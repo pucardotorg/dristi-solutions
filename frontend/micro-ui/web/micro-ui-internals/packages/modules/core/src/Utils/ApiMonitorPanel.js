@@ -148,7 +148,7 @@ function ApiMonitorPanel() {
 
         if (tab === "calls") setCalls(window.apiMonitor.getAllCalls());
         if (tab === "stats") setStats(window.apiMonitor.getStats());
-      }, 500);
+      }, 1000);
 
       return function () {
         clearInterval(interval);
@@ -255,7 +255,7 @@ function ApiMonitorPanel() {
             React.createElement(
               "div",
               { style: styles.tabs },
-              ["overview", "heaviest", "slowest", "mostCalled", "raw"].map(function (t) {
+              ["overview", "slowest", "mostCalled", "raw"].map(function (t) {
                 return React.createElement(
                   "div",
                   {
@@ -277,11 +277,10 @@ function ApiMonitorPanel() {
                       "urlPath",
                       "totalCalls",
                       "uniqueEndpoints",
-                      "totalTime",
+                      "totalNetworkTime",
                       "totalRequestSizeKB",
                       "totalResponseSizeKB",
                       "totalErrors",
-                      "errorRate",
                     ],
                     data: [stats.summary || {}],
                   })
@@ -292,17 +291,17 @@ function ApiMonitorPanel() {
                   })
                 : statsTab === "heaviest"
                 ? React.createElement(Table, {
-                    columns: ["endpoint", "callCount", "totalSizeKB", "avgDuration", "maxDuration"],
+                    columns: ["endpoint", "callCount", "totalSizeKB", "avgApiLatency", "maxDuration"],
                     data: stats.heaviestEndpoints,
                   })
                 : statsTab === "slowest"
                 ? React.createElement(Table, {
-                    columns: ["endpoint", "callCount", "avgDuration", "maxDuration"],
+                    columns: ["endpoint", "callCount", "avgApiLatency", "maxDuration"],
                     data: stats.slowestEndpoints,
                   })
                 : statsTab === "mostCalled"
                 ? React.createElement(Table, {
-                    columns: ["endpoint", "callCount", "totalSizeKB", "avgDuration"],
+                    columns: ["endpoint", "callCount", "avgApiLatency"],
                     data: stats.mostCalledEndpoints,
                   })
                 : React.createElement("pre", null, JSON.stringify(stats, null, 2)))
