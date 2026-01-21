@@ -87,9 +87,9 @@ export const userTypeOptions = [
   {
     code: "ADVOCATE_CLERK",
     name: "ADVOCATE_CLERK_TEXT",
-    showBarDetails: false,
-    hasClerkPhoto: true,
-    isVerified: false,
+    showBarDetails: true,
+    hasBarRegistrationNo: true,
+    isVerified: true,
     role: [
       "ADVOCATE_CLERK_ROLE",
       "CASE_CREATOR",
@@ -115,7 +115,7 @@ export const userTypeOptions = [
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
       requestKey: "clerk",
-      AdditionalFields: [],
+      AdditionalFields: ["barRegistrationNumber"],
     },
     subText: "ADVOCATE_CLERK_SUB_TEXT",
   },
@@ -777,35 +777,3 @@ export const advocateClerkConfig = [
   },
 ];
 
-export const clerkPhotoConfig = [
-  {
-    head: "CS_UPLOAD_CLERK_PHOTO",
-    subHead: "CS_UPLOAD_CLERK_PHOTO_SUBTEXT",
-    body: [
-      {
-        type: "component",
-        component: "SelectUserTypeComponent",
-        key: "clerkPhotoDetails",
-        withoutLabel: true,
-        populators: {
-          inputs: [
-            {
-              label: "CS_CLERK_PHOTO",
-              type: "documentUpload",
-              name: "clerkPhoto",
-              validation: {
-                isRequired: true,
-              },
-              isMandatory: true,
-              allowedFileTypes: /(.*?)(png|jpeg|jpg)$/i,
-              errorMessage: "CS_UPLOAD_PHOTO_ERROR_MSG",
-              multiple: false,
-              uploadGuidelines: "CS_UPLOAD_PHOTO_GUIDELINES",
-            },
-          ],
-          validation: {},
-        },
-      },
-    ],
-  },
-];

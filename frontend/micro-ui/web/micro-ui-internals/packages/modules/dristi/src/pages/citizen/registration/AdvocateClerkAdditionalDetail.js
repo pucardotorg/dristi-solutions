@@ -35,6 +35,9 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
   const setFormErrors = useRef(null);
 
   const tenantId = Digit.ULBService.getCurrentTenantId();
+  
+  // Determine if user is registering as advocate clerk
+  const isAdvocateClerk = params?.userType?.clientDetails?.selectUserType?.code === "ADVOCATE_CLERK";
   const closeToast = () => {
     setShowErrorToast(false);
   };
@@ -224,7 +227,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
     <div className="advocate-additional-details">
       <div className="id-verificatin-header">
         <p className="vefifcation-header" style={headerStyle}>
-          {t("CORE_ADVOCATE_VERFICATION")}
+          {t(isAdvocateClerk ? "CORE_ADVOCATE_CLERK_VERFICATION" : "CORE_ADVOCATE_VERFICATION")}
         </p>
         <p className="vefifcation-sub-header" style={subHeaderStyle}>
           {t("CORE_ADVOCATE_AUTHENTICITY_TEXT")}
