@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
+import org.pucar.dristi.web.models.ProcessHandler;
 import org.springframework.validation.annotation.Validated;
 
 
@@ -30,6 +31,15 @@ public class CaseOverallStatus {
 
     @JsonProperty("substage")
     private String substage = null;
+
+    @JsonProperty("processHandler")
+    private ProcessHandler processHandler = ProcessHandler.RESET_BACKUP;
+
+    @JsonProperty("stageBackup")
+    private String stageBackup = null;
+
+    @JsonProperty("substageBackup")
+    private String substageBackup = null;
 
     @JsonProperty("auditDetails")
     @Valid
