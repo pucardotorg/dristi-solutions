@@ -1,4 +1,4 @@
-package digit.web.models;
+package digit.web.models.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -7,9 +7,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Sorting order
  */
 public enum Order {
+
     ASC("asc"), DESC("desc");
 
-    private String value;
+    private final String value;
 
     Order(String value) {
         this.value = value;
@@ -30,4 +31,5 @@ public enum Order {
         }
         return null;
     }
+
 }

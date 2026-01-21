@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.egov.common.contract.response.ResponseInfo;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
@@ -21,8 +22,8 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class MemberSearchResponse {
-    @JsonProperty("ResponseInfo")
 
+    @JsonProperty("ResponseInfo")
     @Valid
     private ResponseInfo responseInfo = null;
 
@@ -31,14 +32,11 @@ public class MemberSearchResponse {
     private List<AddMember> members = null;
 
     @JsonProperty("pagination")
-
     @Valid
     private Pagination pagination = null;
 
     @JsonProperty("totalCount")
-
     private Integer totalCount = null;
-
 
     public MemberSearchResponse addMembersItem(AddMember membersItem) {
         if (this.members == null) {
