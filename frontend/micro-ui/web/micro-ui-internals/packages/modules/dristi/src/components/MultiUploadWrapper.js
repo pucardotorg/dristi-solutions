@@ -24,7 +24,7 @@ const fileValidationStatus = (file, regex, maxSize, t, notSupportedError, maxFil
 
   if (!updatedRegex.test(file?.name) && file.size / 1024 / 1024 > maxSize) {
     status.valid = false;
-    status.error = t(`NOT_SUPPORTED_FILE_TYPE_AND_FILE_SIZE_EXCEEDED_5MB`);
+    status.error = t(`NOT_SUPPORTED_FILE_TYPE_AND_FILE_SIZE_EXCEEDED_10MB`);
   }
 
   if (!updatedRegex.test(file?.name)) {
@@ -34,7 +34,7 @@ const fileValidationStatus = (file, regex, maxSize, t, notSupportedError, maxFil
 
   if (file.size / 1024 / 1024 > maxSize) {
     status.valid = false;
-    status.error = t(maxFileErrorMessage ? maxFileErrorMessage : `FILE_SIZE_EXCEEDED_5MB`);
+    status.error = t(maxFileErrorMessage ? maxFileErrorMessage : `FILE_SIZE_EXCEEDED_10MB`);
   }
 
   return status;
@@ -71,7 +71,7 @@ const MultiUploadWrapper = ({
   showHintBelow,
   hintText,
   allowedFileTypesRegex = /(.*?)(jpg|jpeg|webp|aif|png|image|pdf|msword|openxmlformats-officedocument|xls|xlsx|openxmlformats-officedocument|wordprocessingml|document|spreadsheetml|sheet|ms-excel)$/i,
-  allowedMaxSizeInMB = 5,
+  allowedMaxSizeInMB = 10,
   acceptFiles = "image/*, .jpg, .jpeg, .webp, .aif, .png, .image, .pdf, .msword, .openxmlformats-officedocument, .dxf, .xlsx, .xls, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   maxFilesAllowed,
   customClass = "",
