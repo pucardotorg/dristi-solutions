@@ -777,3 +777,46 @@ export const advocateClerkConfig = [
   },
 ];
 
+export const advocateClerkVerificationConfig = [
+  {
+    body: [
+      {
+        type: "component",
+        component: "AdvocateDetailComponent",
+        key: "clientDetails",
+        populators: {
+          inputs: [
+            {
+              label: "CLERK_REGISTRATION_NUMBER",
+              type: "text",
+              name: "barRegistrationNumber",
+              validation: {
+                isRequired: true,
+                errMsg: "CLERK_REGISTRATION_NUMBER_INVALID_PATTERN",
+                maxlength: 20,
+                minlength: 1,
+              },
+              isMandatory: true,
+              isDependentOn: "selectUserType",
+              clearFields: { stateRegnNumber: "" },
+              dependentKey: { selectUserType: ["showBarDetails", "hasBarRegistrationNo"] },
+            },
+            {
+              label: "CLERK_ID_DOCUMENT",
+              type: "documentUpload",
+              name: "barCouncilId",
+              validation: {
+                isRequired: true,
+              },
+              isMandatory: true,
+              allowedFileTypes: /(.*?)(png|jpeg|jpg|pdf)$/i,
+              isDependentOn: "selectUserType",
+              dependentKey: { selectUserType: ["showBarDetails"] },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+

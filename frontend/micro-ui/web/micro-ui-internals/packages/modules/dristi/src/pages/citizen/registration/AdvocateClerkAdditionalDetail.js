@@ -1,8 +1,8 @@
 import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
-import { advocateClerkConfig } from "./config";
+import { advocateClerkConfig, advocateClerkVerificationConfig } from "./config";
 import { getFileByFileStore } from "../../../Utils";
 
 const headerStyle = {
@@ -38,6 +38,11 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
   
   // Determine if user is registering as advocate clerk
   const isAdvocateClerk = params?.userType?.clientDetails?.selectUserType?.code === "ADVOCATE_CLERK";
+  
+  // Use different config based on user type
+  const currentConfig = useMemo(() => {
+    return isAdvocateClerk ? advocateClerkVerificationConfig : advocateClerkConfig;
+  }, [isAdvocateClerk]);
   const closeToast = () => {
     setShowErrorToast(false);
   };
@@ -56,7 +61,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
 
   const validateFormData = (data) => {
     let isValid = true;
-    advocateClerkConfig.forEach((curr) => {
+    currentConfig.forEach((curr) => {
       if (!isValid) return;
       if (!(curr.body[0].key in data) || !data[curr.body[0].key]) {
         isValid = false;
@@ -112,7 +117,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
     }
 
     let isDisabled = false;
-    advocateClerkConfig.forEach((curr) => {
+    currentConfig.forEach((curr) => {
       if (isDisabled) return;
       if (!(curr.body[0].key in formData) || !formData[curr.body[0].key]) {
         return;
@@ -237,7 +242,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
         </p>
       </div>
       <FormComposerV2
-        config={advocateClerkConfig}
+        config={currentConfig}
         t={t}
         onSubmit={(props) => {
           onSubmit(props);
