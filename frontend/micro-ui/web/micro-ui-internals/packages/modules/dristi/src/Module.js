@@ -81,6 +81,7 @@ import ProcessCourierService from "./components/ProcessCourierService";
 import CourierService from "./components/CourierService";
 import CustomText from "./components/CustomText";
 import SelectBulkDateInputs from "./components/SelectBulkDateInputs";
+import SelectCustomHearingDate from "./components/SelectCustomHearingDate";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -222,6 +223,7 @@ const componentsToRegister = {
   CourierService,
   CustomText,
   SelectBulkDateInputs,
+  SelectCustomHearingDate
 };
 
 const overrideHooks = () => {

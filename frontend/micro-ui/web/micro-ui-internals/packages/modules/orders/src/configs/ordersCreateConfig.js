@@ -6182,3 +6182,66 @@ export const configsAbateCase = [
     ],
   },
 ];
+
+export const configAcceptReschedulingRequest = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "CURRENT_HEARING_DATE",
+        isMandatory: true,
+        key: "originalHearingDate",
+        schemaKeyPath: "orderDetails.originalHearingDate",
+        transformer: "date",
+        disable: true,
+        type: "date",
+        populators: {
+          name: "originalHearingDate",
+        },
+      },
+      {
+        label: "PURPOSE_OF_NEXT_HEARING",
+        isMandatory: true,
+        key: "hearingPurpose",
+        schemaKeyPath: "orderDetails.purposeOfHearing",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          name: "hearingPurpose",
+          optionsKey: "code",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          hideInForm: false,
+        },
+      },
+      {
+        key: "finalHearingDate",
+        type: "component",
+        component: "SelectCustomHearingDate",
+        withoutLabel: true,
+        isMandatory: true,
+        label: "Please select the final date for hearing",
+        populators: {
+          inputs: [
+            {
+              name: "finalHearingDate",
+              options:[],
+              validation: {
+                minDate: "2024-03-17",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];

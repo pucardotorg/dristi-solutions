@@ -67,6 +67,7 @@ import {
   configsCaseSettlementAccept,
   configsCaseSettlementReject,
   configsAbateCase,
+  configAcceptReschedulingRequest,
 } from "../../configs/ordersCreateConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -81,7 +82,14 @@ import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkfl
 import { applicationTypes } from "../../utils/applicationTypes";
 import { HearingWorkflowState } from "../../utils/hearingWorkflow";
 import { ordersService, taskService } from "../../hooks/services";
-import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName, getSafeFileExtension } from "../../utils";
+import {
+  getRespondantName,
+  getComplainantName,
+  constructFullName,
+  removeInvalidNameParts,
+  getFormattedName,
+  getSafeFileExtension,
+} from "../../utils";
 import {
   channelTypeEnum,
   checkValidation,
@@ -155,6 +163,7 @@ const configKeys = {
   COST: configsCost,
   WITNESS_BATTA: configsWitnessBatta,
   ABATE_CASE: configsAbateCase,
+  ACCEPT_RESCHEDULING_REQUEST: configAcceptReschedulingRequest,
 };
 
 const stateSlaMap = {
@@ -194,6 +203,7 @@ const stateSlaMap = {
   WITNESS_BATTA: 3,
   DRAFT_IN_PROGRESS: 2,
   ABATE_CASE: 3,
+  ACCEPT_RESCHEDULING_REQUEST: 3,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
@@ -962,6 +972,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "ACCEPT_RESCHEDULING_REQUEST",
               ]
             : [
                 "DISMISS_CASE",
@@ -980,6 +991,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "ACCEPT_RESCHEDULING_REQUEST",
               ]
         );
       } else if (isBailApplicationPending) {
@@ -1001,6 +1013,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "ACCEPT_RESCHEDULING_REQUEST",
               ]
             : [
                 "TAKE_COGNIZANCE",
@@ -1019,6 +1032,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "ACCEPT_RESCHEDULING_REQUEST",
               ]
         );
       } else {
@@ -1041,6 +1055,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "ACCEPT_RESCHEDULING_REQUEST",
               ]
             : [
                 "TAKE_COGNIZANCE",
@@ -1060,6 +1075,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "ACCEPT_RESCHEDULING_REQUEST",
               ]
         );
       }
@@ -1079,6 +1095,7 @@ const GenerateOrdersV2 = () => {
                 "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
                 "COST",
                 "WITNESS_BATTA",
+                "ACCEPT_RESCHEDULING_REQUEST",
               ]
             : [
                 "SUMMONS",
@@ -1093,6 +1110,7 @@ const GenerateOrdersV2 = () => {
                 "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
                 "COST",
                 "WITNESS_BATTA",
+                "ACCEPT_RESCHEDULING_REQUEST",
               ]
         );
       } else if (!caseDetails?.lprNumber) {
@@ -1115,6 +1133,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "ACCEPT_RESCHEDULING_REQUEST",
               ]
             : [
                 "SUMMONS",
@@ -1134,6 +1153,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "ACCEPT_RESCHEDULING_REQUEST",
               ]
         );
       } else {
@@ -1155,6 +1175,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "ACCEPT_RESCHEDULING_REQUEST",
               ]
             : [
                 "SUMMONS",
@@ -1173,6 +1194,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "ACCEPT_RESCHEDULING_REQUEST",
               ]
         );
       }
@@ -1194,6 +1216,7 @@ const GenerateOrdersV2 = () => {
         "COST",
         "WITNESS_BATTA",
         "ABATE_CASE",
+        "ACCEPT_RESCHEDULING_REQUEST",
       ]);
     }
 
@@ -1623,6 +1646,40 @@ const GenerateOrdersV2 = () => {
                     populators: {
                       ...field.populators,
                       options: purposeOfHearingData,
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+        if (["ACCEPT_RESCHEDULING_REQUEST"].includes(selectedOrderType)) {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "hearingPurpose") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: purposeOfHearingData,
+                    },
+                  };
+                }
+
+                if (field.key === "finalHearingDate") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      inputs: [
+                        {
+                          ...field.populators.inputs[0],
+                          options: ["01-01-2026", "02-01-2026", "03-01-2026", "04-01-2026", "05-01-2026"],
+                        },
+                      ],
                     },
                   };
                 }
@@ -2284,6 +2341,7 @@ const GenerateOrdersV2 = () => {
           "INITIATING_RESCHEDULING_OF_HEARING_DATE",
           "CHECKOUT_ACCEPTANCE",
           "CHECKOUT_REJECT",
+          "ACCEPT_RESCHEDULING_REQUEST",
         ].includes(currentOrderType)
       ) {
         updatedFormdata.originalHearingDate =
