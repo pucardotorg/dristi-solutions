@@ -1,39 +1,67 @@
-import { CardLabelError } from "@egovernments/digit-ui-components";
-import { Button, RemoveableTag, TextInput } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import { CloseSvg } from "@egovernments/digit-ui-react-components";
+import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
+import { Toast } from "@egovernments/digit-ui-react-components";
+import React, { useEffect, useMemo, useState } from "react";
+
+const RemovalChip = ({ label, onRemove }) => {
+  return (
+    <div className="removal-custom-chip">
+      <span>{label}</span>
+
+      <span
+        onClick={onRemove}
+        className="removal-custom-chip__close"
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#a9a9a9")}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#cfcfcf")}
+      >
+        <CloseSvg />
+      </span>
+    </div>
+  );
+};
 
 function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors }) {
-  const [pickerValue, setPickerValue] = useState("");
-  const [enableAdd, setEnableAdd] = useState(false);
-
-  const formatForSave = (dateStr) => {
-    if (!dateStr) return "";
-    const [y, m, d] = dateStr.split("-");
-    return `${d}-${m}-${y}`;
-  };
-
-  const parseForSort = (dateStr) => {
-    const [d, m, y] = dateStr.split("-");
-    return new Date(`${y}-${m}-${d}`).getTime();
-  };
-
-  const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
+  const [showErrorToast, setShowErrorToast] = useState(null);
 
   const chipList = useMemo(() => formData?.[config.key] || [], [formData, config.key]);
+  const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
 
-  const handleAdd = (input) => {
-    const formattedDate = formatForSave(pickerValue);
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => setShowErrorToast(null), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
+
+  const handleDateAdd = (date, input) => {
+    if (!date) return;
+
+    const dateObj = new Date(date);
+    const d = String(dateObj.getDate()).padStart(2, "0");
+    const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const y = dateObj.getFullYear();
+    const formattedDate = `${d}-${m}-${y}`;
+
     const maxAllowed = input?.maxSelected || Infinity;
 
-    if (chipList.length < maxAllowed && !chipList.includes(formattedDate)) {
-      const newList = [...chipList, formattedDate];
-      const sortedList = newList.sort((a, b) => parseForSort(a) - parseForSort(b));
-      
-      onSelect(config.key, sortedList);
-      
-      setPickerValue("");
-      setEnableAdd(false);
+    if (chipList.includes(formattedDate)) {
+      setShowErrorToast({ error: true, label: t("CS_DATE_ALREADY_SELECTED") });
+      return;
     }
+
+    if (chipList.length >= maxAllowed) {
+      setShowErrorToast({ error: true, label: t("CS_MAX_LIMIT_REACHED") });
+      return;
+    }
+
+    const newList = [...chipList, formattedDate];
+    const sortedList = newList.sort((a, b) => {
+      const [ad, am, ay] = a.split("-");
+      const [bd, bm, by] = b.split("-");
+      return new Date(ay, am - 1, ad) - new Date(by, bm - 1, bd);
+    });
+
+    onSelect(config.key, sortedList);
   };
 
   const handleRemove = (dateToRemove) => {
@@ -41,79 +69,53 @@ function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors }) {
     onSelect(config.key, filteredDates);
   };
 
-  const onChange = (event, input) => {
-    const { value } = event.target;
-    const formattedDate = formatForSave(value);
-    
-    const maxAllowed = input?.maxSelected || Infinity;
-    const isDuplicate = chipList.includes(formattedDate);
-    const isLimitReached = chipList.length >= maxAllowed;
-    const isBeforeMin = input.validation?.minDate && value < input.validation.minDate;
+  return (
+    <div className="bulk-input-container-date-picker">
+      {inputs.map((input) => {
+        const isLimitReached = chipList?.length >= (input?.maxSelected || Infinity);
 
-    setPickerValue(value);
-    setEnableAdd(!!value && !isDuplicate && !isLimitReached && !isBeforeMin);
-  };
+        return (
+          <div key={input.name} style={{ width: "100%" }}>
+            {!config?.disableScrutinyHeader && (
+              <h2 className="card-label bolder" style={{ marginBottom: "revert" }}>
+                {t(input.label)}
+              </h2>
+            )}
 
-  return inputs.map((input) => {
-    const maxAllowed = input?.maxSelected || Infinity;
-    const isLimitReached = chipList.length >= maxAllowed;
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <CustomDatePickerV2
+                t={t}
+                config={input}
+                formData={{ [input.name]: "" }}
+                onDateChange={(date) => handleDateAdd(date, input)}
+                disable={config?.disable || isLimitReached}
+                disableColor="#D6D5D4"
+                disableBorderColor="#D6D5D4"
+                disableBackgroundColor="white"
+              />
+            </div>
 
-    return (
-      <div key={input.name} className={`bulk-input-class ${input.className || ""}`} style={{ width: "100%", marginBottom: "1.5rem" }}>
-        {!config?.disableScrutinyHeader && (
-          <h3 className="bulk-input-header" style={{ marginBottom: "8px", fontWeight: "600" }}>
-            {t(input.label)}
-          </h3>
-        )}
-        
-        <div className="bulk-input-main" style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
-          <div style={{ flex: 1 }}>
-            <TextInput
-              type="date"
-              value={pickerValue}
-              onChange={(event) => onChange(event, input)}
-              name={input.name}
-              min={input.validation?.minDate}
-              disable={input?.disable || config?.disable || isLimitReached}
-            />
+            {chipList?.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                {chipList.map((date, index) => (
+                  <RemovalChip key={index} label={date} onRemove={() => handleRemove(date)} />
+                ))}
+              </div>
+            )}
+
             {isLimitReached && (
-              <p style={{ fontSize: "14px", color: "#BB2C2F", marginTop: "4px" }}>
-                {t("CS_MAX_LIMIT_REACHED")}: {maxAllowed}
+              <p style={{ fontSize: "14px", color: "#BB2C2F", marginBottom: 0 }}>
+                {t("CS_MAX_LIMIT_REACHED")}: {input?.maxSelected}
               </p>
             )}
           </div>
-          <Button
-            label={t("CS_ADD")}
-            isDisabled={!enableAdd || isLimitReached}
-            onButtonClick={() => handleAdd(input)}
-            style={{ marginTop: "4px" }}
-          />
-        </div>
-
-        {errors?.[config?.key] && (
-          <CardLabelError style={{ margin: "8px 0" }}>
-            {t(input.error || input.validation?.errMsg || "CORE_REQUIRED_FIELD_ERROR")}
-          </CardLabelError>
-        )}
-
-        {chipList?.length > 0 && (
-          <div className="tag-container" style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "12px" }}>
-            {chipList.map((date, index) => (
-              <RemoveableTag
-                key={index}
-                text={date}
-                disabled={config?.disable}
-                onClick={() => handleRemove(date)}
-                extraStyles={{
-                  tagStyles: { background: "#F3F3F3", border: "1px solid #B1B4B6" }
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  });
+        );
+      })}
+      {showErrorToast && (
+        <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={() => setShowErrorToast(null)} />
+      )}
+    </div>
+  );
 }
 
 export default SelectBulkDateInputs;
