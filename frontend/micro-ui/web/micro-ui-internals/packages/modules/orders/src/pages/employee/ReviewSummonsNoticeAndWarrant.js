@@ -671,8 +671,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
   // Clear sessionStorage when component unmounts (user navigates away) or page refreshes
   useEffect(() => {
     const handleBeforeUnload = () => {
-      // Clear storage on page refresh
-      clearAllStoredConfigs();
+      const isEsignInProgress =
+        (typeof window !== "undefined" && sessionStorage.getItem("esignProcess")) ||
+        (typeof window !== "undefined" && sessionStorage.getItem("eSignWindowObject"));
+      if (!isEsignInProgress) {
+        clearAllStoredConfigs();
+      }
     };
 
     // Add event listener for page refresh
@@ -682,8 +686,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
     return () => {
       // Remove event listener
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      // Clear storage when component unmounts
-      clearAllStoredConfigs();
+      const isEsignInProgress =
+        (typeof window !== "undefined" && sessionStorage.getItem("esignProcess")) ||
+        (typeof window !== "undefined" && sessionStorage.getItem("eSignWindowObject"));
+      if (!isEsignInProgress) {
+        clearAllStoredConfigs();
+      }
     };
   }, []);
 
