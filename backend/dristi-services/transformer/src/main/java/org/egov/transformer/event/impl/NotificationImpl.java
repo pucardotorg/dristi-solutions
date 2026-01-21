@@ -55,6 +55,7 @@ public class NotificationImpl implements EventListener<Notification, RequestInfo
                 .judgeIds( new ArrayList<>())
                 .documents(event.getDocuments())
                 .createdTime(event.getAuditDetails().getCreatedTime())
+                .lastModifiedTime(event.getAuditDetails().getLastModifiedTime())
                 .caseTitle(null)
                 .caseSTNumber(null)
                 .build();

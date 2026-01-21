@@ -57,9 +57,11 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
             SortParam.Order sortOrder = inboxRequest.getInbox().getModuleSearchCriteria().containsKey(SORT_ORDER_CONSTANT) ? SortParam.Order.valueOf((String) inboxRequest.getInbox().getModuleSearchCriteria().get(SORT_ORDER_CONSTANT)) : configuration.getSortParam().getOrder();
 
             if (inboxSortConfiguration != null && inboxSortConfiguration.getSortOrder() != null && !inboxSortConfiguration.getSortOrder().isEmpty()) {
-                addSortClauseToBaseQueryUsingConfig(baseEsQuery, inboxSortConfiguration.getSortOrder(),inboxRequest.getInbox().getProcessSearchCriteria().getIsHearingSerialNumberSorting(),inboxRequest.getInbox().getProcessSearchCriteria().getModuleName());
-            } else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && PENDING_BULK_E_SIGN.equals(params.get("status"))) {
+                addSortClauseToBaseQueryUsingConfig(baseEsQuery, inboxSortConfiguration.getSortOrder(), inboxRequest.getInbox().getProcessSearchCriteria().getIsHearingSerialNumberSorting(), inboxRequest.getInbox().getProcessSearchCriteria().getModuleName());
+            } else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && "Order".equals(params.get("entityType"))) {
                 addIndexSort(baseEsQuery, configuration.getIndex());
+            } else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && !params.containsKey("entityType")) {
+                orderNotificationSortClause(baseEsQuery);
             } else if (inboxRequest.getInbox().getSortOrder() != null && !inboxRequest.getInbox().getSortOrder().isEmpty()) {
                 List<OrderBy> sortOrders = inboxRequest.getInbox().getSortOrder();
 
@@ -100,11 +102,11 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         return baseEsQuery;
     }
 
-    private void addSortClauseToBaseQueryUsingConfig(Map<String, Object> baseEsQuery, List<SortOrder> sortOrder,boolean isHearingSerialNumberSorting,String moduleName) {
+    private void addSortClauseToBaseQueryUsingConfig(Map<String, Object> baseEsQuery, List<SortOrder> sortOrder, boolean isHearingSerialNumberSorting, String moduleName) {
 
         List<Map<String, Object>> sortList = new ArrayList<>();
 
-        if (isHearingSerialNumberSorting && "Hearing Service".equalsIgnoreCase(moduleName) ) {
+        if (isHearingSerialNumberSorting && "Hearing Service".equalsIgnoreCase(moduleName)) {
             Map<String, Object> innerSortOrderClause = new HashMap<>();
             innerSortOrderClause.put(ORDER_KEY, "ASC");
             Map<String, Object> outerSortClauseChild = new HashMap<>();
@@ -153,6 +155,14 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         outerClauseList.add(getScriptObject(String.format(NUMBER_SORTING_SCRIPT, placeHolder)));
         return outerClauseList;
     }
+
+    private void orderNotificationSortClause(Map<String, Object> baseEsQuery) {
+        List<Map<String, Object>> sortList = new ArrayList<>();
+        sortList.add(getScriptObject(ORDER_STATUS_PRIORITY_SCRIPT));
+        sortList.add(getScriptObject(ORDER_STATUS_TIME_SCRIPT));
+        baseEsQuery.put(SORT_KEY, sortList);
+    }
+
 
     private Object getPlaceHolder(String indexName) {
         if (indexName.equals(OPEN_HEARING_INDEX)) {

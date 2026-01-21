@@ -64,7 +64,7 @@ logger.info("Service starting", { heapSizeGB: totalHeapSizeInGB });
 
 var jp = require("jsonpath");
 //create binary
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
+pdfMake.vfs = pdfFonts.vfs;
 var pdfMakePrinter = require("pdfmake/src/printer");
 
 let app = express();
