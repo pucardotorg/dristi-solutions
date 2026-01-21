@@ -3,6 +3,7 @@ package digit.web.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import digit.web.models.enums.MemberType;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,6 +23,10 @@ import java.util.UUID;
 @Builder
 public class MemberSearchCriteria {
 
+    @JsonProperty("tenantId")
+    @NotNull
+    private String tenantId = null;
+
     @JsonProperty("officeAdvocateId")
     @Valid
     private UUID officeAdvocateId = null;
@@ -38,5 +43,8 @@ public class MemberSearchCriteria {
     @JsonProperty("memberId")
     @Valid
     private UUID memberId = null;
+
+    @JsonProperty("isActive")
+    private Boolean isActive = null;
 
 }

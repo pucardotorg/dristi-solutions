@@ -23,6 +23,10 @@ import java.util.UUID;
 @Builder
 public class LeaveOffice {
 
+    @JsonProperty("tenantId")
+    @NotNull
+    private String tenantId = null;
+
     @JsonProperty("id")
     @Valid
     private UUID id = null;
