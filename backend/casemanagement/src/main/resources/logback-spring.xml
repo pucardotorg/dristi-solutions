@@ -2,7 +2,6 @@
 <configuration>
     <springProperty scope="context" name="lokiEnabled" source="logging.loki.enabled" defaultValue="false"/>
     <springProperty scope="context" name="lokiUrl" source="logging.loki.url" defaultValue="http://localhost:3100/loki/api/v1/push"/>
-    <springProperty scope="context" name="appName" source="logging.loki.app" defaultValue="unknown-app"/>
     <springProperty scope="context" name="env" source="logging.loki.environment" defaultValue="local"/>
     <springProperty scope="context" name="logLevel" source="logging.level.root" defaultValue="INFO"/>
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -22,23 +21,14 @@
             </appender>
             <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
                 <labels>
-                    app=${appName}
                     environment=${env}
                     host=${HOSTNAME}
-                    level=%level
-                    file=%logger
-                    tenant_id=%mdc{TENANTID:-null}
-                    correlation_id=%mdc{CORRELATION_ID:-null}
                 </labels>
                 <structuredMetadata>
-                    level=%level
-                    thread=%thread
                     logger=%logger
-                    *=%%mdc
-                    *=%%kvp
                 </structuredMetadata>
                 <message>
-                    <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] - %msg%n</pattern>
+                    <pattern>%d{yyyy-MM-dd HH:mm:ss.SSSZ} [%thread] %-5level--- %-60logger{50} -- TENANTID=%X{TENANTID:-null}, CORRELATION_ID=%X{CORRELATION_ID:-null} -- : %msg%n</pattern>
                 </message>
                 <http>
                     <url>${lokiUrl}</url>
