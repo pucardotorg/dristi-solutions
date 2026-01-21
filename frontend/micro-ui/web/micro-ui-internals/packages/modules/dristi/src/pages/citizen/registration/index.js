@@ -3,7 +3,7 @@ import { CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import AdvocateClerkAdditionalDetail from "./AdvocateClerkAdditionalDetail";
 import SelectUserType from "./SelectUserType";
-import { newConfig } from "./config";
+import { newConfig, clerkPhotoConfig } from "./config";
 import { useTranslation } from "react-i18next";
 import SelectName from "./SelectName";
 import SelectOtp from "../Login/SelectOtp";
@@ -16,6 +16,7 @@ import UploadIdType from "./UploadIdType";
 import TermsCondition from "./TermsCondition";
 import SelectEmail from "./SelectEmail";
 import Modal from "../../../components/Modal";
+import ClerkPhotoUpload from "./ClerkPhotoUpload";
 
 const TYPE_REGISTER = { type: "REGISTER" };
 const setCitizenDetail = (userObject, token, tenantId) => {
@@ -439,6 +440,15 @@ const Registration = ({ stateCode }) => {
           </Route>
           <Route path={`${path}/upload-id`}>
             <UploadIdType t={t} config={[stepItems[9]]} pathOnRefresh={pathOnRefresh} onDocumentUpload={onDocumentUpload} params={newParams} />
+          </Route>
+          <Route path={`${path}/clerk-photo`}>
+            <ClerkPhotoUpload
+              t={t}
+              params={newParams}
+              setParams={setNewParams}
+              pathOnRefresh={pathOnRefresh}
+              path={path}
+            />
           </Route>
           <Route path={`${path}/terms-condition`}>
             <TermsCondition params={newParams} setParams={setNewParams} t={t} config={[stepItems[10]]} pathOnRefresh={pathOnRefresh} path={path} />

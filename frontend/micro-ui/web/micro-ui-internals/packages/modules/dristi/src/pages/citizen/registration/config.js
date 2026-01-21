@@ -84,44 +84,41 @@ export const userTypeOptions = [
     },
     subText: "ADVOCATE_SUB_TEXT",
   },
-  // DO NOT REMOVE THE BELOW COMMENTED CODE.
-  // Disabled advocate clerk option from user registration as per production side demand.
-  // {
-  //   code: "ADVOCATE_CLERK",
-  //   name: "ADVOCATE_CLERK_TEXT",
-  //   showBarDetails: true,
-  //   hasStateRegistrationNo: true,
-  //   isVerified: true,
-  //   role: [
-  //     "ADVOCATE_CLERK_ROLE",
-  //     "CASE_CREATOR",
-  //     "CASE_EDITOR",
-  //     "CASE_VIEWER",
-  //     "EVIDENCE_CREATOR",
-  //     "EVIDENCE_VIEWER",
-  //     "EVIDENCE_EDITOR",
-  //     "APPLICATION_CREATOR",
-  //     "APPLICATION_VIEWER",
-  //     "HEARING_VIEWER",
-  //     "ORDER_VIEWER",
-  //     "SUBMISSION_CREATOR",
-  //     "SUBMISSION_RESPONDER",
-  //     "SUBMISSION_DELETE",
-  //     "TASK_VIEWER",
-  //     "HEARING_ACCEPTOR",
-  //     "USER_REGISTER",
-  //     "ADVOCATE_VIEWER",
-  //     "ADVOCATE_APPLICATION_VIEWER",
-  //     "PENDING_TASK_CREATOR",
-  //   ],
-  //   apiDetails: {
-  //     serviceName: "/advocate/clerk/v1/_create",
-  //     requestKey: "clerk",
-  //     AdditionalFields: ["stateRegnNumber"],
-  //   },
-
-  //   subText: "ADVOCATE_CLERK_SUB_TEXT",
-  // },
+  {
+    code: "ADVOCATE_CLERK",
+    name: "ADVOCATE_CLERK_TEXT",
+    showBarDetails: false,
+    hasClerkPhoto: true,
+    isVerified: false,
+    role: [
+      "ADVOCATE_CLERK_ROLE",
+      "CASE_CREATOR",
+      "CASE_EDITOR",
+      "CASE_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
+      "APPLICATION_CREATOR",
+      "APPLICATION_VIEWER",
+      "HEARING_VIEWER",
+      "ORDER_VIEWER",
+      "SUBMISSION_CREATOR",
+      "SUBMISSION_RESPONDER",
+      "SUBMISSION_DELETE",
+      "TASK_VIEWER",
+      "HEARING_ACCEPTOR",
+      "USER_REGISTER",
+      "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
+    ],
+    apiDetails: {
+      serviceName: "/advocate/clerk/v1/_create",
+      requestKey: "clerk",
+      AdditionalFields: [],
+    },
+    subText: "ADVOCATE_CLERK_SUB_TEXT",
+  },
 ];
 
 export const newConfig = [
@@ -774,6 +771,39 @@ export const advocateClerkConfig = [
               dependentKey: { selectUserType: ["showBarDetails"] },
             },
           ],
+        },
+      },
+    ],
+  },
+];
+
+export const clerkPhotoConfig = [
+  {
+    head: "CS_UPLOAD_CLERK_PHOTO",
+    subHead: "CS_UPLOAD_CLERK_PHOTO_SUBTEXT",
+    body: [
+      {
+        type: "component",
+        component: "SelectUserTypeComponent",
+        key: "clerkPhotoDetails",
+        withoutLabel: true,
+        populators: {
+          inputs: [
+            {
+              label: "CS_CLERK_PHOTO",
+              type: "documentUpload",
+              name: "clerkPhoto",
+              validation: {
+                isRequired: true,
+              },
+              isMandatory: true,
+              allowedFileTypes: /(.*?)(png|jpeg|jpg)$/i,
+              errorMessage: "CS_UPLOAD_PHOTO_ERROR_MSG",
+              multiple: false,
+              uploadGuidelines: "CS_UPLOAD_PHOTO_GUIDELINES",
+            },
+          ],
+          validation: {},
         },
       },
     ],

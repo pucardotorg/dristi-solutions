@@ -276,10 +276,10 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
       },
     };
     setParams(latestParams);
-    if (
-      ((userTypeSelcted === "LITIGANT" || userTypeSelcted === "ADVOCATE_CLERK") && !data?.Individual?.[0]?.individualId) ||
-      (userTypeSelcted === "ADVOCATE_CLERK" && data?.Individual?.[0]?.individualId)
-    ) {
+    if (userTypeSelcted === "ADVOCATE_CLERK") {
+      // Advocate clerks need to upload their photo before proceeding to terms and conditions
+      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/clerk-photo`, { newParams: latestParams });
+    } else if (userTypeSelcted === "LITIGANT" && !data?.Individual?.[0]?.individualId) {
       history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`, { newParams: latestParams });
     } else {
       history.push(`/${window?.contextPath}/citizen/dristi/home/registration/additional-details`, { newParams: latestParams });

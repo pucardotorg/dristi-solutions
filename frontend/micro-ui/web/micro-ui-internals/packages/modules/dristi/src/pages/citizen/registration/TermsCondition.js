@@ -72,10 +72,40 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
       } finally {
         setParams({});
       }
-    } else if ((userTypeSelcted === "LITIGANT" || userTypeSelcted === "ADVOCATE_CLERK") && !params?.Individual?.[0]?.individualId) {
+    } else if (userTypeSelcted === "LITIGANT" && !params?.Individual?.[0]?.individualId) {
       Digit.DRISTIService.postIndividualService(Individual, tenantId)
         .then((result) => {
+          history.push(`/${window?.contextPath}/citizen/dristi/home/response`, {
+            response: "success",
+            createType: params?.userType?.clientDetails?.selectUserType?.code,
+          });
+        })
+        .catch(() => {
+          history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
+        })
+        .finally(() => {
+          setParams({});
+        });
+    } else if (userTypeSelcted === "ADVOCATE_CLERK" && !params?.Individual?.[0]?.individualId) {
+      // Handle advocate clerk registration with clerk photo
+      Digit.DRISTIService.postIndividualService(Individual, tenantId)
+        .then(async (result) => {
           if (userType?.clientDetails?.selectUserType?.apiDetails && userType?.clientDetails?.selectUserType?.apiDetails?.serviceName && result) {
+            // Upload clerk photo if available
+            let clerkPhotoDocument = null;
+            if (params?.clerkPhotoDetails?.clerkPhoto?.[0]?.[1]?.file) {
+              const photoUploadRes = await onDocumentUpload(params?.clerkPhotoDetails?.clerkPhoto?.[0]?.[1]?.file);
+              clerkPhotoDocument = {
+                id: null,
+                documentType: photoUploadRes.fileType || "image/jpeg",
+                fileStore: photoUploadRes.file?.files?.[0]?.fileStoreId,
+                documentUid: "",
+                additionalDetails: {
+                  fileName: params?.clerkPhotoDetails?.clerkPhoto?.[0]?.[0] || "clerk_photo",
+                },
+              };
+            }
+
             const requestBody = {
               [userType?.clientDetails?.selectUserType?.apiDetails?.requestKey]: {
                 tenantId: tenantId,
@@ -84,27 +114,11 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
                 workflow: {
                   action: "REGISTER",
                   comments: `Applying for ${userType?.clientDetails?.selectUserType?.apiDetails?.requestKey} registration`,
-                  documents: [
-                    {
-                      id: null,
-                      documentType: null,
-                      fileStore: null,
-                      documentUid: "",
-                      additionalDetails: {},
-                    },
-                  ],
+                  documents: clerkPhotoDocument ? [clerkPhotoDocument] : [],
                   assignes: [],
                   rating: null,
                 },
-                documents: [
-                  {
-                    id: null,
-                    documentType: null,
-                    fileStore: null,
-                    documentUid: "",
-                    additionalDetails: {},
-                  },
-                ],
+                documents: clerkPhotoDocument ? [clerkPhotoDocument] : [],
                 additionalDetails: {
                   username: getFullName(" ", params?.name?.firstName, params?.name?.middleName, params?.name?.lastName),
                   userType: userType,
@@ -158,6 +172,21 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
         });
     } else if (userTypeSelcted === "ADVOCATE_CLERK" && params?.Individual?.[0]?.individualId) {
       if (userType?.clientDetails?.selectUserType?.apiDetails && userType?.clientDetails?.selectUserType?.apiDetails?.serviceName) {
+        // Upload clerk photo if available
+        let clerkPhotoDocument = null;
+        if (params?.clerkPhotoDetails?.clerkPhoto?.[0]?.[1]?.file) {
+          const photoUploadRes = await onDocumentUpload(params?.clerkPhotoDetails?.clerkPhoto?.[0]?.[1]?.file);
+          clerkPhotoDocument = {
+            id: null,
+            documentType: photoUploadRes.fileType || "image/jpeg",
+            fileStore: photoUploadRes.file?.files?.[0]?.fileStoreId,
+            documentUid: "",
+            additionalDetails: {
+              fileName: params?.clerkPhotoDetails?.clerkPhoto?.[0]?.[0] || "clerk_photo",
+            },
+          };
+        }
+
         const requestBody = {
           [userType?.clientDetails?.selectUserType?.apiDetails?.requestKey]: {
             tenantId: tenantId,
@@ -166,27 +195,11 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
             workflow: {
               action: "REGISTER",
               comments: `Applying for ${userType?.clientDetails?.selectUserType?.apiDetails?.requestKey} registration`,
-              documents: [
-                {
-                  id: null,
-                  documentType: null,
-                  fileStore: null,
-                  documentUid: "",
-                  additionalDetails: {},
-                },
-              ],
+              documents: clerkPhotoDocument ? [clerkPhotoDocument] : [],
               assignes: [],
               rating: null,
             },
-            documents: [
-              {
-                id: null,
-                documentType: null,
-                fileStore: null,
-                documentUid: "",
-                additionalDetails: {},
-              },
-            ],
+            documents: clerkPhotoDocument ? [clerkPhotoDocument] : [],
             additionalDetails: {
               username: getFullName(
                 " ",
