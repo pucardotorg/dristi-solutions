@@ -361,6 +361,7 @@ const AdmittedCaseV2 = () => {
 
   const nextActions = useMemo(() => workFlowDetails?.nextActions || [{}], [workFlowDetails]);
   const [data, setData] = useState([]);
+  const [dataForNextHearings, setDataForNextHearings] = useState([]);
 
   const fetchInbox = useCallback(async () => {
     try {
@@ -391,6 +392,45 @@ const AdmittedCaseV2 = () => {
       console.error("error", err);
     } finally {
     }
+  }, []);
+
+  const homeNextHearingFilter = JSON.parse(localStorage.getItem("Digit.homeNextHearingFilter"));
+
+  useEffect(() => {
+    const fetchInboxForNextHearingData = async () => {
+      try {
+        const payload = (fromDate, toDate) => {
+          return {
+            inbox: {
+              processSearchCriteria: {
+                businessService: ["hearing-default"],
+                moduleName: "Hearing Service",
+                tenantId: "kl",
+              },
+              moduleSearchCriteria: {
+                tenantId: "kl",
+                ...(fromDate && toDate ? { fromDate, toDate } : {}),
+              },
+              tenantId: "kl",
+              limit: 300,
+              offset: 0,
+            },
+          };
+        };
+
+        if (homeNextHearingFilter) {
+          const fromDateForNextHearings = new Date(homeNextHearingFilter.homeFilterDate).setHours(0, 0, 0, 0);
+          const toDateForNextHearings = new Date(homeNextHearingFilter.homeFilterDate).setHours(23, 59, 59, 999);
+
+          const resForNextHearings = await HomeService.InboxSearch(payload(fromDateForNextHearings, toDateForNextHearings), { tenantId: "kl" });
+          setDataForNextHearings(resForNextHearings?.items || []);
+        }
+      } catch (err) {
+        console.error("error", err);
+      } finally {
+      }
+    };
+    fetchInboxForNextHearingData();
   }, []);
 
   useEffect(() => {
@@ -2662,12 +2702,40 @@ const AdmittedCaseV2 = () => {
   }, [filingNumber, history]);
 
   const hideNextHearingButton = useMemo(() => {
-    const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
+    const validData = dataForNextHearings?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS", "COMPLETED"]?.includes(item?.businessObject?.hearingDetails?.status));
     const index = validData?.findIndex(
-      (item) => item?.businessObject?.hearingDetails?.hearingNumber === (currentInProgressHearing?.hearingId || todayScheduledHearing?.hearingId)
+      (item) => item?.businessObject?.hearingDetails?.hearingNumber === homeNextHearingFilter?.homeHearingNumber
     );
-    return index === -1 || validData?.length === 1;
-  }, [data, currentInProgressHearing?.hearingId, todayScheduledHearing?.hearingId]);
+    return index === -1 || validData?.length <= 1;
+  }, [dataForNextHearings, homeNextHearingFilter]);
+
+  const customNextHearing = useCallback(
+    () => {
+      if (dataForNextHearings?.length === 0) {
+        history.push(`/${window?.contextPath}/employee/home/home-screen`);
+      } else {
+        const validData = dataForNextHearings?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS", "COMPLETED"]?.includes(item?.businessObject?.hearingDetails?.status));
+        const index = validData?.findIndex(
+          (item) => item?.businessObject?.hearingDetails?.hearingNumber === homeNextHearingFilter?.homeHearingNumber
+        );
+        if (index === -1 || validData?.length === 1) {
+          history.push(`/${window?.contextPath}/employee/home/home-screen`);
+        } else {
+          const row = validData[(index + 1) % validData?.length];
+          localStorage.setItem(
+            "Digit.homeNextHearingFilter",
+            JSON.stringify({
+              homeFilterDate: row?.businessObject?.hearingDetails?.fromDate,
+              homeHearingNumber: row?.businessObject?.hearingDetails?.hearingNumber,
+            })
+          );
+          history.push(
+            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+          );
+        }
+      }
+    }, [dataForNextHearings, history, homeNextHearingFilter]
+  )
 
   const nextHearing = useCallback(
     (isStartHearing) => {
@@ -2752,7 +2820,7 @@ const AdmittedCaseV2 = () => {
       if (option.value === "DOWNLOAD_CASE_FILE") {
         setShowDownloadCasePdfModal(true);
       } else if (option.value === "NEXT_HEARING") {
-        nextHearing(false);
+        customNextHearing();
       } else if (option.value === "VIEW_CALENDAR") {
         setShowCalendarModal(true);
       } else if (option.value === "GENERATE_ORDER") {
@@ -3820,7 +3888,7 @@ const AdmittedCaseV2 = () => {
                               <Button
                                 variation={"primary"}
                                 isDisabled={apiCalled}
-                                label={t(hasHearingPriorityView ? "CS_CASE_END_START_NEXT_HEARING" : "CS_CASE_NEXT_HEARING")}
+                                label={t(hasHearingPriorityView ? "CS_CASE_END_START_NEXT_HEARING" : `${t("CS_CASE_NEXT_HEARING")} (${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate))).split("-").join("/")})`)}
                                 children={hasHearingPriorityView ? null : <RightArrow />}
                                 isSuffix={true}
                                 onButtonClick={() =>
@@ -3840,7 +3908,7 @@ const AdmittedCaseV2 = () => {
                             {!hasHearingPriorityView && !hideNextHearingButton && (
                               <Button
                                 variation={"primary"}
-                                label={t("CS_CASE_NEXT_HEARING")}
+                                label={t(`${t("CS_CASE_NEXT_HEARING")} (${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate))).split("-").join("/")})`)}
                                 children={<RightArrow />}
                                 isSuffix={true}
                                 onButtonClick={() =>
@@ -3848,7 +3916,7 @@ const AdmittedCaseV2 = () => {
                                     value: "NEXT_HEARING",
                                   })
                                 }
-                              ></Button>
+                              />
                             )}
                             <ActionButton
                               variation={"primary"}
