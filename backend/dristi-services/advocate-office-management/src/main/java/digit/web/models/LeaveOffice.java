@@ -1,6 +1,7 @@
 package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import digit.web.models.enums.AccessType;
 import digit.web.models.enums.MemberType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -46,6 +47,21 @@ public class LeaveOffice {
     @NotNull
     @Valid
     private UUID memberId = null;
+
+    @JsonProperty("memberName")
+    private String memberName = null;
+
+    @JsonProperty("memberMobileNumber")
+    private String memberMobileNumber = null;
+
+    @JsonProperty("accessType")
+    private AccessType accessType = AccessType.ALL_CASES;
+
+    @JsonProperty("allowCaseCreate")
+    private Boolean allowCaseCreate = true;
+
+    @JsonProperty("addNewCasesAutomatically")
+    private Boolean addNewCasesAutomatically = true;
 
     @JsonProperty("auditDetails")
     @Valid
