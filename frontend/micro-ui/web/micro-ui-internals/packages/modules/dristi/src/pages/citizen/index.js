@@ -8,6 +8,7 @@ import AdmittedCases from "../employee/AdmittedCases/AdmittedCase";
 import ApplicationDetails from "../employee/ApplicationDetails";
 import CitizenHome from "./Home";
 import LandingPage from "./Home/LandingPage";
+import ManageOffice from "./Home/ManageOffice";
 import { newConfig, userTypeOptions } from "./registration/config";
 import Breadcrumb from "../../components/BreadCrumb";
 import SelectEmail from "./registration/SelectEmail";
@@ -130,6 +131,12 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
       show: location.pathname.includes("/edit-profile"),
       isLast: true,
     },
+    {
+      path: `${path}/home/manage-office`,
+      content: t("OFFICE_MANAGEMENT") || "Office Management",
+      show: location.pathname.includes("/manage-office"),
+      isLast: true,
+    },
   ];
 
   const hideBackRoutes = [
@@ -238,7 +245,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
               <BackButton />
             </div>
           )}
-          {location.pathname.includes("/edit-profile") && <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>}
+          {(location.pathname.includes("/edit-profile") || location.pathname.includes("/manage-office")) && (
+            <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 48 }}></Breadcrumb>
+          )}
 
           {userType !== "LITIGANT" && (
             <PrivateRoute exact path={`${path}/home/application-details`} component={(props) => <ApplicationDetails {...props} />} />
@@ -271,6 +280,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
           <PrivateRoute path={`${path}/home/view-case`}>
             <ViewCase />
+          </PrivateRoute>
+          <PrivateRoute exact path={`${path}/home/manage-office`}>
+            <ManageOffice />
           </PrivateRoute>
           <div
             className={
