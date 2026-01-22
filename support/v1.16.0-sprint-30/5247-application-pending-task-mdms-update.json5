@@ -1,0 +1,56 @@
+[
+      {
+        "id": "10dd4f04-53d4-44c3-80c2-c5bd0b3eae9c",
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "14",
+        "data": {
+          "closerAction": [
+            "APPROVE",
+            "REJECT",
+            "AUTOESCALATE",
+            "DELETE",
+            "RESPOND",
+            "ABANDON"
+          ],
+          "triggerAction": [
+            "PAY"
+          ],
+          "referenceEntityTypeNameMapping": [
+            {
+              "pendingTaskName": "Review Litigant Details Change",
+              "referenceEntityType": "CORRECTION_IN_COMPLAINANT_DETAILS"
+            },
+            {
+              "actionCategory": "Delay Condonation",
+              "referenceEntityType": "DELAY_CONDONATION"
+            },
+            {
+              "actionCategory": "Reschedule Applications",
+              "referenceEntityType": "RE_SCHEDULE"
+            },
+            //added this
+            {
+              "actionCategory": "Rescheduling Request",
+              "referenceEntityType": "ADVANCEMENT_OR_ADJOURNMENT_APPLICATION",
+              "pendingTaskName": "Accept Rescheduling Request"
+            }
+          ],
+          "id": "14",
+          "actor": "Judge/CMO",
+          "state": "PENDINGREVIEW",
+          "isgeneric": false,
+          "screenType": "applicationCompositeOrder",
+          "pendingTask": "Review Document Submission",
+          "actionCategory": "Others",
+          "workflowModule": "application-voluntary-submission"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1724750461933,
+          "lastModifiedTime": 1769088738526
+        }
+      }
+]
