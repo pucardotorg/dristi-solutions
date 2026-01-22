@@ -232,7 +232,7 @@ components:
           description: UUID of the member leaving (advocate UUID if memberType is ADVOCATE, advocate clerk UUID if memberType is ADVOCATE_CLERK)
         isActive:
           type: boolean
-          default: true
+          default: false
 
     MemberSearchRequest:
       type: object
