@@ -188,10 +188,13 @@ components:
             - SPECIFIC_CASES
           default: ALL_CASES
           description: Type of access granted to the member
-        allowCaseEdit:
+        allowCaseCreate:
           type: boolean
           default: true
-          description: Whether the member is allowed to edit new cases
+          description: Whether the member is allowed to create new cases
+        isActive:
+          type: boolean
+          default: true
         addNewCasesAutomatically:
           type: boolean
           default: true
@@ -227,6 +230,9 @@ components:
           type: string
           format: uuid
           description: UUID of the member leaving (advocate UUID if memberType is ADVOCATE, advocate clerk UUID if memberType is ADVOCATE_CLERK)
+        isActive:
+          type: boolean
+          default: true
 
     MemberSearchRequest:
       type: object
@@ -268,6 +274,9 @@ components:
           type: string
           format: uuid
           description: Filter by member UUID
+        isActive:
+          type: boolean
+          default: true
 
     MemberSearchResponse:
       type: object
