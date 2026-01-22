@@ -83,6 +83,7 @@ const TopBar = ({
   if (CITIZEN) {
     return (
       <TopBarComponent
+        t={t}
         img={stateInfo?.logoUrlWhite}
         isMobile={true}
         toggleSidebar={updateSidebar}
