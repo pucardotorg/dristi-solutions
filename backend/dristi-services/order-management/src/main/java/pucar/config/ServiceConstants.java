@@ -87,7 +87,6 @@ public class ServiceConstants {
     public static final String COMPLETED = "COMPLETED";
     public static final String ABATED = "ABATED";
     public static final String SAVE_DRAFT = "SAVE_DRAFT";
-    public static final String PASS_OVER = "PASS_OVER";
 
     public static final String IN_PROGRESS = "IN_PROGRESS";
     public static final String MANUAL = "MANUAL_";
