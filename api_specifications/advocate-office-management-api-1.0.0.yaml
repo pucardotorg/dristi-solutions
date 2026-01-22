@@ -153,11 +153,14 @@ components:
         - officeAdvocateId
         - memberType
         - memberId
+        - tenantId
       properties:
         id:
           type: string
           format: uuid
           description: Unique identifier for the add member record
+        tenantId:
+          type: string
         officeAdvocateId:
           type: string
           format: uuid
@@ -185,10 +188,10 @@ components:
             - SPECIFIC_CASES
           default: ALL_CASES
           description: Type of access granted to the member
-        allowCaseCreate:
+        allowCaseEdit:
           type: boolean
           default: true
-          description: Whether the member is allowed to create new cases
+          description: Whether the member is allowed to edit new cases
         addNewCasesAutomatically:
           type: boolean
           default: true
@@ -202,11 +205,14 @@ components:
         - officeAdvocateId
         - memberType
         - memberId
+        - tenantId
       properties:
         id:
           type: string
           format: uuid
           description: Unique identifier for the leave office record
+        tenantId:
+          type: string
         officeAdvocateId:
           type: string
           format: uuid
@@ -237,11 +243,15 @@ components:
 
     MemberSearchCriteria:
       type: object
+      required:
+        - tenantId
       properties:
         officeAdvocateId:
           type: string
           format: uuid
           description: Filter by office advocate UUID
+        tenantId:
+          type: string
         memberType:
           type: string
           enum:
