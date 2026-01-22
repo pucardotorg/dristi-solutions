@@ -153,11 +153,14 @@ components:
         - officeAdvocateId
         - memberType
         - memberId
+        - tenantId
       properties:
         id:
           type: string
           format: uuid
           description: Unique identifier for the add member record
+        tenantId:
+          type: string
         officeAdvocateId:
           type: string
           format: uuid
@@ -189,6 +192,9 @@ components:
           type: boolean
           default: true
           description: Whether the member is allowed to create new cases
+        isActive:
+          type: boolean
+          default: true
         addNewCasesAutomatically:
           type: boolean
           default: true
@@ -202,11 +208,14 @@ components:
         - officeAdvocateId
         - memberType
         - memberId
+        - tenantId
       properties:
         id:
           type: string
           format: uuid
           description: Unique identifier for the leave office record
+        tenantId:
+          type: string
         officeAdvocateId:
           type: string
           format: uuid
@@ -221,6 +230,9 @@ components:
           type: string
           format: uuid
           description: UUID of the member leaving (advocate UUID if memberType is ADVOCATE, advocate clerk UUID if memberType is ADVOCATE_CLERK)
+        isActive:
+          type: boolean
+          default: false
 
     MemberSearchRequest:
       type: object
@@ -237,11 +249,15 @@ components:
 
     MemberSearchCriteria:
       type: object
+      required:
+        - tenantId
       properties:
         officeAdvocateId:
           type: string
           format: uuid
           description: Filter by office advocate UUID
+        tenantId:
+          type: string
         memberType:
           type: string
           enum:
@@ -258,6 +274,9 @@ components:
           type: string
           format: uuid
           description: Filter by member UUID
+        isActive:
+          type: boolean
+          default: true
 
     MemberSearchResponse:
       type: object
