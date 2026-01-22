@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.egov.common.contract.models.AuditDetails;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.UUID;
@@ -25,6 +26,7 @@ public class LeaveOffice {
 
     @JsonProperty("id")
     @Valid
+    @NotNull
     private UUID id = null;
 
     @JsonProperty("tenantId")
@@ -44,5 +46,12 @@ public class LeaveOffice {
     @NotNull
     @Valid
     private UUID memberId = null;
+
+    @JsonProperty("auditDetails")
+    @Valid
+    private AuditDetails auditDetails = null;
+
+    @JsonProperty("isActive")
+    private Boolean isActive = false;
 
 }

@@ -28,6 +28,9 @@ public class AdvocateOfficeValidator {
     public void validateAddMemberRequest(AddMemberRequest request) {
         AddMember addMember = request.getAddMember();
 
+        if (request.getRequestInfo().getUserInfo() == null) {
+            throw new CustomException(USER_INFO_ERROR, USER_INFO_ERROR_MESSAGE);
+        }
         // Check if member already exists in the office
         MemberSearchCriteria searchCriteria = MemberSearchCriteria.builder()
                 .officeAdvocateId(addMember.getOfficeAdvocateId())
@@ -56,6 +59,10 @@ public class AdvocateOfficeValidator {
 
     public void validateLeaveOfficeRequest(LeaveOfficeRequest request) {
         LeaveOffice leaveOffice = request.getLeaveOffice();
+
+        if (request.getRequestInfo().getUserInfo() == null) {
+            throw new CustomException(USER_INFO_ERROR, USER_INFO_ERROR_MESSAGE);
+        }
 
         // Check if member exists in the office
         MemberSearchCriteria searchCriteria = MemberSearchCriteria.builder()

@@ -49,6 +49,9 @@ public class ServiceConstants {
     // Advocate Office Management Exception Codes and Messages
     public static final String MEMBER_ALREADY_EXISTS = "MEMBER_ALREADY_EXISTS";
     public static final String MEMBER_ALREADY_EXISTS_MESSAGE = "Member already exists in the office";
+
+    public static final String USER_INFO_ERROR = "USER_INFO_ERROR";
+    public static final String USER_INFO_ERROR_MESSAGE = "User info cannot be null";
     
     public static final String MEMBER_NOT_FOUND = "MEMBER_NOT_FOUND";
     public static final String MEMBER_NOT_FOUND_MESSAGE = "Member not found in the office";

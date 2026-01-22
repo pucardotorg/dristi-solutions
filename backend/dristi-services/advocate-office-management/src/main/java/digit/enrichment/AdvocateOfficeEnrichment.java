@@ -26,9 +26,8 @@ public class AdvocateOfficeEnrichment {
 
     public void enrichLeaveOfficeRequest(LeaveOfficeRequest request) {
         LeaveOffice leaveOffice = request.getLeaveOffice();
-        if (leaveOffice.getId() == null) {
-            leaveOffice.setId(UUID.randomUUID());
-        }
+        leaveOffice.setAuditDetails(getAuditDetailsForUpdate(request.getRequestInfo()));
+        leaveOffice.setIsActive(false);
         log.info("Enriched leave office request with id: {}", leaveOffice.getId());
     }
 

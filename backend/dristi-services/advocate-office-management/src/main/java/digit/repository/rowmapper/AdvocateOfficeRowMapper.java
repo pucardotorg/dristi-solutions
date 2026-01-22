@@ -47,6 +47,7 @@ public class AdvocateOfficeRowMapper implements ResultSetExtractor<List<AddMembe
                             .accessType(getAccessType(rs))
                             .allowCaseCreate(rs.getBoolean("allow_case_create"))
                             .addNewCasesAutomatically(rs.getBoolean("add_new_cases_automatically"))
+                            .isActive(rs.getBoolean("is_active"))
                             .auditDetails(auditDetails)
                             .build();
 
