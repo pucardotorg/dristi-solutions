@@ -73,19 +73,27 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
         LocalDate today = LocalDate.now(zone);
 
         boolean isSameDate = hearingDate.equals(today);
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
+
+        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
+                .criteria(HearingCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).status(SCHEDULED).build()).build());
+        Hearing hearing = hearings.get(0);
+        hearing.setStartTime(order.getNextHearingDate());
+        hearing.setEndTime(order.getNextHearingDate());
+
         if(isSameDate) {
-            log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
-
-            List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                    .criteria(HearingCriteria.builder().hearingId(order.getScheduledHearingNumber()).filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).courtId(order.getCourtId()).status(SCHEDULED).build()).build());
-            Hearing hearing = hearings.get(0);
-
-            hearing.setStartTime(order.getNextHearingDate());
-            hearing.setEndTime(order.getNextHearingDate());
             WorkflowObject workflow = new WorkflowObject();
+            workflow.setAction(CLOSE);
+            workflow.setComments("Update Hearing");
+            hearing.setWorkflow(workflow);
 
-            //not clear
-            workflow.setAction(RESCHEDULE);
+            hearingUtil.updateHearingSummary(orderRequest, hearing);
+
+            StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
+            hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
+        }else {
+            WorkflowObject workflow = new WorkflowObject();
+            workflow.setAction(PASS_OVER);
             workflow.setComments("Update Hearing");
             hearing.setWorkflow(workflow);
 
