@@ -84,9 +84,9 @@ public class Configuration {
     private String smsNotificationTopic;
 
     //Advocate Office Kafka Topics
-    @Value("${advocate.office.kafka.create.topic}")
+    @Value("${add.member.kafka.create.topic}")
     private String addMemberTopic;
 
-    @Value("${advocate.office.kafka.update.topic}")
+    @Value("${leave.office.kafka.create.topic}")
     private String leaveOfficeTopic;
 }

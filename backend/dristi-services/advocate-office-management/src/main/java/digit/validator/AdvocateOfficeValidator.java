@@ -1,6 +1,7 @@
 package digit.validator;
 
 import digit.repository.AdvocateOfficeRepository;
+import digit.util.UserUtil;
 import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
@@ -16,10 +17,12 @@ import static digit.config.ServiceConstants.*;
 public class AdvocateOfficeValidator {
 
     private final AdvocateOfficeRepository advocateOfficeRepository;
+    private final UserUtil userUtil;
 
     @Autowired
-    public AdvocateOfficeValidator(AdvocateOfficeRepository advocateOfficeRepository) {
+    public AdvocateOfficeValidator(AdvocateOfficeRepository advocateOfficeRepository, UserUtil userUtil) {
         this.advocateOfficeRepository = advocateOfficeRepository;
+        this.userUtil = userUtil;
     }
 
     public void validateAddMemberRequest(AddMemberRequest request) {
@@ -36,7 +39,19 @@ public class AdvocateOfficeValidator {
             throw new CustomException(MEMBER_ALREADY_EXISTS, MEMBER_ALREADY_EXISTS_MESSAGE);
         }
 
-        // todo call user services to check if uuid exists for both officeAdvocateId and memberId
+        /*List<String> uuids = List.of(
+                String.valueOf(addMember.getOfficeAdvocateId()),
+                String.valueOf(addMember.getMemberId())
+        );
+        List<User> users = userUtil.getUserListFromUserUuid(uuids);
+        List<String> uuidResponse = users.stream().map(User::getUuid).toList();
+
+        if(!uuidResponse.contains(String.valueOf(addMember.getMemberId()))) {
+            throw new CustomException(MEMBER_NOT_FOUND, "Member + " + addMember.getMemberId() + " is not registered in the system");
+        }
+        if(!uuidResponse.contains(String.valueOf(addMember.getOfficeAdvocateId()))) {
+            throw new CustomException(MEMBER_NOT_FOUND, "Advocate + " + addMember.getOfficeAdvocateId() + " is not registered in the system");
+        }*/
     }
 
     public void validateLeaveOfficeRequest(LeaveOfficeRequest request) {

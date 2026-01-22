@@ -56,8 +56,8 @@ public class AddMember {
     @JsonProperty("accessType")
     private AccessType accessType = AccessType.ALL_CASES;
 
-    @JsonProperty("allowCaseEdit")
-    private Boolean allowCaseEdit = true;
+    @JsonProperty("allowCaseCreate")
+    private Boolean allowCaseCreate = true;
 
     @JsonProperty("addNewCasesAutomatically")
     private Boolean addNewCasesAutomatically = true;
@@ -65,5 +65,8 @@ public class AddMember {
     @JsonProperty("auditDetails")
     @Valid
     private AuditDetails auditDetails = null;
+
+    @JsonProperty("isActive")
+    private Boolean isActive = true;
 
 }

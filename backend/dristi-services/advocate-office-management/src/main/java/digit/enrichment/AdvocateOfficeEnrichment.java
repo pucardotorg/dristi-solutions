@@ -20,6 +20,7 @@ public class AdvocateOfficeEnrichment {
         AddMember addMember = request.getAddMember();
         addMember.setId(UUID.randomUUID());
         addMember.setAuditDetails(getAuditDetailsForCreate(request.getRequestInfo()));
+        addMember.setIsActive(true);
         log.info("Enriched add member request with id: {}", addMember.getId());
     }
 
