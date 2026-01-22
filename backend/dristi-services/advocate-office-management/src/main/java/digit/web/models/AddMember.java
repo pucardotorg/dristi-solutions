@@ -25,13 +25,13 @@ import java.util.UUID;
 @Builder
 public class AddMember {
 
-    @JsonProperty("tenantId")
-    @NotNull
-    private String tenantId = null;
-
     @JsonProperty("id")
     @Valid
     private UUID id = null;
+
+    @JsonProperty("tenantId")
+    @NotNull
+    private String tenantId = null;
 
     @JsonProperty("officeAdvocateId")
     @NotNull
@@ -56,8 +56,8 @@ public class AddMember {
     @JsonProperty("accessType")
     private AccessType accessType = AccessType.ALL_CASES;
 
-    @JsonProperty("allowCaseCreate")
-    private Boolean allowCaseCreate = true;
+    @JsonProperty("allowCaseEdit")
+    private Boolean allowCaseEdit = true;
 
     @JsonProperty("addNewCasesAutomatically")
     private Boolean addNewCasesAutomatically = true;
