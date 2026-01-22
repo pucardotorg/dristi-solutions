@@ -1,0 +1,294 @@
+openapi: 3.0.0
+info:
+  title: Advocate Office Management
+  description: |
+    API specifications for Advocate Office Management in Dristi system.
+    This API allows adding members to an advocate office and leaving an office.
+  version: "1.0.0"
+  contact:
+    name: Dristi Solutions Team
+    email: support@dristisolutions.org
+
+servers:
+  - url: ""
+    description: Advocate Office Management API Server
+
+tags:
+  - name: AdvocateOffice
+    description: APIs to manage advocate office membership.
+
+paths:
+  /advocate-office/v1/_addMember:
+    post:
+      tags:
+        - AdvocateOffice
+      summary: Add a member to the advocate office
+      description: |
+        API to add a new member (advocate or advocate clerk) to an advocate office.
+      requestBody:
+        description: Details for adding a member to the office + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/AddMemberRequest'
+        required: true
+      responses:
+        '201':
+          description: Member added successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AddMemberResponse'
+        '400':
+          description: Add member failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: addMemberRequest
+
+  /advocate-office/v1/_leaveOffice:
+    post:
+      tags:
+        - AdvocateOffice
+      summary: Leave the advocate office
+      description: |
+        API for a member to leave an advocate office.
+      requestBody:
+        description: Details for leaving the office + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/LeaveOfficeRequest'
+        required: true
+      responses:
+        '200':
+          description: Member left office successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/LeaveOfficeResponse'
+        '400':
+          description: Leave office failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: leaveOfficeRequest
+
+  /advocate-office/v1/_searchMember:
+    post:
+      tags:
+        - AdvocateOffice
+      summary: Search members in an advocate office
+      description: |
+        API to search for members in an advocate office based on various criteria.
+      requestBody:
+        description: Search criteria for members + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/MemberSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: ResponseInfo with list of members matching search criteria
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MemberSearchResponse'
+        '400':
+          description: Member search failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: memberSearchRequest
+
+components:
+  schemas:
+    AddMemberRequest:
+      type: object
+      required:
+        - RequestInfo
+        - addMember
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        addMember:
+          $ref: '#/components/schemas/AddMember'
+      x-codegen-request-body-name: addMemberRequest
+
+    AddMemberResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        addMember:
+          $ref: '#/components/schemas/AddMember'
+
+    LeaveOfficeRequest:
+      type: object
+      required:
+        - RequestInfo
+        - leaveOffice
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        leaveOffice:
+          $ref: '#/components/schemas/LeaveOffice'
+      x-codegen-request-body-name: leaveOfficeRequest
+
+    LeaveOfficeResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        leaveOffice:
+          $ref: '#/components/schemas/LeaveOffice'
+
+    AddMember:
+      type: object
+      required:
+        - officeAdvocateId
+        - memberType
+        - memberId
+        - tenantId
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the add member record
+        tenantId:
+          type: string
+        officeAdvocateId:
+          type: string
+          format: uuid
+          description: UUID of the advocate who owns the office
+        memberType:
+          type: string
+          enum:
+            - ADVOCATE
+            - ADVOCATE_CLERK
+          description: Type of member being added to the office
+        memberId:
+          type: string
+          format: uuid
+          description: UUID of the member (advocate UUID if memberType is ADVOCATE, advocate clerk UUID if memberType is ADVOCATE_CLERK)
+        memberName:
+          type: string
+          description: Name of the member being added
+        memberMobileNumber:
+          type: string
+          description: Mobile number of the member
+        accessType:
+          type: string
+          enum:
+            - ALL_CASES
+            - SPECIFIC_CASES
+          default: ALL_CASES
+          description: Type of access granted to the member
+        allowCaseCreate:
+          type: boolean
+          default: true
+          description: Whether the member is allowed to create new cases
+        isActive:
+          type: boolean
+          default: true
+        addNewCasesAutomatically:
+          type: boolean
+          default: true
+          description: Whether new cases should be automatically assigned to this member
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+
+    LeaveOffice:
+      type: object
+      required:
+        - officeAdvocateId
+        - memberType
+        - memberId
+        - tenantId
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the leave office record
+        tenantId:
+          type: string
+        officeAdvocateId:
+          type: string
+          format: uuid
+          description: UUID of the advocate who owns the office
+        memberType:
+          type: string
+          enum:
+            - ADVOCATE
+            - ADVOCATE_CLERK
+          description: Type of member leaving the office
+        memberId:
+          type: string
+          format: uuid
+          description: UUID of the member leaving (advocate UUID if memberType is ADVOCATE, advocate clerk UUID if memberType is ADVOCATE_CLERK)
+        isActive:
+          type: boolean
+          default: false
+
+    MemberSearchRequest:
+      type: object
+      required:
+        - RequestInfo
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        searchCriteria:
+          $ref: '#/components/schemas/MemberSearchCriteria'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+      x-codegen-request-body-name: memberSearchRequest
+
+    MemberSearchCriteria:
+      type: object
+      required:
+        - tenantId
+      properties:
+        officeAdvocateId:
+          type: string
+          format: uuid
+          description: Filter by office advocate UUID
+        tenantId:
+          type: string
+        memberType:
+          type: string
+          enum:
+            - ADVOCATE
+            - ADVOCATE_CLERK
+          description: Filter by member type
+        memberName:
+          type: string
+          description: Filter by member name
+        memberMobileNumber:
+          type: string
+          description: Filter by member mobile number
+        memberId:
+          type: string
+          format: uuid
+          description: Filter by member UUID
+        isActive:
+          type: boolean
+          default: true
+
+    MemberSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddMember'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+        totalCount:
+          type: integer
+          description: Total number of records matching the search criteria
