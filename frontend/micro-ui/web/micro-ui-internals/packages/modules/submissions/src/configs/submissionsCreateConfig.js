@@ -2689,20 +2689,37 @@ export const configsAdvancementOrAdjournment = [
     body: [
       {
         inline: true,
-        label: "Original_Hearing_Date",
+        label: "CHOOSE_COMPLAINANT",
+        isMandatory: true,
+        type: "dropdown",
+        key: "selectComplainant",
+        populators: {
+          optionsKey: "name",
+          styles: { maxWidth: "100%" },
+          options: [
+            {
+              code: "complainantOne",
+              name: "ComplainantOne",
+            },
+          ],
+        },
+      },
+      {
+        inline: true,
+        label: "ORIGINAL_HEARING_DATE",
         disable: true,
         isMandatory: true,
-        key: "originalHearingDate",
-        schemaKeyPath: "applicationDetails.originalHearingDate",
+        key: "initialHearingDate",
+        schemaKeyPath: "applicationDetails.initialHearingDate",
         transformer: "date",
         type: "date",
         populators: {
-          name: "originalHearingDate",
+          name: "initialHearingDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
         },
       },
       {
-        label: "Have the other parties in the case agreed to advance/reschedule the hearing to the above dates?",
+        label: "HAVE_ALL_PARTIES_AGREED",
         isMandatory: true,
         key: "isAllPartiesAgreed",
         type: "radio",
@@ -2728,14 +2745,14 @@ export const configsAdvancementOrAdjournment = [
       {
         key: "newHearingDates",
         type: "component",
-        label: "Please select date(s) at which the party is available to attend",
+        label: "SUGGESTED_NEW_HEARING_DATES",
         component: "SelectBulkDateInputs",
         populators: {
           inputs: [
             {
               name: "newHearingDates",
               error: "ERR_HRMS_INVALID_MOB_NO",
-              label: "Please select date(s) at which the party is available to attend",
+              label: "SUGGESTED_NEW_HEARING_DATES",
               isMandatory: true,
               placeholder: "DD/MM/YYYY",
               customStyleLabelField: { display: "flex", justifyContent: "space-between" },
@@ -2764,7 +2781,7 @@ export const configsAdvancementOrAdjournment = [
           inputs: [
             {
               name: "text",
-              textAreaSubHeader: "Reason for Request",
+              textAreaSubHeader: "REASON_FOR_REQUEST",
               subHeaderClassName: "dristi-font-big-bold",
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
@@ -2786,7 +2803,7 @@ export const configsAdvancementOrAdjournment = [
       },
       {
         type: "component",
-        key: "submissionDocuments",
+        key: "supportingDocuments",
         component: "SelectMultiUpload",
         disable: false,
         isMandatory: false,
