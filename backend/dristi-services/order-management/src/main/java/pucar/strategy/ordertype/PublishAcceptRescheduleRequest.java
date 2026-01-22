@@ -6,22 +6,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
 import pucar.strategy.OrderUpdateStrategy;
-import pucar.util.ApplicationUtil;
-import pucar.util.HearingUtil;
-import pucar.util.OrderUtil;
+import pucar.util.*;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.WorkflowObject;
 import pucar.web.models.adiary.CaseDiaryEntry;
+import pucar.web.models.courtCase.CaseCriteria;
+import pucar.web.models.courtCase.CaseSearchRequest;
+import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.hearing.Hearing;
 import pucar.web.models.hearing.HearingCriteria;
 import pucar.web.models.hearing.HearingRequest;
 import pucar.web.models.hearing.HearingSearchRequest;
+import pucar.web.models.scheduler.ReScheduleHearing;
+import pucar.web.models.scheduler.ReScheduleHearingRequest;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static pucar.config.ServiceConstants.*;
 
@@ -33,13 +38,19 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
     private final OrderUtil orderUtil;
     private final ApplicationUtil applicationUtil;
     private final Configuration config;
+    private final SchedulerUtil schedulerUtil;
+    private final CaseUtil caseUtil;
+    private final DateUtil dateUtil;
 
     @Autowired
-    public PublishAcceptRescheduleRequest(HearingUtil hearingUtil, OrderUtil orderUtil, ApplicationUtil applicationUtil, Configuration config) {
+    public PublishAcceptRescheduleRequest(HearingUtil hearingUtil, OrderUtil orderUtil, ApplicationUtil applicationUtil, Configuration config, SchedulerUtil schedulerUtil, CaseUtil caseUtil, DateUtil dateUtil) {
         this.hearingUtil = hearingUtil;
         this.orderUtil = orderUtil;
         this.applicationUtil = applicationUtil;
         this.config = config;
+        this.schedulerUtil = schedulerUtil;
+        this.caseUtil = caseUtil;
+        this.dateUtil = dateUtil;
     }
 
     @Override
@@ -83,7 +94,7 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
 
         if(isSameDate) {
             WorkflowObject workflow = new WorkflowObject();
-            workflow.setAction(CLOSE);
+            workflow.setAction(MARK_COMPLETE);
             workflow.setComments("Update Hearing");
             hearing.setWorkflow(workflow);
 
@@ -92,13 +103,25 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
             StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
             hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
         }else {
-            WorkflowObject workflow = new WorkflowObject();
-            workflow.setAction(PASS_OVER);
-            workflow.setComments("Update Hearing");
-            hearing.setWorkflow(workflow);
 
-            StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
-            hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
+            log.info("case search for filingNumber:{}", order.getFilingNumber());
+            List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+                    .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
+                    .requestInfo(requestInfo).build());
+
+            CourtCase courtCase = cases.get(0);
+
+            schedulerUtil.createRescheduleRequest(ReScheduleHearingRequest.builder()
+                    .reScheduleHearing(Collections.singletonList(ReScheduleHearing.builder()
+                            .rescheduledRequestId(order.getOrderNumber())
+                            .hearingBookingId(order.getHearingNumber())
+                            .tenantId(order.getTenantId())
+                            .judgeId(courtCase.getJudgeId())  ///  this need to come from order
+                            .caseId(order.getFilingNumber())
+                            .reason(order.getComments())
+                            .availableAfter(order.getNextHearingDate())
+                            .build()))
+                    .requestInfo(requestInfo).build());
         }
         log.info("After order publish process,result = SUCCESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
         return null;

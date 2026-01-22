@@ -89,7 +89,7 @@
             "uuid": "814eb30b-b7be-4149-ade6-c1ce7ac34195",
             "tenantId": "kl",
             "currentState": "9d48f73c-904a-438d-94aa-ee6f8461191c",
-            "action": "CLOSE",
+            "action": "MARK_COMPLETE",
             "nextState": "cb19c258-f7cd-451c-aa88-4f3716f5ea06",
             "roles": [
               "HEARING_EDITOR"
