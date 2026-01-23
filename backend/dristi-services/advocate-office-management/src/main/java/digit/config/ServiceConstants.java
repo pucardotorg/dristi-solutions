@@ -51,7 +51,11 @@ public class ServiceConstants {
     public static final String MEMBER_ALREADY_EXISTS_MESSAGE = "Member already exists in the office";
 
     public static final String USER_INFO_ERROR = "USER_INFO_ERROR";
-    public static final String USER_INFO_ERROR_MESSAGE = "User info cannot be null";
+    public static final String USER_INFO_NULL_MESSAGE = "User info cannot be null";
+    public static final String USER_UUID_NULL_MESSAGE = "User uuid cannot be null";
+    public static final String UNAUTHORIZED = "UNAUTHORIZED";
+    public static final String CANNOT_ADD_MEMBER_MESSAGE = "officeAdvocateId must match RequestInfo.userInfo.uuid";
+    public static final String CANNOT_LEAVE_OFFICE_MESSAGE = "RequestInfo.userInfo.uuid must match either officeAdvocateId or memberId";
     
     public static final String MEMBER_NOT_FOUND = "MEMBER_NOT_FOUND";
     public static final String MEMBER_NOT_FOUND_MESSAGE = "Member not found in the office";
@@ -77,5 +81,11 @@ public class ServiceConstants {
     
     public static final String ROW_MAPPER_ERROR = "ROW_MAPPER_ERROR";
     public static final String ROW_MAPPER_ERROR_MESSAGE = "Error mapping AddMember result set: ";
+
+    public static final String INDIVIDUAL_NOT_FOUND = "INDIVIDUAL_NOT_FOUND";
+    public static final String ADVOCATE_NOT_FOUND = "ADVOCATE_NOT_FOUND";
+    public static final String ADVOCATE_CLERK_NOT_FOUND = "ADVOCATE_CLERK_NOT_FOUND";
+    public static final String ADVOCATE_NOT_FOUND_MESSAGE = "Advocate not found";
+    public static final String ADVOCATE_CLERK_NOT_FOUND_MESSAGE = "Advocate clerk not found";
 
 }

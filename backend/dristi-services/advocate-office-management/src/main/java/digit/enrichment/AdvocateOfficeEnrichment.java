@@ -26,7 +26,6 @@ public class AdvocateOfficeEnrichment {
 
     public void enrichLeaveOfficeRequest(LeaveOfficeRequest request) {
         LeaveOffice leaveOffice = request.getLeaveOffice();
-        leaveOffice.setAuditDetails(getAuditDetailsForUpdate(request.getRequestInfo()));
         leaveOffice.setIsActive(false);
         log.info("Enriched leave office request with id: {}", leaveOffice.getId());
     }
@@ -43,13 +42,4 @@ public class AdvocateOfficeEnrichment {
                 .build();
     }
 
-    private AuditDetails getAuditDetailsForUpdate(RequestInfo requestInfo) {
-        User user = requestInfo.getUserInfo();
-        long currentTime = System.currentTimeMillis();
-
-        return AuditDetails.builder()
-                .lastModifiedBy(user.getUuid())
-                .lastModifiedTime(currentTime)
-                .build();
-    }
 }

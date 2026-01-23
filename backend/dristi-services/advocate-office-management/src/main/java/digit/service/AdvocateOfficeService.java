@@ -46,8 +46,6 @@ public class AdvocateOfficeService {
 
             enrichment.enrichAddMemberRequest(request);
 
-            //todo encrypt mobile number
-
             producer.push(configuration.getAddMemberTopic(), request);
 
             log.info("Member added successfully with id: {}", request.getAddMember().getId());
