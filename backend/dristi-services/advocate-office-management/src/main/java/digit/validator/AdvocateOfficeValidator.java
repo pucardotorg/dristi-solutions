@@ -3,7 +3,6 @@ package digit.validator;
 import digit.repository.AdvocateOfficeRepository;
 import digit.util.AdvocateUtil;
 import digit.util.IndividualUtil;
-import digit.util.UserUtil;
 import digit.web.models.*;
 import digit.web.models.enums.MemberType;
 import lombok.extern.slf4j.Slf4j;
@@ -23,14 +22,12 @@ import static digit.config.ServiceConstants.*;
 public class AdvocateOfficeValidator {
 
     private final AdvocateOfficeRepository advocateOfficeRepository;
-    private final UserUtil userUtil;
     private final IndividualUtil individualUtil;
     private final AdvocateUtil advocateUtil;
 
     @Autowired
-    public AdvocateOfficeValidator(AdvocateOfficeRepository advocateOfficeRepository, UserUtil userUtil, IndividualUtil individualUtil, AdvocateUtil advocateUtil) {
+    public AdvocateOfficeValidator(AdvocateOfficeRepository advocateOfficeRepository, IndividualUtil individualUtil, AdvocateUtil advocateUtil) {
         this.advocateOfficeRepository = advocateOfficeRepository;
-        this.userUtil = userUtil;
         this.individualUtil = individualUtil;
         this.advocateUtil = advocateUtil;
     }
