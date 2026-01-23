@@ -972,7 +972,6 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
-                "ACCEPT_RESCHEDULING_REQUEST",
               ]
             : [
                 "DISMISS_CASE",
@@ -991,7 +990,6 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
-                "ACCEPT_RESCHEDULING_REQUEST",
               ]
         );
       } else if (isBailApplicationPending) {
@@ -1013,7 +1011,6 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
-                "ACCEPT_RESCHEDULING_REQUEST",
               ]
             : [
                 "TAKE_COGNIZANCE",
@@ -1032,7 +1029,6 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
-                "ACCEPT_RESCHEDULING_REQUEST",
               ]
         );
       } else {
@@ -1055,7 +1051,6 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
-                "ACCEPT_RESCHEDULING_REQUEST",
               ]
             : [
                 "TAKE_COGNIZANCE",
@@ -1075,7 +1070,6 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
-                "ACCEPT_RESCHEDULING_REQUEST",
               ]
         );
       }
@@ -1095,7 +1089,6 @@ const GenerateOrdersV2 = () => {
                 "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
                 "COST",
                 "WITNESS_BATTA",
-                "ACCEPT_RESCHEDULING_REQUEST",
               ]
             : [
                 "SUMMONS",
@@ -1110,7 +1103,6 @@ const GenerateOrdersV2 = () => {
                 "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
                 "COST",
                 "WITNESS_BATTA",
-                "ACCEPT_RESCHEDULING_REQUEST",
               ]
         );
       } else if (!caseDetails?.lprNumber) {
@@ -1133,7 +1125,6 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
-                "ACCEPT_RESCHEDULING_REQUEST",
               ]
             : [
                 "SUMMONS",
@@ -1153,7 +1144,6 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
-                "ACCEPT_RESCHEDULING_REQUEST",
               ]
         );
       } else {
@@ -1175,7 +1165,6 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
-                "ACCEPT_RESCHEDULING_REQUEST",
               ]
             : [
                 "SUMMONS",
@@ -1194,7 +1183,6 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
-                "ACCEPT_RESCHEDULING_REQUEST",
               ]
         );
       }
@@ -1216,7 +1204,6 @@ const GenerateOrdersV2 = () => {
         "COST",
         "WITNESS_BATTA",
         "ABATE_CASE",
-        "ACCEPT_RESCHEDULING_REQUEST",
       ]);
     }
 

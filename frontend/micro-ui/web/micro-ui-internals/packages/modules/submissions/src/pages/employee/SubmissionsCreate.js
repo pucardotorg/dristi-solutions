@@ -898,15 +898,6 @@ const SubmissionsCreate = ({ path }) => {
 
     if (
       applicationType &&
-      scheduledHearing &&
-      ["ADVANCEMENT_OR_ADJOURNMENT_APPLICATION"].includes(applicationType) &&
-      !formData?.initialHearingDate
-    ) {
-      setValue("initialHearingDate", formatDate(new Date(scheduledHearing?.startTime)));
-      setValue("isAllPartiesAgreed", { code: "YES", name: "YES" });
-    }
-    if (
-      applicationType &&
       ["CHECKOUT_REQUEST", "RE_SCHEDULE"].includes(applicationType) &&
       formData?.initialHearingDate &&
       formData?.changedHearingDate
@@ -968,6 +959,17 @@ const SubmissionsCreate = ({ path }) => {
         clearErrors("supportingDocuments");
       }
     }
+
+    if (applicationType && ["ADVANCEMENT_OR_ADJOURNMENT_APPLICATION"].includes(applicationType)) {
+      if (scheduledHearing && !formData?.initialHearingDate) {
+        setValue("initialHearingDate", formatDate(new Date(scheduledHearing?.startTime)));
+      }
+
+      if (!formData?.isAllPartiesAgreed) {
+        setValue("isAllPartiesAgreed", { code: "YES", name: "YES" });
+      }
+    }
+
     if (applicationType === "REQUEST_FOR_BAIL") {
       const addSurety = formData?.addSurety;
       const isSuretySelected = typeof addSurety === "object" ? addSurety?.code === "YES" || addSurety?.showSurety === true : addSurety === "YES";
@@ -1987,7 +1989,7 @@ const SubmissionsCreate = ({ path }) => {
         <div style={{ minHeight: "550px", overflowY: "auto" }}>
           <FormComposerV2
             label={t("REVIEW_SUBMISSION")}
-            className={"submission-create"}
+            className={"submission-create submission-form-filed-style"}
             secondaryLabel={t("SAVE_AS_DRAFT")}
             showSecondaryLabel={restrictedApplicationTypes?.includes(applicationType) ? false : true}
             onSecondayActionClick={handleSaveDraft}

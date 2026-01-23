@@ -2171,7 +2171,7 @@ export const requestForBail = [
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -2196,7 +2196,7 @@ export const requestForBail = [
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -2222,7 +2222,7 @@ export const requestForBail = [
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -2414,12 +2414,12 @@ export const submitDocsForBail = [
                   {
                     name: "uploadedDocs",
                     isMandatory: true,
-                    textAreaHeader: "CS_DOCUMENT",
+                    label: "CS_DOCUMENT",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_10",
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -2602,12 +2602,12 @@ export const submitDelayCondonation = [
                   {
                     name: "uploadedDocs",
                     isMandatory: true,
-                    textAreaHeader: "CS_DOCUMENT",
+                    label: "CS_DOCUMENT",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_10",
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -2747,6 +2747,7 @@ export const configsAdvancementOrAdjournment = [
         type: "component",
         label: "SUGGESTED_NEW_HEARING_DATES",
         component: "SelectBulkDateInputs",
+        isMandatory: true,
         populators: {
           inputs: [
             {
@@ -2812,16 +2813,12 @@ export const configsAdvancementOrAdjournment = [
             {
               name: "uploadedDocs",
               isMandatory: false,
-              textAreaHeader: "Supporting Documents",
+              isOptional: true,
+              label: "Supporting Documents",
               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               uploadGuidelines: "UPLOAD_DOC_10",
               maxFileSize: 10,
               maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: "8px",
-              },
             },
           ],
         },

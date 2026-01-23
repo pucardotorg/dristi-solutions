@@ -5002,12 +5002,12 @@ export const configsIssueBailReject = [
             {
               name: "uploadedDocs",
               isMandatory: true,
-              textAreaHeader: "CS_DOCUMENT",
+              label: "CS_DOCUMENT",
               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               uploadGuidelines: "UPLOAD_DOC_10",
               maxFileSize: 10,
               maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-              textAreaStyle: {
+              labelStyle: {
                 fontSize: "16px",
                 fontWeight: 400,
                 marginBottom: "8px",
@@ -5841,7 +5841,7 @@ export const configsMoveCaseToLongPendingRegister = [
               maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
               isMultipleUpload: true,
               popupModuleMianStyles: { maxHeight: "100%" },
-              textAreaStyle: {
+              labelStyle: {
                 fontSize: "16px",
                 fontWeight: 400,
                 marginBottom: "8px",

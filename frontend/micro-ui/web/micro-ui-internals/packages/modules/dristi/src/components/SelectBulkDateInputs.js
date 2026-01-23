@@ -1,4 +1,4 @@
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, CardLabelError } from "@egovernments/digit-ui-react-components";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
 import { Toast } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
@@ -75,7 +75,7 @@ function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors }) {
         const isLimitReached = chipList?.length >= (input?.maxSelected || Infinity);
 
         return (
-          <div key={input.name} style={{ width: "100%" }}>
+          <div key={input.name} style={{ width: "100%" }} className="bulk-input-date-picker-section">
             {!config?.disableScrutinyHeader && (
               <h2 className="card-label bolder" style={{ marginBottom: "revert" }}>
                 {t(input.label)}
@@ -107,6 +107,10 @@ function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors }) {
               <p style={{ fontSize: "14px", color: "#BB2C2F", marginBottom: 0 }}>
                 {t("CS_MAX_LIMIT_REACHED")}: {input?.maxSelected}
               </p>
+            )}
+
+            {errors[config?.key] && (
+              <CardLabelError style={input?.errorStyle}>{t(errors[config?.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>
             )}
           </div>
         );

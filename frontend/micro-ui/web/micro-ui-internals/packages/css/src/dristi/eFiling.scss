@@ -2353,6 +2353,17 @@
 }
 
 .bulk-input-container-date-picker {
+
+  .bulk-input-date-picker-section{
+    .custom-date-picker {
+      margin-bottom: 5px !important;
+    }
+    .card-label-error{
+      margin-top: 0px !important;
+      margin-bottom: 0px !important;
+    }
+  }
+
   .toast-success.error {
     background-color: red;
 
