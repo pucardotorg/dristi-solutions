@@ -24,6 +24,7 @@ import pucar.web.models.scheduler.ReScheduleHearingRequest;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -75,7 +76,7 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         Order order = orderRequest.getOrder();
 
-        ZoneId zone = ZoneId.of("Asia/Kolkata");
+        ZoneId zone = ZoneId.of(config.getZoneId());
 
         LocalDate hearingDate = Instant.ofEpochMilli(order.getNextHearingDate())
                 .atZone(zone)
@@ -89,8 +90,11 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
                 .criteria(HearingCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).status(SCHEDULED).build()).build());
         Hearing hearing = hearings.get(0);
-        hearing.setStartTime(order.getNextHearingDate());
-        hearing.setEndTime(order.getNextHearingDate());
+        Long time = hearingDate.atStartOfDay(ZoneId.of(config.getZoneId())).toInstant().toEpochMilli();
+        if (time != null) {
+            hearing.setStartTime(time);
+            hearing.setEndTime(time);
+        }
 
         if(isSameDate) {
             WorkflowObject workflow = new WorkflowObject();
@@ -103,25 +107,13 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
             StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
             hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
         }else {
+            WorkflowObject workflow = new WorkflowObject();
+            workflow.setAction(UPDATE_DATE);
+            workflow.setComments("Update Hearing");
+            hearing.setWorkflow(workflow);
 
-            log.info("case search for filingNumber:{}", order.getFilingNumber());
-            List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
-                    .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
-                    .requestInfo(requestInfo).build());
-
-            CourtCase courtCase = cases.get(0);
-
-            schedulerUtil.createRescheduleRequest(ReScheduleHearingRequest.builder()
-                    .reScheduleHearing(Collections.singletonList(ReScheduleHearing.builder()
-                            .rescheduledRequestId(order.getOrderNumber())
-                            .hearingBookingId(order.getHearingNumber())
-                            .tenantId(order.getTenantId())
-                            .judgeId(courtCase.getJudgeId())  ///  this need to come from order
-                            .caseId(order.getFilingNumber())
-                            .reason(order.getComments())
-                            .availableAfter(order.getNextHearingDate())
-                            .build()))
-                    .requestInfo(requestInfo).build());
+            StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
+            hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
         }
         log.info("After order publish process,result = SUCCESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
         return null;
