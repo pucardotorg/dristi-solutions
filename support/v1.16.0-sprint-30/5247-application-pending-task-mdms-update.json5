@@ -59,15 +59,16 @@
     "schemaCode": "Order.ItemText",
     "uniqueIdentifier": "34",
     "data": {
-      "id": 34,
       "path": [
-        "$.orderDetails.originalHearingDate",
-        "$.orderDetails.purposeOfHearing",
+        "GET_LOCAL_DATE$.orderDetails.originalHearingDate",
+        "LOCALIZATION$.orderDetails.purposeOfHearing",
         "$.orderDetails.applicationCMPNumber",
-        "$.orderDetails.newHearingDate",
-        "$.orderDetails.parties[0].partyName"
+        "GET_LOCAL_DATE$.orderDetails.newHearingDate",
+        "$.orderDetails.parties[0].partyName",
+        "GET_LOCAL_DATE$.orderDetails.currentDate"
       ],
-      "itemText": "This matter is taken up upon Application [$.orderDetails.applicationCMPNumber] filed by party [$.orderDetails.parties[0].partyName] seeking to advance the hearing originally set for [$.orderDetails.purposeOfHearing] on [$.orderDetails.originalHearingDate]\\nThe Court having considered the request advances the aforementioned hearing and takes it onboard today [$.orderDetails.newHearingDate]  ",
+      "id": 34,
+      "itemText": "This matter is taken up upon Application [$.orderDetails.applicationCMPNumber] filed by party [$.orderDetails.parties[0].partyName] seeking to advance the hearing originally set for [LOCALIZATION$.orderDetails.purposeOfHearing] on [GET_LOCAL_DATE$.orderDetails.originalHearingDate]\\nThe Court having considered the request, orders as follow:\\n 1.The matter is hereby PRE-LISTED and taken on board today, [GET_LOCAL_DATE$.orderDetails.currentDate]\\n 2.The hearing is RESCHEDULED to [GET_LOCAL_DATE$.orderDetails.newHearingDate]",
       "orderType": "ACCEPT_RESCHEDULING_REQUEST"
     },
     "isActive": true,
@@ -75,7 +76,7 @@
       "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
       "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
       "createdTime": 1769153715687,
-      "lastModifiedTime": 1769164834024
+      "lastModifiedTime": 1769173589545
     }
   }
 ]
