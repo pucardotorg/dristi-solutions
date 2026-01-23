@@ -1,4 +1,4 @@
-import { Card } from "@egovernments/digit-ui-react-components";
+import { Card, DownloadImgIcon } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useState, useCallback } from "react";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import { useTranslation } from "react-i18next";
@@ -88,6 +88,23 @@ const DocViewerWrapper = ({
         uri: window.URL.createObjectURL(file),
         fileName: file?.name,
       }));
+
+  const handleLocalDownload = (file) => {
+    if (!file) return;
+    console.log("Downloading local file:", file);
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const a = document.createElement("a");
+      a.href = reader.result;
+      a.download = file.name || "document";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+
+    reader.readAsDataURL(file);
+  };
 
   return (
     <div className="docviewer-wrapper" id="docviewer-id">
@@ -216,7 +233,31 @@ const DocViewerWrapper = ({
       </Card>
 
       {/* DOWNLOAD LINK                                         */}
-      {showDownloadOption && fileStoreId && <AuthenticatedLink t={t} uri={uri} displayFilename={displayFilename} />}
+      {(showDownloadOption || !fileStoreId) &&
+        (fileStoreId ? (
+          <AuthenticatedLink t={t} uri={uri} displayFilename={displayFilename} />
+        ) : (
+          selectedDocs?.length > 0 && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLocalDownload(selectedDocs[0]);
+              }}
+            >
+              {/* Hiding the previous download icon when download option is shown for local files */}
+              <style>
+                {`
+                  .header-wrap .header-end .close-icon:first-child {
+                    display: none !important;
+                  }
+              `}
+              </style>
+              <div className="custom-download-icon">
+                <DownloadImgIcon />
+              </div>
+            </div>
+          )
+        ))}
 
       {/* DOCUMENT NAME                                         */}
       {documentName && (
