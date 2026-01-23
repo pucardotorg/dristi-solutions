@@ -102,6 +102,7 @@ export const addOrderItem = async (
           dateOfEndADR: orderSchema?.orderDetails?.hearingDate,
           mediationCentre: t(orderSchema?.orderDetails?.mediationCentre) || "",
         }),
+        ...(order?.orderType === "ACCEPT_RESCHEDULING_REQUEST" && { currentDate: new Date().getTime() }),
       },
       additionalDetails: item?.orderSchema?.additionalDetails,
       ...(orderSchema?.orderDetails?.refApplicationId && {
