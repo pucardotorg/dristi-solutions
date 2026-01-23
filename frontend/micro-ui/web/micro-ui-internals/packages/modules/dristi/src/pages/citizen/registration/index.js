@@ -150,7 +150,7 @@ const Registration = ({ stateCode }) => {
 
   useEffect(() => {
     if (isLitigantPartialRegistered && data?.Individual) {
-      setNewParams({
+      setNewParams({...history.location.state?.newParams,
         name: {
           firstName: data?.Individual?.[0]?.name?.givenName,
           middleName: data?.Individual?.[0]?.name?.otherNames,
@@ -158,7 +158,7 @@ const Registration = ({ stateCode }) => {
         },
       });
     }
-  }, [data?.Individual, isLitigantPartialRegistered]);
+  }, [data?.Individual, history.location.state?.newParams, isLitigantPartialRegistered]);
 
   const handleAadharOtpChange = (aadharOtp) => {
     setNewParams({ ...newParams, aadharOtp });
@@ -300,7 +300,7 @@ const Registration = ({ stateCode }) => {
     };
     setNewParams({ ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } });
     Digit.SessionStorage.del("aadharNumber");
-    history.replace(`${path}/user-type`);
+    history.replace(`${path}/user-type`, {newParams: { ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } }});
   };
   if (isLoading || isFetching) {
     return <Loader />;
