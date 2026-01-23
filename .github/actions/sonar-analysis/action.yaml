@@ -48,6 +48,15 @@ runs:
           echo "$key=$value" >> $GITHUB_ENV
         done
 
+    - name: Cache Maven dependencies (.m2)
+      if: ${{ env.language == 'java' }}
+      uses: actions/cache@v5
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-m2
+        restore-keys: |
+          ${{ runner.os }}-m2
+
     - name: print env
       shell: bash
       run: |

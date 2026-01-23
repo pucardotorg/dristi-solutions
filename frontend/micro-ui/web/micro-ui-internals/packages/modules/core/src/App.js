@@ -3,8 +3,8 @@ import { Redirect, Route, Switch, useHistory, useLocation } from "react-router-d
 import CitizenApp from "./pages/citizen";
 import EmployeeApp from "./pages/employee";
 import { useTranslation } from "react-i18next";
-import { trackEvent } from "./lib/gtag";
-import { getCLS, getFID, getLCP, getFCP, getTTFB } from "web-vitals";
+// import { trackEvent } from "./lib/gtag";
+// import { getCLS, getFID, getLCP, getFCP, getTTFB } from "web-vitals";
 import TopBarSideBar from "./components/TopBarSideBar";
 const styles = {
   container: {
@@ -64,17 +64,17 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
     }
   }, [pathname]);
 
-  useEffect(() => {
-    // Track web vitals
-    const reportWebVitals = ({ name, delta, id, value }) => {
-      trackEvent(name, value, "Performance_Metrics");
-    };
+  // useEffect(() => {
+  //   // Track web vitals
+  //   const reportWebVitals = ({ name, delta, id, value }) => {
+  //     trackEvent(name, value, "Performance_Metrics");
+  //   };
 
-    // Measure and report web vitals
-    getFID(reportWebVitals);
-    getLCP(reportWebVitals);
-    getFCP(reportWebVitals);
-  }, [pathname, search]);
+  //   // Measure and report web vitals
+  //   getFID(reportWebVitals);
+  //   getLCP(reportWebVitals);
+  //   getFCP(reportWebVitals);
+  // }, [pathname, search]);
 
   useEffect(() => {
     const handleResize = () => {
