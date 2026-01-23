@@ -91,7 +91,6 @@ const DocViewerWrapper = ({
 
   const handleLocalDownload = (file) => {
     if (!file) return;
-    console.log("Downloading local file:", file);
     const reader = new FileReader();
 
     reader.onload = () => {
