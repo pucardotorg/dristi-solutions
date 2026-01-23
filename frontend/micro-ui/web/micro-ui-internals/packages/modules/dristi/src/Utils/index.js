@@ -557,7 +557,7 @@ export const getComplainantSideAdvocates = (caseDetails) => {
 export const getFileByFileStore = async (uri, filename) => {
   const token = localStorage.getItem("token");
   try {
-    const response = await axios.get(uri, {
+    const response = await axiosInstance.get(uri, {
       responseType: "blob",
       headers: {
         "auth-token": `${token}`,
