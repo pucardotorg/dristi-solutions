@@ -52,7 +52,32 @@ const Registration = ({ stateCode }) => {
   const isUserLoggedIn = Boolean(token);
   const moduleCode = "DRISTI";
   const [newParams, setNewParams] = useState(history.location.state?.newParams || {});
-  const [userTypeRegister] = useState(history.location.state?.userType || {});
+  const userTypeRegister = useMemo(() => {
+    return history.location.state?.userType || 
+    (newParams?.isLitigantPartialRegistered ? {
+      clientDetails: {
+        selectUserType: {
+          code: "LITIGANT",
+          name: "LITIGANT_TEXT",
+          showBarDetails: false,
+          isVerified: false,
+          role: [
+            "CASE_CREATOR", "CASE_EDITOR", "CASE_VIEWER",
+            "EVIDENCE_CREATOR", "EVIDENCE_VIEWER", "EVIDENCE_EDITOR",
+            "APPLICATION_CREATOR", "APPLICATION_VIEWER",
+            "HEARING_VIEWER", "ORDER_VIEWER",
+            "SUBMISSION_CREATOR", "SUBMISSION_RESPONDER", "SUBMISSION_DELETE",
+            "TASK_VIEWER", "HEARING_ACCEPTOR", "ADVOCATE_VIEWER",
+            "PENDING_TASK_CREATOR", "BAIL_BOND_CREATOR", "BAIL_BOND_VIEWER", "BAIL_BOND_EDITOR",
+            "PLEA_SIGNER", "PLEA_EDITOR", "MEDIATION_SIGNER", "MEDIATION_EDITOR",
+            "EXAMINATION_SIGNER", "EXAMINATION_EDITOR",
+            "PLEA_VIEWER", "MEDIATION_VIEWER", "EXAMINATION_VIEWER"
+          ],
+          subText: "LITIGANT_SUB_TEXT"
+        }
+      }
+    } : {});
+  }, [history.location.state?.userType, newParams?.isLitigantPartialRegistered]);
 
   const [canSubmitNo, setCanSubmitNo] = useState(true);
   const [isUserRegistered, setIsUserRegistered] = useState(true);
@@ -156,6 +181,7 @@ const Registration = ({ stateCode }) => {
           middleName: data?.Individual?.[0]?.name?.otherNames,
           lastName: data?.Individual?.[0]?.name?.familyName,
         },
+        isLitigantPartialRegistered: true,
       });
     }
   }, [data?.Individual, history.location.state?.newParams, isLitigantPartialRegistered]);
