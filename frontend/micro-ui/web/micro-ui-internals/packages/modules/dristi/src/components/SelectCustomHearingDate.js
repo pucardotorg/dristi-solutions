@@ -2,6 +2,24 @@ import React, { useMemo, useState, useEffect } from "react";
 import { CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 
+const toInternal = (dateStr) => {
+  if (!dateStr || typeof dateStr !== "string") return dateStr;
+  const parts = dateStr.split("-");
+  if (parts[0].length === 2) {
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  }
+  return dateStr;
+};
+
+const formatToUI = (dateStr) => {
+  if (!dateStr || typeof dateStr !== "string") return dateStr;
+  const parts = dateStr.split("-");
+  if (parts[0].length === 4) {
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  }
+  return dateStr;
+};
+
 const Chip = ({ label, isSelected, handleClick }) => {
   const chipStyle = {
     backgroundColor: isSelected ? "#ecf3fd" : "#FAFAFA",
@@ -20,18 +38,16 @@ const Chip = ({ label, isSelected, handleClick }) => {
 
   return (
     <div style={chipStyle} onClick={handleClick}>
-      {label}
+      {formatToUI(label)}
     </div>
   );
 };
 
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
+const CloseBtn = (props) => (
+  <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
+    <CloseSvg />
+  </div>
+);
 
 function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors }) {
   const [showPicker, setShowPicker] = useState(false);
@@ -45,8 +61,14 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
   });
 
   const suggestedDates = useMemo(() => config?.populators?.inputs?.[0]?.options || [], [config]);
+  
+  const internalSuggestedDates = useMemo(() => suggestedDates.map((d) => toInternal(d)), [suggestedDates]);
+  
   const selectedValue = formData?.[config?.key] || "";
-  const isCustomDateSelected = useMemo(() => selectedValue && !suggestedDates.includes(selectedValue), [selectedValue, suggestedDates]);
+
+  const isCustomDateSelected = useMemo(() => {
+    return selectedValue && !internalSuggestedDates.includes(selectedValue);
+  }, [selectedValue, internalSuggestedDates]);
 
   useEffect(() => {
     if (showErrorToast) {
@@ -55,85 +77,59 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
     }
   }, [showErrorToast]);
 
-  useEffect(() => {
-    const handleBackdropClick = (event) => {
-      if (event.target.classList.contains("popup-wrap") || event.target.classList.contains("modal-wrapper")) {
-        setShowPicker(false);
-      }
-    };
-
-    if (showPicker) {
-      setTimeout(() => {
-        window.addEventListener("click", handleBackdropClick);
-      }, 100);
-    }
-
-    return () => {
-      window.removeEventListener("click", handleBackdropClick);
-    };
-  }, [showPicker]);
-
   const convertToMillis = (dateStr) => {
-    if (!dateStr || typeof dateStr !== "string") return null;
-    const [d, m, y] = dateStr.split("-");
+    if (!dateStr) return new Date().getTime();
+    const internal = toInternal(dateStr);
+    const [y, m, d] = internal.split("-");
     return new Date(y, m - 1, d).getTime();
   };
 
   const handleDateChange = (date) => {
-    const formattedDate = date.toLocaleDateString("en-GB");
-    const formattedForCheck = formattedDate.replace(/\//g, "-");
-    const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
-
-    if (isNonWorkingDay) {
-      setShowErrorToast({
-        error: true,
-        label: t("CS_COMMON_COURT_NON_WORKING"),
-      });
-    }
-
     const d = String(date.getDate()).padStart(2, "0");
     const m = String(date.getMonth() + 1).padStart(2, "0");
     const y = date.getFullYear();
-    const finalFormattedDate = `${d}-${m}-${y}`;
+    
+    const formattedForCheck = `${d}-${m}-${y}`;
+    const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
 
-    onSelect(config.key, finalFormattedDate);
+    if (isNonWorkingDay) {
+      setShowErrorToast({ error: true, label: t("CS_COMMON_COURT_NON_WORKING") });
+      return;
+    }
+
+    const finalInternalDate = `${y}-${m}-${d}`;
+    onSelect(config.key, finalInternalDate);
     setShowPicker(false);
   };
 
   const handleChipClick = (dateStr) => {
-    onSelect(config.key, dateStr);
+    onSelect(config.key, toInternal(dateStr));
     setShowPicker(false);
-  };
-
-  const customDateConfig = {
-    showBottomBar: false,
-    buttonText: "CS_COMMON_CONFIRM",
   };
 
   return (
     <div className="judge-hearing-selection-v2" style={{ width: "100%" }}>
       {config?.withoutLabel && (
-        <h3 class="card-label bolder" style={{ marginBottom: "revert" }}>
+        <h3 className="card-label bolder" style={{ marginBottom: "revert" }}>
           {t(config.label)}
         </h3>
       )}
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          flexWrap: "wrap",
-          borderRadius: "4px",
-          paddingTop: "10px",
-          backgroundColor: "#FBFAFA",
-        }}
-      >
-        {suggestedDates.map((date, index) => (
-          <Chip key={index} label={date} isSelected={selectedValue === date} handleClick={() => handleChipClick(date)} />
-        ))}
+      <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", borderRadius: "4px", paddingTop: "10px", backgroundColor: "#FBFAFA" }}>
+        {suggestedDates.map((date, index) => {
+          const internalDate = internalSuggestedDates[index];
+          return (
+            <Chip 
+              key={index} 
+              label={date} 
+              isSelected={selectedValue === internalDate}
+              handleClick={() => handleChipClick(date)} 
+            />
+          );
+        })}
 
         <Chip
-          label={isCustomDateSelected ? selectedValue : t("Select another date")}
+          label={isCustomDateSelected ? formatToUI(selectedValue) : t("SELECT_ANOTHER_DATE")}
           isSelected={isCustomDateSelected}
           handleClick={() => setShowPicker(true)}
         />
@@ -150,11 +146,11 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
           popupStyles={{ width: "fit-content" }}
         >
           <CustomCalendar
-            config={customDateConfig}
+            config={{ showBottomBar: false }}
             t={t}
             minDate={new Date()}
             handleSelect={handleDateChange}
-            selectedCustomDate={isCustomDateSelected ? convertToMillis(selectedValue) : new Date().getTime()}
+            selectedCustomDate={convertToMillis(selectedValue)}
             tenantId={tenantId}
           />
         </Modal>

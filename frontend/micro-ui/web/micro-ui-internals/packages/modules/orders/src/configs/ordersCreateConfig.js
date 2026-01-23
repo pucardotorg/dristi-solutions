@@ -6224,16 +6224,18 @@ export const configAcceptReschedulingRequest = [
         },
       },
       {
-        key: "finalHearingDate",
+        key: "newHearingDate",
         type: "component",
         component: "SelectCustomHearingDate",
+        schemaKeyPath: "orderDetails.newHearingDate",
+        transformer: "date",
         withoutLabel: true,
         isMandatory: true,
-        label: "Please select the final date for hearing",
+        label: "SELECT_FINAL_DATE_HEARING",
         populators: {
           inputs: [
             {
-              name: "finalHearingDate",
+              name: "newHearingDate",
               options:[],
               validation: {
                 minDate: "2024-03-17",

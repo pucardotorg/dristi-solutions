@@ -1669,7 +1669,7 @@ const GenerateOrdersV2 = () => {
                   };
                 }
 
-                if (field.key === "finalHearingDate") {
+                if (field.key === "newHearingDate") {
                   return {
                     ...field,
                     populators: {
@@ -1677,7 +1677,7 @@ const GenerateOrdersV2 = () => {
                       inputs: [
                         {
                           ...field.populators.inputs[0],
-                          options: ["01-01-2026", "02-01-2026", "03-01-2026", "04-01-2026", "05-01-2026"],
+                          options: applicationDetails?.additionalDetails?.formdata?.newHearingDates || [],
                         },
                       ],
                     },
@@ -1975,6 +1975,7 @@ const GenerateOrdersV2 = () => {
       t,
       groupedWarrantOptions,
       warrantSubtypeCode,
+      applicationDetails,
     ]
   );
 
