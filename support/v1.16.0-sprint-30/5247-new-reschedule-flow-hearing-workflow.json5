@@ -96,6 +96,24 @@
             ],
             "active": true
           },
+          //new action
+          {
+            "auditDetails": {
+              "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+              "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+              "createdTime": 1769163539475,
+              "lastModifiedTime": 1769163539475
+            },
+            "uuid": "3dea13a8-c295-40dd-aa4f-49ed2bc857b1",
+            "tenantId": "kl",
+            "currentState": "9d48f73c-904a-438d-94aa-ee6f8461191c",
+            "action": "UPDATE_DATE",
+            "nextState": "9d48f73c-904a-438d-94aa-ee6f8461191c",
+            "roles": [
+              "HEARING_EDITOR"
+            ],
+            "active": true
+          },
           {
             "auditDetails": {
               "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
