@@ -410,6 +410,8 @@ export const getOrderTypes = (applicationType, type) => {
       return type === "reject" ? "CHECKOUT_REJECT" : "CHECKOUT_ACCEPTANCE";
     case "DELAY_CONDONATION":
       return "ACCEPTANCE_REJECTION_DCA";
+    case "ADVANCEMENT_OR_ADJOURNMENT_APPLICATION":
+      return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "ACCEPT_RESCHEDULING_REQUEST";
     default:
       return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "APPROVE_VOLUNTARY_SUBMISSIONS";
   }

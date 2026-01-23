@@ -114,6 +114,15 @@ router.post(
             courtCaseJudgeDetails
           );
           break;
+        case "application-reschedule-hearing":
+          await applicationRescheduleHearing(
+            req,
+            res,
+            qrCode,
+            application,
+            courtCaseJudgeDetails
+          );
+          break;
         case "application-bail-bond":
           await applicationBailBond(
             req,
