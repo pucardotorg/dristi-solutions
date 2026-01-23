@@ -5002,12 +5002,12 @@ export const configsIssueBailReject = [
             {
               name: "uploadedDocs",
               isMandatory: true,
-              textAreaHeader: "CS_DOCUMENT",
+              label: "CS_DOCUMENT",
               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               uploadGuidelines: "UPLOAD_DOC_10",
               maxFileSize: 10,
               maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-              textAreaStyle: {
+              labelStyle: {
                 fontSize: "16px",
                 fontWeight: 400,
                 marginBottom: "8px",
@@ -5841,7 +5841,7 @@ export const configsMoveCaseToLongPendingRegister = [
               maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
               isMultipleUpload: true,
               popupModuleMianStyles: { maxHeight: "100%" },
-              textAreaStyle: {
+              labelStyle: {
                 fontSize: "16px",
                 fontWeight: 400,
                 marginBottom: "8px",
@@ -6175,6 +6175,71 @@ export const configsAbateCase = [
             {
               code: "UNCONTESTED",
               name: "Uncontested",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configAcceptReschedulingRequest = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "CURRENT_HEARING_DATE",
+        isMandatory: true,
+        key: "originalHearingDate",
+        schemaKeyPath: "orderDetails.originalHearingDate",
+        transformer: "date",
+        disable: true,
+        type: "date",
+        populators: {
+          name: "originalHearingDate",
+        },
+      },
+      {
+        label: "PURPOSE_OF_NEXT_HEARING",
+        isMandatory: true,
+        key: "hearingPurpose",
+        schemaKeyPath: "orderDetails.purposeOfHearing",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          name: "hearingPurpose",
+          optionsKey: "code",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          hideInForm: false,
+        },
+      },
+      {
+        key: "newHearingDate",
+        type: "component",
+        component: "SelectCustomHearingDate",
+        schemaKeyPath: "orderDetails.newHearingDate",
+        transformer: "date",
+        withoutLabel: true,
+        isMandatory: true,
+        label: "SELECT_FINAL_DATE_HEARING",
+        populators: {
+          inputs: [
+            {
+              name: "newHearingDate",
+              options:[],
+              validation: {
+                minDate: "2024-03-17",
+              },
             },
           ],
         },

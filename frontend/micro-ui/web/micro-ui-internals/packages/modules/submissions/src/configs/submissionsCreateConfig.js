@@ -2171,7 +2171,7 @@ export const requestForBail = [
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -2196,7 +2196,7 @@ export const requestForBail = [
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -2222,7 +2222,7 @@ export const requestForBail = [
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -2414,12 +2414,12 @@ export const submitDocsForBail = [
                   {
                     name: "uploadedDocs",
                     isMandatory: true,
-                    textAreaHeader: "CS_DOCUMENT",
+                    label: "CS_DOCUMENT",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_10",
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -2602,12 +2602,12 @@ export const submitDelayCondonation = [
                   {
                     name: "uploadedDocs",
                     isMandatory: true,
-                    textAreaHeader: "CS_DOCUMENT",
+                    label: "CS_DOCUMENT",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_10",
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -2678,6 +2678,149 @@ export const poaClaimingConfig = [
             },
           },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+        },
+      },
+    ],
+  },
+];
+
+export const configsAdvancementOrAdjournment = [
+  {
+    body: [
+      {
+        inline: true,
+        label: "CHOOSE_COMPLAINANT",
+        isMandatory: true,
+        type: "dropdown",
+        key: "selectComplainant",
+        populators: {
+          optionsKey: "name",
+          styles: { maxWidth: "100%" },
+          options: [
+            {
+              code: "complainantOne",
+              name: "ComplainantOne",
+            },
+          ],
+        },
+      },
+      {
+        inline: true,
+        label: "ORIGINAL_HEARING_DATE",
+        disable: true,
+        isMandatory: true,
+        key: "initialHearingDate",
+        schemaKeyPath: "applicationDetails.initialHearingDate",
+        transformer: "date",
+        type: "date",
+        populators: {
+          name: "initialHearingDate",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+        },
+      },
+      {
+        label: "HAVE_ALL_PARTIES_AGREED",
+        isMandatory: true,
+        key: "isAllPartiesAgreed",
+        type: "radio",
+        populators: {
+          name: "isAllPartiesAgreed",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+          options: [
+            {
+              code: "YES",
+              name: "YES",
+            },
+            {
+              code: "NO",
+              name: "NO",
+            },
+          ],
+        },
+      },
+      {
+        key: "newHearingDates",
+        type: "component",
+        label: "SUGGESTED_NEW_HEARING_DATES",
+        component: "SelectBulkDateInputs",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "newHearingDates",
+              error: "ERR_HRMS_INVALID_MOB_NO",
+              label: "SUGGESTED_NEW_HEARING_DATES",
+              isMandatory: true,
+              placeholder: "DD/MM/YYYY",
+              customStyleLabelField: { display: "flex", justifyContent: "space-between" },
+              maxSelected: 5,
+              validation: {
+                isRequired: true,
+                minDate: new Date().toISOString().split("T")[0],
+                errMsg: "CORE_REQUIRED_FIELD_ERROR",
+              },
+            },
+          ],
+          validation: {},
+        },
+        withoutLabel: true,
+      },
+      {
+        inline: true,
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForRequest",
+        schemaKeyPath: "applicationDetails.reasonForRequest",
+        transformer: "customTextArea",
+        isMandatory: true,
+        isInfinite: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "REASON_FOR_REQUEST",
+              subHeaderClassName: "dristi-font-big-bold",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+              textAreaStyle: {
+                fontSize: "16px",
+                fontWeight: 400,
+                marginBottom: 0,
+              },
+            },
+          ],
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiSubmissions",
+              masterName: "alphaNumericValidation",
+            },
+          },
+          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+        },
+      },
+      {
+        type: "component",
+        key: "supportingDocuments",
+        component: "SelectMultiUpload",
+        disable: false,
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "uploadedDocs",
+              isMandatory: false,
+              isOptional: true,
+              label: "Supporting Documents",
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+              uploadGuidelines: "UPLOAD_DOC_10",
+              maxFileSize: 10,
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
+            },
+          ],
         },
       },
     ],

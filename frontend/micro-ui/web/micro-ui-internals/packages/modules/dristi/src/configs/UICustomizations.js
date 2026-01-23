@@ -2180,6 +2180,17 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
+            searchReschedulingRequestApplications: {
+              date: null,
+              isOnlyCountRequired: activeTab === "RESCHEDULE_REQUEST" ? false : true,
+              actionCategory: "Rescheduling Request",
+              ...(activeTab === "RESCHEDULE_REQUEST" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+              ...(activeTab === "RESCHEDULE_REQUEST" &&
+                requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
+            },
             searchBailBonds: {
               date: activeTab === "BAIL_BOND_STATUS" ? selectedDateInMs : currentDateInMs,
               isOnlyCountRequired: activeTab === "BAIL_BOND_STATUS" ? false : true,
@@ -2267,12 +2278,14 @@ export const UICustomizations = {
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
             const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
+            const rescheduleRequestCount = data?.reschedulingRequestData?.totalCount || 0;
 
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
               OFFLINE_PAYMENTS: offlinePaymentsCount,
               SCRUTINISE_CASES: scrutinyCasesCount,
               REGISTRATION: registerCount,
+              RESCHEDULE_REQUEST: rescheduleRequestCount,
               REVIEW_PROCESS: reviwCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
               NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
@@ -2312,7 +2325,6 @@ export const UICustomizations = {
                 }
                 return acc;
               }, {});
-
               return {
                 caseTitle: result?.caseTitle,
                 caseNumber: result?.caseNumber,
@@ -2359,6 +2371,11 @@ export const UICustomizations = {
               return {
                 TotalCount: data?.otherApplicationsData?.count,
                 data: data?.otherApplicationsData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "RESCHEDULE_REQUEST") {
+              return {
+                TotalCount: data?.reschedulingRequestData?.count,
+                data: data?.reschedulingRequestData?.data?.map((item) => processFields(item.fields)) || [],
               };
             } else
               return {
@@ -2536,6 +2553,11 @@ export const UICustomizations = {
               date: null,
               isOnlyCountRequired: true,
             },
+            searchReschedulingRequestApplications: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Rescheduling Request",
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -2553,12 +2575,14 @@ export const UICustomizations = {
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
             const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
+            const rescheduleHearingRequestCount = data?.reschedulingRequestData?.totalCount || 0;
 
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
               OFFLINE_PAYMENTS: offlinePaymentsCount,
               SCRUTINISE_CASES: scrutinyCasesCount,
               REGISTRATION: registerCount,
+              RESCHEDULE_REQUEST: rescheduleHearingRequestCount,
               REVIEW_PROCESS: reviewCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
               NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
@@ -2585,7 +2609,6 @@ export const UICustomizations = {
                 }
                 return acc;
               }, {});
-
               return {
                 caseTitle: result?.caseTitle,
                 caseNumber: result?.caseNumber,

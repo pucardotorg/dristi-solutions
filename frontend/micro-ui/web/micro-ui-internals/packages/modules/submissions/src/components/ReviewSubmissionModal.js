@@ -86,6 +86,7 @@ const SubmissionPreviewSubmissionTypeMap = {
   CORRECTION_IN_COMPLAINANT_DETAILS: "application-profile-edit",
   ADDING_WITNESSES: "application-witness-deposition",
   APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS: "poa-claim-application",
+  ADVANCEMENT_OR_ADJOURNMENT_APPLICATION: "application-reschedule-hearing",
 };
 
 const onDocumentUpload = async (fileData, filename) => {
