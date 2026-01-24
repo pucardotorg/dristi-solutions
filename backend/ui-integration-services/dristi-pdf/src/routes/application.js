@@ -22,6 +22,7 @@ const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
 const applicationProfileEdit = require("../applicationHandlers/applicationProfileEdit");
 const applicationWitnessDeposition = require("../applicationHandlers/applicationWitnessDeposition");
 const applicationPoaClaim = require("../applicationHandlers/applicationPoaClaim");
+const applicationRescheduleHearing = require("../applicationHandlers/applicationRescheduleHearing");
 
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;

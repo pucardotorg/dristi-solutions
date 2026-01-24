@@ -663,7 +663,7 @@ const SubmissionsCreate = ({ path }) => {
   const defaultFormValue = useMemo(() => {
     if (
       applicationDetails?.additionalDetails?.formdata &&
-      (formdata.applicationType ? formdata?.applicationType?.type === applicationDetails?.additionalDetails?.formdata?.applicationType?.type : true)
+      (formdata?.applicationType ? formdata?.applicationType?.type === applicationDetails?.additionalDetails?.formdata?.applicationType?.type : true)
     ) {
       return _getDefaultFormValue(t, applicationDetails);
     } else if (!isCitizen && applicationTypeParam) {
