@@ -302,6 +302,12 @@ module.exports = {
     digitisation_examination_of_accused:
       process.env.DIGITISATION_EXAMINATION_OF_ACCUSED ||
       "digitisation-examination-of-accused",
+    application_reschedule_hearing:
+      process.env.APPLICATION_RESCHEDULE_HEARING ||
+      "application-reschedule-hearing",
+    application_reschedule_hearing_qr:
+      process.env.APPLICATION_RESCHEDULE_HEARING_QR ||
+      "application-reschedule-hearing-qr",
   },
 
   app: {

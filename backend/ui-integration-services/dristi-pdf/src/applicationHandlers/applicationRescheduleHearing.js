@@ -8,6 +8,7 @@ const {
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { cleanName } = require("./cleanName");
+const { getStringAddressDetails } = require("../utils/addressUtils");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -102,7 +103,6 @@ async function applicationRescheduleHearing(
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
@@ -228,19 +228,7 @@ async function applicationRescheduleHearing(
       )
       .map(({ displayIndex, ...rest }) => rest);
 
-    const applicationDate = formatDate(new Date(response.createdDate));
-
-    let caseYear;
-    if (typeof courtCase.filingDate === "string") {
-      caseYear = courtCase.filingDate.slice(-4);
-    } else if (courtCase.filingDate instanceof Date) {
-      caseYear = courtCase.filingDate.getFullYear();
-    } else if (typeof courtCase.filingDate === "number") {
-      // Assuming the number is in milliseconds (epoch time)
-      caseYear = new Date(courtCase.filingDate).getFullYear();
-    } else {
-      return renderError(res, "Invalid filingDate format", 500);
-    }
+    const applicationDate = formatDate(new Date(application.createdDate));
 
     const months = [
       "January",
@@ -258,7 +246,6 @@ async function applicationRescheduleHearing(
     ];
 
     const currentDate = new Date();
-    const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const day = currentDate.getDate();
     const month = months[currentDate.getMonth()];
     const year = currentDate.getFullYear();
@@ -267,15 +254,16 @@ async function applicationRescheduleHearing(
     const initialHearingDate =
       formatDate(application?.applicationDetails?.initialHearingDate) || "";
     const rawProposedHearingDate =
-      formatDate(application?.additionalDetails?.formdata?.newHearingDates) ||
-      [];
-    const proposedHearingDate = Array.isArray(rawProposedHearingDate) ? rawProposedHearingDate : [rawProposedHearingDate];
+      application?.additionalDetails?.formdata?.newHearingDates || [];
+    const proposedHearingDate = Array.isArray(rawProposedHearingDate)
+      ? rawProposedHearingDate
+      : [rawProposedHearingDate];
     const reasonForReschedule =
       application?.applicationDetails?.reasonForRequest || "";
-    const caseNumber = courtCase?.isLPRCase  
+    const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
-     const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const partyName = application?.additionalDetails?.onBehalOfName || "";
 
     const data = {
       Data: [
@@ -288,7 +276,7 @@ async function applicationRescheduleHearing(
           accusedList: accusedList,
           initialHearingDate: initialHearingDate,
           reasonForReschedule: reasonForReschedule,
-          proposedHearingDate: proposedHearingDate,
+          proposedHearingDate: proposedHearingDate.join(", "),
           date: day + ordinalSuffix,
           month: month,
           year: year,
@@ -304,11 +292,11 @@ async function applicationRescheduleHearing(
     // Generate the PDF
     const pdfKey =
       qrCode === "true"
-        ? config.pdf.application_reschedule_request_qr
-        : config.pdf.application_reschedule_request;
+        ? config.pdf.application_reschedule_hearing_qr
+        : config.pdf.application_reschedule_hearing;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
-      "Failed to generate PDF of Reschedule Request Application"
+      "Failed to generate PDF of Reschedule Hearing Application"
     );
     const filename = `${pdfKey}_${new Date().getTime()}`;
     res.writeHead(200, {
