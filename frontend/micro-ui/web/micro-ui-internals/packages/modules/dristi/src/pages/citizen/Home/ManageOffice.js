@@ -1,17 +1,77 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import { userTypeOptions } from "../registration/config";
+
+const DeleteIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2.5 5H4.16667H17.5" stroke="#D4351C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M6.66667 5V3.33333C6.66667 2.89131 6.84226 2.46738 7.15482 2.15482C7.46738 1.84226 7.89131 1.66667 8.33333 1.66667H11.6667C12.1087 1.66667 12.5326 1.84226 12.8452 2.15482C13.1577 2.46738 13.3333 2.89131 13.3333 3.33333V5M15.8333 5V16.6667C15.8333 17.1087 15.6577 17.5326 15.3452 17.8452C15.0326 18.1577 14.6087 18.3333 14.1667 18.3333H5.83333C5.39131 18.3333 4.96738 18.1577 4.65482 17.8452C4.34226 17.5326 4.16667 17.1087 4.16667 16.6667V5H15.8333Z" stroke="#D4351C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
 
 const ManageOffice = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit?.ULBService?.getCurrentTenantId();
+  const userInfo = window?.Digit?.UserService?.getUser()?.info;
+  
+  // Get individual data for logged-in user
+  const { data: individualData } = window?.Digit?.Hooks?.dristi?.useGetIndividualUser(
+    {
+      Individual: {
+        userUuid: [userInfo?.uuid],
+      },
+    },
+    { tenantId, limit: 1000, offset: 0 },
+    "DRISTI",
+    "",
+    userInfo?.uuid
+  );
+
+  const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData?.Individual]);
+  const userType = useMemo(
+    () => individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value,
+    [individualData?.Individual]
+  );
+
+  // Get advocate data for the logged-in advocate
+  const { data: advocateData } = window?.Digit?.Hooks?.dristi?.useGetAdvocateClerk(
+    {
+      criteria: [{ individualId }],
+      tenantId,
+    },
+    {},
+    individualId,
+    userType === "ADVOCATE",
+    "/advocate/v1/_search"
+  );
+
+  const userTypeDetail = useMemo(() => {
+    return userTypeOptions.find((item) => item.code === userType) || {};
+  }, [userType]);
+
+  console.log("advocateData", advocateData, "individualData", individualData);
+
+  const advocateSearchResult = useMemo(() => {
+    return advocateData?.[`${userTypeDetail?.apiDetails?.requestKey}s`];
+  }, [advocateData, userTypeDetail?.apiDetails?.requestKey]);
+
+  // Get the logged-in user's UUID for officeAdvocateId
+  const officeAdvocateId = useMemo(() => {
+    return userInfo?.uuid;
+  }, [userInfo]);
   const [activeTab, setActiveTab] = useState("myAdvocatesClerks");
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
   const [isSearching, setIsSearching] = useState(false);
+  const [isAddingMember, setIsAddingMember] = useState(false);
   const [searchResult, setSearchResult] = useState(null);
   const [searchError, setSearchError] = useState(null);
+  const [memberSearchQuery, setMemberSearchQuery] = useState("");
+  const [addedMembers, setAddedMembers] = useState([]);
+  const [toast, setToast] = useState(null);
 
   const tabs = [
     { id: "myAdvocatesClerks", label: t("MY_ADVOCATES_CLERKS") || "My Advocates/Clerks" },
@@ -58,11 +118,10 @@ const ManageOffice = () => {
 
       if (individualResponse?.Individual && individualResponse.Individual.length > 0) {
         const individual = individualResponse.Individual[0];
-        
         const clerkResponse = await window?.Digit?.DRISTIService?.searchAdvocateClerk(
           "/advocate/clerk/v1/_search",
           {
-            criteria: [{ individualId: individual.individualId }],
+            criteria: [{ individualId: individual.userUuid }],
             tenantId: tenantId,
           },
           { tenantId: tenantId, limit: 10, offset: 0 }
@@ -77,7 +136,7 @@ const ManageOffice = () => {
         } else {
           const advocateResponse = await window?.Digit?.DRISTIService?.searchIndividualAdvocate(
             {
-              criteria: [{ individualId: individual.individualId }],
+              criteria: [{ individualId: individual.userUuid }],
               tenantId: tenantId,
             },
             { tenantId: tenantId, limit: 10, offset: 0 }
@@ -97,7 +156,7 @@ const ManageOffice = () => {
           designation: designation,
           mobileNumber: `${countryCode} ${mobileNumber.slice(0, 5)} ${mobileNumber.slice(5)}`,
           email: individual.email || "N/A",
-          individualId: individual.individualId,
+          individualId: individual.userUuid,
           clerkData: clerkData,
         });
       } else {
@@ -121,13 +180,74 @@ const ManageOffice = () => {
     setShowAddMemberModal(true);
   };
 
-  const handleConfirmAddMember = () => {
-    // TODO: Implement API call to add member to office
-    console.log("Confirming add member:", searchResult);
-    setShowConfirmModal(false);
-    setSearchResult(null);
-    setMobileNumber("");
+  const handleConfirmAddMember = async () => {
+    if (!searchResult || !officeAdvocateId) {
+      setToast({ label: t("ADVOCATE_ID_NOT_FOUND") || "Advocate ID not found. Please try again.", type: "error" });
+      return;
+    }
+    
+    setIsAddingMember(true);
+    try {
+      // Map designation to memberType
+      const memberTypeMap = {
+        "Clerk": "ADVOCATE_CLERK",
+        "Advocate": "ADVOCATE",
+        "Individual": "INDIVIDUAL",
+      };
+
+      console.log("searchResult", searchResult);
+      const response = await window?.Digit?.DRISTIService?.addOfficeMember(
+        {
+          addMember: {
+            tenantId: tenantId,
+            officeAdvocateId: officeAdvocateId,
+            memberType: memberTypeMap[searchResult.designation] || "ADVOCATE_CLERK",
+            memberId: searchResult.individualId,
+            memberName: searchResult.name,
+            memberMobileNumber: mobileNumber,
+            accessType: "ALL_CASES",
+            allowCaseCreate: true,
+            addNewCasesAutomatically: true,
+          },
+        },
+        { tenantId }
+      );
+
+      if (response) {
+        // Add to local state for display
+        setAddedMembers((prev) => [
+          ...prev,
+          {
+            ...searchResult,
+            id: response?.addMember?.id || Date.now(),
+            accessType: "All Cases",
+          },
+        ]);
+        setToast({ label: t("MEMBER_ADDED_SUCCESS") || "Member added successfully", type: "success" });
+      }
+    } catch (error) {
+      console.error("Error adding member:", error);
+      setToast({ label: t("MEMBER_ADD_ERROR") || "Failed to add member. Please try again.", type: "error" });
+    } finally {
+      setIsAddingMember(false);
+      setShowConfirmModal(false);
+      setSearchResult(null);
+      setMobileNumber("");
+    }
   };
+
+  const handleClearSearch = () => {
+    setMemberSearchQuery("");
+  };
+
+  const handleMemberSearch = () => {
+    // Filter is applied automatically via filteredMembers
+    console.log("Searching for:", memberSearchQuery);
+  };
+
+  const filteredMembers = addedMembers.filter((member) =>
+    member.name.toLowerCase().includes(memberSearchQuery.toLowerCase())
+  );
 
   const handleCloseConfirmModal = () => {
     setShowConfirmModal(false);
@@ -171,7 +291,6 @@ const ManageOffice = () => {
       <div
         style={{
           backgroundColor: "#FFFFFF",
-          // borderRadius: "0 0 8px 8px",
           border: "1px solid #D6D5D4",
           padding: "24px",
           minHeight: "400px",
@@ -179,7 +298,50 @@ const ManageOffice = () => {
           borderRight: "none",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "24px" }}>
+        {/* Search and Add Member Row */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+          {/* Search Section */}
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <TextInput
+              type="text"
+              name="memberSearch"
+              value={memberSearchQuery}
+              onChange={(e) => setMemberSearchQuery(e.target.value)}
+              placeholder={t("SEARCH_MEMBER_BY_NAME") || "Search Member by name"}
+              style={{ width: "280px", marginBottom: 0 }}
+              textInputStyle={{ marginBottom: 0 }}
+            />
+            <button
+              onClick={handleClearSearch}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#007E7E",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+              }}
+            >
+              {t("CLEAR_SEARCH") || "Clear Search"}
+            </button>
+            <button
+              onClick={handleMemberSearch}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#007E7E",
+                color: "#FFFFFF",
+                border: "none",
+                borderRadius: "4px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+              }}
+            >
+              {t("SEARCH") || "Search"}
+            </button>
+          </div>
+
+          {/* Add New Member Button */}
           <button
             onClick={handleAddNewMember}
             style={{
@@ -196,28 +358,117 @@ const ManageOffice = () => {
               cursor: "pointer",
             }}
           >
+            <span style={{ fontSize: "18px" }}>+</span>
             {t("ADD_NEW_MEMBER") || "Add New Member"}
           </button>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "60px 20px",
-            // borderTop: "1px solid #D6D5D4",
-            // borderBottom: "1px solid #D6D5D4",
-          }}
-        >
-          <p style={{ fontSize: "18px", fontWeight: "700", color: "#231F20", marginBottom: "8px" }}>
-            {t("NO_DATA_TO_DISPLAY") || "No data to display."}
-          </p>
-          <p style={{ fontSize: "16px", color: "#77787B" }}>
-            {t("PLEASE_ADD_MEMBER") || "Please add member"}
-          </p>
-        </div>
+        {/* Members List or Empty State */}
+        {filteredMembers.length > 0 ? (
+          <div>
+            {/* Table Header */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.5fr 1.5fr 1fr 1fr 1.5fr",
+                padding: "16px 24px",
+                borderBottom: "1px solid #D6D5D4",
+                fontWeight: "600",
+                fontSize: "14px",
+                color: "#3D3C3C",
+              }}
+            >
+              <span>{t("NAME") || "Name"}</span>
+              <span>{t("MOBILE_NUMBER") || "Mobile Number"}</span>
+              <span>{t("DESIGNATION") || "Designation"}</span>
+              <span>{t("ACCESS_TYPE") || "Access Type"}</span>
+              <span>{t("ACTION") || "Action"}</span>
+            </div>
+            {/* Table Rows */}
+            {filteredMembers.map((member) => (
+              <div
+                key={member.id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1.5fr 1.5fr 1fr 1fr 1.5fr",
+                  padding: "16px 24px",
+                  borderBottom: "1px solid #D6D5D4",
+                  fontSize: "14px",
+                  color: "#231F20",
+                  alignItems: "center",
+                }}
+              >
+                <span
+                  style={{
+                    color: "#007E7E",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                  }}
+                >
+                  {member.name}
+                </span>
+                <span>{member.mobileNumber}</span>
+                <span>{member.designation}</span>
+                <span>
+                  <span
+                    style={{
+                      backgroundColor: "#E8E8E8",
+                      padding: "4px 12px",
+                      borderRadius: "4px",
+                      fontSize: "12px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {member.accessType || t("ALL_CASES") || "All Cases"}
+                  </span>
+                </span>
+                <span style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                  <button
+                    style={{
+                      padding: "8px 24px",
+                      backgroundColor: "#FFFFFF",
+                      color: "#007E7E",
+                      border: "1px solid #007E7E",
+                      borderRadius: "4px",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t("MANAGE") || "Manage"}
+                  </button>
+                  <button
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "4px",
+                    }}
+                  >
+                    <DeleteIcon />
+                  </button>
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "60px 20px",
+            }}
+          >
+            <p style={{ fontSize: "18px", fontWeight: "700", color: "#231F20", marginBottom: "8px" }}>
+              {t("NO_DATA_TO_DISPLAY") || "No data to display."}
+            </p>
+            <p style={{ fontSize: "16px", color: "#77787B" }}>
+              {t("PLEASE_ADD_MEMBER") || "Please add member"}
+            </p>
+          </div>
+        )}
       </div>
 
       {showAddMemberModal && (
@@ -486,22 +737,33 @@ const ManageOffice = () => {
               </button>
               <button
                 onClick={handleConfirmAddMember}
+                disabled={isAddingMember}
                 style={{
                   padding: "12px 24px",
-                  backgroundColor: "#007E7E",
+                  backgroundColor: isAddingMember ? "#D6D5D4" : "#007E7E",
                   color: "#FFFFFF",
                   border: "none",
                   borderRadius: "4px",
                   fontSize: "16px",
                   fontWeight: "500",
-                  cursor: "pointer",
+                  cursor: isAddingMember ? "not-allowed" : "pointer",
                 }}
               >
-                {t("CONFIRM") || "Confirm"}
+                {isAddingMember ? (t("ADDING") || "Adding...") : (t("CONFIRM") || "Confirm")}
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          label={toast.label}
+          onClose={() => setToast(null)}
+          error={toast.type === "error"}
+          style={{ maxWidth: "400px" }}
+        />
       )}
     </div>
   );

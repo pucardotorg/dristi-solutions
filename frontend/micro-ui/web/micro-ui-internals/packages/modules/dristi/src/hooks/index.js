@@ -112,6 +112,8 @@ export const Urls = {
     etreasuryCreateDemand: "/etreasury/payment/v1/_createDemand",
     taskSearch: "/task/v1/search",
     searchBailBonds: "/bail-bond/v1/_search",
+    // Advocate Office Management
+    addOfficeMember: "/advocate-office-management/v1/_addMember",
   },
   case: {
     addWitness: "/case/v1/add/witness",

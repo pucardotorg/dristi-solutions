@@ -634,4 +634,13 @@ export const DRISTIService = {
       data,
       params,
     }),
+  // Advocate Office Management
+  addOfficeMember: (data, params) =>
+    Request({
+      url: Urls.dristi.addOfficeMember,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
 };
