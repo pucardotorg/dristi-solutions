@@ -280,7 +280,7 @@ const AdmittedCaseV2 = () => {
 
   const caseData = apiCaseData || historyCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
-  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+  const caseCourtId = localStorage.getItem("courtId");
   const latestCaseDetails = useMemo(() => apiCaseData?.cases || historyCaseData?.cases || {}, [apiCaseData, historyCaseData]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
@@ -3271,7 +3271,8 @@ const AdmittedCaseV2 = () => {
   }
 
   if (caseApiLoading || isApplicationLoading || isCaseFetching) {
-    return <Loader />;
+    // return <Loader />; // We can show loader on individual sections instead of showing loader for the whole component.
+    // in this way the children components can also render initially hence calling api's without much gap from parent's api calls.
   }
 
   if (isEmployee && caseData?.cases?.status && !judgeReviewStages.includes(caseData.cases.status)) {

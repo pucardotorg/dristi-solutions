@@ -39,15 +39,12 @@ const CaseOverviewV2 = ({
       },
     },
     {},
-    cnrNumber + filingNumber,
+    filingNumber,
     Boolean(filingNumber)
   );
 
   const previousBotdOrders = botdOrdersRes?.botdOrderList?.sort((order1, order2) => order2.createdDate - order1.createdDate);
 
-  if (isBotdOrdersLoading) {
-    return <Loader />;
-  }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       {userInfoType === "citizen" && (
@@ -62,7 +59,9 @@ const CaseOverviewV2 = ({
       )}
       <div style={{ display: "flex", flexDirection: "row", gap: "1rem", justifyContent: "space-between" }}>
         <div className="hearing-summary-container" style={{ width: "100%" }}>
-          {
+          {isBotdOrdersLoading ? (
+            <Loader />
+          ) : (
             <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }}>
               <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                 <div
@@ -76,7 +75,9 @@ const CaseOverviewV2 = ({
                   }}
                 >
                   <PreviousHearingIcon />
-                  <span style={{ lineHeight: "normal", marginLeft: "12px" }}>{t("PREVIOUS")} {previousBotdOrders?.[0]?.hearingType ? t(previousBotdOrders?.[0]?.hearingType) : ""} {t("BOTD")}</span>
+                  <span style={{ lineHeight: "normal", marginLeft: "12px" }}>
+                    {t("PREVIOUS")} {previousBotdOrders?.[0]?.hearingType ? t(previousBotdOrders?.[0]?.hearingType) : ""} {t("BOTD")}
+                  </span>
                 </div>
                 <div
                   style={{ color: "#007E7E", cursor: "pointer", fontWeight: 700, fontSize: "16px", lineHeight: "18.75px" }}
@@ -95,10 +96,14 @@ const CaseOverviewV2 = ({
                   lineHeight: "24px",
                 }}
               >
-                {previousBotdOrders?.[0]?.businessOfTheDay ? <div>{previousBotdOrders?.[0]?.businessOfTheDay}</div> : t("NO_HEARING_SUMMARY_AVAILABLE")}
+                {previousBotdOrders?.[0]?.businessOfTheDay ? (
+                  <div>{previousBotdOrders?.[0]?.businessOfTheDay}</div>
+                ) : (
+                  t("NO_HEARING_SUMMARY_AVAILABLE")
+                )}
               </div>
             </Card>
-          }
+          )}
         </div>
       </div>
       <div className="pending-actions-container">
