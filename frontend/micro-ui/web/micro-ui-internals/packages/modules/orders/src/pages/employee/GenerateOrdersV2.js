@@ -67,6 +67,7 @@ import {
   configsCaseSettlementAccept,
   configsCaseSettlementReject,
   configsAbateCase,
+  configAcceptReschedulingRequest,
 } from "../../configs/ordersCreateConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -81,7 +82,14 @@ import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkfl
 import { applicationTypes } from "../../utils/applicationTypes";
 import { HearingWorkflowState } from "../../utils/hearingWorkflow";
 import { ordersService, taskService } from "../../hooks/services";
-import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName, getSafeFileExtension } from "../../utils";
+import {
+  getRespondantName,
+  getComplainantName,
+  constructFullName,
+  removeInvalidNameParts,
+  getFormattedName,
+  getSafeFileExtension,
+} from "../../utils";
 import {
   channelTypeEnum,
   checkValidation,
@@ -155,6 +163,7 @@ const configKeys = {
   COST: configsCost,
   WITNESS_BATTA: configsWitnessBatta,
   ABATE_CASE: configsAbateCase,
+  ACCEPT_RESCHEDULING_REQUEST: configAcceptReschedulingRequest,
 };
 
 const stateSlaMap = {
@@ -194,6 +203,7 @@ const stateSlaMap = {
   WITNESS_BATTA: 3,
   DRAFT_IN_PROGRESS: 2,
   ABATE_CASE: 3,
+  ACCEPT_RESCHEDULING_REQUEST: 3,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
@@ -1631,6 +1641,40 @@ const GenerateOrdersV2 = () => {
             };
           });
         }
+        if (["ACCEPT_RESCHEDULING_REQUEST"].includes(selectedOrderType)) {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "hearingPurpose") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: purposeOfHearingData,
+                    },
+                  };
+                }
+
+                if (field.key === "newHearingDate") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      inputs: [
+                        {
+                          ...field.populators.inputs[0],
+                          options: applicationDetails?.additionalDetails?.formdata?.newHearingDates || [],
+                        },
+                      ],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
         if (selectedOrderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
           orderTypeForm = orderTypeForm?.map((section) => {
             return {
@@ -1918,6 +1962,7 @@ const GenerateOrdersV2 = () => {
       t,
       groupedWarrantOptions,
       warrantSubtypeCode,
+      applicationDetails,
     ]
   );
 
@@ -2284,6 +2329,7 @@ const GenerateOrdersV2 = () => {
           "INITIATING_RESCHEDULING_OF_HEARING_DATE",
           "CHECKOUT_ACCEPTANCE",
           "CHECKOUT_REJECT",
+          "ACCEPT_RESCHEDULING_REQUEST",
         ].includes(currentOrderType)
       ) {
         updatedFormdata.originalHearingDate =
@@ -3017,6 +3063,7 @@ const GenerateOrdersV2 = () => {
             dateOfEndADR: orderSchema?.orderDetails?.hearingDate,
             mediationCentre: t(orderSchema?.orderDetails?.mediationCentre) || "",
           }),
+          ...(order?.orderType === "ACCEPT_RESCHEDULING_REQUEST" && { currentDate: new Date().getTime() }),
         },
       };
       const isAssignDateRescheduleHearingOrder =

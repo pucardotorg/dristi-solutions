@@ -71,12 +71,12 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
         {
           name: "uploadedDocs",
           isMandatory: true,
-          textAreaHeader: "CS_DOCUMENT",
+          label: "CS_DOCUMENT",
           fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           uploadGuidelines: "UPLOAD_DOC_10",
           maxFileSize: 10,
           maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-          textAreaStyle: {
+          labelStyle: {
             fontSize: "16px",
             fontWeight: 400,
             marginBottom: "8px",
@@ -166,9 +166,20 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
         `}
         </style>
         <div className={`file-uploader-div-main show-file-uploader select-UploadFiles`}>
-          {input.textAreaHeader && (
-            <h1 className={`custom-text-area-header ${input?.headerClassName}`} style={{ margin: "0px 0px 8px", ...input.textAreaStyle }}>
-              {t(input?.textAreaHeader)}
+          {input.label && (
+            <h1
+              className={`custom-text-area-header ${input?.headerClassName}`}
+              style={{ margin: "0px 0px 8px", display: "flex", gap: "2px", ...input.labelStyle }}
+            >
+              {t(input?.label)}{" "}
+              {input?.isOptional && (
+                <span>
+                  <p className={`custom-sub-header ${input?.subHeaderClassName}`} style={{ margin: "0px 0px 8px" }}>
+                    {`${t(input?.textAreaSubHeader)}`}
+                    {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;{t("CS_IS_OPTIONAL")}</span>}
+                  </p>
+                </span>
+              )}
             </h1>
           )}
           <div className="file-uploader" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
