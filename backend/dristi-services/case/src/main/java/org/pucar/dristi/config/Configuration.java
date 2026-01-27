@@ -469,4 +469,10 @@ public class Configuration {
 
 	@Value("${case.conversion.topic}")
 	private String caseConversionTopic;
+
+	@Value("${advocate.office.case.member.save.topic}")
+	private String advocateOfficeCaseMemberSaveTopic;
+
+	@Value("${advocate.office.case.member.update.topic}")
+	private String advocateOfficeCaseMemberUpdateTopic;
 }
