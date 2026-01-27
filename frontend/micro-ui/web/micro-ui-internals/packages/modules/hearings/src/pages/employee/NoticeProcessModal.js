@@ -240,18 +240,32 @@ const NoticeProcessModal = ({
     }
   }, [hearingDetails?.hearingId, currentHearingNumber]);
 
-  const hearingByNumber = useMemo(() => hearingDetails?.HearingList?.find((hearing) => hearing.hearingId === currentHearingNumber), [
-    hearingDetails,
-    currentHearingNumber,
-  ]);
+  const hearingCriteria = useMemo(
+    () => ({
+      tenantId,
+      filingNumber,
+      ...(currentHearingNumber && { hearingId: currentHearingNumber }),
+      ...(caseCourtId && { courtId: caseCourtId }),
+    }),
+    [tenantId, filingNumber, caseCourtId, currentHearingNumber]
+  );
+
+  const { data: hearingByNumber } = Digit.Hooks.hearings.useGetHearings(
+    {
+      criteria: hearingCriteria,
+    },
+    { applicationNumber: "", cnrNumber: "" },
+    `${currentHearingNumber}`,
+    Boolean(filingNumber && caseCourtId)
+  );
 
   const paymentStatusText = useMemo(() => {
-    const status = hearingByNumber?.status;
+    const status = hearingByNumber?.HearingList?.[0]?.status;
     return ["ABANDONED", "COMPLETED"].includes(status) ? "PAYMENT_EXPIRED_TEXT" : "PAYMENT_PENDING_TEXT";
   }, [hearingByNumber]);
 
   const paymentStatusSubText = useMemo(() => {
-    const status = hearingByNumber?.status;
+    const status = hearingByNumber?.HearingList?.[0]?.status;
     return ["ABANDONED", "COMPLETED"].includes(status) ? "PAYMENT_EXPIRED_SUB_TEXT" : "PAYMENT_PENDING_SUB_TEXT";
   }, [hearingByNumber]);
 
@@ -420,7 +434,7 @@ const NoticeProcessModal = ({
                 <hr className="vertical-line" />
                 <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
                   <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("HEARING_DATE")}:</span>
-                  <span>{formatDate(new Date(hearingByNumber?.startTime), "DD-MM-YYYY")}</span>
+                  <span>{formatDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY")}</span>
                 </div>
               </div>
               <div style={{ marginLeft: "10px" }}>
