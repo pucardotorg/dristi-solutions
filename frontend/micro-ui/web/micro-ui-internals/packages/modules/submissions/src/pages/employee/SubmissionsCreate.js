@@ -17,6 +17,7 @@ import {
   submitDocsForBail,
   submitDelayCondonation,
   poaClaimingConfig,
+  configsAdvancementOrAdjournment,
 } from "../../configs/submissionsCreateConfig";
 import ReviewSubmissionModal from "../../components/ReviewSubmissionModal";
 import SubmissionSignatureModal from "../../components/SubmissionSignatureModal";
@@ -53,6 +54,7 @@ import {
   _getDefaultFormValue,
   formatDate,
   _getFinalDocumentList,
+  replaceUploadedDocsWithFile,
 } from "../../utils/application";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
@@ -450,6 +452,7 @@ const SubmissionsCreate = ({ path }) => {
           ? getModifiedForm(editRespondentConfig.formconfig, formdata)
           : getModifiedForm(editComplainantDetailsConfig.formconfig, formdata),
       APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS: poaClaimingConfig,
+      ADVANCEMENT_OR_ADJOURNMENT_APPLICATION: configsAdvancementOrAdjournment,
     };
     const applicationConfigKeysForEmployee = {
       DOCUMENT: configsDocumentSubmission,
@@ -527,6 +530,10 @@ const SubmissionsCreate = ({ path }) => {
     "dristi",
     Boolean(filingNumber && caseCourtId)
   );
+
+  const scheduledHearing = useMemo(() => {
+    return hearingsData?.HearingList?.find((hearing) => hearing?.status === "SCHEDULED") || null;
+  }, [hearingsData?.HearingList]);
 
   useEffect(() => {
     if (applicationDetails) {
@@ -656,7 +663,7 @@ const SubmissionsCreate = ({ path }) => {
   const defaultFormValue = useMemo(() => {
     if (
       applicationDetails?.additionalDetails?.formdata &&
-      (formdata.applicationType ? formdata?.applicationType?.type === applicationDetails?.additionalDetails?.formdata?.applicationType?.type : true)
+      (formdata?.applicationType ? formdata?.applicationType?.type === applicationDetails?.additionalDetails?.formdata?.applicationType?.type : true)
     ) {
       return _getDefaultFormValue(t, applicationDetails);
     } else if (!isCitizen && applicationTypeParam) {
@@ -876,6 +883,7 @@ const SubmissionsCreate = ({ path }) => {
         "CORRECTION_IN_COMPLAINANT_DETAILS",
         "ADDING_WITNESSES",
         "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
+        "ADVANCEMENT_OR_ADJOURNMENT_APPLICATION",
       ].includes(applicationType) &&
       !formData?.applicationDate
     ) {
@@ -887,6 +895,7 @@ const SubmissionsCreate = ({ path }) => {
     if (applicationType && hearingId && ["CHECKOUT_REQUEST", "RE_SCHEDULE"].includes(applicationType) && !formData?.initialHearingDate) {
       setValue("initialHearingDate", formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime)));
     }
+
     if (
       applicationType &&
       ["CHECKOUT_REQUEST", "RE_SCHEDULE"].includes(applicationType) &&
@@ -950,6 +959,17 @@ const SubmissionsCreate = ({ path }) => {
         clearErrors("supportingDocuments");
       }
     }
+
+    if (applicationType && ["ADVANCEMENT_OR_ADJOURNMENT_APPLICATION"].includes(applicationType)) {
+      if (scheduledHearing && !formData?.initialHearingDate) {
+        setValue("initialHearingDate", formatDate(new Date(scheduledHearing?.startTime)));
+      }
+
+      if (!formData?.isAllPartiesAgreed) {
+        setValue("isAllPartiesAgreed", { code: "YES", name: "YES" });
+      }
+    }
+
     if (applicationType === "REQUEST_FOR_BAIL") {
       const addSurety = formData?.addSurety;
       const isSuretySelected = typeof addSurety === "object" ? addSurety?.code === "YES" || addSurety?.showSurety === true : addSurety === "YES";
@@ -1087,8 +1107,11 @@ const SubmissionsCreate = ({ path }) => {
       }
       let documents = [];
       if (applicationType !== "REQUEST_FOR_BAIL") {
-        const applicationDocuments = ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)
-          ? formdata?.supportingDocuments?.map((supportDocs) => {
+        let applicationDocuments = [];
+
+        if (["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)) {
+          applicationDocuments =
+            formdata?.supportingDocuments?.map((supportDocs) => {
               const uploadedDoc = supportDocs?.submissionDocuments?.uploadedDocs?.[0];
               if (!uploadedDoc?.fileStore) return [];
               return {
@@ -1101,8 +1124,23 @@ const SubmissionsCreate = ({ path }) => {
                   documentTitle: supportDocs?.documentTitle,
                 },
               };
-            }) || []
-          : formdata?.submissionDocuments?.submissionDocuments?.map((item) => {
+            }) || [];
+        } else if (applicationType === "ADVANCEMENT_OR_ADJOURNMENT_APPLICATION") {
+          applicationDocuments =
+            formdata?.supportingDocuments?.uploadedDocs?.map((doc) => {
+              if (!doc?.fileStore) return [];
+              return {
+                fileType: doc?.documentType,
+                fileStore: doc?.fileStore,
+                name: doc?.additionalDetails?.name || "Supporting Document",
+                additionalDetails: {
+                  ...doc?.additionalDetails,
+                },
+              };
+            }) || [];
+        } else {
+          applicationDocuments =
+            formdata?.submissionDocuments?.submissionDocuments?.map((item) => {
               const uploadedDoc = item?.document;
               if (!uploadedDoc?.fileStore) return [];
               return {
@@ -1116,6 +1154,7 @@ const SubmissionsCreate = ({ path }) => {
                 },
               };
             }) || [];
+        }
 
         // const documentres =
         //   (await Promise.all(documentsList?.map((doc, idx) => onDocumentUpload(doc, uploadFileNames?.[idx] || doc?.name, tenantId)))) || [];
@@ -1536,6 +1575,11 @@ const SubmissionsCreate = ({ path }) => {
         setFormdata(updatedFormData);
       }
 
+      if (applicationType && ["ADVANCEMENT_OR_ADJOURNMENT_APPLICATION"].includes(applicationType)) {
+        const updatedFormData = await replaceUploadedDocsWithFile(t, formdata, tenantId);
+        setFormdata(updatedFormData);
+      }
+
       const action = restrictedApplicationTypes.includes(applicationType) ? SubmissionWorkflowAction.SUBMIT : SubmissionWorkflowAction.SAVEDRAFT;
       if (applicationNumber) {
         const res = await submitSubmission({ update: true, action });
@@ -1590,6 +1634,11 @@ const SubmissionsCreate = ({ path }) => {
       setLoader(true);
       if (applicationType && ["SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)) {
         const updatedFormData = await replaceUploadedDocsWithCombinedFile(t, formdata, tenantId);
+        setFormdata(updatedFormData);
+      }
+
+      if (applicationType && ["ADVANCEMENT_OR_ADJOURNMENT_APPLICATION"].includes(applicationType)) {
+        const updatedFormData = await replaceUploadedDocsWithFile(t, formdata, tenantId);
         setFormdata(updatedFormData);
       }
 
@@ -1940,7 +1989,7 @@ const SubmissionsCreate = ({ path }) => {
         <div style={{ minHeight: "550px", overflowY: "auto" }}>
           <FormComposerV2
             label={t("REVIEW_SUBMISSION")}
-            className={"submission-create"}
+            className={"submission-create submission-form-filed-style"}
             secondaryLabel={t("SAVE_AS_DRAFT")}
             showSecondaryLabel={restrictedApplicationTypes?.includes(applicationType) ? false : true}
             onSecondayActionClick={handleSaveDraft}

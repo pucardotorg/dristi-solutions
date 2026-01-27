@@ -1,0 +1,18 @@
+{
+  "tenantId": "kl",
+  "moduleName": "Application",
+  "masterName": "ApplicationType",
+  "mdmsPayload": {
+    "id": "7a1e2bf1-a55c-4811-87c5-0978c029a6d9",
+    "tenantId": "kl",
+    "schemaCode": "Application.ApplicationType",
+    "uniqueIdentifier": "18",
+    "data": {
+      "id": 18,
+      "type": "ADVANCEMENT_OR_ADJOURNMENT_APPLICATION",
+      "isactive": true,
+      "totalAmount": "20"
+    },
+    "isActive": true
+  }
+}

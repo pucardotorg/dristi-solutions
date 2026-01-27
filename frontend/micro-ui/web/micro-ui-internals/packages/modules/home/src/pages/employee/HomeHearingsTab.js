@@ -488,6 +488,15 @@ const HomeHearingsTab = ({
                 search: `?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
                 state: { homeFilteredData: filters },
               }}
+              onClick={() => {
+                localStorage.setItem(
+                  "Digit.homeNextHearingFilter",
+                  JSON.stringify({
+                    homeFilterDate: hearingDetails?.fromDate,
+                    homeHearingNumber: hearingDetails?.hearingNumber,
+                  })
+                );
+              }}
             >
               <span className="case-link">{hearingDetails?.caseTitle || "-"}</span>
             </Link>

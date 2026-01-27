@@ -24,7 +24,7 @@ const fileValidationStatus = (file, regex, maxSize, t, notSupportedError, maxFil
 
   if (!updatedRegex.test(file?.name) && file.size / 1024 / 1024 > maxSize) {
     status.valid = false;
-    status.error = t(`NOT_SUPPORTED_FILE_TYPE_AND_FILE_SIZE_EXCEEDED_5MB`);
+    status.error = t(`NOT_SUPPORTED_FILE_TYPE_AND_FILE_SIZE_EXCEEDED_10MB`);
   }
 
   if (!updatedRegex.test(file?.name)) {
@@ -34,7 +34,7 @@ const fileValidationStatus = (file, regex, maxSize, t, notSupportedError, maxFil
 
   if (file.size / 1024 / 1024 > maxSize) {
     status.valid = false;
-    status.error = t(maxFileErrorMessage ? maxFileErrorMessage : `FILE_SIZE_EXCEEDED_5MB`);
+    status.error = t(maxFileErrorMessage ? maxFileErrorMessage : `FILE_SIZE_EXCEEDED_10MB`);
   }
 
   return status;
