@@ -116,6 +116,7 @@ export const Urls = {
     // Advocate Office Management
     addOfficeMember: "/advocate-office-management/v1/_addMember",
     searchOfficeMember: "/advocate-office-management/v1/_searchMember",
+    leaveOffice: "/advocate-office-management/v1/_leaveOffice",
   },
   case: {
     addWitness: "/case/v1/add/witness",

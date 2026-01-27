@@ -82,6 +82,9 @@ const ManageOffice = () => {
   const [activeTab, setActiveTab] = useState("myAdvocatesClerks");
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState(null);
+  const [isRemovingMember, setIsRemovingMember] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
   const [isSearching, setIsSearching] = useState(false);
@@ -266,6 +269,51 @@ const ManageOffice = () => {
     setShowConfirmModal(false);
     setSearchResult(null);
     setMobileNumber("");
+  };
+
+  const handleDeleteClick = (member) => {
+    setMemberToRemove(member);
+    setShowRemoveMemberModal(true);
+  };
+
+  const handleCloseRemoveModal = () => {
+    setShowRemoveMemberModal(false);
+    setMemberToRemove(null);
+  };
+
+  const handleConfirmRemoveMember = async () => {
+    if (!memberToRemove || !officeAdvocateId) {
+      setToast({ label: t("REMOVE_MEMBER_ERROR") || "Failed to remove member. Please try again.", type: "error" });
+      return;
+    }
+
+    setIsRemovingMember(true);
+    try {
+      const response = await window?.Digit?.DRISTIService?.leaveOffice(
+        {
+          leaveOffice: {
+            id: memberToRemove.id,
+            tenantId: tenantId,
+            officeAdvocateId: officeAdvocateId,
+            memberType: memberToRemove.memberType,
+            memberId: memberToRemove.memberId,
+          },
+        },
+        { tenantId }
+      );
+
+      if (response) {
+        refetchMembers();
+        setToast({ label: t("MEMBER_REMOVED_SUCCESS") || "Member removed successfully", type: "success" });
+      }
+    } catch (error) {
+      console.error("Error removing member:", error);
+      setToast({ label: t("REMOVE_MEMBER_ERROR") || "Failed to remove member. Please try again.", type: "error" });
+    } finally {
+      setIsRemovingMember(false);
+      setShowRemoveMemberModal(false);
+      setMemberToRemove(null);
+    }
   };
 
   return (
@@ -464,6 +512,7 @@ const ManageOffice = () => {
                     {t("MANAGE") || "Manage"}
                   </button>
                   <button
+                    onClick={() => handleDeleteClick(member)}
                     style={{
                       background: "none",
                       border: "none",
@@ -776,6 +825,94 @@ const ManageOffice = () => {
                 }}
               >
                 {isAddingMember ? (t("ADDING") || "Adding...") : (t("CONFIRM") || "Confirm")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Member Confirmation Modal */}
+      {showRemoveMemberModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+          onClick={handleCloseRemoveModal}
+        >
+          <div
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: "4px",
+              padding: "24px",
+              width: "100%",
+              maxWidth: "500px",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", padding: "0 0 16px 0", justifyContent: "space-between", borderBottom: "1px solid #D6D5D4", alignItems: "center", marginBottom: "24px" }}>
+              <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#231F20", margin: 0 }}>
+                {t("REMOVE_MEMBER") || "Remove Member"}
+              </h2>
+              <button
+                onClick={handleCloseRemoveModal}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px",
+                  fontSize: "24px",
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <p style={{ fontSize: "16px", color: "#3D3C3C", marginBottom: "24px" }}>
+              {t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?"}
+            </p>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "16px" }}>
+              <button
+                onClick={handleCloseRemoveModal}
+                style={{
+                  padding: "12px 24px",
+                  backgroundColor: "#FFFFFF",
+                  color: "#231F20",
+                  border: "1px solid #D6D5D4",
+                  borderRadius: "4px",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                }}
+              >
+                {t("CANCEL") || "Cancel"}
+              </button>
+              <button
+                onClick={handleConfirmRemoveMember}
+                disabled={isRemovingMember}
+                style={{
+                  padding: "12px 24px",
+                  backgroundColor: isRemovingMember ? "#D6D5D4" : "#D4351C",
+                  color: "#FFFFFF",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                  cursor: isRemovingMember ? "not-allowed" : "pointer",
+                }}
+              >
+                {isRemovingMember ? (t("REMOVING") || "Removing...") : (t("REMOVE_MEMBER") || "Remove Member")}
               </button>
             </div>
           </div>

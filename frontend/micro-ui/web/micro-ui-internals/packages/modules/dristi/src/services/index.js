@@ -651,4 +651,12 @@ export const DRISTIService = {
       data,
       params,
     }),
+  leaveOffice: (data, params) =>
+    Request({
+      url: Urls.dristi.leaveOffice,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
 };
