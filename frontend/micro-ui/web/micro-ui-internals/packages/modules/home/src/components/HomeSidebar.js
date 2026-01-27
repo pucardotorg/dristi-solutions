@@ -72,16 +72,18 @@ const HomeSidebar = ({
       {Object?.keys(options)?.length > 0 && (
         <HomeAccordian title={t("PENDING_TASKS_TAB")} defaultOpen>
           {!isOptionsLoading &&
-            Object?.keys(options)?.map((key, index) => (
-              <SidebarItem
-                t={t}
-                key={index}
-                label={options[key]?.name}
-                count={pendingTaskCount[key]}
-                active={activeTab === key}
-                onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
-              />
-            ))}
+            Object?.keys(options)?.map((key, index) => {
+              return (
+                <SidebarItem
+                  t={t}
+                  key={index}
+                  label={options[key]?.name}
+                  count={pendingTaskCount[key]}
+                  active={activeTab === key}
+                  onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
+                />
+              );
+            })}
         </HomeAccordian>
       )}
 

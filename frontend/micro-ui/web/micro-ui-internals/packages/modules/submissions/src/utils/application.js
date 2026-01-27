@@ -131,6 +131,33 @@ export const replaceUploadedDocsWithCombinedFile = async (t, formData, tenantId)
   return formData;
 };
 
+export const replaceUploadedDocsWithFile = async (t, formData, tenantId) => {
+  if (formData?.supportingDocuments?.uploadedDocs?.length > 0) {
+    const hasFileTypeDoc = formData?.supportingDocuments?.uploadedDocs?.some((doc) => doc instanceof File || (doc.file && doc.file instanceof File));
+    if (hasFileTypeDoc) {
+      try {
+        const combinedDocName = `${t("SUPPORTING_DOCS")}`;
+        let combinedDocumentFile;
+        if (Array.isArray(formData?.supportingDocuments?.uploadedDocs) && formData?.supportingDocuments?.uploadedDocs?.length > 1) {
+          combinedDocumentFile = await combineMultipleFiles(formData.supportingDocuments.uploadedDocs, combinedDocName, "submissionDocuments");
+        } else {
+          combinedDocumentFile = formData?.supportingDocuments?.uploadedDocs;
+        }
+        const docs = await onDocumentUpload(combinedDocumentFile?.[0], combinedDocName, tenantId);
+        const file = {
+          documentType: docs?.fileType,
+          fileStore: docs?.file?.files?.[0]?.fileStoreId,
+          additionalDetails: { name: docs?.filename || combinedDocName },
+        };
+        formData.supportingDocuments.uploadedDocs = [file];
+      } catch (error) {
+        console.error("Error combining or uploading documents for production documents:", error);
+        throw new Error("Failed to combine and update uploaded documents.");
+      }
+    }
+  }
+};
+
 export const handleDocumentUploadValidation = (
   t,
   formData,
