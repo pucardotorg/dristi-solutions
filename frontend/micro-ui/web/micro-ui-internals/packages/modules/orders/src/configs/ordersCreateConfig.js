@@ -883,40 +883,13 @@ export const configsOrderTranferToADR = [
           name: "mediationCentre",
           optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%", paddingBottom: "8px" },
+          styles: { maxWidth: "100%" },
           required: true,
           isMandatory: true,
           options: [
             {
               code: "KOLLAM_MEDIATION_CENTRE",
               name: "KOLLAM_MEDIATION_CENTRE",
-            },
-          ],
-        },
-      },
-      {
-        label: "MODE_OF_MEDIATION_SIGNING",
-        isMandatory: true,
-        key: "modeOfSigning",
-        schemaKeyPath: "orderDetails.modeOfSigning",
-        transformer: "customDropdown",
-        type: "radio",
-        populators: {
-          name: "modeOfSigning",
-          optionsKey: "code",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          required: true,
-          isMandatory: true,
-          styles: { marginBottom: "16px", paddingBottom: "14px" },
-          customStyle: { marginBottom: "0px" },
-          options: [
-            {
-              code: "E_SIGN",
-              name: "INITIATE_E-SIGN",
-            },
-            {
-              code: "UPLOAD_SIGNED_COPY",
-              name: "INITIATE_UPLOAD",
             },
           ],
         },
@@ -6236,7 +6209,7 @@ export const configAcceptReschedulingRequest = [
           inputs: [
             {
               name: "newHearingDate",
-              options:[],
+              options: [],
               validation: {
                 minDate: "2024-03-17",
               },

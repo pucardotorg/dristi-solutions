@@ -117,7 +117,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         />
         <PrivateRoute exact path={`${path}/home-pending-task/home-schedule-hearing`} component={() => <ScheduleHearing />} />
         <PrivateRoute exact path={`${path}/home-pending-task/home-set-next-hearing`} component={() => <ScheduleNextHearing />} />
-        <PrivateRoute exact path={`${path}/home-pending-task`} component={() => <HomeView></HomeView>} />
+        <PrivateRoute exact path={`${path}/home-pending-task`} component={HomeView} />
         <PrivateRoute exact path={`${path}/home-screen`} component={() => <MainHomeScreen></MainHomeScreen>} />
         {/* <PrivateRoute path={`${path}/bulk-esign-order`} component={() => <BulkESignView></BulkESignView>} /> */}
         {/* <PrivateRoute path={`${path}/dashboard/adiary`} component={() => <ADiaryPage></ADiaryPage>} /> */}
