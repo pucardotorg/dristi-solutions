@@ -165,6 +165,7 @@ function CitizenHome({ tenantId, setHideBack }) {
         <TakeUserToRegistration
           message={isRejected ? `${t("CS_REJECT_MESSAGE")} due to ${rejectionReason}. ${t("KINDLY_REGISTER_AGAIN")}` : t("CS_REGISTRATION_MESSAGE")}
           isRejected={isRejected}
+          isLitigantPartialRegistered={isLitigantPartialRegistered}
           data={data}
           advocate={searchResult?.[0]}
         />
