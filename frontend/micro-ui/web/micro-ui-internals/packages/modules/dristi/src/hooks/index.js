@@ -39,6 +39,7 @@ import useFetchBill from "./dristi/useFetchBill.js";
 import { useSurveyManager } from "./dristi/useSurveyManager.js";
 import useSearchTaskMangementService from "./dristi/useSearchTaskMangementService.js";
 import useSortedMDMSData from "./dristi/useSortedMDMSData.js";
+import useSearchOfficeMember from "./dristi/useSearchOfficeMember.js";
 
 export const Urls = {
   Authenticate: "/user/oauth/token",
@@ -114,6 +115,7 @@ export const Urls = {
     searchBailBonds: "/bail-bond/v1/_search",
     // Advocate Office Management
     addOfficeMember: "/advocate-office-management/v1/_addMember",
+    searchOfficeMember: "/advocate-office-management/v1/_searchMember",
   },
   case: {
     addWitness: "/case/v1/add/witness",
@@ -177,6 +179,7 @@ const dristi = {
   useSurveyManager,
   useSearchTaskMangementService,
   useSortedMDMSData,
+  useSearchOfficeMember,
 };
 
 const Hooks = {

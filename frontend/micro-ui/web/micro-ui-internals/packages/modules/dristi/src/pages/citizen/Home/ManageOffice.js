@@ -60,6 +60,25 @@ const ManageOffice = () => {
   const officeAdvocateId = useMemo(() => {
     return userInfo?.uuid;
   }, [userInfo]);
+
+  // Fetch office members using the hook
+  const { data: officeMembersData, isLoading: isLoadingMembers, refetch: refetchMembers } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
+    {
+      searchCriteria: {
+        officeAdvocateId: officeAdvocateId,
+        tenantId: tenantId,
+      },
+    },
+    { tenantId },
+    officeAdvocateId,
+    Boolean(officeAdvocateId && tenantId)
+  );
+
+  // Extract members from the API response
+  const officeMembers = useMemo(() => {
+    return officeMembersData?.members || [];
+  }, [officeMembersData]);
+
   const [activeTab, setActiveTab] = useState("myAdvocatesClerks");
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -70,7 +89,6 @@ const ManageOffice = () => {
   const [searchResult, setSearchResult] = useState(null);
   const [searchError, setSearchError] = useState(null);
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
-  const [addedMembers, setAddedMembers] = useState([]);
   const [toast, setToast] = useState(null);
 
   const tabs = [
@@ -214,15 +232,8 @@ const ManageOffice = () => {
       );
 
       if (response) {
-        // Add to local state for display
-        setAddedMembers((prev) => [
-          ...prev,
-          {
-            ...searchResult,
-            id: response?.addMember?.id || Date.now(),
-            accessType: "All Cases",
-          },
-        ]);
+        // Refetch members to get updated list from API
+        refetchMembers();
         setToast({ label: t("MEMBER_ADDED_SUCCESS") || "Member added successfully", type: "success" });
       }
     } catch (error) {
@@ -245,9 +256,11 @@ const ManageOffice = () => {
     console.log("Searching for:", memberSearchQuery);
   };
 
-  const filteredMembers = addedMembers.filter((member) =>
-    member.name.toLowerCase().includes(memberSearchQuery.toLowerCase())
-  );
+  const filteredMembers = useMemo(() => {
+    return officeMembers.filter((member) =>
+      (member.memberName || "").toLowerCase().includes(memberSearchQuery.toLowerCase())
+    );
+  }, [officeMembers, memberSearchQuery]);
 
   const handleCloseConfirmModal = () => {
     setShowConfirmModal(false);
@@ -364,7 +377,20 @@ const ManageOffice = () => {
         </div>
 
         {/* Members List or Empty State */}
-        {filteredMembers.length > 0 ? (
+        {isLoadingMembers ? (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "60px 20px",
+            }}
+          >
+            <p style={{ fontSize: "16px", color: "#77787B" }}>
+              {t("LOADING") || "Loading..."}
+            </p>
+          </div>
+        ) : filteredMembers.length > 0 ? (
           <div>
             {/* Table Header */}
             <div
@@ -387,7 +413,7 @@ const ManageOffice = () => {
             {/* Table Rows */}
             {filteredMembers.map((member) => (
               <div
-                key={member.id}
+                key={member.id || member.memberId}
                 style={{
                   display: "grid",
                   gridTemplateColumns: "1.5fr 1.5fr 1fr 1fr 1.5fr",
@@ -405,10 +431,10 @@ const ManageOffice = () => {
                     cursor: "pointer",
                   }}
                 >
-                  {member.name}
+                  {member.memberName}
                 </span>
-                <span>{member.mobileNumber}</span>
-                <span>{member.designation}</span>
+                <span>{member.memberMobileNumber}</span>
+                <span>{member.memberType === "ADVOCATE_CLERK" ? "Clerk" : member.memberType === "ADVOCATE" ? "Advocate" : member.memberType}</span>
                 <span>
                   <span
                     style={{
@@ -419,7 +445,7 @@ const ManageOffice = () => {
                       fontWeight: "500",
                     }}
                   >
-                    {member.accessType || t("ALL_CASES") || "All Cases"}
+                    {member.accessType === "ALL_CASES" ? t("ALL_CASES") || "All Cases" : member.accessType}
                   </span>
                 </span>
                 <span style={{ display: "flex", alignItems: "center", gap: "16px" }}>

@@ -643,4 +643,12 @@ export const DRISTIService = {
       data,
       params,
     }),
+  searchOfficeMember: (data, params) =>
+    Request({
+      url: Urls.dristi.searchOfficeMember,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
 };
