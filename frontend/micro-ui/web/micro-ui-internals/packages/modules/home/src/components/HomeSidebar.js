@@ -37,7 +37,7 @@ const HomeSidebar = ({
 
   return (
     <div className="home-sidebar">
-      <HomeHeader t={t} userInfo={userInfo} roles={roles} />
+      <HomeHeader t={t} userInfo={userInfo} roles={roles} activeTab={activeTab} onTabChange={onTabChange} />
       {(hasViewTodaysHearingsAccess || hasViewBulkRescheduleHearingsAccess || hasViewScheduleHearingsAccess) && (
         <HomeAccordian title={t("HEARINGS_TAB")} defaultOpen>
           {hasViewTodaysHearingsAccess && (

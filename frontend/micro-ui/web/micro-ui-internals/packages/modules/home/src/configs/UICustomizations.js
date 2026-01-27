@@ -1180,4 +1180,56 @@ export const UICustomizations = {
       }
     },
   },
+
+  templateOrConfigurationHomeConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const entityType = "Order";
+      const caseTitle = requestCriteria?.state?.searchForm?.caseTitle;
+      const status = requestCriteria?.state?.searchForm?.status;
+      const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+
+      const moduleSearchCriteria = {
+        entityType,
+        tenantId,
+        ...(caseTitle && { caseTitle }),
+        status: status?.type,
+        ...(startOfTheDay && {
+          startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
+          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
+        }),
+        ...(courtId && { courtId }),
+      };
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: 10,
+            offset: 0,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const dummyData = [{ srNo: 1, title: "Template Configuration", dateCreated: "01-01-2024", action: "Configure Templates" }];
+            return { data: dummyData, totalCount: 1 };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "TEMPLATE_OR_PROCESS_TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        default:
+          return value || "";
+      }
+    },
+  },
 };

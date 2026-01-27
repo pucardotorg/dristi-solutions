@@ -25,6 +25,7 @@ import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } fro
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
+import TemplateOrConfigurationPage from "./TemplateOrConfigurationPage";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -1150,7 +1151,11 @@ const MainHomeScreen = () => {
           pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount }}
           showToast={showToast}
         />
-        {activeTab === "TOTAL_HEARINGS_TAB" ? (
+        {activeTab === "TEMPLATE_OR_CONFIGURATION" ? (
+          <div className="home-bulk-sign">
+            <TemplateOrConfigurationPage />
+          </div>
+        ) : activeTab === "TOTAL_HEARINGS_TAB" ? (
           <div className="home-bulk-reschedule">
             <HomeHearingsTab
               t={t}
