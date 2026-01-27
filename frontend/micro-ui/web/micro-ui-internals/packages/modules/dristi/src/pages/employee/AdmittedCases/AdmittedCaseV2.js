@@ -3498,6 +3498,9 @@ const AdmittedCaseV2 = () => {
                                     value: "NEXT_HEARING",
                                   })
                                 }
+                                style={{
+                                  boxShadow: "none",
+                                }}
                               />
                             )}
                             <ActionButton
