@@ -215,16 +215,16 @@ public class PdfEmbedder {
             // Create stamper for signature
             PdfStamper stamper = PdfStamper.createSignature(reader, baos, '\0', null, true);
             PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
-            
+
             // Get field name (use first placeholder if map is provided)
             String fieldName = getFieldName(eSignParameter, pages);
             log.info("Multi-page signing: field name = {}", fieldName);
 
-            // For multi-page signing with iText, we use the first page for the signature field
-            // and add visual annotations on other pages
-            Rectangle invisibleRect = new Rectangle(0, 0);
-            appearance.setVisibleSignature(invisibleRect, 0, fieldName);
-            log.info("Created invisible document-level signature field: {}", fieldName);
+            // Create invisible document-level signature field
+            // Using page 1 with zero-size rectangle (page 0 is invalid in PDF spec)
+            Rectangle invisibleRect = new Rectangle(0, 0, 0, 0);
+            appearance.setVisibleSignature(invisibleRect, 1, fieldName);
+            log.info("Created invisible document-level signature field: {} on page 1", fieldName);
 
             // For additional pages, add stamp annotations only if they have placeholders
             for (Integer pageNumber : pages) {
