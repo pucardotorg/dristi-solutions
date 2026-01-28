@@ -15,7 +15,7 @@ serviceMaps:
         - query: |
             INSERT INTO dristi_template_configuration (
               id, tenant_id, court_id, filing_number, is_active, 
-              process_title, is_cover_letter_required, addressee, 
+              process_title, process_text, addressee_name, is_cover_letter_required, addressee, 
               order_text, cover_letter_text, created_by, created_time, 
               last_modified_by, last_modified_time
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
@@ -27,6 +27,8 @@ serviceMaps:
             - jsonPath: $.templateConfiguration.filingNumber
             - jsonPath: $.templateConfiguration.isActive
             - jsonPath: $.templateConfiguration.processTitle
+            - jsonPath: $.templateConfiguration.processText
+            - jsonPath: $.templateConfiguration.addresseeName
             - jsonPath: $.templateConfiguration.isCoverLetterRequired
             - jsonPath: $.templateConfiguration.addressee
             - jsonPath: $.templateConfiguration.orderText
@@ -57,6 +59,8 @@ serviceMaps:
               process_title = ?, 
               is_cover_letter_required = ?, 
               addressee = ?, 
+              process_text = ?, 
+              addressee_name = ?, 
               order_text = ?, 
               cover_letter_text = ?, 
               last_modified_by = ?, 
@@ -71,6 +75,8 @@ serviceMaps:
             - jsonPath: $.templateConfiguration.processTitle
             - jsonPath: $.templateConfiguration.isCoverLetterRequired
             - jsonPath: $.templateConfiguration.addressee
+            - jsonPath: $.templateConfiguration.processText
+            - jsonPath: $.templateConfiguration.addresseeName
             - jsonPath: $.templateConfiguration.orderText
             - jsonPath: $.templateConfiguration.coverLetterText
             - jsonPath: $.templateConfiguration.auditDetails.lastModifiedBy

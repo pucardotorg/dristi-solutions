@@ -16,7 +16,7 @@ import static org.pucar.dristi.config.ServiceConstants.TEMPLATE_SEARCH_EXCEPTION
 public class TemplateConfigurationQueryBuilder {
 
     private static final String BASE_TEMPLATE_QUERY = " SELECT tc.id as id, tc.tenant_id as tenant_id, tc.filing_number as filing_number, " +
-            "tc.court_id as court_id, tc.is_active as is_active, tc.process_title as process_title, " +
+            "tc.court_id as court_id, tc.is_active as is_active, tc.process_title as process_title, tc.process_text as process_text, tc.addressee_name as addressee_name," +
             "tc.is_cover_letter_required as is_cover_letter_required, tc.addressee as addressee, " +
             "tc.order_text as order_text, tc.cover_letter_text as cover_letter_text, " +
             "tc.created_by as created_by, tc.created_time as created_time, " +

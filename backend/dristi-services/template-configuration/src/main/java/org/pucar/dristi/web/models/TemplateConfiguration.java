@@ -40,6 +40,12 @@ public class TemplateConfiguration {
     @JsonProperty("processTitle")
     private String processTitle = null;
 
+    @JsonProperty("processText")
+    private String processText = null;
+
+    @JsonProperty("addresseeName")
+    private String addresseeName = null;
+
     @JsonProperty("isCoverLetterRequired")
     @Valid
     private Boolean isCoverLetterRequired = false;
