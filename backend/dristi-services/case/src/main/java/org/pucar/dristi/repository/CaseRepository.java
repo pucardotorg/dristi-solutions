@@ -128,18 +128,15 @@ public class CaseRepository {
                 preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),
                 advocateOfficeCaseMemberRowMapper);
 
-        Map<String, List<AdvocateOfficeCaseMember>> rowsByCaseId = Objects.requireNonNull(rows).stream()
-                .collect(Collectors.groupingBy(r -> r.getCaseId().toString()));
+        Map<String, List<AdvocateOfficeCaseMember>> rowsByOfficeAdvocateId = Objects.requireNonNull(rows)
+                .stream()
+                .collect(Collectors.groupingBy(r -> r.getOfficeAdvocateId().toString()));
 
         caseCriteria.getResponseList().forEach(courtCase -> {
             if (courtCase.getRepresentatives() == null || courtCase.getRepresentatives().isEmpty()) {
                 return;
             }
 
-            Map<String, List<AdvocateOfficeCaseMember>> rowsByOfficeAdvocateId = rowsByCaseId
-                    .getOrDefault(courtCase.getId().toString(), List.of())
-                    .stream()
-                    .collect(Collectors.groupingBy(r -> r.getOfficeAdvocateId().toString()));
 
             Map<String, AdvocateOffice> officeMap = new LinkedHashMap<>();
             for (AdvocateMapping rep : courtCase.getRepresentatives()) {
@@ -148,21 +145,43 @@ public class CaseRepository {
                     continue;
                 }
 
+                List<AdvocateOfficeCaseMember> officeRows = rowsByOfficeAdvocateId.getOrDefault(advocateId, List.of());
+
                 AdvocateOffice office = officeMap.computeIfAbsent(advocateId, k -> AdvocateOffice.builder()
                         .officeAdvocateId(advocateId)
                         .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(objectMapper, rep))
                         .build());
-
-                List<AdvocateOfficeCaseMember> officeRows = rowsByOfficeAdvocateId.getOrDefault(advocateId, List.of());
-                List<AdvocateOfficeMember> members = officeRows.stream()
+                // Separate advocates and clerks based on memberType
+                List<AdvocateOfficeMember> advocates = officeRows.stream()
+                        .filter(r -> "ADVOCATE".equals(r.getMemberType().toString()))
                         .map(r -> AdvocateOfficeMember.builder()
-                                .memberId(r.getId() == null ? null : r.getId().toString())
+                                .id(r.getId().toString())
+                                .tenantId(r.getTenantId())
+                                .caseId(r.getCaseId().toString())
+                                .memberId(r.getMemberId().toString())
                                 .memberName(r.getMemberName())
                                 .memberType(r.getMemberType())
+                                .isActive(r.getIsActive())
+                                .auditDetails(r.getAuditDetails())
                                 .build())
                         .collect(Collectors.toList());
 
-                office.setMembers(members);
+                List<AdvocateOfficeMember> clerks = officeRows.stream()
+                        .filter(r -> "ADVOCATE_CLERK".equals(r.getMemberType().toString()))
+                        .map(r -> AdvocateOfficeMember.builder()
+                                .id(r.getId().toString())
+                                .tenantId(r.getTenantId())
+                                .caseId(r.getCaseId().toString())
+                                .memberId(r.getMemberId().toString())
+                                .memberName(r.getMemberName())
+                                .memberType(r.getMemberType())
+                                .isActive(r.getIsActive())
+                                .auditDetails(r.getAuditDetails())
+                                .build())
+                        .collect(Collectors.toList());
+
+                office.setAdvocates(advocates);
+                office.setClerks(clerks);
             }
 
             courtCase.setAdvocateOffices(new ArrayList<>(officeMap.values()));

@@ -525,8 +525,7 @@ public class CaseQueryBuilder {
 
             boolean firstCriteria = true;
             if (caseIds != null && !caseIds.isEmpty()) {
-                query.append(firstCriteria ? " WHERE " : AND);
-                query.append("aocm.case_id IN (")
+                query.append(" WHERE aocm.case_id IN (")
                         .append(caseIds.stream().map(id -> "?").collect(Collectors.joining(",")))
                         .append(")");
                 preparedStmtList.addAll(caseIds);

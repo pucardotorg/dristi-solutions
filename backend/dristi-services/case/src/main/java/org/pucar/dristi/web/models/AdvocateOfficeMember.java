@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.egov.common.contract.models.AuditDetails;
 import org.pucar.dristi.web.models.enums.MemberType;
 import org.springframework.validation.annotation.Validated;
 
@@ -14,6 +15,15 @@ import org.springframework.validation.annotation.Validated;
 @NoArgsConstructor
 @Builder
 public class AdvocateOfficeMember {
+
+    @JsonProperty("id")
+    private String id = null;
+
+    @JsonProperty("tenantId")
+    private String tenantId = null;
+
+    @JsonProperty("caseId")
+    private String caseId = null;
 
     @JsonProperty("memberId")
     private String memberId = null;
@@ -26,4 +36,7 @@ public class AdvocateOfficeMember {
 
     @JsonProperty("isActive")
     private Boolean isActive = null;
+
+    @JsonProperty("auditDetails")
+    private AuditDetails auditDetails;
 }

@@ -20,27 +20,20 @@ import java.util.UUID;
 @Builder
 public class AdvocateOffice {
 
-    @JsonProperty("id")
-    private UUID id;
-
     @JsonProperty("officeAdvocateId")
     private String officeAdvocateId = null;
 
     @JsonProperty("officeAdvocateName")
     private String officeAdvocateName = null;
 
-    @JsonProperty("tenantId")
-    private String tenantId = null;
-
-    @JsonProperty("caseId")
-    private String caseId = null;
-
-    @JsonProperty("members")
+    @JsonProperty("advocates")
     @Valid
     @Builder.Default
-    private List<AdvocateOfficeMember> members = new ArrayList<>();
+    private List<AdvocateOfficeMember> advocates = new ArrayList<>();
 
-    @JsonProperty("auditDetails")
-    private AuditDetails auditDetails;
+    @JsonProperty("clerks")
+    @Valid
+    @Builder.Default
+    private List<AdvocateOfficeMember> clerks = new ArrayList<>();
 
 }
