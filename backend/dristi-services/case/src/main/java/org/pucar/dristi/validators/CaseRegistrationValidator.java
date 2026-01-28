@@ -15,6 +15,7 @@ import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.LockUtil;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.v2.CaseSummaryListRequest;
 import org.pucar.dristi.web.models.v2.Emails;
 import org.pucar.dristi.web.models.v2.PartyType;
 import org.pucar.dristi.web.models.v2.PhoneNumbers;
@@ -686,4 +687,16 @@ public class CaseRegistrationValidator {
         }
 
     }
+
+    public void validateCaseSummaryList(CaseSummaryListRequest caseSummaryListRequest) {
+        boolean isAdvocateOrClerk = caseSummaryListRequest.getRequestInfo().getUserInfo().getRoles()
+                .stream()
+                .anyMatch(role -> List.of(ADVOCATE_ROLE, ADVOCATE_CLERK_ROLE).contains(role.getCode()));
+
+        if(isAdvocateOrClerk && caseSummaryListRequest.getCriteria().getOfficeAdvocateId() == null){
+            throw new CustomException(VALIDATION_ERR,
+                    "Office advocate id is a mandatory search criteria for advocates and clerks");
+        }
+    }
+
 }
