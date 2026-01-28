@@ -67,6 +67,16 @@ public class TemplateConfigurationService {
     public TemplateConfiguration updateTemplateConfiguration(TemplateConfigurationRequest body) {
 
         try {
+            if (body.getTemplateConfiguration().getId()==null)
+                throw new CustomException(TEMPLATE_UPDATE_EXCEPTION, "template id is mandatory");
+
+            TemplateConfigurationCriteria criteria = new TemplateConfigurationCriteria();
+            criteria.setId(body.getTemplateConfiguration().getId().toString());
+            List<TemplateConfiguration> templateConfigurations = templateConfigurationRepository.getTemplateConfigurations(criteria, null);
+
+            if (CollectionUtils.isEmpty(templateConfigurations))
+                throw new CustomException(TEMPLATE_UPDATE_EXCEPTION, "Invalid template id");
+
             enrichmentUtil.enrichTemplateConfigurationOnUpdate(body);
 
             producer.push(config.getUpdateTemplateConfigurationKafkaTopic(), body);
