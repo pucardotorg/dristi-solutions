@@ -2,7 +2,6 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
@@ -10,9 +9,7 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.repository.CaseRepositoryV2;
-import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.*;
-import org.pucar.dristi.validators.CaseRegistrationValidator;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.pucar.dristi.config.ServiceConstants.SEARCH_CASE_ERR;
 
@@ -35,29 +31,19 @@ public class CaseServiceV2 {
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final ObjectMapper objectMapper;
     private final CacheService cacheService;
-    private final ServiceRequestRepository serviceRequestRepository;
-    private final CaseRegistrationValidator validator;
-    private final AdvocateUtil advocateUtil;
-    private final IndividualUtil individualUtil;
 
     @Autowired
     public CaseServiceV2(CaseRegistrationEnrichment enrichmentUtil,
                          CaseRepositoryV2 caseRepository,
                          Configuration config,
                          EncryptionDecryptionUtil encryptionDecryptionUtil,
-                         ObjectMapper objectMapper, CacheService cacheService,
-                         ServiceRequestRepository serviceRequestRepository, CaseRegistrationValidator validator,
-                         AdvocateUtil advocateUtil, IndividualUtil individualUtil) {
+                         ObjectMapper objectMapper, CacheService cacheService) {
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
         this.config = config;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.objectMapper = objectMapper;
         this.cacheService = cacheService;
-        this.serviceRequestRepository = serviceRequestRepository;
-        this.validator = validator;
-        this.advocateUtil = advocateUtil;
-        this.individualUtil = individualUtil;
     }
 
     public CourtCase searchCases(CaseSearchRequestV2 caseSearchRequests) {
@@ -144,23 +130,7 @@ public class CaseServiceV2 {
 
     public List<CaseSummaryList> searchCasesList(CaseSummaryListRequest caseListRequest) {
 
-        validator.validateCaseSummaryList(caseListRequest);
         enrichmentUtil.enrichCaseSearchRequest(caseListRequest);
-
-        CaseSummaryListCriteria criteria = caseListRequest.getCriteria();
-        RequestInfo requestInfo = caseListRequest.getRequestInfo();
-
-        String officeAdvocateId = criteria.getOfficeAdvocateId();
-
-        if (officeAdvocateId != null) {
-
-            // If user uuid is not equal to officeAdvocateId, verify if user is present the advocate's office
-            if(!officeAdvocateId.equals(requestInfo.getUserInfo().getUuid())){
-                validateMemberAccessForAdvocate(requestInfo, officeAdvocateId);
-            }
-
-            enrichAdvocateIdForCaseSummaryList(caseListRequest, officeAdvocateId);
-        }
 
         List<CaseSummaryList> caseSummaryLists =  caseRepository.getCaseList(caseListRequest);
         caseSummaryLists.forEach(caseSummaryList -> {
@@ -168,67 +138,6 @@ public class CaseServiceV2 {
             caseSummaryList.setPendingAdvocateRequests(null);
         });
         return caseSummaryLists;
-    }
-
-    private void validateMemberAccessForAdvocate(RequestInfo requestInfo, String officeAdvocateId) {
-        StringBuilder uri = new StringBuilder(config.getAdvocateOfficeHost())
-                .append(config.getAdvocateOfficeSearchMemberEndpoint());
-
-        MemberSearchRequest memberSearchRequest = MemberSearchRequest.builder()
-                .requestInfo(requestInfo)
-                .searchCriteria(MemberSearchCriteria.builder()
-                        .officeAdvocateId(UUID.fromString(officeAdvocateId))
-                        .memberId(UUID.fromString(requestInfo.getUserInfo().getUuid()))
-                        .build())
-                .build();
-
-        Object response = serviceRequestRepository.fetchResult(uri, memberSearchRequest);
-        MemberSearchResponse memberResponse = objectMapper.convertValue(response, MemberSearchResponse.class);
-
-        if (memberResponse.getMembers() == null || memberResponse.getMembers().isEmpty()) {
-            throw new CustomException("ACCESS_DENIED",
-                    String.format("User %s is not an active member of advocate %s's office",
-                            requestInfo.getUserInfo().getUuid(), officeAdvocateId));
-        }
-    }
-
-    private void enrichAdvocateIdForCaseSummaryList(CaseSummaryListRequest caseSummaryListRequest, String officeAdvocateId) {
-        RequestInfo requestInfo = caseSummaryListRequest.getRequestInfo();
-        CaseSummaryListCriteria criteria = caseSummaryListRequest.getCriteria();
-
-        StringBuilder individualUri = new StringBuilder(config.getIndividualHost())
-                .append(config.getIndividualPath());
-
-        IndividualSearchRequest individualRequest = new IndividualSearchRequest();
-        individualRequest.setRequestInfo(requestInfo);
-        individualRequest.setIndividual(
-                IndividualSearch
-                        .builder()
-                        .userUuid(List.of(officeAdvocateId))
-                        .build()
-        );
-
-        JsonObject individualResponse = individualUtil.getIndividual(individualRequest, individualUri);
-        if (individualResponse == null || individualResponse.get("individualId") == null) {
-            throw new CustomException("ADVOCATE_NOT_FOUND",
-                    String.format("officeAdvocateId %s is not present in individual table", officeAdvocateId));
-        }
-
-        String individualId = individualResponse.get("individualId").getAsString();
-
-        List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
-        if (advocates.isEmpty()) {
-            throw new CustomException("ADVOCATE_NOT_FOUND",
-                    String.format("officeAdvocateId %s does not belong to any advocate", officeAdvocateId));
-        }
-
-        if(!advocates.get(0).getIsActive()){
-            throw new CustomException("ADVOCATE_NOT_ACTIVE",
-                    String.format("Advocate with officeAdvocateId (uuid) %s is inactive", officeAdvocateId));
-        }
-
-        String advocateId = String.valueOf(advocates.get(0).getId());
-        criteria.setAdvocateId(advocateId);
     }
 
     private void enrichAdvocateJoinedStatus(CaseSummaryList caseSummary, String advocateId) {
