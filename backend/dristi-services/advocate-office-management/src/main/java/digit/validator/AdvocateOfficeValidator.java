@@ -70,18 +70,18 @@ public class AdvocateOfficeValidator {
 
         UUID userUuidAsUuid = UUID.fromString(request.getRequestInfo().getUserInfo().getUuid());
 
-        if (!addMember.getOfficeAdvocateId().equals(userUuidAsUuid)) {
+        if (!addMember.getOfficeAdvocateUserUuid().equals(userUuidAsUuid)) {
             throw new CustomException(UNAUTHORIZED, CANNOT_ADD_MEMBER_MESSAGE);
         }
 
-        validateAdvocate(request.getRequestInfo(), addMember.getTenantId(), addMember.getOfficeAdvocateId().toString());
+        validateAdvocate(request.getRequestInfo(), addMember.getTenantId(), addMember.getOfficeAdvocateUserUuid().toString());
 
-        validateMember(request.getRequestInfo(), addMember.getTenantId(), addMember.getMemberType(), addMember.getMemberId().toString());
+        validateMember(request.getRequestInfo(), addMember.getTenantId(), addMember.getMemberType(), addMember.getMemberUserUuid().toString());
 
         // Check if member already exists in the office
         MemberSearchCriteria searchCriteria = MemberSearchCriteria.builder()
-                .officeAdvocateId(addMember.getOfficeAdvocateId())
-                .memberId(addMember.getMemberId())
+                .officeAdvocateId(addMember.getOfficeAdvocateUserUuid())
+                .memberId(addMember.getMemberUserUuid())
                 .build();
 
         List<AddMember> existingMembers = advocateOfficeRepository.getMembers(searchCriteria, null);
@@ -98,7 +98,7 @@ public class AdvocateOfficeValidator {
 
         UUID userUuidAsUuid = UUID.fromString(request.getRequestInfo().getUserInfo().getUuid());
 
-        boolean isUserAdvocate = leaveOffice.getOfficeAdvocateId().equals(userUuidAsUuid);
+        boolean isUserAdvocate = leaveOffice.getOfficeAdvocateUserUuid().equals(userUuidAsUuid);
         boolean isUserMember = leaveOffice.getMemberId().equals(userUuidAsUuid);
         if (!isUserAdvocate && !isUserMember) {
             throw new CustomException(UNAUTHORIZED, CANNOT_LEAVE_OFFICE_MESSAGE);
@@ -106,7 +106,7 @@ public class AdvocateOfficeValidator {
 
         // Check if member exists in the office
         MemberSearchCriteria searchCriteria = MemberSearchCriteria.builder()
-                .officeAdvocateId(leaveOffice.getOfficeAdvocateId())
+                .officeAdvocateId(leaveOffice.getOfficeAdvocateUserUuid())
                 .memberId(leaveOffice.getMemberId())
                 .build();
 

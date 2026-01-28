@@ -62,8 +62,8 @@ class AdvocateOfficeValidatorTest {
         AddMember addMember = AddMember.builder()
                 .id(UUID.randomUUID())
                 .tenantId("pg.citya")
-                .officeAdvocateId(officeAdvocateId)
-                .memberId(memberId)
+                .officeAdvocateUserUuid(officeAdvocateId)
+                .memberUserUuid(memberId)
                 .memberType(MemberType.ADVOCATE_CLERK)
                 .memberName("John Doe")
                 .memberMobileNumber("9876543210")
@@ -81,7 +81,7 @@ class AdvocateOfficeValidatorTest {
         LeaveOffice leaveOffice = LeaveOffice.builder()
                 .id(UUID.randomUUID())
                 .tenantId("pg.citya")
-                .officeAdvocateId(officeAdvocateId)
+                .officeAdvocateUserUuid(officeAdvocateId)
                 .memberId(memberId)
                 .isActive(false)
                 .build();
@@ -171,8 +171,8 @@ class AdvocateOfficeValidatorTest {
         List<AddMember> existingMembers = Collections.singletonList(
                 AddMember.builder()
                         .id(UUID.randomUUID())
-                        .officeAdvocateId(officeAdvocateId)
-                        .memberId(memberId)
+                        .officeAdvocateUserUuid(officeAdvocateId)
+                        .memberUserUuid(memberId)
                         .build()
         );
         when(advocateOfficeRepository.getMembers(any(), any())).thenReturn(existingMembers);
@@ -204,8 +204,8 @@ class AdvocateOfficeValidatorTest {
     void testValidateLeaveOfficeRequest_Success_AsAdvocate() {
         AddMember existingMember = AddMember.builder()
                 .id(UUID.randomUUID())
-                .officeAdvocateId(officeAdvocateId)
-                .memberId(memberId)
+                .officeAdvocateUserUuid(officeAdvocateId)
+                .memberUserUuid(memberId)
                 .memberName("John Doe")
                 .memberMobileNumber("9876543210")
                 .accessType(AccessType.ALL_CASES)
@@ -233,8 +233,8 @@ class AdvocateOfficeValidatorTest {
 
         AddMember existingMember = AddMember.builder()
                 .id(UUID.randomUUID())
-                .officeAdvocateId(officeAdvocateId)
-                .memberId(memberId)
+                .officeAdvocateUserUuid(officeAdvocateId)
+                .memberUserUuid(memberId)
                 .memberName("John Doe")
                 .memberMobileNumber("9876543210")
                 .accessType(AccessType.ALL_CASES)
@@ -310,8 +310,8 @@ class AdvocateOfficeValidatorTest {
     void testValidateLeaveOfficeRequest_EnrichesAuditDetails() {
         AddMember existingMember = AddMember.builder()
                 .id(UUID.randomUUID())
-                .officeAdvocateId(officeAdvocateId)
-                .memberId(memberId)
+                .officeAdvocateUserUuid(officeAdvocateId)
+                .memberUserUuid(memberId)
                 .memberName("John Doe")
                 .memberMobileNumber("9876543210")
                 .accessType(AccessType.ALL_CASES)

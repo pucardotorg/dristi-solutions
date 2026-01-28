@@ -39,9 +39,9 @@ public class AdvocateOfficeRowMapper implements ResultSetExtractor<List<AddMembe
 
                     member = AddMember.builder()
                             .id(UUID.fromString(id))
-                            .officeAdvocateId(UUID.fromString(rs.getString("office_advocate_id")))
+                            .officeAdvocateUserUuid(UUID.fromString(rs.getString("office_advocate_id")))
                             .memberType(getMemberType(rs))
-                            .memberId(UUID.fromString(rs.getString("member_id")))
+                            .memberUserUuid(UUID.fromString(rs.getString("member_id")))
                             .memberName(rs.getString("member_name"))
                             .memberMobileNumber(rs.getString("member_mobile_number"))
                             .accessType(getAccessType(rs))

@@ -27,6 +27,10 @@ public class MemberSearchCriteria {
     @NotNull
     private String tenantId = null;
 
+    @JsonProperty("officeAdvocateUserUuid")
+    @Valid
+    private UUID officeAdvocateUserUuid = null;
+
     @JsonProperty("officeAdvocateId")
     @Valid
     private UUID officeAdvocateId = null;
@@ -39,6 +43,10 @@ public class MemberSearchCriteria {
 
     @JsonProperty("memberMobileNumber")
     private String memberMobileNumber = null;
+
+    @JsonProperty("memberUserUuid")
+    @Valid
+    private UUID memberUserUuid = null;
 
     @JsonProperty("memberId")
     @Valid

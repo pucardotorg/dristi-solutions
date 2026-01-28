@@ -64,9 +64,9 @@ class AdvocateOfficeRowMapperTest {
         assertEquals(1, members.size());
         AddMember member = members.get(0);
         assertEquals(UUID.fromString(memberId), member.getId());
-        assertEquals(UUID.fromString(officeAdvocateId), member.getOfficeAdvocateId());
+        assertEquals(UUID.fromString(officeAdvocateId), member.getOfficeAdvocateUserUuid());
         assertEquals(MemberType.ADVOCATE_CLERK, member.getMemberType());
-        assertEquals(UUID.fromString(memberIdUuid), member.getMemberId());
+        assertEquals(UUID.fromString(memberIdUuid), member.getMemberUserUuid());
         assertEquals("John Doe", member.getMemberName());
         assertEquals("9876543210", member.getMemberMobileNumber());
         assertEquals(AccessType.ALL_CASES, member.getAccessType());

@@ -34,14 +34,25 @@ public class LeaveOffice {
     @NotNull
     private String tenantId = null;
 
+    @JsonProperty("officeAdvocateUserUuid")
+    @Valid
+    private UUID officeAdvocateUserUuid = null;
+
     @JsonProperty("officeAdvocateId")
     @NotNull
     @Valid
     private UUID officeAdvocateId = null;
 
+    @JsonProperty("officeAdvocateName")
+    private String officeAdvocateName = null;
+
     @JsonProperty("memberType")
     @NotNull
     private MemberType memberType = null;
+
+    @JsonProperty("memberUserUuid")
+    @Valid
+    private UUID memberUserUuid = null;
 
     @JsonProperty("memberId")
     @NotNull
@@ -53,6 +64,9 @@ public class LeaveOffice {
 
     @JsonProperty("memberMobileNumber")
     private String memberMobileNumber = null;
+
+    @JsonProperty("memberEmail")
+    private String memberEmail = null;
 
     @JsonProperty("accessType")
     private AccessType accessType = AccessType.ALL_CASES;

@@ -44,8 +44,8 @@ class AdvocateOfficeEnrichmentTest {
 
         AddMember addMember = AddMember.builder()
                 .tenantId("pg.citya")
-                .officeAdvocateId(officeAdvocateId)
-                .memberId(memberId)
+                .officeAdvocateUserUuid(officeAdvocateId)
+                .memberUserUuid(memberId)
                 .memberType(MemberType.ADVOCATE_CLERK)
                 .memberName("John Doe")
                 .memberMobileNumber("9876543210")
@@ -62,7 +62,7 @@ class AdvocateOfficeEnrichmentTest {
         LeaveOffice leaveOffice = LeaveOffice.builder()
                 .id(UUID.randomUUID())
                 .tenantId("pg.citya")
-                .officeAdvocateId(officeAdvocateId)
+                .officeAdvocateUserUuid(officeAdvocateId)
                 .memberId(memberId)
                 .build();
 
@@ -134,14 +134,14 @@ class AdvocateOfficeEnrichmentTest {
     void testEnrichLeaveOfficeRequest_PreservesExistingData() {
         UUID originalId = leaveOfficeRequest.getLeaveOffice().getId();
         String originalTenantId = leaveOfficeRequest.getLeaveOffice().getTenantId();
-        UUID originalOfficeAdvocateId = leaveOfficeRequest.getLeaveOffice().getOfficeAdvocateId();
+        UUID originalOfficeAdvocateId = leaveOfficeRequest.getLeaveOffice().getOfficeAdvocateUserUuid();
         UUID originalMemberId = leaveOfficeRequest.getLeaveOffice().getMemberId();
 
         enrichment.enrichLeaveOfficeRequest(leaveOfficeRequest);
 
         assertEquals(originalId, leaveOfficeRequest.getLeaveOffice().getId());
         assertEquals(originalTenantId, leaveOfficeRequest.getLeaveOffice().getTenantId());
-        assertEquals(originalOfficeAdvocateId, leaveOfficeRequest.getLeaveOffice().getOfficeAdvocateId());
+        assertEquals(originalOfficeAdvocateId, leaveOfficeRequest.getLeaveOffice().getOfficeAdvocateUserUuid());
         assertEquals(originalMemberId, leaveOfficeRequest.getLeaveOffice().getMemberId());
         assertFalse(leaveOfficeRequest.getLeaveOffice().getIsActive());
     }
