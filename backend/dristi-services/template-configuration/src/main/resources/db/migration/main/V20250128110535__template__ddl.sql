@@ -2,7 +2,6 @@ CREATE TABLE dristi_template_configuration (
                               id varchar(64) NOT NULL PRIMARY KEY,
                               tenant_id varchar(64) NOT NULL,
                               court_id varchar(64) NULL,
-                              filing_number varchar(64) NULL,
                               process_title varchar(255),
                               addressee_name varchar(255),
                               is_cover_letter_required boolean DEFAULT false,

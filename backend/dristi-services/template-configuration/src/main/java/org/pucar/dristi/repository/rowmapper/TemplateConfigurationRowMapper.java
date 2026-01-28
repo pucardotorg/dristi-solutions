@@ -51,7 +51,6 @@ public class TemplateConfigurationRowMapper implements ResultSetExtractor<List<T
                     template = TemplateConfiguration.builder()
                             .id(UUID.fromString(rs.getString("id")))
                             .tenantId(rs.getString("tenant_id"))
-                            .filingNumber(rs.getString("filing_number"))
                             .courtId(rs.getString("court_id"))
                             .isActive(rs.getBoolean("is_active"))
                             .processTitle(rs.getString("process_title"))

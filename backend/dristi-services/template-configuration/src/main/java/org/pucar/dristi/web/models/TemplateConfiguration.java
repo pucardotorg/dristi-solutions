@@ -28,9 +28,6 @@ public class TemplateConfiguration {
     @NotNull
     private String tenantId = null;
 
-    @JsonProperty("filingNumber")
-    private String filingNumber = null;
-
     @JsonProperty("courtId")
     private String courtId = null;
 
