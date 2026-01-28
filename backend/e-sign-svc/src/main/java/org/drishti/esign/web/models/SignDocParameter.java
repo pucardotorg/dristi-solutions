@@ -21,4 +21,8 @@ public class SignDocParameter {
 
     @JsonProperty("tenantId")
     private String tenantId;
+
+    // Multi-page signing flag
+    @JsonProperty("multiPageSigning")
+    private Boolean multiPageSigning;
 }

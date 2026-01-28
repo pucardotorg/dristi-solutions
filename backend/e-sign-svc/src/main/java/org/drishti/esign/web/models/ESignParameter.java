@@ -8,6 +8,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
 
+import java.util.List;
+import java.util.Map;
+
 
 @Data
 @AllArgsConstructor
@@ -45,5 +48,18 @@ public class ESignParameter {
     @JsonProperty("auditDetails")
     @Valid
     private AuditDetails auditDetails ;
+
+    // Multi-page signing fields
+    @JsonProperty("multiPageSigning")
+    private Boolean multiPageSigning;
+
+    @JsonProperty("specificPages")
+    private List<Integer> specificPages;
+
+    @JsonProperty("applyToAllPages")
+    private Boolean applyToAllPages;
+
+    @JsonProperty("placeholders")
+    private Map<Integer, String> placeholders;
 
 }

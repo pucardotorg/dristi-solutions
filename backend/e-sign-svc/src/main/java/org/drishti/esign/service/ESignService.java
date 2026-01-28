@@ -75,7 +75,16 @@ public class ESignService {
         String tenantId = eSignParameter.getTenantId();
         String pageModule = eSignParameter.getPageModule();
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, eSignParameter.getTenantId());
-        String fileHash = pdfEmbedder.pdfSignerV2(resource, eSignParameter);
+        
+        // Route to multi-page or single-page signing based on flag
+        String fileHash;
+        if (Boolean.TRUE.equals(eSignParameter.getMultiPageSigning())) {
+            log.info("Multi-page signing enabled for fileStoreId={}", fileStoreId);
+            fileHash = pdfEmbedder.pdfSignerMultiPageV2(resource, eSignParameter);
+        } else {
+            log.info("Single-page signing for fileStoreId={}", fileStoreId);
+            fileHash = pdfEmbedder.pdfSignerV2(resource, eSignParameter);
+        }
 
         ESignXmlData eSignXmlData = formDataSetter.setFormXmlData(fileHash, new ESignXmlData());
         eSignXmlData.setTxn(tenantId + "-" + pageModule + "-" + eSignParameter.getId());
@@ -137,8 +146,15 @@ public class ESignService {
         log.info("Method=signDocWithDigitalSignature ,Result=InProgress, filestoreId:{},tenantId:{}", fileStoreId, tenantId);
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, tenantId);
 
+        // Route to multi-page or single-page signing based on flag
         MultipartFile multipartFile;
-        multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFileV2(resource, response, eSignDetails);
+        if (Boolean.TRUE.equals(eSignParameter.getMultiPageSigning())) {
+            log.info("Multi-page signature embedding for fileStoreId={}", fileStoreId);
+            multipartFile = pdfEmbedder.signPdfMultiPageWithDSAndReturnMultipartFileV2(resource, response, eSignDetails);
+        } else {
+            log.info("Single-page signature embedding for fileStoreId={}", fileStoreId);
+            multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFileV2(resource, response, eSignDetails);
+        }
         String signedFileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
         eSignDetails.setSignedFileStoreId(signedFileStoreId);
