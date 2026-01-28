@@ -3,23 +3,23 @@ export const temaplateOrConfigurationConfig = {
   type: "search",
   // TODO: Update the service name
   apiDetails: {
-    serviceName: "/inbox/v2/index/_search",
+    serviceName: "/template-configuration/v1/search",
     requestParam: {},
     requestBody: {
-      inbox: {
-        processSearchCriteria: {
-          businessService: ["notification"],
-          moduleName: "Transformer service",
-        },
+      criteria: {
         tenantId: Digit.ULBService.getCurrentTenantId(),
+      },
+      pagination: {
+        limit: 10,
+        offSet: 0,
       },
     },
     minParametersForSearchForm: 0,
     masterName: "commonUiConfig",
     moduleName: "templateOrConfigurationHomeConfig",
-    searchFormJsonPath: "requestBody.inbox.moduleSearchCriteria",
-    filterFormJsonPath: "requestBody.inbox.moduleSearchCriteria",
-    tableFormJsonPath: "requestBody.inbox",
+    searchFormJsonPath: "requestBody",
+    filterFormJsonPath: "requestBody",
+    tableFormJsonPath: "requestBody",
   },
   sections: {
     search: {
@@ -63,7 +63,7 @@ export const temaplateOrConfigurationConfig = {
           {
             label: "TEMPLATE_OR_PROCESS_TITLE",
             jsonPath: "title",
-            additionalCustomization: true
+            additionalCustomization: true,
           },
           {
             label: "DATE_CREATED",
@@ -72,7 +72,7 @@ export const temaplateOrConfigurationConfig = {
           {
             label: "CS_ACTIONS",
             jsonPath: "action",
-            additionalCustomization: true
+            additionalCustomization: true,
           },
         ],
         enableGlobalSearch: false,

@@ -24,6 +24,9 @@ export const Urls = {
   getWitnessDepositionsToSign: "/evidence/v1/_getArtifactsToSign",
   witnessDepositionUpdate: "/evidence/v1/_update",
   witnessDepositionSearch: "/evidence/v1/_search",
+  updateTemplate: "/template-configuration/v1/update",
+  createTemplate: "/template-configuration/v1/create",
+  searchTemplate: "/template-configuration/v1/search",
 };
 export const HomeService = {
   InboxSearch: (data, params) =>
@@ -177,6 +180,30 @@ export const HomeService = {
   updateSignedEvidences: (data, params) =>
     Request({
       url: Urls.updateSignedEvidences,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  createTeamplate: (data, params) =>
+    Request({
+      url: Urls.createTemplate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateTemplate: (data, params) =>
+    Request({
+      url: Urls.updateTemplate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  searchTemaplate: (data, params) =>
+    Request({
+      url: Urls.searchTemplate,
       useCache: false,
       userService: true,
       data,
