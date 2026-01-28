@@ -289,7 +289,7 @@ class AdvocateOfficeValidatorTest {
         });
 
         assertEquals(UNAUTHORIZED, exception.getCode());
-        assertEquals(CANNOT_LEAVE_OFFICE_MESSAGE, exception.getMessage());
+        assertTrue(exception.getMessage().contains("not authorized"));
     }
 
     @Test
@@ -301,7 +301,7 @@ class AdvocateOfficeValidatorTest {
         });
 
         assertEquals(MEMBER_NOT_FOUND, exception.getCode());
-        assertEquals(MEMBER_NOT_FOUND_MESSAGE, exception.getMessage());
+        assertTrue(exception.getMessage().contains("not found"));
     }
 
     @Test

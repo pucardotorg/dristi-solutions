@@ -142,27 +142,6 @@ class AdvocateOfficeEnrichmentTest {
 
     @Test
     void testEnrichLeaveOfficeRequest_SetsIsActiveToFalse() {
-        // Setup leave office with officeAdvocateId and memberId for enrichment
-        UUID officeAdvocateId = UUID.randomUUID();
-        UUID memberId = UUID.randomUUID();
-        leaveOfficeRequest.getLeaveOffice().setOfficeAdvocateId(officeAdvocateId);
-        leaveOfficeRequest.getLeaveOffice().setMemberId(memberId);
-        leaveOfficeRequest.getLeaveOffice().setOfficeAdvocateUserUuid(null);
-        leaveOfficeRequest.getLeaveOffice().setMemberUserUuid(null);
-        leaveOfficeRequest.getLeaveOffice().setMemberType(MemberType.ADVOCATE_CLERK);
-
-        String advocateUserUuid = UUID.randomUUID().toString();
-        String memberUserUuid = UUID.randomUUID().toString();
-        JsonNode advocateNode = createMockNode("individual-advocate-123", advocateUserUuid);
-        JsonNode clerkNode = createMockNode("individual-clerk-123", memberUserUuid);
-        JsonNode individualNode = createMockNode("individual-123", advocateUserUuid);
-
-        when(advocateUtil.searchAdvocateById(any(), anyString())).thenReturn(advocateNode);
-        when(advocateUtil.searchClerkById(any(), anyString(), anyString())).thenReturn(clerkNode);
-        when(advocateUtil.getIndividualId(any())).thenReturn("individual-123");
-        when(individualUtil.searchIndividualByIndividualId(any(), anyString(), anyString())).thenReturn(individualNode);
-        when(individualUtil.getUserUuid(any())).thenReturn(advocateUserUuid, memberUserUuid);
-
         assertNull(leaveOfficeRequest.getLeaveOffice().getIsActive());
 
         enrichment.enrichLeaveOfficeRequest(leaveOfficeRequest);
@@ -176,31 +155,13 @@ class AdvocateOfficeEnrichmentTest {
         UUID originalId = leaveOfficeRequest.getLeaveOffice().getId();
         String originalTenantId = leaveOfficeRequest.getLeaveOffice().getTenantId();
         UUID originalMemberId = leaveOfficeRequest.getLeaveOffice().getMemberId();
-
-        // Setup leave office with officeAdvocateId and memberId for enrichment
-        UUID officeAdvocateId = UUID.randomUUID();
-        leaveOfficeRequest.getLeaveOffice().setOfficeAdvocateId(officeAdvocateId);
-        leaveOfficeRequest.getLeaveOffice().setOfficeAdvocateUserUuid(null);
-        leaveOfficeRequest.getLeaveOffice().setMemberUserUuid(null);
-        leaveOfficeRequest.getLeaveOffice().setMemberType(MemberType.ADVOCATE_CLERK);
-
-        String advocateUserUuid = UUID.randomUUID().toString();
-        String memberUserUuid = UUID.randomUUID().toString();
-        JsonNode advocateNode = createMockNode("individual-advocate-123", advocateUserUuid);
-        JsonNode clerkNode = createMockNode("individual-clerk-123", memberUserUuid);
-        JsonNode individualNode = createMockNode("individual-123", advocateUserUuid);
-
-        when(advocateUtil.searchAdvocateById(any(), anyString())).thenReturn(advocateNode);
-        when(advocateUtil.searchClerkById(any(), anyString(), anyString())).thenReturn(clerkNode);
-        when(advocateUtil.getIndividualId(any())).thenReturn("individual-123");
-        when(individualUtil.searchIndividualByIndividualId(any(), anyString(), anyString())).thenReturn(individualNode);
-        when(individualUtil.getUserUuid(any())).thenReturn(advocateUserUuid, memberUserUuid);
+        UUID originalOfficeAdvocateUserUuid = leaveOfficeRequest.getLeaveOffice().getOfficeAdvocateUserUuid();
 
         enrichment.enrichLeaveOfficeRequest(leaveOfficeRequest);
 
         assertEquals(originalId, leaveOfficeRequest.getLeaveOffice().getId());
         assertEquals(originalTenantId, leaveOfficeRequest.getLeaveOffice().getTenantId());
-        assertNotNull(leaveOfficeRequest.getLeaveOffice().getOfficeAdvocateUserUuid());
+        assertEquals(originalOfficeAdvocateUserUuid, leaveOfficeRequest.getLeaveOffice().getOfficeAdvocateUserUuid());
         assertEquals(originalMemberId, leaveOfficeRequest.getLeaveOffice().getMemberId());
         assertFalse(leaveOfficeRequest.getLeaveOffice().getIsActive());
     }
