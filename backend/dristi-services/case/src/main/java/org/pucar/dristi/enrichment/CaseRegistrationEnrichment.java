@@ -13,6 +13,8 @@ import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.advocateoffice.OfficeMember;
+import org.pucar.dristi.web.models.enums.MemberType;
 import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,6 +34,7 @@ public class CaseRegistrationEnrichment {
 
     private IndividualService individualService;
     private AdvocateUtil advocateUtil;
+    private AdvocateOfficeUtil advocateOfficeUtil;
     private IdgenUtil idgenUtil;
     private CaseUtil caseUtil;
     private Configuration config;
@@ -39,9 +42,12 @@ public class CaseRegistrationEnrichment {
     private final EtreasuryUtil etreasuryUtil;
 
     @Autowired
-    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, IdgenUtil idgenUtil, CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil, HrmsUtil hrmsUtil) {
+    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, 
+                                      AdvocateOfficeUtil advocateOfficeUtil, IdgenUtil idgenUtil, 
+                                      CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil, HrmsUtil hrmsUtil) {
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
+        this.advocateOfficeUtil = advocateOfficeUtil;
         this.idgenUtil = idgenUtil;
         this.caseUtil = caseUtil;
         this.config = config;
@@ -185,6 +191,8 @@ public class CaseRegistrationEnrichment {
 
             courtCase.setFilingNumber(courtCaseRegistrationFillingNumberIdList.get(0));
 
+            // Enrich advocate office case members
+            enrichAdvocateOffices(caseRequest, auditDetails);
 
         } catch (Exception e) {
             log.error("Error enriching case application :: {}", e.toString());
@@ -196,6 +204,113 @@ public class CaseRegistrationEnrichment {
 
         return hrmsUtil.getCourtId(requestInfo);
 
+    }
+
+    /**
+     * Enriches advocate office entries for a case.
+     * This populates the advocateOffices field in CourtCase for persistence to dristi_advocate_office_case_member table.
+     */
+    private void enrichAdvocateOffices(CaseRequest caseRequest, AuditDetails auditDetails) {
+        CourtCase courtCase = caseRequest.getCases();
+        RequestInfo requestInfo = caseRequest.getRequestInfo();
+        
+        if (courtCase.getRepresentatives() == null || courtCase.getRepresentatives().isEmpty()) {
+            return;
+        }
+
+        String tenantId = courtCase.getTenantId();
+        String caseId = courtCase.getId().toString();
+
+        List<AdvocateOffice> advocateOffices = new ArrayList<>();
+
+        for (AdvocateMapping rep : courtCase.getRepresentatives()) {
+            if (rep.getAdvocateId() == null) {
+                continue;
+            }
+
+            String advocateId = rep.getAdvocateId();
+            String advocateName = getAdvocateName(requestInfo, advocateId);
+
+            List<AdvocateOfficeMember> advocates = new ArrayList<>();
+            List<AdvocateOfficeMember> clerks = new ArrayList<>();
+
+            // Get all active members of the advocate's office
+            List<OfficeMember> officeMembers = advocateOfficeUtil.getActiveMembersOfAdvocateOffice(
+                    requestInfo, tenantId, UUID.fromString(advocateId));
+
+            if (officeMembers.isEmpty()) {
+                log.info("No active members found for advocate: {}", advocateId);
+                continue;
+            }
+
+            for (OfficeMember officeMember : officeMembers) {
+                AdvocateOfficeMember member = AdvocateOfficeMember.builder()
+                        .id(UUID.randomUUID().toString())
+                        .tenantId(tenantId)
+                        .caseId(caseId)
+                        .memberId(officeMember.getMemberId() != null ? officeMember.getMemberId().toString() : null)
+                        .memberType(officeMember.getMemberType())
+                        .memberName(officeMember.getMemberName())
+                        .isActive(true)
+                        .auditDetails(auditDetails)
+                        .build();
+
+                // Separate advocates and clerks based on memberType
+                if (officeMember.getMemberType() == org.pucar.dristi.web.models.enums.MemberType.ADVOCATE) {
+                    advocates.add(member);
+                } else if (officeMember.getMemberType() == MemberType.ADVOCATE_CLERK) {
+                    clerks.add(member);
+                }
+            }
+
+            AdvocateOffice advocateOffice = AdvocateOffice.builder()
+                    .officeAdvocateId(advocateId)
+                    .officeAdvocateName(advocateName)
+                    .advocates(advocates)
+                    .clerks(clerks)
+                    .build();
+
+            advocateOffices.add(advocateOffice);
+        }
+
+        courtCase.setAdvocateOffices(advocateOffices);
+    }
+
+    private String getAdvocateName(RequestInfo requestInfo, String advocateId) {
+        try {
+            List<Advocate> advocates = advocateUtil.fetchAdvocatesById(requestInfo, advocateId);
+            if (!advocates.isEmpty()) {
+                return getIndividualName(requestInfo, advocates.get(0).getIndividualId());
+            }
+        } catch (Exception e) {
+            log.warn("Error fetching advocate name for advocateId: {}", advocateId, e);
+        }
+        return null;
+    }
+
+    // TODO : need to ask UI about this
+    private String getIndividualName(RequestInfo requestInfo, String individualId) {
+        try {
+            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo,
+                    individualId);
+            if (!individuals.isEmpty()) {
+                Individual individual = individuals.get(0);
+                if (individual.getName() != null) {
+                    StringBuilder name = new StringBuilder();
+                    if (individual.getName().getGivenName() != null) {
+                        name.append(individual.getName().getGivenName());
+                    }
+                    if (individual.getName().getFamilyName() != null) {
+                        if (!name.isEmpty()) name.append(" ");
+                        name.append(individual.getName().getFamilyName());
+                    }
+                    return name.toString();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error fetching individual name for individualId: {}", individualId, e);
+        }
+        return null;
     }
 
     private void enrichCaseRegistrationUponCreateAndUpdate(CourtCase courtCase, AuditDetails auditDetails) {

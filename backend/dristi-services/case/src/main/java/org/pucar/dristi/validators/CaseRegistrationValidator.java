@@ -10,6 +10,7 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.service.IndividualService;
+import org.pucar.dristi.util.AdvocateOfficeUtil;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.LockUtil;
@@ -47,6 +48,8 @@ public class CaseRegistrationValidator {
 
     private AdvocateUtil advocateUtil;
 
+    private AdvocateOfficeUtil advocateOfficeUtil;
+
     private Configuration config;
 
     private ObjectMapper objectMapper;
@@ -56,12 +59,14 @@ public class CaseRegistrationValidator {
     @Autowired
     public CaseRegistrationValidator(IndividualService indService, CaseRepository caseRepo,
                                      MdmsUtil mdmsUtil, FileStoreUtil fileStoreUtil, AdvocateUtil advocateUtil,
+                                     AdvocateOfficeUtil advocateOfficeUtil,
                                      Configuration config, LockUtil lockUtil, ObjectMapper objectMapper) {
         this.individualService = indService;
         this.repository = caseRepo;
         this.mdmsUtil = mdmsUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.advocateUtil = advocateUtil;
+        this.advocateOfficeUtil = advocateOfficeUtil;
         this.config = config;
         this.lockUtil = lockUtil;
         this.objectMapper = objectMapper;
@@ -169,6 +174,60 @@ public class CaseRegistrationValidator {
                 } else
                     throw new CustomException(INVALID_ADVOCATE_ID, INVALID_ADVOCATE_DETAILS);
             });
+        }
+    }
+
+    /**
+     * Validates that the user creating the case is authorized to file on behalf of the advocate.
+     * The user must be either:
+     * 1. The advocate themselves (advocate's individualId matches user's individual)
+     * 2. A member of the advocate's office
+     */
+    public void validateAdvocateAuthorization(RequestInfo requestInfo, CourtCase courtCase) {
+        if (courtCase.getRepresentatives() == null || courtCase.getRepresentatives().isEmpty()) {
+            return;
+        }
+
+        String userUuid = requestInfo.getUserInfo().getUuid();
+        String tenantId = courtCase.getTenantId();
+
+        for (AdvocateMapping rep : courtCase.getRepresentatives()) {
+            if (rep.getAdvocateId() == null) {
+                continue;
+            }
+
+            boolean isAuthorized = false;
+
+            // Check 1: Is the user the advocate themselves?
+            List<Advocate> advocates = advocateUtil.fetchAdvocatesById(requestInfo, rep.getAdvocateId());
+            if (!advocates.isEmpty()) {
+                Advocate advocate = advocates.get(0);
+                if (advocate.getIndividualId() != null) {
+                    List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, advocate.getIndividualId());
+                    if (!individuals.isEmpty() && userUuid.equals(individuals.get(0).getUserUuid())) {
+                        isAuthorized = true;
+                    }
+                }
+            }
+
+            // Check 2: Is the user a member of the advocate's office?
+            if (!isAuthorized) {
+                try {
+                    isAuthorized = advocateOfficeUtil.isUserMemberOfAdvocateOffice(
+                            requestInfo,
+                            tenantId,
+                            UUID.fromString(rep.getAdvocateId()),
+                            UUID.fromString(userUuid)
+                    );
+                } catch (Exception e) {
+                    log.warn("Error checking advocate office membership: {}", e.getMessage());
+                }
+            }
+
+            if (!isAuthorized) {
+                throw new CustomException("UNAUTHORIZED_ADVOCATE_ACCESS",
+                        "User is not authorized to file case on behalf of advocate: " + rep.getAdvocateId());
+            }
         }
     }
 
