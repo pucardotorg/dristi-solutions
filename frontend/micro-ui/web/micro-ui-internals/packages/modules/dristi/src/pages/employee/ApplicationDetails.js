@@ -131,11 +131,14 @@ const ApplicationDetails = ({ location, match }) => {
   );
 
   const { data: searchData, isLoading: isSearchLoading } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
-    {},
-    { tenantId: tenantId, applicationNumber: applicationNo },
+    {
+      criteria: [{ applicationNumber: applicationNo }],
+      tenantId: tenantId,
+    },
+    { tenantId: tenantId },
     applicationNo + individualId,
     userType,
-    userType === "ADVOCATE" ? `/advocate/v1/applicationnumber/_search` : `/advocate/clerk/v1/applicationnumber/_search`
+    userType === "ADVOCATE" ? `/advocate/v1/_search` : `/advocate/clerk/v1/_search`
   );
 
   const userTypeDetail = useMemo(() => {
@@ -160,7 +163,17 @@ const ApplicationDetails = ({ location, match }) => {
   );
 
   const searchResult = useMemo(() => {
-    return searchData?.[`${userTypeDetail?.apiDetails?.requestKey}s`];
+    const requestKey = userTypeDetail?.apiDetails?.requestKey;
+    const resultKey = requestKey ? `${requestKey}s` : null;
+    let result = resultKey ? searchData?.[resultKey] : null;
+    
+    // Handle nested responseList structure for clerk search results
+    // The API returns { clerks: [{ responseList: [...actualData...] }] }
+    if (result && result[0]?.responseList) {
+      result = result[0].responseList;
+    }
+    
+    return result;
   }, [searchData, userTypeDetail?.apiDetails?.requestKey]);
   const fileStoreId = useMemo(() => {
     return searchResult?.[0]?.documents?.[0]?.fileStore;
@@ -180,15 +193,41 @@ const ApplicationDetails = ({ location, match }) => {
 
   function takeAction(action) {
     const applications = searchResult;
+    
+    // Defensive checks - ensure data exists
+    if (!applications || !applications[0]) {
+      setShowModal(false);
+      setShowApproveModal(false);
+      setShowInfoModal({ isOpen: true, status: "ES_API_ERROR" });
+      return;
+    }
+    
+    // Ensure workflow object exists - create it if it doesn't
+    if (!applications[0].workflow) {
+      applications[0].workflow = {};
+    }
+    
     applications[0].workflow.action = action;
-    const data = { [userTypeDetail?.apiDetails?.requestKey]: applications?.[0] };
+    
+    const requestKey = userTypeDetail?.apiDetails?.requestKey;
+    if (!requestKey) {
+      setShowModal(false);
+      setShowApproveModal(false);
+      setShowInfoModal({ isOpen: true, status: "ES_API_ERROR" });
+      return;
+    }
+    
+    const data = { [requestKey]: applications[0] };
     const url = userType === "ADVOCATE_CLERK" ? "/advocate/clerk/v1/_update" : "/advocate/v1/_update";
+    
     if (showModal) {
       applications[0].workflow.comments = reasons;
     }
+    
     window?.Digit.DRISTIService.advocateClerkService(url, data, tenantId, true, {})
       .then(() => {
         setShowModal(false);
+        setShowApproveModal(false);
         if (action === "APPROVE") {
           setShowInfoModal({ isOpen: true, status: "ES_USER_APPROVED" });
         } else if (action === "REJECT") {

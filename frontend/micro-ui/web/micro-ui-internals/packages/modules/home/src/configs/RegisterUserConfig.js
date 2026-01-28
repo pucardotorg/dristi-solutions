@@ -43,7 +43,7 @@ export const registerUserConfig = {
               name: "userType",
               error: "CORE_REQUIRED_FIELD_ERROR",
               label: "SELECT_USER_TYPE",
-              options: ["Advocate"],
+              options: ["Advocate", "Advocate Clerk"],
             },
           },
           {

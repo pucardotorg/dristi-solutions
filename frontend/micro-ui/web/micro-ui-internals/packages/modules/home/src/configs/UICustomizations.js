@@ -852,6 +852,17 @@ export const UICustomizations = {
       return !data?.applicationNumber_WILDCARD.trim() ? { label: "Please enter a valid application Number", error: true } : false;
     },
     preProcess: (requestCriteria, additionalDetails) => {
+      const userType = requestCriteria?.state?.searchForm?.userType;
+      
+      // Determine business service based on selected user type
+      let businessService = ["user-registration-advocate"];
+      let moduleName = "Advocate services";
+      
+      if (userType === "Advocate Clerk") {
+        businessService = ["user-registration-advocate-clerk"];
+        moduleName = "Advocate Clerk Service";
+      }
+      
       const moduleSearchCriteria = {
         ...requestCriteria?.body?.inbox?.moduleSearchCriteria,
         ...requestCriteria?.state?.searchForm,
@@ -872,6 +883,8 @@ export const UICustomizations = {
             },
             processSearchCriteria: {
               ...requestCriteria?.body?.inbox?.processSearchCriteria,
+              businessService: businessService,
+              moduleName: moduleName,
               tenantId: window?.Digit.ULBService.getStateId(),
             },
             tenantId: window?.Digit.ULBService.getStateId(),
