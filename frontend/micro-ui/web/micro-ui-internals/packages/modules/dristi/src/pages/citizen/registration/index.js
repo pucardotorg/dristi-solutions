@@ -148,18 +148,6 @@ const Registration = ({ stateCode }) => {
     return !address || (Array.isArray(address) && address.length === 0);
   }, [data?.Individual, userInfoType]);
 
-  useEffect(() => {
-    if (isLitigantPartialRegistered && data?.Individual) {
-      setNewParams({
-        name: {
-          firstName: data?.Individual?.[0]?.name?.givenName,
-          middleName: data?.Individual?.[0]?.name?.otherNames,
-          lastName: data?.Individual?.[0]?.name?.familyName,
-        },
-      });
-    }
-  }, [data?.Individual, isLitigantPartialRegistered]);
-
   const handleAadharOtpChange = (aadharOtp) => {
     setNewParams({ ...newParams, aadharOtp });
   };
@@ -300,7 +288,9 @@ const Registration = ({ stateCode }) => {
     };
     setNewParams({ ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } });
     Digit.SessionStorage.del("aadharNumber");
-    history.replace(`${path}/user-type`);
+    history.replace(`${path}/user-type`, {
+      newParams: { ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } },
+    });
   };
   if (isLoading || isFetching) {
     return <Loader />;
