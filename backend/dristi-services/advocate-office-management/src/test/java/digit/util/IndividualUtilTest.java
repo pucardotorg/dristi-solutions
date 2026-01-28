@@ -1,26 +1,28 @@
 package digit.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static digit.config.ServiceConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class IndividualUtilTest {
 
     @Mock
@@ -45,105 +47,90 @@ class IndividualUtilTest {
     }
 
     @Test
-    void testGetIndividualIdFromUserUuid_Success() throws Exception {
+    void testSearchIndividualByIndividualId_Success() throws Exception {
         Map<String, Object> mockResponse = new HashMap<>();
-        String jsonResponse = "{\"Individual\":[{\"individualId\":\"individual-123\"}]}";
+        String jsonResponse = "{\"Individual\":[{\"individualId\":\"individual-123\",\"userUuid\":\"user-uuid-123\"}]}";
 
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
         when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
 
-        String result = individualUtil.getIndividualIdFromUserUuid(requestInfo, "pg.citya", "user-uuid-123");
+        JsonNode result = individualUtil.searchIndividualByIndividualId(requestInfo, "pg.citya", "individual-123");
 
-        assertEquals("individual-123", result);
+        assertNotNull(result);
         verify(serviceRequestRepository, times(1)).fetchResult(any(), any());
     }
 
     @Test
-    void testGetIndividualIdFromUserUuid_NullResponse() {
+    void testSearchIndividualByIndividualId_NullResponse() {
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(null);
 
-        CustomException exception = assertThrows(CustomException.class, () -> individualUtil.getIndividualIdFromUserUuid(requestInfo, "pg.citya", "user-uuid-123"));
+        JsonNode result = individualUtil.searchIndividualByIndividualId(requestInfo, "pg.citya", "individual-123");
 
-        assertEquals(INDIVIDUAL_NOT_FOUND, exception.getCode());
-        assertTrue(exception.getMessage().contains("user-uuid-123"));
+        assertNull(result);
     }
 
     @Test
-    void testGetIndividualIdFromUserUuid_EmptyIndividualArray() throws Exception {
+    void testSearchIndividualByIndividualId_EmptyIndividualArray() throws Exception {
         Map<String, Object> mockResponse = new HashMap<>();
         String jsonResponse = "{\"Individual\":[]}";
 
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
         when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
 
-        CustomException exception = assertThrows(CustomException.class, () -> individualUtil.getIndividualIdFromUserUuid(requestInfo, "pg.citya", "user-uuid-123"));
+        JsonNode result = individualUtil.searchIndividualByIndividualId(requestInfo, "pg.citya", "individual-123");
 
-        assertEquals(INDIVIDUAL_NOT_FOUND, exception.getCode());
-        assertTrue(exception.getMessage().contains("user-uuid-123"));
+        assertNull(result);
     }
 
     @Test
-    void testGetIndividualIdFromUserUuid_MissingIndividualId() throws Exception {
-        Map<String, Object> mockResponse = new HashMap<>();
-        String jsonResponse = "{\"Individual\":[{\"name\":\"John Doe\"}]}";
-
-        when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
-        when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
-
-        CustomException exception = assertThrows(CustomException.class, () -> individualUtil.getIndividualIdFromUserUuid(requestInfo, "pg.citya", "user-uuid-123"));
-
-        assertEquals(ADVOCATE_NOT_FOUND, exception.getCode());
-        assertEquals(ADVOCATE_NOT_FOUND_MESSAGE, exception.getMessage());
-    }
-
-    @Test
-    void testGetIndividualIdFromUserUuid_NullIndividualId() throws Exception {
-        Map<String, Object> mockResponse = new HashMap<>();
-        String jsonResponse = "{\"Individual\":[{\"individualId\":null}]}";
-
-        when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
-        when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
-
-        CustomException exception = assertThrows(CustomException.class, () -> individualUtil.getIndividualIdFromUserUuid(requestInfo, "pg.citya", "user-uuid-123"));
-
-        assertEquals(ADVOCATE_NOT_FOUND, exception.getCode());
-        assertEquals(ADVOCATE_NOT_FOUND_MESSAGE, exception.getMessage());
-    }
-
-    @Test
-    void testGetIndividualIdFromUserUuid_BlankIndividualId() throws Exception {
-        Map<String, Object> mockResponse = new HashMap<>();
-        String jsonResponse = "{\"Individual\":[{\"individualId\":\"   \"}]}";
-
-        when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
-        when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
-
-        CustomException exception = assertThrows(CustomException.class, () -> individualUtil.getIndividualIdFromUserUuid(requestInfo, "pg.citya", "user-uuid-123"));
-
-        assertEquals(ADVOCATE_NOT_FOUND, exception.getCode());
-        assertEquals(ADVOCATE_NOT_FOUND_MESSAGE, exception.getMessage());
-    }
-
-    @Test
-    void testGetIndividualIdFromUserUuid_ExceptionDuringProcessing() {
+    void testSearchIndividualByIndividualId_ExceptionDuringProcessing() {
         when(serviceRequestRepository.fetchResult(any(), any())).thenThrow(new RuntimeException("Network error"));
 
-        CustomException exception = assertThrows(CustomException.class, () -> individualUtil.getIndividualIdFromUserUuid(requestInfo, "pg.citya", "user-uuid-123"));
+        JsonNode result = individualUtil.searchIndividualByIndividualId(requestInfo, "pg.citya", "individual-123");
 
-        assertEquals(ADVOCATE_NOT_FOUND, exception.getCode());
+        assertNull(result);
     }
 
     @Test
-    void testGetIndividualIdFromUserUuid_ConstructsCorrectUri() throws Exception {
+    void testGetUserUuid_Success() throws Exception {
+        String jsonResponse = "{\"userUuid\":\"user-uuid-123\"}";
+        JsonNode node = new ObjectMapper().readTree(jsonResponse);
+
+        assertEquals("user-uuid-123", individualUtil.getUserUuid(node));
+    }
+
+    @Test
+    void testGetUserUuid_NullNode() {
+        assertNull(individualUtil.getUserUuid(null));
+    }
+
+    @Test
+    void testGetUserUuid_MissingUserUuid() throws Exception {
+        String jsonResponse = "{\"name\":\"John Doe\"}";
+        JsonNode node = new ObjectMapper().readTree(jsonResponse);
+
+        assertNull(individualUtil.getUserUuid(node));
+    }
+
+    @Test
+    void testGetUserUuid_BlankUserUuid() throws Exception {
+        String jsonResponse = "{\"userUuid\":\"   \"}";
+        JsonNode node = new ObjectMapper().readTree(jsonResponse);
+
+        assertNull(individualUtil.getUserUuid(node));
+    }
+
+    @Test
+    void testSearchIndividualByIndividualId_ConstructsCorrectUri() throws Exception {
         Map<String, Object> mockResponse = new HashMap<>();
-        String jsonResponse = "{\"Individual\":[{\"individualId\":\"individual-123\"}]}";
+        String jsonResponse = "{\"Individual\":[{\"individualId\":\"individual-123\",\"userUuid\":\"user-uuid-123\"}]}";
 
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
         when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
 
-        String result = individualUtil.getIndividualIdFromUserUuid(requestInfo, "pg.citya", "user-uuid-123");
+        JsonNode result = individualUtil.searchIndividualByIndividualId(requestInfo, "pg.citya", "individual-123");
 
-        assertEquals("individual-123", result);
+        assertNotNull(result);
         verify(configuration, times(1)).getIndividualHost();
         verify(configuration, times(1)).getIndividualSearchEndPoint();
     }

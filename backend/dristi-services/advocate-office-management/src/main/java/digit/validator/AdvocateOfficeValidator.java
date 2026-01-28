@@ -1,8 +1,8 @@
 package digit.validator;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import digit.repository.AdvocateOfficeRepository;
 import digit.util.AdvocateUtil;
-import digit.util.IndividualUtil;
 import digit.web.models.*;
 import digit.web.models.enums.MemberType;
 import lombok.extern.slf4j.Slf4j;
@@ -22,13 +22,11 @@ import static digit.config.ServiceConstants.*;
 public class AdvocateOfficeValidator {
 
     private final AdvocateOfficeRepository advocateOfficeRepository;
-    private final IndividualUtil individualUtil;
     private final AdvocateUtil advocateUtil;
 
     @Autowired
-    public AdvocateOfficeValidator(AdvocateOfficeRepository advocateOfficeRepository, IndividualUtil individualUtil, AdvocateUtil advocateUtil) {
+    public AdvocateOfficeValidator(AdvocateOfficeRepository advocateOfficeRepository, AdvocateUtil advocateUtil) {
         this.advocateOfficeRepository = advocateOfficeRepository;
-        this.individualUtil = individualUtil;
         this.advocateUtil = advocateUtil;
     }
 
@@ -49,17 +47,27 @@ public class AdvocateOfficeValidator {
         }
     }
 
-    private void validateAdvocate(RequestInfo requestInfo, String tenantId, String officeAdvocateId){
-        String individualId = individualUtil.getIndividualIdFromUserUuid(requestInfo, tenantId, officeAdvocateId);
-        advocateUtil.validateActiveAdvocateExists(requestInfo, individualId);
+    private void validateActiveAdvocateById(RequestInfo requestInfo, String advocateId) {
+        JsonNode advocate = advocateUtil.searchAdvocateById(requestInfo, advocateId);
+        if (advocate == null) {
+            throw new CustomException(ADVOCATE_NOT_FOUND, ADVOCATE_NOT_FOUND_MESSAGE);
+        }
+        if (!advocateUtil.isActive(advocate)) {
+            throw new CustomException(ADVOCATE_NOT_FOUND, ADVOCATE_NOT_FOUND_MESSAGE);
+        }
     }
 
-    private void validateMember(RequestInfo requestInfo, String tenantId, MemberType memberType, String memberId) {
-        String individualId = individualUtil.getIndividualIdFromUserUuid(requestInfo, tenantId, memberId);
+    private void validateActiveMemberById(RequestInfo requestInfo, String tenantId, MemberType memberType, String memberId) {
         if (MemberType.ADVOCATE_CLERK.equals(memberType)) {
-            advocateUtil.validateActiveClerkExists(requestInfo, tenantId, individualId);
+            JsonNode advocateClerk = advocateUtil.searchClerkById(requestInfo, tenantId, memberId);
+            if (advocateClerk == null) {
+                throw new CustomException(ADVOCATE_CLERK_NOT_FOUND, ADVOCATE_CLERK_NOT_FOUND_MESSAGE);
+            }
+            if (!advocateUtil.isActive(advocateClerk)) {
+                throw new CustomException(ADVOCATE_CLERK_NOT_FOUND, ADVOCATE_CLERK_NOT_FOUND_MESSAGE);
+            }
         } else {
-            advocateUtil.validateActiveAdvocateExists(requestInfo, individualId);
+            validateActiveAdvocateById(requestInfo, memberId);
         }
     }
 
@@ -68,20 +76,14 @@ public class AdvocateOfficeValidator {
 
         validateRequestInfo(request.getRequestInfo());
 
-        UUID userUuidAsUuid = UUID.fromString(request.getRequestInfo().getUserInfo().getUuid());
+        validateActiveAdvocateById(request.getRequestInfo(), addMember.getOfficeAdvocateId().toString());
 
-        if (!addMember.getOfficeAdvocateUserUuid().equals(userUuidAsUuid)) {
-            throw new CustomException(UNAUTHORIZED, CANNOT_ADD_MEMBER_MESSAGE);
-        }
-
-        validateAdvocate(request.getRequestInfo(), addMember.getTenantId(), addMember.getOfficeAdvocateUserUuid().toString());
-
-        validateMember(request.getRequestInfo(), addMember.getTenantId(), addMember.getMemberType(), addMember.getMemberUserUuid().toString());
+        validateActiveMemberById(request.getRequestInfo(), addMember.getTenantId(), addMember.getMemberType(), addMember.getMemberId().toString());
 
         // Check if member already exists in the office
         MemberSearchCriteria searchCriteria = MemberSearchCriteria.builder()
-                .officeAdvocateId(addMember.getOfficeAdvocateUserUuid())
-                .memberId(addMember.getMemberUserUuid())
+                .officeAdvocateId(addMember.getOfficeAdvocateId())
+                .memberId(addMember.getMemberId())
                 .build();
 
         List<AddMember> existingMembers = advocateOfficeRepository.getMembers(searchCriteria, null);
@@ -91,31 +93,48 @@ public class AdvocateOfficeValidator {
 
     }
 
+    public void validateCanAddMember(AddMemberRequest request){
+        String userUuid = request.getRequestInfo().getUserInfo().getUuid();
+        String advocateUuid = request.getAddMember().getOfficeAdvocateUserUuid().toString();
+
+        if(!userUuid.equals(advocateUuid)){
+            throw new CustomException(UNAUTHORIZED,
+                    String.format("User is not authorized to add member to advocate %s's office", request.getAddMember().getOfficeAdvocateId()));
+        }
+    }
+
     public void validateLeaveOfficeRequest(LeaveOfficeRequest request) {
         LeaveOffice leaveOffice = request.getLeaveOffice();
 
         validateRequestInfo(request.getRequestInfo());
 
-        UUID userUuidAsUuid = UUID.fromString(request.getRequestInfo().getUserInfo().getUuid());
+        UUID memberId = leaveOffice.getMemberId();
+        UUID officeAdvocateId = leaveOffice.getOfficeAdvocateId();
 
-        boolean isUserAdvocate = leaveOffice.getOfficeAdvocateUserUuid().equals(userUuidAsUuid);
-        boolean isUserMember = leaveOffice.getMemberId().equals(userUuidAsUuid);
-        if (!isUserAdvocate && !isUserMember) {
-            throw new CustomException(UNAUTHORIZED, CANNOT_LEAVE_OFFICE_MESSAGE);
-        }
-
-        // Check if member exists in the office
+        // First check if member exists in the office
         MemberSearchCriteria searchCriteria = MemberSearchCriteria.builder()
-                .officeAdvocateId(leaveOffice.getOfficeAdvocateUserUuid())
+                .officeAdvocateId(leaveOffice.getOfficeAdvocateId())
                 .memberId(leaveOffice.getMemberId())
                 .build();
 
         List<AddMember> existingMembers = advocateOfficeRepository.getMembers(searchCriteria, null);
         if (existingMembers.isEmpty()) {
-            throw new CustomException(MEMBER_NOT_FOUND, MEMBER_NOT_FOUND_MESSAGE);
+            throw new CustomException(MEMBER_NOT_FOUND,
+                    String.format("Member %s not found in advocate %s's office", memberId, officeAdvocateId));
         }
 
         AddMember existingMember = existingMembers.get(0);
+
+        // Then check authorization using UUIDs from the existing member record
+        UUID userUuidAsUuid = UUID.fromString(request.getRequestInfo().getUserInfo().getUuid());
+        boolean isUserAdvocate = existingMember.getOfficeAdvocateUserUuid().equals(userUuidAsUuid);
+        boolean isUserMember = existingMember.getMemberUserUuid().equals(userUuidAsUuid);
+
+        if (!isUserAdvocate && !isUserMember) {
+            throw new CustomException(UNAUTHORIZED,
+                    String.format("User is not authorized to remove member from advocate's office"));
+        }
+
         leaveOffice.setMemberName(existingMember.getMemberName());
         leaveOffice.setMemberMobileNumber(existingMember.getMemberMobileNumber());
         leaveOffice.setAccessType(existingMember.getAccessType());

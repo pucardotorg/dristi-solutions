@@ -18,11 +18,16 @@ public class AdvocateOfficeQueryBuilder {
 
     private static final String BASE_MEMBER_QUERY = "SELECT " +
             "member.id as id, " +
+            "member.tenant_id as tenant_id, " +
+            "member.office_advocate_user_uuid as office_advocate_user_uuid, " +
             "member.office_advocate_id as office_advocate_id, " +
+            "member.office_advocate_name as office_advocate_name, " +
             "member.member_type as member_type, " +
+            "member.member_user_uuid as member_user_uuid, " +
             "member.member_id as member_id, " +
             "member.member_name as member_name, " +
             "member.member_mobile_number as member_mobile_number, " +
+            "member.member_email as member_email, " +
             "member.access_type as access_type, " +
             "member.allow_case_create as allow_case_create, " +
             "member.add_new_cases_automatically as add_new_cases_automatically, " +
@@ -74,10 +79,14 @@ public class AdvocateOfficeQueryBuilder {
             Boolean isActive = criteria.getIsActive() != null ? criteria.getIsActive() : Boolean.TRUE;
             firstCriteria = addBooleanCriteria(isActive, query, firstCriteria, "member.is_active = ?", preparedStmtList, preparedStmtArgList);
 
+            firstCriteria = addCriteria(criteria.getOfficeAdvocateUserUuid() != null ? criteria.getOfficeAdvocateUserUuid().toString() : null,
+                    query, firstCriteria, "member.office_advocate_user_uuid = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addCriteria(criteria.getOfficeAdvocateId() != null ? criteria.getOfficeAdvocateId().toString() : null,
                     query, firstCriteria, "member.office_advocate_id = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addCriteria(criteria.getMemberType() != null ? criteria.getMemberType().name() : null,
                     query, firstCriteria, "member.member_type = ?", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addCriteria(criteria.getMemberUserUuid() != null ? criteria.getMemberUserUuid().toString() : null,
+                    query, firstCriteria, "member.member_user_uuid = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addCriteria(criteria.getMemberId() != null ? criteria.getMemberId().toString() : null,
                     query, firstCriteria, "member.member_id = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addCriteria(criteria.getMemberName(),

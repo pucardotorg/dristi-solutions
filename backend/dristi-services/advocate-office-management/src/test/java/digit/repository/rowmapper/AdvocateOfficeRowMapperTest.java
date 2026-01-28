@@ -31,19 +31,32 @@ class AdvocateOfficeRowMapperTest {
 
     private String memberId;
     private String officeAdvocateId;
+    private String officeAdvocateUserUuid;
     private String memberIdUuid;
+    private String memberUserUuid;
 
     @BeforeEach
     void setUp() {
         memberId = UUID.randomUUID().toString();
         officeAdvocateId = UUID.randomUUID().toString();
+        officeAdvocateUserUuid = UUID.randomUUID().toString();
         memberIdUuid = UUID.randomUUID().toString();
+        memberUserUuid = UUID.randomUUID().toString();
+    }
+
+    private void setupCommonMocks() throws SQLException {
+        when(resultSet.getString("tenant_id")).thenReturn("kl");
+        when(resultSet.getString("office_advocate_user_uuid")).thenReturn(officeAdvocateUserUuid);
+        when(resultSet.getString("office_advocate_name")).thenReturn("Office Advocate");
+        when(resultSet.getString("member_user_uuid")).thenReturn(memberUserUuid);
+        when(resultSet.getString("member_email")).thenReturn("test@example.com");
     }
 
     @Test
     void testExtractData_SingleMember() throws SQLException {
         when(resultSet.next()).thenReturn(true).thenReturn(false);
         when(resultSet.getString("id")).thenReturn(memberId);
+        setupCommonMocks();
         when(resultSet.getString("office_advocate_id")).thenReturn(officeAdvocateId);
         when(resultSet.getString("member_type")).thenReturn("ADVOCATE_CLERK");
         when(resultSet.getString("member_id")).thenReturn(memberIdUuid);
@@ -64,9 +77,11 @@ class AdvocateOfficeRowMapperTest {
         assertEquals(1, members.size());
         AddMember member = members.get(0);
         assertEquals(UUID.fromString(memberId), member.getId());
-        assertEquals(UUID.fromString(officeAdvocateId), member.getOfficeAdvocateUserUuid());
+        assertEquals(UUID.fromString(officeAdvocateUserUuid), member.getOfficeAdvocateUserUuid());
+        assertEquals(UUID.fromString(officeAdvocateId), member.getOfficeAdvocateId());
         assertEquals(MemberType.ADVOCATE_CLERK, member.getMemberType());
-        assertEquals(UUID.fromString(memberIdUuid), member.getMemberUserUuid());
+        assertEquals(UUID.fromString(memberUserUuid), member.getMemberUserUuid());
+        assertEquals(UUID.fromString(memberIdUuid), member.getMemberId());
         assertEquals("John Doe", member.getMemberName());
         assertEquals("9876543210", member.getMemberMobileNumber());
         assertEquals(AccessType.ALL_CASES, member.getAccessType());
@@ -91,6 +106,7 @@ class AdvocateOfficeRowMapperTest {
         when(resultSet.getString("id"))
                 .thenReturn(memberId)
                 .thenReturn(memberId2);
+        setupCommonMocks();
         when(resultSet.getString("office_advocate_id"))
                 .thenReturn(officeAdvocateId)
                 .thenReturn(officeAdvocateId2);
@@ -163,6 +179,7 @@ class AdvocateOfficeRowMapperTest {
     void testExtractData_NullAccessType() throws SQLException {
         when(resultSet.next()).thenReturn(true).thenReturn(false);
         when(resultSet.getString("id")).thenReturn(memberId);
+        setupCommonMocks();
         when(resultSet.getString("office_advocate_id")).thenReturn(officeAdvocateId);
         when(resultSet.getString("member_type")).thenReturn("ADVOCATE");
         when(resultSet.getString("member_id")).thenReturn(memberIdUuid);
@@ -188,6 +205,7 @@ class AdvocateOfficeRowMapperTest {
     void testExtractData_NullMemberType() throws SQLException {
         when(resultSet.next()).thenReturn(true).thenReturn(false);
         when(resultSet.getString("id")).thenReturn(memberId);
+        setupCommonMocks();
         when(resultSet.getString("office_advocate_id")).thenReturn(officeAdvocateId);
         when(resultSet.getString("member_type")).thenReturn(null);
         when(resultSet.getString("member_id")).thenReturn(memberIdUuid);
@@ -214,6 +232,7 @@ class AdvocateOfficeRowMapperTest {
         when(resultSet.next()).thenReturn(true).thenReturn(true).thenReturn(false);
         
         when(resultSet.getString("id")).thenReturn(memberId).thenReturn(memberId);
+        setupCommonMocks();
         when(resultSet.getString("office_advocate_id")).thenReturn(officeAdvocateId);
         when(resultSet.getString("member_type")).thenReturn("ADVOCATE");
         when(resultSet.getString("member_id")).thenReturn(memberIdUuid);
@@ -263,6 +282,7 @@ class AdvocateOfficeRowMapperTest {
     void testExtractData_AllBooleansFalse() throws SQLException {
         when(resultSet.next()).thenReturn(true).thenReturn(false);
         when(resultSet.getString("id")).thenReturn(memberId);
+        setupCommonMocks();
         when(resultSet.getString("office_advocate_id")).thenReturn(officeAdvocateId);
         when(resultSet.getString("member_type")).thenReturn("ADVOCATE_CLERK");
         when(resultSet.getString("member_id")).thenReturn(memberIdUuid);
@@ -291,6 +311,7 @@ class AdvocateOfficeRowMapperTest {
     void testExtractData_VerifyAuditDetails() throws SQLException {
         when(resultSet.next()).thenReturn(true).thenReturn(false);
         when(resultSet.getString("id")).thenReturn(memberId);
+        setupCommonMocks();
         when(resultSet.getString("office_advocate_id")).thenReturn(officeAdvocateId);
         when(resultSet.getString("member_type")).thenReturn("ADVOCATE");
         when(resultSet.getString("member_id")).thenReturn(memberIdUuid);
@@ -326,6 +347,7 @@ class AdvocateOfficeRowMapperTest {
         when(resultSet.getString("id"))
                 .thenReturn(memberId1)
                 .thenReturn(memberId2);
+        setupCommonMocks();
         when(resultSet.getString("office_advocate_id")).thenReturn(officeAdvocateId);
         when(resultSet.getString("member_type"))
                 .thenReturn("ADVOCATE")
@@ -359,6 +381,7 @@ class AdvocateOfficeRowMapperTest {
         when(resultSet.getString("id"))
                 .thenReturn(memberId1)
                 .thenReturn(memberId2);
+        setupCommonMocks();
         when(resultSet.getString("office_advocate_id")).thenReturn(officeAdvocateId);
         when(resultSet.getString("member_type")).thenReturn("ADVOCATE");
         when(resultSet.getString("member_id")).thenReturn(memberIdUuid);

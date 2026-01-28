@@ -1,5 +1,9 @@
 package digit.enrichment;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import digit.util.AdvocateUtil;
+import digit.util.IndividualUtil;
 import digit.web.models.AddMember;
 import digit.web.models.AddMemberRequest;
 import digit.web.models.LeaveOffice;
@@ -12,14 +16,25 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AdvocateOfficeEnrichmentTest {
+
+    @Mock
+    private AdvocateUtil advocateUtil;
+
+    @Mock
+    private IndividualUtil individualUtil;
 
     @InjectMocks
     private AdvocateOfficeEnrichment enrichment;
@@ -120,8 +135,34 @@ class AdvocateOfficeEnrichmentTest {
         assertNotEquals(request1.getAddMember().getId(), request2.getAddMember().getId());
     }
 
+    private JsonNode createMockNode(String individualId, String userUuid) {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.valueToTree(Map.of("individualId", individualId, "userUuid", userUuid));
+    }
+
     @Test
     void testEnrichLeaveOfficeRequest_SetsIsActiveToFalse() {
+        // Setup leave office with officeAdvocateId and memberId for enrichment
+        UUID officeAdvocateId = UUID.randomUUID();
+        UUID memberId = UUID.randomUUID();
+        leaveOfficeRequest.getLeaveOffice().setOfficeAdvocateId(officeAdvocateId);
+        leaveOfficeRequest.getLeaveOffice().setMemberId(memberId);
+        leaveOfficeRequest.getLeaveOffice().setOfficeAdvocateUserUuid(null);
+        leaveOfficeRequest.getLeaveOffice().setMemberUserUuid(null);
+        leaveOfficeRequest.getLeaveOffice().setMemberType(MemberType.ADVOCATE_CLERK);
+
+        String advocateUserUuid = UUID.randomUUID().toString();
+        String memberUserUuid = UUID.randomUUID().toString();
+        JsonNode advocateNode = createMockNode("individual-advocate-123", advocateUserUuid);
+        JsonNode clerkNode = createMockNode("individual-clerk-123", memberUserUuid);
+        JsonNode individualNode = createMockNode("individual-123", advocateUserUuid);
+
+        when(advocateUtil.searchAdvocateById(any(), anyString())).thenReturn(advocateNode);
+        when(advocateUtil.searchClerkById(any(), anyString(), anyString())).thenReturn(clerkNode);
+        when(advocateUtil.getIndividualId(any())).thenReturn("individual-123");
+        when(individualUtil.searchIndividualByIndividualId(any(), anyString(), anyString())).thenReturn(individualNode);
+        when(individualUtil.getUserUuid(any())).thenReturn(advocateUserUuid, memberUserUuid);
+
         assertNull(leaveOfficeRequest.getLeaveOffice().getIsActive());
 
         enrichment.enrichLeaveOfficeRequest(leaveOfficeRequest);
@@ -134,14 +175,32 @@ class AdvocateOfficeEnrichmentTest {
     void testEnrichLeaveOfficeRequest_PreservesExistingData() {
         UUID originalId = leaveOfficeRequest.getLeaveOffice().getId();
         String originalTenantId = leaveOfficeRequest.getLeaveOffice().getTenantId();
-        UUID originalOfficeAdvocateId = leaveOfficeRequest.getLeaveOffice().getOfficeAdvocateUserUuid();
         UUID originalMemberId = leaveOfficeRequest.getLeaveOffice().getMemberId();
+
+        // Setup leave office with officeAdvocateId and memberId for enrichment
+        UUID officeAdvocateId = UUID.randomUUID();
+        leaveOfficeRequest.getLeaveOffice().setOfficeAdvocateId(officeAdvocateId);
+        leaveOfficeRequest.getLeaveOffice().setOfficeAdvocateUserUuid(null);
+        leaveOfficeRequest.getLeaveOffice().setMemberUserUuid(null);
+        leaveOfficeRequest.getLeaveOffice().setMemberType(MemberType.ADVOCATE_CLERK);
+
+        String advocateUserUuid = UUID.randomUUID().toString();
+        String memberUserUuid = UUID.randomUUID().toString();
+        JsonNode advocateNode = createMockNode("individual-advocate-123", advocateUserUuid);
+        JsonNode clerkNode = createMockNode("individual-clerk-123", memberUserUuid);
+        JsonNode individualNode = createMockNode("individual-123", advocateUserUuid);
+
+        when(advocateUtil.searchAdvocateById(any(), anyString())).thenReturn(advocateNode);
+        when(advocateUtil.searchClerkById(any(), anyString(), anyString())).thenReturn(clerkNode);
+        when(advocateUtil.getIndividualId(any())).thenReturn("individual-123");
+        when(individualUtil.searchIndividualByIndividualId(any(), anyString(), anyString())).thenReturn(individualNode);
+        when(individualUtil.getUserUuid(any())).thenReturn(advocateUserUuid, memberUserUuid);
 
         enrichment.enrichLeaveOfficeRequest(leaveOfficeRequest);
 
         assertEquals(originalId, leaveOfficeRequest.getLeaveOffice().getId());
         assertEquals(originalTenantId, leaveOfficeRequest.getLeaveOffice().getTenantId());
-        assertEquals(originalOfficeAdvocateId, leaveOfficeRequest.getLeaveOffice().getOfficeAdvocateUserUuid());
+        assertNotNull(leaveOfficeRequest.getLeaveOffice().getOfficeAdvocateUserUuid());
         assertEquals(originalMemberId, leaveOfficeRequest.getLeaveOffice().getMemberId());
         assertFalse(leaveOfficeRequest.getLeaveOffice().getIsActive());
     }

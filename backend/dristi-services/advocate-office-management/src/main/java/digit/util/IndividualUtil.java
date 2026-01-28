@@ -6,17 +6,12 @@ import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static digit.config.ServiceConstants.ADVOCATE_NOT_FOUND;
-import static digit.config.ServiceConstants.ADVOCATE_NOT_FOUND_MESSAGE;
-import static digit.config.ServiceConstants.INDIVIDUAL_NOT_FOUND;
 
 @Component
 @Slf4j
@@ -33,7 +28,7 @@ public class IndividualUtil {
         this.configuration = configuration;
     }
 
-    public String getIndividualIdFromUserUuid(RequestInfo requestInfo, String tenantId, String userUuid) {
+    public JsonNode searchIndividualByIndividualId(RequestInfo requestInfo, String tenantId, String individualId) {
         try {
             StringBuilder uri = new StringBuilder(configuration.getIndividualHost())
                     .append(configuration.getIndividualSearchEndPoint())
@@ -42,7 +37,7 @@ public class IndividualUtil {
                     .append("&tenantId=").append(tenantId);
 
             Map<String, Object> individual = new HashMap<>();
-            individual.put("userUuid", List.of(userUuid));
+            individual.put("individualId", individualId);
 
             Map<String, Object> request = new HashMap<>();
             request.put("RequestInfo", requestInfo);
@@ -50,29 +45,30 @@ public class IndividualUtil {
 
             Object responseMap = serviceRequestRepository.fetchResult(uri, request);
             if (responseMap == null) {
-                throw new CustomException(INDIVIDUAL_NOT_FOUND,
-                        String.format("Individual with uuid %s doesn't exist", userUuid));
+                return null;
             }
 
             JsonNode rootNode = objectMapper.valueToTree(responseMap);
             JsonNode individualArray = rootNode.path("Individual");
             if (!individualArray.isArray() || individualArray.isEmpty()) {
-                throw new CustomException(INDIVIDUAL_NOT_FOUND,
-                        String.format("Individual with uuid %s doesn't exist", userUuid));
+                return null;
             }
 
-            JsonNode first = individualArray.get(0);
-            JsonNode individualIdNode = first.path("individualId");
-            if (individualIdNode.isMissingNode() || individualIdNode.isNull() || individualIdNode.asText().isBlank()) {
-                throw new CustomException(ADVOCATE_NOT_FOUND, ADVOCATE_NOT_FOUND_MESSAGE);
-            }
-
-            return individualIdNode.asText();
-        } catch (CustomException e) {
-            throw e;
+            return individualArray.get(0);
         } catch (Exception e) {
-            log.error("Error while fetching individualId for userUuid: {}", userUuid, e);
-            throw new CustomException(ADVOCATE_NOT_FOUND, ADVOCATE_NOT_FOUND_MESSAGE);
+            log.error("Error while searching individual by individualId: {}", individualId, e);
+            return null;
         }
+    }
+
+    public String getUserUuid(JsonNode individualNode) {
+        if (individualNode == null) {
+            return null;
+        }
+        JsonNode userUuidNode = individualNode.path("userUuid");
+        if (userUuidNode.isMissingNode() || userUuidNode.isNull() || userUuidNode.asText().isBlank()) {
+            return null;
+        }
+        return userUuidNode.asText();
     }
 }

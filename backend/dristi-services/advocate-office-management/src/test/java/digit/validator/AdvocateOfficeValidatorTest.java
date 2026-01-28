@@ -1,8 +1,9 @@
 package digit.validator;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.repository.AdvocateOfficeRepository;
 import digit.util.AdvocateUtil;
-import digit.util.IndividualUtil;
 import digit.web.models.*;
 import digit.web.models.enums.AccessType;
 import digit.web.models.enums.MemberType;
@@ -32,15 +33,14 @@ class AdvocateOfficeValidatorTest {
     private AdvocateOfficeRepository advocateOfficeRepository;
 
     @Mock
-    private IndividualUtil individualUtil;
-
-    @Mock
     private AdvocateUtil advocateUtil;
 
     @InjectMocks
     private AdvocateOfficeValidator validator;
 
+    private UUID officeAdvocateUserUuid;
     private UUID officeAdvocateId;
+    private UUID memberUserUuid;
     private UUID memberId;
     private AddMemberRequest addMemberRequest;
     private LeaveOfficeRequest leaveOfficeRequest;
@@ -48,22 +48,26 @@ class AdvocateOfficeValidatorTest {
 
     @BeforeEach
     void setUp() {
-        officeAdvocateId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
-        memberId = UUID.fromString("660e8400-e29b-41d4-a716-446655440000");
+        officeAdvocateUserUuid = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
+        officeAdvocateId = UUID.fromString("770e8400-e29b-41d4-a716-446655440000");
+        memberUserUuid = UUID.fromString("660e8400-e29b-41d4-a716-446655440000");
+        memberId = UUID.fromString("880e8400-e29b-41d4-a716-446655440000");
 
         RequestInfo requestInfo = RequestInfo.builder()
                 .apiId("test-api-id")
                 .msgId("test-msg-id")
                 .userInfo(User.builder()
-                        .uuid(officeAdvocateId.toString())
+                        .uuid(officeAdvocateUserUuid.toString())
                         .build())
                 .build();
 
         AddMember addMember = AddMember.builder()
                 .id(UUID.randomUUID())
                 .tenantId("pg.citya")
-                .officeAdvocateUserUuid(officeAdvocateId)
-                .memberUserUuid(memberId)
+                .officeAdvocateUserUuid(officeAdvocateUserUuid)
+                .officeAdvocateId(officeAdvocateId)
+                .memberUserUuid(memberUserUuid)
+                .memberId(memberId)
                 .memberType(MemberType.ADVOCATE_CLERK)
                 .memberName("John Doe")
                 .memberMobileNumber("9876543210")
@@ -81,7 +85,9 @@ class AdvocateOfficeValidatorTest {
         LeaveOffice leaveOffice = LeaveOffice.builder()
                 .id(UUID.randomUUID())
                 .tenantId("pg.citya")
-                .officeAdvocateUserUuid(officeAdvocateId)
+                .officeAdvocateUserUuid(officeAdvocateUserUuid)
+                .officeAdvocateId(officeAdvocateId)
+                .memberUserUuid(memberUserUuid)
                 .memberId(memberId)
                 .isActive(false)
                 .build();
@@ -101,19 +107,24 @@ class AdvocateOfficeValidatorTest {
                 .build();
     }
 
+    private JsonNode createActiveNode() {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.valueToTree(Map.of("isActive", true));
+    }
+
     @Test
     void testValidateAddMemberRequest_Success() {
-        when(individualUtil.getIndividualIdFromUserUuid(any(), anyString(), anyString()))
-                .thenReturn("individual-id-123");
-        doNothing().when(advocateUtil).validateActiveAdvocateExists(any(), anyString());
-        doNothing().when(advocateUtil).validateActiveClerkExists(any(), anyString(), anyString());
+        JsonNode activeAdvocate = createActiveNode();
+        JsonNode activeClerk = createActiveNode();
+        when(advocateUtil.searchAdvocateById(any(), anyString())).thenReturn(activeAdvocate);
+        when(advocateUtil.searchClerkById(any(), anyString(), anyString())).thenReturn(activeClerk);
+        when(advocateUtil.isActive(any())).thenReturn(true);
         when(advocateOfficeRepository.getMembers(any(), any())).thenReturn(Collections.emptyList());
 
         assertDoesNotThrow(() -> validator.validateAddMemberRequest(addMemberRequest));
 
-        verify(individualUtil, times(2)).getIndividualIdFromUserUuid(any(), anyString(), anyString());
-        verify(advocateUtil, times(1)).validateActiveAdvocateExists(any(), anyString());
-        verify(advocateUtil, times(1)).validateActiveClerkExists(any(), anyString(), anyString());
+        verify(advocateUtil, times(1)).searchAdvocateById(any(), anyString());
+        verify(advocateUtil, times(1)).searchClerkById(any(), anyString(), anyString());
         verify(advocateOfficeRepository, times(1)).getMembers(any(), any());
     }
 
@@ -150,29 +161,29 @@ class AdvocateOfficeValidatorTest {
     }
 
     @Test
-    void testValidateAddMemberRequest_UnauthorizedUser() {
-        addMemberRequest.getRequestInfo().getUserInfo().setUuid(UUID.randomUUID().toString());
+    void testValidateAddMemberRequest_AdvocateNotFound() {
+        when(advocateUtil.searchAdvocateById(any(), anyString())).thenReturn(null);
 
         CustomException exception = assertThrows(CustomException.class, () -> {
             validator.validateAddMemberRequest(addMemberRequest);
         });
 
-        assertEquals(UNAUTHORIZED, exception.getCode());
-        assertEquals(CANNOT_ADD_MEMBER_MESSAGE, exception.getMessage());
+        assertEquals(ADVOCATE_NOT_FOUND, exception.getCode());
     }
 
     @Test
     void testValidateAddMemberRequest_MemberAlreadyExists() {
-        when(individualUtil.getIndividualIdFromUserUuid(any(), anyString(), anyString()))
-                .thenReturn("individual-id-123");
-        doNothing().when(advocateUtil).validateActiveAdvocateExists(any(), anyString());
-        doNothing().when(advocateUtil).validateActiveClerkExists(any(), anyString(), anyString());
+        JsonNode activeAdvocate = createActiveNode();
+        JsonNode activeClerk = createActiveNode();
+        when(advocateUtil.searchAdvocateById(any(), anyString())).thenReturn(activeAdvocate);
+        when(advocateUtil.searchClerkById(any(), anyString(), anyString())).thenReturn(activeClerk);
+        when(advocateUtil.isActive(any())).thenReturn(true);
         
         List<AddMember> existingMembers = Collections.singletonList(
                 AddMember.builder()
                         .id(UUID.randomUUID())
-                        .officeAdvocateUserUuid(officeAdvocateId)
-                        .memberUserUuid(memberId)
+                        .officeAdvocateId(officeAdvocateId)
+                        .memberId(memberId)
                         .build()
         );
         when(advocateOfficeRepository.getMembers(any(), any())).thenReturn(existingMembers);
@@ -189,23 +200,25 @@ class AdvocateOfficeValidatorTest {
     void testValidateAddMemberRequest_AdvocateMemberType() {
         addMemberRequest.getAddMember().setMemberType(MemberType.ADVOCATE);
 
-        when(individualUtil.getIndividualIdFromUserUuid(any(), anyString(), anyString()))
-                .thenReturn("individual-id-123");
-        doNothing().when(advocateUtil).validateActiveAdvocateExists(any(), anyString());
+        JsonNode activeAdvocate = createActiveNode();
+        when(advocateUtil.searchAdvocateById(any(), anyString())).thenReturn(activeAdvocate);
+        when(advocateUtil.isActive(any())).thenReturn(true);
         when(advocateOfficeRepository.getMembers(any(), any())).thenReturn(Collections.emptyList());
 
         assertDoesNotThrow(() -> validator.validateAddMemberRequest(addMemberRequest));
 
-        verify(advocateUtil, times(2)).validateActiveAdvocateExists(any(), anyString());
-        verify(advocateUtil, never()).validateActiveClerkExists(any(), anyString(), anyString());
+        verify(advocateUtil, times(2)).searchAdvocateById(any(), anyString());
+        verify(advocateUtil, never()).searchClerkById(any(), anyString(), anyString());
     }
 
     @Test
     void testValidateLeaveOfficeRequest_Success_AsAdvocate() {
         AddMember existingMember = AddMember.builder()
                 .id(UUID.randomUUID())
-                .officeAdvocateUserUuid(officeAdvocateId)
-                .memberUserUuid(memberId)
+                .officeAdvocateUserUuid(officeAdvocateUserUuid)
+                .officeAdvocateId(officeAdvocateId)
+                .memberUserUuid(memberUserUuid)
+                .memberId(memberId)
                 .memberName("John Doe")
                 .memberMobileNumber("9876543210")
                 .accessType(AccessType.ALL_CASES)
@@ -229,12 +242,14 @@ class AdvocateOfficeValidatorTest {
 
     @Test
     void testValidateLeaveOfficeRequest_Success_AsMember() {
-        leaveOfficeRequest.getRequestInfo().getUserInfo().setUuid(memberId.toString());
+        leaveOfficeRequest.getRequestInfo().getUserInfo().setUuid(memberUserUuid.toString());
 
         AddMember existingMember = AddMember.builder()
                 .id(UUID.randomUUID())
-                .officeAdvocateUserUuid(officeAdvocateId)
-                .memberUserUuid(memberId)
+                .officeAdvocateUserUuid(officeAdvocateUserUuid)
+                .officeAdvocateId(officeAdvocateId)
+                .memberUserUuid(memberUserUuid)
+                .memberId(memberId)
                 .memberName("John Doe")
                 .memberMobileNumber("9876543210")
                 .accessType(AccessType.ALL_CASES)
@@ -257,6 +272,17 @@ class AdvocateOfficeValidatorTest {
     @Test
     void testValidateLeaveOfficeRequest_UnauthorizedUser() {
         leaveOfficeRequest.getRequestInfo().getUserInfo().setUuid(UUID.randomUUID().toString());
+
+        AddMember existingMember = AddMember.builder()
+                .id(UUID.randomUUID())
+                .officeAdvocateUserUuid(officeAdvocateUserUuid)
+                .officeAdvocateId(officeAdvocateId)
+                .memberUserUuid(memberUserUuid)
+                .memberId(memberId)
+                .build();
+
+        when(advocateOfficeRepository.getMembers(any(), any()))
+                .thenReturn(Collections.singletonList(existingMember));
 
         CustomException exception = assertThrows(CustomException.class, () -> {
             validator.validateLeaveOfficeRequest(leaveOfficeRequest);
@@ -310,8 +336,10 @@ class AdvocateOfficeValidatorTest {
     void testValidateLeaveOfficeRequest_EnrichesAuditDetails() {
         AddMember existingMember = AddMember.builder()
                 .id(UUID.randomUUID())
-                .officeAdvocateUserUuid(officeAdvocateId)
-                .memberUserUuid(memberId)
+                .officeAdvocateUserUuid(officeAdvocateUserUuid)
+                .officeAdvocateId(officeAdvocateId)
+                .memberUserUuid(memberUserUuid)
+                .memberId(memberId)
                 .memberName("John Doe")
                 .memberMobileNumber("9876543210")
                 .accessType(AccessType.ALL_CASES)
@@ -332,7 +360,7 @@ class AdvocateOfficeValidatorTest {
         assertNotNull(auditDetails);
         assertEquals("original-creator", auditDetails.getCreatedBy());
         assertEquals(1000L, auditDetails.getCreatedTime());
-        assertEquals(officeAdvocateId.toString(), auditDetails.getLastModifiedBy());
+        assertEquals(officeAdvocateUserUuid.toString(), auditDetails.getLastModifiedBy());
         assertNotNull(auditDetails.getLastModifiedTime());
     }
 }

@@ -46,6 +46,8 @@ public class AdvocateOfficeService {
 
             enrichment.enrichAddMemberRequest(request);
 
+            validator.validateCanAddMember(request);
+
             producer.push(configuration.getAddMemberTopic(), request);
 
             log.info("Member added successfully with id: {}", request.getAddMember().getId());

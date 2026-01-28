@@ -39,11 +39,16 @@ public class AdvocateOfficeRowMapper implements ResultSetExtractor<List<AddMembe
 
                     member = AddMember.builder()
                             .id(UUID.fromString(id))
-                            .officeAdvocateUserUuid(UUID.fromString(rs.getString("office_advocate_id")))
+                            .tenantId(rs.getString("tenant_id"))
+                            .officeAdvocateUserUuid(getUuidFromString(rs.getString("office_advocate_user_uuid")))
+                            .officeAdvocateId(getUuidFromString(rs.getString("office_advocate_id")))
+                            .officeAdvocateName(rs.getString("office_advocate_name"))
                             .memberType(getMemberType(rs))
-                            .memberUserUuid(UUID.fromString(rs.getString("member_id")))
+                            .memberUserUuid(getUuidFromString(rs.getString("member_user_uuid")))
+                            .memberId(getUuidFromString(rs.getString("member_id")))
                             .memberName(rs.getString("member_name"))
                             .memberMobileNumber(rs.getString("member_mobile_number"))
+                            .memberEmail(rs.getString("member_email"))
                             .accessType(getAccessType(rs))
                             .allowCaseCreate(rs.getBoolean("allow_case_create"))
                             .addNewCasesAutomatically(rs.getBoolean("add_new_cases_automatically"))
@@ -70,5 +75,9 @@ public class AdvocateOfficeRowMapper implements ResultSetExtractor<List<AddMembe
     private AccessType getAccessType(ResultSet rs) throws SQLException {
         String type = rs.getString("access_type");
         return type == null ? AccessType.ALL_CASES : AccessType.valueOf(type);
+    }
+
+    private UUID getUuidFromString(String uuidStr) {
+        return uuidStr == null ? null : UUID.fromString(uuidStr);
     }
 }

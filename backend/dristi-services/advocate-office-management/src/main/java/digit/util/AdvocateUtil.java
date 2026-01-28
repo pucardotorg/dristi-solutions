@@ -6,18 +6,12 @@ import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static digit.config.ServiceConstants.ADVOCATE_CLERK_NOT_FOUND;
-import static digit.config.ServiceConstants.ADVOCATE_NOT_FOUND;
-import static digit.config.ServiceConstants.ADVOCATE_CLERK_NOT_FOUND_MESSAGE;
-import static digit.config.ServiceConstants.ADVOCATE_NOT_FOUND_MESSAGE;
 
 @Component
 @Slf4j
@@ -34,13 +28,10 @@ public class AdvocateUtil {
         this.configuration = configuration;
     }
 
-    public void validateActiveAdvocateExists(RequestInfo requestInfo, String individualId) {
+    public JsonNode searchAdvocate(RequestInfo requestInfo, Map<String, Object> criteria) {
         try {
             StringBuilder uri = new StringBuilder(configuration.getAdvocateHost())
                     .append(configuration.getAdvocateSearchEndPoint());
-
-            Map<String, Object> criteria = new HashMap<>();
-            criteria.put("individualId", individualId);
 
             Map<String, Object> request = new HashMap<>();
             request.put("RequestInfo", requestInfo);
@@ -48,50 +39,39 @@ public class AdvocateUtil {
 
             Object responseMap = serviceRequestRepository.fetchResult(uri, request);
             if (responseMap == null) {
-                throw new CustomException(ADVOCATE_NOT_FOUND, ADVOCATE_CLERK_NOT_FOUND_MESSAGE);
+                return null;
             }
 
             JsonNode rootNode = objectMapper.valueToTree(responseMap);
             JsonNode advocatesNode = rootNode.path("advocates");
             if (!advocatesNode.isArray() || advocatesNode.isEmpty()) {
-                throw new CustomException(ADVOCATE_NOT_FOUND, ADVOCATE_NOT_FOUND_MESSAGE);
+                return null;
             }
 
-            boolean hasActive = false;
             for (JsonNode group : advocatesNode) {
                 JsonNode responseList = group.path("responseList");
-                if (responseList.isArray()) {
-                    for (JsonNode adv : responseList) {
-                        JsonNode isActiveNode = adv.path("isActive");
-                        if (!isActiveNode.isMissingNode() && !isActiveNode.isNull() && isActiveNode.asBoolean()) {
-                            hasActive = true;
-                            break;
-                        }
-                    }
-                }
-                if (hasActive) {
-                    break;
+                if (responseList.isArray() && !responseList.isEmpty()) {
+                    return responseList.get(0);
                 }
             }
 
-            if (!hasActive) {
-                throw new CustomException(ADVOCATE_NOT_FOUND, ADVOCATE_NOT_FOUND_MESSAGE);
-            }
-        } catch (CustomException e) {
-            throw e;
+            return null;
         } catch (Exception e) {
-            log.error("Error while fetching advocate for individualId: {}", individualId, e);
-            throw new CustomException(ADVOCATE_NOT_FOUND, ADVOCATE_NOT_FOUND_MESSAGE);
+            log.error("Error while searching advocates with criteria: {}", criteria, e);
+            return null;
         }
     }
 
-    public void validateActiveClerkExists(RequestInfo requestInfo, String tenantId, String individualId) {
+    public JsonNode searchAdvocateById(RequestInfo requestInfo, String advocateId) {
+        Map<String, Object> criteria = new HashMap<>();
+        criteria.put("id", advocateId);
+        return searchAdvocate(requestInfo, criteria);
+    }
+
+    public JsonNode searchClerk(RequestInfo requestInfo, String tenantId, Map<String, Object> criteria) {
         try {
             StringBuilder uri = new StringBuilder(configuration.getAdvocateHost())
                     .append(configuration.getAdvocateClerkSearchEndPoint());
-
-            Map<String, Object> criteria = new HashMap<>();
-            criteria.put("individualId", individualId);
 
             Map<String, Object> request = new HashMap<>();
             request.put("RequestInfo", requestInfo);
@@ -100,40 +80,51 @@ public class AdvocateUtil {
 
             Object responseMap = serviceRequestRepository.fetchResult(uri, request);
             if (responseMap == null) {
-                throw new CustomException(ADVOCATE_CLERK_NOT_FOUND, ADVOCATE_NOT_FOUND_MESSAGE);
+                return null;
             }
 
             JsonNode rootNode = objectMapper.valueToTree(responseMap);
             JsonNode clerksNode = rootNode.path("clerks");
             if (!clerksNode.isArray() || clerksNode.isEmpty()) {
-                throw new CustomException(ADVOCATE_CLERK_NOT_FOUND, ADVOCATE_CLERK_NOT_FOUND_MESSAGE);
+                return null;
             }
 
-            boolean hasActive = false;
             for (JsonNode group : clerksNode) {
                 JsonNode responseList = group.path("responseList");
-                if (responseList.isArray()) {
-                    for (JsonNode clerk : responseList) {
-                        JsonNode isActiveNode = clerk.path("isActive");
-                        if (!isActiveNode.isMissingNode() && !isActiveNode.isNull() && isActiveNode.asBoolean()) {
-                            hasActive = true;
-                            break;
-                        }
-                    }
-                }
-                if (hasActive) {
-                    break;
+                if (responseList.isArray() && !responseList.isEmpty()) {
+                    return responseList.get(0);
                 }
             }
 
-            if (!hasActive) {
-                throw new CustomException(ADVOCATE_CLERK_NOT_FOUND, ADVOCATE_CLERK_NOT_FOUND_MESSAGE);
-            }
-        } catch (CustomException e) {
-            throw e;
+            return null;
         } catch (Exception e) {
-            log.error("Error while validating clerk for individualId: {}", individualId, e);
-            throw new CustomException(ADVOCATE_CLERK_NOT_FOUND, ADVOCATE_CLERK_NOT_FOUND_MESSAGE);
+            log.error("Error while searching clerks with criteria: {}", criteria, e);
+            return null;
         }
+    }
+
+    public JsonNode searchClerkById(RequestInfo requestInfo, String tenantId, String clerkId) {
+        Map<String, Object> criteria = new HashMap<>();
+        criteria.put("id", clerkId);
+        return searchClerk(requestInfo, tenantId, criteria);
+    }
+
+    public boolean isActive(JsonNode node) {
+        if (node == null) {
+            return false;
+        }
+        JsonNode isActiveNode = node.path("isActive");
+        return !isActiveNode.isMissingNode() && !isActiveNode.isNull() && isActiveNode.asBoolean();
+    }
+
+    public String getIndividualId(JsonNode node) {
+        if (node == null) {
+            return null;
+        }
+        JsonNode individualIdNode = node.path("individualId");
+        if (individualIdNode.isMissingNode() || individualIdNode.isNull()) {
+            return null;
+        }
+        return individualIdNode.asText();
     }
 }

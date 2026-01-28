@@ -1,10 +1,10 @@
 package digit.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +17,6 @@ import org.mockito.quality.Strictness;
 import java.util.HashMap;
 import java.util.Map;
 
-import static digit.config.ServiceConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -49,133 +48,134 @@ class AdvocateUtilTest {
     }
 
     @Test
-    void testValidateActiveAdvocateExists_Success() throws Exception {
+    void testSearchAdvocateById_Success() throws Exception {
         Map<String, Object> mockResponse = new HashMap<>();
-        String jsonResponse = "{\"advocates\":[{\"responseList\":[{\"isActive\":true,\"id\":\"adv-123\"}]}]}";
+        String jsonResponse = "{\"advocates\":[{\"responseList\":[{\"isActive\":true,\"id\":\"adv-123\",\"individualId\":\"ind-123\"}]}]}";
 
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
         when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
 
-        assertDoesNotThrow(() -> advocateUtil.validateActiveAdvocateExists(requestInfo, "individual-id-123"));
+        JsonNode result = advocateUtil.searchAdvocateById(requestInfo, "adv-123");
 
+        assertNotNull(result);
         verify(serviceRequestRepository, times(1)).fetchResult(any(), any());
     }
 
     @Test
-    void testValidateActiveAdvocateExists_NullResponse() {
+    void testSearchAdvocateById_NullResponse() {
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(null);
 
-        CustomException exception = assertThrows(CustomException.class, () -> advocateUtil.validateActiveAdvocateExists(requestInfo, "individual-id-123"));
+        JsonNode result = advocateUtil.searchAdvocateById(requestInfo, "adv-123");
 
-        assertEquals(ADVOCATE_NOT_FOUND, exception.getCode());
+        assertNull(result);
     }
 
     @Test
-    void testValidateActiveAdvocateExists_EmptyAdvocatesList() throws Exception {
+    void testSearchAdvocateById_EmptyAdvocatesList() throws Exception {
         Map<String, Object> mockResponse = new HashMap<>();
         String jsonResponse = "{\"advocates\":[]}";
 
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
         when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
 
-        CustomException exception = assertThrows(CustomException.class, () -> advocateUtil.validateActiveAdvocateExists(requestInfo, "individual-id-123"));
+        JsonNode result = advocateUtil.searchAdvocateById(requestInfo, "adv-123");
 
-        assertEquals(ADVOCATE_NOT_FOUND, exception.getCode());
-        assertEquals(ADVOCATE_NOT_FOUND_MESSAGE, exception.getMessage());
+        assertNull(result);
     }
 
     @Test
-    void testValidateActiveAdvocateExists_NoActiveAdvocate() throws Exception {
-        Map<String, Object> mockResponse = new HashMap<>();
-        String jsonResponse = "{\"advocates\":[{\"responseList\":[{\"isActive\":false,\"id\":\"adv-123\"}]}]}";
-
-        when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
-        when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
-
-        CustomException exception = assertThrows(CustomException.class, () -> advocateUtil.validateActiveAdvocateExists(requestInfo, "individual-id-123"));
-
-        assertEquals(ADVOCATE_NOT_FOUND, exception.getCode());
-        assertEquals(ADVOCATE_NOT_FOUND_MESSAGE, exception.getMessage());
-    }
-
-    @Test
-    void testValidateActiveAdvocateExists_ExceptionDuringProcessing() {
+    void testSearchAdvocateById_ExceptionDuringProcessing() {
         when(serviceRequestRepository.fetchResult(any(), any())).thenThrow(new RuntimeException("Network error"));
 
-        CustomException exception = assertThrows(CustomException.class, () -> advocateUtil.validateActiveAdvocateExists(requestInfo, "individual-id-123"));
+        JsonNode result = advocateUtil.searchAdvocateById(requestInfo, "adv-123");
 
-        assertEquals(ADVOCATE_NOT_FOUND, exception.getCode());
+        assertNull(result);
     }
 
     @Test
-    void testValidateActiveClerkExists_Success() throws Exception {
+    void testSearchClerkById_Success() throws Exception {
         Map<String, Object> mockResponse = new HashMap<>();
-        String jsonResponse = "{\"clerks\":[{\"responseList\":[{\"isActive\":true,\"id\":\"clerk-123\"}]}]}";
+        String jsonResponse = "{\"clerks\":[{\"responseList\":[{\"isActive\":true,\"id\":\"clerk-123\",\"individualId\":\"ind-123\"}]}]}";
 
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
         when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
 
-        assertDoesNotThrow(() -> advocateUtil.validateActiveClerkExists(requestInfo, "pg.citya", "individual-id-123"));
+        JsonNode result = advocateUtil.searchClerkById(requestInfo, "pg.citya", "clerk-123");
 
+        assertNotNull(result);
         verify(serviceRequestRepository, times(1)).fetchResult(any(), any());
     }
 
     @Test
-    void testValidateActiveClerkExists_NullResponse() {
+    void testSearchClerkById_NullResponse() {
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(null);
 
-        CustomException exception = assertThrows(CustomException.class, () -> advocateUtil.validateActiveClerkExists(requestInfo, "pg.citya", "individual-id-123"));
+        JsonNode result = advocateUtil.searchClerkById(requestInfo, "pg.citya", "clerk-123");
 
-        assertEquals(ADVOCATE_CLERK_NOT_FOUND, exception.getCode());
+        assertNull(result);
     }
 
     @Test
-    void testValidateActiveClerkExists_EmptyClerksList() throws Exception {
+    void testSearchClerkById_EmptyClerksList() throws Exception {
         Map<String, Object> mockResponse = new HashMap<>();
         String jsonResponse = "{\"clerks\":[]}";
 
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
         when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
 
-        CustomException exception = assertThrows(CustomException.class, () -> advocateUtil.validateActiveClerkExists(requestInfo, "pg.citya", "individual-id-123"));
+        JsonNode result = advocateUtil.searchClerkById(requestInfo, "pg.citya", "clerk-123");
 
-        assertEquals(ADVOCATE_CLERK_NOT_FOUND, exception.getCode());
-        assertEquals(ADVOCATE_CLERK_NOT_FOUND_MESSAGE, exception.getMessage());
+        assertNull(result);
     }
 
     @Test
-    void testValidateActiveClerkExists_NoActiveClerk() throws Exception {
-        Map<String, Object> mockResponse = new HashMap<>();
-        String jsonResponse = "{\"clerks\":[{\"responseList\":[{\"isActive\":false,\"id\":\"clerk-123\"}]}]}";
-
-        when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
-        when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
-
-        CustomException exception = assertThrows(CustomException.class, () -> advocateUtil.validateActiveClerkExists(requestInfo, "pg.citya", "individual-id-123"));
-
-        assertEquals(ADVOCATE_CLERK_NOT_FOUND, exception.getCode());
-        assertEquals(ADVOCATE_CLERK_NOT_FOUND_MESSAGE, exception.getMessage());
-    }
-
-    @Test
-    void testValidateActiveClerkExists_ExceptionDuringProcessing() {
+    void testSearchClerkById_ExceptionDuringProcessing() {
         when(serviceRequestRepository.fetchResult(any(), any())).thenThrow(new RuntimeException("Network error"));
 
-        CustomException exception = assertThrows(CustomException.class, () -> advocateUtil.validateActiveClerkExists(requestInfo, "pg.citya", "individual-id-123"));
+        JsonNode result = advocateUtil.searchClerkById(requestInfo, "pg.citya", "clerk-123");
 
-        assertEquals(ADVOCATE_CLERK_NOT_FOUND, exception.getCode());
+        assertNull(result);
     }
 
     @Test
-    void testValidateActiveAdvocateExists_MultipleAdvocatesOneActive() throws Exception {
-        Map<String, Object> mockResponse = new HashMap<>();
-        String jsonResponse = "{\"advocates\":[{\"responseList\":[{\"isActive\":false,\"id\":\"adv-1\"},{\"isActive\":true,\"id\":\"adv-2\"}]}]}";
+    void testIsActive_ActiveNode() throws Exception {
+        String jsonResponse = "{\"isActive\":true}";
+        JsonNode node = new ObjectMapper().readTree(jsonResponse);
 
-        when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
-        when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
+        assertTrue(advocateUtil.isActive(node));
+    }
 
-        assertDoesNotThrow(() -> advocateUtil.validateActiveAdvocateExists(requestInfo, "individual-id-123"));
+    @Test
+    void testIsActive_InactiveNode() throws Exception {
+        String jsonResponse = "{\"isActive\":false}";
+        JsonNode node = new ObjectMapper().readTree(jsonResponse);
 
-        verify(serviceRequestRepository, times(1)).fetchResult(any(), any());
+        assertFalse(advocateUtil.isActive(node));
+    }
+
+    @Test
+    void testIsActive_NullNode() {
+        assertFalse(advocateUtil.isActive(null));
+    }
+
+    @Test
+    void testGetIndividualId_Success() throws Exception {
+        String jsonResponse = "{\"individualId\":\"ind-123\"}";
+        JsonNode node = new ObjectMapper().readTree(jsonResponse);
+
+        assertEquals("ind-123", advocateUtil.getIndividualId(node));
+    }
+
+    @Test
+    void testGetIndividualId_NullNode() {
+        assertNull(advocateUtil.getIndividualId(null));
+    }
+
+    @Test
+    void testGetIndividualId_MissingIndividualId() throws Exception {
+        String jsonResponse = "{\"name\":\"John\"}";
+        JsonNode node = new ObjectMapper().readTree(jsonResponse);
+
+        assertNull(advocateUtil.getIndividualId(node));
     }
 }
