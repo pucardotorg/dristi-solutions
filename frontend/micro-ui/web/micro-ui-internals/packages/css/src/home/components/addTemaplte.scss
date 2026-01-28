@@ -1,0 +1,46 @@
+.template-from-modal{
+    width: 45%;
+}
+
+
+.template-form-composer {
+  .new-template-form {
+    padding: 24px !important;
+    box-shadow: none !important;
+    .label-field-pair {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+
+      .card-label.bolder{
+        flex: 0 0 auto;
+        width: fit-content;
+      }
+    }
+  }
+
+  .order-type-action {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 16px;
+    box-shadow: none;
+    border-top: 1px #bbbbbd solid;
+    padding: 16px 24px;
+
+    .submit-bar {
+      width: fit-content;
+      height: 40px;
+      padding: 8px 24px 8px 24px;
+      box-shadow: none !important;
+
+      header {
+        font-family: Roboto;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 18.75px;
+        text-align: center;
+        color: #ffffff;
+      }
+    }
+  }
+}

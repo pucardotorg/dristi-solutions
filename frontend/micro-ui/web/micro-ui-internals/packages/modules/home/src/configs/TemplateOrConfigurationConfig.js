@@ -72,6 +72,7 @@ export const temaplateOrConfigurationConfig = {
           {
             label: "CS_ACTIONS",
             jsonPath: "action",
+            additionalCustomization: true
           },
         ],
         enableGlobalSearch: false,

@@ -12,6 +12,7 @@ import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
 import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
 import { formatDateWithTime } from "../../../orders/src/utils";
+import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components/EditDeleteModal";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -1227,6 +1228,8 @@ export const UICustomizations = {
       switch (key) {
         case "TEMPLATE_OR_PROCESS_TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
+        case "CS_ACTIONS":
+          return <EditDeleteModal rowData={row} colData={column} value={value} isDelete={true} isEdit={true} />;
         default:
           return value || "";
       }

@@ -52,7 +52,7 @@ const MainHomeScreen = () => {
   const history = useHistory();
   const location = useLocation();
   const homeFilteredData = location?.state?.homeFilteredData;
-  const initialActiveTab = sessionStorage.getItem("homeActiveTab") || location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB";
+  const initialActiveTab = sessionStorage.getItem("homeActiveTab") || location?.state?.homeActiveTab || "TEMPLATE_OR_CONFIGURATION";
   const [homeActiveTab] = useState(initialActiveTab);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTab, setActiveTab] = useState(homeActiveTab);
