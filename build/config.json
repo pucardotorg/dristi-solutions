@@ -249,11 +249,11 @@
         "language": "java",
         "version": "17"
     },
-    "task-management": {
+    "template-configuration": {
         "service_group": "core-services",
-        "db_source_path": "backend/dristi-services/task-management/src/main/resources/db",
+        "db_source_path": "backend/dristi-services/template-configuration/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile.v2",
-        "service_source_path": "backend/dristi-services/task-management",
+        "service_source_path": "backend/dristi-services/template-configuration",
         "language": "java",
         "version": "17"
     },
