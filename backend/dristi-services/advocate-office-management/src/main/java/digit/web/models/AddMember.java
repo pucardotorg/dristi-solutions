@@ -29,18 +29,34 @@ public class AddMember {
     @Valid
     private UUID id = null;
 
-    @JsonProperty("officeAdvocateId")
+    @JsonProperty("tenantId")
     @NotNull
+    private String tenantId = null;
+
+    @JsonProperty("officeAdvocateUserUuid")
     @Valid
+    private UUID officeAdvocateUserUuid = null;
+
+    @JsonProperty("officeAdvocateId")
+    @Valid
+    @NotNull
     private UUID officeAdvocateId = null;
+
+    @JsonProperty("officeAdvocateName")
+    @NotNull
+    private String officeAdvocateName = null;
 
     @JsonProperty("memberType")
     @NotNull
     private MemberType memberType = null;
 
-    @JsonProperty("memberId")
-    @NotNull
+    @JsonProperty("memberUserUuid")
     @Valid
+    private UUID memberUserUuid = null;
+
+    @JsonProperty("memberId")
+    @Valid
+    @NotNull
     private UUID memberId = null;
 
     @JsonProperty("memberName")
@@ -48,6 +64,9 @@ public class AddMember {
 
     @JsonProperty("memberMobileNumber")
     private String memberMobileNumber = null;
+
+    @JsonProperty("memberEmail")
+    private String memberEmail = null;
 
     @JsonProperty("accessType")
     private AccessType accessType = AccessType.ALL_CASES;
@@ -61,5 +80,8 @@ public class AddMember {
     @JsonProperty("auditDetails")
     @Valid
     private AuditDetails auditDetails = null;
+
+    @JsonProperty("isActive")
+    private Boolean isActive = true;
 
 }
