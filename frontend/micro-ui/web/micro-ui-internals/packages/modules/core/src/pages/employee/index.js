@@ -11,6 +11,7 @@ import EmployeeLogin from "./Login";
 import UserProfile from "../citizen/Home/UserProfile";
 import ErrorComponent from "../../components/ErrorComponent";
 import { PrivateRoute } from "@egovernments/digit-ui-react-components";
+import FormComposerPlayground from "../../components/FormComposerPlayground";
 
 const userScreensExempted = ["user/profile", "user/error"];
 
@@ -65,6 +66,9 @@ const EmployeeApp = ({
   return (
     <div className="employee">
       <Switch>
+        <Route path={`${path}/form-composer-v2-playground`}>
+          <FormComposerPlayground />
+        </Route>
         <Route path={`${path}/user`}>
           {isUserProfile && (
             <TopBarSideBar
