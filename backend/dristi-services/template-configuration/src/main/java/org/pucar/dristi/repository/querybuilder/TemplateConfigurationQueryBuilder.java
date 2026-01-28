@@ -22,8 +22,7 @@ public class TemplateConfigurationQueryBuilder {
             "tc.created_by as created_by, tc.created_time as created_time, " +
             "tc.last_modified_by as last_modified_by, tc.last_modified_time as last_modified_time ";
 
-    private static final String FROM_TEMPLATE_TABLE = " FROM dristi_template_configuration tc";
-
+    private static final String FROM_TEMPLATE_TABLE = " FROM dristi_template_configuration tc WHERE is_active = true ";
 
     private static final String ORDERBY_CLAUSE = " ORDER BY tc.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY tc.created_time DESC ";
@@ -35,39 +34,29 @@ public class TemplateConfigurationQueryBuilder {
             StringBuilder query = new StringBuilder(BASE_TEMPLATE_QUERY);
             query.append(FROM_TEMPLATE_TABLE);
 
-            boolean firstCriteria = true;
-
             // Add filters based on criteria
             if (criteria.getId() != null && !criteria.getId().isEmpty()) {
-                addClauseIfRequired(query, firstCriteria);
-                query.append("tc.id = ?");
+                query.append("AND tc.id = ?");
                 preparedStmtList.add(criteria.getId());
                 preparedStmtArgList.add(Types.VARCHAR);
-                firstCriteria = false;
             }
 
             if (criteria.getTenantId() != null && !criteria.getTenantId().isEmpty()) {
-                addClauseIfRequired(query, firstCriteria);
-                query.append("tc.tenant_id = ?");
+                query.append("AND tc.tenant_id = ?");
                 preparedStmtList.add(criteria.getTenantId());
                 preparedStmtArgList.add(Types.VARCHAR);
-                firstCriteria = false;
             }
 
             if (criteria.getCourtId() != null && !criteria.getCourtId().isEmpty()) {
-                addClauseIfRequired(query, firstCriteria);
-                query.append("tc.court_id = ?");
+                query.append(" AND tc.court_id = ?");
                 preparedStmtList.add(criteria.getCourtId());
                 preparedStmtArgList.add(Types.VARCHAR);
-                firstCriteria = false;
             }
 
             if (criteria.getFilingNumber() != null && !criteria.getFilingNumber().isEmpty()) {
-                addClauseIfRequired(query, firstCriteria);
-                query.append("tc.filing_number = ?");
+                query.append(" AND tc.filing_number = ?");
                 preparedStmtList.add(criteria.getFilingNumber());
                 preparedStmtArgList.add(Types.VARCHAR);
-                firstCriteria = false;
             }
 
             return query.toString();
@@ -102,13 +91,5 @@ public class TemplateConfigurationQueryBuilder {
 
     private static boolean isPaginationInvalid(Pagination pagination) {
         return pagination == null || pagination.getSortBy() == null || pagination.getOrder() == null;
-    }
-
-    private void addClauseIfRequired(StringBuilder query, boolean firstCriteria) {
-        if (firstCriteria) {
-            query.append(" WHERE ");
-        } else {
-            query.append(" AND ");
-        }
     }
 }
