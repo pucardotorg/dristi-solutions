@@ -97,7 +97,15 @@ function groupOrdersByParty(filteredOrders) {
   return accusedWiseOrdersList;
 }
 
-const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseDetails, showModal = true }) => {
+const NoticeProcessModal = ({
+  handleClose,
+  filingNumber,
+  currentHearingId,
+  caseDetails,
+  showModal = true,
+  ordersDataFromParent = null,
+  hearingsDataFromParent = null,
+}) => {
   const history = useHistory();
   const { t } = useTranslation();
   const { state } = useLocation();
@@ -130,19 +138,20 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     },
     { applicationNumber: "", cnrNumber: "" },
     filingNumber,
-    Boolean(filingNumber && caseCourtId)
+    Boolean(filingNumber && caseCourtId && !hearingsDataFromParent)
   );
 
   const hearingDetails = useMemo(() => {
-    if (!hearingsData?.HearingList) return [];
+    if (!hearingsData?.HearingList || !hearingsDataFromParent?.HearingList) return [];
+    const hearingDetails = hearingsDataFromParent || hearingsData;
 
     if (currentHearingId) {
-      const matched = hearingsData.HearingList.find((hearing) => hearing.hearingId === currentHearingId);
+      const matched = hearingDetails.HearingList.find((hearing) => hearing.hearingId === currentHearingId);
       return matched ? matched : [];
     }
 
     return [];
-  }, [hearingsData, currentHearingId]);
+  }, [hearingsData, currentHearingId, hearingsDataFromParent]);
 
   const { caseId, cnrNumber } = useMemo(() => ({ cnrNumber: caseDetails?.cnrNumber || "", caseId: caseDetails?.id }), [caseDetails]);
 
@@ -152,12 +161,14 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     } else history.goBack();
   };
 
-  const { data: ordersData } = useSearchOrdersService(
+  const { data: ordersFetchedData } = useSearchOrdersService(
     { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber,
-    Boolean(filingNumber && caseCourtId)
+    Boolean(filingNumber && caseCourtId && !ordersDataFromParent)
   );
+
+  const ordersData = useMemo(() => ordersDataFromParent || ordersFetchedData, [ordersDataFromParent, ordersFetchedData]);
 
   const orderListFiltered = useMemo(() => {
     if (!ordersData?.list) return [];
@@ -227,7 +238,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     if (hearingDetails?.hearingId && !currentHearingNumber) {
       setCurrentHearingNumber(hearingDetails.hearingId);
     }
-  }, [hearingDetails?.hearingId]);
+  }, [hearingDetails?.hearingId, currentHearingNumber]);
 
   const hearingCriteria = useMemo(
     () => ({

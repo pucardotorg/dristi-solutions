@@ -107,6 +107,22 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
     setShowPicker(false);
   };
 
+  useEffect(() => {
+    const handleBackdropClick = (event) => {
+      if (event.target.classList.contains("popup-wrap") || event.target.classList.contains("modal-wrapper")) {
+        setShowPicker(false);
+      }
+    };
+
+    if (showPicker) {
+      window.addEventListener("click", handleBackdropClick);
+    }
+
+    return () => {
+      window.removeEventListener("click", handleBackdropClick);
+    };
+  }, [showPicker]);
+
   return (
     <div className="judge-hearing-selection-v2" style={{ width: "100%" }}>
       {config?.withoutLabel && (
