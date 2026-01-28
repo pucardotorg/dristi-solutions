@@ -1,9 +1,12 @@
 CREATE TABLE dristi_advocate_office_case_member (
     id VARCHAR(64) NOT NULL PRIMARY KEY,
+    tenant_id VARCHAR(64) NOT NULL,
     office_advocate_id VARCHAR(64) NOT NULL,
+    office_advocate_name VARCHAR(256) NOT NULL,
     case_id VARCHAR(64) NOT NULL,
     member_id VARCHAR(64) NOT NULL,
     member_type VARCHAR(64) NOT NULL,
+    member_name VARCHAR(256) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
     created_by VARCHAR(64),
     last_modified_by VARCHAR(64),

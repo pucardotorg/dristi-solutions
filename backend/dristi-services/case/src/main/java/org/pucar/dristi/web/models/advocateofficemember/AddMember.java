@@ -22,11 +22,20 @@ public class AddMember {
     @JsonProperty("tenantId")
     private String tenantId;
 
+    @JsonProperty("officeAdvocateUserUuid")
+    private UUID officeAdvocateUserUuid;
+
     @JsonProperty("officeAdvocateId")
     private UUID officeAdvocateId;
 
+    @JsonProperty("officeAdvocateName")
+    private String officeAdvocateName;
+
     @JsonProperty("memberType")
     private MemberType memberType;
+
+    @JsonProperty("memberUserUuid")
+    private UUID memberUserUuid;
 
     @JsonProperty("memberId")
     private UUID memberId;
@@ -36,6 +45,9 @@ public class AddMember {
 
     @JsonProperty("memberMobileNumber")
     private String memberMobileNumber;
+
+    @JsonProperty("memberEmail")
+    private String memberEmail;
 
     @JsonProperty("auditDetails")
     private AuditDetails auditDetails;

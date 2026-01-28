@@ -32,8 +32,7 @@ public class AdvocateOfficeManagementConsumer {
             log.info("Received add member record on topic: {}", topic);
             AddMemberRequest request = objectMapper.convertValue(payload.value(), AddMemberRequest.class);
             advocateOfficeCaseMemberService.processAddMember(request);
-            log.info("Successfully processed add member event for officeAdvocateId: {}", 
-                    request.getAddMember().getOfficeAdvocateId());
+            log.info("Successfully processed add member event for officeAdvocateId: {}", request);
         } catch (Exception e) {
             log.error("Error while listening to add member on topic: {}", topic, e);
         }

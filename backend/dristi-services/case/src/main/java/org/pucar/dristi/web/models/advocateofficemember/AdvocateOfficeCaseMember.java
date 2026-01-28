@@ -19,8 +19,14 @@ public class AdvocateOfficeCaseMember {
     @JsonProperty("id")
     private UUID id;
 
+    @JsonProperty("tenantId")
+    private String tenantId;
+
     @JsonProperty("officeAdvocateId")
     private UUID officeAdvocateId;
+
+    @JsonProperty("officeAdvocateName")
+    private String officeAdvocateName;
 
     @JsonProperty("caseId")
     private UUID caseId;
@@ -31,9 +37,13 @@ public class AdvocateOfficeCaseMember {
     @JsonProperty("memberType")
     private MemberType memberType;
 
+    @JsonProperty("memberName")
+    private String memberName;
+
     @JsonProperty("isActive")
     private Boolean isActive;
 
     @JsonProperty("auditDetails")
     private AuditDetails auditDetails;
+
 }

@@ -5,9 +5,6 @@ import org.egov.common.contract.models.AuditDetails;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.AdvocateOfficeCaseMemberRepository;
-import org.pucar.dristi.util.AdvocateUtil;
-import org.pucar.dristi.web.models.Advocate;
-import org.pucar.dristi.web.models.Individual;
 import org.pucar.dristi.web.models.advocateofficemember.AddMemberRequest;
 import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMember;
 import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMemberRequest;
@@ -16,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,57 +23,23 @@ public class AdvocateOfficeCaseMemberService {
     private final AdvocateOfficeCaseMemberRepository repository;
     private final Producer producer;
     private final Configuration configuration;
-    private final IndividualService individualService;
-    private final AdvocateUtil advocateUtil;
 
     @Autowired
     public AdvocateOfficeCaseMemberService(AdvocateOfficeCaseMemberRepository repository,
                                            Producer producer,
-                                           Configuration configuration,
-                                           IndividualService individualService,
-                                           AdvocateUtil advocateUtil) {
+                                           Configuration configuration) {
         this.repository = repository;
         this.producer = producer;
         this.configuration = configuration;
-        this.individualService = individualService;
-        this.advocateUtil = advocateUtil;
     }
 
     public void processAddMember(AddMemberRequest request) {
         try {
-            log.info("Processing add member request for officeAdvocateId (userUuid): {}, memberId: {}",
+            log.info("Processing add member request for officeAdvocateId: {}, memberId: {}",
                     request.getAddMember().getOfficeAdvocateId(),
                     request.getAddMember().getMemberId());
 
-            String userUuid = request.getAddMember().getOfficeAdvocateId().toString();
-
-            // Convert userUuid to individualId
-            List<Individual> individuals = individualService.getIndividuals(
-                    request.getRequestInfo(),
-                    Collections.singletonList(userUuid)
-            );
-
-            if (individuals.isEmpty()) {
-                log.error("No individual found for userUuid: {}. Skipping member addition.", userUuid);
-                return;
-            }
-
-            String individualId = individuals.get(0).getIndividualId();
-            log.info("Found individualId: {} for userUuid: {}", individualId, userUuid);
-
-            // Convert individualId to advocateId
-            List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(
-                    request.getRequestInfo(),
-                    individualId
-            );
-
-            if (advocates.isEmpty()) {
-                log.error("No active advocate found for individualId: {}. Skipping member addition.", individualId);
-                return;
-            }
-
-            String advocateId = advocates.get(0).getId().toString();
-            log.info("Found advocateId: {} for individualId: {}", advocateId, individualId);
+            String advocateId = request.getAddMember().getOfficeAdvocateId().toString();
 
             List<String> caseIds = repository.getCaseIdsByAdvocateId(advocateId);
 
@@ -93,10 +55,13 @@ public class AdvocateOfficeCaseMemberService {
             for (String caseId : caseIds) {
                 AdvocateOfficeCaseMember member = AdvocateOfficeCaseMember.builder()
                         .id(UUID.randomUUID())
+                        .tenantId(request.getAddMember().getTenantId())
                         .officeAdvocateId(request.getAddMember().getOfficeAdvocateId())
+                        .officeAdvocateName(request.getAddMember().getOfficeAdvocateName())
                         .caseId(UUID.fromString(caseId))
                         .memberId(request.getAddMember().getMemberId())
                         .memberType(request.getAddMember().getMemberType())
+                        .memberName(request.getAddMember().getMemberName())
                         .isActive(request.getAddMember().getIsActive() != null ? request.getAddMember().getIsActive() : true)
                         .auditDetails(createAuditDetails(request))
                         .build();
@@ -123,8 +88,8 @@ public class AdvocateOfficeCaseMemberService {
     public void processLeaveOffice(LeaveOfficeRequest request) {
         try {
             log.info("Processing leave office request for officeAdvocateId: {}, memberId: {}",
-                    request.getLeaveOffice().getOfficeAdvocateId(),
-                    request.getLeaveOffice().getMemberId());
+                    request.getLeaveOffice().getOfficeAdvocateUserUuid(),
+                    request.getLeaveOffice().getMemberUserUuid());
 
             request.getLeaveOffice().setIsActive(false);
             request.getLeaveOffice().setAuditDetails(createAuditDetailsForLeave(request));
