@@ -1,5 +1,6 @@
 package org.drishti.esign.service;
 
+import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.*;
@@ -22,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -220,32 +222,27 @@ public class PdfEmbedder {
 
             // For multi-page signing with iText, we use the first page for the signature field
             // and add visual annotations on other pages
-            Integer firstPage = pages.get(0);
-            String firstPlaceholder = getPlaceholderForPage(eSignParameter, firstPage);
-            Coordinate firstCoord = findPlaceholderOnPage(reader, firstPage, firstPlaceholder);
-            Rectangle firstRect = new Rectangle(firstCoord.getX(), firstCoord.getY(), 
-                                               firstCoord.getX() + 100, firstCoord.getY() + 50);
+            Rectangle invisibleRect = new Rectangle(0, 0);
+            appearance.setVisibleSignature(invisibleRect, 0, fieldName);
+            log.info("Created invisible document-level signature field: {}", fieldName);
 
             // For additional pages, add stamp annotations only if they have placeholders
-            for (int i = 1; i < pages.size(); i++) {
-                Integer pageNumber = pages.get(i);
+            for (Integer pageNumber : pages) {
                 String placeholder = getPlaceholderForPage(eSignParameter, pageNumber);
-                
-                // Only add annotation if placeholder exists for this page
+
+                // Only add visual overlay if placeholder exists for this page
                 if (placeholder != null && !placeholder.isEmpty()) {
                     Coordinate coord = findPlaceholderOnPage(reader, pageNumber, placeholder);
-                    
-                    Rectangle rect = new Rectangle(coord.getX(), coord.getY(), 
-                                                 coord.getX() + 100, coord.getY() + 50);
-                    
-                    // Add a stamp annotation that will show the signature text
-                    PdfAnnotation annotation = PdfAnnotation.createStamp(stamper.getWriter(), rect, 
-                        "Signature will appear here after signing", "Signature");
-                    annotation.setFlags(PdfAnnotation.FLAGS_PRINT);
-                    stamper.addAnnotation(annotation, pageNumber);
-                    
-                    log.info("Added signature placeholder annotation for page {} at ({}, {})", 
-                        pageNumber, coord.getX(), coord.getY());
+
+                    if (coord.isFound()) {
+                        // Add visual "Digitally Signed" text at placeholder location
+                        addVisualSignatureText(stamper, pageNumber, coord);
+                        log.info("Added visual signature text on page {} at ({}, {})",
+                                pageNumber, coord.getX(), coord.getY());
+                    } else {
+                        log.warn("Placeholder '{}' not found on page {}, skipping visual overlay",
+                                placeholder, pageNumber);
+                    }
                 } else {
                     log.info("Skipping page {} - no placeholder defined for this signer", pageNumber);
                 }
@@ -265,9 +262,6 @@ public class PdfEmbedder {
             appearance.setSignDate(Calendar.getInstance());
             appearance.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED);
             appearance.setImage(null);
-
-            // Set visible signature on first page (iText requirement)
-            appearance.setVisibleSignature(firstRect, firstPage, fieldName);
 
             // Create external signature container
             int contentEstimated = 8192;
@@ -449,5 +443,61 @@ public class PdfEmbedder {
         // Default
         return "SIGNATURE";
     }
-}
 
+    /**
+     * Add visual "Digitally Signed" text at specific location on page
+     * This is purely visual - the cryptographic signature is document-level
+     * 
+     * @param stamper PdfStamper instance
+     * @param pageNumber Page number to add visual signature
+     * @param coord Coordinate where to place the visual signature
+     * @throws Exception if error occurs while adding visual text
+     */
+    private void addVisualSignatureText(PdfStamper stamper, int pageNumber, Coordinate coord) 
+            throws Exception {
+        
+        PdfContentByte canvas = stamper.getOverContent(pageNumber);
+        
+        // Create font for signature text
+        BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.EMBEDDED);
+        
+        // Draw rectangle border (visual signature box)
+        float x = coord.getX();
+        float y = coord.getY();
+        float width = 100;
+        float height = 50;
+        
+        canvas.saveState();
+        canvas.setColorStroke(BaseColor.BLACK);
+        canvas.setLineWidth(0.5f);
+        canvas.rectangle(x, y, width, height);
+        canvas.stroke();
+        
+        // Add "Digitally Signed" text
+        canvas.beginText();
+        canvas.setFontAndSize(baseFont, 8);
+        canvas.setColorFill(BaseColor.BLACK);
+        canvas.setTextMatrix(x + 5, y + height - 15);
+        canvas.showText("Digitally Signed");
+        canvas.endText();
+        
+        // Add date/time
+        String dateTime = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss").format(new Date());
+        canvas.beginText();
+        canvas.setFontAndSize(baseFont, 6);
+        canvas.setTextMatrix(x + 5, y + height - 25);
+        canvas.showText(dateTime);
+        canvas.endText();
+        
+        // Add security indicator text
+        canvas.beginText();
+        canvas.setFontAndSize(baseFont, 6);
+        canvas.setTextMatrix(x + 5, y + 5);
+        canvas.showText("Cryptographically Secured");
+        canvas.endText();
+        
+        canvas.restoreState();
+        
+        log.debug("Added visual signature box on page {} at position ({}, {})", pageNumber, x, y);
+    }
+}
