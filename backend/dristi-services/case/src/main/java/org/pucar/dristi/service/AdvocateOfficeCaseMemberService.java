@@ -1,14 +1,19 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.AdvocateOfficeCaseMemberRepository;
+import org.pucar.dristi.web.models.AdvocateOffice;
+import org.pucar.dristi.web.models.AdvocateOfficeMember;
+import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.advocateofficemember.AddMemberRequest;
 import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMember;
 import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMemberRequest;
 import org.pucar.dristi.web.models.advocateofficemember.LeaveOfficeRequest;
+import org.pucar.dristi.web.models.enums.MemberType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,14 +28,20 @@ public class AdvocateOfficeCaseMemberService {
     private final AdvocateOfficeCaseMemberRepository repository;
     private final Producer producer;
     private final Configuration configuration;
+    private final CacheService cacheService;
+    private final ObjectMapper objectMapper;
 
     @Autowired
     public AdvocateOfficeCaseMemberService(AdvocateOfficeCaseMemberRepository repository,
                                            Producer producer,
-                                           Configuration configuration) {
+                                           Configuration configuration,
+                                           CacheService cacheService,
+                                           ObjectMapper objectMapper) {
         this.repository = repository;
         this.producer = producer;
         this.configuration = configuration;
+        this.cacheService = cacheService;
+        this.objectMapper = objectMapper;
     }
 
     public void processAddMember(AddMemberRequest request) {
@@ -77,6 +88,9 @@ public class AdvocateOfficeCaseMemberService {
 
                 producer.push(configuration.getAdvocateOfficeCaseMemberSaveTopic(), memberRequest);
                 log.info("Successfully published {} members to save topic", members.size());
+
+                // Update Redis cache for each case
+                updateRedisCacheForAddMember(memberRequest);
             }
 
         } catch (Exception e) {
@@ -96,6 +110,9 @@ public class AdvocateOfficeCaseMemberService {
 
             producer.push(configuration.getAdvocateOfficeCaseMemberUpdateTopic(), request);
             log.info("Successfully published leave office request to update topic");
+
+            // Update Redis cache for leave office
+            updateRedisCacheForLeaveOffice(request);
 
         } catch (Exception e) {
             log.error("Error processing leave office request", e);
@@ -127,5 +144,120 @@ public class AdvocateOfficeCaseMemberService {
 
         return auditDetails;
 
+    }
+
+    private void updateRedisCacheForAddMember(AdvocateOfficeCaseMemberRequest memberRequest) {
+        List<AdvocateOfficeCaseMember> members = memberRequest.getMembers();
+        if (members == null || members.isEmpty()) {
+            return;
+        }
+
+        // Group members by caseId
+        members.stream()
+                .filter(m -> m.getCaseId() != null)
+                .forEach(member -> {
+                    try {
+                        String caseId = member.getCaseId().toString();
+                        String tenantId = member.getTenantId();
+                        String redisKey = tenantId + ":" + caseId;
+
+                        Object cachedValue = cacheService.findById(redisKey);
+                        if (cachedValue != null) {
+                            CourtCase courtCase = objectMapper.convertValue(cachedValue, CourtCase.class);
+
+                            // Transform AdvocateOfficeCaseMember to AdvocateOfficeMember
+                            AdvocateOfficeMember officeMember = AdvocateOfficeMember.builder()
+                                    .id(member.getId().toString())
+                                    .tenantId(member.getTenantId())
+                                    .caseId(caseId)
+                                    .memberId(member.getMemberId().toString())
+                                    .memberName(member.getMemberName())
+                                    .memberType(member.getMemberType())
+                                    .isActive(member.getIsActive())
+                                    .auditDetails(member.getAuditDetails())
+                                    .build();
+
+                            // Get or initialize advocate offices list
+                            List<AdvocateOffice> advocateOffices = courtCase.getAdvocateOffices();
+                            if (advocateOffices == null) {
+                                advocateOffices = new ArrayList<>();
+                            }
+
+                            String officeAdvocateId = member.getOfficeAdvocateId().toString();
+
+                            // Find or create the advocate office
+                            AdvocateOffice targetOffice = advocateOffices.stream()
+                                    .filter(office -> officeAdvocateId.equals(office.getOfficeAdvocateId()))
+                                    .findFirst()
+                                    .orElse(null);
+
+                            if (targetOffice == null) {
+                                targetOffice = AdvocateOffice.builder()
+                                        .officeAdvocateId(officeAdvocateId)
+                                        .officeAdvocateName(member.getOfficeAdvocateName())
+                                        .advocates(new ArrayList<>())
+                                        .clerks(new ArrayList<>())
+                                        .build();
+                                advocateOffices.add(targetOffice);
+                            }
+
+                            // Add member to appropriate list based on memberType
+                            if (MemberType.ADVOCATE.equals(member.getMemberType())) {
+                                targetOffice.getAdvocates().add(officeMember);
+                            } else {
+                                targetOffice.getClerks().add(officeMember);
+                            }
+
+                            courtCase.setAdvocateOffices(advocateOffices);
+                            cacheService.save(redisKey, courtCase);
+                            log.info("Updated Redis cache for add member, caseId: {}", caseId);
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to update Redis cache for member: {}", member.getId(), e);
+                    }
+                });
+    }
+
+    private void updateRedisCacheForLeaveOffice(LeaveOfficeRequest request) {
+        String tenantId = request.getLeaveOffice().getTenantId();
+        String officeAdvocateUserUuid = request.getLeaveOffice().getOfficeAdvocateUserUuid().toString();
+        String memberUserUuid = request.getLeaveOffice().getMemberUserUuid().toString();
+
+        // Get all case IDs for this advocate
+        List<String> caseIds = repository.getCaseIdsByAdvocateId(officeAdvocateUserUuid);
+
+        for (String caseId : caseIds) {
+            try {
+                String redisKey = tenantId + ":" + caseId;
+                Object cachedValue = cacheService.findById(redisKey);
+
+                if (cachedValue != null) {
+                    CourtCase courtCase = objectMapper.convertValue(cachedValue, CourtCase.class);
+                    List<AdvocateOffice> advocateOffices = courtCase.getAdvocateOffices();
+
+                    if (advocateOffices != null) {
+                        for (AdvocateOffice office : advocateOffices) {
+                            // Mark member as inactive in advocates list
+                            if (office.getAdvocates() != null) {
+                                office.getAdvocates().stream()
+                                        .filter(m -> memberUserUuid.equals(m.getMemberId()))
+                                        .forEach(m -> m.setIsActive(false));
+                            }
+                            // Mark member as inactive in clerks list
+                            if (office.getClerks() != null) {
+                                office.getClerks().stream()
+                                        .filter(m -> memberUserUuid.equals(m.getMemberId()))
+                                        .forEach(m -> m.setIsActive(false));
+                            }
+                        }
+                        courtCase.setAdvocateOffices(advocateOffices);
+                        cacheService.save(redisKey, courtCase);
+                        log.info("Updated Redis cache for leave office, caseId: {}", caseId);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Failed to update Redis cache for caseId: {}", caseId, e);
+            }
+        }
     }
 }
