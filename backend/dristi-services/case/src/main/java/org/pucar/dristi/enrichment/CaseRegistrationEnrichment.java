@@ -218,7 +218,7 @@ public class CaseRegistrationEnrichment {
             return;
         }
 
-        String tenantId = courtCase.getTenantId();
+        String tenantId = courtCase.getTenantId() != null ? courtCase.getTenantId() : config.getTenantId();
         String caseId = courtCase.getId().toString();
 
         List<AdvocateOffice> advocateOffices = new ArrayList<>();
