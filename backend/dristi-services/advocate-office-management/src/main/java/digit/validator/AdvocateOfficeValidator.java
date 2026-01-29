@@ -47,8 +47,8 @@ public class AdvocateOfficeValidator {
         }
     }
 
-    private void validateActiveAdvocateById(RequestInfo requestInfo, String advocateId) {
-        JsonNode advocate = advocateUtil.searchAdvocateById(requestInfo, advocateId);
+    private void validateActiveAdvocateById(RequestInfo requestInfo, String tenantId, String advocateId) {
+        JsonNode advocate = advocateUtil.searchAdvocateById(requestInfo, tenantId, advocateId);
         if (advocate == null) {
             throw new CustomException(ADVOCATE_NOT_FOUND, ADVOCATE_NOT_FOUND_MESSAGE);
         }
@@ -67,7 +67,7 @@ public class AdvocateOfficeValidator {
                 throw new CustomException(ADVOCATE_CLERK_NOT_FOUND, ADVOCATE_CLERK_NOT_FOUND_MESSAGE);
             }
         } else {
-            validateActiveAdvocateById(requestInfo, memberId);
+            validateActiveAdvocateById(requestInfo, tenantId, memberId);
         }
     }
 
@@ -76,7 +76,7 @@ public class AdvocateOfficeValidator {
 
         validateRequestInfo(request.getRequestInfo());
 
-        validateActiveAdvocateById(request.getRequestInfo(), addMember.getOfficeAdvocateId().toString());
+        validateActiveAdvocateById(request.getRequestInfo(), addMember.getTenantId(), addMember.getOfficeAdvocateId().toString());
 
         validateActiveMemberById(request.getRequestInfo(), addMember.getTenantId(), addMember.getMemberType(), addMember.getMemberId().toString());
 

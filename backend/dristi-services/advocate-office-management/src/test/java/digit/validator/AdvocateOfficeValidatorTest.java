@@ -116,14 +116,14 @@ class AdvocateOfficeValidatorTest {
     void testValidateAddMemberRequest_Success() {
         JsonNode activeAdvocate = createActiveNode();
         JsonNode activeClerk = createActiveNode();
-        when(advocateUtil.searchAdvocateById(any(), anyString())).thenReturn(activeAdvocate);
+        when(advocateUtil.searchAdvocateById(any(), anyString(), anyString())).thenReturn(activeAdvocate);
         when(advocateUtil.searchClerkById(any(), anyString(), anyString())).thenReturn(activeClerk);
         when(advocateUtil.isActive(any())).thenReturn(true);
         when(advocateOfficeRepository.getMembers(any(), any())).thenReturn(Collections.emptyList());
 
         assertDoesNotThrow(() -> validator.validateAddMemberRequest(addMemberRequest));
 
-        verify(advocateUtil, times(1)).searchAdvocateById(any(), anyString());
+        verify(advocateUtil, times(1)).searchAdvocateById(any(), anyString(), anyString());
         verify(advocateUtil, times(1)).searchClerkById(any(), anyString(), anyString());
         verify(advocateOfficeRepository, times(1)).getMembers(any(), any());
     }
@@ -162,7 +162,7 @@ class AdvocateOfficeValidatorTest {
 
     @Test
     void testValidateAddMemberRequest_AdvocateNotFound() {
-        when(advocateUtil.searchAdvocateById(any(), anyString())).thenReturn(null);
+        when(advocateUtil.searchAdvocateById(any(), anyString(), anyString())).thenReturn(null);
 
         CustomException exception = assertThrows(CustomException.class, () -> {
             validator.validateAddMemberRequest(addMemberRequest);
@@ -175,7 +175,7 @@ class AdvocateOfficeValidatorTest {
     void testValidateAddMemberRequest_MemberAlreadyExists() {
         JsonNode activeAdvocate = createActiveNode();
         JsonNode activeClerk = createActiveNode();
-        when(advocateUtil.searchAdvocateById(any(), anyString())).thenReturn(activeAdvocate);
+        when(advocateUtil.searchAdvocateById(any(), anyString(), anyString())).thenReturn(activeAdvocate);
         when(advocateUtil.searchClerkById(any(), anyString(), anyString())).thenReturn(activeClerk);
         when(advocateUtil.isActive(any())).thenReturn(true);
         
@@ -201,13 +201,13 @@ class AdvocateOfficeValidatorTest {
         addMemberRequest.getAddMember().setMemberType(MemberType.ADVOCATE);
 
         JsonNode activeAdvocate = createActiveNode();
-        when(advocateUtil.searchAdvocateById(any(), anyString())).thenReturn(activeAdvocate);
+        when(advocateUtil.searchAdvocateById(any(), anyString(), anyString())).thenReturn(activeAdvocate);
         when(advocateUtil.isActive(any())).thenReturn(true);
         when(advocateOfficeRepository.getMembers(any(), any())).thenReturn(Collections.emptyList());
 
         assertDoesNotThrow(() -> validator.validateAddMemberRequest(addMemberRequest));
 
-        verify(advocateUtil, times(2)).searchAdvocateById(any(), anyString());
+        verify(advocateUtil, times(2)).searchAdvocateById(any(), anyString(), anyString());
         verify(advocateUtil, never()).searchClerkById(any(), anyString(), anyString());
     }
 
