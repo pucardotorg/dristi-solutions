@@ -56,6 +56,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [nextFiveDates, setNextFiveDates] = useState([]);
+  const courtId = localStorage.getItem("courtId");
 
   const history = useHistory();
 
@@ -70,6 +71,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
           criteria: [
             {
               filingNumber: hearing?.filingNumber[0],
+              ...(courtId && userType === "employee" && { courtId }),
             },
           ],
           tenantId,
@@ -154,7 +156,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
       .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
       .then((res) => {
         history.push(
-          `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+          `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })
       .catch((err) => {

@@ -1,5 +1,6 @@
 import React, { useEffect, useReducer, useState } from "react";
 import UploadFile from "./UploadFile";
+import isEqual from "lodash/isEqual";
 
 const displayError = ({ t, error, name }, customErrorMsg) => (
   <span style={{ display: "flex", flexDirection: "column" }}>
@@ -21,19 +22,19 @@ const fileValidationStatus = (file, regex, maxSize, t, notSupportedError, maxFil
   const status = { valid: true, name: file?.name?.substring(0, 15), error: "" };
   if (!file) return;
 
-  if (!updatedRegex.test(file.name) && file.size / 1024 / 1024 > maxSize) {
+  if (!updatedRegex.test(file?.name) && file.size / 1024 / 1024 > maxSize) {
     status.valid = false;
-    status.error = t(`NOT_SUPPORTED_FILE_TYPE_AND_FILE_SIZE_EXCEEDED_5MB`);
+    status.error = t(`NOT_SUPPORTED_FILE_TYPE_AND_FILE_SIZE_EXCEEDED_10MB`);
   }
 
-  if (!updatedRegex.test(file.name)) {
+  if (!updatedRegex.test(file?.name)) {
     status.valid = false;
     status.error = t(notSupportedError ? notSupportedError : `NOT_SUPPORTED_FILE_TYPE`);
   }
 
   if (file.size / 1024 / 1024 > maxSize) {
     status.valid = false;
-    status.error = t(maxFileErrorMessage ? maxFileErrorMessage : `FILE_SIZE_EXCEEDED_5MB`);
+    status.error = t(maxFileErrorMessage ? maxFileErrorMessage : `FILE_SIZE_EXCEEDED_10MB`);
   }
 
   return status;
@@ -70,7 +71,7 @@ const MultiUploadWrapper = ({
   showHintBelow,
   hintText,
   allowedFileTypesRegex = /(.*?)(jpg|jpeg|webp|aif|png|image|pdf|msword|openxmlformats-officedocument|xls|xlsx|openxmlformats-officedocument|wordprocessingml|document|spreadsheetml|sheet|ms-excel)$/i,
-  allowedMaxSizeInMB = 5,
+  allowedMaxSizeInMB = 10,
   acceptFiles = "image/*, .jpg, .jpeg, .webp, .aif, .png, .image, .pdf, .msword, .openxmlformats-officedocument, .dxf, .xlsx, .xls, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   maxFilesAllowed,
   customClass = "",
@@ -85,7 +86,7 @@ const MultiUploadWrapper = ({
   multiple = true,
 }) => {
   const FILES_UPLOADED = "FILES_UPLOADED";
-  const RESET_FILE = "RESET";
+  const RESET_FILE = "RESET_FILE";
   const TARGET_FILE_REMOVAL = "TARGET_FILE_REMOVAL";
 
   const [fileErrors, setFileErrors] = useState([]);
@@ -106,7 +107,7 @@ const MultiUploadWrapper = ({
         });
         return [newFileName, { file, fileStoreId: fileStoreIds[index] }];
       } else {
-        return filesData?.map((file, index) => [file.name, { file, fileStoreId: fileStoreIds[index] }]);
+        return filesData?.map((file, index) => [file?.name, { file, fileStoreId: fileStoreIds[index] }]);
       }
     });
     return [...newUploads];
@@ -135,10 +136,15 @@ const MultiUploadWrapper = ({
   const [state, dispatch] = useReducer(uploadReducer, [...setuploadedstate]);
 
   useEffect(() => {
-    if (multiple) {
-      dispatch({ type: "RESET", payload: [...setuploadedstate] });
+    // 1. Check if the incoming data from parent is different from our local state
+    // 2. We use isEqual to compare values, not object references
+    if (!isEqual(state, setuploadedstate)) {
+      dispatch({ 
+        type: "RESET_FILE", 
+        payload: [...setuploadedstate] 
+      });
     }
-  }, [multiple, JSON.stringify(setuploadedstate)]);
+  }, [JSON.stringify(setuploadedstate)]);
 
   const onUploadMultipleFiles = async (e) => {
     setEnableButton(false);

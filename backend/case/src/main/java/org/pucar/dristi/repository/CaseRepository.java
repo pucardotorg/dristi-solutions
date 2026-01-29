@@ -603,4 +603,23 @@ public class CaseRepository {
             throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Error occurred while retrieving data from the database");
         }
     }
+
+    public Integer getCaseCount(CaseSearchRequest caseSearchRequest) {
+        try {
+
+            CaseCriteria caseCriteria = caseSearchRequest.getCriteria().get(0);
+            String casesQuery;
+            List<Object> preparedStmtList = new ArrayList<>();
+            List<Integer> preparedStmtArgList = new ArrayList<>();
+            RequestInfo requestInfo = caseSearchRequest.getRequestInfo();
+
+            casesQuery = queryBuilder.getCasesSearchQuery(caseCriteria, preparedStmtList, preparedStmtArgList, requestInfo);
+            casesQuery = queryBuilder.addOrderByQuery(casesQuery, caseCriteria.getPagination());
+
+            return getTotalCount(casesQuery, preparedStmtList);
+
+        } catch (Exception e) {
+            throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Error occurred while retrieving data from the database");
+        }
+    }
 }

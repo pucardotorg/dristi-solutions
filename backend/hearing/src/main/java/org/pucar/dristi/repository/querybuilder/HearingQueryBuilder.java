@@ -46,6 +46,7 @@ public class HearingQueryBuilder {
             Long toDate = criteria.getToDate();
             String attendeeIndividualId = criteria.getAttendeeIndividualId();
             String courtId = criteria.getCourtId();
+            String status = criteria.getStatus();
             StringBuilder query = new StringBuilder(BASE_ATR_QUERY);
 
             addCriteriaString(cnrNumber, query, " AND cnrNumbers @> ?::jsonb", preparedStmtList, preparedStmtArgList,"[\"" + cnrNumber + "\"]");
@@ -58,6 +59,7 @@ public class HearingQueryBuilder {
             addCriteriaDate(toDate, query, " AND startTime <= ?", preparedStmtList,preparedStmtArgList);
             addCriteriaString(courtId, query, " AND presidedby ->> 'courtID' = ? ", preparedStmtList, preparedStmtArgList, courtId);
             addCriteriaString(attendeeIndividualId, query," AND EXISTS (SELECT 1 FROM jsonb_array_elements(attendees) elem WHERE elem->>'individualId' = ?)", preparedStmtList,preparedStmtArgList, attendeeIndividualId);
+            addCriteriaString(status, query, " AND status  = ?", preparedStmtList, preparedStmtArgList, status);
 
             return query.toString();
         } catch (Exception e) {
@@ -115,7 +117,7 @@ public class HearingQueryBuilder {
     }
 
     public String buildUpdateTranscriptAdditionalAttendeesQuery(List<Object> preparedStmtList, Hearing hearing) throws CustomException {
-        String query = "UPDATE dristi_hearing SET transcript = ?::jsonb , additionaldetails = ?::jsonb , attendees = ?::jsonb , vclink = ? , notes = ? , lastModifiedBy = ? , lastModifiedTime = ? WHERE hearingId = ? AND tenantId = ?";
+        String query = "UPDATE dristi_hearing SET transcript = ?::jsonb , additionaldetails = ?::jsonb , attendees = ?::jsonb , vclink = ? , notes = ? , lastModifiedBy = ? , lastModifiedTime = ? , hearingSummary = ? WHERE hearingId = ? AND tenantId = ?";
 
         // Convert the objects to JSON
         try {
@@ -134,6 +136,7 @@ public class HearingQueryBuilder {
         preparedStmtList.add(hearing.getNotes());
         preparedStmtList.add(hearing.getAuditDetails().getLastModifiedBy());
         preparedStmtList.add(hearing.getAuditDetails().getLastModifiedTime());
+        preparedStmtList.add(hearing.getHearingSummary());
         preparedStmtList.add(hearing.getHearingId());
         preparedStmtList.add(hearing.getTenantId());
 

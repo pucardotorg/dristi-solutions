@@ -1,6 +1,7 @@
 package org.pucar.dristi.enrichment;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -22,6 +23,7 @@ import org.pucar.dristi.web.models.StatuteSection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -61,28 +63,71 @@ class ApplicationEnrichmentTest {
 
     @Test
     void enrichApplication() {
-        String mockedTenantId = "KL123";
-        String mockedAppNumber = "KL-123-CMP123";
-        when(idgenUtil.getIdList(any(), any(), any(), any(), anyInt(),any()))
+        // Mock UUIDs and timestamps
+        UUID mockUuid = UUID.randomUUID();
+        long now = System.currentTimeMillis();
+
+        // Prepare mock request info and user info
+        User userInfo = new User();
+        userInfo.setUuid(mockUuid.toString());
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setUserInfo(userInfo);
+
+        // Prepare statute section
+        StatuteSection statuteSection = new StatuteSection();
+
+        // Prepare documents
+        Document doc1 = new Document();
+        Document doc2 = new Document();
+        List<Document> documentList = List.of(doc1, doc2);
+
+        // Prepare application
+        Application application = new Application();
+        application.setFilingNumber("KL-123");
+        application.setStatuteSection(statuteSection);
+        application.setDocuments(documentList);
+
+        // Prepare ApplicationRequest
+        applicationRequest = new ApplicationRequest();
+        applicationRequest.setRequestInfo(requestInfo);
+        applicationRequest.setApplication(application);
+
+        // Mock IDGEN return
+        when(idgenUtil.getIdList(any(), any(), any(), any(), anyInt(), any()))
                 .thenReturn(Collections.singletonList("CMP123"));
+
+        // Mock config values
         when(configuration.getApplicationConfig()).thenReturn("config");
         when(configuration.getApplicationFormat()).thenReturn("format");
+
+        // Mock CaseUtil return for courtId
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode courtNode = mapper.valueToTree(Collections.singletonMap("courtId", "COURT123"));
+        when(caseUtil.searchCaseDetails(any())).thenReturn(courtNode);
+
+        // Call method under test
         applicationEnrichment.enrichApplication(applicationRequest);
 
-        Application application = applicationRequest.getApplication();
-        assertEquals(mockedAppNumber, application.getApplicationNumber());
+        // Validate
+        Application enrichedApp = applicationRequest.getApplication();
+        assertEquals("KL-123-CMP123", enrichedApp.getApplicationNumber());
+        assertNotNull(enrichedApp.getId());
+        assertNotNull(enrichedApp.getCreatedDate());
+        assertNotNull(enrichedApp.getAuditDetails());
+        assertEquals(mockUuid.toString(), enrichedApp.getAuditDetails().getCreatedBy());
+        assertTrue(enrichedApp.getIsActive());
 
-        assertNotNull(application.getId());
-        assertNotNull(application.getAuditDetails());
-        assertNotNull(application.getStatuteSection().getId());
-        assertNotNull(application.getStatuteSection().getAuditdetails());
+        assertEquals("COURT123", enrichedApp.getCourtId());
 
-        application.getDocuments().forEach(document -> {
-            assertNotNull(document.getId());
-        });
+        assertNotNull(enrichedApp.getStatuteSection().getId());
+        assertNotNull(enrichedApp.getStatuteSection().getAuditdetails());
 
-        verify(idgenUtil, times(1)).getIdList(any(), any(), any(), any(), anyInt(),any());
+        enrichedApp.getDocuments().forEach(doc -> assertNotNull(doc.getId()));
+
+        verify(idgenUtil, times(1)).getIdList(any(), any(), any(), any(), anyInt(), any());
+        verify(caseUtil, times(1)).searchCaseDetails(any());
     }
+
 
     @Test
     void enrichApplicationUponUpdate() {

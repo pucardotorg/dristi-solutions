@@ -18,4 +18,8 @@ public class Payload {
 
     @JsonProperty("headers")
     private String headers;
+
+    //grn for treasury mock
+    @JsonProperty("grn")
+    private String grn;
 }

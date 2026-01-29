@@ -96,6 +96,10 @@ public class Hearing {
 
     private List<String> transcript = new ArrayList<>();
 
+    @JsonProperty("hearingSummary")
+
+    private String hearingSummary = null;
+
     @JsonProperty("vcLink")
 
     private String vcLink = null;
