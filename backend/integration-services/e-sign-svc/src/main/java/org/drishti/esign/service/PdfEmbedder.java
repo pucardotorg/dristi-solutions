@@ -213,27 +213,20 @@ public class PdfEmbedder {
                 throw new CustomException("MULTI_PAGE_SIGNING_ERROR", "No pages specified for signing");
             }
 
-            // Create stamper for signature
             PdfStamper stamper = PdfStamper.createSignature(reader, baos, '\0', null, true);
             PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
-
-            // Get field name (use first placeholder if map is provided)
-            String fieldName = getFieldName(eSignParameter, pages);
-            log.info("Multi-page signing: field name = {}", fieldName);
-
-            // IMPORTANT: Ensure the field name used for deferred signing is the same one we create here
-            // signPdfMultiPageWithDSAndReturnMultipartFileV2 uses eSignParameter.getSignPlaceHolder()
-            eSignParameter.setSignPlaceHolder(fieldName);
-
-            // Create ONE signature field with MULTIPLE widgets (one per page placeholder)
             PdfWriter writer = stamper.getWriter();
 
-            Map<Integer, Rectangle> widgetRects = new LinkedHashMap<>();
-            Integer firstWidgetPage = null;
-            Rectangle firstWidgetRect = null;
+            String fieldName = getFieldName(eSignParameter, pages);
+            log.info("Multi-page signing: field name = {}", fieldName);
+            eSignParameter.setSignPlaceHolder(fieldName);
+
+            Map<Integer, Rectangle> rectsByPage = new LinkedHashMap<>();
+            Map<Integer, Coordinate> coordsByPage = new LinkedHashMap<>();
+            Integer firstPage = null;
+            Rectangle firstRect = null;
             for (Integer pageNumber : pages) {
                 String placeholder = getPlaceholderForPage(eSignParameter, pageNumber);
-
                 if (placeholder == null || placeholder.isBlank()) {
                     log.info("Skipping page {} - no placeholder defined for this signer", pageNumber);
                     continue;
@@ -241,82 +234,92 @@ public class PdfEmbedder {
 
                 Coordinate coord = findPlaceholderOnPage(reader, pageNumber, placeholder);
                 if (!coord.isFound()) {
-                    log.warn("Placeholder '{}' not found on page {}, skipping widget", placeholder, pageNumber);
+                    log.warn("Placeholder '{}' not found on page {}, skipping", placeholder, pageNumber);
                     continue;
                 }
 
                 Rectangle rect = new Rectangle(coord.getX(), coord.getY(), coord.getX() + 100, coord.getY() + 50);
-                widgetRects.put(pageNumber, rect);
-                if(firstWidgetPage == null) {
-                    firstWidgetPage = pageNumber;
-                    firstWidgetRect = rect;
+                rectsByPage.put(pageNumber, rect);
+                coordsByPage.put(pageNumber, coord);
+                if (firstPage == null) {
+                    firstPage = pageNumber;
+                    firstRect = rect;
                 }
             }
 
-            if (firstWidgetPage == null) {
+            if (firstPage == null) {
                 throw new CustomException("MULTI_PAGE_SIGNING_ERROR", "No valid placeholders found for multi-page signing");
             }
 
-            appearance.setVisibleSignature(firstWidgetRect, firstWidgetPage, fieldName);
-            PdfFormField signatureField;
-            try {
-                Field field = PdfSignatureAppearance.class.getDeclaredField("field");
-                field.setAccessible(true);
-                signatureField = (PdfFormField) field.get(appearance);
-            } catch (Exception e) {
-                throw new CustomException("MULTI_PAGE_SIGNING_ERROR", "Unable to access signature field from appearance");
+            appearance.setVisibleSignature(firstRect, firstPage, fieldName);
+
+            String actualFieldName = appearance.getFieldName();
+            if (actualFieldName != null && !actualFieldName.isBlank() && !actualFieldName.equals(fieldName)) {
+                log.warn("Signature field name auto-renamed by iText. requested={} actual={}", fieldName, actualFieldName);
+                fieldName = actualFieldName;
+                eSignParameter.setSignPlaceHolder(fieldName);
             }
-            signatureField.setFlags(PdfAnnotation.FLAGS_PRINT);
 
-            int widgetCount = 1;
-            for (Map.Entry<Integer, Rectangle> entry : widgetRects.entrySet()) {
-                Integer pageNumber = entry.getKey();
-                if (pageNumber.equals(firstWidgetPage)) continue;
-
-                Rectangle rect = entry.getValue();
-                PdfFormField widget = PdfFormField.createEmpty(writer);
-                widget.setWidget(rect, PdfAnnotation.HIGHLIGHT_NONE);
-                widget.setPage(pageNumber);
-                widget.setFlags(PdfAnnotation.FLAGS_PRINT);
-
-                signatureField.addKid(widget);
-                stamper.addAnnotation(widget, pageNumber);
-                widgetCount++;
-            }
-            log.info("Created multi-widget signature field: {} | widgets: {} | firstWidgetPage: {}", fieldName, widgetCount, firstWidgetPage);
-
-            // Configure signature appearance (applies to all widgets)
             appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
             appearance.setAcro6Layers(false);
-            
+
             Font font = new Font();
             font.setSize(6);
             font.setFamily(FONT_FAMILY);
             font.setStyle(FONT_STYLE);
             appearance.setLayer2Font(font);
-            
             appearance.setLayer2Text("Digitally Signed");
             appearance.setSignDate(Calendar.getInstance());
             appearance.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED);
             appearance.setImage(null);
 
-            // Create external signature container
+            PdfSignature signatureDictionary = new PdfSignature(PdfName.ADOBE_PPKLITE, PdfName.ADBE_PKCS7_DETACHED);
+            signatureDictionary.setReason(appearance.getReason());
+            signatureDictionary.setLocation(appearance.getLocation());
+            signatureDictionary.setSignatureCreator(appearance.getSignatureCreator());
+            signatureDictionary.setContact(appearance.getContact());
+            signatureDictionary.setDate(new PdfDate(appearance.getSignDate()));
+            signatureDictionary.put(PdfName.FILTER, PdfName.ADOBE_PPKLITE);
+            signatureDictionary.put(PdfName.SUBFILTER, PdfName.ADBE_PKCS7_DETACHED);
+            appearance.setCryptoDictionary(signatureDictionary);
+
+            int subFields = 0;
+            for (Map.Entry<Integer, Rectangle> entry : rectsByPage.entrySet()) {
+                Integer pageNumber = entry.getKey();
+                if (pageNumber.equals(firstPage)) {
+                    continue;
+                }
+
+                Rectangle rect = entry.getValue();
+                String subFieldName = fieldName + "_p" + pageNumber;
+                PdfFormField subField = createSubSignatureField(writer, pageNumber, rect, subFieldName, signatureDictionary);
+                stamper.addAnnotation(subField, pageNumber);
+                subFields++;
+            }
+            log.info("Created signature fields sharing one signature dictionary: {} | additionalFields: {}", fieldName, subFields);
+
+            for (Map.Entry<Integer, Coordinate> entry : coordsByPage.entrySet()) {
+                Integer pageNumber = entry.getKey();
+                Coordinate coord = entry.getValue();
+                addVisualSignatureText(stamper, pageNumber, coord);
+            }
             int contentEstimated = 8192;
-            MyExternalSignatureContainer container = new MyExternalSignatureContainer(
-                new byte[]{0}, PdfName.ADOBE_PPKLITE, PdfName.ADBE_PKCS7_DETACHED
-            );
+            HashMap<PdfName, Integer> exc = new HashMap<>();
+            exc.put(PdfName.CONTENTS, contentEstimated * 2 + 2);
+            appearance.preClose(exc);
 
-            MakeSignature.signExternalContainer(appearance, container, contentEstimated);
+            PdfDictionary dic2 = new PdfDictionary();
+            byte[] placeholder = new byte[contentEstimated];
+            dic2.put(PdfName.CONTENTS, new PdfString(placeholder).setHexWriting(true));
+            appearance.close(dic2);
 
-            // Generate document hash
             InputStream is = appearance.getRangeStream();
             hashDocument = DigestUtils.sha256Hex(is);
 
-            // Store prepared PDF
             MultipartFile dummySignedPdf = new ByteArrayMultipartFile(FILE_NAME, baos.toByteArray());
             String dummyFileStoreId = fileStoreUtil.storeFileInFileStore(dummySignedPdf, "kl");
             eSignParameter.setFileStoreId(dummyFileStoreId);
-            
+
             stamper.close();
 
         } catch (Exception e) {
@@ -327,6 +330,17 @@ public class PdfEmbedder {
 
         log.info("Method=pdfSignerMultiPageV2 ,Result=Success ,filestoreId={}", eSignParameter.getFileStoreId());
         return hashDocument;
+    }
+
+    private PdfFormField createSubSignatureField(PdfWriter writer, int pageNumber, Rectangle rect, String fieldName, PdfDictionary signatureDictionary) throws Exception {
+        PdfFormField sigField = PdfFormField.createSignature(writer);
+        sigField.setFieldName(fieldName);
+        sigField.setWidget(rect, PdfAnnotation.HIGHLIGHT_NONE);
+        sigField.setPage(pageNumber);
+        sigField.setFlags(PdfAnnotation.FLAGS_PRINT | PdfAnnotation.FLAGS_LOCKED);
+
+        sigField.put(PdfName.V, signatureDictionary);
+        return sigField;
     }
 
     /**
@@ -358,7 +372,8 @@ public class PdfEmbedder {
 
         } catch (Exception e) {
             log.info("Method=signPdfMultiPageWithDSAndReturnMultipartFileV2 ,Result=Error ,filestoreId={}", eSignParameter.getFileStoreId());
-            log.error("Method=signPdfMultiPageWithDSAndReturnMultipartFileV2, Error:{}", e.getMessage(), e);            throw new CustomException("SIGNATURE_EMBED_EXCEPTION", "Error Occurred while embedding multi-page signature");
+            log.error("Method=signPdfMultiPageWithDSAndReturnMultipartFileV2, Error:{}", e.getMessage(), e);
+            throw new CustomException("SIGNATURE_EMBED_EXCEPTION", "Error Occurred while embedding multi-page signature");
         } finally {
             log.info("Deleting partially signed pdf in finally block, filestoreId={}", eSignParameter.getFileStoreId());
             fileStoreUtil.deleteFileFromFileStore(eSignParameter.getFileStoreId(), eSignParameter.getTenantId(), false);
@@ -500,36 +515,15 @@ public class PdfEmbedder {
         // Draw rectangle border (visual signature box)
         float x = coord.getX();
         float y = coord.getY();
-        float width = 100;
         float height = 50;
-        
+
         canvas.saveState();
-        canvas.setColorStroke(BaseColor.BLACK);
-        canvas.setLineWidth(0.5f);
-        canvas.rectangle(x, y, width, height);
-        canvas.stroke();
-        
-        // Add "Digitally Signed" text
+
         canvas.beginText();
         canvas.setFontAndSize(baseFont, 8);
         canvas.setColorFill(BaseColor.BLACK);
         canvas.setTextMatrix(x + 5, y + height - 15);
         canvas.showText("Digitally Signed");
-        canvas.endText();
-        
-        // Add date/time
-        String dateTime = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss").format(new Date());
-        canvas.beginText();
-        canvas.setFontAndSize(baseFont, 6);
-        canvas.setTextMatrix(x + 5, y + height - 25);
-        canvas.showText(dateTime);
-        canvas.endText();
-        
-        // Add security indicator text
-        canvas.beginText();
-        canvas.setFontAndSize(baseFont, 6);
-        canvas.setTextMatrix(x + 5, y + 5);
-        canvas.showText("Cryptographically Secured");
         canvas.endText();
         
         canvas.restoreState();
