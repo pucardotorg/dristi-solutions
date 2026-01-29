@@ -53,9 +53,9 @@ public class TemplateConfigurationQueryBuilder {
                 preparedStmtArgList.add(Types.VARCHAR);
             }
 
-            if (criteria.getFilingNumber() != null && !criteria.getFilingNumber().isEmpty()) {
-                query.append(" AND tc.filing_number = ?");
-                preparedStmtList.add(criteria.getFilingNumber());
+            if (criteria.getSearchableText() != null && !criteria.getSearchableText().isEmpty()) {
+                query.append(" AND tc.process_title ILIKE ?");
+                preparedStmtList.add("%" + criteria.getSearchableText() + "%");
                 preparedStmtArgList.add(Types.VARCHAR);
             }
 

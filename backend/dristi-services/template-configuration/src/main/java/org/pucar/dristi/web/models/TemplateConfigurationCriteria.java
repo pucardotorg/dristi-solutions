@@ -15,8 +15,8 @@ public class TemplateConfigurationCriteria {
     @JsonProperty("id")
     private String id = null;
 
-    @JsonProperty("filingNumber")
-    private String filingNumber = null;
+    @JsonProperty("searchableText")
+    private String searchableText = null;
 
     @JsonProperty("tenantId")
     private String tenantId = null;
