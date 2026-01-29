@@ -332,25 +332,6 @@ public class PdfEmbedder {
         sigField.setPage(pageNumber);
         sigField.setFlags(PdfAnnotation.FLAGS_PRINT | PdfAnnotation.FLAGS_LOCKED);
 
-        PdfAppearance ap = PdfAppearance.createAppearance(writer, rect.getWidth(), rect.getHeight());
-        BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.EMBEDDED);
-
-        ap.saveState();
-        ap.setColorStroke(BaseColor.BLACK);
-        ap.setLineWidth(0.5f);
-        ap.rectangle(0, 0, rect.getWidth(), rect.getHeight());
-        ap.stroke();
-
-        ap.beginText();
-        ap.setFontAndSize(baseFont, 8);
-        ap.setColorFill(BaseColor.BLACK);
-        ap.setTextMatrix(5, rect.getHeight() - 15);
-        ap.showText("Digitally Signed");
-        ap.endText();
-
-        ap.restoreState();
-
-        sigField.setAppearance(PdfName.N, ap);
         sigField.put(PdfName.V, signatureDictionary);
         return sigField;
     }
