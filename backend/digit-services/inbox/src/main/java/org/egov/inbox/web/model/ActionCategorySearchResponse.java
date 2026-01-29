@@ -35,6 +35,9 @@ public class ActionCategorySearchResponse {
     @JsonProperty("registerCasesData")
     private Criteria registerCasesData;
 
+    @JsonProperty("reschedulingRequestData")
+    private Criteria reschedulingRequestData;
+
     @JsonProperty("bailBondData")
     private Criteria bailBondData;
 

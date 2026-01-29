@@ -46,6 +46,9 @@ public class IndexSearchCriteria {
     @JsonProperty("searchRegisterCases")
     private Criteria searchRegisterCases;
 
+    @JsonProperty("searchReschedulingRequestApplications")
+    private Criteria searchReschedulingRequestApplications;
+
     @JsonProperty("searchBailBonds")
     private Criteria searchBailBonds;
 

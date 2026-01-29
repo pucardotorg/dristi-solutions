@@ -90,15 +90,19 @@ public class OrderService {
 
         orderProcessor.preProcessOrder(request);
 
-        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate() != null) {
+        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())
+                && request.getOrder().getNextHearingDate() != null
+                && !ACCEPT_RESCHEDULING_REQUEST.equalsIgnoreCase(order.getOrderType())) {
             hearingUtil.preProcessScheduleNextHearing(request);
         }
 
-        if (DELETE.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getHearingNumber() != null) {
+        if (DELETE.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())
+                && request.getOrder().getHearingNumber() != null) {
             hearingUtil.updateOpenHearingOrderStatusForDeletedOrder(request.getOrder());
         }
 
-        if (SUBMIT_BULK_ESIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getHearingNumber() != null) {
+        if (SUBMIT_BULK_ESIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())
+                && request.getOrder().getHearingNumber() != null) {
             hearingUtil.updateOpenHearingOrderStatusForPendingSignOrder(request.getOrder());
         }
 
