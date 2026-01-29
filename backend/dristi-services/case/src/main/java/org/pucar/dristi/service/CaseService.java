@@ -2254,6 +2254,13 @@ public class CaseService {
             }
         });
 
+        // Enrich advocate office members for the joining advocate
+        CaseRequest caseRequestForOffice = CaseRequest.builder()
+                .requestInfo(joinCaseRequest.getRequestInfo())
+                .cases(caseObj)
+                .build();
+        enrichmentUtil.enrichAdvocateOffices(caseRequestForOffice, auditDetails);
+
         log.info("Pushing join case representative details :: {}", caseObj);
         producer.push(config.getRepresentativeJoinCaseTopic(), caseObj);
 
