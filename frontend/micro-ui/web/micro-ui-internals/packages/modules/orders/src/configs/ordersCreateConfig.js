@@ -6220,3 +6220,57 @@ export const configAcceptReschedulingRequest = [
     ],
   },
 ];
+
+export const configMiscellaneousProcess = [
+  {
+    body: [
+      {
+        label: "SELECT_MISCELLANEOUS_TEMPLATE",
+        isMandatory: true,
+        key: "processTemplate",
+        schemaKeyPath: "orderDetails.processTemplate",
+        transformer: "customDropdown",
+        type: "dropdown",
+        populators: {
+          styles: { maxWidth: "100%" },
+          name: "processTemplate",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [],
+        },
+      },
+      {
+        isMandatory: true,
+        type: "component",
+        component: "SelectAddreseeCustomComponent",
+        key: "selectAddresee",
+        schemaKeyPath: "orderDetails.selectAddresee",
+        transformer: "noticeOrderPartyName", // need to create
+        label: "SELECT_ADDRESSEE",
+        populators: {
+          inputs: [
+            {
+              name: "select party",
+              type: "dropdown",
+              disable: false,
+            },
+          ],
+        },
+      },
+      {
+        isMandatory: true,
+        type: "component",
+        component: "MultiPartyAddressSelector",
+        key: "selectedPartiesDetails",
+        schemaKeyPath: "orderDetails.selectAddresee",
+        transformer: "noticeOrderPartyName", // need to create
+        withoutLabel: true,
+        populators: {
+          inputs: [],
+        },
+      },
+    ],
+  },
+];

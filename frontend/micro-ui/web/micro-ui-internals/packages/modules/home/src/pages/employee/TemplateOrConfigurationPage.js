@@ -40,7 +40,7 @@ const TemplateOrConfigurationPage = () => {
   };
 
   const handleActionClick = useCallback(
-    (rowData, actionType) => {
+    async (rowData, actionType) => {
       if (actionType === "EDIT") {
         setRowData(rowData);
         setStepper(1);
@@ -54,7 +54,7 @@ const TemplateOrConfigurationPage = () => {
             },
           };
 
-          HomeService.updateTemplate(payload, { tenantId });
+          await HomeService.updateTemplate(payload, { tenantId });
           setRefreshKey((prev) => prev + 1);
         } catch (error) {
           console.error("Delete failed", error);
@@ -115,7 +115,7 @@ const TemplateOrConfigurationPage = () => {
   const getDefaultValues = useMemo(() => {
     if (stepper === 1) {
       if (rowData) {
-        return convertToFormData(rowData);
+        return convertToFormData(t, rowData);
       }
       return {
         isCoverLetterRequired: { code: "YES", name: "YES" },
@@ -125,14 +125,14 @@ const TemplateOrConfigurationPage = () => {
         coverLetterText: { text: rowData?.coverLetterText || "" },
       };
     }
-  }, [rowData, stepper]);
+  }, [rowData, stepper, t]);
 
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
-  
+
       const isCoverLetterRequired = formdata?.isCoverLetterRequired?.code === "YES";
-  
+
       const payload = {
         templateConfiguration: {
           ...(rowData || {}),
@@ -146,18 +146,19 @@ const TemplateOrConfigurationPage = () => {
           addresseeName: formdata?.addresseeName || "",
         },
       };
-  
+
       let res = null;
       if (!rowData) {
         res = await HomeService.createTeamplate(payload, { tenantId });
       } else {
         res = await HomeService.updateTemplate(payload, { tenantId });
       }
-  
+
       if (res?.templateConfiguration) {
         setRowData(res.templateConfiguration);
         setStepper(isCoverLetterRequired ? 2 : 3);
       }
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error("Error while Updating....", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -234,7 +235,8 @@ const TemplateOrConfigurationPage = () => {
           <SubmitBar
             label={t("ADD_NEW_TEMPLATE")}
             onSubmit={() => {
-              setStepper(stepper + 1);
+              setRowData(null);
+              setStepper(1);
             }}
             style={{ width: "auto" }}
           />

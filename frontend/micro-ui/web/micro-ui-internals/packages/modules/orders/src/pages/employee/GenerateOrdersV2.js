@@ -68,6 +68,7 @@ import {
   configsCaseSettlementReject,
   configsAbateCase,
   configAcceptReschedulingRequest,
+  configMiscellaneousProcess,
 } from "../../configs/ordersCreateConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -119,6 +120,7 @@ import {
   getOrderTypes,
   setApplicationStatus,
 } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import useSearchMiscellaneousTemplate from "../../hooks/orders/useSearchMiscellaneousTemplate";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -164,6 +166,7 @@ const configKeys = {
   WITNESS_BATTA: configsWitnessBatta,
   ABATE_CASE: configsAbateCase,
   ACCEPT_RESCHEDULING_REQUEST: configAcceptReschedulingRequest,
+  MISCELLANEOUS_PROCESS: configMiscellaneousProcess,
 };
 
 const stateSlaMap = {
@@ -204,6 +207,7 @@ const stateSlaMap = {
   DRAFT_IN_PROGRESS: 2,
   ABATE_CASE: 3,
   ACCEPT_RESCHEDULING_REQUEST: 3,
+  MISCELLANEOUS_PROCESS: 3,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
@@ -608,6 +612,28 @@ const GenerateOrdersV2 = () => {
   const caseCourtId = useMemo(() => caseDetails?.courtId || localStorage.getItem("courtId"), [caseDetails]);
   const hearingNumber = useMemo(() => currentOrder?.hearingNumber || currentOrder?.additionalDetails?.hearingId || "", [currentOrder]);
 
+  const { data: miscellaneousTemplateData, isLoading: isMiscellaneousTemplateLoading } = useSearchMiscellaneousTemplate(
+    {
+      criteria: {
+        tenantId: tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
+      tenantId,
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber && caseCourtId && orderType?.code === "MISCELLANEOUS_PROCESS")
+  );
+
+  const miscellaneousProcessTemplateDropDown = useMemo(() => {
+    return miscellaneousTemplateData?.list?.map((processTemplate) => {
+      return {
+        name: processTemplate?.processTitle,
+        addressee: processTemplate?.addressee,
+      };
+    });
+  }, [miscellaneousTemplateData]);
+
   const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading, isFetching: isOrdersFetching } = useSearchOrdersService(
     {
       tenantId,
@@ -972,6 +998,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "DISMISS_CASE",
@@ -990,6 +1017,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       } else if (isBailApplicationPending) {
@@ -1011,6 +1039,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "TAKE_COGNIZANCE",
@@ -1029,6 +1058,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       } else {
@@ -1051,6 +1081,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "TAKE_COGNIZANCE",
@@ -1070,6 +1101,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       }
@@ -1089,6 +1121,7 @@ const GenerateOrdersV2 = () => {
                 "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
                 "COST",
                 "WITNESS_BATTA",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "SUMMONS",
@@ -1103,6 +1136,7 @@ const GenerateOrdersV2 = () => {
                 "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
                 "COST",
                 "WITNESS_BATTA",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       } else if (!caseDetails?.lprNumber) {
@@ -1125,6 +1159,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "SUMMONS",
@@ -1144,6 +1179,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       } else {
@@ -1165,6 +1201,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "SUMMONS",
@@ -1183,6 +1220,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       }
@@ -1204,6 +1242,7 @@ const GenerateOrdersV2 = () => {
         "COST",
         "WITNESS_BATTA",
         "ABATE_CASE",
+        "MISCELLANEOUS_PROCESS",
       ]);
     }
 
@@ -1900,6 +1939,26 @@ const GenerateOrdersV2 = () => {
           });
         }
 
+        if (["MISCELLANEOUS_PROCESS"].includes(selectedOrderType)) {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "processTemplate") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: miscellaneousProcessTemplateDropDown || [],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+
         formConfig = [...formConfig, ...orderTypeForm];
       }
 
@@ -1963,6 +2022,7 @@ const GenerateOrdersV2 = () => {
       groupedWarrantOptions,
       warrantSubtypeCode,
       applicationDetails,
+      miscellaneousProcessTemplateDropDown,
     ]
   );
 
@@ -4352,7 +4412,7 @@ const GenerateOrdersV2 = () => {
 
   return (
     <React.Fragment>
-      {(isApiCallLoading || addOrderTypeLoader || isOrdersLoading) && (
+      {(isApiCallLoading || addOrderTypeLoader || isOrdersLoading || isMiscellaneousTemplateLoading) && (
         <div
           style={{
             width: "100vw",

@@ -1185,20 +1185,25 @@ export const UICustomizations = {
   templateOrConfigurationHomeConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
+
       return {
         ...requestCriteria,
         body: {
-          criteria: { tenantId },
+          criteria: { tenantId, searchableText: requestCriteria?.state?.searchForm?.process || "" },
           pagination: {
-            limit: 10,
-            offSet: 0,
+            limit: requestCriteria?.state?.searchForm?.limit || 10,
+            offSet: requestCriteria?.state?.searchForm?.offset || 0,
           },
         },
         config: {
           ...requestCriteria.config,
           select: (data) => {
-            const dummyData = [{ srNo: 1, title: "Template Configuration", dateCreated: "01-01-2024", action: "Configure Templates" }];
-            return { data: dummyData, totalCount: 1 };
+            const lists = data?.list || [];
+            const updatedList = lists?.map((list, index) => ({
+              ...list,
+              srNo: index + 1,
+            }));
+            return { data: updatedList, totalCount: data?.totalCount };
           },
         },
       };
@@ -1210,6 +1215,8 @@ export const UICustomizations = {
           return <OrderName rowData={row} colData={column} value={value} />;
         case "CS_ACTIONS":
           return <EditDeleteModal rowData={row} colData={column} value={value} isDelete={true} isEdit={true} />;
+        case "DATE_CREATED":
+          return formatDateDDMMYYYY(row?.auditDetails?.createdTime);
         default:
           return value || "";
       }

@@ -1,7 +1,6 @@
 export const temaplateOrConfigurationConfig = {
   label: "ES_COMMON_INBOX",
   type: "search",
-  // TODO: Update the service name
   apiDetails: {
     serviceName: "/template-configuration/v1/search",
     requestParam: {},
@@ -40,7 +39,6 @@ export const temaplateOrConfigurationConfig = {
             disable: false,
             populators: {
               name: "process",
-              error: "BR_PATTERN_ERR_MSG",
               validation: {
                 pattern: {},
                 minlength: 2,
@@ -49,7 +47,6 @@ export const temaplateOrConfigurationConfig = {
           },
         ],
       },
-      children: {},
       show: true,
     },
     searchResult: {
@@ -62,12 +59,13 @@ export const temaplateOrConfigurationConfig = {
           },
           {
             label: "TEMPLATE_OR_PROCESS_TITLE",
-            jsonPath: "title",
+            jsonPath: "processTitle",
             additionalCustomization: true,
           },
           {
             label: "DATE_CREATED",
             jsonPath: "dateCreated",
+            additionalCustomization: true,
           },
           {
             label: "CS_ACTIONS",
