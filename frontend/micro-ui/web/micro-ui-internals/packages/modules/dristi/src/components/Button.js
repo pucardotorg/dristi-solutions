@@ -78,6 +78,14 @@ Button.propTypes = {
    * Custom label style or h2 style
    */
   textStyles: PropTypes.object,
+  /**
+   * Sub label
+   */
+  subLabel: PropTypes.string,
+  /**
+   * Sub label text styles
+   */
+  subTextStyles: PropTypes.object,
 };
 
 Button.defaultProps = {
