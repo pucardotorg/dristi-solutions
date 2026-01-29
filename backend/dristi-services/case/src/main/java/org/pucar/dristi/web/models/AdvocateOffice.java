@@ -26,6 +26,9 @@ public class AdvocateOffice {
     @JsonProperty("officeAdvocateName")
     private String officeAdvocateName = null;
 
+    @JsonProperty("officeAdvocateUserUuid")
+    private String officeAdvocateUserUuid = null;
+
     @JsonProperty("advocates")
     @Valid
     @Builder.Default

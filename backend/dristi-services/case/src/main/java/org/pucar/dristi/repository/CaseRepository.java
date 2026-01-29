@@ -150,6 +150,7 @@ public class CaseRepository {
                 AdvocateOffice office = officeMap.computeIfAbsent(advocateId, k -> AdvocateOffice.builder()
                         .officeAdvocateId(advocateId)
                         .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(objectMapper, rep))
+                        .officeAdvocateUserUuid(extractAdvocateUuidFromAdditionalDetails(objectMapper, rep))
                         .build());
                 // Separate advocates and clerks based on memberType
                 List<AdvocateOfficeMember> advocates = officeRows.stream()
@@ -159,6 +160,7 @@ public class CaseRepository {
                                 .tenantId(r.getTenantId())
                                 .caseId(r.getCaseId().toString())
                                 .memberId(r.getMemberId().toString())
+                                .memberUserUuid(r.getMemberUserUuid())
                                 .memberName(r.getMemberName())
                                 .memberType(r.getMemberType())
                                 .isActive(r.getIsActive())
@@ -173,6 +175,7 @@ public class CaseRepository {
                                 .tenantId(r.getTenantId())
                                 .caseId(r.getCaseId().toString())
                                 .memberId(r.getMemberId().toString())
+                                .memberUserUuid(r.getMemberUserUuid())
                                 .memberName(r.getMemberName())
                                 .memberType(r.getMemberType())
                                 .isActive(r.getIsActive())

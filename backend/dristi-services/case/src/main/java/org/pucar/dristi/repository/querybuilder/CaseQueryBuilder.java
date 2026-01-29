@@ -85,7 +85,7 @@ public class CaseQueryBuilder {
 
     private static final String FROM_REPRESENTING_TABLE = " FROM dristi_case_representing rpst";
 
-    private static final String BASE_ADVOCATE_OFFICE_CASE_MEMBER_QUERY = " SELECT aocm.id as id, aocm.tenant_id as tenant_id, aocm.office_advocate_id as office_advocate_id, aocm.office_advocate_name as office_advocate_name, aocm.case_id as case_id, aocm.member_id as member_id, aocm.member_type as member_type, aocm.member_name as member_name, aocm.is_active as is_active, aocm.created_by as created_by, aocm.last_modified_by as last_modified_by, aocm.created_time as created_time, aocm.last_modified_time as last_modified_time ";
+    private static final String BASE_ADVOCATE_OFFICE_CASE_MEMBER_QUERY = " SELECT aocm.id as id, aocm.tenant_id as tenant_id, aocm.office_advocate_id as office_advocate_id, aocm.office_advocate_name as office_advocate_name, aocm.office_advocate_user_uuid as office_advocate_user_uuid, aocm.case_id as case_id, aocm.member_id as member_id, aocm.member_user_uuid as member_user_uuid, aocm.member_type as member_type, aocm.member_name as member_name, aocm.is_active as is_active, aocm.created_by as created_by, aocm.last_modified_by as last_modified_by, aocm.created_time as created_time, aocm.last_modified_time as last_modified_time ";
 
     private static final String FROM_ADVOCATE_OFFICE_CASE_MEMBER_TABLE = " FROM dristi_advocate_office_case_member aocm";
 
@@ -846,5 +846,19 @@ public class CaseQueryBuilder {
             firstCriteria = false;
         }
         return firstCriteria;
+    }
+
+    public String getValidateAdvocateOfficeCaseMemberQuery(List<Object> preparedStmtList, List<Integer> preparedStmtArgList, 
+                                                           String officeAdvocateId, String memberId) {
+        String query = "SELECT COUNT(id) FROM dristi_advocate_office_case_member " +
+                "WHERE office_advocate_id = ? AND member_id = ? AND is_active = true";
+        
+        preparedStmtList.add(officeAdvocateId);
+        preparedStmtArgList.add(Types.VARCHAR);
+        
+        preparedStmtList.add(memberId);
+        preparedStmtArgList.add(Types.VARCHAR);
+        
+        return query;
     }
 }

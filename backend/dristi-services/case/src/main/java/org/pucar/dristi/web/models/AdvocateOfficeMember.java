@@ -28,6 +28,9 @@ public class AdvocateOfficeMember {
     @JsonProperty("memberId")
     private String memberId = null;
 
+    @JsonProperty("memberUserUuid")
+    private String memberUserUuid = null;
+
     @JsonProperty("memberName")
     private String memberName = null;
 

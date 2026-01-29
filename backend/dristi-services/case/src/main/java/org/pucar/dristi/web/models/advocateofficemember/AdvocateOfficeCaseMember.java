@@ -28,11 +28,17 @@ public class AdvocateOfficeCaseMember {
     @JsonProperty("officeAdvocateName")
     private String officeAdvocateName;
 
+    @JsonProperty("officeAdvocateUserUuid")
+    private String officeAdvocateUserUuid;
+
     @JsonProperty("caseId")
     private UUID caseId;
 
     @JsonProperty("memberId")
     private UUID memberId;
+
+    @JsonProperty("memberUserUuid")
+    private String memberUserUuid;
 
     @JsonProperty("memberType")
     private MemberType memberType;

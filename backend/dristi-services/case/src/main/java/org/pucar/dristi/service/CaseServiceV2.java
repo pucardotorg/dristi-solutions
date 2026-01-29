@@ -15,9 +15,12 @@ import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static org.pucar.dristi.config.ServiceConstants.ADVOCATE_CLERK_ROLE;
+import static org.pucar.dristi.config.ServiceConstants.ADVOCATE_ROLE;
 import static org.pucar.dristi.config.ServiceConstants.SEARCH_CASE_ERR;
 
 

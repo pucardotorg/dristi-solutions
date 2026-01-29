@@ -2,6 +2,7 @@ package org.pucar.dristi.enrichment;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
@@ -9,7 +10,7 @@ import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
-import org.pucar.dristi.config.ServiceConstants;
+import org.pucar.dristi.repository.CaseRepositoryV2;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
@@ -24,7 +25,6 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -40,11 +40,13 @@ public class CaseRegistrationEnrichment {
     private Configuration config;
     private HrmsUtil hrmsUtil;
     private final EtreasuryUtil etreasuryUtil;
+    private final ObjectMapper objectMapper;
+    private final CaseRepositoryV2 caseRepositoryV2;
 
     @Autowired
     public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, 
                                       AdvocateOfficeUtil advocateOfficeUtil, IdgenUtil idgenUtil, 
-                                      CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil, HrmsUtil hrmsUtil) {
+                                      CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil, HrmsUtil hrmsUtil, ObjectMapper objectMapper, CaseRepositoryV2 caseRepositoryV2) {
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
         this.advocateOfficeUtil = advocateOfficeUtil;
@@ -53,6 +55,8 @@ public class CaseRegistrationEnrichment {
         this.config = config;
         this.hrmsUtil = hrmsUtil;
         this.etreasuryUtil = etreasuryUtil;
+        this.objectMapper = objectMapper;
+        this.caseRepositoryV2 = caseRepositoryV2;
     }
 
     private static void enrichDocumentsOnCreate(Document document) {
@@ -250,7 +254,8 @@ public class CaseRegistrationEnrichment {
                         .id(UUID.randomUUID().toString())
                         .tenantId(tenantId)
                         .caseId(caseId)
-                        .memberId(officeMember.getMemberId() != null ? officeMember.getMemberId().toString() : null)
+                        .memberId(officeMember.getMemberId().toString())
+                        .memberUserUuid(officeMember.getMemberUserUuid().toString())
                         .memberType(officeMember.getMemberType())
                         .memberName(officeMember.getMemberName())
                         .isActive(isAdvocateActive)
@@ -258,7 +263,7 @@ public class CaseRegistrationEnrichment {
                         .build();
 
                 // Separate advocates and clerks based on memberType
-                if (officeMember.getMemberType() == org.pucar.dristi.web.models.enums.MemberType.ADVOCATE) {
+                if (officeMember.getMemberType() == MemberType.ADVOCATE) {
                     advocates.add(member);
                 } else if (officeMember.getMemberType() == MemberType.ADVOCATE_CLERK) {
                     clerks.add(member);
@@ -268,6 +273,7 @@ public class CaseRegistrationEnrichment {
             AdvocateOffice advocateOffice = AdvocateOffice.builder()
                     .officeAdvocateId(advocateId)
                     .officeAdvocateName(officeMembers.get(0).getOfficeAdvocateName())
+                    .officeAdvocateUserUuid(officeMembers.get(0).getOfficeAdvocateUserUuid().toString())
                     .advocates(advocates)
                     .clerks(clerks)
                     .build();
@@ -596,6 +602,7 @@ public class CaseRegistrationEnrichment {
         }
     }
 
+    
     private void enrichEmployeeUserId(List<Role> roles, CaseSearchCriteriaV2 criteria, RequestInfo requestInfo) {
 
         boolean isCourtAssigned = roles.stream()
@@ -668,6 +675,8 @@ public class CaseRegistrationEnrichment {
 
         boolean isAdvocate = roles.stream()
                 .anyMatch(role -> ADVOCATE_ROLE.equals(role.getCode()));
+        boolean isClerk = roles.stream()
+                .anyMatch(role -> ADVOCATE_CLERK_ROLE.equals(role.getCode()));
 
         if (isAdvocate) {
 
@@ -678,12 +687,68 @@ public class CaseRegistrationEnrichment {
                 caseSummaryListCriteria.setAdvocateId(advocateId);
             }
 
+            processAdvocateOfficeAdvocateValidation(caseSummaryListCriteria);
+
+
+        } else if (isClerk) {
+            processClerkOfficeAdvocateValidation(caseSummaryListCriteria);
         } else {
             caseSummaryListCriteria.setLitigantId(individualId);
         }
 
         caseSummaryListCriteria.setPoaHolderIndividualId(individualId);
 
+    }
+
+    private void processClerkOfficeAdvocateValidation(CaseSummaryListCriteria criteria) {
+        // Both fields are mandatory for clerks
+        if (criteria.getOfficeAdvocateId() == null || criteria.getMemberId() == null) {
+            log.info("Both officeAdvocateId and memberId are mandatory for ADVOCATE_CLERK_ROLE. Returning empty list");
+            criteria.setCaseId("INVALID_CASE_ID_FOR_EMPTY_RESULT");
+            return;
+        }
+
+        // Validate that the clerk is allowed to view this advocate's cases
+        boolean memberExists = caseRepositoryV2.validateAdvocateOfficeCaseMember(
+                criteria.getOfficeAdvocateId(),
+                criteria.getMemberId()
+        );
+
+        if (!memberExists) {
+            log.info("Clerk is not allowed to view advocate{}'s cases", criteria.getOfficeAdvocateId());
+            criteria.setCaseId("INVALID_CASE_ID_FOR_EMPTY_RESULT");
+            return;
+        }
+
+        // Reset criteria and set only advocateId to officeAdvocateId
+        String officeAdvocateId = criteria.getOfficeAdvocateId();
+        criteria = CaseSummaryListCriteria.builder().build();
+        criteria.setAdvocateId(officeAdvocateId);
+    }
+
+    private void processAdvocateOfficeAdvocateValidation(CaseSummaryListCriteria criteria) {
+        // For advocates, officeAdvocateId and memberId are optional
+        if (criteria.getOfficeAdvocateId() == null || criteria.getMemberId() == null) {
+            // If not provided, let existing logic apply (advocate's own cases)
+            return;
+        }
+
+        // Validate if provided
+        boolean memberExists = caseRepositoryV2.validateAdvocateOfficeCaseMember(
+                criteria.getOfficeAdvocateId(),
+                criteria.getMemberId()
+        );
+
+        if (!memberExists) {
+            log.info("Advocate is not allowed to view advocate {}'s cases", criteria.getOfficeAdvocateId());
+            // For advocates, let the existing logic apply (don't set invalid case ID)
+            return;
+        }
+
+        // Reset criteria and set only advocateId to officeAdvocateId
+        String officeAdvocateId = criteria.getOfficeAdvocateId();
+        criteria = CaseSummaryListCriteria.builder().build();
+        criteria.setAdvocateId(officeAdvocateId);
     }
 
     public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id, String consumerCode){
