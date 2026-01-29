@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -226,11 +227,8 @@ public class PdfEmbedder {
 
             // Create ONE signature field with MULTIPLE widgets (one per page placeholder)
             PdfWriter writer = stamper.getWriter();
-            PdfFormField signatureField = PdfFormField.createSignature(writer);
-            signatureField.setFieldName(fieldName);
-            signatureField.setFlags(PdfAnnotation.FLAGS_PRINT);
 
-            int widgetCount = 0;
+            Map<Integer, Rectangle> widgetRects = new LinkedHashMap<>();
             Integer firstWidgetPage = null;
             Rectangle firstWidgetRect = null;
             for (Integer pageNumber : pages) {
@@ -248,33 +246,44 @@ public class PdfEmbedder {
                 }
 
                 Rectangle rect = new Rectangle(coord.getX(), coord.getY(), coord.getX() + 100, coord.getY() + 50);
+                widgetRects.put(pageNumber, rect);
+                if(firstWidgetPage == null) {
+                    firstWidgetPage = pageNumber;
+                    firstWidgetRect = rect;
+                }
+            }
+
+            if (firstWidgetPage == null) {
+                throw new CustomException("MULTI_PAGE_SIGNING_ERROR", "No valid placeholders found for multi-page signing");
+            }
+
+            appearance.setVisibleSignature(firstWidgetRect, firstWidgetPage, fieldName);
+            PdfFormField signatureField;
+            try {
+                Field field = PdfSignatureAppearance.class.getDeclaredField("field");
+                field.setAccessible(true);
+                signatureField = (PdfFormField) field.get(appearance);
+            } catch (Exception e) {
+                throw new CustomException("MULTI_PAGE_SIGNING_ERROR", "Unable to access signature field from appearance");
+            }
+            signatureField.setFlags(PdfAnnotation.FLAGS_PRINT);
+
+            int widgetCount = 1;
+            for (Map.Entry<Integer, Rectangle> entry : widgetRects.entrySet()) {
+                Integer pageNumber = entry.getKey();
+                if (pageNumber.equals(firstWidgetPage)) continue;
+
+                Rectangle rect = entry.getValue();
                 PdfFormField widget = PdfFormField.createEmpty(writer);
                 widget.setWidget(rect, PdfAnnotation.HIGHLIGHT_NONE);
                 widget.setPage(pageNumber);
                 widget.setFlags(PdfAnnotation.FLAGS_PRINT);
 
                 signatureField.addKid(widget);
-                // Register each widget annotation on its page
                 stamper.addAnnotation(widget, pageNumber);
                 widgetCount++;
-                if (firstWidgetPage == null) {
-                    firstWidgetPage = pageNumber;
-                    firstWidgetRect = rect;
-                }
             }
-
-            if (widgetCount == 0) {
-                throw new CustomException("MULTI_PAGE_SIGNING_ERROR", "No valid placeholders found for multi-page signing");
-            }
-
-            // Register parent field in AcroForm (kids already added as annotations)
-            // Use the first page that actually contains a widget.
-            stamper.addAnnotation(signatureField, firstWidgetPage);
             log.info("Created multi-widget signature field: {} | widgets: {} | firstWidgetPage: {}", fieldName, widgetCount, firstWidgetPage);
-
-            // Bind appearance to the signature field using the first widget's rectangle.
-            // Using setVisibleSignature(fieldName) can fail if the field isn't resolvable yet.
-            appearance.setVisibleSignature(firstWidgetRect, firstWidgetPage, fieldName);
 
             // Configure signature appearance (applies to all widgets)
             appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
@@ -349,8 +358,7 @@ public class PdfEmbedder {
 
         } catch (Exception e) {
             log.info("Method=signPdfMultiPageWithDSAndReturnMultipartFileV2 ,Result=Error ,filestoreId={}", eSignParameter.getFileStoreId());
-            log.error("Method=signPdfMultiPageWithDSAndReturnMultipartFileV2, Error:{}", e.toString());
-            throw new CustomException("SIGNATURE_EMBED_EXCEPTION", "Error Occurred while embedding multi-page signature");
+            log.error("Method=signPdfMultiPageWithDSAndReturnMultipartFileV2, Error:{}", e.getMessage(), e);            throw new CustomException("SIGNATURE_EMBED_EXCEPTION", "Error Occurred while embedding multi-page signature");
         } finally {
             log.info("Deleting partially signed pdf in finally block, filestoreId={}", eSignParameter.getFileStoreId());
             fileStoreUtil.deleteFileFromFileStore(eSignParameter.getFileStoreId(), eSignParameter.getTenantId(), false);
@@ -448,7 +456,7 @@ public class PdfEmbedder {
         }
         
         // Default
-        return "SIGNATURE";
+        return SIGNATURE;
     }
 
     /**
