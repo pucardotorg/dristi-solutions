@@ -307,6 +307,9 @@ public class CaseService {
         try {
             validator.validateCaseRegistration(body);
 
+            // Validate that user is authorized to file on behalf of the advocate
+            validator.validateAdvocateAuthorization(body.getRequestInfo(), body.getCases());
+
             enrichmentUtil.enrichCaseRegistrationOnCreate(body);
 
             workflowService.updateWorkflowStatus(body);

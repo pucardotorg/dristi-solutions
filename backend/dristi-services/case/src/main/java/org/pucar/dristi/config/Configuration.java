@@ -93,6 +93,13 @@ public class Configuration {
     @Value("${egov.individual.search.path}")
     private String individualSearchEndpoint;
 
+    // Advocate Office Management Config
+    @Value("${dristi.advocate.office.host}")
+    private String advocateOfficeHost;
+
+    @Value("${dristi.advocate.office.search.member.endpoint}")
+    private String advocateOfficeSearchMemberEndpoint;
+
     @Value("${egov.individual.update.path}")
     private String individualUpdateEndpoint;
 
@@ -469,4 +476,10 @@ public class Configuration {
 
 	@Value("${case.conversion.topic}")
 	private String caseConversionTopic;
+
+	@Value("${advocate.office.case.member.save.topic}")
+	private String advocateOfficeCaseMemberSaveTopic;
+
+	@Value("${advocate.office.case.member.update.topic}")
+	private String advocateOfficeCaseMemberUpdateTopic;
 }
