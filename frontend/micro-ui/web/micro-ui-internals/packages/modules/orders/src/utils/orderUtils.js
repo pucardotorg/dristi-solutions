@@ -25,9 +25,18 @@ export const CloseBtn = (props) => {
 
 export const prepareUpdatedOrderData = (currentOrder, orderFormData, compOrderIndex) => {
   let updatedCompositeItems = null;
+  let updatedCurrentOrder = { ...currentOrder };
 
-  if (currentOrder?.orderCategory === "COMPOSITE") {
-    updatedCompositeItems = currentOrder?.compositeItems?.map((compItem, compIndex) => {
+  if (orderFormData?.orderType?.code === "ACCEPT_RESCHEDULING_REQUEST") {
+    updatedCurrentOrder = {
+      ...updatedCurrentOrder,
+      nextHearingDate: orderFormData?.newHearingDate ? new Date(orderFormData.newHearingDate + "T00:00:00").setHours(0, 0, 0, 0) : null,
+      purposeOfNextHearing: orderFormData?.hearingPurpose?.code,
+    };
+  }
+
+  if (updatedCurrentOrder?.orderCategory === "COMPOSITE") {
+    updatedCompositeItems = updatedCurrentOrder?.compositeItems?.map((compItem, compIndex) => {
       if (compIndex === compOrderIndex) {
         return {
           ...compItem,
@@ -46,7 +55,7 @@ export const prepareUpdatedOrderData = (currentOrder, orderFormData, compOrderIn
   }
 
   return {
-    ...currentOrder,
+    ...updatedCurrentOrder,
     comments:
       orderFormData?.comments?.text ||
       orderFormData?.additionalComments?.text ||
@@ -54,12 +63,13 @@ export const prepareUpdatedOrderData = (currentOrder, orderFormData, compOrderIn
       orderFormData?.sentence?.text ||
       orderFormData?.briefSummary ||
       "",
-    orderTitle: currentOrder?.orderCategory !== "COMPOSITE" ? orderFormData?.orderType?.code : currentOrder?.orderTitle,
-    orderCategory: currentOrder?.orderCategory,
-    orderType: currentOrder?.orderCategory !== "COMPOSITE" ? orderFormData?.orderType?.code : null,
-    compositeItems: currentOrder?.orderCategory !== "COMPOSITE" ? null : updatedCompositeItems,
-    additionalDetails: currentOrder?.orderCategory !== "COMPOSITE" ? { ...currentOrder?.additionalDetails, formdata: orderFormData } : null,
-    orderDetails: currentOrder?.orderCategory !== "COMPOSITE" ? currentOrder?.orderDetails : null,
+    orderTitle: updatedCurrentOrder?.orderCategory !== "COMPOSITE" ? orderFormData?.orderType?.code : updatedCurrentOrder?.orderTitle,
+    orderCategory: updatedCurrentOrder?.orderCategory,
+    orderType: updatedCurrentOrder?.orderCategory !== "COMPOSITE" ? orderFormData?.orderType?.code : null,
+    compositeItems: updatedCurrentOrder?.orderCategory !== "COMPOSITE" ? null : updatedCompositeItems,
+    additionalDetails:
+      updatedCurrentOrder?.orderCategory !== "COMPOSITE" ? { ...updatedCurrentOrder?.additionalDetails, formdata: orderFormData } : null,
+    orderDetails: updatedCurrentOrder?.orderCategory !== "COMPOSITE" ? updatedCurrentOrder?.orderDetails : null,
   };
 };
 

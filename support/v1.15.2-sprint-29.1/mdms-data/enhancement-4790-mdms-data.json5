@@ -58,9 +58,9 @@
       // TODO : need to update the workflow module
       "workflowModule": "order-default",
       // TODO : need to update the composite hearing path
-      "compositeHearingPath": "$.orderSchema.orderDetails.purposeOfHearing",
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
       // TODO : need to update the intermediate hearing path
-      "intermediateHearingPath": "$.orderDetails.purposeOfHearing"
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
     },
     "isActive": true
   },
@@ -106,9 +106,9 @@
       // TODO : need to update the workflow module
       "workflowModule": "order-default",
       // TODO : need to update the composite hearing path
-      "compositeHearingPath": "$.orderSchema.orderDetails.purposeOfHearing",
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
       // TODO : need to update the intermediate hearing path
-      "intermediateHearingPath": "$.orderDetails.purposeOfHearing"
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
     },
     "isActive": true
   },
@@ -132,9 +132,9 @@
       // TODO : need to update the workflow module
       "workflowModule": "order-default",
       // TODO : need to update the composite hearing path
-      "compositeHearingPath": "$.orderSchema.orderDetails.purposeOfHearing",
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
       // TODO : need to update the intermediate hearing path
-      "intermediateHearingPath": "$.orderDetails.purposeOfHearing"
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
     },
     "isActive": true
   },
@@ -158,9 +158,9 @@
       // TODO : need to update the workflow module
       "workflowModule": "order-default",
       // TODO : need to update the composite hearing path
-      "compositeHearingPath": "$.orderSchema.orderDetails.purposeOfHearing",
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
       // TODO : need to update the intermediate hearing path
-      "intermediateHearingPath": "$.orderDetails.purposeOfHearing"
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
     },
     "isActive": true
   },
@@ -184,9 +184,9 @@
       // TODO : need to update the workflow module
       "workflowModule": "order-default",
       // TODO : need to update the composite hearing path
-      "compositeHearingPath": "$.orderSchema.orderDetails.purposeOfHearing",
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
       // TODO : need to update the intermediate hearing path
-      "intermediateHearingPath": "$.orderDetails.purposeOfHearing"
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
     },
     "isActive": true
   },

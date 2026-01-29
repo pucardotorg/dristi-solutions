@@ -74,7 +74,7 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
             ...item.populators,
             inputs: item.populators.inputs.map((input) => ({
               ...input,
-              disable: params?.isRejected,
+              disable: params?.isRejected || params?.isLitigantPartialRegistered,
             })),
           },
         };

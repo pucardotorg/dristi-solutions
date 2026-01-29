@@ -410,6 +410,8 @@ export const getOrderTypes = (applicationType, type) => {
       return type === "reject" ? "CHECKOUT_REJECT" : "CHECKOUT_ACCEPTANCE";
     case "DELAY_CONDONATION":
       return "ACCEPTANCE_REJECTION_DCA";
+    case "ADVANCEMENT_OR_ADJOURNMENT_APPLICATION":
+      return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "ACCEPT_RESCHEDULING_REQUEST";
     default:
       return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "APPROVE_VOLUNTARY_SUBMISSIONS";
   }
@@ -557,7 +559,7 @@ export const getComplainantSideAdvocates = (caseDetails) => {
 export const getFileByFileStore = async (uri, filename) => {
   const token = localStorage.getItem("token");
   try {
-    const response = await axios.get(uri, {
+    const response = await axiosInstance.get(uri, {
       responseType: "blob",
       headers: {
         "auth-token": `${token}`,
@@ -572,4 +574,18 @@ export const getFileByFileStore = async (uri, filename) => {
     console.error("Error fetching file:", error);
     throw error;
   }
+};
+
+export const getNotUploadedFileName = (key) => {
+  const mapping = {
+    "companyDetailsUpload.document": "Company documents",
+    "inquiryAffidavitFileUpload.document": "AFFIDAVIT_UNDER_225",
+    "depositChequeFileUpload.document": "CS_PROOF_DEPOSIT_CHEQUE",
+    "debtLiabilityFileUpload.document": "CS_PROOF_DEBT",
+    "proofOfAcknowledgmentFileUpload.document": "PROOF_LEGAL_DEMAND_NOTICE_FILE_NAME",
+    "proofOfReplyFileUpload.document": "CS_PROOF_TO_REPLY_DEMAND_NOTICE_FILE_NAME",
+    "condonationFileUpload.document": "CONDONATION_DOCUMENT",
+    "swornStatement.document": "SWORN_STATEMENT_DOCUMENT",
+  };
+  return mapping[key] || "Document";
 };

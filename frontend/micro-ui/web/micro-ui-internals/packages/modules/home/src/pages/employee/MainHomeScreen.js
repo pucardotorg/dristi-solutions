@@ -68,6 +68,7 @@ const MainHomeScreen = () => {
     OFFLINE_PAYMENTS: 0,
     SCRUTINISE_CASES: 0,
     REGISTRATION: 0,
+    RESCHEDULE_REQUEST: 0,
     REVIEW_PROCESS: 0,
     // VIEW_APPLICATION: 0,
     // SCHEDULE_HEARING: 0,
@@ -106,6 +107,7 @@ const MainHomeScreen = () => {
   const hasViewOthers = useMemo(() => assignedRoles?.includes("VIEW_OTHERS_APPLICATION"), [assignedRoles]);
   const hasCaseReviewerAccess = useMemo(() => assignedRoles?.includes("CASE_REVIEWER"), [assignedRoles]);
   const hasViewProcessManagementAccess = useMemo(() => assignedRoles?.includes("VIEW_PROCESS_MANAGEMENT"), [assignedRoles]);
+  const hasViewReschedulingRequestAccess = useMemo(() => assignedRoles?.includes("VIEW_RESCHEDULING_REQUESTS"), [assignedRoles]);
 
   const today = new Date();
 
@@ -298,6 +300,11 @@ const MainHomeScreen = () => {
             isOnlyCountRequired: true,
             actionCategory: "Register cases",
           },
+          searchReschedulingRequestApplications: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Rescheduling Request",
+          },
           searchNoticeAndSummons: {
             date: null,
             isOnlyCountRequired: true,
@@ -350,12 +357,14 @@ const MainHomeScreen = () => {
       const registerUsersCount = res?.registerUsersData?.count || 0;
       const offlinePaymentsCount = res?.offlinePaymentsData?.count || 0;
       const noticeAndSummonsCount = res?.noticeAndSummonsData?.count || 0;
+      const rescheduleHearingRequestCount = res?.reschedulingRequestData?.totalCount || 0;
 
       setPendingTaskCount({
         REGISTER_USERS: registerUsersCount,
         OFFLINE_PAYMENTS: offlinePaymentsCount,
         SCRUTINISE_CASES: scrutinyCasesCount,
         REGISTRATION: registerCount,
+        RESCHEDULE_REQUEST: rescheduleHearingRequestCount,
         REVIEW_PROCESS: reviwCount,
         BAIL_BOND_STATUS: bailBondStatusCount,
         NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
@@ -847,6 +856,9 @@ const MainHomeScreen = () => {
   if (hasViewRegisterCasesAccess) {
     options.REGISTRATION = { name: "HOME_REGISTER_CASES" };
   }
+  if (hasViewReschedulingRequestAccess) {
+    options.RESCHEDULE_REQUEST = { name: "HOME_RESCHEDULE_REQUEST" };
+  }
   if (hasViewReissueProcessAccess) {
     options.REVIEW_PROCESS = { name: "HOME_REISSUE_PROCESS" };
   }
@@ -913,7 +925,7 @@ const MainHomeScreen = () => {
       });
     }
 
-    if (["RESCHEDULE_APPLICATIONS", "DELAY_CONDONATION", "OTHERS"].includes(activeTab)) {
+    if (["RESCHEDULE_APPLICATIONS", "DELAY_CONDONATION", "OTHERS", "RESCHEDULE_REQUEST"].includes(activeTab)) {
       updatedConfig.sections.search.uiConfig.fields = [
         {
           label: "STAGE",

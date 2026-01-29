@@ -1,12 +1,11 @@
-FROM egovio/alpine-node-builder-10:yarn
+FROM node:20.18.0-alpine
 
 ARG WORK_DIR
-ENV npm_config_cache=/tmp
 WORKDIR /app
 
 COPY ${WORK_DIR} .
 
-RUN npm install
+RUN yarn install
 
 # set your port
 ENV PORT 8080
@@ -14,4 +13,4 @@ ENV PORT 8080
 EXPOSE  8080
 
 # start command as per package.json
-CMD ["npm", "start"]
+CMD ["yarn", "start"]
