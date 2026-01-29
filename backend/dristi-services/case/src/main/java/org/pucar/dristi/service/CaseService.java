@@ -5087,9 +5087,11 @@ public class CaseService {
                 // Enrich advocate office case members for the joining advocate
                 CaseRequest caseRequestForOffice = CaseRequest.builder()
                         .requestInfo(requestInfo)
-                        .cases(courtCaseObj)
+                        .cases(courtCase)
                         .build();
                 enrichmentUtil.enrichAdvocateOffices(caseRequestForOffice, auditDetails);
+
+                courtCaseObj.setAdvocateOffices(caseRequestForOffice.getCases().getAdvocateOffices());
 
                 producer.push(config.getRepresentativeJoinCaseTopic(), courtCaseObj);
 
