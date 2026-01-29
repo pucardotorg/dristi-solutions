@@ -258,14 +258,40 @@ public class PdfEmbedder {
             }
 
             appearance.setVisibleSignature(firstWidgetRect, firstWidgetPage, fieldName);
-            PdfFormField signatureField;
+
+            String actualFieldName = appearance.getFieldName();
+            if (actualFieldName != null && !actualFieldName.isBlank() && !actualFieldName.equals(fieldName)) {
+                log.warn("Signature field name auto-renamed by iText. requested={} actual={}", fieldName, actualFieldName);
+                fieldName = actualFieldName;
+            }
+            eSignParameter.setSignPlaceHolder(fieldName);
+
+            PdfFormField signatureField = null;
             try {
-                Field field = PdfSignatureAppearance.class.getDeclaredField("field");
-                field.setAccessible(true);
-                signatureField = (PdfFormField) field.get(appearance);
+                Class<?> cls = appearance.getClass();
+                while (cls != null && signatureField == null) {
+                    for (java.lang.reflect.Field f : cls.getDeclaredFields()) {
+                        if (!PdfFormField.class.isAssignableFrom(f.getType())) {
+                            continue;
+                        }
+
+                        f.setAccessible(true);
+                        Object val = f.get(appearance);
+                        if (val instanceof PdfFormField) {
+                            signatureField = (PdfFormField) val;
+                            break;
+                        }
+                    }
+                    cls = cls.getSuperclass();
+                }
             } catch (Exception e) {
                 throw new CustomException("MULTI_PAGE_SIGNING_ERROR", "Unable to access signature field from appearance");
             }
+
+            if (signatureField == null) {
+                throw new CustomException("MULTI_PAGE_SIGNING_ERROR", "Signature field not initialized in appearance");
+            }
+
             signatureField.setFlags(PdfAnnotation.FLAGS_PRINT);
 
             int widgetCount = 1;
@@ -358,7 +384,8 @@ public class PdfEmbedder {
 
         } catch (Exception e) {
             log.info("Method=signPdfMultiPageWithDSAndReturnMultipartFileV2 ,Result=Error ,filestoreId={}", eSignParameter.getFileStoreId());
-            log.error("Method=signPdfMultiPageWithDSAndReturnMultipartFileV2, Error:{}", e.getMessage(), e);            throw new CustomException("SIGNATURE_EMBED_EXCEPTION", "Error Occurred while embedding multi-page signature");
+            log.error("Method=signPdfMultiPageWithDSAndReturnMultipartFileV2, Error:{}", e.getMessage(), e);
+            throw new CustomException("SIGNATURE_EMBED_EXCEPTION", "Error Occurred while embedding multi-page signature");
         } finally {
             log.info("Deleting partially signed pdf in finally block, filestoreId={}", eSignParameter.getFileStoreId());
             fileStoreUtil.deleteFileFromFileStore(eSignParameter.getFileStoreId(), eSignParameter.getTenantId(), false);
