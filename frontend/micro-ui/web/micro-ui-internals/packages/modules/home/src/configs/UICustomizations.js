@@ -849,7 +849,12 @@ export const UICustomizations = {
 
   registerUserHomeConfig: {
     customValidationCheck: (data) => {
-      return !data?.applicationNumber_WILDCARD.trim() ? { label: "Please enter a valid application Number", error: true } : false;
+      // Application number is optional; only validate format/length if user enters something
+      const appNo = data?.applicationNumber_WILDCARD?.trim() || "";
+      if (appNo.length > 0 && appNo.length < 2) {
+        return { label: "Please enter a valid application Number", error: true };
+      }
+      return false;
     },
     preProcess: (requestCriteria, additionalDetails) => {
       const userType = requestCriteria?.state?.searchForm?.userType;

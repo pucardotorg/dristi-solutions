@@ -15,7 +15,7 @@ export const registerUserConfig = {
         offset: 0,
       },
     },
-    minParametersForSearchForm: 1,
+    minParametersForSearchForm: 0,
     masterName: "commonUiConfig",
     moduleName: "registerUserHomeConfig",
     searchFormJsonPath: "requestBody.inbox.moduleSearchCriteria",
@@ -28,7 +28,7 @@ export const registerUserConfig = {
         formClassName: "custom-both-clear-search",
         primaryLabel: "ES_COMMON_SEARCH",
         secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
-        minReqFields: 1,
+        minReqFields: 0,
         defaultValues: {
           applicationNumber_WILDCARD: "",
           isActive: false,
