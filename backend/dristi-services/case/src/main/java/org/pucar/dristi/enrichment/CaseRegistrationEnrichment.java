@@ -649,7 +649,7 @@ public class CaseRegistrationEnrichment {
 
         switch (type.toLowerCase()) {
             case "employee" -> enrichEmployeeUserId(roles, caseListRequest.getCriteria(), requestInfo);
-            case "citizen" -> enrichCitizenUserId(roles, caseListRequest.getCriteria(),requestInfo);
+            case "citizen" -> enrichCitizenUserId(roles, caseListRequest, requestInfo);
             case "system" -> log.info("System User is searching for cases");
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
@@ -669,8 +669,8 @@ public class CaseRegistrationEnrichment {
 
     }
 
-    private void enrichCitizenUserId(List<Role> roles, CaseSummaryListCriteria caseSummaryListCriteria, RequestInfo requestInfo) {
-
+    private void enrichCitizenUserId(List<Role> roles, CaseSummaryListRequest caseListRequest, RequestInfo requestInfo) {
+        CaseSummaryListCriteria caseSummaryListCriteria = caseListRequest.getCriteria();
         String individualId = individualService.getIndividualId(requestInfo);
 
         boolean isAdvocate = roles.stream()
@@ -687,11 +687,11 @@ public class CaseRegistrationEnrichment {
                 caseSummaryListCriteria.setAdvocateId(advocateId);
             }
 
-            processAdvocateOfficeAdvocateValidation(caseSummaryListCriteria);
+            processAdvocateOfficeAdvocateValidation(caseListRequest);
 
 
         } else if (isClerk) {
-            processClerkOfficeAdvocateValidation(caseSummaryListCriteria);
+            processClerkOfficeAdvocateValidation(caseListRequest);
         } else {
             caseSummaryListCriteria.setLitigantId(individualId);
         }
@@ -700,7 +700,9 @@ public class CaseRegistrationEnrichment {
 
     }
 
-    private void processClerkOfficeAdvocateValidation(CaseSummaryListCriteria criteria) {
+    private void processClerkOfficeAdvocateValidation(CaseSummaryListRequest caseListRequest) {
+        CaseSummaryListCriteria criteria = caseListRequest.getCriteria();
+        
         // Both fields are mandatory for clerks
         if (criteria.getOfficeAdvocateId() == null || criteria.getMemberId() == null) {
             log.info("Both officeAdvocateId and memberId are mandatory for ADVOCATE_CLERK_ROLE. Returning empty list");
@@ -720,13 +722,19 @@ public class CaseRegistrationEnrichment {
             return;
         }
 
-        // Reset criteria and set only advocateId to officeAdvocateId
+        // Create new criteria with only advocateId, invalidating all others
         String officeAdvocateId = criteria.getOfficeAdvocateId();
-        criteria = CaseSummaryListCriteria.builder().build();
-        criteria.setAdvocateId(officeAdvocateId);
+        CaseSummaryListCriteria newCriteria = CaseSummaryListCriteria.builder()
+                .advocateId(officeAdvocateId)
+                .build();
+        
+        // Set the new criteria back to the request
+        caseListRequest.setCriteria(newCriteria);
     }
 
-    private void processAdvocateOfficeAdvocateValidation(CaseSummaryListCriteria criteria) {
+    private void processAdvocateOfficeAdvocateValidation(CaseSummaryListRequest caseListRequest) {
+        CaseSummaryListCriteria criteria = caseListRequest.getCriteria();
+        
         // For advocates, officeAdvocateId and memberId are optional
         if (criteria.getOfficeAdvocateId() == null || criteria.getMemberId() == null) {
             // If not provided, let existing logic apply (advocate's own cases)
@@ -745,10 +753,14 @@ public class CaseRegistrationEnrichment {
             return;
         }
 
-        // Reset criteria and set only advocateId to officeAdvocateId
+        // Create new criteria with only advocateId, invalidating all others
         String officeAdvocateId = criteria.getOfficeAdvocateId();
-        criteria = CaseSummaryListCriteria.builder().build();
-        criteria.setAdvocateId(officeAdvocateId);
+        CaseSummaryListCriteria newCriteria = CaseSummaryListCriteria.builder()
+                .advocateId(officeAdvocateId)
+                .build();
+        
+        // Set the new criteria back to the request
+        caseListRequest.setCriteria(newCriteria);
     }
 
     public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id, String consumerCode){
