@@ -12,6 +12,7 @@ import UserProfile from "../citizen/Home/UserProfile";
 import ErrorComponent from "../../components/ErrorComponent";
 import { PrivateRoute } from "@egovernments/digit-ui-react-components";
 import FormComposerPlayground from "../../components/FormComposerPlayground";
+import InboxSearchPlayground from "../../components/InboxSearchPlayground";
 
 const userScreensExempted = ["user/profile", "user/error"];
 
@@ -68,6 +69,9 @@ const EmployeeApp = ({
       <Switch>
         <Route path={`${path}/form-composer-v2-playground`}>
           <FormComposerPlayground />
+        </Route>
+        <Route path={`${path}/inbox-search-composer-playground`}>
+          <InboxSearchPlayground />
         </Route>
         <Route path={`${path}/user`}>
           {isUserProfile && (

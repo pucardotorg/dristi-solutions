@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, Fragment } from "react";
 import { FormComposerV2, Header } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 
@@ -461,7 +461,7 @@ const FormComposerPlayground = () => {
 
       {/* Basic Playground Tab */}
       {activeTab === "basic" && (
-        <>
+        <Fragment>
           <div style={{ marginBottom: "20px", padding: "10px", backgroundColor: "#f0f8ff", borderRadius: "8px" }}>
             <h3>Basic Playground</h3>
             <p><strong>Features:</strong> Text, Email, Dropdown, Radio, Checkbox, Textarea, Multi-select, Conditional fields</p>
@@ -476,12 +476,12 @@ const FormComposerPlayground = () => {
             label="Submit Form"
             cardStyle={{ minWidth: "100%" }}
           />
-        </>
+        </Fragment>
       )}
 
       {/* Witness Form Tab */}
       {activeTab === "witness" && (
-        <>
+        <Fragment>
           <div style={{ marginBottom: "20px", padding: "10px", backgroundColor: "#fff8e1", borderRadius: "8px" }}>
             <h3>Witness Form (Production Pattern)</h3>
             <p><strong>Features:</strong> Section headers, Conditional sections, Form validation, Field clearing on type switch</p>
@@ -497,7 +497,7 @@ const FormComposerPlayground = () => {
             label="Add Witness"
             cardStyle={{ minWidth: "100%" }}
           />
-        </>
+        </Fragment>
       )}
     </div>
   );
