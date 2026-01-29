@@ -222,6 +222,7 @@ public class PdfEmbedder {
             eSignParameter.setSignPlaceHolder(fieldName);
 
             Map<Integer, Rectangle> rectsByPage = new LinkedHashMap<>();
+            Map<Integer, Coordinate> coordsByPage = new LinkedHashMap<>();
             Integer firstPage = null;
             Rectangle firstRect = null;
             for (Integer pageNumber : pages) {
@@ -239,6 +240,7 @@ public class PdfEmbedder {
 
                 Rectangle rect = new Rectangle(coord.getX(), coord.getY(), coord.getX() + 100, coord.getY() + 50);
                 rectsByPage.put(pageNumber, rect);
+                coordsByPage.put(pageNumber, coord);
                 if (firstPage == null) {
                     firstPage = pageNumber;
                     firstRect = rect;
@@ -296,6 +298,11 @@ public class PdfEmbedder {
             }
             log.info("Created signature fields sharing one signature dictionary: {} | additionalFields: {}", fieldName, subFields);
 
+            for (Map.Entry<Integer, Coordinate> entry : coordsByPage.entrySet()) {
+                Integer pageNumber = entry.getKey();
+                Coordinate coord = entry.getValue();
+                addVisualSignatureText(stamper, pageNumber, coord);
+            }
             int contentEstimated = 8192;
             HashMap<PdfName, Integer> exc = new HashMap<>();
             exc.put(PdfName.CONTENTS, contentEstimated * 2 + 2);
@@ -508,36 +515,15 @@ public class PdfEmbedder {
         // Draw rectangle border (visual signature box)
         float x = coord.getX();
         float y = coord.getY();
-        float width = 100;
         float height = 50;
-        
+
         canvas.saveState();
-        canvas.setColorStroke(BaseColor.BLACK);
-        canvas.setLineWidth(0.5f);
-        canvas.rectangle(x, y, width, height);
-        canvas.stroke();
-        
-        // Add "Digitally Signed" text
+
         canvas.beginText();
         canvas.setFontAndSize(baseFont, 8);
         canvas.setColorFill(BaseColor.BLACK);
         canvas.setTextMatrix(x + 5, y + height - 15);
         canvas.showText("Digitally Signed");
-        canvas.endText();
-        
-        // Add date/time
-        String dateTime = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss").format(new Date());
-        canvas.beginText();
-        canvas.setFontAndSize(baseFont, 6);
-        canvas.setTextMatrix(x + 5, y + height - 25);
-        canvas.showText(dateTime);
-        canvas.endText();
-        
-        // Add security indicator text
-        canvas.beginText();
-        canvas.setFontAndSize(baseFont, 6);
-        canvas.setTextMatrix(x + 5, y + 5);
-        canvas.showText("Cryptographically Secured");
         canvas.endText();
         
         canvas.restoreState();
