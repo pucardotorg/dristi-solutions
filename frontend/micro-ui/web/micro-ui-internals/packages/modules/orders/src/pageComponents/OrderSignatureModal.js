@@ -107,7 +107,7 @@ function OrderSignatureModal({
       setIsSigned(true);
     } else {
       sessionStorage.setItem("orderPDF", orderPdfFileStoreID);
-      handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder);
+      handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder, true, true);
     }
   };
 

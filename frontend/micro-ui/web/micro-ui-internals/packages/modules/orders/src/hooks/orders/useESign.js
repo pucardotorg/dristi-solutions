@@ -7,7 +7,7 @@ const useESign = () => {
   const esignUrl = window?.globalConfigs?.getConfig("ESIGN_URL") || "https://es-staging.cdac.in/esignlevel2/2.1/form/signdoc";
 
   const handleEsign = useCallback(
-    async (name, pageModule, fileStoreId, signPlaceHolder) => {
+    async (name, pageModule, fileStoreId, signPlaceHolder, multiPageSigning, applyToAllPages) => {
       try {
         const newSignStatuses = [...parsedObj, { name: name, isSigned: true }];
         sessionStorage.setItem("signStatus", JSON.stringify(newSignStatuses));
@@ -21,6 +21,8 @@ const useESign = () => {
             tenantId: tenantId,
             pageModule: pageModule,
             signPlaceHolder: signPlaceHolder || "EsIIIgNNN_PlAcEholDeR_keYY",
+            ...(multiPageSigning && { multiPageSigning: true }),
+            ...(applyToAllPages && { applyToAllPages: true }),
           },
         });
         if (eSignResponse) {
