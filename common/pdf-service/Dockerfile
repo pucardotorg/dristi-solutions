@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:20.18.0-alpine
 
 ARG WORK_DIR
 ENV npm_config_cache=/tmp
