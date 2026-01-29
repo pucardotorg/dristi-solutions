@@ -232,6 +232,7 @@ public class PdfEmbedder {
 
             int widgetCount = 0;
             Integer firstWidgetPage = null;
+            Rectangle firstWidgetRect = null;
             for (Integer pageNumber : pages) {
                 String placeholder = getPlaceholderForPage(eSignParameter, pageNumber);
 
@@ -258,6 +259,7 @@ public class PdfEmbedder {
                 widgetCount++;
                 if (firstWidgetPage == null) {
                     firstWidgetPage = pageNumber;
+                    firstWidgetRect = rect;
                 }
             }
 
@@ -267,14 +269,12 @@ public class PdfEmbedder {
 
             // Register parent field in AcroForm (kids already added as annotations)
             // Use the first page that actually contains a widget.
-            if (firstWidgetPage == null) {
-                throw new CustomException("MULTI_PAGE_SIGNING_ERROR", "No valid widget pages found for multi-page signing");
-            }
             stamper.addAnnotation(signatureField, firstWidgetPage);
             log.info("Created multi-widget signature field: {} | widgets: {} | firstWidgetPage: {}", fieldName, widgetCount, firstWidgetPage);
 
-            // Tell appearance to sign the existing field
-            appearance.setVisibleSignature(fieldName);
+            // Bind appearance to the signature field using the first widget's rectangle.
+            // Using setVisibleSignature(fieldName) can fail if the field isn't resolvable yet.
+            appearance.setVisibleSignature(firstWidgetRect, firstWidgetPage, fieldName);
 
             // Configure signature appearance (applies to all widgets)
             appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
