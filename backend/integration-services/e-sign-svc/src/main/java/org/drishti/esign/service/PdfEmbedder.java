@@ -231,6 +231,7 @@ public class PdfEmbedder {
             signatureField.setFlags(PdfAnnotation.FLAGS_PRINT);
 
             int widgetCount = 0;
+            Integer firstWidgetPage = null;
             for (Integer pageNumber : pages) {
                 String placeholder = getPlaceholderForPage(eSignParameter, pageNumber);
 
@@ -252,16 +253,25 @@ public class PdfEmbedder {
                 widget.setFlags(PdfAnnotation.FLAGS_PRINT);
 
                 signatureField.addKid(widget);
+                // Register each widget annotation on its page
+                stamper.addAnnotation(widget, pageNumber);
                 widgetCount++;
+                if (firstWidgetPage == null) {
+                    firstWidgetPage = pageNumber;
+                }
             }
 
             if (widgetCount == 0) {
                 throw new CustomException("MULTI_PAGE_SIGNING_ERROR", "No valid placeholders found for multi-page signing");
             }
 
-            // Register field in AcroForm by adding it as an annotation (parent field carries kids)
-            stamper.addAnnotation(signatureField, 1);
-            log.info("Created multi-widget signature field: {} | widgets: {}", fieldName, widgetCount);
+            // Register parent field in AcroForm (kids already added as annotations)
+            // Use the first page that actually contains a widget.
+            if (firstWidgetPage == null) {
+                throw new CustomException("MULTI_PAGE_SIGNING_ERROR", "No valid widget pages found for multi-page signing");
+            }
+            stamper.addAnnotation(signatureField, firstWidgetPage);
+            log.info("Created multi-widget signature field: {} | widgets: {} | firstWidgetPage: {}", fieldName, widgetCount, firstWidgetPage);
 
             // Tell appearance to sign the existing field
             appearance.setVisibleSignature(fieldName);
@@ -302,7 +312,7 @@ public class PdfEmbedder {
 
         } catch (Exception e) {
             log.info("Method=pdfSignerMultiPageV2 ,Result=Error ,filestoreId={}", eSignParameter.getFileStoreId());
-            log.error("Method=pdfSignerMultiPageV2, Error:{}", e.toString());
+            log.error("Method=pdfSignerMultiPageV2, Error:{}", e.getMessage(), e);
             throw new CustomException("SIGNATURE_PLACEHOLDER_EXCEPTION", "Error occurred while creating multi-page placeholder");
         }
 
