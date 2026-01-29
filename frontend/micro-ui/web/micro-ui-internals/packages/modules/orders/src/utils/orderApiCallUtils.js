@@ -101,6 +101,7 @@ export const addOrderItem = async (
           isMediationChanged: isMediationChanged,
           dateOfEndADR: orderSchema?.orderDetails?.hearingDate,
           mediationCentre: t(orderSchema?.orderDetails?.mediationCentre) || "",
+          modeOfSigning: "INITIATE_E-SIGN",
         }),
       },
       additionalDetails: item?.orderSchema?.additionalDetails,

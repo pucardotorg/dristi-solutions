@@ -3016,6 +3016,7 @@ const GenerateOrdersV2 = () => {
             isMediationChanged: isMediationChanged,
             dateOfEndADR: orderSchema?.orderDetails?.hearingDate,
             mediationCentre: t(orderSchema?.orderDetails?.mediationCentre) || "",
+            modeOfSigning: "INITIATE_E-SIGN",
           }),
         },
       };
