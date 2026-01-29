@@ -853,16 +853,16 @@ export const UICustomizations = {
     },
     preProcess: (requestCriteria, additionalDetails) => {
       const userType = requestCriteria?.state?.searchForm?.userType;
-      
+
       // Determine business service based on selected user type
       let businessService = ["user-registration-advocate"];
       let moduleName = "Advocate services";
-      
+
       if (userType === "Advocate Clerk") {
         businessService = ["user-registration-advocate-clerk"];
         moduleName = "Advocate Clerk Service";
       }
-      
+
       const moduleSearchCriteria = {
         ...requestCriteria?.body?.inbox?.moduleSearchCriteria,
         ...requestCriteria?.state?.searchForm,
@@ -918,9 +918,13 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${value}&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
+                  applicationNumber || ""
+                }&individualId=${individualId}&type=${usertype}`}
               >
-                {String(value ? (column?.translate ? t(column?.prefix ? `${column?.prefix}${value}` : value) : value) : t("ES_COMMON_NA"))}
+                {applicationNumber
+                  ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)
+                  : t("ES_COMMON_NA")}
               </Link>
             </span>
           );
