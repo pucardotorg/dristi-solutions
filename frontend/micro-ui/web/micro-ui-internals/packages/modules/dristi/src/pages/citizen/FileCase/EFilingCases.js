@@ -670,7 +670,8 @@ function EFilingCases({ path }) {
   }, [caseDetails]);
 
   const isDelayCondonation = useMemo(() => {
-    return caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some((data) => {
+    const sourceCaseDetails = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
+    return sourceCaseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some((data) => {
       const dateObj = new Date(data?.data?.dateOfAccrual);
       const currentDate = new Date();
       const monthDifference = currentDate.getMonth() - dateObj.getMonth() + (currentDate.getFullYear() - dateObj.getFullYear()) * 12;
@@ -684,7 +685,7 @@ function EFilingCases({ path }) {
         return false;
       }
     });
-  }, [caseDetails]);
+  }, [caseDetails, errorCaseDetails, isCaseReAssigned]);
 
   useEffect(() => {
     const data =
@@ -879,6 +880,48 @@ function EFilingCases({ path }) {
       if (isCaseReAssigned && errorCaseDetails) {
         if (selected === "reviewCaseFile") {
           return scrutinyObj;
+        }
+        if (
+          selected === "delayApplications" &&
+          (errorCaseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.delayCondonationType?.code === "NO") !== isDelayCondonation
+        ) {
+          if (isDelayCondonation) {
+            const data = {
+              ...caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data,
+              delayCondonationType: {
+                code: "NO",
+                name: "NO",
+                showForm: true,
+                isEnabled: true,
+              },
+
+              isDcaSkippedInEFiling: caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
+                ? caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
+                : {
+                    code: "NO",
+                    name: "NO",
+                    showDcaFileUpload: true,
+                  },
+              condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
+            };
+            if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload) {
+              setFormDataValue.current?.(
+                "condonationFileUpload",
+                caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
+              );
+            }
+            return data;
+          } else {
+            return {
+              ...caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data,
+              delayCondonationType: {
+                code: "YES",
+                name: "YES",
+                showForm: false,
+                isEnabled: true,
+              },
+            };
+          }
         }
         if (selected === "delayApplications") {
           if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload && prevIsDcaSkipped === "NO") {
@@ -1331,6 +1374,7 @@ function EFilingCases({ path }) {
             ...config,
             body: config?.body.map((body) => {
               body.state = state;
+              body.filingNumber = caseDetails?.filingNumber;
               if (body?.addUUID && body?.uuid !== index) {
                 body.uuid = index;
                 body.isUserVerified = disableConfigFields.some((field) => {
@@ -1705,6 +1749,49 @@ function EFilingCases({ path }) {
                   if (selected === "delayApplications" && key === "delayCondonationType.name") {
                     modifiedFormComponent.disable = true;
                   }
+                  if (
+                    ["complainantDetails", "respondentDetails"]?.includes(selected) &&
+                    (formComponent.component === "CustomRadioInfoComponent" || formComponent.key === "transferredPOA")
+                  ) {
+                    key = formComponent.key + ".name";
+                  }
+
+                  // Check if transferredPOA.name is present in scrutiny and enable all subsequent fields
+                  if (["complainantDetails"]?.includes(selected) && scrutiny?.[selected]?.form?.[index]?.["transferredPOA.name"]?.FSOError) {
+                    if (
+                      [
+                        "poaVerification",
+                        "poaComplainantId",
+                        "poaFirstName",
+                        "poaMiddleName",
+                        "poaLastName",
+                        "poaAge",
+                        "poaAddressDetails",
+                        "poaAuthorizationDocument",
+                      ]?.includes(formComponent.key || formComponent.populators?.name)
+                    ) {
+                      modifiedFormComponent.disable = false;
+                    }
+                  }
+
+                  if (
+                    ["complainantDetails"]?.includes(selected) &&
+                    scrutiny?.[selected]?.form?.[index]?.["complainantType.name"]?.FSOError &&
+                    caseDetails?.additionalDetails?.complainantDetails?.formdata[index]?.data?.complainantType?.code === "INDIVIDUAL"
+                  ) {
+                    if (
+                      [
+                        "complainantTypeOfEntity",
+                        "complainantDesignation",
+                        "complainantCompanyName",
+                        "companyDetailsUpload",
+                        "addressCompanyDetails",
+                      ]?.includes(formComponent.key || formComponent.populators?.name)
+                    ) {
+                      modifiedFormComponent.disable = false;
+                    }
+                  }
+
                   if (key in scrutiny?.[selected]?.form?.[index] && scrutiny?.[selected]?.form?.[index]?.[key]?.FSOError) {
                     if (key === "complainantVerification.individualDetails.document") {
                       modifiedFormComponent.isScrutiny = true;
@@ -3424,7 +3511,7 @@ function EFilingCases({ path }) {
               className="add-new-form"
               icon={<CustomAddIcon />}
               label={t(pageConfig.addFormText)}
-              isDisabled={!isDraftInProgress && ["chequeDetails", "complainantDetails"].includes(selected)}
+              isDisabled={!isDraftInProgress && ["complainantDetails"].includes(selected)}
             ></Button>
           )}
           {openConfigurationModal && (
