@@ -220,33 +220,51 @@ public class PdfEmbedder {
             String fieldName = getFieldName(eSignParameter, pages);
             log.info("Multi-page signing: field name = {}", fieldName);
 
-            // Create invisible document-level signature field
-            // Using page 1 with zero-size rectangle (page 0 is invalid in PDF spec)
-            Rectangle invisibleRect = new Rectangle(0, 0, 0, 0);
-            appearance.setVisibleSignature(invisibleRect, 1, fieldName);
-            log.info("Created invisible document-level signature field: {} on page 1", fieldName);
+            // IMPORTANT: Ensure the field name used for deferred signing is the same one we create here
+            // signPdfMultiPageWithDSAndReturnMultipartFileV2 uses eSignParameter.getSignPlaceHolder()
+            eSignParameter.setSignPlaceHolder(fieldName);
 
-            // For additional pages, add stamp annotations only if they have placeholders
+            // Create ONE signature field with MULTIPLE widgets (one per page placeholder)
+            PdfWriter writer = stamper.getWriter();
+            PdfFormField signatureField = PdfFormField.createSignature(writer);
+            signatureField.setFieldName(fieldName);
+            signatureField.setFlags(PdfAnnotation.FLAGS_PRINT);
+
+            int widgetCount = 0;
             for (Integer pageNumber : pages) {
                 String placeholder = getPlaceholderForPage(eSignParameter, pageNumber);
 
-                // Only add visual overlay if placeholder exists for this page
-                if (placeholder != null && !placeholder.isEmpty()) {
-                    Coordinate coord = findPlaceholderOnPage(reader, pageNumber, placeholder);
-
-                    if (coord.isFound()) {
-                        // Add visual "Digitally Signed" text at placeholder location
-                        addVisualSignatureText(stamper, pageNumber, coord);
-                        log.info("Added visual signature text on page {} at ({}, {})",
-                                pageNumber, coord.getX(), coord.getY());
-                    } else {
-                        log.warn("Placeholder '{}' not found on page {}, skipping visual overlay",
-                                placeholder, pageNumber);
-                    }
-                } else {
+                if (placeholder == null || placeholder.isBlank()) {
                     log.info("Skipping page {} - no placeholder defined for this signer", pageNumber);
+                    continue;
                 }
+
+                Coordinate coord = findPlaceholderOnPage(reader, pageNumber, placeholder);
+                if (!coord.isFound()) {
+                    log.warn("Placeholder '{}' not found on page {}, skipping widget", placeholder, pageNumber);
+                    continue;
+                }
+
+                Rectangle rect = new Rectangle(coord.getX(), coord.getY(), coord.getX() + 100, coord.getY() + 50);
+                PdfFormField widget = PdfFormField.createEmpty(writer);
+                widget.setWidget(rect, PdfAnnotation.HIGHLIGHT_NONE);
+                widget.setPage(pageNumber);
+                widget.setFlags(PdfAnnotation.FLAGS_PRINT);
+
+                signatureField.addKid(widget);
+                widgetCount++;
             }
+
+            if (widgetCount == 0) {
+                throw new CustomException("MULTI_PAGE_SIGNING_ERROR", "No valid placeholders found for multi-page signing");
+            }
+
+            // Register field in AcroForm by adding it as an annotation (parent field carries kids)
+            stamper.addAnnotation(signatureField, 1);
+            log.info("Created multi-widget signature field: {} | widgets: {}", fieldName, widgetCount);
+
+            // Tell appearance to sign the existing field
+            appearance.setVisibleSignature(fieldName);
 
             // Configure signature appearance (applies to all widgets)
             appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
@@ -441,7 +459,7 @@ public class PdfEmbedder {
         }
         
         // Default
-        return "SIGNATURE";
+        return SIGNATURE;
     }
 
     /**

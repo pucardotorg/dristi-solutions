@@ -25,5 +25,6 @@ public class ServiceConstants {
     public static final String FILE_STORE_SERVICE_EXCEPTION_CODE = "FILESTORE_SERVICE_EXCEPTION";
     public static final String FILE_STORE_SERVICE_EXCEPTION_MESSAGE = "exception occurred while calling filestore service";
 
+    public static final String SIGNATURE = "Signature";
 
 }
