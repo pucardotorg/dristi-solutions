@@ -210,7 +210,7 @@ public class CaseRegistrationEnrichment {
      * Enriches advocate office entries for a case.
      * This populates the advocateOffices field in CourtCase for persistence to dristi_advocate_office_case_member table.
      */
-    private void enrichAdvocateOffices(CaseRequest caseRequest, AuditDetails auditDetails) {
+    public void enrichAdvocateOffices(CaseRequest caseRequest, AuditDetails auditDetails) {
         CourtCase courtCase = caseRequest.getCases();
         RequestInfo requestInfo = caseRequest.getRequestInfo();
         
@@ -229,7 +229,9 @@ public class CaseRegistrationEnrichment {
             }
 
             String advocateId = rep.getAdvocateId();
-            String advocateName = getAdvocateName(requestInfo, advocateId);
+
+            // Check if advocate is active - if not, office members should also be inactive
+            Boolean isAdvocateActive = rep.getIsActive() != null ? rep.getIsActive() : true;
 
             List<AdvocateOfficeMember> advocates = new ArrayList<>();
             List<AdvocateOfficeMember> clerks = new ArrayList<>();
@@ -251,7 +253,7 @@ public class CaseRegistrationEnrichment {
                         .memberId(officeMember.getMemberId() != null ? officeMember.getMemberId().toString() : null)
                         .memberType(officeMember.getMemberType())
                         .memberName(officeMember.getMemberName())
-                        .isActive(true)
+                        .isActive(isAdvocateActive)
                         .auditDetails(auditDetails)
                         .build();
 
@@ -265,7 +267,7 @@ public class CaseRegistrationEnrichment {
 
             AdvocateOffice advocateOffice = AdvocateOffice.builder()
                     .officeAdvocateId(advocateId)
-                    .officeAdvocateName(advocateName)
+                    .officeAdvocateName(officeMembers.get(0).getOfficeAdvocateName())
                     .advocates(advocates)
                     .clerks(clerks)
                     .build();
@@ -274,43 +276,6 @@ public class CaseRegistrationEnrichment {
         }
 
         courtCase.setAdvocateOffices(advocateOffices);
-    }
-
-    private String getAdvocateName(RequestInfo requestInfo, String advocateId) {
-        try {
-            List<Advocate> advocates = advocateUtil.fetchAdvocatesById(requestInfo, advocateId);
-            if (!advocates.isEmpty()) {
-                return getIndividualName(requestInfo, advocates.get(0).getIndividualId());
-            }
-        } catch (Exception e) {
-            log.warn("Error fetching advocate name for advocateId: {}", advocateId, e);
-        }
-        return null;
-    }
-
-    // TODO : need to ask UI about this
-    private String getIndividualName(RequestInfo requestInfo, String individualId) {
-        try {
-            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo,
-                    individualId);
-            if (!individuals.isEmpty()) {
-                Individual individual = individuals.get(0);
-                if (individual.getName() != null) {
-                    StringBuilder name = new StringBuilder();
-                    if (individual.getName().getGivenName() != null) {
-                        name.append(individual.getName().getGivenName());
-                    }
-                    if (individual.getName().getFamilyName() != null) {
-                        if (!name.isEmpty()) name.append(" ");
-                        name.append(individual.getName().getFamilyName());
-                    }
-                    return name.toString();
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Error fetching individual name for individualId: {}", individualId, e);
-        }
-        return null;
     }
 
     private void enrichCaseRegistrationUponCreateAndUpdate(CourtCase courtCase, AuditDetails auditDetails) {

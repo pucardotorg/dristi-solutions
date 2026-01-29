@@ -415,6 +415,8 @@ public class CaseService {
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
+            // Enrich advocate office case members
+            enrichmentUtil.enrichAdvocateOffices(caseRequest, caseRequest.getCases().getAuditdetails());
 
             // conditional enrichment using strategy
             enrichmentService.enrichCourtCase(caseRequest);
@@ -5074,6 +5076,13 @@ public class CaseService {
                         inactivateOldAdvocate(replacementDetails, courtCase);
                     }
                 }
+
+                // Enrich advocate office case members for the joining advocate
+                CaseRequest caseRequestForOffice = CaseRequest.builder()
+                        .requestInfo(requestInfo)
+                        .cases(courtCaseObj)
+                        .build();
+                enrichmentUtil.enrichAdvocateOffices(caseRequestForOffice, auditDetails);
 
                 producer.push(config.getRepresentativeJoinCaseTopic(), courtCaseObj);
 
