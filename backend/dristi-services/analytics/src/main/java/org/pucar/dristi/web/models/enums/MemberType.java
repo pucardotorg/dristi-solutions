@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum MemberType {
     ADVOCATE("ADVOCATE"),
-    CLERK("CLERK");
+    ADVOCATE_CLERK("ADVOCATE_CLERK");
 
     private final String value;
 
