@@ -726,6 +726,7 @@ public class CaseRegistrationEnrichment {
         String officeAdvocateId = criteria.getOfficeAdvocateId();
         CaseSummaryListCriteria newCriteria = CaseSummaryListCriteria.builder()
                 .advocateId(officeAdvocateId)
+                .pagination(criteria.getPagination())
                 .build();
         
         // Set the new criteria back to the request
@@ -757,6 +758,7 @@ public class CaseRegistrationEnrichment {
         String officeAdvocateId = criteria.getOfficeAdvocateId();
         CaseSummaryListCriteria newCriteria = CaseSummaryListCriteria.builder()
                 .advocateId(officeAdvocateId)
+                .pagination(criteria.getPagination())
                 .build();
         
         // Set the new criteria back to the request
