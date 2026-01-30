@@ -1070,6 +1070,7 @@ const GenerateOrdersV2 = () => {
             ? [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "WARRANT",
                 "OTHERS",
@@ -1083,6 +1084,7 @@ const GenerateOrdersV2 = () => {
             : [
                 "SUMMONS",
                 "NOTICE",
+                "DISMISS_CASE",
                 "MANDATORY_SUBMISSIONS_RESPONSES",
                 "SCHEDULE_OF_HEARING_DATE",
                 "WARRANT",
