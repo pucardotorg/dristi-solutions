@@ -148,35 +148,51 @@ const ManageOffice = () => {
 
       if (individualResponse?.Individual && individualResponse.Individual.length > 0) {
         const individual = individualResponse.Individual[0];
-        const clerkResponse = await window?.Digit?.DRISTIService?.searchAdvocateClerk(
-          "/advocate/clerk/v1/_search",
+        // Get userType from searched individual (same as HomeView: individualData.Individual[0].additionalFields.fields)
+        const memberUserType = individual?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value;
+        // Per userType, use same URL pattern as HomeView: ADVOCATE -> /advocate/v1/_search, else -> /advocate/clerk/v1/_search
+        const searchUrl = memberUserType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search";
+
+        const typeResponse = await window?.Digit?.DRISTIService?.searchAdvocateClerk(
+          searchUrl,
           {
             criteria: [{ individualId: individual.individualId }],
             tenantId: tenantId,
           },
           { tenantId: tenantId, limit: 10, offset: 0 }
         );
-        let designation = "Individual";
-        let clerkData = null;
-        let advocateData = null;
 
-        if (clerkResponse?.clerks && clerkResponse.clerks.length > 0) {
-          clerkData = clerkResponse.clerks[0]?.responseList?.[0] || clerkResponse.clerks[0];
-          designation = "Clerk";
-        } else {
-          const advocateResponse = await window?.Digit?.DRISTIService?.searchIndividualAdvocate(
-            {
-              criteria: [{ individualId: individual.individualId }],
-              tenantId: tenantId,
-            },
+        // Response key matches userType: "advocates" for ADVOCATE, "clerks" for ADVOCATE_CLERK (same as HomeView searchData[requestKey + 's'])
+        const responseKey = memberUserType === "ADVOCATE" ? "advocates" : "clerks";
+        const typeList = typeResponse?.[responseKey];
+        let firstRecord = typeList?.[0]?.responseList?.[0] || typeList?.[0];
+        let designation = memberUserType === "ADVOCATE" ? "Advocate" : memberUserType === "ADVOCATE_CLERK" ? "Clerk" : "Individual";
+
+        // If no userType or no result from first search, try the other type (e.g. individual has no userType in additionalFields)
+        if (!firstRecord && !memberUserType) {
+          const clerkRes = await window?.Digit?.DRISTIService?.searchAdvocateClerk(
+            "/advocate/clerk/v1/_search",
+            { criteria: [{ individualId: individual.individualId }], tenantId: tenantId },
             { tenantId: tenantId, limit: 10, offset: 0 }
           );
-
-          if (advocateResponse?.advocates && advocateResponse.advocates.length > 0) {
-            advocateData = advocateResponse.advocates[0]?.responseList?.[0] || advocateResponse.advocates[0];
-            designation = "Advocate";
+          const clerkList = clerkRes?.clerks;
+          firstRecord = clerkList?.[0]?.responseList?.[0] || clerkList?.[0];
+          if (firstRecord) {
+            designation = "Clerk";
+          } else {
+            const advRes = await window?.Digit?.DRISTIService?.searchAdvocateClerk(
+              "/advocate/v1/_search",
+              { criteria: [{ individualId: individual.individualId }], tenantId: tenantId },
+              { tenantId: tenantId, limit: 10, offset: 0 }
+            );
+            const advList = advRes?.advocates;
+            firstRecord = advList?.[0]?.responseList?.[0] || advList?.[0];
+            if (firstRecord) designation = "Advocate";
           }
         }
+
+        const clerkData = designation === "Clerk" ? firstRecord : null;
+        const advocateData = designation === "Advocate" ? firstRecord : null;
 
         const name = individual.name?.givenName
           ? `${individual.name.givenName}${individual.name.familyName ? " " + individual.name.familyName : ""}`
@@ -184,7 +200,7 @@ const ManageOffice = () => {
 
         setSearchResult({
           name: name,
-          designation: designation,
+          designation: firstRecord ? designation : "Individual",
           mobileNumber: `${countryCode} ${mobileNumber.slice(0, 5)} ${mobileNumber.slice(5)}`,
           email: individual.email || "N/A",
           individualId: individual.userUuid,
@@ -226,15 +242,13 @@ const ManageOffice = () => {
         Advocate: "ADVOCATE",
         Individual: "INDIVIDUAL",
       };
-      // Get memberId from responseList based on member type
-      let memberId = null;
-      if (searchResult.designation === "Clerk" && searchResult.clerkData) {
-        // For Clerk: use individualId of /advocate/clerk/v1/_search
-        memberId = searchResult?.individualId;
-      } else if (searchResult.designation === "Advocate" && searchResult.advocateData) {
-        // For Advocate: use id from responseList of /advocate/v1/_search
-        memberId = searchResult.advocateData?.id;
-      }
+      // Get memberId from responseList: id from clerk/advocate search (same as senior's API spec)
+      const memberId =
+        searchResult.designation === "Clerk"
+          ? searchResult.clerkData?.id
+          : searchResult.designation === "Advocate"
+          ? searchResult.advocateData?.id
+          : null;
 
       if (!memberId) {
         setToast({ label: t("MEMBER_ID_NOT_FOUND") || "Member ID not found. Please try again.", type: "error" });
@@ -242,14 +256,15 @@ const ManageOffice = () => {
         return;
       }
 
+      const officeAdvocateId = advocateSearchResult?.[0]?.responseList?.[0]?.id || advocateSearchResult?.[0]?.id;
       const response = await window?.Digit?.DRISTIService?.addOfficeMember(
         {
           addMember: {
             tenantId: tenantId,
-            officeAdvocateId: advocateSearchResult?.[0]?.responseList?.[0]?.id,
+            officeAdvocateId: officeAdvocateId,
             officeAdvocateName: officeAdvocateName,
             memberType: memberTypeMap[searchResult.designation] || "ADVOCATE_CLERK",
-            memberId: searchResult?.clerkData?.id,
+            memberId: memberId,
             memberName: searchResult.name,
             memberMobileNumber: mobileNumber,
             accessType: "ALL_CASES",
