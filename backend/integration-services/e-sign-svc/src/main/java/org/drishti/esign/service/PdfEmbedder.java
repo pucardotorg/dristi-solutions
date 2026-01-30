@@ -107,7 +107,7 @@ public class PdfEmbedder {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
             String pkcsResponse = new XmlSigning().parseXml(response.trim());
-            byte[] sigbytes = Base64.getDecoder().decode(pkcsResponse);
+            byte[] sigbytes = org.apache.commons.codec.binary.Base64.decodeBase64(pkcsResponse);
             byte[] paddedSig = new byte[contentEstimated];
             System.arraycopy(sigbytes, 0, paddedSig, 0, sigbytes.length);
             MyExternalSignatureContainer container = new MyExternalSignatureContainer(paddedSig, null, null);

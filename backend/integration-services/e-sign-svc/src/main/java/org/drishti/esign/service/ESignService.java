@@ -80,7 +80,7 @@ public class ESignService {
         String fileHash;
         if (Boolean.TRUE.equals(eSignParameter.getMultiPageSigning())) {
             log.info("Multi-page signing enabled for fileStoreId={}", fileStoreId);
-            fileHash = pdfEmbedder.pdfSignerMultiPageV2_1(resource, eSignParameter);
+            fileHash = pdfEmbedder.pdfSignerMultiPageV2(resource, eSignParameter);
         } else {
             log.info("Single-page signing for fileStoreId={}", fileStoreId);
             fileHash = pdfEmbedder.pdfSignerV2(resource, eSignParameter);
