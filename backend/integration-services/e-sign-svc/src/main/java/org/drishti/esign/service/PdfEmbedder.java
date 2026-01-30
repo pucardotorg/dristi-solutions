@@ -1,5 +1,7 @@
 package org.drishti.esign.service;
 
+import com.itextpdf.forms.PdfAcroForm;
+import com.itextpdf.forms.fields.PdfSignatureFormField;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.*;
@@ -14,6 +16,7 @@ import org.drishti.esign.util.TextLocationFinder;
 import org.drishti.esign.web.models.Coordinate;
 import org.drishti.esign.web.models.ESignParameter;
 import org.egov.tracer.model.CustomException;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -228,6 +231,8 @@ public class PdfEmbedder {
                 signatureField.setFlags(PdfAnnotation.FLAGS_PRINT);
                 signatureField.setPage(pageNumber);
 
+                PdfSignatureAppearance appearance = getSignatureAppearance(stamper);
+                appearance.setVisibleSignature(rect, pageNumber, fieldName);
                 stamper.addAnnotation(signatureField, pageNumber);
             }
             stamper.close();
@@ -244,6 +249,24 @@ public class PdfEmbedder {
             throw new CustomException("SIGNATURE_PLACEHOLDER_EXCEPTION","Error occurred while creating placeholder");
         }
         return hashDocument;
+    }
+
+    @NotNull
+    private static PdfSignatureAppearance getSignatureAppearance(PdfStamper stamper) {
+        PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
+        appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
+        appearance.setAcro6Layers(false);// deprecated
+        Font font = new Font();
+        font.setSize(6);
+        font.setFamily(FONT_FAMILY);
+        font.setStyle(FONT_STYLE);
+        appearance.setLayer2Font(font);
+        Calendar currentDat = Calendar.getInstance();
+        appearance.setSignDate(currentDat);
+        appearance.setLayer2Text("Digitally Signed");
+        appearance.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED);
+        appearance.setImage(null);
+        return appearance;
     }
 
     public String pdfSignerMultiPageV2_1(Resource resource, ESignParameter eSignParameter){
@@ -317,6 +340,60 @@ public class PdfEmbedder {
                     "Error occurred while creating placeholder"
             );
         }
+    }
+
+    public String pdfSignerMultiPageV2_2(Resource resource, ESignParameter eSignParameter){
+        log.info("Method=pdfSignerMultiPageV2_2 ,Result=InProgress ,filestoreId={}",
+                eSignParameter.getFileStoreId());
+        String hashDocument = null;
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            com.itextpdf.kernel.pdf.PdfReader reader = new com.itextpdf.kernel.pdf.PdfReader(resource.getInputStream());
+            com.itextpdf.kernel.pdf.PdfWriter writer = new com.itextpdf.kernel.pdf.PdfWriter(baos);
+            com.itextpdf.kernel.pdf.PdfDocument pdfDoc = new com.itextpdf.kernel.pdf.PdfDocument(reader, writer);
+
+            PdfAcroForm acroForm = PdfAcroForm.getAcroForm(pdfDoc, true);
+            boolean multiPageSign = Boolean.TRUE.equals(eSignParameter.getMultiPageSigning());
+            String baseFieldName = eSignParameter.getSignPlaceHolder() != null
+                    ? eSignParameter.getSignPlaceHolder()
+                    : SIGNATURE;
+
+            List<Integer> pagesToSign = new ArrayList<>();
+
+            if (multiPageSign) {
+                if (Boolean.TRUE.equals(eSignParameter.getApplyToAllPages())) {
+                    int totalPages = pdfDoc.getNumberOfPages();
+                    for (int i = 1; i <= totalPages; i++) {
+                        pagesToSign.add(i);
+                    }
+                } else if (eSignParameter.getSpecificPages() != null) {
+                    pagesToSign.addAll(eSignParameter.getSpecificPages());
+                }
+            }
+
+            for(Integer pageNum : pagesToSign) {
+                com.itextpdf.kernel.pdf.PdfPage pdfPage = pdfDoc.getPage(pageNum);
+
+                PdfSignatureFormField signatureFormField =
+                        com.itextpdf.forms.fields.PdfFormField
+                                .createSignature(pdfDoc,  new com.itextpdf.kernel.geom.Rectangle(100, 100, 250, 150));
+                signatureFormField.setFieldName(baseFieldName + "_page_" + pageNum);
+                signatureFormField.setPage(pageNum);
+                acroForm.addField(signatureFormField, pdfPage);
+            }
+            pdfDoc.close();
+            byte[] pdfBytes = baos.toByteArray();
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(pdfBytes);
+            hashDocument = Base64.getEncoder().encodeToString(hashBytes);
+            log.info("Method=pdfSignerMultiPageV2_2 ,Result=Success ,filestoreId={}",
+                    eSignParameter.getFileStoreId());
+        } catch (Exception e) {
+            log.error("Method=pdfSignerMultiPageV2_2, Error:{}", e.getMessage(), e);
+            throw new CustomException("SIGNATURE_PLACEHOLDER_EXCEPTION", "Error occurred while creating placeholder");
+        }
+        return hashDocument;
     }
     /**
      * Multi-page signing: Embed signature in multi-widget field
