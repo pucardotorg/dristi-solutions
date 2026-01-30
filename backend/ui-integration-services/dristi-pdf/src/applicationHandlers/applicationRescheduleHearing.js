@@ -109,19 +109,7 @@ async function applicationRescheduleHearing(
             messages.map(({ code, message }) => [code, message])
           )
         : {};
-
-
-    const resHearing = await handleApiCall(
-      () => search_hearing(tenantId, cnrNumber, requestInfo, courtCase?.courtId),
-      "Failed to query hearing service"
-    );
-    const hearing = resHearing?.data?.HearingList?.find(
-      (item) =>
-        item.status === config.workFlowState.hearing.SCHEDULED
-    );
-    const purposeOfHearing = hearing?.hearingType || "";
-    const localizedPurposeOfHearing = messagesMap?.[purposeOfHearing] || purposeOfHearing;
-
+    
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     let advocateName = "";
     const advocateIndividualId =
@@ -296,6 +284,8 @@ async function applicationRescheduleHearing(
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const purposeOfHearing = application?.applicationDetails?.initialHearingPurpose || "";
+    const localizedPurposeOfHearing = messagesMap?.[purposeOfHearing] || purposeOfHearing;
 
     const data = {
       Data: [
