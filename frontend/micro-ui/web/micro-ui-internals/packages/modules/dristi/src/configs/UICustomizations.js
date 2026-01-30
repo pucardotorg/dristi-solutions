@@ -919,7 +919,7 @@ export const UICustomizations = {
           },
         ];
       }
-    
+
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       if (row.status === "SCHEDULED" && userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")) {
         return [
@@ -2102,8 +2102,6 @@ export const UICustomizations = {
                 requestCriteria?.state?.searchForm?.caseSearchText && {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
-              ...(activeTab === "RESCHEDULE_REQUEST" &&
-                requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
             },
             searchBailBonds: {
               date: activeTab === "BAIL_BOND_STATUS" ? selectedDateInMs : currentDateInMs,
@@ -2333,6 +2331,17 @@ export const UICustomizations = {
               to={{
                 pathname: `/${window?.contextPath}/employee/dristi/admission`,
                 search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`,
+                state: { homeActiveTab: row?.tab },
+              }}
+            >
+              {value ? value : "-"}
+            </Link>
+          ) : row?.tab === "RESCHEDULE_REQUEST" ? (
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
+                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Submissions&fromHome=true`,
                 state: { homeActiveTab: row?.tab },
               }}
             >
