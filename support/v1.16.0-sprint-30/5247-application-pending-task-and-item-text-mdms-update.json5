@@ -33,7 +33,7 @@
             {
               "actionCategory": "Rescheduling Request",
               "referenceEntityType": "ADVANCEMENT_OR_ADJOURNMENT_APPLICATION",
-              "pendingTaskName": "Accept Rescheduling Request"
+              "pendingTaskName": "Review Reschedule Request"
             }
           ],
           "id": "14",
