@@ -3419,16 +3419,38 @@ const GenerateOrdersV2 = () => {
         }
 
         if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType) && (isHearingScheduled || isHearingInProgress || isHearingOptout)) {
-          setShowErrorToast({
-            label: isHearingScheduled
-              ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE")
-              : isHearingInProgress
-              ? t("HEARING_IS_ALREADY_IN_PROGRESS_FOR_THIS_CASE")
-              : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
-            error: true,
-          });
-          hasError = true;
-          break;
+          const isIntermediate = currentOrder?.orderCategory === "INTERMEDIATE";
+
+          const hasValidRescheduleBypass = (() => {
+            if (isIntermediate || !currentOrder?.compositeItems) return false;
+
+            const acceptIndex = currentOrder?.compositeItems?.findIndex((item) => {
+              if (item?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+                const selectedDateTimestamp = item?.orderSchema?.orderDetails?.newHearingDate;
+                const isToday = selectedDateTimestamp && new Date(selectedDateTimestamp).toDateString() === new Date().toDateString();
+
+                return isToday && isHearingScheduled;
+              }
+              return false;
+            });
+
+            const scheduleIndex = currentOrder?.compositeItems?.findIndex((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE");
+
+            return acceptIndex !== -1 && scheduleIndex > acceptIndex;
+          })();
+
+          if (!hasValidRescheduleBypass) {
+            setShowErrorToast({
+              label: isHearingScheduled
+                ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE")
+                : isHearingInProgress
+                ? t("HEARING_IS_ALREADY_IN_PROGRESS_FOR_THIS_CASE")
+                : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
         }
 
         if (["SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
