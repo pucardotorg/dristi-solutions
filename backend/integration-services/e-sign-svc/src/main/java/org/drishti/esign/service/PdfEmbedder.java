@@ -2,6 +2,7 @@ package org.drishti.esign.service;
 
 import com.itextpdf.forms.PdfAcroForm;
 import com.itextpdf.forms.fields.PdfSignatureFormField;
+import com.itextpdf.signatures.PdfSigner;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.*;
@@ -22,9 +23,13 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.security.MessageDigest;
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
 import java.util.*;
 
 import static org.drishti.esign.config.ServiceConstants.*;
@@ -395,6 +400,71 @@ public class PdfEmbedder {
         }
         return hashDocument;
     }
+
+    public String pdfSignerMultiPageV2_3(Resource resource, ESignParameter eSignParameter) {
+        log.info("Method=pdfSignerMultiPageV2_3 ,Result=InProgress ,filestoreId={}", eSignParameter.getFileStoreId());
+        String hashDocument = null;
+
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            com.itextpdf.kernel.pdf.PdfReader reader = new com.itextpdf.kernel.pdf.PdfReader(resource.getInputStream());
+            com.itextpdf.kernel.pdf.PdfWriter writer = new com.itextpdf.kernel.pdf.PdfWriter(baos);
+            com.itextpdf.kernel.pdf.PdfDocument pdfDoc = new com.itextpdf.kernel.pdf.PdfDocument(reader, writer);
+
+            // Pages to place signature placeholders
+            int totalPages = pdfDoc.getNumberOfPages();
+            List<Integer> pagesToSign = new ArrayList<>();
+
+            if (Boolean.TRUE.equals(eSignParameter.getMultiPageSigning())) {
+                if (Boolean.TRUE.equals(eSignParameter.getApplyToAllPages())) {
+                    for (int i = 1; i <= totalPages; i++) pagesToSign.add(i);
+                } else if (eSignParameter.getSpecificPages() != null) {
+                    pagesToSign.addAll(eSignParameter.getSpecificPages());
+                }
+            } else {
+                pagesToSign.add(1); // default first page
+            }
+
+            String baseFieldName = eSignParameter.getSignPlaceHolder() != null
+                    ? eSignParameter.getSignPlaceHolder()
+                    : "Signature";
+
+            PdfAcroForm acroForm = PdfAcroForm.getAcroForm(pdfDoc, true);
+            float x = 350, y = 50, width = 200, height = 100;
+
+            // Create placeholder on each page
+            for (Integer pageNum : pagesToSign) {
+                String fieldName = baseFieldName + "_" + pageNum;
+                if (eSignParameter.getPlaceholders() != null && eSignParameter.getPlaceholders().containsKey(pageNum)) {
+                    String overrideName = eSignParameter.getPlaceholders().get(pageNum);
+                    if (overrideName != null && !overrideName.isBlank()) fieldName = overrideName;
+                }
+
+                com.itextpdf.kernel.geom.Rectangle rect = new com.itextpdf.kernel.geom.Rectangle(x, y, width, height);
+                PdfSignatureFormField signatureField = PdfSignatureFormField.createSignature(pdfDoc, rect);
+                signatureField.setFieldName(fieldName);
+                signatureField.setPage(pageNum);
+                acroForm.addField(signatureField, pdfDoc.getPage(pageNum));
+            }
+
+            pdfDoc.close(); // finalize fields
+
+            // Compute hash for tracking
+            hashDocument = org.apache.commons.codec.digest.DigestUtils.sha256Hex(
+                    new ByteArrayInputStream(baos.toByteArray())
+            );
+
+            log.info("Placeholders created, hashDocument={}", hashDocument);
+
+        } catch (Exception e) {
+            log.error("Error creating PDF placeholders: {}", e.getMessage(), e);
+            throw new CustomException("SIGNATURE_PLACEHOLDER_EXCEPTION", "Error occurred while creating signature placeholders");
+        }
+
+        return hashDocument;
+    }
+
+
     /**
      * Multi-page signing: Embed signature in multi-widget field
      * This single operation signs ALL widgets across all pages

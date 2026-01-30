@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +82,7 @@ public class ESignService {
         String fileHash;
         if (Boolean.TRUE.equals(eSignParameter.getMultiPageSigning())) {
             log.info("Multi-page signing enabled for fileStoreId={}", fileStoreId);
-            fileHash = pdfEmbedder.pdfSignerMultiPageV2_2(resource, eSignParameter);
+            fileHash = pdfEmbedder.pdfSignerMultiPageV2_3(resource, eSignParameter);
         } else {
             log.info("Single-page signing for fileStoreId={}", fileStoreId);
             fileHash = pdfEmbedder.pdfSignerV2(resource, eSignParameter);
@@ -91,7 +93,6 @@ public class ESignService {
         String strToEncrypt = xmlGenerator.generateXml(eSignXmlData);  // this method is writing in testing.xml
         log.info(strToEncrypt);
         String xmlData = "";
-
         try {
             log.info("Method=signDoc ,Result=Inprogress, private key and xml data");
             PrivateKey rsaPrivateKey = encryption.getPrivateKey(PRIVATE_KEY_FILE_NAME);
@@ -116,11 +117,11 @@ public class ESignService {
         myRequestXmlForm.setESignRequest(xmlData);
         myRequestXmlForm.setAspTxnID(eSignXmlData.getTxn());
         myRequestXmlForm.setContentType("application/xml");
+
         log.info("Method=signDoc ,Result=Success");
-
         return myRequestXmlForm;
-
     }
+
 
     private void setAuditDetails(ESignParameter eSignParameter, @Valid RequestInfo requestInfo) {
         eSignParameter.setAuditDetails(AuditDetails.builder()

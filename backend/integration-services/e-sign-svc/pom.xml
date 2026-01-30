@@ -130,6 +130,12 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>sign</artifactId>
+            <version>7.1.17</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
             <version>1.70</version> <!-- Check for the latest version -->
