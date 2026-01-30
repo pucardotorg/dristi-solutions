@@ -555,7 +555,7 @@ public class CaseService {
                                 .toList());
                     });
 
-            log.info("Updating the case in redis cache after filtering the documents, advocates and litigants : {}", caseRequest.getCases().getId());
+            log.info("Updating the case in redis cache after filtering the documents, advocates, litigants, poa holders and advocate offices : {}", caseRequest.getCases().getId());
 
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
