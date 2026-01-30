@@ -139,4 +139,12 @@ public class InboxConfiguration {
 
 	@Value("${es.search.default.sort.order}")
 	private String defaultSortOrder;
+
+    @Value("${billing.service.module.name}")
+    private String billingServiceModuleName;
+
+    @Value("${advocate.service.module.name}")
+    private String advocateModuleName;
+
+
 }

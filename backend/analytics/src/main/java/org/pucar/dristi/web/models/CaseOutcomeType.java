@@ -33,6 +33,10 @@ public class CaseOutcomeType {
     @Valid
     private String outcome = null;
 
+    @JsonProperty("natureOfDisposal")
+    @Valid
+    private NatureOfDisposal natureOfDisposal = null;
+
     @JsonProperty("isJudgement")
     @Valid
     private Boolean isJudgement = null;

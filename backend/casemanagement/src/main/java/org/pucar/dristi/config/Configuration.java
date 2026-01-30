@@ -1,10 +1,15 @@
 package org.pucar.dristi.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.*;
 import org.egov.tracer.config.TracerConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 @Data
@@ -184,5 +189,18 @@ public class Configuration {
 
 	@Value("${generate.vc.code}")
 	private String vcCode;
+
+	// delay time for calling process case bundle
+	@Value("${casemanagement.delay.time}")
+	private Integer delayTime;
+
+	@Value("${case.allowed.status}")
+	private String caseAllowedStatuses;
+	private List<String> caseAllowedStatusesList = new ArrayList<>();
+
+	@PostConstruct
+	public void init() {
+		caseAllowedStatusesList = Arrays.asList(caseAllowedStatuses.split(","));
+	}
 
 }

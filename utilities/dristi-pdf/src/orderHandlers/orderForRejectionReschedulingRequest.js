@@ -44,7 +44,7 @@ const orderForRejectionReschedulingRequest = async (
   try {
     const resCase = await handleApiCall(
       res,
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, order?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -61,7 +61,8 @@ const orderForRejectionReschedulingRequest = async (
         search_application(
           tenantId,
           order?.additionalDetails?.formdata?.refApplicationId,
-          requestInfo
+          requestInfo,
+          order?.courtId
         ),
       "Failed to query application service"
     );
@@ -109,7 +110,13 @@ const orderForRejectionReschedulingRequest = async (
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const year = currentDate.getFullYear();
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber =
+      (courtCase?.isLPRCase
+        ? courtCase?.lprNumber
+        : courtCase?.courtCaseNumber) ||
+      courtCase?.courtCaseNumber ||
+      courtCase?.cmpNumber ||
+      "";
     const data = {
       Data: [
         {

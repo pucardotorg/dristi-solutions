@@ -12,6 +12,7 @@ public class ServiceConstants {
     public static final String IDGEN_ERROR = "IDGEN ERROR";
     public static final String NO_IDS_FOUND_ERROR = "No ids returned from idgen Service";
     public static final String ERROR_WHILE_FETCHING_FROM_MDMS = "Exception occurred while fetching category lists from mdms: ";
+    public static final String ERROR_WHILE_UPDATING_FROM_MDMS = "Exception occurred while updating mdms: ";
     public static final String RES_MSG_ID = "uief87324";
     public static final String SUCCESSFUL = "successful";
     public static final String FAILED = "failed";
@@ -50,6 +51,9 @@ public class ServiceConstants {
     public static final String PENDING_TASK_ENTITY_TYPE = "order-managelifecycle";
     public static final String PENDING_TASK_NAME = "Create Order for rescheduling the hearing";
     public static final String PENDING_TASK_STATUS = "RESCHEDULE_HEARING";
+    public static final String RE_SCHEDULE_PENDING_TASK_ACTION_CATEGORY = "Reschedule Applications";
+    public static final String RE_SCHEDULE_APPLICATION_TYPE  = "RE_SCHEDULE";
+    public static final String SCHEDULE_HEARING_ACTION_CATEGORY = "Schedule Hearing";
 
     public static final String STATUS_RESCHEDULE = "RESCHEDULE";
 
@@ -98,4 +102,29 @@ public class ServiceConstants {
 
     public static final String CAUSE_LIST_EMAIL_TEMPLATE_CODE = "CAUSELIST_EMAIL";
 
+    public static final String PASSED_OVER = "PASSED_OVER";
+
+    public static final String SCHEDULED = "SCHEDULED";
+
+    public static final String ABANDON = "ABANDON";
+
+    public static final String WORKFLOW_ABANDON = "WORKFLOW_ABANDON";
+
+
+    public static final String IN_PROGRESS = "IN_PROGRESS";
+
+    public static final String EMPLOYEE = "EMPLOYEE";
+
+    public static final String ERRORS_PATH = "$.errors";
+
+    public static final String ES_UPDATE_HEADER_FORMAT = "{\"update\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
+
+    public static final String ES_UPDATE_DOCUMENT_FORMAT = "{\"doc\":{\"Data\":{\"hearingDetails\":{\"serialNumber\":%d}}}}\n";
+
+    public static final String PAYMENT_COLLECTOR = "PAYMENT_COLLECTOR";
+
+    public static final String EXPIRED = "EXPIRED";
+
+    // roles
+    public static final String VIEW_RE_SCHEDULE_APPLICATION = "VIEW_RE_SCHEDULE_APPLICATION";
 }

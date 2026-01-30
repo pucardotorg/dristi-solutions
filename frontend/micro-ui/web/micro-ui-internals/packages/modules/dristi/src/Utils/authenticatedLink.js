@@ -1,12 +1,12 @@
 import React from "react";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false }) => {
   const handleClick = (e) => {
     e.preventDefault();
 
     const authToken = localStorage.getItem("token");
-    axios
+    axiosInstance
       .get(uri, {
         headers: {
           "auth-token": `${authToken}`,
@@ -48,6 +48,7 @@ const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false }) => 
         textOverflow: "ellipsis",
         cursor: "pointer",
         textDecoration: "underline",
+        marginLeft: "5px",
       }}
     >
       {displayFilename ? t(displayFilename) : t("CS_CLICK_TO_DOWNLOAD")}

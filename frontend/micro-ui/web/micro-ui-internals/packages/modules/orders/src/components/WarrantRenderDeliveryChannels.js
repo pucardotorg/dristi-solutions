@@ -176,7 +176,7 @@ const WarrantRenderDeliveryChannels = ({
                 <div style={{ marginBottom: "1rem" }}>
                   <div style={{ marginBottom: "5px" }}>{t("POLICE_STATION")}</div>
                   <Dropdown
-                    option={policeStationData?.case?.PoliceStation || []}
+                    option={policeStationData?.case?.PoliceStation?.sort((a, b) => t(a?.name)?.localeCompare(t(b?.name))) || []}
                     optionKey="name"
                     selected={policeStationIdMapping?.find((item) => item?.id === address?.id)?.policeStation || {}}
                     select={(station) => handlePoliceStationSelect(station, address)}

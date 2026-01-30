@@ -38,6 +38,7 @@
     "build:cases": "cd packages/modules/cases && yarn build",
     "build:home": "cd packages/modules/home && yarn build",
     "build:core": "cd packages/modules/core && yarn build",
+    "build:css": "cd packages/css && yarn build:prod",
     "deploy:jenkins": "./scripts/jenkins.sh",
     "clean": "rm -rf node_modules"
   },
@@ -58,7 +59,8 @@
   "dependencies": {
     "@egovernments/digit-ui-components": "0.0.1-beta.28",
     "@egovernments/digit-ui-react-components": "1.8.2-beta.11",
-    "dristi-ui-css": "0.0.3-dristi-kerala.6",
+    "dristi-ui-css": "0.1.0-dristi-kerala.3",
+    "jszip": "^3.10.1",
     "lodash": "4.17.21",
     "microbundle-crl": "0.13.11",
     "react": "17.0.2",

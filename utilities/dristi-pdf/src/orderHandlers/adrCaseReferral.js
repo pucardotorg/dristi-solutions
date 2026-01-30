@@ -44,7 +44,7 @@ async function adrCaseReferral(
     // Search for case details
     const resCase = await handleApiCall(
       res,
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, order?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -111,7 +111,13 @@ async function adrCaseReferral(
     const additionalComments =
       order?.additionalDetails?.formdata?.comments?.text || "";
     const modeOfAdr = adr?.name || "";
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber =
+      (courtCase?.isLPRCase
+        ? courtCase?.lprNumber
+        : courtCase?.courtCaseNumber) ||
+      courtCase?.courtCaseNumber ||
+      courtCase?.cmpNumber ||
+      "";
     const data = {
       Data: [
         {

@@ -131,5 +131,21 @@ public class EmployeeController {
 		return new ResponseEntity<>(response,HttpStatus.OK);
 	}
 
+	/**
+	 * Creates employee records for existing users in the system.
+	 * This endpoint associates employees with existing user accounts
+	 * without creating new user records.
+	 *
+	 * @param employeeRequest The employee request containing employee details
+	 * @return ResponseEntity containing the employee response
+	 */
+	@PostMapping(value = "/_createForExistingUsers")
+	@ResponseBody
+	public ResponseEntity<?> createForExistingUsers(@RequestBody @Valid EmployeeRequest employeeRequest) {
+		EmployeeResponse employeeResponse = employeeService.createForExistingUsers(employeeRequest);
+		return new ResponseEntity<>(employeeResponse, HttpStatus.ACCEPTED);
+	}
+
+
 
 }

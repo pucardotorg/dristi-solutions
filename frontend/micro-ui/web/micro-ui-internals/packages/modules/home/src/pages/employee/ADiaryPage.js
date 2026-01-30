@@ -93,7 +93,7 @@ const ADiaryPage = ({ path }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const userRoles = Digit?.UserService?.getUser?.()?.info?.roles || [];
+  const userRoles = useMemo(() => userInfo?.roles, [userInfo]);
   const styles = getStyles();
   const [selectedDate, setSelectedDate] = useState(
     getCurrentDate(queryStrings?.date?.split("-")[1] || sessionStorage.getItem("selectedADiaryDate") || "")
@@ -101,6 +101,11 @@ const ADiaryPage = ({ path }) => {
   const [entryDate, setEntryDate] = useState(
     parseInt(queryStrings?.date?.split("-")[1] || sessionStorage.getItem("selectedADiaryDate")) || new Date().setHours(0, 0, 0, 0)
   );
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isEpostUser = useMemo(() => userRoles?.some((role) => role?.code === "POST_MANAGER"), [userRoles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  const hasViewSignADiaryAccess = useMemo(() => userRoles?.some((role) => role?.code === "DIARY_VIEWER"), [userRoles]);
 
   const [offSet, setOffset] = useState(0);
   const limit = 10;
@@ -119,11 +124,16 @@ const ADiaryPage = ({ path }) => {
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
   const [generateAdiaryLoader, setGenerateAdiaryLoader] = useState(false);
   const [noAdiaryModal, setNoAdiaryModal] = useState(false);
+  const [loader, setLoader] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
+
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isDiaryApprover = useMemo(() => roles?.some((role) => role?.code === "DIARY_APPROVER"), [roles]);
 
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
 
@@ -140,8 +150,8 @@ const ADiaryPage = ({ path }) => {
             name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -165,7 +175,7 @@ const ADiaryPage = ({ path }) => {
     }
     setStepper(parseInt(stepper) - 1);
   };
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const courtId = localStorage.getItem("courtId");
 
   const onSubmit = async () => {
     if (parseInt(stepper) === 0) {
@@ -185,7 +195,7 @@ const ADiaryPage = ({ path }) => {
         sessionStorage.setItem("adiaryStepper", parseInt(stepper) + 1);
         setStepper(parseInt(stepper) + 1);
       } catch (error) {
-        console.log("Error :", error);
+        console.error("Error :", error);
         setGenerateAdiaryLoader(false);
       }
     } else if (parseInt(stepper) === 1) {
@@ -205,11 +215,13 @@ const ADiaryPage = ({ path }) => {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onUploadSubmit = async () => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
+        setLoader(true);
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setFileStoreIds((prevFileStoreIds) => new Set([...prevFileStoreIds, uploadedFileId?.[0]?.fileStoreId]));
@@ -217,9 +229,12 @@ const ADiaryPage = ({ path }) => {
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
+        setLoader(false);
         setFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
+      setLoader(false);
     }
   };
 
@@ -246,11 +261,11 @@ const ADiaryPage = ({ path }) => {
           setIsSelectedDataSigned(false);
         }
       } catch (error) {
-        console.log("Error :", error);
+        console.error("Error :", error);
       }
     };
     getDiarySearch();
-  }, [entryDate, tenantId]);
+  }, [entryDate, tenantId, courtId]);
 
   const uploadSignedPdf = async () => {
     try {
@@ -292,7 +307,7 @@ const ADiaryPage = ({ path }) => {
       sessionStorage.removeItem("adiarypdf");
       sessionStorage.removeItem("adiaryStepper");
     } catch (error) {
-      console.log("Error :", error);
+      console.error("Error :", error);
       setIsSigned(false);
       setSignedDocumentUploadID("");
       sessionStorage.removeItem("fileStoreId");
@@ -315,7 +330,7 @@ const ADiaryPage = ({ path }) => {
     {},
     `diary-entries-${entryDate}-${offSet}`,
     entryDate,
-    Boolean(entryDate)
+    Boolean(entryDate && courtId)
   );
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
@@ -354,7 +369,7 @@ const ADiaryPage = ({ path }) => {
   const handleRowClick = (entry) => {
     if (entry?.referenceType === "Order") {
       history.push(
-        `/${window?.contextPath}/${userInfoType}/orders/generate-orders?filingNumber=${entry?.additionalDetails?.filingNumber}&orderNumber=${entry?.referenceId}`,
+        `/${window?.contextPath}/${userInfoType}/orders/generate-order?filingNumber=${entry?.additionalDetails?.filingNumber}&orderNumber=${entry?.referenceId}`,
         { diaryEntry: entry }
       );
     }
@@ -364,10 +379,14 @@ const ADiaryPage = ({ path }) => {
         { diaryEntry: entry }
       );
     }
-    if (entry?.referenceType === "bulkreschedule") {
+    if (entry?.referenceType === "notice") {
       history.push(`/${window?.contextPath}/${userInfoType}/hearings`, { diaryEntry: entry });
     }
   };
+
+  if (!hasViewSignADiaryAccess) {
+    history.push(homePath);
+  }
 
   if (isDiaryEntriesLoading || generateAdiaryLoader) {
     return <Loader />;
@@ -410,7 +429,7 @@ const ADiaryPage = ({ path }) => {
                           <td style={styles.rowDataStyle}>{index + 1}</td>
                           <td style={styles.rowDataStyle}>{entry?.caseNumber}</td>
                           <td
-                            style={{ ...styles.rowDataStyle, ...styles.linkRowDataStyle }}
+                            style={{ ...styles.rowDataStyle, ...styles.linkRowDataStyle, whiteSpace: "pre-line" }}
                             onClick={() => handleRowClick(entry)}
                             onMouseEnter={(e) => (e.target.style.textDecoration = "underline")}
                             onMouseLeave={(e) => (e.target.style.textDecoration = "none")}
@@ -458,7 +477,7 @@ const ADiaryPage = ({ path }) => {
           )}
         </div>
         <div style={styles.rightPanel}>
-          {
+          {isDiaryApprover && (
             <div>
               {!isSelectedDataSigned &&
                 entryDate !== new Date().setHours(0, 0, 0, 0) &&
@@ -477,7 +496,7 @@ const ADiaryPage = ({ path }) => {
                 isDiary={true}
               />
             </div>
-          }
+          )}
         </div>
         <div className="adiary-container">
           {stepper === 1 && (
@@ -572,6 +591,8 @@ const ADiaryPage = ({ path }) => {
               config={uploadModalConfig}
               formData={formData}
               onSubmit={onUploadSubmit}
+              isDisabled={loader}
+              fileUploadError={fileUploadError}
             />
           )}
 

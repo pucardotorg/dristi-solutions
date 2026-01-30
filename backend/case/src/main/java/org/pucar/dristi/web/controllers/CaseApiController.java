@@ -4,8 +4,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
+import org.pucar.dristi.scheduling.CronJobScheduler;
 import org.pucar.dristi.service.CasePdfService;
 import org.pucar.dristi.service.CaseService;
 import org.pucar.dristi.service.CaseServiceV2;
@@ -30,26 +32,29 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-15T11:31:40.281899+05:30[Asia/Kolkata]")
 @RestController
 @RequestMapping("")
+@Slf4j
 public class CaseApiController {
 
     private final CaseService caseService;
+
+    private final CaseServiceV2 caseServiceV2;
 
     private final WitnessService witnessService;
 
     private final ResponseInfoFactory responseInfoFactory;
 
     private final CasePdfService casePdfService;
-
-    private final CaseServiceV2 caseServiceV2;
+    private final CronJobScheduler cronJobScheduler;
 
 
     @Autowired
-    public CaseApiController(CaseService caseService, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService, CaseServiceV2 caseServiceV2) {
+    public CaseApiController(CaseService caseService, CaseServiceV2 caseServiceV2, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService, CronJobScheduler cronJobScheduler) {
         this.caseService = caseService;
+        this.caseServiceV2 = caseServiceV2;
         this.witnessService = witnessService;
         this.responseInfoFactory = responseInfoFactory;
         this.casePdfService = casePdfService;
-        this.caseServiceV2 = caseServiceV2;
+        this.cronJobScheduler = cronJobScheduler;
     }
 
     @PostMapping(value = "/v1/_create")
@@ -139,6 +144,7 @@ public class CaseApiController {
         return new ResponseEntity<>(caseResponse, HttpStatus.OK);
     }
 
+    @Deprecated
     @PostMapping(value = "/v1/add/witness")
     public ResponseEntity<AddWitnessResponse> caseV1AddWitnessPost(
             @Parameter(in = ParameterIn.DEFAULT, description = "Details for adding witness details in the court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody AddWitnessRequest body) {
@@ -266,5 +272,56 @@ public class CaseApiController {
     public ResponseEntity<Map<String, AtomicBoolean>> enrichAccessCode(@Parameter(in = ParameterIn.DEFAULT, description = "enrich access code", required = true, schema = @Schema()) @Valid @RequestBody AccessCodeGenerateRequest body) {
         Map<String,AtomicBoolean> response = caseService.enrichAccessCode(body);
         return new ResponseEntity<>(response,HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/_count")
+    public ResponseEntity<Integer> getCaseCount(@Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseSearchRequest body) {
+        log.info("api=/v1/_count, result=IN_PROGRESS");
+        Integer count = caseService.getCaseCount(body);
+        log.info("api=/v1/_count, result=SUCCESS");
+        return new ResponseEntity<>(count,HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v2/add/witness")
+    public ResponseEntity<WitnessDetailsResponse> addWitnessToCase(@Parameter(in = ParameterIn.DEFAULT, description = "Court case details + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody WitnessDetailsRequest body) {
+        log.info("api=/v2/add/witness, result=IN_PROGRESS");
+        WitnessDetailsResponse response = caseService.addWitnessToCase(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        response.setResponseInfo(responseInfo);
+        log.info("api=/v2/add/witness, result=SUCCESS");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v2/_update")
+    public ResponseEntity<CaseResponse> updateCaseWithoutWorkflow(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseRequest body) {
+        CourtCase cases = caseService.updateCaseWithoutWorkflow(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        CaseResponse caseResponse = CaseResponse.builder().cases(Collections.singletonList(cases)).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/_updateLPRDetails")
+    public ResponseEntity<CaseResponse> updateLPRDetails(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseRequest body) {
+        CourtCase cases = caseService.updateLPRDetails(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        CaseResponse caseResponse = CaseResponse.builder().cases(Collections.singletonList(cases)).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/address/_add")
+    public ResponseEntity<AddAddressResponse> caseV1AddAddress(
+            @Parameter(in = ParameterIn.DEFAULT, description = "This API is used to add or update addresses for parties involved in a case. It can handle multiple addresses for multiple parties in a single request.", required = true, schema = @Schema()) @Valid @RequestBody AddAddressRequest body) {
+
+        List<PartyAddressRequest> addressResponses = caseService.addAddress(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        AddAddressResponse addAddressResponse = AddAddressResponse.builder().partyAddressList(addressResponses).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(addAddressResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/_runCronJob")
+    public ResponseEntity<?> runCronJob() {
+        cronJobScheduler.sendNotificationToCaseReassigned();
+
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

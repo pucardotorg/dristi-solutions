@@ -108,11 +108,14 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   const [itemId, setItemId] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const userType = Digit.UserService.getType();
+  const courtId = localStorage.getItem("courtId");
+
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
           filingNumber: filingNumber,
+          ...(courtId && userType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -123,22 +126,6 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     Boolean(filingNumber)
   );
 
-  const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
-    {
-      hearing: { tenantId },
-      criteria: {
-        tenantID: tenantId,
-        filingNumber: filingNumber,
-        hearingId: hearingId,
-      },
-    },
-    { applicationNumber: "", cnrNumber: "" },
-    hearingId,
-    Boolean(hearingId)
-  );
-
-  const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
-
   const caseDetails = useMemo(
     () => ({
       ...caseData?.criteria?.[0]?.responseList?.[0],
@@ -146,12 +133,30 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     [caseData]
   );
 
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails]);
 
   const { caseId, cnrNumber, caseTitle } = useMemo(
     () => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
     [caseDetails]
   );
+
+  const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
+    {
+      hearing: { tenantId },
+      criteria: {
+        tenantID: tenantId,
+        filingNumber: filingNumber,
+        hearingId: hearingId,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
+    },
+    { applicationNumber: "", cnrNumber: "" },
+    hearingId,
+    Boolean(hearingId && caseCourtId)
+  );
+
+  const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
 
   const handleCloseModal = () => {
     if (handleClose) {
@@ -173,7 +178,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
         tenantId,
         cnrNumber,
         filingNumber: filingNumber,
-        hearingNumber: hearingId,
+        // hearingNumber: hearingId,
         statuteSection: {
           tenantId,
         },
@@ -213,7 +218,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           referenceId: `MANUAL_${res.order.orderNumber}`,
           status: "DRAFT_IN_PROGRESS",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["PENDING_TASK_ORDER"],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: filingNumber,
           caseId: caseDetails?.id,
@@ -224,15 +229,15 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           tenantId,
         },
       });
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
     } catch (error) {}
   };
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const [orderList, setOrderList] = useState([]);
@@ -245,8 +250,10 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
         return order?.compositeItems
           ?.filter(
             (item) =>
-              (taskOrderType === "NOTICE" ? item?.orderType === "NOTICE" : ["SUMMONS", "WARRANT"].includes(item?.orderType)) &&
-              order?.hearingNumber === hearingId
+              (taskOrderType === "NOTICE"
+                ? item?.orderType === "NOTICE"
+                : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(item?.orderType)) &&
+              (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
           )
           ?.map((item) => ({
             ...order,
@@ -256,8 +263,10 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             itemId: item?.id,
           }));
       } else {
-        return (taskOrderType === "NOTICE" ? order?.orderType === "NOTICE" : ["SUMMONS", "WARRANT"].includes(order?.orderType)) &&
-          order?.hearingNumber === hearingId
+        return (taskOrderType === "NOTICE"
+          ? order?.orderType === "NOTICE"
+          : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(order?.orderType)) &&
+          (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
           ? [order]
           : [];
       }
@@ -278,13 +287,14 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     setItemId(orderListFiltered?.[0]?.ordersList?.[0]?.itemId);
   }, [orderListFiltered]);
 
-  const config = useMemo(() => summonsConfig({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId }), [
+  const config = useMemo(() => summonsConfig({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, caseCourtId }), [
     taskCnrNumber,
     filingNumber,
     orderId,
     orderNumber,
     orderType,
     itemId,
+    caseCourtId,
   ]);
 
   const getOrderPartyData = (orderType, orderList) => {
@@ -392,7 +402,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     );
   }, [caseDetails, filingNumber, respondentName, hearingDetails, orderList, userType, caseId]);
 
-  const modalLabel = ["SUMMONS", "WARRANT"].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
+  const modalLabel = ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
 
   function removeAccusedSuffix(partyName) {
     return partyName.replace(/\s*\(Accused\)$/, "");
@@ -501,8 +511,8 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               />
             )
           )}
-          <Button
-            label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
+          {/* <Button
+            label={`Re-Issue ${t(orderType)}`}
             onButtonClick={() => {
               handleNavigate();
             }}
@@ -512,7 +522,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               padding: "16px 24px",
             }}
             textStyles={headingStyle}
-          />
+          /> */}
         </div>
       </div>
     </Modal>

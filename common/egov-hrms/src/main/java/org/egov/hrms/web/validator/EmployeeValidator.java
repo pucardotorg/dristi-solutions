@@ -161,7 +161,8 @@ public class EmployeeValidator {
 	private void validateExistingDuplicates(EmployeeRequest request, Map<String, String> errorMap) {
 		List<Employee> employees = request.getEmployees();
 		validateDataUniqueness(employees,errorMap);
-        validateUserMobile(employees,errorMap,request.getRequestInfo());
+		//todo: might need to enable this validation later
+//		validateUserMobile(employees,errorMap,request.getRequestInfo());
         validateUserName(employees,errorMap,request.getRequestInfo());
 		if(request.getEmployees().get(0).getEmployeeType().equals(HRMSConstants.HRMS_EMPLOYEE_JUDGE)){
 			validateJudgeAssignment(request, errorMap);
@@ -338,7 +339,7 @@ public class EmployeeValidator {
 	 */
 	private void validateEmployee(Employee employee, Map<String, String> errorMap, Map<String, List<String>> mdmsData) {
 
-		if(employee.getUser().getMobileNumber().length() != 10)
+		if(employee.getUser().getMobileNumber() != null && employee.getUser().getMobileNumber().length() != 10)
 			errorMap.put(ErrorConstants.HRMS_INVALID_MOB_NO_CODE, ErrorConstants.HRMS_INVALID_MOB_NO_MSG);
 		
 		if(CollectionUtils.isEmpty(employee.getUser().getRoles()))

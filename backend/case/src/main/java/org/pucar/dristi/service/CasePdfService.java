@@ -3,6 +3,7 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.web.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -45,8 +46,10 @@ public class CasePdfService {
 
     private final CacheService cacheService;
 
+    private final CaseRegistrationEnrichment caseRegistrationEnrichment;
+
     @Autowired
-    public CasePdfService(Configuration config, CasePdfUtil casePdfUtil, CaseRepository caseRepository, FileStoreUtil fileStoreUtil, ObjectMapper mapper, Producer producer, EncryptionDecryptionUtil encryptionDecryptionUtil, CacheService cacheService) {
+    public CasePdfService(Configuration config, CasePdfUtil casePdfUtil, CaseRepository caseRepository, FileStoreUtil fileStoreUtil, ObjectMapper mapper, Producer producer, EncryptionDecryptionUtil encryptionDecryptionUtil, CacheService cacheService, CaseRegistrationEnrichment caseRegistrationEnrichment) {
         this.config = config;
         this.casePdfUtil = casePdfUtil;
         this.caseRepository = caseRepository;
@@ -55,6 +58,7 @@ public class CasePdfService {
         this.producer = producer;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.cacheService = cacheService;
+        this.caseRegistrationEnrichment = caseRegistrationEnrichment;
     }
 
     public CourtCase generatePdf(CaseSearchRequest body) {
@@ -94,6 +98,7 @@ public class CasePdfService {
                 courtCase.getDocuments().add(document);
             }
 
+            caseRegistrationEnrichment.enrichStatuteAndSectionsOnCreateAndUpdate(caseRequest.getCases(), caseRequest.getCases().getAuditdetails());
             log.info("Encrypting: {}", caseRequest);
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());

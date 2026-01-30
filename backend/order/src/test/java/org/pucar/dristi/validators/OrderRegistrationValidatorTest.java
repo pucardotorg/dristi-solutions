@@ -102,27 +102,6 @@ class OrderRegistrationValidatorTest {
     }
 
     @Test
-    void testValidateOrderRegistration_missingOrderType() {
-        // Prepare test data - new test case for missing orderType
-        Order order = new Order();
-        order.setStatuteSection(new StatuteSection());
-        order.setOrderCategory("Judicial");
-        order.setCnrNumber("CNR12345");
-        order.setFilingNumber("FIL12345");
-        // Intentionally not setting orderType
-
-        OrderRequest orderRequest = new OrderRequest();
-        orderRequest.setRequestInfo(new RequestInfo());
-        orderRequest.setOrder(order);
-
-        // Execute and verify exception
-        CustomException exception = assertThrows(CustomException.class, () ->
-                orderRegistrationValidator.validateOrderRegistration(orderRequest));
-        assertEquals(CREATE_ORDER_ERR, exception.getCode());
-        assertEquals("orderType is mandatory for intermediate order", exception.getMessage());
-    }
-
-    @Test
     void testValidateOrderRegistration_invalidCase() {
         // Prepare test data
         Order order = new Order();

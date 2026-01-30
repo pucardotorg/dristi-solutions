@@ -54,7 +54,7 @@ const showAddress = (data) => {
       (part) => part !== null && part !== undefined && part.trim?.() !== ""
     );
 
-    return parts.join(", ");
+    return { address: parts.join(", ") };
   };
 
   if (Array.isArray(data)) {
@@ -245,7 +245,9 @@ async function applicationProfileEdit(
         ? oldData?.data?.respondentType?.code
         : oldData?.data?.complainantType?.code;
 
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase
+      ? courtCase?.lprNumber
+      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const reasonForChange =
       application?.additionalDetails?.formdata?.reasonForChange?.text || "";
     const prayer = application?.additionalDetails?.formdata?.prayer?.text || "";
@@ -292,8 +294,9 @@ async function applicationProfileEdit(
             oldData?.data?.emails?.emailId
           ),
           currentPermanentAddress:
-            showAddress(oldData?.data?.addressDetails)?.[0] || "",
-          currentResedentialAddress: "", // need to change config first
+            showAddress(oldData?.data?.addressDetails) || [],
+          currentResedentialAddress:
+            showAddress(oldData?.data?.currentAddressDetails) || [],
           isEntity: currentDetailsLitigantTypeCode !== "INDIVIDUAL",
           currentCompanyName: currentCompanyName || "",
           currentEntityType: currentEntityType || "",
@@ -303,8 +306,9 @@ async function applicationProfileEdit(
             newData?.phonenumbers?.mobileNumber
           ),
           newEmailId: getCommaSeparatedValues(newData?.emails?.emailId),
-          newPermanentAddress: showAddress(newData?.addressDetails)?.[0] || "",
-          newResedentialAddress: "", // need to change config first
+          newPermanentAddress: showAddress(newData?.addressDetails) || [],
+          newResedentialAddress:
+            showAddress(newData?.currentAddressDetails) || [],
         },
       ],
     };

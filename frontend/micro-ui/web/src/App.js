@@ -11,11 +11,12 @@ import { initSubmissionsComponents } from "@egovernments/digit-ui-module-submiss
 import { initHearingsComponents } from "@egovernments/digit-ui-module-hearings";
 import { initCasesComponents } from "@egovernments/digit-ui-module-cases";
 import { initHomeComponents } from "@egovernments/digit-ui-module-home";
-
+import setupRequestInterceptor from "@egovernments/digit-ui-module-core/src/Utils/requestInterceptor";
+import apiMonitor from "@egovernments/digit-ui-module-core/src/Utils/apiMonitor";
 import "dristi-ui-css/dist/index.min.css";
+import ApiMonitorPanel from "@egovernments/digit-ui-module-core/src/Utils/ApiMonitorPanel.js";
 
-window.contextPath =
-  window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
+window.contextPath = window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
 
 const enabledModules = [
   "DRISTI",
@@ -32,6 +33,7 @@ const moduleReducers = (initData) => ({
 
 const initDigitUI = () => {
   window.Digit.ComponentRegistryService.setupRegistry({});
+  setupRequestInterceptor();
   initCoreComponents();
   initDRISTIComponents();
   initOrdersComponents();
@@ -39,6 +41,9 @@ const initDigitUI = () => {
   initCasesComponents();
   initSubmissionsComponents();
   initHomeComponents();
+
+  // Initialize API monitoring after all components are initialized
+  apiMonitor.init();
 };
 
 initLibraries().then(() => {
@@ -47,18 +52,24 @@ initLibraries().then(() => {
 
 function App() {
   const stateCode =
-    window.globalConfigs?.getConfig("STATE_LEVEL_TENANT_ID") ||
-    process.env.REACT_APP_STATE_LEVEL_TENANT_ID;
+    window?.globalConfigs.getConfig("STATE_LEVEL_TENANT_ID") || "kl";
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const roles = userInfo?.roles;
+  const assignedRoles = roles?.map((role) => role?.code);
+  const hasViewApiMonitorAccess = assignedRoles?.includes("VIEW_API_MONITOR");
   if (!stateCode) {
     return <h1>stateCode is not defined</h1>;
   }
   return (
-    <DigitUI
-      stateCode={stateCode}
-      enabledModules={enabledModules}
-      moduleReducers={moduleReducers}
-      // defaultLanding="employee"
-    />
+    <>
+      <DigitUI
+        stateCode={stateCode}
+        enabledModules={enabledModules}
+        moduleReducers={moduleReducers}
+        // defaultLanding="employee"
+      />
+      {hasViewApiMonitorAccess && <ApiMonitorPanel />}
+    </>
   );
 }
 

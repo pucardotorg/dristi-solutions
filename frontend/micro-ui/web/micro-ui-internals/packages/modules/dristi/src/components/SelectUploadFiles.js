@@ -99,9 +99,9 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
           infoTooltipMessage: "AADHAR",
           label: "Title",
           type: "DragDropComponent",
-          uploadGuidelines: t("UPLOAD_DOC_50"),
-          maxFileSize: 50,
-          maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+          uploadGuidelines: t("UPLOAD_DOC_10"),
+          maxFileSize: 10,
+          maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
           fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
 
           isMultipleUpload: true,

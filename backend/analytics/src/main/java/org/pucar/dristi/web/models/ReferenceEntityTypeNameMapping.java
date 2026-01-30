@@ -17,5 +17,8 @@ public class ReferenceEntityTypeNameMapping {
 
     @JsonProperty("pendingTaskName")
     private String pendingTaskName;
+
+    @JsonProperty("actionCategory")
+    private String actionCategory;
 }
 

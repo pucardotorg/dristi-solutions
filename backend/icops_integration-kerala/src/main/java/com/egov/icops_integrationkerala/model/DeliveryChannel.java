@@ -33,4 +33,8 @@ public class DeliveryChannel {
 
     @JsonProperty("channelDetails")
     private Map<String, String> channelDetails;
+
+    @JsonProperty("isPendingCollection")
+    private Boolean isPendingCollection;
+
 }

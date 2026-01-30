@@ -38,6 +38,7 @@ class OrderRowMapperTest {
         when(resultSet.getString("ordernumber")).thenReturn("ORDER-123");
         when(resultSet.getString("linkedordernumber")).thenReturn("LINKED-ORDER-123");
         when(resultSet.getString("hearingnumber")).thenReturn("123e4567-e89b-12d3-a456-556642440001");
+        when(resultSet.getString("hearingtype")).thenReturn("Type1");
         when(resultSet.getString("cnrnumber")).thenReturn("CNR-123");
         when(resultSet.getString("ordercategory")).thenReturn("Category1");
         when(resultSet.getBoolean("isactive")).thenReturn(true);
@@ -89,6 +90,7 @@ class OrderRowMapperTest {
         assertEquals("ORDER-123", order.getOrderNumber());
         assertEquals("LINKED-ORDER-123", order.getLinkedOrderNumber());
         assertEquals("123e4567-e89b-12d3-a456-556642440001", order.getHearingNumber());
+        assertEquals("Type1", order.getHearingType());
         assertEquals("CNR-123", order.getCnrNumber());
         assertEquals("Category1", order.getOrderCategory());
         assertTrue(order.getIsActive());

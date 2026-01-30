@@ -22,6 +22,7 @@ public class TextLocationFinder implements RenderListener {
     private float keywordX, keywordY;
     private StringBuilder currentText = new StringBuilder();
     private Float lastY;
+    private float firstCharX;
 
     @Getter
     private Boolean keywordFound = false;
@@ -29,21 +30,53 @@ public class TextLocationFinder implements RenderListener {
 
     @Override
     public void renderText(TextRenderInfo renderInfo) {
+        if (keywordFound) {
+            return;
+        }
         String text = renderInfo.getText();
         if (text != null) {
             Float currentY = renderInfo.getBaseline().getStartPoint().get(1);
+            float currentX = renderInfo.getBaseline().getStartPoint().get(0);
+            
             if (lastY != null && !currentY.equals(lastY)) {
                 currentText = new StringBuilder();
+                firstCharX = 0;
             }
+            
             lastY = currentY;
+            
+            String before = currentText.toString();
             currentText.append(text);
-            if (currentText.toString().contains(keyword)) {
-                // Coordinates are in user space units
-                currentText = new StringBuilder();
-                keywordX = renderInfo.getBaseline().getStartPoint().get(0);
-                keywordY = renderInfo.getBaseline().getStartPoint().get(1);
+            String after = currentText.toString();
+            
+            int keywordStartIndex = after.indexOf(keyword);
+            if (keywordStartIndex >= 0) {
+                int chunkStartIndex = before.length();
+                
+                if (keywordStartIndex >= chunkStartIndex) {
+                    int offsetInChunk = keywordStartIndex - chunkStartIndex;
+                    float chunkWidth = renderInfo.getBaseline().getEndPoint().get(0) - currentX;
+                    float avgCharWidth = text.length() > 0 ? chunkWidth / text.length() : 0;
+                    keywordX = currentX + (offsetInChunk * avgCharWidth);
+                } else {
+                    if (firstCharX == 0) {
+                        log.info("Keyword '{}' started in a previous chunk but firstCharX is 0. Falling back to currentX. before='{}', after='{}', currentX={}, currentY={}",
+                                keyword, before, after, currentX, currentY);
+                        keywordX = currentX;
+                    } else {
+                        keywordX = firstCharX;
+                    }
+                }
+                keywordY = currentY;
                 keywordFound = true;
                 log.debug("Keyword '{}' found at coordinates ({}, {})", keyword, keywordX, keywordY);
+            } else if (keyword.startsWith(after) || after.endsWith(keyword.substring(0, Math.min(keyword.length(), after.length())))) {
+                if (firstCharX == 0) {
+                    firstCharX = currentX;
+                }
+            } else {
+                currentText = new StringBuilder();
+                firstCharX = 0;
             }
         }
     }
