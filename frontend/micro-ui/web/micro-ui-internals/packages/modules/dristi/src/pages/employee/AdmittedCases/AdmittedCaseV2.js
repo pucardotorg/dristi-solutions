@@ -3463,10 +3463,17 @@ const AdmittedCaseV2 = () => {
                                 label={t(
                                   hasHearingPriorityView
                                     ? "CS_CASE_END_START_NEXT_HEARING"
-                                    : `${t("CS_CASE_NEXT_HEARING")} (${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
+                                    : "CS_CASE_NEXT_HEARING"
+                                )}
+                                subLabel={
+                                  hasHearingPriorityView
+                                    ? null
+                                    : `(${formatDate(
+                                        new Date(parseInt(homeNextHearingFilter?.homeFilterDate))
+                                      )
                                         .split("-")
                                         .join("/")})`
-                                )}
+                                }
                                 children={hasHearingPriorityView ? null : <RightArrow />}
                                 isSuffix={true}
                                 onButtonClick={() =>
@@ -3478,6 +3485,8 @@ const AdmittedCaseV2 = () => {
                                   boxShadow: "none",
                                   ...(hasHearingPriorityView ? { backgroundColor: "#007e7e", border: "none" } : {}),
                                 }}
+                                textStyles={{ fontSize: "16px", marginLeft: "10px" }}
+                                subTextStyles={{ fontSize: "14px", marginLeft: "10px" }}
                               ></Button>
                             )}
                           </React.Fragment>
@@ -3486,11 +3495,12 @@ const AdmittedCaseV2 = () => {
                             {!hasHearingPriorityView && !hideNextHearingButton && (
                               <Button
                                 variation={"primary"}
-                                label={t(
-                                  `${t("CS_CASE_NEXT_HEARING")} (${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
-                                    .split("-")
-                                    .join("/")})`
-                                )}
+                                label={t("CS_CASE_NEXT_HEARING")}
+                                subLabel={`(${formatDate(
+                                  new Date(parseInt(homeNextHearingFilter?.homeFilterDate))
+                                )
+                                  .split("-")
+                                  .join("/")})`}
                                 children={<RightArrow />}
                                 isSuffix={true}
                                 onButtonClick={() =>
@@ -3501,6 +3511,8 @@ const AdmittedCaseV2 = () => {
                                 style={{
                                   boxShadow: "none",
                                 }}
+                                textStyles={{ fontSize: "16px", marginLeft: "10px" }}
+                                subTextStyles={{ fontSize: "14px", marginLeft: "10px" }}
                               />
                             )}
                             <ActionButton
