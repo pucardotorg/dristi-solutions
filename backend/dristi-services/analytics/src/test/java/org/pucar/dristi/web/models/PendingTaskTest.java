@@ -36,7 +36,7 @@ class PendingTaskTest {
         Object additionalDetails = new Object();
         PendingTask pendingTask = new PendingTask("1", "TaskName", "Ref123", "EntityType1", "Status1",
                 assignedTo, assignedRole, "CNR123", "Filing123","test1","test","test",
-                true, 10L, 20L, additionalDetails, "home", "KLKM52" , 1L,  "NIA S138",1L, "test");
+                true, 10L, 20L, additionalDetails, "home", "KLKM52" , 1L,  "NIA S138",1L, "test", null);
 
         assertEquals("1", pendingTask.getId());
         assertEquals("TaskName", pendingTask.getName());
@@ -146,7 +146,7 @@ class PendingTaskTest {
                 .courtId("KLKM52")
                 .build();
 
-        String expected ="PendingTask(id=1, name=TaskName, referenceId=Ref123, entityType=EntityType1, status=Status1, assignedTo=[], assignedRole=[], cnrNumber=CNR123, filingNumber=Filing123, actionCategory=null, caseId=null, caseTitle=null, isCompleted=true, stateSla=10, businessServiceSla=20, additionalDetails=null, screenType=home, courtId=KLKM52, expiryDate=null, sectionAndSubSection=null, filingDate=null, referenceEntityType=null)";
+        String expected ="PendingTask(id=1, name=TaskName, referenceId=Ref123, entityType=EntityType1, status=Status1, assignedTo=[], assignedRole=[], cnrNumber=CNR123, filingNumber=Filing123, actionCategory=null, caseId=null, caseTitle=null, isCompleted=true, stateSla=10, businessServiceSla=20, additionalDetails=null, screenType=home, courtId=KLKM52, expiryDate=null, sectionAndSubSection=null, filingDate=null, referenceEntityType=null, offices=null)";
         assertEquals(expected, pendingTask.toString());
     }
 }

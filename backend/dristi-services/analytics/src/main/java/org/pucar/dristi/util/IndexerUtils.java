@@ -19,6 +19,7 @@ import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
 import org.pucar.dristi.service.UserService;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.casemodels.CaseAdvocateOffice;
 import org.pucar.dristi.web.models.taskManagement.TaskManagement;
 import org.pucar.dristi.web.models.taskManagement.TaskSearchCriteria;
 import org.pucar.dristi.web.models.taskManagement.TaskSearchRequest;
@@ -187,6 +188,7 @@ public class IndexerUtils {
         String caseSubStage = null;
         String advocateDetails = "{}";
         String searchableFields = null;
+        String offices = "[]";
         if (filingNumber != null) {
             JsonNode caseDetails = getCaseDetails(filingNumber);
 
@@ -226,6 +228,8 @@ public class IndexerUtils {
 
             searchableFields = new JSONArray(searchableFieldsList).toString();
 
+            // Enrich offices from case details based on assignedTo
+            offices = pendingTask.getOffices() != null ? new JSONArray(pendingTask.getOffices()).toString() : enrichOfficesFromCaseDetails(caseDetails, assignedToList);
         }
 
         Long createdTime = clock.millis();
@@ -241,8 +245,27 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, expiryTime, sectionAndSubSection, filingDate, referenceEntityType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, expiryTime, sectionAndSubSection, filingDate, referenceEntityType, offices
         );
+    }
+
+    private String enrichOfficesFromCaseDetails(JsonNode caseDetails, List<User> assignedToList) {
+        try {
+            List<org.pucar.dristi.web.models.casemodels.CaseAdvocateOffice> advocateOffices = caseUtil.getAdvocateOffices(caseDetails);
+            if (advocateOffices == null || advocateOffices.isEmpty()) {
+                return "[]";
+            }
+
+            Set<String> assignedUuids = assignedToList.stream()
+                    .map(User::getUuid)
+                    .filter(Objects::nonNull)
+                    .collect(java.util.stream.Collectors.toSet());
+
+            return getOfficesStringFromList(advocateOffices, assignedUuids);
+        } catch (Exception e) {
+            log.error("Error while enriching offices from case details", e);
+            return "[]";
+        }
     }
 
     private JsonNode getCaseDetails(String filingNumber) {
@@ -375,6 +398,7 @@ public class IndexerUtils {
         String advocateDetails = "{}";
         String searchableFields = null;
         String caseNumber = filingNumber;
+        String offices = "[]";
 
         if (caseDetails == null && filingNumber != null) {
             requestInfo1.getUserInfo().setType("EMPLOYEE");
@@ -419,6 +443,8 @@ public class IndexerUtils {
              searchableFields = new JSONArray(searchableFieldsList).toString();
             log.info("searchableFields: {}", searchableFields);
 
+            // Enrich offices from case details based on assignedTo
+            offices = enrichOfficesFromCaseDetailsWithObjectList(caseDetails, assignedToList);
         }
 
         Object additionalDetails;
@@ -475,10 +501,79 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, null, sectionAndSubSection, filingDate, referenceEntityType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, null, sectionAndSubSection, filingDate, referenceEntityType, offices
         );
     }
 
+    private String enrichOfficesFromCaseDetailsWithObjectList(JsonNode caseDetails, List<Object> assignedToList) {
+        try {
+            List<org.pucar.dristi.web.models.casemodels.CaseAdvocateOffice> advocateOffices = caseUtil.getAdvocateOffices(caseDetails);
+            if (advocateOffices == null || advocateOffices.isEmpty()) {
+                return "[]";
+            }
+
+            Set<String> assignedUuids = new HashSet<>();
+            for (Object obj : assignedToList) {
+                if (obj instanceof Map) {
+                    Object uuidObj = ((Map<?, ?>) obj).get("uuid");
+                    if (uuidObj != null) {
+                        assignedUuids.add(String.valueOf(uuidObj));
+                    }
+                }
+            }
+
+            return getOfficesStringFromList(advocateOffices, assignedUuids);
+        } catch (Exception e) {
+            log.error("Error while enriching offices from case details with object list", e);
+            return "[]";
+        }
+    }
+
+    private String getOfficesStringFromList(List<org.pucar.dristi.web.models.casemodels.CaseAdvocateOffice> advocateOffices, Set<String> assignedUuids) throws JsonProcessingException {
+        List<AdvocateOffice> officesList = new ArrayList<>();
+        
+        for (org.pucar.dristi.web.models.casemodels.CaseAdvocateOffice office : advocateOffices) {
+            String officeAdvocateUserUuid = office.getOfficeAdvocateUserUuid();
+
+            // Check if office advocate is in assignedTo list
+            if (officeAdvocateUserUuid != null && assignedUuids.contains(officeAdvocateUserUuid)) {
+                List<String> memberIds = getMemberIds(office);
+
+                AdvocateOffice analyticsOffice = AdvocateOffice.builder()
+                        .advocateOfficeName(office.getOfficeAdvocateName())
+                        .advocateUserUuid(officeAdvocateUserUuid)
+                        .advocateId(office.getOfficeAdvocateId())
+                        .officeMembers(memberIds)
+                        .build();
+                officesList.add(analyticsOffice);
+            }
+        }
+
+        return mapper.writeValueAsString(officesList);
+    }
+
+    private static List<String> getMemberIds(CaseAdvocateOffice office) {
+        List<String> memberIds = new ArrayList<>();
+
+        // Add advocate members
+        if (office.getAdvocates() != null) {
+            for (AdvocateOfficeMember member : office.getAdvocates()) {
+                if (member.getMemberId() != null) {
+                    memberIds.add(member.getMemberId());
+                }
+            }
+        }
+
+        // Add clerk members
+        if (office.getClerks() != null) {
+            for (AdvocateOfficeMember member : office.getClerks()) {
+                if (member.getMemberId() != null) {
+                    memberIds.add(member.getMemberId());
+                }
+            }
+        }
+        return memberIds;
+    }
 
     private AdvocateDetail getAdvocates(List<AdvocateMapping> representatives) {
 
