@@ -117,7 +117,7 @@ public class TaskUtil {
 
         WorkflowObject workflowObject = new WorkflowObject();
         if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel) || courtCase.getIsLPRCase() ||
-                isCourtWitness(order.getOrderType(), objectMapper.convertValue(taskDetails, JsonNode.class))) {
+                isCourtWitness(order.getOrderType(), objectMapper.convertValue(taskDetails, JsonNode.class)) || MISCELLANEOUS_PROCESS.equalsIgnoreCase(order.getOrderType())) {
             workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
         }
         else {
