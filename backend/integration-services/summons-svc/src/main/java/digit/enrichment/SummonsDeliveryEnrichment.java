@@ -57,6 +57,11 @@ public class SummonsDeliveryEnrichment {
                 docSubType = summonDetails.getDocSubType();
                 partyType = summonDetails.getPartyType();
                 break;
+            case MISCELLANEOUS_PROCESS:
+                docType = summonDetails.getDocType();
+                docSubType = summonDetails.getDocSubType();
+                partyType = summonDetails.getPartyType();
+                break;
         }
 
         return SummonsDelivery.builder()

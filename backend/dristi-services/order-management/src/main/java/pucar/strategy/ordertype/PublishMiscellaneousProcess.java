@@ -86,56 +86,6 @@ public class PublishMiscellaneousProcess implements OrderUpdateStrategy {
 
         // add validation here
         CourtCase courtCase = cases.get(0);
-        log.info("fetching litigant advocate mapping for caseId:{}", courtCase.getId());
-        Map<String, List<String>> litigantAdvocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
-
-        String type = "complainant";
-        if(isWarrantForAccusedWitness(order))
-            type = "respondent";
-        List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, type);
-        List<String> assignees = new ArrayList<>();
-        List<User> uniqueAssignee = new ArrayList<>();
-        Set<String> uniqueSet = new HashSet<>();
-        List<String> complainantIndividualId = new ArrayList<>();
-        Map<String, List<POAHolder>> litigantPoaMapping = caseUtil.getLitigantPoaMapping(courtCase);
-
-        for (Party party : complainants) {
-            String uuid = jsonUtil.getNestedValue(party.getAdditionalDetails(), List.of("uuid"), String.class);
-            if (litigantAdvocateMapping.containsKey(uuid)) {
-                assignees.addAll(litigantAdvocateMapping.get(uuid));
-                assignees.add(uuid);
-            }
-            complainantIndividualId.add(party.getIndividualId());
-            if (litigantPoaMapping.containsKey(party.getIndividualId())) {
-                List<POAHolder> poaHolders = litigantPoaMapping.get(party.getIndividualId());
-                if (poaHolders != null) {
-                    for (POAHolder poaHolder : poaHolders) {
-                        if (poaHolder.getAdditionalDetails() != null) {
-                            String poaUUID = jsonUtil.getNestedValue(poaHolder.getAdditionalDetails(), List.of("uuid"), String.class);
-                            if (poaUUID != null) assignees.add(poaUUID);
-                        }
-                    }
-                }
-            }
-
-        }
-
-        for (String userUUID : assignees) {
-            if (uniqueSet.contains(userUUID)) {
-                continue;
-            }
-            User user = User.builder().uuid(userUUID).build();
-            uniqueAssignee.add(user);
-            uniqueSet.add(userUUID);
-        }
-
-        Long sla = pendingTaskUtil.getStateSla(order.getOrderType());
-        String applicationNumber = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "refApplicationId"), String.class);
-
-        Map<String, Object> additionalDetails = new HashMap<>();
-        additionalDetails.put("applicationNumber", applicationNumber);
-        additionalDetails.put("litigants", complainantIndividualId);
-
 
         String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
         try {
@@ -148,56 +98,9 @@ public class PublishMiscellaneousProcess implements OrderUpdateStrategy {
                 });
                 String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
 
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase,channel);
+                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail, courtCase, channel);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
-
-                // create pending task
-
-                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))
-                        && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail) && !courtCase.getIsLPRCase()) {
-
-                    PendingTask pendingTask = PendingTask.builder()
-                            .name(PAYMENT_PENDING_FOR_WARRANT)
-                            .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
-                            .entityType("order-default")
-                            .status("PAYMENT_PENDING_POLICE")
-                            .assignedTo(uniqueAssignee)
-                            .cnrNumber(courtCase.getCnrNumber())
-                            .filingNumber(courtCase.getFilingNumber())
-                            .caseId(courtCase.getId().toString())
-                            .caseTitle(courtCase.getCaseTitle())
-                            .isCompleted(false)
-                            .stateSla(sla)
-                            .additionalDetails(additionalDetails)
-                            .screenType("home")
-                            .build();
-
-                    pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
-                    ).pendingTask(pendingTask).build());
-
-                    String partyType = getPartyType(order);
-                    String orderType = order.getOrderType();
-                    if (orderType != null && !orderType.isEmpty()) {
-                        orderType = orderType.substring(0, 1).toUpperCase()
-                                + orderType.substring(1).toLowerCase();
-                    }
-                    String days = String.valueOf(StateSlaMap.getStateSlaMap().get(WARRANT));
-                    SMSTemplateData smsTemplateData = SMSTemplateData.builder()
-                            .partyType(partyType)
-                            .orderType(orderType)
-                            .tenantId(courtCase.getTenantId())
-                            .days(days)
-                            .courtCaseNumber(courtCase.getCourtCaseNumber())
-                            .cmpNumber(courtCase.getCmpNumber())
-                            .build();
-                    callNotificationService(orderRequest,PROCESS_FEE_PAYMENT, smsTemplateData, uniqueAssignee);
-                    if(pendingTask.getName().contains(RPAD)){
-                        callNotificationService(orderRequest, RPAD_SUBMISSION, smsTemplateData, uniqueAssignee);
-
-                    }
-                }
             }
-
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
