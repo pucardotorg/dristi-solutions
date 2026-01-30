@@ -75,6 +75,8 @@ public class ServiceConstants {
     public static final String ATTACHMENT = "ATTACHMENT";
     public static final String ISSUESUMMON = "ISSUE_SUMMON";
 
+    public static final String PROCESS_SENT = "PROCESS_SENT";
+
     public static final String SUMMON_SENT = "SUMMON_SENT";
 
     public static final String NOTICE_SENT = "NOTICE_SENT";
@@ -103,6 +105,7 @@ public class ServiceConstants {
 
     public static final String JOIN_CASE = "JOIN_CASE";
     public static final String JOIN_CASE_PAYMENT = "JOIN_CASE_PAYMENT";
+    public static final String MISCELLANEOUS_PROCESS = "MISCELLANEOUS_PROCESS";
     public static final String APPROVED = "APPROVED";
     public static final String REJECTED = "REJECTED";
     public static final String PENDING_APPROVAL = "PENDING_APPROVAL";

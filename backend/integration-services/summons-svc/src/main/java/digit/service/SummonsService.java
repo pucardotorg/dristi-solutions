@@ -130,7 +130,7 @@ public class SummonsService {
                 .task(task)
                 .requestInfo(request.getRequestInfo()).build();
 
-        if (!(taskType.equalsIgnoreCase(WARRANT) || taskType.equalsIgnoreCase(PROCLAMATION) || taskType.equalsIgnoreCase(ATTACHMENT))) {
+        if (!(MISCELLANEOUS_PROCESS.equalsIgnoreCase(taskType) || taskType.equalsIgnoreCase(WARRANT) || taskType.equalsIgnoreCase(PROCLAMATION) || taskType.equalsIgnoreCase(ATTACHMENT))) {
             String docSubType = getDocSubType(taskType, task.getTaskDetails());
             String noticeType = getNoticeType(task.getTaskDetails());
             String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true, noticeType, null);
@@ -384,6 +384,7 @@ public class SummonsService {
             case NOTICE -> taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
             case PROCLAMATION -> taskDetails.getProclamationDetails() != null ? taskDetails.getProclamationDetails().getDocSubType() : null;
             case ATTACHMENT -> taskDetails.getAttachmentDetails() != null ? taskDetails.getAttachmentDetails().getDocSubType() : null;
+            case MISCELLANEOUS_PROCESS -> taskDetails.getAttachmentDetails() != null ? taskDetails.getAttachmentDetails().getDocSubType() : null;
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
         };
     }

@@ -57,6 +57,7 @@ public class ServiceConstants {
     public static final String NOTICE = "NOTICE";
     public static final String PROCLAMATION = "PROCLAMATION";
     public static final String ATTACHMENT = "ATTACHMENT";
+    public static final String MISCELLANEOUS_PROCESS = "MISCELLANEOUS_PROCESS";
     public static final String ACCUSED = "ACCUSED";
     public static final String WITNESS = "WITNESS";
     public static final String BAILABLE = "BAILABLE";
