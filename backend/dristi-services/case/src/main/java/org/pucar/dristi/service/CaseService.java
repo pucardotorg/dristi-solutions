@@ -544,16 +544,28 @@ public class CaseService {
             caseRequest.getCases().setDocuments(isActiveTrueDocuments);
             caseRequest.getCases().setRepresentatives(activeAdvocateMapping);
             caseRequest.getCases().setLitigants(activeParty);
-            Optional.ofNullable(caseRequest.getCases().getAdvocateOffices())
-                    .orElse(Collections.emptyList())
-                    .forEach(office -> {
-                        office.setAdvocates(office.getAdvocates().stream()
-                                .filter(AdvocateOfficeMember::getIsActive)
-                                .toList());
-                        office.setClerks(office.getClerks().stream()
-                                .filter(AdvocateOfficeMember::getIsActive)
-                                .toList());
-                    });
+            caseRequest.getCases().setAdvocateOffices(
+                    Optional.ofNullable(caseRequest.getCases().getAdvocateOffices())
+                            .orElse(Collections.emptyList())
+                            .stream()
+                            .peek(office -> {
+                                office.setAdvocates(
+                                        office.getAdvocates().stream()
+                                                .filter(AdvocateOfficeMember::getIsActive)
+                                                .toList()
+                                );
+                                office.setClerks(
+                                        office.getClerks().stream()
+                                                .filter(AdvocateOfficeMember::getIsActive)
+                                                .toList()
+                                );
+                            })
+                            .filter(office ->
+                                    !office.getAdvocates().isEmpty() || !office.getClerks().isEmpty()
+                            )
+                            .toList()
+            );
+
 
             log.info("Updating the case in redis cache after filtering the documents, advocates, litigants, poa holders and advocate offices : {}", caseRequest.getCases().getId());
 

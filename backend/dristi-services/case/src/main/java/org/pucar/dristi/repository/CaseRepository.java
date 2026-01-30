@@ -128,15 +128,27 @@ public class CaseRepository {
                 preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),
                 advocateOfficeCaseMemberRowMapper);
 
-        Map<String, List<AdvocateOfficeCaseMember>> rowsByOfficeAdvocateId = Objects.requireNonNull(rows)
+        // Group by case ID first, then by advocate ID within each case
+        Map<UUID, List<AdvocateOfficeCaseMember>> rowsByCaseId = Objects.requireNonNull(rows)
                 .stream()
-                .collect(Collectors.groupingBy(r -> r.getOfficeAdvocateId().toString()));
+                .collect(Collectors.groupingBy(AdvocateOfficeCaseMember::getCaseId));
 
         caseCriteria.getResponseList().forEach(courtCase -> {
             if (courtCase.getRepresentatives() == null || courtCase.getRepresentatives().isEmpty()) {
                 return;
             }
 
+            // Get advocate office members only for this specific case
+            List<AdvocateOfficeCaseMember> caseAdvocateOfficeMembers = rowsByCaseId.getOrDefault(courtCase.getId(), List.of());
+            
+            if (caseAdvocateOfficeMembers.isEmpty()) {
+                courtCase.setAdvocateOffices(new ArrayList<>());
+                return;
+            }
+
+            // Group the case-specific members by advocate ID
+            Map<String, List<AdvocateOfficeCaseMember>> membersByAdvocateId = caseAdvocateOfficeMembers.stream()
+                    .collect(Collectors.groupingBy(r -> r.getOfficeAdvocateId().toString()));
 
             Map<String, AdvocateOffice> officeMap = new LinkedHashMap<>();
             for (AdvocateMapping rep : courtCase.getRepresentatives()) {
@@ -145,13 +157,18 @@ public class CaseRepository {
                     continue;
                 }
 
-                List<AdvocateOfficeCaseMember> officeRows = rowsByOfficeAdvocateId.getOrDefault(advocateId, List.of());
+                // Only create office if there are actual database results for this advocate and case
+                List<AdvocateOfficeCaseMember> officeRows = membersByAdvocateId.get(advocateId);
+                if (officeRows == null || officeRows.isEmpty()) {
+                    continue;
+                }
 
                 AdvocateOffice office = officeMap.computeIfAbsent(advocateId, k -> AdvocateOffice.builder()
                         .officeAdvocateId(advocateId)
                         .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(objectMapper, rep))
                         .officeAdvocateUserUuid(extractAdvocateUuidFromAdditionalDetails(objectMapper, rep))
                         .build());
+                
                 // Separate advocates and clerks based on memberType
                 List<AdvocateOfficeMember> advocates = officeRows.stream()
                         .filter(r -> "ADVOCATE".equals(r.getMemberType().toString()))
