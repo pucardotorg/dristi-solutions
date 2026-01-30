@@ -369,7 +369,7 @@ const AddOrderTypeModal = ({
                     }),
                   }));
                 } else if (isReferralToADR) {
-                  const mediationKeys = ["mediationCentre", "mediationNote", "modeOfSigning", "dateOfEndADR"];
+                  const mediationKeys = ["mediationCentre", "mediationNote", "dateOfEndADR"];
                   const hideForMediationEndKeys = ["dateOfEndADR"];
                   effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
                     ...conf,

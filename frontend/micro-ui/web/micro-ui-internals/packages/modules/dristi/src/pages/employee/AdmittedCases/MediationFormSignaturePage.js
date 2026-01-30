@@ -510,7 +510,7 @@ const MediationFormSignaturePage = () => {
                     onButtonClick={() => downloadPdf(tenantId, signatureDocumentId || mediationFileStoreId)}
                   />
                 )}
-                {((isMediationCreator && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_UPLOAD) || isCitizen) && (
+                {((isMediationCreator && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_E_SIGN) || isCitizen) && (
                   <Button
                     label={isMediationCreator ? t("UPLOAD_SIGNED_COPY_MEDIATION") : t("BACK_MEDIATION")}
                     variation={"secondary"}
