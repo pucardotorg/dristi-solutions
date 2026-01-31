@@ -307,6 +307,9 @@ public class CaseService {
         try {
             validator.validateCaseRegistration(body);
 
+            // Validate that user is authorized to file on behalf of the advocate
+            validator.validateAdvocateAuthorization(body.getRequestInfo(), body.getCases());
+
             enrichmentUtil.enrichCaseRegistrationOnCreate(body);
 
             workflowService.updateWorkflowStatus(body);
@@ -412,6 +415,8 @@ public class CaseService {
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
+            // Enrich advocate office case members
+            enrichmentUtil.enrichAdvocateOffices(caseRequest, caseRequest.getCases().getAuditdetails());
 
             // conditional enrichment using strategy
             enrichmentService.enrichCourtCase(caseRequest);
@@ -539,8 +544,30 @@ public class CaseService {
             caseRequest.getCases().setDocuments(isActiveTrueDocuments);
             caseRequest.getCases().setRepresentatives(activeAdvocateMapping);
             caseRequest.getCases().setLitigants(activeParty);
+            caseRequest.getCases().setAdvocateOffices(
+                    Optional.ofNullable(caseRequest.getCases().getAdvocateOffices())
+                            .orElse(Collections.emptyList())
+                            .stream()
+                            .peek(office -> {
+                                office.setAdvocates(
+                                        office.getAdvocates().stream()
+                                                .filter(AdvocateOfficeMember::getIsActive)
+                                                .toList()
+                                );
+                                office.setClerks(
+                                        office.getClerks().stream()
+                                                .filter(AdvocateOfficeMember::getIsActive)
+                                                .toList()
+                                );
+                            })
+                            .filter(office ->
+                                    !office.getAdvocates().isEmpty() || !office.getClerks().isEmpty()
+                            )
+                            .toList()
+            );
 
-            log.info("Updating the case in redis cache after filtering the documents, advocates and litigants : {}", caseRequest.getCases().getId());
+
+            log.info("Updating the case in redis cache after filtering the documents, advocates, litigants, poa holders and advocate offices : {}", caseRequest.getCases().getId());
 
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
@@ -2248,6 +2275,13 @@ public class CaseService {
                 courtCase.setAdditionalDetails(modifyAdditionalDetails(joinCaseRequest.getRequestInfo(), courtCase.getAdditionalDetails(), representingJoinCase, joinCaseData.getRepresentative()));
             }
         });
+
+        // Enrich advocate office members for the joining advocate
+        CaseRequest caseRequestForOffice = CaseRequest.builder()
+                .requestInfo(joinCaseRequest.getRequestInfo())
+                .cases(caseObj)
+                .build();
+        enrichmentUtil.enrichAdvocateOffices(caseRequestForOffice, auditDetails);
 
         log.info("Pushing join case representative details :: {}", caseObj);
         producer.push(config.getRepresentativeJoinCaseTopic(), caseObj);
@@ -5071,6 +5105,15 @@ public class CaseService {
                         inactivateOldAdvocate(replacementDetails, courtCase);
                     }
                 }
+
+                // Enrich advocate office case members for the joining advocate
+                CaseRequest caseRequestForOffice = CaseRequest.builder()
+                        .requestInfo(requestInfo)
+                        .cases(courtCase)
+                        .build();
+                enrichmentUtil.enrichAdvocateOffices(caseRequestForOffice, auditDetails);
+
+                courtCaseObj.setAdvocateOffices(caseRequestForOffice.getCases().getAdvocateOffices());
 
                 producer.push(config.getRepresentativeJoinCaseTopic(), courtCaseObj);
 

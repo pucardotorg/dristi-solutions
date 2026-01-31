@@ -99,7 +99,7 @@
     "e-sign-svc": {
         "service_group": "core-services",
         "db_source_path": "backend/integration-services/e-sign-svc/src/main/resources/db",
-        "dockerfile_path": "build/maven/Dockerfile.v2",
+        "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/integration-services/e-sign-svc",
         "language": "java",
         "version": "17"

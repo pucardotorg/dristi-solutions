@@ -2719,27 +2719,18 @@ export const configsAdvancementOrAdjournment = [
         },
       },
       {
-        label: "HAVE_ALL_PARTIES_AGREED",
+        inline: true,
+        label: "ORIGINAL_HEARING_DATE",
+        disable: true,
         isMandatory: true,
-        key: "isAllPartiesAgreed",
-        type: "radio",
+        key: "initialHearingPurpose",
+        schemaKeyPath: "applicationDetails.initialHearingPurpose",
+        transformer: "text",
+        type: "text",
         populators: {
-          name: "isAllPartiesAgreed",
-          optionsKey: "name",
+          name: "initialHearingPurpose",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          required: true,
-          isMandatory: true,
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-          options: [
-            {
-              code: "YES",
-              name: "YES",
-            },
-            {
-              code: "NO",
-              name: "NO",
-            },
-          ],
+          customStyle: { display: "none" },
         },
       },
       {
@@ -2768,6 +2759,30 @@ export const configsAdvancementOrAdjournment = [
           validation: {},
         },
         withoutLabel: true,
+      },
+      {
+        label: "HAVE_ALL_PARTIES_AGREED",
+        isMandatory: true,
+        key: "isAllPartiesAgreed",
+        type: "radio",
+        populators: {
+          name: "isAllPartiesAgreed",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+          options: [
+            {
+              code: "YES",
+              name: "YES",
+            },
+            {
+              code: "NO",
+              name: "NO",
+            },
+          ],
+        },
       },
       {
         inline: true,

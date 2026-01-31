@@ -684,4 +684,19 @@ public class CaseRepositoryV2 {
             courtCase.getLinkedCases().forEach(linkedCase -> idsLinkedCases.add(linkedCase.getId().toString()));
         }
     }
+
+    public boolean validateAdvocateOfficeCaseMember(String officeAdvocateId, String memberId) {
+        try {
+            String query = "SELECT COUNT(*) FROM dristi_advocate_office_case_member " +
+                    "WHERE office_advocate_id = ? AND member_id = ? AND is_active = true";
+            
+            Integer count = jdbcTemplate.queryForObject(query, Integer.class, officeAdvocateId, memberId);
+            
+            return count > 0;
+        } catch (Exception e) {
+            log.error("Error validating advocate office case member for officeAdvocateId: {}, memberId: {}", 
+                officeAdvocateId, memberId, e);
+            return false;
+        }
+    }
 }

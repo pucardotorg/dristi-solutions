@@ -7,6 +7,7 @@ import ReactTooltip from "react-tooltip";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import DOMPurify from "dompurify";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import { getNotUploadedFileName } from "../Utils";
 
 const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
 
@@ -269,7 +270,7 @@ const CustomReviewCardRow = ({
                       name,
                       dataIndex,
                       Array.isArray(value) ? type : value,
-                      Array.isArray(value) ? [...value, type] : [value, type]
+                      Array.isArray(value) ? [...value, type, ...(badgeType ? [badgeType] : [])] : [value, type]
                     );
                   }}
                   key={dataIndex}
@@ -741,22 +742,20 @@ const CustomReviewCardRow = ({
         if (isPrevScrutiny && (!disableScrutiny || enableScrutinyField)) {
           showFlagIcon = prevDataError?.[type]?.FSOError;
         }
-        value?.forEach((val) => {
-          const getFile = extractValue(data, val);
-          if (getFile && getFile?.length > 0) {
-            valuesAvailable.push(val);
-          }
-        });
-        const files = value?.map((value) => extractValue(data, value)) || [];
-        let hasImages = false;
-        files.forEach((file) => {
-          if (file && file?.length > 0) {
-            hasImages = true;
-          }
-        });
-        if (!hasImages) {
-          return null;
-        }
+        const files =
+          value?.map((value) => {
+            valuesAvailable.push(value);
+            const getFile = extractValue(data, value);
+            if (getFile) {
+              return getFile;
+            } else if (value !== "SelectUploadDocWithName") {
+              return {
+                fileName: t(getNotUploadedFileName(value)),
+              };
+            } else {
+              return [];
+            }
+          }) || [];
         return (
           <div className={`image-main ${bgclassname}`}>
             <div className={`image ${!isScrutiny ? "column" : ""}`}>
@@ -838,7 +837,7 @@ const CustomReviewCardRow = ({
                             return null;
                           }
                         })
-                      ) : file ? (
+                      ) : file?.fileStore ? (
                         <div
                           style={{ cursor: "pointer" }}
                           onClick={() => {
@@ -856,6 +855,31 @@ const CustomReviewCardRow = ({
                             documentName={data?.fileName}
                             preview
                           />
+                        </div>
+                      ) : file?.fileName ? (
+                        <div
+                          key={fileIndex}
+                          style={{ display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer" }}
+                          onClick={() => {
+                            handleImageClick(configKey, name, dataIndex, value[fileIndex], file, [value[fileIndex]], dataError);
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              fontSize: "16px",
+                              color: "#888",
+                              height: "238px",
+                              padding: "16px",
+                              boxSizing: "border-box",
+                              marginBottom: "16px",
+                              border: "1px solid #ccc",
+                            }}
+                          >
+                            {t("NOT_UPLOADED")}
+                          </div>
+                          <div style={{ fontSize: "14px", color: "#555" }}>{file?.fileName}</div>
                         </div>
                       ) : null
                     )

@@ -30,6 +30,22 @@ export const ImageModal = ({
   }
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 
+  const handleLocalDownload = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const a = document.createElement("a");
+      a.href = reader.result;
+      a.download = file.name || "document";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
   const zoomIn = () => {
     setZoom(zoom + 0.1);
   };
@@ -79,7 +95,18 @@ export const ImageModal = ({
           </div>
         )}
 
-        <div className="close-icon" onClick={() => downloadPdf(tenantId, imageInfo?.data?.fileStore)} style={{ cursor: "pointer" }}>
+        <div
+          className="close-icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (imageInfo?.data?.fileStore) {
+              downloadPdf(tenantId, imageInfo?.data?.fileStore);
+            } else if (selectedDocs?.length > 0) {
+              handleLocalDownload(selectedDocs[0]);
+            }
+          }}
+          style={{ cursor: "pointer" }}
+        >
           <DownloadIcon size={20} />
         </div>
         <div className="close-icon" onClick={zoomIn} style={{ cursor: "pointer" }}>

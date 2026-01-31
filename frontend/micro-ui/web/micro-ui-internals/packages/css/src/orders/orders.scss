@@ -378,14 +378,14 @@
   }
 }
 
-.success-modal{
+.success-modal {
   &.popup-module {
     .popup-module-main {
       .popup-module-action-bar {
         .selector-button-border {
           gap: 6px;
           h2 {
-           width: fit-content !important;
+            width: fit-content !important;
           }
         }
       }
@@ -1177,12 +1177,23 @@
 
   .new-order {
     padding: 24px !important;
-  }
-  .order-type-action{
-      .submit-bar-disabled {
-        width:164px !important;
+
+    .label-field-pair {
+      .field {
+        .select-wrap {
+          .options-card {
+            margin-top: 42px;
+            max-height: 220px !important;
+          }
+        }
       }
     }
+  }
+  .order-type-action {
+    .submit-bar-disabled {
+      width: 164px !important;
+    }
+  }
 }
 
 .order-type-form-modal {
@@ -1989,7 +2000,7 @@
           .employee-card-input {
             margin-bottom: 0px !important;
 
-            &::placeholder{
+            &::placeholder {
               color: #b1b4b6;
             }
           }
@@ -2123,10 +2134,10 @@
   }
 }
 
-.text-validaion-input{
-  .text-input{
-    .employee-card-input{
-      &::placeholder{
+.text-validaion-input {
+  .text-input {
+    .employee-card-input {
+      &::placeholder {
         color: #b1b4b6;
       }
     }

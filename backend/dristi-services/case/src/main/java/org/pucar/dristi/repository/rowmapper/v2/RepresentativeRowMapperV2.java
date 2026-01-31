@@ -24,6 +24,7 @@ public class RepresentativeRowMapperV2 implements ResultSetExtractor<Map<UUID, L
                 RepresentativeV2 representativeV2 = RepresentativeV2.builder()
                         .advocateId(rs.getString("advocateid"))
                         .id(rs.getString("id"))
+                        .advocateFilingStatus(rs.getString("advocate_filing_status"))
                         .build();
 
                 PGobject pgObject = (PGobject) rs.getObject("additionaldetails");

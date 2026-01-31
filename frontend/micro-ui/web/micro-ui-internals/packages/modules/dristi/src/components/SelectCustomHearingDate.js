@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import { EditPencilIcon } from "../icons/svgIndex";
 
 const toInternal = (dateStr) => {
   if (!dateStr || typeof dateStr !== "string") return dateStr;
@@ -20,7 +21,7 @@ const formatToUI = (dateStr) => {
   return dateStr;
 };
 
-const Chip = ({ label, isSelected, handleClick }) => {
+const Chip = ({ label, isSelected, handleClick, icon }) => {
   const chipStyle = {
     backgroundColor: isSelected ? "#ecf3fd" : "#FAFAFA",
     color: "#505A5F",
@@ -34,11 +35,13 @@ const Chip = ({ label, isSelected, handleClick }) => {
     justifyContent: "center",
     minWidth: "150px",
     fontWeight: isSelected ? "700" : "400",
+    gap: "10px",
   };
 
   return (
     <div style={chipStyle} onClick={handleClick}>
       {formatToUI(label)}
+      {icon && <span>{icon}</span>}
     </div>
   );
 };
@@ -61,9 +64,9 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
   });
 
   const suggestedDates = useMemo(() => config?.populators?.inputs?.[0]?.options || [], [config]);
-  
+
   const internalSuggestedDates = useMemo(() => suggestedDates.map((d) => toInternal(d)), [suggestedDates]);
-  
+
   const selectedValue = formData?.[config?.key] || "";
 
   const isCustomDateSelected = useMemo(() => {
@@ -88,7 +91,7 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
     const d = String(date.getDate()).padStart(2, "0");
     const m = String(date.getMonth() + 1).padStart(2, "0");
     const y = date.getFullYear();
-    
+
     const formattedForCheck = `${d}-${m}-${y}`;
     const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
 
@@ -134,20 +137,14 @@ function SelectCustomHearingDate({ t, config, onSelect, formData = {}, errors })
       <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", borderRadius: "4px", paddingTop: "10px", backgroundColor: "#FBFAFA" }}>
         {suggestedDates.map((date, index) => {
           const internalDate = internalSuggestedDates[index];
-          return (
-            <Chip 
-              key={index} 
-              label={date} 
-              isSelected={selectedValue === internalDate}
-              handleClick={() => handleChipClick(date)} 
-            />
-          );
+          return <Chip key={index} label={date} isSelected={selectedValue === internalDate} handleClick={() => handleChipClick(date)} />;
         })}
 
         <Chip
           label={isCustomDateSelected ? formatToUI(selectedValue) : t("SELECT_ANOTHER_DATE")}
           isSelected={isCustomDateSelected}
           handleClick={() => setShowPicker(true)}
+          icon={isCustomDateSelected ? <EditPencilIcon /> : null}
         />
       </div>
 

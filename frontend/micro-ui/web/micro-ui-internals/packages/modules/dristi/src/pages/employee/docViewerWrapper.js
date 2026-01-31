@@ -89,22 +89,6 @@ const DocViewerWrapper = ({
         fileName: file?.name,
       }));
 
-  const handleLocalDownload = (file) => {
-    if (!file) return;
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const a = document.createElement("a");
-      a.href = reader.result;
-      a.download = file.name || "document";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    };
-
-    reader.readAsDataURL(file);
-  };
-
   return (
     <div className="docviewer-wrapper" id="docviewer-id">
       <Card
@@ -232,31 +216,7 @@ const DocViewerWrapper = ({
       </Card>
 
       {/* DOWNLOAD LINK                                         */}
-      {(showDownloadOption || !fileStoreId) &&
-        (fileStoreId ? (
-          <AuthenticatedLink t={t} uri={uri} displayFilename={displayFilename} />
-        ) : (
-          selectedDocs?.length > 0 && (
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                handleLocalDownload(selectedDocs[0]);
-              }}
-            >
-              {/* Hiding the previous download icon when download option is shown for local files */}
-              <style>
-                {`
-                  .header-wrap .header-end .close-icon:first-child {
-                    display: none !important;
-                  }
-              `}
-              </style>
-              <div className="custom-download-icon">
-                <DownloadImgIcon />
-              </div>
-            </div>
-          )
-        ))}
+      {showDownloadOption && fileStoreId && <AuthenticatedLink t={t} uri={uri} displayFilename={displayFilename} />}
 
       {/* DOCUMENT NAME                                         */}
       {documentName && (

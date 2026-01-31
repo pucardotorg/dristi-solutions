@@ -5,6 +5,8 @@ const {
   search_sunbirdrc_credential_service,
   create_pdf,
   search_advocate,
+  search_message,
+  search_hearing,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { cleanName } = require("./cleanName");
@@ -90,6 +92,24 @@ async function applicationRescheduleHearing(
       return renderError(res, "Court case not found", 404);
     }
 
+    const resMessage = await handleApiCall(
+      () =>
+        search_message(
+          tenantId,
+          "rainmaker-submissions,rainmaker-common",
+          "en_IN",
+          requestInfo
+        ),
+      "Failed to query Localized messages"
+    );
+    const messages = resMessage?.data?.messages || [];
+    const messagesMap =
+      messages?.length > 0
+        ? Object.fromEntries(
+            messages.map(({ code, message }) => [code, message])
+          )
+        : {};
+    
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     let advocateName = "";
     const advocateIndividualId =
@@ -264,6 +284,8 @@ async function applicationRescheduleHearing(
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const purposeOfHearing = application?.applicationDetails?.initialHearingPurpose || "";
+    const localizedPurposeOfHearing = messagesMap?.[purposeOfHearing] || purposeOfHearing;
 
     const data = {
       Data: [
@@ -285,6 +307,7 @@ async function applicationRescheduleHearing(
           // date: formattedToday,
           partyName: partyName,
           qrCodeUrl: base64Url,
+          purposeOfHearing: localizedPurposeOfHearing,
         },
       ],
     };
