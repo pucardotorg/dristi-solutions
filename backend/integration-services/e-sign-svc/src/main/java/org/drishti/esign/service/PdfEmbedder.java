@@ -2,6 +2,7 @@ package org.drishti.esign.service;
 
 import com.itextpdf.forms.PdfAcroForm;
 import com.itextpdf.forms.fields.PdfSignatureFormField;
+import com.itextpdf.kernel.pdf.annot.PdfWidgetAnnotation;
 import com.itextpdf.signatures.PdfSigner;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Rectangle;
@@ -464,6 +465,66 @@ public class PdfEmbedder {
         return hashDocument;
     }
 
+    public String pdfSignerMultiPageV2_4(Resource resource, ESignParameter eSignParameter) {
+        log.info("Method=pdfSignerMultiPageV2_4 ,Result=InProgress ,filestoreId={}", eSignParameter.getFileStoreId());
+        String hashDocument;
+
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            com.itextpdf.kernel.pdf.PdfReader reader = new com.itextpdf.kernel.pdf.PdfReader(resource.getInputStream());
+            com.itextpdf.kernel.pdf.PdfWriter writer = new com.itextpdf.kernel.pdf.PdfWriter(baos);
+            com.itextpdf.kernel.pdf.PdfDocument pdfDoc = new com.itextpdf.kernel.pdf.PdfDocument(reader, writer);
+
+            int totalPages = pdfDoc.getNumberOfPages();
+            List<Integer> pagesToSign = new ArrayList<>();
+
+            if (Boolean.TRUE.equals(eSignParameter.getMultiPageSigning())) {
+                if (Boolean.TRUE.equals(eSignParameter.getApplyToAllPages())) {
+                    for (int i = 1; i <= totalPages; i++) pagesToSign.add(i);
+                } else if (eSignParameter.getSpecificPages() != null && !eSignParameter.getSpecificPages().isEmpty()) {
+                    pagesToSign.addAll(eSignParameter.getSpecificPages());
+                }
+            } else {
+                pagesToSign.add(1);
+            }
+
+            String fieldName = eSignParameter.getSignPlaceHolder() != null
+                    ? eSignParameter.getSignPlaceHolder()
+                    : "Signature";
+
+            PdfAcroForm acroForm = PdfAcroForm.getAcroForm(pdfDoc, true);
+            PdfSignatureFormField signatureField = PdfSignatureFormField.createSignature(pdfDoc);
+            signatureField.setFieldName(fieldName);
+
+            float x = 350, y = 50, width = 200, height = 100;
+
+            for (Integer pageNum : pagesToSign) {
+                com.itextpdf.kernel.geom.Rectangle rect =
+                        new com.itextpdf.kernel.geom.Rectangle(x, y, width, height);
+                PdfWidgetAnnotation widget = new PdfWidgetAnnotation(rect);
+                widget.setPage(pdfDoc.getPage(pageNum));
+                widget.setHighlightMode(com.itextpdf.kernel.pdf.annot.PdfAnnotation.HIGHLIGHT_INVERT);
+
+                signatureField.addKid(widget);
+                pdfDoc.getPage(pageNum).addAnnotation(widget);
+            }
+
+            acroForm.addField(signatureField);
+
+            pdfDoc.close(); // finalize placeholders
+
+            byte[] preparedPdfBytes = baos.toByteArray();
+            hashDocument = org.apache.commons.codec.digest.DigestUtils.sha256Hex(preparedPdfBytes);
+
+            log.info("Multi-page placeholders created, hashDocument={}", hashDocument);
+            return hashDocument;
+
+        } catch (Exception e) {
+            log.error("Error creating multi-page PDF placeholders: {}", e.getMessage(), e);
+            throw new CustomException("SIGNATURE_PLACEHOLDER_EXCEPTION",
+                    "Error occurred while creating multi-page signature placeholders");
+        }
+    }
 
     /**
      * Multi-page signing: Embed signature in multi-widget field
@@ -473,7 +534,6 @@ public class PdfEmbedder {
         log.info("Method=signPdfMultiPageWithDSAndReturnMultipartFileV2 ,Result=Inprogress ,filestoreId={}", eSignParameter.getFileStoreId());
         
         try {
-            int contentEstimated = 8192;
 
             PdfReader reader = new PdfReader(resource.getInputStream());
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -481,14 +541,20 @@ public class PdfEmbedder {
             // Parse PKCS7 signature from external service response
             String pkcsResponse = new XmlSigning().parseXml(response.trim());
             byte[] signBytes = Base64.getDecoder().decode(pkcsResponse);
+
+
+            int contentEstimated = Math.max(8192, signBytes.length + 1024);
             byte[] paddedSig = new byte[contentEstimated];
             System.arraycopy(signBytes, 0, paddedSig, 0, signBytes.length);
             
             MyExternalSignatureContainer container = new MyExternalSignatureContainer(paddedSig, null, null);
 
+            String fieldName = eSignParameter.getSignPlaceHolder() != null
+                    ? eSignParameter.getSignPlaceHolder()
+                    : "Signature";
             // Embed signature into the multi-widget field
             // This single operation signs ALL widgets across all pages
-            MakeSignature.signDeferred(reader, eSignParameter.getSignPlaceHolder(), baos, container);
+            MakeSignature.signDeferred(reader, fieldName, baos, container);
 
             return new ByteArrayMultipartFile(FILE_NAME, baos.toByteArray());
 
