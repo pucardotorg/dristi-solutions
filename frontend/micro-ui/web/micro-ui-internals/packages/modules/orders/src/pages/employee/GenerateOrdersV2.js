@@ -286,6 +286,18 @@ const GenerateOrdersV2 = () => {
   const hasCalledApplicationAction = useRef(false);
   const [respondents, setRespondents] = useState([]);
 
+  const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }]);
+  const sortedPoliceStations = useMemo(() => {
+    const stations = policeStationData?.case?.PoliceStation || [];
+    return [...stations].sort((a, b) => {
+      const nameA = (a?.name || "").toUpperCase();
+      const nameB = (b?.name || "").toUpperCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
+  }, [policeStationData]);
+
   const fetchCaseDetails = async () => {
     try {
       setIsCaseDetailsLoading(true);
@@ -4887,6 +4899,10 @@ const GenerateOrdersV2 = () => {
           setWarrantSubtypeCode={setWarrantSubtypeCode}
           bailBondRequired={bailBondRequired}
           setBailBondRequired={setBailBondRequired}
+          policeStationData={sortedPoliceStations}
+          complainants={complainants}
+          respondents={respondents}
+          caseDetails={caseDetails}
         />
       )}
       {showMandatoryFieldsErrorModal?.showModal && (

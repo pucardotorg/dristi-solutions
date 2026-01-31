@@ -3,7 +3,7 @@ import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import isEqual from "lodash/isEqual";
-import { CloseBtn, Heading } from "../utils/orderUtils";
+import { _getPartiesOptions, CloseBtn, Heading } from "../utils/orderUtils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
@@ -37,6 +37,10 @@ const AddOrderTypeModal = ({
   persistedDefaultValues,
   bailBondRequired,
   setBailBondRequired,
+  policeStationData,
+  respondents,
+  complainants,
+  caseDetails,
 }) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -341,6 +345,26 @@ const AddOrderTypeModal = ({
     return natureOfDisposal;
   }, [newCurrentOrder]);
 
+  const addresseeOptions = useMemo(() => {
+    if (orderType?.code === "MISCELLANEOUS_PROCESS") {
+      const option = formdata?.processTemplate?.addressee;
+
+      switch (option) {
+        case "POLICE":
+          return policeStationData;
+        case "RESPONDENT":
+          return respondents;
+        case "COMPLAINTANT":
+          return complainants;
+        case "OTHER":
+          return [...respondents, ...complainants];
+        default:
+          return [];
+      }
+    }
+    return [];
+  }, [complainants, formdata, orderType, policeStationData, respondents]);
+
   return (
     <React.Fragment>
       <Modal
@@ -355,6 +379,7 @@ const AddOrderTypeModal = ({
               {(() => {
                 const isAcceptBail = orderType?.code === "ACCEPT_BAIL";
                 const isReferralToADR = orderType?.code === "REFERRAL_CASE_TO_ADR";
+                const isMiscellaneousTemplate = orderType?.code === "MISCELLANEOUS_PROCESS";
                 const bt = formdata?.bailType;
                 const bailTypeCode = (typeof bt === "string" ? bt : bt?.code || bt?.type || "").toUpperCase();
                 const showSuretyFields = !isAcceptBail || bailTypeCode === "SURETY";
@@ -385,6 +410,33 @@ const AddOrderTypeModal = ({
                           hideInForm: shouldHide,
                         },
                       };
+                    }),
+                  }));
+                } else if (isMiscellaneousTemplate) {
+                  effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
+                    ...conf,
+                    body: conf?.body?.map((field) => {
+                      if (field?.key === "selectAddresee") {
+                        return {
+                          ...field,
+                          populators: {
+                            ...field?.populators,
+                            options: addresseeOptions,
+                          },
+                        };
+                      }
+
+                      if (field?.key === "selectedPartiesDetails") {
+                        return {
+                          ...field,
+                          populators: {
+                            ...field?.populators,
+                            hideInForm: formdata?.processTemplate?.addressee === "POLICE" ? false : true,
+                            options: _getPartiesOptions(caseDetails) || [],
+                          },
+                        };
+                      }
+                      return field;
                     }),
                   }));
                 }

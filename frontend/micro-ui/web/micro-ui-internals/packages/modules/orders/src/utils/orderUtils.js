@@ -1,5 +1,6 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import React from "react";
+import { formatAddress, mapAddressDetails } from ".";
 
 export const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -584,3 +585,41 @@ export const compositeOrderAllowedTypes = [
     unAllowedOrderTypes: ["TAKE_COGNIZANCE", "DISMISS_CASE"],
   },
 ];
+
+export const _getPartiesOptions = (caseDetails) => {
+  if (!caseDetails?.additionalDetails) return [];
+
+  const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
+  const updatedRespondentData = respondentData.map((item, index) => {
+    const mappedAddresses = mapAddressDetails(item?.data?.addressDetails) || [];
+    const formattedAddressOptions = mappedAddresses.map((addr) => ({
+      partyUniqueId: item?.uniqueId,
+      id: addr?.id,
+      formattedAddress: formatAddress ? formatAddress(addr) : `${addr.locality}, ${addr.city}, ${addr.pincode}`,
+      locality: addr?.address?.locality || addr?.locality || "",
+      city: addr?.address?.city || addr?.city || "",
+      district: addr?.address?.district || addr?.district || "",
+      pincode: addr?.address?.pincode || addr?.pincode || "",
+      state: addr?.address?.state || addr?.state || "",
+    }));
+    return {
+      ...item,
+      data: {
+        ...item?.data,
+        name: `${item?.data?.respondentFirstName || ""} ${item?.data?.respondentMiddleName || ""} ${item?.data?.respondentLastName || ""}`.trim(),
+        firstName: item?.data?.respondentFirstName || "",
+        lastName: item?.data?.respondentLastName || "",
+        middleName: item?.data?.respondentMiddleName || "",
+        partyType: "Respondent",
+        phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
+        email: item?.data?.emails?.emailId || [],
+        uuid: item?.data?.uuid,
+        partyIndex: `Respondent_${index}`,
+        uniqueId: item?.uniqueId,
+      },
+      address: formattedAddressOptions,
+    };
+  });
+
+  return updatedRespondentData;
+};

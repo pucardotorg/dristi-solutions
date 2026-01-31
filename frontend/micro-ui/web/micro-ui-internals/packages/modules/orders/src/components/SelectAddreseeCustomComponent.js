@@ -5,21 +5,29 @@ import React, { useMemo } from "react";
 const SelectAddreseeCustomComponent = ({ t, config, formData = {}, onSelect, errors }) => {
   const inputs = useMemo(
     () =>
-      config?.populators?.inputs || [
+      config?.populators || [
         {
           name: "select address",
           type: "dropdown",
           disbale: true,
         },
       ],
-    [config?.populators?.inputs]
+    [config?.populators]
   );
+
+  const addresee = useMemo(() => {
+    return formData?.processTemplate?.addressee;
+  }, [formData]);
 
   const addressList = useMemo(() => {
     return formData?.[config?.key] || [{}];
   }, [formData, config?.key]);
 
-  const handleSelect = () => {}; //todo:  need to work on
+  const handleSelect = (index, value) => {
+    const newList = [...addressList];
+    newList[index] = value;
+    onSelect(config.key, newList);
+  };
 
   const removeAddress = (index) => {
     const newList = addressList?.filter((_, i) => i !== index);
@@ -35,11 +43,12 @@ const SelectAddreseeCustomComponent = ({ t, config, formData = {}, onSelect, err
       <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
         {addressList?.map((item, index) => (
           <div key={index} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: 0 }}>
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1 }} className="dropdown-custom-component">
               <Dropdown
+                className="police-station-dropdown"
                 t={t}
                 option={inputs?.options || []}
-                optionKey={"name"}
+                optionKey={inputs?.optionKey || "name"}
                 select={(value) => handleSelect(index, value)}
                 selected={item}
                 placeholder={t(inputs?.placeholder)}
@@ -63,21 +72,23 @@ const SelectAddreseeCustomComponent = ({ t, config, formData = {}, onSelect, err
           </div>
         ))}
       </div>
-      <div
-        onClick={handleAddAddressee}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "8px",
-          cursor: "pointer",
-          color: "#007E7E",
-          fontWeight: "700",
-          marginTop: "6px",
-        }}
-      >
-        <CustomAddIcon width="14px" height="14px" />
-        <span style={{ color: "#007E7E" }}>{t("ADD_ADDRESSEE")}</span>
-      </div>
+      {addresee === "POLICE" && (
+        <div
+          onClick={handleAddAddressee}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            cursor: "pointer",
+            color: "#007E7E",
+            fontWeight: "700",
+            marginTop: "6px",
+          }}
+        >
+          <CustomAddIcon width="14px" height="14px" />
+          <span style={{ color: "#007E7E" }}>{t("ADD_ADDRESSEE")}</span>
+        </div>
+      )}
       {errors[config?.key] && (
         <CardLabelError style={inputs?.errorStyle}>{t(errors[config?.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>
       )}{" "}

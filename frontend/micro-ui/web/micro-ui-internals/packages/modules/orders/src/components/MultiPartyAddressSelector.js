@@ -8,14 +8,14 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
 
   const inputs = useMemo(
     () =>
-      config?.populators?.inputs || [
+      config?.populators || [
         {
           name: "select address",
           errorStyle: {},
           disable: true,
         },
       ],
-    [config?.populators?.inputs]
+    [config?.populators]
   );
 
   const selectedRows = useMemo(() => {
@@ -23,8 +23,8 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
   }, [formData, config?.key]);
 
   const partyOptions = useMemo(() => {
-    return [];
-  }, []);
+    return inputs?.options || [];
+  }, [inputs?.options]);
 
   const updateRow = (index, field, value) => {
     const updatedData = [...(selectedRows || [])];
@@ -45,11 +45,11 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
     const updatedData = selectedRows?.filter((_, i) => i !== index);
     onSelect?.(config?.key, updatedData);
   };
-
+  
   return (
     <div className="multi-party-address-wrapper">
       {selectedRows?.map((row, index) => {
-        const currentPartyData = partyOptions?.find((opt) => opt?.party?.id === row?.selectedParty?.id);
+        const currentPartyData = partyOptions?.find((opt) => opt?.data?.uniqueId === row?.selectedParty?.uniqueId);
         const availableAddresses = currentPartyData?.address || [];
 
         return (
@@ -72,10 +72,11 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
                 <p className="input-label">{t("PARTY_NAME")}</p>
                 <Dropdown
                   t={t}
-                  option={partyOptions?.map((opt) => opt?.party)}
-                  optionKey="name"
+                  option={partyOptions?.map((opt) => opt?.data)}
+                  optionKey={inputs?.optionsKey || "name"}
                   selected={row?.selectedParty}
                   select={(val) => updateRow(index, "selectedParty", val)}
+                  className="police-station-dropdown"
                 />
               </div>
 
@@ -84,9 +85,9 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
                 <CustomMultiSelectDropdown
                   t={t}
                   options={availableAddresses}
-                  optionsKey="text"
-                  displayKey="text"
-                  filterKey="text"
+                  optionsKey={inputs?.addressOptionKey || "text"}
+                  displayKey={inputs?.addressOptionKey || "text"}
+                  filterKey={inputs?.addressOptionKey || "text"}
                   selected={row?.selectedAddresses}
                   onSelect={(val) => updateRow(index, "selectedAddresses", val)}
                   disable={!row?.selectedParty || config?.disable}

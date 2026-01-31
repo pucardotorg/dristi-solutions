@@ -6250,13 +6250,9 @@ export const configMiscellaneousProcess = [
         transformer: "noticeOrderPartyName", // need to create
         label: "SELECT_ADDRESSEE",
         populators: {
-          inputs: [
-            {
-              name: "select party",
-              type: "dropdown",
-              disable: false,
-            },
-          ],
+          options: [],
+          optionsKey: "name",
+          disable: false,
         },
       },
       {
@@ -6268,7 +6264,10 @@ export const configMiscellaneousProcess = [
         transformer: "noticeOrderPartyName", // need to create
         withoutLabel: true,
         populators: {
-          inputs: [],
+          options: [],
+          optionsKey: "name",
+          addressOptionKey: "formattedAddress",
+          hideInForm: true,
         },
       },
     ],
