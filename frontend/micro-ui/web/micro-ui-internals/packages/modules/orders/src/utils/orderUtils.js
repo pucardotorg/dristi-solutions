@@ -253,6 +253,20 @@ export const getParties = (type, orderSchema, allParties) => {
     parties = [...updatedComplainants, ...updatedRespondents];
 
     return parties;
+  } else if (type === "MISCELLANEOUS_PROCESS") {
+    let updatedPartiesdata = [];
+    if (orderSchema?.orderDetails?.selectedPartiesDetails?.length > 0) {
+      updatedPartiesdata = orderSchema?.orderDetails?.selectedPartiesDetails?.map((party) => {
+        return {
+          partyName: party?.selectedParty?.name,
+          partyType: party?.selectedParty?.partyType,
+        };
+      });
+    } else {
+      updatedPartiesdata = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
+    }
+
+    return updatedPartiesdata;
   } else {
     parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
     return parties;

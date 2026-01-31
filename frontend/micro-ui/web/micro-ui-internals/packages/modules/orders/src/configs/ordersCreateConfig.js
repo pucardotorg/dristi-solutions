@@ -6229,12 +6229,12 @@ export const configMiscellaneousProcess = [
         isMandatory: true,
         key: "processTemplate",
         schemaKeyPath: "orderDetails.processTemplate",
-        transformer: "customDropdown",
+        transformer: "default",
         type: "dropdown",
         populators: {
           styles: { maxWidth: "100%" },
           name: "processTemplate",
-          optionsKey: "name",
+          optionsKey: "processTitle",
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
@@ -6247,7 +6247,7 @@ export const configMiscellaneousProcess = [
         component: "SelectAddreseeCustomComponent",
         key: "selectAddresee",
         schemaKeyPath: "orderDetails.selectAddresee",
-        transformer: "noticeOrderPartyName", // need to create
+        transformer: "default",
         label: "SELECT_ADDRESSEE",
         populators: {
           options: [],
@@ -6260,8 +6260,8 @@ export const configMiscellaneousProcess = [
         type: "component",
         component: "MultiPartyAddressSelector",
         key: "selectedPartiesDetails",
-        schemaKeyPath: "orderDetails.selectAddresee",
-        transformer: "noticeOrderPartyName", // need to create
+        schemaKeyPath: "orderDetails.selectedPartiesDetails",
+        transformer: "default",
         withoutLabel: true,
         populators: {
           options: [],

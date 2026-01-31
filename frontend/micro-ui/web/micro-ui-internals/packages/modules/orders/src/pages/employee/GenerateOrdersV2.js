@@ -638,12 +638,7 @@ const GenerateOrdersV2 = () => {
   );
 
   const miscellaneousProcessTemplateDropDown = useMemo(() => {
-    return miscellaneousTemplateData?.list?.map((processTemplate) => {
-      return {
-        name: processTemplate?.processTitle,
-        addressee: processTemplate?.addressee,
-      };
-    });
+    return miscellaneousTemplateData?.list || [];
   }, [miscellaneousTemplateData]);
 
   const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading, isFetching: isOrdersFetching } = useSearchOrdersService(
