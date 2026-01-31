@@ -495,21 +495,23 @@ public class PdfEmbedder {
             PdfAcroForm acroForm = PdfAcroForm.getAcroForm(pdfDoc, true);
             PdfSignatureFormField signatureField = PdfSignatureFormField.createSignature(pdfDoc);
             signatureField.setFieldName(fieldName);
+            acroForm.addField(signatureField);
 
             float x = 350, y = 50, width = 200, height = 100;
 
             for (Integer pageNum : pagesToSign) {
                 com.itextpdf.kernel.geom.Rectangle rect =
                         new com.itextpdf.kernel.geom.Rectangle(x, y, width, height);
-                PdfWidgetAnnotation widget = new PdfWidgetAnnotation(rect);
-                widget.setPage(pdfDoc.getPage(pageNum));
-                widget.setHighlightMode(com.itextpdf.kernel.pdf.annot.PdfAnnotation.HIGHLIGHT_INVERT);
+                PdfSignatureFormField pdfSignatureFormField = PdfSignatureFormField.createSignature(pdfDoc, rect);
 
-                signatureField.addKid(widget);
-                pdfDoc.getPage(pageNum).addAnnotation(widget);
+                PdfWidgetAnnotation widgetAnnotation = pdfSignatureFormField.getWidgets().get(0);
+                widgetAnnotation.setPage(pdfDoc.getPage(pageNum));
+                widgetAnnotation.setHighlightMode(com.itextpdf.kernel.pdf.annot.PdfAnnotation.HIGHLIGHT_INVERT);
+
+                signatureField.addKid(pdfSignatureFormField);
+                pdfDoc.getPage(pageNum).addAnnotation(widgetAnnotation);
             }
 
-            acroForm.addField(signatureField);
 
             pdfDoc.close(); // finalize placeholders
 
