@@ -105,6 +105,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
           artifactType: "DOCUMENTARY",
           sourceType: "COMPLAINANT",
           caseId: caseId,
+          filingNumber: config?.filingNumber,
           tenantId,
           artifactId: currentDocumentDataCopy?.[index].document?.[0]?.artifactId,
           comments: [],
@@ -137,10 +138,10 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
               <div className="file-uploader-with-name-header">
                 <h1>{`${t("DOCUMENT_NUMBER_HEADING")} ${index + 1}`}</h1>
 
-                {(config?.state === "DRAFT_IN_PROGRESS" || index >= config?.doclength) && (
+                {!config?.disable && (["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"]?.includes(config?.state) || index >= config?.doclength) && (
                   <span
                     onClick={() => {
-                      if (!config?.disable && (config?.state === "DRAFT_IN_PROGRESS" || index >= config?.doclength)) {
+                      if (!config?.disable && (["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"]?.includes(config?.state) || index >= config?.doclength)) {
                         handleDeleteDocument(index);
                       }
                     }}

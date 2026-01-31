@@ -575,3 +575,17 @@ export const getFileByFileStore = async (uri, filename) => {
     throw error;
   }
 };
+
+export const getNotUploadedFileName = (key) => {
+  const mapping = {
+    "companyDetailsUpload.document": "Company documents",
+    "inquiryAffidavitFileUpload.document": "AFFIDAVIT_UNDER_225",
+    "depositChequeFileUpload.document": "CS_PROOF_DEPOSIT_CHEQUE",
+    "debtLiabilityFileUpload.document": "CS_PROOF_DEBT",
+    "proofOfAcknowledgmentFileUpload.document": "PROOF_LEGAL_DEMAND_NOTICE_FILE_NAME",
+    "proofOfReplyFileUpload.document": "CS_PROOF_TO_REPLY_DEMAND_NOTICE_FILE_NAME",
+    "condonationFileUpload.document": "CONDONATION_DOCUMENT",
+    "swornStatement.document": "SWORN_STATEMENT_DOCUMENT",
+  };
+  return mapping[key] || "Document";
+};

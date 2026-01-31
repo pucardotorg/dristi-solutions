@@ -26,36 +26,36 @@ const getStyles = (key) => {
       position: "relative",
       padding: "16px 24px",
       background: "#f7f5f3",
-      display: "flex",
-      flexWrap: "wrap",
-      gap: "20px",
-      alignItems: "flex-start",
+      display: "grid",
+      gridTemplateColumns: "220px 1fr",
+      gap: "10px 24px",
+      alignItems: "baseline",
     },
 
     infoRow: {
-      display: "flex",
-      alignItems: "flex-start",
-      gap: "10px",
+      display: "contents",
     },
 
     infoKey: {
-      width: "fit-content",
       margin: 0,
       fontFamily: "Roboto",
       fontSize: "16px",
       fontWeight: 700,
-      lineHeight: "18.75px",
+      lineHeight: "1.4",
       color: "#0a0a0a",
+      whiteSpace: "nowrap",
     },
 
     infoValue: {
-      width: "fit-content",
       margin: 0,
       fontFamily: "Roboto",
       fontSize: "16px",
       fontWeight: 400,
-      lineHeight: "18.75px",
+      lineHeight: "1.4",
       color: "#3d3c3c",
+      wordBreak: "normal",
+      overflowWrap: "anywhere",
+      textAlign: "left",
     },
   };
 
@@ -230,6 +230,33 @@ function ReviewSubmissionModal({
               <div style={getStyles("infoRow")}>
                 <h3 style={getStyles("infoKey")}>{t("ADDITIONAL_DETAILS")}</h3>
                 <h3 style={getStyles("infoValue")}>{t(additionalDetails)}</h3>
+              </div>
+            )}
+
+            {application?.additionalDetails?.formdata?.initialHearingDate && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("CURRENT_HEARING_DATE")}</h3>
+                <h3 style={getStyles("infoValue")}>
+                  {application?.additionalDetails?.formdata?.initialHearingDate?.split("-")?.reverse()?.join("-")}
+                </h3>
+              </div>
+            )}
+            {application?.additionalDetails?.formdata?.newHearingDates?.join(", ") && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("PROPOSED_HEARING_DATE")}</h3>
+                <h3 style={getStyles("infoValue")}>{application?.additionalDetails?.formdata?.newHearingDates?.join(", ")}</h3>
+              </div>
+            )}
+            {application?.additionalDetails?.formdata?.initialHearingPurpose && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("PURPOSE_OF_NEXT_HEARING")}</h3>
+                <h3 style={getStyles("infoValue")}>{t(application?.additionalDetails?.formdata?.initialHearingPurpose)}</h3>
+              </div>
+            )}
+            {application?.additionalDetails?.formdata?.isAllPartiesAgreed?.code && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("OTHER_PARTIES_CONSENT")}</h3>
+                <h3 style={getStyles("infoValue")}>{t(application?.additionalDetails?.formdata?.isAllPartiesAgreed?.code)}</h3>
               </div>
             )}
           </div>
