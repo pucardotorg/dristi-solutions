@@ -28,6 +28,9 @@ public class SearchParam {
     @JsonProperty("operator")
     private Operator operator;
 
+    @JsonProperty("nestedPath")
+    private String nestedPath;
+
     public enum Operator {
 
         EQUAL("EQUAL"),
