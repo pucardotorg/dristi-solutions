@@ -229,7 +229,7 @@ public class IndexerUtils {
             searchableFields = new JSONArray(searchableFieldsList).toString();
 
             // Enrich offices from case details based on assignedTo
-            if (assignedToList != null && assignedTo.isEmpty()) {
+            if (assignedToList != null && !assignedToList.isEmpty()) {
                 offices = (pendingTask.getOffices() != null && !pendingTask.getOffices().isEmpty()) ? new JSONArray(pendingTask.getOffices()).toString() : enrichOfficesFromCaseDetails(caseDetails, assignedToList);
             } else {
                 log.error("assignedToList is null or empty while enriching offices from case details during manual pending task creation");
@@ -448,7 +448,7 @@ public class IndexerUtils {
             log.info("searchableFields: {}", searchableFields);
 
             // Enrich offices from case details based on assignedTo
-            if (assignedToList != null && !assignedTo.isEmpty()) {
+            if (assignedToList != null && !assignedToList.isEmpty()) {
                 offices = enrichOfficesFromCaseDetailsWithObjectList(caseDetails, assignedToList);
             } else {
                 log.error("assignedToList is null or empty while enriching offices from case details during workflow driven pending task creation");
