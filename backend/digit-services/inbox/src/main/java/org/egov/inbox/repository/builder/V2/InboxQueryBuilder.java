@@ -89,16 +89,18 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         Map<String, String> nameToPathMap = new HashMap<>();
         Map<String, SearchParam.Operator> nameToOperator = new HashMap<>();
         Map<String, String> nameToNestedPath = new HashMap<>();
+        Map<String, SearchParam> nameToSearchParam = new HashMap<>();
 
         configuration.getAllowedSearchCriteria().forEach(searchParam -> {
             nameToPathMap.put(searchParam.getName(), searchParam.getPath());
             nameToOperator.put(searchParam.getName(), searchParam.getOperator());
+            nameToSearchParam.put(searchParam.getName(), searchParam);
             if (!ObjectUtils.isEmpty(searchParam.getNestedPath())) {
                 nameToNestedPath.put(searchParam.getName(), searchParam.getNestedPath());
             }
         });
 
-        addModuleSearchCriteriaToBaseQuery(params, nameToPathMap, nameToOperator, nameToNestedPath, mustClauseList);
+        addModuleSearchCriteriaToBaseQuery(params, nameToPathMap, nameToOperator, nameToNestedPath, nameToSearchParam, mustClauseList);
         addProcessSearchCriteriaToBaseQuery(inboxRequest.getInbox().getProcessSearchCriteria(), nameToPathMap, nameToOperator, mustClauseList);
 
         innerBoolClause.put(MUST_KEY, mustClauseList);
@@ -225,16 +227,18 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         Map<String, String> nameToPathMap = new HashMap<>();
         Map<String, SearchParam.Operator> nameToOperator = new HashMap<>();
         Map<String, String> nameToNestedPath = new HashMap<>();
+        Map<String, SearchParam> nameToSearchParam = new HashMap<>();
 
         configuration.getAllowedSearchCriteria().forEach(searchParam -> {
             nameToPathMap.put(searchParam.getName(), searchParam.getPath());
             nameToOperator.put(searchParam.getName(), searchParam.getOperator());
+            nameToSearchParam.put(searchParam.getName(), searchParam);
             if (!ObjectUtils.isEmpty(searchParam.getNestedPath())) {
                 nameToNestedPath.put(searchParam.getName(), searchParam.getNestedPath());
             }
         });
 
-        addModuleSearchCriteriaToBaseQuery(params, nameToPathMap, nameToOperator, nameToNestedPath, mustClauseList);
+        addModuleSearchCriteriaToBaseQuery(params, nameToPathMap, nameToOperator, nameToNestedPath, nameToSearchParam, mustClauseList);
 
         innerBoolClause.put(MUST_KEY, mustClauseList);
 
@@ -330,20 +334,37 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
 
     private void addModuleSearchCriteriaToBaseQuery
             (Map<String, Object> params, Map<String, String> nameToPathMap,
-             Map<String, SearchParam.Operator> nameToOperator, Map<String, String> nameToNestedPath, List<Object> mustClauseList) {
+             Map<String, SearchParam.Operator> nameToOperator, Map<String, String> nameToNestedPath, 
+             Map<String, SearchParam> nameToSearchParam, List<Object> mustClauseList) {
 
         // Group nested params by their nestedPath
         Map<String, List<String>> nestedPathToKeys = new HashMap<>();
         List<String> nonNestedKeys = new ArrayList<>();
+        List<String> orQueryKeys = new ArrayList<>();
 
         params.keySet().forEach(key -> {
             if (!(key.equals(SORT_ORDER_CONSTANT) || key.equals(SORT_BY_CONSTANT))) {
-                String nestedPath = nameToNestedPath.get(key);
-                if (!ObjectUtils.isEmpty(nestedPath)) {
-                    nestedPathToKeys.computeIfAbsent(nestedPath, k -> new ArrayList<>()).add(key);
+                SearchParam searchParam = nameToSearchParam.get(key);
+                
+                // Check if this param has OR paths configured
+                if (searchParam != null && !CollectionUtils.isEmpty(searchParam.getOrPaths())) {
+                    orQueryKeys.add(key);
                 } else {
-                    nonNestedKeys.add(key);
+                    String nestedPath = nameToNestedPath.get(key);
+                    if (!ObjectUtils.isEmpty(nestedPath)) {
+                        nestedPathToKeys.computeIfAbsent(nestedPath, k -> new ArrayList<>()).add(key);
+                    } else {
+                        nonNestedKeys.add(key);
+                    }
                 }
+            }
+        });
+
+        // Process OR query params
+        orQueryKeys.forEach(key -> {
+            Map<String, Object> orQuery = buildOrQuery(key, params, nameToSearchParam);
+            if (!CollectionUtils.isEmpty(orQuery)) {
+                mustClauseList.add(orQuery);
             }
         });
 
@@ -413,6 +434,86 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         Map<String, Object> nestedInner = new HashMap<>();
         nestedInner.put("path", nestedPath);
         nestedInner.put(QUERY_KEY, nestedBool);
+
+        Map<String, Object> nestedQuery = new HashMap<>();
+        nestedQuery.put("nested", nestedInner);
+
+        return nestedQuery;
+    }
+
+    private Map<String, Object> buildOrQuery(String key, Map<String, Object> params, Map<String, SearchParam> nameToSearchParam) {
+        SearchParam searchParam = nameToSearchParam.get(key);
+        if (searchParam == null || CollectionUtils.isEmpty(searchParam.getOrPaths())) {
+            return null;
+        }
+
+        Object value = params.get(key);
+        if (value == null) {
+            return null;
+        }
+
+        List<Object> shouldClauses = new ArrayList<>();
+
+        // Add the primary path clause
+        Map<String, Object> primaryClause = buildTermClause(searchParam.getPath(), value);
+        if (!CollectionUtils.isEmpty(primaryClause)) {
+            shouldClauses.add(primaryClause);
+        }
+
+        // Add OR path clauses
+        searchParam.getOrPaths().forEach(orPath -> {
+            if (ObjectUtils.isEmpty(orPath.getNestedPath())) {
+                // Non-nested OR path
+                Map<String, Object> orClause = buildTermClause(orPath.getPath(), value);
+                if (!CollectionUtils.isEmpty(orClause)) {
+                    shouldClauses.add(orClause);
+                }
+            } else {
+                // Nested OR path
+                Map<String, Object> nestedOrClause = buildNestedTermClause(orPath.getNestedPath(), orPath.getPath(), value);
+                if (!CollectionUtils.isEmpty(nestedOrClause)) {
+                    shouldClauses.add(nestedOrClause);
+                }
+            }
+        });
+
+        if (CollectionUtils.isEmpty(shouldClauses)) {
+            return null;
+        }
+
+        // Build bool should query structure
+        Map<String, Object> shouldMap = new HashMap<>();
+        shouldMap.put("should", shouldClauses);
+        shouldMap.put("minimum_should_match", 1);
+
+        Map<String, Object> boolQuery = new HashMap<>();
+        boolQuery.put(BOOL_KEY, shouldMap);
+
+        return boolQuery;
+    }
+
+    private Map<String, Object> buildTermClause(String path, Object value) {
+        if (value instanceof List) {
+            Map<String, Object> termsClause = new HashMap<>();
+            Map<String, Object> innerTermsClause = new HashMap<>();
+            innerTermsClause.put(path, value);
+            termsClause.put("terms", innerTermsClause);
+            return termsClause;
+        } else {
+            Map<String, Object> termClause = new HashMap<>();
+            Map<String, Object> innerTermClause = new HashMap<>();
+            innerTermClause.put(path, value);
+            termClause.put("term", innerTermClause);
+            return termClause;
+        }
+    }
+
+    private Map<String, Object> buildNestedTermClause(String nestedPath, String path, Object value) {
+        Map<String, Object> termClause = buildTermClause(path, value);
+        
+        Map<String, Object> nestedInner = new HashMap<>();
+        nestedInner.put("path", nestedPath);
+        nestedInner.put(QUERY_KEY, termClause);
 
         Map<String, Object> nestedQuery = new HashMap<>();
         nestedQuery.put("nested", nestedInner);

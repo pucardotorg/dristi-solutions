@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.*;
 
+import java.util.List;
+
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -30,6 +32,9 @@ public class SearchParam {
 
     @JsonProperty("nestedPath")
     private String nestedPath;
+
+    @JsonProperty("orPaths")
+    private List<OrPath> orPaths;
 
     public enum Operator {
 
