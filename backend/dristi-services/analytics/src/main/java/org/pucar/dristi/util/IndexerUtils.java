@@ -229,7 +229,11 @@ public class IndexerUtils {
             searchableFields = new JSONArray(searchableFieldsList).toString();
 
             // Enrich offices from case details based on assignedTo
-            offices = (pendingTask.getOffices() != null && !pendingTask.getOffices().isEmpty()) ? new JSONArray(pendingTask.getOffices()).toString() : enrichOfficesFromCaseDetails(caseDetails, assignedToList);
+            if (assignedToList != null && assignedTo.isEmpty()) {
+                offices = (pendingTask.getOffices() != null && !pendingTask.getOffices().isEmpty()) ? new JSONArray(pendingTask.getOffices()).toString() : enrichOfficesFromCaseDetails(caseDetails, assignedToList);
+            } else {
+                log.error("assignedToList is null or empty while enriching offices from case details during manual pending task creation");
+            }
         }
 
         Long createdTime = clock.millis();
@@ -444,7 +448,11 @@ public class IndexerUtils {
             log.info("searchableFields: {}", searchableFields);
 
             // Enrich offices from case details based on assignedTo
-            offices = enrichOfficesFromCaseDetailsWithObjectList(caseDetails, assignedToList);
+            if (assignedToList != null && !assignedTo.isEmpty()) {
+                offices = enrichOfficesFromCaseDetailsWithObjectList(caseDetails, assignedToList);
+            } else {
+                log.error("assignedToList is null or empty while enriching offices from case details during workflow driven pending task creation");
+            }
         }
 
         Object additionalDetails;
