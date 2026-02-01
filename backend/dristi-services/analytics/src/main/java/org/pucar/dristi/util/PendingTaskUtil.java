@@ -45,15 +45,7 @@ public class PendingTaskUtil {
 
         String query = getEsQuery(filingNumber);
 
-        HttpEntity<String> entity = new HttpEntity<>(query, headers);
-
-        try {
-            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
-            return objectMapper.readTree(response.getBody());
-        } catch (Exception e) {
-            log.error(ERROR_WHILE_FETCHING_PENDING_TASK, e);
-            throw new CustomException(ERROR_WHILE_FETCHING_PENDING_TASK, e.getMessage());
-        }
+        return getPendingTasksJsonNode(url, headers, query);
     }
 
     public String getESEncodedCredentials() {
@@ -92,5 +84,56 @@ public class PendingTaskUtil {
             String requestBody = indexerUtils.buildPayload(pendingTask);
             indexerUtils.esPostManual(url, requestBody);
         }
+    }
+
+    public JsonNode callPendingTaskByAssignedTo(String userUuid) {
+        String url = config.getEsHostUrl() + config.getPendingTaskIndexEndpoint() + config.getPendingTaskSearchPath();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", getESEncodedCredentials());
+
+        String query = getEsQueryByAssignedTo(userUuid);
+
+        return getPendingTasksJsonNode(url, headers, query);
+    }
+
+    private JsonNode getPendingTasksJsonNode(String url, HttpHeaders headers, String query) {
+        HttpEntity<String> requestEntity = new HttpEntity<>(query, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+            return objectMapper.readTree(response.getBody());
+        } catch (Exception e) {
+            log.error(ERROR_WHILE_FETCHING_PENDING_TASK, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_PENDING_TASK, e.getMessage());
+        }
+    }
+
+    private String getEsQueryByAssignedTo(String userUuid) {
+        return "{\n" +
+                "  \"query\": {\n" +
+                "    \"bool\": {\n" +
+                "      \"must\": [\n" +
+                "        {\n" +
+                "          \"nested\": {\n" +
+                "            \"path\": \"Data.assignedTo\",\n" +
+                "            \"query\": {\n" +
+                "              \"term\": {\n" +
+                "                \"Data.assignedTo.uuid.keyword\": \"" + userUuid + "\"\n" +
+                "              }\n" +
+                "            }\n" +
+                "          }\n" +
+                "        },\n" +
+                "        {\n" +
+                "          \"term\": {\n" +
+                "            \"Data.isCompleted\": false\n" +
+                "          }\n" +
+                "        }\n" +
+                "      ]\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"size\": 2000\n" +
+                "}";
     }
 }
