@@ -116,13 +116,8 @@ public class PendingTaskUtil {
                 "    \"bool\": {\n" +
                 "      \"must\": [\n" +
                 "        {\n" +
-                "          \"nested\": {\n" +
-                "            \"path\": \"Data.assignedTo\",\n" +
-                "            \"query\": {\n" +
-                "              \"term\": {\n" +
-                "                \"Data.assignedTo.uuid.keyword\": \"" + userUuid + "\"\n" +
-                "              }\n" +
-                "            }\n" +
+                "          \"match\": {\n" +
+                "            \"Data.assignedTo.uuid.keyword\": \"" + userUuid + "\"\n" +
                 "          }\n" +
                 "        },\n" +
                 "        {\n" +
