@@ -35,7 +35,4 @@ public class RepresentativeV2 {
     @JsonProperty("representing")
     @Valid
     private List<RepresentingV2> representing = null;
-
-    @JsonProperty("advocateFilingStatus")
-    private String advocateFilingStatus = null;
 }
