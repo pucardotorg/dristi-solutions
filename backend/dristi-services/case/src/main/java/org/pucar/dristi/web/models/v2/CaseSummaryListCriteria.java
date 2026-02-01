@@ -100,4 +100,7 @@ public class CaseSummaryListCriteria {
     @JsonProperty("memberId")
     private String memberId = null;
 
+    @JsonProperty("isMemberActiveInCase")
+    private Boolean isMemberActiveInCase = null;
+
 }

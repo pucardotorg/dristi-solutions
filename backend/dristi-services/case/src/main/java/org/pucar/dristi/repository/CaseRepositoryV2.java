@@ -688,7 +688,7 @@ public class CaseRepositoryV2 {
     public boolean validateAdvocateOfficeCaseMember(String officeAdvocateId, String memberId) {
         try {
             String query = "SELECT COUNT(*) FROM dristi_advocate_office_case_member " +
-                    "WHERE office_advocate_id = ? AND member_id = ? AND is_active = true";
+                    "WHERE office_advocate_id = ? AND member_id = ?";
             
             Integer count = jdbcTemplate.queryForObject(query, Integer.class, officeAdvocateId, memberId);
             

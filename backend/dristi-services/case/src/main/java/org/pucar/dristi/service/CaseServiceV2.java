@@ -15,12 +15,10 @@ import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static org.pucar.dristi.config.ServiceConstants.ADVOCATE_CLERK_ROLE;
-import static org.pucar.dristi.config.ServiceConstants.ADVOCATE_ROLE;
 import static org.pucar.dristi.config.ServiceConstants.SEARCH_CASE_ERR;
 
 
@@ -133,14 +131,25 @@ public class CaseServiceV2 {
 
     public List<CaseSummaryList> searchCasesList(CaseSummaryListRequest caseListRequest) {
 
-        enrichmentUtil.enrichCaseSearchRequest(caseListRequest);
+        try {
+            enrichmentUtil.enrichCaseSearchRequest(caseListRequest);
 
-        List<CaseSummaryList> caseSummaryLists =  caseRepository.getCaseList(caseListRequest);
-        caseSummaryLists.forEach(caseSummaryList -> {
-            enrichAdvocateJoinedStatus(caseSummaryList, caseListRequest.getCriteria().getAdvocateId());
-            caseSummaryList.setPendingAdvocateRequests(null);
-        });
-        return caseSummaryLists;
+            List<CaseSummaryList> caseSummaryLists =  caseRepository.getCaseList(caseListRequest);
+            caseSummaryLists.forEach(caseSummaryList -> {
+                enrichAdvocateJoinedStatus(caseSummaryList, caseListRequest.getCriteria().getAdvocateId());
+                caseSummaryList.setPendingAdvocateRequests(null);
+            });
+            return caseSummaryLists;
+        } catch (CustomException e) {
+            // Return empty list for clerk access issues
+            if ("CLERK_ACCESS_DENIED".equals(e.getCode()) || 
+                "CLERK_MEMBER_NOT_FOUND".equals(e.getCode()) || 
+                "CLERK_NOT_MEMBER".equals(e.getCode())) {
+                log.info("Clerk access denied: {}", e.getMessage());
+                return new ArrayList<>();
+            }
+            throw e;
+        }
     }
 
     private void enrichAdvocateJoinedStatus(CaseSummaryList caseSummary, String advocateId) {

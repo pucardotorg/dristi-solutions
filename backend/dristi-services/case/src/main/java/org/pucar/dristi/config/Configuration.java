@@ -80,6 +80,9 @@ public class Configuration {
 	@Value("${egov.advocate.path}")
 	private String advocatePath;
 
+	@Value("${egov.advocate.clerk.path}")
+	private String advocateClerkPath;
+
     //Individual Service
     @Value("${egov.individual.host}")
     private String individualHost;
