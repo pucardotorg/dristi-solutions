@@ -545,7 +545,7 @@ public class IndexerUtils {
 
             // Check if office advocate is in assignedTo list
             if (officeAdvocateUserUuid != null && assignedUuids.contains(officeAdvocateUserUuid)) {
-                List<String> memberIds = getMemberIds(office);
+                List<String> memberIds = getMemberUserUuIds(office);
 
                 AdvocateOffice analyticsOffice = AdvocateOffice.builder()
                         .advocateOfficeName(office.getOfficeAdvocateName())
@@ -560,14 +560,14 @@ public class IndexerUtils {
         return mapper.writeValueAsString(officesList);
     }
 
-    private static List<String> getMemberIds(CaseAdvocateOffice office) {
+    private static List<String> getMemberUserUuIds(CaseAdvocateOffice office) {
         List<String> memberIds = new ArrayList<>();
 
         // Add advocate members
         if (office.getAdvocates() != null) {
             for (AdvocateOfficeMember member : office.getAdvocates()) {
-                if (member.getMemberId() != null) {
-                    memberIds.add(member.getMemberId());
+                if (member.getMemberUserUuid() != null) {
+                    memberIds.add(member.getMemberUserUuid());
                 }
             }
         }
@@ -575,8 +575,8 @@ public class IndexerUtils {
         // Add clerk members
         if (office.getClerks() != null) {
             for (AdvocateOfficeMember member : office.getClerks()) {
-                if (member.getMemberId() != null) {
-                    memberIds.add(member.getMemberId());
+                if (member.getMemberUserUuid() != null) {
+                    memberIds.add(member.getMemberUserUuid());
                 }
             }
         }
