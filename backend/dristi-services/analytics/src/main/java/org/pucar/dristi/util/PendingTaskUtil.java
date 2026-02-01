@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
@@ -86,6 +87,8 @@ public class PendingTaskUtil {
         String url = config.getEsHostUrl() + config.getBulkPath();
         for(JsonNode task: pendingTasks) {
             PendingTask pendingTask = objectMapper.convertValue( task.get("_source").get("Data"), PendingTask.class);
+            // Set offices to empty list so it will be calculated from case details in buildPayload method
+            pendingTask.setOffices(new ArrayList<>());
             String requestBody = indexerUtils.buildPayload(pendingTask);
             indexerUtils.esPostManual(url, requestBody);
         }

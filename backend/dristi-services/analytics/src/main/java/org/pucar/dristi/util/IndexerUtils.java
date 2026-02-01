@@ -229,7 +229,7 @@ public class IndexerUtils {
             searchableFields = new JSONArray(searchableFieldsList).toString();
 
             // Enrich offices from case details based on assignedTo
-            offices = pendingTask.getOffices() != null ? new JSONArray(pendingTask.getOffices()).toString() : enrichOfficesFromCaseDetails(caseDetails, assignedToList);
+            offices = (pendingTask.getOffices() != null && !pendingTask.getOffices().isEmpty()) ? new JSONArray(pendingTask.getOffices()).toString() : enrichOfficesFromCaseDetails(caseDetails, assignedToList);
         }
 
         Long createdTime = clock.millis();
