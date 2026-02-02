@@ -6265,7 +6265,7 @@ export const configMiscellaneousProcess = [
         withoutLabel: true,
         populators: {
           options: [],
-          partyOptionsKey : "name",
+          partyOptionsKey: "name",
           optionsKey: "formattedAddress",
           addressOptionKey: "partyUniqueId",
           hideInForm: true,

@@ -1190,6 +1190,16 @@
   margin-bottom: 0 !important;
   padding: 0 !important;
 
+  .pdf-viewer-container{
+    padding-bottom: 0px !important;
+    .docviewer-wrapper{
+      margin-top: 0px !important;
+      .employeeCard {
+        margin-bottom: 0px !important;
+      }
+    }
+  }
+
   .label-field-pair {
     .field {
       .field-container {

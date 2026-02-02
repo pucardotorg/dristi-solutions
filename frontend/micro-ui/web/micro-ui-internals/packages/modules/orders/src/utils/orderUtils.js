@@ -695,6 +695,7 @@ export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, schedule
       status: "",
       statusChangeDate: "",
       channelCode: "RPAD",
+      isPendingCollection: false,
     };
 
     if (["POLICE", "OTHER"]?.includes(processTemplateAddressee)) {

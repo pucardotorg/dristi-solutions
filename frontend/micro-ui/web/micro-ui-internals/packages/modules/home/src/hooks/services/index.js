@@ -27,6 +27,7 @@ export const Urls = {
   updateTemplate: "/template-configuration/v1/update",
   createTemplate: "/template-configuration/v1/create",
   searchTemplate: "/template-configuration/v1/search",
+  searchTemplatePdf: " /egov-pdf/template-configuration"
 };
 export const HomeService = {
   InboxSearch: (data, params) =>

@@ -2927,7 +2927,7 @@ const GenerateOrdersV2 = () => {
         const taskCaseDetails = {
           title: caseDetails?.caseTitle,
           year: new Date(caseDetails).getFullYear(),
-          hearingDate: new Date(orderData?.additionalDetails?.formdata?.date || "").getTime(),
+          hearingDate: currentScheduledHearing,
           judgeName: "",
           courtName: courtDetails?.name,
           courtAddress: courtDetails?.address,
