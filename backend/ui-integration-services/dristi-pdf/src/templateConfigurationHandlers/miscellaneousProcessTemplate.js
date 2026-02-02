@@ -7,6 +7,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { getStringAddressDetails } = require("../utils/addressUtils");
+const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 
 async function miscellaneousProcessTemplate(
@@ -97,16 +98,10 @@ async function miscellaneousProcessTemplate(
     const coverLetterSelected = templateData?.isCoverLetterRequired || false;
 
     let policeAddresseeSelected = false;
-    let accusedAddresseeSelected = false;
-    let complainantAddresseeSelected = false;
     let otherAddresseeSelected = false;
 
     if(templateData?.addressee === "POLICE"){
       policeAddresseeSelected = true;
-    } else if(templateData?.addressee === "ACCUSED"){
-      accusedAddresseeSelected = true;
-    } else if(templateData?.addressee === "COMPLAINANT"){
-      complainantAddresseeSelected = true;
     } else if(templateData?.addressee === "OTHER"){
       otherAddresseeSelected = true;
     }
@@ -137,23 +132,17 @@ async function miscellaneousProcessTemplate(
           caseNumber: caseNumber,
 
           policeAddresseeSelected: policeAddresseeSelected,
-          accusedAddresseeSelected: accusedAddresseeSelected, 
-          complainantAddresseeSelected: complainantAddresseeSelected,
-          otherAddresseeSelected: otherAddresseeSelected, 
 
-          policeStation: addresseeDetails,    // these all can be one variable
-          accusedName: addresseeDetails,
-          complainantName: addresseeDetails,
-          otherName: addresseeDetails,
+          addresseeDetails: addresseeDetails,  
 
           date: formattedToday,
-          coverLetterText: coverLetterText,
+          coverLetterText: htmlToFormattedText(coverLetterText),
           showAccusedNameAddress: showAccusedNameAddress,
           accusedNameAddress: accusedNameAddress, // array with name and address already computed
 
           processTitle: processTitle,
-          processText: processText,
-          nextHearingDate: nextHearingDate,
+          processText: htmlToFormattedText(processText),
+          nextHearingDate: formatDate(nextHearingDate, "DD-MM-YYYY"),
           qrCodeUrl: base64Url,
         },
       ],
