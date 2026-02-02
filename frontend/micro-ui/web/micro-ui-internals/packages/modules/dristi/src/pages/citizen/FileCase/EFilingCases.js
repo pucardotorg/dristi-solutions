@@ -1680,6 +1680,7 @@ function EFilingCases({ path }) {
                 if (
                   !isDraftInProgress &&
                   selected === "prayerSwornStatement" &&
+                  modifiedFormComponent?.component === "SelectUploadDocWithName" &&
                   SelectUploadDocLength < formdata?.[0]?.data?.SelectUploadDocWithName?.length
                 ) {
                   modifiedFormComponent.doclength = SelectUploadDocLength;
@@ -1692,7 +1693,7 @@ function EFilingCases({ path }) {
                     modifiedFormComponent.addressLength = resAddressDetailsLength;
                     modifiedFormComponent.disable = false;
                   } else {
-                    if (modifiedFormComponent?.component === "SelectComponentsMulti") {
+                    if (modifiedFormComponent?.component === "SelectComponentsMulti" && resAddressDetailsLength > 0) {
                       modifiedFormComponent.disable = true;
                     }
                   }
@@ -1940,6 +1941,8 @@ function EFilingCases({ path }) {
         caseDetails,
         selected,
         setServiceOfDemandNoticeModal,
+        isCaseReAssigned,
+        errorCaseDetails,
       });
       checkDuplicateMobileEmailValidation({
         formData,
@@ -3354,17 +3357,25 @@ function EFilingCases({ path }) {
                   {pageConfig?.addFormText && (
                     <div className="form-item-name">
                       <h1>{`${t(pageConfig?.formItemName)} ${formdata[index]?.displayindex + 1}`}</h1>
-                      {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) && isDraftInProgress && (
-                        <span
-                          style={{ cursor: "pointer" }}
-                          onClick={() => {
-                            setConfirmDeleteModal(true);
-                            setDeleteFormIndex(index);
-                          }}
-                        >
-                          <CustomDeleteIcon />
-                        </span>
-                      )}
+                      {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) &&
+                        (isDraftInProgress ||
+                          (isCaseReAssigned &&
+                            (Object?.keys(judgeObj || {})?.length > 0 ||
+                              (!!formdata?.[index] &&
+                                !(
+                                  caseDetails?.additionalDetails?.[selected]?.formdata?.[index] ||
+                                  caseDetails?.caseDetails?.[selected]?.formdata?.[index]
+                                ))))) && (
+                          <span
+                            style={{ cursor: "pointer" }}
+                            onClick={() => {
+                              setConfirmDeleteModal(true);
+                              setDeleteFormIndex(index);
+                            }}
+                          >
+                            <CustomDeleteIcon />
+                          </span>
+                        )}
                     </div>
                   )}
                   <FormComposerV2
