@@ -546,7 +546,7 @@ export const UICustomizations = {
           criteria: {
             ...filterList,
             completeStatus: completeStatusData,
-            orderType: filterList?.orderType && filterList?.orderType?.code !== "" ? [filterList?.orderType?.code] : [],
+            orderType: filterList?.orderType && filterList?.orderType?.code !== "" ? [filterList?.orderType?.code] : null,
             ...(noticeType && { noticeType }),
             ...(deliveryChanel && { deliveryChanel }),
             ...(hearingDate !== null && { hearingDate }),
