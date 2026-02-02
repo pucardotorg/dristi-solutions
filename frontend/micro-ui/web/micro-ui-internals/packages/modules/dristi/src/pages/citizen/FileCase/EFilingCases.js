@@ -1680,6 +1680,7 @@ function EFilingCases({ path }) {
                 if (
                   !isDraftInProgress &&
                   selected === "prayerSwornStatement" &&
+                  modifiedFormComponent?.component === "SelectUploadDocWithName" &&
                   SelectUploadDocLength < formdata?.[0]?.data?.SelectUploadDocWithName?.length
                 ) {
                   modifiedFormComponent.doclength = SelectUploadDocLength;
