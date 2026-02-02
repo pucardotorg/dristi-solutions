@@ -905,4 +905,13 @@ public class CaseQueryBuilder {
         
         return query;
     }
+
+    public String getCaseIdFromFilingNumberQuery(List<Object> preparedStmtList, List<Integer> preparedStmtArgList, String filingNumber) {
+        String query = "SELECT id FROM dristi_cases WHERE filingnumber = ?";
+        
+        preparedStmtList.add(filingNumber);
+        preparedStmtArgList.add(Types.VARCHAR);
+        
+        return query;
+    }
 }

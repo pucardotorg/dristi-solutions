@@ -774,7 +774,7 @@ public class CaseRegistrationEnrichment {
             }
         }
         
-        List<String> officeAdvocateIdsForMemberInCase = caseRepositoryV2.getOfficeAdvocateIdsForMemberIdInCase(memberId, criteria.getCaseId());
+        List<String> officeAdvocateIdsForMemberInCase = caseRepositoryV2.getOfficeAdvocateIdsForMemberIdInCase(memberId, criteria.getCaseId(), criteria.getFilingNumber());
         
         if (officeAdvocateIdsForMemberInCase.isEmpty()) {
             // Searching on behalf of advocate should be invalidated
@@ -795,43 +795,36 @@ public class CaseRegistrationEnrichment {
     }
 
     private void validateOfficeAdvocateId(CaseSearchCriteriaV2 criteria, String individualId, RequestInfo requestInfo, boolean isAdvocate) {
-        
-        String officeAdvocateId = criteria.getOfficeAdvocateId();
-        
-        if (officeAdvocateId == null) {
-            if (isAdvocate) {
-                return;
-            } else {
-                throw new CustomException("CLERK_ACCESS_DENIED", "Clerk must provide officeAdvocateId");
-            }
-        }
-        
+
         String memberId = getMemberIdForUser(individualId, requestInfo, isAdvocate);
         
         if (memberId == null) {
+            criteria.setOfficeAdvocateId(null);
             if (isAdvocate) {
-                criteria.setOfficeAdvocateId(null);
                 return;
             } else {
                 throw new CustomException("CLERK_MEMBER_NOT_FOUND", "Clerk member not found");
             }
         }
         
-        boolean memberExists = caseRepositoryV2.validateAdvocateOfficeCaseMember(officeAdvocateId, memberId);
+        List<String> officeAdvocateIdsForMemberInCase = caseRepositoryV2.getOfficeAdvocateIdsForMemberIdInCase(memberId, criteria.getCaseId(), criteria.getFilingNumber());
         
-        if (!memberExists) {
+        if (officeAdvocateIdsForMemberInCase.isEmpty()) {
             // Searching on behalf of advocate should be invalidated
             criteria.setOfficeAdvocateId(null);
             criteria.setMemberId(null);
             if (isAdvocate) {
                 return;
             } else {
-                throw new CustomException("CLERK_NOT_MEMBER", "Clerk is not a member of this advocate's office");
+                throw new CustomException("ACCESS_DENIED", "Clerk cannot view this case");
             }
         }
         
         Boolean representativeCases = criteria.getIsMemberActiveInCase();
         criteria.setIsMemberActiveInCase(representativeCases != null && representativeCases);
+        // For /case/v2/_search it does not matter on whose behalf the case is being searched
+        // as long as member is tied to an advocate in the case
+        criteria.setOfficeAdvocateId(officeAdvocateIdsForMemberInCase.get(0));
     }
     
     private String getMemberIdForUser(String individualId, RequestInfo requestInfo, boolean isAdvocate) {

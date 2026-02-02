@@ -708,11 +708,14 @@ public class CaseRepositoryV2 {
         }
     }
 
-    public List<String> getOfficeAdvocateIdsForMemberIdInCase(String memberId, String caseId) {
+    public List<String> getOfficeAdvocateIdsForMemberIdInCase(String memberId, String caseId, String filingNumber) {
         try {
             List<Object> preparedStmtList = new ArrayList<>();
             List<Integer> preparedStmtArgList = new ArrayList<>();
-            
+            // todo should be removed later
+            if(caseId == null || caseId.isEmpty()) {
+                caseId = getCaseIdFromFilingNumber(filingNumber);
+            }
             String query = queryBuilder.getOfficeAdvocateIdsByMemberIdAndCaseIdQuery(preparedStmtList, preparedStmtArgList, memberId, caseId);
             
             return jdbcTemplate.queryForList(query, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), String.class);
@@ -848,5 +851,31 @@ public class CaseRepositoryV2 {
             log.warn("Error extracting advocate UUID from additional details: {}", e.getMessage());
         }
         return null;
+    }
+
+    public String getCaseIdFromFilingNumber(String filingNumber) {
+        if (filingNumber == null || filingNumber.isEmpty()) {
+            return null;
+        }
+        
+        try {
+            List<Object> preparedStmtList = new ArrayList<>();
+            List<Integer> preparedStmtArgList = new ArrayList<>();
+            
+            String query = queryBuilder.getCaseIdFromFilingNumberQuery(preparedStmtList, preparedStmtArgList, filingNumber);
+            
+            log.info("Fetching case ID for filing number: {}", filingNumber);
+            
+            List<String> caseIds = jdbcTemplate.query(query, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),
+                    (rs, rowNum) -> rs.getString("id"));
+            
+            if (!caseIds.isEmpty()) return caseIds.get(0);
+            
+            log.warn("No case found for filing number: {}", filingNumber);
+            return null;
+        } catch (Exception e) {
+            log.error("Error fetching case ID for filing number: {}", filingNumber, e);
+            throw new CustomException("CASE_ID_FETCH_ERROR", "Error fetching case ID for filing number: " + filingNumber);
+        }
     }
 }
