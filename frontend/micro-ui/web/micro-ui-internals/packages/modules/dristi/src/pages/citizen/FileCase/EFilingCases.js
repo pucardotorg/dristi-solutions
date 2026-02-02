@@ -1709,6 +1709,7 @@ function EFilingCases({ path }) {
 
                 if (
                   modifiedFormComponent?.type === "radio" &&
+                  modifiedFormComponent?.disable &&
                   !(index + 1 > scrutinyFormLength || scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign))
                 ) {
                   modifiedFormComponent.populators.styles = { opacity: 0.5 };
@@ -1751,7 +1752,9 @@ function EFilingCases({ path }) {
                   }
                   if (
                     ["complainantDetails", "respondentDetails"]?.includes(selected) &&
-                    (formComponent.component === "CustomRadioInfoComponent" || formComponent.key === "transferredPOA")
+                    (formComponent.component === "CustomRadioInfoComponent" ||
+                      formComponent.key === "transferredPOA" ||
+                      formComponent.key === "respondentType")
                   ) {
                     key = formComponent.key + ".name";
                   }
@@ -1797,6 +1800,9 @@ function EFilingCases({ path }) {
                       modifiedFormComponent.isScrutiny = true;
                     }
                     modifiedFormComponent.disable = false;
+                    if (modifiedFormComponent?.type === "radio") {
+                      modifiedFormComponent.populators.styles = { opacity: 1 };
+                    }
                     modifiedFormComponent.withoutLabel = true;
                     modifiedFormComponent.disableScrutinyHeader = true;
                     return [
