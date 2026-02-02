@@ -487,12 +487,14 @@ public class TaskService {
             addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_NOTICE, NOTICE);
             addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_PROCLAMATION, PROCLAMATION);
             addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_ATTACHMENT, ATTACHMENT);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_MISCELLANEOUS, MISCELLANEOUS_PROCESS);
         } else {
             removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_SUMMONS, SUMMON);
             removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_WARRANT, WARRANT);
             removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_NOTICE, NOTICE);
             removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_PROCLAMATION, PROCLAMATION);
             removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_ATTACHMENT, ATTACHMENT);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_MISCELLANEOUS, MISCELLANEOUS_PROCESS);
         }
         return orderType;
     }

@@ -66,6 +66,7 @@ public class ServiceConstants {
     public static final String ROLE_VIEW_PROCESS_NOTICE = "VIEW_PROCESS_NOTICE";
     public static final String ROLE_VIEW_PROCESS_PROCLAMATION = "VIEW_PROCESS_PROCLAMATION";
     public static final String ROLE_VIEW_PROCESS_ATTACHMENT = "VIEW_PROCESS_ATTACHMENT";
+    public static final String ROLE_VIEW_PROCESS_MISCELLANEOUS = "VIEW_PROCESS_MISCELLANEOUS";
 
     public static final String MAKE_PAYMENT = "MAKE_PAYMENT";
 
