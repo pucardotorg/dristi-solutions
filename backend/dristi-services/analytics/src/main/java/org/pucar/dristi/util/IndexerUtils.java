@@ -190,7 +190,7 @@ public class IndexerUtils {
         String searchableFields = null;
         String offices = "[]";
         if (filingNumber != null) {
-            JsonNode caseDetails = getCaseDetails(filingNumber);
+            JsonNode caseDetails = getCaseDetails(filingNumber, caseId);
 
             courtId = caseDetails.get(0).path("courtId").textValue();
 
@@ -272,11 +272,11 @@ public class IndexerUtils {
         }
     }
 
-    private JsonNode getCaseDetails(String filingNumber) {
+    private JsonNode getCaseDetails(String filingNumber, String caseId) {
         try {
             RequestInfo requestInfo = createInternalRequestInfo();
             requestInfo.getUserInfo().setType("EMPLOYEE");
-            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber, caseId);
             return caseUtil.searchCaseDetails(caseSearchRequest);
         } catch (Exception e) {
             log.error("Error occurred while getting case details for filingNumber :: {}", filingNumber);
@@ -369,7 +369,7 @@ public class IndexerUtils {
                 if (actors.toLowerCase().contains(ADVOCATE) || actors.toLowerCase().contains(LITIGANT)) {
                     String jsonString = requestInfo.toString();
                     RequestInfo request = mapper.readValue(jsonString, RequestInfo.class);
-                    CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
+                    CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber, caseId);
                     caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
                     JsonNode litigants = caseUtil.getLitigants(caseDetails);
                     Set<String> individualIds = caseUtil.getIndividualIds(litigants);
@@ -406,7 +406,7 @@ public class IndexerUtils {
 
         if (caseDetails == null && filingNumber != null) {
             requestInfo1.getUserInfo().setType("EMPLOYEE");
-            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo1, filingNumber);
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo1, filingNumber, caseId);
             caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
         }
         if (caseDetails != null) {
@@ -621,7 +621,7 @@ public class IndexerUtils {
     private String getCourtId(String filingNumber, RequestInfo request) {
         try {
             request.getUserInfo().setType("EMPLOYEE");
-            org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
+            org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber, null);
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
             return caseDetails.get(0).path("courtId").textValue();
         } catch (Exception e) {
@@ -650,10 +650,13 @@ public class IndexerUtils {
                 .tenantId(tenantId).build();
     }
 
-    public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
+    public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber, String caseId) {
         CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
         caseSearchRequest.setRequestInfo(requestInfo);
         CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
+        if (caseId != null) {
+            caseCriteria.setCaseId(caseId);
+        }
         caseSearchRequest.addCriteriaItem(caseCriteria);
         return caseSearchRequest;
     }
