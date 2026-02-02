@@ -1,12 +1,12 @@
 const cheerio = require("cheerio");
 const config = require("../config");
 const {
-  search_case,
   search_sunbirdrc_credential_service,
   create_pdf,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
+const { getStringAddressDetails } = require("../utils/addressUtils");
 
 
 async function miscellaneousProcessTemplate(
@@ -15,23 +15,20 @@ async function miscellaneousProcessTemplate(
   qrCode,
   courtCaseJudgeDetails
 ) {
-  const cnrNumber = req.query.cnrNumber;
-  const applicationNumber = req.query.applicationNumber;
   const tenantId = req.query.tenantId;
   const entityId = req.query.entityId;
   const code = req.query.code;
   const requestInfo = req.body.RequestInfo;
-  const templateConfigurationData = req.body.templateConfiguration;
-  const courtId = templateConfigurationData?.courtId;
+  const templateData = req.body.templateConfiguration;
 
-  if(templateConfigurationData === undefined){
+  if(templateData === undefined){
     return renderError(
       res,
       "templateConfiguration is mandatory to generate the PDF",
       400
     );
   }
-  if(templateConfigurationData.courtId === undefined){
+  if(templateData.courtId === undefined){
     return renderError(
       res,
       "courtId inside templateConfiguration is mandatory to generate the PDF",
@@ -40,8 +37,6 @@ async function miscellaneousProcessTemplate(
   }
 
   const missingFields = [];
-  if (!cnrNumber) missingFields.push("cnrNumber");
-  if (!applicationNumber) missingFields.push("applicationNumber");
   if (!tenantId) missingFields.push("tenantId");
   if (requestInfo === undefined) missingFields.push("requestInfo");
   if (qrCode === "true" && (!entityId || !code))
@@ -66,15 +61,6 @@ async function miscellaneousProcessTemplate(
   };
 
   try {
-    // Search for case details
-    const resCase = await handleApiCall(
-      () => search_case(cnrNumber, tenantId, requestInfo, courtId), // TODO : verify courtId param
-      "Failed to query case service"
-    );
-    const courtCase = resCase?.data?.criteria[0]?.responseList[0];
-    if (!courtCase) {
-      return renderError(res, "Court case not found", 404);
-    }
 
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
 
@@ -106,40 +92,42 @@ async function miscellaneousProcessTemplate(
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
 
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = templateData?.caseNumber || "";
 
-    // TODO : confirm all the paths and update
+    const coverLetterSelected = templateData?.isCoverLetterRequired || false;
 
-    const coverLetterSelected = ""; // application?.additionalDetails?.coverLetterSelected || "";
-    const policeAddresseeSelected = "";
-      //application?.additionalDetails?.policeAddresseeSelected || "";
-    const accusedAddresseeSelected = "";
-      // application?.additionalDetails?.accusedAddresseeSelected || "";
-    const complainantAddresseeSelected = "";
-      // application?.additionalDetails?.complainantAddresseeSelected || "";
-    const otherAddresseeSelected = "";
-      // application?.additionalDetails?.otherAddresseeSelected || "";
+    let policeAddresseeSelected = false;
+    let accusedAddresseeSelected = false;
+    let complainantAddresseeSelected = false;
+    let otherAddresseeSelected = false;
 
-    const policeStation = "";
-      // application?.applicationDetails?.policeStation || "";
-    const accusedName = ""; // application?.applicationDetails?.accusedName || "";
-    const complainantName = "";
-      // application?.applicationDetails?.complainantName || "";
-    const otherName = ""; // application?.applicationDetails?.otherName || "";
+    if(templateData?.addressee === "POLICE"){
+      policeAddresseeSelected = true;
+    } else if(templateData?.addressee === "ACCUSED"){
+      accusedAddresseeSelected = true;
+    } else if(templateData?.addressee === "COMPLAINANT"){
+      complainantAddresseeSelected = true;
+    } else if(templateData?.addressee === "OTHER"){
+      otherAddresseeSelected = true;
+    }
 
-    const coverLetterText = "";
-      // application?.additionalDetails?.coverLetterText || "";
-    const showAccusedNameAddress = "";
-      // application?.additionalDetails?.showAccusedNameAddress || false;
-    const accusedNameAddress = "";
-      // application?.additionalDetails?.accusedNameAddress || [];             // TODO : modify to array with name and address already attached
+    const addresseeDetails = otherAddresseeSelected ? templateData?.addresseeName : templateData?.addresseeDetails || "";
 
-    const processTitle = ""; // application?.applicationDetails?.processTitle || "";
-    const processText = ""; // application?.applicationDetails?.processText || "";
-    const nextHearingDate = "";
-      // application?.applicationDetails?.nextHearingDate || "";
+    const coverLetterText = templateData?.coverLetterText || "";
+
+    const showAccusedNameAddress = (policeAddresseeSelected || otherAddresseeSelected) ? true : false;
+
+    const accusedNameAddress = 
+      templateData?.partyDetails?.flatMap(party =>
+        (party.selectedAddresses || []).map(address => ({
+          name: party.selectedParty?.name || "",
+          formattedAddress: getStringAddressDetails(address)
+        }))
+      ) || [];
+
+    const processTitle = templateData?.processTitle || "";
+    const processText = templateData?.processText || "";
+    const nextHearingDate = templateData?.nextHearingDate || "";
 
     const data = {
       Data: [
@@ -153,10 +141,10 @@ async function miscellaneousProcessTemplate(
           complainantAddresseeSelected: complainantAddresseeSelected,
           otherAddresseeSelected: otherAddresseeSelected, 
 
-          policeStation: policeStation,
-          accusedName: accusedName,
-          complainantName: complainantName,
-          otherName: otherName,
+          policeStation: addresseeDetails,    // these all can be one variable
+          accusedName: addresseeDetails,
+          complainantName: addresseeDetails,
+          otherName: addresseeDetails,
 
           date: formattedToday,
           coverLetterText: coverLetterText,
@@ -196,7 +184,7 @@ async function miscellaneousProcessTemplate(
   } catch (ex) {
     return renderError(
       res,
-      "Failed to query details of case Settlement Application",
+      "Failed to query details of Miscellaneous Process Application",
       500,
       ex
     );

@@ -308,12 +308,12 @@ module.exports = {
     application_reschedule_hearing_qr:
       process.env.APPLICATION_RESCHEDULE_HEARING_QR ||
       "application-reschedule-hearing-qr",
-    template_configuration_miscellaneous_process:                   // TODO : confirm and update template configuration pdf types
+    template_configuration_miscellaneous_process:                   
       process.env.TEMPLATE_CONFIGURATION_MISCELLANEOUS_PROCESS ||
-      "template-configuration-miscellaneous-process",
+      "template-miscellaneous-process",
     template_configuration_miscellaneous_process_qr:
       process.env.TEMPLATE_CONFIGURATION_MISCELLANEOUS_PROCESS_QR ||
-      "template-configuration-miscellaneous-process-qr",
+      "template-miscellaneous-process-qr",
   },
 
   app: {
@@ -344,10 +344,10 @@ module.exports = {
       process.env.DRISTI_TASK_MANAGEMENT_HOST || "http://localhost:8087",
     digitisation:
       process.env.DRISTI_DIGITALIZED_DOCUMENTS_HOST || "http://localhost:8333",
-    templateConfiguration:
-      process.env.DRISTI_TEMPLATE_CONFIGURATION_HOST ||
-      "http://localhost:8030",
-    // TODO : confirma and update template configuration host
+    // templateConfiguration:
+    //   process.env.DRISTI_TEMPLATE_CONFIGURATION_HOST ||
+    //   "http://localhost:8030",
+    // // TODO : no need of host remove it
   },
 
   paths: {
@@ -375,7 +375,7 @@ module.exports = {
     task_management_search: "/task-management/v1/_search",
     digitalized_documents_search: "/digitalized-documents/v1/_search",
     template_configuration_search: "/template-configuration/v1/_search",
-    // TODO : confirm and update template configuration paths
+    // TODO : Add mdms response and role action to support folder
   },
 
   constraints: {

@@ -19,13 +19,11 @@ router.post(
   asyncMiddleware(async function (req, res, next) {
     const {
       qrCode: qrCodeRaw,
-      templateConfiguration,
       tenantId,
       courtId,
     } = req.query || {};
 
     let qrCode = qrCodeRaw;
-    let templateType = templateConfiguration;
     const requestInfo = req.body?.RequestInfo;
     const courtCaseJudgeDetails = await getCourtAndJudgeDetails(
       res,
@@ -42,32 +40,14 @@ router.post(
       qrCode = qrCode.toString().toLowerCase();
     }
 
-    if (!templateType) {
-      return renderError(
-        res,
-        "Template configuration type is mandatory to generate the PDF",
-        400
-      );
-    }
 
     try {
-      switch (templateType.toLowerCase()) {
-        case "miscellaneous-process-template":
-          await miscellaneousProcessTemplate(
-            req,
-            res,
-            courtCaseJudgeDetails,
-            qrCode
-          );
-          break;
-        
-        default:
-          return renderError(
-            res,
-            `Unsupported template configuration type: ${templateType}`,
-            400
-          );
-      }
+      await miscellaneousProcessTemplate(
+        req,
+        res,
+        qrCode,
+        courtCaseJudgeDetails
+      );
     } catch (error) {
       renderError(
         res,
