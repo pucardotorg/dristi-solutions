@@ -1940,6 +1940,8 @@ function EFilingCases({ path }) {
         caseDetails,
         selected,
         setServiceOfDemandNoticeModal,
+        isCaseReAssigned,
+        errorCaseDetails,
       });
       checkDuplicateMobileEmailValidation({
         formData,
