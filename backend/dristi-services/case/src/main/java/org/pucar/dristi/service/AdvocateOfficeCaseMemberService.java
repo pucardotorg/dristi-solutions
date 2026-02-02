@@ -269,6 +269,10 @@ public class AdvocateOfficeCaseMemberService {
                             if (office.getClerks() != null) {
                                 office.getClerks().removeIf(m -> memberUserUuid.equals(m.getMemberUserUuid()));
                             }
+
+                            if (office.getAdvocates() != null && office.getClerks() != null && office.getAdvocates().isEmpty() && office.getClerks().isEmpty()) {
+                                advocateOffices.remove(office);
+                            }
                         }
                         courtCase.setAdvocateOffices(advocateOffices);
                         cacheService.save(redisKey, courtCase);
