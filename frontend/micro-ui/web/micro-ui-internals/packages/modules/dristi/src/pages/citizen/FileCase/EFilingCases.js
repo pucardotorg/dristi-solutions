@@ -67,9 +67,8 @@ import CorrectionsSubmitModal from "../../../components/CorrectionsSubmitModal";
 import { Urls } from "../../../hooks";
 import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
 import {
-  getComplainants,
-  getComplainantSideAdvocates,
-  getComplainantsSidePoAHolders,
+  findCaseDraftEditAllowedParties,
+  getAllComplainantSideUuids,
   getFilingType,
   getSuffixByBusinessCode,
   TaskManagementWorkflowState,
@@ -83,6 +82,7 @@ import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
 import { documentLabels } from "../../../Utils";
 import useSearchTaskMangementService from "../../../hooks/dristi/useSearchTaskMangementService";
+import { ADVOCATE_OFFICE_MAPPING_KEY } from "@egovernments/digit-ui-module-home/src/utils";
 
 export const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -185,8 +185,14 @@ function EFilingCases({ path }) {
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const todayDate = new Date().getTime();
   const userInfo = Digit?.UserService?.getUser()?.info;
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isAdvocateFilingCase = roles?.some((role) => role.code === "ADVOCATE_ROLE");
+  const advocateOfficeMapping = JSON.parse(localStorage.getItem(ADVOCATE_OFFICE_MAPPING_KEY));
+  const { loggedInMemberId = null, officeAdvocateId = null, officeAdvocateUuid = null } = advocateOfficeMapping || {};
+
+  const isAdvocateOrOfficeMemberLoggedIn = useMemo(() => {
+    // if either a senior adv himself or it's associated members i.e jr. adv/clerk doing the process on it's behalf.
+    return Boolean(officeAdvocateId);
+  }, [officeAdvocateId]);
+
   const moduleCode = "DRISTI";
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
@@ -236,7 +242,7 @@ function EFilingCases({ path }) {
   const [newCaseName, setNewCaseName] = useState("");
   const [showEditCaseNameModal, setShowEditCaseNameModal] = useState(false);
   const [modalCaseName, setModalCaseName] = useState("");
-  const [isFilingParty, setIsFilingParty] = useState(false);
+  const [isEditingAllowed, setIsEditingAllowed] = useState(false);
 
   const [{ showSuccessToast, successMsg }, setSuccessToast] = useState({
     showSuccessToast: false,
@@ -621,27 +627,29 @@ function EFilingCases({ path }) {
     }
   }, [caseDetails, errorCaseDetails, isCaseReAssigned, isDraftInProgress, judgeObj, scrutinyObj, selected]);
 
+  // Case correction/edition is allowed only to complainants, and also poa holders, advocates who are associated to complainants.
   const allComplainantSideUuids = useMemo(() => {
-    const complainants = getComplainants(caseDetails);
-    const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants);
-    const advocates = getComplainantSideAdvocates(caseDetails) || [];
-    const allParties = [...complainants, ...poaHolders, ...advocates];
-    return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+    return getAllComplainantSideUuids(caseDetails);
+  }, [caseDetails]);
+
+  const caseDraftEditAllowedParties = useMemo(() => {
+    const createdByUuid = caseDetails?.auditDetails?.createdBy;
+    return findCaseDraftEditAllowedParties(caseDetails, createdByUuid);
   }, [caseDetails]);
 
   useEffect(() => {
     if (caseDetails?.status === "DRAFT_IN_PROGRESS") {
-      // In draft stage, only the party who created the case can have the edit access.
-      const filingParty = caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
-      setIsFilingParty(filingParty);
-      if (caseDetails && !filingParty && !isLoading) {
+      const loggedInUserUuid = userInfo?.uuid;
+      const isEditingAllowedToUser = caseDraftEditAllowedParties?.includes(loggedInUserUuid);
+      setIsEditingAllowed(isEditingAllowedToUser);
+      if (caseDetails && !isEditingAllowedToUser && !isLoading) {
         history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
       }
     }
     if (caseDetails?.status === "CASE_REASSIGNED") {
       // Case correction/edition is allowed only to complainants, and also poa holders, advocates who are associated to complainants.
       const isCaseCorrectionAllowed = allComplainantSideUuids?.includes(userInfo?.uuid);
-      setIsFilingParty(isCaseCorrectionAllowed);
+      setIsEditingAllowed(isCaseCorrectionAllowed);
       if (caseDetails && !isCaseCorrectionAllowed && !isLoading) {
         history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
       }
@@ -655,9 +663,11 @@ function EFilingCases({ path }) {
         CaseWorkflowState.PENDING_SIGN,
       ]?.includes(caseDetails?.status)
     ) {
-      history.replace(`/${window?.contextPath}/citizen/dristi/home/file-case/sign-complaint?filingNumber=${caseDetails?.filingNumber}`);
+      history.replace(
+        `/${window?.contextPath}/citizen/dristi/home/file-case/sign-complaint?filingNumber=${caseDetails?.filingNumber}&caseId=${caseId}`
+      );
     }
-  }, [caseDetails, caseId, history, isFilingParty, isLoading, userInfo?.uuid, allComplainantSideUuids]);
+  }, [caseDetails, caseId, history, isEditingAllowed, isLoading, userInfo?.uuid, allComplainantSideUuids, caseDraftEditAllowedParties]);
 
   const completedComplainants = useMemo(() => {
     // check TODO: apply filter for formdata which is enabled and completed
@@ -1109,7 +1119,7 @@ function EFilingCases({ path }) {
                       return {
                         ...input,
                         data: dataobj,
-                        isFilingParty: isFilingParty,
+                        isEditingAllowed: isEditingAllowed,
                       };
                     }),
                   },
@@ -2826,7 +2836,7 @@ function EFilingCases({ path }) {
         setIsLoader(false);
       });
     setPrevSelected(selected);
-    if (!isFilingParty) {
+    if (!isEditingAllowed) {
       history.replace(`?caseId=${caseId}&selected=${key}`);
     } else {
       history.push(`?caseId=${caseId}&selected=${key}`);
@@ -3033,8 +3043,8 @@ function EFilingCases({ path }) {
 
   // show action bar only after all mandatory details are filed
   const showActionsLabels = useMemo(() => {
-    return !isFilingParty ? !mandatoryFieldsLeftTotalCount && !isDisableAllFieldsMode : true;
-  }, [isFilingParty, mandatoryFieldsLeftTotalCount, isDisableAllFieldsMode]);
+    return !isEditingAllowed ? !mandatoryFieldsLeftTotalCount && !isDisableAllFieldsMode : true;
+  }, [isEditingAllowed, mandatoryFieldsLeftTotalCount, isDisableAllFieldsMode]);
 
   const [isOpen, setIsOpen] = useState(false);
   if (isLoading || isGetAllCasesLoading || isCourtIdsLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
@@ -3067,7 +3077,7 @@ function EFilingCases({ path }) {
   };
 
   const handleGoToPage = (key) => {
-    if (!isFilingParty) {
+    if (!isEditingAllowed) {
       history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
     } else {
       history.push(`?caseId=${caseId}&selected=${key}`);
@@ -3243,7 +3253,7 @@ function EFilingCases({ path }) {
                   title={item.title}
                   handlePageChange={handlePageChange}
                   handleAccordionClick={() => {
-                    handleAccordionClick(isFilingParty ? index : accordion.length - 1);
+                    handleAccordionClick(isEditingAllowed ? index : accordion.length - 1);
                   }}
                   key={index}
                   children={item.children}
@@ -3252,7 +3262,7 @@ function EFilingCases({ path }) {
                   errorCount={scrutinyErrors?.[item.key]?.total - scrutinyErrors?.[item.key]?.warning || 0}
                   isCaseReAssigned={isCaseReAssigned}
                   isDraftInProgress={isDraftInProgress}
-                  isFilingParty={isFilingParty}
+                  isEditingAllowed={isEditingAllowed}
                   AccordionTabs={AccordionTabs}
                 />
               ))}
@@ -3267,7 +3277,7 @@ function EFilingCases({ path }) {
               title={item.title}
               handlePageChange={handlePageChange}
               handleAccordionClick={() => {
-                handleAccordionClick(isFilingParty ? index : accordion.length - 1);
+                handleAccordionClick(isEditingAllowed ? index : accordion.length - 1);
               }}
               key={index}
               children={item.children}
@@ -3277,7 +3287,7 @@ function EFilingCases({ path }) {
               errorCount={scrutinyErrors?.[item.key]?.total - scrutinyErrors?.[item.key]?.warning || 0}
               isCaseReAssigned={isCaseReAssigned}
               isDraftInProgress={isDraftInProgress}
-              isFilingParty={isFilingParty}
+              isEditingAllowed={isEditingAllowed}
               AccordionTabs={AccordionTabs}
             />
           ))}
@@ -3313,7 +3323,7 @@ function EFilingCases({ path }) {
                       </React.Fragment>
                     )}
                   </Header>
-                  {selected === "reviewCaseFile" && !isCaseReAssigned && isFilingParty && (
+                  {selected === "reviewCaseFile" && !isCaseReAssigned && isEditingAllowed && (
                     <div className="case-edit-icon" onClick={() => setShowEditCaseNameModal(true)} style={{ cursor: "pointer" }}>
                       <span style={{ position: "relative" }} data-tip data-for="Click">
                         <EditIcon style={{ display: "block", position: "relative" }} />
@@ -3463,7 +3473,7 @@ function EFilingCases({ path }) {
             ></Modal>
           )}
           {/* show this modal only for filingParty */}
-          {isFilingParty && showMandatoryFieldsRemainingModal && showConfirmMandatoryModal && (
+          {isEditingAllowed && showMandatoryFieldsRemainingModal && showConfirmMandatoryModal && (
             <Modal
               headerBarMain={<Heading label={`${mandatoryFieldsLeftTotalCount} ${t("MANDATORY_FIELDS_REMAINING")}`} />}
               headerBarEnd={<CloseBtn onClick={() => takeUserToRemainingMandatoryFieldsPage()} />}
@@ -3489,7 +3499,7 @@ function EFilingCases({ path }) {
                 }
                 actionCancelLabel={t("SKIP_AND_CONTINUE")}
                 actionCancelOnSubmit={handleSkip}
-                actionSaveLabel={isFilingParty && t("FILL_NOW")}
+                actionSaveLabel={isEditingAllowed && t("FILL_NOW")}
                 children={optionalFieldsRemainingText(optionalFieldsLeftTotalCount)}
                 actionSaveOnSubmit={() => takeUserToRemainingOptionalFieldsPage()}
               ></Modal>
@@ -3627,7 +3637,7 @@ function EFilingCases({ path }) {
           path={path}
           setShowCaseLockingModal={setShowCaseLockingModal}
           setShowConfirmCaseDetailsModal={setShowConfirmCaseDetailsModal}
-          isAdvocateFilingCase={isAdvocateFilingCase}
+          isAdvocateOrOfficeMemberLoggedIn={isAdvocateOrOfficeMemberLoggedIn}
           onSubmit={onSubmit}
           createPendingTask={createPendingTask}
           setPrevSelected={setPrevSelected}

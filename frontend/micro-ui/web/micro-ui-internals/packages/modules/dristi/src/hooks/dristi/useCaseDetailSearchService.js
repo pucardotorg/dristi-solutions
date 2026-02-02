@@ -2,11 +2,20 @@ import { useQuery, useQueryClient } from "react-query";
 import { DRISTIService } from "../../services";
 
 function useCaseDetailSearchService(reqData, params, moduleCode, caseId, enabled, isCacheTimeEnabled = true) {
+  const advocateOfficeMapping = JSON.parse(localStorage.getItem("advocateOfficeMapping"));
+  //TODO: remove this extraCriteria dependency once back end changes are done.
+  const { loggedInMemberId = null, officeAdvocateId = null, officeAdvocateUuid = null } = advocateOfficeMapping || {};
+  const extraCriteria = officeAdvocateId
+    ? officeAdvocateId === loggedInMemberId
+      ? { advocateId: officeAdvocateId }
+      : { officeAdvocateId: officeAdvocateId, memberid: loggedInMemberId }
+    : {};
+  const reqDataUpdated = { ...reqData, criteria: { ...reqData.criteria, ...extraCriteria } };
   const client = useQueryClient();
   const { isLoading, data, isFetching, refetch, error } = useQuery(
     `GET_CASE_DETAILS_${moduleCode}_${caseId}`,
     () =>
-      DRISTIService.caseDetailSearchService(reqData, params)
+      DRISTIService.caseDetailSearchService(reqDataUpdated, params)
         .then((data) => data)
         .catch(() => ({})),
     {

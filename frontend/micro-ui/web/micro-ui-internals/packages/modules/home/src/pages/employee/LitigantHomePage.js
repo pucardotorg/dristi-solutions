@@ -9,7 +9,7 @@ import { uploadResponseDocumentConfig } from "@egovernments/digit-ui-module-dris
 import OtpComponent from "../../../../cases/src/components/OtpComponent";
 import CustomStepperSuccess from "@egovernments/digit-ui-module-orders/src/components/CustomStepperSuccess";
 import { updateCaseDetails } from "../../../../cases/src/utils/joinCaseUtils";
-import ClerkWithoutAdvocateView from "./ClerkWithoutAdvocateView";
+import ClerkWithoutAdvocateView from "../../components/ClerkWithoutAdvocateView";
 const FileNewCaseIcon = () => (
   <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect width="120" height="120" rx="60" fill="#FFF4FC" fill-opacity="0.5" />
@@ -449,7 +449,7 @@ const containerJoinFileCaseStyle = {
   border: "1px solid #e8e8e8",
   borderRadius: "8px",
 };
-const LitigantHomePage = ({ isApprovalPending }) => {
+const LitigantHomePage = ({ isApprovalPending, unAssociatedClerk = false, isLoggedInUserClerk = false }) => {
   const userName = Digit.SessionStorage.get("User");
   const { t } = useTranslation();
   const today = new Date();
@@ -482,80 +482,85 @@ const LitigantHomePage = ({ isApprovalPending }) => {
       <div className="header" style={{ fontSize: "30px" }}>
         {curHr < 12 ? t("GOOD_MORNING") : curHr < 18 ? t("GOOD_AFTERNOON") : t("GOOD_EVENING")}, <span className="userName">{name}</span>
       </div>
-      <div className="header sub-text" style={{ marginTop: "40px", fontSize: "30px" }}>
-        {t("What are you planning to do today?")}
-      </div>
-      <div
-        key={`${callRefetch}`}
-        className="join-file-case-wrapper"
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          width: "100%",
-          gap: "20px",
-        }}
-      >
-        <div className="container" style={containerJoinFileCaseStyle}>
+      {unAssociatedClerk ? (
+        <ClerkWithoutAdvocateView></ClerkWithoutAdvocateView>
+      ) : (
+        <div>
+          <div className="header sub-text" style={{ marginTop: "40px", fontSize: "30px" }}>
+            {t("What are you planning to do today?")}
+          </div>
           <div
-            className="litigant-file-case"
+            key={`${callRefetch}`}
+            className="join-file-case-wrapper"
             style={{
               display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
               justifyContent: "center",
+              alignItems: "center",
               width: "100%",
-              height: "100%",
-              gap: 8,
+              gap: "20px",
             }}
           >
-            <FileNewCaseIcon />
-            <React.Fragment>
-              <span className="header userName" style={{ fontSize: "30px", textAlign: "center" }}>
-                {t("CS_JOIN_NEW_CASE")}
-              </span>
-              <span className="subtext" style={subtextStyle}>
-                {t("CS_FILE_A_CASE_SUBTEXT")}
-              </span>
-            </React.Fragment>
-            <Button
-              className={"home-view tertiary-button-selector"}
-              label={t("FILE_A_CASE")}
-              labelClassName={"tertiary-label-selector"}
-              onButtonClick={() => {
-                history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
-              }}
-            />
-          </div>
-        </div>
+            <div className="container" style={containerJoinFileCaseStyle}>
+              <div
+                className="litigant-file-case"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  height: "100%",
+                  gap: 8,
+                }}
+              >
+                <FileNewCaseIcon />
+                <React.Fragment>
+                  <span className="header userName" style={{ fontSize: "30px", textAlign: "center" }}>
+                    {t("CS_JOIN_NEW_CASE")}
+                  </span>
+                  <span className="subtext" style={subtextStyle}>
+                    {t("CS_FILE_A_CASE_SUBTEXT")}
+                  </span>
+                </React.Fragment>
+                <Button
+                  className={"home-view tertiary-button-selector"}
+                  label={t("FILE_A_CASE")}
+                  labelClassName={"tertiary-label-selector"}
+                  onButtonClick={() => {
+                    history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
+                  }}
+                />
+              </div>
+            </div>
 
-        <div className="container" style={containerJoinFileCaseStyle}>
-          <div
-            className="litigant-join-case"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "100%",
-              height: "100%",
-              gap: 8,
-            }}
-          >
-            <JoinOngoingCaseIcon />
-            <React.Fragment>
-              <span className="header userName" style={{ fontSize: "30px", textAlign: "center" }}>
-                {t("CS_JOIN_ONGOING_CASE")}
-              </span>
-              <span className="subtext" style={subtextStyle}>
-                {t("CS_JOIN_ONGOING_CASE_SUBTEXT_1")}
-              </span>
-            </React.Fragment>
-            <JoinCaseHome refreshInbox={refreshInbox} />
+            <div className="container" style={containerJoinFileCaseStyle}>
+              <div
+                className="litigant-join-case"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "100%",
+                  height: "100%",
+                  gap: 8,
+                }}
+              >
+                <JoinOngoingCaseIcon />
+                <React.Fragment>
+                  <span className="header userName" style={{ fontSize: "30px", textAlign: "center" }}>
+                    {t("CS_JOIN_ONGOING_CASE")}
+                  </span>
+                  <span className="subtext" style={subtextStyle}>
+                    {t("CS_JOIN_ONGOING_CASE_SUBTEXT_1")}
+                  </span>
+                </React.Fragment>
+                <JoinCaseHome refreshInbox={refreshInbox} />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <ClerkWithoutAdvocateView />
+      )}
     </div>
   );
 };

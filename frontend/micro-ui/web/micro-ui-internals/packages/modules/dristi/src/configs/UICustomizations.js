@@ -9,7 +9,14 @@ import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
 import ActionEdit from "../components/ActionEdit";
 import ReactTooltip from "react-tooltip";
-import { _getDigitilizationPatiresName, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
+import {
+  _getDigitilizationPatiresName,
+  getAssistantAdvocateMembersForPartiesTab,
+  getClerkMembersForPartiesTab,
+  getDate,
+  modifiedEvidenceNumber,
+  removeInvalidNameParts,
+} from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
@@ -1458,6 +1465,12 @@ export const UICustomizations = {
                 };
               }) || [];
 
+            //List of all the clerks working for senior advocates in the case
+            const advocateOfficeClerks = getClerkMembersForPartiesTab(data);
+
+            //List of all the assistant advocates working for senior advocates in the case
+            const advocateOfficeAssistantAdvocates = getAssistantAdvocateMembersForPartiesTab(data);
+
             const allParties = [
               ...finalLitigantsData,
               ...unjoinedAccused,
@@ -1465,6 +1478,8 @@ export const UICustomizations = {
               ...joinStatusPendingAdvocates,
               ...finalPoaHoldersData,
               ...witnessDetails,
+              ...advocateOfficeClerks,
+              ...advocateOfficeAssistantAdvocates,
             ];
             const paginatedParties = allParties.slice(offset, offset + limit);
             return {
@@ -1487,14 +1502,18 @@ export const UICustomizations = {
         case "PARTY_NAME":
           return removeInvalidNameParts(value) || "";
 
-        case "ASSOCIATED_WITH":
-          const associatedWith =
-            row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType)
+        case "ASSOCIATED_WITH": {
+          let associatedWith =
+            row?.partyType === "ADVOCATE" || ["poa.regular"].includes(row?.partyType)
               ? row?.representingList
               : row?.partyType === "witness"
               ? t(row?.associatedWith)
               : "";
+          if (Array.isArray(row?.associatedWith)) {
+            associatedWith = row.associatedWith.filter(Boolean).join(", ");
+          }
           return associatedWith || "";
+        }
         case "STATUS":
           const caseJoinStatus = ["respondent.primary", "respondent.additional"].includes(row?.partyType)
             ? t("JOINED")
@@ -1519,7 +1538,15 @@ export const UICustomizations = {
           return <span>{formattedDate}</span>;
         case "PARTY_TYPE":
           const partyType = value === "ADVOCATE" ? `${t("ADVOCATE")}` : partyTypes[value] ? t(partyTypes[value]) : t(value);
-          return partyType === "unJoinedAccused" ? "Accused" : partyType === "witness" ? t("WITNESS") : partyType;
+          return partyType === "unJoinedAccused"
+            ? "Accused"
+            : partyType === "witness"
+            ? t("WITNESS")
+            : partyType === "CLERK"
+            ? t("CLERK_PARTY_TYPE")
+            : partyType === "ASSISTANT_ADVOCATE"
+            ? t("ASSISTANT_ADVOCATE_PARTY_TYPE")
+            : partyType;
         case "ACTIONS":
           return row?.isEditable ? (
             <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center" }}>

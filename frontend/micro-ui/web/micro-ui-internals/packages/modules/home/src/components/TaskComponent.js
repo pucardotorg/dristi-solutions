@@ -58,6 +58,7 @@ const TasksComponent = ({
   pendingSignOrderList,
   tableView = false,
   needRefresh = false,
+  seniorAdvocates = null,
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const CourierService = useMemo(() => Digit.ComponentRegistryService.getComponent("CourierService"), []);
@@ -1251,37 +1252,64 @@ const TasksComponent = ({
         ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
           <React.Fragment>
             {!hideFilters && (
-              <div className="task-filters">
-                <style>{customStyles}</style>
-                <LabelFieldPair>
-                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
-                    {t("CASE_TYPE")}
-                  </CardLabel>
-                  <Dropdown
-                    option={caseTypes}
-                    selected={caseType}
-                    optionKey={"name"}
-                    select={(value) => {
-                      setCaseType(value);
-                    }}
-                    placeholder={t("CS_CASE_TYPE")}
-                  />
-                </LabelFieldPair>
-                <LabelFieldPair>
-                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
-                    {t("CS_TASK_TYPE")}
-                  </CardLabel>
-                  <Dropdown
-                    t={t}
-                    option={options?.sort((a, b) => a?.name?.localeCompare(b?.name))}
-                    optionKey={"name"}
-                    selected={taskType}
-                    select={(value) => {
-                      setTaskType(value);
-                    }}
-                    placeholder={t("CS_TASK_TYPE")}
-                  />
-                </LabelFieldPair>
+              <div>
+                <div className="task-filters">
+                  <style>{customStyles}</style>
+                  <LabelFieldPair>
+                    <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
+                      {t("CASE_TYPE")}
+                    </CardLabel>
+                    <Dropdown
+                      option={caseTypes}
+                      selected={caseType}
+                      optionKey={"name"}
+                      select={(value) => {
+                        setCaseType(value);
+                      }}
+                      placeholder={t("CS_CASE_TYPE")}
+                      style={{ marginBottom: "0px" }}
+                    />
+                  </LabelFieldPair>
+                  <LabelFieldPair>
+                    <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
+                      {t("CS_TASK_TYPE")}
+                    </CardLabel>
+                    <Dropdown
+                      t={t}
+                      option={options?.sort((a, b) => a?.name?.localeCompare(b?.name))}
+                      optionKey={"name"}
+                      selected={taskType}
+                      select={(value) => {
+                        setTaskType(value);
+                      }}
+                      placeholder={t("CS_TASK_TYPE")}
+                      style={{ marginBottom: "0px" }}
+                    />
+                  </LabelFieldPair>
+                </div>
+                {seniorAdvocates &&
+                  seniorAdvocates?.length >
+                    0(
+                      <div className="">
+                        <style>{customStyles}</style>
+                        <LabelFieldPair>
+                          <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
+                            {t("ADVOCATE")}
+                          </CardLabel>
+
+                          <Dropdown
+                            t={t}
+                            option={seniorAdvocates}
+                            optionKey={"advocateName"}
+                            // select={handleDropdownChange}
+                            // freeze={true}
+                            // selected={selectedSeniorAdvocate}
+                            placeholder={t("SELECT_ADVOCATE")}
+                            style={{ marginBottom: "0px" }}
+                          />
+                        </LabelFieldPair>
+                      </div>
+                    )}
               </div>
             )}
 

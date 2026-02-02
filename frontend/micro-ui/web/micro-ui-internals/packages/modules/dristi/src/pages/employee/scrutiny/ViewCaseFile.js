@@ -18,7 +18,7 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import { use } from "react";
-import { getComplainants, getComplainantSideAdvocates, getComplainantsSidePoAHolders } from "../../../Utils";
+import { getAllComplainantSideUuids } from "../../../Utils";
 import isEqual from "lodash/isEqual";
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
@@ -170,11 +170,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   ]);
 
   const allComplainantSideUuids = useMemo(() => {
-    const complainants = getComplainants(caseDetails);
-    const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants);
-    const advocates = getComplainantSideAdvocates(caseDetails) || [];
-    const allParties = [...complainants, ...poaHolders, ...advocates];
-    return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+    return getAllComplainantSideUuids(caseDetails);
   }, [caseDetails]);
   const filingNumberRef = useRef(null);
 
@@ -522,7 +518,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: allComplainantSideUuids, comments: commentSendBack }),
+            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: allComplainantSideUuids, comments: commentSendBack }), //TODO: check all scenarios for clerk flow.(remove clerk/jr uuid from here when back end changes are done)
             ...(action === CaseWorkflowAction.VALIDATE && { comments: comment }),
           },
           ...(action === CaseWorkflowAction.VALIDATE && { judgeId, courtId, benchId }),

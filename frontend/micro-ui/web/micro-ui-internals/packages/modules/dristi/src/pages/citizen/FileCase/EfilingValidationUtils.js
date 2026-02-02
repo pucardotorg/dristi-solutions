@@ -3294,6 +3294,9 @@ export const updateCaseDetails = async ({
           uuid: data?.advocate?.auditDetails?.createdBy,
         },
         representing: representing,
+        advocateFilingStatus: "other", // For new advocates except case creator advocate
+        // (if senior adv or his jr adv/clerk member created case on his behalf then its already present in existing case reprentatives as advocateFilingStatus: "caseOwner")
+        //and it will be overridden automatically in updatedRepresentatives logic written below.
       };
     });
 

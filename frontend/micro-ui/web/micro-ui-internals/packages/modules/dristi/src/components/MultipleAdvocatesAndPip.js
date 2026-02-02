@@ -16,6 +16,7 @@ import { useToast } from "./Toast/useToast";
 import { FSOErrorIcon } from "../icons/svgIndex";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import SearchableDropdown from "./SearchableDropdown";
+import { ADVOCATE_OFFICE_MAPPING_KEY } from "../../../home/src/utils";
 
 function ScrutinyInfoAdvocate({ message, t }) {
   return (
@@ -91,6 +92,8 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const caseId = urlParams.get("caseId");
   const [isApproved, setIsApproved] = useState(false);
   const toast = useToast();
+  const advocateOfficeMapping = JSON.parse(localStorage.getItem(ADVOCATE_OFFICE_MAPPING_KEY));
+  const { loggedInMemberId = null, officeAdvocateId = null, officeAdvocateUuid = null } = advocateOfficeMapping || {};
 
   const [advocateAndPipData, setAdvocateAndPipData] = useState(
     formData?.[config?.key]
@@ -323,11 +326,11 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const { data, isLoading, refetch } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        userUuid: [userInfo?.uuid],
+        userUuid: officeAdvocateUuid ? [officeAdvocateUuid] : [userInfo?.uuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
       },
     },
     { tenantId, limit: 1000, offset: 0 },
-    moduleCode,
+    `${moduleCode}-${userInfo?.uuid}-${officeAdvocateUuid}`,
     "HOME",
     userInfo?.uuid && isUserLoggedIn
   );
@@ -369,10 +372,6 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     setIsApproved(!isPending);
   }, []);
 
-  const selectedAdvindividualId = useMemo(() => {
-    return formData?.multipleAdvocateNameDetails?.[0]?.advocateBarRegNumberWithName?.individualId || null;
-  }, [formData?.advocateBarRegNumberWithName]);
-
   const fetchIndividualInfo = async (individualId) => {
     const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
       {
@@ -397,21 +396,6 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     `getindividual-${individualId}`,
     individualId
   );
-
-  const getSelectedIndividual = async (selectedAdvindividualId) => {
-    const { data: selectedIndividual, isLoading: isInidividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
-      {
-        Individual: {
-          individualId: selectedAdvindividualId,
-        },
-      },
-      { tenantId, limit: 1000, offset: 0 },
-      moduleCode,
-      `getindividual-${selectedAdvindividualId}`,
-      selectedAdvindividualId
-    );
-    return { selectedIndividual, isInidividualLoading };
-  };
 
   useEffect(() => {
     if (

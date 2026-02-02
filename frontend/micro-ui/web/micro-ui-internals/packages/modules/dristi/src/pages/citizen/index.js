@@ -13,6 +13,7 @@ import { newConfig, userTypeOptions } from "./registration/config";
 import Breadcrumb from "../../components/BreadCrumb";
 import SelectEmail from "./registration/SelectEmail";
 import ViewCase from "./view-case";
+import { ADVOCATE_OFFICE_MAPPING_KEY } from "@egovernments/digit-ui-module-home/src/utils";
 
 const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const [hideBack, setHideBack] = useState(false);
@@ -40,6 +41,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const isUserLoggedIn = Boolean(token);
   const userInfoType = Digit.UserService.getType();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const advocateOfficeMapping = JSON.parse(localStorage.getItem(ADVOCATE_OFFICE_MAPPING_KEY));
+  const { loggedInMemberId = null, officeAdvocateId = null, officeAdvocateUuid = null } = advocateOfficeMapping || {};
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
@@ -55,11 +58,11 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const { data, isLoading, refetch } = Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        userUuid: [userInfo?.uuid],
+        userUuid: officeAdvocateUuid ? [officeAdvocateUuid] : [userInfo?.uuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
       },
     },
     { tenantId, limit: 1000, offset: 0 },
-    moduleCode,
+    `${moduleCode}-${userInfo?.uuid}-${officeAdvocateUuid}`,
     "",
     userInfo?.uuid && isUserLoggedIn
   );

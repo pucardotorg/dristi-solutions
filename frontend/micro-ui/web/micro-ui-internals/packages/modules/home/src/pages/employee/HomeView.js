@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useHistory } from "react-router-dom";
 import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { rolesToConfigMapping, userTypeOptions, getUnifiedEmployeeConfig, getOnRowClickConfig, litigantConfig } from "../../configs/HomeConfig";
@@ -18,6 +18,9 @@ import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import useSearchCaseListService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseListService";
 import { BreadCrumb } from "@egovernments/digit-ui-react-components";
+import SelectAdvocateModal from "./SelectAdvocateModal";
+import { Dropdown } from "@egovernments/digit-ui-components";
+import { ADVOCATE_OFFICE_MAPPING_KEY, extractedSeniorAdvocates } from "../../utils";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -79,6 +82,10 @@ const HomeView = () => {
   const [onRowClickData, setOnRowClickData] = useState({ url: "", params: [] });
   const [taskType, setTaskType] = useState(state?.taskType || {});
   const [caseType, setCaseType] = useState(state?.caseType || {});
+  const [showSelectAdvocateModal, setShowSelectAdvocateModal] = useState(false);
+  const [selectedSeniorAdvocate, setSelectedSeniorAdvocate] = useState({});
+  const citizenDataLoadingRef = useRef(null);
+  const initialCountFetchRef = useRef(false);
 
   const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -165,6 +172,11 @@ const HomeView = () => {
     setCallRefetch(!callRefetch);
   };
 
+  const refreshInboxAfterSelectedAdvocateChange = () => {
+    setCallRefetch(!callRefetch);
+    getTotalCountForTab(tabConfigs);
+  };
+
   const userTypeDetail = useMemo(() => {
     return userTypeOptions.find((item) => item.code === userType) || {};
   }, [userType]);
@@ -184,16 +196,150 @@ const HomeView = () => {
   }, [searchResult, userType]);
 
   const advocateId = useMemo(() => {
-    return searchResult?.[0]?.id;
-  }, [searchResult]);
+    return userType === "ADVOCATE" ? searchResult?.[0]?.id : null;
+  }, [searchResult, userType]);
+
+  const advClerkId = useMemo(() => {
+    return userType === "ADVOCATE_CLERK" ? searchResult?.[0]?.id : null;
+  }, [searchResult, userType]);
+
+  const searchCriteria = useMemo(() => {
+    return userType === "ADVOCATE" ? { memberId: advocateId } : userType === "ADVOCATE_CLERK" ? { memberId: advClerkId } : {};
+  }, [advocateId, advClerkId, userType]);
+
+  const { data: officeMembersData, isLoading: isLoadingMembers, refetch: refetchMembers } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
+    {
+      searchCriteria: {
+        ...searchCriteria,
+        tenantId: tenantId,
+      },
+    },
+    { tenantId },
+    searchCriteria,
+    Boolean((advocateId || advClerkId) && tenantId)
+  );
+
+  const seniorAdvocates = useMemo(() => {
+    if (isLoadingMembers) return [];
+    if (userType === "ADVOCATE" && advocateId) {
+      const selfDetails = [{ id: advocateId, value: advocateId, advocateName: userInfo?.name, uuid: userInfo?.uuid }];
+      if (officeMembersData?.members?.length > 0) {
+        const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
+        const totalList = [...selfDetails, ...seniorAdvocatesList];
+        return [...(totalList || [])].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
+      } else return selfDetails;
+    } else if (userType === "ADVOCATE_CLERK" && advClerkId) {
+      if (officeMembersData?.members?.length > 0) {
+        const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
+        return [...(seniorAdvocatesList || [])].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
+      } else return [];
+    }
+    return [];
+  }, [advocateId, advClerkId, officeMembersData, isLoadingMembers, userType, userInfo?.name, userInfo?.uuid]);
+
+  const unAssociatedClerk = useMemo(() => {
+    // seniorAdvocates length zero means the logged in clerk is not associated with any advocate yet.
+    if (userType === "ADVOCATE_CLERK" && seniorAdvocates?.length === 0) {
+      return true;
+    }
+    return false;
+  }, [userType, seniorAdvocates?.length]);
+
+  const handleDropdownChange = (selectedAdvocateOption) => {
+    const selectedValue = selectedAdvocateOption?.value;
+    if (!selectedValue) return;
+
+    const matchingAdvocate = seniorAdvocates.find((opt) => opt?.value === selectedValue);
+    if (!matchingAdvocate) return;
+
+    const { id, uuid, value, advocateName } = matchingAdvocate;
+    setSelectedSeniorAdvocate((prev) => {
+      if (prev?.id === id && prev?.uuid === uuid) return prev;
+      return {
+        advocateName,
+        value,
+        id,
+        uuid,
+      };
+    });
+    refreshInbox();
+  };
+
+  useEffect(() => {
+    selectedSeniorAdvocate?.id && refreshInboxAfterSelectedAdvocateChange(); // TODO: add logic to remove duplicate calls initially(after changing advocate, duplication is not happening)
+    const matchingAdvocate = seniorAdvocates.find((opt) => opt?.id === selectedSeniorAdvocate?.id);
+
+    if (!matchingAdvocate) return;
+
+    const { id, uuid, value, advocateName } = matchingAdvocate;
+
+    const nextMapping = {
+      loggedInMemberId: advocateId || advClerkId,
+      officeAdvocateId: id,
+      officeAdvocateUuid: uuid,
+    };
+
+    const prevMapping = localStorage.getItem(ADVOCATE_OFFICE_MAPPING_KEY);
+    const nextMappingStr = JSON.stringify(nextMapping);
+
+    if (prevMapping !== nextMappingStr) {
+      localStorage.setItem(ADVOCATE_OFFICE_MAPPING_KEY, nextMappingStr);
+    }
+  }, [selectedSeniorAdvocate?.id]);
+
+  useEffect(() => {
+    if (!seniorAdvocates?.length) return;
+    if (seniorAdvocates?.length > 0) {
+      const savedSeniorAdvocate = JSON.parse(localStorage.getItem("advocateOfficeMapping"));
+      if (savedSeniorAdvocate) {
+        const matchingAdvocate = seniorAdvocates.find((opt) => opt?.id === savedSeniorAdvocate?.officeAdvocateId);
+        if (!matchingAdvocate) return;
+
+        const { id, uuid, value, advocateName } = matchingAdvocate;
+        setSelectedSeniorAdvocate({
+          advocateName,
+          value,
+          id,
+          uuid,
+        });
+      } else {
+        setSelectedSeniorAdvocate((prev) => {
+          if (prev?.id === seniorAdvocates?.[0]?.id) return prev;
+          else {
+            if (userType === "ADVOCATE" && advocateId) {
+              return seniorAdvocates.find((opt) => opt?.id === advocateId);
+            }
+            return seniorAdvocates?.[0];
+          }
+        });
+      }
+    }
+  }, [seniorAdvocates, userType, advocateId]);
 
   const additionalDetails = useMemo(() => {
+    if (!userInfoType) return null;
+    if (userInfoType === "citizen" && !userType) return null;
+    if ((userType === "ADVOCATE" && !advocateId) || (userType === "ADVOCATE_CLERK" && !advClerkId)) return null;
+    if (((userType === "ADVOCATE" && advocateId) || (userType === "ADVOCATE_CLERK" && advClerkId)) && !selectedSeniorAdvocate?.id) return null;
     return {
-      ...(advocateId
+      ...(advClerkId
         ? {
             searchKey: "filingNumber",
             defaultFields: true,
-            advocateId: advocateId,
+            officeAdvocateId: selectedSeniorAdvocate?.id, // TODO: handle for jr adv and senr adv
+            memberId: advClerkId,
+            ...(courtId && !isScrutiny && { courtId }),
+          }
+        : advocateId
+        ? {
+            searchKey: "filingNumber",
+            defaultFields: true,
+            ...(advocateId === selectedSeniorAdvocate?.id
+              ? { advocateId }
+              : {
+                  officeAdvocateId: selectedSeniorAdvocate?.id,
+                  memberId: advocateId,
+                }),
             ...(courtId && !isScrutiny && { courtId }),
           }
         : individualId
@@ -205,7 +351,7 @@ const HomeView = () => {
           }
         : { ...(courtId && !isScrutiny && { courtId }) }),
     };
-  }, [advocateId, individualId, courtId, isScrutiny]);
+  }, [advocateId, advClerkId, individualId, courtId, isScrutiny, selectedSeniorAdvocate, userType, userInfoType]);
 
   useEffect(() => {
     setDefaultValues(defaultSearchValues);
@@ -286,20 +432,52 @@ const HomeView = () => {
     } else return null;
   }, [userInfoType, advocateId, individualId, isSearchLoading]);
 
+  const casefetchCriteriaForCitizen = useMemo(() => {
+    if (!citizenId) return false;
+    if (citizenId) {
+      if (!userType) return false;
+      if (userType === "LITIGANT") {
+        if (individualId) return true;
+        return false;
+      }
+      if ((userType === "ADVOCATE" && !advocateId) || (userType === "ADVOCATE_CLERK" && !advClerkId)) return false;
+      if ((userType === "ADVOCATE" && advocateId) || (userType === "ADVOCATE_CLERK" && advClerkId)) {
+        if (selectedSeniorAdvocate?.id) {
+          return true;
+        }
+      }
+      return false;
+    }
+    return false;
+  }, [citizenId, userType, advocateId, advClerkId, selectedSeniorAdvocate?.id, individualId]);
+
   const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseListService(
     {
       criteria: {
-        ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
-        ...(courtId && userInfoType === "employee" && !isScrutiny && { courtId }),
+        ...(citizenId
+          ? advocateId
+            ? advocateId === selectedSeniorAdvocate?.id
+              ? { advocateId }
+              : {
+                  officeAdvocateId: selectedSeniorAdvocate?.id,
+                  memberId: advocateId,
+                }
+            : advClerkId
+            ? {
+                officeAdvocateId: selectedSeniorAdvocate?.id,
+                memberId: advClerkId,
+              }
+            : { litigantId: individualId }
+          : {}),
         pagination: { offSet: 0, limit: 1 },
         tenantId,
       },
       tenantId,
     },
     {},
-    `dristi-${citizenId}`,
+    `dristi-${casefetchCriteriaForCitizen}`,
     "",
-    Boolean(citizenId),
+    Boolean(casefetchCriteriaForCitizen),
     true,
     6 * 1000
   );
@@ -310,12 +488,19 @@ const HomeView = () => {
   }, [citizenCaseData]);
 
   useEffect(() => {
-    const isAnyLoading = isLoading || isFetching || isSearchLoading || isOutcomeLoading || isCitizenCaseDataLoading;
+    if (citizenCaseData) {
+      citizenDataLoadingRef.current = true;
+    }
+  }, [citizenCaseData]);
+
+  useEffect(() => {
+    const isAnyLoading = isLoading || isFetching || isSearchLoading || isOutcomeLoading || isCitizenCaseDataLoading || !additionalDetails;
     if (!isAnyLoading && tabConfigs && rowClickData && rolesToConfigMappingData && userInfoType) {
       setOnRowClickData(rowClickData);
       if (tabConfigs && !isEqual(tabConfigs, tabConfig)) {
         setConfig(tabConfigs?.TabSearchConfig?.[0]);
         setTabConfig(tabConfigs);
+        // initialCountFetchRef.current = true; // TODO: check logic to remove duplicate calls for citizen
         getTotalCountForTab(tabConfigs);
       }
     }
@@ -331,6 +516,8 @@ const HomeView = () => {
     rolesToConfigMappingData,
     isCitizenCaseDataLoading,
     userInfoType,
+    additionalDetails,
+    callRefetch,
   ]);
 
   const onTabChange = (n) => {
@@ -365,7 +552,7 @@ const HomeView = () => {
       case "PENDING_RE_E-SIGN":
       case "PENDING_RE_E-SIGN-2":
       case "PENDING_RE_SIGN":
-        return `/${contextPath}/${userType}/dristi/home/file-case/sign-complaint?filingNumber=${filingNumber}`;
+        return `/${contextPath}/${userType}/dristi/home/file-case/sign-complaint?filingNumber=${filingNumber}&caseId=${caseId}`;
       default:
         return `${baseUrl}?${params}&tab=Overview`;
     }
@@ -463,7 +650,24 @@ const HomeView = () => {
     // },
   ];
 
-  if (isLoading || isFetching || isSearchLoading || isOrdersLoading || isOutcomeLoading || isCitizenCaseDataLoading) {
+  const canJoinCase = useMemo(() => {
+    // iF user is advocate clerk then do not allow to join case(only for sprint 1st half, in 2nd half it is allowed)
+    if (userType === "ADVOCATE_CLERK") {
+      return false;
+    }
+    return true;
+  }, [userType]);
+
+  if (
+    isLoading ||
+    isFetching ||
+    isSearchLoading ||
+    isOrdersLoading ||
+    isOutcomeLoading ||
+    isCitizenCaseDataLoading ||
+    isLoadingMembers ||
+    citizenDataLoadingRef.current === false
+  ) {
     return <Loader />;
   }
   const showToast = (type, message, duration = 5000) => {
@@ -472,12 +676,33 @@ const HomeView = () => {
       setToastMsg(null);
     }, duration);
   };
+
+  const handleConfirmAdvocate = (advocate) => {
+    setShowSelectAdvocateModal(false);
+    history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
+  };
+
+  const handleClickFileCase = () => {
+    if (userType === "LITIGANT") {
+      history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
+    } else if (userType === "ADVOCATE") {
+      if (advocateId === selectedSeniorAdvocate?.id) {
+        // No need to show modal if selected adv is the logged in adv itself.
+        history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
+      } else {
+        setShowSelectAdvocateModal(true);
+      }
+    } else if (userType === "ADVOCATE_CLERK") {
+      setShowSelectAdvocateModal(true);
+    }
+  };
+
   return (
     <React.Fragment>
       {<ProjectBreadCrumb location={window.location} t={t} />}
       <div className="home-view-hearing-container">
-        {individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? (
-          <LitigantHomePage isApprovalPending={isApprovalPending} />
+        {individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase && userType === "LITIGANT" ? (
+          <LitigantHomePage isApprovalPending={isApprovalPending} unAssociatedClerk={unAssociatedClerk} />
         ) : (
           <React.Fragment>
             <div
@@ -520,28 +745,47 @@ const HomeView = () => {
                 {showReviewSummonsWarrantNotice && <ReviewCard data={data} userInfoType={userInfoType} />}
               </div>
               <div className="content-wrapper">
+                {(userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "20px", marginTop: "10px", marginBottom: "35px" }}>
+                    <span style={{ fontSize: "18px", fontWeight: "bold" }}>Select Advocate to View/File a Case :</span>
+                    <div>
+                      <Dropdown
+                        t={t}
+                        option={seniorAdvocates?.sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName))}
+                        optionKey={"advocateName"}
+                        select={handleDropdownChange}
+                        selected={selectedSeniorAdvocate}
+                        style={{ width: "300px", height: "40px", fontSize: "16px", marginBottom: "0px" }}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <div className="header-class">
-                  <div className="header">{t("CS_YOUR_CASE")}</div>
+                  {selectedSeniorAdvocate?.id ? (
+                    <div className="header">{`Advocate ${t(selectedSeniorAdvocate?.advocateName || "")}`}</div>
+                  ) : (
+                    <div className="header">{t("CS_YOUR_CASE")}</div>
+                  )}
+
                   {individualId && userType && userInfoType === "citizen" && (
-                    <div className="button-field" style={{ width: "50%" }}>
+                    <div className="button-field" style={{ width: "fit-content" }}>
                       <React.Fragment>
-                        <JoinCaseHome refreshInbox={refreshInbox} />
+                        {canJoinCase && <JoinCaseHome refreshInbox={refreshInbox} />}
                         <Button
                           className={"tertiary-button-selector"}
                           label={t("FILE_A_CASE")}
                           labelClassName={"tertiary-label-selector"}
-                          onButtonClick={() => {
-                            history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
-                          }}
+                          onButtonClick={handleClickFileCase}
                         />
                       </React.Fragment>
                     </div>
                   )}
                 </div>
                 <div className="inbox-search-wrapper pucar-home home-view">
-                  {config ? (
+                  {config && additionalDetails ? (
                     <InboxSearchComposer
-                      key={`InboxSearchComposer-${callRefetch}`}
+                      key={`InboxSearchComposer-${callRefetch}-${additionalDetails}`}
                       configs={{
                         ...config,
                         ...{
@@ -580,6 +824,7 @@ const HomeView = () => {
               uuid={userInfo?.uuid}
               userInfoType={userInfoType}
               pendingSignOrderList={ordersNotificationData}
+              seniorAdvocates={seniorAdvocates}
             />
           </div>
         )}
@@ -590,6 +835,14 @@ const HomeView = () => {
             onClose={() => setToastMsg(null)}
             isDleteBtn={true}
             style={{ maxWidth: "500px" }}
+          />
+        )}
+        {showSelectAdvocateModal && (
+          <SelectAdvocateModal
+            t={t}
+            setShowSelectAdvocateModal={setShowSelectAdvocateModal}
+            confirmAdvocate={handleConfirmAdvocate}
+            selectedSeniorAdvocate={selectedSeniorAdvocate}
           />
         )}
       </div>

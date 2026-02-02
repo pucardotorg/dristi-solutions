@@ -842,9 +842,11 @@ const MainHomeScreen = () => {
   }, [courierServiceSteps]);
 
   useEffect(() => {
-    fetchPendingTaskCounts();
-    fetchHearingCount(filters, activeTab);
-  }, []);
+    if (userType === "employee") {
+      fetchPendingTaskCounts();
+      fetchHearingCount(filters, activeTab);
+    }
+  }, [userType]);
 
   const options = {};
   if (hasViewRegisterUserAccess) {
@@ -1062,8 +1064,8 @@ const MainHomeScreen = () => {
   );
 
   useEffect(() => {
-    getTotalCountForTab(scrutinyPendingTaskConfig);
-  }, [scrutinyPendingTaskConfig]);
+    userType === "employee" && getTotalCountForTab(scrutinyPendingTaskConfig);
+  }, [scrutinyPendingTaskConfig, userType]);
 
   const handleTabChange = (title, label) => {
     if (title !== activeTabTitle) {

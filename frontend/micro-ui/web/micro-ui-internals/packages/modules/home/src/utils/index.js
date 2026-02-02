@@ -243,4 +243,17 @@ export const filterValidAddresses = (addressDetails = []) => {
   });
 };
 
+export const extractedSeniorAdvocates = (officeMembersData = []) => {
+  return officeMembersData?.members?.map((member, index) => {
+    return {
+      advocateName: member?.officeAdvocateName || `adv_${index}`,
+      id: member?.officeAdvocateId,
+      value: member?.officeAdvocateId,
+      uuid: member?.officeAdvocateUserUuid,
+    };
+  });
+};
+
+export const ADVOCATE_OFFICE_MAPPING_KEY = "advocateOfficeMapping";
+
 export default {};
