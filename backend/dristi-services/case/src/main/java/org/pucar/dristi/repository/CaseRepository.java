@@ -54,10 +54,11 @@ public class CaseRepository {
     private final PoaDocumentRowMapper poaDocumentRowMapper;
     private final PoaRowMapper poaRowMapper;
     private final AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper;
+    private final ObjectMapper objectMapper;
 
 
     @Autowired
-    public CaseRepository(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, CaseSummaryQueryBuilder caseSummaryQueryBuilder, CaseSummaryRowMapper caseSummaryRowMapper, OpenApiCaseSummaryQueryBuilder openApiCaseSummaryQueryBuilder, OpenApiCaseSummaryRowMapper openApiCaseSummaryRowMapper, OpenApiCaseListRowMapper openApiCaseListRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper, AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper) {
+    public CaseRepository(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, CaseSummaryQueryBuilder caseSummaryQueryBuilder, CaseSummaryRowMapper caseSummaryRowMapper, OpenApiCaseSummaryQueryBuilder openApiCaseSummaryQueryBuilder, OpenApiCaseSummaryRowMapper openApiCaseSummaryRowMapper, OpenApiCaseListRowMapper openApiCaseListRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper, AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper, ObjectMapper objectMapper) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
@@ -79,9 +80,10 @@ public class CaseRepository {
         this.poaDocumentRowMapper = poaDocumentRowMapper;
         this.poaRowMapper = poaRowMapper;
         this.advocateOfficeCaseMemberRowMapper = advocateOfficeCaseMemberRowMapper;
+        this.objectMapper = objectMapper;
     }
 
-    private static String extractAdvocateUuidFromAdditionalDetails(ObjectMapper objectMapper, AdvocateMapping representative) {
+    private String extractAdvocateUuidFromAdditionalDetails(AdvocateMapping representative) {
         JsonNode node = objectMapper.convertValue(representative, JsonNode.class);
         JsonNode uuidNode = node.path("additionalDetails").path("uuid");
         if (uuidNode.isMissingNode() || uuidNode.isNull()) {
@@ -90,7 +92,7 @@ public class CaseRepository {
         return uuidNode.asText();
     }
 
-    private static String extractAdvocateNameFromAdditionalDetails(ObjectMapper objectMapper, AdvocateMapping representative) {
+    private String extractAdvocateNameFromAdditionalDetails(AdvocateMapping representative) {
         JsonNode node = objectMapper.convertValue(representative, JsonNode.class);
         JsonNode nameNode = node.path("additionalDetails").path("advocateName");
         if (nameNode.isMissingNode() || nameNode.isNull()) {
@@ -104,7 +106,6 @@ public class CaseRepository {
             return;
         }
 
-        ObjectMapper objectMapper = new ObjectMapper();
 
         // Collect advocateIds from representatives (office_advocate_id maps to advocateId, not UUID)
         List<String> officeAdvocateIds = caseCriteria.getResponseList().stream()
@@ -165,8 +166,8 @@ public class CaseRepository {
 
                 AdvocateOffice office = officeMap.computeIfAbsent(advocateId, k -> AdvocateOffice.builder()
                         .officeAdvocateId(advocateId)
-                        .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(objectMapper, rep))
-                        .officeAdvocateUserUuid(extractAdvocateUuidFromAdditionalDetails(objectMapper, rep))
+                        .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(rep))
+                        .officeAdvocateUserUuid(extractAdvocateUuidFromAdditionalDetails(rep))
                         .build());
                 
                 // Separate advocates and clerks based on memberType

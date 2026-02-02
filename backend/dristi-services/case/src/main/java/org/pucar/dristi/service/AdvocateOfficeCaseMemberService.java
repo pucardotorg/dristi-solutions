@@ -171,6 +171,7 @@ public class AdvocateOfficeCaseMemberService {
                                     .tenantId(member.getTenantId())
                                     .caseId(caseId)
                                     .memberId(member.getMemberId().toString())
+                                    .memberUserUuid(member.getMemberUserUuid())
                                     .memberName(member.getMemberName())
                                     .memberType(member.getMemberType())
                                     .isActive(member.getIsActive())
@@ -194,18 +195,38 @@ public class AdvocateOfficeCaseMemberService {
                             if (targetOffice == null) {
                                 targetOffice = AdvocateOffice.builder()
                                         .officeAdvocateId(officeAdvocateId)
+                                        .officeAdvocateUserUuid(member.getOfficeAdvocateUserUuid())
                                         .officeAdvocateName(member.getOfficeAdvocateName())
+                                        .officeAdvocateUserUuid(member.getOfficeAdvocateUserUuid())
                                         .advocates(new ArrayList<>())
                                         .clerks(new ArrayList<>())
                                         .build();
                                 advocateOffices.add(targetOffice);
                             }
 
-                            // Add member to appropriate list based on memberType
+                            // Add member to appropriate list based on memberType (only if not already present)
                             if (MemberType.ADVOCATE.equals(member.getMemberType())) {
-                                targetOffice.getAdvocates().add(officeMember);
+                                AdvocateOfficeMember existingMember = targetOffice.getAdvocates().stream()
+                                        .filter(m -> member.getMemberUserUuid().equals(m.getMemberUserUuid()))
+                                        .findFirst()
+                                        .orElse(null);
+                                
+                                if (existingMember != null && Boolean.FALSE.equals(existingMember.getIsActive())) {
+                                    existingMember.setIsActive(true);
+                                } else if (existingMember == null) {
+                                    targetOffice.getAdvocates().add(officeMember);
+                                }
                             } else {
-                                targetOffice.getClerks().add(officeMember);
+                                AdvocateOfficeMember existingMember = targetOffice.getClerks().stream()
+                                        .filter(m -> member.getMemberUserUuid().equals(m.getMemberUserUuid()))
+                                        .findFirst()
+                                        .orElse(null);
+                                
+                                if (existingMember != null && Boolean.FALSE.equals(existingMember.getIsActive())) {
+                                    existingMember.setIsActive(true);
+                                } else if (existingMember == null) {
+                                    targetOffice.getClerks().add(officeMember);
+                                }
                             }
 
                             courtCase.setAdvocateOffices(advocateOffices);
@@ -220,11 +241,11 @@ public class AdvocateOfficeCaseMemberService {
 
     private void updateRedisCacheForLeaveOffice(LeaveOfficeRequest request) {
         String tenantId = request.getLeaveOffice().getTenantId();
-        String officeAdvocateUserUuid = request.getLeaveOffice().getOfficeAdvocateUserUuid().toString();
+        String officeAdvocateId = request.getLeaveOffice().getOfficeAdvocateId().toString();
         String memberUserUuid = request.getLeaveOffice().getMemberUserUuid().toString();
 
         // Get all case IDs for this advocate
-        List<String> caseIds = repository.getCaseIdsByAdvocateId(officeAdvocateUserUuid);
+        List<String> caseIds = repository.getCaseIdsByAdvocateId(officeAdvocateId);
 
         for (String caseId : caseIds) {
             try {
@@ -237,17 +258,20 @@ public class AdvocateOfficeCaseMemberService {
 
                     if (advocateOffices != null) {
                         for (AdvocateOffice office : advocateOffices) {
-                            // Mark member as inactive in advocates list
-                            if (office.getAdvocates() != null) {
-                                office.getAdvocates().stream()
-                                        .filter(m -> memberUserUuid.equals(m.getMemberId()))
-                                        .forEach(m -> m.setIsActive(false));
+                            if (!officeAdvocateId.equals(office.getOfficeAdvocateId())) {
+                                continue;
                             }
-                            // Mark member as inactive in clerks list
+                            // Remove member from advocates list
+                            if (office.getAdvocates() != null) {
+                                office.getAdvocates().removeIf(m -> memberUserUuid.equals(m.getMemberUserUuid()));
+                            }
+                            // Remove member from clerks list
                             if (office.getClerks() != null) {
-                                office.getClerks().stream()
-                                        .filter(m -> memberUserUuid.equals(m.getMemberId()))
-                                        .forEach(m -> m.setIsActive(false));
+                                office.getClerks().removeIf(m -> memberUserUuid.equals(m.getMemberUserUuid()));
+                            }
+
+                            if (office.getAdvocates() != null && office.getClerks() != null && office.getAdvocates().isEmpty() && office.getClerks().isEmpty()) {
+                                advocateOffices.remove(office);
                             }
                         }
                         courtCase.setAdvocateOffices(advocateOffices);
