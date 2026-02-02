@@ -98,6 +98,7 @@ const ApplicationDetails = ({ location, match }) => {
   const [reasons, setReasons] = useState(null);
   const [isAction, setIsAction] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [imageInfo, setImageInfo] = useState(null);
 
@@ -166,13 +167,13 @@ const ApplicationDetails = ({ location, match }) => {
     const requestKey = userTypeDetail?.apiDetails?.requestKey;
     const resultKey = requestKey ? `${requestKey}s` : null;
     let result = resultKey ? searchData?.[resultKey] : null;
-    
+
     // Handle nested responseList structure for clerk search results
     // The API returns { clerks: [{ responseList: [...actualData...] }] }
     if (result && result[0]?.responseList) {
       result = result[0].responseList;
     }
-    
+
     return result;
   }, [searchData, userTypeDetail?.apiDetails?.requestKey]);
   const fileStoreId = useMemo(() => {
@@ -193,7 +194,7 @@ const ApplicationDetails = ({ location, match }) => {
 
   function takeAction(action) {
     const applications = searchResult;
-    
+
     // Defensive checks - ensure data exists
     if (!applications || !applications[0]) {
       setShowModal(false);
@@ -201,14 +202,14 @@ const ApplicationDetails = ({ location, match }) => {
       setShowInfoModal({ isOpen: true, status: "ES_API_ERROR" });
       return;
     }
-    
+
     // Ensure workflow object exists - create it if it doesn't
     if (!applications[0].workflow) {
       applications[0].workflow = {};
     }
-    
+
     applications[0].workflow.action = action;
-    
+
     const requestKey = userTypeDetail?.apiDetails?.requestKey;
     if (!requestKey) {
       setShowModal(false);
@@ -216,18 +217,20 @@ const ApplicationDetails = ({ location, match }) => {
       setShowInfoModal({ isOpen: true, status: "ES_API_ERROR" });
       return;
     }
-    
+
     const data = { [requestKey]: applications[0] };
     const url = userType === "ADVOCATE_CLERK" ? "/advocate/clerk/v1/_update" : "/advocate/v1/_update";
-    
+
     if (showModal) {
       applications[0].workflow.comments = reasons;
     }
-    
+
+    setIsSubmittingAction(true);
     window?.Digit.DRISTIService.advocateClerkService(url, data, tenantId, true, {})
       .then(() => {
         setShowModal(false);
         setShowApproveModal(false);
+        setIsSubmittingAction(false);
         if (action === "APPROVE") {
           setShowInfoModal({ isOpen: true, status: "ES_USER_APPROVED" });
         } else if (action === "REJECT") {
@@ -237,6 +240,7 @@ const ApplicationDetails = ({ location, match }) => {
       .catch(() => {
         setShowModal(false);
         setShowApproveModal(false);
+        setIsSubmittingAction(false);
         setShowInfoModal({ isOpen: true, status: "ES_API_ERROR" });
       });
   }
@@ -375,24 +379,31 @@ const ApplicationDetails = ({ location, match }) => {
           {showModal && (
             <Modal
               headerBarMain={<Heading label={t("Confirm Reject Application")} />}
-              headerBarEnd={<CloseBtn onClick={() => setShowModal(false)} />}
+              headerBarEnd={<CloseBtn onClick={() => !isSubmittingAction && setShowModal(false)} />}
               actionSaveLabel={t("Reject")}
               actionSaveOnSubmit={() => {
                 handleDelete("REJECT");
               }}
-              isDisabled={!reasons || !reasons.trim()}
+              isDisabled={!reasons || !reasons.trim() || isSubmittingAction}
+              isBackButtonDisabled={isSubmittingAction}
               style={{ backgroundColor: "#BB2C2F" }}
             >
-              <Card style={{ boxShadow: "none", padding: "2px 16px 2px 16px", marginBottom: "2px" }}>
-                <CardText style={{ margin: "2px 0px" }}>{t(`REASON_FOR_REJECTION`)}</CardText>
-                <TextArea rows={"3"} onChange={(e) => setReasons(e.target.value)} style={{ maxWidth: "100%", height: "auto" }}></TextArea>
-              </Card>
+              {isSubmittingAction ? (
+                <div style={{ display: "flex", justifyContent: "center", padding: "24px 0" }}>
+                  <Loader />
+                </div>
+              ) : (
+                <Card style={{ boxShadow: "none", padding: "2px 16px 2px 16px", marginBottom: "2px" }}>
+                  <CardText style={{ margin: "2px 0px" }}>{t(`REASON_FOR_REJECTION`)}</CardText>
+                  <TextArea rows={"3"} onChange={(e) => setReasons(e.target.value)} style={{ maxWidth: "100%", height: "auto" }}></TextArea>
+                </Card>
+              )}
             </Modal>
           )}
           {showApproveModal && (
             <Modal
               headerBarMain={<Heading label={t("CONFIRM_APPROVE_ADVOCATE_APPLICATION_HEADER")} />}
-              headerBarEnd={<CloseBtn onClick={() => setShowApproveModal(false)} />}
+              headerBarEnd={<CloseBtn onClick={() => !isSubmittingAction && setShowApproveModal(false)} />}
               actionCancelLabel={t("CS_BACK")}
               actionCancelOnSubmit={() => {
                 setShowApproveModal(false);
@@ -401,8 +412,16 @@ const ApplicationDetails = ({ location, match }) => {
               actionSaveOnSubmit={() => {
                 takeAction("APPROVE");
               }}
+              isDisabled={isSubmittingAction}
+              isBackButtonDisabled={isSubmittingAction}
             >
-              <div style={{ padding: "20px 0px" }}>{t(`CONFIRM_APPROVE_ADVOCATE_APPLICATION_TEXT`)}</div>
+              {isSubmittingAction ? (
+                <div style={{ display: "flex", justifyContent: "center", padding: "24px 0" }}>
+                  <Loader />
+                </div>
+              ) : (
+                <div style={{ padding: "20px 0px" }}>{t(`CONFIRM_APPROVE_ADVOCATE_APPLICATION_TEXT`)}</div>
+              )}
             </Modal>
           )}
           {showInfoModal?.isOpen && (
