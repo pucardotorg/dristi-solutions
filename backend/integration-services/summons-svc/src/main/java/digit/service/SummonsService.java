@@ -118,6 +118,17 @@ public class SummonsService {
         return taskUtil.callUploadDocumentTask(taskRequest);
     }
 
+    private TaskResponse generateMiscellaneousDocumentAndUpdateTask(TaskRequest taskRequest, boolean qrCode) {
+        ByteArrayResource byteArrayResource = pdfServiceUtil.generatePdfFromEgovPdfService(taskRequest,
+                taskRequest.getTask().getTenantId(), taskRequest.getTask().getCourtId());
+        String fileStoreId = fileStorageUtil.saveDocumentToFileStore(byteArrayResource);
+
+        Document document = createDocument(fileStoreId, qrCode);
+        taskRequest.getTask().addDocumentsItem(document);
+
+        return taskUtil.callUploadDocumentTask(taskRequest);
+    }
+
     public SummonsDelivery sendSummonsViaChannels(TaskRequest request) {
 
         TaskCriteria taskCriteria = TaskCriteria.builder().taskNumber(request.getTask().getTaskNumber()).build();
@@ -136,6 +147,10 @@ public class SummonsService {
             String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true, noticeType, null);
 
             generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, true);
+        }
+
+        if (MISCELLANEOUS_PROCESS.equalsIgnoreCase(taskType)) {
+            generateMiscellaneousDocumentAndUpdateTask(taskRequest,false);
         }
 
         SummonsDelivery summonsDelivery = summonsDeliveryEnrichment.generateAndEnrichSummonsDelivery(taskRequest.getTask(), taskRequest.getRequestInfo());
@@ -384,7 +399,6 @@ public class SummonsService {
             case NOTICE -> taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
             case PROCLAMATION -> taskDetails.getProclamationDetails() != null ? taskDetails.getProclamationDetails().getDocSubType() : null;
             case ATTACHMENT -> taskDetails.getAttachmentDetails() != null ? taskDetails.getAttachmentDetails().getDocSubType() : null;
-            case MISCELLANEOUS_PROCESS -> taskDetails.getAttachmentDetails() != null ? taskDetails.getAttachmentDetails().getDocSubType() : null;
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
         };
     }

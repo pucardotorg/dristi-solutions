@@ -49,6 +49,45 @@ public class PdfServiceUtil {
         this.icopsUtil = icopsUtil;
     }
 
+    public ByteArrayResource generatePdfFromEgovPdfService(TaskRequest taskRequest, String tenantId, String courtId) {
+        try {
+            StringBuilder uri = new StringBuilder();
+            uri.append(config.getEgovPdfServiceHost())
+                    .append(config.getEgovPdfServiceEndpoint())
+                    .append("?tenantId=").append(tenantId).append("&qrCode=false&courtId=").append(courtId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            MiscellaneousPdf miscellaneousPdf = new MiscellaneousPdf();
+            miscellaneousPdf.setCourtId();
+            miscellaneousPdf.setProcessTitle();
+            miscellaneousPdf.setProcessText();
+            miscellaneousPdf.setAddressee();
+            miscellaneousPdf.setAddresseeName();
+            miscellaneousPdf.setAddresseeDetails();
+            miscellaneousPdf.setOrderText();
+            miscellaneousPdf.setCoverLetterText();
+            miscellaneousPdf.setCaseNumber();
+            miscellaneousPdf.setIsCoverLetterRequired();
+            miscellaneousPdf.setNextHearingDate();
+            miscellaneousPdf.setPartyDetails();
+
+            MiscellaneousPdfRequest miscellaneousPdfRequest = MiscellaneousPdfRequest.builder()
+                    .templateConfiguration(miscellaneousPdf).requestInfo(taskRequest.getRequestInfo()).build();
+
+            HttpEntity<MiscellaneousPdfRequest> requestEntity = new HttpEntity<>(miscellaneousPdfRequest, headers);
+
+            ResponseEntity<ByteArrayResource> responseEntity = restTemplate.postForEntity(uri.toString(),
+                    requestEntity, ByteArrayResource.class);
+
+            return responseEntity.getBody();
+        } catch (Exception e) {
+            log.error("Error getting response from Pdf Service", e);
+            throw new CustomException("SU_PDF_APP_ERROR", "Error getting response from Pdf Service");
+        }
+    }
+
     public ByteArrayResource generatePdfFromPdfService(TaskRequest taskRequest, String tenantId,
                                                        String pdfTemplateKey, boolean qrCode) {
         try {
