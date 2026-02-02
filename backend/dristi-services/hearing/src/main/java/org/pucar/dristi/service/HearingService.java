@@ -152,6 +152,10 @@ public class HearingService {
             hearing.setCaseReferenceNumber(hearingRequest.getHearing().getCaseReferenceNumber() != null ? hearingRequest.getHearing().getCaseReferenceNumber() : hearing.getCaseReferenceNumber());
             hearingRequest.setHearing(hearing);
 
+            if(hearing.getWorkflow()!=null && (hearing.getWorkflow().getAction().equalsIgnoreCase(MARK_COMPLETE) || hearing.getWorkflow().getAction().equalsIgnoreCase(UPDATE_DATE))){
+                hearing.setHearingType(hearingRequest.getHearing().getHearingType());
+            }
+
             // Enrich application upon update
             enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
 
