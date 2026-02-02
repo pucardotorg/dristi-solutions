@@ -26,9 +26,7 @@ import pucar.web.models.hearing.*;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static pucar.config.ServiceConstants.*;
 
@@ -90,15 +88,25 @@ public class OrderService {
 
         orderProcessor.preProcessOrder(request);
 
-        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate() != null) {
+        boolean isRescheduleRequest = Optional.ofNullable(order.getCompositeItems())
+                .map(obj -> (List<Map<String, Object>>) obj)
+                .orElse(List.of())
+                .stream()
+                .anyMatch(item -> ACCEPT_RESCHEDULING_REQUEST.equals(String.valueOf(item.get("orderType"))));
+
+        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())
+                && request.getOrder().getNextHearingDate() != null
+                && !ACCEPT_RESCHEDULING_REQUEST.equalsIgnoreCase(order.getOrderType()) && !isRescheduleRequest) {
             hearingUtil.preProcessScheduleNextHearing(request);
         }
 
-        if (DELETE.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getHearingNumber() != null) {
+        if (DELETE.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())
+                && request.getOrder().getHearingNumber() != null) {
             hearingUtil.updateOpenHearingOrderStatusForDeletedOrder(request.getOrder());
         }
 
-        if (SUBMIT_BULK_ESIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getHearingNumber() != null) {
+        if (SUBMIT_BULK_ESIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())
+                && request.getOrder().getHearingNumber() != null) {
             hearingUtil.updateOpenHearingOrderStatusForPendingSignOrder(request.getOrder());
         }
 
