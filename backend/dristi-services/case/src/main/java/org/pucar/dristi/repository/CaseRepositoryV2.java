@@ -9,12 +9,14 @@ import org.pucar.dristi.repository.querybuilder.CaseQueryBuilder;
 import org.pucar.dristi.repository.rowmapper.*;
 import org.pucar.dristi.repository.rowmapper.v2.*;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.advocateofficemember.*;
 import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -45,11 +47,12 @@ public class CaseRepositoryV2 {
     private final LitigantRowMapperV2 litigantRowMapperV2;
     private final StatuteSectionRowMapperV2 statuteSectionRowMapperV2;
     private final PoaRowMapperV2 poaRowMapperV2;
+    private final AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper;
     private final ObjectMapper objectMapper;
 
 
     @Autowired
-    public CaseRepositoryV2(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, CaseListSummaryRowMapper caseListSummaryRowMapper, CaseSummarySearchRowMapper caseSummarySearchRowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper, RepresentativeRowMapperV2 representativeRowMapperV2, RepresentingRowMapperV2 representingRowMapperV2, LitigantRowMapperV2 litigantRowMapperV2, StatuteSectionRowMapperV2 statuteSectionRowMapperV2, PoaRowMapperV2 poaRowMapperV2, ObjectMapper objectMapper) {
+    public CaseRepositoryV2(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, CaseListSummaryRowMapper caseListSummaryRowMapper, CaseSummarySearchRowMapper caseSummarySearchRowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper, RepresentativeRowMapperV2 representativeRowMapperV2, RepresentingRowMapperV2 representingRowMapperV2, LitigantRowMapperV2 litigantRowMapperV2, StatuteSectionRowMapperV2 statuteSectionRowMapperV2, PoaRowMapperV2 poaRowMapperV2, AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper, ObjectMapper objectMapper) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
@@ -72,6 +75,7 @@ public class CaseRepositoryV2 {
         this.litigantRowMapperV2 = litigantRowMapperV2;
         this.statuteSectionRowMapperV2 = statuteSectionRowMapperV2;
         this.poaRowMapperV2 = poaRowMapperV2;
+        this.advocateOfficeCaseMemberRowMapper = advocateOfficeCaseMemberRowMapper;
         this.objectMapper = objectMapper;
     }
 
@@ -414,6 +418,8 @@ public class CaseRepositoryV2 {
 
         setRepresentatives(courtCase, ids);
 
+        setAdvocateOffices(courtCase, ids);
+
         extractRepresentativeIds(courtCase, idsRepresentative);
 
         if (!idsRepresentative.isEmpty())
@@ -698,5 +704,133 @@ public class CaseRepositoryV2 {
                 officeAdvocateId, memberId, e);
             return false;
         }
+    }
+
+    private void setAdvocateOffices(CourtCase courtCase, List<String> ids) {
+        if (courtCase.getRepresentatives() == null || courtCase.getRepresentatives().isEmpty()) {
+            return;
+        }
+
+        // Collect advocateIds from representatives (office_advocate_id maps to advocateId, not UUID)
+        List<String> officeAdvocateIds = courtCase.getRepresentatives().stream()
+                .map(AdvocateMapping::getAdvocateId)
+                .filter(advocateId -> advocateId != null && !advocateId.isEmpty())
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (officeAdvocateIds.isEmpty() || ids == null || ids.isEmpty()) {
+            return;
+        }
+
+        List<Object> preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+        String query = queryBuilder.getAdvocateOfficeCaseMemberSearchQuery(ids, officeAdvocateIds, preparedStmtList, preparedStmtArgList);
+        log.info("Final advocate office case member query :: {}", query);
+
+        List<AdvocateOfficeCaseMember> rows = jdbcTemplate.query(query,
+                preparedStmtList.toArray(),
+                preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),
+                advocateOfficeCaseMemberRowMapper);
+
+        // Group by case ID first, then by advocate ID within each case
+        Map<UUID, List<AdvocateOfficeCaseMember>> rowsByCaseId = Objects.requireNonNull(rows)
+                .stream()
+                .collect(Collectors.groupingBy(AdvocateOfficeCaseMember::getCaseId));
+
+        // Since this is CaseRepositoryV2, we're dealing with a single case, not a list
+        List<AdvocateOfficeCaseMember> caseAdvocateOfficeMembers = rowsByCaseId.getOrDefault(courtCase.getId(), List.of());
+        
+        if (caseAdvocateOfficeMembers.isEmpty()) {
+            courtCase.setAdvocateOffices(new ArrayList<>());
+            return;
+        }
+
+        // Group the case-specific members by advocate ID
+        Map<String, List<AdvocateOfficeCaseMember>> membersByAdvocateId = caseAdvocateOfficeMembers.stream()
+                .collect(Collectors.groupingBy(r -> r.getOfficeAdvocateId().toString()));
+
+        Map<String, AdvocateOffice> officeMap = new LinkedHashMap<>();
+        for (AdvocateMapping rep : courtCase.getRepresentatives()) {
+            String advocateId = rep.getAdvocateId();
+            if (advocateId == null || advocateId.isEmpty()) {
+                continue;
+            }
+
+            // Only create office if there are actual database results for this advocate and case
+            List<AdvocateOfficeCaseMember> officeRows = membersByAdvocateId.get(advocateId);
+            if (officeRows == null || officeRows.isEmpty()) {
+                continue;
+            }
+
+            AdvocateOffice office = officeMap.computeIfAbsent(advocateId, k -> AdvocateOffice.builder()
+                    .officeAdvocateId(advocateId)
+                    .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(rep))
+                    .officeAdvocateUserUuid(extractAdvocateUuidFromAdditionalDetails(rep))
+                    .build());
+            
+            // Separate advocates and clerks based on memberType
+            List<AdvocateOfficeMember> advocates = officeRows.stream()
+                    .filter(r -> "ADVOCATE".equals(r.getMemberType().toString()))
+                    .map(r -> AdvocateOfficeMember.builder()
+                            .id(r.getId().toString())
+                            .tenantId(r.getTenantId())
+                            .caseId(r.getCaseId().toString())
+                            .memberId(r.getMemberId().toString())
+                            .memberUserUuid(r.getMemberUserUuid())
+                            .memberName(r.getMemberName())
+                            .memberType(r.getMemberType())
+                            .isActive(r.getIsActive())
+                            .auditDetails(r.getAuditDetails())
+                            .build())
+                    .collect(Collectors.toList());
+
+            List<AdvocateOfficeMember> clerks = officeRows.stream()
+                    .filter(r -> "ADVOCATE_CLERK".equals(r.getMemberType().toString()))
+                    .map(r -> AdvocateOfficeMember.builder()
+                            .id(r.getId().toString())
+                            .tenantId(r.getTenantId())
+                            .caseId(r.getCaseId().toString())
+                            .memberId(r.getMemberId().toString())
+                            .memberUserUuid(r.getMemberUserUuid())
+                            .memberName(r.getMemberName())
+                            .memberType(r.getMemberType())
+                            .isActive(r.getIsActive())
+                            .auditDetails(r.getAuditDetails())
+                            .build())
+                    .collect(Collectors.toList());
+
+            office.setAdvocates(advocates);
+            office.setClerks(clerks);
+        }
+
+        courtCase.setAdvocateOffices(new ArrayList<>(officeMap.values()));
+    }
+
+    private String extractAdvocateNameFromAdditionalDetails(AdvocateMapping rep) {
+        try {
+            if (rep.getAdditionalDetails() != null) {
+                ObjectNode additionalDetails = objectMapper.convertValue(rep.getAdditionalDetails(), ObjectNode.class);
+                if (additionalDetails.has("advocateName")) {
+                    return additionalDetails.get("advocateName").asText();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error extracting advocate name from additional details: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    private String extractAdvocateUuidFromAdditionalDetails(AdvocateMapping rep) {
+        try {
+            if (rep.getAdditionalDetails() != null) {
+                ObjectNode additionalDetails = objectMapper.convertValue(rep.getAdditionalDetails(), ObjectNode.class);
+                if (additionalDetails.has("advocateUserUuid")) {
+                    return additionalDetails.get("advocateUserUuid").asText();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Error extracting advocate UUID from additional details: {}", e.getMessage());
+        }
+        return null;
     }
 }
