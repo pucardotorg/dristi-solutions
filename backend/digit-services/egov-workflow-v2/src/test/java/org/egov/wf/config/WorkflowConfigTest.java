@@ -15,9 +15,25 @@ class WorkflowConfigTest {
     @Test
     void testInitialize() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.initialize();
         assertTrue(workflowConfig.getAssignedOnly());
         assertEquals("https://config.us-east-2.amazonaws.com", workflowConfig.getUserSearchEndpoint());
