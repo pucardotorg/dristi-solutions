@@ -353,17 +353,17 @@ const AddOrderTypeModal = ({
         case "POLICE":
           return policeStationData;
         case "RESPONDENT":
-          return respondents;
+          return _getPartiesOptions(caseDetails, "respondent", true);
         case "COMPLAINTANT":
-          return complainants;
+          return _getPartiesOptions(caseDetails, "complainant", true);
         case "OTHER":
-          return [...respondents, ...complainants];
+          return _getPartiesOptions(caseDetails, "all", true);
         default:
           return [];
       }
     }
     return [];
-  }, [complainants, formdata, orderType, policeStationData, respondents]);
+  }, [caseDetails, formdata?.processTemplate?.addressee, orderType?.code, policeStationData]);
 
   return (
     <React.Fragment>

@@ -49,9 +49,8 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
   return (
     <div className="multi-party-address-wrapper">
       {selectedRows?.map((row, index) => {
-        const currentPartyData = partyOptions?.find((opt) => opt?.data?.uniqueId === row?.selectedParty?.uniqueId);
+        const currentPartyData = partyOptions?.find((opt) => opt?.data?.partyUniqueId === row?.selectedParty?.partyUniqueId);
         const availableAddresses = currentPartyData?.address || [];
-
         return (
           <div key={index} className="party-card">
             {selectedRows?.length > 1 && (
@@ -73,7 +72,7 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
                 <Dropdown
                   t={t}
                   option={partyOptions?.map((opt) => opt?.data)}
-                  optionKey={inputs?.optionsKey || "name"}
+                  optionKey={inputs?.partyOptionsKey || "name"}
                   selected={row?.selectedParty}
                   select={(val) => updateRow(index, "selectedParty", val)}
                   className="police-station-dropdown"
@@ -85,8 +84,8 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
                 <CustomMultiSelectDropdown
                   t={t}
                   options={availableAddresses}
-                  optionsKey={inputs?.addressOptionKey || "text"}
-                  displayKey={inputs?.addressOptionKey || "text"}
+                  optionsKey={inputs?.optionsKey || "text"}
+                  displayKey={inputs?.optionsKey || "text"}
                   filterKey={inputs?.addressOptionKey || "text"}
                   selected={row?.selectedAddresses}
                   onSelect={(val) => updateRow(index, "selectedAddresses", val)}

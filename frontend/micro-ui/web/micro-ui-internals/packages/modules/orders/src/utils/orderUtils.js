@@ -600,40 +600,150 @@ export const compositeOrderAllowedTypes = [
   },
 ];
 
-export const _getPartiesOptions = (caseDetails) => {
+export const _getPartiesOptions = (caseDetails, type = "all", isFlat = false) => {
   if (!caseDetails?.additionalDetails) return [];
 
-  const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
-  const updatedRespondentData = respondentData.map((item, index) => {
-    const mappedAddresses = mapAddressDetails(item?.data?.addressDetails) || [];
-    const formattedAddressOptions = mappedAddresses.map((addr) => ({
-      partyUniqueId: item?.uniqueId,
+  const mapParty = (item, index, partyRole) => {
+    const addressData = item?.data?.addressDetails || item?.addressDetails;
+    const addressArray = Array.isArray(addressData) ? addressData : addressData ? [addressData] : [];
+    const mappedAddresses = mapAddressDetails(addressArray) || [];
+    const complaintUUID = item?.data?.complainantVerification?.individualDetails?.userUuid;
+    const uuid = item?.data?.userUuid || item?.userUuid || item?.data?.uuid || complaintUUID;
+
+    const formattedAddressOptions = mappedAddresses?.map((addr) => ({
+      partyUniqueId: uuid || item?.uniqueId,
       id: addr?.id,
-      formattedAddress: formatAddress ? formatAddress(addr) : `${addr.locality}, ${addr.city}, ${addr.pincode}`,
+      formattedAddress: formatAddress ? formatAddress(addr) : `${addr?.locality}, ${addr?.city}, ${addr?.pincode}`,
       locality: addr?.address?.locality || addr?.locality || "",
       city: addr?.address?.city || addr?.city || "",
       district: addr?.address?.district || addr?.district || "",
       pincode: addr?.address?.pincode || addr?.pincode || "",
       state: addr?.address?.state || addr?.state || "",
     }));
+
+    const fName = item?.data?.firstName || item?.firstName || item?.data?.respondentFirstName || "";
+    const mName = item?.data?.middleName || item?.middleName || item?.data?.respondentMiddleName || "";
+    const lName = item?.data?.lastName || item?.lastName || item?.data?.respondentLastName || "";
+
     return {
       ...item,
       data: {
-        ...item?.data,
-        name: `${item?.data?.respondentFirstName || ""} ${item?.data?.respondentMiddleName || ""} ${item?.data?.respondentLastName || ""}`.trim(),
-        firstName: item?.data?.respondentFirstName || "",
-        lastName: item?.data?.respondentLastName || "",
-        middleName: item?.data?.respondentMiddleName || "",
-        partyType: "Respondent",
-        phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
+        name: `${fName} ${mName} ${lName}`.trim(),
+        firstName: fName,
+        lastName: lName,
+        middleName: mName,
+        partyType: partyRole,
+        phone_numbers: item?.data?.mobileNumber || item?.mobileNumber || item?.data?.phonenumbers?.mobileNumber || [],
         email: item?.data?.emails?.emailId || [],
-        uuid: item?.data?.uuid,
-        partyIndex: `Respondent_${index}`,
+        uuid: uuid,
+        partyIndex: `${partyRole}_${index}`,
         uniqueId: item?.uniqueId,
+        address: formattedAddressOptions?.[0],
+        age: item?.data?.respondentAge || item?.data?.complainantAge,
+        partyUniqueId: uuid || item?.uniqueId,
       },
       address: formattedAddressOptions,
     };
+  };
+
+  const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
+  const complainantData = caseDetails?.additionalDetails?.complainantDetails?.formdata || [];
+
+  let result = [];
+
+  if (type === "respondent") {
+    result = respondentData?.map((item, index) => mapParty(item, index, "Respondent"));
+  }
+
+  if (type === "complainant") {
+    result = complainantData?.map((item, index) => mapParty(item, index, "Complainant"));
+  }
+
+  if (type === "all") {
+    const allComplainants = complainantData?.map((item, index) => mapParty(item, index, "Complainant"));
+    const allRespondents = respondentData?.map((item, index) => mapParty(item, index, "Respondent"));
+    result = [...allComplainants, ...allRespondents];
+  }
+
+  return isFlat ? result?.map((item) => item?.data || {}) : result;
+};
+
+export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, scheduleHearing, caseNumber) => {
+  const orderDetails = orderData?.orderDetails || {};
+  const selectAddresee = orderDetails?.selectAddresee || [];
+  const processTemplateAddressee = orderDetails?.processTemplate?.addressee;
+
+  const payload = selectAddresee?.map((data) => {
+    let miscellaneuosDetails = null;
+    let deliveryChannels = null;
+    let partyDetails = null;
+    let others = null;
+    let policeDetails = null;
+    let respondentDetails = null;
+    let complainantDetails = null;
+
+    miscellaneuosDetails = {
+      ...orderDetails?.processTemplate,
+      issueDate: orderData?.auditDetails?.lastModifiedTime,
+      caseFilingDate: filingDate,
+      nextHearingDate: scheduleHearing?.startTime,
+      caseNumber: caseNumber,
+    };
+
+    deliveryChannels = {
+      channelName: "RPAD",
+      status: "",
+      statusChangeDate: "",
+      channelCode: "RPAD",
+    };
+
+    if (["POLICE", "OTHER"]?.includes(processTemplateAddressee)) {
+      partyDetails = orderDetails?.selectedPartiesDetails?.map((partyData) => {
+        const {address, ...rest} = partyData?.selectedParty;
+        return {
+          party: rest,
+          address: partyData?.selectedAddresses,
+        };
+      });
+    }
+
+    if (processTemplateAddressee === "POLICE") {
+      policeDetails = data;
+    } else if (processTemplateAddressee === "OTHER") {
+      others = data;
+    } else if (processTemplateAddressee === "RESPONDENT") {
+      respondentDetails = {
+        name: data?.name,
+        address: data?.address,
+        phone: data?.phone_numbers?.[0],
+        email: data?.email?.[0],
+        age: "",
+        gender: data?.age || "",
+        uniqueId: data?.uniqueId,
+      };
+    } else {
+      complainantDetails = {
+        name: data?.name,
+        address: data?.address,
+        phone: data?.phone_numbers?.[0],
+        email: data?.email?.[0],
+        age: "",
+        gender: data?.age || "",
+        uuid: data?.uuid || data?.uniqueId,
+      };
+    }
+
+    return {
+      caseDetails: taskCaseDetails,
+      others,
+      miscellaneuosDetails,
+      partyDetails,
+      policeDetails,
+      deliveryChannels,
+      respondentDetails,
+      complainantDetails,
+    };
   });
 
-  return updatedRespondentData;
+  return payload;
 };

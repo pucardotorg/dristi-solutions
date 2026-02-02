@@ -432,9 +432,9 @@ export const getSafeFileExtension = (fileName, fallback = "pdf") => {
 
 export const mapAddressDetails = (addressDetails, isIndividualData = false) => {
   return addressDetails?.map((address) => ({
-    locality: address?.addressDetails?.locality || address?.street || "",
+    locality: address?.addressDetails?.locality || address?.street || address?.locality || "",
     city: address?.addressDetails?.city || address?.city || "",
-    district: address?.addressDetails?.district || address?.addressLine2 || "",
+    district: address?.addressDetails?.district || address?.addressLine2 || address?.district || "",
     pincode: address?.addressDetails?.pincode || address?.pincode || "",
     state: address?.addressDetails?.state || address?.state || "",
     address: isIndividualData ? undefined : address?.addressDetails,

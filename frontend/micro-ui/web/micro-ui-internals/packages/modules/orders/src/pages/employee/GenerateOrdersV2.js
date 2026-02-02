@@ -92,6 +92,7 @@ import {
   getSafeFileExtension,
 } from "../../utils";
 import {
+  _getTaskPayload,
   channelTypeEnum,
   checkValidation,
   compositeOrderAllowedTypes,
@@ -638,7 +639,12 @@ const GenerateOrdersV2 = () => {
   );
 
   const miscellaneousProcessTemplateDropDown = useMemo(() => {
-    return miscellaneousTemplateData?.list || [];
+    return (
+      miscellaneousTemplateData?.list?.map((template) => {
+        const { auditDetails, ...result } = template;
+        return result;
+      }) || []
+    );
   }, [miscellaneousTemplateData]);
 
   const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading, isFetching: isOrdersFetching } = useSearchOrdersService(
@@ -2917,9 +2923,24 @@ const GenerateOrdersV2 = () => {
           },
         };
         break;
+      case "MISCELLANEOUS_PROCESS":
+        const taskCaseDetails = {
+          title: caseDetails?.caseTitle,
+          year: new Date(caseDetails).getFullYear(),
+          hearingDate: new Date(orderData?.additionalDetails?.formdata?.date || "").getTime(),
+          judgeName: "",
+          courtName: courtDetails?.name,
+          courtAddress: courtDetails?.address,
+          courtPhone: courtDetails?.phone,
+          courtId: caseDetails?.courtId,
+        };
+        const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
+        payload = await _getTaskPayload(taskCaseDetails, orderData, caseDetails?.filingDate, currentScheduledHearing, caseNumber);
+        break;
       default:
         break;
     }
+    if (orderType === "MISCELLANEOUS_PROCESS") return payload;
     if (Object.keys(payload || {}).length > 0 && !Array.isArray(selectedChannel)) return [payload];
     else if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
       const channelPayloads = await Promise.all(
@@ -3017,7 +3038,7 @@ const GenerateOrdersV2 = () => {
           });
           for (const item of updatedOrders) {
             const matchedItem = order?.compositeItems?.find((compositeItem) => compositeItem?.id === item?.order?.itemId);
-            if (["WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(item?.order?.orderType)) {
+            if (["WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"]?.includes(item?.order?.orderType)) {
               const payloads = await createTaskPayload(item?.order?.orderType, item);
               if (matchedItem) {
                 const newItem = {
@@ -3036,7 +3057,7 @@ const GenerateOrdersV2 = () => {
               newCompositeItems?.push(matchedItem);
             }
           }
-        } else if (["WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(order?.orderType)) {
+        } else if (["WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"]?.includes(order?.orderType)) {
           const payloads = await createTaskPayload(order?.orderType, { order });
           taskDetails = JSON.stringify(payloads);
         }
@@ -3316,7 +3337,18 @@ const GenerateOrdersV2 = () => {
       const updatedFormData = await replaceUploadedDocsWithCombinedFile(orderFormData);
       const isAcceptBailOrder = orderFormData?.orderType?.code === "ACCEPT_BAIL";
       const requestBailBond = orderFormData?.requestBailBond;
-      const updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
+      let updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
+
+      if (orderFormData?.orderType?.code === "MISCELLANEOUS_PROCESS") {
+        const miscItemText = orderFormData?.processTemplate?.orderText || "";
+        const baseOrder = updatedOrderData && typeof updatedOrderData === "object" ? updatedOrderData : {};
+
+        updatedOrderData = {
+          ...baseOrder,
+          itemText: [baseOrder.itemText, miscItemText].filter(Boolean).join(" "),
+        };
+      }
+
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
       if (isAcceptBailOrder && requestBailBond) {
         await createPendingTaskForJudge(updateOrderResponse?.order);
