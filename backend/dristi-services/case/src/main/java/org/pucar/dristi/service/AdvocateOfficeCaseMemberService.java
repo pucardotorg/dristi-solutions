@@ -197,6 +197,7 @@ public class AdvocateOfficeCaseMemberService {
                                         .officeAdvocateId(officeAdvocateId)
                                         .officeAdvocateUserUuid(member.getOfficeAdvocateUserUuid())
                                         .officeAdvocateName(member.getOfficeAdvocateName())
+                                        .officeAdvocateUserUuid(member.getOfficeAdvocateUserUuid())
                                         .advocates(new ArrayList<>())
                                         .clerks(new ArrayList<>())
                                         .build();
