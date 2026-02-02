@@ -2115,9 +2115,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 (item.code === "PROCLAMATION" && ${hasViewProclamationAccess}) ||
                 (item.code === "SUMMONS" && ${hasViewSummonsAccess}) ||
                 (item.code === "WARRANT" && ${hasViewWarrantAccess}) ||
-                (item.code === "NOTICE" && ${hasViewNoticeAccess})
+                (item.code === "NOTICE" && ${hasViewNoticeAccess}) ||
+                (item.code === "MISCELLANEOUS") 
               );
-            }`,
+            }`, // TODO : Add MISCELLANEOUS view access  && ${hasViewMiscellaneoudAccess}
             },
           },
         };
