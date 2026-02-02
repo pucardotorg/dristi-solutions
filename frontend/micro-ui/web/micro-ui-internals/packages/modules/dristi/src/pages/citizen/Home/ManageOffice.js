@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
 
 const DeleteIcon = () => (
@@ -468,7 +468,7 @@ const ManageOffice = () => {
               padding: "60px 20px",
             }}
           >
-            <p style={{ fontSize: "16px", color: "#77787B" }}>{t("LOADING") || "Loading..."}</p>
+            <Loader />
           </div>
         ) : filteredMembers.length > 0 ? (
           <div>
@@ -740,19 +740,30 @@ const ManageOffice = () => {
               ) : (
                 <button
                   onClick={handleSearch}
-                  disabled={!mobileNumber || mobileNumber.length < 10 || isSearching}
+                  disabled={isSearching}
                   style={{
                     padding: "12px 24px",
+                    width: "120px",
+                    height: "44px",
+                    boxSizing: "border-box",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     backgroundColor: !mobileNumber || mobileNumber.length < 10 || isSearching ? "#D6D5D4" : "#007E7E",
                     color: "#FFFFFF",
                     border: "none",
                     borderRadius: "4px",
                     fontSize: "16px",
                     fontWeight: "500",
-                    cursor: !mobileNumber || mobileNumber.length < 10 || isSearching ? "not-allowed" : "pointer",
                   }}
                 >
-                  {isSearching ? t("SEARCHING") || "Searching..." : t("SEARCH") || "Search"}
+                  {isSearching ? (
+                    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", transform: "scale(0.45)" }}>
+                      <Loader />
+                    </span>
+                  ) : (
+                    t("SEARCH") || "Search"
+                  )}
                 </button>
               )}
             </div>
@@ -839,6 +850,12 @@ const ManageOffice = () => {
                 disabled={isAddingMember}
                 style={{
                   padding: "12px 24px",
+                  width: "120px",
+                  height: "44px",
+                  boxSizing: "border-box",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   backgroundColor: isAddingMember ? "#D6D5D4" : "#007E7E",
                   color: "#FFFFFF",
                   border: "none",
@@ -848,7 +865,13 @@ const ManageOffice = () => {
                   cursor: isAddingMember ? "not-allowed" : "pointer",
                 }}
               >
-                {isAddingMember ? t("ADDING") || "Adding..." : t("CONFIRM") || "Confirm"}
+                {isAddingMember ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", transform: "scale(0.45)" }}>
+                    <Loader />
+                  </span>
+                ) : (
+                  t("CONFIRM") || "Confirm"
+                )}
               </button>
             </div>
           </div>
@@ -934,6 +957,13 @@ const ManageOffice = () => {
                 disabled={isRemovingMember}
                 style={{
                   padding: "12px 24px",
+                  width: "160px",
+                  height: "44px",
+                  boxSizing: "border-box",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  whiteSpace: "nowrap",
                   backgroundColor: isRemovingMember ? "#D6D5D4" : "#D4351C",
                   color: "#FFFFFF",
                   border: "none",
@@ -943,7 +973,13 @@ const ManageOffice = () => {
                   cursor: isRemovingMember ? "not-allowed" : "pointer",
                 }}
               >
-                {isRemovingMember ? t("REMOVING") || "Removing..." : t("REMOVE_MEMBER") || "Remove Member"}
+                {isRemovingMember ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", transform: "scale(0.45)" }}>
+                    <Loader />
+                  </span>
+                ) : (
+                  t("REMOVE_MEMBER") || "Remove Member"
+                )}
               </button>
             </div>
           </div>
