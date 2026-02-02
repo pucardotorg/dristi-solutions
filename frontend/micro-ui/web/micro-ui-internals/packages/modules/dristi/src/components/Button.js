@@ -30,10 +30,19 @@ const Button = (props) => {
       onChange={props?.onChange}
     >
       {props?.icon && props.icon}
-      {props?.label && (
-        <h2 className={props.labelClassName} style={{ ...{ width: "100%" }, ...props?.textStyles }}>
-          {props.label}
-        </h2>
+      {(props?.label || props?.subLabel) && (
+        <div>
+          {props?.label && (
+            <div className={props.labelClassName} style={{ ...{ width: "100%" }, ...props?.textStyles }}>
+              {props.label}
+            </div>
+          )}
+          {props?.subLabel && (
+            <div className={props.subLabelClassName} style={props?.subTextStyles}>
+              {props.subLabel}  
+            </div>
+          )}
+        </div>
       )}
       {props.children}
     </button>
@@ -69,6 +78,14 @@ Button.propTypes = {
    * Custom label style or h2 style
    */
   textStyles: PropTypes.object,
+  /**
+   * Sub label
+   */
+  subLabel: PropTypes.string,
+  /**
+   * Sub label text styles
+   */
+  subTextStyles: PropTypes.object,
 };
 
 Button.defaultProps = {
