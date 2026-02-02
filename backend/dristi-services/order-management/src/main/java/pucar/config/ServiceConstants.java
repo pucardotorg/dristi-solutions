@@ -84,6 +84,8 @@ public class ServiceConstants {
     public static final String ABANDON = "ABANDON";
     public static final String ABANDONED = "ABANDONED";
     public static final String CLOSE = "CLOSE";
+    public static final String MARK_COMPLETE = "MARK_COMPLETE";
+    public static final String UPDATE_DATE = "UPDATE_DATE";
     public static final String COMPLETED = "COMPLETED";
     public static final String ABATED = "ABATED";
     public static final String SAVE_DRAFT = "SAVE_DRAFT";
@@ -152,6 +154,7 @@ public class ServiceConstants {
     public static final String WITHDRAWAL = "WITHDRAWAL";
     public static final String MOVE_CASE_TO_LONG_PENDING_REGISTER = "MOVE_CASE_TO_LONG_PENDING_REGISTER";
     public static final String MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER = "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER";
+    public static final String ACCEPT_RESCHEDULING_REQUEST = "ACCEPT_RESCHEDULING_REQUEST";
 
     public static final String SMS = "SMS";
 

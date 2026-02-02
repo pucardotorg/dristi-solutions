@@ -963,6 +963,7 @@ const SubmissionsCreate = ({ path }) => {
     if (applicationType && ["ADVANCEMENT_OR_ADJOURNMENT_APPLICATION"].includes(applicationType)) {
       if (scheduledHearing && !formData?.initialHearingDate) {
         setValue("initialHearingDate", formatDate(new Date(scheduledHearing?.startTime)));
+        setValue("initialHearingPurpose", scheduledHearing?.hearingType);
       }
 
       if (!formData?.isAllPartiesAgreed) {
@@ -1557,6 +1558,24 @@ const SubmissionsCreate = ({ path }) => {
       )
     ) {
       return;
+    }
+
+    if (applicationType && ["ADVANCEMENT_OR_ADJOURNMENT_APPLICATION"].includes(applicationType)) {
+      const selectedNewHearingDates = formdata?.newHearingDates || [];
+      const originalHearingDate = formdata?.initialHearingDate;
+
+      if (originalHearingDate) {
+        const [d, m, y] = originalHearingDate.split("-");
+        const reversedOriginalDate = `${y}-${m}-${d}`;
+    
+        if (selectedNewHearingDates.includes(reversedOriginalDate)) {
+          setShowErrorToast({ 
+            label: t("ERR_SAME_DATE_AS_ORIGINAL_HEARING"), 
+            error: true 
+          });
+          return;
+        }
+      }
     }
 
     if (applicationType === "REQUEST_FOR_BAIL") {

@@ -6165,7 +6165,16 @@ export const configAcceptReschedulingRequest = [
         key: "refApplicationId",
         disable: true,
         type: "text",
-        populators: { name: "refApplicationId" },
+        populators: { name: "refApplicationId", customStyle: { display: "none" } },
+      },
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "originalHearingPurpose",
+        disable: true,
+        type: "text",
+        schemaKeyPath: "orderDetails.originalHearingPurpose",
+        populators: { name: "originalHearingPurpose", customStyle: { display: "none" } },
       },
       {
         label: "CURRENT_HEARING_DATE",

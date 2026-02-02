@@ -856,9 +856,6 @@ const MainHomeScreen = () => {
   if (hasViewRegisterCasesAccess) {
     options.REGISTRATION = { name: "HOME_REGISTER_CASES" };
   }
-  if (hasViewReschedulingRequestAccess) {
-    options.RESCHEDULE_REQUEST = { name: "HOME_RESCHEDULE_REQUEST" };
-  }
   if (hasViewReissueProcessAccess) {
     options.REVIEW_PROCESS = { name: "HOME_REISSUE_PROCESS" };
   }
@@ -880,6 +877,9 @@ const MainHomeScreen = () => {
   // },
 
   const applicationOptions = {};
+  if (hasViewReschedulingRequestAccess) {
+    applicationOptions.RESCHEDULE_REQUEST = { name: "HOME_RESCHEDULE_REQUEST" };
+  }
   if (hasViewReschedulApplicationAccess) {
     applicationOptions.RESCHEDULE_APPLICATIONS = { name: "HOME_RESCHEDULE_APPLICATIONS" };
   }
@@ -897,7 +897,7 @@ const MainHomeScreen = () => {
       setSelectedBailBond(row);
     };
 
-    if (["REGISTRATION", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(activeTab)) {
+    if (["REGISTRATION", "NOTICE_SUMMONS_MANAGEMENT", "RESCHEDULE_REQUEST"]?.includes(activeTab)) {
       updatedConfig.sections.search.uiConfig.fields = [
         {
           label: "CS_CASE_NAME_ADVOCATE",
@@ -925,7 +925,7 @@ const MainHomeScreen = () => {
       });
     }
 
-    if (["RESCHEDULE_APPLICATIONS", "DELAY_CONDONATION", "OTHERS", "RESCHEDULE_REQUEST"].includes(activeTab)) {
+    if (["RESCHEDULE_APPLICATIONS", "DELAY_CONDONATION", "OTHERS"].includes(activeTab)) {
       updatedConfig.sections.search.uiConfig.fields = [
         {
           label: "STAGE",
