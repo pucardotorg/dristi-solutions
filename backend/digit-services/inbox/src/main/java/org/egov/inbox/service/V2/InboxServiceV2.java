@@ -399,6 +399,9 @@ public class InboxServiceV2 {
         if (indexSearchCriteria.getSearchRegisterCases() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
         }
+        if (indexSearchCriteria.getSearchReschedulingRequestApplications() != null) {
+            populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchReschedulingRequestApplications(), inboxQueryConfiguration, response::setReschedulingRequestData);
+        }
         if (indexSearchCriteria.getSearchBailBonds() != null) {
             populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchBailBonds(), inboxQueryConfiguration, response::setBailBondData);
         }
