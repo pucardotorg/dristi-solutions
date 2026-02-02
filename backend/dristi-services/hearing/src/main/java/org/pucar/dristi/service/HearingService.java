@@ -150,11 +150,12 @@ public class HearingService {
             hearing.setCmpNumber(hearingRequest.getHearing().getCmpNumber() != null ? hearingRequest.getHearing().getCmpNumber() : hearing.getCmpNumber());
             hearing.setCourtCaseNumber(hearingRequest.getHearing().getCourtCaseNumber() != null ? hearingRequest.getHearing().getCourtCaseNumber() : hearing.getCourtCaseNumber());
             hearing.setCaseReferenceNumber(hearingRequest.getHearing().getCaseReferenceNumber() != null ? hearingRequest.getHearing().getCaseReferenceNumber() : hearing.getCaseReferenceNumber());
-            hearingRequest.setHearing(hearing);
-
+            String newHearingType = null;
             if(hearing.getWorkflow()!=null && (hearing.getWorkflow().getAction().equalsIgnoreCase(MARK_COMPLETE) || hearing.getWorkflow().getAction().equalsIgnoreCase(UPDATE_DATE))){
-                hearing.setHearingType(hearingRequest.getHearing().getHearingType());
+                newHearingType = hearingRequest.getHearing().getHearingType();
+                hearing.setHearingType(newHearingType);
             }
+            hearingRequest.setHearing(hearing);
 
             // Enrich application upon update
             enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
