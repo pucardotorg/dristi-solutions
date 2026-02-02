@@ -1,0 +1,82 @@
+[
+      {
+        "id": "10dd4f04-53d4-44c3-80c2-c5bd0b3eae9c",
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "14",
+        "data": {
+          "closerAction": [
+            "APPROVE",
+            "REJECT",
+            "AUTOESCALATE",
+            "DELETE",
+            "RESPOND",
+            "ABANDON"
+          ],
+          "triggerAction": [
+            "PAY"
+          ],
+          "referenceEntityTypeNameMapping": [
+            {
+              "pendingTaskName": "Review Litigant Details Change",
+              "referenceEntityType": "CORRECTION_IN_COMPLAINANT_DETAILS"
+            },
+            {
+              "actionCategory": "Delay Condonation",
+              "referenceEntityType": "DELAY_CONDONATION"
+            },
+            {
+              "actionCategory": "Reschedule Applications",
+              "referenceEntityType": "RE_SCHEDULE"
+            },
+            //added this
+            {
+              "actionCategory": "Rescheduling Request",
+              "referenceEntityType": "ADVANCEMENT_OR_ADJOURNMENT_APPLICATION",
+              "pendingTaskName": "Review Reschedule Request"
+            }
+          ],
+          "id": "14",
+          "actor": "Judge/CMO",
+          "state": "PENDINGREVIEW",
+          "isgeneric": false,
+          "screenType": "applicationCompositeOrder",
+          "pendingTask": "Review Document Submission",
+          "actionCategory": "Others",
+          "workflowModule": "application-voluntary-submission"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1724750461933,
+          "lastModifiedTime": 1769088738526
+        }
+      },
+  {
+    "id": "edb189b5-ce05-4bf4-bb07-94bc77a60f0a",
+    "tenantId": "kl",
+    "schemaCode": "Order.ItemText",
+    "uniqueIdentifier": "34",
+    "data": {
+      "id": 34,
+      "path": [
+        "GET_LOCAL_DATE$.orderDetails.originalHearingDate",
+        "LOCALIZATION$.orderDetails.originalHearingPurpose",
+        "$.orderDetails.applicationCMPNumber",
+        "GET_LOCAL_DATE$.orderDetails.newHearingDate",
+        "$.orderDetails.parties[0].partyName",
+        "GET_LOCAL_DATE$.orderDetails.currentDate"
+      ],
+      "itemText": "This matter is taken up upon Application [$.orderDetails.applicationCMPNumber] filed by party [$.orderDetails.parties[0].partyName] seeking to advance the hearing originally set for [LOCALIZATION$.orderDetails.originalHearingPurpose] on [GET_LOCAL_DATE$.orderDetails.originalHearingDate]. The Court having considered the request, orders as follow:<br>1.The matter is hereby <b>PRE-LISTED</b> and taken on board today, [GET_LOCAL_DATE$.orderDetails.currentDate]<br> 2.The hearing is <b>RESCHEDULED</b> to [GET_LOCAL_DATE$.orderDetails.newHearingDate]",
+      "orderType": "ACCEPT_RESCHEDULING_REQUEST"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1769153715687,
+      "lastModifiedTime": 1769187339411
+    }
+  }
+]
