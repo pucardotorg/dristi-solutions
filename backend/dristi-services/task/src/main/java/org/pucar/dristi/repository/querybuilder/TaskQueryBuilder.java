@@ -150,7 +150,13 @@ public class TaskQueryBuilder {
                 partyCondition = "task.taskdetails->>'respondentDetails' IS NOT NULL AND task.taskdetails->'respondentDetails'->>'name' = ?";
             } else if ("witness".equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'name' = ?";
-            }  else {
+            } else if ("complainant".equalsIgnoreCase(partyType)) {
+                partyCondition = "task.taskdetails->>'complainantDetails' IS NOT NULL AND task.taskdetails->'complainantDetails'->>'name' = ?";
+            } else if ("others".equalsIgnoreCase(partyType)) {
+                partyCondition = "task.taskdetails->>'others' IS NOT NULL AND task.taskdetails->'others'->>'name' = ?";
+            } else if ("police".equalsIgnoreCase(partyType)) {
+                partyCondition = "task.taskdetails->>'policeDetails' IS NOT NULL AND task.taskdetails->'policeDetails'->>'name' = ?";
+            } else {
                 log.warn("Unrecognized partyType value: {}. while filtering by party name Filter will be ignored.", partyType);
             }
         }
@@ -165,7 +171,13 @@ public class TaskQueryBuilder {
                 partyCondition = "task.taskdetails->>'respondentDetails' IS NOT NULL AND task.taskdetails->'respondentDetails'->>'uniqueId' = ?";
             } else if ("witness".equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'uniqueId' = ?";
-            }  else {
+            }  else if ("complainant".equalsIgnoreCase(partyType)) {
+                partyCondition = "task.taskdetails->>'complainantDetails' IS NOT NULL AND task.taskdetails->'complainantDetails'->>'uniqueId' = ?";
+            } else if ("others".equalsIgnoreCase(partyType)) {
+                partyCondition = "task.taskdetails->>'others' IS NOT NULL AND task.taskdetails->'others'->>'uniqueId' = ?";
+            } else if ("police".equalsIgnoreCase(partyType)) {
+                partyCondition = "task.taskdetails->>'policeDetails' IS NOT NULL AND task.taskdetails->'policeDetails'->>'code' = ?";
+            } else {
                 log.warn("Unrecognized partyType value: {}. while filtering by party uniqueId Filter will be ignored.", partyType);
             }
         }

@@ -59,19 +59,35 @@ public class PdfServiceUtil {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
+            TaskDetails taskDetails = taskRequest.getTask().getTaskDetails();
+
             MiscellaneousPdf miscellaneousPdf = new MiscellaneousPdf();
-            miscellaneousPdf.setCourtId();
-            miscellaneousPdf.setProcessTitle();
-            miscellaneousPdf.setProcessText();
-            miscellaneousPdf.setAddressee();
-            miscellaneousPdf.setAddresseeName();
-            miscellaneousPdf.setAddresseeDetails();
-            miscellaneousPdf.setOrderText();
-            miscellaneousPdf.setCoverLetterText();
-            miscellaneousPdf.setCaseNumber();
-            miscellaneousPdf.setIsCoverLetterRequired();
-            miscellaneousPdf.setNextHearingDate();
-            miscellaneousPdf.setPartyDetails();
+            miscellaneousPdf.setCourtId(taskDetails.getMiscellaneuosDetails().getCourtId());
+            miscellaneousPdf.setProcessTitle(taskDetails.getMiscellaneuosDetails().getProcessTitle());
+            miscellaneousPdf.setProcessText(taskDetails.getMiscellaneuosDetails().getProcessText());
+            miscellaneousPdf.setAddressee(taskDetails.getMiscellaneuosDetails().getAddressee());
+            miscellaneousPdf.setAddresseeName(taskDetails.getMiscellaneuosDetails().getAddresseeName());
+            String addresseeDetails = null;
+            if(taskDetails.getRespondentDetails()!=null){
+                addresseeDetails = taskDetails.getRespondentDetails().getName();
+            }
+            if(taskDetails.getComplainantDetails()!=null){
+                addresseeDetails = taskDetails.getComplainantDetails().getName();
+            }
+            if(taskDetails.getOthers()!=null){
+                addresseeDetails = taskDetails.getOthers().getName();
+            }
+            if(taskDetails.getPoliceDetails()!=null){
+                addresseeDetails = taskDetails.getPoliceDetails().getName()+", "+taskDetails.getPoliceDetails().getDistrict();
+            }
+             miscellaneousPdf.setAddresseeDetails(addresseeDetails);
+
+            miscellaneousPdf.setOrderText(taskDetails.getMiscellaneuosDetails().getOrderText());
+            miscellaneousPdf.setCoverLetterText(taskDetails.getMiscellaneuosDetails().getCoverLetterText());
+            miscellaneousPdf.setCaseNumber(taskDetails.getMiscellaneuosDetails().getCaseNumber());
+            miscellaneousPdf.setIsCoverLetterRequired(taskDetails.getMiscellaneuosDetails().getIsCoverLetterRequired());
+            miscellaneousPdf.setNextHearingDate(taskDetails.getMiscellaneuosDetails().getCourtId());
+            miscellaneousPdf.setPartyDetails(taskDetails.getPartyDetails());
 
             MiscellaneousPdfRequest miscellaneousPdfRequest = MiscellaneousPdfRequest.builder()
                     .templateConfiguration(miscellaneousPdf).requestInfo(taskRequest.getRequestInfo()).build();

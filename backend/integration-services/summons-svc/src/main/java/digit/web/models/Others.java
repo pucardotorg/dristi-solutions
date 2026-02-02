@@ -8,8 +8,8 @@ import lombok.Data;
 @Builder
 public class Others {
 
-    @JsonProperty("uniqueid")
-    private String uniqueid;
+    @JsonProperty("uniqueId")
+    private String uniqueId;
 
     @JsonProperty("name")
     private String name;
