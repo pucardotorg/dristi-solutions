@@ -203,11 +203,29 @@ public class AdvocateOfficeCaseMemberService {
                                 advocateOffices.add(targetOffice);
                             }
 
-                            // Add member to appropriate list based on memberType
+                            // Add member to appropriate list based on memberType (only if not already present)
                             if (MemberType.ADVOCATE.equals(member.getMemberType())) {
-                                targetOffice.getAdvocates().add(officeMember);
+                                AdvocateOfficeMember existingMember = targetOffice.getAdvocates().stream()
+                                        .filter(m -> member.getMemberUserUuid().equals(m.getMemberUserUuid()))
+                                        .findFirst()
+                                        .orElse(null);
+                                
+                                if (existingMember != null && Boolean.FALSE.equals(existingMember.getIsActive())) {
+                                    existingMember.setIsActive(true);
+                                } else if (existingMember == null) {
+                                    targetOffice.getAdvocates().add(officeMember);
+                                }
                             } else {
-                                targetOffice.getClerks().add(officeMember);
+                                AdvocateOfficeMember existingMember = targetOffice.getClerks().stream()
+                                        .filter(m -> member.getMemberUserUuid().equals(m.getMemberUserUuid()))
+                                        .findFirst()
+                                        .orElse(null);
+                                
+                                if (existingMember != null && Boolean.FALSE.equals(existingMember.getIsActive())) {
+                                    existingMember.setIsActive(true);
+                                } else if (existingMember == null) {
+                                    targetOffice.getClerks().add(officeMember);
+                                }
                             }
 
                             courtCase.setAdvocateOffices(advocateOffices);
