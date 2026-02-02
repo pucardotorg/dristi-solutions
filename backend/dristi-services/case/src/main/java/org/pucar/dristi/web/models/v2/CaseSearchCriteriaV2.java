@@ -34,4 +34,13 @@ public class CaseSearchCriteriaV2 {
 
     @JsonProperty("judgeId")
     private String judgeId;
+
+    @JsonProperty("officeAdvocateId")
+    private String officeAdvocateId = null;
+
+    @JsonProperty("memberId")
+    private String memberId = null;
+
+    @JsonProperty("isMemberActiveInCase")
+    private Boolean isMemberActiveInCase = null;
 }
