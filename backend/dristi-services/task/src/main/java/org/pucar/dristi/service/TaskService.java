@@ -235,7 +235,7 @@ public class TaskService {
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
             log.info("status , taskType : {} , {} ", status, taskType);
-            if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status) || PROCLAMATION_SENT.equalsIgnoreCase(status) || ATTACHMENT_SENT.equalsIgnoreCase(status)){
+            if (PROCESS_SENT.equalsIgnoreCase(status) || SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status) || PROCLAMATION_SENT.equalsIgnoreCase(status) || ATTACHMENT_SENT.equalsIgnoreCase(status)){
                 String acknowledgementId = summonUtil.sendSummons(body);
                 updateAcknowledgementId(body, acknowledgementId);
                 closeEnvelopePendingTaskOfRpad(body);
