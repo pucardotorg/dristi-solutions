@@ -101,6 +101,7 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
             workflow.setAction(MARK_COMPLETE);
             workflow.setComments("Update Hearing");
             hearing.setWorkflow(workflow);
+            hearing.setHearingType(order.getPurposeOfNextHearing());
 
             hearingUtil.updateHearingSummary(orderRequest, hearing);
 
@@ -111,6 +112,7 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
             workflow.setAction(UPDATE_DATE);
             workflow.setComments("Update Hearing");
             hearing.setWorkflow(workflow);
+            hearing.setHearingType(order.getPurposeOfNextHearing());
 
             StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
             hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
