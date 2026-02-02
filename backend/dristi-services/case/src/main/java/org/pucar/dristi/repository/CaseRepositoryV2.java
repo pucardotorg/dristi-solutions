@@ -693,16 +693,32 @@ public class CaseRepositoryV2 {
 
     public boolean validateAdvocateOfficeCaseMember(String officeAdvocateId, String memberId) {
         try {
-            String query = "SELECT COUNT(*) FROM dristi_advocate_office_case_member " +
-                    "WHERE office_advocate_id = ? AND member_id = ?";
+            List<Object> preparedStmtList = new ArrayList<>();
+            List<Integer> preparedStmtArgList = new ArrayList<>();
             
-            Integer count = jdbcTemplate.queryForObject(query, Integer.class, officeAdvocateId, memberId);
+            String query = queryBuilder.getValidateAdvocateOfficeCaseMemberQuery(preparedStmtList, preparedStmtArgList, officeAdvocateId, memberId);
+            
+            Integer count = jdbcTemplate.queryForObject(query, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), Integer.class);
             
             return count > 0;
         } catch (Exception e) {
             log.error("Error validating advocate office case member for officeAdvocateId: {}, memberId: {}", 
                 officeAdvocateId, memberId, e);
             return false;
+        }
+    }
+
+    public List<String> getOfficeAdvocateIdsForMemberIdInCase(String memberId, String caseId) {
+        try {
+            List<Object> preparedStmtList = new ArrayList<>();
+            List<Integer> preparedStmtArgList = new ArrayList<>();
+            
+            String query = queryBuilder.getOfficeAdvocateIdsByMemberIdAndCaseIdQuery(preparedStmtList, preparedStmtArgList, memberId, caseId);
+            
+            return jdbcTemplate.queryForList(query, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), String.class);
+        } catch (Exception e) {
+            log.error("Error getting office advocate IDs for memberId: {}, caseId: {}", memberId, caseId, e);
+            return new ArrayList<>();
         }
     }
 

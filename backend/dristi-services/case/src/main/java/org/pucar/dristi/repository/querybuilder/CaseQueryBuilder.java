@@ -880,15 +880,27 @@ public class CaseQueryBuilder {
         return firstCriteria;
     }
 
-    public String getValidateAdvocateOfficeCaseMemberQuery(List<Object> preparedStmtList, List<Integer> preparedStmtArgList, 
-                                                           String officeAdvocateId, String memberId) {
-        String query = "SELECT COUNT(id) FROM dristi_advocate_office_case_member " +
+    public String getValidateAdvocateOfficeCaseMemberQuery(List<Object> preparedStmtList, List<Integer> preparedStmtArgList, String officeAdvocateId, String memberId) {
+        String query = "SELECT COUNT(*) FROM dristi_advocate_office_case_member " +
                 "WHERE office_advocate_id = ? AND member_id = ? AND is_active = true";
         
         preparedStmtList.add(officeAdvocateId);
         preparedStmtArgList.add(Types.VARCHAR);
         
         preparedStmtList.add(memberId);
+        preparedStmtArgList.add(Types.VARCHAR);
+        
+        return query;
+    }
+
+    public String getOfficeAdvocateIdsByMemberIdAndCaseIdQuery(List<Object> preparedStmtList, List<Integer> preparedStmtArgList, String memberId, String caseId) {
+        String query = "SELECT DISTINCT office_advocate_id FROM dristi_advocate_office_case_member " +
+                "WHERE member_id = ? AND case_id = ? AND is_active = true";
+
+        preparedStmtList.add(memberId);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(caseId);
         preparedStmtArgList.add(Types.VARCHAR);
         
         return query;
