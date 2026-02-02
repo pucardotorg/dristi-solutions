@@ -71,6 +71,7 @@ public class ServiceConstants {
 
     public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
     public static final String ISSUESUMMON = "ISSUE_SUMMON";
+    public static final String ISSUE_PROCESS = "ISSUE_PROCESS";
     public static final String BNSS_NOTICE = "Section 223 Notice";
     public static final String DCA_NOTICE = "DCA Notice";
     public static final String GENERATE_TASK_DOCUMENT = "GENERATE_TASK_DOCUMENT";

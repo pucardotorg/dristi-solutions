@@ -74,6 +74,7 @@ public class ServiceConstants {
     public static final String PROCLAMATION = "PROCLAMATION";
     public static final String ATTACHMENT = "ATTACHMENT";
     public static final String ISSUESUMMON = "ISSUE_SUMMON";
+    public static final String ISSUE_PROCESS = "ISSUE_PROCESS";
 
     public static final String PROCESS_SENT = "PROCESS_SENT";
 

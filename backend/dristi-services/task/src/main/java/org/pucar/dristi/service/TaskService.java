@@ -240,6 +240,7 @@ public class TaskService {
                 updateAcknowledgementId(body, acknowledgementId);
                 closeEnvelopePendingTaskOfRpad(body);
             }
+
             List<String> fileStoreIds = new ArrayList<>();
             if(body.getTask().getDocuments() != null){
                 for (Document document : body.getTask().getDocuments()) {
@@ -257,6 +258,9 @@ public class TaskService {
                 topicBasedOnStatus.pushToTopicBasedOnStatus(status, body);
             }
 
+            if(MISCELLANEOUS_PROCESS.equalsIgnoreCase(taskType)&& ISSUE_PROCESS.equalsIgnoreCase(status)){
+                producer.push(config.getTaskIssueSummonTopic(),body);
+            }
             producer.push(config.getTaskUpdateTopic(), body);
 
             if (!isValidTask) {

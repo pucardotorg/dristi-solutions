@@ -149,7 +149,7 @@ public class SummonsService {
             generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, true);
         }
 
-        if (MISCELLANEOUS_PROCESS.equalsIgnoreCase(taskType)) {
+        if (MISCELLANEOUS_PROCESS.equalsIgnoreCase(taskType) && ISSUE_PROCESS.equalsIgnoreCase(task.getStatus())) {
             generateMiscellaneousDocumentAndUpdateTask(taskRequest,false);
         }
 
