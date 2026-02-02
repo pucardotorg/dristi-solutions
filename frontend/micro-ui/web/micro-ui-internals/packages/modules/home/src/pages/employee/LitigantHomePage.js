@@ -9,6 +9,7 @@ import { uploadResponseDocumentConfig } from "@egovernments/digit-ui-module-dris
 import OtpComponent from "../../../../cases/src/components/OtpComponent";
 import CustomStepperSuccess from "@egovernments/digit-ui-module-orders/src/components/CustomStepperSuccess";
 import { updateCaseDetails } from "../../../../cases/src/utils/joinCaseUtils";
+import ClerkWithoutAdvocateView from "./ClerkWithoutAdvocateView";
 const FileNewCaseIcon = () => (
   <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect width="120" height="120" rx="60" fill="#FFF4FC" fill-opacity="0.5" />
@@ -554,6 +555,7 @@ const LitigantHomePage = ({ isApprovalPending }) => {
           </div>
         </div>
       </div>
+      <ClerkWithoutAdvocateView />
     </div>
   );
 };
