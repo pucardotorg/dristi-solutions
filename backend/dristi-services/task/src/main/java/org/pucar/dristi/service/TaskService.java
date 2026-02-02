@@ -111,6 +111,10 @@ public class TaskService {
                     || body.getTask().getTaskType().equalsIgnoreCase("ATTACHMENT")) {
                 updateCase(body);
             }
+            if(MISCELLANEOUS_PROCESS.equalsIgnoreCase(body.getTask().getTaskType())&& ISSUE_PROCESS.equalsIgnoreCase(body.getTask().getStatus())){
+                producer.push(config.getTaskIssueSummonTopic(),body);
+            }
+
             producer.push(config.getTaskCreateTopic(), body);
 
             String status = body.getTask().getStatus();
@@ -256,10 +260,6 @@ public class TaskService {
             // push to join case topic based on status
             if (taskType.equalsIgnoreCase(JOIN_CASE)) {
                 topicBasedOnStatus.pushToTopicBasedOnStatus(status, body);
-            }
-
-            if(MISCELLANEOUS_PROCESS.equalsIgnoreCase(taskType)&& ISSUE_PROCESS.equalsIgnoreCase(status)){
-                producer.push(config.getTaskIssueSummonTopic(),body);
             }
             producer.push(config.getTaskUpdateTopic(), body);
 
