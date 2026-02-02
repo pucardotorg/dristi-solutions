@@ -461,6 +461,10 @@ public class EvidenceService {
 
     public List<Artifact> searchEvidence(RequestInfo requestInfo, EvidenceSearchCriteria evidenceSearchCriteria, Pagination pagination) {
         try {
+            if (evidenceSearchCriteria != null && evidenceSearchCriteria.getCaseId() != null) {
+                validator.validateCaseAccess(requestInfo, evidenceSearchCriteria.getCaseId());
+            }
+            
             // Fetch applications from database according to the given search criteria
             enrichEvidenceSearch(requestInfo, evidenceSearchCriteria);
             List<Artifact> artifacts = repository.getArtifacts(evidenceSearchCriteria, pagination);
