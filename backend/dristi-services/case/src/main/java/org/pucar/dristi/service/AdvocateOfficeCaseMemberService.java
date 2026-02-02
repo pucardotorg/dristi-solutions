@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
@@ -257,7 +258,9 @@ public class AdvocateOfficeCaseMemberService {
                     List<AdvocateOffice> advocateOffices = courtCase.getAdvocateOffices();
 
                     if (advocateOffices != null) {
-                        for (AdvocateOffice office : advocateOffices) {
+                        Iterator<AdvocateOffice> iterator = advocateOffices.iterator();
+                        while (iterator.hasNext()) {
+                            AdvocateOffice office = iterator.next();
                             if (!officeAdvocateId.equals(office.getOfficeAdvocateId())) {
                                 continue;
                             }
@@ -271,7 +274,7 @@ public class AdvocateOfficeCaseMemberService {
                             }
 
                             if (office.getAdvocates() != null && office.getClerks() != null && office.getAdvocates().isEmpty() && office.getClerks().isEmpty()) {
-                                advocateOffices.remove(office);
+                                iterator.remove();
                             }
                         }
                         courtCase.setAdvocateOffices(advocateOffices);
