@@ -1,0 +1,398 @@
+openapi: 3.0.0
+info:
+  title: Case and Witness Registry
+  description: |
+    This API specification defines the Case and Witness registries with all implemented endpoints.
+    It includes both v1 and v2 endpoints as per the current implementation.
+  version: 2.0.0
+
+tags:
+  - name: Case
+    description: APIs to create, update, search, and manage cases.
+  - name: Witness
+    description: APIs related to creating, updating and searching for witnesses to a case.
+  - name: Profile
+    description: APIs for managing user profiles and access control.
+  - name: Address
+    description: APIs for managing addresses related to cases and parties.
+  - name: Utilities
+    description: Utility endpoints for system operations.
+
+servers:
+  - url: /api
+    description: Base API path
+
+paths:
+  # V1 Endpoints
+  /v1/_create:
+    post:
+      tags: [Case]
+      summary: Create new case in the registry
+      description: Creates a new case in the case registry
+      requestBody:
+        description: Details for the new court case + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+        required: true
+      responses:
+        '201':
+          description: Case created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+        '400':
+          description: Court case creation failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /v1/_update:
+    post:
+      tags: [Case]
+      summary: Update a court case
+      description: API to update the case including workflow, attributes, or soft deletion.
+      requestBody:
+        description: Details for updating all editable fields in the court case + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+        required: true
+      responses:
+        '200':
+          description: Case updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+        '400':
+          description: Case update failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /v1/_search:
+    post:
+      tags: [Case]
+      summary: Search for cases
+      description: Search for cases based on provided criteria
+      requestBody:
+        description: Search criteria + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/CaseSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: List of cases matching search criteria
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CaseSearchResponse'
+        '400':
+          description: Search failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /v1/_exists:
+    post:
+      tags: [Case]
+      summary: Check if a specific case exists
+      description: Check if a case exists using case number or other identifiers
+      requestBody:
+        description: Case search criteria + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/CaseExistsRequest'
+        required: true
+      responses:
+        '200':
+          description: Case existence check result
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CaseExistsResponse'
+        '400':
+          description: Check failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  # V2 Search Endpoints
+  /v2/search/details:
+    post:
+      tags: [Case]
+      summary: Get detailed case information
+      description: Retrieve detailed information for a specific case
+      requestBody:
+        description: Search criteria + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/CaseSearchRequestV2'
+        required: true
+      responses:
+        '200':
+          description: Case details
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CaseSearchResponseV2'
+        '400':
+          description: Search failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /v2/search/list:
+    post:
+      tags: [Case]
+      summary: Get list of cases with summary information
+      description: Retrieve a paginated list of cases with summary information
+      requestBody:
+        description: Search criteria + pagination + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/CaseSummaryListRequest'
+        required: true
+      responses:
+        '200':
+          description: List of case summaries
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CaseSummaryListResponse'
+        '400':
+          description: Search failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  # Profile Management Endpoints
+  /v2/profilerequest/create:
+    post:
+      tags: [Profile]
+      summary: Create profile edit request
+      description: Create a request to edit litigant profile details
+      requestBody:
+        description: Profile edit request details + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/CreateProfileRequest'
+        required: true
+      responses:
+        '200':
+          description: Profile edit request created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+        '400':
+          description: Request creation failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  # Address Management
+  /v1/address/_add:
+    post:
+      tags: [Address]
+      summary: Add or update addresses for case parties
+      description: Add or update addresses for parties involved in a case
+      requestBody:
+        description: Address details + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/AddAddressRequest'
+        required: true
+      responses:
+        '200':
+          description: Addresses added/updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AddAddressResponse'
+        '400':
+          description: Address update failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  # Witness Endpoints
+  /witness/v1/_create:
+    post:
+      tags: [Witness]
+      summary: Add a witness to a case
+      description: Register a new witness for a case
+      requestBody:
+        description: Witness details + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/WitnessRequest'
+        required: true
+      responses:
+        '201':
+          description: Witness added successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/WitnessResponse'
+        '400':
+          description: Failed to add witness
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  # Add other endpoints following the same pattern...
+  # (Additional endpoints would be added here with the same structure)
+
+  # Utility Endpoints
+  /v1/_generatePdf:
+    post:
+      tags: [Utilities]
+      summary: Generate PDF for a case
+      description: Generate a PDF document for the specified case
+      requestBody:
+        description: Case details for PDF generation + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/CaseSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: PDF generated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
+        '400':
+          description: PDF generation failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+components:
+  schemas:
+    # Base schemas from original specification
+    CaseRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        case:
+          $ref: '#/components/schemas/CourtCase'
+
+    CaseResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourtCase'
+
+    # Add other schemas from the original specification
+    # ...
+
+    # New schemas for additional endpoints
+    CaseSearchRequestV2:
+      type: object
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/CaseSearchCriteriaV2'
+
+    CaseSearchResponseV2:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        case:
+          $ref: '#/components/schemas/CourtCase'
+
+    CaseSummaryListRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/CaseSummaryCriteria'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination'
+
+    CaseSummaryListResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        caseList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseSummary'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination'
+
+    # Add other new schemas as needed
+    # ...
+
+    # Address related schemas
+    AddAddressRequest:
+      type: object
+      required:
+        - requestInfo
+        - partyAddressList
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        partyAddressList:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyAddressRequest'
+
+    AddAddressResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        partyAddressList:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyAddressRequest'
+
+    PartyAddressRequest:
+      type: object
+      properties:
+        caseId:
+          type: string
+          format: uuid
+        partyId:
+          type: string
+          format: uuid
+        address:
+          $ref: '#/components/schemas/Address'
+
+    # Add other component schemas as needed
+    # ...

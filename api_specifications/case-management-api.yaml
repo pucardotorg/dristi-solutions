@@ -1,0 +1,398 @@
+openapi: 3.0.0
+
+info:
+  title: Case Management Service
+  description: |
+    This API provides case management services including case file retrieval,
+    case grouping, and case bundle generation.
+  version: 1.0.0
+
+servers:
+  - url: /casemanagement/v1
+    description: Case Management Service API
+
+tags:
+  - name: Case Management
+    description: APIs for managing case files and related operations
+  - name: Case Grouping
+    description: APIs for grouping and ungrouping cases
+  - name: Case Bundles
+    description: APIs for generating case bundles
+
+paths:
+
+  /case/files/_search:
+    post:
+      tags:
+        - Case Management
+      summary: Retrieve case files
+      description: Retrieves complete case files including hearings, witnesses, orders, etc.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseFileSearchRequest'
+      responses:
+        '200':
+          description: Successful response with case files
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseFileSearchResponse'
+        '400':
+          description: Invalid input or case not found
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /case/groups:
+    post:
+      tags:
+        - Case Grouping
+      summary: Create case group
+      description: Creates a logical grouping of cases
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseGroupRequest'
+      responses:
+        '201':
+          description: Case group created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseGroupResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /case/groups/{groupId}:
+    delete:
+      tags:
+        - Case Grouping
+      summary: Delete case group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Case group deleted successfully
+        '404':
+          description: Case group not found
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /case/bundles:
+    post:
+      tags:
+        - Case Bundles
+      summary: Generate case bundle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseBundleRequest'
+      responses:
+        '202':
+          description: Case bundle generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseBundleResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /case/bundles/bulk:
+    post:
+      tags:
+        - Case Bundles
+      summary: Generate case bundles in bulk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkCaseBundleRequest'
+      responses:
+        '202':
+          description: Bulk case bundle generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkCaseBundleResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+
+    CaseFileSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/CaseSearchCriteria'
+
+    CaseSearchCriteria:
+      type: object
+      properties:
+        caseId:
+          type: string
+          format: uuid
+        filingNumber:
+          type: string
+        caseNumber:
+          type: string
+        tenantId:
+          type: string
+      anyOf:
+        - required: [caseId]
+        - required: [filingNumber]
+        - required: [caseNumber]
+
+    CaseFileSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        caseFiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseFile'
+
+    CaseFile:
+      type: object
+      properties:
+        case:
+          $ref: '#/components/schemas/CourtCase'
+        hearings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hearing'
+        witnesses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Witness'
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderTasks'
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artifact'
+
+    CourtCase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseNumber:
+          type: string
+        filingNumber:
+          type: string
+        status:
+          type: string
+
+    Hearing:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        hearingNumber:
+          type: string
+
+    Witness:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    OrderTasks:
+      type: object
+      properties:
+        order:
+          $ref: '#/components/schemas/Order'
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskType:
+          type: string
+        status:
+          type: string
+
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        applicationNumber:
+          type: string
+
+    Artifact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    CaseGroupRequest:
+      type: object
+      required: [requestInfo, caseGroup]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        caseGroup:
+          $ref: '#/components/schemas/CaseGroup'
+
+    CaseGroup:
+      type: object
+      required: [caseIds, groupName]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        caseIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+        groupName:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+
+    CaseGroupResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        caseGroup:
+          $ref: '#/components/schemas/CaseGroup'
+
+    CaseBundleRequest:
+      type: object
+      required: [requestInfo, caseId]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        caseId:
+          type: string
+          format: uuid
+        includeDocuments:
+          type: boolean
+          default: true
+
+    CaseBundleResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        bundleId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [IN_PROGRESS, COMPLETED, FAILED]
+        downloadUrl:
+          type: string
+          format: uri
+
+    BulkCaseBundleRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          type: object
+          properties:
+            caseType:
+              type: string
+            status:
+              type: array
+              items:
+                type: string
+            fromDate:
+              type: string
+              format: date
+            toDate:
+              type: string
+              format: date
+
+    BulkCaseBundleResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        bulkRequestId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [IN_PROGRESS, COMPLETED, FAILED]
+        totalCases:
+          type: integer
+        processedCases:
+          type: integer
+        failedCases:
+          type: integer
+
