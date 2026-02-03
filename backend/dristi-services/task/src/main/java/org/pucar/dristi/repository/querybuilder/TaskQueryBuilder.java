@@ -168,9 +168,9 @@ public class TaskQueryBuilder {
             } else if ("complainant".equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'complainantDetails' IS NOT NULL AND task.taskdetails->'complainantDetails'->>'uniqueId' = ?";
             } else if ("others".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->'others' IS NOT NULL AND task.taskdetails->'others' <> '{}'::jsonb";
+                partyCondition = "task.taskdetails->'others' IS NOT NULL OR task.taskdetails->'others' <> '{}'::jsonb";
             } else if ("police".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->'policeDetails' IS NOT NULL AND task.taskdetails->'policeDetails' <> '{}'::jsonb";
+                partyCondition = "task.taskdetails->'policeDetails' IS NOT NULL OR task.taskdetails->'policeDetails' <> '{}'::jsonb";
             } else {
                 log.warn("Unrecognized partyType value: {}. while filtering by party uniqueId Filter will be ignored.", partyType);
             }
