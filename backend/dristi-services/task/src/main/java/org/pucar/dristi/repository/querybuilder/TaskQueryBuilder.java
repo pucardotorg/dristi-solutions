@@ -179,9 +179,9 @@ public class TaskQueryBuilder {
 
         if (partyType != null && !partyType.trim().isEmpty()) {
              if ("others".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->'others' IS NOT NULL AND task.taskdetails->'others' <> '{}'::jsonb";
+                partyCondition = "COALESCE(task.taskdetails->'others', '{}'::jsonb) NOT IN ('{}'::jsonb, 'null'::jsonb)";
             } else if ("police".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->'policeDetails' IS NOT NULL AND task.taskdetails->'policeDetails' <> '{}'::jsonb";
+                partyCondition = "COALESCE(task.taskdetails->'policeDetails', '{}'::jsonb) NOT IN ('{}'::jsonb, 'null'::jsonb)";
             }
         }
         return partyCondition;
