@@ -50,10 +50,22 @@ const checkChequeDepositDateValidity = (caseDetails, dateOfDispatch) => {
   };
 };
 
-export const showDemandNoticeModal = ({ selected, setValue, formData, setError, clearErrors, index, setServiceOfDemandNoticeModal, caseDetails }) => {
+export const showDemandNoticeModal = ({
+  selected,
+  setValue,
+  formData,
+  setError,
+  clearErrors,
+  index,
+  setServiceOfDemandNoticeModal,
+  caseDetails,
+  isCaseReAssigned,
+  errorCaseDetails,
+}) => {
   if (selected === "demandNoticeDetails") {
     const totalCheques = caseDetails?.caseDetails?.["chequeDetails"]?.formdata && caseDetails?.caseDetails?.["chequeDetails"]?.formdata.length;
-    const chequeDetails = caseDetails?.caseDetails?.["chequeDetails"]?.formdata?.[0]?.data;
+    const newCaseDetails = isCaseReAssigned ? errorCaseDetails : caseDetails;
+    const chequeDetails = newCaseDetails?.caseDetails?.["chequeDetails"]?.formdata?.[0]?.data;
     for (const key in formData) {
       switch (key) {
         case "dateOfService":
