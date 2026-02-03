@@ -8,8 +8,8 @@ import lombok.Data;
 @Builder
 public class PoliceDetails {
 
-    @JsonProperty("code")
-    private String code;
+    @JsonProperty("uniqueId")
+    private String uniqueId;
 
     @JsonProperty("name")
     private String name;
