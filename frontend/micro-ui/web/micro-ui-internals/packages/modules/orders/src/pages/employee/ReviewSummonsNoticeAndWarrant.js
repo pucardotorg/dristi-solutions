@@ -2117,7 +2117,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 (item.code === "SUMMONS" && ${hasViewSummonsAccess}) ||
                 (item.code === "WARRANT" && ${hasViewWarrantAccess}) ||
                 (item.code === "NOTICE" && ${hasViewNoticeAccess}) ||
-                (item.code === "MISCELLANEOUS" && ${hasViewMiscellaneousAccess}) 
+                (item.code === "MISCELLANEOUS_PROCESS" && ${hasViewMiscellaneousAccess}) 
               );
             }`,
             },
