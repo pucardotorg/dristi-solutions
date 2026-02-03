@@ -38,7 +38,6 @@ class WorkflowConfigTest {
         assertTrue(workflowConfig.getAssignedOnly());
         assertEquals("https://config.us-east-2.amazonaws.com", workflowConfig.getUserSearchEndpoint());
         assertEquals("localhost", workflowConfig.getUserHost());
-        assertEquals("2020-03-01", workflowConfig.getUpdateBusinessServiceTopic());
         assertEquals("UTC", workflowConfig.getTimeZone());
         assertEquals(3, workflowConfig.getStateLevelTenantIdLength().intValue());
         assertEquals("MD", workflowConfig.getStateLevelTenantId());

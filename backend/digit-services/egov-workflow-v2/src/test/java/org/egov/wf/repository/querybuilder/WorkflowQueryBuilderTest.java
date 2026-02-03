@@ -1366,10 +1366,7 @@ class WorkflowQueryBuilderTest {
         processInstanceSearchCriteria.setToDate(1L);
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(
-                " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=? and pi_outer.id"
-                        + " IN ( ?) and id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee"
-                        + " = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER"
-                        + " BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
+                " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=? and pi_outer.id IN ( ?) and id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
         verify(processInstanceSearchCriteria, atLeast(1)).getHistory();
         verify(processInstanceSearchCriteria, atLeast(1)).getLimit();
@@ -1484,10 +1481,7 @@ class WorkflowQueryBuilderTest {
         processInstanceSearchCriteria.setToDate(1L);
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(
-                " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and pi_outer.status"
-                        + " IN ( ?) and id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee"
-                        + " = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER"
-                        + " BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
+                " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and pi_outer.status IN ( ?) and id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
         verify(processInstanceSearchCriteria, atLeast(1)).getHistory();
         verify(processInstanceSearchCriteria, atLeast(1)).getLimit();
