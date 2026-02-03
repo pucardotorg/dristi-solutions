@@ -237,7 +237,8 @@ public String processOrderText(String orderType, String orderSchema, RequestInfo
                 Long dateInMilliSecond = JsonPath.read(orderSchema, path.substring("GET_LOCAL_DATE".length()));
                 if (dateInMilliSecond != null) {
                     LocalDate date = Instant.ofEpochMilli(dateInMilliSecond).atZone(ZoneId.systemDefault()).toLocalDate();
-                    text = text.replace("[" + path + "]", date.toString());
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                    text = text.replace("[" + path + "]", date.format(formatter));
                 }
             } else if (path.startsWith("CONCAT_STRING")) {
                 List<String> parties = JsonPath.read(orderSchema, path.substring("CONCAT_STRING".length()));

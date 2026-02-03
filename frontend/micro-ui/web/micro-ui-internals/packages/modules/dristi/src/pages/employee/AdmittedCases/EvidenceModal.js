@@ -751,6 +751,7 @@ const EvidenceModal = ({
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
       const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
       const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
+      const currentHearingPurpose = documentSubmission?.[0]?.applicationList?.applicationDetails?.initialHearingPurpose || "";
       const caseNumber =
         (caseData?.isLPRCase ? caseData?.lprNumber : caseData?.courtCaseNumber) ||
         caseData?.courtCaseNumber ||
@@ -763,6 +764,7 @@ const EvidenceModal = ({
           name: `ORDER_TYPE_${orderType}`,
         },
         refApplicationId: refApplicationId,
+        ...(currentHearingPurpose && { originalHearingPurpose: currentHearingPurpose }),
         applicationStatus: documentSubmission?.[0]?.applicationList?.applicationType
           ? setApplicationStatus(type, documentSubmission[0].applicationList.applicationType)
           : null,
@@ -1236,7 +1238,7 @@ const EvidenceModal = ({
                     </div>
                   </div>
                 )}
-                <div className="application-info" style={{ display: "flex", flexDirection: "column" }}>
+                <div className="application-info-new" style={{ display: "flex", flexDirection: "column" }}>
                   <div className="info-row">
                     <div className="info-key">
                       <h3>{t("APPLICATION_TYPE")}</h3>
@@ -1291,6 +1293,51 @@ const EvidenceModal = ({
                       <h3>N/A</h3>
                     </div>
                   </div>
+                  {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingDate && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("CURRENT_HEARING_DATE")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>
+                          {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingDate
+                            ?.split("-")
+                            ?.reverse()
+                            ?.join("-")}
+                        </h3>
+                      </div>
+                    </div>
+                  )}
+                  {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.newHearingDates && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("PROPOSED_HEARING_DATE")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>{documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.newHearingDates?.join(", ")}</h3>
+                      </div>
+                    </div>
+                  )}
+                  {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingPurpose && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("PURPOSE_OF_NEXT_HEARING")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>{t(documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingPurpose)}</h3>
+                      </div>
+                    </div>
+                  )}
+                  {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.isAllPartiesAgreed?.code && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("OTHER_PARTIES_CONSENT")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>{t(documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.isAllPartiesAgreed?.code)}</h3>
+                      </div>
+                    </div>
+                  )}
                   {documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling && (
                     <div className="info-row">
                       <div className="info-key">
