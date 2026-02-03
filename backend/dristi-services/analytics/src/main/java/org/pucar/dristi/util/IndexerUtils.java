@@ -78,9 +78,11 @@ public class IndexerUtils {
 
     private final TaskManagementUtil taskManagementUtil;
 
+    private final WorkflowUtil workflowUtil;
+
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, UserService userService, JsonUtil jsonUtil, TaskManagementUtil taskManagementUtil) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, UserService userService, JsonUtil jsonUtil, TaskManagementUtil taskManagementUtil, WorkflowUtil workflowUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.caseUtil = caseUtil;
@@ -97,6 +99,7 @@ public class IndexerUtils {
         this.userService = userService;
         this.jsonUtil = jsonUtil;
         this.taskManagementUtil = taskManagementUtil;
+        this.workflowUtil = workflowUtil;
     }
 
     public static boolean isNullOrEmpty(String str) {
@@ -450,6 +453,25 @@ public class IndexerUtils {
             // Enrich offices from case details based on assignedTo
             if (assignedToList != null && !assignedToList.isEmpty()) {
                 offices = enrichOfficesFromCaseDetailsWithObjectList(caseDetails, assignedToList);
+                
+                // Collect all UUIDs from assignedTo and office members
+                Set<String> allUuids = new HashSet<>();
+                try {
+                     allUuids = collectAllUuidsFromAssignedToAndOfficeMembers(assignedToList, offices);
+                } catch (Exception e) {
+                    log.error("Error while collecting UUIDs from assignedTo and office members", e);
+                }
+                
+                // Call workflow assignee upsert API
+                if (!allUuids.isEmpty()) {
+                    try {
+                        RequestInfo enrichRequestInfo = mapper.readValue(requestInfo.toString(), RequestInfo.class);
+                        workflowUtil.upsertAssignees(enrichRequestInfo, allUuids, id, tenantId);
+                        log.info("Successfully called workflow assignee upsert API for {} UUIDs", allUuids.size());
+                    } catch (Exception e) {
+                        log.error("Error while calling workflow assignee upsert API for UUIDs: {}", allUuids, e);
+                    }
+                }
             } else {
                 log.error("assignedToList is null or empty while enriching offices from case details during workflow driven pending task creation");
             }
@@ -497,6 +519,9 @@ public class IndexerUtils {
                         return false; // If not a map, do not remove
                     });
                     assignedTo = new JSONArray(assignedToList).toString();
+                    
+                    // Also filter offices to remove excluded UUIDs
+                    offices = filterOfficesByExcludedUuids(offices, excludedAssignedUuidsList);
                 }
             }
             if(additonalDetailsJsonNode != null && additonalDetailsJsonNode.has("dueDate")) {
@@ -1088,6 +1113,85 @@ public class IndexerUtils {
         }
 
         return updatedTaskNameAndActionCategory;
+    }
+
+    private Set<String> collectAllUuidsFromAssignedToAndOfficeMembers(List<Object> assignedToList, String officesJson) {
+        Set<String> allUuids = new HashSet<>();
+        
+        // Collect UUIDs from assignedToList
+        if (assignedToList != null && !assignedToList.isEmpty()) {
+            for (Object obj : assignedToList) {
+                if (obj instanceof Map) {
+                    Object uuidObj = ((Map<?, ?>) obj).get("uuid");
+                    if (uuidObj != null) {
+                        allUuids.add(String.valueOf(uuidObj));
+                    }
+                }
+            }
+        }
+        
+        // Collect UUIDs from office members
+        if (officesJson != null && !officesJson.isEmpty() && !officesJson.equals("[]")) {
+            try {
+                List<AdvocateOffice> offices = mapper.readValue(officesJson, new TypeReference<List<AdvocateOffice>>() {});
+                for (AdvocateOffice office : offices) {
+                    // Add advocate UUID
+                    if (office.getAdvocateUserUuid() != null) {
+                        allUuids.add(office.getAdvocateUserUuid());
+                    }
+                    // Add office member UUIDs
+                    if (office.getOfficeMembers() != null && !office.getOfficeMembers().isEmpty()) {
+                        allUuids.addAll(office.getOfficeMembers());
+                    }
+                }
+                log.info("Collected {} unique UUIDs from assignedTo and office members", allUuids.size());
+            } catch (Exception e) {
+                log.error("Error while parsing offices JSON to collect UUIDs", e);
+            }
+        }
+        
+        return allUuids;
+    }
+
+    private String filterOfficesByExcludedUuids(String officesJson, List<String> excludedUuids) {
+        if (officesJson == null || officesJson.isEmpty() || officesJson.equals("[]")) {
+            return "[]";
+        }
+        
+        if (excludedUuids == null || excludedUuids.isEmpty()) {
+            return officesJson;
+        }
+        
+        try {
+            List<AdvocateOffice> offices = mapper.readValue(officesJson, new TypeReference<>() {
+            });
+            List<AdvocateOffice> filteredOffices = new ArrayList<>();
+            
+            for (AdvocateOffice office : offices) {
+                // Check if advocate UUID is excluded
+                if (office.getAdvocateUserUuid() != null && excludedUuids.contains(office.getAdvocateUserUuid())) {
+                    log.info("Excluding office with advocate UUID: {}", office.getAdvocateUserUuid());
+                    continue; // Skip this office entirely if the main advocate is excluded
+                }
+                
+                // Filter out excluded office members
+                if (office.getOfficeMembers() != null && !office.getOfficeMembers().isEmpty()) {
+                    List<String> filteredMembers = office.getOfficeMembers().stream()
+                            .filter(memberUuid -> !excludedUuids.contains(memberUuid))
+                            .collect(java.util.stream.Collectors.toList());
+                    office.setOfficeMembers(filteredMembers);
+                }
+                
+                filteredOffices.add(office);
+            }
+            
+            String result = mapper.writeValueAsString(filteredOffices);
+            log.info("Filtered offices from {} to {} offices after removing excluded UUIDs", offices.size(), filteredOffices.size());
+            return result;
+        } catch (Exception e) {
+            log.error("Error while filtering offices by excluded UUIDs", e);
+            return officesJson; // Return original if filtering fails
+        }
     }
 
 }

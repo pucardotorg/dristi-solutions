@@ -250,6 +250,13 @@ public class Configuration {
 	@Value("${dristi.task-management.search.endpoint}")
 	private String taskManagementSearchEndpoint;
 
+	// Workflow Service config
+	@Value("${egov.workflow.host}")
+	private String workflowHost;
+
+	@Value("${egov.workflow.assignee.upsert.endpoint}")
+	private String workflowAssigneeUpsertEndpoint;
+
 	@PostConstruct
 	public void init() {
 		hearingBusinessServiceList = Arrays.asList(hearingBusinessServices.split(","));
