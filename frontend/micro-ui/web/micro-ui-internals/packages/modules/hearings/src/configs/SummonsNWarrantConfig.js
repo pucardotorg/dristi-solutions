@@ -5,6 +5,10 @@
 // };
 
 const _getPartyType = (orderType, partyType) => {
+  if (orderType === "MISCELLANEOUS_PROCESS") {
+    return partyType === "Accused" || partyType === "Respondent" ? "respondent" : partyType?.toLowerCase();
+  }
+
   if (!["NOTICE", "SUMMONS"]?.includes(orderType)) {
     return "respondent";
   }
@@ -13,6 +17,7 @@ const _getPartyType = (orderType, partyType) => {
 };
 
 export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, partyUniqueId, partyType }) => {
+  debugger;
   return {
     label: `1(${orderType === "NOTICE" ? "Notice" : "Summon"}s)`,
     type: "search",
@@ -30,7 +35,7 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
           // cnrNumber: taskCnrNumber,
           orderId: orderId,
           partyType: _getPartyType(orderType, partyType),
-          partyUniqueId: partyUniqueId,
+          ...(!["police", "other"]?.includes((partyType || "")?.toLowerCase()) && { partyUniqueId: partyUniqueId }),
         },
       },
       masterName: "commonUiConfig",

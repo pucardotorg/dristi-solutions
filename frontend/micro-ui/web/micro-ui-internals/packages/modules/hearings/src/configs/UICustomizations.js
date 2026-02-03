@@ -330,12 +330,33 @@ export const UICustomizations = {
                   };
                   return mapping[status]?.[taskType] || status; // fallback to original
                 }
-                const channelDetails =
-                  taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]] ||
-                  taskDetail?.witnessDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
+                let chanelDeatils = "";
+                if (data?.taskType === "MISCELLANEOUS_PROCESS") {
+                  const type = data?.taskDetails?.miscellaneuosDetails?.addressee;
+                  switch (type) {
+                    case "POLICE":
+                      const policeDetails = data?.taskDetails?.policeDetails;
+                      chanelDeatils = `${policeDetails?.name}, ${policeDetails?.district}`;
+                      break;
+                    case "OTHER":
+                      const othersDetails = data?.taskDetails?.others;
+                      chanelDeatils = `${othersDetails?.name}`;
+                      break;
+                    default:
+                      const address = data?.taskDetails?.respondentDetails?.address || data?.taskDetails?.complainantDetails?.address;
+                      chanelDeatils = typeof data === "object" ? generateAddress({ ...address }) : address;
+                      break;
+                  }
+                } else {
+                  const data =
+                    taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]] ||
+                    taskDetail?.witnessDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
+                  chanelDeatils = typeof data === "object" ? generateAddress({ ...data }) : data;
+                }
+
                 return {
                   deliveryChannel: taskDetail?.deliveryChannels?.channelName,
-                  channelDetails: typeof channelDetails === "object" ? generateAddress({ ...channelDetails }) : channelDetails,
+                  channelDetails: chanelDeatils,
                   status: mapStatus(data?.status, data?.taskType),
                   remarks: taskDetail?.remarks?.remark,
                   statusChangeDate: taskDetail?.deliveryChannels?.statusChangeDate,

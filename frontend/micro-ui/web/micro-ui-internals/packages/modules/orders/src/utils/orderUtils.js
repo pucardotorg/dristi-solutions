@@ -731,6 +731,7 @@ export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, schedule
         age: "",
         gender: data?.age || "",
         uuid: data?.uuid || data?.uniqueId,
+        uniqueId: data?.uuid || data?.uniqueId
       };
     }
 
