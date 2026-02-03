@@ -5,6 +5,7 @@ const HomeHeader = ({ t, userInfo, roles, activeTab, onTabChange }) => {
   const name = userInfo?.name;
   const hasViewDashboardsAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_DASHBOARDS"), [roles]);
   const hasViewAllCasesAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_ALL_CASES"), [roles]);
+  const hasViewTemaplateConfigurationAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_MISCELLANEOUS_TEMPLATE_CONFIGURATION"), [roles])
   const today = new Date();
   const curHr = today.getHours();
 
@@ -41,7 +42,7 @@ const HomeHeader = ({ t, userInfo, roles, activeTab, onTabChange }) => {
             </a>
           )}
           {/* TODO: need to change */}
-          {hasViewAllCasesAccess && (
+          {hasViewTemaplateConfigurationAccess && (
             <div
               className="home-btn"
               style={{

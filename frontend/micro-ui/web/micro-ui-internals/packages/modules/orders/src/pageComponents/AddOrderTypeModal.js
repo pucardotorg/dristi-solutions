@@ -7,6 +7,7 @@ import { _getPartiesOptions, CloseBtn, Heading } from "../utils/orderUtils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
+import { generateUUID } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
   keys.forEach((key) => {
@@ -38,8 +39,6 @@ const AddOrderTypeModal = ({
   bailBondRequired,
   setBailBondRequired,
   policeStationData,
-  respondents,
-  complainants,
   caseDetails,
 }) => {
   const [formdata, setFormData] = useState({});
@@ -81,6 +80,13 @@ const AddOrderTypeModal = ({
         setFormErrors?.current?.[index]?.("amount", { message: t("Amount should be greater that 0") });
       } else if ((!hasAmount || (Number.isFinite(amountNum) && amountNum >= 0)) && hasAmountError) {
         clearFormErrors?.current?.[index]?.("amount");
+      }
+    }
+
+    if (currentOrderType && ["MISCELLANEOUS_PROCESS"]?.includes(currentOrderType)) {
+      if (!isEqual(formData?.processTemplate, formdata?.processTemplate) && (formdata?.selectAddresee || formdata?.selectedPartiesDetails)) {
+        setValue("selectAddresee", null);
+        setValue("selectedPartiesDetails", null);
       }
     }
 
@@ -348,6 +354,10 @@ const AddOrderTypeModal = ({
   const addresseeOptions = useMemo(() => {
     if (orderType?.code === "MISCELLANEOUS_PROCESS") {
       const option = formdata?.processTemplate?.addressee;
+      const data = {
+        uniqueId: generateUUID(),
+        name: formdata?.processTemplate?.addresseeName,
+      };
 
       switch (option) {
         case "POLICE":
@@ -357,13 +367,13 @@ const AddOrderTypeModal = ({
         case "COMPLAINTANT":
           return _getPartiesOptions(caseDetails, "complainant", true);
         case "OTHER":
-          return _getPartiesOptions(caseDetails, "all", true);
+          return [data];
         default:
           return [];
       }
     }
     return [];
-  }, [caseDetails, formdata?.processTemplate?.addressee, orderType?.code, policeStationData]);
+  }, [caseDetails, formdata, orderType?.code, policeStationData]);
 
   return (
     <React.Fragment>
@@ -431,7 +441,7 @@ const AddOrderTypeModal = ({
                           ...field,
                           populators: {
                             ...field?.populators,
-                            hideInForm: formdata?.processTemplate?.addressee === "POLICE" ? false : true,
+                            hideInForm: ["POLICE", "OTHER"]?.includes(formdata?.processTemplate?.addressee) ? false : true,
                             options: _getPartiesOptions(caseDetails) || [],
                           },
                         };

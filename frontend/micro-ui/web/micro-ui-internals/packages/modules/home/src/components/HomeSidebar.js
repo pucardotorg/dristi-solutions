@@ -24,9 +24,14 @@ const HomeSidebar = ({
   const hasViewSignOrdersAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_ORDERS"), [assignedRoles]);
   const hasViewSignProcessAccess = useMemo(
     () =>
-      ["VIEW_PROCESS_SUMMONS", "VIEW_PROCESS_WARRANT", "VIEW_PROCESS_NOTICE", "VIEW_PROCESS_PROCLAMATION", "VIEW_PROCESS_ATTACHMENT"].some((role) =>
-        assignedRoles?.includes(role)
-      ),
+      [
+        "VIEW_PROCESS_SUMMONS",
+        "VIEW_PROCESS_WARRANT",
+        "VIEW_PROCESS_NOTICE",
+        "VIEW_PROCESS_PROCLAMATION",
+        "VIEW_PROCESS_ATTACHMENT",
+        "VIEW_PROCESS_MISCELLANEOUS",
+      ].some((role) => assignedRoles?.includes(role)),
     [assignedRoles]
   );
   const hasViewSignBailBondAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_BAIL_BOND"), [assignedRoles]);

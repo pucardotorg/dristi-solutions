@@ -789,7 +789,7 @@ export const SummonsTabsConfig = {
         },
         requestBody: {
           criteria: {
-            completeStatus: ["ATTACHMENT_SENT", "PROCLAMATION_SENT", "SUMMON_SENT", "WARRANT_SENT", "NOTICE_SENT"],
+            completeStatus: ["ATTACHMENT_SENT", "PROCLAMATION_SENT", "SUMMON_SENT", "WARRANT_SENT", "NOTICE_SENT", "PROCESS_SENT"],
             isPendingCollection: false,
           },
         },

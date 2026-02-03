@@ -164,6 +164,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const hasViewSummonsAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_SUMMONS"), [roles]);
   const hasViewWarrantAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_WARRANT"), [roles]);
   const hasViewNoticeAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_NOTICE"), [roles]);
+  const hasViewMiscellaneousAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_MISCELLANEOUS"), [roles]);
 
   const hasSignAttachmentAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_ATTACHMENT"), [roles]);
   const hasSignProclamationAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_PROCLAMATION"), [roles]);
@@ -2116,9 +2117,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 (item.code === "SUMMONS" && ${hasViewSummonsAccess}) ||
                 (item.code === "WARRANT" && ${hasViewWarrantAccess}) ||
                 (item.code === "NOTICE" && ${hasViewNoticeAccess}) ||
-                (item.code === "MISCELLANEOUS") 
+                (item.code === "MISCELLANEOUS" && ${hasViewMiscellaneousAccess}) 
               );
-            }`, // TODO : Add MISCELLANEOUS view access  && ${hasViewMiscellaneoudAccess}
+            }`,
             },
           },
         };

@@ -290,7 +290,14 @@ const GenerateOrdersV2 = () => {
   const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }]);
   const sortedPoliceStations = useMemo(() => {
     const stations = policeStationData?.case?.PoliceStation || [];
-    return [...stations].sort((a, b) => {
+    const updatedStationData = stations?.map((data) => {
+      const { code, ...rest } = data;
+      return {
+        ...rest,
+        uniqueId: code,
+      };
+    });
+    return [...updatedStationData].sort((a, b) => {
       const nameA = (a?.name || "").toUpperCase();
       const nameB = (b?.name || "").toUpperCase();
       if (nameA < nameB) return -1;
@@ -4927,8 +4934,6 @@ const GenerateOrdersV2 = () => {
           bailBondRequired={bailBondRequired}
           setBailBondRequired={setBailBondRequired}
           policeStationData={sortedPoliceStations}
-          complainants={complainants}
-          respondents={respondents}
           caseDetails={caseDetails}
         />
       )}

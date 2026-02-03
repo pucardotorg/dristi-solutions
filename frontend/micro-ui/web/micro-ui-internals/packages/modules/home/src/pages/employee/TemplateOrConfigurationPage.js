@@ -36,35 +36,38 @@ const TemplateOrConfigurationPage = () => {
   const [pdfData, setPdfFile] = useState(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
 
-  const getTemplatePdfHelper = useCallback(async (rowData) => {
-    try {
-      const { auditDetails, id, isActive, ...rest } = rowData;
-      const response = await axiosInstance.post(
-        Urls.searchTemplatePdf,
-        {
-          RequestInfo: {
-            authToken: accessToken,
-            userInfo: userInfo,
-            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Dristi",
+  const getTemplatePdfHelper = useCallback(
+    async (rowData) => {
+      try {
+        const { auditDetails, id, isActive, ...rest } = rowData;
+        const response = await axiosInstance.post(
+          Urls.searchTemplatePdf,
+          {
+            RequestInfo: {
+              authToken: accessToken,
+              userInfo: userInfo,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Dristi",
+            },
+            templateConfiguration: { ...rest },
           },
-          templateConfiguration: { ...rest },
-        },
-        {
-          params: { tenantId, qrCode: false, courtId },
-          responseType: "blob",
-        }
-      );
-  
-      const contentDisposition = response.headers["content-disposition"];
-      const filename = contentDisposition ? contentDisposition.split("filename=")[1]?.replace(/['"]/g, "") : "template-configuration.pdf";
-  
-      return new File([response?.data], filename, { type: "application/pdf" });
-    } catch (error) {
-      console.error("Error while fetching pdf:", error);
-      throw error;
-    }
-  }, [accessToken, courtId, tenantId, userInfo]);
+          {
+            params: { tenantId, qrCode: false, courtId },
+            responseType: "blob",
+          }
+        );
+
+        const contentDisposition = response.headers["content-disposition"];
+        const filename = contentDisposition ? contentDisposition.split("filename=")[1]?.replace(/['"]/g, "") : "template-configuration.pdf";
+
+        return new File([response?.data], filename, { type: "application/pdf" });
+      } catch (error) {
+        console.error("Error while fetching pdf:", error);
+        throw error;
+      }
+    },
+    [accessToken, courtId, tenantId, userInfo]
+  );
 
   const handleActionClick = useCallback(
     async (rowData, actionType) => {
@@ -94,23 +97,26 @@ const TemplateOrConfigurationPage = () => {
     [t, tenantId]
   );
 
-  const handleTemplateTitleClick = useCallback(async (rowData) => {
-    try {
-      setIsLoading(true);
-      setIsViewOnly(true);
-      const file = await getTemplatePdfHelper(rowData);
-      if (file) {
-        setPdfFile(file);
-        setStepper(3);
-      } else {
-        setShowErrorToast({ label: t("ERROR_OPENING_TEMPLATE"), error: true });
+  const handleTemplateTitleClick = useCallback(
+    async (rowData) => {
+      try {
+        setIsLoading(true);
+        setIsViewOnly(true);
+        const file = await getTemplatePdfHelper(rowData);
+        if (file) {
+          setPdfFile(file);
+          setStepper(3);
+        } else {
+          setShowErrorToast({ label: t("ERROR_OPENING_TEMPLATE"), error: true });
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [getTemplatePdfHelper, t]);
+    },
+    [getTemplatePdfHelper, t]
+  );
 
   const modifiedConfig = useMemo(() => {
     return {
@@ -138,7 +144,7 @@ const TemplateOrConfigurationPage = () => {
         },
       },
     };
-  }, [handleActionClick, handleTemplateTitleClick]);
+  }, []);
 
   const modifiedFormConfig = useMemo(() => {
     const selectedAddresseeCode = formdata?.selectAddressee?.code;
@@ -353,7 +359,10 @@ const TemplateOrConfigurationPage = () => {
           }}
           saveLabel={"NEXT"}
           cancelLabel={"GO_BACK"}
-          handleSubmit={() => setStepper(0)}
+          handleSubmit={() => {
+            setStepper(0);
+            setRefreshKey((prev) => prev + 1);
+          }}
           isPdfLoading={isLoading}
           previewPdf={pdfData}
           isShowPdf={true}

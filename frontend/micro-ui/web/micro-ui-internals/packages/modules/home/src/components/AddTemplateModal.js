@@ -44,6 +44,7 @@ const AddTemplateModal = ({
         actionCancelLabel={t(cancelLabel)}
         actionCancelOnSubmit={handleCancel}
         actionSaveOnSubmit={handleSubmit}
+        popupModuleMianStyles={{ overflowY: !isShowPdf ? "scroll" : "hidden" }}
       >
         <div className="generate-orders">
           <div className="view-order order-type-form-modal">
@@ -61,12 +62,7 @@ const AddTemplateModal = ({
                     <span>{t("LOADING")}</span>
                   </div>
                 ) : (
-                  <DocViewerWrapper
-                    docWidth={"100%"}
-                    selectedDocs={[previewPdf]}
-                    showDownloadOption={false}
-                    docHeight={"100%"}
-                  />
+                  <DocViewerWrapper docWidth={"100%"} selectedDocs={[previewPdf]} showDownloadOption={false} docHeight={"100%"} />
                 )}
               </div>
             ) : (
