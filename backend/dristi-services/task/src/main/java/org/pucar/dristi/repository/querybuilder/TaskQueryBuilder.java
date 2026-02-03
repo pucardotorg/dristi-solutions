@@ -104,17 +104,17 @@ public class TaskQueryBuilder {
             String partyConditionByUuid = getPartyConditionByUuid(partyType, partyUuid);
 
             String condition = """
-                        EXISTS (
-                          SELECT 1
-                          FROM jsonb_array_elements(
-                              CASE\s
-                                WHEN jsonb_typeof(task.assignedto) = 'array' THEN task.assignedto\s
-                                ELSE '[]'::jsonb\s
-                              END
-                          ) elem
-                          WHERE elem->>'uuid' = ?
-                        )
-                   \s""";
+                         EXISTS (
+                           SELECT 1
+                           FROM jsonb_array_elements(
+                               CASE\s
+                                 WHEN jsonb_typeof(task.assignedto) = 'array' THEN task.assignedto\s
+                                 ELSE '[]'::jsonb\s
+                               END
+                           ) elem
+                           WHERE elem->>'uuid' = ?
+                         )
+                    \s""";
 
             StringBuilder query = new StringBuilder(BASE_CASE_QUERY);
             query.append(FROM_TASK_TABLE);
@@ -125,8 +125,8 @@ public class TaskQueryBuilder {
             firstCriteria = addTaskCriteria(status, query, firstCriteria, "task.status = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(orderId != null ? orderId.toString() : null, query, firstCriteria, "task.orderid = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(cnrNumber, query, firstCriteria, "task.cnrnumber = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addTaskCriteria(referenceId, query, firstCriteria, "task.referenceid = ?", preparedStmtList,preparedStmtArgList);
-            firstCriteria = addTaskCriteria(state, query, firstCriteria, "task.state = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addTaskCriteria(referenceId, query, firstCriteria, "task.referenceid = ?", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(state, query, firstCriteria, "task.state = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(taskType, query, firstCriteria, "task.tasktype = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(courtId, query, firstCriteria, "task.courtId = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(filingNumber, query, firstCriteria, "task.filingnumber = ?", preparedStmtList, preparedStmtArgList);
@@ -150,12 +150,6 @@ public class TaskQueryBuilder {
                 partyCondition = "task.taskdetails->>'respondentDetails' IS NOT NULL AND task.taskdetails->'respondentDetails'->>'name' = ?";
             } else if ("witness".equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'name' = ?";
-            } else if ("complainant".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->>'complainantDetails' IS NOT NULL AND task.taskdetails->'complainantDetails'->>'name' = ?";
-            } else if ("others".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->>'others' IS NOT NULL AND task.taskdetails->'others'->>'name' = ?";
-            } else if ("police".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->>'policeDetails' IS NOT NULL AND task.taskdetails->'policeDetails'->>'name' = ?";
             } else {
                 log.warn("Unrecognized partyType value: {}. while filtering by party name Filter will be ignored.", partyType);
             }
@@ -171,12 +165,12 @@ public class TaskQueryBuilder {
                 partyCondition = "task.taskdetails->>'respondentDetails' IS NOT NULL AND task.taskdetails->'respondentDetails'->>'uniqueId' = ?";
             } else if ("witness".equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'uniqueId' = ?";
-            }  else if ("complainant".equalsIgnoreCase(partyType)) {
+            } else if ("complainant".equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'complainantDetails' IS NOT NULL AND task.taskdetails->'complainantDetails'->>'uniqueId' = ?";
             } else if ("others".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->>'others' IS NOT NULL AND task.taskdetails->'others'->>'uniqueId' = ?";
+                partyCondition = "task.taskdetails->'others' IS NOT NULL AND task.taskdetails->'others' <> '{}'::jsonb";
             } else if ("police".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->>'policeDetails' IS NOT NULL AND task.taskdetails->'policeDetails'->>'code' = ?";
+                partyCondition = "task.taskdetails->'policeDetails' IS NOT NULL AND task.taskdetails->'policeDetails' <> '{}'::jsonb";
             } else {
                 log.warn("Unrecognized partyType value: {}. while filtering by party uniqueId Filter will be ignored.", partyType);
             }

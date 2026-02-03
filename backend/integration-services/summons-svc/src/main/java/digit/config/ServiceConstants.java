@@ -78,6 +78,7 @@ public class ServiceConstants {
     public static final String SEND_TASK_DOCUMENT = "SEND_TASK_DOCUMENT";
     public static final String SIGNED_TASK_DOCUMENT = "SIGNED_TASK_DOCUMENT";
     public static final String CREATE_WITH_OUT_PAYMENT = "CREATE_WITH_OUT_PAYMENT";
+    public static final String CREATE = "CREATE";
 
     public static final String COORDINATE_NOT_FOUND = "COORDINATE_NOT_FOUND";
 

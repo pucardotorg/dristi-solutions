@@ -66,6 +66,15 @@ public class SummonsConsumer {
                     log.error("Error while generating summons document: {}", taskRequest.getTask(), e);
                 }
             }
+
+            if (taskRequest.getTask().getWorkflow() !=null && taskRequest.getTask().getWorkflow().getAction().equalsIgnoreCase(CREATE) && ISSUE_PROCESS.equalsIgnoreCase(taskRequest.getTask().getStatus())) {
+                try {
+                    log.info("Received message for uploading document for miscellaneous process{}", taskRequest.getTask());
+                    summonsService.generateMiscellaneousDocumentAndUpdateTask(taskRequest,false);
+                } catch (Exception e) {
+                    log.error("Error while generating miscellaneous process document : {}", taskRequest.getTask(), e);
+                }
+            }
         } catch (final Exception e) {
             log.error("Error while listening to value: {}: ", record, e);
         }

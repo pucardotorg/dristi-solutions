@@ -118,7 +118,7 @@ public class SummonsService {
         return taskUtil.callUploadDocumentTask(taskRequest);
     }
 
-    private TaskResponse generateMiscellaneousDocumentAndUpdateTask(TaskRequest taskRequest, boolean qrCode) {
+    public TaskResponse generateMiscellaneousDocumentAndUpdateTask(TaskRequest taskRequest, boolean qrCode) {
         ByteArrayResource byteArrayResource = pdfServiceUtil.generatePdfFromEgovPdfService(taskRequest,
                 taskRequest.getTask().getTenantId(), taskRequest.getTask().getCourtId());
         String fileStoreId = fileStorageUtil.saveDocumentToFileStore(byteArrayResource);
@@ -147,10 +147,6 @@ public class SummonsService {
             String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true, noticeType, null);
 
             generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, true);
-        }
-
-        if (MISCELLANEOUS_PROCESS.equalsIgnoreCase(taskType) && ISSUE_PROCESS.equalsIgnoreCase(task.getStatus())) {
-            generateMiscellaneousDocumentAndUpdateTask(taskRequest,false);
         }
 
         SummonsDelivery summonsDelivery = summonsDeliveryEnrichment.generateAndEnrichSummonsDelivery(taskRequest.getTask(), taskRequest.getRequestInfo());

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.StateSlaMap;
@@ -101,63 +102,11 @@ public class PublishMiscellaneousProcess implements OrderUpdateStrategy {
                 TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail, courtCase, channel);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
             }
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new CustomException("ERROR", "error while creating task for miscellaneous order");
         }
 
         return null;
-    }
-
-    private String getPartyType(Order order) {
-        Object additionalDetails = order.getAdditionalDetails();
-        JsonNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
-
-        JsonNode partyTypeNode = additionalDetailsNode
-                .path("formdata")
-                .path("warrantFor")
-                .path("party")
-                .path("data")
-                .path("partyType");
-
-        String partyType = partyTypeNode.textValue();
-        return partyType == null ? null : partyType.substring(0, 1).toUpperCase() + partyType.substring(1).toLowerCase();
-    }
-
-    private void callNotificationService(OrderRequest orderRequest, String messageCode, SMSTemplateData smsTemplateData, List<User> users) {
-        try {
-            List<String> uuids = users.stream()
-                    .map(User::getUuid)
-                    .toList();
-
-            List<User> userList = userUtil.getUserListFromUserUuid(uuids);
-            List<String> phoneNumbers = userList.stream()
-                    .map(User::getMobileNumber)
-                    .toList();
-
-            for (String number : phoneNumbers) {
-                smsNotificationService.sendNotification(orderRequest.getRequestInfo(), smsTemplateData, messageCode, number);
-            }
-        }
-        catch (Exception e) {
-            log.error("Error occurred while sending notification: {}", e.toString());
-        }
-    }
-
-    private boolean isWarrantForAccusedWitness(Order order) {
-        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
-        try {
-            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
-            JsonNode taskDetail = taskDetailsArray.get(0);
-            if(taskDetail.get("respondentDetails") != null
-                    && taskDetail.get("respondentDetails").get("ownerType") != null
-                    && taskDetail.get("respondentDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED)){
-                return true;
-            }
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        return false;
     }
 
     @Override
