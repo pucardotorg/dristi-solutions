@@ -1238,7 +1238,7 @@ const EvidenceModal = ({
                     </div>
                   </div>
                 )}
-                <div className="application-info" style={{ display: "flex", flexDirection: "column" }}>
+                <div className="application-info-new" style={{ display: "flex", flexDirection: "column" }}>
                   <div className="info-row">
                     <div className="info-key">
                       <h3>{t("APPLICATION_TYPE")}</h3>
