@@ -4,7 +4,7 @@ import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/servic
 function useSearchMiscellaneousTemplate(data, params, keys, enabled) {
   const { isLoading, data: templateResponse, isFetching, refetch, error } = useQuery(
     `SEARCH_MISCELLANEOUS_TEMPLATE_${keys}`,
-    () => HomeService.searchTemaplate(data, params),
+    () => HomeService.searchTemplate(data, params),
     {
       cacheTime: 0,
       enabled: Boolean(enabled),

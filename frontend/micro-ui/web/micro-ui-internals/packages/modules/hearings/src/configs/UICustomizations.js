@@ -332,14 +332,14 @@ export const UICustomizations = {
                 }
                 let chanelDeatils = "";
                 if (data?.taskType === "MISCELLANEOUS_PROCESS") {
-                  const type = data?.taskDetails?.miscellaneuosDetails?.addressee;
+                  const type = taskDetail?.miscellaneuosDetails?.addressee;
                   switch (type) {
                     case "POLICE":
-                      const policeDetails = data?.taskDetails?.policeDetails;
+                      const policeDetails = taskDetail?.policeDetails;
                       chanelDeatils = `${policeDetails?.name}, ${policeDetails?.district}`;
                       break;
                     case "OTHER":
-                      const othersDetails = data?.taskDetails?.others;
+                      const othersDetails = taskDetail?.others;
                       chanelDeatils = `${othersDetails?.name}`;
                       break;
                     default:

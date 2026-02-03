@@ -2190,6 +2190,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewSummonsAccess,
     hasViewWarrantAccess,
     hasViewNoticeAccess,
+    hasViewMiscellaneousAccess,
     reload, // Added to ensure config re-reads from sessionStorage after "Send for Sign"
   ]);
 

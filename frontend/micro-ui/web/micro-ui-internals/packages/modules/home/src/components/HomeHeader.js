@@ -41,7 +41,6 @@ const HomeHeader = ({ t, userInfo, roles, activeTab, onTabChange }) => {
               <OpenInNewTabIcon />
             </a>
           )}
-          {/* TODO: need to change */}
           {hasViewTemaplateConfigurationAccess && (
             <div
               className="home-btn"

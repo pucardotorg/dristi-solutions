@@ -16,13 +16,13 @@ const EditDeleteModal = ({ rowData, colData, value = "", isEdit = true, isDelete
             color: "#007E7E",
             borderRadius: "4px",
           }}
-          onClick={() => colData?.clickFunc(rowData, "EDIT")}
+          onClick={() => colData?.clickFunc && colData.clickFunc(rowData, "EDIT")}
         >
           {t("EDIT")}
         </div>
       )}
       {isDelete && (
-        <div style={{ cursor: "pointer", marginTop: "4px" }} onClick={() => colData?.clickFunc(rowData, "DELETE")}>
+        <div style={{ cursor: "pointer", marginTop: "4px" }} onClick={() => colData?.clickFunc && colData.clickFunc(rowData, "DELETE")}>
           <svg width="16" height="18" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
               fill-rule="evenodd"

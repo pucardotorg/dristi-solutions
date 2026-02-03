@@ -27,7 +27,7 @@ export const Urls = {
   updateTemplate: "/template-configuration/v1/update",
   createTemplate: "/template-configuration/v1/create",
   searchTemplate: "/template-configuration/v1/search",
-  searchTemplatePdf: " /egov-pdf/template-configuration"
+  searchTemplatePdf: "/egov-pdf/template-configuration",
 };
 export const HomeService = {
   InboxSearch: (data, params) =>
@@ -186,7 +186,7 @@ export const HomeService = {
       data,
       params,
     }),
-  createTeamplate: (data, params) =>
+  createTemplate: (data, params) =>
     Request({
       url: Urls.createTemplate,
       useCache: false,
@@ -202,7 +202,7 @@ export const HomeService = {
       data,
       params,
     }),
-  searchTemaplate: (data, params) =>
+  searchTemplate: (data, params) =>
     Request({
       url: Urls.searchTemplate,
       useCache: false,

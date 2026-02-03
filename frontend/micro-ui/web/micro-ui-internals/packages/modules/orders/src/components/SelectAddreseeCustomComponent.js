@@ -9,7 +9,7 @@ const SelectAddreseeCustomComponent = ({ t, config, formData = {}, onSelect, err
         {
           name: "select address",
           type: "dropdown",
-          disbale: true,
+          disable: true,
         },
       ],
     [config?.populators]
@@ -89,8 +89,8 @@ const SelectAddreseeCustomComponent = ({ t, config, formData = {}, onSelect, err
           <span style={{ color: "#007E7E" }}>{t("ADD_ADDRESSEE")}</span>
         </div>
       )}
-      {errors[config?.key] && (
-        <CardLabelError style={inputs?.errorStyle}>{t(errors[config?.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>
+      {errors?.[config?.key] && (
+        <CardLabelError style={inputs?.errorStyle}>{t(errors?.[config?.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>
       )}{" "}
     </React.Fragment>
   );

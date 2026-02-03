@@ -60,7 +60,11 @@ function groupOrdersByParty(filteredOrders) {
   });
 
   policeOtherData?.forEach((order) => {
-    const uniqueId = (order?.orderDetails?.processTemplate?.addressee|| "")?.toLowerCase();
+    const uniqueId = (
+      order?.additionalDetails?.formdata?.processTemplate?.addressee ||
+      order?.orderDetails?.processTemplate?.addressee ||
+      ""
+    )?.toLowerCase();
     const addresseeType = uniqueId?.charAt(0).toUpperCase() + uniqueId?.slice(1);
     if (!accusedWiseOrdersMap?.has(uniqueId)) {
       accusedWiseOrdersMap?.set(uniqueId, { partyType: addresseeType, partyName: addresseeType, uniqueId, ordersList: [], order });
@@ -73,7 +77,7 @@ function groupOrdersByParty(filteredOrders) {
     let parties = [];
     if (order?.orderType === "MISCELLANEOUS_PROCESS") {
       const addressee = order?.additionalDetails?.formdata?.processTemplate?.addressee;
-    
+
       if (["COMPLAINANT", "RESPONDENT"].includes(addressee) || addressee?.startsWith("COM") || addressee?.startsWith("RES")) {
         parties =
           order?.additionalDetails?.formdata?.selectAddresee?.map((p) => ({
@@ -108,8 +112,8 @@ function groupOrdersByParty(filteredOrders) {
         partyType = "Witness";
       } else if (rawType === "complainant") {
         partyType = "Complainant";
-      } else {
-        partyType = rawType.charAt(0).toUpperCase() + rawType.slice(1);
+      } else if (rawType) {
+        partyType = rawType?.charAt(0).toUpperCase() + rawType.slice(1);
       }
 
       if (!accusedWiseOrdersMap?.has(uniqueId)) {
@@ -121,7 +125,7 @@ function groupOrdersByParty(filteredOrders) {
   });
   const accusedWiseOrdersList = Array.from(accusedWiseOrdersMap.values());
 
-  const priority = { Accused: 1, Witness: 2, Complainant: 3, POLICE: 4, OTHER: 5 };
+  const priority = { Accused: 1, Witness: 2, Complainant: 3, Police: 4, Other: 5 };
 
   accusedWiseOrdersList.sort((a, b) => {
     const scoreA = priority[a.partyType] || 99;
@@ -241,7 +245,6 @@ const NoticeProcessModal = ({
       });
 
       const updatedOrdersList = partyGroup?.ordersList?.map((order) => {
-        
         const type = order?.orderType === "MISCELLANEOUS_PROCESS" ? order?.orderDetails?.processTemplate?.processTitle : order?.orderType;
         const round = typeCounters[type]--;
         const titleCaseType = type

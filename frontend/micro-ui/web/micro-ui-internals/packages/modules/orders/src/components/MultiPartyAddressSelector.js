@@ -8,13 +8,11 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
 
   const inputs = useMemo(
     () =>
-      config?.populators || [
-        {
-          name: "select address",
-          errorStyle: {},
-          disable: true,
-        },
-      ],
+      config?.populators || {
+        name: "select address",
+        errorStyle: {},
+        disable: true,
+      },
     [config?.populators]
   );
 
@@ -45,7 +43,7 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
     const updatedData = selectedRows?.filter((_, i) => i !== index);
     onSelect?.(config?.key, updatedData);
   };
-  
+
   return (
     <div className="multi-party-address-wrapper">
       {selectedRows?.map((row, index) => {
@@ -115,8 +113,8 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
         <span style={{ color: "#007E7E" }}>{t("ADD_PARTIES")}</span>
       </div>
 
-      {errors[config?.key] && (
-        <CardLabelError style={inputs?.errorStyle}>{t(errors[config?.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>
+      {errors?.[config?.key] && (
+        <CardLabelError style={inputs?.errorStyle}>{t(errors?.[config?.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>
       )}
     </div>
   );

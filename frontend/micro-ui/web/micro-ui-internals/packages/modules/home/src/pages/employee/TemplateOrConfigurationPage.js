@@ -200,7 +200,7 @@ const TemplateOrConfigurationPage = () => {
 
       let res = null;
       if (!rowData) {
-        res = await HomeService.createTeamplate(payload, { tenantId });
+        res = await HomeService.createTemplate(payload, { tenantId });
       } else {
         res = await HomeService.updateTemplate(payload, { tenantId });
       }
