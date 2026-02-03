@@ -86,7 +86,7 @@ public class PdfServiceUtil {
             miscellaneousPdf.setCoverLetterText(taskDetails.getMiscellaneuosDetails().getCoverLetterText());
             miscellaneousPdf.setCaseNumber(taskDetails.getMiscellaneuosDetails().getCaseNumber());
             miscellaneousPdf.setIsCoverLetterRequired(taskDetails.getMiscellaneuosDetails().getIsCoverLetterRequired());
-            miscellaneousPdf.setNextHearingDate(taskDetails.getMiscellaneuosDetails().getCourtId());
+            miscellaneousPdf.setNextHearingDate(taskDetails.getMiscellaneuosDetails().getNextHearingDate());
             miscellaneousPdf.setPartyDetails(taskDetails.getPartyDetails());
 
             MiscellaneousPdfRequest miscellaneousPdfRequest = MiscellaneousPdfRequest.builder()

@@ -49,6 +49,6 @@ public class MiscellaneousPdf  {
     private String caseNumber;
 
     @JsonProperty("nextHearingDate")
-    private String nextHearingDate;
+    private Long nextHearingDate;
 
 }
