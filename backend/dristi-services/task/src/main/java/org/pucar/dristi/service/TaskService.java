@@ -112,7 +112,7 @@ public class TaskService {
                 updateCase(body);
             }
             if(MISCELLANEOUS_PROCESS.equalsIgnoreCase(body.getTask().getTaskType())){
-                producer.push(config.getTaskIssueSummonTopic(),body);
+                summonUtil.sendSummons(body);
             }
 
             producer.push(config.getTaskCreateTopic(), body);
