@@ -102,6 +102,7 @@ public class TaskQueryBuilder {
             String partyUuid = criteria.getPartyUniqueId();
             String partyCondition = getPartyCondition(partyType, partyName);
             String partyConditionByUuid = getPartyConditionByUuid(partyType, partyUuid);
+            String partyConditionByUuidNoArg = getPartyConditionByUuidNoArg(partyType);
 
             String condition = """
                          EXISTS (
@@ -133,7 +134,8 @@ public class TaskQueryBuilder {
             firstCriteria = addTaskCriteria(uuid, query, firstCriteria, condition, preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(taskNumber, query, firstCriteria, "task.tasknumber = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(partyCondition != null ? partyName : null, query, firstCriteria, partyCondition, preparedStmtList, preparedStmtArgList);
-            addTaskCriteria(partyConditionByUuid != null ? partyUuid : null, query, firstCriteria, partyConditionByUuid, preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(partyConditionByUuid != null ? partyUuid : null, query, firstCriteria, partyConditionByUuid, preparedStmtList, preparedStmtArgList);
+            addTaskCriteriaWithoutArg(partyConditionByUuidNoArg != null ? partyUuid : null, query, firstCriteria, partyConditionByUuidNoArg);
 
             return query.toString();
         } catch (Exception e) {
@@ -167,12 +169,19 @@ public class TaskQueryBuilder {
                 partyCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'uniqueId' = ?";
             } else if ("complainant".equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'complainantDetails' IS NOT NULL AND task.taskdetails->'complainantDetails'->>'uniqueId' = ?";
-            } else if ("others".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->'others' IS NOT NULL OR task.taskdetails->'others' <> '{}'::jsonb";
+            }
+        }
+        return partyCondition;
+    }
+
+    private String getPartyConditionByUuidNoArg(String partyType) {
+        String partyCondition = null;
+
+        if (partyType != null && !partyType.trim().isEmpty()) {
+             if ("others".equalsIgnoreCase(partyType)) {
+                partyCondition = "task.taskdetails->'others' IS NOT NULL AND task.taskdetails->'others' <> '{}'::jsonb";
             } else if ("police".equalsIgnoreCase(partyType)) {
-                partyCondition = "task.taskdetails->'policeDetails' IS NOT NULL OR task.taskdetails->'policeDetails' <> '{}'::jsonb";
-            } else {
-                log.warn("Unrecognized partyType value: {}. while filtering by party uniqueId Filter will be ignored.", partyType);
+                partyCondition = "task.taskdetails->'policeDetails' IS NOT NULL AND task.taskdetails->'policeDetails' <> '{}'::jsonb";
             }
         }
         return partyCondition;
@@ -195,6 +204,15 @@ public class TaskQueryBuilder {
             query.append(str);
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(Types.VARCHAR);
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    private boolean addTaskCriteriaWithoutArg(String criteria, StringBuilder query, boolean firstCriteria, String str) {
+        if (criteria != null && !criteria.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(str);
             firstCriteria = false;
         }
         return firstCriteria;
