@@ -1,4 +1,16 @@
 import axiosInstance from "./axiosInstance";
+import { UICustomizations } from "../configs/UICustomizations";
+
+/* To register UICustomizations for InboxSearchComposer preProcess functions */
+const setupLibraries = (Library, service, method) => {
+  window.Digit = window.Digit || {};
+  window.Digit[Library] = window.Digit[Library] || {};
+  window.Digit[Library][service] = method;
+};
+
+export const updateCustomConfigs = () => {
+  setupLibraries("Customizations", "commonUiConfig", { ...window?.Digit?.Customizations?.commonUiConfig, ...UICustomizations });
+};
 axiosInstance.interceptors.response.use(
   (res) => res,
   (err) => {

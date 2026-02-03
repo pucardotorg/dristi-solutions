@@ -12,6 +12,7 @@ import { useState } from "react";
 import ErrorBoundary from "./components/ErrorBoundaries";
 import getStore from "./redux/store";
 import { useGetAccessToken } from "./hooks/useGetAccessToken";
+import { updateCustomConfigs } from "./Utils";
 
 // Initialize breadcrumb parameters with empty values
 const initialBreadCrumbParamsData = { caseId: "", filingNumber: "" };
@@ -226,4 +227,7 @@ export const initCoreComponents = () => {
   Object.entries(componentsToRegister).forEach(([key, value]) => {
     Digit.ComponentRegistryService.setComponent(key, value);
   });
+
+  // Register UICustomizations for InboxSearchComposer preProcess functions
+  updateCustomConfigs();
 };
