@@ -6234,6 +6234,26 @@ export const configMiscellaneousProcess = [
   {
     body: [
       {
+        type: "date",
+        label: "Date for Hearing",
+        key: "dateOfHearing",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
+        labelChildren: "OutlinedInfoIcon",
+        isMandatory: true,
+        disable: true,
+        populators: {
+          name: "dateOfHearing",
+          validation: {
+            max: {
+              patternType: "date",
+              masterName: "commonUiConfig",
+              moduleName: "maxDateValidation",
+            },
+          },
+        },
+      },
+      {
         label: "SELECT_MISCELLANEOUS_TEMPLATE",
         isMandatory: true,
         key: "processTemplate",

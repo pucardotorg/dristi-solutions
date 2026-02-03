@@ -263,7 +263,7 @@ export const getParties = (type, orderSchema, allParties) => {
         };
       });
     } else {
-      updatedPartiesdata = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
+      updatedPartiesdata = orderSchema?.orderDetails?.selectAddresee?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
     }
 
     return updatedPartiesdata;
@@ -638,7 +638,6 @@ export const _getPartiesOptions = (caseDetails, type = "all", isFlat = false) =>
         uuid: uuid,
         partyIndex: `${partyRole}_${index}`,
         uniqueId: item?.uniqueId,
-        address: formattedAddressOptions?.[0],
         age: item?.data?.respondentAge || item?.data?.complainantAge,
         partyUniqueId: uuid || item?.uniqueId,
       },
@@ -715,9 +714,8 @@ export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, schedule
     } else if (processTemplateAddressee === "RESPONDENT") {
       respondentDetails = {
         name: data?.name,
-        address: data?.address,
-        phone: data?.phone_numbers?.[0],
-        email: data?.email?.[0],
+        phone: data?.phone_numbers?.[0] || "",
+        email: data?.email?.[0] || "",
         age: "",
         gender: data?.age || "",
         uniqueId: data?.uniqueId,
@@ -725,9 +723,8 @@ export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, schedule
     } else {
       complainantDetails = {
         name: data?.name,
-        address: data?.address,
-        phone: data?.phone_numbers?.[0],
-        email: data?.email?.[0],
+        phone: data?.phone_numbers?.[0] || "",
+        email: data?.email?.[0] || "",
         age: "",
         gender: data?.age || "",
         uuid: data?.uuid || data?.uniqueId,

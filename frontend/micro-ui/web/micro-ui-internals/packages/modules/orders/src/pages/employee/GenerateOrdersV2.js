@@ -2356,7 +2356,12 @@ const GenerateOrdersV2 = () => {
           setValueRef?.current?.[index]?.("noticeOrder", updatedFormdata.noticeOrder);
         }
       }
-      if (currentOrderType === "WARRANT" || currentOrderType === "PROCLAMATION" || currentOrderType === "ATTACHMENT") {
+      if (
+        currentOrderType === "WARRANT" ||
+        currentOrderType === "PROCLAMATION" ||
+        currentOrderType === "ATTACHMENT" ||
+        currentOrderType === "MISCELLANEOUS_PROCESS"
+      ) {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -2931,10 +2936,11 @@ const GenerateOrdersV2 = () => {
         };
         break;
       case "MISCELLANEOUS_PROCESS":
+        const hearingDate = new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime();
         const taskCaseDetails = {
           title: caseDetails?.caseTitle,
           year: new Date(caseDetails).getFullYear(),
-          hearingDate: currentScheduledHearing?.startTime,
+          hearingDate: hearingDate,
           judgeName: "",
           courtName: courtDetails?.name,
           courtAddress: courtDetails?.address,
@@ -2942,7 +2948,7 @@ const GenerateOrdersV2 = () => {
           courtId: caseDetails?.courtId,
         };
         const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
-        payload = await _getTaskPayload(taskCaseDetails, orderData, caseDetails?.filingDate, currentScheduledHearing, caseNumber);
+        payload = await _getTaskPayload(taskCaseDetails, orderData, caseDetails?.filingDate, hearingDate, caseNumber);
         break;
       default:
         break;

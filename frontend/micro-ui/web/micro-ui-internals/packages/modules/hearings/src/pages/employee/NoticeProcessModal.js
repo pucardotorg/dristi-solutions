@@ -235,16 +235,17 @@ const NoticeProcessModal = ({
       const typeCounters = {};
 
       partyGroup?.ordersList?.forEach((order) => {
-        const type = order?.orderType;
+        const type = order?.orderType === "MISCELLANEOUS_PROCESS" ? order?.orderDetails?.processTemplate?.processTitle : order?.orderType;
         if (!typeCounters[type]) typeCounters[type] = 0;
         typeCounters[type]++;
       });
 
       const updatedOrdersList = partyGroup?.ordersList?.map((order) => {
-        const type = order?.orderType;
+        
+        const type = order?.orderType === "MISCELLANEOUS_PROCESS" ? order?.orderDetails?.processTemplate?.processTitle : order?.orderType;
         const round = typeCounters[type]--;
         const titleCaseType = type
-          .split("_")
+          .split(" ")
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
           .join(" ");
         return {
@@ -311,7 +312,6 @@ const NoticeProcessModal = ({
 
   const config = useMemo(() => {
     if (!taskCnrNumber && !cnrNumber) return undefined;
-    debugger;
     return summonsConfig({
       filingNumber,
       orderNumber,

@@ -343,8 +343,7 @@ export const UICustomizations = {
                       chanelDeatils = `${othersDetails?.name}`;
                       break;
                     default:
-                      const address = data?.taskDetails?.respondentDetails?.address || data?.taskDetails?.complainantDetails?.address;
-                      chanelDeatils = typeof data === "object" ? generateAddress({ ...address }) : address;
+                      chanelDeatils = "-";
                       break;
                   }
                 } else {
