@@ -92,6 +92,7 @@ function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors }) {
                 disableColor="#D6D5D4"
                 disableBorderColor="#D6D5D4"
                 disableBackgroundColor="white"
+                isShowHearing={input?.isShowHearing}
               />
             </div>
 
