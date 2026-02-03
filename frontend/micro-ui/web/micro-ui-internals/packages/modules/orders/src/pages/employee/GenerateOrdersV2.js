@@ -68,6 +68,7 @@ import {
   configsCaseSettlementReject,
   configsAbateCase,
   configAcceptReschedulingRequest,
+  configMiscellaneousProcess,
 } from "../../configs/ordersCreateConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -91,6 +92,7 @@ import {
   getSafeFileExtension,
 } from "../../utils";
 import {
+  _getTaskPayload,
   channelTypeEnum,
   checkValidation,
   compositeOrderAllowedTypes,
@@ -119,6 +121,7 @@ import {
   getOrderTypes,
   setApplicationStatus,
 } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import useSearchMiscellaneousTemplate from "../../hooks/orders/useSearchMiscellaneousTemplate";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -164,6 +167,7 @@ const configKeys = {
   WITNESS_BATTA: configsWitnessBatta,
   ABATE_CASE: configsAbateCase,
   ACCEPT_RESCHEDULING_REQUEST: configAcceptReschedulingRequest,
+  MISCELLANEOUS_PROCESS: configMiscellaneousProcess,
 };
 
 const stateSlaMap = {
@@ -204,6 +208,7 @@ const stateSlaMap = {
   DRAFT_IN_PROGRESS: 2,
   ABATE_CASE: 3,
   ACCEPT_RESCHEDULING_REQUEST: 3,
+  MISCELLANEOUS_PROCESS: 3,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
@@ -281,6 +286,25 @@ const GenerateOrdersV2 = () => {
   const isApplicationAccepted = history.location?.state?.isApplicationAccepted;
   const hasCalledApplicationAction = useRef(false);
   const [respondents, setRespondents] = useState([]);
+
+  const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }]);
+  const sortedPoliceStations = useMemo(() => {
+    const stations = policeStationData?.case?.PoliceStation || [];
+    const updatedStationData = stations?.map((data) => {
+      const { code, ...rest } = data;
+      return {
+        ...rest,
+        uniqueId: code,
+      };
+    });
+    return [...updatedStationData].sort((a, b) => {
+      const nameA = (a?.name || "").toUpperCase();
+      const nameB = (b?.name || "").toUpperCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
+  }, [policeStationData]);
 
   const fetchCaseDetails = async () => {
     try {
@@ -607,6 +631,28 @@ const GenerateOrdersV2 = () => {
 
   const caseCourtId = useMemo(() => caseDetails?.courtId || localStorage.getItem("courtId"), [caseDetails]);
   const hearingNumber = useMemo(() => currentOrder?.hearingNumber || currentOrder?.additionalDetails?.hearingId || "", [currentOrder]);
+
+  const { data: miscellaneousTemplateData, isLoading: isMiscellaneousTemplateLoading } = useSearchMiscellaneousTemplate(
+    {
+      criteria: {
+        tenantId: tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
+      tenantId,
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber && caseCourtId && orderType?.code === "MISCELLANEOUS_PROCESS")
+  );
+
+  const miscellaneousProcessTemplateDropDown = useMemo(() => {
+    return (
+      miscellaneousTemplateData?.list?.map((template) => {
+        const { auditDetails, ...result } = template;
+        return result;
+      }) || []
+    );
+  }, [miscellaneousTemplateData]);
 
   const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading, isFetching: isOrdersFetching } = useSearchOrdersService(
     {
@@ -972,6 +1018,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "DISMISS_CASE",
@@ -990,6 +1037,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       } else if (isBailApplicationPending) {
@@ -1011,6 +1059,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "TAKE_COGNIZANCE",
@@ -1029,6 +1078,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       } else {
@@ -1051,6 +1101,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "TAKE_COGNIZANCE",
@@ -1070,6 +1121,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       }
@@ -1089,6 +1141,7 @@ const GenerateOrdersV2 = () => {
                 "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
                 "COST",
                 "WITNESS_BATTA",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "SUMMONS",
@@ -1103,6 +1156,7 @@ const GenerateOrdersV2 = () => {
                 "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
                 "COST",
                 "WITNESS_BATTA",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       } else if (!caseDetails?.lprNumber) {
@@ -1125,6 +1179,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "SUMMONS",
@@ -1144,6 +1199,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       } else {
@@ -1165,6 +1221,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "SUMMONS",
@@ -1183,6 +1240,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       }
@@ -1204,6 +1262,7 @@ const GenerateOrdersV2 = () => {
         "COST",
         "WITNESS_BATTA",
         "ABATE_CASE",
+        "MISCELLANEOUS_PROCESS",
       ]);
     }
 
@@ -1900,6 +1959,26 @@ const GenerateOrdersV2 = () => {
           });
         }
 
+        if (["MISCELLANEOUS_PROCESS"].includes(selectedOrderType)) {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "processTemplate") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: miscellaneousProcessTemplateDropDown || [],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+
         formConfig = [...formConfig, ...orderTypeForm];
       }
 
@@ -1963,6 +2042,7 @@ const GenerateOrdersV2 = () => {
       groupedWarrantOptions,
       warrantSubtypeCode,
       applicationDetails,
+      miscellaneousProcessTemplateDropDown,
     ]
   );
 
@@ -2276,7 +2356,12 @@ const GenerateOrdersV2 = () => {
           setValueRef?.current?.[index]?.("noticeOrder", updatedFormdata.noticeOrder);
         }
       }
-      if (currentOrderType === "WARRANT" || currentOrderType === "PROCLAMATION" || currentOrderType === "ATTACHMENT") {
+      if (
+        currentOrderType === "WARRANT" ||
+        currentOrderType === "PROCLAMATION" ||
+        currentOrderType === "ATTACHMENT" ||
+        currentOrderType === "MISCELLANEOUS_PROCESS"
+      ) {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -2850,9 +2935,25 @@ const GenerateOrdersV2 = () => {
           },
         };
         break;
+      case "MISCELLANEOUS_PROCESS":
+        const hearingDate = new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime();
+        const taskCaseDetails = {
+          title: caseDetails?.caseTitle,
+          year: new Date(caseDetails).getFullYear(),
+          hearingDate: hearingDate,
+          judgeName: "",
+          courtName: courtDetails?.name,
+          courtAddress: courtDetails?.address,
+          courtPhone: courtDetails?.phone,
+          courtId: caseDetails?.courtId,
+        };
+        const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
+        payload = await _getTaskPayload(taskCaseDetails, orderData, caseDetails?.filingDate, hearingDate, caseNumber);
+        break;
       default:
         break;
     }
+    if (orderType === "MISCELLANEOUS_PROCESS") return payload;
     if (Object.keys(payload || {}).length > 0 && !Array.isArray(selectedChannel)) return [payload];
     else if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
       const channelPayloads = await Promise.all(
@@ -2950,7 +3051,7 @@ const GenerateOrdersV2 = () => {
           });
           for (const item of updatedOrders) {
             const matchedItem = order?.compositeItems?.find((compositeItem) => compositeItem?.id === item?.order?.itemId);
-            if (["WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(item?.order?.orderType)) {
+            if (["WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"]?.includes(item?.order?.orderType)) {
               const payloads = await createTaskPayload(item?.order?.orderType, item);
               if (matchedItem) {
                 const newItem = {
@@ -2969,7 +3070,7 @@ const GenerateOrdersV2 = () => {
               newCompositeItems?.push(matchedItem);
             }
           }
-        } else if (["WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(order?.orderType)) {
+        } else if (["WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"]?.includes(order?.orderType)) {
           const payloads = await createTaskPayload(order?.orderType, { order });
           taskDetails = JSON.stringify(payloads);
         }
@@ -3249,7 +3350,18 @@ const GenerateOrdersV2 = () => {
       const updatedFormData = await replaceUploadedDocsWithCombinedFile(orderFormData);
       const isAcceptBailOrder = orderFormData?.orderType?.code === "ACCEPT_BAIL";
       const requestBailBond = orderFormData?.requestBailBond;
-      const updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
+      let updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
+
+      if (orderFormData?.orderType?.code === "MISCELLANEOUS_PROCESS") {
+        const miscItemText = orderFormData?.processTemplate?.orderText || "";
+        const baseOrder = updatedOrderData && typeof updatedOrderData === "object" ? updatedOrderData : {};
+
+        updatedOrderData = {
+          ...baseOrder,
+          itemText: [baseOrder.itemText, miscItemText].filter(Boolean).join(" "),
+        };
+      }
+
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
       if (isAcceptBailOrder && requestBailBond) {
         await createPendingTaskForJudge(updateOrderResponse?.order);
@@ -4352,7 +4464,7 @@ const GenerateOrdersV2 = () => {
 
   return (
     <React.Fragment>
-      {(isApiCallLoading || addOrderTypeLoader || isOrdersLoading) && (
+      {(isApiCallLoading || addOrderTypeLoader || isOrdersLoading || isMiscellaneousTemplateLoading) && (
         <div
           style={{
             width: "100vw",
@@ -4827,6 +4939,8 @@ const GenerateOrdersV2 = () => {
           setWarrantSubtypeCode={setWarrantSubtypeCode}
           bailBondRequired={bailBondRequired}
           setBailBondRequired={setBailBondRequired}
+          policeStationData={sortedPoliceStations}
+          caseDetails={caseDetails}
         />
       )}
       {showMandatoryFieldsErrorModal?.showModal && (
