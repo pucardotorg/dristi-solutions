@@ -114,8 +114,8 @@ async function miscellaneousProcessTemplate(
 
     const accusedNameAddress = 
       templateData?.partyDetails?.flatMap(party =>
-        (party.selectedAddresses || []).map(address => ({
-          name: party.selectedParty?.name || "",
+        (party.address || []).map(address => ({
+          name: party.party?.name || "",
           formattedAddress: getStringAddressDetails(address)
         }))
       ) || [];
