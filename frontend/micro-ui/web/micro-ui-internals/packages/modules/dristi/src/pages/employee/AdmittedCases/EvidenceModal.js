@@ -1238,7 +1238,7 @@ const EvidenceModal = ({
                     </div>
                   </div>
                 )}
-                <div className="application-info" style={{ display: "flex", flexDirection: "column" }}>
+                <div className="application-info-new" style={{ display: "flex", flexDirection: "column" }}>
                   <div className="info-row">
                     <div className="info-key">
                       <h3>{t("APPLICATION_TYPE")}</h3>
@@ -1282,15 +1282,6 @@ const EvidenceModal = ({
                     </div>
                     <div className="info-value">
                       <h3>{currentDiaryEntry && artifact ? artifact?.sender : removeInvalidNameParts(documentSubmission[0]?.details?.sender)}</h3>
-                    </div>
-                  </div>
-                  <div className="info-row">
-                    <div className="info-key">
-                      <h3>{t("EVIDENCE_ADDITIONAL_DETAILS")}</h3>
-                    </div>
-                    <div className="info-value">
-                      {/* <h3>{JSON.stringify(documentSubmission[0]?.details.additionalDetails)}</h3> */}
-                      <h3>N/A</h3>
                     </div>
                   </div>
                   {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingDate && (

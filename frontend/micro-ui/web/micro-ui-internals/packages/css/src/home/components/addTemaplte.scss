@@ -1,0 +1,81 @@
+.template-from-modal {
+  width: 55%;
+  
+  max-height: 90vh; 
+  display: flex;
+  flex-direction: column;
+
+  .popup-module-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .popup-module-content {
+      flex: 1;
+      overflow-y: auto; 
+      padding: 16px;
+    }
+
+    .popup-module-action-bar {
+      padding: 16px 24px;
+      background: #fff;
+      border-top: 1px solid #EFEFEF;
+      z-index: 10;
+      position: sticky;
+      bottom: 0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px; 
+
+      button {
+        margin: 0 !important;
+      }
+      .selector-button-border, .selector-button-primary  {
+        height: 40px !important;
+      }
+    }
+  }
+}
+
+
+.template-form-composer {
+  .new-template-form {
+    padding: 24px !important;
+    box-shadow: none !important;
+    .label-field-pair {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+
+      .card-label.bolder{
+        flex: 0 0 auto;
+        width: fit-content;
+      }
+    }
+  }
+
+  .order-type-action {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 16px;
+    box-shadow: none;
+    border-top: 1px #bbbbbd solid;
+    padding: 16px 24px;
+
+    .submit-bar {
+      width: fit-content;
+      height: 40px;
+      padding: 8px 24px 8px 24px;
+      box-shadow: none !important;
+
+      header {
+        font-family: Roboto;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 18.75px;
+        text-align: center;
+        color: #ffffff;
+      }
+    }
+  }
+}
