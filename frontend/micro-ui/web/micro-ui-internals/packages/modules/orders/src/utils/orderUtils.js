@@ -1,5 +1,6 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import React from "react";
+import { formatAddress, mapAddressDetails } from ".";
 
 export const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -252,6 +253,20 @@ export const getParties = (type, orderSchema, allParties) => {
     parties = [...updatedComplainants, ...updatedRespondents];
 
     return parties;
+  } else if (type === "MISCELLANEOUS_PROCESS") {
+    let updatedPartiesdata = [];
+    if (orderSchema?.orderDetails?.selectedPartiesDetails?.length > 0) {
+      updatedPartiesdata = orderSchema?.orderDetails?.selectedPartiesDetails?.map((party) => {
+        return {
+          partyName: party?.selectedParty?.name,
+          partyType: party?.selectedParty?.partyType,
+        };
+      });
+    } else {
+      updatedPartiesdata = orderSchema?.orderDetails?.selectAddresee?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
+    }
+
+    return updatedPartiesdata;
   } else {
     parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
     return parties;
@@ -389,6 +404,36 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
     ) {
       setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
       hasError = true;
+    }
+  }
+
+  if (currentOrderType && ["MISCELLANEOUS_PROCESS"]?.includes(currentOrderType)) {
+    const isSelectAddreseeValid =
+      Array.isArray(formData?.selectAddresee) &&
+      formData?.selectAddresee?.length > 0 &&
+      formData?.selectAddresee?.every((item) => item && Object.keys(item)?.length > 0);
+
+    if (!isSelectAddreseeValid && formData?.selectAddresee) {
+      setFormErrors?.current?.[index]?.("selectAddresee", { message: t("ERR_COMPLETE_ALL_PARTIES") });
+      hasError = true;
+    }
+
+    const addressee = formData?.processTemplate?.addressee;
+
+    if (addressee) {
+      if (["POLICE", "OTHER"].includes(addressee)) {
+        const isPartiesDetailsValid =
+          Array.isArray(formData?.selectedPartiesDetails) &&
+          formData?.selectedPartiesDetails?.length > 0 &&
+          formData?.selectedPartiesDetails?.every(
+            (item) => item?.selectedParty?.name && Array.isArray(item?.selectedAddresses) && item?.selectedAddresses?.length > 0
+          );
+
+        if (!isPartiesDetailsValid) {
+          setFormErrors?.current?.[index]?.("selectedPartiesDetails", { message: t("ERR_COMPLETE_ALL_PARTIES") });
+          hasError = true;
+        }
+      }
     }
   }
 
@@ -584,3 +629,150 @@ export const compositeOrderAllowedTypes = [
     unAllowedOrderTypes: ["TAKE_COGNIZANCE", "DISMISS_CASE"],
   },
 ];
+
+export const _getPartiesOptions = (caseDetails, type = "all", isFlat = false) => {
+  if (!caseDetails?.additionalDetails) return [];
+
+  const mapParty = (item, index, partyRole) => {
+    const addressData = item?.data?.addressDetails || item?.addressDetails;
+    const addressArray = Array.isArray(addressData) ? addressData : addressData ? [addressData] : [];
+    const mappedAddresses = mapAddressDetails(addressArray) || [];
+    const complaintUUID = item?.data?.complainantVerification?.individualDetails?.userUuid;
+    const uuid = item?.data?.userUuid || item?.userUuid || item?.data?.uuid || complaintUUID;
+
+    const formattedAddressOptions = mappedAddresses?.map((addr) => ({
+      partyUniqueId: uuid || item?.uniqueId,
+      id: addr?.id,
+      formattedAddress: formatAddress ? formatAddress(addr) : `${addr?.locality}, ${addr?.city}, ${addr?.pincode}`,
+      locality: addr?.address?.locality || addr?.locality || "",
+      city: addr?.address?.city || addr?.city || "",
+      district: addr?.address?.district || addr?.district || "",
+      pincode: addr?.address?.pincode || addr?.pincode || "",
+      state: addr?.address?.state || addr?.state || "",
+    }));
+
+    const fName = item?.data?.firstName || item?.firstName || item?.data?.respondentFirstName || "";
+    const mName = item?.data?.middleName || item?.middleName || item?.data?.respondentMiddleName || "";
+    const lName = item?.data?.lastName || item?.lastName || item?.data?.respondentLastName || "";
+
+    return {
+      ...item,
+      data: {
+        name: `${fName} ${mName} ${lName}`.trim(),
+        firstName: fName,
+        lastName: lName,
+        middleName: mName,
+        partyType: partyRole,
+        phone_numbers: item?.data?.mobileNumber || item?.mobileNumber || item?.data?.phonenumbers?.mobileNumber || [],
+        email: item?.data?.emails?.emailId || [],
+        uuid: uuid,
+        partyIndex: `${partyRole}_${index}`,
+        uniqueId: item?.uniqueId,
+        age: item?.data?.respondentAge || item?.data?.complainantAge,
+        partyUniqueId: uuid || item?.uniqueId,
+      },
+      address: formattedAddressOptions,
+    };
+  };
+
+  const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
+  const complainantData = caseDetails?.additionalDetails?.complainantDetails?.formdata || [];
+
+  let result = [];
+
+  if (type === "respondent") {
+    result = respondentData?.map((item, index) => mapParty(item, index, "Respondent"));
+  }
+
+  if (type === "complainant") {
+    result = complainantData?.map((item, index) => mapParty(item, index, "Complainant"));
+  }
+
+  if (type === "all") {
+    const allComplainants = complainantData?.map((item, index) => mapParty(item, index, "Complainant"));
+    const allRespondents = respondentData?.map((item, index) => mapParty(item, index, "Respondent"));
+    result = [...allComplainants, ...allRespondents];
+  }
+
+  return isFlat ? result?.map((item) => item?.data || {}) : result;
+};
+
+export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, scheduleHearing, caseNumber) => {
+  const orderDetails = orderData?.orderDetails || {};
+  const selectAddresee = orderDetails?.selectAddresee || [];
+  const processTemplateAddressee = orderDetails?.processTemplate?.addressee;
+
+  const payload = selectAddresee?.map((data) => {
+    let miscellaneuosDetails = null;
+    let deliveryChannels = null;
+    let partyDetails = null;
+    let others = null;
+    let policeDetails = null;
+    let respondentDetails = null;
+    let complainantDetails = null;
+
+    miscellaneuosDetails = {
+      ...orderDetails?.processTemplate,
+      issueDate: orderData?.auditDetails?.lastModifiedTime,
+      caseFilingDate: filingDate,
+      nextHearingDate: scheduleHearing?.startTime,
+      caseNumber: caseNumber,
+    };
+
+    deliveryChannels = {
+      channelName: "RPAD",
+      status: "",
+      statusChangeDate: "",
+      channelCode: "RPAD",
+      isPendingCollection: false,
+    };
+
+    if (["POLICE", "OTHER"]?.includes(processTemplateAddressee)) {
+      partyDetails = orderDetails?.selectedPartiesDetails?.map((partyData) => {
+        const { address, ...rest } = partyData?.selectedParty;
+        return {
+          party: rest,
+          address: partyData?.selectedAddresses,
+        };
+      });
+    }
+
+    if (processTemplateAddressee === "POLICE") {
+      policeDetails = data;
+    } else if (processTemplateAddressee === "OTHER") {
+      others = data;
+    } else if (processTemplateAddressee === "RESPONDENT") {
+      respondentDetails = {
+        name: data?.name,
+        phone: data?.phone_numbers?.[0] || "",
+        email: data?.email?.[0] || "",
+        age: "",
+        gender: data?.age || "",
+        uniqueId: data?.uniqueId,
+      };
+    } else {
+      complainantDetails = {
+        name: data?.name,
+        phone: data?.phone_numbers?.[0] || "",
+        email: data?.email?.[0] || "",
+        age: "",
+        gender: data?.age || "",
+        uuid: data?.uuid || data?.uniqueId,
+        uniqueId: data?.uuid || data?.uniqueId,
+      };
+    }
+
+    return {
+      caseDetails: taskCaseDetails,
+      others,
+      miscellaneuosDetails,
+      partyDetails,
+      policeDetails,
+      deliveryChannels,
+      respondentDetails,
+      complainantDetails,
+    };
+  });
+
+  return payload;
+};

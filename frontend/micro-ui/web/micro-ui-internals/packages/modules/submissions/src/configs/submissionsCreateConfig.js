@@ -2719,6 +2719,49 @@ export const configsAdvancementOrAdjournment = [
         },
       },
       {
+        inline: true,
+        label: "ORIGINAL_HEARING_DATE",
+        disable: true,
+        isMandatory: true,
+        key: "initialHearingPurpose",
+        schemaKeyPath: "applicationDetails.initialHearingPurpose",
+        transformer: "text",
+        type: "text",
+        populators: {
+          name: "initialHearingPurpose",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          customStyle: { display: "none" },
+        },
+      },
+      {
+        key: "newHearingDates",
+        type: "component",
+        label: "SUGGESTED_NEW_HEARING_DATES",
+        component: "SelectBulkDateInputs",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "newHearingDates",
+              error: "ERR_HRMS_INVALID_MOB_NO",
+              label: "SUGGESTED_NEW_HEARING_DATES",
+              isMandatory: true,
+              placeholder: "DD/MM/YYYY",
+              customStyleLabelField: { display: "flex", justifyContent: "space-between" },
+              maxSelected: 5,
+              isShowHearing: false,
+              validation: {
+                isRequired: true,
+                minDate: new Date().toISOString().split("T")[0],
+                errMsg: "CORE_REQUIRED_FIELD_ERROR",
+              },
+            },
+          ],
+          validation: {},
+        },
+        withoutLabel: true,
+      },
+      {
         label: "HAVE_ALL_PARTIES_AGREED",
         isMandatory: true,
         key: "isAllPartiesAgreed",
@@ -2741,33 +2784,6 @@ export const configsAdvancementOrAdjournment = [
             },
           ],
         },
-      },
-      {
-        key: "newHearingDates",
-        type: "component",
-        label: "SUGGESTED_NEW_HEARING_DATES",
-        component: "SelectBulkDateInputs",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "newHearingDates",
-              error: "ERR_HRMS_INVALID_MOB_NO",
-              label: "SUGGESTED_NEW_HEARING_DATES",
-              isMandatory: true,
-              placeholder: "DD/MM/YYYY",
-              customStyleLabelField: { display: "flex", justifyContent: "space-between" },
-              maxSelected: 5,
-              validation: {
-                isRequired: true,
-                minDate: new Date().toISOString().split("T")[0],
-                errMsg: "CORE_REQUIRED_FIELD_ERROR",
-              },
-            },
-          ],
-          validation: {},
-        },
-        withoutLabel: true,
       },
       {
         inline: true,
