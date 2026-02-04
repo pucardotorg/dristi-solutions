@@ -883,40 +883,13 @@ export const configsOrderTranferToADR = [
           name: "mediationCentre",
           optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%", paddingBottom: "8px" },
+          styles: { maxWidth: "100%" },
           required: true,
           isMandatory: true,
           options: [
             {
               code: "KOLLAM_MEDIATION_CENTRE",
               name: "KOLLAM_MEDIATION_CENTRE",
-            },
-          ],
-        },
-      },
-      {
-        label: "MODE_OF_MEDIATION_SIGNING",
-        isMandatory: true,
-        key: "modeOfSigning",
-        schemaKeyPath: "orderDetails.modeOfSigning",
-        transformer: "customDropdown",
-        type: "radio",
-        populators: {
-          name: "modeOfSigning",
-          optionsKey: "code",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          required: true,
-          isMandatory: true,
-          styles: { marginBottom: "16px", paddingBottom: "14px" },
-          customStyle: { marginBottom: "0px" },
-          options: [
-            {
-              code: "E_SIGN",
-              name: "INITIATE_E-SIGN",
-            },
-            {
-              code: "UPLOAD_SIGNED_COPY",
-              name: "INITIATE_UPLOAD",
             },
           ],
         },
@@ -5002,12 +4975,12 @@ export const configsIssueBailReject = [
             {
               name: "uploadedDocs",
               isMandatory: true,
-              textAreaHeader: "CS_DOCUMENT",
+              label: "CS_DOCUMENT",
               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               uploadGuidelines: "UPLOAD_DOC_10",
               maxFileSize: 10,
               maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-              textAreaStyle: {
+              labelStyle: {
                 fontSize: "16px",
                 fontWeight: 400,
                 marginBottom: "8px",
@@ -5841,7 +5814,7 @@ export const configsMoveCaseToLongPendingRegister = [
               maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
               isMultipleUpload: true,
               popupModuleMianStyles: { maxHeight: "100%" },
-              textAreaStyle: {
+              labelStyle: {
                 fontSize: "16px",
                 fontWeight: 400,
                 marginBottom: "8px",
@@ -6177,6 +6150,154 @@ export const configsAbateCase = [
               name: "Uncontested",
             },
           ],
+        },
+      },
+    ],
+  },
+];
+
+export const configAcceptReschedulingRequest = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId", customStyle: { display: "none" } },
+      },
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "originalHearingPurpose",
+        disable: true,
+        type: "text",
+        schemaKeyPath: "orderDetails.originalHearingPurpose",
+        populators: { name: "originalHearingPurpose", customStyle: { display: "none" } },
+      },
+      {
+        label: "CURRENT_HEARING_DATE",
+        isMandatory: true,
+        key: "originalHearingDate",
+        schemaKeyPath: "orderDetails.originalHearingDate",
+        transformer: "date",
+        disable: true,
+        type: "date",
+        populators: {
+          name: "originalHearingDate",
+        },
+      },
+      {
+        label: "PURPOSE_OF_NEXT_HEARING",
+        isMandatory: true,
+        key: "hearingPurpose",
+        schemaKeyPath: "orderDetails.purposeOfHearing",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          name: "hearingPurpose",
+          optionsKey: "code",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          hideInForm: false,
+        },
+      },
+      {
+        key: "newHearingDate",
+        type: "component",
+        component: "SelectCustomHearingDate",
+        schemaKeyPath: "orderDetails.newHearingDate",
+        transformer: "date",
+        withoutLabel: true,
+        isMandatory: true,
+        label: "SELECT_FINAL_DATE_HEARING",
+        populators: {
+          inputs: [
+            {
+              name: "newHearingDate",
+              options: [],
+              validation: {
+                minDate: "2024-03-17",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configMiscellaneousProcess = [
+  {
+    body: [
+      {
+        type: "date",
+        label: "Date for Hearing",
+        key: "dateOfHearing",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
+        labelChildren: "OutlinedInfoIcon",
+        isMandatory: true,
+        disable: true,
+        populators: {
+          name: "dateOfHearing",
+          validation: {
+            max: {
+              patternType: "date",
+              masterName: "commonUiConfig",
+              moduleName: "maxDateValidation",
+            },
+          },
+        },
+      },
+      {
+        label: "SELECT_MISCELLANEOUS_TEMPLATE",
+        isMandatory: true,
+        key: "processTemplate",
+        schemaKeyPath: "orderDetails.processTemplate",
+        transformer: "default",
+        type: "dropdown",
+        populators: {
+          styles: { maxWidth: "100%" },
+          name: "processTemplate",
+          optionsKey: "processTitle",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [],
+        },
+      },
+      {
+        isMandatory: true,
+        type: "component",
+        component: "SelectAddreseeCustomComponent",
+        key: "selectAddresee",
+        schemaKeyPath: "orderDetails.selectAddresee",
+        transformer: "default",
+        label: "SELECT_ADDRESSEE",
+        populators: {
+          options: [],
+          optionsKey: "name",
+          disable: false,
+        },
+      },
+      {
+        isMandatory: true,
+        type: "component",
+        component: "MultiPartyAddressSelector",
+        key: "selectedPartiesDetails",
+        schemaKeyPath: "orderDetails.selectedPartiesDetails",
+        transformer: "default",
+        withoutLabel: true,
+        populators: {
+          options: [],
+          partyOptionsKey: "name",
+          optionsKey: "formattedAddress",
+          addressOptionKey: "partyUniqueId",
+          hideInForm: true,
         },
       },
     ],

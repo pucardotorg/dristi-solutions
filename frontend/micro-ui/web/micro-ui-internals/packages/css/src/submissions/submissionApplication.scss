@@ -273,6 +273,29 @@
   }
 }
 
+.submission-form-filed-style {
+  .card {
+    .label-field-pair {
+      .card-label {
+        font-weight: 400;
+        font-size: 16px;
+      }
+
+      .field{
+        .custom-text-area-main-div{
+          margin-bottom: 20px !important;
+          .custom-text-area-header-div{
+            .custom-sub-header{
+              font-size:16px !important;
+              font-weight:400 !important;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 .add-party {
   form {
     .employeeCard {
@@ -895,7 +918,7 @@
       }
 
       .custom-text-area-main-div {
-        .custom-textarea-style{
+        .custom-textarea-style {
           color: rgba(11, 12, 12, var(--text-opacity)) !important;
         }
       }

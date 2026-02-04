@@ -1,4 +1,4 @@
-import { Card } from "@egovernments/digit-ui-react-components";
+import { Card, DownloadImgIcon } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useState, useCallback } from "react";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import { useTranslation } from "react-i18next";

@@ -164,6 +164,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const hasViewSummonsAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_SUMMONS"), [roles]);
   const hasViewWarrantAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_WARRANT"), [roles]);
   const hasViewNoticeAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_NOTICE"), [roles]);
+  const hasViewMiscellaneousAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_MISCELLANEOUS"), [roles]);
 
   const hasSignAttachmentAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_ATTACHMENT"), [roles]);
   const hasSignProclamationAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_PROCLAMATION"), [roles]);
@@ -671,8 +672,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
   // Clear sessionStorage when component unmounts (user navigates away) or page refreshes
   useEffect(() => {
     const handleBeforeUnload = () => {
-      // Clear storage on page refresh
-      clearAllStoredConfigs();
+      const isEsignInProgress =
+        (typeof window !== "undefined" && sessionStorage.getItem("esignProcess")) ||
+        (typeof window !== "undefined" && sessionStorage.getItem("eSignWindowObject"));
+      if (!isEsignInProgress) {
+        clearAllStoredConfigs();
+      }
     };
 
     // Add event listener for page refresh
@@ -682,8 +687,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
     return () => {
       // Remove event listener
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      // Clear storage when component unmounts
-      clearAllStoredConfigs();
+      const isEsignInProgress =
+        (typeof window !== "undefined" && sessionStorage.getItem("esignProcess")) ||
+        (typeof window !== "undefined" && sessionStorage.getItem("eSignWindowObject"));
+      if (!isEsignInProgress) {
+        clearAllStoredConfigs();
+      }
     };
   }, []);
 
@@ -765,7 +774,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
           key: "NEXT_HEARING_DATE",
@@ -2107,7 +2116,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 (item.code === "PROCLAMATION" && ${hasViewProclamationAccess}) ||
                 (item.code === "SUMMONS" && ${hasViewSummonsAccess}) ||
                 (item.code === "WARRANT" && ${hasViewWarrantAccess}) ||
-                (item.code === "NOTICE" && ${hasViewNoticeAccess})
+                (item.code === "NOTICE" && ${hasViewNoticeAccess}) ||
+                (item.code === "MISCELLANEOUS_PROCESS" && ${hasViewMiscellaneousAccess}) 
               );
             }`,
             },
@@ -2180,6 +2190,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewSummonsAccess,
     hasViewWarrantAccess,
     hasViewNoticeAccess,
+    hasViewMiscellaneousAccess,
     reload, // Added to ensure config re-reads from sessionStorage after "Send for Sign"
   ]);
 

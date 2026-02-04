@@ -24,9 +24,14 @@ const HomeSidebar = ({
   const hasViewSignOrdersAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_ORDERS"), [assignedRoles]);
   const hasViewSignProcessAccess = useMemo(
     () =>
-      ["VIEW_PROCESS_SUMMONS", "VIEW_PROCESS_WARRANT", "VIEW_PROCESS_NOTICE", "VIEW_PROCESS_PROCLAMATION", "VIEW_PROCESS_ATTACHMENT"].some((role) =>
-        assignedRoles?.includes(role)
-      ),
+      [
+        "VIEW_PROCESS_SUMMONS",
+        "VIEW_PROCESS_WARRANT",
+        "VIEW_PROCESS_NOTICE",
+        "VIEW_PROCESS_PROCLAMATION",
+        "VIEW_PROCESS_ATTACHMENT",
+        "VIEW_PROCESS_MISCELLANEOUS",
+      ].some((role) => assignedRoles?.includes(role)),
     [assignedRoles]
   );
   const hasViewSignBailBondAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_BAIL_BOND"), [assignedRoles]);
@@ -37,7 +42,7 @@ const HomeSidebar = ({
 
   return (
     <div className="home-sidebar">
-      <HomeHeader t={t} userInfo={userInfo} roles={roles} />
+      <HomeHeader t={t} userInfo={userInfo} roles={roles} activeTab={activeTab} onTabChange={onTabChange} />
       {(hasViewTodaysHearingsAccess || hasViewBulkRescheduleHearingsAccess || hasViewScheduleHearingsAccess) && (
         <HomeAccordian title={t("HEARINGS_TAB")} defaultOpen>
           {hasViewTodaysHearingsAccess && (
@@ -72,16 +77,18 @@ const HomeSidebar = ({
       {Object?.keys(options)?.length > 0 && (
         <HomeAccordian title={t("PENDING_TASKS_TAB")} defaultOpen>
           {!isOptionsLoading &&
-            Object?.keys(options)?.map((key, index) => (
-              <SidebarItem
-                t={t}
-                key={index}
-                label={options[key]?.name}
-                count={pendingTaskCount[key]}
-                active={activeTab === key}
-                onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
-              />
-            ))}
+            Object?.keys(options)?.map((key, index) => {
+              return (
+                <SidebarItem
+                  t={t}
+                  key={index}
+                  label={options[key]?.name}
+                  count={pendingTaskCount[key]}
+                  active={activeTab === key}
+                  onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
+                />
+              );
+            })}
         </HomeAccordian>
       )}
 

@@ -1,0 +1,18 @@
+{
+  "tenantId": "kl",
+  "moduleName": "Order",
+  "masterName": "OrderType",
+  "mdmsPayload": {
+    "id": "82646a70-74aa-4f25-933e-b7d7b4a4e422",
+    "tenantId": "kl",
+    "schemaCode": "Order.OrderType",
+    "uniqueIdentifier": "51",
+    "data": {
+      "id": 53,
+      "code": "MISCELLANEOUS_PROCESS",
+      "type": "MISCELLANEOUS_PROCESS",
+      "isactive": true
+    },
+    "isActive": true
+  }
+}

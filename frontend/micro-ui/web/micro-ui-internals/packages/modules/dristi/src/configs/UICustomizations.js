@@ -919,76 +919,10 @@ export const UICustomizations = {
           },
         ];
       }
-      const formatDate = (date) => {
-        const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-      };
-      const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
-      const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
+
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-      const date = new Date(row.startTime);
-      const future = row.startTime > Date.now();
-      const showActions = configs && configs.hasOwnProperty("showMakeSubmission") ? configs.showMakeSubmission : true;
       if (row.status === "SCHEDULED" && userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")) {
         return [
-          {
-            label: "Reschedule hearing",
-            id: "reschedule",
-            action: (history) => {
-              const requestBody = {
-                order: {
-                  createdDate: null,
-                  tenantId: row.tenantId,
-                  // hearingNumber: row?.hearingId,
-                  filingNumber: row.filingNumber[0],
-                  cnrNumber: row.cnrNumbers[0],
-                  statuteSection: {
-                    tenantId: row.tenantId,
-                  },
-                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                  orderCategory: "INTERMEDIATE",
-                  orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                  status: "",
-                  isActive: true,
-                  workflow: {
-                    action: OrderWorkflowAction.SAVE_DRAFT,
-                    comments: "Creating order",
-                    assignes: null,
-                    rating: null,
-                    documents: [{}],
-                  },
-                  documents: [],
-                  additionalDetails: {
-                    formdata: {
-                      orderType: {
-                        type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                        isactive: true,
-                        code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                        name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                      },
-                      originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
-                        date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
-                      }`,
-                    },
-                  },
-                },
-              };
-              ordersService
-                .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
-                .then((res) => {
-                  history.push(
-                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
-                    {
-                      caseId: row.caseId,
-                      tab: "Orders",
-                    }
-                  );
-                })
-                .catch((err) => {});
-            },
-          },
           {
             label: "View transcript",
             id: "view_transcript",
@@ -1017,26 +951,6 @@ export const UICustomizations = {
       }
       if (row.status === "SCHEDULED" && userInfo?.type === "CITIZEN") {
         return [
-          {
-            label: "Request for Reschedule hearing",
-            id: "reschedule",
-            hide: !showActions,
-            action: (history) => {
-              history.push(
-                `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=RE_SCHEDULE`
-              );
-            },
-          },
-          {
-            label: "Request for Checkout Request",
-            id: "reschedule",
-            hide: !showActions,
-            action: (history) => {
-              history.push(
-                `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=CHECKOUT_REQUEST`
-              );
-            },
-          },
           {
             label: "View transcript",
             id: "view_transcript",
@@ -2180,6 +2094,15 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
+            searchReschedulingRequestApplications: {
+              date: null,
+              isOnlyCountRequired: activeTab === "RESCHEDULE_REQUEST" ? false : true,
+              actionCategory: "Rescheduling Request",
+              ...(activeTab === "RESCHEDULE_REQUEST" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
             searchBailBonds: {
               date: activeTab === "BAIL_BOND_STATUS" ? selectedDateInMs : currentDateInMs,
               isOnlyCountRequired: activeTab === "BAIL_BOND_STATUS" ? false : true,
@@ -2267,12 +2190,14 @@ export const UICustomizations = {
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
             const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
+            const rescheduleRequestCount = data?.reschedulingRequestData?.totalCount || 0;
 
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
               OFFLINE_PAYMENTS: offlinePaymentsCount,
               SCRUTINISE_CASES: scrutinyCasesCount,
               REGISTRATION: registerCount,
+              RESCHEDULE_REQUEST: rescheduleRequestCount,
               REVIEW_PROCESS: reviwCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
               NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
@@ -2312,7 +2237,6 @@ export const UICustomizations = {
                 }
                 return acc;
               }, {});
-
               return {
                 caseTitle: result?.caseTitle,
                 caseNumber: result?.caseNumber,
@@ -2360,6 +2284,11 @@ export const UICustomizations = {
                 TotalCount: data?.otherApplicationsData?.count,
                 data: data?.otherApplicationsData?.data?.map((item) => processFields(item.fields)) || [],
               };
+            } else if (activeTab === "RESCHEDULE_REQUEST") {
+              return {
+                TotalCount: data?.reschedulingRequestData?.count,
+                data: data?.reschedulingRequestData?.data?.map((item) => processFields(item.fields)) || [],
+              };
             } else
               return {
                 TotalCount: data?.registerCasesData?.count,
@@ -2402,6 +2331,17 @@ export const UICustomizations = {
               to={{
                 pathname: `/${window?.contextPath}/employee/dristi/admission`,
                 search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`,
+                state: { homeActiveTab: row?.tab },
+              }}
+            >
+              {value ? value : "-"}
+            </Link>
+          ) : row?.tab === "RESCHEDULE_REQUEST" ? (
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
+                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Submissions&fromHome=true`,
                 state: { homeActiveTab: row?.tab },
               }}
             >
@@ -2536,6 +2476,11 @@ export const UICustomizations = {
               date: null,
               isOnlyCountRequired: true,
             },
+            searchReschedulingRequestApplications: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Rescheduling Request",
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -2553,12 +2498,14 @@ export const UICustomizations = {
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
             const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
+            const rescheduleHearingRequestCount = data?.reschedulingRequestData?.totalCount || 0;
 
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
               OFFLINE_PAYMENTS: offlinePaymentsCount,
               SCRUTINISE_CASES: scrutinyCasesCount,
               REGISTRATION: registerCount,
+              RESCHEDULE_REQUEST: rescheduleHearingRequestCount,
               REVIEW_PROCESS: reviewCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
               NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
@@ -2585,7 +2532,6 @@ export const UICustomizations = {
                 }
                 return acc;
               }, {});
-
               return {
                 caseTitle: result?.caseTitle,
                 caseNumber: result?.caseNumber,

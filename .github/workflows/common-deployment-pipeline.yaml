@@ -1,12 +1,6 @@
 name: Common Deployment Pipeline
 
 on:
-  pull_request:
-    branches:
-      - main
-      - develop
-      - release/*
-      - develop-actions-enhancement
   workflow_dispatch:
     inputs:
       services:

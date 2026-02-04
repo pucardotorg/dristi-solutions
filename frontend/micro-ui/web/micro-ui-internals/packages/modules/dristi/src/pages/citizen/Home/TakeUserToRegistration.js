@@ -5,8 +5,9 @@ import { useHistory } from "react-router-dom";
 import { ReactComponent as RegisterImage } from "./ImageUpload/image/register.svg";
 import { ReactComponent as RightArrow } from "./ImageUpload/image/arrow_forward.svg";
 import { getFileByFileStore } from "../../../Utils";
+import { userTypeOptions } from "../registration/config";
 
-function TakeUserToRegistration({ message, isRejected, data, advocate }) {
+function TakeUserToRegistration({ message, isRejected, isLitigantPartialRegistered, data, advocate }) {
   const { t } = useTranslation();
   const history = useHistory();
 
@@ -22,10 +23,9 @@ function TakeUserToRegistration({ message, isRejected, data, advocate }) {
     sessionStorage.removeItem("userRegistrationParams");
 
     let params = {};
+    const individual = data?.Individual?.[0];
 
     if (isRejected) {
-      const individual = data?.Individual?.[0];
-
       const identifierIdDetails = JSON.parse(individual?.additionalFields?.fields?.find((o) => o.key === "identifierIdDetails")?.value || "{}");
 
       const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${individual?.tenantId}&fileStoreId=${identifierIdDetails?.fileStoreId}`;
@@ -109,7 +109,21 @@ function TakeUserToRegistration({ message, isRejected, data, advocate }) {
     }
 
     !isRejected
-      ? history.push(`/${window?.contextPath}/citizen/dristi/home/registration/user-name`)
+      ? history.push(`/${window?.contextPath}/citizen/dristi/home/registration/user-name`, {
+          newParams: {
+            name: {
+              firstName: individual?.name?.givenName,
+              middleName: individual?.name?.otherNames,
+              lastName: individual?.name?.familyName,
+            },
+            isLitigantPartialRegistered: isLitigantPartialRegistered,
+          },
+          userType: {
+            clientDetails: {
+              selectUserType: userTypeOptions?.find((item) => item?.code === "LITIGANT"),
+            },
+          },
+        })
       : history.push(`/${window?.contextPath}/citizen/dristi/home/registration/email`, {
           newParams: { ...data, ...params, isRejected: isRejected },
           userType: advocate?.additionalDetails?.userType,
