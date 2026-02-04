@@ -14,9 +14,9 @@ import java.util.List;
 @Builder
 public class PartyDetails {
 
-    @JsonProperty("selectedParty")
-    private Object selectedParty;
+    @JsonProperty("party")
+    private Object party;
 
-    @JsonProperty("selectedAddresses")
-    private List<Object> selectedAddresses;
+    @JsonProperty("address")
+    private List<Object> address;
 }
