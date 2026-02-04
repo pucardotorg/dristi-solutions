@@ -320,6 +320,20 @@ export const downloadFile = (responseBlob, fileName) => {
 };
 
 export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, taskDetails) => {
+
+  if (orderType === "MISCELLANEOUS_PROCESS") {
+    const type = taskDetails?.miscellaneuosDetails?.addressee || "";
+
+    switch (type) {
+      case "POLICE":
+        return `${taskDetails?.policeDetails?.name}, ${taskDetails?.policeDetails?.district}`;
+      case "OTHER":
+        return `${taskDetails?.others?.name}`;
+      default:
+        return taskDetails?.respondentDetails?.name || taskDetails?.complainantDetails?.name || "";
+    }
+  }
+
   const formDataKeyMap = {
     NOTICE: "noticeOrder",
     SUMMONS: "SummonsOrder",
@@ -418,10 +432,7 @@ export const getSafeFileExtension = (fileName, fallback = "pdf") => {
 
   const lastDotIndex = fileName?.lastIndexOf(".");
 
-  if (
-    lastDotIndex <= 0 || 
-    lastDotIndex === fileName?.length - 1
-  ) {
+  if (lastDotIndex <= 0 || lastDotIndex === fileName?.length - 1) {
     return fallback;
   }
 
