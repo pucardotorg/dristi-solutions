@@ -43,7 +43,6 @@ public class AddMember {
     private UUID officeAdvocateId = null;
 
     @JsonProperty("officeAdvocateName")
-    @NotNull
     private String officeAdvocateName = null;
 
     @JsonProperty("memberType")
