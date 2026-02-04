@@ -83,7 +83,7 @@ const ManageOffice = () => {
     Boolean(officeAdvocateUserUuid && tenantId)
   );
 
-  // Extract members from the API response
+  // Extract members from the API response (My Advocates/Clerks tab)
   const officeMembers = useMemo(() => {
     return officeMembersData?.members || [];
   }, [officeMembersData]);
@@ -102,6 +102,24 @@ const ManageOffice = () => {
   const [searchError, setSearchError] = useState(null);
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
   const [toast, setToast] = useState(null);
+
+  // "Advocates I'm working for" tab: fetch by memberId + tenantId (logged-in user as member)
+  const {
+    data: advocatesWorkingForData,
+    isLoading: isLoadingAdvocatesWorkingFor,
+    refetch: refetchAdvocatesWorkingFor,
+  } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
+    {
+      searchCriteria: {
+        memberid: officeAdvocateUserUuid,
+        tenantId: tenantId,
+      },
+    },
+    { tenantId },
+    `advocatesWorkingFor_${officeAdvocateUserUuid}_${tenantId}`,
+    activeTab === "advocatesWorkingFor" && Boolean(officeAdvocateUserUuid && tenantId)
+  );
+  const advocatesWorkingForMembers = useMemo(() => advocatesWorkingForData?.members || [], [advocatesWorkingForData]);
 
   const tabs = [
     { id: "myAdvocatesClerks", label: t("MY_ADVOCATES_CLERKS") || "My Advocates/Clerks" },
@@ -301,8 +319,16 @@ const ManageOffice = () => {
   };
 
   const filteredMembers = useMemo(() => {
-    return officeMembers.filter((member) => (member.memberName || "").toLowerCase().includes(memberSearchQuery.toLowerCase()));
-  }, [officeMembers, memberSearchQuery]);
+    return officeMembers;
+  }, [officeMembers]);
+
+  // Data and loading per tab: My Advocates/Clerks vs Advocates I'm working for
+  const displayMembers = useMemo(() => (activeTab === "advocatesWorkingFor" ? advocatesWorkingForMembers : filteredMembers), [
+    activeTab,
+    advocatesWorkingForMembers,
+    filteredMembers,
+  ]);
+  const isLoadingDisplay = activeTab === "advocatesWorkingFor" ? isLoadingAdvocatesWorkingFor : isLoadingMembers;
 
   const handleCloseConfirmModal = () => {
     setShowConfirmModal(false);
@@ -325,6 +351,14 @@ const ManageOffice = () => {
       setToast({ label: t("REMOVE_MEMBER_ERROR") || "Failed to remove member. Please try again.", type: "error" });
       return;
     }
+    const isLeavingOfficeTab = activeTab === "advocatesWorkingFor";
+    const officeAdvocateIdForLeave = isLeavingOfficeTab
+      ? memberToRemove.officeAdvocateId
+      : advocateSearchResult?.[0]?.responseList?.[0]?.id || advocateSearchResult?.[0]?.id;
+    if (!officeAdvocateIdForLeave) {
+      setToast({ label: t("REMOVE_MEMBER_ERROR") || "Failed to remove member. Please try again.", type: "error" });
+      return;
+    }
     setIsRemovingMember(true);
     try {
       const response = await window?.Digit?.DRISTIService?.leaveOffice(
@@ -332,8 +366,8 @@ const ManageOffice = () => {
           leaveOffice: {
             id: memberToRemove.id,
             tenantId: tenantId,
-            officeAdvocateId: advocateSearchResult?.[0]?.responseList?.[0]?.id,
-            memberType: memberToRemove.memberType,
+            officeAdvocateId: officeAdvocateIdForLeave,
+            memberType: isLeavingOfficeTab ? "ADVOCATE_CLERK" : memberToRemove.memberType,
             memberId: memberToRemove.memberId,
           },
         },
@@ -342,6 +376,7 @@ const ManageOffice = () => {
 
       if (response) {
         refetchMembers();
+        if (isLeavingOfficeTab && refetchAdvocatesWorkingFor) refetchAdvocatesWorkingFor();
         setToast({ label: t("MEMBER_REMOVED_SUCCESS") || "Member removed successfully", type: "success" });
       }
     } catch (error) {
@@ -393,31 +428,33 @@ const ManageOffice = () => {
           borderRight: "none",
         }}
       >
-        {/* Add New Member Row */}
-        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: "24px" }}>
-          <button
-            onClick={handleAddNewMember}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "12px 24px",
-              backgroundColor: "#007E7E",
-              color: "#FFFFFF",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "16px",
-              fontWeight: "500",
-              cursor: "pointer",
-            }}
-          >
-            <span style={{ fontSize: "18px" }}>+</span>
-            {t("ADD_NEW_MEMBER") || "Add New Member"}
-          </button>
-        </div>
+        {/* Top row: only "Add New Member" on My Advocates/Clerks; no search row on Advocates I'm working for */}
+        {activeTab === "myAdvocatesClerks" && (
+          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: "24px" }}>
+            <button
+              onClick={handleAddNewMember}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "12px 24px",
+                backgroundColor: "#007E7E",
+                color: "#FFFFFF",
+                border: "none",
+                borderRadius: "4px",
+                fontSize: "16px",
+                fontWeight: "500",
+                cursor: "pointer",
+              }}
+            >
+              <span style={{ fontSize: "18px" }}>+</span>
+              {t("ADD_NEW_MEMBER") || "Add New Member"}
+            </button>
+          </div>
+        )}
 
         {/* Members List or Empty State */}
-        {isLoadingMembers ? (
+        {isLoadingDisplay ? (
           <div
             style={{
               display: "flex",
@@ -428,13 +465,13 @@ const ManageOffice = () => {
           >
             <Loader />
           </div>
-        ) : filteredMembers.length > 0 ? (
+        ) : displayMembers.length > 0 ? (
           <div>
-            {/* Table Header */}
+            {/* Table Header: 4 columns for Advocates I'm working for, 5 for My Advocates/Clerks */}
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1.5fr 1.5fr 1fr 1fr 1.5fr",
+                gridTemplateColumns: activeTab === "advocatesWorkingFor" ? "1.5fr 1.5fr 1fr 80px" : "1.5fr 1.5fr 1fr 1fr 1.5fr",
                 padding: "16px 24px",
                 borderBottom: "1px solid #D6D5D4",
                 fontWeight: "600",
@@ -442,19 +479,19 @@ const ManageOffice = () => {
                 color: "#3D3C3C",
               }}
             >
-              <span>{t("NAME") || "Name"}</span>
+              <span>{activeTab === "advocatesWorkingFor" ? t("ADVOCATE") || "Advocate" : t("NAME") || "Name"}</span>
               <span>{t("MOBILE_NUMBER") || "Mobile Number"}</span>
-              <span>{t("DESIGNATION") || "Designation"}</span>
+              {activeTab !== "advocatesWorkingFor" && <span>{t("DESIGNATION") || "Designation"}</span>}
               <span>{t("ACCESS_TYPE") || "Access Type"}</span>
               <span>{t("ACTION") || "Action"}</span>
             </div>
             {/* Table Rows */}
-            {filteredMembers.map((member) => (
+            {displayMembers.map((member) => (
               <div
                 key={member.id || member.memberId}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1.5fr 1.5fr 1fr 1fr 1.5fr",
+                  gridTemplateColumns: activeTab === "advocatesWorkingFor" ? "1.5fr 1.5fr 1fr 80px" : "1.5fr 1.5fr 1fr 1fr 1.5fr",
                   padding: "16px 24px",
                   borderBottom: "1px solid #D6D5D4",
                   fontSize: "14px",
@@ -462,45 +499,43 @@ const ManageOffice = () => {
                   alignItems: "center",
                 }}
               >
-                <span
-                  style={{
-                    color: "#007E7E",
-                    textDecoration: "underline",
-                    cursor: "pointer",
-                  }}
-                >
-                  {member.memberName}
+                <span style={activeTab === "advocatesWorkingFor" ? {} : { color: "#007E7E", textDecoration: "underline", cursor: "pointer" }}>
+                  {activeTab === "advocatesWorkingFor" ? member.officeAdvocateName || member.memberName : member.memberName}
                 </span>
-                <span>{member.memberMobileNumber}</span>
-                <span>{member.memberType === "ADVOCATE_CLERK" ? "Clerk" : member.memberType === "ADVOCATE" ? "Advocate" : member.memberType}</span>
+                <span>{member.memberMobileNumber || member.officeAdvocateMobileNumber}</span>
+                {activeTab !== "advocatesWorkingFor" && (
+                  <span>{member.memberType === "ADVOCATE_CLERK" ? "Clerk" : member.memberType === "ADVOCATE" ? "Advocate" : member.memberType}</span>
+                )}
                 <span>
                   <span
                     style={{
                       backgroundColor: "#E8E8E8",
                       padding: "4px 12px",
-                      borderRadius: "4px",
+                      borderRadius: "16px",
                       fontSize: "12px",
                       fontWeight: "500",
                     }}
                   >
-                    {member.accessType === "ALL_CASES" ? t("ALL_CASES") || "All Cases" : member.accessType}
+                    {member.accessType === "ALL_CASES" ? t("ALL_CASES") || "All Cases" : t("SPECIFIC_CASES") || "Specific Cases"}
                   </span>
                 </span>
-                <span style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                  <button
-                    style={{
-                      padding: "8px 24px",
-                      backgroundColor: "#FFFFFF",
-                      color: "#007E7E",
-                      border: "1px solid #007E7E",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {t("MANAGE") || "Manage"}
-                  </button>
+                <span style={{ display: "flex", alignItems: "center", gap: activeTab === "advocatesWorkingFor" ? "0" : "16px" }}>
+                  {activeTab !== "advocatesWorkingFor" && (
+                    <button
+                      style={{
+                        padding: "8px 24px",
+                        backgroundColor: "#FFFFFF",
+                        color: "#007E7E",
+                        border: "1px solid #007E7E",
+                        borderRadius: "4px",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {t("MANAGE") || "Manage"}
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDeleteClick(member)}
                     style={{
