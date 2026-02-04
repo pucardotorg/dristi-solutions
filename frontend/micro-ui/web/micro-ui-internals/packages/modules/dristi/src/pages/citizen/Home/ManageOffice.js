@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
@@ -102,6 +102,13 @@ const ManageOffice = () => {
   const [searchError, setSearchError] = useState(null);
   const [memberSearchQuery, setMemberSearchQuery] = useState("");
   const [toast, setToast] = useState(null);
+
+  // Auto-close toast after 5 seconds
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // "Advocates I'm working for" tab: fetch by memberId + tenantId (logged-in user as member)
   const {
@@ -216,15 +223,29 @@ const ManageOffice = () => {
           ? `${individual.name.givenName}${individual.name.familyName ? " " + individual.name.familyName : ""}`
           : "N/A";
 
-        setSearchResult({
-          name: name,
-          designation: firstRecord ? designation : "Individual",
-          mobileNumber: `${countryCode} ${mobileNumber.slice(0, 5)} ${mobileNumber.slice(5)}`,
-          email: individual.email || "N/A",
-          individualId: individual.userUuid,
-          clerkData: clerkData,
-          advocateData: advocateData,
+        // Validation: do not allow adding if this mobile number is already a member of the office
+        const normalizeMobile = (val) => (val || "").replace(/\D/g, "");
+        const searchedMobile = normalizeMobile(countryCode) + normalizeMobile(mobileNumber);
+        const isAlreadyMember = (officeMembers || []).some((m) => {
+          const existing = normalizeMobile(m.memberMobileNumber);
+          return (
+            existing === searchedMobile || (existing.length >= 10 && searchedMobile.length >= 10 && existing.slice(-10) === searchedMobile.slice(-10))
+          );
         });
+        if (isAlreadyMember) {
+          setSearchError(t("MEMBER_ALREADY_EXISTS") || "This mobile number is already added as a member.");
+          setSearchResult(null);
+        } else {
+          setSearchResult({
+            name: name,
+            designation: firstRecord ? designation : "Individual",
+            mobileNumber: `${countryCode} ${mobileNumber.slice(0, 5)} ${mobileNumber.slice(5)}`,
+            email: individual.email || "N/A",
+            individualId: individual.userUuid,
+            clerkData: clerkData,
+            advocateData: advocateData,
+          });
+        }
       } else {
         setSearchError(t("NO_MEMBER_FOUND") || "No member found with this mobile number");
       }
@@ -352,23 +373,18 @@ const ManageOffice = () => {
       return;
     }
     const isLeavingOfficeTab = activeTab === "advocatesWorkingFor";
-    const officeAdvocateIdForLeave = isLeavingOfficeTab
-      ? memberToRemove.officeAdvocateId
-      : advocateSearchResult?.[0]?.responseList?.[0]?.id || advocateSearchResult?.[0]?.id;
-    if (!officeAdvocateIdForLeave) {
-      setToast({ label: t("REMOVE_MEMBER_ERROR") || "Failed to remove member. Please try again.", type: "error" });
-      return;
-    }
     setIsRemovingMember(true);
     try {
       const response = await window?.Digit?.DRISTIService?.leaveOffice(
         {
           leaveOffice: {
-            id: memberToRemove.id,
+            id: memberToRemove?.id,
             tenantId: tenantId,
-            officeAdvocateId: officeAdvocateIdForLeave,
-            memberType: isLeavingOfficeTab ? "ADVOCATE_CLERK" : memberToRemove.memberType,
-            memberId: memberToRemove.memberId,
+            officeAdvocateId: advocateSearchResult?.[0]?.responseList?.[0]?.id,
+            memberType: memberToRemove?.memberType,
+            memberId: memberToRemove?.memberId,
+            memberUserUuid: memberToRemove?.memberUserUuid,
+            officeAdvocateUserUuid: memberToRemove?.officeAdvocateUserUuid,
           },
         },
         { tenantId }
@@ -392,7 +408,6 @@ const ManageOffice = () => {
   return (
     <div style={{ padding: "30px 48px", minHeight: "100vh" }}>
       <h1 style={{ fontSize: "32px", fontWeight: "700", marginBottom: "32px", color: "#231F20" }}>{t("MANAGE_OFFICE") || "Manage Office"}</h1>
-      <p style={{ fontSize: "16px", color: "#3D3C3C" }}>{t("SELECT_OFFICE_TO_MANAGE") || "Select the office you want to manage"}</p>
 
       <div style={{ borderBottom: "1px solid #D6D5D4" }}>
         <div style={{ display: "flex", gap: "32px" }}>
@@ -520,6 +535,7 @@ const ManageOffice = () => {
                   </span>
                 </span>
                 <span style={{ display: "flex", alignItems: "center", gap: activeTab === "advocatesWorkingFor" ? "0" : "16px" }}>
+                  {/* Manage button – to be implemented later
                   {activeTab !== "advocatesWorkingFor" && (
                     <button
                       style={{
@@ -536,6 +552,7 @@ const ManageOffice = () => {
                       {t("MANAGE") || "Manage"}
                     </button>
                   )}
+                  */}
                   <button
                     onClick={() => handleDeleteClick(member)}
                     style={{
@@ -979,8 +996,10 @@ const ManageOffice = () => {
         </div>
       )}
 
-      {/* Toast Notification */}
-      {toast && <Toast label={toast.label} onClose={() => setToast(null)} error={toast.type === "error"} style={{ maxWidth: "400px" }} />}
+      {/* Toast Notification: auto-close after 5s, close button to dismiss manually */}
+      {toast && (
+        <Toast label={toast.label} onClose={() => setToast(null)} error={toast.type === "error"} isDleteBtn={true} style={{ maxWidth: "400px" }} />
+      )}
     </div>
   );
 };
