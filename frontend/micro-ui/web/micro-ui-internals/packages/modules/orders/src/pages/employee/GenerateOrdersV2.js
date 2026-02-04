@@ -1567,6 +1567,10 @@ const GenerateOrdersV2 = () => {
           body: item.body.map((input) => ({
             ...input,
             disable: true,
+            populators: {
+              ...input.populators,
+              customStyle: { display: "none" },
+            },
           })),
         })) || [];
 
