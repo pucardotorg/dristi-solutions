@@ -1,0 +1,16 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+  "uniqueIdentifier": "2784",
+  "data": {
+    "id": 2784,
+    "url": "/egov-pdf/template-configuration",
+    "code": "2784",
+    "name": "Pdf template configuration",
+    "enabled": false,
+    "displayName": "Pdf template configuration",
+    "serviceCode": "egov-pdf",
+    "parentModule": "egov-pdf"
+  },
+  "isActive": true
+}
