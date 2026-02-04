@@ -1201,6 +1201,16 @@
   margin-bottom: 0 !important;
   padding: 0 !important;
 
+  .pdf-viewer-container {
+    padding-bottom: 0px !important;
+    .docviewer-wrapper {
+      margin-top: 0px !important;
+      .employeeCard {
+        margin-bottom: 0px !important;
+      }
+    }
+  }
+
   .label-field-pair {
     .field {
       .field-container {
@@ -2139,6 +2149,46 @@
     .employee-card-input {
       &::placeholder {
         color: #b1b4b6;
+      }
+    }
+  }
+}
+
+.multi-party-address-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  .party-card {
+    position: relative;
+    & + .party-card {
+      margin-top: 20px;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: 0px;
+      right: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+
+    .card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+
+      .input-label {
+        font-size: 16px;
+        font-weight: 400;
+        margin-bottom: 8px;
+        margin-top: 0px;
       }
     }
   }

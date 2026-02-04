@@ -59,6 +59,8 @@ class AdvocateOfficeEnrichmentTest {
 
         AddMember addMember = AddMember.builder()
                 .tenantId("pg.citya")
+                .officeAdvocateId(officeAdvocateId)
+                .memberId(memberId)
                 .officeAdvocateUserUuid(officeAdvocateId)
                 .memberUserUuid(memberId)
                 .memberType(MemberType.ADVOCATE_CLERK)
@@ -89,6 +91,17 @@ class AdvocateOfficeEnrichmentTest {
 
     @Test
     void testEnrichAddMemberRequest_AddsIdAndAuditDetails() {
+        // Mock the advocate and individual searches
+        JsonNode advocateNode = createMockNode("ind-123", "user-123");
+        JsonNode clerkNode = createMockNode("ind-456", "user-456");
+        JsonNode individualNode = createMockNode("ind-123", "user-uuid-123");
+        
+        when(advocateUtil.searchAdvocateById(any(), anyString(), anyString())).thenReturn(advocateNode);
+        when(advocateUtil.searchClerkById(any(), anyString(), anyString())).thenReturn(clerkNode);
+        when(advocateUtil.getIndividualId(any())).thenReturn("ind-123", "ind-456");
+        when(individualUtil.searchIndividualByIndividualId(any(), anyString(), anyString())).thenReturn(individualNode);
+        when(individualUtil.getUserUuid(any())).thenReturn("550e8400-e29b-41d4-a716-446655440000", "660e8400-e29b-41d4-a716-446655440000");
+
         assertNull(addMemberRequest.getAddMember().getId());
         assertNull(addMemberRequest.getAddMember().getAuditDetails());
         assertNull(addMemberRequest.getAddMember().getIsActive());
@@ -111,16 +124,37 @@ class AdvocateOfficeEnrichmentTest {
 
     @Test
     void testEnrichAddMemberRequest_GeneratesUniqueIds() {
+        // Mock the advocate and individual searches
+        JsonNode advocateNode = createMockNode("ind-123", "user-123");
+        JsonNode clerkNode = createMockNode("ind-456", "user-456");
+        JsonNode individualNode = createMockNode("ind-123", "user-uuid-123");
+        
+        when(advocateUtil.searchAdvocateById(any(), anyString(), anyString())).thenReturn(advocateNode);
+        when(advocateUtil.searchClerkById(any(), anyString(), anyString())).thenReturn(clerkNode);
+        when(advocateUtil.getIndividualId(any())).thenReturn("ind-123", "ind-456");
+        when(individualUtil.searchIndividualByIndividualId(any(), anyString(), anyString())).thenReturn(individualNode);
+        when(individualUtil.getUserUuid(any())).thenReturn("550e8400-e29b-41d4-a716-446655440000", "660e8400-e29b-41d4-a716-446655440000");
+
+        UUID testOfficeAdvocateId1 = UUID.randomUUID();
+        UUID testMemberId1 = UUID.randomUUID();
         AddMember addMember1 = AddMember.builder()
                 .tenantId("pg.citya")
+                .officeAdvocateId(testOfficeAdvocateId1)
+                .memberId(testMemberId1)
+                .memberType(MemberType.ADVOCATE_CLERK)
                 .build();
         AddMemberRequest request1 = AddMemberRequest.builder()
                 .requestInfo(requestInfo)
                 .addMember(addMember1)
                 .build();
 
+        UUID testOfficeAdvocateId2 = UUID.randomUUID();
+        UUID testMemberId2 = UUID.randomUUID();
         AddMember addMember2 = AddMember.builder()
                 .tenantId("pg.citya")
+                .officeAdvocateId(testOfficeAdvocateId2)
+                .memberId(testMemberId2)
+                .memberType(MemberType.ADVOCATE_CLERK)
                 .build();
         AddMemberRequest request2 = AddMemberRequest.builder()
                 .requestInfo(requestInfo)
@@ -168,12 +202,28 @@ class AdvocateOfficeEnrichmentTest {
 
     @Test
     void testEnrichAddMemberRequest_AuditDetailsWithDifferentUsers() {
+        // Mock the advocate and individual searches
+        JsonNode advocateNode = createMockNode("ind-123", "user-123");
+        JsonNode clerkNode = createMockNode("ind-456", "user-456");
+        JsonNode individualNode = createMockNode("ind-123", "user-uuid-123");
+        
+        when(advocateUtil.searchAdvocateById(any(), anyString(), anyString())).thenReturn(advocateNode);
+        when(advocateUtil.searchClerkById(any(), anyString(), anyString())).thenReturn(clerkNode);
+        when(advocateUtil.getIndividualId(any())).thenReturn("ind-123", "ind-456");
+        when(individualUtil.searchIndividualByIndividualId(any(), anyString(), anyString())).thenReturn(individualNode);
+        when(individualUtil.getUserUuid(any())).thenReturn("550e8400-e29b-41d4-a716-446655440000", "660e8400-e29b-41d4-a716-446655440000");
+
         String userUuid1 = "user-uuid-111";
         RequestInfo requestInfo1 = RequestInfo.builder()
                 .userInfo(User.builder().uuid(userUuid1).build())
                 .build();
 
-        AddMember addMember1 = AddMember.builder().tenantId("pg.citya").build();
+        AddMember addMember1 = AddMember.builder()
+                .tenantId("pg.citya")
+                .officeAdvocateId(UUID.randomUUID())
+                .memberId(UUID.randomUUID())
+                .memberType(MemberType.ADVOCATE_CLERK)
+                .build();
         AddMemberRequest request1 = AddMemberRequest.builder()
                 .requestInfo(requestInfo1)
                 .addMember(addMember1)
@@ -184,7 +234,12 @@ class AdvocateOfficeEnrichmentTest {
                 .userInfo(User.builder().uuid(userUuid2).build())
                 .build();
 
-        AddMember addMember2 = AddMember.builder().tenantId("pg.citya").build();
+        AddMember addMember2 = AddMember.builder()
+                .tenantId("pg.citya")
+                .officeAdvocateId(UUID.randomUUID())
+                .memberId(UUID.randomUUID())
+                .memberType(MemberType.ADVOCATE_CLERK)
+                .build();
         AddMemberRequest request2 = AddMemberRequest.builder()
                 .requestInfo(requestInfo2)
                 .addMember(addMember2)
@@ -199,6 +254,17 @@ class AdvocateOfficeEnrichmentTest {
 
     @Test
     void testEnrichAddMemberRequest_IsActiveSetToTrue() {
+        // Mock the advocate and individual searches
+        JsonNode advocateNode = createMockNode("ind-123", "user-123");
+        JsonNode clerkNode = createMockNode("ind-456", "user-456");
+        JsonNode individualNode = createMockNode("ind-123", "user-uuid-123");
+        
+        when(advocateUtil.searchAdvocateById(any(), anyString(), anyString())).thenReturn(advocateNode);
+        when(advocateUtil.searchClerkById(any(), anyString(), anyString())).thenReturn(clerkNode);
+        when(advocateUtil.getIndividualId(any())).thenReturn("ind-123", "ind-456");
+        when(individualUtil.searchIndividualByIndividualId(any(), anyString(), anyString())).thenReturn(individualNode);
+        when(individualUtil.getUserUuid(any())).thenReturn("550e8400-e29b-41d4-a716-446655440000", "660e8400-e29b-41d4-a716-446655440000");
+
         AddMember addMember = addMemberRequest.getAddMember();
         addMember.setIsActive(false);
 

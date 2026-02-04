@@ -1680,6 +1680,7 @@ function EFilingCases({ path }) {
                 if (
                   !isDraftInProgress &&
                   selected === "prayerSwornStatement" &&
+                  modifiedFormComponent?.component === "SelectUploadDocWithName" &&
                   SelectUploadDocLength < formdata?.[0]?.data?.SelectUploadDocWithName?.length
                 ) {
                   modifiedFormComponent.doclength = SelectUploadDocLength;
@@ -1692,7 +1693,7 @@ function EFilingCases({ path }) {
                     modifiedFormComponent.addressLength = resAddressDetailsLength;
                     modifiedFormComponent.disable = false;
                   } else {
-                    if (modifiedFormComponent?.component === "SelectComponentsMulti") {
+                    if (modifiedFormComponent?.component === "SelectComponentsMulti" && resAddressDetailsLength > 0) {
                       modifiedFormComponent.disable = true;
                     }
                   }
@@ -1708,6 +1709,7 @@ function EFilingCases({ path }) {
 
                 if (
                   modifiedFormComponent?.type === "radio" &&
+                  modifiedFormComponent?.disable &&
                   !(index + 1 > scrutinyFormLength || scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign))
                 ) {
                   modifiedFormComponent.populators.styles = { opacity: 0.5 };
@@ -1750,7 +1752,9 @@ function EFilingCases({ path }) {
                   }
                   if (
                     ["complainantDetails", "respondentDetails"]?.includes(selected) &&
-                    (formComponent.component === "CustomRadioInfoComponent" || formComponent.key === "transferredPOA")
+                    (formComponent.component === "CustomRadioInfoComponent" ||
+                      formComponent.key === "transferredPOA" ||
+                      formComponent.key === "respondentType")
                   ) {
                     key = formComponent.key + ".name";
                   }
@@ -1796,6 +1800,9 @@ function EFilingCases({ path }) {
                       modifiedFormComponent.isScrutiny = true;
                     }
                     modifiedFormComponent.disable = false;
+                    if (modifiedFormComponent?.type === "radio") {
+                      modifiedFormComponent.populators.styles = { opacity: 1 };
+                    }
                     modifiedFormComponent.withoutLabel = true;
                     modifiedFormComponent.disableScrutinyHeader = true;
                     return [
@@ -1934,6 +1941,8 @@ function EFilingCases({ path }) {
         caseDetails,
         selected,
         setServiceOfDemandNoticeModal,
+        isCaseReAssigned,
+        errorCaseDetails,
       });
       checkDuplicateMobileEmailValidation({
         formData,
@@ -3348,17 +3357,25 @@ function EFilingCases({ path }) {
                   {pageConfig?.addFormText && (
                     <div className="form-item-name">
                       <h1>{`${t(pageConfig?.formItemName)} ${formdata[index]?.displayindex + 1}`}</h1>
-                      {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) && isDraftInProgress && (
-                        <span
-                          style={{ cursor: "pointer" }}
-                          onClick={() => {
-                            setConfirmDeleteModal(true);
-                            setDeleteFormIndex(index);
-                          }}
-                        >
-                          <CustomDeleteIcon />
-                        </span>
-                      )}
+                      {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) &&
+                        (isDraftInProgress ||
+                          (isCaseReAssigned &&
+                            (Object?.keys(judgeObj || {})?.length > 0 ||
+                              (!!formdata?.[index] &&
+                                !(
+                                  caseDetails?.additionalDetails?.[selected]?.formdata?.[index] ||
+                                  caseDetails?.caseDetails?.[selected]?.formdata?.[index]
+                                ))))) && (
+                          <span
+                            style={{ cursor: "pointer" }}
+                            onClick={() => {
+                              setConfirmDeleteModal(true);
+                              setDeleteFormIndex(index);
+                            }}
+                          >
+                            <CustomDeleteIcon />
+                          </span>
+                        )}
                     </div>
                   )}
                   <FormComposerV2

@@ -6229,3 +6229,77 @@ export const configAcceptReschedulingRequest = [
     ],
   },
 ];
+
+export const configMiscellaneousProcess = [
+  {
+    body: [
+      {
+        type: "date",
+        label: "Date for Hearing",
+        key: "dateOfHearing",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
+        labelChildren: "OutlinedInfoIcon",
+        isMandatory: true,
+        disable: true,
+        populators: {
+          name: "dateOfHearing",
+          validation: {
+            max: {
+              patternType: "date",
+              masterName: "commonUiConfig",
+              moduleName: "maxDateValidation",
+            },
+          },
+        },
+      },
+      {
+        label: "SELECT_MISCELLANEOUS_TEMPLATE",
+        isMandatory: true,
+        key: "processTemplate",
+        schemaKeyPath: "orderDetails.processTemplate",
+        transformer: "default",
+        type: "dropdown",
+        populators: {
+          styles: { maxWidth: "100%" },
+          name: "processTemplate",
+          optionsKey: "processTitle",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [],
+        },
+      },
+      {
+        isMandatory: true,
+        type: "component",
+        component: "SelectAddreseeCustomComponent",
+        key: "selectAddresee",
+        schemaKeyPath: "orderDetails.selectAddresee",
+        transformer: "default",
+        label: "SELECT_ADDRESSEE",
+        populators: {
+          options: [],
+          optionsKey: "name",
+          disable: false,
+        },
+      },
+      {
+        isMandatory: true,
+        type: "component",
+        component: "MultiPartyAddressSelector",
+        key: "selectedPartiesDetails",
+        schemaKeyPath: "orderDetails.selectedPartiesDetails",
+        transformer: "default",
+        withoutLabel: true,
+        populators: {
+          options: [],
+          partyOptionsKey: "name",
+          optionsKey: "formattedAddress",
+          addressOptionKey: "partyUniqueId",
+          hideInForm: true,
+        },
+      },
+    ],
+  },
+];
