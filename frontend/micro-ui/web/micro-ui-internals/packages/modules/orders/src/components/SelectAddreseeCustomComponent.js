@@ -51,7 +51,7 @@ const SelectAddreseeCustomComponent = ({ t, config, formData = {}, onSelect, err
       const optId = optData?.uniqueId || optData?.uuid;
 
       return !selectedPartyIds.includes(optId);
-    });
+    }) || [];
   }, [inputs?.options, selectedPartyIds]);
 
 

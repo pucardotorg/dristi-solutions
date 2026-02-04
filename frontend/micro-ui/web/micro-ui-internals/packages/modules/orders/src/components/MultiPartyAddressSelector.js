@@ -53,13 +53,15 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
   }, [formData, config?.key]);
 
   const availableOptions = useMemo(() => {
-    return partyOptions
-      ?.map((opt) => opt?.data)
-      ?.filter((optData) => {
-        const optId = optData?.uniqueId || optData?.uuid;
+    return (
+      partyOptions
+        ?.map((opt) => opt?.data)
+        ?.filter((optData) => {
+          const optId = optData?.uniqueId || optData?.uuid;
 
-        return !selectedPartyIds.includes(optId);
-      });
+          return !selectedPartyIds.includes(optId);
+        }) || []
+    );
   }, [partyOptions, selectedPartyIds]);
 
   return (
@@ -87,7 +89,7 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
                 <p className="input-label">{t("PARTY_NAME")}</p>
                 <Dropdown
                   t={t}
-                  option={availableOptions}
+                  option={availableOptions || []}
                   optionKey={inputs?.partyOptionsKey || "name"}
                   selected={row?.selectedParty}
                   select={(val) => updateRow(index, "selectedParty", val)}
