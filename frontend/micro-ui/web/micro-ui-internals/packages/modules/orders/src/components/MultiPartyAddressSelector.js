@@ -44,6 +44,24 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
     onSelect?.(config?.key, updatedData);
   };
 
+  const selectedPartyIds = useMemo(() => {
+    const alreadySelectedData = formData?.[config?.key];
+    if (Array.isArray(alreadySelectedData)) {
+      return alreadySelectedData?.map((data) => data?.selectedParty?.uniqueId || data?.selectedParty?.uuid)?.filter(Boolean);
+    }
+    return [];
+  }, [formData, config?.key]);
+
+  const availableOptions = useMemo(() => {
+    return partyOptions
+      ?.map((opt) => opt?.data)
+      ?.filter((optData) => {
+        const optId = optData?.uniqueId || optData?.uuid;
+
+        return !selectedPartyIds.includes(optId);
+      });
+  }, [partyOptions, selectedPartyIds]);
+
   return (
     <div className="multi-party-address-wrapper">
       {selectedRows?.map((row, index) => {
@@ -69,7 +87,7 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
                 <p className="input-label">{t("PARTY_NAME")}</p>
                 <Dropdown
                   t={t}
-                  option={partyOptions?.map((opt) => opt?.data)}
+                  option={availableOptions}
                   optionKey={inputs?.partyOptionsKey || "name"}
                   selected={row?.selectedParty}
                   select={(val) => updateRow(index, "selectedParty", val)}
