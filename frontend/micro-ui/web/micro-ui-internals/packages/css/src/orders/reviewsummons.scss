@@ -149,7 +149,10 @@
   position: relative !important;
   top: -2px !important;
 }
-
+.template-page table thead th:first-child {
+  min-width: 5px !important;
+  width: 10px !important;
+}
 /*
 .custom-search-layout .search-field-wrapper .label-field-pair:first-child {
   flex-basis: 100%;
