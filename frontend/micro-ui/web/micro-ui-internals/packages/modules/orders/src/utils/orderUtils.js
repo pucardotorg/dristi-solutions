@@ -410,8 +410,8 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
   if (currentOrderType && ["MISCELLANEOUS_PROCESS"]?.includes(currentOrderType)) {
     const isSelectAddreseeValid =
       Array.isArray(formData?.selectAddresee) &&
-      formData.selectAddresee.length > 0 &&
-      formData.selectAddresee.every((item) => item && Object.keys(item).length > 0);
+      formData?.selectAddresee?.length > 0 &&
+      formData?.selectAddresee?.every((item) => item && Object.keys(item)?.length > 0);
 
     if (!isSelectAddreseeValid && formData?.selectAddresee) {
       setFormErrors?.current?.[index]?.("selectAddresee", { message: t("ERR_COMPLETE_ALL_PARTIES") });

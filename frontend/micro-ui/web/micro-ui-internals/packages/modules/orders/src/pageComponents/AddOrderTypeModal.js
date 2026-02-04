@@ -91,8 +91,8 @@ const AddOrderTypeModal = ({
 
       const isSelectAddreseeValid =
         Array.isArray(formData?.selectAddresee) &&
-        formData.selectAddresee.length > 0 &&
-        formData.selectAddresee.every((item) => item && Object.keys(item).length > 0);
+        formData?.selectAddresee?.length > 0 &&
+        formData?.selectAddresee?.every((item) => item && Object.keys(item)?.length > 0);
 
       if (isSelectAddreseeValid && Object.keys(formState?.errors).includes("selectAddresee")) {
         clearFormErrors?.current?.[index]?.("selectAddresee");
