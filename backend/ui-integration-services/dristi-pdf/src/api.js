@@ -619,6 +619,34 @@ async function search_digitalizedDocuments(
   }
 }
 
+async function search_templateConfiguration(
+  tenantId,
+  requestinfo,
+  criteria,
+  pagination
+) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(
+        config.host.templateConfiguration,  // TODO : confirm host and path and update
+        config.paths.template_configuration_search 
+      ),
+      data: {
+        RequestInfo: requestinfo,
+        criteria,
+        // pagination,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(
+      `Error in ${config.paths.template_configuration_search}: ${error.message}`
+    );
+    throw error;
+  }
+}
+
 module.exports = {
   pool,
   create_pdf,
@@ -651,4 +679,5 @@ module.exports = {
   search_bailBond_v2,
   search_task_mangement,
   search_digitalizedDocuments,
+  search_templateConfiguration,
 };
