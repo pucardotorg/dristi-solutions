@@ -874,8 +874,8 @@
         font-size: 16px !important;
       }
     }
-    .digit-dropdown-options-card{
-      span{
+    .digit-dropdown-options-card {
+      span {
         font-size: 16px !important;
         color: "#505a5f" !important;
       }
@@ -883,7 +883,7 @@
   }
 }
 
-.application-info {
+.application-info-new {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -921,6 +921,6 @@
   }
 
   .application-type-details {
-     display: contents;
+    display: contents;
   }
 }

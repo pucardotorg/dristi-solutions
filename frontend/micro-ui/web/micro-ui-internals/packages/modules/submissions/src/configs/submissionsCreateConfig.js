@@ -2749,6 +2749,7 @@ export const configsAdvancementOrAdjournment = [
               placeholder: "DD/MM/YYYY",
               customStyleLabelField: { display: "flex", justifyContent: "space-between" },
               maxSelected: 5,
+              isShowHearing: false,
               validation: {
                 isRequired: true,
                 minDate: new Date().toISOString().split("T")[0],

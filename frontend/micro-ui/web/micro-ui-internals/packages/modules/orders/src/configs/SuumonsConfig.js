@@ -248,7 +248,7 @@ export const SummonsTabsConfig = {
           apiOperation: "SEARCH",
           criteria: {
             applicationStatus: "SIGN_PENDING",
-            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"],
+            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT", "ISSUE_PROCESS"],
             isPendingCollection: false,
           },
         },
@@ -539,7 +539,7 @@ export const SummonsTabsConfig = {
           apiOperation: "SEARCH",
           criteria: {
             applicationStatus: "SIGNED",
-            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"],
+            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT", "ISSUE_PROCESS"],
             isPendingCollection: false,
           },
         },
@@ -789,7 +789,7 @@ export const SummonsTabsConfig = {
         },
         requestBody: {
           criteria: {
-            completeStatus: ["ATTACHMENT_SENT", "PROCLAMATION_SENT", "SUMMON_SENT", "WARRANT_SENT", "NOTICE_SENT"],
+            completeStatus: ["ATTACHMENT_SENT", "PROCLAMATION_SENT", "SUMMON_SENT", "WARRANT_SENT", "NOTICE_SENT", "PROCESS_SENT"],
             isPendingCollection: false,
           },
         },

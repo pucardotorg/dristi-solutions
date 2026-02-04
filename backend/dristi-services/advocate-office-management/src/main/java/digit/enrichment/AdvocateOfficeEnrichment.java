@@ -33,74 +33,84 @@ public class AdvocateOfficeEnrichment {
         this.individualUtil = individualUtil;
     }
 
-    private String getUserUuidFromAdvocateId(RequestInfo requestInfo, String tenantId, String advocateId) {
-        JsonNode advocate = advocateUtil.searchAdvocateById(requestInfo, advocateId);
+    private String getIndividualIdFromAdvocateId(RequestInfo requestInfo, String tenantId, String advocateId){
+        JsonNode advocate = advocateUtil.searchAdvocateById(requestInfo, tenantId, advocateId);
         if (advocate == null) {
             throw new CustomException(ADVOCATE_NOT_FOUND,
                     String.format("Advocate not found for advocate id %s", advocateId));
         }
 
-        String individualId = advocateUtil.getIndividualId(advocate);
+        return advocateUtil.getIndividualId(advocate);
+    }
+
+    private String getUserUuidFromIndividualId(RequestInfo requestInfo, String tenantId, String individualId){
         JsonNode individual = individualUtil.searchIndividualByIndividualId(requestInfo, tenantId, individualId);
         if (individual == null) {
             throw new CustomException(INDIVIDUAL_NOT_FOUND,
-                    String.format("Individual not found for advocate id %s", advocateId));
+                    String.format("Individual not found for individual id %s", individualId));
         }
 
         return individualUtil.getUserUuid(individual);
     }
 
-    private String getUserUuidFromClerkId(RequestInfo requestInfo, String tenantId, String clerkId) {
+    private String getIndividualIdFromClerkId(RequestInfo requestInfo, String tenantId, String clerkId){
         JsonNode clerk = advocateUtil.searchClerkById(requestInfo, tenantId, clerkId);
         if (clerk == null) {
             throw new CustomException(ADVOCATE_CLERK_NOT_FOUND,
                     String.format("Advocate clerk not found for clerk id %s", clerkId));
         }
 
-        String individualId = advocateUtil.getIndividualId(clerk);
-        JsonNode individual = individualUtil.searchIndividualByIndividualId(requestInfo, tenantId, individualId);
-        if (individual == null) {
-            throw new CustomException(INDIVIDUAL_NOT_FOUND, "Individual not found for clerk");
-        }
-
-        return individualUtil.getUserUuid(individual);
+        return advocateUtil.getIndividualId(clerk);
     }
 
     public void enrichAddMemberRequest(AddMemberRequest request) {
         AddMember addMember = request.getAddMember();
         RequestInfo requestInfo = request.getRequestInfo();
-        String tenantId = addMember.getTenantId();
 
         addMember.setId(UUID.randomUUID());
         addMember.setAuditDetails(getAuditDetailsForCreate(requestInfo));
         addMember.setIsActive(true);
 
-        // Enrich officeAdvocateUserUuid from officeAdvocateId
-        if (addMember.getOfficeAdvocateId() != null && addMember.getOfficeAdvocateUserUuid() == null) {
-            String advocateUserUuid = getUserUuidFromAdvocateId(requestInfo, tenantId, addMember.getOfficeAdvocateId().toString());
-            addMember.setOfficeAdvocateUserUuid(UUID.fromString(advocateUserUuid));
-            log.info("Enriched officeAdvocateUserUuid: {} for officeAdvocateId: {}", advocateUserUuid, addMember.getOfficeAdvocateId());
-        }
-
-        // Enrich memberUserUuid from memberId
-        if (addMember.getMemberId() != null && addMember.getMemberUserUuid() == null) {
-            String memberUserUuid;
-            if (addMember.getMemberType() == MemberType.ADVOCATE) {
-                memberUserUuid = getUserUuidFromAdvocateId(requestInfo, tenantId, addMember.getMemberId().toString());
-            } else {
-                memberUserUuid = getUserUuidFromClerkId(requestInfo, tenantId, addMember.getMemberId().toString());
-            }
-            addMember.setMemberUserUuid(UUID.fromString(memberUserUuid));
-            log.info("Enriched memberUserUuid: {} for memberId: {}", memberUserUuid, addMember.getMemberId());
-        }
+        enrichOfficeAdvocateUserUuid(request);
+        enrichMemberUserUuid(request);
 
         log.info("Enriched add member request with id: {}", addMember.getId());
     }
 
+    private void enrichOfficeAdvocateUserUuid(AddMemberRequest request){
+        AddMember addMember = request.getAddMember();
+        RequestInfo requestInfo = request.getRequestInfo();
+        String tenantId = addMember.getTenantId();
+        String advocateId = addMember.getOfficeAdvocateId().toString();
+
+        String advocateIndividualId = getIndividualIdFromAdvocateId(requestInfo, tenantId, advocateId);
+        String advocateUserUuid = getUserUuidFromIndividualId(requestInfo, tenantId, advocateIndividualId);
+        addMember.setOfficeAdvocateUserUuid(UUID.fromString(advocateUserUuid));
+        log.info("Enriched officeAdvocateUserUuid: {} for officeAdvocateId: {}", advocateUserUuid, addMember.getOfficeAdvocateId());
+    }
+
+    private void enrichMemberUserUuid(AddMemberRequest request){
+        AddMember addMember = request.getAddMember();
+        RequestInfo requestInfo = request.getRequestInfo();
+        String tenantId = addMember.getTenantId();
+        String memberId = addMember.getMemberId().toString();
+
+        String memberIndividualId;
+        if (addMember.getMemberType() == MemberType.ADVOCATE) {
+            memberIndividualId = getIndividualIdFromAdvocateId(requestInfo, tenantId, memberId);
+        } else {
+            memberIndividualId = getIndividualIdFromClerkId(requestInfo, tenantId, memberId);
+        }
+
+        String memberUserUuid = getUserUuidFromIndividualId(requestInfo, tenantId, memberIndividualId);
+        addMember.setMemberUserUuid(UUID.fromString(memberUserUuid));
+        log.info("Enriched memberUserUuid: {} for memberId: {}", memberUserUuid, addMember.getMemberId());
+    }
+
+
+
     public void enrichLeaveOfficeRequest(LeaveOfficeRequest request) {
         LeaveOffice leaveOffice = request.getLeaveOffice();
-        RequestInfo requestInfo = request.getRequestInfo();
-        String tenantId = leaveOffice.getTenantId();
 
         leaveOffice.setIsActive(false);
 

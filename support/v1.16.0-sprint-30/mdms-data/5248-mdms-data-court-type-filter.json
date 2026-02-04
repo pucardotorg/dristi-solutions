@@ -1,0 +1,20 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "Order",
+    "masterName": "CourtStaffOrderType",
+    "mdmsPayload": {
+      "id": "6c81aa1b-1eb4-4d12-baf7-cd6232dd5363",
+      "tenantId": "kl",
+      "schemaCode": "Order.CourtStaffOrderType",
+      "uniqueIdentifier": "6",
+      "data": {
+        "id": 6,
+        "code": "MISCELLANEOUS_PROCESS",
+        "name": "Miscellaneous",
+        "isActive": true
+      },
+      "isActive": true
+    }
+  }
+]

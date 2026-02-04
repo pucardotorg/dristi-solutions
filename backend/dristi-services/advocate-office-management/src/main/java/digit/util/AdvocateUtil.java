@@ -28,13 +28,14 @@ public class AdvocateUtil {
         this.configuration = configuration;
     }
 
-    public JsonNode searchAdvocate(RequestInfo requestInfo, Map<String, Object> criteria) {
+    public JsonNode searchAdvocate(RequestInfo requestInfo, String tenantId, Map<String, Object> criteria) {
         try {
             StringBuilder uri = new StringBuilder(configuration.getAdvocateHost())
                     .append(configuration.getAdvocateSearchEndPoint());
 
             Map<String, Object> request = new HashMap<>();
             request.put("RequestInfo", requestInfo);
+            request.put("tenantId", tenantId);
             request.put("criteria", List.of(criteria));
 
             Object responseMap = serviceRequestRepository.fetchResult(uri, request);
@@ -62,10 +63,10 @@ public class AdvocateUtil {
         }
     }
 
-    public JsonNode searchAdvocateById(RequestInfo requestInfo, String advocateId) {
+    public JsonNode searchAdvocateById(RequestInfo requestInfo, String tenantId, String advocateId) {
         Map<String, Object> criteria = new HashMap<>();
         criteria.put("id", advocateId);
-        return searchAdvocate(requestInfo, criteria);
+        return searchAdvocate(requestInfo, tenantId, criteria);
     }
 
     public JsonNode searchClerk(RequestInfo requestInfo, String tenantId, Map<String, Object> criteria) {

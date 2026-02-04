@@ -63,5 +63,6 @@ module.exports = function (app) {
     "/bail-bond/v1/_getBailsToSign",
     "/task-management",
     "/digitalized-documents",
+    "/template-configuration"
   ].forEach((location) => app.use(location, createProxy));
 };

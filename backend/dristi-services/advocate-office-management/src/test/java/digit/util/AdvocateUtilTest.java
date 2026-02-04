@@ -55,7 +55,7 @@ class AdvocateUtilTest {
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
         when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
 
-        JsonNode result = advocateUtil.searchAdvocateById(requestInfo, "adv-123");
+        JsonNode result = advocateUtil.searchAdvocateById(requestInfo, "pg.citya", "adv-123");
 
         assertNotNull(result);
         verify(serviceRequestRepository, times(1)).fetchResult(any(), any());
@@ -65,7 +65,7 @@ class AdvocateUtilTest {
     void testSearchAdvocateById_NullResponse() {
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(null);
 
-        JsonNode result = advocateUtil.searchAdvocateById(requestInfo, "adv-123");
+        JsonNode result = advocateUtil.searchAdvocateById(requestInfo, "pg.citya", "adv-123");
 
         assertNull(result);
     }
@@ -78,7 +78,7 @@ class AdvocateUtilTest {
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(mockResponse);
         when(objectMapper.valueToTree(any())).thenReturn(new ObjectMapper().readTree(jsonResponse));
 
-        JsonNode result = advocateUtil.searchAdvocateById(requestInfo, "adv-123");
+        JsonNode result = advocateUtil.searchAdvocateById(requestInfo, "pg.citya", "adv-123");
 
         assertNull(result);
     }
@@ -87,7 +87,7 @@ class AdvocateUtilTest {
     void testSearchAdvocateById_ExceptionDuringProcessing() {
         when(serviceRequestRepository.fetchResult(any(), any())).thenThrow(new RuntimeException("Network error"));
 
-        JsonNode result = advocateUtil.searchAdvocateById(requestInfo, "adv-123");
+        JsonNode result = advocateUtil.searchAdvocateById(requestInfo, "pg.citya", "adv-123");
 
         assertNull(result);
     }
