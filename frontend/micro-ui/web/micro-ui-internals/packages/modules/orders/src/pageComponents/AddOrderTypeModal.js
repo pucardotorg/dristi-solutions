@@ -401,8 +401,6 @@ const AddOrderTypeModal = ({
     return [];
   }, [caseDetails, formdata, orderType?.code, policeStationData]);
 
-  console.log(formdata, "kl");
-
   return (
     <React.Fragment>
       <Modal
