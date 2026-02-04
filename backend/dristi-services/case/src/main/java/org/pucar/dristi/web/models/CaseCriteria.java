@@ -98,13 +98,7 @@ public class CaseCriteria {
     @Valid
     private Pagination pagination = null;
 
-    @JsonProperty("officeAdvocateId")
-    private String officeAdvocateId = null;
-
-    @JsonProperty("memberId")
-    private String memberId = null;
-
-    @JsonProperty("isMemberActiveInCase")
-    private Boolean isMemberActiveInCase = null;
+    @JsonProperty("isClerk")
+    private Boolean isClerk = null;
 
 }
