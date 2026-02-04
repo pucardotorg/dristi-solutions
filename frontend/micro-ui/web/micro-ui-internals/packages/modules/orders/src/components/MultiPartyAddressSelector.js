@@ -114,7 +114,9 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
       </div>
 
       {errors?.[config?.key] && (
-        <CardLabelError style={inputs?.errorStyle}>{t(errors?.[config?.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>
+        <CardLabelError style={inputs?.errorStyle || { color: "red", marginTop: "5px", marginBottom: 0 }}>
+          {t(errors?.[config?.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")}
+        </CardLabelError>
       )}
     </div>
   );
