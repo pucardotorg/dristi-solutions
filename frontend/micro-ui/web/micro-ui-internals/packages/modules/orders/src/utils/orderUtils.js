@@ -495,7 +495,16 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
 
       if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "REFERRAL_CASE_TO_ADR"]?.includes(orderType)) {
         const hearingDate = formdata?.dateOfHearing || formdata?.dateForHearing || formdata?.hearingDate;
-        if (currentOrder?.nextHearingDate && hearingDate) {
+        const scheduleItem = currentOrder?.compositeItems?.find((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE");
+        if (scheduleItem && hearingDate) {
+          const dateChanged = formatDate(new Date(scheduleItem?.orderSchema?.orderDetails?.hearingDate)) !== hearingDate;
+          if (dateChanged) {
+            itemErrors?.push({
+              key: "DATE_OF_HEARING",
+              errorMessage: "THIS_DOES_NOT_MATCH_WITH_NEXT_HEARING_DATE",
+            });
+          }
+        } else if (currentOrder?.nextHearingDate && hearingDate) {
           const dateChanged = formatDate(new Date(currentOrder?.nextHearingDate)) !== hearingDate;
           if (dateChanged) {
             itemErrors?.push({
