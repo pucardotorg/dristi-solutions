@@ -1,5 +1,7 @@
 package pucar.strategy.ordertype;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,8 +89,9 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
         boolean isSameDate = hearingDate.equals(today);
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
+        String refHearingId = JsonPath.read(order.getAdditionalDetails().toString(), "$.refHearingId");
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                .criteria(HearingCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).hearingId(order.getScheduledHearingNumber()).build()).build());
+                .criteria(HearingCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).hearingId(refHearingId).build()).build());
         Hearing hearing = hearings.get(0);
         Long time = hearingDate.atStartOfDay(ZoneId.of(config.getZoneId())).toInstant().toEpochMilli();
         if (time != null) {
