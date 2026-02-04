@@ -44,19 +44,19 @@ public class AdvocateOfficeMemberConsumer {
             }
 
             // Get unique office advocate user UUIDs to update their pending tasks
-            Set<String> officeAdvocateUuids = new HashSet<>();
+            Map<String, String> officeAdvocateMap = new HashMap<>();
             for (AdvocateOfficeCaseMember member : request.getMembers()) {
-                if (member.getOfficeAdvocateUserUuid() != null) {
-                    officeAdvocateUuids.add(member.getOfficeAdvocateUserUuid());
+                if (member.getOfficeAdvocateUserUuid() != null && member.getOfficeAdvocateId() != null) {
+                    officeAdvocateMap.put(member.getOfficeAdvocateUserUuid(), member.getOfficeAdvocateId().toString());
                 }
             }
 
             // For each office advocate, fetch their pending tasks and re-index them
-            for (String advocateUuid : officeAdvocateUuids) {
-                updatePendingTasksForAdvocate(advocateUuid, request.getRequestInfo());
+            for (Map.Entry<String, String> entry : officeAdvocateMap.entrySet()) {
+                updatePendingTasksForAdvocate(entry.getKey(), request.getRequestInfo(), entry.getValue());
             }
 
-            log.info("Successfully processed add member event for {} office advocates", officeAdvocateUuids.size());
+            log.info("Successfully processed add member event for {} office advocates", officeAdvocateMap.size());
         } catch (Exception e) {
             log.error("Error processing add member event", e);
         }
@@ -78,8 +78,12 @@ public class AdvocateOfficeMemberConsumer {
                     ? request.getLeaveOffice().getOfficeAdvocateUserUuid().toString()
                     : null;
 
+            String advocateId = request.getLeaveOffice().getOfficeAdvocateId() != null
+                    ? request.getLeaveOffice().getOfficeAdvocateId().toString()
+                    : null;
+
             if (officeAdvocateUuid != null) {
-                updatePendingTasksForAdvocate(officeAdvocateUuid, request.getRequestInfo());
+                updatePendingTasksForAdvocate(officeAdvocateUuid, request.getRequestInfo(), advocateId);
                 log.info("Successfully processed leave office event for advocate: {}", officeAdvocateUuid);
             }
         } catch (Exception e) {
@@ -87,12 +91,12 @@ public class AdvocateOfficeMemberConsumer {
         }
     }
 
-    private void updatePendingTasksForAdvocate(String advocateUuid, RequestInfo requestInfo) {
+    private void updatePendingTasksForAdvocate(String advocateUuid, RequestInfo requestInfo, String advocateId) {
         try {
             log.info("Fetching cases for advocate: {}", advocateUuid);
             
             // Step 1: Get all cases for this advocate
-            List<Map<String, String>> cases = caseUtil.getCasesByAdvocateId(advocateUuid, requestInfo);
+            List<Map<String, String>> cases = caseUtil.getCasesByAdvocateId(advocateId, requestInfo);
             
             if (cases.isEmpty()) {
                 log.info("No cases found for advocate: {}", advocateUuid);
