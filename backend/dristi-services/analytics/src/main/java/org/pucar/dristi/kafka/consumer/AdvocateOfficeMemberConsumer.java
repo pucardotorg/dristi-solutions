@@ -136,6 +136,7 @@ public class AdvocateOfficeMemberConsumer {
                             CaseCriteria criteria = CaseCriteria.builder()
                                     .filingNumber(filingNumber)
                                     .caseId(caseId)
+                                    .defaultFields(false)
                                     .build();
                             CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
                                     .requestInfo(requestInfo)
