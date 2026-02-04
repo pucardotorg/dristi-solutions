@@ -324,4 +324,18 @@ public class CaseApiController {
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @PostMapping(value = "/v1/advocate/_cases")
+    public ResponseEntity<AdvocateCasesResponse> getAdvocateCases(
+            @Parameter(in = ParameterIn.DEFAULT, description = "Advocate ID + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody AdvocateCasesRequest body) {
+        log.info("api=/v1/advocate/_cases, result=IN_PROGRESS");
+        List<AdvocateCaseInfo> cases = caseService.getCasesByAdvocateId(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        AdvocateCasesResponse response = AdvocateCasesResponse.builder()
+                .cases(cases)
+                .responseInfo(responseInfo)
+                .build();
+        log.info("api=/v1/advocate/_cases, result=SUCCESS");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

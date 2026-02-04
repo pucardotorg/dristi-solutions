@@ -280,6 +280,11 @@ public class ApplicationService {
 
     public List<Application> searchApplications(ApplicationSearchRequest request) {
         try {
+            // Validate case access for advocate and advocate clerk roles if filingNumber is provided in criteria
+            if (request != null && request.getCriteria() != null && request.getCriteria().getFilingNumber() != null) {
+                validator.validateCaseAccess(request.getRequestInfo(), request.getCriteria().getFilingNumber());
+            }
+
             // Fetch applications from database according to the given search params
             log.info("Starting application search with parameters :: {}", request);
             List<Application> applicationList = applicationRepository.getApplications(request);
@@ -296,6 +301,15 @@ public class ApplicationService {
 
     public List<ApplicationExists> existsApplication(ApplicationExistsRequest applicationExistsRequest) {
         try {
+            // Validate case access for advocate and advocate clerk roles if filingNumber is provided
+            if (applicationExistsRequest != null && applicationExistsRequest.getApplicationExists() != null) {
+                for (ApplicationExists appExists : applicationExistsRequest.getApplicationExists()) {
+                    if (appExists.getFilingNumber() != null) {
+                        validator.validateCaseAccess(applicationExistsRequest.getRequestInfo(), appExists.getFilingNumber());
+                    }
+                }
+            }
+
             return applicationRepository.checkApplicationExists(applicationExistsRequest.getApplicationExists());
         } catch (CustomException e) {
             log.error("Error while checking application exist {}", e.toString());
