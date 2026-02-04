@@ -22,6 +22,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.enrichment.EnrichmentService;
 import org.pucar.dristi.kafka.Producer;
+import org.pucar.dristi.repository.AdvocateOfficeCaseMemberRepository;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
@@ -90,6 +91,7 @@ public class CaseService {
     private final OrderUtil orderUtil;
     private final DateUtil dateUtil;
     private final InboxUtil inboxUtil;
+    private final AdvocateOfficeCaseMemberRepository advocateOfficeCaseMemberRepository;
 
 
     @Autowired
@@ -105,7 +107,7 @@ public class CaseService {
                        HearingUtil analyticsUtil,
                        UserService userService,
                        PaymentCalculaterUtil paymentCalculaterUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil, InboxUtil inboxUtil) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateOfficeCaseMemberRepository advocateOfficeCaseMemberRepository) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -131,6 +133,7 @@ public class CaseService {
         this.orderUtil = orderUtil;
         this.dateUtil = dateUtil;
         this.inboxUtil = inboxUtil;
+        this.advocateOfficeCaseMemberRepository = advocateOfficeCaseMemberRepository;
     }
 
     public static List<String> extractIndividualIds(JsonNode rootNode) {
@@ -6473,5 +6476,17 @@ public class CaseService {
         }
         
         return caseConversionDetails;
+    }
+
+    public List<AdvocateCaseInfo> getCasesByAdvocateId(AdvocateCasesRequest request) {
+        try {
+            log.info("Fetching cases for advocateId: {}", request.getAdvocateId());
+            List<AdvocateCaseInfo> cases = advocateOfficeCaseMemberRepository.getCasesByAdvocateId(request.getAdvocateId());
+            log.info("Found {} cases for advocateId: {}", cases.size(), request.getAdvocateId());
+            return cases;
+        } catch (Exception e) {
+            log.error("Error fetching cases for advocateId: {}", request.getAdvocateId(), e);
+            throw new CustomException("ADVOCATE_CASES_FETCH_ERROR", "Error fetching cases for advocate: " + e.getMessage());
+        }
     }
 }
