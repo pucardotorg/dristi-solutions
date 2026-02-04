@@ -1,4 +1,4 @@
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getUserDetails, setCitizenDetail } from "../../../hooks/useGetAccessToken";
@@ -12,6 +12,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const setFormError = useRef(null);
 
@@ -40,6 +41,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
 
   const onSubmit = async () => {
     setIsDisabled(true);
+    setIsLoading(true);
     const userType = params?.userType;
     const userTypeSelcted = params?.userType?.clientDetails?.selectUserType?.code;
     const Individual = params?.IndividualPayload
@@ -138,10 +140,14 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
                       username: getFullName(" ", oldData?.name?.firstName, oldData?.name?.middleName, oldData?.name?.lastName),
                       userType: params?.userType,
                     },
-                    ...data?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
-                      res[curr] = formData?.clientDetails?.[curr];
-                      return res;
-                    }, {}),
+                    ...(data?.selectUserType?.code === "ADVOCATE_CLERK"
+                      ? {
+                          stateRegnNumber: formData?.clientDetails?.barRegistrationNumber,
+                        }
+                      : data?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
+                          res[curr] = formData?.clientDetails?.[curr];
+                          return res;
+                        }, {})),
                   },
                 };
                 Digit.DRISTIService.advocateClerkService(data?.selectUserType?.apiDetails?.serviceName, requestBody, tenantId, true, {
@@ -185,7 +191,11 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
           ...formData,
         });
       } else if (params?.Individual?.[0]?.individualId) {
-        if (data?.selectUserType?.apiDetails && data?.selectUserType?.apiDetails?.serviceName && (data?.selectUserType?.role[0] === "ADVOCATE_ROLE" || data?.selectUserType?.role[0] === "ADVOCATE_CLERK_ROLE")) {
+        if (
+          data?.selectUserType?.apiDetails &&
+          data?.selectUserType?.apiDetails?.serviceName &&
+          (data?.selectUserType?.role[0] === "ADVOCATE_ROLE" || data?.selectUserType?.role[0] === "ADVOCATE_CLERK_ROLE")
+        ) {
           await window?.Digit.DRISTIService.updateIndividualUser(
             {
               Individual: params?.Individual?.[0],
@@ -235,10 +245,14 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
                   ),
                   userType: params?.userType,
                 },
-                ...data?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
-                  res[curr] = formData?.clientDetails?.[curr];
-                  return res;
-                }, {}),
+                ...(data?.selectUserType?.code === "ADVOCATE_CLERK"
+                  ? {
+                      stateRegnNumber: formData?.clientDetails?.barRegistrationNumber,
+                    }
+                  : data?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
+                      res[curr] = formData?.clientDetails?.[curr];
+                      return res;
+                    }, {})),
               },
             };
             Digit.DRISTIService.advocateClerkService(data?.selectUserType?.apiDetails?.serviceName, requestBody, tenantId, true, {
@@ -333,8 +347,12 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
     handleRedirect();
   }, [params.address, params, history, pathOnRefresh, showSuccess]);
 
+  if (isLoading) {
+    return <Loader />;
+  }
+
   return (
-    <div className="terms-condition" style={{ margin: "50px" }}>
+    <div className="terms-condition" style={{ margin: "24px auto" }}>
       <FormComposerV2
         config={config}
         t={t}

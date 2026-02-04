@@ -393,50 +393,8 @@ const ManageOffice = () => {
           borderRight: "none",
         }}
       >
-        {/* Search and Add Member Row */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-          {/* Search Section */}
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <TextInput
-              type="text"
-              name="memberSearch"
-              value={memberSearchQuery}
-              onChange={(e) => setMemberSearchQuery(e.target.value)}
-              placeholder={t("SEARCH_MEMBER_BY_NAME") || "Search Member by name"}
-              style={{ width: "280px", marginBottom: 0 }}
-              textInputStyle={{ marginBottom: 0 }}
-            />
-            <button
-              onClick={handleClearSearch}
-              style={{
-                background: "none",
-                border: "none",
-                color: "#007E7E",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-              }}
-            >
-              {t("CLEAR_SEARCH") || "Clear Search"}
-            </button>
-            <button
-              onClick={handleMemberSearch}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#007E7E",
-                color: "#FFFFFF",
-                border: "none",
-                borderRadius: "4px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-              }}
-            >
-              {t("SEARCH") || "Search"}
-            </button>
-          </div>
-
-          {/* Add New Member Button */}
+        {/* Add New Member Row */}
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: "24px" }}>
           <button
             onClick={handleAddNewMember}
             style={{
