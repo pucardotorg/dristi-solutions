@@ -110,6 +110,7 @@ public class ServiceConstants {
     public static final String ORDER_COMPOSITE_ITEMS_PATH = "$.compositeItems.*";
     public static final String APPLICATION_TYPE_PATH = "$.applicationType";
     public static final String INITIAL_HEARING_DATE_PATH = "$.applicationDetails.initialHearingDate";
+    public static final String ADVANCEMENT_OR_ADJOURNMENT_APPLICATION = "ADVANCEMENT_OR_ADJOURNMENT_APPLICATION";
 
     public static final String RES_MSG_ID = "uief87324";
     public static final String SUCCESSFUL = "successful";

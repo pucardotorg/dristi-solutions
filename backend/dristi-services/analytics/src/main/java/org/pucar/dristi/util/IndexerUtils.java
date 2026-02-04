@@ -418,8 +418,10 @@ public class IndexerUtils {
             }
             searchableFieldsList.add(filingNumber);
             searchableFieldsList.add(caseTitle);
-            searchableFieldsList.add(nextHearingDate);
-            searchableFieldsList.add(dateOfApplication);
+            if(nextHearingDate!=null)
+             searchableFieldsList.add(nextHearingDate);
+            if(dateOfApplication!=null)
+             searchableFieldsList.add(dateOfApplication);
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());
 
@@ -867,9 +869,10 @@ public class IndexerUtils {
         caseDetails.put("filingNumber", filingNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
-        caseDetails.put("nextHearingDate", formatEpoch(initialHearingEpoch));
-        caseDetails.put("dateOfApplication", formatEpoch(System.currentTimeMillis()));
-
+        if(ADVANCEMENT_OR_ADJOURNMENT_APPLICATION.equalsIgnoreCase(applicationType)){
+            caseDetails.put("nextHearingDate", formatEpoch(initialHearingEpoch));
+            caseDetails.put("dateOfApplication", formatEpoch(System.currentTimeMillis()));
+        }
         return caseDetails;
     }
 
