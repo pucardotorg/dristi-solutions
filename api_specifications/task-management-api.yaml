@@ -1,0 +1,422 @@
+openapi: 3.0.0
+
+info:
+  title: Task Management Service API
+  description: |
+    This API provides advanced task management functionality including task creation,
+    assignment, tracking, and reporting.
+  version: 1.0.0
+
+servers:
+  - url: /taskmgmt/v1
+    description: Task Management Service API
+
+tags:
+  - name: Task Management
+    description: Operations related to task management
+  - name: Task Assignment
+    description: Operations related to task assignment
+  - name: Task Reports
+    description: Operations related to task reporting
+
+paths:
+
+  /tasks/_create:
+    post:
+      tags: [Task Management]
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskManagementRequest'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskManagementResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /tasks/_update:
+    post:
+      tags: [Task Management]
+      summary: Update an existing task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskManagementRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskManagementResponse'
+        '400':
+          description: Invalid input or task not found
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /tasks/_search:
+    post:
+      tags: [Task Management]
+      summary: Search tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskManagementSearchRequest'
+      responses:
+        '200':
+          description: Tasks matching search criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskManagementSearchResponse'
+        '400':
+          description: Invalid search criteria
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /tasks/_assign:
+    post:
+      tags: [Task Assignment]
+      summary: Assign tasks to a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskAssignmentRequest'
+      responses:
+        '202':
+          description: Task assignment accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAssignmentResponse'
+        '400':
+          description: Invalid assignment request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /reports/_summary:
+    post:
+      tags: [Task Reports]
+      summary: Task summary report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskReportRequest'
+      responses:
+        '200':
+          description: Task report generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskReportResponse'
+        '400':
+          description: Invalid report criteria
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    Workflow:
+      type: object
+      properties:
+        action:
+          type: string
+        comments:
+          type: string
+        assignees:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    TaskManagementRequest:
+      type: object
+      required: [requestInfo, taskManagement]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        taskManagement:
+          $ref: '#/components/schemas/TaskManagement'
+
+    TaskManagement:
+      type: object
+      required: [taskId, title, tenantId]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        taskManagementNumber:
+          type: string
+          readOnly: true
+        taskId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+        assignee:
+          type: string
+          format: uuid
+        assigner:
+          type: string
+          format: uuid
+        dueDate:
+          type: string
+          format: date-time
+        createdDate:
+          type: string
+          format: date-time
+          readOnly: true
+        lastModifiedDate:
+          type: string
+          format: date-time
+          readOnly: true
+        additionalDetails:
+          type: object
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+        tenantId:
+          type: string
+
+    TaskManagementSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/TaskManagementSearchCriteria'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    TaskManagementSearchCriteria:
+      type: object
+      required: [tenantId]
+      properties:
+        id:
+          type: array
+          items:
+            type: string
+            format: uuid
+        taskManagementNumber:
+          type: array
+          items:
+            type: string
+        taskId:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: array
+          items:
+            type: string
+        assignee:
+          type: array
+          items:
+            type: string
+            format: uuid
+        assigner:
+          type: array
+          items:
+            type: string
+            format: uuid
+        fromDate:
+          type: string
+          format: date-time
+        toDate:
+          type: string
+          format: date-time
+        tenantId:
+          type: string
+
+    TaskAssignmentRequest:
+      type: object
+      required: [requestInfo, taskIds, assignee, tenantId]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        taskIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        assignee:
+          type: string
+          format: uuid
+        comment:
+          type: string
+        tenantId:
+          type: string
+
+    TaskReportRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/TaskReportCriteria'
+
+    TaskReportCriteria:
+      type: object
+      required: [tenantId]
+      properties:
+        fromDate:
+          type: string
+          format: date
+        toDate:
+          type: string
+          format: date
+        assignee:
+          type: string
+          format: uuid
+        taskType:
+          type: string
+        status:
+          type: array
+          items:
+            type: string
+        tenantId:
+          type: string
+
+    TaskManagementResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        taskManagement:
+          $ref: '#/components/schemas/TaskManagement'
+
+    TaskManagementSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        taskManagements:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskManagement'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    TaskAssignmentResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        success:
+          type: array
+          items:
+            type: string
+            format: uuid
+        failed:
+          type: array
+          items:
+            $ref: '#/components/schemas/FailedAssignment'
+
+    FailedAssignment:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
+
+    TaskReportResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        reportData:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskReportData'
+        summary:
+          $ref: '#/components/schemas/TaskReportSummary'
+
+    TaskReportData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        totalTasks:
+          type: integer
+        completed:
+          type: integer
+        inProgress:
+          type: integer
+        pending:
+          type: integer
+        overdue:
+          type: integer
+
+    TaskReportSummary:
+      type: object
+      properties:
+        totalTasks:
+          type: integer
+        completed:
+          type: integer
+        inProgress:
+          type: integer
+        pending:
+          type: integer
+        overdue:
+          type: integer
+        completionRate:
+          type: number
+          format: float
+        averageCompletionTime:
+          type: number
+          format: float
+
+security:
+  - bearerAuth: []
+

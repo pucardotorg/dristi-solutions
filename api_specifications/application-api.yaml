@@ -1,0 +1,220 @@
+openapi: 3.0.0
+info:
+  title: Application Service
+  description: APIs for managing applications in DRISTI
+  version: 1.0.0
+
+servers:
+  - url: /application-services
+    description: Application service base path
+
+tags:
+  - name: Application
+
+paths:
+  /v1/_create:
+    post:
+      tags: [Application]
+      summary: Create application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationRequest'
+      responses:
+        '200':
+          description: Application created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+
+  /v1/_update:
+    post:
+      tags: [Application]
+      summary: Update application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationRequest'
+      responses:
+        '200':
+          description: Application updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+
+  /v1/_search:
+    post:
+      tags: [Application]
+      summary: Search applications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationSearchRequest'
+      responses:
+        '200':
+          description: Search result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationSearchResponse'
+
+  /v1/_exists:
+    post:
+      tags: [Application]
+      summary: Check if application exists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationExistsRequest'
+      responses:
+        '200':
+          description: Exists response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationExistsResponse'
+
+  /v1/_addcomment:
+    post:
+      tags: [Application]
+      summary: Add comment to application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationCommentRequest'
+      responses:
+        '200':
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+
+components:
+  schemas:
+    ApplicationRequest:
+      type: object
+      required: [requestInfo, application]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        application:
+          $ref: '#/components/schemas/Application'
+
+    ApplicationResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: common ResponseInfo
+        application:
+          $ref: '#/components/schemas/Application'
+
+    ApplicationSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: common RequestInfo
+        criteria:
+          $ref: '#/components/schemas/ApplicationSearchCriteria'
+        pagination:
+          $ref: common Pagination
+
+    ApplicationSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: common ResponseInfo
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+        totalCount:
+          type: integer
+
+    ApplicationExistsRequest:
+      type: object
+      required: [requestInfo, applicationNumber]
+      properties:
+        requestInfo:
+          $ref: common RequestInfo
+        applicationNumber:
+          type: string
+
+    ApplicationExistsResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: common ResponseInfo
+        exists:
+          type: boolean
+
+    ApplicationCommentRequest:
+      type: object
+      required: [requestInfo, applicationId, comment]
+      properties:
+        requestInfo:
+          $ref: common RequestInfo
+        applicationId:
+          type: string
+          format: uuid
+        comment:
+          type: string
+
+    Application:
+      type: object
+      required: [tenantId, caseId, applicationType, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        caseId:
+          type: string
+          format: uuid
+        applicationNumber:
+          type: string
+        applicationType:
+          type: string
+        status:
+          type: string
+        isActive:
+          type: boolean
+        workflow:
+          $ref: common Workflow
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: common AuditDetails
+
+    ApplicationSearchCriteria:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        caseId:
+          type: string
+          format: uuid
+        applicationNumber:
+          type: string
+        status:
+          type: string
+        tenantId:
+          type: string
+

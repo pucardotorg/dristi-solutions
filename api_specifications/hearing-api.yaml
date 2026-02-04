@@ -1,0 +1,145 @@
+openapi: 3.0.0
+info:
+  title: Hearing Management Service
+  description: APIs to manage court hearings in DRISTI
+  version: 1.0.0
+
+servers:
+  - url: /api
+
+tags:
+  - name: Hearings
+  - name: Witness Depositions
+  - name: Bulk
+  - name: Utilities
+
+paths:
+
+  /v1/create:
+    post:
+      tags: [Hearings]
+      summary: Create hearing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingRequest'
+      responses:
+        '200':
+          description: Hearing created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HearingResponse'
+
+  /v1/update:
+    post:
+      tags: [Hearings]
+      summary: Update hearing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingRequest'
+      responses:
+        '200':
+          description: Hearing updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HearingResponse'
+
+  /v1/search:
+    post:
+      tags: [Hearings]
+      summary: Search hearings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingSearchRequest'
+      responses:
+        '200':
+          description: Search result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HearingSearchResponse'
+
+  /v1/exists:
+    post:
+      tags: [Hearings]
+      summary: Check hearing exists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingExistsRequest'
+      responses:
+        '200':
+          description: Exists result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HearingExistsResponse'
+
+  /v1/update/time:
+    post:
+      tags: [Hearings]
+      summary: Update hearing time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTimeRequest'
+      responses:
+        '200':
+          description: Time updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateTimeResponse'
+
+  /v1/bulk/_reschedule:
+    post:
+      tags: [Bulk]
+      summary: Bulk reschedule hearings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkRescheduleRequest'
+      responses:
+        '202':
+          description: Accepted
+
+  /v1/bulk/_update:
+    post:
+      tags: [Bulk]
+      summary: Bulk update hearings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingUpdateBulkRequest'
+      responses:
+        '202':
+          description: Accepted
+
+  /witnessDeposition/v1/uploadPdf:
+    post:
+      tags: [Witness Depositions]
+      summary: Upload deposition PDF
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+

@@ -1,0 +1,325 @@
+openapi: 3.0.0
+info:
+  title: Advocate Registry Service
+  description: |
+    This API manages advocate registration and related operations.
+    It provides endpoints for creating, updating, and searching advocate records.
+  version: 1.0.0
+
+tags:
+  - name: Advocate
+    description: APIs to manage advocate registrations
+  - name: Clerk
+    description: APIs to manage advocate clerk registrations
+
+servers:
+  - url: /api
+    description: Base API path
+
+paths:
+  # Advocate Endpoints
+  /v1/_create:
+    post:
+      tags: [Advocate]
+      summary: Register a new advocate
+      description: Creates a new advocate registration
+      requestBody:
+        description: Advocate registration details + RequestInfo meta data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateRequest'
+        required: true
+      responses:
+        '200':
+          description: Advocate registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /v1/_search:
+    post:
+      tags: [Advocate]
+      summary: Search advocates
+      description: Search for advocates based on criteria
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 1000
+          description: Pagination - limit records in response
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+          description: Pagination - offset from which records should be returned
+      requestBody:
+        description: Search criteria + RequestInfo meta data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateListResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /v1/status/_search:
+    post:
+      tags: [Advocate]
+      summary: Search advocates by status
+      description: Search for advocates by registration status
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+          required: true
+          description: Status of advocate registration being searched
+        - in: query
+          name: tenantId
+          schema:
+            type: string
+          required: true
+          description: Tenant ID for the search
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 1000
+          description: Pagination - limit records in response
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+          description: Pagination - offset from which records should be returned
+      requestBody:
+        description: RequestInfo meta data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateSimpleSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /v1/applicationnumber/_search:
+    post:
+      tags: [Advocate]
+      summary: Search advocate by application number
+      description: Search for an advocate by their application number
+      parameters:
+        - in: query
+          name: applicationNumber
+          schema:
+            type: string
+          required: true
+          description: Application number of advocate registration
+        - in: query
+          name: tenantId
+          schema:
+            type: string
+          required: true
+          description: Tenant ID for the search
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 1000
+          description: Pagination - limit records in response
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+          description: Pagination - offset from which records should be returned
+      requestBody:
+        description: RequestInfo meta data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateSimpleSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /v1/_update:
+    post:
+      tags: [Advocate]
+      summary: Update advocate details
+      description: Update an existing advocate's information
+      requestBody:
+        description: Advocate details to update + RequestInfo meta data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateRequest'
+        required: true
+      responses:
+        '200':
+          description: Advocate updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+components:
+  schemas:
+    AdvocateRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        advocate:
+          $ref: '#/components/schemas/Advocate'
+
+    AdvocateResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        advocates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Advocate'
+
+    AdvocateListResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        advocates:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateCriteria'
+
+    AdvocateSearchRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/AdvocateCriteria'
+        tenantId:
+          type: string
+
+    AdvocateSimpleSearchRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+
+    Advocate:
+      type: object
+      required:
+        - tenantId
+        - individualId
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier of the advocate
+        tenantId:
+          type: string
+          description: Tenant identifier
+        individualId:
+          type: string
+          format: uuid
+          description: Reference to the individual in the individual service
+        barCouncilNumber:
+          type: string
+          description: Bar council registration number
+        barCouncilName:
+          type: string
+          description: Name of the bar council
+        yearOfEnrollment:
+          type: integer
+          format: int32
+          description: Year of enrollment with the bar council
+        specialization:
+          type: array
+          items:
+            type: string
+          description: Areas of legal specialization
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, PENDING_VERIFICATION, REJECTED]
+          description: Status of the advocate registration
+        additionalDetails:
+          type: object
+          description: Any additional details
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+
+    AdvocateCriteria:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Filter by advocate ID
+        individualId:
+          type: string
+          format: uuid
+          description: Filter by individual ID
+        barCouncilNumber:
+          type: string
+          description: Filter by bar council number
+        status:
+          type: string
+          description: Filter by status
+        tenantId:
+          type: string
+          description: Filter by tenant ID
