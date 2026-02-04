@@ -73,6 +73,9 @@ public class Configuration {
 	@Value("${egov.case.search.endpoint}")
 	private String caseSearchPath;
 
+	@Value("${egov.advocate.case.search.endpoint}")
+	private String advocateCaseSearchPath;
+
 	//Evidence Config
 	@Value("${egov.evidence.host}")
 	private String evidenceHost;

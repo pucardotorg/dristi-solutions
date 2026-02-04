@@ -86,16 +86,16 @@ public class PendingTaskUtil {
         }
     }
 
-    public JsonNode callPendingTaskByAssignedTo(String userUuid) {
-        String url = config.getEsHostUrl() + config.getPendingTaskIndexEndpoint() + config.getPendingTaskSearchPath();
+    public void updatePendingTask(List<JsonNode> pendingTasks, JsonNode caseDetails) throws Exception {
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add("Authorization", getESEncodedCredentials());
-
-        String query = getEsQueryByAssignedTo(userUuid);
-
-        return getPendingTasksJsonNode(url, headers, query);
+        String url = config.getEsHostUrl() + config.getBulkPath();
+        for(JsonNode task: pendingTasks) {
+            PendingTask pendingTask = objectMapper.convertValue( task.get("_source").get("Data"), PendingTask.class);
+            // Set offices to empty list so it will be calculated from case details in buildPayload method
+            pendingTask.setOffices(new ArrayList<>());
+            String requestBody = indexerUtils.buildPayload(pendingTask, caseDetails);
+            indexerUtils.esPostManual(url, requestBody);
+        }
     }
 
     private JsonNode getPendingTasksJsonNode(String url, HttpHeaders headers, String query) {
@@ -110,11 +110,28 @@ public class PendingTaskUtil {
         }
     }
 
-    private String getEsQueryByAssignedTo(String userUuid) {
+    public JsonNode callPendingTaskByFilingNumberAndAssignedTo(String filingNumber, String userUuid) {
+        String url = config.getEsHostUrl() + config.getPendingTaskIndexEndpoint() + config.getPendingTaskSearchPath();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", getESEncodedCredentials());
+
+        String query = getEsQueryByFilingNumberAndAssignedTo(filingNumber, userUuid);
+
+        return getPendingTasksJsonNode(url, headers, query);
+    }
+
+    private String getEsQueryByFilingNumberAndAssignedTo(String filingNumber, String userUuid) {
         return "{\n" +
                 "  \"query\": {\n" +
                 "    \"bool\": {\n" +
                 "      \"must\": [\n" +
+                "        {\n" +
+                "          \"match\": {\n" +
+                "            \"Data.filingNumber.keyword\": \"" + filingNumber + "\"\n" +
+                "          }\n" +
+                "        },\n" +
                 "        {\n" +
                 "          \"match\": {\n" +
                 "            \"Data.assignedTo.uuid.keyword\": \"" + userUuid + "\"\n" +

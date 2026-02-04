@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -91,6 +92,39 @@ public class CaseUtil {
 			throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, e.getMessage());
 		}
 		return caseList;
+	}
+
+	public List<Map<String, String>> getCasesByAdvocateId(String advocateId, RequestInfo requestInfo) {
+		try {
+			StringBuilder uri = new StringBuilder();
+			uri.append(config.getCaseHost()).append(config.getAdvocateCaseSearchPath());
+
+			Map<String, Object> requestBody = new HashMap<>();
+			requestBody.put("RequestInfo", requestInfo);
+			requestBody.put("advocateId", advocateId);
+
+			log.info("Calling advocate cases API for advocateId: {}", advocateId);
+			Object response = restTemplate.postForObject(uri.toString(), requestBody, Map.class);
+			
+			JsonNode jsonNode = mapper.readTree(mapper.writeValueAsString(response));
+			JsonNode casesNode = jsonNode.get("cases");
+
+			if (casesNode != null && casesNode.isArray()) {
+				List<Map<String, String>> casesList = new ArrayList<>();
+				for (JsonNode caseNode : casesNode) {
+					Map<String, String> caseInfo = new HashMap<>();
+					caseInfo.put("caseId", caseNode.path("caseId").asText());
+					caseInfo.put("filingNumber", caseNode.path("filingNumber").asText());
+					casesList.add(caseInfo);
+				}
+				log.info("Found {} cases for advocateId: {}", casesList.size(), advocateId);
+				return casesList;
+			}
+			return new ArrayList<>();
+		} catch (Exception e) {
+			log.error("Error while fetching cases for advocateId: {}", advocateId, e);
+			return new ArrayList<>();
+		}
 	}
 
 	public JsonNode getLitigants(JsonNode caseList) {

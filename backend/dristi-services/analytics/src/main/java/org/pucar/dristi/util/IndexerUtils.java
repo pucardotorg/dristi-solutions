@@ -256,6 +256,101 @@ public class IndexerUtils {
         );
     }
 
+    public String buildPayload(PendingTask pendingTask, JsonNode caseDetails) {
+
+        String id = pendingTask.getId();
+        String name = pendingTask.getName();
+        String entityType = pendingTask.getEntityType();
+        String referenceId = pendingTask.getReferenceId();
+        String status = pendingTask.getStatus();
+        Long stateSla = pendingTask.getStateSla();
+        Long businessServiceSla = pendingTask.getBusinessServiceSla();
+        List<User> assignedToList = pendingTask.getAssignedTo();
+        List<String> assignedRoleList = pendingTask.getAssignedRole();
+        String assignedTo = new JSONArray(assignedToList).toString();
+        String assignedRole = new JSONArray(assignedRoleList).toString();
+        Boolean isCompleted = pendingTask.getIsCompleted();
+        String cnrNumber = pendingTask.getCnrNumber();
+        String filingNumber = pendingTask.getFilingNumber();
+        String caseId = pendingTask.getCaseId();
+        String caseTitle = pendingTask.getCaseTitle();
+        String additionalDetails = "{}";
+        String screenType = pendingTask.getScreenType();
+        String caseNumber = filingNumber;
+        String actionCategory = pendingTask.getActionCategory();
+        Long filingDate = pendingTask.getFilingDate();
+        String sectionAndSubSection = pendingTask.getSectionAndSubSection();
+        String referenceEntityType = pendingTask.getReferenceEntityType();
+
+
+        String courtId = null;
+        String caseSubStage = null;
+        String advocateDetails = "{}";
+        String searchableFields = null;
+        String offices = "[]";
+        if (filingNumber != null && caseDetails != null && !caseDetails.isEmpty()) {
+
+            courtId = caseDetails.get(0).path("courtId").textValue();
+
+            String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
+            String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
+            caseSubStage = caseDetails.get(0).path("substage").textValue();
+
+            if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+                caseNumber = courtCaseNumber;
+            } else if (cmpNumber != null && !cmpNumber.isEmpty()) {
+                caseNumber = cmpNumber;
+            }
+
+            JsonNode representativesNode = caseUtil.getRepresentatives(caseDetails);
+            List<AdvocateMapping> representatives = mapper.convertValue(representativesNode, new TypeReference<List<AdvocateMapping>>() {
+            });
+
+            AdvocateDetail advocate = getAdvocates(representatives);
+
+            try {
+                advocateDetails = mapper.writeValueAsString(advocate);
+            } catch (Exception e) {
+                log.error("Error while building advocate details json", e);
+                throw new CustomException(Pending_Task_Exception, "Error while building advocate details json: " + e);
+            }
+
+            List<String> searchableFieldsList = new ArrayList<>();
+            searchableFieldsList.add(filingNumber);
+            if (!filingNumber.equals(caseNumber)) {
+                searchableFieldsList.add(caseNumber);
+            }
+            searchableFieldsList.add(caseTitle);
+            searchableFieldsList.addAll(advocate.getAccused());
+            searchableFieldsList.addAll(advocate.getComplainant());
+
+            searchableFields = new JSONArray(searchableFieldsList).toString();
+
+            // Enrich offices from case details based on assignedTo
+            if (assignedToList != null && !assignedToList.isEmpty()) {
+                offices = (pendingTask.getOffices() != null && !pendingTask.getOffices().isEmpty()) ? new JSONArray(pendingTask.getOffices()).toString() : enrichOfficesFromCaseDetails(caseDetails, assignedToList);
+            } else {
+                log.error("assignedToList is null or empty while enriching offices from case details during manual pending task creation");
+            }
+        }
+
+        Long createdTime = clock.millis();
+
+        Long expiryTime = pendingTask.getExpiryDate();
+        try {
+            additionalDetails = mapper.writeValueAsString(pendingTask.getAdditionalDetails());
+        } catch (Exception e) {
+            log.error("Error while building API payload", e);
+            throw new CustomException(Pending_Task_Exception, "Error occurred while preparing pending task: " + e);
+        }
+
+
+        return String.format(
+                ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, expiryTime, sectionAndSubSection, filingDate, referenceEntityType, offices
+        );
+    }
+
     private String enrichOfficesFromCaseDetails(JsonNode caseDetails, List<User> assignedToList) {
         try {
             List<org.pucar.dristi.web.models.casemodels.CaseAdvocateOffice> advocateOffices = caseUtil.getAdvocateOffices(caseDetails);
