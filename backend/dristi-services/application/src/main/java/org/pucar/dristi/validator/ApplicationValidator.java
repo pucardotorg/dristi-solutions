@@ -1,5 +1,6 @@
 package org.pucar.dristi.validator;
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.repository.ApplicationRepository;
@@ -12,11 +13,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
-import static org.pucar.dristi.config.ServiceConstants.ORDER_EXCEPTION;
 
+@Slf4j
 @Component
 public class ApplicationValidator {
     private final ApplicationRepository repository;
@@ -35,6 +37,11 @@ public class ApplicationValidator {
         RequestInfo requestInfo = applicationRequest.getRequestInfo();
         Application application = applicationRequest.getApplication();
 
+        // Validate case access for advocate and advocate clerk roles
+        if (application != null && application.getFilingNumber() != null) {
+            validateCaseAccess(requestInfo, application.getFilingNumber());
+        }
+
         //validate documents
         validateDocuments(application);
 
@@ -50,6 +57,11 @@ public class ApplicationValidator {
     }
 
     public Boolean validateApplicationExistence(RequestInfo requestInfo ,Application application) {
+        // Validate case access for advocate and advocate clerk roles
+        if (application != null && application.getFilingNumber() != null) {
+            validateCaseAccess(requestInfo, application.getFilingNumber());
+        }
+
         //validate documents
         validateDocuments(application);
 
@@ -118,5 +130,23 @@ public class ApplicationValidator {
 
             });
         }
+    }
+
+    /**
+     * Validates case access by calling case search API which handles validation internally
+     */
+    public void validateCaseAccess(RequestInfo requestInfo, String filingNumber) {
+        CaseSearchRequest searchRequest = CaseSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(Collections.singletonList(
+                        CaseCriteria.builder()
+                            .filingNumber(filingNumber)
+                            .defaultFields(false)
+                            .build()
+                        )
+                )
+                .build();
+
+        caseUtil.searchCaseDetails(searchRequest);
     }
 }
