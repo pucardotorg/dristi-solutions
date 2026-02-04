@@ -20,7 +20,7 @@ const RemovalChip = ({ label, onRemove }) => {
   );
 };
 
-function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors }) {
+function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors, clearErrors }) {
   const [showErrorToast, setShowErrorToast] = useState(null);
 
   const chipList = useMemo(() => formData?.[config.key] || [], [formData, config.key]);
@@ -60,7 +60,7 @@ function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors }) {
       const [bd, bm, by] = b.split("-");
       return new Date(ay, am - 1, ad) - new Date(by, bm - 1, bd);
     });
-
+    clearErrors(config.key);
     onSelect(config.key, sortedList);
   };
 
