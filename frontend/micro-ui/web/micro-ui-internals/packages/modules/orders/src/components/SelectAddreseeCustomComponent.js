@@ -107,7 +107,9 @@ const SelectAddreseeCustomComponent = ({ t, config, formData = {}, onSelect, err
         </div>
       )}
       {errors?.[config?.key] && (
-        <CardLabelError style={inputs?.errorStyle}>{t(errors?.[config?.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>
+        <CardLabelError style={inputs?.errorStyle || { color: "red", marginTop: "5px", marginBottom: 0 }}>
+          {t(errors?.[config?.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")}
+        </CardLabelError>
       )}{" "}
     </React.Fragment>
   );

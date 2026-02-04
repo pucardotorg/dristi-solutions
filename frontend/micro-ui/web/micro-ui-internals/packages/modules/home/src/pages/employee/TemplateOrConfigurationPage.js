@@ -296,7 +296,7 @@ const TemplateOrConfigurationPage = () => {
         <div className="header" style={{ paddingLeft: "0px", paddingBottom: "24px" }}>
           {t("TEMPLATES")}
         </div>
-        <div className="review-process-page inbox-search-wrapper">
+        <div className="review-process-page template-page inbox-search-wrapper">
           <InboxSearchComposer key={`inbox-${refreshKey}`} showTab={false} configs={modifiedConfig} />
         </div>
       </div>

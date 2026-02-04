@@ -407,6 +407,36 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
     }
   }
 
+  if (currentOrderType && ["MISCELLANEOUS_PROCESS"]?.includes(currentOrderType)) {
+    const isSelectAddreseeValid =
+      Array.isArray(formData?.selectAddresee) &&
+      formData?.selectAddresee?.length > 0 &&
+      formData?.selectAddresee?.every((item) => item && Object.keys(item)?.length > 0);
+
+    if (!isSelectAddreseeValid && formData?.selectAddresee) {
+      setFormErrors?.current?.[index]?.("selectAddresee", { message: t("ERR_COMPLETE_ALL_PARTIES") });
+      hasError = true;
+    }
+
+    const addressee = formData?.processTemplate?.addressee;
+
+    if (addressee) {
+      if (["POLICE", "OTHER"].includes(addressee)) {
+        const isPartiesDetailsValid =
+          Array.isArray(formData?.selectedPartiesDetails) &&
+          formData?.selectedPartiesDetails?.length > 0 &&
+          formData?.selectedPartiesDetails?.every(
+            (item) => item?.selectedParty?.name && Array.isArray(item?.selectedAddresses) && item?.selectedAddresses?.length > 0
+          );
+
+        if (!isPartiesDetailsValid) {
+          setFormErrors?.current?.[index]?.("selectedPartiesDetails", { message: t("ERR_COMPLETE_ALL_PARTIES") });
+          hasError = true;
+        }
+      }
+    }
+  }
+
   return hasError;
 };
 
@@ -699,7 +729,7 @@ export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, schedule
 
     if (["POLICE", "OTHER"]?.includes(processTemplateAddressee)) {
       partyDetails = orderDetails?.selectedPartiesDetails?.map((partyData) => {
-        const {address, ...rest} = partyData?.selectedParty;
+        const { address, ...rest } = partyData?.selectedParty;
         return {
           party: rest,
           address: partyData?.selectedAddresses,
@@ -728,7 +758,7 @@ export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, schedule
         age: "",
         gender: data?.age || "",
         uuid: data?.uuid || data?.uniqueId,
-        uniqueId: data?.uuid || data?.uniqueId
+        uniqueId: data?.uuid || data?.uniqueId,
       };
     }
 

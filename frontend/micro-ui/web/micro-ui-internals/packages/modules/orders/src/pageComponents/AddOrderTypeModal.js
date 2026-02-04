@@ -88,6 +88,32 @@ const AddOrderTypeModal = ({
         setValue("selectAddresee", null);
         setValue("selectedPartiesDetails", null);
       }
+
+      const isSelectAddreseeValid =
+        Array.isArray(formData?.selectAddresee) &&
+        formData?.selectAddresee?.length > 0 &&
+        formData?.selectAddresee?.every((item) => item && Object.keys(item)?.length > 0);
+
+      if (isSelectAddreseeValid && Object.keys(formState?.errors).includes("selectAddresee")) {
+        clearFormErrors?.current?.[index]?.("selectAddresee");
+      }
+
+      const addressee = formData?.processTemplate?.addressee;
+
+      if (addressee) {
+        if (["POLICE", "OTHER"].includes(addressee)) {
+          const isPartiesDetailsValid =
+            Array.isArray(formData?.selectedPartiesDetails) &&
+            formData?.selectedPartiesDetails?.length > 0 &&
+            formData?.selectedPartiesDetails?.every(
+              (item) => item?.selectedParty?.name && Array.isArray(item?.selectedAddresses) && item?.selectedAddresses?.length > 0
+            );
+
+          if (isPartiesDetailsValid && Object.keys(formState?.errors).includes("selectedPartiesDetails")) {
+            clearFormErrors?.current?.[index]?.("selectedPartiesDetails");
+          }
+        }
+      }
     }
 
     if (currentOrderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(currentOrderType)) {
