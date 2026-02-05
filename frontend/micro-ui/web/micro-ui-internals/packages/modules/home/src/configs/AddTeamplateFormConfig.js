@@ -7,7 +7,11 @@ export const AddTeamplateFormConfig = [
         key: "processTitle",
         disable: false,
         type: "text",
-        populators: { name: "processTitle" },
+        populators: { name: "processTitle", error: "CORE_REQUIRED_FIELD_ERROR", validation: {
+          required: true,
+          minLength: 1,
+          maxLength: 200,
+        }, },
       },
       {
         label: "IS_COVER_LETTER_REQUIRED",
@@ -72,7 +76,7 @@ export const AddTeamplateFormConfig = [
         key: "addresseeName",
         disable: false,
         type: "text",
-        populators: { name: "addresseeName" },
+        populators: { name: "addresseeName", error: "CORE_REQUIRED_FIELD_ERROR" },
       },
       {
         inline: true,

@@ -780,6 +780,7 @@ const EvidenceModal = ({
       const hearingNumber =
         ["INITIATING_RESCHEDULING_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(orderType) &&
         documentSubmission?.[0]?.applicationList?.additionalDetails?.hearingId;
+      const refHearingId = documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.refHearingId;
       const parties = documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
         parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }],
       };
@@ -793,6 +794,7 @@ const EvidenceModal = ({
         ...(hearingNumber && {
           hearingNumber: hearingNumber,
         }),
+        ...(refHearingId && { refHearingId: refHearingId }),
       };
 
       if (generateOrder) {
