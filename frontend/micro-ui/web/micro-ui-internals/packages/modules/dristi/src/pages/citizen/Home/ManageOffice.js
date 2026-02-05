@@ -495,83 +495,87 @@ const ManageOffice = () => {
               </button>
             </div>
 
-            {searchResult ? (
-              <div className="manage-office-search-card">
-                <div className="manage-office-search-card__col">
-                  <p className="manage-office-search-card__label">{t("NAME") || "Name"}</p>
-                  <p className="manage-office-search-card__value">{searchResult.name}</p>
-                </div>
-                <div className="manage-office-search-card__col">
-                  <p className="manage-office-search-card__label">{t("DESIGNATION") || "Designation"}</p>
-                  <p className="manage-office-search-card__value">{searchResult.designation}</p>
-                </div>
-                <div className="manage-office-search-card__col">
-                  <p className="manage-office-search-card__label">{t("MOBILE_NUMBER") || "Mobile number"}</p>
-                  <p className="manage-office-search-card__value">{searchResult.mobileNumber}</p>
-                </div>
-                <div className="manage-office-search-card__col">
-                  <p className="manage-office-search-card__label">{t("EMAIL") || "Email"}</p>
-                  <p className="manage-office-search-card__value">{searchResult.email}</p>
-                </div>
+            {isSearching || isAddingMember ? (
+              <div className="manage-office-modal-loader">
+                <Loader />
               </div>
             ) : (
-              <div className="manage-office-search-field">
-                <label className="manage-office-search-field__label">
-                  {t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}
-                </label>
-                <div className="manage-office-search-field__control">
-                  <select
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
-                    className="manage-office-search-field__country"
-                  >
-                    <option value="+91">+91</option>
-                    <option value="+1">+1</option>
-                    <option value="+44">+44</option>
-                  </select>
-                  <input
-                    type="tel"
-                    value={mobileNumber}
-                    onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))}
-                    placeholder={t("ENTER_HERE") || "Enter here"}
-                    maxLength={10}
-                    className="manage-office-search-field__input"
-                  />
-                </div>
-                {searchError && <div className="manage-office-search-field__error">{searchError}</div>}
-              </div>
-            )}
+              <React.Fragment>
+                {searchResult ? (
+                  <div className="manage-office-search-card">
+                    <div className="manage-office-search-card__col">
+                      <p className="manage-office-search-card__label">{t("NAME") || "Name"}</p>
+                      <p className="manage-office-search-card__value">{searchResult.name}</p>
+                    </div>
+                    <div className="manage-office-search-card__col">
+                      <p className="manage-office-search-card__label">{t("DESIGNATION") || "Designation"}</p>
+                      <p className="manage-office-search-card__value">{searchResult.designation}</p>
+                    </div>
+                    <div className="manage-office-search-card__col">
+                      <p className="manage-office-search-card__label">{t("MOBILE_NUMBER") || "Mobile number"}</p>
+                      <p className="manage-office-search-card__value">{searchResult.mobileNumber}</p>
+                    </div>
+                    <div className="manage-office-search-card__col">
+                      <p className="manage-office-search-card__label">{t("EMAIL") || "Email"}</p>
+                      <p className="manage-office-search-card__value">{searchResult.email}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="manage-office-search-field">
+                    <label className="manage-office-search-field__label">
+                      {t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}
+                    </label>
+                    <div className="manage-office-search-field__control">
+                      <select
+                        value={countryCode}
+                        onChange={(e) => setCountryCode(e.target.value)}
+                        className="manage-office-search-field__country"
+                      >
+                        <option value="+91">+91</option>
+                        <option value="+1">+1</option>
+                        <option value="+44">+44</option>
+                      </select>
+                      <input
+                        type="tel"
+                        value={mobileNumber}
+                        onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))}
+                        placeholder={t("ENTER_HERE") || "Enter here"}
+                        maxLength={10}
+                        className="manage-office-search-field__input"
+                      />
+                    </div>
+                    {searchError && <div className="manage-office-search-field__error">{searchError}</div>}
+                  </div>
+                )}
 
-            <div className="manage-office-modal__footer">
-              <button
-                onClick={handleGoBack}
-                disabled={isAddingMember}
-                className="manage-office-btn manage-office-btn--secondary"
-              >
-                {t("GO_BACK") || "Go Back"}
-              </button>
-              {searchResult ? (
-                <button
-                  onClick={handleConfirmAddMember}
-                  disabled={isAddingMember}
-                  className={`manage-office-btn manage-office-btn--primary${
-                    isAddingMember ? " manage-office-btn--disabled" : ""
-                  }`}
-                >
-                  {t("ADD_MEMBER") || "Add Member"}
-                </button>
-              ) : (
-                <button
-                  onClick={handleSearch}
-                  disabled={isSearching || !mobileNumber || mobileNumber.length < 10}
-                  className={`manage-office-btn manage-office-btn--primary${
-                    isSearching || !mobileNumber || mobileNumber.length < 10 ? " manage-office-btn--disabled" : ""
-                  }`}
-                >
-                  {isSearching ? t("PLEASE_WAIT") || "Please wait..." : t("SEARCH") || "Search"}
-                </button>
-              )}
-            </div>
+                <div className="manage-office-modal__footer">
+                  <button
+                    onClick={handleGoBack}
+                    className="manage-office-btn manage-office-btn--secondary"
+                  >
+                    {t("GO_BACK") || "Go Back"}
+                  </button>
+                  {searchResult ? (
+                    <button
+                      onClick={handleConfirmAddMember}
+                      className="manage-office-btn manage-office-btn--primary"
+                    >
+                      {t("ADD_MEMBER") || "Add Member"}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleSearch}
+                      disabled={!mobileNumber || mobileNumber.length < 10}
+                      className={`manage-office-btn manage-office-btn--primary${
+                        !mobileNumber || mobileNumber.length < 10 ? " manage-office-btn--disabled" : ""
+                      }`}
+                    >
+                      {t("SEARCH") || "Search"}
+                    </button>
+                  )}
+                </div>
+              </React.Fragment>
+            )}
           </div>
         </div>
       )}

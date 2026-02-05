@@ -512,6 +512,14 @@
   line-height: 1;
 }
 
+.manage-office-modal-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  min-height: 160px;
+}
+
 .manage-office-search-card {
   display: flex;
   background-color: #f7f5f3;
