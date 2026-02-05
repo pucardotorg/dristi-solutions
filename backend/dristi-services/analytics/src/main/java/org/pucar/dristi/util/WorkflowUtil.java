@@ -180,4 +180,70 @@ public class WorkflowUtil {
 
         return shouldUpsert;
     }
+
+    public List<Assignee> searchAssigneesByMemberUuid(RequestInfo requestInfo, String memberUserUuid, String tenantId) {
+        try {
+            RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
+
+            StringBuilder url = new StringBuilder();
+            url.append(config.getWorkflowHost())
+                    .append(config.getWorkflowAssigneeSearchEndpoint())
+                    .append("?tenantId=").append(tenantId)
+                    .append("&assignee=").append(memberUserUuid);
+
+            log.info("Searching workflow assignees by member UUID: {} with URL: {}", memberUserUuid, url);
+
+            Object response = requestRepository.fetchResult(url, requestInfoWrapper);
+            AssigneeResponse assigneeResponse = mapper.convertValue(response, AssigneeResponse.class);
+
+            if (assigneeResponse != null && assigneeResponse.getAssignees() != null) {
+                log.info("Found {} assignees for member UUID: {}", assigneeResponse.getAssignees().size(), memberUserUuid);
+                return assigneeResponse.getAssignees();
+            }
+
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error searching workflow assignees by member UUID: {}", memberUserUuid, e);
+            return Collections.emptyList();
+        }
+    }
+
+    public List<String> searchProcessInstanceIdsWithExclude(RequestInfo requestInfo, String memberUserUuid, List<String> excludeAdvocateUuids, String businessId, String tenantId) {
+        try {
+            // Build criteria
+            List<String> uuids = new ArrayList<>();
+            uuids.add(memberUserUuid);
+
+            AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
+                    .tenantId(tenantId)
+                    .uuids(uuids)
+                    .excludeUuids(excludeAdvocateUuids)
+                    .businessId(businessId)
+                    .build();
+
+            AssigneeSearchRequest searchRequest = AssigneeSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(criteria)
+                    .build();
+
+            StringBuilder url = new StringBuilder();
+            url.append(config.getWorkflowHost()).append(config.getWorkflowAssigneeSearchEndpoint());
+
+            log.info("Searching workflow process instances with uuids: {}, businessId: {}, and excludeUuids: {}", memberUserUuid, businessId, excludeAdvocateUuids);
+
+            Object response = requestRepository.fetchResult(url, searchRequest);
+            ProcessInstanceIdResponse processInstanceIdResponse = mapper.convertValue(response, ProcessInstanceIdResponse.class);
+
+            if (processInstanceIdResponse != null && processInstanceIdResponse.getProcessInstanceIds() != null) {
+                log.info("Found {} process instances for member UUID: {} with exclusions for businessId: {}", 
+                        processInstanceIdResponse.getProcessInstanceIds().size(), memberUserUuid, businessId);
+                return processInstanceIdResponse.getProcessInstanceIds();
+            }
+
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error searching workflow process instances with exclusions for member UUID: {} and businessId: {}", memberUserUuid, businessId, e);
+            return Collections.emptyList();
+        }
+    }
 }

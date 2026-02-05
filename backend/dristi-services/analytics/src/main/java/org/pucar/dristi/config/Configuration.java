@@ -76,6 +76,9 @@ public class Configuration {
 	@Value("${egov.advocate.case.search.endpoint}")
 	private String advocateCaseSearchPath;
 
+	@Value("${egov.case.member.advocates.endpoint}")
+	private String caseMemberAdvocatesPath;
+
 	//Evidence Config
 	@Value("${egov.evidence.host}")
 	private String evidenceHost;
@@ -265,6 +268,9 @@ public class Configuration {
 
 	@Value("${egov.workflow.assignee.upsert.endpoint}")
 	private String workflowAssigneeUpsertEndpoint;
+
+	@Value("${egov.workflow.assignee.search.endpoint}")
+	private String workflowAssigneeSearchEndpoint;
 
 	@Value("${egov.workflow.process.search.endpoint}")
 	private String workflowProcessSearchEndpoint;

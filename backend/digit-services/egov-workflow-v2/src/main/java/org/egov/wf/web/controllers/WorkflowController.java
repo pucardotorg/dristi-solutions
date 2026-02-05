@@ -12,7 +12,9 @@ import org.egov.wf.util.ResponseInfoFactory;
 import org.egov.wf.web.models.Assignee;
 import org.egov.wf.web.models.AssigneeRequest;
 import org.egov.wf.web.models.AssigneeResponse;
+import org.egov.wf.web.models.AssigneeSearchRequest;
 import org.egov.wf.web.models.ProcessInstance;
+import org.egov.wf.web.models.ProcessInstanceIdResponse;
 import org.egov.wf.web.models.ProcessInstanceRequest;
 import org.egov.wf.web.models.ProcessInstanceResponse;
 import org.egov.wf.web.models.ProcessInstanceSearchCriteria;
@@ -135,6 +137,24 @@ public class WorkflowController {
         AssigneeResponse response = AssigneeResponse.builder()
                 .assignees(assignees)
                 .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(assigneeRequest.getRequestInfo(), true))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    /**
+     * Searches for process instance IDs where the given uuid is assigned 
+     * but none of the excludeUuids are assigned.
+     * Only considers the latest process instance record (history = false behavior).
+     * @param assigneeSearchRequest The request containing search criteria
+     * @return List of process instance IDs matching the criteria
+     */
+    @RequestMapping(value="/assignee/_search", method = RequestMethod.POST)
+    public ResponseEntity<ProcessInstanceIdResponse> searchAssigneeExclusion(@Valid @RequestBody AssigneeSearchRequest assigneeSearchRequest) {
+        List<String> processInstanceIds = assigneeService.searchProcessInstanceIdsByAssigneeExclusion(assigneeSearchRequest.getCriteria());
+        ProcessInstanceIdResponse response = ProcessInstanceIdResponse.builder()
+                .processInstanceIds(processInstanceIds)
+                .totalCount(processInstanceIds.size())
+                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(assigneeSearchRequest.getRequestInfo(), true))
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

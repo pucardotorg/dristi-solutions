@@ -15,6 +15,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 
 import org.egov.wf.config.WorkflowConfig;
+import org.egov.wf.web.models.AssigneeSearchCriteria;
 import org.egov.wf.web.models.ProcessInstanceSearchCriteria;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -8729,6 +8730,185 @@ class WorkflowQueryBuilderTest {
         verify(processInstanceSearchCriteria).setTenantSpecifiStatus((List<String>) any());
         verify(processInstanceSearchCriteria).setToDate((Long) any());
         assertEquals(4, objectList.size());
+    }
+
+    @Test
+    void testGetProcessInstanceIdsByAssigneeExclusion() {
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
+
+        List<String> uuids = new ArrayList<>();
+        uuids.add("user-uuid-123");
+
+        AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
+                .tenantId("pg.citya")
+                .uuids(uuids)
+                .build();
+
+        ArrayList<Object> preparedStmtList = new ArrayList<>();
+        String query = workflowQueryBuilder.getProcessInstanceIdsByAssigneeExclusion(criteria, preparedStmtList);
+
+        assertEquals(
+                "SELECT DISTINCT asg.processinstanceid FROM {SCHEMA}.eg_wf_assignee_v2 asg "
+                        + "INNER JOIN {SCHEMA}.eg_wf_processinstance_v2 pi ON asg.processinstanceid = pi.id "
+                        + "WHERE asg.assignee IN ( ?) AND asg.isActive = true "
+                        + "AND pi.tenantid = ? "
+                        + "AND pi.lastmodifiedTime = ("
+                        + "SELECT max(lastmodifiedTime) FROM {SCHEMA}.eg_wf_processinstance_v2 pi_inner "
+                        + "WHERE pi_inner.businessid = pi.businessid AND pi_inner.tenantid = ? "
+                        + ") ",
+                query);
+        assertEquals(3, preparedStmtList.size());
+        assertEquals("user-uuid-123", preparedStmtList.get(0));
+        assertEquals("pg.citya", preparedStmtList.get(1));
+        assertEquals("pg.citya", preparedStmtList.get(2));
+    }
+
+    @Test
+    void testGetProcessInstanceIdsByAssigneeExclusionWithExcludeUuids() {
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
+
+        List<String> uuids = new ArrayList<>();
+        uuids.add("user-uuid-123");
+
+        List<String> excludeUuids = new ArrayList<>();
+        excludeUuids.add("exclude-uuid-1");
+        excludeUuids.add("exclude-uuid-2");
+
+        AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
+                .tenantId("pg.citya")
+                .uuids(uuids)
+                .excludeUuids(excludeUuids)
+                .build();
+
+        ArrayList<Object> preparedStmtList = new ArrayList<>();
+        String query = workflowQueryBuilder.getProcessInstanceIdsByAssigneeExclusion(criteria, preparedStmtList);
+
+        assertEquals(
+                "SELECT DISTINCT asg.processinstanceid FROM {SCHEMA}.eg_wf_assignee_v2 asg "
+                        + "INNER JOIN {SCHEMA}.eg_wf_processinstance_v2 pi ON asg.processinstanceid = pi.id "
+                        + "WHERE asg.assignee IN ( ?) AND asg.isActive = true "
+                        + "AND pi.tenantid = ? "
+                        + "AND pi.lastmodifiedTime = ("
+                        + "SELECT max(lastmodifiedTime) FROM {SCHEMA}.eg_wf_processinstance_v2 pi_inner "
+                        + "WHERE pi_inner.businessid = pi.businessid AND pi_inner.tenantid = ? "
+                        + ") "
+                        + "AND NOT EXISTS ("
+                        + "SELECT 1 FROM {SCHEMA}.eg_wf_assignee_v2 asg_exclude "
+                        + "WHERE asg_exclude.processinstanceid = asg.processinstanceid "
+                        + "AND asg_exclude.isActive = true "
+                        + "AND asg_exclude.assignee IN ( ?, ?)"
+                        + ") ",
+                query);
+        assertEquals(5, preparedStmtList.size());
+        assertEquals("user-uuid-123", preparedStmtList.get(0));
+        assertEquals("pg.citya", preparedStmtList.get(1));
+        assertEquals("pg.citya", preparedStmtList.get(2));
+        assertEquals("exclude-uuid-1", preparedStmtList.get(3));
+        assertEquals("exclude-uuid-2", preparedStmtList.get(4));
+    }
+
+    @Test
+    void testGetProcessInstanceIdsByAssigneeExclusionWithBusinessIdLikeSearch() {
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
+
+        List<String> uuids = new ArrayList<>();
+        uuids.add("user-uuid-123");
+        uuids.add("user-uuid-456");
+
+        List<String> excludeUuids = new ArrayList<>();
+        excludeUuids.add("exclude-uuid-1");
+
+        AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
+                .tenantId("pg.citya")
+                .uuids(uuids)
+                .excludeUuids(excludeUuids)
+                .businessId("CASE-2024")
+                .build();
+
+        ArrayList<Object> preparedStmtList = new ArrayList<>();
+        String query = workflowQueryBuilder.getProcessInstanceIdsByAssigneeExclusion(criteria, preparedStmtList);
+
+        assertEquals(
+                "SELECT DISTINCT asg.processinstanceid FROM {SCHEMA}.eg_wf_assignee_v2 asg "
+                        + "INNER JOIN {SCHEMA}.eg_wf_processinstance_v2 pi ON asg.processinstanceid = pi.id "
+                        + "WHERE asg.assignee IN ( ?, ?) AND asg.isActive = true "
+                        + "AND pi.tenantid = ? "
+                        + "AND pi.lastmodifiedTime = ("
+                        + "SELECT max(lastmodifiedTime) FROM {SCHEMA}.eg_wf_processinstance_v2 pi_inner "
+                        + "WHERE pi_inner.businessid = pi.businessid AND pi_inner.tenantid = ? "
+                        + ") "
+                        + "AND pi.businessid LIKE ? "
+                        + "AND NOT EXISTS ("
+                        + "SELECT 1 FROM {SCHEMA}.eg_wf_assignee_v2 asg_exclude "
+                        + "WHERE asg_exclude.processinstanceid = asg.processinstanceid "
+                        + "AND asg_exclude.isActive = true "
+                        + "AND asg_exclude.assignee IN ( ?)"
+                        + ") ",
+                query);
+        assertEquals(6, preparedStmtList.size());
+        assertEquals("user-uuid-123", preparedStmtList.get(0));
+        assertEquals("user-uuid-456", preparedStmtList.get(1));
+        assertEquals("pg.citya", preparedStmtList.get(2));
+        assertEquals("pg.citya", preparedStmtList.get(3));
+        assertEquals("%CASE-2024%", preparedStmtList.get(4));
+        assertEquals("exclude-uuid-1", preparedStmtList.get(5));
     }
 }
 

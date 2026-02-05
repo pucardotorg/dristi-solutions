@@ -5,12 +5,15 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.wf.config.WorkflowConfig;
 import org.egov.wf.producer.Producer;
+import org.egov.wf.repository.WorKflowRepository;
 import org.egov.wf.web.models.Assignee;
 import org.egov.wf.web.models.AssigneeRequest;
+import org.egov.wf.web.models.AssigneeSearchCriteria;
 import org.egov.wf.web.models.AuditDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -22,10 +25,13 @@ public class AssigneeService {
 
     private final WorkflowConfig config;
 
+    private final WorKflowRepository workflowRepository;
+
     @Autowired
-    public AssigneeService(Producer producer, WorkflowConfig config) {
+    public AssigneeService(Producer producer, WorkflowConfig config, WorKflowRepository workflowRepository) {
         this.producer = producer;
         this.config = config;
+        this.workflowRepository = workflowRepository;
     }
 
     public List<Assignee> upsertAssignees(AssigneeRequest request) {
@@ -59,6 +65,30 @@ public class AssigneeService {
                     .build();
 
             assignee.setAuditDetails(auditDetails);
+        }
+    }
+
+    /**
+     * Searches for process instance IDs where the given uuid is assigned 
+     * but none of the excludeUuids are assigned.
+     * Only considers the latest process instance record (history = false behavior).
+     * @param criteria The search criteria containing uuid and excludeUuids
+     * @return List of process instance IDs matching the criteria
+     */
+    public List<String> searchProcessInstanceIdsByAssigneeExclusion(AssigneeSearchCriteria criteria) {
+        validateSearchCriteria(criteria);
+        return workflowRepository.getProcessInstanceIdsByAssigneeExclusion(criteria);
+    }
+
+    private void validateSearchCriteria(AssigneeSearchCriteria criteria) {
+        if (criteria == null) {
+            throw new CustomException("INVALID_REQUEST", "Search criteria cannot be null");
+        }
+        if (!StringUtils.hasText(criteria.getTenantId())) {
+            throw new CustomException("INVALID_REQUEST", "TenantId is mandatory");
+        }
+        if (CollectionUtils.isEmpty(criteria.getUuids())) {
+            throw new CustomException("INVALID_REQUEST", "UUIDs list is mandatory and cannot be empty");
         }
     }
 

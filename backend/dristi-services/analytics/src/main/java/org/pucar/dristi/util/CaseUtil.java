@@ -246,4 +246,35 @@ public class CaseUtil {
 			return Collections.emptyList();
 		}
 	}
+
+	public List<String> getAdvocatesForMember(RequestInfo requestInfo, String memberUserUuid, String caseId) {
+		try {
+			StringBuilder uri = new StringBuilder();
+			uri.append(config.getCaseHost()).append(config.getCaseMemberAdvocatesPath());
+
+			Map<String, Object> requestBody = new HashMap<>();
+			requestBody.put("RequestInfo", requestInfo);
+			requestBody.put("memberUserUuid", memberUserUuid);
+			requestBody.put("caseId", caseId);
+
+			log.info("Calling member advocates API for memberUserUuid: {} and caseId: {}", memberUserUuid, caseId);
+			Object response = restTemplate.postForObject(uri.toString(), requestBody, Map.class);
+			
+			JsonNode jsonNode = mapper.readTree(mapper.writeValueAsString(response));
+			JsonNode advocateUuidsNode = jsonNode.get("advocateUuids");
+
+			if (advocateUuidsNode != null && advocateUuidsNode.isArray()) {
+				List<String> advocateUuids = new ArrayList<>();
+				for (JsonNode uuidNode : advocateUuidsNode) {
+					advocateUuids.add(uuidNode.asText());
+				}
+				log.info("Found {} advocates for memberUserUuid: {}", advocateUuids.size(), memberUserUuid);
+				return advocateUuids;
+			}
+			return new ArrayList<>();
+		} catch (Exception e) {
+			log.error("Error while fetching advocates for memberUserUuid: {}", memberUserUuid, e);
+			return new ArrayList<>();
+		}
+	}
 }
