@@ -3,6 +3,7 @@ import { FormComposerV2, SubmitBar } from "@egovernments/digit-ui-react-componen
 import React, { useMemo, useState } from "react";
 import isEqual from "lodash/isEqual";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import { formatName, isRichTextEmpty } from "../utils";
 
 const AddTemplateModal = ({
   t,
@@ -17,11 +18,51 @@ const AddTemplateModal = ({
   handleSubmit,
   isShowPdf = false,
   previewPdf = null,
+  setFormErrors,
 }) => {
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
 
+  const checkTextValidation = ({ formData, setValue, reset, formdata, clearErrors, formState }) => {
+    const formDataCopy = structuredClone(formData);
+    for (const key in formDataCopy) {
+      if (["processTitle"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+        const oldValue = formDataCopy[key];
+        let value = oldValue;
+        if (typeof value === "string") {
+          if (value.length > 200) {
+            value = value.slice(0, 200);
+          }
+          let updatedValue = formatName(value);
+          if (updatedValue !== oldValue) {
+            const element = document.querySelector(`[name="${key}"]`);
+            const start = element?.selectionStart;
+            const end = element?.selectionEnd;
+            setValue(key, updatedValue);
+            clearErrors(key);
+            setTimeout(() => {
+              element?.setSelectionRange(start, end);
+            }, 0);
+          }
+        }
+      }
+    }
+  };
+
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    checkTextValidation({ formData, setValue, formdata, reset, clearErrors, formState });
+    if (!isRichTextEmpty(formData?.orderText?.text) && Object.keys(formState?.errors).includes("orderText")) {
+      clearErrors("orderText");
+    }
+
+    if (!isRichTextEmpty(formData?.processText?.text) && Object.keys(formState?.errors).includes("processText")) {
+      clearErrors("processText");
+    }
+
+    if (!isRichTextEmpty(formData?.coverLetterText?.text) && Object.keys(formState?.errors).includes("coverLetterText")) {
+      clearErrors("coverLetterText");
+    }
+
     if (!isEqual(formdata, formData)) {
       setFormData(formData);
     }
@@ -31,6 +72,8 @@ const AddTemplateModal = ({
     } else {
       setIsSubmitDisabled(false);
     }
+
+    setFormErrors.current = setError;
   };
 
   return (

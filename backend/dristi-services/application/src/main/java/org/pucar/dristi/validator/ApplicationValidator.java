@@ -36,12 +36,6 @@ public class ApplicationValidator {
     public void validateApplication(ApplicationRequest applicationRequest) throws CustomException {
         RequestInfo requestInfo = applicationRequest.getRequestInfo();
         Application application = applicationRequest.getApplication();
-
-        // Validate case access for advocate and advocate clerk roles
-        if (application != null && application.getFilingNumber() != null) {
-            validateCaseAccess(requestInfo, application.getFilingNumber());
-        }
-
         //validate documents
         validateDocuments(application);
 
@@ -57,11 +51,6 @@ public class ApplicationValidator {
     }
 
     public Boolean validateApplicationExistence(RequestInfo requestInfo ,Application application) {
-        // Validate case access for advocate and advocate clerk roles
-        if (application != null && application.getFilingNumber() != null) {
-            validateCaseAccess(requestInfo, application.getFilingNumber());
-        }
-
         //validate documents
         validateDocuments(application);
 
@@ -130,23 +119,5 @@ public class ApplicationValidator {
 
             });
         }
-    }
-
-    /**
-     * Validates case access by calling case search API which handles validation internally
-     */
-    public void validateCaseAccess(RequestInfo requestInfo, String filingNumber) {
-        CaseSearchRequest searchRequest = CaseSearchRequest.builder()
-                .requestInfo(requestInfo)
-                .criteria(Collections.singletonList(
-                        CaseCriteria.builder()
-                            .filingNumber(filingNumber)
-                            .defaultFields(false)
-                            .build()
-                        )
-                )
-                .build();
-
-        caseUtil.searchCaseDetails(searchRequest);
     }
 }

@@ -45,12 +45,6 @@ public class EvidenceValidator {
         if (evidenceRequest.getRequestInfo().getUserInfo() == null) {
             throw new CustomException(ENRICHMENT_EXCEPTION, "User info not found!!!");
         }
-
-        // Validate case access for advocate and advocate clerk roles
-        if (evidenceRequest.getArtifact().getCaseId() != null) {
-            validateCaseAccess(evidenceRequest.getRequestInfo(), evidenceRequest.getArtifact().getCaseId());
-        }
-
         CaseExistsRequest caseExistsRequest = createCaseExistsRequest(evidenceRequest.getRequestInfo(), evidenceRequest.getArtifact());
         // Validate caseid
         if (!caseUtil.fetchCaseDetails(caseExistsRequest)) {
@@ -156,23 +150,5 @@ public class EvidenceValidator {
         hearingExists.setHearingId(artifact.getHearing());
         hearingExistsRequest.setOrder(hearingExists);
         return hearingExistsRequest;
-    }
-
-    /**
-     * Validates case access by calling case search API which handles validation internally
-     */
-    public void validateCaseAccess(RequestInfo requestInfo, String caseId) {
-        CaseSearchRequest searchRequest = CaseSearchRequest.builder()
-                .requestInfo(requestInfo)
-                .criteria(Collections.singletonList(
-                        CaseCriteria.builder()
-                            .caseId(caseId)
-                            .defaultFields(false)
-                            .build()
-                        )
-                )
-                .build();
-
-        caseUtil.searchCaseDetails(searchRequest);
     }
 }

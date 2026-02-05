@@ -136,7 +136,9 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
-                addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), criteria.getOfficeAdvocateId(), criteria.getMemberId(), criteria.getIsMemberActiveInCase(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+
+                addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
             }
 
             return query.toString();
@@ -175,7 +177,7 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
-                firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), criteria.getOfficeAdvocateId(), criteria.getMemberId(), criteria.getIsMemberActiveInCase(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                firstCriteria = addAdvocateCriteriaForListSearch(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), criteria.getOfficeAdvocateId(), criteria.getIsMemberActiveInCase(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
                 firstCriteria = addListCriteria(criteria.getStatus(), query, firstCriteria, "cases.status", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
@@ -200,45 +202,57 @@ public class CaseQueryBuilder {
         }
     }
 
-    private boolean addAdvocateCriteria(String advocateId, String poaHolderIndividualId, String officeAdvocateId, String memberId, Boolean isMemberActiveInCase, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
+    private boolean addAdvocateCriteriaForListSearch(String advocateId, String poaHolderIndividualId, String officeAdvocateId, Boolean isMemberActiveInCase, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
+        // For list search (/case/v2/search/list)
+        String userUuid = requestInfo.getUserInfo().getUuid();
 
         if (officeAdvocateId != null && !officeAdvocateId.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
-            if(isMemberActiveInCase && memberId!= null && !memberId.isEmpty()) {
+            
+            if (Boolean.TRUE.equals(isMemberActiveInCase)) {
+                // Member wants to view only cases where they are active members
                 query.append("(cases.id IN (" +
                                 " SELECT aocm.case_id" +
                                 " FROM dristi_advocate_office_case_member aocm" +
                                 " WHERE aocm.office_advocate_id = ?" +
-                                " AND aocm.member_id = ?" +
+                                " AND aocm.member_user_uuid = ?" +
                                 " AND aocm.is_active = true))" +
                                 " AND (cases.status NOT IN ('DELETED_DRAFT'))"
                         );
-
                 preparedStmtList.add(officeAdvocateId);
                 preparedStmtArgList.add(Types.VARCHAR);
-                preparedStmtList.add(memberId);
+                preparedStmtList.add(userUuid);
                 preparedStmtArgList.add(Types.VARCHAR);
-            }
-            else{
-                query.append("(cases.id IN (" +
+            } else {
+                // Member wants to view all advocate's cases from dcr table
+                query.append("(EXISTS (SELECT 1 FROM dristi_advocate_office_case_member aocm " +
+                           "WHERE aocm.office_advocate_id = ? " +
+                           "AND aocm.member_user_uuid = ? " +
+                           "AND aocm.is_active = true) " +
+                           "AND cases.id IN (" +
                                 " SELECT dcr.case_id" +
                                 " FROM dristi_case_representatives dcr" +
                                 " WHERE dcr.advocateId = ? AND dcr.isactive = true))" +
                         " AND (cases.status NOT IN ('DELETED_DRAFT'))");
                 preparedStmtList.add(officeAdvocateId);
                 preparedStmtArgList.add(Types.VARCHAR);
+                preparedStmtList.add(userUuid);
+                preparedStmtArgList.add(Types.VARCHAR);
+                preparedStmtList.add(officeAdvocateId);
+                preparedStmtArgList.add(Types.VARCHAR);
             }
 
             firstCriteria = false;
-
+            return firstCriteria;
         }
 
+        // Advocate viewing their own cases
         if (advocateId != null && !advocateId.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
             query.append("((cases.id IN (" +
-                    "        SELECT advocate.case_id" +
-                    "        FROM dristi_case_representatives advocate" +
-                    "        WHERE advocate.advocateId = ? AND advocate.isactive = true" +
+                    "        SELECT dcr.case_id" +
+                    "        FROM dristi_case_representatives dcr" +
+                    "        WHERE dcr.advocateId = ? AND dcr.isactive = true" +
                     "        UNION" +
                     "        SELECT poaholders.case_id" +
                     "        FROM dristi_case_poaholders poaholders" +
@@ -249,11 +263,66 @@ public class CaseQueryBuilder {
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(poaHolderIndividualId);
             preparedStmtArgList.add(Types.VARCHAR);
-            preparedStmtList.add(requestInfo.getUserInfo().getUuid());
+            preparedStmtList.add(userUuid);
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(advocateId);
             preparedStmtArgList.add(Types.VARCHAR);
             firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    private boolean addAdvocateCriteria(String advocateId, String poaHolderIndividualId, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
+        // For v1 search and v2 details search
+        // Check both direct and indirect membership using member_user_uuid
+        if (advocateId != null && !advocateId.isEmpty()) {
+            String userUuid = requestInfo.getUserInfo().getUuid();
+            // Advocate: check via advocate tables OR via office member table
+            addClauseIfRequired(query, firstCriteria);
+            query.append("((cases.id IN (" +
+                    "        SELECT dcr.case_id" +
+                    "        FROM dristi_case_representatives dcr" +
+                    "        WHERE dcr.advocateId = ? AND dcr.isactive = true" +
+                    "        UNION" +
+                    "        SELECT poaholders.case_id" +
+                    "        FROM dristi_case_poaholders poaholders" +
+                    "        WHERE poaholders.individual_id = ? AND poaholders.is_active = true" +
+                    "        UNION" +
+                    "        SELECT aocm.case_id" +
+                    "        FROM dristi_advocate_office_case_member aocm" +
+                    "        WHERE aocm.member_user_uuid = ? AND aocm.is_active = true))" +
+                    " OR cases.status='DRAFT_IN_PROGRESS' AND cases.createdby = ?" +
+                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+            preparedStmtList.add(advocateId);
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(poaHolderIndividualId);
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(userUuid);
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(userUuid);
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(advocateId);
+            preparedStmtArgList.add(Types.VARCHAR);
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    private boolean addClerkCriteria(Boolean isClerk, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
+
+        if(Boolean.TRUE.equals(isClerk)){
+            // Clerk: check only via office member table using member_user_uuid
+
+            addClauseIfRequired(query, firstCriteria);
+            String userUuid = requestInfo.getUserInfo().getUuid();
+            query.append("(cases.id IN (" +
+                    "        SELECT aocm.case_id" +
+                    "        FROM dristi_advocate_office_case_member aocm" +
+                    "        WHERE aocm.member_user_uuid = ? AND aocm.is_active = true))" +
+                    " AND (cases.status NOT IN ('DELETED_DRAFT'))");
+            preparedStmtList.add(userUuid);
+            preparedStmtArgList.add(Types.VARCHAR);
+            return false;
         }
         return firstCriteria;
     }
@@ -333,7 +402,9 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
-                firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), criteria.getOfficeAdvocateId(), criteria.getMemberId(), criteria.getIsMemberActiveInCase(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+                firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+
+                firstCriteria = addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
                 firstCriteria = addListCriteria(criteria.getStatus(), query, firstCriteria, "cases.status", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 

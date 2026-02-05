@@ -560,9 +560,7 @@ public class CaseRegistrationEnrichment {
     }
 
     private void enrichCitizenUserId(List<Role> roles, CaseSearchRequest searchRequest) {
-
         RequestInfo requestInfo = searchRequest.getRequestInfo();
-
         String individualId = individualService.getIndividualId(requestInfo);
 
         boolean isAdvocate = roles.stream()
@@ -571,25 +569,16 @@ public class CaseRegistrationEnrichment {
                 .anyMatch(role -> ADVOCATE_CLERK_ROLE.equals(role.getCode()));
 
         if (isAdvocate) {
-            for (CaseCriteria element : searchRequest.getCriteria()) {
-                // Handle officeAdvocateId validation logic
-                validateOfficeAdvocateId(element, individualId, requestInfo, true);
-            }
-
             List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
-
             if (!advocates.isEmpty()) {
                 String advocateId = advocates.get(0).getId().toString();
                 for (CaseCriteria element : searchRequest.getCriteria()) {
-                    if(element.getOfficeAdvocateId() == null){
-                        element.setAdvocateId(advocateId);
-                    }
+                    element.setAdvocateId(advocateId);
                 }
             }
-
         } else if (isClerk) {
             for (CaseCriteria element : searchRequest.getCriteria()) {
-                validateOfficeAdvocateId(element, individualId, requestInfo, false);
+                element.setIsClerk(true);
             }
         } else {
             for (CaseCriteria element : searchRequest.getCriteria()) {
@@ -600,7 +589,6 @@ public class CaseRegistrationEnrichment {
         for (CaseCriteria element : searchRequest.getCriteria()) {
             element.setPoaHolderIndividualId(individualId);
         }
-
     }
 
     public void enrichCaseSearchRequest(CaseSearchRequestV2 caseSearchRequest) {
@@ -632,8 +620,7 @@ public class CaseRegistrationEnrichment {
 
     }
 
-    private void enrichCitizenUserId(List<Role> roles, CaseSearchCriteriaV2 criteria,RequestInfo requestInfo) {
-
+    private void enrichCitizenUserId(List<Role> roles, CaseSearchCriteriaV2 criteria, RequestInfo requestInfo) {
         String individualId = individualService.getIndividualId(requestInfo);
 
         boolean isAdvocate = roles.stream()
@@ -642,24 +629,18 @@ public class CaseRegistrationEnrichment {
                 .anyMatch(role -> ADVOCATE_CLERK_ROLE.equals(role.getCode()));
 
         if (isAdvocate) {
-            // Handle officeAdvocateId validation logic
-            validateOfficeAdvocateId(criteria, individualId, requestInfo, true);
-
             List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
-
-            if (!advocates.isEmpty() && criteria.getOfficeAdvocateId() == null) {
+            if (!advocates.isEmpty()) {
                 String advocateId = advocates.get(0).getId().toString();
                 criteria.setAdvocateId(advocateId);
             }
-
         } else if (isClerk) {
-            validateOfficeAdvocateId(criteria, individualId, requestInfo, false);
+            criteria.setIsClerk(true);
         } else {
             criteria.setLitigantId(individualId);
         }
 
         criteria.setPoaHolderIndividualId(individualId);
-
     }
 
     public void enrichCaseSearchRequest(CaseSummaryListRequest caseListRequest) {
@@ -691,7 +672,7 @@ public class CaseRegistrationEnrichment {
     }
 
     private void enrichCitizenUserId(List<Role> roles, CaseSummaryListRequest caseListRequest, RequestInfo requestInfo) {
-        CaseSummaryListCriteria caseSummaryListCriteria = caseListRequest.getCriteria();
+        CaseSummaryListCriteria criteria = caseListRequest.getCriteria();
         String individualId = individualService.getIndividualId(requestInfo);
 
         boolean isAdvocate = roles.stream()
@@ -700,148 +681,32 @@ public class CaseRegistrationEnrichment {
                 .anyMatch(role -> ADVOCATE_CLERK_ROLE.equals(role.getCode()));
 
         if (isAdvocate) {
-
-            // Handle officeAdvocateId validation logic
-            validateOfficeAdvocateId(caseSummaryListCriteria, individualId, requestInfo, true);
-
-            List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
-
-            if (!advocates.isEmpty() && caseSummaryListCriteria.getOfficeAdvocateId() == null) {
-                String advocateId = advocates.get(0).getId().toString();
-                caseSummaryListCriteria.setAdvocateId(advocateId);
-            }
-
-        } else if (isClerk) {
-            validateOfficeAdvocateId(caseSummaryListCriteria, individualId, requestInfo, false);
-        } else {
-            caseSummaryListCriteria.setLitigantId(individualId);
-        }
-
-        caseSummaryListCriteria.setPoaHolderIndividualId(individualId);
-
-    }
-
-    private void validateOfficeAdvocateId(CaseSummaryListCriteria criteria, String individualId, RequestInfo requestInfo, boolean isAdvocate) {
-        
-        String officeAdvocateId = criteria.getOfficeAdvocateId();
-        
-        if (officeAdvocateId == null) {
-            if (isAdvocate) {
-                return;
+            if (criteria.getOfficeAdvocateId() != null) {
+                // If officeAdvocateId is provided, validation will happen in query
+                // using member_user_uuid against userUuid
+                Boolean isMemberActiveInCase = criteria.getIsMemberActiveInCase();
+                criteria.setIsMemberActiveInCase(isMemberActiveInCase != null && isMemberActiveInCase);
             } else {
-                throw new CustomException("CLERK_ACCESS_DENIED", "Clerk must provide officeAdvocateId");
-            }
-        }
-        
-        String memberId = getMemberIdForUser(individualId, requestInfo, isAdvocate);
-        
-        if (memberId == null) {
-            if (isAdvocate) {
-                criteria.setOfficeAdvocateId(null);
-                return;
-            } else {
-                throw new CustomException("CLERK_MEMBER_NOT_FOUND", "Clerk member not found");
-            }
-        }
-        
-        boolean memberExists = caseRepositoryV2.validateAdvocateOfficeCaseMember(officeAdvocateId, memberId);
-        
-        if (!memberExists) {
-            // Searching on behalf of advocate should be invalidated
-            criteria.setOfficeAdvocateId(null);
-            criteria.setMemberId(null);
-            if (isAdvocate) {
-                return;
-            } else {
-                throw new CustomException("CLERK_NOT_MEMBER", "Clerk is not a member of this advocate's office");
-            }
-        }
-        
-        Boolean representativeCases = criteria.getIsMemberActiveInCase();
-        criteria.setIsMemberActiveInCase(representativeCases != null && representativeCases);
-    }
-
-    private void validateOfficeAdvocateId(CaseCriteria criteria, String individualId, RequestInfo requestInfo, boolean isAdvocate) {
-
-        String memberId = getMemberIdForUser(individualId, requestInfo, isAdvocate);
-        
-        if (memberId == null) {
-            criteria.setOfficeAdvocateId(null);
-            if (isAdvocate) {
-                return;
-            } else {
-                throw new CustomException("CLERK_MEMBER_NOT_FOUND", "Clerk member not found");
-            }
-        }
-        
-        List<String> officeAdvocateIdsForMemberInCase = caseRepositoryV2.getOfficeAdvocateIdsForMemberIdInCase(memberId, criteria.getCaseId(), criteria.getFilingNumber());
-        
-        if (officeAdvocateIdsForMemberInCase.isEmpty()) {
-            // Searching on behalf of advocate should be invalidated
-            criteria.setOfficeAdvocateId(null);
-            criteria.setMemberId(null);
-            if (isAdvocate) {
-                return;
-            } else {
-                throw new CustomException("ACCESS_DENIED", "Clerk cannot view this case");
-            }
-        }
-        
-        Boolean representativeCases = criteria.getIsMemberActiveInCase();
-        criteria.setIsMemberActiveInCase(representativeCases != null && representativeCases);
-        // For /case/v1_search it does not matter on whose behalf the case is being searched
-        // as long as member is tied to an advocate in the case
-        criteria.setOfficeAdvocateId(officeAdvocateIdsForMemberInCase.get(0));
-    }
-
-    private void validateOfficeAdvocateId(CaseSearchCriteriaV2 criteria, String individualId, RequestInfo requestInfo, boolean isAdvocate) {
-
-        String memberId = getMemberIdForUser(individualId, requestInfo, isAdvocate);
-        
-        if (memberId == null) {
-            criteria.setOfficeAdvocateId(null);
-            if (isAdvocate) {
-                return;
-            } else {
-                throw new CustomException("CLERK_MEMBER_NOT_FOUND", "Clerk member not found");
-            }
-        }
-        
-        List<String> officeAdvocateIdsForMemberInCase = caseRepositoryV2.getOfficeAdvocateIdsForMemberIdInCase(memberId, criteria.getCaseId(), criteria.getFilingNumber());
-        
-        if (officeAdvocateIdsForMemberInCase.isEmpty()) {
-            // Searching on behalf of advocate should be invalidated
-            criteria.setOfficeAdvocateId(null);
-            criteria.setMemberId(null);
-            if (isAdvocate) {
-                return;
-            } else {
-                throw new CustomException("ACCESS_DENIED", "Clerk cannot view this case");
-            }
-        }
-        
-        Boolean representativeCases = criteria.getIsMemberActiveInCase();
-        criteria.setIsMemberActiveInCase(representativeCases != null && representativeCases);
-        // For /case/v2/_search it does not matter on whose behalf the case is being searched
-        // as long as member is tied to an advocate in the case
-        criteria.setOfficeAdvocateId(officeAdvocateIdsForMemberInCase.get(0));
-    }
-    
-    private String getMemberIdForUser(String individualId, RequestInfo requestInfo, boolean isAdvocate) {
-        try {
-            if (isAdvocate) {
+                // If no officeAdvocateId, use advocateId for regular advocate search
                 List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
                 if (!advocates.isEmpty()) {
-                    return advocates.get(0).getId().toString();
+                    String advocateId = advocates.get(0).getId().toString();
+                    criteria.setAdvocateId(advocateId);
                 }
-            } else {
-                JsonNode clerkNode = advocateUtil.searchClerkByIndividualId(requestInfo, individualId);
-                return clerkNode.path("id").asText();
             }
-        } catch (Exception e) {
-            log.error("Error fetching member ID for individualId: {}, isAdvocate: {}", individualId, isAdvocate, e);
+        } else if (isClerk) {
+            if (criteria.getOfficeAdvocateId() == null) {
+                // For clerks, officeAdvocateId is mandatory
+                throw new CustomException("CLERK_ACCESS_DENIED", "Clerk must provide officeAdvocateId");
+            }
+            // Validation will happen in query using member_user_uuid against userUuid
+            Boolean isMemberActiveInCase = criteria.getIsMemberActiveInCase();
+            criteria.setIsMemberActiveInCase(isMemberActiveInCase != null && isMemberActiveInCase);
+        } else {
+            criteria.setLitigantId(individualId);
         }
-        return null;
+
+        criteria.setPoaHolderIndividualId(individualId);
     }
 
     public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id, String consumerCode){
