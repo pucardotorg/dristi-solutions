@@ -52,6 +52,10 @@
         width: fit-content;
       }
     }
+
+    .card-label-error {
+      margin-left: 0 !important;
+    }
   }
 
   .order-type-action {
@@ -62,8 +66,8 @@
     border-top: 1px #bbbbbd solid;
     padding: 16px 24px;
 
-    .submit-bar {
-      width: fit-content;
+    .submit-bar, .submit-bar-disabled {
+      width: fit-content !important;
       height: 40px;
       padding: 8px 24px 8px 24px;
       box-shadow: none !important;
