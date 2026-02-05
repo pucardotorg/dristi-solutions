@@ -1,11 +1,12 @@
 import { InboxSearchComposer, Loader, SubmitBar, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { temaplateOrConfigurationConfig } from "../../configs/TemplateOrConfigurationConfig";
 import AddTemplateModal from "../../components/AddTemplateModal";
 import { AddTeamplateFormConfig, coverLetterTextConfig } from "../../configs/AddTeamplateFormConfig";
 import { HomeService, Urls } from "../../hooks/services";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { isRichTextEmpty } from "../../utils";
 
 const convertToFormData = (t, data) => {
   const formData = {
@@ -35,6 +36,7 @@ const TemplateOrConfigurationPage = () => {
   const userInfo = Digit.UserService.getUser()?.info;
   const [pdfData, setPdfFile] = useState(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
+  const setFormErrors = useRef(null);
 
   const getTemplatePdfHelper = useCallback(
     async (rowData) => {
@@ -180,6 +182,16 @@ const TemplateOrConfigurationPage = () => {
 
   const handleSubmit = async () => {
     try {
+      if (isRichTextEmpty(formdata?.orderText?.text)) {
+        setFormErrors?.current("orderText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+        return;
+      }
+
+      if (isRichTextEmpty(formdata?.processText?.text)) {
+        setFormErrors?.current("processText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+        return;
+      }
+
       setIsLoading(true);
 
       const isCoverLetterRequired = formdata?.isCoverLetterRequired?.code === "YES";
@@ -230,6 +242,11 @@ const TemplateOrConfigurationPage = () => {
 
   const handleUpdateCoverLetterText = async () => {
     try {
+      if (isRichTextEmpty(coverLetterText?.coverLetterText?.text)) {
+        setFormErrors?.current("coverLetterText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+        return;
+      }
+
       setIsLoading(true);
       const payload = {
         templateConfiguration: {
@@ -327,6 +344,7 @@ const TemplateOrConfigurationPage = () => {
           formdata={formdata}
           setFormData={setFormData}
           handleSubmit={handleSubmit}
+          setFormErrors={setFormErrors}
         />
       )}
       {stepper === 2 && (
@@ -343,6 +361,7 @@ const TemplateOrConfigurationPage = () => {
           formdata={coverLetterText}
           setFormData={setCoverLetterText}
           handleSubmit={handleUpdateCoverLetterText}
+          setFormErrors={setFormErrors}
         />
       )}
       {stepper === 3 && (
@@ -366,6 +385,7 @@ const TemplateOrConfigurationPage = () => {
           isPdfLoading={isLoading}
           previewPdf={pdfData}
           isShowPdf={true}
+          setFormErrors={setFormErrors}
         />
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}

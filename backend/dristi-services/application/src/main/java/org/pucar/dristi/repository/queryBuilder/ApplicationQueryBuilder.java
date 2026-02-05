@@ -21,7 +21,7 @@ public class ApplicationQueryBuilder {
     private static final String     BASE_APP_QUERY =
             " SELECT app.id as id, app.tenantid as tenantid, app.caseid as caseid, app.filingnumber as filingnumber, app.cnrnumber as cnrnumber," +
                     " app.referenceid as referenceid, app.createddate as createddate, app.applicationcreatedby as applicationcreatedby," +
-                    " app.onbehalfof as onbehalfof, app.applicationtype as applicationtype, app.applicationnumber as applicationnumber," +
+                    " app.onbehalfof as onbehalfof, app.officeadvocateuseruuid as officeadvocateuseruuid, app.applicationtype as applicationtype, app.applicationnumber as applicationnumber," +
                     " app.statuteSection as statuteSection, app.issuedby as issuedby, app.status as status, app.courtId as courtId, app.comment as comment, app.isactive as isactive," +
                     " app.additionaldetails as additionaldetails,"+
                     " app.applicationcmpnumber as applicationcmpnumber,"+
