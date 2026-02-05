@@ -62,7 +62,7 @@ public class CaseServiceV2 {
                 if(courtCase!=null) {
                     log.info("CourtCase found in Redis cache for caseId: {}", criteria.getCaseId());
 
-                    validateIfUserPartOfCase(criteria, courtCase);
+                    validateIfUserPartOfCase(caseSearchRequests, courtCase);
                     return encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
                 } else {
                     log.debug("CourtCase not found in Redis cache for caseId: {}", criteria.getCaseId());
@@ -90,7 +90,8 @@ public class CaseServiceV2 {
         }
     }
 
-    private void validateIfUserPartOfCase(CaseSearchCriteriaV2 criteria, CourtCase courtCase) {
+    private void validateIfUserPartOfCase(CaseSearchRequestV2 caseSearchRequestV2, CourtCase courtCase) {
+        CaseSearchCriteriaV2 criteria = caseSearchRequestV2.getCriteria();
         boolean isPoaPresent = false;
 
         if (criteria.getCourtId() != null && !criteria.getCourtId().isEmpty()) {
@@ -111,9 +112,27 @@ public class CaseServiceV2 {
                     courtCase.getRepresentatives().stream()
                             .anyMatch(rep -> criteria.getAdvocateId().equals(rep.getAdvocateId()));
 
-            if(!isPoaPresent && !isAdvocatePresent){
+            boolean isAdvocateOfficeMember = courtCase.getAdvocateOffices()
+                    .stream()
+                    .flatMap(advocateOffice -> advocateOffice.getAdvocates().stream())
+                    .anyMatch(member -> criteria.getAdvocateId().equals(member.getMemberId()));
+
+            if(!isPoaPresent && !isAdvocatePresent && !isAdvocateOfficeMember){
                 log.debug("Advocate is not part of the case for caseId {}", criteria.getCaseId());
                 throw new CustomException(SEARCH_CASE_ERR, "Advocate is not part of the case");
+            }
+        }
+
+        if(Boolean.TRUE.equals(criteria.getIsClerk())){
+            boolean isClerkPresent = courtCase.getAdvocateOffices()
+                    .stream()
+                    .flatMap(advocateOffice -> advocateOffice.getClerks().stream())
+                    .anyMatch(member ->
+                            caseSearchRequestV2.getRequestInfo().getUserInfo().getUuid().equals(member.getMemberUserUuid()));
+
+            if(!isClerkPresent){
+                log.debug("Clerk is not part of the case for caseId {}", criteria.getCaseId());
+                throw new CustomException(SEARCH_CASE_ERR, "Clerk is not part of the case");
             }
         }
 
