@@ -128,7 +128,7 @@ async function miscellaneousProcessTemplate(
       Data: [
         {
           coverLetterSelected: coverLetterSelected,
-          courtComplex: mdmsCourtRoom.name,
+          courtComplex: mdmsCourtRoom.nameWithIn,
           caseNumber: caseNumber,
 
           policeAddresseeSelected: policeAddresseeSelected,
