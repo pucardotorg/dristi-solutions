@@ -1,10 +1,11 @@
 import React, { useMemo } from "react";
 import { AllCasesIcon, DashboarGraphIcon, OpenInNewTabIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 
-const HomeHeader = ({ t, userInfo, roles }) => {
+const HomeHeader = ({ t, userInfo, roles, activeTab, onTabChange }) => {
   const name = userInfo?.name;
   const hasViewDashboardsAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_DASHBOARDS"), [roles]);
   const hasViewAllCasesAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_ALL_CASES"), [roles]);
+  const hasViewTemaplateConfigurationAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_MISCELLANEOUS_TEMPLATE_CONFIGURATION"), [roles])
   const today = new Date();
   const curHr = today.getHours();
 
@@ -39,6 +40,23 @@ const HomeHeader = ({ t, userInfo, roles }) => {
               </div>
               <OpenInNewTabIcon />
             </a>
+          )}
+          {hasViewTemaplateConfigurationAccess && (
+            <div
+              className="home-btn"
+              style={{
+                cursor: "pointer",
+                background: activeTab === "TEMPLATE_OR_CONFIGURATION" ? "#E8E8E8" : "#F9FAFB",
+                borderRadius: activeTab === "TEMPLATE_OR_CONFIGURATION" ? "4px" : "0px",
+                width: "100%",
+              }}
+              onClick={() => onTabChange("TEMPLATE_OR_CONFIGURATION")}
+            >
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <AllCasesIcon />
+                <span style={{ paddingLeft: "8px" }}>{t("TEMPLATE_OR_CONFIGURATION")}</span>
+              </div>
+            </div>
           )}
         </div>
       )}

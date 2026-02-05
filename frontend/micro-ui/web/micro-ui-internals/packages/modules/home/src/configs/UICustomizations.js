@@ -12,6 +12,7 @@ import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
 import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
 import { formatDateWithTime } from "../../../orders/src/utils";
+import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components/EditDeleteModal";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -545,7 +546,7 @@ export const UICustomizations = {
           criteria: {
             ...filterList,
             completeStatus: completeStatusData,
-            orderType: filterList?.orderType && filterList?.orderType?.code !== "" ? [filterList?.orderType?.code] : [],
+            orderType: filterList?.orderType && filterList?.orderType?.code !== "" ? [filterList?.orderType?.code] : null,
             ...(noticeType && { noticeType }),
             ...(deliveryChanel && { deliveryChanel }),
             ...(hearingDate !== null && { hearingDate }),
@@ -1197,6 +1198,47 @@ export const UICustomizations = {
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
         case "EVIDENCE_NUMBER":
           return modifiedEvidenceNumber(value, row?.businessObject?.artifactDetails?.filingNumber);
+        default:
+          return value || "";
+      }
+    },
+  },
+
+  templateOrConfigurationHomeConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+
+      return {
+        ...requestCriteria,
+        body: {
+          criteria: { tenantId, searchableText: requestCriteria?.state?.searchForm?.process || "" },
+          pagination: {
+            limit: requestCriteria?.state?.searchForm?.limit || 10,
+            offSet: requestCriteria?.state?.searchForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const lists = data?.list || [];
+            const updatedList = lists?.map((list, index) => ({
+              ...list,
+              srNo: index + 1,
+            }));
+            return { data: updatedList, totalCount: data?.totalCount };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "TEMPLATE_OR_PROCESS_TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        case "CS_ACTIONS":
+          return <EditDeleteModal rowData={row} colData={column} value={value} isDelete={true} isEdit={true} />;
+        case "DATE_CREATED":
+          return formatDateDDMMYYYY(row?.auditDetails?.createdTime);
         default:
           return value || "";
       }

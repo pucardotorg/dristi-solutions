@@ -64,5 +64,6 @@ module.exports = function (app) {
     "/task-management",
     "/digitalized-documents",
     "/advocate-office-management",
+    "/template-configuration",
   ].forEach((location) => app.use(location, createProxy));
 };
