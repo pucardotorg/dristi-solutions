@@ -591,24 +591,29 @@ const ManageOffice = () => {
               </button>
             </div>
 
-            <p className="manage-office-remove-text">
-              {t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?"}
-            </p>
+            {isRemovingMember ? (
+              <div className="manage-office-modal-loader">
+                <Loader />
+              </div>
+            ) : (
+              <React.Fragment>
+                <p className="manage-office-remove-text">
+                  {t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?"}
+                </p>
 
-            <div className="manage-office-modal__footer">
-              <button onClick={handleCloseRemoveModal} className="manage-office-btn manage-office-btn--secondary">
-                {t("CANCEL") || "Cancel"}
-              </button>
-              <button
-                onClick={handleConfirmRemoveMember}
-                disabled={isRemovingMember}
-                className={`manage-office-btn manage-office-btn--danger${
-                  isRemovingMember ? " manage-office-btn--disabled" : ""
-                }`}
-              >
-                {isRemovingMember ? t("PLEASE_WAIT") || "Please wait..." : t("REMOVE_MEMBER") || "Remove Member"}
-              </button>
-            </div>
+                <div className="manage-office-modal__footer">
+                  <button onClick={handleCloseRemoveModal} className="manage-office-btn manage-office-btn--secondary">
+                    {t("CANCEL") || "Cancel"}
+                  </button>
+                  <button
+                    onClick={handleConfirmRemoveMember}
+                    className="manage-office-btn manage-office-btn--danger"
+                  >
+                    {t("REMOVE_MEMBER") || "Remove Member"}
+                  </button>
+                </div>
+              </React.Fragment>
+            )}
           </div>
         </div>
       )}
