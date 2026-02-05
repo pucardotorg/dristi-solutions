@@ -242,7 +242,7 @@ const TemplateOrConfigurationPage = () => {
 
   const handleUpdateCoverLetterText = async () => {
     try {
-      if (isRichTextEmpty(coverLetterText?.text)) {
+      if (isRichTextEmpty(coverLetterText?.coverLetterText?.text)) {
         setFormErrors?.current("coverLetterText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
         return;
       }
