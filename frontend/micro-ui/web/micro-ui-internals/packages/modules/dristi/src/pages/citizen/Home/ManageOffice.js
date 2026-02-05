@@ -358,9 +358,19 @@ const ManageOffice = () => {
     const isLeavingOfficeTab = activeTab === "advocatesWorkingFor";
     setIsRemovingMember(true);
     try {
-      const response = await window?.Digit?.DRISTIService?.leaveOffice(
-        {
-          leaveOffice: {
+      // On "Advocates I'm working for" we leave the selected advocate's office: use row's officeAdvocateId and fields.
+      // On "My Advocates/Clerks" the office is the logged-in advocate, so officeAdvocateId comes from advocateSearchResult.
+      const leavePayload = isLeavingOfficeTab
+        ? {
+            id: memberToRemove?.id,
+            tenantId: tenantId,
+            officeAdvocateId: memberToRemove?.officeAdvocateId != null ? memberToRemove.officeAdvocateId : memberToRemove?.advocateId,
+            memberType: memberToRemove?.memberType != null && memberToRemove.memberType !== "" ? memberToRemove.memberType : "ADVOCATE_CLERK",
+            memberId: memberToRemove?.memberId,
+            memberUserUuid: memberToRemove?.memberUserUuid,
+            officeAdvocateUserUuid: memberToRemove?.officeAdvocateUserUuid,
+          }
+        : {
             id: memberToRemove?.id,
             tenantId: tenantId,
             officeAdvocateId: advocateSearchResult?.[0]?.responseList?.[0]?.id,
@@ -368,10 +378,9 @@ const ManageOffice = () => {
             memberId: memberToRemove?.memberId,
             memberUserUuid: memberToRemove?.memberUserUuid,
             officeAdvocateUserUuid: memberToRemove?.officeAdvocateUserUuid,
-          },
-        },
-        { tenantId }
-      );
+          };
+
+      const response = await window?.Digit?.DRISTIService?.leaveOffice({ leaveOffice: leavePayload }, { tenantId });
 
       if (response) {
         refetchMembers();
@@ -460,8 +469,17 @@ const ManageOffice = () => {
           </div>
         ) : (
           <div className="manage-office-empty">
-            <p className="manage-office-empty__title">{t("NO_DATA_TO_DISPLAY") || "No data to display."}</p>
-            <p className="manage-office-empty__subtitle">{t("PLEASE_ADD_MEMBER") || "Please add member"}</p>
+            {activeTab === "advocatesWorkingFor" ? (
+              <React.Fragment>
+                <p className="manage-office-empty__title">{t("NO_DATA_TO_DISPLAY") || "No data to display."}</p>
+                <p className="manage-office-empty__title">{t("NOT_WORKING_FOR_ANY_ADVOCATES") || "You are not working for any advocates."}</p>
+              </React.Fragment>
+            ) : (
+              <>
+                <p className="manage-office-empty__title">{t("NO_DATA_TO_DISPLAY") || "No data to display."}</p>
+                <p className="manage-office-empty__subtitle">{t("PLEASE_ADD_MEMBER") || "Please add member"}</p>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -568,8 +586,8 @@ const ManageOffice = () => {
               <React.Fragment>
                 <p className="manage-office-remove-text">
                   {activeTab === "advocatesWorkingFor"
-                    ? (t("CONFIRM_LEAVE_ADVOCATE_OFFICE") || "Are you sure you want to leave this advocate office?")
-                    : (t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?")}
+                    ? t("CONFIRM_LEAVE_ADVOCATE_OFFICE") || "Are you sure you want to leave this advocate's office?"
+                    : t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?"}
                 </p>
 
                 <div className="manage-office-modal__footer">
