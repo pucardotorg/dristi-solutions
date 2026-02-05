@@ -5661,6 +5661,7 @@ export const configsCreateOrderAttachment = [
           optionsKey: "code",
           error: "CORE_REQUIRED_FIELD_ERROR",
           styles: { maxWidth: "100%" },
+          customStyle: { display: "none" },
           mdmsConfig: {
             masterName: "OrderType",
             moduleName: "Order",
