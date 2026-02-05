@@ -117,7 +117,7 @@ const ManageOffice = () => {
   } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
     {
       searchCriteria: {
-        memberid: officeAdvocateUserUuid,
+        memberUserUuid: officeAdvocateUserUuid,
         tenantId: tenantId,
       },
     },
@@ -425,11 +425,7 @@ const ManageOffice = () => {
         ) : displayMembers.length > 0 ? (
           <div>
             {/* Table Header: 4 columns for Advocates I'm working for, 5 for My Advocates/Clerks */}
-            <div
-              className={`manage-office-table-header${
-                activeTab === "advocatesWorkingFor" ? " manage-office-table-header--working-for" : ""
-              }`}
-            >
+            <div className={`manage-office-table-header${activeTab === "advocatesWorkingFor" ? " manage-office-table-header--working-for" : ""}`}>
               <span>{activeTab === "advocatesWorkingFor" ? t("ADVOCATE") || "Advocate" : t("NAME") || "Name"}</span>
               <span>{t("MOBILE_NUMBER") || "Mobile Number"}</span>
               {activeTab !== "advocatesWorkingFor" && <span>{t("DESIGNATION") || "Designation"}</span>}
@@ -440,17 +436,9 @@ const ManageOffice = () => {
             {displayMembers.map((member) => (
               <div
                 key={member.id || member.memberId}
-                className={`manage-office-table-row${
-                  activeTab === "advocatesWorkingFor" ? " manage-office-table-row--working-for" : ""
-                }`}
+                className={`manage-office-table-row${activeTab === "advocatesWorkingFor" ? " manage-office-table-row--working-for" : ""}`}
               >
-                <span
-                  className={
-                    activeTab === "advocatesWorkingFor"
-                      ? "manage-office-name"
-                      : "manage-office-name manage-office-name--clickable"
-                  }
-                >
+                <span className={activeTab === "advocatesWorkingFor" ? "manage-office-name" : "manage-office-name manage-office-name--clickable"}>
                   {activeTab === "advocatesWorkingFor" ? member.officeAdvocateName || member.memberName : member.memberName}
                 </span>
                 <span>{member.memberMobileNumber || member.officeAdvocateMobileNumber}</span>
@@ -462,11 +450,7 @@ const ManageOffice = () => {
                     {member.accessType === "ALL_CASES" ? t("ALL_CASES") || "All Cases" : t("SPECIFIC_CASES") || "Specific Cases"}
                   </span>
                 </span>
-                <span
-                  className={`manage-office-actions${
-                    activeTab === "advocatesWorkingFor" ? " manage-office-actions--compact" : ""
-                  }`}
-                >
+                <span className={`manage-office-actions${activeTab === "advocatesWorkingFor" ? " manage-office-actions--compact" : ""}`}>
                   <button onClick={() => handleDeleteClick(member)} className="manage-office-delete-btn">
                     <DeleteIcon />
                   </button>
@@ -484,10 +468,7 @@ const ManageOffice = () => {
 
       {showAddMemberModal && (
         <div className="manage-office-modal-overlay" onClick={handleCloseModal}>
-          <div
-            className={`manage-office-modal ${searchResult ? "manage-office-modal--wide" : ""}`}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className={`manage-office-modal ${searchResult ? "manage-office-modal--wide" : ""}`} onClick={(e) => e.stopPropagation()}>
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">{t("ADD_MEMBER") || "Add Member"}</h2>
               <button onClick={handleCloseModal} className="manage-office-modal__close">
@@ -522,15 +503,9 @@ const ManageOffice = () => {
                   </div>
                 ) : (
                   <div className="manage-office-search-field">
-                    <label className="manage-office-search-field__label">
-                      {t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}
-                    </label>
+                    <label className="manage-office-search-field__label">{t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}</label>
                     <div className="manage-office-search-field__control">
-                      <select
-                        value={countryCode}
-                        onChange={(e) => setCountryCode(e.target.value)}
-                        className="manage-office-search-field__country"
-                      >
+                      <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="manage-office-search-field__country">
                         <option value="+91">+91</option>
                         <option value="+1">+1</option>
                         <option value="+44">+44</option>
@@ -549,17 +524,11 @@ const ManageOffice = () => {
                 )}
 
                 <div className="manage-office-modal__footer">
-                  <button
-                    onClick={handleGoBack}
-                    className="manage-office-btn manage-office-btn--secondary"
-                  >
+                  <button onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
                     {t("GO_BACK") || "Go Back"}
                   </button>
                   {searchResult ? (
-                    <button
-                      onClick={handleConfirmAddMember}
-                      className="manage-office-btn manage-office-btn--primary"
-                    >
+                    <button onClick={handleConfirmAddMember} className="manage-office-btn manage-office-btn--primary">
                       {t("ADD_MEMBER") || "Add Member"}
                     </button>
                   ) : (
@@ -598,17 +567,16 @@ const ManageOffice = () => {
             ) : (
               <React.Fragment>
                 <p className="manage-office-remove-text">
-                  {t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?"}
+                  {activeTab === "advocatesWorkingFor"
+                    ? (t("CONFIRM_LEAVE_ADVOCATE_OFFICE") || "Are you sure you want to leave this advocate office?")
+                    : (t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?")}
                 </p>
 
                 <div className="manage-office-modal__footer">
                   <button onClick={handleCloseRemoveModal} className="manage-office-btn manage-office-btn--secondary">
                     {t("CANCEL") || "Cancel"}
                   </button>
-                  <button
-                    onClick={handleConfirmRemoveMember}
-                    className="manage-office-btn manage-office-btn--danger"
-                  >
+                  <button onClick={handleConfirmRemoveMember} className="manage-office-btn manage-office-btn--danger">
                     {t("REMOVE_MEMBER") || "Remove Member"}
                   </button>
                 </div>
@@ -619,9 +587,7 @@ const ManageOffice = () => {
       )}
 
       {/* Toast Notification: auto-close after 5s, close button to dismiss manually */}
-      {toast && (
-        <Toast label={toast.label} onClose={() => setToast(null)} error={toast.type === "error"} isDleteBtn={true} />
-      )}
+      {toast && <Toast label={toast.label} onClose={() => setToast(null)} error={toast.type === "error"} isDleteBtn={true} />}
     </div>
   );
 };
