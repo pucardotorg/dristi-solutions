@@ -1,5 +1,6 @@
 package pucar.strategy;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
 
@@ -12,7 +13,7 @@ public interface OrderUpdateStrategy {
 
     OrderRequest preProcess(OrderRequest orderRequest);
 
-    OrderRequest postProcess(OrderRequest orderRequest);
+    OrderRequest postProcess(OrderRequest orderRequest) throws JsonProcessingException;
 
     boolean supportsCommon(OrderRequest request);
 
