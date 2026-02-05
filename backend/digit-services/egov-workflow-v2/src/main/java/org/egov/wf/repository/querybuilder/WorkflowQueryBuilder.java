@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.wf.config.WorkflowConfig;
+import org.egov.wf.web.models.AssigneeSearchCriteria;
 import org.egov.wf.web.models.ProcessInstanceSearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -590,5 +591,50 @@ public class WorkflowQueryBuilder {
     private String addStatusCountWrapper(String query){
         String countQuery = STATUS_COUNT_WRAPPER.replace("{INTERNAL_QUERY}", query);
         return countQuery;
+    }
+
+    /**
+     * Returns query to fetch process instance IDs where:
+     * - The entry (pid, uuid) EXISTS in assignees table with isActive = true
+     * - The entry (pid, excludeUuid) does NOT exist for each excludeUuid in the list
+     * - The corresponding process instance is the latest record (history = false behavior)
+     * @param criteria The search criteria containing uuid and excludeUuids
+     * @param preparedStmtList The list to add prepared statement parameters
+     * @return The query string
+     */
+    public String getProcessInstanceIdsByAssigneeExclusion(AssigneeSearchCriteria criteria, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder();
+
+        query.append("SELECT DISTINCT asg.processinstanceid FROM {SCHEMA}.eg_wf_assignee_v2 asg ");
+        query.append("INNER JOIN {SCHEMA}.eg_wf_processinstance_v2 pi ON asg.processinstanceid = pi.id ");
+        query.append("WHERE asg.assignee IN (").append(createQuery(criteria.getUuids())).append(") AND asg.isActive = true ");
+        addToPreparedStatement(preparedStmtList, criteria.getUuids());
+
+        query.append("AND pi.tenantid = ? ");
+        preparedStmtList.add(criteria.getTenantId());
+
+        query.append("AND pi.lastmodifiedTime = (");
+        query.append("SELECT max(lastmodifiedTime) FROM {SCHEMA}.eg_wf_processinstance_v2 pi_inner ");
+        query.append("WHERE pi_inner.businessid = pi.businessid AND pi_inner.tenantid = ? ");
+        query.append(") ");
+        preparedStmtList.add(criteria.getTenantId());
+
+        if (!StringUtils.isEmpty(criteria.getBusinessId())) {
+            query.append("AND pi.businessid LIKE ? ");
+            preparedStmtList.add("%" + criteria.getBusinessId() + "%");
+        }
+
+        List<String> excludeUuids = criteria.getExcludeUuids();
+        if (!CollectionUtils.isEmpty(excludeUuids)) {
+            query.append("AND NOT EXISTS (");
+            query.append("SELECT 1 FROM {SCHEMA}.eg_wf_assignee_v2 asg_exclude ");
+            query.append("WHERE asg_exclude.processinstanceid = asg.processinstanceid ");
+            query.append("AND asg_exclude.isActive = true ");
+            query.append("AND asg_exclude.assignee IN (").append(createQuery(excludeUuids)).append(")");
+            query.append(") ");
+            addToPreparedStatement(preparedStmtList, excludeUuids);
+        }
+
+        return query.toString();
     }
 }

@@ -180,4 +180,31 @@ public class WorkflowUtil {
 
         return shouldUpsert;
     }
+
+    public List<Assignee> searchAssigneesByMemberUuid(RequestInfo requestInfo, String memberUserUuid, String tenantId) {
+        try {
+            RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
+
+            StringBuilder url = new StringBuilder();
+            url.append(config.getWorkflowHost())
+                    .append(config.getWorkflowAssigneeSearchEndpoint())
+                    .append("?tenantId=").append(tenantId)
+                    .append("&assignee=").append(memberUserUuid);
+
+            log.info("Searching workflow assignees by member UUID: {} with URL: {}", memberUserUuid, url);
+
+            Object response = requestRepository.fetchResult(url, requestInfoWrapper);
+            AssigneeResponse assigneeResponse = mapper.convertValue(response, AssigneeResponse.class);
+
+            if (assigneeResponse != null && assigneeResponse.getAssignees() != null) {
+                log.info("Found {} assignees for member UUID: {}", assigneeResponse.getAssignees().size(), memberUserUuid);
+                return assigneeResponse.getAssignees();
+            }
+
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error searching workflow assignees by member UUID: {}", memberUserUuid, e);
+            return Collections.emptyList();
+        }
+    }
 }

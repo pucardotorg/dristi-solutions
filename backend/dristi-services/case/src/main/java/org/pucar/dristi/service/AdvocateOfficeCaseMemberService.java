@@ -13,6 +13,7 @@ import org.pucar.dristi.web.models.advocateofficemember.AddMemberRequest;
 import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMember;
 import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMemberRequest;
 import org.pucar.dristi.web.models.advocateofficemember.LeaveOfficeRequest;
+import org.pucar.dristi.web.models.advocateofficemember.MemberAdvocatesRequest;
 import org.pucar.dristi.web.models.enums.MemberType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -285,6 +286,27 @@ public class AdvocateOfficeCaseMemberService {
             } catch (Exception e) {
                 log.warn("Failed to update Redis cache for caseId: {}", caseId, e);
             }
+        }
+    }
+
+    public List<String> getAdvocatesForMember(MemberAdvocatesRequest request) {
+        try {
+            log.info("Fetching advocates for memberUserUuid: {} and caseId: {}", 
+                    request.getMemberUserUuid(), request.getCaseId());
+            
+            List<String> advocateUuids = repository.getAdvocateUuidsByMemberAndCase(
+                    request.getMemberUserUuid(), 
+                    request.getCaseId()
+            );
+            
+            log.info("Found {} advocates for memberUserUuid: {} and caseId: {}", 
+                    advocateUuids.size(), request.getMemberUserUuid(), request.getCaseId());
+            
+            return advocateUuids;
+        } catch (Exception e) {
+            log.error("Error fetching advocates for memberUserUuid: {} and caseId: {}", 
+                    request.getMemberUserUuid(), request.getCaseId(), e);
+            throw e;
         }
     }
 

@@ -10,6 +10,7 @@ import org.pucar.dristi.util.PendingTaskUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.web.models.CaseCriteria;
 import org.pucar.dristi.web.models.CaseSearchRequest;
+import org.pucar.dristi.web.models.workflow.Assignee;
 import org.pucar.dristi.web.models.workflow.ProcessInstance;
 import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMember;
 import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMemberRequest;
@@ -152,12 +153,90 @@ public class AdvocateOfficeMemberConsumer {
                     ? request.getLeaveOffice().getOfficeAdvocateId().toString()
                     : null;
 
+            String memberUserUuid = request.getLeaveOffice().getMemberUserUuid() != null
+                    ? request.getLeaveOffice().getMemberUserUuid().toString()
+                    : null;
+
+            String tenantId = request.getLeaveOffice().getTenantId();
+
             if (officeAdvocateUuid != null) {
                 updatePendingTasksForAdvocate(officeAdvocateUuid, request.getRequestInfo(), advocateId);
-                log.info("Successfully processed leave office event for advocate: {}", officeAdvocateUuid);
+                log.info("Successfully processed leave office pending tasks for advocate: {}", officeAdvocateUuid);
+            }
+
+            if (memberUserUuid != null && officeAdvocateUuid != null && advocateId != null && tenantId != null) {
+                processLeaveOfficeWorkflowDeactivation(memberUserUuid, officeAdvocateUuid, advocateId, tenantId, request.getRequestInfo());
             }
         } catch (Exception e) {
             log.error("Error processing leave office event", e);
+        }
+    }
+
+    private void processLeaveOfficeWorkflowDeactivation(String memberUserUuid, String officeAdvocateUuid, String advocateId, String tenantId, RequestInfo requestInfo) {
+        try {
+            log.info("Processing workflow assignee deactivation for member: {} leaving office of advocate: {}", memberUserUuid, officeAdvocateUuid);
+
+            // Step 1: Get all cases of the office advocate
+            List<Map<String, String>> cases = caseUtil.getCasesByAdvocateId(advocateId, requestInfo);
+            
+            if (cases.isEmpty()) {
+                log.info("No cases found for office advocate: {}, skipping workflow deactivation", officeAdvocateUuid);
+                return;
+            }
+
+            log.info("Found {} cases for office advocate: {}", cases.size(), officeAdvocateUuid);
+
+            // Step 2: For each case, get advocates for the member and check if they should be deactivated
+            for (Map<String, String> caseInfo : cases) {
+                String caseId = caseInfo.get("caseId");
+                
+                if (caseId == null) {
+                    continue;
+                }
+
+                try {
+                    // Get all advocates for this member in this case
+                    List<String> advocateUuidsForMember = caseUtil.getAdvocatesForMember(requestInfo, memberUserUuid, caseId);
+                    
+                    // Exclude the office advocate UUID from the list
+                    advocateUuidsForMember.remove(officeAdvocateUuid);
+                    
+                    // If the member is not associated with any other advocate in this case, deactivate assignees
+                    if (advocateUuidsForMember.isEmpty()) {
+                        log.info("Member {} is not associated with any other advocate in case {}, proceeding with deactivation", memberUserUuid, caseId);
+                        
+                        // Step 3: Search for assignees by member UUID
+                        List<Assignee> assignees = workflowUtil.searchAssigneesByMemberUuid(requestInfo, memberUserUuid, tenantId);
+                        
+                        if (assignees != null && !assignees.isEmpty()) {
+                            log.info("Found {} assignees to deactivate for member: {}", assignees.size(), memberUserUuid);
+                            
+                            // Step 4: Deactivate each assignee
+                            for (Assignee assignee : assignees) {
+                                if (assignee.getProcessInstanceId() != null && assignee.getIsActive()) {
+                                    try {
+                                        workflowUtil.deactivateAssignee(requestInfo, memberUserUuid, assignee.getProcessInstanceId(), tenantId);
+                                        log.info("Successfully deactivated assignee {} for process instance {}", memberUserUuid, assignee.getProcessInstanceId());
+                                    } catch (Exception e) {
+                                        log.error("Error deactivating assignee for process instance: {}", assignee.getProcessInstanceId(), e);
+                                    }
+                                }
+                            }
+                        } else {
+                            log.info("No active assignees found for member: {} in case: {}", memberUserUuid, caseId);
+                        }
+                    } else {
+                        log.info("Member {} is still associated with {} other advocate(s) in case {}, skipping deactivation", 
+                                memberUserUuid, advocateUuidsForMember.size(), caseId);
+                    }
+                } catch (Exception e) {
+                    log.error("Error processing workflow deactivation for case: {}", caseId, e);
+                }
+            }
+
+            log.info("Completed processing workflow assignee deactivation for member: {}", memberUserUuid);
+        } catch (Exception e) {
+            log.error("Error processing leave office workflow deactivation for member: {}", memberUserUuid, e);
         }
     }
 
