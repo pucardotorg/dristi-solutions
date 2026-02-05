@@ -169,6 +169,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     caseDetailsAdmitted,
   ]);
 
+  // Case correction/edition is allowed to all complainant side parties including poa holders, advocates, advocate's associated office members.
   const allComplainantSideUuids = useMemo(() => {
     return getAllComplainantSideUuids(caseDetails);
   }, [caseDetails]);

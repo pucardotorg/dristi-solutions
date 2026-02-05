@@ -413,6 +413,7 @@ const MainHomeScreen = () => {
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         tenantId: tenantId,
+        caseId: courierServicePendingTask?.caseId || "",
       },
     },
     {},

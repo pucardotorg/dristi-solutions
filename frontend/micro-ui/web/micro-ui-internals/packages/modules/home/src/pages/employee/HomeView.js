@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef, useContext } from "react";
 import { useHistory } from "react-router-dom";
 import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { rolesToConfigMapping, userTypeOptions, getUnifiedEmployeeConfig, getOnRowClickConfig, litigantConfig } from "../../configs/HomeConfig";
@@ -19,8 +19,8 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import useSearchCaseListService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseListService";
 import { BreadCrumb } from "@egovernments/digit-ui-react-components";
 import SelectAdvocateModal from "./SelectAdvocateModal";
-import { Dropdown } from "@egovernments/digit-ui-components";
-import { ADVOCATE_OFFICE_MAPPING_KEY, extractedSeniorAdvocates } from "../../utils";
+import { extractedSeniorAdvocates } from "../../utils";
+import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -83,9 +83,10 @@ const HomeView = () => {
   const [taskType, setTaskType] = useState(state?.taskType || {});
   const [caseType, setCaseType] = useState(state?.caseType || {});
   const [showSelectAdvocateModal, setShowSelectAdvocateModal] = useState(false);
-  const [selectedSeniorAdvocate, setSelectedSeniorAdvocate] = useState({});
   const citizenDataLoadingRef = useRef(null);
   const initialCountFetchRef = useRef(false);
+  const { AdvocateData } = useContext(AdvocateDataContext);
+  const selectedSeniorAdvocate = AdvocateData;
 
   const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -173,7 +174,7 @@ const HomeView = () => {
   };
 
   const refreshInboxAfterSelectedAdvocateChange = () => {
-    setCallRefetch(!callRefetch);
+    setCallRefetch((prev) => !prev);
     getTotalCountForTab(tabConfigs);
   };
 
@@ -244,77 +245,6 @@ const HomeView = () => {
     }
     return false;
   }, [userType, seniorAdvocates?.length]);
-
-  const handleDropdownChange = (selectedAdvocateOption) => {
-    const selectedValue = selectedAdvocateOption?.value;
-    if (!selectedValue) return;
-
-    const matchingAdvocate = seniorAdvocates.find((opt) => opt?.value === selectedValue);
-    if (!matchingAdvocate) return;
-
-    const { id, uuid, value, advocateName } = matchingAdvocate;
-    setSelectedSeniorAdvocate((prev) => {
-      if (prev?.id === id && prev?.uuid === uuid) return prev;
-      return {
-        advocateName,
-        value,
-        id,
-        uuid,
-      };
-    });
-    refreshInbox();
-  };
-
-  useEffect(() => {
-    selectedSeniorAdvocate?.id && refreshInboxAfterSelectedAdvocateChange(); // TODO: add logic to remove duplicate calls initially(after changing advocate, duplication is not happening)
-    const matchingAdvocate = seniorAdvocates.find((opt) => opt?.id === selectedSeniorAdvocate?.id);
-
-    if (!matchingAdvocate) return;
-
-    const { id, uuid, value, advocateName } = matchingAdvocate;
-
-    const nextMapping = {
-      loggedInMemberId: advocateId || advClerkId,
-      officeAdvocateId: id,
-      officeAdvocateUuid: uuid,
-    };
-
-    const prevMapping = localStorage.getItem(ADVOCATE_OFFICE_MAPPING_KEY);
-    const nextMappingStr = JSON.stringify(nextMapping);
-
-    if (prevMapping !== nextMappingStr) {
-      localStorage.setItem(ADVOCATE_OFFICE_MAPPING_KEY, nextMappingStr);
-    }
-  }, [selectedSeniorAdvocate?.id]);
-
-  useEffect(() => {
-    if (!seniorAdvocates?.length) return;
-    if (seniorAdvocates?.length > 0) {
-      const savedSeniorAdvocate = JSON.parse(localStorage.getItem("advocateOfficeMapping"));
-      if (savedSeniorAdvocate) {
-        const matchingAdvocate = seniorAdvocates.find((opt) => opt?.id === savedSeniorAdvocate?.officeAdvocateId);
-        if (!matchingAdvocate) return;
-
-        const { id, uuid, value, advocateName } = matchingAdvocate;
-        setSelectedSeniorAdvocate({
-          advocateName,
-          value,
-          id,
-          uuid,
-        });
-      } else {
-        setSelectedSeniorAdvocate((prev) => {
-          if (prev?.id === seniorAdvocates?.[0]?.id) return prev;
-          else {
-            if (userType === "ADVOCATE" && advocateId) {
-              return seniorAdvocates.find((opt) => opt?.id === advocateId);
-            }
-            return seniorAdvocates?.[0];
-          }
-        });
-      }
-    }
-  }, [seniorAdvocates, userType, advocateId]);
 
   const additionalDetails = useMemo(() => {
     if (!userInfoType) return null;
@@ -426,6 +356,11 @@ const HomeView = () => {
     [additionalDetails, outcomeTypeData, tenantId, t]
   );
 
+  useEffect(() => {
+    if (!selectedSeniorAdvocate?.id) return;
+    initialCountFetchRef.current === true && refreshInboxAfterSelectedAdvocateChange();
+  }, [selectedSeniorAdvocate?.id]);
+
   const citizenId = useMemo(() => {
     if (userInfoType === "citizen" && !isSearchLoading) {
       return advocateId ? advocateId : individualId;
@@ -500,7 +435,7 @@ const HomeView = () => {
       if (tabConfigs && !isEqual(tabConfigs, tabConfig)) {
         setConfig(tabConfigs?.TabSearchConfig?.[0]);
         setTabConfig(tabConfigs);
-        // initialCountFetchRef.current = true; // TODO: check logic to remove duplicate calls for citizen
+        initialCountFetchRef.current = true; //To block duplicate calls for citizen initially on page reload.
         getTotalCountForTab(tabConfigs);
       }
     }
@@ -654,9 +589,12 @@ const HomeView = () => {
     // iF user is advocate clerk then do not allow to join case(only for sprint 1st half, in 2nd half it is allowed)
     if (userType === "ADVOCATE_CLERK") {
       return false;
+    } else if (userType === "ADVOCATE" && advocateId === selectedSeniorAdvocate?.id) {
+      //TODO: if adv is working as assistant for a senior adv, then not allowed to join case for this sprint
+      return true;
     }
-    return true;
-  }, [userType]);
+    return false;
+  }, [userType, advocateId, selectedSeniorAdvocate?.id]);
 
   if (
     isLoading ||
@@ -701,7 +639,10 @@ const HomeView = () => {
     <React.Fragment>
       {<ProjectBreadCrumb location={window.location} t={t} />}
       <div className="home-view-hearing-container">
-        {individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase && userType === "LITIGANT" ? (
+        {individualId &&
+        userType &&
+        userInfoType === "citizen" &&
+        ((userType === "LITIGANT" && !isCitizenReferredInAnyCase) || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) ? (
           <LitigantHomePage isApprovalPending={isApprovalPending} unAssociatedClerk={unAssociatedClerk} />
         ) : (
           <React.Fragment>
@@ -745,25 +686,13 @@ const HomeView = () => {
                 {showReviewSummonsWarrantNotice && <ReviewCard data={data} userInfoType={userInfoType} />}
               </div>
               <div className="content-wrapper">
-                {(userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "20px", marginTop: "10px", marginBottom: "35px" }}>
-                    <span style={{ fontSize: "18px", fontWeight: "bold" }}>Select Advocate to View/File a Case :</span>
-                    <div>
-                      <Dropdown
-                        t={t}
-                        option={seniorAdvocates?.sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName))}
-                        optionKey={"advocateName"}
-                        select={handleDropdownChange}
-                        selected={selectedSeniorAdvocate}
-                        style={{ width: "300px", height: "40px", fontSize: "16px", marginBottom: "0px" }}
-                      />
-                    </div>
-                  </div>
-                )}
-
                 <div className="header-class">
                   {selectedSeniorAdvocate?.id ? (
-                    <div className="header">{`Advocate ${t(selectedSeniorAdvocate?.advocateName || "")}`}</div>
+                    <div className="header">
+                      {selectedSeniorAdvocate?.uuid === userInfo?.uuid
+                        ? `${t("YOUR_CASES")}`
+                        : `Adv. ${t(selectedSeniorAdvocate?.advocateName)}'s Cases`}
+                    </div>
                   ) : (
                     <div className="header">{t("CS_YOUR_CASE")}</div>
                   )}
@@ -813,7 +742,7 @@ const HomeView = () => {
             </div>
           </React.Fragment>
         )}
-        {((individualId && userType && userInfoType === "citizen" && isCitizenReferredInAnyCase) || userInfoType === "employee") && (
+        {((individualId && userType && userInfoType === "citizen") || userInfoType === "employee") && (
           <div className="right-side" style={{ width: "30vw" }}>
             <TasksComponent
               taskType={taskType}
@@ -825,6 +754,7 @@ const HomeView = () => {
               userInfoType={userInfoType}
               pendingSignOrderList={ordersNotificationData}
               seniorAdvocates={seniorAdvocates}
+              individualUserType={userType}
             />
           </div>
         )}
@@ -842,7 +772,7 @@ const HomeView = () => {
             t={t}
             setShowSelectAdvocateModal={setShowSelectAdvocateModal}
             confirmAdvocate={handleConfirmAdvocate}
-            selectedSeniorAdvocate={selectedSeniorAdvocate}
+            preSelectedSeniorAdvocate={selectedSeniorAdvocate}
           />
         )}
       </div>

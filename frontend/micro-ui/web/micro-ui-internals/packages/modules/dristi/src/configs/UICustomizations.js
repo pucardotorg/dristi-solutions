@@ -22,7 +22,14 @@ import { constructFullName } from "@egovernments/digit-ui-module-orders/src/util
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
-import BailBondModal from "../../../home/src/pages/employee/BailBondModal";
+
+export const getSelectedAdvocate = () => {
+  try {
+    return JSON.parse(localStorage.getItem("SELECTED_ADVOCATE"));
+  } catch {
+    return null;
+  }
+};
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -2675,6 +2682,7 @@ export const UICustomizations = {
       const courtId = localStorage.getItem("courtId");
       const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
       const isCitizen = userRoles?.includes("CITIZEN");
+      const selectedAdvocate = getSelectedAdvocate();
       const userUUID = Digit.UserService.getUser()?.info?.uuid;
       return {
         ...requestCriteria,

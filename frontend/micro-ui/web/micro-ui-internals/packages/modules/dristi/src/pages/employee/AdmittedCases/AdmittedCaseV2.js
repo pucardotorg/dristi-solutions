@@ -3355,7 +3355,11 @@ const AdmittedCaseV2 = () => {
         style={{ position: showJoinCase ? "" : "", top: "72px", width: "100%", zIndex: 150, background: "white", gap: "0px" }}
       >
         <div className="admitted-case-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {caseDetails?.caseTitle && <Header styles={{ marginBottom: "0px" }}>{caseDetails?.caseTitle}</Header>}
+          {caseApiLoading || isCaseFetching ? (
+            <Loader />
+          ) : caseDetails?.caseTitle ? (
+            <Header styles={{ marginBottom: "0px" }}>{caseDetails?.caseTitle}</Header>
+          ) : null}
           <div className="make-submission-action" style={{ display: "flex", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
             {(showMakeSubmission || isCitizen) && (
               <div className="evidence-header-wrapper">
@@ -3460,17 +3464,11 @@ const AdmittedCaseV2 = () => {
                               <Button
                                 variation={"primary"}
                                 isDisabled={apiCalled}
-                                label={t(
-                                  hasHearingPriorityView
-                                    ? "CS_CASE_END_START_NEXT_HEARING"
-                                    : "CS_CASE_NEXT_HEARING"
-                                )}
+                                label={t(hasHearingPriorityView ? "CS_CASE_END_START_NEXT_HEARING" : "CS_CASE_NEXT_HEARING")}
                                 subLabel={
                                   hasHearingPriorityView
                                     ? null
-                                    : `(${formatDate(
-                                        new Date(parseInt(homeNextHearingFilter?.homeFilterDate))
-                                      )
+                                    : `(${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
                                         .split("-")
                                         .join("/")})`
                                 }
@@ -3496,9 +3494,7 @@ const AdmittedCaseV2 = () => {
                               <Button
                                 variation={"primary"}
                                 label={t("CS_CASE_NEXT_HEARING")}
-                                subLabel={`(${formatDate(
-                                  new Date(parseInt(homeNextHearingFilter?.homeFilterDate))
-                                )
+                                subLabel={`(${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
                                   .split("-")
                                   .join("/")})`}
                                 children={<RightArrow />}

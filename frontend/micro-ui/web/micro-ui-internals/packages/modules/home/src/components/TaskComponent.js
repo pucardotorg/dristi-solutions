@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CardLabel, Dropdown } from "@egovernments/digit-ui-components";
 import { Button, LabelFieldPair, Card } from "@egovernments/digit-ui-react-components";
 import { Loader } from "@egovernments/digit-ui-react-components";
@@ -20,6 +20,7 @@ import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } fro
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
+import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -58,7 +59,7 @@ const TasksComponent = ({
   pendingSignOrderList,
   tableView = false,
   needRefresh = false,
-  seniorAdvocates = null,
+  individualUserType = null,
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const CourierService = useMemo(() => Digit.ComponentRegistryService.getComponent("CourierService"), []);
@@ -93,6 +94,8 @@ const TasksComponent = ({
     joinCasePaymentModal: false,
     data: {},
   });
+  const { AdvocateData } = useContext(AdvocateDataContext);
+  const selectedSeniorAdvocate = AdvocateData;
 
   const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -105,14 +108,42 @@ const TasksComponent = ({
     }
   );
 
-  const { data: pendingTaskDetails = [], isLoading, refetch } = useGetPendingTask({
+  const litigantSearchCriteriaAdditional = useMemo(() => {
+    if (!userType) return null;
+
+    // Employee: no additional filters
+    if (userType === "employee") return {};
+
+    // Citizen but not resolved yet
+    if (userType === "citizen" && !individualUserType) return null;
+
+    // Citizen litigant
+    if (userType === "citizen" && individualUserType === "LITIGANT") {
+      return uuid ? { assignedTo: uuid } : null;
+    }
+
+    // Advocate / office logic
+
+    if (!uuid) return null;
+    if (!selectedSeniorAdvocate?.uuid) return null;
+    if (selectedSeniorAdvocate.uuid === uuid) {
+      return { assignedTo: uuid };
+    }
+
+    return {
+      officeAdvocateUuid: selectedSeniorAdvocate.uuid,
+      officeMemberUuid: uuid,
+    };
+  }, [userType, individualUserType, uuid, selectedSeniorAdvocate?.uuid]);
+
+  const { data: pendingTaskDetails = [], isLoading, refetch, isFetching: isFetchingPendingTask } = useGetPendingTask({
     data: {
       SearchCriteria: {
         tenantId,
         moduleName: "Pending Tasks Service",
         moduleSearchCriteria: {
           isCompleted: false,
-          ...(isLitigant && { assignedTo: uuid }),
+          ...(isLitigant && litigantSearchCriteriaAdditional && { ...litigantSearchCriteriaAdditional }),
           ...(!isLitigant && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
           screenType: isDiary ? ["Adiary"] : isApplicationCompositeOrder ? ["applicationCompositeOrder"] : ["home", "applicationCompositeOrder"],
@@ -124,8 +155,10 @@ const TasksComponent = ({
     },
     params: { tenantId },
     key: `${filingNumber}-${isDiary}-${isApplicationCompositeOrder}-${isScrutiny}-${courtId}`,
-    config: { enabled: Boolean(tenantId) },
+    config: { enabled: Boolean(tenantId) && Boolean(litigantSearchCriteriaAdditional) },
   });
+
+  console.log("isFetchingPendingTask", isFetchingPendingTask);
 
   const pendingTaskActionDetails = useMemo(() => {
     if (!totalPendingTask) {
@@ -183,6 +216,7 @@ const TasksComponent = ({
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         tenantId: tenantId,
+        caseId: courierServicePendingTask?.caseId || "",
       },
     },
     {},
@@ -602,7 +636,7 @@ const TasksComponent = ({
   );
 
   const pendingTasks = useMemo(() => {
-    if (isLoading || isOptionsLoading || pendingTaskActionDetails?.length === 0) return [];
+    if (isLoading || isFetchingPendingTask || isOptionsLoading || pendingTaskActionDetails?.length === 0) return [];
     const getCustomFunction = {
       handleCreateOrder,
       handleReviewSubmission,
@@ -631,7 +665,7 @@ const TasksComponent = ({
       const bailBondId = data?.fields?.find((field) => field.key === "additionalDetails.bailBondId")?.value;
       const courtId = data?.fields?.find((field) => field.key === "courtId")?.value;
 
-      const updateReferenceId = referenceId.split("_").pop();
+      const updateReferenceId = referenceId?.split("_").pop();
       const defaultObj = {
         referenceId: updateReferenceId,
         id: caseId,
@@ -737,6 +771,7 @@ const TasksComponent = ({
     handleReviewOrder,
     handleReviewSubmission,
     isLoading,
+    isFetchingPendingTask,
     isOptionsLoading,
     pendingTaskActionDetails,
     taskType?.code,
@@ -1205,6 +1240,12 @@ const TasksComponent = ({
     };
   }, [courierServiceSteps, t, taskManagementList, courierOrderDetails, hideCancelButton, hasProcessManagementEditorAccess, refetch, suffix]);
 
+  useEffect(() => {
+    if (selectedSeniorAdvocate?.id && litigantSearchCriteriaAdditional) {
+      refetch();
+    }
+  }, [selectedSeniorAdvocate?.id, litigantSearchCriteriaAdditional, refetch]);
+
   const customStyles = `
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
     height:unset !important;
@@ -1247,7 +1288,7 @@ const TasksComponent = ({
             isDisabled={pendingSignOrderList?.totalCount === 0}
           />
         )}
-        {isLoading || isOptionsLoading || isPaymentTypeLoading ? (
+        {isLoading || isFetchingPendingTask || isOptionsLoading || isPaymentTypeLoading ? (
           <Loader />
         ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
           <React.Fragment>
@@ -1287,29 +1328,6 @@ const TasksComponent = ({
                     />
                   </LabelFieldPair>
                 </div>
-                {seniorAdvocates &&
-                  seniorAdvocates?.length >
-                    0(
-                      <div className="">
-                        <style>{customStyles}</style>
-                        <LabelFieldPair>
-                          <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
-                            {t("ADVOCATE")}
-                          </CardLabel>
-
-                          <Dropdown
-                            t={t}
-                            option={seniorAdvocates}
-                            optionKey={"advocateName"}
-                            // select={handleDropdownChange}
-                            // freeze={true}
-                            // selected={selectedSeniorAdvocate}
-                            placeholder={t("SELECT_ADVOCATE")}
-                            style={{ marginBottom: "0px" }}
-                          />
-                        </LabelFieldPair>
-                      </div>
-                    )}
               </div>
             )}
 
@@ -1397,7 +1415,7 @@ const TasksComponent = ({
     </div>
   ) : (
     <div className="tasks-component-table-view">
-      {isLoading || isOptionsLoading ? (
+      {isLoading || isFetchingPendingTask || isOptionsLoading ? (
         <Loader />
       ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
         <React.Fragment>

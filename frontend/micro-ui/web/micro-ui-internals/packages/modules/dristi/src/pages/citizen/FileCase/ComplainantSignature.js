@@ -355,7 +355,7 @@ const ComplainantSignature = ({ path }) => {
     });
   }, [caseDetails, litigants]);
 
-  // Case correction/edition is allowed only to complainants, and also poa holders, advocates who are associated to complainants.
+  // Case correction/edition is allowed to all complainant side parties including poa holders, advocates, advocate's associated office members.
   const allComplainantSideUuids = useMemo(() => {
     return getAllComplainantSideUuids(caseDetails);
   }, [caseDetails]);
