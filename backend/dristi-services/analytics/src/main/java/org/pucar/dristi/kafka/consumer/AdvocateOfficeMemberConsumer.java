@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.common.contract.request.RequestInfo;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.PendingTaskUtil;
 import org.pucar.dristi.util.WorkflowUtil;
@@ -29,11 +30,14 @@ public class AdvocateOfficeMemberConsumer {
     private final CaseUtil caseUtil;
     private final WorkflowUtil workflowUtil;
 
-    public AdvocateOfficeMemberConsumer(PendingTaskUtil pendingTaskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, WorkflowUtil workflowUtil) {
+    private final Configuration configuration;
+
+    public AdvocateOfficeMemberConsumer(PendingTaskUtil pendingTaskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, WorkflowUtil workflowUtil, Configuration configuration) {
         this.pendingTaskUtil = pendingTaskUtil;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
         this.workflowUtil = workflowUtil;
+        this.configuration = configuration;
     }
 
     @KafkaListener(topics = "${kafka.topics.advocate.office.member.save}")
@@ -159,6 +163,10 @@ public class AdvocateOfficeMemberConsumer {
 
             String tenantId = request.getLeaveOffice().getTenantId();
 
+            if (tenantId == null) {
+                tenantId = configuration.getStateLevelTenantId();
+            }
+
             if (officeAdvocateUuid != null) {
                 updatePendingTasksForAdvocate(officeAdvocateUuid, request.getRequestInfo(), advocateId);
                 log.info("Successfully processed leave office pending tasks for advocate: {}", officeAdvocateUuid);
@@ -186,51 +194,57 @@ public class AdvocateOfficeMemberConsumer {
 
             log.info("Found {} cases for office advocate: {}", cases.size(), officeAdvocateUuid);
 
-            // Step 2: For each case, get advocates for the member and check if they should be deactivated
+            // Step 2: Process each case individually
             for (Map<String, String> caseInfo : cases) {
+                String filingNumber = caseInfo.get("filingNumber");
                 String caseId = caseInfo.get("caseId");
                 
-                if (caseId == null) {
+                if (filingNumber == null || caseId == null) {
+                    log.error("Filing number or caseId not found for case: {}, skipping", caseId);
                     continue;
                 }
 
                 try {
-                    // Get all advocates for this member in this case
-                    List<String> advocateUuidsForMember = caseUtil.getAdvocatesForMember(requestInfo, memberUserUuid, caseId);
+                    log.info("Processing case with filingNumber: {} and caseId: {} for member: {}", filingNumber, caseId, memberUserUuid);
                     
-                    // Exclude the office advocate UUID from the list
-                    advocateUuidsForMember.remove(officeAdvocateUuid);
+                    // Step 3: Get all advocates for this member in this specific case
+                    List<String> advocateUuidsForMemberInCase = caseUtil.getAdvocatesForMember(requestInfo, memberUserUuid, caseId);
                     
-                    // If the member is not associated with any other advocate in this case, deactivate assignees
-                    if (advocateUuidsForMember.isEmpty()) {
-                        log.info("Member {} is not associated with any other advocate in case {}, proceeding with deactivation", memberUserUuid, caseId);
+                    log.info("Found {} advocates for member: {} in case: {}", advocateUuidsForMemberInCase.size(), memberUserUuid, filingNumber);
+                    
+                    // Step 4: Exclude the office advocate UUID from the list
+                    List<String> otherAdvocateUuids = new ArrayList<>(advocateUuidsForMemberInCase);
+                    otherAdvocateUuids.remove(officeAdvocateUuid);
+                    
+                    log.info("After excluding office advocate {}, member {} has {} other advocate(s) in case {}", 
+                            officeAdvocateUuid, memberUserUuid, otherAdvocateUuids.size(), filingNumber);
+                    
+                    // Step 5: Search for process instance IDs with memberUserUuid, businessId (filingNumber), and exclude other advocates
+                    List<String> processInstanceIds = workflowUtil.searchProcessInstanceIdsWithExclude(
+                            requestInfo, 
+                            memberUserUuid, 
+                            otherAdvocateUuids, 
+                            filingNumber,
+                            tenantId
+                    );
+                    
+                    if (processInstanceIds != null && !processInstanceIds.isEmpty()) {
+                        log.info("Found {} process instances to deactivate assignee for member: {} in case: {}", processInstanceIds.size(), memberUserUuid, filingNumber);
                         
-                        // Step 3: Search for assignees by member UUID
-                        List<Assignee> assignees = workflowUtil.searchAssigneesByMemberUuid(requestInfo, memberUserUuid, tenantId);
-                        
-                        if (assignees != null && !assignees.isEmpty()) {
-                            log.info("Found {} assignees to deactivate for member: {}", assignees.size(), memberUserUuid);
-                            
-                            // Step 4: Deactivate each assignee
-                            for (Assignee assignee : assignees) {
-                                if (assignee.getProcessInstanceId() != null && assignee.getIsActive()) {
-                                    try {
-                                        workflowUtil.deactivateAssignee(requestInfo, memberUserUuid, assignee.getProcessInstanceId(), tenantId);
-                                        log.info("Successfully deactivated assignee {} for process instance {}", memberUserUuid, assignee.getProcessInstanceId());
-                                    } catch (Exception e) {
-                                        log.error("Error deactivating assignee for process instance: {}", assignee.getProcessInstanceId(), e);
-                                    }
-                                }
+                        // Step 6: Deactivate assignee for each process instance
+                        for (String processInstanceId : processInstanceIds) {
+                            try {
+                                workflowUtil.deactivateAssignee(requestInfo, memberUserUuid, processInstanceId, tenantId);
+                                log.info("Successfully deactivated assignee {} for process instance {} in case {}", memberUserUuid, processInstanceId, filingNumber);
+                            } catch (Exception e) {
+                                log.error("Error deactivating assignee for process instance: {} in case: {}", processInstanceId, filingNumber, e);
                             }
-                        } else {
-                            log.info("No active assignees found for member: {} in case: {}", memberUserUuid, caseId);
                         }
                     } else {
-                        log.info("Member {} is still associated with {} other advocate(s) in case {}, skipping deactivation", 
-                                memberUserUuid, advocateUuidsForMember.size(), caseId);
+                        log.info("No process instances found for member: {} in case: {}", memberUserUuid, filingNumber);
                     }
                 } catch (Exception e) {
-                    log.error("Error processing workflow deactivation for case: {}", caseId, e);
+                    log.error("Error processing workflow deactivation for case: {}", filingNumber, e);
                 }
             }
 

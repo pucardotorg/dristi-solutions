@@ -207,4 +207,43 @@ public class WorkflowUtil {
             return Collections.emptyList();
         }
     }
+
+    public List<String> searchProcessInstanceIdsWithExclude(RequestInfo requestInfo, String memberUserUuid, List<String> excludeAdvocateUuids, String businessId, String tenantId) {
+        try {
+            // Build criteria
+            List<String> uuids = new ArrayList<>();
+            uuids.add(memberUserUuid);
+
+            AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
+                    .tenantId(tenantId)
+                    .uuids(uuids)
+                    .excludeUuids(excludeAdvocateUuids)
+                    .businessId(businessId)
+                    .build();
+
+            AssigneeSearchRequest searchRequest = AssigneeSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(criteria)
+                    .build();
+
+            StringBuilder url = new StringBuilder();
+            url.append(config.getWorkflowHost()).append(config.getWorkflowAssigneeSearchEndpoint());
+
+            log.info("Searching workflow process instances with uuids: {}, businessId: {}, and excludeUuids: {}", memberUserUuid, businessId, excludeAdvocateUuids);
+
+            Object response = requestRepository.fetchResult(url, searchRequest);
+            ProcessInstanceIdResponse processInstanceIdResponse = mapper.convertValue(response, ProcessInstanceIdResponse.class);
+
+            if (processInstanceIdResponse != null && processInstanceIdResponse.getProcessInstanceIds() != null) {
+                log.info("Found {} process instances for member UUID: {} with exclusions for businessId: {}", 
+                        processInstanceIdResponse.getProcessInstanceIds().size(), memberUserUuid, businessId);
+                return processInstanceIdResponse.getProcessInstanceIds();
+            }
+
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error searching workflow process instances with exclusions for member UUID: {} and businessId: {}", memberUserUuid, businessId, e);
+            return Collections.emptyList();
+        }
+    }
 }
