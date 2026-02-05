@@ -13,7 +13,7 @@ public interface OrderUpdateStrategy {
 
     OrderRequest preProcess(OrderRequest orderRequest);
 
-    OrderRequest postProcess(OrderRequest orderRequest) throws JsonProcessingException;
+    OrderRequest postProcess(OrderRequest orderRequest);
 
     boolean supportsCommon(OrderRequest request);
 
