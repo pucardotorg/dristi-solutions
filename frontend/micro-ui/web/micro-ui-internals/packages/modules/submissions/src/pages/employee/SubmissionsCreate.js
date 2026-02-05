@@ -969,6 +969,7 @@ const SubmissionsCreate = ({ path }) => {
       if (scheduledHearing && !formData?.initialHearingDate) {
         setValue("initialHearingDate", formatDate(new Date(scheduledHearing?.startTime)));
         setValue("initialHearingPurpose", scheduledHearing?.hearingType);
+        setValue("refHearingId", scheduledHearing?.hearingId);
       }
 
       if (!formData?.isAllPartiesAgreed) {
