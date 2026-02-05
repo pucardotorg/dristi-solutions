@@ -863,13 +863,12 @@ public class IndexerUtils {
         String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
         caseDetails.put("referenceEntityType", applicationType);
 
-        Long initialHearingEpoch = JsonPath.read(applicationObject.toString(), INITIAL_HEARING_DATE_PATH);
-
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
         if(ADVANCEMENT_OR_ADJOURNMENT_APPLICATION.equalsIgnoreCase(applicationType)){
+            Long initialHearingEpoch = JsonPath.read(applicationObject.toString(), INITIAL_HEARING_DATE_PATH);
             caseDetails.put("nextHearingDate", formatEpoch(initialHearingEpoch));
             caseDetails.put("dateOfApplication", formatEpoch(System.currentTimeMillis()));
         }
