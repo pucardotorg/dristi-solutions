@@ -1593,6 +1593,10 @@ const GenerateOrdersV2 = () => {
         currentSelectedOrder = currentOrder;
       }
 
+      const currentSelectedOrderRelatedApplication = applicationData?.applicationList?.find(
+        (application) => application?.applicationNumber === currentSelectedOrder?.additionalDetails?.formdata?.refApplicationId
+      );
+
       if (selectedOrderType && configKeys.hasOwnProperty(selectedOrderType)) {
         let orderTypeForm = configKeys[selectedOrderType];
         if (selectedOrderType === "SECTION_202_CRPC") {
@@ -1727,7 +1731,7 @@ const GenerateOrdersV2 = () => {
                       inputs: [
                         {
                           ...field.populators.inputs[0],
-                          options: applicationDetails?.additionalDetails?.formdata?.newHearingDates || [],
+                          options: currentSelectedOrderRelatedApplication?.additionalDetails?.formdata?.newHearingDates || [],
                         },
                       ],
                     },
@@ -2031,8 +2035,8 @@ const GenerateOrdersV2 = () => {
       return updatedConfig;
     },
     [
-      currentOrder,
       applicationTypeConfigUpdated,
+      currentOrder,
       orderType?.code,
       complainants,
       respondents,
@@ -2040,12 +2044,14 @@ const GenerateOrdersV2 = () => {
       poaHolders,
       unJoinedLitigant,
       witnesses,
+      purposeOfHearingData,
+      applicationData?.applicationList,
       caseDetails?.id,
       caseDetails?.filingNumber,
       t,
       groupedWarrantOptions,
       warrantSubtypeCode,
-      applicationDetails,
+      bailTypeData,
       miscellaneousProcessTemplateDropDown,
     ]
   );
@@ -3205,7 +3211,7 @@ const GenerateOrdersV2 = () => {
                       namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
                     },
                   }),
-                refHearingId: order?.hearingNumber || lastCompletedHearing?.hearingId,
+                refHearingId: order?.additionalDetails?.refHearingId || order?.hearingNumber || lastCompletedHearing?.hearingId,
               },
               ...(currentScheduledHearing && {
                 scheduledHearingNumber: currentScheduledHearing?.hearingId,
@@ -3594,6 +3600,19 @@ const GenerateOrdersV2 = () => {
           });
           hasError = true;
           break;
+        }
+
+        if (["ACCEPT_RESCHEDULING_REQUEST"]?.includes(orderType)) {
+          const rescheduleStatus = hearingsData?.HearingList?.find((data) => data?.hearingId === additionalDetails?.refHearingId);
+
+          if (rescheduleStatus !== "SCHEDULED") {
+            setShowErrorToast({
+              label: t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
         }
 
         if (
@@ -4173,6 +4192,7 @@ const GenerateOrdersV2 = () => {
       const hearingNumber =
         ["INITIATING_RESCHEDULING_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(orderType) &&
         documentSubmission?.[0]?.applicationList?.additionalDetails?.hearingId;
+      const refHearingId = documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.refHearingId;
       const parties = documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
         parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }],
       };
@@ -4186,6 +4206,7 @@ const GenerateOrdersV2 = () => {
         ...(hearingNumber && {
           hearingNumber: hearingNumber,
         }),
+        ...(refHearingId && { refHearingId: refHearingId }),
       };
       const isSameOrder =
         currentOrder?.orderCategory === "COMPOSITE"
