@@ -1207,11 +1207,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
     const criteriaList = selectedItems?.map((item) => {
       const fileStoreId = item?.documents?.[0]?.fileStore || "";
-
+      const placeHolder = item?.taskType === "MISCELLANEOUS_PROCESS" ? "Judicial Magistrate of First Class" : "Signature";
       return {
         fileStoreId: fileStoreId,
         taskNumber: item?.taskNumber || item?.id || item?.businessId,
-        placeholder: "Signature",
+        placeholder: placeHolder,
         tenantId: tenantId,
       };
     });
