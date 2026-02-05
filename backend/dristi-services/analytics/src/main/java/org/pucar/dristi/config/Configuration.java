@@ -132,6 +132,12 @@ public class Configuration {
 	@Value("${egov.mdms.case.outcome.master.name}")
 	private String mdmsCaseOutcomeMasterName;
 
+	@Value("${egov.mdms.assignee.to.office.members.module.name}")
+	private String mdmsAssigneeToOfficeMembersModuleName;
+
+	@Value("${egov.mdms.assignee.to.office.members.master.name}")
+	private String mdmsAssigneeToOfficeMembersMasterName;
+
 	@Value("${create.demand.topic.name}")
 	private String demandGenerateTopic;
 
@@ -259,6 +265,9 @@ public class Configuration {
 
 	@Value("${egov.workflow.assignee.upsert.endpoint}")
 	private String workflowAssigneeUpsertEndpoint;
+
+	@Value("${egov.workflow.process.search.endpoint}")
+	private String workflowProcessSearchEndpoint;
 
 	@PostConstruct
 	public void init() {

@@ -557,12 +557,17 @@ public class IndexerUtils {
                     log.error("Error while collecting UUIDs from assignedTo and office members", e);
                 }
                 
-                // Call workflow assignee upsert API
+                // Call workflow assignee upsert API with validation
                 if (!allUuids.isEmpty()) {
                     try {
-                        RequestInfo enrichRequestInfo = mapper.readValue(requestInfo.toString(), RequestInfo.class);
-                        workflowUtil.upsertAssignees(enrichRequestInfo, allUuids, id, tenantId);
-                        log.info("Successfully called workflow assignee upsert API for {} UUIDs", allUuids.size());
+                        // Validate if businessService and state match MDMS configuration
+                        if (workflowUtil.shouldUpsertAssignee(entityType, status)) {
+                            RequestInfo enrichRequestInfo = mapper.readValue(requestInfo.toString(), RequestInfo.class);
+                            workflowUtil.upsertAssignees(enrichRequestInfo, allUuids, id, tenantId);
+                            log.info("Successfully called workflow assignee upsert API for {} UUIDs", allUuids.size());
+                        } else {
+                            log.info("Skipping workflow assignee upsert for businessService: {} and state: {} as it does not match MDMS configuration", entityType, status);
+                        }
                     } catch (Exception e) {
                         log.error("Error while calling workflow assignee upsert API for UUIDs: {}", allUuids, e);
                     }
