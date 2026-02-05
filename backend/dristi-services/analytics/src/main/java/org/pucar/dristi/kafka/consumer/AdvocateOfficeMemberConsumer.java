@@ -7,8 +7,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.PendingTaskUtil;
+import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.web.models.CaseCriteria;
 import org.pucar.dristi.web.models.CaseSearchRequest;
+import org.pucar.dristi.web.models.workflow.ProcessInstance;
 import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMember;
 import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMemberRequest;
 import org.pucar.dristi.web.models.advocateofficemember.LeaveOfficeRequest;
@@ -24,11 +26,13 @@ public class AdvocateOfficeMemberConsumer {
     private final PendingTaskUtil pendingTaskUtil;
     private final ObjectMapper objectMapper;
     private final CaseUtil caseUtil;
+    private final WorkflowUtil workflowUtil;
 
-    public AdvocateOfficeMemberConsumer(PendingTaskUtil pendingTaskUtil, ObjectMapper objectMapper, CaseUtil caseUtil) {
+    public AdvocateOfficeMemberConsumer(PendingTaskUtil pendingTaskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, WorkflowUtil workflowUtil) {
         this.pendingTaskUtil = pendingTaskUtil;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
+        this.workflowUtil = workflowUtil;
     }
 
     @KafkaListener(topics = "${kafka.topics.advocate.office.member.save}")
@@ -54,6 +58,72 @@ public class AdvocateOfficeMemberConsumer {
             // For each office advocate, fetch their pending tasks and re-index them
             for (Map.Entry<String, String> entry : officeAdvocateMap.entrySet()) {
                 updatePendingTasksForAdvocate(entry.getKey(), request.getRequestInfo(), entry.getValue());
+            }
+
+            // Group members by office advocate UUID to avoid duplicate workflow searches
+            Map<String, List<AdvocateOfficeCaseMember>> membersByOfficeAdvocate = new HashMap<>();
+            for (AdvocateOfficeCaseMember member : request.getMembers()) {
+                if (member.getOfficeAdvocateUserUuid() != null && member.getMemberUserUuid() != null) {
+                    membersByOfficeAdvocate
+                            .computeIfAbsent(member.getOfficeAdvocateUserUuid(), k -> new ArrayList<>())
+                            .add(member);
+                }
+            }
+
+            // Search workflow once per office advocate and upsert all their members
+            for (Map.Entry<String, List<AdvocateOfficeCaseMember>> entry : membersByOfficeAdvocate.entrySet()) {
+                String officeAdvocateUuid = entry.getKey();
+                List<AdvocateOfficeCaseMember> members = entry.getValue();
+                
+                try {
+                    String tenantId = members.get(0).getTenantId();
+                    
+                    // Search workflow by office advocate to get all their process instances (once per advocate)
+                    List<ProcessInstance> processInstances = workflowUtil.searchWorkflowByAssignee(
+                            request.getRequestInfo(), 
+                            officeAdvocateUuid, 
+                            tenantId
+                    );
+
+                    if (processInstances != null && !processInstances.isEmpty()) {
+                        log.info("Found {} process instances for office advocate: {}", processInstances.size(), officeAdvocateUuid);
+                        
+                        // Collect all member UUIDs for this office advocate
+                        Set<String> memberUuidSet = new HashSet<>();
+                        for (AdvocateOfficeCaseMember member : members) {
+                            memberUuidSet.add(member.getMemberUserUuid());
+                        }
+                        
+                        // For each process instance, upsert all members at once
+                        for (ProcessInstance processInstance : processInstances) {
+                            if (processInstance.getId() != null) {
+                                try {
+                                    // Extract state name from State object
+                                    String stateName = processInstance.getState() != null ? processInstance.getState().getState() : null;
+                                    // Validate if businessService and state match MDMS configuration
+                                    if (workflowUtil.shouldUpsertAssignee(processInstance.getBusinessService(), stateName)) {
+                                        workflowUtil.upsertAssignees(
+                                                request.getRequestInfo(),
+                                                memberUuidSet,
+                                                processInstance.getId(),
+                                                tenantId
+                                        );
+                                        log.info("Successfully upserted {} assignees to process instance {}", memberUuidSet.size(), processInstance.getId());
+                                    } else {
+                                        log.info("Skipping assignee upsert for process instance {} as businessService: {} and state: {} do not match MDMS configuration", 
+                                                processInstance.getId(), processInstance.getBusinessService(), stateName);
+                                    }
+                                } catch (Exception e) {
+                                    log.error("Error upserting assignees for process instance: {}", processInstance.getId(), e);
+                                }
+                            }
+                        }
+                    } else {
+                        log.info("No process instances found for office advocate: {}", officeAdvocateUuid);
+                    }
+                } catch (Exception e) {
+                    log.error("Error processing workflow search for office advocate: {}", officeAdvocateUuid, e);
+                }
             }
 
             log.info("Successfully processed add member event for {} office advocates", officeAdvocateMap.size());
