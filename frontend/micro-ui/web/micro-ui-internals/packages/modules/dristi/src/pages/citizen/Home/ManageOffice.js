@@ -389,26 +389,16 @@ const ManageOffice = () => {
   };
 
   return (
-    <div style={{ padding: "30px 48px", minHeight: "100vh" }}>
-      <h1 style={{ fontSize: "32px", fontWeight: "700", marginBottom: "32px", color: "#231F20" }}>{t("MANAGE_OFFICE") || "Manage Office"}</h1>
+    <div className="manage-office-page">
+      <h1 className="manage-office-title">{t("MANAGE_OFFICE") || "Manage Office"}</h1>
 
-      <div style={{ borderBottom: "1px solid #D6D5D4" }}>
-        <div style={{ display: "flex", gap: "32px" }}>
+      <div className="manage-office-tabs-wrapper">
+        <div className="manage-office-tabs">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              style={{
-                padding: "12px 0",
-                fontSize: "16px",
-                fontWeight: activeTab === tab.id ? "700" : "400",
-                color: activeTab === tab.id ? "#007E7E" : "#77787B",
-                backgroundColor: "transparent",
-                border: "none",
-                borderBottom: activeTab === tab.id ? "2px solid #007E7E" : "2px solid transparent",
-                cursor: "pointer",
-                marginBottom: "-1px",
-              }}
+              className={`manage-office-tab${activeTab === tab.id ? " manage-office-tab--active" : ""}`}
             >
               {tab.label}
             </button>
@@ -416,36 +406,12 @@ const ManageOffice = () => {
         </div>
       </div>
 
-      <div
-        style={{
-          backgroundColor: "#FFFFFF",
-          border: "1px solid #D6D5D4",
-          padding: "24px 0px 0px 0px",
-          minHeight: "400px",
-          borderLeft: "none",
-          borderRight: "none",
-        }}
-      >
+      <div className="manage-office-card">
         {/* Top row: only "Add New Member" on My Advocates/Clerks; no search row on Advocates I'm working for */}
         {activeTab === "myAdvocatesClerks" && (
-          <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: "24px" }}>
-            <button
-              onClick={handleAddNewMember}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "12px 24px",
-                backgroundColor: "#007E7E",
-                color: "#FFFFFF",
-                border: "none",
-                borderRadius: "4px",
-                fontSize: "16px",
-                fontWeight: "500",
-                cursor: "pointer",
-              }}
-            >
-              <span style={{ fontSize: "18px" }}>+</span>
+          <div className="manage-office-toprow">
+            <button onClick={handleAddNewMember} className="manage-office-add-member-btn">
+              <span className="manage-office-add-member-btn__icon">+</span>
               {t("ADD_NEW_MEMBER") || "Add New Member"}
             </button>
           </div>
@@ -453,29 +419,16 @@ const ManageOffice = () => {
 
         {/* Members List or Empty State */}
         {isLoadingDisplay ? (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "60px 20px",
-            }}
-          >
+          <div className="manage-office-loader">
             <Loader />
           </div>
         ) : displayMembers.length > 0 ? (
           <div>
             {/* Table Header: 4 columns for Advocates I'm working for, 5 for My Advocates/Clerks */}
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: activeTab === "advocatesWorkingFor" ? "1.5fr 1.5fr 1fr 80px" : "1.5fr 1.5fr 1fr 1fr 1.5fr",
-                padding: "16px 24px",
-                borderBottom: "1px solid #D6D5D4",
-                fontWeight: "600",
-                fontSize: "14px",
-                color: "#3D3C3C",
-              }}
+              className={`manage-office-table-header${
+                activeTab === "advocatesWorkingFor" ? " manage-office-table-header--working-for" : ""
+              }`}
             >
               <span>{activeTab === "advocatesWorkingFor" ? t("ADVOCATE") || "Advocate" : t("NAME") || "Name"}</span>
               <span>{t("MOBILE_NUMBER") || "Mobile Number"}</span>
@@ -487,17 +440,17 @@ const ManageOffice = () => {
             {displayMembers.map((member) => (
               <div
                 key={member.id || member.memberId}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: activeTab === "advocatesWorkingFor" ? "1.5fr 1.5fr 1fr 80px" : "1.5fr 1.5fr 1fr 1fr 1.5fr",
-                  padding: "16px 24px",
-                  borderBottom: "1px solid #D6D5D4",
-                  fontSize: "14px",
-                  color: "#231F20",
-                  alignItems: "center",
-                }}
+                className={`manage-office-table-row${
+                  activeTab === "advocatesWorkingFor" ? " manage-office-table-row--working-for" : ""
+                }`}
               >
-                <span style={activeTab === "advocatesWorkingFor" ? {} : { color: "#007E7E", textDecoration: "underline", cursor: "pointer" }}>
+                <span
+                  className={
+                    activeTab === "advocatesWorkingFor"
+                      ? "manage-office-name"
+                      : "manage-office-name manage-office-name--clickable"
+                  }
+                >
                   {activeTab === "advocatesWorkingFor" ? member.officeAdvocateName || member.memberName : member.memberName}
                 </span>
                 <span>{member.memberMobileNumber || member.officeAdvocateMobileNumber}</span>
@@ -505,46 +458,16 @@ const ManageOffice = () => {
                   <span>{member.memberType === "ADVOCATE_CLERK" ? "Clerk" : member.memberType === "ADVOCATE" ? "Advocate" : member.memberType}</span>
                 )}
                 <span>
-                  <span
-                    style={{
-                      backgroundColor: "#E8E8E8",
-                      padding: "4px 12px",
-                      borderRadius: "16px",
-                      fontSize: "12px",
-                      fontWeight: "500",
-                    }}
-                  >
+                  <span className="manage-office-access-pill">
                     {member.accessType === "ALL_CASES" ? t("ALL_CASES") || "All Cases" : t("SPECIFIC_CASES") || "Specific Cases"}
                   </span>
                 </span>
-                <span style={{ display: "flex", alignItems: "center", gap: activeTab === "advocatesWorkingFor" ? "0" : "16px" }}>
-                  {/* Manage button – to be implemented later
-                  {activeTab !== "advocatesWorkingFor" && (
-                    <button
-                      style={{
-                        padding: "8px 24px",
-                        backgroundColor: "#FFFFFF",
-                        color: "#007E7E",
-                        border: "1px solid #007E7E",
-                        borderRadius: "4px",
-                        fontSize: "14px",
-                        fontWeight: "500",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {t("MANAGE") || "Manage"}
-                    </button>
-                  )}
-                  */}
-                  <button
-                    onClick={() => handleDeleteClick(member)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: "4px",
-                    }}
-                  >
+                <span
+                  className={`manage-office-actions${
+                    activeTab === "advocatesWorkingFor" ? " manage-office-actions--compact" : ""
+                  }`}
+                >
+                  <button onClick={() => handleDeleteClick(member)} className="manage-office-delete-btn">
                     <DeleteIcon />
                   </button>
                 </span>
@@ -552,124 +475,55 @@ const ManageOffice = () => {
             ))}
           </div>
         ) : (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "60px 20px",
-            }}
-          >
-            <p style={{ fontSize: "18px", fontWeight: "700", color: "#231F20", marginBottom: "8px" }}>
-              {t("NO_DATA_TO_DISPLAY") || "No data to display."}
-            </p>
-            <p style={{ fontSize: "16px", color: "#77787B" }}>{t("PLEASE_ADD_MEMBER") || "Please add member"}</p>
+          <div className="manage-office-empty">
+            <p className="manage-office-empty__title">{t("NO_DATA_TO_DISPLAY") || "No data to display."}</p>
+            <p className="manage-office-empty__subtitle">{t("PLEASE_ADD_MEMBER") || "Please add member"}</p>
           </div>
         )}
       </div>
 
       {showAddMemberModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-          onClick={handleCloseModal}
-        >
+        <div className="manage-office-modal-overlay" onClick={handleCloseModal}>
           <div
-            style={{
-              backgroundColor: "#FFFFFF",
-              borderRadius: "4px",
-              padding: "24px",
-              width: "100%",
-              maxWidth: searchResult ? "700px" : "500px",
-              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-            }}
+            className={`manage-office-modal ${searchResult ? "manage-office-modal--wide" : ""}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div
-              style={{
-                display: "flex",
-                padding: "0 0 16px 0",
-                justifyContent: "space-between",
-                borderBottom: "1px solid #D6D5D4",
-                alignItems: "center",
-                marginBottom: "24px",
-              }}
-            >
-              <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#231F20", margin: 0 }}>{t("ADD_MEMBER") || "Add Member"}</h2>
-              <button
-                onClick={handleCloseModal}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "4px",
-                  fontSize: "24px",
-                  lineHeight: 1,
-                }}
-              >
+            <div className="manage-office-modal__header">
+              <h2 className="manage-office-modal__title">{t("ADD_MEMBER") || "Add Member"}</h2>
+              <button onClick={handleCloseModal} className="manage-office-modal__close">
                 ×
               </button>
             </div>
 
             {searchResult ? (
-              <div
-                style={{
-                  display: "flex",
-                  // border: "1px solid #D6D5D4",
-                  backgroundColor: "#F7F5F3",
-                  borderRadius: "16px",
-                  marginBottom: "24px",
-                  overflow: "hidden",
-                  padding: "8px 0 8px 0",
-                }}
-              >
-                <div style={{ flex: 1, padding: "8px", borderRight: "1px solid #D6D5D4" }}>
-                  <p style={{ fontSize: "14px", color: "#77787B", marginBottom: "4px" }}>{t("NAME") || "Name"}</p>
-                  <p style={{ fontSize: "16px", fontWeight: "500", color: "#231F20", margin: 0 }}>{searchResult.name}</p>
+              <div className="manage-office-search-card">
+                <div className="manage-office-search-card__col">
+                  <p className="manage-office-search-card__label">{t("NAME") || "Name"}</p>
+                  <p className="manage-office-search-card__value">{searchResult.name}</p>
                 </div>
-                <div style={{ flex: 1, padding: "8px", borderRight: "1px solid #D6D5D4" }}>
-                  <p style={{ fontSize: "14px", color: "#77787B", marginBottom: "4px" }}>{t("DESIGNATION") || "Designation"}</p>
-                  <p style={{ fontSize: "16px", fontWeight: "500", color: "#231F20", margin: 0 }}>{searchResult.designation}</p>
+                <div className="manage-office-search-card__col">
+                  <p className="manage-office-search-card__label">{t("DESIGNATION") || "Designation"}</p>
+                  <p className="manage-office-search-card__value">{searchResult.designation}</p>
                 </div>
-                <div style={{ flex: 1, padding: "8px", borderRight: "1px solid #D6D5D4" }}>
-                  <p style={{ fontSize: "14px", color: "#77787B", marginBottom: "4px" }}>{t("MOBILE_NUMBER") || "Mobile number"}</p>
-                  <p style={{ fontSize: "16px", fontWeight: "500", color: "#231F20", margin: 0 }}>{searchResult.mobileNumber}</p>
+                <div className="manage-office-search-card__col">
+                  <p className="manage-office-search-card__label">{t("MOBILE_NUMBER") || "Mobile number"}</p>
+                  <p className="manage-office-search-card__value">{searchResult.mobileNumber}</p>
                 </div>
-                <div style={{ flex: 1, padding: "8px" }}>
-                  <p style={{ fontSize: "14px", color: "#77787B", marginBottom: "4px" }}>{t("EMAIL") || "Email"}</p>
-                  <p style={{ fontSize: "16px", fontWeight: "500", color: "#231F20", margin: 0 }}>{searchResult.email}</p>
+                <div className="manage-office-search-card__col">
+                  <p className="manage-office-search-card__label">{t("EMAIL") || "Email"}</p>
+                  <p className="manage-office-search-card__value">{searchResult.email}</p>
                 </div>
               </div>
             ) : (
-              <div style={{ marginBottom: "24px" }}>
-                <label style={{ display: "block", fontSize: "16px", fontWeight: "400", color: "#231F20", marginBottom: "8px" }}>
+              <div className="manage-office-search-field">
+                <label className="manage-office-search-field__label">
                   {t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}
                 </label>
-                <div style={{ display: "flex", border: "1px solid #D6D5D4", borderRadius: "4px", overflow: "hidden" }}>
+                <div className="manage-office-search-field__control">
                   <select
                     value={countryCode}
                     onChange={(e) => setCountryCode(e.target.value)}
-                    style={{
-                      padding: "12px",
-                      border: "none",
-                      borderRight: "1px solid #D6D5D4",
-                      backgroundColor: "#FFFFFF",
-                      fontSize: "16px",
-                      color: "#231F20",
-                      cursor: "pointer",
-                      outline: "none",
-                    }}
+                    className="manage-office-search-field__country"
                   >
                     <option value="+91">+91</option>
                     <option value="+1">+1</option>
@@ -681,34 +535,18 @@ const ManageOffice = () => {
                     onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))}
                     placeholder={t("ENTER_HERE") || "Enter here"}
                     maxLength={10}
-                    style={{
-                      flex: 1,
-                      padding: "12px",
-                      border: "none",
-                      fontSize: "16px",
-                      outline: "none",
-                    }}
+                    className="manage-office-search-field__input"
                   />
                 </div>
-                {searchError && <div style={{ marginTop: "12px", color: "#D4351C", fontSize: "14px" }}>{searchError}</div>}
+                {searchError && <div className="manage-office-search-field__error">{searchError}</div>}
               </div>
             )}
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "16px" }}>
+            <div className="manage-office-modal__footer">
               <button
                 onClick={handleGoBack}
                 disabled={isAddingMember}
-                style={{
-                  padding: "12px 24px",
-                  backgroundColor: "#FFFFFF",
-                  color: "#231F20",
-                  border: "1px solid #D6D5D4",
-                  borderRadius: "4px",
-                  fontSize: "16px",
-                  fontWeight: "500",
-                  cursor: isAddingMember ? "not-allowed" : "pointer",
-                  opacity: isAddingMember ? 0.6 : 1,
-                }}
+                className="manage-office-btn manage-office-btn--secondary"
               >
                 {t("GO_BACK") || "Go Back"}
               </button>
@@ -716,50 +554,21 @@ const ManageOffice = () => {
                 <button
                   onClick={handleConfirmAddMember}
                   disabled={isAddingMember}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "12px 24px",
-                    backgroundColor: isAddingMember ? "#D6D5D4" : "#007E7E",
-                    color: "#FFFFFF",
-                    border: "none",
-                    borderRadius: "4px",
-                    fontSize: "16px",
-                    fontWeight: "500",
-                    cursor: isAddingMember ? "not-allowed" : "pointer",
-                  }}
+                  className={`manage-office-btn manage-office-btn--primary${
+                    isAddingMember ? " manage-office-btn--disabled" : ""
+                  }`}
                 >
                   {t("ADD_MEMBER") || "Add Member"}
-                  <span>→</span>
                 </button>
               ) : (
                 <button
                   onClick={handleSearch}
-                  disabled={isSearching}
-                  style={{
-                    padding: "12px 24px",
-                    width: "120px",
-                    height: "44px",
-                    boxSizing: "border-box",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: !mobileNumber || mobileNumber.length < 10 || isSearching ? "#D6D5D4" : "#007E7E",
-                    color: "#FFFFFF",
-                    border: "none",
-                    borderRadius: "4px",
-                    fontSize: "16px",
-                    fontWeight: "500",
-                  }}
+                  disabled={isSearching || !mobileNumber || mobileNumber.length < 10}
+                  className={`manage-office-btn manage-office-btn--primary${
+                    isSearching || !mobileNumber || mobileNumber.length < 10 ? " manage-office-btn--disabled" : ""
+                  }`}
                 >
-                  {isSearching ? (
-                    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", transform: "scale(0.45)" }}>
-                      <Loader />
-                    </span>
-                  ) : (
-                    t("SEARCH") || "Search"
-                  )}
+                  {isSearching ? t("PLEASE_WAIT") || "Please wait..." : t("SEARCH") || "Search"}
                 </button>
               )}
             </div>
@@ -769,106 +578,31 @@ const ManageOffice = () => {
 
       {/* Remove Member Confirmation Modal */}
       {showRemoveMemberModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-          onClick={handleCloseRemoveModal}
-        >
-          <div
-            style={{
-              backgroundColor: "#FFFFFF",
-              borderRadius: "4px",
-              padding: "24px",
-              width: "100%",
-              maxWidth: "500px",
-              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                display: "flex",
-                padding: "0 0 16px 0",
-                justifyContent: "space-between",
-                borderBottom: "1px solid #D6D5D4",
-                alignItems: "center",
-                marginBottom: "24px",
-              }}
-            >
-              <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#231F20", margin: 0 }}>{t("REMOVE_MEMBER") || "Remove Member"}</h2>
-              <button
-                onClick={handleCloseRemoveModal}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "4px",
-                  fontSize: "24px",
-                  lineHeight: 1,
-                }}
-              >
+        <div className="manage-office-modal-overlay" onClick={handleCloseRemoveModal}>
+          <div className="manage-office-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="manage-office-modal__header">
+              <h2 className="manage-office-modal__title">{t("REMOVE_MEMBER") || "Remove Member"}</h2>
+              <button onClick={handleCloseRemoveModal} className="manage-office-modal__close">
                 ×
               </button>
             </div>
 
-            <p style={{ fontSize: "16px", color: "#3D3C3C", marginBottom: "24px" }}>
+            <p className="manage-office-remove-text">
               {t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?"}
             </p>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "16px" }}>
-              <button
-                onClick={handleCloseRemoveModal}
-                style={{
-                  padding: "12px 24px",
-                  backgroundColor: "#FFFFFF",
-                  color: "#231F20",
-                  border: "1px solid #D6D5D4",
-                  borderRadius: "4px",
-                  fontSize: "16px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                }}
-              >
+            <div className="manage-office-modal__footer">
+              <button onClick={handleCloseRemoveModal} className="manage-office-btn manage-office-btn--secondary">
                 {t("CANCEL") || "Cancel"}
               </button>
               <button
                 onClick={handleConfirmRemoveMember}
                 disabled={isRemovingMember}
-                style={{
-                  padding: "12px 24px",
-                  width: "160px",
-                  height: "44px",
-                  boxSizing: "border-box",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  whiteSpace: "nowrap",
-                  backgroundColor: isRemovingMember ? "#D6D5D4" : "#D4351C",
-                  color: "#FFFFFF",
-                  border: "none",
-                  borderRadius: "4px",
-                  fontSize: "16px",
-                  fontWeight: "500",
-                  cursor: isRemovingMember ? "not-allowed" : "pointer",
-                }}
+                className={`manage-office-btn manage-office-btn--danger${
+                  isRemovingMember ? " manage-office-btn--disabled" : ""
+                }`}
               >
-                {isRemovingMember ? (
-                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", transform: "scale(0.45)" }}>
-                    <Loader />
-                  </span>
-                ) : (
-                  t("REMOVE_MEMBER") || "Remove Member"
-                )}
+                {isRemovingMember ? t("PLEASE_WAIT") || "Please wait..." : t("REMOVE_MEMBER") || "Remove Member"}
               </button>
             </div>
           </div>
@@ -877,7 +611,7 @@ const ManageOffice = () => {
 
       {/* Toast Notification: auto-close after 5s, close button to dismiss manually */}
       {toast && (
-        <Toast label={toast.label} onClose={() => setToast(null)} error={toast.type === "error"} isDleteBtn={true} style={{ maxWidth: "400px" }} />
+        <Toast label={toast.label} onClose={() => setToast(null)} error={toast.type === "error"} isDleteBtn={true} />
       )}
     </div>
   );
