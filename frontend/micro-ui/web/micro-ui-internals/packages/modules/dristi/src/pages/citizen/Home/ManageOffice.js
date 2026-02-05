@@ -90,7 +90,6 @@ const ManageOffice = () => {
 
   const [activeTab, setActiveTab] = useState("myAdvocatesClerks");
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState(null);
   const [isRemovingMember, setIsRemovingMember] = useState(false);
@@ -257,16 +256,6 @@ const ManageOffice = () => {
     }
   };
 
-  const handleVerifyDetails = () => {
-    setShowAddMemberModal(false);
-    setShowConfirmModal(true);
-  };
-
-  const handleConfirmGoBack = () => {
-    setShowConfirmModal(false);
-    setShowAddMemberModal(true);
-  };
-
   const handleConfirmAddMember = async () => {
     if (!searchResult || !officeAdvocateUserUuid) {
       setToast({ label: t("ADVOCATE_ID_NOT_FOUND") || "Advocate ID not found. Please try again.", type: "error" });
@@ -324,7 +313,7 @@ const ManageOffice = () => {
       setToast({ label: t("MEMBER_ADD_ERROR") || "Failed to add member. Please try again.", type: "error" });
     } finally {
       setIsAddingMember(false);
-      setShowConfirmModal(false);
+      setShowAddMemberModal(false);
       setSearchResult(null);
       setMobileNumber("");
     }
@@ -350,12 +339,6 @@ const ManageOffice = () => {
     filteredMembers,
   ]);
   const isLoadingDisplay = activeTab === "advocatesWorkingFor" ? isLoadingAdvocatesWorkingFor : isLoadingMembers;
-
-  const handleCloseConfirmModal = () => {
-    setShowConfirmModal(false);
-    setSearchResult(null);
-    setMobileNumber("");
-  };
 
   const handleDeleteClick = (member) => {
     setMemberToRemove(member);
@@ -437,7 +420,7 @@ const ManageOffice = () => {
         style={{
           backgroundColor: "#FFFFFF",
           border: "1px solid #D6D5D4",
-          padding: "24px",
+          padding: "24px 0px 0px 0px",
           minHeight: "400px",
           borderLeft: "none",
           borderRight: "none",
@@ -714,6 +697,7 @@ const ManageOffice = () => {
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "16px" }}>
               <button
                 onClick={handleGoBack}
+                disabled={isAddingMember}
                 style={{
                   padding: "12px 24px",
                   backgroundColor: "#FFFFFF",
@@ -722,29 +706,31 @@ const ManageOffice = () => {
                   borderRadius: "4px",
                   fontSize: "16px",
                   fontWeight: "500",
-                  cursor: "pointer",
+                  cursor: isAddingMember ? "not-allowed" : "pointer",
+                  opacity: isAddingMember ? 0.6 : 1,
                 }}
               >
                 {t("GO_BACK") || "Go Back"}
               </button>
               {searchResult ? (
                 <button
-                  onClick={handleVerifyDetails}
+                  onClick={handleConfirmAddMember}
+                  disabled={isAddingMember}
                   style={{
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
                     padding: "12px 24px",
-                    backgroundColor: "#007E7E",
+                    backgroundColor: isAddingMember ? "#D6D5D4" : "#007E7E",
                     color: "#FFFFFF",
                     border: "none",
                     borderRadius: "4px",
                     fontSize: "16px",
                     fontWeight: "500",
-                    cursor: "pointer",
+                    cursor: isAddingMember ? "not-allowed" : "pointer",
                   }}
                 >
-                  {t("VERIFY_DETAILS") || "Verify Details"}
+                  {t("ADD_MEMBER") || "Add Member"}
                   <span>→</span>
                 </button>
               ) : (
@@ -776,113 +762,6 @@ const ManageOffice = () => {
                   )}
                 </button>
               )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-          onClick={handleCloseConfirmModal}
-        >
-          <div
-            style={{
-              backgroundColor: "#FFFFFF",
-              borderRadius: "4px",
-              padding: "24px",
-              width: "100%",
-              maxWidth: "500px",
-              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                display: "flex",
-                padding: "0 0 16px 0",
-                justifyContent: "space-between",
-                borderBottom: "1px solid #D6D5D4",
-                alignItems: "center",
-                marginBottom: "24px",
-              }}
-            >
-              <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#231F20", margin: 0 }}>{t("ADD_MEMBER") || "Add Member"}</h2>
-              <button
-                onClick={handleCloseConfirmModal}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: "4px",
-                  fontSize: "24px",
-                  lineHeight: 1,
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            <p style={{ fontSize: "16px", color: "#3D3C3C", marginBottom: "24px" }}>
-              {t("CONFIRM_ADD_MEMBER_MESSAGE") || "Are you sure you want to add this member to your office?"}
-            </p>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "16px" }}>
-              <button
-                onClick={handleConfirmGoBack}
-                style={{
-                  padding: "12px 24px",
-                  backgroundColor: "#FFFFFF",
-                  color: "#231F20",
-                  border: "1px solid #D6D5D4",
-                  borderRadius: "4px",
-                  fontSize: "16px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                }}
-              >
-                {t("GO_BACK") || "Go Back"}
-              </button>
-              <button
-                onClick={handleConfirmAddMember}
-                disabled={isAddingMember}
-                style={{
-                  padding: "12px 24px",
-                  width: "120px",
-                  height: "44px",
-                  boxSizing: "border-box",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: isAddingMember ? "#D6D5D4" : "#007E7E",
-                  color: "#FFFFFF",
-                  border: "none",
-                  borderRadius: "4px",
-                  fontSize: "16px",
-                  fontWeight: "500",
-                  cursor: isAddingMember ? "not-allowed" : "pointer",
-                }}
-              >
-                {isAddingMember ? (
-                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", transform: "scale(0.45)" }}>
-                    <Loader />
-                  </span>
-                ) : (
-                  t("CONFIRM") || "Confirm"
-                )}
-              </button>
             </div>
           </div>
         </div>
