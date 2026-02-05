@@ -38,6 +38,23 @@ const SelectAddreseeCustomComponent = ({ t, config, formData = {}, onSelect, err
     onSelect(config.key, [...addressList, {}]);
   };
 
+  const selectedPartyIds = useMemo(() => {
+    const alreadySelectedData = formData?.[config?.key];
+    if (Array.isArray(alreadySelectedData)) {
+      return alreadySelectedData?.map((data) => data?.uniqueId || data?.uuid)?.filter(Boolean);
+    }
+    return [];
+  }, [formData, config?.key]);
+
+  const availableOptions = useMemo(() => {
+    return (inputs?.options || [])?.filter((optData) => {
+      const optId = optData?.uniqueId || optData?.uuid;
+
+      return !selectedPartyIds.includes(optId);
+    }) || [];
+  }, [inputs?.options, selectedPartyIds]);
+
+
   return (
     <React.Fragment>
       <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
@@ -47,7 +64,7 @@ const SelectAddreseeCustomComponent = ({ t, config, formData = {}, onSelect, err
               <Dropdown
                 className="police-station-dropdown"
                 t={t}
-                option={inputs?.options || []}
+                option={availableOptions || []}
                 optionKey={inputs?.optionKey || "name"}
                 select={(value) => handleSelect(index, value)}
                 selected={item}

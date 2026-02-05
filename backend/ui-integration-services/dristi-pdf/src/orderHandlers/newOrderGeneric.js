@@ -261,10 +261,15 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       return {
         isReschedule: isBothPresent,
         nextHearingDate: isBothPresent
-          ? formatDate(scheduleItem?.orderDetails?.hearingDate, "DD-MM-YYYY")
+          ? formatDate(
+              scheduleItem?.orderSchema?.orderDetails?.hearingDate,
+              "DD-MM-YYYY"
+            )
           : "",
         purposeOfNextHearing: isBothPresent
-          ? messagesMap[scheduleItem?.orderDetails?.purposeOfHearing]
+          ? messagesMap[
+              scheduleItem?.orderSchema?.orderDetails?.purposeOfHearing
+            ]
           : "",
       };
     })();
