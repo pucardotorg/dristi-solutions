@@ -58,8 +58,10 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
 
             if (inboxSortConfiguration != null && inboxSortConfiguration.getSortOrder() != null && !inboxSortConfiguration.getSortOrder().isEmpty()) {
                 addSortClauseToBaseQueryUsingConfig(baseEsQuery, inboxSortConfiguration.getSortOrder(),inboxRequest.getInbox().getProcessSearchCriteria().getIsHearingSerialNumberSorting(),inboxRequest.getInbox().getProcessSearchCriteria().getModuleName());
-            } else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && PENDING_BULK_E_SIGN.equals(params.get("status"))) {
+            } else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && "Order".equals(params.get("entityType"))) {
                 addIndexSort(baseEsQuery, configuration.getIndex());
+            } else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && !params.containsKey("entityType")) {
+               orderNotificationSortClause(baseEsQuery);
             } else if (inboxRequest.getInbox().getSortOrder() != null && !inboxRequest.getInbox().getSortOrder().isEmpty()) {
                 List<OrderBy> sortOrders = inboxRequest.getInbox().getSortOrder();
 
@@ -152,6 +154,13 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         outerClauseList.add(getScriptObject(String.format(YEAR_SORTING_SCRIPT, placeHolder)));
         outerClauseList.add(getScriptObject(String.format(NUMBER_SORTING_SCRIPT, placeHolder)));
         return outerClauseList;
+    }
+
+    private void orderNotificationSortClause(Map<String, Object> baseEsQuery) {
+        List<Map<String, Object>> sortList = new ArrayList<>();
+        sortList.add(getScriptObject(ORDER_STATUS_PRIORITY_SCRIPT));
+        sortList.add(getScriptObject(ORDER_STATUS_TIME_SCRIPT));
+        baseEsQuery.put(SORT_KEY, sortList);
     }
 
     private Object getPlaceHolder(String indexName) {

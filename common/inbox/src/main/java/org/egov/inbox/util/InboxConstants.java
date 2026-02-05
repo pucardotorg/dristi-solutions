@@ -79,4 +79,36 @@ public class InboxConstants {
     public static final String OPEN_HEARING_INDEX = "open-hearing-index";
     public static final String ORDER_NOTIFICATION_INDEX = "order-notification-view";
     public static final String PENDING_BULK_E_SIGN = "PENDING_BULK_E-SIGN";
+
+    public static final String DRAFT_IN_PROGRESS = "DRAFT_IN_PROGRESS";
+    public static final String PUBLISHED = "PUBLISHED";
+
+    public static final String ORDER_STATUS_PRIORITY_SCRIPT =
+            "{ \"_script\": { " +
+                    "  \"type\": \"number\", " +
+                    "  \"script\": { " +
+                    "    \"lang\": \"painless\", " +
+                    "    \"source\": \"String status = doc['Data.orderNotification.status.keyword'].value; " +
+                    "      if (status == 'PENDING_BULK_E-SIGN') return 0; " +
+                    "      if (status == 'DRAFT_IN_PROGRESS') return 1; " +
+                    "      if (status == 'PUBLISHED') return 2; " +
+                    "      return 3;\" " +
+                    "  }, " +
+                    "  \"order\": \"asc\" " +
+                    "} }";
+
+    public static final String ORDER_STATUS_TIME_SCRIPT =
+            "{ \"_script\": { " +
+                    "  \"type\": \"number\", " +
+                    "  \"script\": { " +
+                    "    \"lang\": \"painless\", " +
+                    "    \"source\": \"String status = doc['Data.orderNotification.status.keyword'].value; " +
+                    "      if (status == 'PUBLISHED') { " +
+                    "        return doc['Data.orderNotification.date'].size() == 0 ? 0 : doc['Data.orderNotification.date'].value; " +
+                    "      } else { " +
+                    "        return doc['Data.orderNotification.lastModifiedTime'].size() == 0 ? 0 : doc['Data.orderNotification.lastModifiedTime'].value; " +
+                    "      }\" " +
+                    "  }, " +
+                    "  \"order\": \"desc\" " +
+                    "} }";
 }
