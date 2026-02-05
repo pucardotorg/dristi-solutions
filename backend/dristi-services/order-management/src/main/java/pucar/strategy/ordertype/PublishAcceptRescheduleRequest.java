@@ -1,8 +1,10 @@
 package pucar.strategy.ordertype;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
@@ -87,8 +89,14 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
 
         boolean isSameDate = hearingDate.equals(today);
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
-
-        String refHearingId = JsonPath.read(order.getAdditionalDetails().toString(), "$.refHearingId");
+        String refHearingId = "";
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String json = mapper.writeValueAsString(orderRequest.getOrder().getAdditionalDetails());
+            refHearingId = JsonPath.read(json, "$.refHearingId");
+        } catch (Exception e) {
+            throw new CustomException("ERROR", "Error occurred while processing json");
+        }
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
                 .criteria(HearingCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).hearingId(refHearingId).build()).build());
         Hearing hearing = hearings.get(0);
