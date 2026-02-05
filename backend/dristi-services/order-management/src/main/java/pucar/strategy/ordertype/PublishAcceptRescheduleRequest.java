@@ -1,5 +1,6 @@
 package pucar.strategy.ordertype;
 
+import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,8 +88,9 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
         boolean isSameDate = hearingDate.equals(today);
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
+        String refHearingId = JsonPath.read(order.getAdditionalDetails().toString(), "$.refHearingId");
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                .criteria(HearingCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).status(SCHEDULED).build()).build());
+                .criteria(HearingCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).hearingId(refHearingId).build()).build());
         Hearing hearing = hearings.get(0);
         Long time = hearingDate.atStartOfDay(ZoneId.of(config.getZoneId())).toInstant().toEpochMilli();
         if (time != null) {
@@ -96,7 +98,7 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
             hearing.setEndTime(time);
         }
 
-        if(isSameDate) {
+        if (isSameDate) {
             WorkflowObject workflow = new WorkflowObject();
             workflow.setAction(MARK_COMPLETE);
             workflow.setComments("Update Hearing");
@@ -107,12 +109,20 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
 
             StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
             hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
-        }else {
-            WorkflowObject workflow = new WorkflowObject();
-            workflow.setAction(UPDATE_DATE);
-            workflow.setComments("Update Hearing");
-            hearing.setWorkflow(workflow);
-            hearing.setHearingType(order.getPurposeOfNextHearing());
+        } else {
+            if (IN_PROGRESS.equalsIgnoreCase(hearing.getStatus())) {
+                WorkflowObject workflow = new WorkflowObject();
+                workflow.setAction(RESCHEDULE_ONGOING);
+                workflow.setComments("Update Hearing");
+                hearing.setWorkflow(workflow);
+                hearing.setHearingType(order.getPurposeOfNextHearing());
+            } else {
+                WorkflowObject workflow = new WorkflowObject();
+                workflow.setAction(UPDATE_DATE);
+                workflow.setComments("Update Hearing");
+                hearing.setWorkflow(workflow);
+                hearing.setHearingType(order.getPurposeOfNextHearing());
+            }
 
             StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
             hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);

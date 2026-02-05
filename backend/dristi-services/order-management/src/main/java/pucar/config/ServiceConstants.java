@@ -85,6 +85,7 @@ public class ServiceConstants {
     public static final String CLOSE = "CLOSE";
     public static final String MARK_COMPLETE = "MARK_COMPLETE";
     public static final String UPDATE_DATE = "UPDATE_DATE";
+    public static final String RESCHEDULE_ONGOING = "RESCHEDULE_ONGOING";
     public static final String COMPLETED = "COMPLETED";
     public static final String ABATED = "ABATED";
     public static final String SAVE_DRAFT = "SAVE_DRAFT";
