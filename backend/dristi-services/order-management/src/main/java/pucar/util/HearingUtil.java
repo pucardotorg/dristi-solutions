@@ -45,8 +45,9 @@ public class HearingUtil {
     private final OrderUtil orderUtil;
     private final InboxUtil inboxUtil;
     private final EsUtil esUtil;
+    private final PendingTaskUtil pendingTaskUtil;
 
-    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil, OrderUtil orderUtil, InboxUtil inboxUtil, EsUtil esUtil) {
+    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil, OrderUtil orderUtil, InboxUtil inboxUtil, EsUtil esUtil, PendingTaskUtil pendingTaskUtil) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
@@ -58,6 +59,7 @@ public class HearingUtil {
         this.orderUtil = orderUtil;
         this.inboxUtil = inboxUtil;
         this.esUtil = esUtil;
+        this.pendingTaskUtil = pendingTaskUtil;
     }
 
 
@@ -438,6 +440,9 @@ public class HearingUtil {
 
         order.setScheduledHearingNumber(newHearing.getHearing().getHearingId());
         log.info("hearing number:{}", newHearing.getHearing().getHearingId());
+
+        log.info("close manual pending task of schedule of hearing");
+        pendingTaskUtil.closeManualPendingTask(order.getFilingNumber() + SCHEDULE_HEARING_SUFFIX, requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
 
         log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
     }
