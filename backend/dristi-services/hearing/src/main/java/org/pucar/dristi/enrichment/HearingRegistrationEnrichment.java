@@ -172,6 +172,15 @@ public class HearingRegistrationEnrichment {
                 }
             }
 
+            if (hearingDuration != null) {
+                String action = processInstance.get(0).getAction();
+                if (START.equalsIgnoreCase(action)) {
+                    Long currentTime = System.currentTimeMillis();
+                    log.info("Last action :: {}, createdTime :: {}", "CLOSE", currentTime);
+                    hearingDuration = hearingDuration + (currentTime - processInstance.get(0).getAuditDetails().getCreatedTime());
+                }
+            }
+
             hearingRequest.getHearing().setHearingDurationInMillis(hearingDuration);
         } catch (Exception e) {
             log.error("Error enriching hearing duration: {}", e.getMessage());
