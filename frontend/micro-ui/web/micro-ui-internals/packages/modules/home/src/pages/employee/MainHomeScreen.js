@@ -975,6 +975,21 @@ const MainHomeScreen = () => {
       });
     }
 
+    if (activeTab === "RESCHEDULE_REQUEST") {
+      updatedConfig.sections.searchResult.uiConfig.columns.push(
+        {
+          label: "DATE_OF_APPLICATION",
+          jsonPath: "dateOfApplication",
+          additionalCustomization: true,
+        },
+        {
+          label: "DATE_OF_NEXT_HEARING",
+          jsonPath: "nextHearingDate",
+          additionalCustomization: true,
+        }
+      );
+    }
+
     updatedConfig = {
       ...updatedConfig,
       sections: {
@@ -998,6 +1013,10 @@ const MainHomeScreen = () => {
                   : column;
               })
               ?.filter((column) => {
+                if (activeTab === "RESCHEDULE_REQUEST") {
+                  if (column?.label === "STAGE") return false;
+                  if (column?.label === "ADVOCATES") return false;
+                }
                 if (activeTab !== "OTHERS" && column?.label === "APPLICATION_TYPE") return false;
                 if (activeTab === "REGISTRATION") {
                   if (column?.label === "STAGE") return false;
