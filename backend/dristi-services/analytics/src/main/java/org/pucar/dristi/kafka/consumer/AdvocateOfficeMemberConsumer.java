@@ -83,15 +83,16 @@ public class AdvocateOfficeMemberConsumer {
                 try {
                     String tenantId = members.get(0).getTenantId();
                     
-                    // Search workflow by office advocate to get all their process instances (once per advocate)
-                    List<ProcessInstance> processInstances = workflowUtil.searchWorkflowByAssignee(
+                    // Search workflow by office advocate with query-level filtering based on MDMS configuration
+                    // This filters by businessService and states at the API level instead of validating after fetching
+                    List<ProcessInstance> processInstances = workflowUtil.searchWorkflowByAssigneeForAllConfigurations(
                             request.getRequestInfo(), 
                             officeAdvocateUuid, 
                             tenantId
                     );
 
                     if (processInstances != null && !processInstances.isEmpty()) {
-                        log.info("Found {} process instances for office advocate: {}", processInstances.size(), officeAdvocateUuid);
+                        log.info("Found {} process instances for office advocate: {} matching MDMS configuration", processInstances.size(), officeAdvocateUuid);
                         
                         // Collect all member UUIDs for this office advocate
                         Set<String> memberUuidSet = new HashSet<>();
@@ -103,28 +104,20 @@ public class AdvocateOfficeMemberConsumer {
                         for (ProcessInstance processInstance : processInstances) {
                             if (processInstance.getId() != null) {
                                 try {
-                                    // Extract state name from State object
-                                    String stateName = processInstance.getState() != null ? processInstance.getState().getState() : null;
-                                    // Validate if businessService and state match MDMS configuration
-                                    if (workflowUtil.shouldUpsertAssignee(processInstance.getBusinessService(), stateName)) {
-                                        workflowUtil.upsertAssignees(
-                                                request.getRequestInfo(),
-                                                memberUuidSet,
-                                                processInstance.getId(),
-                                                tenantId
-                                        );
-                                        log.info("Successfully upserted {} assignees to process instance {}", memberUuidSet.size(), processInstance.getId());
-                                    } else {
-                                        log.info("Skipping assignee upsert for process instance {} as businessService: {} and state: {} do not match MDMS configuration", 
-                                                processInstance.getId(), processInstance.getBusinessService(), stateName);
-                                    }
+                                    workflowUtil.upsertAssignees(
+                                            request.getRequestInfo(),
+                                            memberUuidSet,
+                                            processInstance.getId(),
+                                            tenantId
+                                    );
+                                    log.info("Successfully upserted {} assignees to process instance {}", memberUuidSet.size(), processInstance.getId());
                                 } catch (Exception e) {
                                     log.error("Error upserting assignees for process instance: {}", processInstance.getId(), e);
                                 }
                             }
                         }
                     } else {
-                        log.info("No process instances found for office advocate: {}", officeAdvocateUuid);
+                        log.info("No process instances found for office advocate: {} matching MDMS configuration", officeAdvocateUuid);
                     }
                 } catch (Exception e) {
                     log.error("Error processing workflow search for office advocate: {}", officeAdvocateUuid, e);

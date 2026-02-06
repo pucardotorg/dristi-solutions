@@ -63,6 +63,45 @@ public class WorkflowUtil {
         }
     }
 
+    public List<ProcessInstance> searchWorkflowByAssigneeWithFilters(RequestInfo requestInfo, String assigneeUuid, String businessService, List<String> states, String tenantId) {
+        try {
+            RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
+
+            StringBuilder url = new StringBuilder();
+            url.append(config.getWorkflowHost())
+                    .append(config.getWorkflowProcessSearchEndpoint())
+                    .append("?tenantId=").append(tenantId)
+                    .append("&assignee=").append(assigneeUuid)
+                    .append("&history=false");
+
+            if (businessService != null && !businessService.isEmpty()) {
+                url.append("&businessService=").append(businessService);
+            }
+
+            if (states != null && !states.isEmpty()) {
+                for (String state : states) {
+                    url.append("&status=").append(state);
+                }
+            }
+
+            log.info("Searching workflow by assignee: {} with businessService: {} and states: {} with URL: {}", 
+                    assigneeUuid, businessService, states, url);
+
+            Object response = requestRepository.fetchResult(url, requestInfoWrapper);
+            ProcessInstanceResponse processInstanceResponse = mapper.convertValue(response, ProcessInstanceResponse.class);
+
+            if (processInstanceResponse != null && processInstanceResponse.getProcessInstances() != null) {
+                log.info("Found {} process instances for assignee: {} with filters", processInstanceResponse.getProcessInstances().size(), assigneeUuid);
+                return processInstanceResponse.getProcessInstances();
+            }
+
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error searching workflow by assignee: {} with filters", assigneeUuid, e);
+            return Collections.emptyList();
+        }
+    }
+
     public AssigneeResponse upsertAssignees(RequestInfo requestInfo, Set<String> assigneeUuids, String processInstanceId, String tenantId) {
         if (assigneeUuids == null || assigneeUuids.isEmpty()) {
             log.error("No assignee UUIDs provided for workflow upsert");
@@ -181,31 +220,30 @@ public class WorkflowUtil {
         return shouldUpsert;
     }
 
-    public List<Assignee> searchAssigneesByMemberUuid(RequestInfo requestInfo, String memberUserUuid, String tenantId) {
-        try {
-            RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
+    public List<ProcessInstance> searchWorkflowByAssigneeForAllConfigurations(RequestInfo requestInfo, String assigneeUuid, String tenantId) {
+        List<ProcessInstance> allProcessInstances = new ArrayList<>();
 
-            StringBuilder url = new StringBuilder();
-            url.append(config.getWorkflowHost())
-                    .append(config.getWorkflowAssigneeSearchEndpoint())
-                    .append("?tenantId=").append(tenantId)
-                    .append("&assignee=").append(memberUserUuid);
-
-            log.info("Searching workflow assignees by member UUID: {} with URL: {}", memberUserUuid, url);
-
-            Object response = requestRepository.fetchResult(url, requestInfoWrapper);
-            AssigneeResponse assigneeResponse = mapper.convertValue(response, AssigneeResponse.class);
-
-            if (assigneeResponse != null && assigneeResponse.getAssignees() != null) {
-                log.info("Found {} assignees for member UUID: {}", assigneeResponse.getAssignees().size(), memberUserUuid);
-                return assigneeResponse.getAssignees();
-            }
-
-            return Collections.emptyList();
-        } catch (Exception e) {
-            log.error("Error searching workflow assignees by member UUID: {}", memberUserUuid, e);
-            return Collections.emptyList();
+        if (mdmsDataConfig.getAssigneeToOfficeMembersTypeMap() == null || mdmsDataConfig.getAssigneeToOfficeMembersTypeMap().isEmpty()) {
+            log.info("No assignee to office members configuration found in MDMS, falling back to unfiltered search");
+            return searchWorkflowByAssignee(requestInfo, assigneeUuid, tenantId);
         }
+
+        for (AssigneeToOfficeMembersType config : mdmsDataConfig.getAssigneeToOfficeMembersTypeMap().values()) {
+            if (config.getWorkflowModule() != null && config.getStates() != null && !config.getStates().isEmpty()) {
+                List<ProcessInstance> processInstances = searchWorkflowByAssigneeWithFilters(
+                        requestInfo, 
+                        assigneeUuid, 
+                        config.getWorkflowModule(),
+                        config.getStates(), 
+                        tenantId
+                );
+                allProcessInstances.addAll(processInstances);
+            }
+        }
+
+        log.info("Found total {} process instances for assignee: {} across all configured businessServices", 
+                allProcessInstances.size(), assigneeUuid);
+        return allProcessInstances;
     }
 
     public List<String> searchProcessInstanceIdsWithExclude(RequestInfo requestInfo, String memberUserUuid, List<String> excludeAdvocateUuids, String businessId, String tenantId) {

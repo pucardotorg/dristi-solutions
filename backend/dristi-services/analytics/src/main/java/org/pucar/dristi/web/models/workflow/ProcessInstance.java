@@ -24,15 +24,6 @@ public class ProcessInstance {
     @JsonProperty("businessId")
     private String businessId;
 
-    @JsonProperty("action")
-    private String action;
-
-    @JsonProperty("moduleName")
-    private String moduleName;
-
-    @JsonProperty("comment")
-    private String comment;
-
     @JsonProperty("state")
     private State state;
 
