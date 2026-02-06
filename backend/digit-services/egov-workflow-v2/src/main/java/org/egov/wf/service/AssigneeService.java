@@ -69,15 +69,14 @@ public class AssigneeService {
     }
 
     /**
-     * Searches for process instance IDs where the given uuid is assigned 
-     * but none of the excludeUuids are assigned.
+     * Searches for process instances by assignee with optional filtering by businessService and states.
      * Only considers the latest process instance record (history = false behavior).
-     * @param criteria The search criteria containing uuid and excludeUuids
-     * @return List of process instance IDs matching the criteria
+     * @param criteria The search criteria containing uuid, businessService, and states
+     * @return List of ProcessInstances matching the criteria
      */
-    public List<String> searchProcessInstanceIdsByAssigneeExclusion(AssigneeSearchCriteria criteria) {
+    public List<org.egov.wf.web.models.ProcessInstance> searchProcessInstancesByAssignee(AssigneeSearchCriteria criteria) {
         validateSearchCriteria(criteria);
-        return workflowRepository.getProcessInstanceIdsByAssigneeExclusion(criteria);
+        return workflowRepository.getProcessInstancesByAssigneeSearch(criteria);
     }
 
     private void validateSearchCriteria(AssigneeSearchCriteria criteria) {
@@ -87,8 +86,8 @@ public class AssigneeService {
         if (!StringUtils.hasText(criteria.getTenantId())) {
             throw new CustomException("INVALID_REQUEST", "TenantId is mandatory");
         }
-        if (CollectionUtils.isEmpty(criteria.getUuids())) {
-            throw new CustomException("INVALID_REQUEST", "UUIDs list is mandatory and cannot be empty");
+        if (!StringUtils.hasText(criteria.getUuid())) {
+            throw new CustomException("INVALID_REQUEST", "UUID is mandatory and cannot be empty");
         }
     }
 

@@ -21,13 +21,19 @@ public class AssigneeSearchCriteria {
     private String tenantId;
 
     @NotNull
-    @JsonProperty("uuids")
-    private List<String> uuids;
+    @JsonProperty("uuid")
+    private String uuid;
 
     @JsonProperty("excludeUuids")
     private List<String> excludeUuids;
 
     @JsonProperty("businessId")
     private String businessId;
+
+    @JsonProperty("businessService")
+    private String businessService;
+
+    @JsonProperty("states")
+    private List<String> states;
 
 }

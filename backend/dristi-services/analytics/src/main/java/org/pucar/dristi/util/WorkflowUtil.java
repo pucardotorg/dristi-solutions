@@ -65,44 +65,31 @@ public class WorkflowUtil {
 
     public List<ProcessInstance> searchWorkflowByAssigneeWithFilters(RequestInfo requestInfo, String assigneeUuid, String businessService, List<String> stateNames, String tenantId) {
         try {
-            RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
+            AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
+                    .tenantId(tenantId)
+                    .uuid(assigneeUuid)
+                    .businessService(businessService)
+                    .states(stateNames)
+                    .build();
+
+            AssigneeSearchRequest searchRequest = AssigneeSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(criteria)
+                    .build();
 
             StringBuilder url = new StringBuilder();
-            url.append(config.getWorkflowHost())
-                    .append(config.getWorkflowProcessSearchEndpoint())
-                    .append("?tenantId=").append(tenantId)
-                    .append("&assignee=").append(assigneeUuid)
-                    .append("&history=false");
+            url.append(config.getWorkflowHost()).append(config.getWorkflowAssigneeSearchEndpoint());
 
-            if (businessService != null && !businessService.isEmpty()) {
-                url.append("&businessService=").append(businessService);
-            }
+            log.info("Searching workflow by assignee: {} with businessService: {} and states: {} using assignee/_search API", 
+                    assigneeUuid, businessService, stateNames);
 
-            log.info("Searching workflow by assignee: {} with businessService: {} with URL: {}", 
-                    assigneeUuid, businessService, url);
-
-            Object response = requestRepository.fetchResult(url, requestInfoWrapper);
+            Object response = requestRepository.fetchResult(url, searchRequest);
             ProcessInstanceResponse processInstanceResponse = mapper.convertValue(response, ProcessInstanceResponse.class);
 
             if (processInstanceResponse != null && processInstanceResponse.getProcessInstances() != null) {
-                List<ProcessInstance> allInstances = processInstanceResponse.getProcessInstances();
-                log.info("Found {} process instances for assignee: {} with businessService filter", allInstances.size(), assigneeUuid);
-                
-                if (stateNames == null || stateNames.isEmpty()) {
-                    return allInstances;
-                }
-                
-                List<ProcessInstance> filteredInstances = new ArrayList<>();
-                for (ProcessInstance instance : allInstances) {
-                    String stateName = instance.getState() != null ? instance.getState().getState() : null;
-                    if (stateName != null && stateNames.contains(stateName)) {
-                        filteredInstances.add(instance);
-                    }
-                }
-                
-                log.info("After state name filtering, {} process instances match configured states: {}", 
-                        filteredInstances.size(), stateNames);
-                return filteredInstances;
+                log.info("Found {} process instances for assignee: {} with filters applied at query level", 
+                        processInstanceResponse.getProcessInstances().size(), assigneeUuid);
+                return processInstanceResponse.getProcessInstances();
             }
 
             return Collections.emptyList();
@@ -258,13 +245,9 @@ public class WorkflowUtil {
 
     public List<String> searchProcessInstanceIdsWithExclude(RequestInfo requestInfo, String memberUserUuid, List<String> excludeAdvocateUuids, String businessId, String tenantId) {
         try {
-            // Build criteria
-            List<String> uuids = new ArrayList<>();
-            uuids.add(memberUserUuid);
-
             AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
                     .tenantId(tenantId)
-                    .uuids(uuids)
+                    .uuid(memberUserUuid)
                     .excludeUuids(excludeAdvocateUuids)
                     .businessId(businessId)
                     .build();

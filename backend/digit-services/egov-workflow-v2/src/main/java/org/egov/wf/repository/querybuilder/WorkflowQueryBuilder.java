@@ -593,31 +593,26 @@ public class WorkflowQueryBuilder {
         return countQuery;
     }
 
-    /**
-     * Returns query to fetch process instance IDs where:
-     * - The entry (pid, uuid) EXISTS in assignees table with isActive = true
-     * - The entry (pid, excludeUuid) does NOT exist for each excludeUuid in the list
-     * - The corresponding process instance is the latest record (history = false behavior)
-     * @param criteria The search criteria containing uuid and excludeUuids
-     * @param preparedStmtList The list to add prepared statement parameters
-     * @return The query string
-     */
-    public String getProcessInstanceIdsByAssigneeExclusion(AssigneeSearchCriteria criteria, List<Object> preparedStmtList) {
-        StringBuilder query = new StringBuilder();
+    public String getProcessInstancesByAssigneeSearch(AssigneeSearchCriteria criteria, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(QUERY);
 
-        query.append("SELECT DISTINCT asg.processinstanceid FROM {SCHEMA}.eg_wf_assignee_v2 asg ");
-        query.append("INNER JOIN {SCHEMA}.eg_wf_processinstance_v2 pi ON asg.processinstanceid = pi.id ");
-        query.append("WHERE asg.assignee IN (").append(createQuery(criteria.getUuids())).append(") AND asg.isActive = true ");
-        addToPreparedStatement(preparedStmtList, criteria.getUuids());
-
-        query.append("AND pi.tenantid = ? ");
+        query.append(LATEST_RECORD);
+        query.append(" AND pi.tenantid = ? ");
         preparedStmtList.add(criteria.getTenantId());
 
-        query.append("AND pi.lastmodifiedTime = (");
-        query.append("SELECT max(lastmodifiedTime) FROM {SCHEMA}.eg_wf_processinstance_v2 pi_inner ");
-        query.append("WHERE pi_inner.businessid = pi.businessid AND pi_inner.tenantid = ? ");
-        query.append(") ");
-        preparedStmtList.add(criteria.getTenantId());
+        query.append("AND asg.assignee = ? ");
+        preparedStmtList.add(criteria.getUuid());
+
+        if (!StringUtils.isEmpty(criteria.getBusinessService())) {
+            query.append("AND pi.businessservice = ? ");
+            preparedStmtList.add(criteria.getBusinessService());
+        }
+
+        List<String> states = criteria.getStates();
+        if (!CollectionUtils.isEmpty(states)) {
+            query.append("AND pi.status IN (").append(createQuery(states)).append(") ");
+            addToPreparedStatement(preparedStmtList, states);
+        }
 
         if (!StringUtils.isEmpty(criteria.getBusinessId())) {
             query.append("AND pi.businessid LIKE ? ");
@@ -634,6 +629,8 @@ public class WorkflowQueryBuilder {
             query.append(") ");
             addToPreparedStatement(preparedStmtList, excludeUuids);
         }
+
+        query.append(" ORDER BY wf_lastModifiedTime DESC ");
 
         return query.toString();
     }

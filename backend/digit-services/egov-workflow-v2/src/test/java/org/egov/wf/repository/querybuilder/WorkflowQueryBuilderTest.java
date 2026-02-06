@@ -8760,26 +8760,27 @@ class WorkflowQueryBuilderTest {
 
         AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
                 .tenantId("pg.citya")
-                .uuids(uuids)
+                .uuid(uuids.get(0))
                 .build();
 
         ArrayList<Object> preparedStmtList = new ArrayList<>();
-        String query = workflowQueryBuilder.getProcessInstanceIdsByAssigneeExclusion(criteria, preparedStmtList);
+        String query = workflowQueryBuilder.getProcessInstancesByAssigneeSearch(criteria, preparedStmtList);
 
         assertEquals(
-                "SELECT DISTINCT asg.processinstanceid FROM {SCHEMA}.eg_wf_assignee_v2 asg "
-                        + "INNER JOIN {SCHEMA}.eg_wf_processinstance_v2 pi ON asg.processinstanceid = pi.id "
-                        + "WHERE asg.assignee IN ( ?) AND asg.isActive = true "
-                        + "AND pi.tenantid = ? "
-                        + "AND pi.lastmodifiedTime = ("
-                        + "SELECT max(lastmodifiedTime) FROM {SCHEMA}.eg_wf_processinstance_v2 pi_inner "
-                        + "WHERE pi_inner.businessid = pi.businessid AND pi_inner.tenantid = ? "
-                        + ") ",
+                " SELECT pi.*,st.*,ac.*,doc.*,pi.id as wf_id,pi.lastModifiedTime as wf_lastModifiedTime,pi.createdTime as wf_createdTime,"
+                        + "       pi.createdBy as wf_createdBy,pi.lastModifiedBy as wf_lastModifiedBy,pi.status as pi_status, pi.tenantid as pi_tenantid, "
+                        + "       doc.lastModifiedTime as doc_lastModifiedTime,doc.createdTime as doc_createdTime,doc.createdBy as doc_createdBy,"
+                        + "       doc.lastModifiedBy as doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,"
+                        + "       st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action as ac_action"
+                        + "       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_document_v2 doc  ON doc.processinstanceid = pi.id  INNER JOIN "
+                        + "       {SCHEMA}.eg_wf_state_v2 st ON st.uuid = pi.status LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND ac.active=TRUE        WHERE  pi.lastmodifiedTime  IN  (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 GROUP BY businessid)  AND pi.tenantid = ? AND asg.assignee = ?  ORDER BY wf_lastModifiedTime DESC ",
                 query);
-        assertEquals(3, preparedStmtList.size());
-        assertEquals("user-uuid-123", preparedStmtList.get(0));
-        assertEquals("pg.citya", preparedStmtList.get(1));
-        assertEquals("pg.citya", preparedStmtList.get(2));
+        assertEquals(2, preparedStmtList.size());
+        assertEquals("pg.citya", preparedStmtList.get(0));
+        assertEquals("user-uuid-123", preparedStmtList.get(1));
     }
 
     @Test
@@ -8814,35 +8815,30 @@ class WorkflowQueryBuilderTest {
 
         AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
                 .tenantId("pg.citya")
-                .uuids(uuids)
+                .uuid(uuids.get(0))
                 .excludeUuids(excludeUuids)
                 .build();
 
         ArrayList<Object> preparedStmtList = new ArrayList<>();
-        String query = workflowQueryBuilder.getProcessInstanceIdsByAssigneeExclusion(criteria, preparedStmtList);
+        String query = workflowQueryBuilder.getProcessInstancesByAssigneeSearch(criteria, preparedStmtList);
 
         assertEquals(
-                "SELECT DISTINCT asg.processinstanceid FROM {SCHEMA}.eg_wf_assignee_v2 asg "
-                        + "INNER JOIN {SCHEMA}.eg_wf_processinstance_v2 pi ON asg.processinstanceid = pi.id "
-                        + "WHERE asg.assignee IN ( ?) AND asg.isActive = true "
-                        + "AND pi.tenantid = ? "
-                        + "AND pi.lastmodifiedTime = ("
-                        + "SELECT max(lastmodifiedTime) FROM {SCHEMA}.eg_wf_processinstance_v2 pi_inner "
-                        + "WHERE pi_inner.businessid = pi.businessid AND pi_inner.tenantid = ? "
-                        + ") "
-                        + "AND NOT EXISTS ("
-                        + "SELECT 1 FROM {SCHEMA}.eg_wf_assignee_v2 asg_exclude "
-                        + "WHERE asg_exclude.processinstanceid = asg.processinstanceid "
-                        + "AND asg_exclude.isActive = true "
-                        + "AND asg_exclude.assignee IN ( ?, ?)"
-                        + ") ",
+                " SELECT pi.*,st.*,ac.*,doc.*,pi.id as wf_id,pi.lastModifiedTime as wf_lastModifiedTime,pi.createdTime as wf_createdTime,"
+                        + "       pi.createdBy as wf_createdBy,pi.lastModifiedBy as wf_lastModifiedBy,pi.status as pi_status, pi.tenantid as pi_tenantid, "
+                        + "       doc.lastModifiedTime as doc_lastModifiedTime,doc.createdTime as doc_createdTime,doc.createdBy as doc_createdBy,"
+                        + "       doc.lastModifiedBy as doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,"
+                        + "       st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action as ac_action"
+                        + "       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_document_v2 doc  ON doc.processinstanceid = pi.id  INNER JOIN "
+                        + "       {SCHEMA}.eg_wf_state_v2 st ON st.uuid = pi.status LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND ac.active=TRUE        WHERE  pi.lastmodifiedTime  IN  (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 GROUP BY businessid)  AND pi.tenantid = ? AND asg.assignee = ? AND NOT EXISTS (SELECT 1 FROM {SCHEMA}.eg_wf_assignee_v2 asg_exclude WHERE asg_exclude.processinstanceid = asg.processinstanceid AND asg_exclude.isActive = true AND asg_exclude.assignee IN ( ?, ?))  ORDER BY wf_lastModifiedTime DESC ",
                 query);
-        assertEquals(5, preparedStmtList.size());
-        assertEquals("user-uuid-123", preparedStmtList.get(0));
-        assertEquals("pg.citya", preparedStmtList.get(1));
-        assertEquals("pg.citya", preparedStmtList.get(2));
-        assertEquals("exclude-uuid-1", preparedStmtList.get(3));
-        assertEquals("exclude-uuid-2", preparedStmtList.get(4));
+        assertEquals(4, preparedStmtList.size());
+        assertEquals("pg.citya", preparedStmtList.get(0));
+        assertEquals("user-uuid-123", preparedStmtList.get(1));
+        assertEquals("exclude-uuid-1", preparedStmtList.get(2));
+        assertEquals("exclude-uuid-2", preparedStmtList.get(3));
     }
 
     @Test
@@ -8877,38 +8873,31 @@ class WorkflowQueryBuilderTest {
 
         AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
                 .tenantId("pg.citya")
-                .uuids(uuids)
+                .uuid(uuids.get(0))
                 .excludeUuids(excludeUuids)
                 .businessId("CASE-2024")
                 .build();
 
         ArrayList<Object> preparedStmtList = new ArrayList<>();
-        String query = workflowQueryBuilder.getProcessInstanceIdsByAssigneeExclusion(criteria, preparedStmtList);
+        String query = workflowQueryBuilder.getProcessInstancesByAssigneeSearch(criteria, preparedStmtList);
 
         assertEquals(
-                "SELECT DISTINCT asg.processinstanceid FROM {SCHEMA}.eg_wf_assignee_v2 asg "
-                        + "INNER JOIN {SCHEMA}.eg_wf_processinstance_v2 pi ON asg.processinstanceid = pi.id "
-                        + "WHERE asg.assignee IN ( ?, ?) AND asg.isActive = true "
-                        + "AND pi.tenantid = ? "
-                        + "AND pi.lastmodifiedTime = ("
-                        + "SELECT max(lastmodifiedTime) FROM {SCHEMA}.eg_wf_processinstance_v2 pi_inner "
-                        + "WHERE pi_inner.businessid = pi.businessid AND pi_inner.tenantid = ? "
-                        + ") "
-                        + "AND pi.businessid LIKE ? "
-                        + "AND NOT EXISTS ("
-                        + "SELECT 1 FROM {SCHEMA}.eg_wf_assignee_v2 asg_exclude "
-                        + "WHERE asg_exclude.processinstanceid = asg.processinstanceid "
-                        + "AND asg_exclude.isActive = true "
-                        + "AND asg_exclude.assignee IN ( ?)"
-                        + ") ",
+                " SELECT pi.*,st.*,ac.*,doc.*,pi.id as wf_id,pi.lastModifiedTime as wf_lastModifiedTime,pi.createdTime as wf_createdTime,"
+                        + "       pi.createdBy as wf_createdBy,pi.lastModifiedBy as wf_lastModifiedBy,pi.status as pi_status, pi.tenantid as pi_tenantid, "
+                        + "       doc.lastModifiedTime as doc_lastModifiedTime,doc.createdTime as doc_createdTime,doc.createdBy as doc_createdBy,"
+                        + "       doc.lastModifiedBy as doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,"
+                        + "       st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action as ac_action"
+                        + "       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_document_v2 doc  ON doc.processinstanceid = pi.id  INNER JOIN "
+                        + "       {SCHEMA}.eg_wf_state_v2 st ON st.uuid = pi.status LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND ac.active=TRUE        WHERE  pi.lastmodifiedTime  IN  (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 GROUP BY businessid)  AND pi.tenantid = ? AND asg.assignee = ? AND pi.businessid LIKE ? AND NOT EXISTS (SELECT 1 FROM {SCHEMA}.eg_wf_assignee_v2 asg_exclude WHERE asg_exclude.processinstanceid = asg.processinstanceid AND asg_exclude.isActive = true AND asg_exclude.assignee IN ( ?))  ORDER BY wf_lastModifiedTime DESC ",
                 query);
-        assertEquals(6, preparedStmtList.size());
-        assertEquals("user-uuid-123", preparedStmtList.get(0));
-        assertEquals("user-uuid-456", preparedStmtList.get(1));
-        assertEquals("pg.citya", preparedStmtList.get(2));
-        assertEquals("pg.citya", preparedStmtList.get(3));
-        assertEquals("%CASE-2024%", preparedStmtList.get(4));
-        assertEquals("exclude-uuid-1", preparedStmtList.get(5));
+        assertEquals(4, preparedStmtList.size());
+        assertEquals("pg.citya", preparedStmtList.get(0));
+        assertEquals("user-uuid-123", preparedStmtList.get(1));
+        assertEquals("%CASE-2024%", preparedStmtList.get(2));
+        assertEquals("exclude-uuid-1", preparedStmtList.get(3));
     }
 }
 
