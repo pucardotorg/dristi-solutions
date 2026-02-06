@@ -43,7 +43,6 @@ on:
       - main
       - develop
       - release/*
-      - pipeline-dynamic-name
 
 
 jobs:
