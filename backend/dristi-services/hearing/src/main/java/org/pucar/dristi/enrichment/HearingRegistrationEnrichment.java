@@ -141,6 +141,7 @@ public class HearingRegistrationEnrichment {
                 if (processInstance.get(i) != null) {
                     String action = processInstance.get(i).getAction();
                     if (START.equalsIgnoreCase(action)) {
+                        boolean wasRescheduled = false;
                         for (int j = i - 1; j >= 0; j--) {
                             if (processInstance.get(j) != null) {
                                 String otherAction = processInstance.get(j).getAction();
@@ -154,6 +155,7 @@ public class HearingRegistrationEnrichment {
                                 } else if (RESCHEDULE_ONGOING.equalsIgnoreCase(otherAction)) {
                                     hearingDuration = null;
                                     i--;
+                                    wasRescheduled=true;
                                     break;
                                 } else if (ABANDON.equalsIgnoreCase(otherAction)) {
                                     hearingDuration = null;
@@ -162,7 +164,7 @@ public class HearingRegistrationEnrichment {
                             }
                             i--;
                         }
-                        if (hearingDuration == null) {
+                        if (hearingDuration == null && !wasRescheduled) {
                             break;
                         }
                     }
