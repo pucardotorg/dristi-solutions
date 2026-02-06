@@ -1,26 +1,5 @@
 name: Common Deployment Pipeline
 
-run-name: >
-  ${{ 
-    github.event_name == 'workflow_dispatch' && 
-      format(
-        'Deploy {0}-{1} on {2}',
-        github.event.inputs.environment,
-        github.event.inputs.service,
-        github.ref_name
-      )
-    || github.event_name == 'pull_request' &&
-      format(
-        'PR: {0}',
-        github.event.pull_request.title
-      )
-    || github.event_name == 'push' &&
-      format(
-        'Push: {0}',
-        github.event.head_commit.message
-      )
-  }}
-
 on:
   workflow_dispatch:
     inputs:
