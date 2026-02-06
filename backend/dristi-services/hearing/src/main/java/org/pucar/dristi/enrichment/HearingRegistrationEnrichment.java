@@ -140,9 +140,11 @@ public class HearingRegistrationEnrichment {
 
             log.info("ProcessInstance :: {}", processInstance.size());
             for (int i = processInstance.size() - 1; i >= 0; i--) {
-                if (processInstance.get(i) != null) {
+                if (processInstance.get(i) != null
+                        && processInstance.get(i).getAuditDetails() != null
+                        && processInstance.get(i).getAuditDetails().getCreatedTime() != null) {
                     String action = processInstance.get(i).getAction();
-                    Long time = processInstance.get(i).getAuditDetails().getCreatedTime();
+                    long time = processInstance.get(i).getAuditDetails().getCreatedTime();
 
                     log.info("ProcessInstance action :: {}, createdTime :: {}", action, time);
 
@@ -160,11 +162,6 @@ public class HearingRegistrationEnrichment {
                         activeStart = 0L;
                     }
 
-                    else if (CLOSE.equalsIgnoreCase(action)) {
-                        hearingDuration += (time - activeStart);
-                        activeStart = 0L;
-                    }
-
                     else if (ABANDON.equalsIgnoreCase(action)) {
                         hearingDuration = 0L;
                         break;
@@ -173,11 +170,11 @@ public class HearingRegistrationEnrichment {
                 }
             }
 
-            String action = processInstance.get(0).getAction();
+            String action = processInstance.get(processInstance.size() - 1).getAction();
             if (START.equalsIgnoreCase(action)) {
-                Long currentTime = System.currentTimeMillis();
+                long currentTime = System.currentTimeMillis();
                 log.info("Last action :: {}, createdTime :: {}", "CLOSE", currentTime);
-                hearingDuration = hearingDuration + (currentTime - processInstance.get(0).getAuditDetails().getCreatedTime());
+                hearingDuration = hearingDuration + (currentTime - processInstance.get(processInstance.size() - 1).getAuditDetails().getCreatedTime());
             }
 
             hearingRequest.getHearing().setHearingDurationInMillis(hearingDuration);
