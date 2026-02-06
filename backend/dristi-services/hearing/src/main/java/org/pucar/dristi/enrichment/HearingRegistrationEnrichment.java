@@ -135,50 +135,40 @@ public class HearingRegistrationEnrichment {
             // if hearing status moves to complete then, we need to calculate the duration
             List<ProcessInstance> processInstance = workflowUtil.getProcessInstance(hearingRequest.getRequestInfo(), hearingRequest.getHearing().getTenantId(), hearingRequest.getHearing().getHearingId());
 
-            log.info("ProcessInstance :: {}", processInstance.size());
             Long hearingDuration = 0L;
+            Long activeStart = null;
+
+            log.info("ProcessInstance :: {}", processInstance.size());
             for (int i = processInstance.size() - 1; i >= 0; i--) {
                 if (processInstance.get(i) != null) {
                     String action = processInstance.get(i).getAction();
+                    Long time = processInstance.get(i).getAuditDetails().getCreatedTime();
+
+                    log.info("ProcessInstance action :: {}, createdTime :: {}", action, time);
+
                     if (START.equalsIgnoreCase(action)) {
-                        for (int j = i - 1; j >= 0; j--) {
-                            if (processInstance.get(j) != null) {
-                                String otherAction = processInstance.get(j).getAction();
-                                if (PASS_OVER.equalsIgnoreCase(otherAction)) {
-                                    Long passOverTime = processInstance.get(j).getAuditDetails().getCreatedTime();
-                                    Long startTime = processInstance.get(i).getAuditDetails().getCreatedTime();
-                                    hearingDuration = hearingDuration + (passOverTime - startTime);
-                                    i--;
-                                    break;
-
-                                } else if (RESCHEDULE_ONGOING.equalsIgnoreCase(otherAction)) {
-                                    // Ignore this START completely
-                                    i--;
-                                    break;
-
-                                } else if (ABANDON.equalsIgnoreCase(otherAction)) {
-                                    hearingDuration = null;
-                                    break;
-                                }
-                            }
-                            i--;
-                        }
-                        if (hearingDuration == null) {
-                            break;
-                        }
+                        activeStart = time;
                     }
+
+                    else if (PASS_OVER.equalsIgnoreCase(action) && activeStart != null) {
+                        hearingDuration += (time - activeStart);
+                        activeStart = null;
+                    }
+
+                    else if (RESCHEDULE_ONGOING.equalsIgnoreCase(action)) {
+                        activeStart = null;
+                    }
+
+                    else if (CLOSE.equalsIgnoreCase(action) && activeStart != null) {
+                        hearingDuration += (time - activeStart);
+                        activeStart = null;
+                    }
+
                     else if (ABANDON.equalsIgnoreCase(action)) {
                         hearingDuration = null;
                         break;
                     }
 
-                }
-            }
-
-            if (hearingDuration != null) {
-                String action = processInstance.get(0).getAction();
-                if (START.equalsIgnoreCase(action)) {
-                    hearingDuration = hearingDuration + (System.currentTimeMillis() - processInstance.get(0).getAuditDetails().getCreatedTime());
                 }
             }
 
