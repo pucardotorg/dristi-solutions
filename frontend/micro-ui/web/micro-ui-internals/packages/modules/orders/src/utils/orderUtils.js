@@ -28,14 +28,6 @@ export const prepareUpdatedOrderData = (currentOrder, orderFormData, compOrderIn
   let updatedCompositeItems = null;
   let updatedCurrentOrder = { ...currentOrder };
 
-  if (orderFormData?.orderType?.code === "ACCEPT_RESCHEDULING_REQUEST") {
-    updatedCurrentOrder = {
-      ...updatedCurrentOrder,
-      nextHearingDate: orderFormData?.newHearingDate ? new Date(orderFormData.newHearingDate + "T00:00:00").setHours(0, 0, 0, 0) : null,
-      purposeOfNextHearing: orderFormData?.hearingPurpose?.code,
-    };
-  }
-
   if (updatedCurrentOrder?.orderCategory === "COMPOSITE") {
     updatedCompositeItems = updatedCurrentOrder?.compositeItems?.map((compItem, compIndex) => {
       if (compIndex === compOrderIndex) {
@@ -496,7 +488,18 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
       if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "REFERRAL_CASE_TO_ADR"]?.includes(orderType)) {
         const hearingDate = formdata?.dateOfHearing || formdata?.dateForHearing || formdata?.hearingDate;
         const scheduleItem = currentOrder?.compositeItems?.find((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE");
-        if (scheduleItem && hearingDate) {
+        const acceptRescheduleRequest = currentOrder?.compositeItems?.find((item) => item?.orderType === "ACCEPT_RESCHEDULING_REQUEST");
+
+        if(acceptRescheduleRequest && !scheduleItem && hearingDate){
+          const dateChanged = formatDate(new Date(acceptRescheduleRequest?.orderSchema?.orderDetails?.newHearingDate)) !== hearingDate;
+          if (dateChanged) {
+            itemErrors?.push({
+              key: "DATE_OF_HEARING",
+              errorMessage: "THIS_DOES_NOT_MATCH_WITH_NEXT_HEARING_DATE",
+            });
+          }
+        }
+        else if (scheduleItem && hearingDate) {
           const dateChanged = formatDate(new Date(scheduleItem?.orderSchema?.orderDetails?.hearingDate)) !== hearingDate;
           if (dateChanged) {
             itemErrors?.push({
