@@ -75,7 +75,7 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
     }
 
     @Override
-    public OrderRequest postProcess(OrderRequest orderRequest) {
+    public OrderRequest postProcess(OrderRequest orderRequest){
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         Order order = orderRequest.getOrder();
         ZoneId zone = ZoneId.of(config.getZoneId());
@@ -105,7 +105,6 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
 
         boolean isSameDate = hearingDate.equals(today);
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
-
         Long time = hearingDate.atStartOfDay(ZoneId.of(config.getZoneId())).toInstant().toEpochMilli();
         if (time != null) {
             hearing.setStartTime(time);
