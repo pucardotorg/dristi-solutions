@@ -63,7 +63,7 @@ public class WorkflowUtil {
         }
     }
 
-    public List<ProcessInstance> searchWorkflowByAssigneeWithFilters(RequestInfo requestInfo, String assigneeUuid, String businessService, List<String> states, String tenantId) {
+    public List<ProcessInstance> searchWorkflowByAssigneeWithFilters(RequestInfo requestInfo, String assigneeUuid, String businessService, List<String> stateNames, String tenantId) {
         try {
             RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
 
@@ -78,21 +78,31 @@ public class WorkflowUtil {
                 url.append("&businessService=").append(businessService);
             }
 
-            if (states != null && !states.isEmpty()) {
-                for (String state : states) {
-                    url.append("&status=").append(state);
-                }
-            }
-
-            log.info("Searching workflow by assignee: {} with businessService: {} and states: {} with URL: {}", 
-                    assigneeUuid, businessService, states, url);
+            log.info("Searching workflow by assignee: {} with businessService: {} with URL: {}", 
+                    assigneeUuid, businessService, url);
 
             Object response = requestRepository.fetchResult(url, requestInfoWrapper);
             ProcessInstanceResponse processInstanceResponse = mapper.convertValue(response, ProcessInstanceResponse.class);
 
             if (processInstanceResponse != null && processInstanceResponse.getProcessInstances() != null) {
-                log.info("Found {} process instances for assignee: {} with filters", processInstanceResponse.getProcessInstances().size(), assigneeUuid);
-                return processInstanceResponse.getProcessInstances();
+                List<ProcessInstance> allInstances = processInstanceResponse.getProcessInstances();
+                log.info("Found {} process instances for assignee: {} with businessService filter", allInstances.size(), assigneeUuid);
+                
+                if (stateNames == null || stateNames.isEmpty()) {
+                    return allInstances;
+                }
+                
+                List<ProcessInstance> filteredInstances = new ArrayList<>();
+                for (ProcessInstance instance : allInstances) {
+                    String stateName = instance.getState() != null ? instance.getState().getState() : null;
+                    if (stateName != null && stateNames.contains(stateName)) {
+                        filteredInstances.add(instance);
+                    }
+                }
+                
+                log.info("After state name filtering, {} process instances match configured states: {}", 
+                        filteredInstances.size(), stateNames);
+                return filteredInstances;
             }
 
             return Collections.emptyList();
@@ -241,7 +251,7 @@ public class WorkflowUtil {
             }
         }
 
-        log.info("Found total {} process instances for assignee: {} across all configured businessServices", 
+        log.info("Found total {} process instances for assignee: {} across all configured businessServices and states", 
                 allProcessInstances.size(), assigneeUuid);
         return allProcessInstances;
     }
