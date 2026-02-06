@@ -86,6 +86,7 @@ export const addOrderItem = async (
       ...orderSchema?.orderDetails,
       mediationCentre: t(orderSchema?.orderDetails?.mediationCentre),
       parties,
+      modeOfSigning: "INITIATE_E-SIGN",
     });
     const orderSchemaUpdated = {
       ...orderSchema,

@@ -154,6 +154,7 @@ export const channelTypeEnum = {
 };
 
 export const getMediationChangedFlag = (orderDetails, newOrderDetails) => {
+  debugger;
   if (newOrderDetails?.adrMode !== "MEDIATION") return false;
   if (!orderDetails) return true;
 
