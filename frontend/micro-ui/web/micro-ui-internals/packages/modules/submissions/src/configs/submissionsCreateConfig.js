@@ -2688,6 +2688,15 @@ export const configsAdvancementOrAdjournment = [
   {
     body: [
       {
+        label: "refHearingId",
+        isMandatory: false,
+        key: "refHearingId",
+        disable: true,
+        type: "text",
+        schemaKeyPath: "applicationDetails.refHearingId",
+        populators: { name: "refHearingId", customStyle: { display: "none" } },
+      },
+      {
         inline: true,
         label: "CHOOSE_COMPLAINANT",
         isMandatory: true,
