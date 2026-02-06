@@ -19,6 +19,9 @@ import org.springframework.validation.annotation.Validated;
 @Builder
 public class ComplainantDetails {
 
+    @JsonProperty("uniqueId")
+    private String uniqueId;
+
     @JsonProperty("name")
     @Pattern(regexp = "^[a-zA-Z]{1,100}$", message = "Name must be up to 100 alphabets with no numbers")
     private String name;

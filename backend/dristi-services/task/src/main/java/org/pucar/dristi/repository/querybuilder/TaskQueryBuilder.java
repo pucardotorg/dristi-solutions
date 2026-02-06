@@ -102,19 +102,20 @@ public class TaskQueryBuilder {
             String partyUuid = criteria.getPartyUniqueId();
             String partyCondition = getPartyCondition(partyType, partyName);
             String partyConditionByUuid = getPartyConditionByUuid(partyType, partyUuid);
+            String partyConditionByUuidNoArg = getPartyConditionByUuidNoArg(partyType);
 
             String condition = """
-                        EXISTS (
-                          SELECT 1
-                          FROM jsonb_array_elements(
-                              CASE\s
-                                WHEN jsonb_typeof(task.assignedto) = 'array' THEN task.assignedto\s
-                                ELSE '[]'::jsonb\s
-                              END
-                          ) elem
-                          WHERE elem->>'uuid' = ?
-                        )
-                   \s""";
+                         EXISTS (
+                           SELECT 1
+                           FROM jsonb_array_elements(
+                               CASE\s
+                                 WHEN jsonb_typeof(task.assignedto) = 'array' THEN task.assignedto\s
+                                 ELSE '[]'::jsonb\s
+                               END
+                           ) elem
+                           WHERE elem->>'uuid' = ?
+                         )
+                    \s""";
 
             StringBuilder query = new StringBuilder(BASE_CASE_QUERY);
             query.append(FROM_TASK_TABLE);
@@ -125,15 +126,16 @@ public class TaskQueryBuilder {
             firstCriteria = addTaskCriteria(status, query, firstCriteria, "task.status = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(orderId != null ? orderId.toString() : null, query, firstCriteria, "task.orderid = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(cnrNumber, query, firstCriteria, "task.cnrnumber = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addTaskCriteria(referenceId, query, firstCriteria, "task.referenceid = ?", preparedStmtList,preparedStmtArgList);
-            firstCriteria = addTaskCriteria(state, query, firstCriteria, "task.state = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addTaskCriteria(referenceId, query, firstCriteria, "task.referenceid = ?", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(state, query, firstCriteria, "task.state = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(taskType, query, firstCriteria, "task.tasktype = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(courtId, query, firstCriteria, "task.courtId = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(filingNumber, query, firstCriteria, "task.filingnumber = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(uuid, query, firstCriteria, condition, preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(taskNumber, query, firstCriteria, "task.tasknumber = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(partyCondition != null ? partyName : null, query, firstCriteria, partyCondition, preparedStmtList, preparedStmtArgList);
-            addTaskCriteria(partyConditionByUuid != null ? partyUuid : null, query, firstCriteria, partyConditionByUuid, preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(partyConditionByUuid != null ? partyUuid : null, query, firstCriteria, partyConditionByUuid, preparedStmtList, preparedStmtArgList);
+            addTaskCriteriaWithoutArg(partyConditionByUuidNoArg != null ? partyUuid : null, query, firstCriteria, partyConditionByUuidNoArg);
 
             return query.toString();
         } catch (Exception e) {
@@ -150,7 +152,7 @@ public class TaskQueryBuilder {
                 partyCondition = "task.taskdetails->>'respondentDetails' IS NOT NULL AND task.taskdetails->'respondentDetails'->>'name' = ?";
             } else if ("witness".equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'name' = ?";
-            }  else {
+            } else {
                 log.warn("Unrecognized partyType value: {}. while filtering by party name Filter will be ignored.", partyType);
             }
         }
@@ -165,8 +167,21 @@ public class TaskQueryBuilder {
                 partyCondition = "task.taskdetails->>'respondentDetails' IS NOT NULL AND task.taskdetails->'respondentDetails'->>'uniqueId' = ?";
             } else if ("witness".equalsIgnoreCase(partyType)) {
                 partyCondition = "task.taskdetails->>'witnessDetails' IS NOT NULL AND task.taskdetails->'witnessDetails'->>'uniqueId' = ?";
-            }  else {
-                log.warn("Unrecognized partyType value: {}. while filtering by party uniqueId Filter will be ignored.", partyType);
+            } else if ("complainant".equalsIgnoreCase(partyType)) {
+                partyCondition = "task.taskdetails->>'complainantDetails' IS NOT NULL AND task.taskdetails->'complainantDetails'->>'uniqueId' = ?";
+            }
+        }
+        return partyCondition;
+    }
+
+    private String getPartyConditionByUuidNoArg(String partyType) {
+        String partyCondition = null;
+
+        if (partyType != null && !partyType.trim().isEmpty()) {
+             if ("others".equalsIgnoreCase(partyType)) {
+                partyCondition = "COALESCE(task.taskdetails->'others', '{}'::jsonb) NOT IN ('{}'::jsonb, 'null'::jsonb)";
+            } else if ("police".equalsIgnoreCase(partyType)) {
+                partyCondition = "COALESCE(task.taskdetails->'policeDetails', '{}'::jsonb) NOT IN ('{}'::jsonb, 'null'::jsonb)";
             }
         }
         return partyCondition;
@@ -189,6 +204,15 @@ public class TaskQueryBuilder {
             query.append(str);
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(Types.VARCHAR);
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    private boolean addTaskCriteriaWithoutArg(String criteria, StringBuilder query, boolean firstCriteria, String str) {
+        if (criteria != null && !criteria.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(str);
             firstCriteria = false;
         }
         return firstCriteria;

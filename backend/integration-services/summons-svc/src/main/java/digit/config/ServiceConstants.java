@@ -57,6 +57,7 @@ public class ServiceConstants {
     public static final String NOTICE = "NOTICE";
     public static final String PROCLAMATION = "PROCLAMATION";
     public static final String ATTACHMENT = "ATTACHMENT";
+    public static final String MISCELLANEOUS_PROCESS = "MISCELLANEOUS_PROCESS";
     public static final String ACCUSED = "ACCUSED";
     public static final String WITNESS = "WITNESS";
     public static final String BAILABLE = "BAILABLE";
@@ -70,12 +71,14 @@ public class ServiceConstants {
 
     public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
     public static final String ISSUESUMMON = "ISSUE_SUMMON";
+    public static final String ISSUE_PROCESS = "ISSUE_PROCESS";
     public static final String BNSS_NOTICE = "Section 223 Notice";
     public static final String DCA_NOTICE = "DCA Notice";
     public static final String GENERATE_TASK_DOCUMENT = "GENERATE_TASK_DOCUMENT";
     public static final String SEND_TASK_DOCUMENT = "SEND_TASK_DOCUMENT";
     public static final String SIGNED_TASK_DOCUMENT = "SIGNED_TASK_DOCUMENT";
     public static final String CREATE_WITH_OUT_PAYMENT = "CREATE_WITH_OUT_PAYMENT";
+    public static final String CREATE = "CREATE";
 
     public static final String COORDINATE_NOT_FOUND = "COORDINATE_NOT_FOUND";
 

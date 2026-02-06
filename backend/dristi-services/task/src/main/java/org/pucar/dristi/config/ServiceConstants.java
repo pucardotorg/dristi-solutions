@@ -66,6 +66,7 @@ public class ServiceConstants {
     public static final String ROLE_VIEW_PROCESS_NOTICE = "VIEW_PROCESS_NOTICE";
     public static final String ROLE_VIEW_PROCESS_PROCLAMATION = "VIEW_PROCESS_PROCLAMATION";
     public static final String ROLE_VIEW_PROCESS_ATTACHMENT = "VIEW_PROCESS_ATTACHMENT";
+    public static final String ROLE_VIEW_PROCESS_MISCELLANEOUS = "VIEW_PROCESS_MISCELLANEOUS";
 
     public static final String MAKE_PAYMENT = "MAKE_PAYMENT";
 
@@ -74,6 +75,9 @@ public class ServiceConstants {
     public static final String PROCLAMATION = "PROCLAMATION";
     public static final String ATTACHMENT = "ATTACHMENT";
     public static final String ISSUESUMMON = "ISSUE_SUMMON";
+    public static final String ISSUE_PROCESS = "ISSUE_PROCESS";
+
+    public static final String PROCESS_SENT = "PROCESS_SENT";
 
     public static final String SUMMON_SENT = "SUMMON_SENT";
 
@@ -103,6 +107,7 @@ public class ServiceConstants {
 
     public static final String JOIN_CASE = "JOIN_CASE";
     public static final String JOIN_CASE_PAYMENT = "JOIN_CASE_PAYMENT";
+    public static final String MISCELLANEOUS_PROCESS = "MISCELLANEOUS_PROCESS";
     public static final String APPROVED = "APPROVED";
     public static final String REJECTED = "REJECTED";
     public static final String PENDING_APPROVAL = "PENDING_APPROVAL";

@@ -23,6 +23,7 @@ public class ServiceConstants {
     public static final String E_SIGN = "E-SIGN";
     public static final String SIGNED = "SIGNED";
     public static final String COMPOSITE = "COMPOSITE";
+    public static final String MISCELLANEOUS_PROCESS = "MISCELLANEOUS_PROCESS";
 
     public static final String COORDINATES_ERROR = "COORDINATES_ERROR";
     public static final String EMPTY_ORDERS_ERROR = "EMPTY_ORDERS_ERROR";

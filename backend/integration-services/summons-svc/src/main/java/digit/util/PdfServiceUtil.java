@@ -49,6 +49,61 @@ public class PdfServiceUtil {
         this.icopsUtil = icopsUtil;
     }
 
+    public ByteArrayResource generatePdfFromEgovPdfService(TaskRequest taskRequest, String tenantId, String courtId) {
+        try {
+            StringBuilder uri = new StringBuilder();
+            uri.append(config.getEgovPdfServiceHost())
+                    .append(config.getEgovPdfServiceEndpoint())
+                    .append("?tenantId=").append(tenantId).append("&qrCode=false&courtId=").append(courtId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            TaskDetails taskDetails = taskRequest.getTask().getTaskDetails();
+
+            MiscellaneousPdf miscellaneousPdf = new MiscellaneousPdf();
+            miscellaneousPdf.setCourtId(taskDetails.getMiscellaneuosDetails().getCourtId());
+            miscellaneousPdf.setProcessTitle(taskDetails.getMiscellaneuosDetails().getProcessTitle());
+            miscellaneousPdf.setProcessText(taskDetails.getMiscellaneuosDetails().getProcessText());
+            miscellaneousPdf.setAddressee(taskDetails.getMiscellaneuosDetails().getAddressee());
+            miscellaneousPdf.setAddresseeName(taskDetails.getMiscellaneuosDetails().getAddresseeName());
+            String addresseeDetails = null;
+            if(taskDetails.getRespondentDetails()!=null){
+                addresseeDetails = taskDetails.getRespondentDetails().getName();
+            }
+            if(taskDetails.getComplainantDetails()!=null){
+                addresseeDetails = taskDetails.getComplainantDetails().getName();
+            }
+            if(taskDetails.getOthers()!=null){
+                addresseeDetails = taskDetails.getOthers().getName();
+            }
+            if(taskDetails.getPoliceDetails()!=null){
+                addresseeDetails = taskDetails.getPoliceDetails().getName()+", "+taskDetails.getPoliceDetails().getDistrict();
+            }
+             miscellaneousPdf.setAddresseeDetails(addresseeDetails);
+
+            miscellaneousPdf.setOrderText(taskDetails.getMiscellaneuosDetails().getOrderText());
+            miscellaneousPdf.setCoverLetterText(taskDetails.getMiscellaneuosDetails().getCoverLetterText());
+            miscellaneousPdf.setCaseNumber(taskDetails.getMiscellaneuosDetails().getCaseNumber());
+            miscellaneousPdf.setIsCoverLetterRequired(taskDetails.getMiscellaneuosDetails().getIsCoverLetterRequired());
+            miscellaneousPdf.setNextHearingDate(taskDetails.getMiscellaneuosDetails().getNextHearingDate());
+            miscellaneousPdf.setPartyDetails(taskDetails.getPartyDetails());
+
+            MiscellaneousPdfRequest miscellaneousPdfRequest = MiscellaneousPdfRequest.builder()
+                    .templateConfiguration(miscellaneousPdf).requestInfo(taskRequest.getRequestInfo()).build();
+
+            HttpEntity<MiscellaneousPdfRequest> requestEntity = new HttpEntity<>(miscellaneousPdfRequest, headers);
+
+            ResponseEntity<ByteArrayResource> responseEntity = restTemplate.postForEntity(uri.toString(),
+                    requestEntity, ByteArrayResource.class);
+
+            return responseEntity.getBody();
+        } catch (Exception e) {
+            log.error("Error getting response from Pdf Service", e);
+            throw new CustomException("SU_PDF_APP_ERROR", "Error getting response from Pdf Service");
+        }
+    }
+
     public ByteArrayResource generatePdfFromPdfService(TaskRequest taskRequest, String tenantId,
                                                        String pdfTemplateKey, boolean qrCode) {
         try {

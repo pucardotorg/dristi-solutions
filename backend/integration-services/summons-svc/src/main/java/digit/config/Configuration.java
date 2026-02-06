@@ -92,6 +92,12 @@ public class Configuration {
     @Value("${egov.pdf.service.create.endpoint}")
     private String pdfServiceEndpoint;
 
+    @Value("${egov.dristi.pdf.service.host}")
+    private String egovPdfServiceHost;
+
+    @Value("${egov.dristi.pdf.service.create.endpoint}")
+    private String egovPdfServiceEndpoint;
+
     // File Store Service
     @Value("${egov.file.store.summons.module}")
     private String summonsFileStoreModule;

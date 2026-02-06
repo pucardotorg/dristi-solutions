@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.List;
+
 @Validated
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-05-29T13:38:04.562296+05:30[Asia/Calcutta]")
 @Data
@@ -40,4 +42,16 @@ public class TaskDetails {
 
     @JsonProperty("deliveryChannels")
     private DeliveryChannel deliveryChannel = null;
+
+    @JsonProperty("miscellaneuosDetails")
+    private MiscellaneuosDetails miscellaneuosDetails;
+
+    @JsonProperty("others")
+    private Others others;
+
+    @JsonProperty("partyDetails")
+    private List<PartyDetails> partyDetails;
+
+    @JsonProperty("policeDetails")
+    private PoliceDetails policeDetails;
 }

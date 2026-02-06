@@ -107,6 +107,12 @@ public class Configuration {
     @Value("${egov.courtId}")
     private String courtId;
 
+    @Value("${egov.workflow.task.miscellaneous.business.service.name}")
+    private String taskMiscellaneusBusinessServiceName;
+
+    @Value("${egov.workflow.task.miscellaneous.business.name}")
+    private String taskMiscellaneusBusinessName;
+
     @Value("${egov.workflow.task.join.case.business.name}")
     private String taskjoinCaseBusinessName;
 
