@@ -142,18 +142,18 @@ public class WorkflowController {
     }
 
     /**
-     * Searches for process instances by assignee with optional filtering by businessService and states.
+     * Searches for process instance IDs by assignee with optional filtering by businessService and states.
      * Supports excludeUuids to filter out instances assigned to specific users.
      * Only considers the latest process instance record (history = false behavior).
      * @param assigneeSearchRequest The request containing search criteria
-     * @return List of ProcessInstances matching the criteria
+     * @return List of process instance IDs matching the criteria
      */
     @RequestMapping(value="/assignee/_search", method = RequestMethod.POST)
-    public ResponseEntity<ProcessInstanceResponse> searchAssigneeExclusion(@Valid @RequestBody AssigneeSearchRequest assigneeSearchRequest) {
-        List<ProcessInstance> processInstances = assigneeService.searchProcessInstancesByAssignee(assigneeSearchRequest.getCriteria());
-        ProcessInstanceResponse response = ProcessInstanceResponse.builder()
-                .processInstances(processInstances)
-                .totalCount(processInstances.size())
+    public ResponseEntity<ProcessInstanceIdResponse> searchAssigneeExclusion(@Valid @RequestBody AssigneeSearchRequest assigneeSearchRequest) {
+        List<String> processInstanceIds = assigneeService.searchProcessInstanceIdsByAssignee(assigneeSearchRequest.getCriteria());
+        ProcessInstanceIdResponse response = ProcessInstanceIdResponse.builder()
+                .processInstanceIds(processInstanceIds)
+                .totalCount(processInstanceIds.size())
                 .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(assigneeSearchRequest.getRequestInfo(), true))
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);

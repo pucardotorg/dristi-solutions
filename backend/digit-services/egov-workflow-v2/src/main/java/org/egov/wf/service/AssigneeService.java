@@ -69,14 +69,14 @@ public class AssigneeService {
     }
 
     /**
-     * Searches for process instances by assignee with optional filtering by businessService and states.
+     * Searches for process instance IDs by assignee with optional filtering by businessService and states.
      * Only considers the latest process instance record (history = false behavior).
      * @param criteria The search criteria containing uuid, businessService, and states
-     * @return List of ProcessInstances matching the criteria
+     * @return List of process instance IDs matching the criteria
      */
-    public List<org.egov.wf.web.models.ProcessInstance> searchProcessInstancesByAssignee(AssigneeSearchCriteria criteria) {
+    public List<String> searchProcessInstanceIdsByAssignee(AssigneeSearchCriteria criteria) {
         validateSearchCriteria(criteria);
-        return workflowRepository.getProcessInstancesByAssigneeSearch(criteria);
+        return workflowRepository.getProcessInstanceIdsByAssigneeSearch(criteria);
     }
 
     private void validateSearchCriteria(AssigneeSearchCriteria criteria) {

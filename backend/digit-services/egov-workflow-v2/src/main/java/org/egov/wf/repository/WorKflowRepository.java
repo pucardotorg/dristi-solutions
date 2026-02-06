@@ -192,17 +192,17 @@ public class WorKflowRepository {
     }
 
     /**
-     * Fetches process instances by assignee with optional filtering by businessService and states.
+     * Fetches process instance IDs by assignee with optional filtering by businessService and states.
      * Only considers the latest process instance record (history = false behavior).
      * @param criteria The search criteria containing uuid, businessService, and states
-     * @return List of ProcessInstances matching the criteria
+     * @return List of process instance IDs matching the criteria
      */
-    public List<ProcessInstance> getProcessInstancesByAssigneeSearch(AssigneeSearchCriteria criteria) {
+    public List<String> getProcessInstanceIdsByAssigneeSearch(AssigneeSearchCriteria criteria) {
         List<Object> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getProcessInstancesByAssigneeSearch(criteria, preparedStmtList);
+        String query = queryBuilder.getProcessInstanceIdsByAssigneeSearch(criteria, preparedStmtList);
         query = util.replaceSchemaPlaceholder(query, criteria.getTenantId());
-        log.info("Query for assignee search: " + query);
+        log.info("Query for assignee ID search: " + query);
         log.info("Params: " + preparedStmtList);
-        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
+        return jdbcTemplate.query(query, new SingleColumnRowMapper<>(String.class), preparedStmtList.toArray());
     }
 }

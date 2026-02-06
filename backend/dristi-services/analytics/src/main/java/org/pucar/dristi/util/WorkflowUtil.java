@@ -63,7 +63,7 @@ public class WorkflowUtil {
         }
     }
 
-    public List<ProcessInstance> searchWorkflowByAssigneeWithFilters(RequestInfo requestInfo, String assigneeUuid, String businessService, List<String> stateNames, String tenantId) {
+    public List<String> searchWorkflowByAssigneeWithFilters(RequestInfo requestInfo, String assigneeUuid, String businessService, List<String> stateNames, String tenantId) {
         try {
             AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
                     .tenantId(tenantId)
@@ -84,12 +84,12 @@ public class WorkflowUtil {
                     assigneeUuid, businessService, stateNames);
 
             Object response = requestRepository.fetchResult(url, searchRequest);
-            ProcessInstanceResponse processInstanceResponse = mapper.convertValue(response, ProcessInstanceResponse.class);
+            ProcessInstanceIdResponse processInstanceIdResponse = mapper.convertValue(response, ProcessInstanceIdResponse.class);
 
-            if (processInstanceResponse != null && processInstanceResponse.getProcessInstances() != null) {
-                log.info("Found {} process instances for assignee: {} with filters applied at query level", 
-                        processInstanceResponse.getProcessInstances().size(), assigneeUuid);
-                return processInstanceResponse.getProcessInstances();
+            if (processInstanceIdResponse != null && processInstanceIdResponse.getProcessInstanceIds() != null) {
+                log.info("Found {} process instance IDs for assignee: {} with filters applied at query level", 
+                        processInstanceIdResponse.getProcessInstanceIds().size(), assigneeUuid);
+                return processInstanceIdResponse.getProcessInstanceIds();
             }
 
             return Collections.emptyList();
@@ -217,30 +217,36 @@ public class WorkflowUtil {
         return shouldUpsert;
     }
 
-    public List<ProcessInstance> searchWorkflowByAssigneeForAllConfigurations(RequestInfo requestInfo, String assigneeUuid, String tenantId) {
-        List<ProcessInstance> allProcessInstances = new ArrayList<>();
+    public List<String> searchWorkflowByAssigneeForAllConfigurations(RequestInfo requestInfo, String assigneeUuid, String tenantId) {
+        List<String> allProcessInstanceIds = new ArrayList<>();
 
         if (mdmsDataConfig.getAssigneeToOfficeMembersTypeMap() == null || mdmsDataConfig.getAssigneeToOfficeMembersTypeMap().isEmpty()) {
             log.info("No assignee to office members configuration found in MDMS, falling back to unfiltered search");
-            return searchWorkflowByAssignee(requestInfo, assigneeUuid, tenantId);
+            List<ProcessInstance> processInstances = searchWorkflowByAssignee(requestInfo, assigneeUuid, tenantId);
+            for (ProcessInstance pi : processInstances) {
+                if (pi.getId() != null) {
+                    allProcessInstanceIds.add(pi.getId());
+                }
+            }
+            return allProcessInstanceIds;
         }
 
         for (AssigneeToOfficeMembersType config : mdmsDataConfig.getAssigneeToOfficeMembersTypeMap().values()) {
             if (config.getWorkflowModule() != null && config.getStates() != null && !config.getStates().isEmpty()) {
-                List<ProcessInstance> processInstances = searchWorkflowByAssigneeWithFilters(
+                List<String> processInstanceIds = searchWorkflowByAssigneeWithFilters(
                         requestInfo, 
                         assigneeUuid, 
                         config.getWorkflowModule(),
                         config.getStates(), 
                         tenantId
                 );
-                allProcessInstances.addAll(processInstances);
+                allProcessInstanceIds.addAll(processInstanceIds);
             }
         }
 
-        log.info("Found total {} process instances for assignee: {} across all configured businessServices and states", 
-                allProcessInstances.size(), assigneeUuid);
-        return allProcessInstances;
+        log.info("Found total {} process instance IDs for assignee: {} across all configured businessServices and states", 
+                allProcessInstanceIds.size(), assigneeUuid);
+        return allProcessInstanceIds;
     }
 
     public List<String> searchProcessInstanceIdsWithExclude(RequestInfo requestInfo, String memberUserUuid, List<String> excludeAdvocateUuids, String businessId, String tenantId) {

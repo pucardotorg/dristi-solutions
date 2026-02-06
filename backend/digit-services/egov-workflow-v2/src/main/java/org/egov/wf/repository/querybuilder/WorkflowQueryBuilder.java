@@ -634,4 +634,48 @@ public class WorkflowQueryBuilder {
 
         return query.toString();
     }
+
+    public String getProcessInstanceIdsByAssigneeSearch(AssigneeSearchCriteria criteria, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder();
+
+        query.append("SELECT DISTINCT pi.id FROM {SCHEMA}.eg_wf_processinstance_v2 pi ");
+        query.append("LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true ");
+        query.append("INNER JOIN {SCHEMA}.eg_wf_state_v2 st ON st.uuid = pi.status ");
+        query.append("WHERE ");
+        query.append("pi.lastmodifiedTime IN (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 GROUP BY businessid) ");
+        query.append("AND pi.tenantid = ? ");
+        preparedStmtList.add(criteria.getTenantId());
+
+        query.append("AND asg.assignee = ? ");
+        preparedStmtList.add(criteria.getUuid());
+
+        if (!StringUtils.isEmpty(criteria.getBusinessService())) {
+            query.append("AND pi.businessservice = ? ");
+            preparedStmtList.add(criteria.getBusinessService());
+        }
+
+        List<String> states = criteria.getStates();
+        if (!CollectionUtils.isEmpty(states)) {
+            query.append("AND st.state IN (").append(createQuery(states)).append(") ");
+            addToPreparedStatement(preparedStmtList, states);
+        }
+
+        if (!StringUtils.isEmpty(criteria.getBusinessId())) {
+            query.append("AND pi.businessid LIKE ? ");
+            preparedStmtList.add("%" + criteria.getBusinessId() + "%");
+        }
+
+        List<String> excludeUuids = criteria.getExcludeUuids();
+        if (!CollectionUtils.isEmpty(excludeUuids)) {
+            query.append("AND NOT EXISTS (");
+            query.append("SELECT 1 FROM {SCHEMA}.eg_wf_assignee_v2 asg_exclude ");
+            query.append("WHERE asg_exclude.processinstanceid = pi.id ");
+            query.append("AND asg_exclude.isActive = true ");
+            query.append("AND asg_exclude.assignee IN (").append(createQuery(excludeUuids)).append(")");
+            query.append(") ");
+            addToPreparedStatement(preparedStmtList, excludeUuids);
+        }
+
+        return query.toString();
+    }
 }
