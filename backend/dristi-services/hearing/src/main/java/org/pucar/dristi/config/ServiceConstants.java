@@ -90,7 +90,6 @@ public class ServiceConstants {
     public static final String CLOSE = "CLOSE";
     public static final String START = "START";
     public static final String PASS_OVER = "PASS_OVER";
-    public static final String RESCHEDULE_ONGOING = "RESCHEDULE_ONGOING";
     public static final String ABANDON = "ABANDON";
     public static final String HEARING_MODULE_NAME = "Hearing";
     public static final String HEARING_STATUS_MASTER_NAME = "HearingStatus";
