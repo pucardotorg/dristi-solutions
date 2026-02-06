@@ -243,4 +243,21 @@ export const filterValidAddresses = (addressDetails = []) => {
   });
 };
 
+export const isRichTextEmpty = (html) => {
+  if (!html) return true;
+  const plainText = html?.replace(/<[^>]*>/g, '').trim();
+  return plainText?.length === 0;
+};
+
+export const formatName = (value, capitalize = true) => {
+  let cleanedValue = value
+    .replace(/[^a-zA-Z\s]/g, "")
+    .trimStart()
+    .replace(/ +/g, " ");
+
+  if (!capitalize) return cleanedValue;
+
+  return cleanedValue;
+};
+
 export default {};

@@ -295,7 +295,12 @@ const SubmissionsCreate = ({ path }) => {
     return [];
   }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
 
-  const { data: applicationData, isloading: isApplicationLoading, refetch: applicationRefetch } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const {
+    data: applicationData,
+    isloading: isApplicationLoading,
+    refetch: applicationRefetch,
+    isFetching: isApplicationFetching,
+  } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         filingNumber,
@@ -964,6 +969,7 @@ const SubmissionsCreate = ({ path }) => {
       if (scheduledHearing && !formData?.initialHearingDate) {
         setValue("initialHearingDate", formatDate(new Date(scheduledHearing?.startTime)));
         setValue("initialHearingPurpose", scheduledHearing?.hearingType);
+        setValue("refHearingId", scheduledHearing?.hearingId);
       }
 
       if (!formData?.isAllPartiesAgreed) {
@@ -1567,11 +1573,11 @@ const SubmissionsCreate = ({ path }) => {
       if (originalHearingDate) {
         const [d, m, y] = originalHearingDate.split("-");
         const reversedOriginalDate = `${y}-${m}-${d}`;
-    
+
         if (selectedNewHearingDates.includes(reversedOriginalDate)) {
-          setShowErrorToast({ 
-            label: t("ERR_SAME_DATE_AS_ORIGINAL_HEARING"), 
-            error: true 
+          setShowErrorToast({
+            label: t("ERR_SAME_DATE_AS_ORIGINAL_HEARING"),
+            error: true,
           });
           return;
         }
@@ -1976,7 +1982,7 @@ const SubmissionsCreate = ({ path }) => {
 
   return (
     <React.Fragment>
-      {(loader ||
+      {(isApplicationFetching||loader ||
         isOrdersLoading ||
         isApplicationLoading ||
         (applicationNumber ? !applicationDetails?.additionalDetails?.formdata : false) ||
@@ -2017,7 +2023,7 @@ const SubmissionsCreate = ({ path }) => {
             onFormValueChange={onFormValueChange}
             onSubmit={handleOpenReview}
             fieldStyle={fieldStyle}
-            key={formKey}
+            key={formKey + isApplicationFetching}
             isDisabled={isSubmitDisabled}
             actionClassName={"bail-action-bar"}
           />

@@ -780,6 +780,7 @@ const EvidenceModal = ({
       const hearingNumber =
         ["INITIATING_RESCHEDULING_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(orderType) &&
         documentSubmission?.[0]?.applicationList?.additionalDetails?.hearingId;
+      const refHearingId = documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.refHearingId;
       const parties = documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
         parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }],
       };
@@ -793,6 +794,7 @@ const EvidenceModal = ({
         ...(hearingNumber && {
           hearingNumber: hearingNumber,
         }),
+        ...(refHearingId && { refHearingId: refHearingId }),
       };
 
       if (generateOrder) {
@@ -1282,15 +1284,6 @@ const EvidenceModal = ({
                     </div>
                     <div className="info-value">
                       <h3>{currentDiaryEntry && artifact ? artifact?.sender : removeInvalidNameParts(documentSubmission[0]?.details?.sender)}</h3>
-                    </div>
-                  </div>
-                  <div className="info-row">
-                    <div className="info-key">
-                      <h3>{t("EVIDENCE_ADDITIONAL_DETAILS")}</h3>
-                    </div>
-                    <div className="info-value">
-                      {/* <h3>{JSON.stringify(documentSubmission[0]?.details.additionalDetails)}</h3> */}
-                      <h3>N/A</h3>
                     </div>
                   </div>
                   {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingDate && (

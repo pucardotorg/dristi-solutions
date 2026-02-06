@@ -149,7 +149,20 @@
   position: relative !important;
   top: -2px !important;
 }
+.template-page table thead th:first-child {
+  min-width: 5px !important;
+  width: 10px !important;
+}
+.template-page table thead th:last-child {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 20px 68px 20px 18px !important;
+}
 
+.template-page table tbody td:last-child > div {
+  justify-content: flex-end;
+}
 /*
 .custom-search-layout .search-field-wrapper .label-field-pair:first-child {
   flex-basis: 100%;

@@ -1,0 +1,18 @@
+{
+  "tenantId": "kl",
+  "moduleName": "Order",
+  "masterName": "SentStatus",
+  "mdmsPayload": {
+    "id": "34194fee-eec4-40f3-bac6-5b2effce1e84",
+    "tenantId": "kl",
+    "schemaCode": "Order.SentStatus",
+    "uniqueIdentifier": "12",
+    "data": {
+      "id": 12,
+      "code": "PROCESS_SENT",
+      "name": "Process Sent",
+      "isActive": true
+    },
+    "isActive": true
+  }
+}

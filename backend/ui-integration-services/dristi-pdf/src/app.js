@@ -13,6 +13,7 @@ const hearing = require("./routes/hearing");
 const bailBond = require("./routes/bailBond");
 const evidence = require("./routes/evidence");
 const digitisation = require("./routes/digitisation");
+const templateConfiguration = require("./routes/templateConfiguration");
 // var {listenConsumer} = require("./consumer")
 
 var app = express();
@@ -34,6 +35,7 @@ app.use(config.app.contextPath + "/hearing", hearing);
 app.use(config.app.contextPath + "/bailBond", bailBond);
 app.use(config.app.contextPath + "/evidence", evidence);
 app.use(config.app.contextPath + "/digitisation", digitisation);
+app.use(config.app.contextPath + "/template-configuration", templateConfiguration); 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

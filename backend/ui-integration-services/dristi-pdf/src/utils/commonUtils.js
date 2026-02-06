@@ -69,6 +69,7 @@ async function getCourtAndJudgeDetails(
         assignment.district.slice(1).toLowerCase(),
       state: "Kerala",
       orderHeading: "Before The " + mdmsCourtRoom.name,
+      nameWithIn: "In the " + mdmsCourtRoom.name,
     },
     judgeDetails: {
       name: employee.user.name,

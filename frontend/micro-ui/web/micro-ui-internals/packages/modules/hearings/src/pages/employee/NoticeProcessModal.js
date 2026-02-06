@@ -46,13 +46,53 @@ function removeAccusedSuffix(partyName) {
 function groupOrdersByParty(filteredOrders) {
   const accusedWiseOrdersMap = new Map();
 
+  let policeOtherData = [];
+  let remaingData = [];
+
   filteredOrders?.forEach((order) => {
-    const party = order?.additionalDetails?.formdata?.[formDataKeyMap[order?.orderType]]?.party;
-    const parties = Array.isArray(party) ? party : party ? [party] : [];
+    const addressee = order?.additionalDetails?.formdata?.processTemplate?.addressee;
+
+    if (order?.orderType === "MISCELLANEOUS_PROCESS" && (addressee === "POLICE" || addressee === "OTHER")) {
+      policeOtherData.push(order);
+    } else {
+      remaingData.push(order);
+    }
+  });
+
+  policeOtherData?.forEach((order) => {
+    const uniqueId = (
+      order?.additionalDetails?.formdata?.processTemplate?.addressee ||
+      order?.orderDetails?.processTemplate?.addressee ||
+      ""
+    )?.toLowerCase();
+    const addresseeType = uniqueId?.charAt(0).toUpperCase() + uniqueId?.slice(1);
+    if (!accusedWiseOrdersMap?.has(uniqueId)) {
+      accusedWiseOrdersMap?.set(uniqueId, { partyType: addresseeType, partyName: addresseeType, uniqueId, ordersList: [], order });
+    }
+
+    accusedWiseOrdersMap?.get(uniqueId)?.ordersList?.push(order);
+  });
+
+  remaingData?.forEach((order) => {
+    let parties = [];
+    if (order?.orderType === "MISCELLANEOUS_PROCESS") {
+      const addressee = order?.additionalDetails?.formdata?.processTemplate?.addressee;
+
+      if (["COMPLAINANT", "RESPONDENT"].includes(addressee) || addressee?.startsWith("COM") || addressee?.startsWith("RES")) {
+        parties =
+          order?.additionalDetails?.formdata?.selectAddresee?.map((p) => ({
+            data: p,
+          })) || [];
+      }
+    } else {
+      const party = order?.additionalDetails?.formdata?.[formDataKeyMap[order?.orderType]]?.party;
+      parties = Array.isArray(party) ? party : party ? [party] : [];
+    }
+
     if (!Array?.isArray(parties) || parties?.length === 0) return;
 
     parties.forEach((party) => {
-      const uniqueId = party?.data?.uniqueId;
+      const uniqueId = party?.data?.uniqueId || party?.data?.uuid;
       if (!uniqueId) return;
 
       const partyName = getFormattedName(
@@ -63,14 +103,17 @@ function groupOrdersByParty(filteredOrders) {
         null
       );
 
-      let partyType = (party?.data?.partyType || "").toLowerCase();
+      let rawType = (party?.data?.partyType || "").toLowerCase();
+      let partyType = "Other";
 
-      if (partyType === "respondent") {
+      if (rawType === "respondent" || rawType === "accused") {
         partyType = "Accused";
-      } else if (partyType === "witness") {
+      } else if (rawType === "witness") {
         partyType = "Witness";
-      } else {
-        partyType = partyType?.charAt(0)?.toUpperCase() + partyType?.slice(1);
+      } else if (rawType === "complainant") {
+        partyType = "Complainant";
+      } else if (rawType) {
+        partyType = rawType?.charAt(0).toUpperCase() + rawType.slice(1);
       }
 
       if (!accusedWiseOrdersMap?.has(uniqueId)) {
@@ -80,14 +123,14 @@ function groupOrdersByParty(filteredOrders) {
       accusedWiseOrdersMap?.get(uniqueId)?.ordersList?.push(order);
     });
   });
-
   const accusedWiseOrdersList = Array.from(accusedWiseOrdersMap.values());
 
-  // Sort first by partyType: "respondent", then "witness"
+  const priority = { Accused: 1, Witness: 2, Complainant: 3, Police: 4, Other: 5 };
+
   accusedWiseOrdersList.sort((a, b) => {
-    if (a.partyType === "Accused" && b.partyType !== "Accused") return -1;
-    if (a.partyType !== "Accused" && b.partyType === "Accused") return 1;
-    return 0;
+    const scoreA = priority[a.partyType] || 99;
+    const scoreB = priority[b.partyType] || 99;
+    return scoreA - scoreB;
   });
 
   accusedWiseOrdersList.forEach((party) => {
@@ -176,7 +219,7 @@ const NoticeProcessModal = ({
     const filteredOrders = ordersData?.list?.flatMap((order) => {
       if (order?.orderCategory === "COMPOSITE") {
         return order?.compositeItems
-          ?.filter((item) => ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(item?.orderType))
+          ?.filter((item) => ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"].includes(item?.orderType))
           ?.map((item) => ({
             ...order,
             orderType: item?.orderType,
@@ -185,28 +228,29 @@ const NoticeProcessModal = ({
             itemId: item?.id,
           }));
       } else {
-        return ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(order?.orderType) ? [order] : [];
+        return ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"].includes(order?.orderType) ? [order] : [];
       }
     });
 
     const sortedOrders = [...filteredOrders]?.sort((a, b) => new Date(b?.createdDate) - new Date(a?.createdDate));
 
     const groupedByParty = groupOrdersByParty(sortedOrders);
-
     const updatedGrouped = groupedByParty?.map((partyGroup) => {
       const typeCounters = {};
 
       partyGroup?.ordersList?.forEach((order) => {
-        const type = order?.orderType;
+        const type = order?.orderType === "MISCELLANEOUS_PROCESS" ? order?.orderDetails?.processTemplate?.processTitle : order?.orderType;
         if (!typeCounters[type]) typeCounters[type] = 0;
         typeCounters[type]++;
       });
 
       const updatedOrdersList = partyGroup?.ordersList?.map((order) => {
-        const type = order?.orderType;
+        const type = order?.orderType === "MISCELLANEOUS_PROCESS" ? order?.orderDetails?.processTemplate?.processTitle : order?.orderType;
         const round = typeCounters[type]--;
-        const titleCaseType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
-
+        const titleCaseType = type
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(" ");
         return {
           ...order,
           displayTitle: `${titleCaseType} - R${round}`,
@@ -271,7 +315,6 @@ const NoticeProcessModal = ({
 
   const config = useMemo(() => {
     if (!taskCnrNumber && !cnrNumber) return undefined;
-
     return summonsConfig({
       filingNumber,
       orderNumber,
