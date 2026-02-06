@@ -2221,40 +2221,6 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("submissionDocuments", updatedFormdata.submissionDocuments);
       }
 
-      // if (orderType === "CASE_TRANSFER") {
-      //   updatedFormdata.caseTransferredTo = applicationDetails?.applicationDetails?.selectRequestedCourt;
-      // setValueRef?.current?.[index]?.("caseTransferredTo", updatedFormdata.caseTransferredTo);
-      //   updatedFormdata.grounds = { text: applicationDetails?.applicationDetails?.groundsForSeekingTransfer };
-      // setValueRef?.current?.[index]?.("grounds", updatedFormdata.grounds);
-
-      // }
-
-      // if (currentOrderType === "WITHDRAWAL_ACCEPT") {
-      //   if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
-      //     updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
-      //     setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
-
-      //     updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
-      //     setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
-
-      //     updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
-      //     setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
-      //   }
-      // }
-
-      // if (currentOrderType === "WITHDRAWAL_REJECT") {
-      //   if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
-      //     updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
-      //     setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
-
-      //     updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
-      //     setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
-
-      //     updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
-      //     setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
-      //   }
-      // }
-
       if (currentOrderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
         if (newApplicationDetails?.applicationType === applicationTypes.EXTENSION_SUBMISSION_DEADLINE) {
           updatedFormdata.documentName = newApplicationDetails?.additionalDetails?.formdata?.documentType?.value;
@@ -2262,12 +2228,6 @@ const GenerateOrdersV2 = () => {
 
           updatedFormdata.originalDeadline = newApplicationDetails?.additionalDetails?.formdata?.initialSubmissionDate;
           setValueRef?.current?.[index]?.("originalDeadline", updatedFormdata.originalDeadline);
-
-          // updatedFormdata.proposedSubmissionDate = newApplicationDetails?.additionalDetails?.formdata?.changedSubmissionDate;
-          // setValueRef?.current?.[index]?.("proposedSubmissionDate", updatedFormdata.proposedSubmissionDate);
-
-          // updatedFormdata.originalSubmissionOrderDate = newApplicationDetails?.additionalDetails?.orderDate;
-          // setValueRef?.current?.[index]?.("originalSubmissionOrderDate", updatedFormdata.originalSubmissionOrderDate);
         }
       }
 
@@ -2277,7 +2237,10 @@ const GenerateOrdersV2 = () => {
         );
         const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
           (item) =>
-            item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(item?.orderType)
+            item?.isEnabled &&
+            ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING", "ACCEPT_RESCHEDULING_REQUEST"].includes(
+              item?.orderType
+            )
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
@@ -2324,7 +2287,10 @@ const GenerateOrdersV2 = () => {
         );
         const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
           (item) =>
-            item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(item?.orderType)
+            item?.isEnabled &&
+            ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING", "ACCEPT_RESCHEDULING_REQUEST"].includes(
+              item?.orderType
+            )
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
@@ -2378,7 +2344,9 @@ const GenerateOrdersV2 = () => {
         const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
           (item) =>
             item?.isEnabled &&
-            ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "INITIATING_RESCHEDULING_OF_HEARING_DATE"].includes(item?.orderType)
+            ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "INITIATING_RESCHEDULING_OF_HEARING_DATE", "ACCEPT_RESCHEDULING_REQUEST"].includes(
+              item?.orderType
+            )
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
@@ -2400,7 +2368,10 @@ const GenerateOrdersV2 = () => {
         );
         const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
           (item) =>
-            item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(item?.orderType)
+            item?.isEnabled &&
+            ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING", "ACCEPT_RESCHEDULING_REQUEST"].includes(
+              item?.orderType
+            )
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.hearingDate = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
@@ -3606,7 +3577,7 @@ const GenerateOrdersV2 = () => {
         if (["ACCEPT_RESCHEDULING_REQUEST"]?.includes(orderType)) {
           const rescheduleStatus = hearingsData?.HearingList?.find((data) => data?.hearingId === additionalDetails?.refHearingId);
 
-          if (rescheduleStatus?.status !== "SCHEDULED") {
+          if (["SCHEDULED", "IN_PROGRESS"]?.includes(rescheduleStatus?.status)) {
             setShowErrorToast({
               label: t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST"),
               error: true,
@@ -3933,9 +3904,28 @@ const GenerateOrdersV2 = () => {
       if (isBailRejected) {
         await createPendingTaskForEmployee(currentOrder, true);
       }
+
+      let hearingNumber = "";
+      const todayDate = new Date().toISOString().split("T")[0];
+
+      if (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+        const hearingDate = currentOrder?.additionalDetails?.formdata?.newHearingDate;
+        if (hearingDate === todayDate) {
+          hearingNumber = currentOrder?.additionalDetails?.refHearingId;
+        }
+      } else {
+        const acceptRescheduleRequest = currentOrder?.compositeItems?.find((item) => item?.orderType === "ACCEPT_RESCHEDULING_REQUEST");
+        const hearingDate = acceptRescheduleRequest?.orderSchema?.additionalDetails?.formdata?.newHearingDate;
+
+        if (hearingDate === todayDate) {
+          hearingNumber = acceptRescheduleRequest?.orderSchema?.additionalDetails?.refHearingId;
+        }
+      }
+
       await updateOrder(
         {
           ...currentOrder,
+          ...(hearingNumber && { hearingNumber: currentOrder?.hearingNumber || hearingNumber }),
           additionalDetails: {
             ...currentOrder?.additionalDetails,
             businessOfTheDay: businessOfTheDay,
