@@ -154,6 +154,7 @@ public class HearingRegistrationEnrichment {
                                 } else if (RESCHEDULE_ONGOING.equalsIgnoreCase(otherAction)) {
                                     hearingDuration = null;
                                     i--;
+                                    break;
                                 } else if (ABANDON.equalsIgnoreCase(otherAction)) {
                                     hearingDuration = null;
                                     break;
