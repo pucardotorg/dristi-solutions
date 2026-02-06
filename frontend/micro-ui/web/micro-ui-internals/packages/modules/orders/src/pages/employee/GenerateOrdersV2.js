@@ -3577,7 +3577,7 @@ const GenerateOrdersV2 = () => {
         if (["ACCEPT_RESCHEDULING_REQUEST"]?.includes(orderType)) {
           const rescheduleStatus = hearingsData?.HearingList?.find((data) => data?.hearingId === additionalDetails?.refHearingId);
 
-          if (["SCHEDULED", "IN_PROGRESS"]?.includes(rescheduleStatus?.status)) {
+          if (!["SCHEDULED", "IN_PROGRESS"]?.includes(rescheduleStatus?.status)) {
             setShowErrorToast({
               label: t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST"),
               error: true,
