@@ -156,6 +156,7 @@ public class HearingRegistrationEnrichment {
                     }
 
                     else if (RESCHEDULE_ONGOING.equalsIgnoreCase(action)) {
+                        hearingDuration = null;
                         activeStart = null;
                     }
 
