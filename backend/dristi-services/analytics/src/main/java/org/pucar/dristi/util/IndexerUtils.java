@@ -32,6 +32,9 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -241,7 +244,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, expiryTime, sectionAndSubSection, filingDate, referenceEntityType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, expiryTime, sectionAndSubSection, filingDate, referenceEntityType, null, null
         );
     }
 
@@ -295,6 +298,8 @@ public class IndexerUtils {
         String filingNumber = details.get("filingNumber");
         String caseId = details.get("caseId");
         String caseTitle = details.get("caseTitle");
+        String nextHearingDate = details.get("nextHearingDate");
+        String dateOfApplication = details.get("dateOfApplication");
         String screenType = details.get("screenType");
         String name = details.get("name");
         isCompleted = isNullOrEmpty(name);
@@ -413,6 +418,10 @@ public class IndexerUtils {
             }
             searchableFieldsList.add(filingNumber);
             searchableFieldsList.add(caseTitle);
+            if(nextHearingDate!=null)
+             searchableFieldsList.add(nextHearingDate);
+            if(dateOfApplication!=null)
+             searchableFieldsList.add(dateOfApplication);
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());
 
@@ -475,7 +484,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, null, sectionAndSubSection, filingDate, referenceEntityType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, null, sectionAndSubSection, filingDate, referenceEntityType, dateOfApplication, nextHearingDate
         );
     }
 
@@ -858,8 +867,21 @@ public class IndexerUtils {
         caseDetails.put("filingNumber", filingNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
-
+        if(ADVANCEMENT_OR_ADJOURNMENT_APPLICATION.equalsIgnoreCase(applicationType)){
+            Long initialHearingEpoch = JsonPath.read(applicationObject.toString(), INITIAL_HEARING_DATE_PATH);
+            caseDetails.put("nextHearingDate", formatEpoch(initialHearingEpoch));
+            caseDetails.put("dateOfApplication", formatEpoch(System.currentTimeMillis()));
+        }
         return caseDetails;
+    }
+
+    private String formatEpoch(Long epoch) {
+        if (epoch == null) return "";
+
+        return Instant.ofEpochMilli(epoch)
+                .atZone(ZoneId.of("Asia/Kolkata"))
+                .toLocalDate()
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }
 
     private Map<String, String> processOrderEntity(JSONObject request, Object orderObject) throws InterruptedException {

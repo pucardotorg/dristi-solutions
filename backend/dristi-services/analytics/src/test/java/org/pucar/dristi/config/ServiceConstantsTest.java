@@ -16,8 +16,7 @@ class ServiceConstantsTest {
 
         // Testing ES index formats
         assertEquals("{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n", ServiceConstants.ES_INDEX_HEADER_FORMAT);
-        assertEquals("{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"caseNumber\":\"%s\",\"substage\":\"%s\",\"advocateDetails\":%s,\"actionCategory\":\"%s\",\"searchableFields\":%s,\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s\",\"courtId\":\"%s\",\"createdTime\":%d,\"expiryDate\":%d,\"sectionAndSubSection\":\"%s\",\"filingDate\":%d,\"referenceEntityType\":\"%s\"}}\n"
-        ,ServiceConstants.ES_INDEX_DOCUMENT_FORMAT);
+        assertEquals("{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"caseNumber\":\"%s\",\"substage\":\"%s\",\"advocateDetails\":%s,\"actionCategory\":\"%s\",\"searchableFields\":%s,\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s\",\"courtId\":\"%s\",\"createdTime\":%d,\"expiryDate\":%d,\"sectionAndSubSection\":\"%s\",\"filingDate\":%d,\"referenceEntityType\":\"%s\",\"dateOfApplication\":\"%s\",\"nextHearingDate\":\"%s\"}}\n",ServiceConstants.ES_INDEX_DOCUMENT_FORMAT);
         assertEquals("TENANTID", ServiceConstants.TENANTID_MDC_STRING);
 
         // Testing search params
