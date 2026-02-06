@@ -1,5 +1,6 @@
 package org.pucar.dristi.repository;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
@@ -825,32 +826,22 @@ public class CaseRepositoryV2 {
         courtCase.setAdvocateOffices(new ArrayList<>(officeMap.values()));
     }
 
-    private String extractAdvocateNameFromAdditionalDetails(AdvocateMapping rep) {
-        try {
-            if (rep.getAdditionalDetails() != null) {
-                ObjectNode additionalDetails = objectMapper.convertValue(rep.getAdditionalDetails(), ObjectNode.class);
-                if (additionalDetails.has("advocateName")) {
-                    return additionalDetails.get("advocateName").asText();
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Error extracting advocate name from additional details: {}", e.getMessage());
+    private String extractAdvocateUuidFromAdditionalDetails(AdvocateMapping representative) {
+        JsonNode node = objectMapper.convertValue(representative, JsonNode.class);
+        JsonNode uuidNode = node.path("additionalDetails").path("uuid");
+        if (uuidNode.isMissingNode() || uuidNode.isNull()) {
+            return null;
         }
-        return null;
+        return uuidNode.asText();
     }
 
-    private String extractAdvocateUuidFromAdditionalDetails(AdvocateMapping rep) {
-        try {
-            if (rep.getAdditionalDetails() != null) {
-                ObjectNode additionalDetails = objectMapper.convertValue(rep.getAdditionalDetails(), ObjectNode.class);
-                if (additionalDetails.has("advocateUserUuid")) {
-                    return additionalDetails.get("advocateUserUuid").asText();
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Error extracting advocate UUID from additional details: {}", e.getMessage());
+    private String extractAdvocateNameFromAdditionalDetails(AdvocateMapping representative) {
+        JsonNode node = objectMapper.convertValue(representative, JsonNode.class);
+        JsonNode nameNode = node.path("additionalDetails").path("advocateName");
+        if (nameNode.isMissingNode() || nameNode.isNull()) {
+            return null;
         }
-        return null;
+        return nameNode.asText();
     }
 
     public String getCaseIdFromFilingNumber(String filingNumber) {
