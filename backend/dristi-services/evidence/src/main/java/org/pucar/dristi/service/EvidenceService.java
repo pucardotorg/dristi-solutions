@@ -485,7 +485,7 @@ public class EvidenceService {
                 case CITIZEN_UPPER -> {
                     searchCriteria.setIsCitizen(true);
                     searchCriteria.setUserUuid(userInfo.getUuid());
-                    enrichAdvocateOrClerkUuids(requestInfo, searchCriteria);
+                    enrichAdvocateAndClerkUuids(requestInfo, searchCriteria);
                 }
                 case EMPLOYEE_UPPER -> {
                     searchCriteria.setIsCourtEmployee(true);
@@ -498,7 +498,7 @@ public class EvidenceService {
         }
     }
 
-    private void enrichAdvocateOrClerkUuids(RequestInfo requestInfo, EvidenceSearchCriteria searchCriteria) {
+    private void enrichAdvocateAndClerkUuids(RequestInfo requestInfo, EvidenceSearchCriteria searchCriteria) {
         User userInfo = requestInfo.getUserInfo();
         String userUuid = userInfo.getUuid();
         String tenantId = config.getTenantId();
