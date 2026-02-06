@@ -43,7 +43,7 @@ on:
       - main
       - develop
       - release/*
-      - develop-actions-enhancement
+      - pipeline-dynamic-name
 
 
 jobs:
