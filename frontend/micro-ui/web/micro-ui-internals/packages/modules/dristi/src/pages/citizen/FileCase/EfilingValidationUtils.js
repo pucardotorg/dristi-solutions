@@ -1,7 +1,15 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
-import { combineMultipleFiles, documentsTypeMapping, extractValue, generateUUID, isEmptyValue, TaskManagementWorkflowAction } from "../../../Utils";
+import {
+  combineMultipleFiles,
+  documentsTypeMapping,
+  extractValue,
+  generateUUID,
+  getAuthorizedUuid,
+  isEmptyValue,
+  TaskManagementWorkflowAction,
+} from "../../../Utils";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 import { userTypeOptions } from "../registration/config";
@@ -1574,15 +1582,17 @@ const documentUploadHandler = async (document, index, prevCaseDetails, data, pag
 
 const fetchBasicUserInfo = async (caseDetails, tenantId) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
     {
       Individual: {
-        userUuid: [userInfo?.uuid],
+        userUuid: [authorizedUuid],
       },
     },
     { tenantId, limit: 1000, offset: 0 },
     "",
-    userInfo?.uuid
+    authorizedUuid
   );
 
   return individualData?.Individual?.[0]?.individualId;
@@ -2984,6 +2994,9 @@ export const updateCaseDetails = async ({
       },
     };
   }
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   if (selected === "prayerSwornStatement") {
     let additionalDocs = [];
     const newFormData = await Promise.all(
@@ -3007,6 +3020,7 @@ export const updateCaseDetails = async ({
                         artifactType: "OTHER",
                         sourceType: "COMPLAINANT",
                         caseId: caseDetails?.id,
+                        officeAdvocateUserUuid: authorizedUuid !== userUuid ? authorizedUuid : null, // Only sending in case clerk/jr adv is creating doc.
                         sourceID: individualId,
                         filingNumber: caseDetails?.filingNumber,
                         tenantId,

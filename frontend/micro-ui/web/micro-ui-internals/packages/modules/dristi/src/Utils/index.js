@@ -780,3 +780,88 @@ export const getAssistantAdvocateMembersForPartiesTab = (data) => {
 
   return mergedAdvocateOfficeAssistantAdvocates;
 };
+
+// In case of citizen login, we need to extract the user id of the user on behalf of whom the junior advocate/clerk is viewing/doing actions from UI.
+// For other citizens like litigant/POA, we need to return the same uuid.
+// For advocates/clerks, we need to return the uuid of the senior office advocate selected from home dropdown.
+export const getAuthorizedUuid = (currentLoggedInUserUuid) => {
+  if (!currentLoggedInUserUuid) return currentLoggedInUserUuid;
+  const storedAdvocate = JSON.parse(localStorage.getItem("selectedAdvocate"));
+  // This means logged in user is not an advocate or clerk, so return same uuid
+  if (!storedAdvocate?.uuid) return currentLoggedInUserUuid;
+
+  //This means logged in user is Advocate but selected himself/herself from home dropdown.
+  if (storedAdvocate.uuid === currentLoggedInUserUuid) return currentLoggedInUserUuid;
+
+  //This means logged in user is Clerk/junior advocate and has selected some senior office advocate from home dropdown.
+  if (storedAdvocate.uuid !== currentLoggedInUserUuid) return storedAdvocate.uuid;
+
+  return currentLoggedInUserUuid;
+};
+
+export const getAllAssociatedPartyUuids = (caseDetails, createdByUuid) => {
+  const isOwnerAdvocate = caseDetails?.representatives?.find((rep) => rep?.advocateFilingStatus === advocateCaseFilingStatusTypes?.CASE_OWNER);
+  //if neither a senior advocate nor junior adv/clerk did the filing on his behalf that means litigant only did case filing and only he/she can have edit draft access.
+  if (isOwnerAdvocate) {
+    const advocateOffices = caseDetails?.advocateOffices || [];
+    // means creator is main advocate himself/PIP
+    if (advocateOffices.length === 0) {
+      return [createdByUuid];
+    }
+
+    // If advocate office is found for the creator advocate.
+    const ownerAdvocateUuid = isOwnerAdvocate?.additionalDetails?.uuid;
+    //Now we have to check all the advocates and clerks members associated with this advocate and they all can edit the case draft
+    const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateUserUuid === ownerAdvocateUuid);
+    if (!matchingOffice) {
+      // Fallback
+      return [createdByUuid];
+    }
+    const advocates = matchingOffice?.advocates || [];
+    const clerks = matchingOffice?.clerks || [];
+    // Collect all memberUserUuid
+    const editableUsers = [
+      ownerAdvocateUuid, // senior advocate himself
+      ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
+      ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
+    ];
+
+    // Remove null/undefined + de-duplicate
+    return Array.from(new Set((editableUsers || []).filter(Boolean)));
+  } else if (!isOwnerAdvocate) {
+    // this means creator could be a junior advocate/clerk
+
+    //check if creator was junior adv.
+    const isCreatorJuniorAdvMatchingOffice = caseDetails?.advocateOffices?.find((office) =>
+      office?.advocates?.find((adv) => adv?.memberUserUuid === createdByUuid)
+    );
+
+    //check if creator was clerk
+    const isCreatorClerkMatchingOffice = caseDetails?.advocateOffices?.find((office) =>
+      office?.clerks?.find((clerk) => clerk?.memberUserUuid === createdByUuid)
+    );
+
+    let matchingOffice = null;
+    //if creator was junior adv or clerk, return the uuid of the senior office advocate associated with the creator.
+    if (isCreatorJuniorAdvMatchingOffice) {
+      matchingOffice = { ...isCreatorJuniorAdvMatchingOffice };
+    } else if (isCreatorClerkMatchingOffice) {
+      matchingOffice = { ...isCreatorClerkMatchingOffice };
+    }
+    if (matchingOffice) {
+      const advocates = matchingOffice?.advocates || [];
+      const clerks = matchingOffice?.clerks || [];
+      // Collect all memberUserUuid
+      const editableUsers = [
+        ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
+        ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
+      ];
+
+      // Remove null/undefined + de-duplicate
+      return Array.from(new Set((editableUsers || []).filter(Boolean)));
+    }
+
+    //if creator was litigant/POA, return the uuid of the creator.
+    return [createdByUuid];
+  }
+};

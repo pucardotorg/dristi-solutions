@@ -117,6 +117,7 @@ import TasksComponent from "../../../../home/src/components/TaskComponent";
 import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
 import {
   checkAcceptRejectOrderValidation,
+  getAuthorizedUuid,
   getOrderActionName,
   getOrderTypes,
   setApplicationStatus,
@@ -241,10 +242,11 @@ const GenerateOrdersV2 = () => {
   const courtId = localStorage.getItem("courtId");
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
-  const [caseApiError, setCaseApiError] = useState(undefined);
   // Flag to prevent multiple breadcrumb updates
   const isBreadCrumbsParamsDataSet = useRef(false);
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
@@ -332,7 +334,7 @@ const GenerateOrdersV2 = () => {
         isBreadCrumbsParamsDataSet.current = true;
       }
     } catch (err) {
-      setCaseApiError(err);
+      return null;
     } finally {
       setIsCaseDetailsLoading(false);
     }
@@ -3913,10 +3915,10 @@ const GenerateOrdersV2 = () => {
                 comments: [],
                 file, // already uploaded doc or file object
                 sourceType: "COURT",
-                sourceID: userInfo?.uuid,
+                sourceID: authorizedUuid,
                 filingType: "DIRECT",
                 additionalDetails: {
-                  uuid: userInfo?.uuid,
+                  uuid: authorizedUuid,
                 },
               },
             };
@@ -4553,7 +4555,6 @@ const GenerateOrdersV2 = () => {
             <TasksComponent
               taskType={taskType}
               setTaskType={setTaskType}
-              uuid={userInfo?.uuid}
               userInfoType={userInfoType}
               filingNumber={filingNumber}
               inCase={true}

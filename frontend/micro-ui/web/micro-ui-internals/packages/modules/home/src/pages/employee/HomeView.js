@@ -750,7 +750,6 @@ const HomeView = () => {
               caseType={caseType}
               setCaseType={setCaseType}
               isLitigant={Boolean(individualId && userType && userInfoType === "citizen")}
-              uuid={userInfo?.uuid}
               userInfoType={userInfoType}
               pendingSignOrderList={ordersNotificationData}
               seniorAdvocates={seniorAdvocates}

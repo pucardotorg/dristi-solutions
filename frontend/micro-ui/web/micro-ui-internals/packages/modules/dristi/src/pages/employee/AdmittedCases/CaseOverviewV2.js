@@ -111,7 +111,6 @@ const CaseOverviewV2 = ({
           taskType={taskType}
           setTaskType={setTaskType}
           isLitigant={userRoles.includes("CITIZEN")}
-          uuid={userInfo?.uuid}
           userInfoType={userInfoType}
           filingNumber={filingNumber}
           inCase={true}

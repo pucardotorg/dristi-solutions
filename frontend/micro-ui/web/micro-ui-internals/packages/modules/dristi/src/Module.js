@@ -30,7 +30,6 @@ import VerifyPhoneNumber from "./components/VerifyPhoneNumber";
 import { UICustomizations } from "./configs/UICustomizations";
 import SelectEmptyComponent from "./components/SelectEmptyComponent";
 import ScrutinyInfo from "./components/ScrutinyInfo";
-import AdvocateNameDetails from "./components/AdvocateNameDetails";
 import { CustomizedHooks } from "./hooks";
 import FileCase from "./pages/citizen/FileCase";
 import Login from "./pages/citizen/Login";
@@ -58,7 +57,6 @@ import useBillSearch from "./hooks/dristi/useBillSearch";
 import SelectTranscriptTextArea from "./components/SelectTranscriptTextArea";
 import SelectMultiUpload from "./components/SelectMultiUpload";
 import SupportingDocsComponent from "./components/SupportingDocsComponent";
-import MultipleAdvocateNameDetails from "./components/MultipleAdvocateNameDetails";
 import BoxComplainant from "./components/BoxComplainant";
 import MultipleAdvocatesAndPip from "./components/MultipleAdvocatesAndPip";
 import MultiSelectDropdown from "./components/MultiSelectDropdown";
@@ -176,7 +174,6 @@ const componentsToRegister = {
   SelectUploadDocWithName,
   SelectEmptyComponent,
   ScrutinyInfo,
-  AdvocateNameDetails,
   CustomRadioInfoComponent,
   Modal,
   CommentComponent,
@@ -200,7 +197,6 @@ const componentsToRegister = {
   SelectTranscriptTextArea,
   SelectMultiUpload,
   SupportingDocsComponent,
-  MultipleAdvocateNameDetails,
   MultipleAdvocatesAndPip,
   BoxComplainant,
   MultiSelectDropdown,
@@ -225,7 +221,7 @@ const componentsToRegister = {
   CustomText,
   SelectBulkDateInputs,
   SelectCustomHearingDate,
-  EditDeleteModal
+  EditDeleteModal,
 };
 
 const overrideHooks = () => {

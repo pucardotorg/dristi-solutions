@@ -15,7 +15,15 @@ import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import { cleanString, getDate, getOrderActionName, getOrderTypes, removeInvalidNameParts, setApplicationStatus } from "../../../Utils";
+import {
+  cleanString,
+  getAuthorizedUuid,
+  getDate,
+  getOrderActionName,
+  getOrderTypes,
+  removeInvalidNameParts,
+  setApplicationStatus,
+} from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
@@ -60,6 +68,8 @@ const EvidenceModal = ({
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const userInfo = Digit.UserService.getUser()?.info;
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const user = Digit.UserService.getUser()?.info?.name;
   const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK"].includes(role?.code)), [userInfo?.roles]);
   const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
@@ -155,6 +165,7 @@ const EvidenceModal = ({
         return false;
       }
       if (userInfo?.uuid === createdBy) {
+        // the on ewho created the document should be able to edit it.
         return [SubmissionWorkflowState.DELETED].includes(applicationStatus) ? false : true;
       }
       if (isLitigent && [...allAdvocates?.[userInfo?.uuid], userInfo?.uuid]?.includes(createdBy)) {
@@ -201,15 +212,7 @@ const EvidenceModal = ({
     }
     return label;
   }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
-  const actionCustomLabel = useMemo(() => {
-    let label = "";
-    if (modalType === "Submissions") {
-      if (userType === "employee") {
-        label = t("SET_TERMS_OF_BAIL");
-      }
-    }
-    return label;
-  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
+
   const actionCancelLabel = useMemo(() => {
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
@@ -280,38 +283,6 @@ const EvidenceModal = ({
   const submissionComment = Digit.Hooks.useCustomAPIMutationHook(addSubmissionComment);
   const evidenceComment = Digit.Hooks.useCustomAPIMutationHook(addEvidenceComment);
 
-  // const markAsReadPayload = {
-  //   tenantId: tenantId,
-  //   artifact: {
-  //     tenantId: tenantId,
-  //     caseId: caseId,
-  //     artifactType: "AFFIDAVIT",
-  //     sourceType: "COURT",
-  //     application: documentSubmission[0]?.details.applicationId,
-  //     isActive: true,
-  //     isEvidence: true,
-  //     status: documentSubmission[0]?.status,
-  //     file: documentSubmission.map((doc) => {
-  //       return {
-  //         id: doc?.applicationContent?.id,
-  //         documentType: doc?.applicationContent?.documentType,
-  //         fileStore: doc?.applicationContent?.fileStoreId,
-  //         documentUid: doc?.applicationContent?.documentUid,
-  //         additionalDetails: doc?.applicationContent?.additionalDetails,
-  //       };
-  //     }),
-  //     comments: [],
-  //     auditDetails: documentSubmission[0]?.details.auditDetails,
-  //     workflow: {
-  //       comments: documentSubmission[0]?.applicationList?.workflow.comments,
-  //       documents: [{}],
-  //       id: documentSubmission[0]?.applicationList?.workflow.id,
-  //       status: documentSubmission[0]?.applicationList?.workflow?.status,
-  //       action: "TYPE DEPOSITION",
-  //     },
-  //   },
-  // };
-
   const respondApplicationPayload = {
     ...documentSubmission?.[0]?.applicationList,
     statuteSection: {
@@ -358,18 +329,6 @@ const EvidenceModal = ({
       ...documentSubmission?.[0]?.applicationList?.workflow,
       action: SubmissionWorkflowAction.REJECT,
     },
-  };
-
-  const applicationCommentsPayload = (newComment) => {
-    return {
-      ...documentSubmission[0]?.applicationList,
-      statuteSection: { ...documentSubmission[0]?.applicationList?.statuteSection, tenantId: tenantId },
-      comment: documentSubmission[0]?.applicationList.comment ? [...documentSubmission[0]?.applicationList.comment, newComment] : [newComment],
-      workflow: {
-        ...documentSubmission[0]?.applicationList?.workflow,
-        action: "RESPOND",
-      },
-    };
   };
 
   const onSuccess = async () => {
@@ -682,13 +641,6 @@ const EvidenceModal = ({
                   />
                 )}
               </React.Fragment>
-              {/* <DocViewerWrapper
-                fileStoreId={artifact?.file?.fileStore}
-                tenantId={tenantId}
-                docWidth={"calc(80vw * 62 / 100)"}
-                docHeight={"unset"}
-                showDownloadOption={false}
-              /> */}
             </div>
           ) : (
             documentSubmission?.map((docSubmission, index) => (
@@ -995,25 +947,6 @@ const EvidenceModal = ({
     }
   };
 
-  const handleUpdateBusinessOfDayEntry = async () => {
-    try {
-      await DRISTIService.aDiaryEntryUpdate(
-        {
-          diaryEntry: {
-            ...currentDiaryEntry,
-            businessOfDay: businessOfTheDay,
-          },
-        },
-        {}
-      ).then(async () => {
-        history.goBack();
-      });
-    } catch (error) {
-      console.error("error: ", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
-    }
-  };
-
   const documentUploaderConfig = useMemo(
     () => [
       {
@@ -1069,12 +1002,6 @@ const EvidenceModal = ({
     []
   );
 
-  const onDocumentUpload = async (fileData, filename, tenantId) => {
-    if (fileData?.fileStore) return fileData;
-    const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
-    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
-  };
-
   useEffect(() => {
     if (!(currentDiaryEntry && artifact)) {
       fetchRecursiveData(documentSubmission?.[0]?.applicationList);
@@ -1086,16 +1013,6 @@ const EvidenceModal = ({
       setShowConfirmationModal({ type: isApplicationAccepted?.value ? "accept" : "reject" });
     }
   }, [documentSubmission, isApplicationAccepted]);
-
-  // const customLabelShow = useMemo(() => {
-  //   return (
-  //     isJudge &&
-  //     ["REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType) &&
-  //     userRoles.includes("SUBMISSION_APPROVER") &&
-  //     [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
-  //     modalType === "Submissions"
-  //   );
-  // }, [isJudge, documentSubmission, userRoles, applicationStatus, modalType]);
 
   return (
     <React.Fragment>
@@ -1347,33 +1264,6 @@ const EvidenceModal = ({
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>{showDocument}</div>
               </div>
-              {/* {modalType === "Documents" && isJudge && (
-                <div>
-                  <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <TextInput
-                      className="field desktop-w-full"
-                      onChange={(e) => {
-                        setBusinessOfTheDay(e.target.value);
-                      }}
-                      disable={isDisabled}
-                      defaultValue={currentDiaryEntry?.businessOfDay || computeDefaultBOTD}
-                      style={{ minWidth: "500px" }}
-                      textInputStyle={{ maxWidth: "100%" }}
-                    />
-                    {currentDiaryEntry && (
-                      <Button
-                        label={t("SAVE")}
-                        variation={"primary"}
-                        style={{ padding: 15, boxShadow: "none" }}
-                        onButtonClick={() => {
-                          handleUpdateBusinessOfDayEntry();
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
-              )} */}
             </div>
             {(userRoles.includes("SUBMISSION_RESPONDER") || userType === "employee") && (
               <div className={`application-comment`}>

@@ -12,6 +12,7 @@ import ReactTooltip from "react-tooltip";
 import {
   _getDigitilizationPatiresName,
   getAssistantAdvocateMembersForPartiesTab,
+  getAuthorizedUuid,
   getClerkMembersForPartiesTab,
   getDate,
   modifiedEvidenceNumber,
@@ -1336,7 +1337,8 @@ export const UICustomizations = {
           select: (data) => {
             const allLitigantAdvocatesMapping = getAdvocates(data.criteria[0].responseList[0]);
             const userInfo = Digit.UserService.getUser()?.info;
-            const editorUuid = userInfo?.uuid;
+            const userUuid = userInfo?.uuid;
+            const editorUuid = getAuthorizedUuid(userUuid);
 
             // Either an advocate who is representing any "complainant" or any "PIP complainant" ->> only these
             // 2 type can edit details of any complainant/accused from actions in parties tab.
@@ -1590,7 +1592,8 @@ export const UICustomizations = {
         : row?.individualId;
       const caseId = row?.caseId;
       const isAdvocate = row?.isAdvocateEditor;
-      const editorUuid = userInfo?.uuid;
+      const userUuid = userInfo?.uuid;
+      const editorUuid = getAuthorizedUuid(userUuid);
 
       return [
         {
@@ -2682,8 +2685,8 @@ export const UICustomizations = {
       const courtId = localStorage.getItem("courtId");
       const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
       const isCitizen = userRoles?.includes("CITIZEN");
-      const selectedAdvocate = getSelectedAdvocate();
       const userUUID = Digit.UserService.getUser()?.info?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUUID);
       return {
         ...requestCriteria,
         body: {
@@ -2695,7 +2698,7 @@ export const UICustomizations = {
               ...(courtId ? { courtId } : {}),
               ...(requestCriteria?.state?.searchForm?.type?.code ? { type: requestCriteria.state.searchForm.type.code } : {}),
               ...(requestCriteria?.state?.searchForm?.documentNumber ? { documentNumber: requestCriteria.state.searchForm.documentNumber } : {}),
-              ...(isCitizen ? { assignedTo: [userUUID] } : {}),
+              ...(isCitizen ? { assignedTo: [authorizedUuid] } : {}),
               ...(!isCitizen ? { assignedRoles: [...userRoles] } : {}),
             },
             limit: requestCriteria?.state?.tableForm?.limit || 10,

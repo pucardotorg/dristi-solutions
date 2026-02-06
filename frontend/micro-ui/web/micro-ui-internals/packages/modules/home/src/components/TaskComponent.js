@@ -21,6 +21,7 @@ import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -48,7 +49,6 @@ const TasksComponent = ({
   caseType,
   setCaseType,
   isLitigant,
-  uuid,
   filingNumber,
   inCase = false,
   hideFilters = false,
@@ -70,6 +70,8 @@ const TasksComponent = ({
   const taskTypeCode = useMemo(() => taskType?.code, [taskType]);
   const [searchCaseLoading, setSearchCaseLoading] = useState(false);
   const userInfo = Digit.UserService.getUser()?.info;
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const todayDate = useMemo(() => new Date().getTime(), []);
   const [totalPendingTask, setTotalPendingTask] = useState(0);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
@@ -119,22 +121,22 @@ const TasksComponent = ({
 
     // Citizen litigant
     if (userType === "citizen" && individualUserType === "LITIGANT") {
-      return uuid ? { assignedTo: uuid } : null;
+      return userUuid ? { assignedTo: userUuid } : null;
     }
 
     // Advocate / office logic
 
-    if (!uuid) return null;
+    if (!userUuid) return null;
     if (!selectedSeniorAdvocate?.uuid) return null;
-    if (selectedSeniorAdvocate.uuid === uuid) {
-      return { assignedTo: uuid };
+    if (selectedSeniorAdvocate.uuid === userUuid) {
+      return { assignedTo: userUuid };
     }
 
     return {
       officeAdvocateUuid: selectedSeniorAdvocate.uuid,
-      officeMemberUuid: uuid,
+      officeMemberUuid: userUuid,
     };
-  }, [userType, individualUserType, uuid, selectedSeniorAdvocate?.uuid]);
+  }, [userType, individualUserType, userUuid, selectedSeniorAdvocate?.uuid]);
 
   const { data: pendingTaskDetails = [], isLoading, refetch, isFetching: isFetchingPendingTask } = useGetPendingTask({
     data: {
@@ -840,7 +842,7 @@ const TasksComponent = ({
               entityType: "case-default",
               referenceId: pendingTask?.referenceId,
               status: "PENDING_RESPONSE",
-              assignedTo: [{ uuid: userInfo?.uuid }],
+              assignedTo: [{ uuid: authorizedUuid }],
               assignedRole: ["CASE_RESPONDER"],
               cnrNumber: pendingTask?.cnrNumber,
               filingNumber: pendingTask?.filingNumber,
@@ -862,7 +864,7 @@ const TasksComponent = ({
         return { continue: false };
       }
     },
-    [responsePendingTask, tenantId, userInfo?.uuid]
+    [responsePendingTask, tenantId, authorizedUuid]
   );
 
   const getCaseDetailsUrl = useCallback(

@@ -7,7 +7,6 @@ import { getFormattedName } from "../../../../../hearings/src/utils";
 import isEmpty from "lodash/isEmpty";
 import { TextArea } from "@egovernments/digit-ui-components";
 import TranscriptComponent from "../../../../../hearings/src/pages/employee/Transcription";
-import WitnessModal from "../../../../../hearings/src/components/WitnessModal";
 import { Urls } from "../../../hooks";
 import { getFilingType } from "../../../Utils";
 import { hearingService } from "../../../../../hearings/src/hooks/services";

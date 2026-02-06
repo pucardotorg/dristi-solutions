@@ -90,6 +90,7 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
     searchParams.set("hearingId", scheduledHearing?.hearingId);
     searchParams.set("filingNumber", scheduledHearing?.filingNumber);
     if (userType === "citizen") {
+      //checkkk
       history.push(`/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`);
     } else if (scheduledHearing?.status === "SCHEDULED") {
       DRISTIService.startHearing({ hearing: scheduledHearing }).then(() => {
