@@ -610,7 +610,7 @@ public class WorkflowQueryBuilder {
 
         List<String> states = criteria.getStates();
         if (!CollectionUtils.isEmpty(states)) {
-            query.append("AND pi.status IN (").append(createQuery(states)).append(") ");
+            query.append("AND st.state IN (").append(createQuery(states)).append(") ");
             addToPreparedStatement(preparedStmtList, states);
         }
 
