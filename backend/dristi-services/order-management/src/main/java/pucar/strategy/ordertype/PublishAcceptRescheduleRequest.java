@@ -78,40 +78,46 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
     public OrderRequest postProcess(OrderRequest orderRequest) {
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         Order order = orderRequest.getOrder();
-
         ZoneId zone = ZoneId.of(config.getZoneId());
-
-        LocalDate hearingDate = Instant.ofEpochMilli(order.getNextHearingDate())
-                .atZone(zone)
-                .toLocalDate();
-
-        LocalDate today = LocalDate.now(zone);
-
-        boolean isSameDate = hearingDate.equals(today);
-        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
         String refHearingId = "";
+        String newPurposeOfHearing = "";
+        LocalDate hearingDate = null;
         try {
             ObjectMapper mapper = new ObjectMapper();
-            String json = mapper.writeValueAsString(orderRequest.getOrder().getAdditionalDetails());
-            refHearingId = JsonPath.read(json, "$.refHearingId");
+            String jsonAdditionalDetails = mapper.writeValueAsString(orderRequest.getOrder().getAdditionalDetails());
+            refHearingId = JsonPath.read(jsonAdditionalDetails, "$.refHearingId");
+
+            String jsonOrderDetails = mapper.writeValueAsString(orderRequest.getOrder().getOrderDetails());
+            Long  newHearingDateEpoch = JsonPath.read(jsonOrderDetails, "$.newHearingDate");
+            newPurposeOfHearing = JsonPath.read(jsonOrderDetails, "$.purposeOfHearing");
+            hearingDate = Instant.ofEpochMilli(newHearingDateEpoch)
+                    .atZone(zone)
+                    .toLocalDate();
+
         } catch (Exception e) {
             throw new CustomException("ERROR", "Error occurred while processing json");
         }
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
                 .criteria(HearingCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).hearingId(refHearingId).build()).build());
         Hearing hearing = hearings.get(0);
+
+        LocalDate today = LocalDate.now(zone);
+
+        boolean isSameDate = hearingDate.equals(today);
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
+
         Long time = hearingDate.atStartOfDay(ZoneId.of(config.getZoneId())).toInstant().toEpochMilli();
         if (time != null) {
             hearing.setStartTime(time);
             hearing.setEndTime(time);
         }
+        hearing.setHearingType(newPurposeOfHearing);
 
         if (isSameDate) {
             WorkflowObject workflow = new WorkflowObject();
             workflow.setAction(MARK_COMPLETE);
             workflow.setComments("Update Hearing");
             hearing.setWorkflow(workflow);
-            hearing.setHearingType(order.getPurposeOfNextHearing());
 
             hearingUtil.updateHearingSummary(orderRequest, hearing);
 
@@ -123,13 +129,11 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
                 workflow.setAction(RESCHEDULE_ONGOING);
                 workflow.setComments("Update Hearing");
                 hearing.setWorkflow(workflow);
-                hearing.setHearingType(order.getPurposeOfNextHearing());
             } else {
                 WorkflowObject workflow = new WorkflowObject();
                 workflow.setAction(UPDATE_DATE);
                 workflow.setComments("Update Hearing");
                 hearing.setWorkflow(workflow);
-                hearing.setHearingType(order.getPurposeOfNextHearing());
             }
 
             StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());

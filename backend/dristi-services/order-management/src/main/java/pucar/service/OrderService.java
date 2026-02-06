@@ -112,15 +112,7 @@ public class OrderService {
 
         orderProcessor.preProcessOrder(request);
 
-        boolean isRescheduleRequest = Optional.ofNullable(order.getCompositeItems())
-                .map(obj -> (List<Map<String, Object>>) obj)
-                .orElse(List.of())
-                .stream()
-                .anyMatch(item -> ACCEPT_RESCHEDULING_REQUEST.equals(String.valueOf(item.get("orderType"))));
-
-        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())
-                && request.getOrder().getNextHearingDate() != null
-                && !ACCEPT_RESCHEDULING_REQUEST.equalsIgnoreCase(order.getOrderType()) && !isRescheduleRequest) {
+        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate() != null) {
             hearingUtil.preProcessScheduleNextHearing(request);
         }
 
