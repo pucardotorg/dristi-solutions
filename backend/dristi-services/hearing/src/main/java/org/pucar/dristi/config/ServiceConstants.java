@@ -70,6 +70,7 @@ public class ServiceConstants {
 
     public static final String MARK_COMPLETE = "MARK_COMPLETE";
     public static final String UPDATE_DATE = "UPDATE_DATE";
+    public static final String RESCHEDULE_ONGOING = "RESCHEDULE_ONGOING";
 
     public static final String JSON_PARSING_ERR = "JSON_PARSING_ERR";
 
