@@ -110,4 +110,10 @@ public class PendingTask {
     @JsonProperty("offices")
     private List<AdvocateOffice> offices = null;
 
+    @JsonProperty("dateOfApplication")
+    private String dateOfApplication = null;
+
+    @JsonProperty("nextHearingDate")
+    private String nextHearingDate = null;
+
 }

@@ -8,6 +8,7 @@ import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.MdmsUtil;
+import org.pucar.dristi.web.models.AssigneeToOfficeMembersType;
 import org.pucar.dristi.web.models.CaseOutcomeType;
 import org.pucar.dristi.web.models.CaseOverallStatusType;
 import org.pucar.dristi.web.models.PendingTaskType;
@@ -36,6 +37,9 @@ public class MdmsDataConfig {
     @Getter
     private Map<String, CaseOutcomeType> caseOutcomeTypeMap;
 
+    @Getter
+    private Map<String, AssigneeToOfficeMembersType> assigneeToOfficeMembersTypeMap;
+
     @Autowired
     public MdmsDataConfig(MdmsUtil mdmsUtil, ObjectMapper objectMapper, Configuration configuration) {
         this.mdmsUtil = mdmsUtil;
@@ -48,6 +52,7 @@ public class MdmsDataConfig {
         loadPendingTaskMap();
         loadCaseOverallStatusMap();
         loadCaseOutcomeMap();
+        loadAssigneeToOfficeMembersMap();
     }
     private void loadPendingTaskMap(){
         RequestInfo requestInfo = RequestInfo.builder().build();
@@ -103,6 +108,23 @@ public class MdmsDataConfig {
             }
         } catch (Exception e) {
             log.error("Unable to create case outcome map :: {}",e.getMessage());
+        }
+    }
+
+    private void loadAssigneeToOfficeMembersMap(){
+        RequestInfo requestInfo = RequestInfo.builder().build();
+        JSONArray assigneeToOfficeMembersTypeList = mdmsUtil.fetchMdmsData(requestInfo,configuration.getStateLevelTenantId(),configuration.getMdmsAssigneeToOfficeMembersModuleName(),List.of(configuration.getMdmsAssigneeToOfficeMembersMasterName()))
+                .get(configuration.getMdmsAssigneeToOfficeMembersModuleName()).get(configuration.getMdmsAssigneeToOfficeMembersMasterName());
+        assigneeToOfficeMembersTypeMap = new HashMap<>();
+
+        try {
+            for (Object o : assigneeToOfficeMembersTypeList) {
+                AssigneeToOfficeMembersType assigneeToOfficeMembersType = objectMapper.convertValue(o, AssigneeToOfficeMembersType.class);
+                String workflowModule = assigneeToOfficeMembersType.getWorkflowModule();
+                assigneeToOfficeMembersTypeMap.put(workflowModule, assigneeToOfficeMembersType);
+            }
+        } catch (Exception e) {
+            log.error("Unable to create assignee to office members map :: {}",e.getMessage());
         }
     }
 }

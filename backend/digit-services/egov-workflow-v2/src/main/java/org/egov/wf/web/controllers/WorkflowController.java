@@ -6,9 +6,15 @@ import java.util.List;
 import javax.validation.Valid;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.egov.wf.service.AssigneeService;
 import org.egov.wf.service.WorkflowService;
 import org.egov.wf.util.ResponseInfoFactory;
+import org.egov.wf.web.models.Assignee;
+import org.egov.wf.web.models.AssigneeRequest;
+import org.egov.wf.web.models.AssigneeResponse;
+import org.egov.wf.web.models.AssigneeSearchRequest;
 import org.egov.wf.web.models.ProcessInstance;
+import org.egov.wf.web.models.ProcessInstanceIdResponse;
 import org.egov.wf.web.models.ProcessInstanceRequest;
 import org.egov.wf.web.models.ProcessInstanceResponse;
 import org.egov.wf.web.models.ProcessInstanceSearchCriteria;
@@ -39,14 +45,18 @@ public class WorkflowController {
 
     private final ResponseInfoFactory responseInfoFactory;
 
+    private final AssigneeService assigneeService;
+
 
     @Autowired
     public WorkflowController(ObjectMapper objectMapper, HttpServletRequest request,
-                              WorkflowService workflowService, ResponseInfoFactory responseInfoFactory) {
+                              WorkflowService workflowService, ResponseInfoFactory responseInfoFactory,
+                              AssigneeService assigneeService) {
         this.objectMapper = objectMapper;
         this.request = request;
         this.workflowService = workflowService;
         this.responseInfoFactory = responseInfoFactory;
+        this.assigneeService = assigneeService;
     }
 
 
@@ -119,6 +129,34 @@ public class WorkflowController {
         criteria.setIsNearingSlaCount(Boolean.TRUE);
         Integer count = workflowService.count(requestInfoWrapper.getRequestInfo(),criteria);
         return new ResponseEntity<>(count,HttpStatus.OK);
+    }
+
+    @RequestMapping(value="/assignee/_upsert", method = RequestMethod.POST)
+    public ResponseEntity<AssigneeResponse> upsertAssignee(@Valid @RequestBody AssigneeRequest assigneeRequest) {
+        List<Assignee> assignees = assigneeService.upsertAssignees(assigneeRequest);
+        AssigneeResponse response = AssigneeResponse.builder()
+                .assignees(assignees)
+                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(assigneeRequest.getRequestInfo(), true))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    /**
+     * Searches for process instance IDs by assignee with optional filtering by businessService and states.
+     * Supports excludeUuids to filter out instances assigned to specific users.
+     * Only considers the latest process instance record (history = false behavior).
+     * @param assigneeSearchRequest The request containing search criteria
+     * @return List of process instance IDs matching the criteria
+     */
+    @RequestMapping(value="/assignee/_search", method = RequestMethod.POST)
+    public ResponseEntity<ProcessInstanceIdResponse> searchAssigneeExclusion(@Valid @RequestBody AssigneeSearchRequest assigneeSearchRequest) {
+        List<String> processInstanceIds = assigneeService.searchProcessInstanceIdsByAssignee(assigneeSearchRequest.getCriteria());
+        ProcessInstanceIdResponse response = ProcessInstanceIdResponse.builder()
+                .processInstanceIds(processInstanceIds)
+                .totalCount(processInstanceIds.size())
+                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(assigneeSearchRequest.getRequestInfo(), true))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

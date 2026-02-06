@@ -51,4 +51,18 @@ public class AdvocateOfficeCaseMemberRepository {
         }
     }
 
+    public List<String> getAdvocateUuidsByMemberAndCase(String memberUserUuid, String caseId) {
+        String query = "SELECT DISTINCT office_advocate_user_uuid " +
+                       "FROM dristi_advocate_office_case_member " +
+                       "WHERE member_user_uuid = ? AND case_id = ? AND is_active = true " +
+                       "AND office_advocate_user_uuid IS NOT NULL";
+
+        try {
+            return jdbcTemplate.queryForList(query, String.class, memberUserUuid, caseId);
+        } catch (Exception e) {
+            log.error("Error fetching advocate UUIDs for member: {} and case: {}", memberUserUuid, caseId, e);
+            return new ArrayList<>();
+        }
+    }
+
 }

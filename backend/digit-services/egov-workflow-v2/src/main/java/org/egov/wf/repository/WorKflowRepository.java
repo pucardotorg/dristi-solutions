@@ -6,6 +6,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.wf.repository.querybuilder.WorkflowQueryBuilder;
 import org.egov.wf.repository.rowmapper.WorkflowRowMapper;
 import org.egov.wf.util.WorkflowUtil;
+import org.egov.wf.web.models.AssigneeSearchCriteria;
 import org.egov.wf.web.models.ProcessInstance;
 import org.egov.wf.web.models.ProcessInstanceSearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -188,5 +189,20 @@ public class WorKflowRepository {
         query = util.replaceSchemaPlaceholder(query, criteria.getTenantId());
         Integer count =  jdbcTemplate.queryForObject(query, Integer.class, preparedStmtList.toArray());
         return count;
+    }
+
+    /**
+     * Fetches process instance IDs by assignee with optional filtering by businessService and states.
+     * Only considers the latest process instance record (history = false behavior).
+     * @param criteria The search criteria containing uuid, businessService, and states
+     * @return List of process instance IDs matching the criteria
+     */
+    public List<String> getProcessInstanceIdsByAssigneeSearch(AssigneeSearchCriteria criteria) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getProcessInstanceIdsByAssigneeSearch(criteria, preparedStmtList);
+        query = util.replaceSchemaPlaceholder(query, criteria.getTenantId());
+        log.info("Query for assignee ID search: " + query);
+        log.info("Params: " + preparedStmtList);
+        return jdbcTemplate.query(query, new SingleColumnRowMapper<>(String.class), preparedStmtList.toArray());
     }
 }

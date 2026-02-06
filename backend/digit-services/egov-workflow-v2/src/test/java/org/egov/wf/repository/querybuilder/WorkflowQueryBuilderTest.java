@@ -15,6 +15,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 
 import org.egov.wf.config.WorkflowConfig;
+import org.egov.wf.web.models.AssigneeSearchCriteria;
 import org.egov.wf.web.models.ProcessInstanceSearchCriteria;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -24,9 +25,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
 
@@ -54,7 +71,7 @@ class WorkflowQueryBuilderTest {
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and id in (select"
-                        + " processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid"
+                        + " processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid"
                         + " = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER BY pi_outer.lastModifiedTime"
                         + " DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
@@ -64,9 +81,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds4() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 0, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(0)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
 
@@ -94,7 +127,7 @@ class WorkflowQueryBuilderTest {
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and id in (select"
-                        + " processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid"
+                        + " processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid"
                         + " = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER BY pi_outer.lastModifiedTime"
                         + " DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
@@ -104,9 +137,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds6() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -163,7 +212,7 @@ class WorkflowQueryBuilderTest {
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and id in (select"
-                        + " processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid"
+                        + " processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid"
                         + " = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER BY pi_outer.lastModifiedTime"
                         + " DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
@@ -203,9 +252,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds7() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -264,7 +329,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND pi_outer.tenantid=?  and id in (select processinstanceid"
-                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND"
+                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND"
                         + " pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER BY pi_outer.lastModifiedTime DESC "
                         + " OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
@@ -304,9 +369,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds9() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -363,7 +444,7 @@ class WorkflowQueryBuilderTest {
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and id in (select"
-                        + " processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid"
+                        + " processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid"
                         + " = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER BY pi_outer.lastModifiedTime"
                         + " DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
@@ -403,9 +484,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds10() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -462,7 +559,7 @@ class WorkflowQueryBuilderTest {
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and id in (select"
-                        + " processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid"
+                        + " processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid"
                         + " = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER BY pi_outer.lastModifiedTime"
                         + " DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
@@ -502,9 +599,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds11() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -600,9 +713,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds12() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -658,7 +787,7 @@ class WorkflowQueryBuilderTest {
         processInstanceSearchCriteria.setToDate(1L);
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(" select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and id in"
-                + " (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND"
+                + " (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND"
                 + " pi_outer.tenantid = ?  AND pi_outer.modulename =?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET"
                 + " ?  LIMIT ? ", workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
         verify(processInstanceSearchCriteria, atLeast(1)).getHistory();
@@ -697,9 +826,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds13() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -755,7 +900,7 @@ class WorkflowQueryBuilderTest {
         processInstanceSearchCriteria.setToDate(1L);
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(" select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and id in"
-                + " (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND"
+                + " (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND"
                 + " pi_outer.tenantid = ?  AND pi_outer.modulename =?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET"
                 + " ?  LIMIT ? ", workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
         verify(processInstanceSearchCriteria, atLeast(1)).getHistory();
@@ -795,9 +940,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds14() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -854,7 +1015,7 @@ class WorkflowQueryBuilderTest {
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and id in"
-                        + " (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND"
+                        + " (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND"
                         + " pi_outer.tenantid = ?  AND pi_outer.businessservice =?  ORDER BY pi_outer.lastModifiedTime DESC "
                         + " OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
@@ -894,9 +1055,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds15() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
 
@@ -956,7 +1133,7 @@ class WorkflowQueryBuilderTest {
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(" select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and pi_outer"
                         + ".businessId IN (  ?) and id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where"
-                        + " asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename"
+                        + " asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename"
                         + " =?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
         verify(processInstanceSearchCriteria, atLeast(1)).getHistory();
@@ -995,9 +1172,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds16() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
 
@@ -1058,7 +1251,7 @@ class WorkflowQueryBuilderTest {
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(" select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and pi_outer"
                         + ".businessId IN (  ?, ?) and id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where"
-                        + " asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename"
+                        + " asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename"
                         + " =?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
         verify(processInstanceSearchCriteria, atLeast(1)).getHistory();
@@ -1097,9 +1290,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds17() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
 
@@ -1158,10 +1367,7 @@ class WorkflowQueryBuilderTest {
         processInstanceSearchCriteria.setToDate(1L);
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(
-                " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=? and pi_outer.id"
-                        + " IN ( ?) and id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee"
-                        + " = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER"
-                        + " BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
+                " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=? and pi_outer.id IN ( ?) and id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
         verify(processInstanceSearchCriteria, atLeast(1)).getHistory();
         verify(processInstanceSearchCriteria, atLeast(1)).getLimit();
@@ -1199,9 +1405,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceIds18() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
 
@@ -1260,10 +1482,7 @@ class WorkflowQueryBuilderTest {
         processInstanceSearchCriteria.setToDate(1L);
         ArrayList<Object> objectList = new ArrayList<>();
         assertEquals(
-                " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and pi_outer.status"
-                        + " IN ( ?) and id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee"
-                        + " = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER"
-                        + " BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
+                " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.tenantid=?  and pi_outer.status IN ( ?) and id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =?  AND pi_outer.modulename =?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getProcessInstanceIds(processInstanceSearchCriteria, objectList));
         verify(processInstanceSearchCriteria, atLeast(1)).getHistory();
         verify(processInstanceSearchCriteria, atLeast(1)).getLimit();
@@ -1301,7 +1520,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceSearchQueryById() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ArrayList<String> ids = new ArrayList<>();
         assertEquals(
                 " SELECT pi.*,st.*,ac.*,doc.*,pi.id as wf_id,pi.lastModifiedTime as wf_lastModifiedTime,pi.createdTime"
@@ -1311,7 +1530,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.id IN () ORDER BY wf_lastModifiedTime DESC ",
@@ -1331,7 +1550,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.id IN () ORDER BY wf_lastModifiedTime DESC ",
@@ -1341,7 +1560,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceSearchQueryById3() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ArrayList<String> stringList = new ArrayList<>();
         stringList
@@ -1352,7 +1571,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE ");
@@ -1365,7 +1584,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.id IN ( ?) ORDER BY wf_lastModifiedTime DESC ",
@@ -1376,7 +1595,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceSearchQueryById4() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ArrayList<String> stringList = new ArrayList<>();
         stringList
@@ -1387,7 +1606,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE ");
@@ -1399,7 +1618,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE ");
@@ -1412,7 +1631,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.id IN ( ?, ?) ORDER BY wf_lastModifiedTime DESC ",
@@ -1423,7 +1642,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdCount() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = new ProcessInstanceSearchCriteria();
         processInstanceSearchCriteria.setAssignee("Assignee");
@@ -1451,7 +1670,7 @@ class WorkflowQueryBuilderTest {
                 " select count(DISTINCT id) from ( select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE "
                         + " pi_outer.lastmodifiedTime = (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner"
                         + " where pi_inner.businessid = pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid"
-                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND"
+                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND"
                         + " pi_outer.businessservice =?  AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer"
                         + ".lastmodifiedTime) BETWEEN ? AND ?  ORDER BY pi_outer.lastModifiedTime DESC ) as count",
                 workflowQueryBuilder.getInboxIdCount(processInstanceSearchCriteria, objectList));
@@ -1488,7 +1707,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(" select count(DISTINCT id) from ( select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE "
                         + " pi_outer.lastmodifiedTime = (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner"
                         + " where pi_inner.businessid = pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid"
-                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND"
+                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND"
                         + " pi_outer.businessservice =?  AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer"
                         + ".lastmodifiedTime) BETWEEN ? AND ?  ORDER BY pi_outer.lastModifiedTime DESC ) as count",
                 workflowQueryBuilder.getInboxIdCount(processInstanceSearchCriteria, objectList));
@@ -1498,7 +1717,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdCount3() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getIsNearingSlaCount()).thenReturn(true);
@@ -1552,7 +1771,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(" select count(DISTINCT id) from ( select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE "
                         + " pi_outer.lastmodifiedTime = (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner"
                         + " where pi_inner.businessid = pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid"
-                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND"
+                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND"
                         + " pi_outer.businessservice =?  AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer"
                         + ".lastmodifiedTime) BETWEEN ? AND ?  ORDER BY pi_outer.lastModifiedTime DESC ) as count",
                 workflowQueryBuilder.getInboxIdCount(processInstanceSearchCriteria, objectList));
@@ -1590,7 +1809,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdCount4() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getIsNearingSlaCount()).thenReturn(false);
@@ -1644,7 +1863,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(" select count(DISTINCT id) from ( select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE "
                         + " pi_outer.lastmodifiedTime = (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner"
                         + " where pi_inner.businessid = pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid"
-                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND"
+                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND"
                         + " pi_outer.businessservice =?  ORDER BY pi_outer.lastModifiedTime DESC ) as count",
                 workflowQueryBuilder.getInboxIdCount(processInstanceSearchCriteria, objectList));
         verify(processInstanceSearchCriteria, atLeast(1)).getIsAssignedToMeCount();
@@ -1680,7 +1899,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdCount5() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getIsNearingSlaCount()).thenReturn(null);
@@ -1734,7 +1953,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(" select count(DISTINCT id) from ( select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE "
                         + " pi_outer.lastmodifiedTime = (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner"
                         + " where pi_inner.businessid = pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid"
-                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND"
+                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND"
                         + " pi_outer.businessservice =?  ORDER BY pi_outer.lastModifiedTime DESC ) as count",
                 workflowQueryBuilder.getInboxIdCount(processInstanceSearchCriteria, objectList));
         verify(processInstanceSearchCriteria, atLeast(1)).getIsAssignedToMeCount();
@@ -1770,7 +1989,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdCount6() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getIsNearingSlaCount()).thenReturn(true);
@@ -1824,7 +2043,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(" select count(DISTINCT id) from ( select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE "
                         + " pi_outer.lastmodifiedTime = (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner"
                         + " where pi_inner.businessid = pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid"
-                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND ((select"
+                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND ((select"
                         + " extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND ?  ORDER BY"
                         + " pi_outer.lastModifiedTime DESC ) as count",
                 workflowQueryBuilder.getInboxIdCount(processInstanceSearchCriteria, objectList));
@@ -1862,7 +2081,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdCount7() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getIsNearingSlaCount()).thenReturn(true);
@@ -1916,7 +2135,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(" select count(DISTINCT id) from ( select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE "
                         + " pi_outer.lastmodifiedTime = (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner"
                         + " where pi_inner.businessid = pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid"
-                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND ((select"
+                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND ((select"
                         + " extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND ?  ORDER BY"
                         + " pi_outer.lastModifiedTime DESC ) as count",
                 workflowQueryBuilder.getInboxIdCount(processInstanceSearchCriteria, objectList));
@@ -1954,9 +2173,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery3() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
 
@@ -1986,7 +2221,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND"
                         + " ?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, true));
@@ -1996,9 +2231,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery4() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 0, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(0)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
 
@@ -2028,7 +2279,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND"
                         + " ?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, true));
@@ -2038,9 +2289,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery6() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -2100,7 +2367,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND"
                         + " ?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, true));
@@ -2140,9 +2407,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery7() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -2202,7 +2485,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND"
                         + " ?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, true));
@@ -2243,9 +2526,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery8() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -2305,7 +2604,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND"
                         + " ?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, true));
@@ -2346,9 +2645,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery9() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -2408,7 +2723,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, true));
         verify(processInstanceSearchCriteria, atLeast(1)).getIsAssignedToMeCount();
@@ -2446,9 +2761,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery10() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -2508,7 +2839,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, true));
         verify(processInstanceSearchCriteria, atLeast(1)).getIsAssignedToMeCount();
@@ -2546,9 +2877,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery11() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -2608,7 +2955,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND"
                         + " ?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, true));
@@ -2648,9 +2995,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery12() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -2710,7 +3073,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND"
                         + " ?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, true));
@@ -2750,9 +3113,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery13() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -2812,7 +3191,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND ((select extract(epoch from"
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND ((select extract(epoch from"
                         + " current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND ?  ORDER BY pi_outer.lastModifiedTime"
                         + " DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, true));
@@ -2852,9 +3231,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery14() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -2914,7 +3309,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND ((select extract(epoch from"
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND ((select extract(epoch from"
                         + " current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND ?  ORDER BY pi_outer.lastModifiedTime"
                         + " DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, true));
@@ -2954,9 +3349,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery15() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -3016,7 +3427,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND"
                         + " ?  ORDER BY pi_outer.lastModifiedTime DESC ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, false));
@@ -3054,9 +3465,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxIdQuery17() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", false, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(false)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -3116,7 +3543,7 @@ class WorkflowQueryBuilderTest {
                 " select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND"
                         + " ?  ORDER BY pi_outer.lastModifiedTime DESC  OFFSET ?  LIMIT ? ",
                 workflowQueryBuilder.getInboxIdQuery(processInstanceSearchCriteria, objectList, true));
@@ -3158,9 +3585,25 @@ class WorkflowQueryBuilderTest {
     void testGetInboxIdQuery19() {
 
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(0);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
@@ -3261,7 +3704,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxCount() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = new ProcessInstanceSearchCriteria();
         processInstanceSearchCriteria.setAssignee("Assignee");
@@ -3291,7 +3734,7 @@ class WorkflowQueryBuilderTest {
                 + " id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                 + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                 + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                 + " AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND"
                 + " ?  ORDER BY pi_outer.lastModifiedTime DESC ) ) cq GROUP BY cq.applicationStatus,cq.businessservice"
                 + ",cq.PI_STATUS", workflowQueryBuilder.getInboxCount(processInstanceSearchCriteria, objectList, true));
@@ -3332,7 +3775,7 @@ class WorkflowQueryBuilderTest {
                         + " id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND"
                         + " ?  ORDER BY pi_outer.lastModifiedTime DESC ) ) cq GROUP BY cq.applicationStatus,cq.businessservice"
                         + ",cq.PI_STATUS",
@@ -3343,7 +3786,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxCount3() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getIsNearingSlaCount()).thenReturn(true);
@@ -3401,7 +3844,7 @@ class WorkflowQueryBuilderTest {
                         + " id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND"
                         + " ?  ORDER BY pi_outer.lastModifiedTime DESC ) ) cq GROUP BY cq.applicationStatus,cq.businessservice"
                         + ",cq.PI_STATUS",
@@ -3440,7 +3883,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxCount4() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getIsNearingSlaCount()).thenReturn(false);
@@ -3498,7 +3941,7 @@ class WorkflowQueryBuilderTest {
                         + " id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " ORDER BY pi_outer.lastModifiedTime DESC ) ) cq GROUP BY cq.applicationStatus,cq.businessservice,cq"
                         + ".PI_STATUS",
                 workflowQueryBuilder.getInboxCount(processInstanceSearchCriteria, objectList, true));
@@ -3536,7 +3979,7 @@ class WorkflowQueryBuilderTest {
     void testGetInboxCount5() {
 
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getIsNearingSlaCount()).thenReturn(null);
@@ -3594,7 +4037,7 @@ class WorkflowQueryBuilderTest {
                         + " id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND pi_outer.businessservice =? "
                         + " ORDER BY pi_outer.lastModifiedTime DESC ) ) cq GROUP BY cq.applicationStatus,cq.businessservice,cq"
                         + ".PI_STATUS",
                 workflowQueryBuilder.getInboxCount(processInstanceSearchCriteria, objectList, true));
@@ -3631,7 +4074,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxCount6() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getIsNearingSlaCount()).thenReturn(true);
@@ -3689,7 +4132,7 @@ class WorkflowQueryBuilderTest {
                         + " id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND ((select extract(epoch from"
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND ((select extract(epoch from"
                         + " current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND ?  ORDER BY pi_outer.lastModifiedTime"
                         + " DESC ) ) cq GROUP BY cq.applicationStatus,cq.businessservice,cq.PI_STATUS",
                 workflowQueryBuilder.getInboxCount(processInstanceSearchCriteria, objectList, true));
@@ -3727,7 +4170,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxCount7() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getIsNearingSlaCount()).thenReturn(true);
@@ -3785,7 +4228,7 @@ class WorkflowQueryBuilderTest {
                         + " id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE  pi_outer.lastmodifiedTime = (SELECT"
                         + " max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner where pi_inner.businessid ="
                         + " pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid from {SCHEMA}.eg_wf_assignee_v2"
-                        + " asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND ((select extract(epoch from"
+                        + " asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND ((select extract(epoch from"
                         + " current_timestamp)) * 1000 - pi_outer.lastmodifiedTime) BETWEEN ? AND ?  ORDER BY pi_outer.lastModifiedTime"
                         + " DESC ) ) cq GROUP BY cq.applicationStatus,cq.businessservice,cq.PI_STATUS",
                 workflowQueryBuilder.getInboxCount(processInstanceSearchCriteria, objectList, true));
@@ -3824,7 +4267,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxCount10() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getIsNearingSlaCount()).thenReturn(true);
@@ -3878,7 +4321,7 @@ class WorkflowQueryBuilderTest {
         assertEquals("select count(DISTINCT id) from ( select id from {SCHEMA}.eg_wf_processinstance_v2 pi_outer WHERE "
                         + " pi_outer.lastmodifiedTime = (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 as pi_inner"
                         + " where pi_inner.businessid = pi_outer.businessid and tenantid = ? )  AND id in (select processinstanceid"
-                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ?) AND pi_outer.tenantid = ?  AND"
+                        + " from {SCHEMA}.eg_wf_assignee_v2 asg_inner where asg_inner.assignee = ? AND asg_inner.isActive = true) AND pi_outer.tenantid = ?  AND"
                         + " pi_outer.businessservice =?  AND ((select extract(epoch from current_timestamp)) * 1000 - pi_outer"
                         + ".lastmodifiedTime) BETWEEN ? AND ?  ORDER BY pi_outer.lastModifiedTime DESC ) as count",
                 workflowQueryBuilder.getInboxCount(processInstanceSearchCriteria, objectList, false));
@@ -3916,7 +4359,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceCount() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = new ProcessInstanceSearchCriteria();
         processInstanceSearchCriteria.setAssignee("Assignee");
@@ -3949,7 +4392,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.tenantid=?  AND pi.businessservice =?  AND ((select extract(epoch"
@@ -3995,7 +4438,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.tenantid=?  AND pi.businessservice =?  AND ((select extract(epoch"
@@ -4008,7 +4451,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceCount3() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getHistory()).thenReturn(true);
@@ -4070,7 +4513,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.tenantid=?  AND pi.businessservice =?  AND ((select extract(epoch"
@@ -4113,7 +4556,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceCount4() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getHistory()).thenReturn(false);
@@ -4175,7 +4618,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.lastmodifiedTime  IN  (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf"
@@ -4219,7 +4662,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceCount5() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getHistory()).thenReturn(true);
@@ -4281,7 +4724,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.tenantid=?  AND pi.businessservice =?  AND asg.assignee=? ) as cq"
@@ -4322,7 +4765,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceCount6() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getHistory()).thenReturn(true);
@@ -4384,7 +4827,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.tenantid=?  AND pi.businessservice =?  AND ((select extract(epoch"
@@ -4427,7 +4870,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceCount7() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getHistory()).thenReturn(true);
@@ -4489,7 +4932,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.tenantid=?  AND ((select extract(epoch from current_timestamp)) *"
@@ -4532,7 +4975,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceCount8() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ArrayList<String> stringList = new ArrayList<>();
         stringList
@@ -4543,7 +4986,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE ");
@@ -4608,7 +5051,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.tenantid=?  and pi.businessId IN ( ?) AND pi.businessservice =?  AND"
@@ -4651,7 +5094,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceCount9() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ArrayList<String> stringList = new ArrayList<>();
         stringList
@@ -4662,7 +5105,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE ");
@@ -4674,7 +5117,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE ");
@@ -4739,7 +5182,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.tenantid=?  and pi.businessId IN ( ?, ?) AND pi.businessservice =? "
@@ -4782,7 +5225,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceCount10() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ArrayList<String> stringList = new ArrayList<>();
         stringList
@@ -4793,7 +5236,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE ");
@@ -4858,7 +5301,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.tenantid=? and pi.id IN ( ?) AND pi.businessservice =?  AND ((select"
@@ -4901,7 +5344,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceCount11() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ArrayList<String> stringList = new ArrayList<>();
         stringList
@@ -4912,7 +5355,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE ");
@@ -4977,7 +5420,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.tenantid=?  AND pi.businessservice =?  and pi.status  IN ( ?) AND"
@@ -5020,7 +5463,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceCount12() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ArrayList<String> stringList = new ArrayList<>();
         stringList
@@ -5031,7 +5474,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE ");
@@ -5096,7 +5539,7 @@ class WorkflowQueryBuilderTest {
                         + " doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,     "
                         + "  st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action"
                         + " as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN        {SCHEMA}.eg_wf"
-                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
+                        + "_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN        {SCHEMA}.eg_wf_document_v2"
                         + " doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2 st ON st.uuid ="
                         + " pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND"
                         + " ac.active=TRUE        WHERE  pi.tenantid=?  AND pi.businessservice =?  and CONCAT (pi.tenantid,':'"
@@ -5140,7 +5583,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetProcessInstanceCount13() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getSlotPercentageSlaLimit()).thenReturn(1L);
         when(processInstanceSearchCriteria.getHistory()).thenReturn(true);
@@ -5201,7 +5644,7 @@ class WorkflowQueryBuilderTest {
                         + " doc.lastModifiedBy as doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee"
                         + " as assigneeuuid,       st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId"
                         + " as ac_tenantId,ac.action as ac_action       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER"
-                        + " JOIN        {SCHEMA}.eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id  LEFT OUTER JOIN       "
+                        + " JOIN        {SCHEMA}.eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN       "
                         + " {SCHEMA}.eg_wf_document_v2 doc  ON doc.processinstanceid = pi.id  INNER JOIN        {SCHEMA}.eg_wf_state_v2"
                         + " st ON st.uuid = pi.status LEFT OUTER JOIN        {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState ="
                         + " st.uuid AND ac.active=TRUE        WHERE  pi.tenantid=?  AND pi.businessservice =?  AND ((select"
@@ -5244,7 +5687,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxApplicationsBusinessIdsQuery() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = new ProcessInstanceSearchCriteria();
         processInstanceSearchCriteria.setAssignee("Assignee");
@@ -5312,7 +5755,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetInboxApplicationsBusinessIdsQuery3() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getAssignee()).thenReturn("Assignee");
         when(processInstanceSearchCriteria.getBusinessService()).thenReturn("Business Service");
@@ -5391,7 +5834,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetEscalatedApplicationsCount3() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.setUserInfo(new User());
@@ -5421,7 +5864,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "select count(DISTINCT businessid) from (SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,"
                         + "  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime DESC) outer_rank  FROM"
-                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid"
+                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid AND assg.isActive = true"
                         + " WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId"
                         + " ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE  tenantid = ?  AND "
                         + " businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final WHERE outer_rank"
@@ -5433,7 +5876,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetEscalatedApplicationsCount5() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         RequestInfo requestInfo = mock(RequestInfo.class);
         when(requestInfo.getUserInfo()).thenReturn(new User());
 
@@ -5462,7 +5905,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "select count(DISTINCT businessid) from (SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,"
                         + "  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime DESC) outer_rank  FROM"
-                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid"
+                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid AND assg.isActive = true"
                         + " WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId"
                         + " ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE  tenantid = ?  AND "
                         + " businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final WHERE outer_rank"
@@ -5475,7 +5918,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetEscalatedApplicationsCount6() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         RequestInfo requestInfo = mock(RequestInfo.class);
         when(requestInfo.getUserInfo()).thenReturn(new User(123L, "janedoe",
                 "select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId ORDER BY createdtime  DESC)"
@@ -5509,7 +5952,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "select count(DISTINCT businessid) from (SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,"
                         + "  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime DESC) outer_rank  FROM"
-                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid"
+                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid AND assg.isActive = true"
                         + " WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId ORDER"
                         + " BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE  tenantid = ?  AND  businessservice"
                         + " = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final WHERE outer_rank = 2  AND asg = ?"
@@ -5522,7 +5965,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetEscalatedApplicationsCount8() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         RequestInfo requestInfo = mock(RequestInfo.class);
         when(requestInfo.getUserInfo()).thenReturn(new User());
 
@@ -5577,7 +6020,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "select count(DISTINCT businessid) from (SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,"
                         + "  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime DESC) outer_rank  FROM"
-                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid"
+                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid AND assg.isActive = true"
                         + " WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId ORDER"
                         + " BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE  tenantid = ?  and businessId"
                         + " IN (  ?) AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final WHERE"
@@ -5614,7 +6057,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetEscalatedApplicationsCount9() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         RequestInfo requestInfo = mock(RequestInfo.class);
         when(requestInfo.getUserInfo()).thenReturn(new User());
 
@@ -5672,7 +6115,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "select count(DISTINCT businessid) from (SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,"
                         + "  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime DESC) outer_rank  FROM"
-                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid"
+                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid AND assg.isActive = true"
                         + " WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId ORDER"
                         + " BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE  tenantid = ?  and businessId"
                         + " IN (  ?, ?) AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final"
@@ -5709,9 +6152,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetEscalatedApplicationsCount11() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -5767,7 +6226,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "select count(DISTINCT businessid) from (SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,"
                         + "  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime DESC) outer_rank  FROM"
-                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid"
+                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid AND assg.isActive = true"
                         + " WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId ORDER"
                         + " BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE  tenantid = ?  AND  businessservice"
                         + " = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final WHERE outer_rank = 2  OFFSET ? "
@@ -5806,9 +6265,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetEscalatedApplicationsCount12() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 0, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(0)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -5864,7 +6339,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "select count(DISTINCT businessid) from (SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,"
                         + "  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime DESC) outer_rank  FROM"
-                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid"
+                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid AND assg.isActive = true"
                         + " WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId ORDER"
                         + " BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE  tenantid = ?  AND  businessservice"
                         + " = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final WHERE outer_rank = 2  OFFSET ? "
@@ -5903,9 +6378,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetEscalatedApplicationsCount14() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -5961,7 +6452,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "select count(DISTINCT businessid) from (SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,"
                         + "  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime DESC) outer_rank  FROM"
-                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid"
+                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid AND assg.isActive = true"
                         + " WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId ORDER"
                         + " BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE  tenantid = ?  AND  businessservice"
                         + " = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final WHERE outer_rank = 2  OFFSET ? "
@@ -6000,9 +6491,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetEscalatedApplicationsCount15() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -6058,7 +6565,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "select count(DISTINCT businessid) from (SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,"
                         + "  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime DESC) outer_rank  FROM"
-                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid"
+                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid AND assg.isActive = true"
                         + " WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId ORDER"
                         + " BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE  tenantid = ?  AND  businessservice"
                         + " = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final WHERE outer_rank = 2  OFFSET ? "
@@ -6097,9 +6604,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetEscalatedApplicationsCount16() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -6155,7 +6678,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "select count(DISTINCT businessid) from (SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,"
                         + "  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime DESC) outer_rank  FROM"
-                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid"
+                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid AND assg.isActive = true"
                         + " WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId"
                         + " ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE  tenantid = ?  AND "
                         + " businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final WHERE outer_rank"
@@ -6192,9 +6715,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetEscalatedApplicationsCount17() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -6250,7 +6789,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "select count(DISTINCT businessid) from (SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,"
                         + "  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime DESC) outer_rank  FROM"
-                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid"
+                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid AND assg.isActive = true"
                         + " WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId ORDER"
                         + " BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE  tenantid = ? ) wf  WHERE"
                         + " rank_number = 1 AND wf.escalated = true ) ) final WHERE outer_rank = 2  OFFSET ?  LIMIT ? ) as"
@@ -6289,9 +6828,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetEscalatedApplicationsCount18() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -6347,7 +6902,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "select count(DISTINCT businessid) from (SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,"
                         + "  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime DESC) outer_rank  FROM"
-                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid"
+                        + " {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id = assg.processinstanceid AND assg.isActive = true"
                         + " WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId"
                         + " ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE  businessservice = ?"
                         + " ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final WHERE outer_rank = 2  OFFSET ?  LIMIT"
@@ -6386,7 +6941,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsFinalQuery3() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.setUserInfo(new User());
@@ -6416,7 +6971,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid"
                         + " ORDER BY wf.createdtime DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2"
-                        + " assg ON wf.id = assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
+                        + " assg ON wf.id = assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
                         + " () OVER (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2"
                         + "  WHERE  tenantid = ?  AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true )"
                         + " ) final WHERE outer_rank = 2 ",
@@ -6428,7 +6983,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsFinalQuery5() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         RequestInfo requestInfo = mock(RequestInfo.class);
         when(requestInfo.getUserInfo()).thenReturn(new User());
 
@@ -6457,7 +7012,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid"
                         + " ORDER BY wf.createdtime DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2"
-                        + " assg ON wf.id = assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
+                        + " assg ON wf.id = assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
                         + " () OVER (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2"
                         + "  WHERE  tenantid = ?  AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true )"
                         + " ) final WHERE outer_rank = 2 ",
@@ -6470,7 +7025,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsFinalQuery6() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         RequestInfo requestInfo = mock(RequestInfo.class);
         when(requestInfo.getUserInfo()).thenReturn(new User(123L, "janedoe",
                 "select businessId from (  SELECT *,RANK () OVER (PARTITION BY businessId ORDER BY createdtime  DESC)"
@@ -6504,7 +7059,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid"
                         + " ORDER BY wf.createdtime DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2"
-                        + " assg ON wf.id = assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
+                        + " assg ON wf.id = assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
                         + " () OVER (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2"
                         + "  WHERE  tenantid = ?  AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true )"
                         + " ) final WHERE outer_rank = 2  AND asg = ? ",
@@ -6517,7 +7072,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsFinalQuery8() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         RequestInfo requestInfo = mock(RequestInfo.class);
         when(requestInfo.getUserInfo()).thenReturn(new User());
 
@@ -6572,7 +7127,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid"
                         + " ORDER BY wf.createdtime DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2"
-                        + " assg ON wf.id = assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
+                        + " assg ON wf.id = assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
                         + " () OVER (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2"
                         + "  WHERE  tenantid = ?  and businessId IN (  ?) AND  businessservice = ? ) wf  WHERE rank_number = 1"
                         + " AND wf.escalated = true ) ) final WHERE outer_rank = 2 ",
@@ -6609,7 +7164,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsFinalQuery9() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         RequestInfo requestInfo = mock(RequestInfo.class);
         when(requestInfo.getUserInfo()).thenReturn(new User());
 
@@ -6667,7 +7222,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid"
                         + " ORDER BY wf.createdtime DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2"
-                        + " assg ON wf.id = assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
+                        + " assg ON wf.id = assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
                         + " () OVER (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2"
                         + "  WHERE  tenantid = ?  and businessId IN (  ?, ?) AND  businessservice = ? ) wf  WHERE rank_number ="
                         + " 1 AND wf.escalated = true ) ) final WHERE outer_rank = 2 ",
@@ -6705,9 +7260,25 @@ class WorkflowQueryBuilderTest {
     void testGetAutoEscalatedApplicationsFinalQuery11() {
 
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -6763,7 +7334,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid"
                         + " ORDER BY wf.createdtime DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2"
-                        + " assg ON wf.id = assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
+                        + " assg ON wf.id = assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
                         + " () OVER (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2"
                         + "  WHERE  tenantid = ?  AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true )"
                         + " ) final WHERE outer_rank = 2  OFFSET ?  LIMIT ? ",
@@ -6802,9 +7373,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsFinalQuery12() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 0, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(0)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -6860,7 +7447,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid"
                         + " ORDER BY wf.createdtime DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2"
-                        + " assg ON wf.id = assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
+                        + " assg ON wf.id = assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
                         + " () OVER (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2"
                         + "  WHERE  tenantid = ?  AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true )"
                         + " ) final WHERE outer_rank = 2  OFFSET ?  LIMIT ? ",
@@ -6899,9 +7486,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsFinalQuery14() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -6957,7 +7560,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid"
                         + " ORDER BY wf.createdtime DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2"
-                        + " assg ON wf.id = assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
+                        + " assg ON wf.id = assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
                         + " () OVER (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2"
                         + "  WHERE  tenantid = ?  AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true )"
                         + " ) final WHERE outer_rank = 2  OFFSET ?  LIMIT ? ",
@@ -6996,9 +7599,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsFinalQuery15() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -7054,7 +7673,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid"
                         + " ORDER BY wf.createdtime DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2"
-                        + " assg ON wf.id = assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
+                        + " assg ON wf.id = assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
                         + " () OVER (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2"
                         + "  WHERE  tenantid = ?  AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true )"
                         + " ) final WHERE outer_rank = 2  OFFSET ?  LIMIT ? ",
@@ -7093,9 +7712,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsFinalQuery16() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -7151,7 +7786,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid"
                         + " ORDER BY wf.createdtime DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2"
-                        + " assg ON wf.id = assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
+                        + " assg ON wf.id = assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
                         + " () OVER (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2"
                         + "  WHERE  tenantid = ?  AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true )"
                         + " ) final WHERE outer_rank = 2 ",
@@ -7188,9 +7823,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsFinalQuery17() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -7246,7 +7897,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid"
                         + " ORDER BY wf.createdtime DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2"
-                        + " assg ON wf.id = assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
+                        + " assg ON wf.id = assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
                         + " () OVER (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2"
                         + "  WHERE  tenantid = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final WHERE outer_rank"
                         + " = 2  OFFSET ?  LIMIT ? ",
@@ -7285,9 +7936,25 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsFinalQuery18() {
 
-        WorkflowConfig workflowConfig = new WorkflowConfig("UTC", 1, 1, 3, "Save Transition Topic",
-                "Save Business Service Topic", "2020-03-01", "localhost", "https://config.us-east-2.amazonaws.com",
-                "localhost", "https://config.us-east-2.amazonaws.com", true, "MD", 3, 3, true);
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
         workflowConfig.setDefaultLimit(1);
         WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
         RequestInfo requestInfo = mock(RequestInfo.class);
@@ -7343,7 +8010,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT businessid from ( SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid"
                         + " ORDER BY wf.createdtime DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2"
-                        + " assg ON wf.id = assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
+                        + " assg ON wf.id = assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK"
                         + " () OVER (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2"
                         + "  WHERE  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true ) ) final WHERE"
                         + " outer_rank = 2  OFFSET ?  LIMIT ? ",
@@ -7382,7 +8049,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsRankedQuery() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = new ProcessInstanceSearchCriteria();
         processInstanceSearchCriteria.setAssignee("Assignee");
@@ -7409,7 +8076,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime"
                         + " DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id ="
-                        + " assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER"
+                        + " assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER"
                         + " (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE"
                         + "  tenantid = ?  AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true )",
                 workflowQueryBuilder.getAutoEscalatedApplicationsRankedQuery(processInstanceSearchCriteria, objectList));
@@ -7446,7 +8113,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime"
                         + " DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id ="
-                        + " assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER"
+                        + " assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER"
                         + " (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE"
                         + "  tenantid = ?  AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true )",
                 workflowQueryBuilder.getAutoEscalatedApplicationsRankedQuery(processInstanceSearchCriteria, objectList));
@@ -7456,7 +8123,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsRankedQuery3() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getBusinessService()).thenReturn("Business Service");
         when(processInstanceSearchCriteria.getTenantId()).thenReturn("42");
@@ -7505,7 +8172,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime"
                         + " DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id ="
-                        + " assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER"
+                        + " assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER"
                         + " (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE"
                         + "  tenantid = ?  AND  businessservice = ? ) wf  WHERE rank_number = 1 AND wf.escalated = true )",
                 workflowQueryBuilder.getAutoEscalatedApplicationsRankedQuery(processInstanceSearchCriteria, objectList));
@@ -7538,7 +8205,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsRankedQuery4() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ArrayList<String> stringList = new ArrayList<>();
         stringList
@@ -7592,7 +8259,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime"
                         + " DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id ="
-                        + " assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER"
+                        + " assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER"
                         + " (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE"
                         + "  tenantid = ?  and businessId IN (  ?) AND  businessservice = ? ) wf  WHERE rank_number = 1 AND"
                         + " wf.escalated = true )",
@@ -7654,7 +8321,7 @@ class WorkflowQueryBuilderTest {
         //       at java.util.stream.ReferencePipeline.findFirst(ReferencePipeline.java:543)
         //   See https://diff.blue/R026 to resolve this issue.
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ArrayList<String> stringList = new ArrayList<>();
         stringList
@@ -7711,7 +8378,7 @@ class WorkflowQueryBuilderTest {
         assertEquals(
                 "SELECT wf.* , assg.assignee AS asg,  DENSE_RANK() OVER(PARTITION BY wf.businessid ORDER BY wf.createdtime"
                         + " DESC) outer_rank  FROM {SCHEMA}.eg_wf_processinstance_v2 wf LEFT OUTER JOIN {SCHEMA}.eg_wf_assignee_v2 assg ON wf.id ="
-                        + " assg.processinstanceid WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER"
+                        + " assg.processinstanceid AND assg.isActive = true WHERE wf.businessid IN (select businessId from (  SELECT *,RANK () OVER"
                         + " (PARTITION BY businessId ORDER BY createdtime  DESC) rank_number  FROM {SCHEMA}.eg_wf_processinstance_v2  WHERE"
                         + "  tenantid = ?  and businessId IN (  ?, ?) AND  businessservice = ? ) wf  WHERE rank_number = 1 AND"
                         + " wf.escalated = true )",
@@ -7745,7 +8412,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsBusinessIdsQuery() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = new ProcessInstanceSearchCriteria();
         processInstanceSearchCriteria.setAssignee("Assignee");
@@ -7815,7 +8482,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsBusinessIdsQuery3() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
         ProcessInstanceSearchCriteria processInstanceSearchCriteria = mock(ProcessInstanceSearchCriteria.class);
         when(processInstanceSearchCriteria.getBusinessService()).thenReturn("Business Service");
         when(processInstanceSearchCriteria.getTenantId()).thenReturn("42");
@@ -7895,7 +8562,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsBusinessIdsQuery4() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ArrayList<String> stringList = new ArrayList<>();
         stringList
@@ -7980,7 +8647,7 @@ class WorkflowQueryBuilderTest {
     @Test
     void testGetAutoEscalatedApplicationsBusinessIdsQuery5() {
 
-        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(new WorkflowConfig());
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(WorkflowConfig.builder().build());
 
         ArrayList<String> stringList = new ArrayList<>();
         stringList
@@ -8063,6 +8730,174 @@ class WorkflowQueryBuilderTest {
         verify(processInstanceSearchCriteria).setTenantSpecifiStatus((List<String>) any());
         verify(processInstanceSearchCriteria).setToDate((Long) any());
         assertEquals(4, objectList.size());
+    }
+
+    @Test
+    void testGetProcessInstanceIdsByAssigneeExclusion() {
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
+
+        List<String> uuids = new ArrayList<>();
+        uuids.add("user-uuid-123");
+
+        AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
+                .tenantId("pg.citya")
+                .uuid(uuids.get(0))
+                .build();
+
+        ArrayList<Object> preparedStmtList = new ArrayList<>();
+        String query = workflowQueryBuilder.getProcessInstancesByAssigneeSearch(criteria, preparedStmtList);
+
+        assertEquals(
+                " SELECT pi.*,st.*,ac.*,doc.*,pi.id as wf_id,pi.lastModifiedTime as wf_lastModifiedTime,pi.createdTime as wf_createdTime,"
+                        + "       pi.createdBy as wf_createdBy,pi.lastModifiedBy as wf_lastModifiedBy,pi.status as pi_status, pi.tenantid as pi_tenantid, "
+                        + "       doc.lastModifiedTime as doc_lastModifiedTime,doc.createdTime as doc_createdTime,doc.createdBy as doc_createdBy,"
+                        + "       doc.lastModifiedBy as doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,"
+                        + "       st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action as ac_action"
+                        + "       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_document_v2 doc  ON doc.processinstanceid = pi.id  INNER JOIN "
+                        + "       {SCHEMA}.eg_wf_state_v2 st ON st.uuid = pi.status LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND ac.active=TRUE        WHERE  pi.lastmodifiedTime  IN  (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 GROUP BY businessid)  AND pi.tenantid = ? AND asg.assignee = ?  ORDER BY wf_lastModifiedTime DESC ",
+                query);
+        assertEquals(2, preparedStmtList.size());
+        assertEquals("pg.citya", preparedStmtList.get(0));
+        assertEquals("user-uuid-123", preparedStmtList.get(1));
+    }
+
+    @Test
+    void testGetProcessInstanceIdsByAssigneeExclusionWithExcludeUuids() {
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
+
+        List<String> uuids = new ArrayList<>();
+        uuids.add("user-uuid-123");
+
+        List<String> excludeUuids = new ArrayList<>();
+        excludeUuids.add("exclude-uuid-1");
+        excludeUuids.add("exclude-uuid-2");
+
+        AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
+                .tenantId("pg.citya")
+                .uuid(uuids.get(0))
+                .excludeUuids(excludeUuids)
+                .build();
+
+        ArrayList<Object> preparedStmtList = new ArrayList<>();
+        String query = workflowQueryBuilder.getProcessInstancesByAssigneeSearch(criteria, preparedStmtList);
+
+        assertEquals(
+                " SELECT pi.*,st.*,ac.*,doc.*,pi.id as wf_id,pi.lastModifiedTime as wf_lastModifiedTime,pi.createdTime as wf_createdTime,"
+                        + "       pi.createdBy as wf_createdBy,pi.lastModifiedBy as wf_lastModifiedBy,pi.status as pi_status, pi.tenantid as pi_tenantid, "
+                        + "       doc.lastModifiedTime as doc_lastModifiedTime,doc.createdTime as doc_createdTime,doc.createdBy as doc_createdBy,"
+                        + "       doc.lastModifiedBy as doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,"
+                        + "       st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action as ac_action"
+                        + "       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_document_v2 doc  ON doc.processinstanceid = pi.id  INNER JOIN "
+                        + "       {SCHEMA}.eg_wf_state_v2 st ON st.uuid = pi.status LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND ac.active=TRUE        WHERE  pi.lastmodifiedTime  IN  (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 GROUP BY businessid)  AND pi.tenantid = ? AND asg.assignee = ? AND NOT EXISTS (SELECT 1 FROM {SCHEMA}.eg_wf_assignee_v2 asg_exclude WHERE asg_exclude.processinstanceid = asg.processinstanceid AND asg_exclude.isActive = true AND asg_exclude.assignee IN ( ?, ?))  ORDER BY wf_lastModifiedTime DESC ",
+                query);
+        assertEquals(4, preparedStmtList.size());
+        assertEquals("pg.citya", preparedStmtList.get(0));
+        assertEquals("user-uuid-123", preparedStmtList.get(1));
+        assertEquals("exclude-uuid-1", preparedStmtList.get(2));
+        assertEquals("exclude-uuid-2", preparedStmtList.get(3));
+    }
+
+    @Test
+    void testGetProcessInstanceIdsByAssigneeExclusionWithBusinessIdLikeSearch() {
+        WorkflowConfig workflowConfig = WorkflowConfig.builder()
+                .timeZone("UTC")
+                .defaultLimit(1)
+                .defaultOffset(1)
+                .maxSearchLimit(3)
+                .saveTransitionTopic("Save Transition Topic")
+                .saveBusinessServiceTopic("Save Business Service Topic")
+                .updateBusinessServiceTopic("Update Business Service Topic")
+                .upsertAssigneeTopic("upsert-wf-assignee")
+                .mdmsHost("localhost")
+                .mdmsEndPoint("https://config.us-east-2.amazonaws.com")
+                .userHost("localhost")
+                .userSearchEndpoint("https://config.us-east-2.amazonaws.com")
+                .assignedOnly(true)
+                .stateLevelTenantId("MD")
+                .escalationBatchSize(3)
+                .stateLevelTenantIdLength(3)
+                .isEnvironmentCentralInstance(true)
+                .build();
+        WorkflowQueryBuilder workflowQueryBuilder = new WorkflowQueryBuilder(workflowConfig);
+
+        List<String> uuids = new ArrayList<>();
+        uuids.add("user-uuid-123");
+        uuids.add("user-uuid-456");
+
+        List<String> excludeUuids = new ArrayList<>();
+        excludeUuids.add("exclude-uuid-1");
+
+        AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
+                .tenantId("pg.citya")
+                .uuid(uuids.get(0))
+                .excludeUuids(excludeUuids)
+                .businessId("CASE-2024")
+                .build();
+
+        ArrayList<Object> preparedStmtList = new ArrayList<>();
+        String query = workflowQueryBuilder.getProcessInstancesByAssigneeSearch(criteria, preparedStmtList);
+
+        assertEquals(
+                " SELECT pi.*,st.*,ac.*,doc.*,pi.id as wf_id,pi.lastModifiedTime as wf_lastModifiedTime,pi.createdTime as wf_createdTime,"
+                        + "       pi.createdBy as wf_createdBy,pi.lastModifiedBy as wf_lastModifiedBy,pi.status as pi_status, pi.tenantid as pi_tenantid, "
+                        + "       doc.lastModifiedTime as doc_lastModifiedTime,doc.createdTime as doc_createdTime,doc.createdBy as doc_createdBy,"
+                        + "       doc.lastModifiedBy as doc_lastModifiedBy,doc.tenantid as doc_tenantid,doc.id as doc_id,asg.assignee as assigneeuuid,"
+                        + "       st.uuid as st_uuid,st.tenantId as st_tenantId, ac.uuid as ac_uuid,ac.tenantId as ac_tenantId,ac.action as ac_action"
+                        + "       FROM {SCHEMA}.eg_wf_processinstance_v2 pi   LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_assignee_v2 asg ON asg.processinstanceid = pi.id AND asg.isActive = true  LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_document_v2 doc  ON doc.processinstanceid = pi.id  INNER JOIN "
+                        + "       {SCHEMA}.eg_wf_state_v2 st ON st.uuid = pi.status LEFT OUTER JOIN "
+                        + "       {SCHEMA}.eg_wf_action_v2 ac ON ac.currentState = st.uuid AND ac.active=TRUE        WHERE  pi.lastmodifiedTime  IN  (SELECT max(lastmodifiedTime) from {SCHEMA}.eg_wf_processinstance_v2 GROUP BY businessid)  AND pi.tenantid = ? AND asg.assignee = ? AND pi.businessid LIKE ? AND NOT EXISTS (SELECT 1 FROM {SCHEMA}.eg_wf_assignee_v2 asg_exclude WHERE asg_exclude.processinstanceid = asg.processinstanceid AND asg_exclude.isActive = true AND asg_exclude.assignee IN ( ?))  ORDER BY wf_lastModifiedTime DESC ",
+                query);
+        assertEquals(4, preparedStmtList.size());
+        assertEquals("pg.citya", preparedStmtList.get(0));
+        assertEquals("user-uuid-123", preparedStmtList.get(1));
+        assertEquals("%CASE-2024%", preparedStmtList.get(2));
+        assertEquals("exclude-uuid-1", preparedStmtList.get(3));
     }
 }
 
