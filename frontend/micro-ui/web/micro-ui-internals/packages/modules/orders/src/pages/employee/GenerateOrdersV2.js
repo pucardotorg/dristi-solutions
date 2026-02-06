@@ -286,6 +286,7 @@ const GenerateOrdersV2 = () => {
   const isApplicationAccepted = history.location?.state?.isApplicationAccepted;
   const hasCalledApplicationAction = useRef(false);
   const [respondents, setRespondents] = useState([]);
+  const hasInitialized = useRef(false);
 
   const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }]);
   const sortedPoliceStations = useMemo(() => {
@@ -3585,6 +3586,18 @@ const GenerateOrdersV2 = () => {
             hasError = true;
             break;
           }
+
+          const newHearingDate = additionalDetails?.formdata?.newHearingDate;
+          const todayDate = new Date().toISOString().split("T")[0];
+
+          if ((currentInProgressHearing || currentOrder?.hearingNumber) && !skipScheduling && newHearingDate !== todayDate) {
+            setShowErrorToast({
+              label: t("SAME_HEARING_RESCHEDULE_DATE"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
         }
 
         if (
@@ -4495,6 +4508,25 @@ const GenerateOrdersV2 = () => {
     isApplicationDetailsLoading,
     isOrderTypeLoading,
   ]);
+
+  useEffect(() => {
+    if (!hasInitialized.current && currentOrder && (currentInProgressHearing || currentOrder?.hearingNumber)) {
+      const todayDate = new Date().toISOString().split("T")[0];
+      let hearingDate = null;
+
+      if (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+        hearingDate = currentOrder?.additionalDetails?.formdata?.newHearingDate;
+      } else {
+        const acceptRescheduleRequest = currentOrder?.compositeItems?.find((item) => item?.orderType === "ACCEPT_RESCHEDULING_REQUEST");
+        hearingDate = acceptRescheduleRequest?.orderSchema?.additionalDetails?.formdata?.newHearingDate;
+      }
+
+      if (hearingDate && hearingDate !== todayDate) {
+        setSkipScheduling(true);
+        hasInitialized.current = true;
+      }
+    }
+  }, [currentInProgressHearing, currentOrder]);
 
   if (isLoading || isCaseDetailsLoading || isHearingFetching || isOrderTypeLoading || isPurposeOfHearingLoading || isBailTypeLoading) {
     return <Loader />;
