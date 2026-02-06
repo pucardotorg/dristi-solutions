@@ -135,8 +135,8 @@ public class HearingRegistrationEnrichment {
             // if hearing status moves to complete then, we need to calculate the duration
             List<ProcessInstance> processInstance = workflowUtil.getProcessInstance(hearingRequest.getRequestInfo(), hearingRequest.getHearing().getTenantId(), hearingRequest.getHearing().getHearingId());
 
-            Long hearingDuration = 0L;
-            Long activeStart = 0L;
+            long hearingDuration = 0L;
+            long activeStart = 0L;
 
             log.info("ProcessInstance :: {}", processInstance.size());
             for (int i = processInstance.size() - 1; i >= 0; i--) {
@@ -150,7 +150,7 @@ public class HearingRegistrationEnrichment {
                         activeStart = time;
                     }
 
-                    else if (PASS_OVER.equalsIgnoreCase(action) && activeStart != null) {
+                    else if (PASS_OVER.equalsIgnoreCase(action)) {
                         hearingDuration += (time - activeStart);
                         activeStart = 0L;
                     }
@@ -160,7 +160,7 @@ public class HearingRegistrationEnrichment {
                         activeStart = 0L;
                     }
 
-                    else if (CLOSE.equalsIgnoreCase(action) && activeStart != null) {
+                    else if (CLOSE.equalsIgnoreCase(action)) {
                         hearingDuration += (time - activeStart);
                         activeStart = 0L;
                     }
