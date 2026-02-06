@@ -156,7 +156,7 @@ public class HearingRegistrationEnrichment {
                     }
 
                     else if (RESCHEDULE_ONGOING.equalsIgnoreCase(action)) {
-                        hearingDuration = null;
+                        hearingDuration = 0L;
                         activeStart = null;
                     }
 
@@ -166,7 +166,7 @@ public class HearingRegistrationEnrichment {
                     }
 
                     else if (ABANDON.equalsIgnoreCase(action)) {
-                        hearingDuration = null;
+                        hearingDuration = 0L;
                         break;
                     }
 
