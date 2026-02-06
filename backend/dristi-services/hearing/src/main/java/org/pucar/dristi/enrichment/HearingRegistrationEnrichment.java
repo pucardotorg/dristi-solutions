@@ -148,6 +148,8 @@ public class HearingRegistrationEnrichment {
                                 if (PASS_OVER.equalsIgnoreCase(otherAction)) {
                                     Long passOverTime = processInstance.get(j).getAuditDetails().getCreatedTime();
                                     Long startTime = processInstance.get(i).getAuditDetails().getCreatedTime();
+                                    if(hearingDuration==null)
+                                        hearingDuration=0L;
                                     hearingDuration = hearingDuration + (passOverTime - startTime);
                                     i--;
                                     break;
