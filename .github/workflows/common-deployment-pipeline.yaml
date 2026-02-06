@@ -1,5 +1,26 @@
 name: Common Deployment Pipeline
 
+run-name: >
+  ${{
+    github.event_name == 'workflow_dispatch' &&
+      format(
+        'Deploy to {1} : {0}',
+        github.event.inputs.services,
+        github.event.inputs.deployment_env,
+        github.ref_name
+      )
+    || github.event_name == 'pull_request' &&
+      format(
+        'PR: {0}',
+        github.event.pull_request.title
+      )
+    || github.event_name == 'push' &&
+      format(
+        'Code Push: {0}',
+        github.event.head_commit.message
+      )
+  }}
+
 on:
   workflow_dispatch:
     inputs:
@@ -22,7 +43,6 @@ on:
       - main
       - develop
       - release/*
-      - develop-actions-enhancement
 
 
 jobs:
