@@ -13,7 +13,7 @@ public class ServiceConstants {
 
     //Consumer
     public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
-    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"caseNumber\":\"%s\",\"substage\":\"%s\",\"advocateDetails\":%s,\"actionCategory\":\"%s\",\"searchableFields\":%s,\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s\",\"courtId\":\"%s\",\"createdTime\":%d,\"expiryDate\":%d,\"sectionAndSubSection\":\"%s\",\"filingDate\":%d,\"referenceEntityType\":\"%s\",\"dateOfApplication\":\"%s\",\"nextHearingDate\":\"%s\"}}\n";
+    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"caseNumber\":\"%s\",\"substage\":\"%s\",\"advocateDetails\":%s,\"actionCategory\":\"%s\",\"searchableFields\":%s,\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s\",\"courtId\":\"%s\",\"createdTime\":%d,\"expiryDate\":%d,\"sectionAndSubSection\":\"%s\",\"filingDate\":%d,\"referenceEntityType\":\"%s\",\"offices\":%s,\"dateOfApplication\":\"%s\",\"nextHearingDate\":\"%s\"}}\n";
     public static final String TENANTID_MDC_STRING = "TENANTID";
 
 

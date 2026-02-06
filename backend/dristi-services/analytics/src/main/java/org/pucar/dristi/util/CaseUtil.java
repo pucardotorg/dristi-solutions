@@ -1,5 +1,6 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -9,15 +10,13 @@ import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.Util;
+import org.pucar.dristi.web.models.casemodels.CaseAdvocateOffice;
 import org.pucar.dristi.web.models.CaseSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -190,5 +189,27 @@ public class CaseUtil {
 		}
 		log.error("cmp number not found");
 		return null;
+	}
+
+	public List<CaseAdvocateOffice> getAdvocateOffices(JsonNode caseDetails) {
+		log.info("operation = getAdvocateOffices, result = IN_PROGRESS");
+		try {
+			if (caseDetails != null && caseDetails.isArray() && !caseDetails.isEmpty()) {
+				JsonNode advocateOfficesNode = caseDetails.get(0).get("advocateOffices");
+				if (advocateOfficesNode != null && advocateOfficesNode.isArray()) {
+					List<CaseAdvocateOffice> advocateOffices = mapper.convertValue(
+							advocateOfficesNode,
+							new TypeReference<List<CaseAdvocateOffice>>() {}
+					);
+					log.info("operation = getAdvocateOffices, result = SUCCESS, count = {}", advocateOffices.size());
+					return advocateOffices;
+				}
+			}
+			log.info("operation = getAdvocateOffices, result = NO_OFFICES_FOUND");
+			return Collections.emptyList();
+		} catch (Exception e) {
+			log.error("Error while converting advocate offices", e);
+			return Collections.emptyList();
+		}
 	}
 }
