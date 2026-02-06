@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 /**
  * UICustomizations for Core Module
@@ -42,9 +42,34 @@ export const UICustomizations = {
 
     // Step 6: Custom cell rendering for table columns
     // Called when column has additionalCustomization: true
-    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+    additionalCustomizations: (row, key, column, value, t, searchResult, customProps = {}) => {
+      const { selectedRows = [], onRowSelect } = customProps;
       // key is the LABEL of the column (e.g., "Status"), NOT jsonPath!
       switch (key) {
+        case "":
+          // Checkbox column
+          const isSelected = selectedRows?.some(r => r.id === row.id);
+          return (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+            }}>
+              <input
+                type="checkbox"
+                checked={isSelected || false}
+                onChange={(e) => onRowSelect?.(row, e.target.checked)}
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  cursor: 'pointer',
+                  accentColor: '#1976d2'
+                }}
+              />
+            </div>
+          );
+
         case "Status":  // NOTE: key is the column LABEL, not jsonPath!
           // Format backend code to readable string
           // "CASE_ADMITTED" → "Case Admitted"
@@ -79,6 +104,92 @@ export const UICustomizations = {
             </span>
           );
         
+        case "Actions":
+          const [showMenu, setShowMenu] = React.useState(false);
+          const menuRef = React.useRef();
+
+          // Close menu when clicking outside
+          React.useEffect(() => {
+            const handleClickOutside = (event) => {
+              if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setShowMenu(false);
+              }
+            };
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+          }, []);
+
+          // Action handlers
+          const handleAction = (action) => {
+            setShowMenu(false);
+            window.alert(`${action}, Row: ${JSON.stringify(row)}`);
+          };
+
+          // Return three-dots menu
+          return (
+            <div style={{ position: 'relative' }} ref={menuRef}>
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                style={{
+                  backgroundColor: "transparent",
+                  color: "#666",
+                  border: "none",
+                  padding: "8px",
+                  borderRadius: "50%",
+                  cursor: "pointer",
+                  fontSize: "18px",
+                  width: "32px",
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                ⋮
+              </button>
+              {showMenu && (
+                <div style={{
+                  position: 'absolute',
+                  right: '0',
+                  top: '100%',
+                  backgroundColor: 'white',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                  borderRadius: '4px',
+                  zIndex: 1000,
+                  minWidth: '120px',
+                }}>
+                  {[
+                    { icon: '🖨️', label: 'Print' },
+                    { icon: '✏️', label: 'Edit' },
+                    { icon: '🗑️', label: 'Delete' }
+                  ].map(({ icon, label }) => (
+                    <button
+                      key={label}
+                      onClick={() => handleAction(label)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        padding: '8px 16px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        textAlign: 'left'
+                      }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = '#f5f5f5'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                    >
+                      <span>{icon}</span>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+
         default:
           return value || "-";
       }

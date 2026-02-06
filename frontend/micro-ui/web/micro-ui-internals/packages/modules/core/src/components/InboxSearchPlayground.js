@@ -11,11 +11,23 @@ import { useTranslation } from "react-i18next";
  * Route: /employee/inbox-search-composer-playground
  */
 
+import React from "react";
+
 const InboxSearchPlayground = () => {
   const { t } = useTranslation();
+  const [selectedRows, setSelectedRows] = React.useState([]);
 
-  // ============ STEP 6: CUSTOM CELL RENDERING ============
-  // Format Status column to display nicely instead of backend codes
+  // Handle row selection
+  const handleRowSelection = (row, isSelected) => {
+    if (isSelected) {
+      setSelectedRows(prev => [...prev, row]);
+    } else {
+      setSelectedRows(prev => prev.filter(r => r.id !== row.id));
+    }
+  };
+
+  // ============ STEP 7: ACTION BUTTONS ============
+  // Add Print action button to each row
   const tenantId = Digit.ULBService.getCurrentTenantId();
   
   const minimalConfig = {
@@ -103,6 +115,13 @@ const InboxSearchPlayground = () => {
         uiConfig: {
           columns: [
             {
+              label: "",  // Checkbox column
+              jsonPath: "id",
+              additionalCustomization: true,
+              sortable: false,
+              width: 50,
+            },
+            {
               label: "Filing Number",
               jsonPath: "filingNumber",
             },
@@ -119,6 +138,11 @@ const InboxSearchPlayground = () => {
               jsonPath: "status",
               additionalCustomization: true,  // Step 6: Enable custom rendering
             },
+            {
+              label: "Actions",
+              jsonPath: "id",
+              additionalCustomization: true,  // Enable custom rendering for action buttons
+            },
           ],
           enableGlobalSearch: false,
           enableColumnSort: true,
@@ -134,21 +158,69 @@ const InboxSearchPlayground = () => {
       <h2 style={{ marginBottom: "20px" }}>InboxSearchComposer Learning Playground</h2>
       
       <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#e3f2fd", borderRadius: "8px" }}>
-        <h3>Step 6: Custom Cell Rendering (additionalCustomizations)</h3>
-        <p><strong>NEW:</strong> Format Status column from <code>CASE_ADMITTED</code> → <code>Case Admitted</code></p>
+        <h3>Step 7: Action Buttons</h3>
+        <p><strong>NEW:</strong> Added Print action button to each row</p>
         <p><strong>Key Learning:</strong></p>
         <ul style={{ margin: "5px 0", paddingLeft: "20px" }}>
-          <li><code>additionalCustomization: true</code> on column config</li>
-          <li><code>additionalCustomizations(row, key, column, value, t)</code> in UICustomizations</li>
-          <li>Return JSX or formatted value for custom display</li>
-          <li>Can add colors, badges, icons, links, etc.</li>
+          <li>Add action column with <code>additionalCustomization: true</code></li>
+          <li>Return button JSX from <code>additionalCustomizations</code></li>
+          <li>Use <code>onClick</code> to handle button actions</li>
+          <li>Access row data via first parameter in <code>additionalCustomizations</code></li>
         </ul>
-        <p><strong>Notice:</strong> Status column now shows "Case Admitted" instead of "CASE_ADMITTED"</p>
+        <p><strong>Try:</strong> Click the Print button on any row!</p>
       </div>
 
       <div style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "20px", backgroundColor: "#fafafa" }}>
-        <InboxSearchComposer configs={minimalConfig} />
+        <InboxSearchComposer 
+          configs={{
+            ...minimalConfig,
+            customProps: { selectedRows, onRowSelect: handleRowSelection }
+          }} 
+        />
       </div>
+
+      {/* Selected Items Summary */}
+      {selectedRows.length > 0 && (
+        <div style={{
+          position: 'sticky',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: '#1976d2',
+          color: 'white',
+          padding: '16px',
+          marginTop: '20px',
+          borderRadius: '8px',
+          boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <div>
+            <span style={{ fontSize: '16px', fontWeight: '500' }}>
+              {selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'} selected
+            </span>
+            <div style={{ fontSize: '14px', marginTop: '4px', opacity: 0.9 }}>
+              {selectedRows.map(row => row.caseNumber).join(', ')}
+            </div>
+          </div>
+          <button
+            onClick={() => setSelectedRows([])}
+            style={{
+              backgroundColor: 'white',
+              color: '#1976d2',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+            }}
+          >
+            Clear Selection
+          </button>
+        </div>
+      )}
 
       <div style={{ marginTop: "20px", padding: "15px", backgroundColor: "#fff3e0", borderRadius: "8px" }}>
         <h4>Current Config (Step 6):</h4>
