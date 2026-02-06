@@ -1,12 +1,12 @@
 name: Common Deployment Pipeline
 
 run-name: >
-  ${{ 
-    github.event_name == 'workflow_dispatch' && 
+  ${{
+    github.event_name == 'workflow_dispatch' &&
       format(
-        'Deploy {0}-{1} on {2}',
-        github.event.inputs.environment,
-        github.event.inputs.service,
+        'Deploy {0} to {1} on {2}',
+        github.event.inputs.services,
+        github.event.inputs.deployment_env,
         github.ref_name
       )
     || github.event_name == 'pull_request' &&
