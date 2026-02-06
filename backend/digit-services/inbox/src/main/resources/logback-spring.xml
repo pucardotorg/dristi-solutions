@@ -21,43 +21,29 @@
     <!-- Conditionally define Loki Appender -->
     <if condition='property("lokiEnabled").equalsIgnoreCase("true")'>
         <then>
+            <!-- LOKI appender for loki4j 1.4.x compatible format -->
+            <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+                <http class="com.github.loki4j.logback.ApacheHttpSender">
+                    <url>${lokiUrl}</url>
+                    <connectionTimeoutMs>5000</connectionTimeoutMs>
+                    <requestTimeoutMs>3000</requestTimeoutMs>
+                </http>
+                <format>
+                    <label>
+                        <pattern>app=${appName},environment=${env},host=${HOSTNAME},level=%level,logger=%logger</pattern>
+                    </label>
+                    <message>
+                        <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] TENANTID=%X{TENANTID:-null} CORRELATION_ID=%X{CORRELATION_ID:-null} - %msg%n</pattern>
+                    </message>
+                </format>
+            </appender>
+
+            <!-- Async wrapper for LOKI appender - defined AFTER LOKI -->
             <appender name="LOKI_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
                 <appender-ref ref="LOKI"/>
                 <queueSize>1000</queueSize>
                 <discardingThreshold>0</discardingThreshold>
                 <neverBlock>true</neverBlock>
-            </appender>
-
-            <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-                <labels>
-                    app=${appName}
-                    environment=${env}
-                    host=${HOSTNAME}
-                    level=%level
-                    file=%logger
-                    tenant_id=%mdc{TENANTID:-null}
-                    correlation_id=%mdc{CORRELATION_ID:-null}
-                </labels>
-                <structuredMetadata>
-                    level=%level
-                    thread=%thread
-                    logger=%logger
-                    *=%%mdc
-                    *=%%kvp
-                </structuredMetadata>
-                <message>
-                    <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] - %msg%n</pattern>
-                </message>
-                <http>
-                    <url>${lokiUrl}</url>
-                    <connectionTimeoutMs>5000</connectionTimeoutMs>
-                    <requestTimeoutMs>3000</requestTimeoutMs>
-                </http>
-                <batch>
-                    <drainOnStop>false</drainOnStop>
-                    <staticLabels>false</staticLabels>
-                </batch>
-                <verbose>false</verbose>
             </appender>
 
             <!-- When Loki enabled: Console + Loki Async -->

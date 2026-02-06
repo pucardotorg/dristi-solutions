@@ -3150,6 +3150,7 @@ const GenerateOrdersV2 = () => {
       const isMediationChanged = getMediationChangedFlag(order?.orderDetails, {
         ...orderSchema?.orderDetails,
         mediationCentre: t(orderSchema?.orderDetails?.mediationCentre),
+        modeOfSigning: "INITIATE_E-SIGN",
         parties,
       });
 

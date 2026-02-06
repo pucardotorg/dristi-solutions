@@ -258,7 +258,7 @@ public class IndexerUtilsTest {
                 "COURT-456", "HEARING", "{\"complainant\":[\"John Doe\"]}", "action",
                 "[\"filingNumber\",\"COURT-456\",\"caseTitle\",\"John Doe\"]", "[null]", "[\"role\"]", "cnrNumber",
                 "filingNumber", "caseId", "caseTitle", true, 123L, 456L,
-                "{\"key\":\"value\"}", null, null, 1000000000, null, "NIA S138", 1000000000, null, "[]"
+                "{\"key\":\"value\"}", null, null, 1000000000, null, "NIA S138", 1000000000, null, "[]", null, null
         );
 
         // Assert
@@ -336,7 +336,7 @@ public class IndexerUtilsTest {
 
         String expected = String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", null,null,"{}","null",null,"[\"user1\"]", "[\"role1\",\"role2\"]", "null", "null", "null","null",false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, "{\"complainant\":[\"John Doe\"]}", null,null,1000000000, null, null, null, null, "[]"
+                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", null,null,"{}","null",null,"[\"user1\"]", "[\"role1\",\"role2\"]", "null", "null", "null","null",false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, "{\"complainant\":[\"John Doe\"]}", null,null,1000000000, null, null, null, null, "[]", null, null
         );
 
         PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).build();
@@ -421,7 +421,7 @@ public class IndexerUtilsTest {
         String expected = String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
                 "index", "referenceId", "id", "name", "entityType", "referenceId", "status", null, null, "{}", null, null,
-                "[{\"uuid\":\"user1\"}]", "[\"role1\"]", null, null, null, null, false, 1086400000, 456L, "{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}", null, null, 1000000000L, null, null, null, null, "[]"
+                "[{\"uuid\":\"user1\"}]", "[\"role1\"]", null, null, null, null, false, 1086400000, 456L, "{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}", null, null, 1000000000L, null, null, null, null, "[]", null, null
         );
 
         PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).actor("judge").build();
