@@ -81,7 +81,14 @@ import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkfl
 import { applicationTypes } from "../../utils/applicationTypes";
 import { HearingWorkflowState } from "../../utils/hearingWorkflow";
 import { ordersService, taskService } from "../../hooks/services";
-import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName, getSafeFileExtension } from "../../utils";
+import {
+  getRespondantName,
+  getComplainantName,
+  constructFullName,
+  removeInvalidNameParts,
+  getFormattedName,
+  getSafeFileExtension,
+} from "../../utils";
 import {
   channelTypeEnum,
   checkValidation,
@@ -2993,6 +3000,7 @@ const GenerateOrdersV2 = () => {
       const isMediationChanged = getMediationChangedFlag(order?.orderDetails, {
         ...orderSchema?.orderDetails,
         mediationCentre: t(orderSchema?.orderDetails?.mediationCentre),
+        modeOfSigning: "INITIATE_E-SIGN",
         parties,
       });
 
@@ -4548,7 +4556,7 @@ const GenerateOrdersV2 = () => {
                       }
                     }}
                     value={purposeOfHearing || purposeOfHearingData?.find((item) => item?.code === currentOrder?.purposeOfNextHearing)}
-                    config={{...purposeOfHearingConfig?.populators, options: purposeOfHearingData}}
+                    config={{ ...purposeOfHearingConfig?.populators, options: purposeOfHearingData }}
                     disable={skipScheduling}
                   ></CustomDropdown>
                   {errors[purposeOfHearingConfig?.key] && (
