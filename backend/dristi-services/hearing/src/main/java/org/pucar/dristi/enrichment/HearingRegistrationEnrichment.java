@@ -136,7 +136,7 @@ public class HearingRegistrationEnrichment {
             List<ProcessInstance> processInstance = workflowUtil.getProcessInstance(hearingRequest.getRequestInfo(), hearingRequest.getHearing().getTenantId(), hearingRequest.getHearing().getHearingId());
 
             Long hearingDuration = 0L;
-            Long activeStart = null;
+            Long activeStart = 0L;
 
             log.info("ProcessInstance :: {}", processInstance.size());
             for (int i = processInstance.size() - 1; i >= 0; i--) {
@@ -152,17 +152,17 @@ public class HearingRegistrationEnrichment {
 
                     else if (PASS_OVER.equalsIgnoreCase(action) && activeStart != null) {
                         hearingDuration += (time - activeStart);
-                        activeStart = null;
+                        activeStart = 0L;
                     }
 
                     else if (RESCHEDULE_ONGOING.equalsIgnoreCase(action)) {
                         hearingDuration = 0L;
-                        activeStart = null;
+                        activeStart = 0L;
                     }
 
                     else if (CLOSE.equalsIgnoreCase(action) && activeStart != null) {
                         hearingDuration += (time - activeStart);
-                        activeStart = null;
+                        activeStart = 0L;
                     }
 
                     else if (ABANDON.equalsIgnoreCase(action)) {
@@ -173,13 +173,11 @@ public class HearingRegistrationEnrichment {
                 }
             }
 
-            if (hearingDuration != null) {
-                String action = processInstance.get(0).getAction();
-                if (START.equalsIgnoreCase(action)) {
-                    Long currentTime = System.currentTimeMillis();
-                    log.info("Last action :: {}, createdTime :: {}", "CLOSE", currentTime);
-                    hearingDuration = hearingDuration + (currentTime - processInstance.get(0).getAuditDetails().getCreatedTime());
-                }
+            String action = processInstance.get(0).getAction();
+            if (START.equalsIgnoreCase(action)) {
+                Long currentTime = System.currentTimeMillis();
+                log.info("Last action :: {}, createdTime :: {}", "CLOSE", currentTime);
+                hearingDuration = hearingDuration + (currentTime - processInstance.get(0).getAuditDetails().getCreatedTime());
             }
 
             hearingRequest.getHearing().setHearingDurationInMillis(hearingDuration);
