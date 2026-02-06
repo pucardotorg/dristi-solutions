@@ -148,6 +148,24 @@ public class EmployeeService {
 		return generateResponse(employeeRequest);
 	}
 
+	public EmployeeResponse createForExistingUsers(EmployeeRequest employeeRequest) {
+
+		RequestInfo requestInfo = employeeRequest.getRequestInfo();
+		String tenantId = employeeRequest.getEmployees().get(0).getTenantId();
+
+		Map<String, String> pwdMap = new HashMap<>();
+		idGenService.setIds(employeeRequest);
+		employeeRequest.getEmployees().stream().forEach(employee -> {
+			enrichCreateRequest(employee, requestInfo);
+			createHrmsForExistingUsers(employee, requestInfo);
+			pwdMap.put(employee.getUuid(), employee.getUser().getPassword());
+			employee.getUser().setPassword(null);
+		});
+		String hrmsCreateTopic = propertiesManager.getSaveEmployeeTopic();
+		hrmsProducer.push(tenantId, hrmsCreateTopic, employeeRequest);
+		return generateResponse(employeeRequest);
+	}
+
 
 	/**
 	 * Searches employees on a given criteria.
@@ -253,6 +271,32 @@ public class EmployeeService {
 		}catch(Exception e) {
 			log.error("Exception while creating user: ",e);
 			log.error("request: "+request);
+			throw new CustomException(ErrorConstants.HRMS_USER_CREATION_FAILED_CODE, ErrorConstants.HRMS_USER_CREATION_FAILED_MSG);
+		}
+
+	}
+
+	private void createHrmsForExistingUsers(Employee employee, RequestInfo requestInfo) {
+		enrichUser(employee);
+		try {
+			if(!StringUtils.isEmpty(employee.getCode())){
+				Map<String, Object> userSearchCriteria = new HashMap<>();
+				userSearchCriteria.put(HRMSConstants.HRMS_USER_SEARCH_CRITERA_TENANTID,employee.getTenantId());
+				userSearchCriteria.put(HRMSConstants.HRMS_USER_SEARCH_CRITERA_USERNAME,employee.getCode());
+                UserResponse response = userService.getUser(requestInfo, userSearchCriteria);
+                if (response != null && !CollectionUtils.isEmpty(response.getUser())) {
+                    User user = response.getUser().get(0);
+                    employee.setId(user.getId());
+                    employee.setUuid(user.getUuid());
+                    employee.getUser().setId(user.getId());
+                    employee.getUser().setUuid(user.getUuid());
+                    } else {
+                    throw new CustomException("HRMS_USER_NOT_FOUND_CODE",
+                            "User not found with employee code: " + employee.getCode());
+                    }
+			}
+		}catch(Exception e) {
+			log.error("Exception while creating user: ",e);
 			throw new CustomException(ErrorConstants.HRMS_USER_CREATION_FAILED_CODE, ErrorConstants.HRMS_USER_CREATION_FAILED_MSG);
 		}
 

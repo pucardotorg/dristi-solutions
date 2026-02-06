@@ -38,6 +38,9 @@ public class CaseSummary {
     @JsonProperty("outcome")
     private String outcome;
 
+    @JsonProperty("natureOfDisposal")
+    private NatureOfDisposal natureOfDisposal;
+
     @JsonProperty("litigants")
     private List<PartySummary> litigants;
 

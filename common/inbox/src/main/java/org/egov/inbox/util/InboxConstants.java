@@ -6,10 +6,12 @@ import org.springframework.stereotype.Component;
 public class InboxConstants {
 
     public static final String INBOX_QUERY_CONFIG_NAME = "InboxQueryConfiguration";
+    public static final String INBOX_SORT_CONFIG_NAME = "InboxSortConfiguration";
 
     public static final String INBOX_MODULE_CODE = "INBOX";
 
     public static final String MDMS_RESPONSE_JSONPATH = "$.MdmsRes.INBOX.InboxQueryConfiguration[?(@.module==\'{{MODULE_NAME}}\')]";
+    public static final String MDMS_SORT_RESPONSE_JSONPATH = "$.MdmsRes.INBOX.InboxSortConfiguration[?(@.module==\'{{MODULE_NAME}}\')]";
 
     public static final String MODULE_PLACEHOLDER = "{{MODULE_NAME}}";
 
@@ -71,10 +73,42 @@ public class InboxConstants {
 
     public static final String STATE = "state";
 
-    public static final String TYPE_SORTING_SCRIPT = "{\"_script\":{\"type\":\"string\",\"script\":{\"source\":\"def value = doc['Data.%s.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { return parts[0]; } else { return ''; } } else { return ''; }\"},\"order\":\"desc\"}}";
+    public static final String TYPE_SORTING_SCRIPT = "{\"_script\": {\"type\": \"string\",\"script\": {\"source\": \"def value = doc['Data.%s.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { def prefix = parts[0]; if (prefix == 'ST') { return '1_ST'; } else if (prefix == 'CMP') { return '2_CMP'; } else if (prefix == 'LP') { return '3_LP'; } else { return '9_' + prefix; } } else { return 'z_empty'; } } else { return 'z_null'; }\"},\"order\": \"asc\"}}";
     public static final String YEAR_SORTING_SCRIPT = "{\"_script\":{\"type\":\"number\",\"script\":{\"source\":\"def value = doc['Data.%s.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 2) { return Long.parseLong(parts[2]); } else { return 0; } } else { return 0; }\"},\"order\":\"asc\"}}";
     public static final String NUMBER_SORTING_SCRIPT= "{\"_script\":{\"type\":\"number\",\"script\":{\"source\":\"def value = doc['Data.%s.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { return Long.parseLong(parts[1]); } else { return 0; } } else { return 0; }\"},\"order\":\"asc\"}}";
     public static final String OPEN_HEARING_INDEX = "open-hearing-index";
     public static final String ORDER_NOTIFICATION_INDEX = "order-notification-view";
     public static final String PENDING_BULK_E_SIGN = "PENDING_BULK_E-SIGN";
+
+    public static final String DRAFT_IN_PROGRESS = "DRAFT_IN_PROGRESS";
+    public static final String PUBLISHED = "PUBLISHED";
+
+    public static final String ORDER_STATUS_PRIORITY_SCRIPT =
+            "{ \"_script\": { " +
+                    "  \"type\": \"number\", " +
+                    "  \"script\": { " +
+                    "    \"lang\": \"painless\", " +
+                    "    \"source\": \"String status = doc['Data.orderNotification.status.keyword'].value; " +
+                    "      if (status == 'PENDING_BULK_E-SIGN') return 0; " +
+                    "      if (status == 'DRAFT_IN_PROGRESS') return 1; " +
+                    "      if (status == 'PUBLISHED') return 2; " +
+                    "      return 3;\" " +
+                    "  }, " +
+                    "  \"order\": \"asc\" " +
+                    "} }";
+
+    public static final String ORDER_STATUS_TIME_SCRIPT =
+            "{ \"_script\": { " +
+                    "  \"type\": \"number\", " +
+                    "  \"script\": { " +
+                    "    \"lang\": \"painless\", " +
+                    "    \"source\": \"String status = doc['Data.orderNotification.status.keyword'].value; " +
+                    "      if (status == 'PUBLISHED') { " +
+                    "        return doc['Data.orderNotification.date'].size() == 0 ? 0 : doc['Data.orderNotification.date'].value; " +
+                    "      } else { " +
+                    "        return doc['Data.orderNotification.lastModifiedTime'].size() == 0 ? 0 : doc['Data.orderNotification.lastModifiedTime'].value; " +
+                    "      }\" " +
+                    "  }, " +
+                    "  \"order\": \"desc\" " +
+                    "} }";
 }

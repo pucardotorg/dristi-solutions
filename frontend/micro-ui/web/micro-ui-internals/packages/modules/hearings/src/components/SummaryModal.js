@@ -91,6 +91,7 @@ const SummaryModal = ({
   const history = useHistory();
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const courtId = localStorage.getItem("courtId");
 
   const reqBody = {
     hearing: { tenantId },
@@ -99,8 +100,14 @@ const SummaryModal = ({
       hearingId: hearingId,
     },
   };
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
-  const { data: latestText } = useGetHearings(reqBody, { applicationNumber: "", cnrNumber: "", hearingId }, hearingId, true);
+  const { data: latestText } = useGetHearings(
+    reqBody,
+    { applicationNumber: "", cnrNumber: "", hearingId, ...(caseCourtId && { courtId: caseCourtId }) },
+    hearingId,
+    Boolean(caseCourtId)
+  );
 
   useEffect(() => {
     // await refetch();
@@ -150,7 +157,7 @@ const SummaryModal = ({
       .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
       .then((res) => {
         history.push(
-          `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+          `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })
       .catch((err) => {
@@ -169,6 +176,7 @@ const SummaryModal = ({
           criteria: [
             {
               filingNumber: hearing?.filingNumber[0],
+              ...(courtId && userType === "employee" && { courtId }),
             },
           ],
           tenantId,

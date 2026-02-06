@@ -4,241 +4,386 @@ export const chequeDetailsFormConfig = [
       {
         type: "text",
         label: "CS_DISHONOURED_CHEQUE_SIGNATORY_NAME",
-        isMandatory: true,
         populators: {
+          name: "chequeSignatoryName",
+          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
           validation: {
             pattern: {
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              value: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,100}$/i,
+              masterName: "commonUiConfig",
+              moduleName: "patternValidation",
+              patternType: "userName"
             },
-            patternType: "Name",
             minLength: 1,
-          },
-          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
-          name: "chequeSignatoryName",
+            patternType: "Name"
+          }
         },
-      },
-    ],
+        isMandatory: true,
+        tooltipValue: "CS_DISHONOURED_CHEQUE_SIGNATORY_NAME_INFO",
+        labelChildren: "OutlinedInfoIcon"
+      }
+    ]
   },
   {
     body: [
       {
-        type: "component",
-        component: "SelectCustomDragDrop",
         key: "bouncedChequeFileUpload",
+        type: "component",
+        label: "CS_BOUNCED_CHEQUE",
+        component: "SelectCustomDragDrop",
         populators: {
           inputs: [
             {
               name: "document",
-              isMandatory: true,
-              documentHeader: "CS_BOUNCED_CHEQUE",
               type: "DragDropComponent",
-              uploadGuidelines: "UPLOAD_DOC_50",
-              maxFileSize: 50,
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-              fileTypes: ["JPG", "PDF", "PNG"],
+              fileTypes: [
+                "JPG",
+                "JPEG",
+                "PDF",
+                "PNG"
+              ],
+              isMandatory: true,
+              maxFileSize: 10,
+              documentHeader: "CS_BOUNCED_CHEQUE",
               isMultipleUpload: true,
-            },
-          ],
+              uploadGuidelines: "UPLOAD_DOC_10",
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB"
+            }
+          ]
         },
-      },
-    ],
+        isMandatory: true,
+        withoutLabel: true
+      }
+    ]
   },
   {
     body: [
       {
         type: "text",
         label: "CS_NAME_ON_CHEQUE",
-        isMandatory: true,
         populators: {
+          name: "name",
+          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
           validation: {
             pattern: {
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
-              value: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+              masterName: "commonUiConfig",
+              moduleName: "patternValidation",
+              patternType: "userName"
             },
-            patternType: "Name",
             minLength: 1,
-          },
-          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
-          name: "name",
+            patternType: "Name"
+          }
         },
-      },
-    ],
+        isMandatory: true,
+        tooltipValue: "CS_NAME_ON_CHEQUE_INFO",
+        labelChildren: "OutlinedInfoIcon"
+      }
+    ]
+  },
+  {
+    body: [
+      {
+        type: "text",
+        label: "CS_PAYEE_BANK_NAME",
+        populators: {
+          name: "payeeBankName",
+          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE"
+        },
+        isMandatory: true,
+        tooltipValue: "CS_PAYEE_BANK_NAME_INFO",
+        labelChildren: "OutlinedInfoIcon"
+      }
+    ]
+  },
+  {
+    body: [
+      {
+        type: "text",
+        label: "CS_PAYEE_BRANCH_NAME",
+        populators: {
+          name: "payeeBranchName",
+          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE"
+        },
+        isMandatory: true,
+        tooltipValue: "CS_PAYEE_BRANCH_NAME_INFO",
+        labelChildren: "OutlinedInfoIcon"
+      }
+    ]
   },
   {
     body: [
       {
         type: "text",
         label: "CS_CHEQUE_NUMBER",
-        isMandatory: true,
         populators: {
+          name: "chequeNumber",
           error: "CORE_REQUIRED_FIELD_ERROR",
           validation: {
-            minLength: 6,
-          },
-          name: "chequeNumber",
+            minLength: 6
+          }
         },
-      },
-    ],
+        isMandatory: true
+      }
+    ]
   },
   {
     body: [
       {
         type: "date",
         label: "CS_DATE_OF_ISSUANCE",
-        isMandatory: true,
         populators: {
           name: "issuanceDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
           validation: {
             max: {
-              patternType: "date",
               masterName: "commonUiConfig",
               moduleName: "maxDateValidation",
-            },
-          },
+              patternType: "date"
+            }
+          }
         },
-      },
-    ],
+        isMandatory: true,
+        tooltipValue: "CS_DATE_OF_ISSUANCE_INFO",
+        labelChildren: "OutlinedInfoIcon"
+      }
+    ]
   },
   {
     body: [
       {
         type: "text",
-        label: "CS_BANK_NAME",
-        isMandatory: true,
+        label: "CS_PAYER_BANK_NAME",
         populators: {
-          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
-          name: "bankName",
+          name: "payerBankName",
+          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE"
         },
-      },
-    ],
+        isMandatory: true,
+        tooltipValue: "CS_PAYER_BANK_NAME_INFO",
+        labelChildren: "OutlinedInfoIcon"
+      }
+    ]
+  },
+  {
+    body: [
+      {
+        type: "text",
+        label: "CS_PAYER_BRANCH_NAME",
+        populators: {
+          name: "payerBranchName",
+          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE"
+        },
+        isMandatory: true,
+        tooltipValue: "CS_PAYER_BRANCH_NAME_INFO",
+        labelChildren: "OutlinedInfoIcon"
+      }
+    ]
   },
   {
     body: [
       {
         type: "text",
         label: "CS_IFSC_CODE",
-        isMandatory: true,
         populators: {
+          name: "ifsc",
           error: "CORE_REQUIRED_FIELD_ERROR",
           validation: {
             pattern: {
-              patternType: "ifsc",
               masterName: "commonUiConfig",
               moduleName: "patternValidation",
+              patternType: "ifsc"
             },
-            minLength: 11,
-          },
-          name: "ifsc",
+            minLength: 11
+          }
         },
-      },
-    ],
+        isMandatory: true,
+        tooltipValue: "IFSC_CODE_SUGGESTION",
+        labelChildren: "OutlinedInfoIcon"
+      }
+    ]
   },
   {
     body: [
       {
         type: "amount",
         label: "CS_CHEQUE_AMOUNT",
-        isMandatory: true,
         populators: {
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          componentInFront: "₹",
           name: "chequeAmount",
+          error: "CORE_REQUIRED_FIELD_ERROR",
           prefix: "",
+          intlConfig: {
+            locale: "en-IN",
+            currency: "INR"
+          },
+          componentInFront: "₹"
         },
-      },
-    ],
+        isMandatory: true
+      }
+    ]
+  },
+  {
+    body: [
+      {
+        key: "policeStationJurisDictionCheque",
+        type: "dropdown",
+        label: "POLICE_STATION_JURISDICTION_CHEQUE",
+        populators: {
+          name: "policeStationJurisDictionCheque",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: {
+            maxWidth: "100%",
+            marginBottom: "10px"
+          },
+          required: false,
+          mdmsConfig: {
+            select:"(data) => { const list = data['case'].PoliceStation || []; return [...list].sort((a,b) => ((a?.name || '').toUpperCase()).localeCompare((b?.name || '').toUpperCase())); }",
+            masterName: "PoliceStation",
+            moduleName: "case"
+          },
+          optionsKey: "name",
+          isMandatory: true,
+          optionsCustomStyle: {
+            height: "30vh",
+            marginTop: "42px",
+            overflowY: "auto"
+          }
+        },
+        isMandatory: true
+      }
+    ]
   },
   {
     body: [
       {
         type: "date",
         label: "CS_DATE_OF_CHEQUE_DEPOSIT",
-        isMandatory: true,
         populators: {
           name: "depositDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
           validation: {
             max: {
-              patternType: "date",
               masterName: "commonUiConfig",
               moduleName: "maxDateValidation",
-            },
-          },
+              patternType: "date"
+            }
+          }
         },
-      },
-    ],
+        isMandatory: true,
+        labelChildren: "OutlinedInfoIcon"
+      }
+    ]
   },
   {
     body: [
       {
-        type: "component",
-        component: "SelectCustomDragDrop",
         key: "depositChequeFileUpload",
-        withoutLabel: true,
-        populators: {
-          inputs: [
-            {
-              name: "document",
-              documentHeader: "CS_PROOF_DEPOSIT_CHEQUE",
-              infoTooltipMessage: "CS_PROOF_DEPOSIT_CHEQUE",
-              type: "DragDropComponent",
-              uploadGuidelines: "UPLOAD_DOC_50",
-              maxFileSize: 50,
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-              fileTypes: ["JPG", "PDF", "PNG"],
-              isMultipleUpload: true,
-            },
-          ],
-        },
-      },
-    ],
-  },
-  {
-    body: [
-      {
         type: "component",
+        label: "CS_PROOF_DEPOSIT_CHEQUE",
         component: "SelectCustomDragDrop",
-        key: "returnMemoFileUpload",
-        withoutLabel: true,
         populators: {
           inputs: [
             {
               name: "document",
-              documentHeader: "CS_CHEQUE_RETURN_MEMO",
-              infoTooltipMessage: "CS_CHEQUE_RETURN_MEMO",
               type: "DragDropComponent",
-              uploadGuidelines: "UPLOAD_DOC_50",
-              maxFileSize: 50,
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-              fileTypes: ["JPG", "PDF", "PNG"],
+              fileTypes: [
+                "JPG",
+                "JPEG",
+                "PDF",
+                "PNG"
+              ],
+              isOptional: "CS_IS_OPTIONAL",
+              isMandatory: false,
+              maxFileSize: 10,
+              documentHeader: "CS_PROOF_DEPOSIT_CHEQUE",
               isMultipleUpload: true,
-            },
-          ],
+              uploadGuidelines: "UPLOAD_DOC_10",
+              infoTooltipMessage: "CS_PROOF_DEPOSIT_CHEQUE",
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB"
+            }
+          ]
         },
-      },
-    ],
+        isMandatory: false,
+        withoutLabel: true
+      }
+    ]
   },
   {
     body: [
       {
+        key: "delayReason",
         type: "component",
         component: "SelectCustomTextArea",
-        key: "chequeAdditionalDetails",
+        isInfinite: true,
         populators: {
           inputs: [
             {
-              textAreaSubHeader: "CS_CHEQUE_ADDITIONAL_DETAILS",
-              isOptional: true,
+              name: "reasonForReturnCheque",
               type: "TextAreaComponent",
-            },
-          ],
+              errorStyle: {
+                paddingTop: "20px"
+              },
+              textAreaSubHeader: "REASON_FOR_RETURN_CHEQUE"
+            }
+          ]
         },
-      },
-    ],
+        isMandatory: true
+      }
+    ]
   },
-];
+  {
+    body: [
+      {
+        key: "returnMemoFileUpload",
+        type: "component",
+        label: "CS_CHEQUE_RETURN_MEMO",
+        component: "SelectCustomDragDrop",
+        populators: {
+          inputs: [
+            {
+              name: "document",
+              type: "DragDropComponent",
+              fileTypes: [
+                "JPG",
+                "JPEG",
+                "PDF",
+                "PNG"
+              ],
+              maxFileSize: 10,
+              documentHeader: "CS_CHEQUE_RETURN_MEMO",
+              isMultipleUpload: true,
+              uploadGuidelines: "UPLOAD_DOC_10",
+              infoTooltipMessage: "CS_CHEQUE_RETURN_MEMO",
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB"
+            }
+          ]
+        },
+        isMandatory: true,
+        withoutLabel: true
+      }
+    ]
+  },
+  {
+    body: [
+      {
+        key: "chequeAdditionalDetails",
+        type: "component",
+        label: "CS_CHEQUE_ADDITIONAL_DETAILS",
+        component: "SelectCustomFormatterTextArea",
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              type: "TextAreaComponent",
+              isOptional: true,
+              textAreaSubHeader: "CS_CHEQUE_ADDITIONAL_DETAILS"
+            }
+          ]
+        },
+        withoutLabel: true
+      }
+    ]
+  }
+]
 
 export const chequeDetailsConfig = {
   formconfig: chequeDetailsFormConfig,

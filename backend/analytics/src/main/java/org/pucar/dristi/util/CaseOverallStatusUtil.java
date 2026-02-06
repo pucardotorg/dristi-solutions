@@ -17,8 +17,6 @@ import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
-import org.pucar.dristi.util.HearingUtil;
-import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.CaseOutcome;
 import org.pucar.dristi.web.models.CaseOutcomeType;
@@ -26,15 +24,14 @@ import org.pucar.dristi.web.models.CaseOverallStatus;
 import org.pucar.dristi.web.models.CaseOverallStatusType;
 import org.pucar.dristi.web.models.CaseStageSubStage;
 import org.pucar.dristi.web.models.Outcome;
+import org.pucar.dristi.web.models.enums.ProcessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.web.models.enums.ProcessHandler.UPDATE_BACKUP;
 
 @Slf4j
 @Component
@@ -101,6 +98,17 @@ public class CaseOverallStatusUtil {
         Object orderObject = orderUtil.getOrder(request, referenceId, config.getStateLevelTenantId());
         String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
         String orderCategory = JsonPath.read(orderObject.toString(), ORDER_CATEGORY_PATH);
+		boolean isHearingFound = false;
+		TreeMap<Integer, CaseOverallStatus> priorityMap = new TreeMap<>();
+		try {
+			String hearingType = JsonPath.read(orderObject.toString(), PURPOSE_OF_NEXT_HEARING_PATH);
+			isHearingFound = hearingType != null;
+			if (isHearingFound) {
+				populateHearingPriorityMap(filingNumber, tenantId, hearingType, priorityMap);
+			}
+		} catch (Exception e) {
+			log.error("Error processing order while processing priority map: {} for filing number: {}", e.getMessage(), filingNumber, e);
+		}
         try {
             if (COMPOSITE.equalsIgnoreCase(orderCategory)) {
 
@@ -110,12 +118,17 @@ public class CaseOverallStatusUtil {
                     return orderObject;
                 }
                 for (int i = 0; i < compositeItems.length(); i++) {
-                    JSONObject compositeItem = compositeItems.getJSONObject(i);
-                    processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject);
+					try{
+						JSONObject compositeItem = compositeItems.getJSONObject(i);
+						boolean canPublishCaseOverallStatus = i == compositeItems.length() - 1;
+                        processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE, canPublishCaseOverallStatus, isHearingFound, priorityMap);
+					} catch(Exception e){
+						log.error("Error processing composite item: {} for filing number: {}", e.getMessage(), filingNumber, e);
+					}
                 }
 
             } else {
-                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject);
+                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject, null, true, isHearingFound, priorityMap);
             }
         } catch (JSONException e) {
             log.error("Error processing JSON structure in composite items: {}, for filing number: {}", e.getMessage(), filingNumber, e);
@@ -126,6 +139,20 @@ public class CaseOverallStatusUtil {
         }
         return orderObject;
     }
+
+	private void populateHearingPriorityMap(String filingNumber, String tenantId, String hearingType, TreeMap<Integer, CaseOverallStatus> priorityMap) {
+		for (CaseOverallStatusType caseOverallStatusType : caseOverallStatusTypeList) {
+			if (HEARING.equalsIgnoreCase(caseOverallStatusType.getEntityType()) && caseOverallStatusType.getTypeIdentifier().equalsIgnoreCase(hearingType)) {
+				Integer priority = caseOverallStatusType.getPriority() != null ? caseOverallStatusType.getPriority() : Integer.MAX_VALUE;
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, caseOverallStatusType.getStage(), caseOverallStatusType.getSubstage());
+				caseOverallStatus.setProcessHandler(caseOverallStatusType.getProcessHandler());
+				priorityMap.put(priority, caseOverallStatus);
+			}
+		}
+		if (priorityMap.isEmpty()) {
+			log.error("No priority found for hearing type: {} for filing number: {}", hearingType, filingNumber);
+		}
+	}
 
 	private Object processCaseOverallStatus(JSONObject request, String referenceId, String status, String action, String tenantId) throws JsonProcessingException {
 		RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
@@ -155,40 +182,39 @@ public class CaseOverallStatusUtil {
 			log.info("CaseOverallStatusType MDMS action ::{} and status :: {}",statusType.getAction(),statusType.getState());
 			if (statusType.getAction().equalsIgnoreCase(action) && statusType.getState().equalsIgnoreCase(status)){
 				log.info("Creating CaseOverallStatus for action ::{} and status :: {}",statusType.getAction(),statusType.getState());
-				sendSmsForCaseStatusChange(filingNumber,requestInfo);
-				return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
 			}
 		}
 		return null;
 	}
 
-	private void sendSmsForCaseStatusChange(String filingNumber,RequestInfo requestInfo) {
+	private void sendSmsForCaseSubStageChange(String filingNumber, RequestInfo requestInfo, String subStage) {
 		org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
 		JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
 		String courtCaseNumber = caseUtil.getCourtCaseNumber(caseDetails);
+		String cmpNumber = caseUtil.getCmpNumber(caseDetails);
 		JsonNode litigants = caseUtil.getLitigants(caseDetails);
 		Set<String> individualIds = caseUtil.getIndividualIds(litigants);
-		JsonNode representatives = caseUtil.getRepresentatives(caseDetails);
-		Set<String> representativeIds = caseUtil.getAdvocateIds(representatives);
-		Set<String> powerOfAttorneyIds = caseUtil.extractPowerOfAttorneyIds(caseDetails,individualIds);
-		if(!powerOfAttorneyIds.isEmpty()){
-			individualIds.addAll(powerOfAttorneyIds);
-		}
-
-		if(!representativeIds.isEmpty()){
-			representativeIds = advocateUtil.getAdvocate(requestInfo,representativeIds.stream().toList());
-		}
-		individualIds.addAll(representativeIds);
-		org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber, courtCaseNumber, requestInfo);
+		SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber, cmpNumber, courtCaseNumber, requestInfo, subStage);
 		List<String> phoneNumbers = callIndividualService(requestInfo, new ArrayList<>(individualIds));
 		for (String number : phoneNumbers) {
 			notificationService.sendNotification(requestInfo, smsTemplateData, CASE_STATUS_CHANGED_MESSAGE, number);
 		}
 	}
 
-	private SmsTemplateData enrichSmsTemplateData(String filingNumber, String courtCaseNumber, RequestInfo requestInfo) {
+	private boolean shouldSendSMSForSubStageChange(String subStage) {
+		if(subStage == null){
+			return false;
+		}
+		List<String> consideredSubStages = List.of(APPEARANCE, ARGUMENTS, EVIDENCE, LONG_PENDING_REGISTER, REFER_TO_ADR);
+		return consideredSubStages.contains(subStage);
+	}
+
+	private SmsTemplateData enrichSmsTemplateData(String filingNumber, String cmpNumber, String courtCaseNumber, RequestInfo requestInfo,String subStage) {
 		return SmsTemplateData.builder()
 				.efilingNumber(filingNumber)
+				.subStage(subStage)
+				.cmpNumber(cmpNumber)
 				.courtCaseNumber(courtCaseNumber)
 				.tenantId(requestInfo.getUserInfo().getTenantId())
 				.build();
@@ -222,10 +248,27 @@ public class CaseOverallStatusUtil {
 		return null;
 	}
 
-	private org.pucar.dristi.web.models.CaseOverallStatus determineOrderStage(String filingNumber, String tenantId, String orderType, String status) {
-		for (CaseOverallStatusType statusType : caseOverallStatusTypeList){
-			if(statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status))
-                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+	private org.pucar.dristi.web.models.CaseOverallStatus determineOrderStage(String filingNumber, String tenantId, String orderType, String status, String hearingType, TreeMap<Integer, CaseOverallStatus> priorityMap) {
+		for (CaseOverallStatusType statusType : caseOverallStatusTypeList) {
+			boolean isMatch = false;
+			
+			if (statusType.getEntityType() != null) {
+				if (ORDER.equalsIgnoreCase(statusType.getEntityType()) && statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status)) {
+					isMatch = true;
+				} else if (HEARING.equalsIgnoreCase(statusType.getEntityType()) && statusType.getTypeIdentifier().equalsIgnoreCase(hearingType) && statusType.getState().equalsIgnoreCase(status)) {
+					isMatch = true;
+				}
+			} else if (statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status)) {
+				isMatch = true;
+			}
+			
+			if (isMatch) {
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+				caseOverallStatus.setProcessHandler(statusType.getProcessHandler());
+				Integer priority = statusType.getPriority() != null ? statusType.getPriority() : Integer.MAX_VALUE;
+				priorityMap.put(priority, caseOverallStatus);
+				return caseOverallStatus;
+			}
 		}
 		return null;
 	}
@@ -240,10 +283,27 @@ public class CaseOverallStatusUtil {
 			}
 			else{
 				RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
+                String filingNumber = caseOverallStatus.getFilingNumber();
+                Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+                Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
+				String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
+				String caseSubStage = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_PATH);
+				String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);
+				String caseSubStageBackup = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_BACKUP_PATH);
+				
+				handleProcessBackup(caseOverallStatus, caseStage, caseSubStage, caseStageBackup, caseSubStageBackup);
+				
+				if (!handleLprCase(caseOverallStatus, isLprCase, caseStage, filingNumber)) {
+					return;
+				}
 				AuditDetails auditDetails = new AuditDetails();
 				auditDetails.setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 				auditDetails.setLastModifiedTime(System.currentTimeMillis());
 				caseOverallStatus.setAuditDetails(auditDetails);
+				String subStage = caseOverallStatus.getSubstage();
+				if(shouldSendSMSForSubStageChange(subStage)){
+					sendSmsForCaseSubStageChange(filingNumber, requestInfo, subStage);
+				}
 				org.pucar.dristi.web.models.CaseStageSubStage caseStageSubStage = new CaseStageSubStage(requestInfo,caseOverallStatus);
 				log.info("Publishing to kafka topic: {}, caseStageSubstage: {}",config.getCaseOverallStatusTopic(), caseStageSubStage);
 				producer.push(config.getCaseOverallStatusTopic(), caseStageSubStage);
@@ -253,20 +313,56 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private org.pucar.dristi.web.models.Outcome determineCaseOutcome(String filingNumber, String tenantId, String orderType, String status, Object orderObject) {
+	private void handleProcessBackup(CaseOverallStatus caseOverallStatus, String currentCaseStage, String currentCaseSubStage, String caseStageBackup, String caseSubStageBackup) {
+		if (caseOverallStatus.getProcessHandler() == null) {
+			caseOverallStatus.setProcessHandler(ProcessHandler.RESET_BACKUP);
+		}
+		
+		if (caseOverallStatus.getProcessHandler() == UPDATE_BACKUP) {
+			if (caseOverallStatus.getStageBackup() == null) {
+				caseOverallStatus.setStageBackup(currentCaseStage);
+				caseOverallStatus.setSubstageBackup(currentCaseSubStage);
+			}
+		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESET_BACKUP) {
+			caseOverallStatus.setStageBackup(null);
+			caseOverallStatus.setSubstageBackup(null);
+		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESTORE_BACKUP) {
+			// If stage hasn't been set from second priority, use case backup values
+			if (caseOverallStatus.getStage() == null || caseOverallStatus.getStage().isEmpty() || caseOverallStatus.getStage().equalsIgnoreCase(RESTORE_BACKUP)) {
+				caseOverallStatus.setStage(caseStageBackup);
+				caseOverallStatus.setSubstage(caseSubStageBackup);
+			}
+		}
+	}
+
+	private boolean handleLprCase(CaseOverallStatus caseOverallStatus, Boolean isLprCase, String caseStage, String filingNumber) {
+		if (isLprCase != null && isLprCase) {
+			if (config.getLprStage().equalsIgnoreCase(caseStage)) {
+				log.info("case is already in lpr stage : {} ", filingNumber);
+				return false;
+			}
+			caseOverallStatus.setStage(config.getLprStage());
+			caseOverallStatus.setSubstage(config.getLprSubStage());
+		}
+		return true;
+	}
+
+	private org.pucar.dristi.web.models.Outcome determineCaseOutcome(String filingNumber, String tenantId, String orderType, String status, Object orderObject, String orderCategory) {
 		if (!"published".equalsIgnoreCase(status)) return null;
 
 		org.pucar.dristi.web.models.CaseOutcomeType caseOutcomeType = mdmsDataConfig.getCaseOutcomeTypeMap().get(orderType);
-		if (caseOutcomeType == null) {
+        if (caseOutcomeType == null) {
 			log.info("CaseOutcomeType not found for orderType: {}", orderType);
 			return null;
 		}
 
 		try {
+			String natureOfDisposalStr = COMPOSITE.equalsIgnoreCase(orderCategory) ? JsonPath.read(orderObject.toString(), COMPOSITE_ORDER_NATURE_OF_DISPOSAL_PATH) : JsonPath.read(orderObject.toString(), ORDER_NATURE_OF_DISPOSAL_PATH);
+			NatureOfDisposal natureOfDisposal = parseNatureOfDisposal(natureOfDisposalStr);
 			if (caseOutcomeType.getIsJudgement()) {
-				return handleJudgementCase(filingNumber, tenantId, caseOutcomeType, orderObject);
+				return handleJudgementCase(filingNumber, tenantId, caseOutcomeType, orderObject, orderCategory);
 			} else {
-				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, caseOutcomeType.getOutcome());
+				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, caseOutcomeType.getOutcome(), natureOfDisposal);
 			}
 		} catch (Exception e) {
 			log.error("Error determining case outcome for filingNumber: {} and orderType: {}", filingNumber, orderType, e);
@@ -274,11 +370,14 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private org.pucar.dristi.web.models.Outcome handleJudgementCase(String filingNumber, String tenantId, CaseOutcomeType caseOutcomeType, Object orderObject) {
+	private org.pucar.dristi.web.models.Outcome handleJudgementCase(String filingNumber, String tenantId, CaseOutcomeType caseOutcomeType, Object orderObject, String orderCategory) {
 		try {
-			String outcome = JsonPath.read(orderObject.toString(), ORDER_FINDINGS_PATH);
-			if (caseOutcomeType.getJudgementList().contains(outcome)) {
-				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, outcome);
+			String outcome = COMPOSITE.equalsIgnoreCase(orderCategory) ? JsonPath.read(orderObject.toString(), COMPOSITE_ORDER_FINDINGS_PATH) : JsonPath.read(orderObject.toString(), ORDER_FINDINGS_PATH);
+            String natureOfDisposalStr = COMPOSITE.equalsIgnoreCase(orderCategory) ? JsonPath.read(orderObject.toString(), COMPOSITE_ORDER_NATURE_OF_DISPOSAL_PATH) : JsonPath.read(orderObject.toString(), ORDER_NATURE_OF_DISPOSAL_PATH);
+            NatureOfDisposal natureOfDisposal = parseNatureOfDisposal(natureOfDisposalStr);
+
+            if (caseOutcomeType.getJudgementList().contains(outcome)) {
+				return new org.pucar.dristi.web.models.Outcome(filingNumber, tenantId, outcome, natureOfDisposal);
 			} else {
 				log.info("Outcome not in judgement list for orderType: {}", caseOutcomeType.getOrderType());
 				return null;
@@ -299,6 +398,13 @@ public class CaseOverallStatusUtil {
 			}
 			else{
 				RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
+                String filingNumber = outcome.getFilingNumber();
+                Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+                Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
+                if (isLprCase != null && isLprCase) {
+                    log.info("case is in long pending registration {} not eligible for case outcome update" , filingNumber);
+                    return;
+                }
 				AuditDetails auditDetails = new AuditDetails();
 				auditDetails.setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 				auditDetails.setLastModifiedTime(System.currentTimeMillis());
@@ -312,9 +418,66 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-    private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject) {
+    private NatureOfDisposal parseNatureOfDisposal(String natureOfDisposalStr) {
+        if (natureOfDisposalStr == null) return null;
+        try {
+            return NatureOfDisposal.valueOf(natureOfDisposalStr.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            log.error("Invalid natureOfDisposal value: {}", natureOfDisposalStr);
+            return null;
+        }
+    }
+
+
+    private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory, boolean canPublishCaseOverallStatus, boolean isHearingFound, TreeMap<Integer, CaseOverallStatus> priorityMap) {
         String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
-        publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
-        publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject), request);
+		String hearingType = null;
+		if (!isHearingFound) {
+			if (SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(orderType) || SCHEDULING_NEXT_HEARING.equalsIgnoreCase(orderType)) {
+				String path = null;
+				for (CaseOverallStatusType caseOverallStatusType : caseOverallStatusTypeList) {
+					if (HEARING.equalsIgnoreCase(caseOverallStatusType.getEntityType())) {
+						if (COMPOSITE.equalsIgnoreCase(orderCategory)) {
+							path = caseOverallStatusType.getCompositeHearingPath();
+						} else {
+							path = caseOverallStatusType.getIntermediateHearingPath();
+						}
+						break;
+					}
+				}
+				if(path!=null){
+					try {
+						hearingType = JsonPath.read(orderItemJson, path);
+					} catch (Exception e) {
+						log.error("Error reading hearing type from path: {} for filing number: {}", path, filingNumber, e);
+					}
+				}
+			}
+		}
+		CaseOverallStatus caseOverallStatus = determineOrderStage(filingNumber, tenantId, orderType, status, hearingType, priorityMap);
+		if (canPublishCaseOverallStatus && !priorityMap.isEmpty()) {
+			CaseOverallStatus finalCaseOverallStatus = priorityMap.firstEntry().getValue();
+
+			if (priorityMap.size() > 1) {
+				Map.Entry<Integer, CaseOverallStatus> secondEntry = priorityMap.higherEntry(priorityMap.firstKey());
+				if (secondEntry != null) {
+					CaseOverallStatus backupCaseOverallStatus = secondEntry.getValue();
+					
+					if (finalCaseOverallStatus.getProcessHandler() == ProcessHandler.RESTORE_BACKUP) {
+						// For RESTORE_BACKUP, use second priority values directly for stage/substage
+						finalCaseOverallStatus.setStage(backupCaseOverallStatus.getStage());
+						finalCaseOverallStatus.setSubstage(backupCaseOverallStatus.getSubstage());
+					} else if (finalCaseOverallStatus.getStageBackup() == null && UPDATE_BACKUP.equals(finalCaseOverallStatus.getProcessHandler())) {
+						// For other handlers, set backup values if not already set
+						finalCaseOverallStatus.setStageBackup(backupCaseOverallStatus.getStage());
+						finalCaseOverallStatus.setSubstageBackup(backupCaseOverallStatus.getSubstage());
+					}
+				}
+			}
+
+			log.info("Publishing case overall status with priority: {} for filing number: {}", priorityMap.firstEntry().getKey(), filingNumber);
+			publishToCaseOverallStatus(finalCaseOverallStatus, request);
+		}
+        publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderItemJson, orderCategory), request);
     }
 }

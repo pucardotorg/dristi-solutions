@@ -71,12 +71,14 @@ public class ServiceConstants {
 
     public static final String ADMISSION_HEARING_SCHEDULED = "ADMISSION_HEARING_SCHEDULED";
 
-    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+    public static final String ENG_LOCALE_CODE = "en_IN";
 
     public static final String NOTIFICATION_MODULE_CODE = "notification";
 
-    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
-    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+    public static final String MODULE_CODE = "rainmaker-common,rainmaker-home,rainmaker-case,rainmaker-orders,rainmaker-hearings,rainmaker-submission";
+
+    public static final String LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
 
     public static final String ORDER_ISSUED = "ORDER_ISSUED";
 
@@ -112,4 +114,15 @@ public class ServiceConstants {
     public static final String INTERMEDIATE = "INTERMEDIATE";
     public static final String COMPOSITE = "COMPOSITE";
     public static final String SAVE_DRAFT = "SAVE_DRAFT";
+    public static final String PROCLAMATION = "PROCLAMATION";
+    public static final String ATTACHMENT = "ATTACHMENT";
+
+    public static final String SCHEDULED = "SCHEDULED";
+    public static final String OPT_OUT = "OPT_OUT";
+
+    public static final String SCHEDULE_OF_HEARING_DATE = "SCHEDULE_OF_HEARING_DATE";
+    public static final String HEARING_SCHEDULED = "HEARING_SCHEDULED";
+    public static final String ERROR_WHILE_FETCHING_FROM_HEARING_SERVICE = "ERROR_WHILE_FETCHING_FROM_HEARING_SERVICE";
+    
+    public static final String YYYY_MM_DD = "yyyy-MM-dd";
 }

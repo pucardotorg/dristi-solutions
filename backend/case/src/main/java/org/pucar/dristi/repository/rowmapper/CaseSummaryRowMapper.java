@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.NatureOfDisposal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -47,6 +48,7 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
                         .stage(rs.getString("stage"))
                         .subStage(rs.getString("substage"))
                         .outcome(rs.getString("outcome"))
+                        .natureOfDisposal(getNatureOfDisposal(rs))
                         .courtId(rs.getString("courtid"))
                         .registrationDate(parseDateToLong(rs.getString("registrationdate")))
                         .registrationNumber(rs.getString("cmpnumber"))
@@ -130,6 +132,20 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
 
     private Judge getJudge(ResultSet rs) {
         return Judge.builder().build();
+    }
+
+    private NatureOfDisposal getNatureOfDisposal(ResultSet rs) throws SQLException {
+        try {
+            String str = rs.getString("natureofdisposal");
+            if (str == null || str.isEmpty()) return null;
+            return NatureOfDisposal.valueOf(str);
+        } catch (SQLException e) {
+            log.error("Error reading natureofdisposal column from ResultSet", e);
+            return null;
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid NatureOfDisposal value in database: {}", rs.getString("natureofdisposal"), e);
+            return null;
+        }
     }
 
     public List<String> stringToList(String str) {

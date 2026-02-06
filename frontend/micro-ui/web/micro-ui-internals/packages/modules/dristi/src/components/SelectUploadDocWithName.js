@@ -9,7 +9,7 @@ import { CustomAddIcon } from "../icons/svgIndex";
 import Button from "./Button";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import { DRISTIService } from "../services";
-import { getFilingType } from "../Utils";
+import { getFilingType, sanitizeData } from "../Utils";
 
 function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
   const [documentData, setDocumentData] = useState(formData?.[config.key] ? formData?.[config.key] : []);
@@ -37,8 +37,8 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
           name: "document",
           documentHeader: "header",
           type: "DragDropComponent",
-          maxFileSize: 50,
-          maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+          maxFileSize: 10,
+          maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
           fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           isMultipleUpload: false,
         },
@@ -105,6 +105,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
           artifactType: "DOCUMENTARY",
           sourceType: "COMPLAINANT",
           caseId: caseId,
+          filingNumber: config?.filingNumber,
           tenantId,
           artifactId: currentDocumentDataCopy?.[index].document?.[0]?.artifactId,
           comments: [],
@@ -137,10 +138,10 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
               <div className="file-uploader-with-name-header">
                 <h1>{`${t("DOCUMENT_NUMBER_HEADING")} ${index + 1}`}</h1>
 
-                {(config?.state === "DRAFT_IN_PROGRESS" || index >= config?.doclength) && (
+                {!config?.disable && (["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"]?.includes(config?.state) || index >= config?.doclength) && (
                   <span
                     onClick={() => {
-                      if (!config?.disable && (config?.state === "DRAFT_IN_PROGRESS" || index >= config?.doclength)) {
+                      if (!config?.disable && (["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"]?.includes(config?.state) || index >= config?.doclength)) {
                         handleDeleteDocument(index);
                       }
                     }}
@@ -165,7 +166,8 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
                           key={input?.name}
                           value={currentValue}
                           onChange={(e) => {
-                            handleOnTextChange(e.target.value, input, index);
+                            const val = sanitizeData(e.target.value);
+                            handleOnTextChange(val, input, index);
                           }}
                           disable={input?.isDisabled || (index < config?.doclength ? true : config?.disable)}
                           defaultValue={undefined}

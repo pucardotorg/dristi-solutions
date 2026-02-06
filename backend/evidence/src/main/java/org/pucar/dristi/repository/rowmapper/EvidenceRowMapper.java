@@ -52,7 +52,6 @@ public class EvidenceRowMapper implements ResultSetExtractor<List<Artifact>> {
                             .externalRefNumber(rs.getString("externalRefNumber"))
                             .caseId(rs.getString("caseId"))
                             .application(rs.getString("application"))
-                            .courtId(rs.getString("courtId"))
                             .filingNumber(rs.getString("filingNumber"))
                             .hearing(rs.getString("hearing"))
                             .order(rs.getString("orders"))
@@ -60,6 +59,7 @@ public class EvidenceRowMapper implements ResultSetExtractor<List<Artifact>> {
                             .artifactType(rs.getString("artifactType"))
                             .sourceType(rs.getString("sourceType"))
                             .sourceID(rs.getString("sourceID"))
+                            .courtId(rs.getString("courtId"))
                             .sourceName(rs.getString("sourceName"))
                             .applicableTo(getObjectFromJson(rs.getString("applicableTo"), new TypeReference<List<String>>() {
                             }))
@@ -76,6 +76,15 @@ public class EvidenceRowMapper implements ResultSetExtractor<List<Artifact>> {
                             .description(rs.getString("description"))
                             .auditdetails(auditDetails)
                             .publishedDate(rs.getLong("publishedDate"))
+                            .shortenedUrl(rs.getString("shortenedUrl"))
+                            .seal(getObjectFromJson(rs.getString("seal"), new TypeReference<Document>(){}))
+                            .witnessMobileNumbers(getObjectFromJson(rs.getString("witnessMobileNumbers"), new TypeReference<>() {
+                            }))
+                            .witnessEmails(getObjectFromJson(rs.getString("witnessEmails"), new TypeReference<>() {
+                            }))
+                            .evidenceMarkedStatus(rs.getString("evidenceMarkedStatus"))
+                            .tag(rs.getString("tag"))
+                            .isEvidenceMarkedFlow(rs.getBoolean("isEvidenceMarkedFlow"))
                             .build();
                 }
 

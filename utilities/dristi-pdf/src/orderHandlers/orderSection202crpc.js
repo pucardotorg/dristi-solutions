@@ -43,7 +43,7 @@ async function orderSection202crpc(
     // Search for case details
     const resCase = await handleApiCall(
       res,
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, order?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -119,7 +119,13 @@ async function orderSection202crpc(
       order?.additionalDetails?.formdata?.applicationFilledBy?.name || "";
     const respondentName =
       order?.additionalDetails?.formdata?.detailsSeekedOf?.name || "";
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber =
+      (courtCase?.isLPRCase
+        ? courtCase?.lprNumber
+        : courtCase?.courtCaseNumber) ||
+      courtCase?.courtCaseNumber ||
+      courtCase?.cmpNumber ||
+      "";
     const data = {
       Data: [
         {

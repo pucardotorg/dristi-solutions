@@ -1,0 +1,30 @@
+{
+        "tenantId": "kl",
+        "code": "case.landingpagestatus",
+        "description": null,
+        "definition": {
+            "type": "object",
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "required": [
+                "code",
+                "name",
+                "id"
+            ],
+            "x-unique": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false
+        },
+        "isActive": true
+    }

@@ -183,6 +183,42 @@
   }
   .case-overview-wrapper {
     padding: 24px 24px 24px 40px;
+    .case-timeline-container {
+      .checkpoint-connect-wrap {
+        padding-bottom: 0px !important;
+        .checkpoint-done {
+          h2 {
+            min-width: 24px !important;
+          }
+        }
+      }
+      .workflow-timeline-checkpoint {
+        .checkpoint-done {
+          h2 {
+            min-width: 24px !important;
+          }
+        }
+        .checkpoint {
+          h2 {
+            min-width: 24px !important;
+          }
+        }
+      }
+    }
+  }
+  .workflow-timeline-modal {
+    .workflow-timeline {
+      .checkpoint-done {
+        h2 {
+          min-width: 24px !important;
+        }
+      }
+      .checkpoint {
+        h2 {
+          min-width: 24px !important;
+        }
+      }
+    }
   }
   .view-case-file-wrapper {
     .case-and-admission {
@@ -281,6 +317,350 @@
             cursor: pointer;
           }
         }
+      }
+    }
+  }
+}
+
+.view-case-file-new-wrapper {
+  display: flex;
+  background-color: #f9fafb;
+  height: calc(100vh - 80px);
+
+  .scrollable-container {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: calc(100% - 57px);
+    scrollbar-width: thin;
+    scrollbar-color: #c5c5c5 #f9fafb;
+    direction: rtl;
+  }
+
+  .scrollable-container > * {
+    direction: ltr;
+  }
+
+  /* Custom scrollbar styles */
+  .scrollable-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollable-container::-webkit-scrollbar-track {
+    background: #f9fafb;
+  }
+
+  .scrollable-container::-webkit-scrollbar-thumb {
+    background-color: #c5c5c5;
+    border-radius: 4px;
+  }
+
+  .scrollable-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  .menu-item-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    min-height: 47px;
+    cursor: pointer;
+    border-bottom: 1px solid #e8e8e8;
+  }
+
+  .menu-item-container .menu-item-container.selected {
+    background-color: #e8e8e8;
+  }
+
+  .menu-item-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+    word-break: break-word;
+    font-family: Roboto;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  .menu-item-icon {
+    margin-left: 8px;
+  }
+
+  .menu-item-number {
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  .menu-item-text {
+    flex: 1;
+    word-break: break-word;
+  }
+
+  .sidebar-panel {
+    flex: 1;
+    width: 280px;
+    background-color: #f9fafb;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: sticky;
+    top: 0;
+  }
+
+  .sidebar-header {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: Roboto, sans-serif;
+    line-height: 100%;
+    letter-spacing: 0%;
+    color: #1f2937;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    background-color: #f9fafb;
+    z-index: 10;
+  }
+
+  .doc-viewer-container {
+    flex: 4;
+    padding: 16px;
+    overflow-y: auto;
+    height: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: #c5c5c5 #f9fafb;
+
+    .docviewer-wrapper {
+      margin-top: 0px !important;
+    }
+  }
+
+  .context-menu {
+    position: fixed;
+    background-color: white;
+    border: 1px solid #ccc;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+  }
+}
+.bottom-drawer-wrapper {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+
+  .bottom-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .bottom-drawer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    padding: 24px 0px 16px 24px;
+    max-height: calc(100vh - 90px);
+    opacity: 0;
+    visibility: hidden;
+
+    &.open {
+      opacity: 1;
+      visibility: visible;
+      box-shadow: 0px -4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .drawer-header {
+      .header-content {
+        display: flex;
+        gap: 8px;
+
+        h2 {
+          margin: 0px;
+          font-family: Roboto;
+          font-weight: 700;
+          font-size: 24px;
+          line-height: 100%;
+          letter-spacing: 0%;
+          color: #231f20;
+        }
+
+        .drawer-close-button {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 4px;
+
+          svg {
+            width: 16px;
+            height: 16px;
+          }
+        }
+      }
+    }
+
+    .drawer-content {
+      gap: 32px;
+      display: flex;
+      flex-direction: column;
+      margin: 0px;
+      padding-right: 16px;
+      max-height: calc(100vh - 264px);
+      overflow-y: auto;
+
+      .open & {
+        opacity: 1;
+      }
+
+      .drawer-section {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px;
+        border: 1px #e8e8e8 solid;
+
+        .custom-textarea-style {
+          textarea {
+            width: 100%;
+            height: 148px;
+          }
+          textarea:focus {
+            outline: none;
+            border: none;
+            box-shadow: none;
+          }
+          .cell-text {
+            display: none;
+          }
+        }
+        .order-date-picker {
+          border-color: #566056 !important;
+        }
+        .drawer-sub-section {
+          display: flex;
+          gap: 16px;
+          justify-content: space-between;
+          .case-label-field-pair {
+            flex: 1;
+            width: 100%;
+            .select-wrap {
+              .options-card {
+                top: 40px;
+                max-height: 250px;
+                overflow-y: auto;
+              }
+            }
+
+            &.disabled {
+              .select-wrap {
+                background-color: rgb(217, 217, 217);
+                cursor: not-allowed;
+              }
+              .multi-select-dropdown-wrap {
+                background-color: rgb(217, 217, 217);
+                cursor: not-allowed;
+              }
+              .order-date-picker {
+                border-color: #a6abae !important;
+              }
+            }
+          }
+          .master,
+          .select {
+            height: 42px;
+          }
+          .radio-wrap {
+            margin: 0px !important;
+          }
+          .drawer-sub-section-title {
+            font-family: Roboto;
+            font-weight: 700;
+            font-size: 24px;
+            line-height: 100%;
+            letter-spacing: 0%;
+            color: #231f20;
+            margin: 0px;
+          }
+
+          .custom-date-picker {
+            margin-bottom: 0px !important;
+            .order-date-picker {
+              .text-input {
+                input {
+                  font-family: Roboto;
+                  font-weight: 400;
+                  font-size: 16px;
+                  line-height: 24px;
+                  letter-spacing: 0px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .drawer-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 16px;
+      padding-top: 16px;
+      padding-right: 32px;
+
+      .order-drawer-save-btn {
+        padding: 12px;
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+.confirm-end-hearing-modal {
+  width: 896px !important;
+
+  .checkbox-wrap {
+    .custom-checkbox {
+      margin: 8px 0px 0px;
+    }
+  }
+}
+
+.selector-button-primary.end-and-view-causelist-button {
+  background: #fff;
+  box-shadow: none;
+  border: 1px #007e7e solid;
+  h2 {
+    color: #007e7e;
+    font-family: Roboto;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 100%;
+  }
+}
+
+.end-and-view-causelist-submit-button {
+  background: #bb2c2f !important;
+  border: none !important;
+}
+
+.evidence-header-wrapper .evidence-hearing-header .evidence-actions .menu-wrap div {
+  height: auto;
+}
+
+.witness-editor{
+  .custom-text-area-main-div{
+    .custom-quill-wrapper{
+      .ql-editor {
+        height: 375px !important;
       }
     }
   }

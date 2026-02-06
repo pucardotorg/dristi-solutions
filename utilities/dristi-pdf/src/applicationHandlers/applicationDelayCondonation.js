@@ -9,6 +9,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -66,7 +67,7 @@ const applicationDelayCondonation = async (
   // Search for case details
   try {
     const resCase = await handleApiCall(
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, application?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -112,10 +113,12 @@ const applicationDelayCondonation = async (
         (litigant) => litigant.partyType === "complainant.primary"
       )?.additionalDetails?.fullName || "";
 
-    const additionalComments =
-      application?.applicationDetails?.additionalInformation || "";
-    const reasonForDelay =
-      application?.applicationDetails?.reasonForDelay || "";
+    const additionalComments = htmlToFormattedText(
+      application?.applicationDetails?.additionalInformation || ""
+    );
+    const reasonForDelay = htmlToFormattedText(
+      application?.applicationDetails?.reasonForDelay || ""
+    );
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
@@ -175,7 +178,9 @@ const applicationDelayCondonation = async (
     const year = currentDate.getFullYear();
 
     const ordinalSuffix = getOrdinalSuffix(day);
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase
+      ? courtCase?.lprNumber
+      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [

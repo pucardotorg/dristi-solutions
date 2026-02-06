@@ -21,7 +21,13 @@ class CaseOverallStatusTest {
     @Test
     void testAllArgsConstructor() {
         AuditDetails auditDetails = new AuditDetails();
-        CaseOverallStatus caseOverallStatus = new CaseOverallStatus("123", "tenant", "stage1", "substage1", auditDetails);
+        CaseOverallStatus caseOverallStatus = CaseOverallStatus.builder()
+                .filingNumber("123")
+                .tenantId("tenant")
+                .stage("stage1")
+                .substage("substage1")
+                .auditDetails(auditDetails)
+                .build();
         assertEquals("123", caseOverallStatus.getFilingNumber());
         assertEquals("tenant", caseOverallStatus.getTenantId());
         assertEquals("stage1", caseOverallStatus.getStage());

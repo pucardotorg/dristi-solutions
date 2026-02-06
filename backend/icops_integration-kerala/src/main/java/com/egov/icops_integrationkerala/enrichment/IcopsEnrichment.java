@@ -61,9 +61,32 @@ public class IcopsEnrichment {
         String processUniqueId = idgenUtil.getIdList(taskRequest.getRequestInfo(), config.getEgovStateTenantId(),
                 config.getIdName(),null,1).get(0);
         ProcessRequest processRequest;
-        if(!task.getTaskType().isEmpty() && task.getTaskType().equalsIgnoreCase("WARRANT")){
-            String docSubType = Optional.ofNullable(taskDetails.getWarrantDetails().getDocSubType())
-                    .orElse("Warrant of arrest");
+        if(!task.getTaskType().isEmpty() && (task.getTaskType().equalsIgnoreCase("WARRANT") ||
+                task.getTaskType().equalsIgnoreCase("PROCLAMATION") ||
+                task.getTaskType().equalsIgnoreCase("ATTACHMENT"))
+        ){
+            String docSubType = null;
+            Long issueDate = null;
+            String partyType = null;
+
+            switch (task.getTaskType().toUpperCase()) {
+                case "WARRANT":
+                    docSubType = Optional.ofNullable(taskDetails.getWarrantDetails().getDocSubType())
+                            .orElse("Warrant of arrest");
+                    issueDate = taskDetails.getWarrantDetails().getIssueDate();
+                    partyType = taskDetails.getWarrantDetails().getPartyType();
+                    break;
+                case "PROCLAMATION":
+                    docSubType = Optional.ofNullable(taskDetails.getProclamationDetails().getDocSubType())
+                            .orElse("Proclamation requiring the appearance of a person accused");
+                    issueDate = taskDetails.getProclamationDetails().getIssueDate();
+                    break;
+                case "ATTACHMENT":
+                    docSubType = Optional.ofNullable(taskDetails.getAttachmentDetails().getDocSubType())
+                            .orElse("Order authorising an attachment by the district magistrate or collector");
+                    issueDate = taskDetails.getAttachmentDetails().getIssueDate();
+                    break;
+            }
             Integer age = taskDetails.getRespondentDetails().getAge();
             String ageString = (age != null) ? String.valueOf(age) : "";
 
@@ -91,9 +114,9 @@ public class IcopsEnrichment {
                     .processUniqueId(processUniqueId)
                     .processCourtName(taskDetails.getCaseDetails().getCourtName())
                     .processJudge(taskDetails.getCaseDetails().getJudgeName())
-                    .processIssueDate(converter.convertLongToDate(taskDetails.getWarrantDetails().getIssueDate()))
+                    .processIssueDate(converter.convertLongToDate(issueDate))
                     .processNextHearingDate(converter.convertLongToDate(taskDetails.getCaseDetails().getHearingDate()))
-                    .processPartyType(taskDetails.getWarrantDetails().getPartyType())
+                    .processPartyType(partyType)
                     .processDocType(docTypeInfo != null ? docTypeInfo.get("name") : null)
                     .processDocTypeCode(docTypeInfo != null ? docTypeInfo.get(DOC_TYPE_CODE) : null)
                     .processDocSubType(docTypeInfo != null ? docTypeInfo.get(SUB_TYPE) : null)
@@ -205,7 +228,7 @@ public class IcopsEnrichment {
             return null;
         }
         String taskType = request.getTask().getTaskType();
-        String documentTypeToUse = WARRANT.equalsIgnoreCase(taskType) ? SIGNED_TASK_DOCUMENT : SEND_TASK_DOCUMENT;
+        String documentTypeToUse = (WARRANT.equalsIgnoreCase(taskType) || PROCLAMATION.equalsIgnoreCase(taskType) || ATTACHMENT.equalsIgnoreCase(taskType)) ? SIGNED_TASK_DOCUMENT : SEND_TASK_DOCUMENT;
         return request.getTask().getDocuments().stream()
                 .filter(document -> document.getDocumentType() != null)
                 .filter(document -> document.getDocumentType().equalsIgnoreCase(documentTypeToUse))

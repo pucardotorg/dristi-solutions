@@ -1,7 +1,7 @@
 const express = require("express");
 const path = require("path");
 const axios = require("axios");
-const qs = require('qs');
+const qs = require("qs");
 
 const app = express();
 const port = 8080;
@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 let cachedRequestInfo = null;
 let tokenExpirationTime = 0;
 let isRefreshing = false;
-let refreshPromise = null; 
+let refreshPromise = null;
 
 // Log incoming requests
 app.use((req, res, next) => {
@@ -42,24 +42,29 @@ app.post(`${contextPath}`, async (req, res) => {
       data: returnParams.data,
       hmac: returnParams.hmac,
       authToken: returnHeader.AuthToken,
-      tenantId: "kl"
+      tenantId: "kl",
+      mockEnabled: returnParams?.mockEnabled || false,
     };
 
     const dataToSend = {
-      RequestInfo: requestInfo, 
-      TreasuryParams: treasuryParams
-    }
+      RequestInfo: requestInfo,
+      TreasuryParams: treasuryParams,
+    };
     // Send data to the backend service
     let backendResponse;
     try {
       // Log the data to send
       console.log("Data to send:", JSON.stringify(dataToSend, null, 2));
-      backendResponse = await axios.post(`${serverUrl}/etreasury/payment/v1/_decryptTreasuryResponse`, dataToSend, {
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Basic ZWdvdi11c2VyLWNsaWVudDo="
+      backendResponse = await axios.post(
+        `${serverUrl}/etreasury/payment/v1/_decryptTreasuryResponse`,
+        dataToSend,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Basic ZWdvdi11c2VyLWNsaWVudDo=",
+          },
         }
-      });
+      );
       console.log("Backend response:", backendResponse.data);
     } catch (backendError) {
       console.error("Backend request error:", backendError);
@@ -69,8 +74,7 @@ app.post(`${contextPath}`, async (req, res) => {
     const paymentStatus = backendResponse.data.treasuryPaymentData.status;
 
     let htmlFile;
-    if (
-      treasuryStatus === true && paymentStatus === "Y") {
+    if (treasuryStatus === true && paymentStatus === "Y") {
       htmlFile = "payment-success.html";
     } else {
       htmlFile = "payment-failure.html";
@@ -87,7 +91,11 @@ app.post(`${contextPath}`, async (req, res) => {
 async function getRequestInfo() {
   const currentTime = new Date().getTime();
 
-  if (cachedRequestInfo && tokenExpirationTime && currentTime < tokenExpirationTime) { 
+  if (
+    cachedRequestInfo &&
+    tokenExpirationTime &&
+    currentTime < tokenExpirationTime
+  ) {
     await refreshRequestInfo();
   }
 
@@ -103,21 +111,23 @@ async function refreshRequestInfo() {
   isRefreshing = true;
   refreshPromise = new Promise(async (resolve, reject) => {
     try {
-      const url = process.env.DRISTI_URL || "https://dristi-kerala-dev.pucar.org/user/oauth/token?_=1713357247536";
+      const url =
+        process.env.DRISTI_URL ||
+        "https://dristi-kerala-dev.pucar.org/user/oauth/token?_=1713357247536";
       const data = qs.stringify({
         username: process.env.USERNAME || "payment-collector",
         password: process.env.PASSWORD || "Dristi@123",
         tenantId: "kl",
         userType: "EMPLOYEE",
         scope: "read",
-        grant_type: "password"
+        grant_type: "password",
       });
 
       const headers = {
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ZWdvdi11c2VyLWNsaWVudDo='
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: "Basic ZWdvdi11c2VyLWNsaWVudDo=",
       };
 
       const response = await axios.post(url, data, { headers });
@@ -131,7 +141,7 @@ async function refreshRequestInfo() {
         msgId: "1723548200333|en_IN",
         authToken: accessToken,
         userInfo: userInfo,
-        tenantId: "kl"
+        tenantId: "kl",
       };
 
       const currentTime = new Date().getTime();
@@ -142,10 +152,13 @@ async function refreshRequestInfo() {
 
       resolve(cachedRequestInfo);
     } catch (error) {
-      console.error('Error fetching Auth token:', error.response ? error.response.data : error.message);
+      console.error(
+        "Error fetching Auth token:",
+        error.response ? error.response.data : error.message
+      );
       reject(error);
     } finally {
-      isRefreshing = false; 
+      isRefreshing = false;
     }
   });
 

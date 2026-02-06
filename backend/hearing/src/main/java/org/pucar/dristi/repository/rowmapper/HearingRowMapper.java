@@ -67,6 +67,7 @@ public class HearingRowMapper implements ResultSetExtractor<List<Hearing>> {
                             .isActive(rs.getBoolean("isactive"))
                             .notes(rs.getString("notes"))
                             .hearingType(rs.getString("hearingtype"))
+                            .hearingSummary(rs.getString("hearingsummary"))
                             .courtCaseNumber(rs.getString("courtcasenumber"))
                             .caseReferenceNumber(rs.getString("casereferencenumber"))
                             .cmpNumber(rs.getString("cmpNumber"))

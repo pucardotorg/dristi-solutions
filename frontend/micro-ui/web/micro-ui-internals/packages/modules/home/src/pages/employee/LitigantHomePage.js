@@ -455,11 +455,19 @@ const LitigantHomePage = ({ isApprovalPending }) => {
   const history = useHistory();
   const curHr = today.getHours();
   const userType = Digit.UserService.getType();
+  const userInfo = window?.Digit?.UserService?.getUser?.()?.info;
+
   const [callRefetch, SetCallRefetch] = useState(false);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+
+  let homePath = `/${window?.contextPath}/${userInfoType}/home/home-pending-task`;
+  if (!isEpostUser && userInfoType === "employee") homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
 
   const refreshInbox = () => {
     SetCallRefetch(true);
-    history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+    history.push(homePath);
   };
   const name = userName?.info?.name
     .split(" ")

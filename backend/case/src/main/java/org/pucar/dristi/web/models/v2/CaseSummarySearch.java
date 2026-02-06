@@ -1,10 +1,14 @@
 package org.pucar.dristi.web.models.v2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.pucar.dristi.web.models.NatureOfDisposal;
+import org.pucar.dristi.web.models.POAHolder;
+import org.pucar.dristi.web.models.StatuteSection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +61,9 @@ public class CaseSummarySearch {
 
     @JsonProperty("outcome")
     private String outcome = null;
+
+    @JsonProperty("natureOfDisposal")
+    private NatureOfDisposal natureOfDisposal = null;
 
     @JsonProperty("courtId")
     private String courtId = null;

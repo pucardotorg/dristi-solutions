@@ -18,6 +18,13 @@ import PaymentForSummonModalSMSAndEmail from "./pages/employee/PaymentForSummonM
 import SBIEpostPayment from "./pages/employee/SBIEpostPayment";
 import SBIPaymentStatus from "./components/SBIPaymentStatus";
 import WarrantOrderComponent from "./components/WarrantOrderComponent";
+import OrderTypeControls from "./components/OrderTypeControls";
+import OrderTypeControlItem from "./components/OrderTypeControlItem";
+import EpostTrackingPage from "./pages/employee/E-PostTracking";
+import PaymentLoginPage from "./pages/employee/PaymentLoginPage";
+import SmsPaymentPage from "./pages/employee/SmsPaymentPage";
+import NoticeSummonPartyComponent from "./components/NoticeSummonPartyComponent";
+import MediationFormSignaturePage from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/MediationFormSignaturePage";
 export const OrdersModule = ({ stateCode, userType, tenants }) => {
   const { path } = useRouteMatch();
   const moduleCode = ["orders", "hearings", "common", "case", "workflow"];
@@ -52,6 +59,13 @@ const componentsToRegister = {
   SBIPaymentStatus,
   PaymentForRPADModal,
   WarrantOrderComponent,
+  OrderTypeControls,
+  OrderTypeControlItem,
+  EpostTrackingPage,
+  PaymentLoginPage,
+  SmsPaymentPage,
+  NoticeSummonPartyComponent,
+  MediationFormSignaturePage,
 };
 
 export const initOrdersComponents = () => {

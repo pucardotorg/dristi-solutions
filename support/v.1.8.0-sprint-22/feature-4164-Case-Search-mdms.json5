@@ -1,0 +1,120 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "INBOX",
+    "moduleName": "InboxQueryConfiguration",
+    "mdmsPayload": [
+      {
+        "id": "7b2e8571-4211-4706-b9a7-4d7fdb699b8b",
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "case-search-index",
+        "data": {
+          "index": "case-search-index",
+          "module": "Openapi Service",
+          "sortBy": {
+            "path": "Data.caseDetails.filingDate",
+            "defaultOrder": "ASC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "filingNumber",
+              "path": "Data.caseDetails.filingNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "stNumber",
+              "path": "Data.caseDetails.stNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "cnrNumber",
+              "path": "Data.caseDetails.cnrNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseSubStage",
+              "path": "Data.caseDetails.caseSubStage.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseStatus",
+              "path": "Data.caseDetails.caseStatus.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "yearOfFiling",
+              "path": "Data.caseDetails.yearOfFiling.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseType",
+              "path": "Data.caseDetails.caseType.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "courtName",
+              "path": "Data.caseDetails.courtName.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "advocateName",
+              "path": "Data.caseDetails.advocates.name.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "advocateId",
+              "path": "Data.caseDetails.advocates.id.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "litigantName",
+              "path": "Data.caseDetails.litigants.name.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "hearingDateFrom",
+              "path": "Data.caseDetails.nextHearingDate",
+              "operator": "GTE",
+              "isMandatory": false
+            },
+            {
+              "name": "hearingDateTo",
+              "path": "Data.caseDetails.nextHearingDate",
+              "operator": "LTE",
+              "isMandatory": false
+            },
+            {
+              "name": "caseTitle",
+              "path": "Data.caseDetails.caseTitle.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "tenantId",
+              "path": "Data.caseDetails.tenantId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "cmpNumber",
+              "path": "Data.caseDetails.cmpNumber.keyword",
+              "isMandatory": false
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1750944837112,
+          "lastModifiedTime": 1750955071140
+        }
+      }
+    ]
+  }
+]

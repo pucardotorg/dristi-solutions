@@ -100,14 +100,14 @@ const editRespondentFormconfig = [
               fileTypes: ["JPG", "JPEG", "PDF", "PNG"],
               isOptional: "CS_IS_OPTIONAL",
               isMandatory: false,
-              maxFileSize: 50,
+              maxFileSize: 10,
               documentHeader: "COMPANY_DOCUMENT_DETAILS",
               isMultipleUpload: true,
-              uploadGuidelines: "UPLOAD_DOC_50",
+              uploadGuidelines: "UPLOAD_DOC_10",
               documentHeaderStyle: {
                 textAlign: "start",
               },
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             },
           ],
         },
@@ -187,6 +187,8 @@ const editRespondentFormconfig = [
           name: "respondentAge",
           validation: {
             maxLength: 3,
+            minLength: 2,
+            pattern: "[0-9]+",
             patternType: "Number",
           },
         },
@@ -515,6 +517,7 @@ const editRespondentFormconfig = [
         key: "prayer",
         withoutLabel: true,
         isMandatory: false,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -537,6 +540,7 @@ const editRespondentFormconfig = [
         label: "CS_REASON_FOR_CHANGE",
         withoutLabel: true,
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -570,9 +574,9 @@ const editRespondentFormconfig = [
               documentHeader: "SUPPORTING_DOCUMENT",
               type: "DragDropComponent",
               isOptional: "CS_IS_OPTIONAL",
-              uploadGuidelines: "UPLOAD_DOC_50",
-              maxFileSize: 50,
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              uploadGuidelines: "UPLOAD_DOC_10",
+              maxFileSize: 10,
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               isMultipleUpload: false,
               documentHeaderStyle: {

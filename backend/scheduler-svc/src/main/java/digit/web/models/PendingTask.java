@@ -43,6 +43,9 @@ public class PendingTask {
     @JsonProperty("filingNumber")
     private String filingNumber = null;
 
+    @JsonProperty("actionCategory")
+    private String actionCategory = null;
+
     @JsonProperty("caseId")
     private String caseId = null;
 
@@ -63,4 +66,8 @@ public class PendingTask {
 
     @JsonProperty("screenType")
     private String screenType = null;
+
+    @JsonProperty("referenceEntityType")
+    private String referenceEntityType = null;
+
 }

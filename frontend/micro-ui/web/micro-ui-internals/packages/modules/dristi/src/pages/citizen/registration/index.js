@@ -78,6 +78,20 @@ const Registration = ({ stateCode }) => {
 
     return () => clearTimeout(timer);
   }, [closeToast]);
+
+  useEffect(() => {
+    if (location?.state?.newParams) {
+      setNewParams(location.state.newParams);
+    }
+  }, [location.state?.newParams]);
+
+  useEffect(() => {
+    if (newParams) {
+      const { mobileNumber, ...sanitizedParams } = newParams || {};
+      sessionStorage.setItem("userRegistrationParams", JSON.stringify(sanitizedParams));
+    }
+  }, [newParams]);
+
   useEffect(() => {
     if (!user) {
       return;
@@ -133,18 +147,6 @@ const Registration = ({ stateCode }) => {
     const address = data?.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
   }, [data?.Individual, userInfoType]);
-
-  useEffect(() => {
-    if (isLitigantPartialRegistered && data?.Individual) {
-      setNewParams({
-        name: {
-          firstName: data?.Individual?.[0]?.name?.givenName,
-          middleName: data?.Individual?.[0]?.name?.otherNames,
-          lastName: data?.Individual?.[0]?.name?.familyName,
-        },
-      });
-    }
-  }, [data?.Individual, isLitigantPartialRegistered]);
 
   const handleAadharOtpChange = (aadharOtp) => {
     setNewParams({ ...newParams, aadharOtp });
@@ -240,11 +242,11 @@ const Registration = ({ stateCode }) => {
   const onSelectSkipEmail = async () => {
     setShowSkipEmailModal(false);
     setNewParams({ ...newParams, isSkip: true });
-    history.push(`${path}/user-name`);
+    history.push(`${path}/user-name`, { newParams: { ...newParams, isSkip: true } });
   };
   const selectName = async (name) => {
     setNewParams({ ...newParams, name });
-    history.push(`${path}/user-address`);
+    history.push(`${path}/user-address`, { newParams: { ...newParams, name } });
   };
 
   const onAadharOtpSelect = () => {
@@ -255,18 +257,18 @@ const Registration = ({ stateCode }) => {
       showOtpModal: false,
       isAdhaar: false,
     }));
-    history.replace(`${path}/user-type`);
+    history.replace(`${path}/user-type`, { newParams });
     setCanSubmitAadharOtp(true);
   };
   const handleAddressSave = (address) => {
     setNewParams({ ...newParams, address });
-    history.push(`${path}/id-verification`);
+    history.push(`${path}/id-verification`, { newParams: { ...newParams, address } });
   };
   const handleIdentitySave = (indentity) => {
     setNewParams({ ...newParams, indentity, adhaarNumber: "" });
     indentity.IdVerification.selectIdType.code === "AADHAR"
       ? history.push(`${path}/enter-adhaar`, { comingFrom: "Aadhaar" })
-      : history.push(`${path}/upload-id`, { comingFrom: "otherId" });
+      : history.push(`${path}/upload-id`, { comingFrom: "otherId", newParams: { ...newParams, indentity } });
   };
   const handleUserTypeSave = (userType) => {
     setNewParams({ ...newParams, userType });
@@ -277,17 +279,18 @@ const Registration = ({ stateCode }) => {
     const identityObj = {
       IdVerification: {
         selectIdType: {
-          code: "OTHER ID",
+          id: 2,
+          code: "OTHER_ID",
           name: "CS_OTHER",
           subText: "CS_OTHER_SUB_TEXT",
         },
       },
     };
-    setNewParams({ ...newParams, indentity: identityObj });
-
-    Digit.SessionStorage.set("UploadedDocument", { filedata: fileUploadRes?.data, IdType, filename });
+    setNewParams({ ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } });
     Digit.SessionStorage.del("aadharNumber");
-    history.replace(`${path}/user-type`);
+    history.replace(`${path}/user-type`, {
+      newParams: { ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } },
+    });
   };
   if (isLoading || isFetching) {
     return <Loader />;

@@ -49,6 +49,9 @@ public class OrderAndNotification {
     @JsonProperty("courtId")
     private String courtId;
 
+    @JsonProperty("businessOfTheDay")
+    private String businessOfTheDay;
+
     @JsonProperty("judgeIds")
     private List<String> judgeIds;
 
@@ -63,5 +66,8 @@ public class OrderAndNotification {
 
     @JsonProperty("caseSTNumber")
     private String caseSTNumber = null;
+
+    @JsonProperty("lastModifiedTime")
+    private Long lastModifiedTime = null;
 
 }

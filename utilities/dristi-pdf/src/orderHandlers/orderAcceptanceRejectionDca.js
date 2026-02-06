@@ -44,7 +44,7 @@ async function orderAcceptanceRejectionDca(
   try {
     const resCase = await handleApiCall(
       res,
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, order?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -61,7 +61,8 @@ async function orderAcceptanceRejectionDca(
         search_application(
           tenantId,
           order?.additionalDetails?.formdata?.refApplicationId,
-          requestInfo
+          requestInfo,
+          order?.courtId
         ),
       "Failed to query application service"
     );
@@ -114,7 +115,13 @@ async function orderAcceptanceRejectionDca(
 
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
 
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber =
+      (courtCase?.isLPRCase
+        ? courtCase?.lprNumber
+        : courtCase?.courtCaseNumber) ||
+      courtCase?.courtCaseNumber ||
+      courtCase?.cmpNumber ||
+      "";
     const data = {
       Data: [
         {

@@ -78,8 +78,8 @@ public class PdfEmbedder {
                     // Once found, use the coordinates of the keyword
                     float x = finder.getKeywordX();
                     float y = finder.getKeywordY();
-                    coordinate.setX(x - signaturePlace.length() * configuration.getPositionOffset());
-                    coordinate.setY(y);
+                    coordinate.setX(x);
+                    coordinate.setY(y + configuration.getESignYCoordinateOffset());
                     coordinate.setFound(true);
                     coordinate.setPageNumber(i);
                     log.info("Method=findLocationToSign,Result=Success,Coordinate found for placeholder={}", signaturePlace);

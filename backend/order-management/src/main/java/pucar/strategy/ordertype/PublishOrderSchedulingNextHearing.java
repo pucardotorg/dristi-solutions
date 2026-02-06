@@ -8,20 +8,19 @@ import pucar.config.Configuration;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.CaseUtil;
 import pucar.util.HearingUtil;
+import pucar.util.PendingTaskUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.CaseCriteria;
 import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
-import pucar.web.models.hearing.HearingRequest;
-import pucar.web.models.hearing.HearingResponse;
+import pucar.web.models.hearing.*;
 
 import java.util.Collections;
 import java.util.List;
 
-import static pucar.config.ServiceConstants.E_SIGN;
-import static pucar.config.ServiceConstants.SCHEDULING_NEXT_HEARING;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -30,12 +29,14 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
     private final HearingUtil hearingUtil;
     private final Configuration configuration;
     private final CaseUtil caseUtil;
+    private final PendingTaskUtil pendingTaskUtil;
 
     @Autowired
-    public PublishOrderSchedulingNextHearing(HearingUtil hearingUtil, Configuration configuration, CaseUtil caseUtil) {
+    public PublishOrderSchedulingNextHearing(HearingUtil hearingUtil, Configuration configuration, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil) {
         this.hearingUtil = hearingUtil;
         this.configuration = configuration;
         this.caseUtil = caseUtil;
+        this.pendingTaskUtil = pendingTaskUtil;
     }
 
     @Override
@@ -47,7 +48,9 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        Order order = orderRequest.getOrder();
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && SCHEDULING_NEXT_HEARING.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -80,6 +83,21 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
 
     @Override
     public OrderRequest postProcess(OrderRequest orderRequest) {
+
+        hearingUtil.updateHearingStatus(orderRequest);
+
+        Order order = orderRequest.getOrder();
+        RequestInfo requestInfo = orderRequest.getRequestInfo();
+
+
+        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
+                .requestInfo(requestInfo).build());
+
+        CourtCase courtCase = cases.get(0);
+        pendingTaskUtil.closeManualPendingTask(order.getFilingNumber() + SCHEDULE_HEARING_SUFFIX, requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
+
+
         return null;
     }
 

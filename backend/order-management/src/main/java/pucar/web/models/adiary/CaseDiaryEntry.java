@@ -47,7 +47,6 @@ public class CaseDiaryEntry {
     @JsonProperty("businessOfDay")
     @NotNull
 
-    @Size(max = 1024)
     private String businessOfDay = null;
 
     @JsonProperty("referenceId")
