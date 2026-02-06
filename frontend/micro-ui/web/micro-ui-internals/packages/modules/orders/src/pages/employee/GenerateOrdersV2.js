@@ -2195,6 +2195,8 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("offense", updatedFormdata.offense);
       }
 
+      console.log("updatedFormdata", updatedFormdata);
+
       if (currentOrderType === "BAIL") {
         updatedFormdata.bailType = { type: newApplicationDetails?.applicationType };
         setValueRef?.current?.[index]?.("bailType", updatedFormdata.bailType);
