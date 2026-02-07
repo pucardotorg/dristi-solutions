@@ -94,10 +94,28 @@ public class ApplicationQueryBuilder {
             }
 
             if (requestInfo != null && requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null) {
+                List<String> advocateAndClerkUuids = applicationCriteria.getAdvocateAndClerkUuids();
+                boolean isAdvocateOrClerk = applicationCriteria.isAdvocate() || applicationCriteria.isClerk();
+                boolean hasUserUuidsList = advocateAndClerkUuids != null && !advocateAndClerkUuids.isEmpty();
+
                 addClauseIfRequired(query, firstCriteria);
-                query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.createdBy = ?))");
-                preparedStmtList.add(userUuid);
-                preparedStmtArgList.add(Types.VARCHAR);
+
+                if (isAdvocateOrClerk && hasUserUuidsList) {
+                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.createdBy IN (");
+                    for (int i = 0; i < advocateAndClerkUuids.size(); i++) {
+                        query.append("?");
+                        if (i < advocateAndClerkUuids.size() - 1) {
+                            query.append(", ");
+                        }
+                        preparedStmtList.add(advocateAndClerkUuids.get(i));
+                        preparedStmtArgList.add(Types.VARCHAR);
+                    }
+                    query.append(")))");
+                } else {
+                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.createdBy = ?))");
+                    preparedStmtList.add(userUuid);
+                    preparedStmtArgList.add(Types.VARCHAR);
+                }
                 firstCriteria = false;
             }
 
