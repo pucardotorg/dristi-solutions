@@ -1,4 +1,4 @@
-import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getUserDetails, setCitizenDetail } from "../../../hooks/useGetAccessToken";
@@ -12,6 +12,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const setFormError = useRef(null);
 
@@ -40,6 +41,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
 
   const onSubmit = async () => {
     setIsDisabled(true);
+    setIsLoading(true);
     const userType = params?.userType;
     const userTypeSelcted = params?.userType?.clientDetails?.selectUserType?.code;
     const Individual = params?.IndividualPayload
@@ -72,83 +74,13 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
       } finally {
         setParams({});
       }
-    } else if ((userTypeSelcted === "LITIGANT" || userTypeSelcted === "ADVOCATE_CLERK") && !params?.Individual?.[0]?.individualId) {
+    } else if (userTypeSelcted === "LITIGANT" && !params?.Individual?.[0]?.individualId) {
       Digit.DRISTIService.postIndividualService(Individual, tenantId)
         .then((result) => {
-          if (userType?.clientDetails?.selectUserType?.apiDetails && userType?.clientDetails?.selectUserType?.apiDetails?.serviceName && result) {
-            const requestBody = {
-              [userType?.clientDetails?.selectUserType?.apiDetails?.requestKey]: {
-                tenantId: tenantId,
-                individualId: result?.Individual?.individualId,
-                isActive: false,
-                workflow: {
-                  action: "REGISTER",
-                  comments: `Applying for ${userType?.clientDetails?.selectUserType?.apiDetails?.requestKey} registration`,
-                  documents: [
-                    {
-                      id: null,
-                      documentType: null,
-                      fileStore: null,
-                      documentUid: "",
-                      additionalDetails: {},
-                    },
-                  ],
-                  assignes: [],
-                  rating: null,
-                },
-                documents: [
-                  {
-                    id: null,
-                    documentType: null,
-                    fileStore: null,
-                    documentUid: "",
-                    additionalDetails: {},
-                  },
-                ],
-                additionalDetails: {
-                  username: getFullName(" ", params?.name?.firstName, params?.name?.middleName, params?.name?.lastName),
-                  userType: userType,
-                },
-                ...userType?.clientDetails?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
-                  res[curr] = "DEFAULT_VALUE";
-                  return res;
-                }, {}),
-              },
-            };
-            Digit.DRISTIService.advocateClerkService(userType?.clientDetails?.selectUserType?.apiDetails?.serviceName, requestBody, tenantId, true, {
-              roles: [
-                {
-                  name: "Citizen",
-                  code: "CITIZEN",
-                  tenantId: tenantId,
-                },
-              ],
-            })
-              .then(() => {
-                const refreshToken = window.localStorage.getItem("citizen.refresh-token");
-                if (refreshToken) {
-                  getUserDetails(refreshToken).then((res) => {
-                    const { ResponseInfo, UserRequest: info, ...tokens } = res;
-                    const user = { info, ...tokens };
-                    localStorage.setItem("citizen.userRequestObject", user);
-                    window?.Digit.UserService.setUser(user);
-                    setCitizenDetail(user?.info, user?.access_token, window?.Digit.ULBService.getStateId());
-                    history.push(`/${window?.contextPath}/citizen/dristi/home`);
-                  });
-                }
-              })
-              .catch(() => {
-                history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
-              })
-              .finally(() => {
-                setParams({});
-              });
-          } else {
-            history.push(`/${window?.contextPath}/citizen/dristi/home/response`, {
-              response: "success",
-              createType: params?.userType?.clientDetails?.selectUserType?.code,
-            });
-          }
+          history.push(`/${window?.contextPath}/citizen/dristi/home/response`, {
+            response: "success",
+            createType: params?.userType?.clientDetails?.selectUserType?.code,
+          });
         })
         .catch(() => {
           history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
@@ -156,86 +88,6 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
         .finally(() => {
           setParams({});
         });
-    } else if (userTypeSelcted === "ADVOCATE_CLERK" && params?.Individual?.[0]?.individualId) {
-      if (userType?.clientDetails?.selectUserType?.apiDetails && userType?.clientDetails?.selectUserType?.apiDetails?.serviceName) {
-        const requestBody = {
-          [userType?.clientDetails?.selectUserType?.apiDetails?.requestKey]: {
-            tenantId: tenantId,
-            individualId: params?.Individual?.[0]?.individualId,
-            isActive: false,
-            workflow: {
-              action: "REGISTER",
-              comments: `Applying for ${userType?.clientDetails?.selectUserType?.apiDetails?.requestKey} registration`,
-              documents: [
-                {
-                  id: null,
-                  documentType: null,
-                  fileStore: null,
-                  documentUid: "",
-                  additionalDetails: {},
-                },
-              ],
-              assignes: [],
-              rating: null,
-            },
-            documents: [
-              {
-                id: null,
-                documentType: null,
-                fileStore: null,
-                documentUid: "",
-                additionalDetails: {},
-              },
-            ],
-            additionalDetails: {
-              username: getFullName(
-                " ",
-                params?.Individual?.[0]?.name?.givenName,
-                params?.Individual?.[0]?.name?.otherNames,
-                params?.Individual?.[0]?.name?.familyName
-              ),
-              userType: userType,
-            },
-            ...userType?.clientDetails?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
-              res[curr] = "DEFAULT_VALUE";
-              return res;
-            }, {}),
-          },
-        };
-        Digit.DRISTIService.advocateClerkService(userType?.clientDetails?.selectUserType?.apiDetails?.serviceName, requestBody, tenantId, true, {
-          roles: [
-            {
-              name: "Citizen",
-              code: "CITIZEN",
-              tenantId: tenantId,
-            },
-          ],
-        })
-          .then(() => {
-            const refreshToken = window.localStorage.getItem("citizen.refresh-token");
-            if (refreshToken) {
-              getUserDetails(refreshToken).then((res) => {
-                const { ResponseInfo, UserRequest: info, ...tokens } = res;
-                const user = { info, ...tokens };
-                localStorage.setItem("citizen.userRequestObject", user);
-                window?.Digit.UserService.setUser(user);
-                setCitizenDetail(user?.info, user?.access_token, window?.Digit.ULBService.getStateId());
-                history.push(`/${window?.contextPath}/citizen/dristi/home`);
-              });
-            }
-          })
-          .catch(() => {
-            history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
-          })
-          .finally(() => {
-            setParams({});
-          });
-      } else {
-        history.push(`/${window?.contextPath}/citizen/dristi/home/response`, {
-          response: "success",
-          createType: params?.userType?.clientDetails?.selectUserType?.code,
-        });
-      }
     } else {
       const data = params?.userType?.clientDetails;
       const Individual = params?.IndividualPayload ? params?.IndividualPayload : { Individual: params?.Individual?.[0] };
@@ -248,7 +100,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
               data?.selectUserType?.apiDetails &&
               data?.selectUserType?.apiDetails?.serviceName &&
               result &&
-              data?.selectUserType?.role[0] === "ADVOCATE_ROLE"
+              (data?.selectUserType?.role[0] === "ADVOCATE_ROLE" || data?.selectUserType?.role[0] === "ADVOCATE_CLERK_ROLE")
             ) {
               onDocumentUpload(formData?.clientDetails?.barCouncilId[0][1]?.file, formData?.clientDetails?.barCouncilId[0][0]).then((document) => {
                 const requestBody = {
@@ -288,10 +140,14 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
                       username: getFullName(" ", oldData?.name?.firstName, oldData?.name?.middleName, oldData?.name?.lastName),
                       userType: params?.userType,
                     },
-                    ...data?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
-                      res[curr] = formData?.clientDetails?.[curr];
-                      return res;
-                    }, {}),
+                    ...(data?.selectUserType?.code === "ADVOCATE_CLERK"
+                      ? {
+                          stateRegnNumber: formData?.clientDetails?.barRegistrationNumber,
+                        }
+                      : data?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
+                          res[curr] = formData?.clientDetails?.[curr];
+                          return res;
+                        }, {})),
                   },
                 };
                 Digit.DRISTIService.advocateClerkService(data?.selectUserType?.apiDetails?.serviceName, requestBody, tenantId, true, {
@@ -335,7 +191,11 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
           ...formData,
         });
       } else if (params?.Individual?.[0]?.individualId) {
-        if (data?.selectUserType?.apiDetails && data?.selectUserType?.apiDetails?.serviceName && data?.selectUserType?.role[0] === "ADVOCATE_ROLE") {
+        if (
+          data?.selectUserType?.apiDetails &&
+          data?.selectUserType?.apiDetails?.serviceName &&
+          (data?.selectUserType?.role[0] === "ADVOCATE_ROLE" || data?.selectUserType?.role[0] === "ADVOCATE_CLERK_ROLE")
+        ) {
           await window?.Digit.DRISTIService.updateIndividualUser(
             {
               Individual: params?.Individual?.[0],
@@ -385,10 +245,14 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
                   ),
                   userType: params?.userType,
                 },
-                ...data?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
-                  res[curr] = formData?.clientDetails?.[curr];
-                  return res;
-                }, {}),
+                ...(data?.selectUserType?.code === "ADVOCATE_CLERK"
+                  ? {
+                      stateRegnNumber: formData?.clientDetails?.barRegistrationNumber,
+                    }
+                  : data?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
+                      res[curr] = formData?.clientDetails?.[curr];
+                      return res;
+                    }, {})),
               },
             };
             Digit.DRISTIService.advocateClerkService(data?.selectUserType?.apiDetails?.serviceName, requestBody, tenantId, true, {
@@ -483,8 +347,12 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
     handleRedirect();
   }, [params.address, params, history, pathOnRefresh, showSuccess]);
 
+  if (isLoading) {
+    return <Loader />;
+  }
+
   return (
-    <div className="terms-condition" style={{ margin: "50px" }}>
+    <div className="terms-condition" style={{ margin: "24px auto" }}>
       <FormComposerV2
         config={config}
         t={t}

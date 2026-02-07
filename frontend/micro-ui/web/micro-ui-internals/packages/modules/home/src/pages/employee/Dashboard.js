@@ -3,43 +3,21 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
-import TasksComponent from "../../components/TaskComponent";
 import { BreadCrumb } from "@egovernments/digit-ui-react-components";
 import { MailBoxIcon, CaseDynamicsIcon, ThreeUserIcon, DownloadIcon, ExpandIcon, CollapseIcon, FilterIcon, DocumentIcon } from "../../../homeIcon";
-import CustomDateRangePicker from "../../components/CustomDateRangePicker";
 
 const METABASE_URL = "https://oncourts.kerala.gov.in/pucar-dashboard/public/dashboard/981a30b4-c33a-4f11-96a6-1242d95717e2";
 
 const DashboardPage = () => {
   const { t } = useTranslation();
   const { select } = Digit.Hooks.useQueryParams();
-  const getCurrentDate = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate() + 1).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
   const history = useHistory();
   const [stepper, setStepper] = useState(Number(select) || 0);
-  const [selectedRange, setSelectedRange] = useState({ startDate: "2024-11-14", endDate: getCurrentDate() });
   const [downloadingIndices, setDownloadingIndices] = useState([]);
   const [navbarCollapsed, setNavbarCollapsed] = useState(false);
-  const userInfo = Digit?.UserService?.getUser()?.info;
-  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const userRoles = Digit?.UserService?.getUser?.()?.info?.roles || [];
-  const [taskType, setTaskType] = useState({});
   const [jobId, setJobID] = useState("");
   const [headingTxt, setHeadingTxt] = useState("");
   const [metabaseUrl, setMetabaseUrl] = useState(METABASE_URL);
-  const [showPicker, setShowPicker] = useState(false);
-  const [dateRange, setDateRange] = useState([
-    {
-      startDate: new Date(2024, 10, 14),
-      endDate: new Date(),
-      key: "selection",
-    },
-  ]);
   const [toastMsg, setToastMsg] = useState(null);
   const showToast = (type, message, duration = 5000) => {
     setToastMsg({ key: type, action: message });
@@ -115,23 +93,6 @@ const DashboardPage = () => {
       setHeadingTxt("AVAILABLE_REPORTS");
     }
   }, [select]);
-
-  const handleSubmit = () => {
-    const startDate = new Date(dateRange[0].startDate);
-    const endDate = new Date(dateRange[0].endDate);
-
-    startDate.setHours(0, 0, 0, 0);
-
-    endDate.setHours(23, 59, 59, 999);
-
-    const utcStartDate = new Date(startDate.toUTCString());
-    const utcEndDate = new Date(endDate.toUTCString());
-
-    setSelectedRange({
-      startDate: utcStartDate.toISOString(),
-      endDate: utcEndDate.toISOString(),
-    });
-  };
 
   const toggleNavbar = () => {
     setNavbarCollapsed(!navbarCollapsed);
@@ -341,14 +302,6 @@ const DashboardPage = () => {
           )}
 
           <div className="dashboard-content">
-            {/*stepper === 1 && (
-              <div className="date-filter">
-                <CustomDateRangePicker setDateRange={setDateRange} dateRange={dateRange} showPicker={showPicker} setShowPicker={setShowPicker} />
-                <button onClick={handleSubmit} className="filter-button">
-                  <FilterIcon /> {t("ADD_FILTER")}
-                </button>
-              </div>
-            ) */}
             <div className="content-area">
               <style>{customStyles}</style>
               {stepper === 1 && <iframe src={metabaseUrl} height="700" width="100%"></iframe>}{" "}
@@ -373,17 +326,6 @@ const DashboardPage = () => {
                       </div>
                     ))}
                   </div>
-                  {/* <div style={{ flex: 2 }}>
-                      <TasksComponent
-                        taskType={taskType}
-                        setTaskType={setTaskType}
-                        isLitigant={userRoles.includes("CITIZEN")}
-                        uuid={userInfo?.uuid}
-                        userInfoType={userInfoType}
-                        hideFilters={true}
-                        isDiary={true}
-                      />
-                    </div> */}
                 </div>
               )}
             </div>

@@ -106,14 +106,6 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
     return MdmsCourtList?.["common-masters"]?.Court_Rooms.find((court) => court.code === caseDetails?.courtId);
   }, [MdmsCourtList, caseDetails?.courtId]);
 
-  const handleNavigate = (path) => {
-    const contextPath = window?.contextPath || "";
-    history.push(`/${contextPath}${path}`);
-  };
-
-  const closeSetDate = () => {
-    handleNavigate(`/employee/hearings/inside-hearing?hearingId=${hearingId}`);
-  };
   const [error, setError] = useState(null);
   const onGenerateOrder = () => {
     const requestBody = {

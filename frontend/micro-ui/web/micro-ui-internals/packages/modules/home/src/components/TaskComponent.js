@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CardLabel, Dropdown } from "@egovernments/digit-ui-components";
 import { Button, LabelFieldPair, Card } from "@egovernments/digit-ui-react-components";
 import { Loader } from "@egovernments/digit-ui-react-components";
@@ -20,6 +20,8 @@ import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } fro
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
+import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -47,7 +49,6 @@ const TasksComponent = ({
   caseType,
   setCaseType,
   isLitigant,
-  uuid,
   filingNumber,
   inCase = false,
   hideFilters = false,
@@ -58,6 +59,7 @@ const TasksComponent = ({
   pendingSignOrderList,
   tableView = false,
   needRefresh = false,
+  individualUserType = null,
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const CourierService = useMemo(() => Digit.ComponentRegistryService.getComponent("CourierService"), []);
@@ -68,6 +70,8 @@ const TasksComponent = ({
   const taskTypeCode = useMemo(() => taskType?.code, [taskType]);
   const [searchCaseLoading, setSearchCaseLoading] = useState(false);
   const userInfo = Digit.UserService.getUser()?.info;
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const todayDate = useMemo(() => new Date().getTime(), []);
   const [totalPendingTask, setTotalPendingTask] = useState(0);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
@@ -92,6 +96,8 @@ const TasksComponent = ({
     joinCasePaymentModal: false,
     data: {},
   });
+  const { AdvocateData } = useContext(AdvocateDataContext);
+  const selectedSeniorAdvocate = AdvocateData;
 
   const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -104,14 +110,42 @@ const TasksComponent = ({
     }
   );
 
-  const { data: pendingTaskDetails = [], isLoading, refetch } = useGetPendingTask({
+  const litigantSearchCriteriaAdditional = useMemo(() => {
+    if (!userType) return null;
+
+    // Employee: no additional filters
+    if (userType === "employee") return {};
+
+    // Citizen but not resolved yet
+    if (userType === "citizen" && !individualUserType) return null;
+
+    // Citizen litigant
+    if (userType === "citizen" && individualUserType === "LITIGANT") {
+      return userUuid ? { assignedTo: userUuid } : null;
+    }
+
+    // Advocate / office logic
+
+    if (!userUuid) return null;
+    if (!selectedSeniorAdvocate?.uuid) return null;
+    if (selectedSeniorAdvocate.uuid === userUuid) {
+      return { assignedTo: userUuid };
+    }
+
+    return {
+      officeAdvocateUuid: selectedSeniorAdvocate.uuid,
+      officeMemberUuid: userUuid,
+    };
+  }, [userType, individualUserType, userUuid, selectedSeniorAdvocate?.uuid]);
+
+  const { data: pendingTaskDetails = [], isLoading, refetch, isFetching: isFetchingPendingTask } = useGetPendingTask({
     data: {
       SearchCriteria: {
         tenantId,
         moduleName: "Pending Tasks Service",
         moduleSearchCriteria: {
           isCompleted: false,
-          ...(isLitigant && { assignedTo: uuid }),
+          ...(isLitigant && litigantSearchCriteriaAdditional && { ...litigantSearchCriteriaAdditional }),
           ...(!isLitigant && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
           screenType: isDiary ? ["Adiary"] : isApplicationCompositeOrder ? ["applicationCompositeOrder"] : ["home", "applicationCompositeOrder"],
@@ -123,8 +157,10 @@ const TasksComponent = ({
     },
     params: { tenantId },
     key: `${filingNumber}-${isDiary}-${isApplicationCompositeOrder}-${isScrutiny}-${courtId}`,
-    config: { enabled: Boolean(tenantId) },
+    config: { enabled: Boolean(tenantId) && Boolean(litigantSearchCriteriaAdditional) },
   });
+
+  console.log("isFetchingPendingTask", isFetchingPendingTask);
 
   const pendingTaskActionDetails = useMemo(() => {
     if (!totalPendingTask) {
@@ -182,6 +218,7 @@ const TasksComponent = ({
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         tenantId: tenantId,
+        caseId: courierServicePendingTask?.caseId || "",
       },
     },
     {},
@@ -601,7 +638,7 @@ const TasksComponent = ({
   );
 
   const pendingTasks = useMemo(() => {
-    if (isLoading || isOptionsLoading || pendingTaskActionDetails?.length === 0) return [];
+    if (isLoading || isFetchingPendingTask || isOptionsLoading || pendingTaskActionDetails?.length === 0) return [];
     const getCustomFunction = {
       handleCreateOrder,
       handleReviewSubmission,
@@ -630,7 +667,7 @@ const TasksComponent = ({
       const bailBondId = data?.fields?.find((field) => field.key === "additionalDetails.bailBondId")?.value;
       const courtId = data?.fields?.find((field) => field.key === "courtId")?.value;
 
-      const updateReferenceId = referenceId.split("_").pop();
+      const updateReferenceId = referenceId?.split("_").pop();
       const defaultObj = {
         referenceId: updateReferenceId,
         id: caseId,
@@ -736,6 +773,7 @@ const TasksComponent = ({
     handleReviewOrder,
     handleReviewSubmission,
     isLoading,
+    isFetchingPendingTask,
     isOptionsLoading,
     pendingTaskActionDetails,
     taskType?.code,
@@ -804,7 +842,7 @@ const TasksComponent = ({
               entityType: "case-default",
               referenceId: pendingTask?.referenceId,
               status: "PENDING_RESPONSE",
-              assignedTo: [{ uuid: userInfo?.uuid }],
+              assignedTo: [{ uuid: authorizedUuid }],
               assignedRole: ["CASE_RESPONDER"],
               cnrNumber: pendingTask?.cnrNumber,
               filingNumber: pendingTask?.filingNumber,
@@ -826,7 +864,7 @@ const TasksComponent = ({
         return { continue: false };
       }
     },
-    [responsePendingTask, tenantId, userInfo?.uuid]
+    [responsePendingTask, tenantId, authorizedUuid]
   );
 
   const getCaseDetailsUrl = useCallback(
@@ -1204,6 +1242,12 @@ const TasksComponent = ({
     };
   }, [courierServiceSteps, t, taskManagementList, courierOrderDetails, hideCancelButton, hasProcessManagementEditorAccess, refetch, suffix]);
 
+  useEffect(() => {
+    if (selectedSeniorAdvocate?.id && litigantSearchCriteriaAdditional) {
+      refetch();
+    }
+  }, [selectedSeniorAdvocate?.id, litigantSearchCriteriaAdditional, refetch]);
+
   const customStyles = `
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
     height:unset !important;
@@ -1246,42 +1290,46 @@ const TasksComponent = ({
             isDisabled={pendingSignOrderList?.totalCount === 0}
           />
         )}
-        {isLoading || isOptionsLoading || isPaymentTypeLoading ? (
+        {isLoading || isFetchingPendingTask || isOptionsLoading || isPaymentTypeLoading ? (
           <Loader />
         ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
           <React.Fragment>
             {!hideFilters && (
-              <div className="task-filters">
-                <style>{customStyles}</style>
-                <LabelFieldPair>
-                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
-                    {t("CASE_TYPE")}
-                  </CardLabel>
-                  <Dropdown
-                    option={caseTypes}
-                    selected={caseType}
-                    optionKey={"name"}
-                    select={(value) => {
-                      setCaseType(value);
-                    }}
-                    placeholder={t("CS_CASE_TYPE")}
-                  />
-                </LabelFieldPair>
-                <LabelFieldPair>
-                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
-                    {t("CS_TASK_TYPE")}
-                  </CardLabel>
-                  <Dropdown
-                    t={t}
-                    option={options?.sort((a, b) => a?.name?.localeCompare(b?.name))}
-                    optionKey={"name"}
-                    selected={taskType}
-                    select={(value) => {
-                      setTaskType(value);
-                    }}
-                    placeholder={t("CS_TASK_TYPE")}
-                  />
-                </LabelFieldPair>
+              <div>
+                <div className="task-filters">
+                  <style>{customStyles}</style>
+                  <LabelFieldPair>
+                    <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
+                      {t("CASE_TYPE")}
+                    </CardLabel>
+                    <Dropdown
+                      option={caseTypes}
+                      selected={caseType}
+                      optionKey={"name"}
+                      select={(value) => {
+                        setCaseType(value);
+                      }}
+                      placeholder={t("CS_CASE_TYPE")}
+                      style={{ marginBottom: "0px" }}
+                    />
+                  </LabelFieldPair>
+                  <LabelFieldPair>
+                    <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
+                      {t("CS_TASK_TYPE")}
+                    </CardLabel>
+                    <Dropdown
+                      t={t}
+                      option={options?.sort((a, b) => a?.name?.localeCompare(b?.name))}
+                      optionKey={"name"}
+                      selected={taskType}
+                      select={(value) => {
+                        setTaskType(value);
+                      }}
+                      placeholder={t("CS_TASK_TYPE")}
+                      style={{ marginBottom: "0px" }}
+                    />
+                  </LabelFieldPair>
+                </div>
               </div>
             )}
 
@@ -1369,7 +1417,7 @@ const TasksComponent = ({
     </div>
   ) : (
     <div className="tasks-component-table-view">
-      {isLoading || isOptionsLoading ? (
+      {isLoading || isFetchingPendingTask || isOptionsLoading ? (
         <Loader />
       ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
         <React.Fragment>

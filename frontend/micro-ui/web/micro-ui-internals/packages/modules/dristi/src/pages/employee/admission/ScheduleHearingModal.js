@@ -179,6 +179,7 @@ function ScheduleHearing({
       criteria: [
         {
           filingNumber: oldCaseDetails?.filingNumber,
+          caseId: oldCaseDetails?.id || "",
           ...(courtId && userInfoType === "employee" && { courtId }),
         },
       ],

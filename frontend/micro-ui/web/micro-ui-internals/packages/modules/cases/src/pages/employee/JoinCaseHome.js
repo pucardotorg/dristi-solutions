@@ -1152,6 +1152,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 filingNumber: caseDetails?.filingNumber,
                 litigant: litigantData,
                 representative: {
+                  advocateFilingStatus: "other",
                   advocateId: advocateData?.id,
                   ...(selectPartyData?.isReplaceAdvocate?.value === "YES" && {
                     isReplacing: true,
@@ -1334,7 +1335,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 return {
                   documentType: poaDoc?.documentType,
                   fileStore: poaDoc?.fileStore,
-                  documentName:poaDoc?.additionalDetails?.documentName,
+                  documentName: poaDoc?.additionalDetails?.documentName,
                   additionalDetails: {
                     name: poaDoc?.additionalDetails?.documentName,
                   },

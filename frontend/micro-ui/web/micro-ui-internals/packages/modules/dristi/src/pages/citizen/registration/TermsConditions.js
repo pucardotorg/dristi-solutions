@@ -174,10 +174,14 @@ function TermsConditions({ params = {}, setParams = () => {}, path, refetchIndiv
                     username: data?.userDetails?.firstName + " " + data?.userDetails?.lastName,
                     filename: document.filename,
                   },
-                  ...data?.clientDetails?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
-                    res[curr] = data?.clientDetails[curr];
-                    return res;
-                  }, {}),
+                  ...(data?.clientDetails?.selectUserType?.code === "ADVOCATE_CLERK"
+                    ? {
+                        stateRegnNumber: data?.clientDetails?.barRegistrationNumber,
+                      }
+                    : data?.clientDetails?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
+                        res[curr] = data?.clientDetails[curr];
+                        return res;
+                      }, {})),
                 },
               ],
             };
@@ -234,10 +238,14 @@ function TermsConditions({ params = {}, setParams = () => {}, path, refetchIndiv
                 additionalDetails: {
                   username: data?.userDetails?.firstName + " " + data?.userDetails?.lastName,
                 },
-                ...data?.clientDetails?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
-                  res[curr] = "DEFAULT_VALUE";
-                  return res;
-                }, {}),
+                ...(data?.clientDetails?.selectUserType?.code === "ADVOCATE_CLERK"
+                  ? {
+                      stateRegnNumber: "DEFAULT_VALUE",
+                    }
+                  : data?.clientDetails?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
+                      res[curr] = "DEFAULT_VALUE";
+                      return res;
+                    }, {})),
               },
             ],
           };

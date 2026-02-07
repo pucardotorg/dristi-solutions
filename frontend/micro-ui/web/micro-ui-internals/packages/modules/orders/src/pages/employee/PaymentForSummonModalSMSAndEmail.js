@@ -10,7 +10,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { ordersService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { paymentType } from "../../utils/paymentType";
-import { extractFeeMedium, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { extractFeeMedium, getAuthorizedUuid, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { getFormattedName, getSuffixByDeliveryChannel } from "../../utils";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
@@ -115,6 +115,8 @@ const PaymentForSummonComponent = ({
 const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const history = useHistory();
   const userInfo = Digit.UserService.getUser()?.info;
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const { filingNumber, taskNumber } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [caseId, setCaseId] = useState();
@@ -186,7 +188,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     }
     return [];
   }, [allAdvocates]);
-  const isUserAdv = useMemo(() => advocatesUuids.includes(userInfo.uuid), [advocatesUuids, userInfo.uuid]);
+  const isUserAdv = useMemo(() => advocatesUuids.includes(authorizedUuid), [advocatesUuids, authorizedUuid]);
 
   const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails]);
 

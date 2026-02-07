@@ -33,7 +33,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode } from "../../utils";
-import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -90,8 +90,6 @@ const SubmissionsCreate = ({ path }) => {
   const [paymentStatus, setPaymentStatus] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const scenario = "applicationSubmission";
-  const token = window.localStorage.getItem("token");
-  const isUserLoggedIn = Boolean(token);
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
   const setFormErrors = useRef(null);
@@ -103,6 +101,8 @@ const SubmissionsCreate = ({ path }) => {
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const [showErrorToast, setShowErrorToast] = useState(null);
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
 
@@ -119,13 +119,13 @@ const SubmissionsCreate = ({ path }) => {
   const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        userUuid: [userInfo?.uuid],
+        userUuid: [authorizedUuid],
       },
     },
     { tenantId, limit: 1000, offset: 0 },
     "Home",
     "",
-    userInfo?.uuid
+    authorizedUuid
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
   const userTypeCitizen = useMemo(() => individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [
@@ -143,28 +143,6 @@ const SubmissionsCreate = ({ path }) => {
     }
   );
 
-  const { data: taxPeriodData, isLoading: taxPeriodLoading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "BillingService",
-    [{ name: "TaxPeriod" }],
-    {
-      select: (data) => {
-        return data?.BillingService?.TaxPeriod || [];
-      },
-    }
-  );
-
-  const { data: courtFeeAmount, isLoading: isLoadingCourtFeeData } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "payment",
-    [{ name: "courtFeePayment" }],
-    {
-      select: (data) => {
-        return data?.payment?.courtFeePayment || [];
-      },
-    }
-  );
-
   const { data: applicationTypeAmount, isLoading: isApplicationTypeAmountLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "Application",
@@ -176,12 +154,6 @@ const SubmissionsCreate = ({ path }) => {
     }
   );
 
-  const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
-    { name: "FilingType" },
-  ]);
-
-  const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "Application"), [filingTypeData?.FilingType]);
-
   const { data: documentTypeData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Application", [{ name: "DocumentType" }], {
     select: (data) => {
       return data?.Application?.DocumentType || [];
@@ -190,7 +162,6 @@ const SubmissionsCreate = ({ path }) => {
 
   const [caseData, setCaseData] = useState(undefined);
   const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
-  const [caseApiError, setCaseApiError] = useState(undefined);
   const isBreadCrumbsParamsDataSet = useRef(false);
 
   useEffect(() => {
@@ -222,7 +193,7 @@ const SubmissionsCreate = ({ path }) => {
           isBreadCrumbsParamsDataSet.current = true;
         }
       } catch (err) {
-        setCaseApiError(err);
+        return null;
       } finally {
         setIsCaseDetailsLoading(false);
       }
@@ -261,7 +232,7 @@ const SubmissionsCreate = ({ path }) => {
   }, [caseDetails]);
 
   const complainantsList = useMemo(() => {
-    const loggedinUserUuid = userInfo?.uuid;
+    const loggedinUserUuid = authorizedUuid;
     // If logged in person is an advocate
     const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
     const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
@@ -293,7 +264,7 @@ const SubmissionsCreate = ({ path }) => {
       ];
     }
     return [];
-  }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
+  }, [caseDetails, pipComplainants, pipAccuseds, authorizedUuid]);
 
   const {
     data: applicationData,
@@ -336,11 +307,11 @@ const SubmissionsCreate = ({ path }) => {
 
   const fullName = useMemo(() => {
     return (
-      caseDetails?.litigants?.find((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid)?.additionalDetails?.fullName ||
-      caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid)?.additionalDetails?.advocateName ||
+      caseDetails?.litigants?.find((litigant) => litigant?.additionalDetails?.uuid === authorizedUuid)?.additionalDetails?.fullName ||
+      caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === authorizedUuid)?.additionalDetails?.advocateName ||
       ""
     );
-  }, [caseDetails, userInfo?.uuid]);
+  }, [caseDetails, authorizedUuid]);
 
   const orderRefNumber = useMemo(() => extractOrderNumber(applicationData?.applicationList?.[0]?.additionalDetails?.formdata?.refOrderId), [
     applicationData,
@@ -567,9 +538,9 @@ const SubmissionsCreate = ({ path }) => {
   }, [applicationPdfFileStoreId, signedDoucumentUploadedID]);
 
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
-  const onBehalfOfuuid = useMemo(() => Object.keys(allAdvocates)?.find((key) => allAdvocates[key].includes(userInfo?.uuid)), [
+  const onBehalfOfuuid = useMemo(() => Object.keys(allAdvocates)?.find((key) => allAdvocates[key].includes(authorizedUuid)), [
     allAdvocates,
-    userInfo?.uuid,
+    authorizedUuid,
   ]);
   const onBehalfOfLitigent = useMemo(() => caseDetails?.litigants?.find((item) => item?.additionalDetails?.uuid === onBehalfOfuuid), [
     caseDetails,
@@ -1019,7 +990,7 @@ const SubmissionsCreate = ({ path }) => {
     isAssignedRole = false,
     assignedRole = [],
   }) => {
-    const assignes = !isAssignedRole ? [userInfo?.uuid] || [] : [];
+    const assignes = !isAssignedRole ? [authorizedUuid] || [] : [];
     await submissionService.customApiService(Urls.application.pendingTask, {
       pendingTask: {
         name,
@@ -1400,7 +1371,8 @@ const SubmissionsCreate = ({ path }) => {
             applicationType,
             status: caseDetails?.status,
             isActive: true,
-            createdBy: userInfo?.uuid,
+            officeAdvocateUserUuid: authorizedUuid !== userUuid ? authorizedUuid : null, // Only sending in case clerk/jr adv is creating application.
+            createdBy: userUuid,
             statuteSection: { tenantId },
             additionalDetails: {
               formdata: {
@@ -1750,7 +1722,7 @@ const SubmissionsCreate = ({ path }) => {
           ["SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
             (orderNumber || orderRefNumber) &&
             (await createPendingTask({
-              refId: `${itemId ? `${itemId}_` : ""}${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
+              refId: `${itemId ? `${itemId}_` : ""}${authorizedUuid}_${orderNumber || orderRefNumber}`,
               isCompleted: true,
               status: "Completed",
               ...(applicationType === "SUBMIT_BAIL_DOCUMENTS" && { name: t("SUBMIT_BAIL_DOCUMENTS") }),
@@ -1758,7 +1730,7 @@ const SubmissionsCreate = ({ path }) => {
           ["PRODUCTION_DOCUMENTS"].includes(applicationType) &&
             (orderNumber || orderRefNumber) &&
             (await createPendingTask({
-              refId: `${itemId ? `${itemId}_` : ""}${litigantIndId}_${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
+              refId: `${itemId ? `${itemId}_` : ""}${litigantIndId}_${authorizedUuid}_${orderNumber || orderRefNumber}`,
               isCompleted: true,
               status: "Completed",
             }));
@@ -1822,7 +1794,7 @@ const SubmissionsCreate = ({ path }) => {
       if (response && response?.application?.additionalDetails?.isResponseRequired) {
         const assignedTo = response?.application?.additionalDetails?.respondingParty
           ?.flatMap((item) => item?.uuid?.map((u) => ({ uuid: u })))
-          ?.filter((item) => item?.uuid !== userInfo?.uuid);
+          ?.filter((item) => item?.uuid !== authorizedUuid);
         const uniqueAssignedTo = new Set(assignedTo?.map((item) => item?.uuid));
         const litigants = [];
         uniqueAssignedTo.forEach((uuid) => {
@@ -1982,7 +1954,8 @@ const SubmissionsCreate = ({ path }) => {
 
   return (
     <React.Fragment>
-      {(isApplicationFetching||loader ||
+      {(isApplicationFetching ||
+        loader ||
         isOrdersLoading ||
         isApplicationLoading ||
         (applicationNumber ? !applicationDetails?.additionalDetails?.formdata : false) ||

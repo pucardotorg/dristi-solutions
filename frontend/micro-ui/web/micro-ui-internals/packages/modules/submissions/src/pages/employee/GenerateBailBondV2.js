@@ -9,7 +9,7 @@ import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/d
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory, useLocation } from "react-router-dom";
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
-import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { submissionService } from "../../hooks/services";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionWorkflow";
@@ -76,6 +76,8 @@ const GenerateBailBondV2 = () => {
   const pendingTaskrefId = state?.state?.params?.actualReferenceId || null;
   // const pendingTaskId = state?.state?.params?.refId || null;
   const userInfo = Digit.UserService.getUser()?.info;
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -165,7 +167,7 @@ const GenerateBailBondV2 = () => {
         moduleName: "Pending Tasks Service",
         moduleSearchCriteria: {
           isCompleted: false,
-          ...(isCitizen ? { assignedTo: userInfo?.uuid } : { assignedRole: [...roles] }),
+          ...(isCitizen ? { assignedTo: authorizedUuid } : { assignedRole: [...roles] }),
           ...(courtId && { courtId }),
           filingNumber,
           entityType: "bail bond",
@@ -230,7 +232,7 @@ const GenerateBailBondV2 = () => {
   }, [caseDetails]);
 
   const complainantsList = useMemo(() => {
-    const loggedinUserUuid = userInfo?.uuid;
+    const loggedinUserUuid = authorizedUuid;
     // If logged in person is an advocate
     const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
     const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);

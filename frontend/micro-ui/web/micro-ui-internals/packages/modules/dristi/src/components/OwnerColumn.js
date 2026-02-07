@@ -54,9 +54,6 @@ export const OwnerColumn = ({ rowData, colData, value = "", showAsHeading = fals
     };
   }) || [defaultObj];
 
-  // const createdByUuid = rowData.statuteSection?.auditdetails?.createdBy;
-  // const respondingUuids = rowData?.additionalDetails?.respondingParty?.map((party) => party?.uuid.map((uuid) => uuid)).flat();
-
   const showDoc = userRoles.includes("JUDGE_ROLE")
     ? [
         SubmissionWorkflowState.PENDINGREVIEW,
@@ -67,13 +64,6 @@ export const OwnerColumn = ({ rowData, colData, value = "", showAsHeading = fals
         SubmissionWorkflowState.DOC_UPLOAD,
       ].includes(rowData?.status)
     : true;
-  //   ||
-  // userInfo?.uuid === createdByUuid ||
-  // (!rowData?.referenceId && [SubmissionWorkflowState.PENDINGRESPONSE, SubmissionWorkflowState.PENDINGREVIEW].includes(rowData?.status)) ||
-  // (![SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(
-  //   rowData?.status
-  // ) &&
-  //   respondingUuids?.includes(userInfo?.uuid));
 
   return (
     <React.Fragment>

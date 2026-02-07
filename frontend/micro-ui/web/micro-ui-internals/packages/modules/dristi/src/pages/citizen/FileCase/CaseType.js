@@ -12,6 +12,7 @@ import { DRISTIService } from "../../../services";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import { userTypeOptions } from "../registration/config";
 import CustomDetailsDropdownCard from "../../../components/CustomDetailsDropdownCard";
+import { ADVOCATE_OFFICE_MAPPING_KEY } from "../../../../../home/src/utils";
 
 const customNoteConfig = {
   populators: {
@@ -83,15 +84,17 @@ function CaseType({ t }) {
     const isUserLoggedIn = Boolean(token);
     const moduleCode = "DRISTI";
     const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+    const advocateOfficeMapping = JSON.parse(localStorage.getItem(ADVOCATE_OFFICE_MAPPING_KEY));
+    const { loggedInMemberId = null, officeAdvocateId = null, officeAdvocateUuid = null } = advocateOfficeMapping || {};
     const roles = userInfo?.roles;
     const { data: individualData, isLoading, refetch, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
       {
         Individual: {
-          userUuid: [userInfo?.uuid],
+          userUuid: officeAdvocateUuid ? [officeAdvocateUuid] : [userInfo?.uuid],
         },
       },
       { tenantId, limit: 1000, offset: 0 },
-      moduleCode,
+      `${moduleCode}-${userInfo?.uuid}-${officeAdvocateUuid}`,
       "",
       userInfo?.uuid && isUserLoggedIn
     );
@@ -126,8 +129,8 @@ function CaseType({ t }) {
       },
       {},
       individualId,
-      userType,
-      "/advocate/v1/_search"
+      Boolean(!advocateOfficeMapping?.officeAdvocateUuid && isUserLoggedIn && individualId && userType !== "LITIGANT"), // no need to search call if already adv mapping exists
+      userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
     );
 
     if (userType === "ADVOCATE" && searchData) {
@@ -148,8 +151,8 @@ function CaseType({ t }) {
     }, [searchData, userTypeDetail?.apiDetails?.requestKey]);
 
     const advocateId = useMemo(() => {
-      return searchResult?.[0]?.responseList?.[0]?.id;
-    }, [searchResult]);
+      return userType === "ADVOCATE" ? searchResult?.[0]?.responseList?.[0]?.id : null;
+    }, [searchResult, userType]);
 
     if (isLoading || isFetching || isSearchLoading || mdmsLoading || isComplainantRespondentTypeLoading) {
       return <Loader />;
@@ -192,15 +195,17 @@ function CaseType({ t }) {
                   },
                 ],
                 litigants: [],
-                representatives: advocateId
-                  ? [
-                      {
-                        advocateId: advocateId,
-                        tenantId,
-                        representing: [],
-                      },
-                    ]
-                  : [],
+                representatives:
+                  officeAdvocateId || advocateId
+                    ? [
+                        {
+                          advocateId: officeAdvocateId || advocateId,
+                          tenantId,
+                          representing: [],
+                          advocateFilingStatus: "caseOwner",
+                        },
+                      ]
+                    : [],
                 documents: [],
                 workflow: {
                   action: "SAVE_DRAFT",
@@ -218,7 +223,7 @@ function CaseType({ t }) {
                 additionalDetails: {
                   payerMobileNo: individualData?.Individual?.[0]?.mobileNumber,
                   payerName: `${givenName} ${familyName}`,
-                  ...(advocateId
+                  ...(officeAdvocateId || advocateId
                     ? {
                         advocateDetails: {
                           formdata: [

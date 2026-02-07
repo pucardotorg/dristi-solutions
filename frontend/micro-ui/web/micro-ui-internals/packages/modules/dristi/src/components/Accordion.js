@@ -13,7 +13,7 @@ function Accordion({
   errorCount,
   isCaseReAssigned,
   isDraftInProgress,
-  isFilingParty,
+  isEditingAllowed,
   AccordionTabs,
 }) {
   const getTime = useMemo(() => {
@@ -50,7 +50,7 @@ function Accordion({
             </span>
           </div>
         )}
-        {isDraftInProgress && isFilingParty && (
+        {isDraftInProgress && isEditingAllowed && (
           <div className="icon">
             <CustomSchedule />
             <span style={{ paddingRight: "8px" }}>{getTime}</span>
@@ -67,7 +67,7 @@ function Accordion({
               className="radio-wrap"
               style={item.checked ? { background: "#E8E8E8", color: "#3D3C3C", borderRadius: "0px" } : { color: "#77787B" }}
               onClick={() => {
-                if (!isFilingParty) {
+                if (!isEditingAllowed) {
                   handlePageChange(AccordionTabs.REVIEW_CASE_FILE, !showConfirmModal);
                 } else {
                   handlePageChange(item.key, !showConfirmModal);
