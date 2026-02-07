@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useContext } from "react";
+import React, { useEffect, useState, useMemo, useContext, useRef } from "react";
 import PropTypes from "prop-types";
 import { useLocation, useHistory } from "react-router-dom";
 // import BackButton from "./BackButton";
@@ -7,6 +7,7 @@ import ProfileComponent from "./ProfileComponent";
 import { AdvocateDataContext } from "../../Module";
 import { userTypeOptions } from "@egovernments/digit-ui-module-home/src/configs/BenchHomeConfig";
 import { extractedSeniorAdvocates } from "@egovernments/digit-ui-module-home/src/utils";
+import { AdvocateProfileUserIcon, AdvocateProfileChevronIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 
 const ManageOfficeIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -17,6 +18,75 @@ const ManageOfficeIcon = () => (
     <path d="M19 8H21V10H19V8ZM19 12H21V18H19V12Z" fill="#007E7E" />
   </svg>
 );
+
+const AdvocateProfileDropdown = ({ t, options, selected, onSelect, disabled }) => {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
+
+  const hasSelected = selected && selected.advocateName;
+  const baseLabel = hasSelected ? `Adv. ${t(selected.advocateName)}` : t("SELECT_ADVOCATE");
+  const buttonLabel = hasSelected ? `${baseLabel}'s Profile` : baseLabel;
+
+  const handleToggle = () => {
+    if (disabled) return;
+    setOpen(!open);
+  };
+
+  const handleSelect = (option) => {
+    if (!option) return;
+    onSelect(option);
+    setOpen(false);
+  };
+
+  return (
+    <div className="advocate-profile-dropdown" ref={wrapperRef}>
+      <button
+        type="button"
+        className={`advocate-profile-dropdown__button${open ? " advocate-profile-dropdown__button--open" : ""}`}
+        onClick={handleToggle}
+        disabled={disabled}
+      >
+        <span className="advocate-profile-dropdown__button-label">{buttonLabel}</span>
+        <span className="advocate-profile-dropdown__button-chevron">
+          <AdvocateProfileChevronIcon />
+        </span>
+      </button>
+      {open && options && options.length > 0 && (
+        <div className="advocate-profile-dropdown__menu">
+          {options.map((option) => (
+            <button
+              type="button"
+              key={option.id || option.value || option.uuid}
+              className="advocate-profile-dropdown__item"
+              onClick={() => handleSelect(option)}
+            >
+              <span className="advocate-profile-dropdown__item-icon">
+                <AdvocateProfileUserIcon />
+              </span>
+              <span className="advocate-profile-dropdown__item-label">{t(option.advocateName)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const TopBarComponent = ({
   img,
@@ -226,26 +296,15 @@ const TopBarComponent = ({
         </div>
 
         <div className="RightMostTopBarOptions">
-          {/* Manage Office button - only visible for advocates */}
+          {/* Manage Office button & Advocate profile dropdown - only visible for advocates / clerks */}
           {isUserLoggedIn && (isAdvocate || isAdvocateClerk) && (
             <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
-              <Dropdown
+              <AdvocateProfileDropdown
                 t={t}
-                option={seniorAdvocates}
-                optionKey={"advocateName"}
-                select={(e) => changeAdvocateSelection(e)}
+                options={seniorAdvocates}
                 selected={selectedAdvocate}
-                value={`Adv. ${t(selectedAdvocate?.advocateName)}'s Profile`}
-                style={{
-                  width: "300px",
-                  height: "40px",
-                  fontSize: "16px",
-                  backgroundColor: "white",
-                  border: "1px solid #007E7E",
-                  borderRadius: "4px",
-                  color: "#007E7E",
-                }}
-                disable={disableAdvocateChange}
+                onSelect={changeAdvocateSelection}
+                disabled={disableAdvocateChange}
               />
               {isAdvocate && (
                 <button

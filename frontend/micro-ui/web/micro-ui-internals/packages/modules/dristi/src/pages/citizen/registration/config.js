@@ -111,6 +111,12 @@ export const userTypeOptions = [
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
+      "PLEA_VIEWER",
+      "MEDIATION_VIEWER",
+      "EXAMINATION_VIEWER",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
