@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,7 +45,6 @@ public class EvidenceValidator {
         if (evidenceRequest.getRequestInfo().getUserInfo() == null) {
             throw new CustomException(ENRICHMENT_EXCEPTION, "User info not found!!!");
         }
-
         CaseExistsRequest caseExistsRequest = createCaseExistsRequest(evidenceRequest.getRequestInfo(), evidenceRequest.getArtifact());
         // Validate caseid
         if (!caseUtil.fetchCaseDetails(caseExistsRequest)) {

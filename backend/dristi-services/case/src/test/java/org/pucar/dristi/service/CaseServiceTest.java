@@ -30,6 +30,7 @@ import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.enrichment.EnrichmentService;
 import org.pucar.dristi.kafka.Producer;
+import org.pucar.dristi.repository.AdvocateOfficeCaseMemberRepository;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.*;
@@ -120,6 +121,9 @@ public class CaseServiceTest {
     @Mock
     private InboxUtil inboxUtil;
 
+    @Mock
+    private AdvocateOfficeCaseMemberRepository advocateOfficeCaseMemberRepository;
+
     private CaseRequest caseRequest;
     private RequestInfo requestInfo;
     private User userInfo;
@@ -182,7 +186,7 @@ public class CaseServiceTest {
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
         OrderUtil orderUtil = new OrderUtil(null, null, null);
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil,fileStoreUtil, orderUtil, dateUtil,inboxUtil);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil,fileStoreUtil, orderUtil, dateUtil,inboxUtil, advocateOfficeCaseMemberRepository);
 
         requestInfo = RequestInfo.builder()
                 .userInfo(User.builder().uuid("ba8767a6-7cb1-416b-803e-19cf9dca06bc").tenantId(TENANT_ID).build())

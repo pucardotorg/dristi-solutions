@@ -1,5 +1,6 @@
 package org.pucar.dristi.validator;
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.repository.ApplicationRepository;
@@ -12,11 +13,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
-import static org.pucar.dristi.config.ServiceConstants.ORDER_EXCEPTION;
 
+@Slf4j
 @Component
 public class ApplicationValidator {
     private final ApplicationRepository repository;
@@ -34,7 +36,6 @@ public class ApplicationValidator {
     public void validateApplication(ApplicationRequest applicationRequest) throws CustomException {
         RequestInfo requestInfo = applicationRequest.getRequestInfo();
         Application application = applicationRequest.getApplication();
-
         //validate documents
         validateDocuments(application);
 

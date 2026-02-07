@@ -142,4 +142,6 @@ public class ServiceConstants {
 
     public static final String APPLICATION_SUBMITTED = "APPLICATION_SUBMITTED";
 
+    public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
+    public static final String ADVOCATE_CLERK_ROLE = "ADVOCATE_CLERK_ROLE";
 }

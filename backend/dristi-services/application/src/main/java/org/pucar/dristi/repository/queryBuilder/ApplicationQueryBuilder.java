@@ -21,7 +21,7 @@ public class ApplicationQueryBuilder {
     private static final String     BASE_APP_QUERY =
             " SELECT app.id as id, app.tenantid as tenantid, app.caseid as caseid, app.filingnumber as filingnumber, app.cnrnumber as cnrnumber," +
                     " app.referenceid as referenceid, app.createddate as createddate, app.applicationcreatedby as applicationcreatedby," +
-                    " app.onbehalfof as onbehalfof, app.applicationtype as applicationtype, app.applicationnumber as applicationnumber," +
+                    " app.onbehalfof as onbehalfof, app.officeadvocateuseruuid as officeadvocateuseruuid, app.applicationtype as applicationtype, app.applicationnumber as applicationnumber," +
                     " app.statuteSection as statuteSection, app.issuedby as issuedby, app.status as status, app.courtId as courtId, app.comment as comment, app.isactive as isactive," +
                     " app.additionaldetails as additionaldetails,"+
                     " app.applicationcmpnumber as applicationcmpnumber,"+
@@ -94,17 +94,37 @@ public class ApplicationQueryBuilder {
             }
 
             if (requestInfo != null && requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null) {
+                List<String> advocateAndClerkUuids = applicationCriteria.getAdvocateAndClerkUuids();
+                boolean isAdvocateOrClerk = applicationCriteria.isAdvocate() || applicationCriteria.isClerk();
+                boolean hasUserUuidsList = advocateAndClerkUuids != null && !advocateAndClerkUuids.isEmpty();
+
                 addClauseIfRequired(query, firstCriteria);
-                query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.createdBy = ?))");
-                preparedStmtList.add(userUuid);
-                preparedStmtArgList.add(Types.VARCHAR);
+
+                if (isAdvocateOrClerk && hasUserUuidsList) {
+                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.createdBy IN (");
+                    for (int i = 0; i < advocateAndClerkUuids.size(); i++) {
+                        query.append("?");
+                        if (i < advocateAndClerkUuids.size() - 1) {
+                            query.append(", ");
+                        }
+                        preparedStmtList.add(advocateAndClerkUuids.get(i));
+                        preparedStmtArgList.add(Types.VARCHAR);
+                    }
+                    query.append(")))");
+                } else {
+                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.createdBy = ?))");
+                    preparedStmtList.add(userUuid);
+                    preparedStmtArgList.add(Types.VARCHAR);
+                }
                 firstCriteria = false;
             }
 
             // TODO : remove this, this is temporary fix (#5016)
             // --------- REQUEST_FOR_BAIL visibility ----------
+            List<String> advocateAndClerkUuids = applicationCriteria.getAdvocateAndClerkUuids();
+            boolean isAdvocateOrClerk = applicationCriteria.isAdvocate() || applicationCriteria.isClerk();
             applyRequestForBailVisibility(
-                    query, firstCriteria, userUuid,
+                    query, firstCriteria, userUuid, advocateAndClerkUuids, isAdvocateOrClerk,
                     preparedStmtList, preparedStmtArgList);
 
             return query.toString();
@@ -115,12 +135,14 @@ public class ApplicationQueryBuilder {
         }
     }
 
-    private void applyRequestForBailVisibility(StringBuilder query, boolean firstCriteria, String userUuid, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    private void applyRequestForBailVisibility(StringBuilder query, boolean firstCriteria, String userUuid, List<String> userUuids, boolean isAdvocateOrClerk, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
 
         // If user info is missing, do not restrict visibility
         if (userUuid == null || userUuid.isEmpty()) {
             return;
         }
+
+        boolean hasUserUuidsList = userUuids != null && !userUuids.isEmpty();
 
         addClauseIfRequired(query, firstCriteria);
 
@@ -130,12 +152,7 @@ public class ApplicationQueryBuilder {
                 .append("(")
                 .append("app.applicationType = ? ")
                 .append("AND ")
-                .append("(")
-                .append("app.onBehalfOf @> ?::jsonb ")
-                .append("OR app.createdBy = ?")
-                .append(")")
-                .append(")")
-                .append(")");
+                .append("(");
 
         preparedStmtList.add(REQUEST_FOR_BAIL);
         preparedStmtArgList.add(Types.VARCHAR);
@@ -143,11 +160,36 @@ public class ApplicationQueryBuilder {
         preparedStmtList.add(REQUEST_FOR_BAIL);
         preparedStmtArgList.add(Types.VARCHAR);
 
-        preparedStmtList.add("[\"" + userUuid + "\"]");
-        preparedStmtArgList.add(Types.VARCHAR);
+        if (isAdvocateOrClerk && hasUserUuidsList) {
+            query.append("app.onBehalfOf ??| ?::text[] ");
+            preparedStmtList.add(userUuids.toArray(new String[0]));
+            preparedStmtArgList.add(Types.ARRAY);
 
-        preparedStmtList.add(userUuid);
-        preparedStmtArgList.add(Types.VARCHAR);
+            query.append("OR app.createdBy IN (");
+            for (int i = 0; i < userUuids.size(); i++) {
+                query.append("?");
+                if (i < userUuids.size() - 1) {
+                    query.append(", ");
+                }
+                preparedStmtList.add(userUuids.get(i));
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
+            query.append(")")
+                    .append(")")
+                    .append(")")
+                    .append(")");
+        } else {
+            query.append("app.onBehalfOf @> ?::jsonb ")
+                    .append("OR app.createdBy = ?)")
+                    .append(")")
+                    .append(")");
+
+            preparedStmtList.add("[\"" + userUuid + "\"]");
+            preparedStmtArgList.add(Types.VARCHAR);
+
+            preparedStmtList.add(userUuid);
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
     }
     boolean addMultipleCriteria(List<UUID> criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {

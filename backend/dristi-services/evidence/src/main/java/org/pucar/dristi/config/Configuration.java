@@ -342,5 +342,8 @@ public class Configuration {
 	@Value("${egov.bulk.open.artifact.index}")
 	private String openArtifactIndex;
 
+	@Value("${state.level.tenant.id}")
+	private String tenantId;
+
 
 }

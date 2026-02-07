@@ -1,7 +1,6 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -48,7 +47,16 @@ public class EvidenceSearchCriteria {
     private String userUuid;
 
     @JsonIgnore
+    private List<String> advocateAndClerkUuids = new ArrayList<>();
+
+    @JsonIgnore
     private boolean isCitizen = false;
+
+    @JsonIgnore
+    private boolean isAdvocate = false;
+
+    @JsonIgnore
+    private boolean isClerk = false;
 
     @JsonIgnore
     private boolean isCourtEmployee = false;

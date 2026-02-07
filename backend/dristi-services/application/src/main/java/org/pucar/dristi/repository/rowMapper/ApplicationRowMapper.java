@@ -61,6 +61,7 @@ public class ApplicationRowMapper implements ResultSetExtractor<List<Application
                             .createdBy(toUUID(rs.getString("applicationcreatedby")))
                             .tenantId(rs.getString("tenantid"))
                             .courtId(rs.getString("courtId"))
+                            .officeAdvocateUserUuid(rs.getString("officeadvocateuseruuid"))
                             .applicationCMPNumber(rs.getString("applicationcmpnumber"))
                             .reasonForApplication(rs.getString("reason_for_application"))
                             .id(toUUID(rs.getString("id")))
