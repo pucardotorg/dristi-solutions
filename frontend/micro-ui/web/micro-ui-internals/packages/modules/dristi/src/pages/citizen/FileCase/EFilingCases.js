@@ -82,7 +82,6 @@ import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
 import { documentLabels } from "../../../Utils";
 import useSearchTaskMangementService from "../../../hooks/dristi/useSearchTaskMangementService";
-import { ADVOCATE_OFFICE_MAPPING_KEY } from "@egovernments/digit-ui-module-home/src/utils";
 
 export const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -185,13 +184,6 @@ function EFilingCases({ path }) {
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const todayDate = new Date().getTime();
   const userInfo = Digit?.UserService?.getUser()?.info;
-  const advocateOfficeMapping = JSON.parse(localStorage.getItem(ADVOCATE_OFFICE_MAPPING_KEY));
-  const { loggedInMemberId = null, officeAdvocateId = null, officeAdvocateUuid = null } = advocateOfficeMapping || {};
-
-  const isAdvocateOrOfficeMemberLoggedIn = useMemo(() => {
-    // if either a senior adv himself or it's associated members i.e jr. adv/clerk doing the process on it's behalf.
-    return Boolean(officeAdvocateId);
-  }, [officeAdvocateId]);
 
   const moduleCode = "DRISTI";
   const token = window.localStorage.getItem("token");
@@ -3637,7 +3629,6 @@ function EFilingCases({ path }) {
           path={path}
           setShowCaseLockingModal={setShowCaseLockingModal}
           setShowConfirmCaseDetailsModal={setShowConfirmCaseDetailsModal}
-          isAdvocateOrOfficeMemberLoggedIn={isAdvocateOrOfficeMemberLoggedIn}
           onSubmit={onSubmit}
           createPendingTask={createPendingTask}
           setPrevSelected={setPrevSelected}

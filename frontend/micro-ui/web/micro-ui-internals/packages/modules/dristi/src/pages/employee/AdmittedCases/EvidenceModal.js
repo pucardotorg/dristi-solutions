@@ -30,6 +30,7 @@ import useSearchEvidenceService from "../../../../../submissions/src/hooks/submi
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
 import DOMPurify from "dompurify";
+import { getUserInfo } from "../../../../../submissions/src/utils";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -71,7 +72,9 @@ const EvidenceModal = ({
   const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
   const authorizedUuid = getAuthorizedUuid(userUuid);
   const user = Digit.UserService.getUser()?.info?.name;
-  const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK"].includes(role?.code)), [userInfo?.roles]);
+  const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
+    userInfo?.roles,
+  ]);
   const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
@@ -86,7 +89,11 @@ const EvidenceModal = ({
   const applicationNumber = urlParams.get("applicationNumber");
   const compositeOrderObj = history.location?.state?.compositeOrderObj;
   const [reasonOfApplication, setReasonOfApplication] = useState("");
-
+  const [userInfoMap, setUserInfoMap] = useState({
+    senderUser: null,
+    createdByUser: null,
+    onBehalfOfUser: null,
+  });
   const setData = (data) => {
     setFormData(data);
   };
@@ -121,6 +128,79 @@ const EvidenceModal = ({
   useEffect(() => {
     setBusinessOfTheDay(computeDefaultBOTD);
   }, [computeDefaultBOTD, setBusinessOfTheDay]);
+
+  useEffect(() => {
+    if (!documentSubmission?.length > 0 && !artifact) return;
+
+    let officeAdvocateUuid = "";
+    let createdBy = "";
+    let onBehalfOfUuid = "";
+
+    if (documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList) {
+      const { officeAdvocateUserUuid, auditDetails, auditdetails, onBehalfOf } =
+        documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList;
+      officeAdvocateUuid = officeAdvocateUserUuid;
+      createdBy = auditDetails?.createdBy || auditdetails?.createdBy;
+      onBehalfOfUuid = onBehalfOf?.[0];
+    } else if (artifact?.artifactList) {
+      const { officeAdvocateUserUuid, auditDetails } = artifact?.artifactList;
+      officeAdvocateUuid = officeAdvocateUserUuid;
+      createdBy = auditDetails?.createdBy;
+    }
+
+    const uuids = [...new Set([officeAdvocateUuid, createdBy, onBehalfOfUuid].filter(Boolean))];
+
+    if (uuids.length === 0) {
+      setUserInfoMap({
+        senderUser: null,
+        createdByUser: null,
+        onBehalfOfUser: null,
+      });
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchUsers = async () => {
+      try {
+        const result = await getUserInfo(uuids);
+
+        const lookup = new Map(result.map((user) => [user.userUuid, user.name]));
+
+        if (!isMounted) return;
+
+        setUserInfoMap({
+          senderUser: officeAdvocateUuid
+            ? { uuid: officeAdvocateUuid, name: lookup.get(officeAdvocateUuid) }
+            : createdBy
+            ? { uuid: createdBy, name: lookup.get(createdBy) }
+            : null,
+          createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
+          onBehalfOfUser: onBehalfOfUuid ? { uuid: onBehalfOfUuid, name: lookup.get(onBehalfOfUuid) } : null,
+        });
+      } catch (error) {
+        console.error("Failed to fetch user info", error);
+      }
+    };
+
+    fetchUsers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [documentSubmission, artifact]);
+
+  const senderName = useMemo(() => {
+    return currentDiaryEntry && artifact
+      ? artifact?.sender
+      : userInfoMap?.onBehalfOfUser?.name
+      ? `${userInfoMap?.senderUser?.name} on Behalf of ${userInfoMap?.onBehalfOfUser?.name}`
+      : userInfoMap?.senderUser?.name;
+  }, [userInfoMap, artifact, currentDiaryEntry]);
+
+  const createdByname = useMemo(() => {
+    return userInfoMap?.createdByUser?.name;
+  }, [userInfoMap]);
 
   const documentApplicationType = useMemo(() => documentSubmission?.[0]?.applicationList?.applicationType, [documentSubmission]);
 
@@ -165,7 +245,6 @@ const EvidenceModal = ({
         return false;
       }
       if (userInfo?.uuid === createdBy) {
-        // the on ewho created the document should be able to edit it.
         return [SubmissionWorkflowState.DELETED].includes(applicationStatus) ? false : true;
       }
       if (isLitigent && [...allAdvocates?.[userInfo?.uuid], userInfo?.uuid]?.includes(createdBy)) {
@@ -1200,9 +1279,19 @@ const EvidenceModal = ({
                       <h3>{t("SENDER")}</h3>
                     </div>
                     <div className="info-value">
-                      <h3>{currentDiaryEntry && artifact ? artifact?.sender : removeInvalidNameParts(documentSubmission[0]?.details?.sender)}</h3>
+                      <h3>{senderName}</h3>
                     </div>
                   </div>
+                  {createdByname && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("CREATED_BY")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>{createdByname}</h3>
+                      </div>
+                    </div>
+                  )}
                   {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingDate && (
                     <div className="info-row">
                       <div className="info-key">

@@ -1,5 +1,5 @@
 import { DocumentSearchConfig } from "./DocumentsV2Config";
-import { InboxSearchComposer, Toast } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
@@ -399,8 +399,8 @@ const DocumentsV2 = ({
               requestBody: {
                 ...tabConfig.apiDetails.requestBody,
                 criteria: {
-                  caseId: caseDetails?.id,
-                  filingNumber: caseDetails?.filingNumber,
+                  caseId: caseId,
+                  filingNumber: filingNumber,
                   tenantId: tenantId,
                   ...(caseCourtId && { courtId: caseCourtId }),
                 },
@@ -457,7 +457,6 @@ const DocumentsV2 = ({
                 criteria: {
                   ...(tabConfig.apiDetails?.requestBody?.criteria || {}),
                   filingNumber: filingNumber,
-                  ...(isCitizen && { owner: authorizedUuid }),
                 },
               },
             },
@@ -548,7 +547,7 @@ const DocumentsV2 = ({
     };
 
     return getTabConfig(activeTabConfig);
-  }, [activeTab, userInfo, isCitizen, evidenceTypeOptions]);
+  }, [activeTab, userInfo, isCitizen, evidenceTypeOptions, caseDetails, userUuid, caseId, filingNumber]);
   const newTabSearchConfig = useMemo(
     () => ({
       ...DocumentSearchConfig,
@@ -571,8 +570,9 @@ const DocumentsV2 = ({
     }
   }, [setShowMakeAsEvidenceModal]);
   const config = useMemo(() => {
+    if (!caseDetails?.filingNumber) return null; // wait for caseDetails to load
     return newTabSearchConfig?.TabSearchconfig;
-  }, [newTabSearchConfig?.TabSearchconfig]);
+  }, [newTabSearchConfig?.TabSearchconfig, caseDetails?.filingNumber]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -616,9 +616,11 @@ const DocumentsV2 = ({
           );
         })}
       </div>
-
-      <InboxSearchComposer key={`${config?.label}-${counter}`} configs={config} showTab={false}></InboxSearchComposer>
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {config ? (
+        <InboxSearchComposer key={`${config?.label}-${counter}-${caseDetails?.filingNumber}`} configs={config} showTab={false}></InboxSearchComposer>
+      ) : (
+        <Loader></Loader>
+      )}
     </React.Fragment>
   );
 };

@@ -20,7 +20,7 @@ import {
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
-import { getAllComplainantSideUuids, getFilingType } from "../../../Utils";
+import { getCaseEditAllowedAssignees, getFilingType } from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
@@ -357,8 +357,9 @@ function CaseFileAdmission({ t, path }) {
   }, [caseDetails]);
 
   // Case correction/edition is allowed to all complainant side parties including poa holders, advocates, advocate's associated office members.
+  // but no need to send uuid of office members in assignee payload
   const allComplainantSideUuids = useMemo(() => {
-    return getAllComplainantSideUuids(caseDetails);
+    return getCaseEditAllowedAssignees(caseDetails);
   }, [caseDetails]);
 
   const updateCaseDetails = async (action, data = {}) => {

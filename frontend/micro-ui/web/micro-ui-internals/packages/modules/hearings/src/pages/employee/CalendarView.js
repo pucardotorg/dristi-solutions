@@ -286,14 +286,7 @@ const MonthlyCalendar = ({ hideRight }) => {
         </div>
         {hideRight ? null : (
           <div className="right-side">
-            <TasksComponent
-              taskType={taskType}
-              setTaskType={setTaskType}
-              caseType={caseType}
-              setCaseType={setCaseType}
-              isLitigant={Boolean(userInfoType === "citizen")}
-              userInfoType={userInfoType}
-            />
+            <TasksComponent taskType={taskType} setTaskType={setTaskType} caseType={caseType} setCaseType={setCaseType} userInfoType={userInfoType} />
           </div>
         )}
       </div>

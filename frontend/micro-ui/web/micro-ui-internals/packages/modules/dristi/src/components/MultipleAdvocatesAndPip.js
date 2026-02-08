@@ -1,10 +1,10 @@
-import { ArrowDown, Loader, UploadIcon } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import { Loader, UploadIcon } from "@egovernments/digit-ui-react-components";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { ReactComponent as CrossIcon } from "../images/cross.svg";
 import { CustomAddIcon, FileUploadIcon } from "../icons/svgIndex";
 
 import Button from "./Button";
-import { removeInvalidNameParts } from "../Utils";
+import { getAuthorizedUuid } from "../Utils";
 import { userTypeOptions } from "../pages/citizen/registration/config";
 import useSearchCaseService from "../hooks/dristi/useSearchCaseService";
 import { CustomDeleteIcon } from "../icons/svgIndex";
@@ -16,7 +16,7 @@ import { useToast } from "./Toast/useToast";
 import { FSOErrorIcon } from "../icons/svgIndex";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import SearchableDropdown from "./SearchableDropdown";
-import { ADVOCATE_OFFICE_MAPPING_KEY } from "../../../home/src/utils";
+import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 function ScrutinyInfoAdvocate({ message, t }) {
   return (
@@ -87,13 +87,16 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const isUserLoggedIn = Boolean(token);
   const moduleCode = "DRISTI";
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const tenantId = window.localStorage.getItem("tenant-id");
   const urlParams = new URLSearchParams(window.location.search);
   const caseId = urlParams.get("caseId");
   const [isApproved, setIsApproved] = useState(false);
   const toast = useToast();
-  const advocateOfficeMapping = JSON.parse(localStorage.getItem(ADVOCATE_OFFICE_MAPPING_KEY));
-  const { loggedInMemberId = null, officeAdvocateId = null, officeAdvocateUuid = null } = advocateOfficeMapping || {};
+  const { AdvocateData } = useContext(AdvocateDataContext);
+  const selectedSeniorAdvocate = AdvocateData;
+  const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
 
   const [advocateAndPipData, setAdvocateAndPipData] = useState(
     formData?.[config?.key]
@@ -326,11 +329,11 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const { data, isLoading, refetch } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        userUuid: officeAdvocateUuid ? [officeAdvocateUuid] : [userInfo?.uuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
+        userUuid: selectedAdvocateUuid ? [selectedAdvocateUuid] : [userInfo?.uuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
       },
     },
     { tenantId, limit: 1000, offset: 0 },
-    `${moduleCode}-${userInfo?.uuid}-${officeAdvocateUuid}`,
+    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid}`,
     "HOME",
     userInfo?.uuid && isUserLoggedIn
   );
@@ -464,6 +467,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           advData?.length > 0 &&
           advData?.[0]?.advocateBarRegNumberWithName?.individualId &&
           advData?.[0]?.advocateBarRegNumberWithName?.individualId !== individualId &&
+          (userType === "ADVOCATE" ? authorizedUuid === userUuid : true) &&
           caseDetails?.status === CaseWorkflowState.DRAFT_IN_PROGRESS // Append filing advocate automatically only while  in filing stage, not thereafter (like case reassigned stage)
         ) {
           const firstAdvocate = { advocateBarRegNumberWithName, advocateNameDetails };
@@ -487,6 +491,8 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     formData,
     advocateAndPipData,
     caseDetails?.status,
+    authorizedUuid,
+    userUuid,
   ]);
 
   const handleInputChange = async (index, field, value) => {

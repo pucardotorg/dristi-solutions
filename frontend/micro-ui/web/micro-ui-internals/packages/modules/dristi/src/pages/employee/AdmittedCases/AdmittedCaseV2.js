@@ -783,6 +783,7 @@ const AdmittedCaseV2 = () => {
 
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
+      // This is redundant for document tab, used only for submissions tab
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
       const status = docObj?.[0]?.applicationList?.status;
       const applicationCreatedByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;

@@ -1,5 +1,5 @@
 import { BackButton, Loader, PrivateRoute, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch, useRouteMatch } from "react-router-dom";
 import { Route, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -12,7 +12,7 @@ import { newConfig, userTypeOptions } from "./registration/config";
 import Breadcrumb from "../../components/BreadCrumb";
 import SelectEmail from "./registration/SelectEmail";
 import ViewCase from "./view-case";
-import { ADVOCATE_OFFICE_MAPPING_KEY } from "@egovernments/digit-ui-module-home/src/utils";
+import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const [hideBack, setHideBack] = useState(false);
@@ -40,8 +40,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const isUserLoggedIn = Boolean(token);
   const userInfoType = Digit.UserService.getType();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-  const advocateOfficeMapping = JSON.parse(localStorage.getItem(ADVOCATE_OFFICE_MAPPING_KEY));
-  const { loggedInMemberId = null, officeAdvocateId = null, officeAdvocateUuid = null } = advocateOfficeMapping || {};
+  const { AdvocateData } = useContext(AdvocateDataContext);
+  const selectedSeniorAdvocate = AdvocateData;
+  const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
@@ -57,11 +58,11 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const { data, isLoading, refetch } = Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        userUuid: officeAdvocateUuid ? [officeAdvocateUuid] : [userInfo?.uuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
+        userUuid: selectedAdvocateUuid ? [selectedAdvocateUuid] : [userInfo?.uuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
       },
     },
     { tenantId, limit: 1000, offset: 0 },
-    `${moduleCode}-${userInfo?.uuid}-${officeAdvocateUuid}`,
+    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid}`,
     "",
     userInfo?.uuid && isUserLoggedIn
   );

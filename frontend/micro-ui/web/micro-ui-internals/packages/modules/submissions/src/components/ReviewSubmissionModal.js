@@ -5,7 +5,7 @@ import { Toast } from "@egovernments/digit-ui-react-components";
 
 import { Urls } from "../hooks/services/Urls";
 import { useQuery } from "react-query";
-import { convertToDateInputFormat } from "../utils/index";
+import { convertToDateInputFormat, getUserInfo } from "../utils/index";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const Heading = (props) => {
@@ -114,6 +114,11 @@ function ReviewSubmissionModal({
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showErrorToast, setShowErrorToast] = useState(null);
+  const [userInfoMap, setUserInfoMap] = useState({
+    senderUser: null,
+    createdByUser: null,
+    onBehalfOfUser: null,
+  });
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -156,6 +161,7 @@ function ReviewSubmissionModal({
               qrCode: false,
               applicationType: SubmissionPreviewSubmissionTypeMap[application?.applicationType],
               courtId: courtId || application?.courtId,
+              filingNumber: application?.filingNumber,
             },
             responseType: "blob",
           }
@@ -164,6 +170,51 @@ function ReviewSubmissionModal({
     },
     enabled: !!application?.applicationNumber && !!application?.cnrNumber && !!SubmissionPreviewSubmissionTypeMap[application?.applicationType],
   });
+
+  useEffect(() => {
+    if (!application) return;
+    const { officeAdvocateUserUuid, createdBy, onBehalfOf } = application;
+    const onBehalfOfUuid = onBehalfOf?.[0];
+    const uuids = [...new Set([officeAdvocateUserUuid, createdBy, onBehalfOfUuid].filter(Boolean))];
+
+    if (uuids.length === 0) {
+      setUserInfoMap({
+        officeAdvocateUser: null,
+        createdByUser: null,
+        onBehalfOfUser: null,
+      });
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchUsers = async () => {
+      try {
+        const result = await getUserInfo(uuids); // [{ userUuid, name }]
+
+        // Build lookup map (O(1))
+        const lookup = new Map(result.map((user) => [user.userUuid, user.name]));
+
+        if (!isMounted) return;
+
+        setUserInfoMap({
+          senderUser: officeAdvocateUserUuid ? { uuid: officeAdvocateUserUuid, name: lookup.get(officeAdvocateUserUuid) } : null,
+
+          createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
+
+          onBehalfOfUser: onBehalfOfUuid ? { uuid: onBehalfOfUuid, name: lookup.get(onBehalfOfUuid) } : null,
+        });
+      } catch (error) {
+        console.error("Failed to fetch user info", error);
+      }
+    };
+
+    fetchUsers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [application]);
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
@@ -223,7 +274,11 @@ function ReviewSubmissionModal({
 
             <div style={getStyles("infoRow")}>
               <h3 style={getStyles("infoKey")}>{t("SENDER")}</h3>
-              <h3 style={getStyles("infoValue")}>{sender || application?.additionalDetails?.owner || ""}</h3>
+              <h3 style={getStyles("infoValue")}>
+                {userInfoMap?.senderUser?.name
+                  ? `${userInfoMap?.senderUser?.name} on Behalf of ${userInfoMap?.onBehalfOfUser?.name}`
+                  : application?.additionalDetails?.owner || ""}
+              </h3>
             </div>
 
             {additionalDetails && (
@@ -232,6 +287,11 @@ function ReviewSubmissionModal({
                 <h3 style={getStyles("infoValue")}>{t(additionalDetails)}</h3>
               </div>
             )}
+
+            <div style={getStyles("infoRow")}>
+              <h3 style={getStyles("infoKey")}>{t("CREATED_BY")}</h3>
+              <h3 style={getStyles("infoValue")}>{userInfoMap?.createdByUser?.name || ""}</h3>
+            </div>
 
             {application?.additionalDetails?.formdata?.initialHearingDate && (
               <div style={getStyles("infoRow")}>

@@ -521,7 +521,6 @@ const InsideHearingMainPage = () => {
         <TasksComponent
           taskType={taskType}
           setTaskType={setTaskType}
-          isLitigant={userRoles.includes("CITIZEN")}
           userInfoType={userInfoType}
           filingNumber={filingNumber}
           inCase={true}

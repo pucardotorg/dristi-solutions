@@ -1,10 +1,11 @@
 import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
 
-import React, { useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { useToast } from "../../../components/Toast/useToast";
 import Modal from "../../../components/Modal";
+import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 const caseLockingMainDiv = {
   padding: "24px",
@@ -19,17 +20,6 @@ const caseSubmissionWarningText = {
   fontWeight: 400,
   lineHeight: "21.6px",
   color: "#3D3C3C",
-};
-
-const caseLockModalStyle = {
-  border: "1px solid #007E7E",
-  backgroundColor: "white",
-  fontFamily: "Roboto",
-  fontSize: "16px",
-  fontWeight: 700,
-  lineHeight: "18.75px",
-  textAlign: "center",
-  width: "190px",
 };
 
 const Heading = (props) => {
@@ -53,7 +43,6 @@ function CaseLockModal({
   path,
   setShowCaseLockingModal,
   setShowConfirmCaseDetailsModal,
-  isAdvocateOrOfficeMemberLoggedIn,
   onSubmit,
   createPendingTask,
   setPrevSelected,
@@ -64,6 +53,9 @@ function CaseLockModal({
   const [submitConfirmed, setSubmitConfirmed] = useState(false);
   const history = useHistory();
   const toast = useToast();
+  const { AdvocateData } = useContext(AdvocateDataContext);
+  const selectedSeniorAdvocate = AdvocateData;
+  const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
 
   const filingNumber = useMemo(() => {
     return caseDetails?.filingNumber;
@@ -92,13 +84,6 @@ function CaseLockModal({
     setShowCaseLockingModal(false);
 
     const isCaseReassigned = state === CaseWorkflowState.CASE_REASSIGNED;
-
-    // uncomment if confirm caseDetails modal needed and don't want to call update case api
-    // if (isAdvocateOrOfficeMemberLoggedIn && !isCaseReassigned) {
-    //   setShowConfirmCaseDetailsModal(true);
-    //   return;
-    // }
-
     const actionType = isCaseReassigned ? "EDIT_CASE" : "SUBMIT_CASE";
 
     const result = await onSubmit(actionType, true);
@@ -130,7 +115,7 @@ function CaseLockModal({
   const handleCancelOnSubmit = async () => {
     setShowCaseLockingModal(false);
 
-    if (isAdvocateOrOfficeMemberLoggedIn) {
+    if (selectedAdvocateUuid) {
       const assignees = Array.isArray(caseDetails?.representatives)
         ? caseDetails?.representatives?.map((advocate) => ({
             uuid: advocate?.additionalDetails?.uuid,
@@ -170,24 +155,24 @@ function CaseLockModal({
           }}
         />
       }
-      actionSaveLabel={isAdvocateOrOfficeMemberLoggedIn ? t("CS_ESIGN") : t("CONFIRM_AND_SIGN")}
+      actionSaveLabel={selectedAdvocateUuid ? t("CS_ESIGN") : t("CONFIRM_AND_SIGN")}
       actionSaveOnSubmit={handleSaveOnSubmit}
-      actionCancelLabel={isAdvocateOrOfficeMemberLoggedIn ? t("UPLOAD_SIGNED_COPY") : t("DOWNLOAD_CS_BACK")}
+      actionCancelLabel={selectedAdvocateUuid ? t("UPLOAD_SIGNED_COPY") : t("DOWNLOAD_CS_BACK")}
       actionCancelOnSubmit={handleCancelOnSubmit}
       formId="modal-action"
-      headerBarMain={<Heading label={isAdvocateOrOfficeMemberLoggedIn ? t("SUBMIT_CASE_CONFIRMATION") : t("CONFIRM_CASE_DETAILS")} />}
+      headerBarMain={<Heading label={selectedAdvocateUuid ? t("SUBMIT_CASE_CONFIRMATION") : t("CONFIRM_CASE_DETAILS")} />}
       popmoduleClassName={"case-lock-confirm-modal"}
       style={{ width: "50%", height: "40px" }}
       // textStyle={{ margin: "0px", color: "" }}
       // popupStyles={{ maxWidth: "60%" }}
       popUpStyleMain={{ zIndex: "1000" }}
       isDisabled={!submitConfirmed}
-      isBackButtonDisabled={!submitConfirmed && isAdvocateOrOfficeMemberLoggedIn}
+      isBackButtonDisabled={!submitConfirmed && selectedAdvocateUuid}
       actionCancelStyle={{ width: "50%", height: "40px" }}
     >
       <div className="case-locking-main-div" style={caseLockingMainDiv}>
         <div>
-          {isAdvocateOrOfficeMemberLoggedIn ? (
+          {selectedAdvocateUuid ? (
             <React.Fragment>
               <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
                 {t("CONFIRM_HOW_COMPLAINT_WILL_BE_SIGNED")}

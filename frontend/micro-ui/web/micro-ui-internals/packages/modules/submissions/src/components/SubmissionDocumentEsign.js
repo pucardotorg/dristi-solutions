@@ -21,9 +21,10 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
   const authorizedUuid = getAuthorizedUuid(userUuid);
+  const storedAdvocate = JSON.parse(localStorage.getItem("selectedAdvocate"));
 
   const name = "Signature";
-  const isAdvocate = userInfo?.roles?.some((role) => ["ADVOCATE_CLERK_ROLE", "ADVOCATE_ROLE"].includes(role.code));
+  const isAdvocateOrClerk = userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role.code));
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -187,9 +188,9 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
               paddingBottom: "10px",
             }}
           >
-            {cleanString(userInfo?.name)}
+            {isAdvocateOrClerk && storedAdvocate?.advocateName ? cleanString(storedAdvocate?.advocateName) : cleanString(userInfo?.name)}
           </div>
-          {isAdvocate && <div>{t("ADVOCATE_KERALA_HIGH_COURT")}</div>}
+          {isAdvocateOrClerk && <div>{t("ADVOCATE_KERALA_HIGH_COURT")}</div>}
         </div>
       )}
     </div>

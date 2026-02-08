@@ -87,7 +87,6 @@ const HomeView = () => {
   const initialCountFetchRef = useRef(false);
   const { AdvocateData } = useContext(AdvocateDataContext);
   const selectedSeniorAdvocate = AdvocateData;
-
   const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
@@ -742,18 +741,18 @@ const HomeView = () => {
             </div>
           </React.Fragment>
         )}
-        {((individualId && userType && userInfoType === "citizen") || userInfoType === "employee") && (
+        {((individualId &&
+          userType &&
+          userInfoType === "citizen" &&
+          (isCitizenReferredInAnyCase || (selectedSeniorAdvocate?.id && (userType === "ADVOCATE_CLERK" || userType === "ADVOCATE")))) ||
+          userInfoType === "employee") && (
           <div className="right-side" style={{ width: "30vw" }}>
             <TasksComponent
               taskType={taskType}
               setTaskType={setTaskType}
               caseType={caseType}
               setCaseType={setCaseType}
-              isLitigant={Boolean(individualId && userType && userInfoType === "citizen")}
-              userInfoType={userInfoType}
               pendingSignOrderList={ordersNotificationData}
-              seniorAdvocates={seniorAdvocates}
-              individualUserType={userType}
             />
           </div>
         )}

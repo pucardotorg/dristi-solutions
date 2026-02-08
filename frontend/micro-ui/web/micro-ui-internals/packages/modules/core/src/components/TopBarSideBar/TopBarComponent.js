@@ -163,6 +163,17 @@ const TopBarComponent = ({
     return searchData?.[`${userTypeDetail?.apiDetails?.requestKey}s`]?.[0]?.responseList;
   }, [searchData, userTypeDetail?.apiDetails?.requestKey]);
 
+  const isApprovalPending = useMemo(() => {
+    if (!searchResult) return true;
+    return (
+      userType !== "LITIGANT" &&
+      Array.isArray(searchResult) &&
+      searchResult?.length > 0 &&
+      searchResult?.[0]?.isActive === false &&
+      searchResult?.[0]?.status !== "INACTIVE"
+    );
+  }, [searchResult, userType]);
+
   const advocateId = useMemo(() => {
     return userType === "ADVOCATE" ? searchResult?.[0]?.id : null;
   }, [searchResult, userType]);
@@ -184,7 +195,7 @@ const TopBarComponent = ({
     },
     { tenantId },
     searchCriteria,
-    Boolean((advocateId || advClerkId) && tenantId)
+    Boolean((advocateId || advClerkId) && tenantId && !isApprovalPending)
   );
 
   const seniorAdvocates = useMemo(() => {
@@ -251,6 +262,8 @@ const TopBarComponent = ({
     return pathname !== "/ui/citizen/home/home-pending-task";
   }, [pathname]);
 
+  const hasMembers = Array.isArray(seniorAdvocates) && seniorAdvocates?.length > 0;
+
   return (
     <div className="navbar" style={{ zIndex: "999" }}>
       <div className="center-container back-wrapper">
@@ -284,39 +297,45 @@ const TopBarComponent = ({
 
         <div className="RightMostTopBarOptions">
           {/* Manage Office button & Advocate profile dropdown - only visible for advocates / clerks */}
-          {isUserLoggedIn && (isAdvocate || isAdvocateClerk) && (
-            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
-              <AdvocateProfileDropdown
-                t={t}
-                options={seniorAdvocates}
-                selected={selectedAdvocate}
-                onSelect={changeAdvocateSelection}
-                disabled={disableAdvocateChange}
-              />
-              {isAdvocate && (
-                <button
-                  className="manage-office-btn"
-                  onClick={handleManageOfficeClick}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "8px 16px",
-                    backgroundColor: "white",
-                    border: "1px solid #007E7E",
-                    borderRadius: "4px",
-                    color: "#007E7E",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    cursor: "pointer",
-                  }}
-                >
-                  <ManageOfficeIcon />
-                  <span>{t ? t("MANAGE_OFFICE") : "Manage Office"}</span>
-                </button>
+          {isSearchLoading || isApprovalPending
+            ? null
+            : isUserLoggedIn &&
+              !isSearchLoading &&
+              !isApprovalPending &&
+              hasMembers &&
+              (isAdvocate || isAdvocateClerk) && (
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
+                  <AdvocateProfileDropdown
+                    t={t}
+                    options={seniorAdvocates}
+                    selected={selectedAdvocate}
+                    onSelect={changeAdvocateSelection}
+                    disabled={disableAdvocateChange}
+                  />
+                  {isAdvocate && (
+                    <button
+                      className="manage-office-btn"
+                      onClick={handleManageOfficeClick}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "8px 16px",
+                        backgroundColor: "white",
+                        border: "1px solid #007E7E",
+                        borderRadius: "4px",
+                        color: "#007E7E",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <ManageOfficeIcon />
+                      <span>{t ? t("MANAGE_OFFICE") : "Manage Office"}</span>
+                    </button>
+                  )}
+                </div>
               )}
-            </div>
-          )}
           {!hideChangeLangOnSomeUrlsWhenNotLoggedIn && !isUserLoggedIn ? changeLanguage : null}
           {!hideNotificationIconOnSomeUrlsWhenNotLoggedIn ? (
             <div className="EventNotificationWrapper" onClick={onNotificationIconClick}>

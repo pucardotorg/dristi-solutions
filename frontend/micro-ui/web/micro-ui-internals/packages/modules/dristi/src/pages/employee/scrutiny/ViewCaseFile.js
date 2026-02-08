@@ -17,8 +17,7 @@ import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
-import { use } from "react";
-import { getAllComplainantSideUuids } from "../../../Utils";
+import { getCaseEditAllowedAssignees } from "../../../Utils";
 import isEqual from "lodash/isEqual";
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
@@ -170,8 +169,9 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   ]);
 
   // Case correction/edition is allowed to all complainant side parties including poa holders, advocates, advocate's associated office members.
+  // but no need to send uuid of office members in assignee payload
   const allComplainantSideUuids = useMemo(() => {
-    return getAllComplainantSideUuids(caseDetails);
+    return getCaseEditAllowedAssignees(caseDetails);
   }, [caseDetails]);
   const filingNumberRef = useRef(null);
 

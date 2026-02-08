@@ -578,6 +578,15 @@ export const getAdvocateOfficeMembers = (caseDetails) => {
   return advocateOfficeMembers?.filter(Boolean);
 };
 
+export const getCaseEditAllowedAssignees = (caseDetails) => {
+  const complainants = getComplainants(caseDetails) || [];
+  const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants) || [];
+  const advocates = getComplainantSideAdvocates(caseDetails) || [];
+  // No need to send uuid of office members in assignee payload
+  const allParties = [...complainants, ...poaHolders, ...advocates];
+  return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+};
+
 export const getAllComplainantSideUuids = (caseDetails) => {
   const complainants = getComplainants(caseDetails) || [];
   const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants) || [];
@@ -800,9 +809,9 @@ export const getAuthorizedUuid = (currentLoggedInUserUuid) => {
 };
 
 export const getAllAssociatedPartyUuids = (caseDetails, createdByUuid) => {
-  const isOwnerAdvocate = caseDetails?.representatives?.find((rep) => rep?.advocateFilingStatus === advocateCaseFilingStatusTypes?.CASE_OWNER);
+  const isCreatorAdvocate = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === createdByUuid);
   //if neither a senior advocate nor junior adv/clerk did the filing on his behalf that means litigant only did case filing and only he/she can have edit draft access.
-  if (isOwnerAdvocate) {
+  if (isCreatorAdvocate) {
     const advocateOffices = caseDetails?.advocateOffices || [];
     // means creator is main advocate himself/PIP
     if (advocateOffices.length === 0) {
@@ -810,9 +819,9 @@ export const getAllAssociatedPartyUuids = (caseDetails, createdByUuid) => {
     }
 
     // If advocate office is found for the creator advocate.
-    const ownerAdvocateUuid = isOwnerAdvocate?.additionalDetails?.uuid;
+    const creatorAdvocateUuid = isCreatorAdvocate?.additionalDetails?.uuid;
     //Now we have to check all the advocates and clerks members associated with this advocate and they all can edit the case draft
-    const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateUserUuid === ownerAdvocateUuid);
+    const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateUserUuid === creatorAdvocateUuid);
     if (!matchingOffice) {
       // Fallback
       return [createdByUuid];
@@ -821,14 +830,14 @@ export const getAllAssociatedPartyUuids = (caseDetails, createdByUuid) => {
     const clerks = matchingOffice?.clerks || [];
     // Collect all memberUserUuid
     const editableUsers = [
-      ownerAdvocateUuid, // senior advocate himself
+      creatorAdvocateUuid, // senior advocate himself
       ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
       ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
     ];
 
     // Remove null/undefined + de-duplicate
     return Array.from(new Set((editableUsers || []).filter(Boolean)));
-  } else if (!isOwnerAdvocate) {
+  } else if (!isCreatorAdvocate) {
     // this means creator could be a junior advocate/clerk
 
     //check if creator was junior adv.
@@ -849,10 +858,12 @@ export const getAllAssociatedPartyUuids = (caseDetails, createdByUuid) => {
       matchingOffice = { ...isCreatorClerkMatchingOffice };
     }
     if (matchingOffice) {
+      const officeAdvocateUuid = matchingOffice?.officeAdvocateUserUuid;
       const advocates = matchingOffice?.advocates || [];
       const clerks = matchingOffice?.clerks || [];
       // Collect all memberUserUuid
       const editableUsers = [
+        officeAdvocateUuid,
         ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
         ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
       ];

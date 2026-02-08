@@ -48,7 +48,6 @@ const TasksComponent = ({
   setTaskType,
   caseType,
   setCaseType,
-  isLitigant,
   filingNumber,
   inCase = false,
   hideFilters = false,
@@ -59,7 +58,6 @@ const TasksComponent = ({
   pendingSignOrderList,
   tableView = false,
   needRefresh = false,
-  individualUserType = null,
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const CourierService = useMemo(() => Digit.ComponentRegistryService.getComponent("CourierService"), []);
@@ -91,6 +89,12 @@ const TasksComponent = ({
   const [hideCancelButton, setHideCancelButton] = useState(false);
   const [isPaymentCompleted, setIsPaymentCompleted] = useState(false);
   const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
+  const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
+  const isLitigant = useMemo(() => {
+    if (userInfo?.type !== "CITIZEN") return false;
+    return !userInfo?.roles?.some((role) => role.code === "ADVOCATE_ROLE" || role.code === "ADVOCATE_CLERK_ROLE");
+  }, [userInfo]);
+
   const [{ joinCaseConfirmModal, joinCasePaymentModal, data }, setPendingTaskActionModals] = useState({
     joinCaseConfirmModal: false,
     joinCasePaymentModal: false,
@@ -116,11 +120,8 @@ const TasksComponent = ({
     // Employee: no additional filters
     if (userType === "employee") return {};
 
-    // Citizen but not resolved yet
-    if (userType === "citizen" && !individualUserType) return null;
-
     // Citizen litigant
-    if (userType === "citizen" && individualUserType === "LITIGANT") {
+    if (userType === "citizen" && isLitigant) {
       return userUuid ? { assignedTo: userUuid } : null;
     }
 
@@ -136,7 +137,7 @@ const TasksComponent = ({
       officeAdvocateUuid: selectedSeniorAdvocate.uuid,
       officeMemberUuid: userUuid,
     };
-  }, [userType, individualUserType, userUuid, selectedSeniorAdvocate?.uuid]);
+  }, [userType, isLitigant, userUuid, selectedSeniorAdvocate?.uuid]);
 
   const { data: pendingTaskDetails = [], isLoading, refetch, isFetching: isFetchingPendingTask } = useGetPendingTask({
     data: {
@@ -145,11 +146,11 @@ const TasksComponent = ({
         moduleName: "Pending Tasks Service",
         moduleSearchCriteria: {
           isCompleted: false,
-          ...(isLitigant && litigantSearchCriteriaAdditional && { ...litigantSearchCriteriaAdditional }),
-          ...(!isLitigant && { assignedRole: [...roles] }),
+          ...(isCitizen && litigantSearchCriteriaAdditional && { ...litigantSearchCriteriaAdditional }),
+          ...(!isCitizen && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
           screenType: isDiary ? ["Adiary"] : isApplicationCompositeOrder ? ["applicationCompositeOrder"] : ["home", "applicationCompositeOrder"],
-          ...(!isLitigant && courtId && !isScrutiny && { courtId }),
+          ...(!isCitizen && courtId && !isScrutiny && { courtId }),
         },
         limit: 10000,
         offset: 0,
@@ -159,8 +160,6 @@ const TasksComponent = ({
     key: `${filingNumber}-${isDiary}-${isApplicationCompositeOrder}-${isScrutiny}-${courtId}`,
     config: { enabled: Boolean(tenantId) && Boolean(litigantSearchCriteriaAdditional) },
   });
-
-  console.log("isFetchingPendingTask", isFetchingPendingTask);
 
   const pendingTaskActionDetails = useMemo(() => {
     if (!totalPendingTask) {
@@ -1280,7 +1279,7 @@ const TasksComponent = ({
   return !tableView ? (
     <div className="tasks-component">
       <React.Fragment>
-        <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
+        <h2>{!isCitizen ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
         {hasSignOrderAccess && pendingSignOrderList && (
           <Button
             label={`${t("BULK_SIGN")} ${pendingSignOrderList?.totalCount} ${t("BULK_PENDING_ORDERS")}`}
@@ -1404,7 +1403,7 @@ const TasksComponent = ({
               color: "#77787B",
             }}
           >
-            {!isLitigant ? t("NO_TASK_TEXT") : t("NO_PENDING_TASK_TEXT")}
+            {!isCitizen ? t("NO_TASK_TEXT") : t("NO_PENDING_TASK_TEXT")}
           </div>
         )}
       </React.Fragment>
