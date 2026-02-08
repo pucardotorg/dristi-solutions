@@ -262,8 +262,6 @@ public class CaseQueryBuilder {
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(poaHolderIndividualId);
             preparedStmtArgList.add(Types.VARCHAR);
-            preparedStmtList.add(userUuid);
-            preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(advocateId);
             preparedStmtArgList.add(Types.VARCHAR);
             firstCriteria = false;
