@@ -203,7 +203,7 @@ public class BailQueryBuilder {
             boolean hasUserUuidsList = advocateAndClerkUuids != null && !advocateAndClerkUuids.isEmpty();
 
             if (isAdvocateOrClerk && hasUserUuidsList) {
-                query.append(" AND bail.created_by IN (");
+                query.append(" AND (bail.litigant_id IN (");
                 for (int i = 0; i < advocateAndClerkUuids.size(); i++) {
                     query.append("?");
                     if (i < advocateAndClerkUuids.size() - 1) {
@@ -212,7 +212,16 @@ public class BailQueryBuilder {
                     preparedStmtList.add(advocateAndClerkUuids.get(i));
                     preparedStmtArgList.add(Types.VARCHAR);
                 }
-                query.append(")");
+                query.append(") OR bail.created_by IN (");
+                for (int i = 0; i < advocateAndClerkUuids.size(); i++) {
+                    query.append("?");
+                    if (i < advocateAndClerkUuids.size() - 1) {
+                        query.append(", ");
+                    }
+                    preparedStmtList.add(advocateAndClerkUuids.get(i));
+                    preparedStmtArgList.add(Types.VARCHAR);
+                }
+                query.append("))");
             } else {
                 query.append(" AND (bail.litigant_id = ? OR bail.created_by = ?)");
                 preparedStmtList.add(userUuid);
