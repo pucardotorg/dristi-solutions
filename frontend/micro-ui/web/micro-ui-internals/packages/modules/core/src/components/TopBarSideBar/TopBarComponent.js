@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useContext, useRef } from "react";
+import React, { useEffect, useState, useMemo, useContext, useRef, useCallback } from "react";
 import PropTypes from "prop-types";
 import { useLocation, useHistory } from "react-router-dom";
 // import BackButton from "./BackButton";
@@ -19,74 +19,61 @@ const ManageOfficeIcon = () => (
   </svg>
 );
 
-const AdvocateProfileDropdown = ({ t, options, selected, onSelect, disabled }) => {
+const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelect, disabled }) => {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
 
   useEffect(() => {
+    if (!open) return;
     const handleClickOutside = (event) => {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
         setOpen(false);
       }
     };
 
-    if (open) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  const hasSelected = selected && selected.advocateName;
-  const baseLabel = hasSelected ? `Adv. ${t(selected.advocateName)}` : t("SELECT_ADVOCATE");
-  const buttonLabel = hasSelected ? `${baseLabel}'s Profile` : baseLabel;
+  const handleToggle = useCallback(() => {
+    if (!disabled) setOpen((prev) => !prev);
+  }, [disabled]);
 
-  const handleToggle = () => {
-    if (disabled) return;
-    setOpen(!open);
-  };
+  const handleSelect = useCallback(
+    (option) => {
+      if (!option || option.id === selected?.id) {
+        setOpen(false);
+        return;
+      }
 
-  const handleSelect = (option) => {
-    if (!option) return;
-    onSelect(option);
-    setOpen(false);
-  };
+      onSelect(option);
+      setOpen(false);
+    },
+    [onSelect, selected?.id]
+  );
+
+  const buttonLabel = selected?.advocateName ? `Adv. ${t(selected.advocateName)}'s Profile` : t("SELECT_ADVOCATE");
 
   return (
     <div className="advocate-profile-dropdown" ref={wrapperRef}>
-      <button
-        type="button"
-        className={`advocate-profile-dropdown__button${open ? " advocate-profile-dropdown__button--open" : ""}`}
-        onClick={handleToggle}
-        disabled={disabled}
-      >
-        <span className="advocate-profile-dropdown__button-label">{buttonLabel}</span>
-        <span className="advocate-profile-dropdown__button-chevron">
-          <AdvocateProfileChevronIcon />
-        </span>
+      <button type="button" className={`advocate-profile-dropdown__button${open ? " open" : ""}`} onClick={handleToggle} disabled={disabled}>
+        <span>{buttonLabel}</span>
+        <AdvocateProfileChevronIcon />
       </button>
-      {open && options && options.length > 0 && (
+
+      {open && options.length > 0 && (
         <div className="advocate-profile-dropdown__menu">
           {options.map((option) => (
-            <button
-              type="button"
-              key={option.id || option.value || option.uuid}
-              className="advocate-profile-dropdown__item"
-              onClick={() => handleSelect(option)}
-            >
-              <span className="advocate-profile-dropdown__item-icon">
-                <AdvocateProfileUserIcon />
-              </span>
-              <span className="advocate-profile-dropdown__item-label">{t(option.advocateName)}</span>
+            <button key={option.id} type="button" className="advocate-profile-dropdown__item" onClick={() => handleSelect(option)}>
+              <AdvocateProfileUserIcon />
+              <span>{t(option.advocateName)}</span>
             </button>
           ))}
         </div>
       )}
     </div>
   );
-};
+});
 
 const TopBarComponent = ({
   img,
