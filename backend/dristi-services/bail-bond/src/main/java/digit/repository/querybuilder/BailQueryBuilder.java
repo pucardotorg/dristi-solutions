@@ -151,9 +151,26 @@ public class BailQueryBuilder {
         }
 
         if (criteria.getUserUuid() != null && !criteria.getUserUuid().isEmpty()) {
-            query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.created_by = ?)) ");
-            preparedStmtList.add(criteria.getUserUuid());
-            preparedStmtArgList.add(Types.VARCHAR);
+            List<String> advocateAndClerkUuids = criteria.getAdvocateAndClerkUuids();
+            boolean isAdvocateOrClerk = criteria.isAdvocate() || criteria.isClerk();
+            boolean hasUserUuidsList = advocateAndClerkUuids != null && !advocateAndClerkUuids.isEmpty();
+
+            if (isAdvocateOrClerk && hasUserUuidsList) {
+                query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.created_by IN (");
+                for (int i = 0; i < advocateAndClerkUuids.size(); i++) {
+                    query.append("?");
+                    if (i < advocateAndClerkUuids.size() - 1) {
+                        query.append(", ");
+                    }
+                    preparedStmtList.add(advocateAndClerkUuids.get(i));
+                    preparedStmtArgList.add(Types.VARCHAR);
+                }
+                query.append("))) ");
+            } else {
+                query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.created_by = ?)) ");
+                preparedStmtList.add(criteria.getUserUuid());
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
         }
     }
 
