@@ -118,6 +118,17 @@ public class SummonsService {
         return taskUtil.callUploadDocumentTask(taskRequest);
     }
 
+    public TaskResponse generateMiscellaneousDocumentAndUpdateTask(TaskRequest taskRequest, boolean qrCode) {
+        ByteArrayResource byteArrayResource = pdfServiceUtil.generatePdfFromEgovPdfService(taskRequest,
+                taskRequest.getTask().getTenantId(), taskRequest.getTask().getCourtId());
+        String fileStoreId = fileStorageUtil.saveDocumentToFileStore(byteArrayResource);
+
+        Document document = createDocument(fileStoreId, qrCode);
+        taskRequest.getTask().addDocumentsItem(document);
+
+        return taskUtil.callUploadDocumentTask(taskRequest);
+    }
+
     public SummonsDelivery sendSummonsViaChannels(TaskRequest request) {
 
         TaskCriteria taskCriteria = TaskCriteria.builder().taskNumber(request.getTask().getTaskNumber()).build();
@@ -130,7 +141,7 @@ public class SummonsService {
                 .task(task)
                 .requestInfo(request.getRequestInfo()).build();
 
-        if (!(taskType.equalsIgnoreCase(WARRANT) || taskType.equalsIgnoreCase(PROCLAMATION) || taskType.equalsIgnoreCase(ATTACHMENT))) {
+        if (!(MISCELLANEOUS_PROCESS.equalsIgnoreCase(taskType) || taskType.equalsIgnoreCase(WARRANT) || taskType.equalsIgnoreCase(PROCLAMATION) || taskType.equalsIgnoreCase(ATTACHMENT))) {
             String docSubType = getDocSubType(taskType, task.getTaskDetails());
             String noticeType = getNoticeType(task.getTaskDetails());
             String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true, noticeType, null);
