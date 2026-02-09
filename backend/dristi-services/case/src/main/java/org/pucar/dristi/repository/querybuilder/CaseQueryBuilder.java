@@ -257,13 +257,10 @@ public class CaseQueryBuilder {
                     "        SELECT poaholders.case_id" +
                     "        FROM dristi_case_poaholders poaholders" +
                     "        WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
-                    " OR cases.status='DRAFT_IN_PROGRESS' AND cases.createdby = ?" +
                     " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
             preparedStmtList.add(advocateId);
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(poaHolderIndividualId);
-            preparedStmtArgList.add(Types.VARCHAR);
-            preparedStmtList.add(userUuid);
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(advocateId);
             preparedStmtArgList.add(Types.VARCHAR);
