@@ -46,5 +46,46 @@ public class ServiceConstants {
     public static final String TENANTID = "?tenantId=";
     public static final String BUSINESS_SERVICES = "&businessServices=";
 
+    // Advocate Office Management Exception Codes and Messages
+    public static final String MEMBER_ALREADY_EXISTS = "MEMBER_ALREADY_EXISTS";
+    public static final String MEMBER_ALREADY_EXISTS_MESSAGE = "Member already exists in the office";
+
+    public static final String USER_INFO_ERROR = "USER_INFO_ERROR";
+    public static final String USER_INFO_NULL_MESSAGE = "User info cannot be null";
+    public static final String USER_UUID_NULL_MESSAGE = "User uuid cannot be null";
+    public static final String UNAUTHORIZED = "UNAUTHORIZED";
+    public static final String CANNOT_ADD_MEMBER_MESSAGE = "officeAdvocateId must match RequestInfo.userInfo.uuid";
+    public static final String CANNOT_LEAVE_OFFICE_MESSAGE = "RequestInfo.userInfo.uuid must match either officeAdvocateId or memberId";
+    
+    public static final String MEMBER_NOT_FOUND = "MEMBER_NOT_FOUND";
+    public static final String MEMBER_NOT_FOUND_MESSAGE = "Member not found in the office";
+    
+    public static final String SEARCH_CRITERIA_NULL = "SEARCH_CRITERIA_NULL";
+    public static final String SEARCH_CRITERIA_NULL_MESSAGE = "Search criteria cannot be null";
+    
+    public static final String ADD_MEMBER_ERROR = "ADD_MEMBER_ERROR";
+    public static final String ADD_MEMBER_ERROR_MESSAGE = "Error while adding member: ";
+    
+    public static final String LEAVE_OFFICE_ERROR = "LEAVE_OFFICE_ERROR";
+    public static final String LEAVE_OFFICE_ERROR_MESSAGE = "Error while processing leave office: ";
+    
+    public static final String SEARCH_MEMBER_ERROR = "SEARCH_MEMBER_ERROR";
+    public static final String SEARCH_MEMBER_ERROR_MESSAGE = "Error while searching members: ";
+    
+    public static final String MEMBER_SEARCH_QUERY_EXCEPTION = "MEMBER_SEARCH_QUERY_EXCEPTION";
+    public static final String MEMBER_SEARCH_QUERY_EXCEPTION_MESSAGE = "Exception occurred while building the member search query: ";
+    
+    public static final String SEARCH_MEMBER_ERR = "SEARCH_MEMBER_ERR";
+    public static final String ARGS_SIZE_MISMATCH_MESSAGE = "Args and ArgTypes size mismatch";
+    public static final String SEARCH_MEMBER_ERR_MESSAGE = "Exception while fetching member list: ";
+    
+    public static final String ROW_MAPPER_ERROR = "ROW_MAPPER_ERROR";
+    public static final String ROW_MAPPER_ERROR_MESSAGE = "Error mapping AddMember result set: ";
+
+    public static final String INDIVIDUAL_NOT_FOUND = "INDIVIDUAL_NOT_FOUND";
+    public static final String ADVOCATE_NOT_FOUND = "ADVOCATE_NOT_FOUND";
+    public static final String ADVOCATE_CLERK_NOT_FOUND = "ADVOCATE_CLERK_NOT_FOUND";
+    public static final String ADVOCATE_NOT_FOUND_MESSAGE = "Advocate not found";
+    public static final String ADVOCATE_CLERK_NOT_FOUND_MESSAGE = "Advocate clerk not found";
 
 }

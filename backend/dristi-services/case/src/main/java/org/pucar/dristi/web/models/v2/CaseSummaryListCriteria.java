@@ -94,4 +94,13 @@ public class CaseSummaryListCriteria {
     @JsonProperty("isLPRCase")
     private Boolean isLPRCase = null;
 
+    @JsonProperty("officeAdvocateId")
+    private String officeAdvocateId = null;
+
+    @JsonProperty("memberId")
+    private String memberId = null;
+
+    @JsonProperty("isMemberActiveInCase")
+    private Boolean isMemberActiveInCase = null;
+
 }

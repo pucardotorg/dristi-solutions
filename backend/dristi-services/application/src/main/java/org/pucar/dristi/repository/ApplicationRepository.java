@@ -1,20 +1,23 @@
 package org.pucar.dristi.repository;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
-import org.jetbrains.annotations.Nullable;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.queryBuilder.ApplicationQueryBuilder;
 import org.pucar.dristi.repository.rowMapper.ApplicationRowMapper;
 import org.pucar.dristi.repository.rowMapper.DocumentRowMapper;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.Collections;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -25,16 +28,26 @@ public class ApplicationRepository {
     private final JdbcTemplate jdbcTemplate;
     private final ApplicationRowMapper rowMapper;
     private final DocumentRowMapper documentRowMapper;
+    private final CaseUtil caseUtil;
+    private final Configuration config;
+    private final ObjectMapper mapper;
+
     @Autowired
     public ApplicationRepository(
             ApplicationQueryBuilder queryBuilder,
             JdbcTemplate jdbcTemplate,
             ApplicationRowMapper rowMapper,
-            DocumentRowMapper documentRowMapper) {
+            DocumentRowMapper documentRowMapper,
+            CaseUtil caseUtil,
+            Configuration config,
+            ObjectMapper mapper) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
         this.documentRowMapper = documentRowMapper;
+        this.caseUtil = caseUtil;
+        this.config = config;
+        this.mapper = mapper;
     }
 
     public List<Application> getApplications(ApplicationSearchRequest applicationSearchRequest) {
@@ -48,6 +61,7 @@ public class ApplicationRepository {
 
             // TODO : remove this, this is temporary fix (#5016)
             String userUuid = getCitizenUserUuid(applicationSearchRequest);
+            enrichAdvocateAndClerkUuids(applicationSearchRequest);
 
             String applicationQuery = queryBuilder.getApplicationSearchQuery(applicationSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList, userUuid,applicationSearchRequest.getRequestInfo());
             applicationQuery = queryBuilder.addOrderByQuery(applicationQuery, applicationSearchRequest.getPagination());
@@ -116,6 +130,120 @@ public class ApplicationRepository {
             }
         }
         return userUuid;
+    }
+
+    private void enrichAdvocateAndClerkUuids(ApplicationSearchRequest applicationSearchRequest) {
+        RequestInfo requestInfo = applicationSearchRequest.getRequestInfo();
+        ApplicationCriteria criteria = applicationSearchRequest.getCriteria();
+
+        if (requestInfo == null || requestInfo.getUserInfo() == null) {
+            return;
+        }
+
+        User userInfo = requestInfo.getUserInfo();
+        String userUuid = userInfo.getUuid();
+        String tenantId = config.getStateLevelTenantId();
+
+        boolean isAdvocate = hasRole(userInfo, ADVOCATE_ROLE);
+        boolean isClerk = hasRole(userInfo, ADVOCATE_CLERK_ROLE);
+
+        if (!isAdvocate && !isClerk) {
+            return;
+        }
+
+        criteria.setAdvocate(isAdvocate);
+        criteria.setClerk(isClerk);
+
+        String filingNumber = criteria.getFilingNumber();
+
+        if (filingNumber == null || filingNumber.isEmpty()) {
+            return;
+        }
+
+        try {
+            CaseCriteria caseCriteria = CaseCriteria.builder()
+                    .filingNumber(filingNumber)
+                    .defaultFields(false)
+                    .build();
+
+            CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(Collections.singletonList(caseCriteria))
+                    .tenantId(tenantId)
+                    .build();
+
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+            if (caseDetails == null) {
+                return;
+            }
+
+            CourtCase courtCase = mapper.convertValue(caseDetails, CourtCase.class);
+
+            if (courtCase.getAdvocateOffices() == null) {
+                return;
+            }
+
+            Set<String> uuidSet = new HashSet<>();
+            List<AdvocateOffice> advocateOffices = courtCase.getAdvocateOffices();
+
+            for (AdvocateOffice office : advocateOffices) {
+                boolean userBelongsToOffice = false;
+
+                if (isClerk && office.getClerks() != null) {
+                    userBelongsToOffice = office.getClerks().stream()
+                            .anyMatch(clerk -> userUuid.equals(clerk.getMemberUserUuid()));
+                }
+
+                if (isAdvocate) {
+                    if (userUuid.equals(office.getOfficeAdvocateUserUuid())) {
+                        userBelongsToOffice = true;
+                    } else if (office.getAdvocates() != null) {
+                        userBelongsToOffice = userBelongsToOffice || office.getAdvocates().stream()
+                                .anyMatch(advocate -> userUuid.equals(advocate.getMemberUserUuid()));
+                    }
+                }
+
+                if (userBelongsToOffice) {
+                    if (office.getOfficeAdvocateUserUuid() != null) {
+                        uuidSet.add(office.getOfficeAdvocateUserUuid());
+                    }
+
+                    if (office.getAdvocates() != null) {
+                        office.getAdvocates().forEach(advocate -> {
+                            if (advocate.getMemberUserUuid() != null) {
+                                uuidSet.add(advocate.getMemberUserUuid());
+                            }
+                        });
+                    }
+
+                    if (office.getClerks() != null) {
+                        office.getClerks().forEach(clerk -> {
+                            if (clerk.getMemberUserUuid() != null) {
+                                uuidSet.add(clerk.getMemberUserUuid());
+                            }
+                        });
+                    }
+                }
+            }
+
+            if (isAdvocate) {
+                uuidSet.add(userUuid);
+            }
+
+            log.info("Enriched advocateAndClerkUuids for application search: {}", uuidSet);
+            criteria.setAdvocateAndClerkUuids(new ArrayList<>(uuidSet));
+
+        } catch (Exception e) {
+            log.error("Error while enriching advocate/clerk UUIDs for application search", e);
+        }
+    }
+
+    private boolean hasRole(User userInfo, String roleCode) {
+        if (userInfo.getRoles() == null) {
+            return false;
+        }
+        return userInfo.getRoles().stream()
+                .anyMatch(role -> roleCode.equals(role.getCode()));
     }
 
     public Integer getTotalCountApplication(String baseQuery, List<Object> preparedStmtList) {

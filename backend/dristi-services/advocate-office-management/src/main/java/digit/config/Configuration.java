@@ -82,4 +82,30 @@ public class Configuration {
     //SMSNotification
     @Value("${egov.sms.notification.topic}")
     private String smsNotificationTopic;
+
+
+    //Individual Config
+    @Value("${dristi.individual.host}")
+    private String individualHost;
+
+    @Value("${dristi.individual.search.endpoint}")
+    private String individualSearchEndPoint;
+
+
+    //Advocate Config
+    @Value("${dristi.advocate.host}")
+    private String advocateHost;
+
+    @Value("${dristi.advocate.search.endpoint}")
+    private String advocateSearchEndPoint;
+
+    @Value("${dristi.advocate.clerk.search.endpoint}")
+    private String advocateClerkSearchEndPoint;
+
+    //Advocate Office Kafka Topics
+    @Value("${add.member.kafka.create.topic}")
+    private String addMemberTopic;
+
+    @Value("${leave.office.kafka.create.topic}")
+    private String leaveOfficeTopic;
 }
