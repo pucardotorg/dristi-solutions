@@ -81,7 +81,7 @@ public class EventListener implements MessageListener<String, String> {
         String correlationId = null;
 
         try {
-            Map<String, Object> requestMap = (Map)objectMapper.convertValue(value, Map.class);
+            Map<String, Object> requestMap = (Map)objectMapper.readValue(value.toString(), Map.class);
             Object requestInfo = requestMap.containsKey("RequestInfo") ? requestMap.get("RequestInfo") : requestMap.get("requestInfo");
             if (Objects.isNull(requestInfo)) {
                 return null;
