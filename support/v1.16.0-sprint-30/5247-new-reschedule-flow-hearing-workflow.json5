@@ -257,6 +257,24 @@
         "isTerminateState": false,
         "isStateUpdatable": true,
         "actions": [
+          //added new action
+          {
+            "auditDetails": {
+              "createdBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+              "lastModifiedBy": "a6f16d0c-5654-4b4c-ac62-ab57e40f7ead",
+              "createdTime": 1770290322531,
+              "lastModifiedTime": 1770290322531
+            },
+            "uuid": "e54f08a3-89a9-4173-9360-ae549d837592",
+            "tenantId": "kl",
+            "currentState": "feb13943-8584-4999-9c5c-61e316524456",
+            "action": "RESCHEDULE_ONGOING",
+            "nextState": "9d48f73c-904a-438d-94aa-ee6f8461191c",
+            "roles": [
+              "HEARING_EDITOR"
+            ],
+            "active": true
+          },
           {
             "auditDetails": {
               "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
