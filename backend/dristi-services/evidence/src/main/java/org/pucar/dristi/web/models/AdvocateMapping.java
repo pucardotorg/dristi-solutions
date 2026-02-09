@@ -60,6 +60,11 @@ public class AdvocateMapping   {
 
     private Object additionalDetails = null;
 
+    @JsonProperty("hasSigned")
+    private Boolean hasSigned = false;
+
+    @JsonProperty("advocateFilingStatus")
+    private String advocateFilingStatus = null;
 
     public AdvocateMapping addRepresentingItem(Party representingItem) {
         if (this.representing == null) {

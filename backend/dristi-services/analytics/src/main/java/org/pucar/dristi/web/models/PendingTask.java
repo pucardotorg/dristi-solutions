@@ -107,4 +107,13 @@ public class PendingTask {
     @JsonProperty("referenceEntityType")
     private String referenceEntityType = null;
 
+    @JsonProperty("offices")
+    private List<AdvocateOffice> offices = null;
+
+    @JsonProperty("dateOfApplication")
+    private String dateOfApplication = null;
+
+    @JsonProperty("nextHearingDate")
+    private String nextHearingDate = null;
+
 }

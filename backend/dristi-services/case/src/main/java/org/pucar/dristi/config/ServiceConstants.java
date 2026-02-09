@@ -115,6 +115,7 @@ public class ServiceConstants {
     public static final String DECRYPT_DATA_ROLE = "DECRYPT_DATA_ROLE";
     public static final String INTERNAL_MICROSERVICE_ROLE = "INTERNAL_MICROSERVICE_ROLE";
     public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
+    public static final String ADVOCATE_CLERK_ROLE = "ADVOCATE_CLERK_ROLE";
     public static final String EMPLOYEE = "EMPLOYEE";
     public static final String PAYMENT_PENDING = "PENDING_PAYMENT";
     public static final String UPLOAD_PIP_AFFIDAVIT = "UPLOAD_PIP_AFFIDAVIT";

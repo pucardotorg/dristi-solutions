@@ -1,6 +1,7 @@
 package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
@@ -9,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Validated
@@ -123,5 +125,14 @@ public class BailSearchCriteria {
 
     @JsonProperty("fuzzySearch")
     private Boolean fuzzySearch=false;
+
+    @JsonIgnore
+    private List<String> advocateAndClerkUuids = new ArrayList<>();
+
+    @JsonIgnore
+    private boolean isAdvocate = false;
+
+    @JsonIgnore
+    private boolean isClerk = false;
 
 }

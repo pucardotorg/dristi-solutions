@@ -960,7 +960,7 @@ function CaseFileAdmission({ t, path }) {
             tenantId,
           },
         });
-        history.push(
+        history.replace(
           `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })

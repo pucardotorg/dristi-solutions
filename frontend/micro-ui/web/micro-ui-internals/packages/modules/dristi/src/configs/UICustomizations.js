@@ -2289,6 +2289,8 @@ export const UICustomizations = {
                 orderItemId: result?.orderItemId,
                 partyType: result?.partyType,
                 processType: result?.name?.trim()?.split(" ")?.pop(),
+                dateOfApplication: result?.dateOfApplication || "-",
+                nextHearingDate: result?.nextHearingDate || "-",
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
