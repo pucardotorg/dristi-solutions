@@ -228,6 +228,12 @@ public class IndexerUtils {
             if (!filingNumber.equals(caseNumber)) {
                 searchableFieldsList.add(caseNumber);
             }
+            if (pendingTask.getDateOfApplication() != null) {
+                searchableFieldsList.add(pendingTask.getDateOfApplication());
+            }
+            if (pendingTask.getNextHearingDate() != null) {
+                searchableFieldsList.add(pendingTask.getNextHearingDate());
+            }
             searchableFieldsList.add(caseTitle);
             searchableFieldsList.addAll(advocate.getAccused());
             searchableFieldsList.addAll(advocate.getComplainant());
@@ -255,7 +261,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, expiryTime, sectionAndSubSection, filingDate, referenceEntityType, offices, null, null
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime, expiryTime, sectionAndSubSection, filingDate, referenceEntityType, offices, pendingTask.getNextHearingDate(), pendingTask.getDateOfApplication()
         );
     }
 
@@ -322,6 +328,12 @@ public class IndexerUtils {
             searchableFieldsList.add(filingNumber);
             if (!filingNumber.equals(caseNumber)) {
                 searchableFieldsList.add(caseNumber);
+            }
+            if(pendingTask.getNextHearingDate() != null) {
+                searchableFieldsList.add(pendingTask.getNextHearingDate());
+            }
+            if(pendingTask.getDateOfApplication() != null) {
+                searchableFieldsList.add(pendingTask.getDateOfApplication());
             }
             searchableFieldsList.add(caseTitle);
             searchableFieldsList.addAll(advocate.getAccused());
