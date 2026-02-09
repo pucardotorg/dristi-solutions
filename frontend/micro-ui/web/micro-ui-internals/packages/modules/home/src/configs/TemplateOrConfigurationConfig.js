@@ -27,7 +27,7 @@ export const temaplateOrConfigurationConfig = {
         formClassName: "custom-both-clear-search",
         primaryLabel: "ES_COMMON_SEARCH",
         secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
-        minReqFields: 1,
+        minReqFields: 0,
         defaultValues: {
           process: "",
         },
@@ -39,10 +39,6 @@ export const temaplateOrConfigurationConfig = {
             disable: false,
             populators: {
               name: "process",
-              validation: {
-                pattern: {},
-                minlength: 2,
-              },
             },
           },
         ],
