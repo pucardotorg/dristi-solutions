@@ -62,7 +62,7 @@ const ManageOffice = () => {
   // Get the logged-in advocate's ID from responseList for officeAdvocateUserUuid
   const officeAdvocateUserUuid = useMemo(() => {
     return userInfo?.uuid;
-  }, []);
+  }, [userInfo?.uuid]);
 
   // Get the logged-in advocate's name from additionalDetails.username for officeAdvocateName
   const officeAdvocateName = useMemo(() => {
