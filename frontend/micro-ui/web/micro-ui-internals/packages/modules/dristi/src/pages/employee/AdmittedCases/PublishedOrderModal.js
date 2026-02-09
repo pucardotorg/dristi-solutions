@@ -73,7 +73,7 @@ function PublishedOrderModal({
         referenceId: order?.orderNumber,
         tenantId,
         courtId: caseCourtId,
-        caseId: caseDetails?.cmpNumber,
+        caseId: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber,
       },
     },
     {},
