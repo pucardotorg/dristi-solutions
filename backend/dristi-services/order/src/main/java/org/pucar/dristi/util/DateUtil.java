@@ -29,7 +29,7 @@ public class DateUtil {
         LocalTime localTime = LocalTime.parse(time);
         ZonedDateTime zonedDateTime = ZonedDateTime.now()
                 .with(localTime)
-                .withZoneSameLocal(ZoneId.systemDefault());
+                .withZoneSameLocal(ZoneId.of(config.getZoneId()));
 
         return Date.from(zonedDateTime.toInstant()).toInstant();
     }

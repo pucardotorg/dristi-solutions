@@ -229,14 +229,14 @@ public String processOrderText(String orderType, String orderSchema, RequestInfo
             if (path.startsWith("GET_DUE_DATE")) {
                 Long dueDateInMilliSecond = JsonPath.read(orderSchema, path.substring("GET_DUE_DATE".length()));
                 if (dueDateInMilliSecond != null) {
-                    LocalDate dueDate = Instant.ofEpochMilli(dueDateInMilliSecond).atZone(ZoneId.systemDefault()).toLocalDate();
+                    LocalDate dueDate = Instant.ofEpochMilli(dueDateInMilliSecond).atZone(ZoneId.of(configuration.getZoneId())).toLocalDate();
                     long daysRemaining = Duration.between(LocalDate.now().atStartOfDay(), dueDate.atStartOfDay()).toDays();
                     text = text.replace("[" + path + "]", Long.toString(daysRemaining));
                 }
             } else if (path.startsWith("GET_LOCAL_DATE")) {
                 Long dateInMilliSecond = JsonPath.read(orderSchema, path.substring("GET_LOCAL_DATE".length()));
                 if (dateInMilliSecond != null) {
-                    LocalDate date = Instant.ofEpochMilli(dateInMilliSecond).atZone(ZoneId.systemDefault()).toLocalDate();
+                    LocalDate date = Instant.ofEpochMilli(dateInMilliSecond).atZone(ZoneId.of(configuration.getZoneId())).toLocalDate();
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
                     text = text.replace("[" + path + "]", date.format(formatter));
                 }

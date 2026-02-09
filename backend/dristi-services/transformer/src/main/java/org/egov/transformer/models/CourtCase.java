@@ -237,7 +237,7 @@ public class CourtCase {
         if (null != date) {
             if (date > 0) {
                 formattedDate = Instant.ofEpochMilli(date)
-                        .atZone(ZoneId.systemDefault())
+                        .atZone(ZoneId.of("Asia/Kolkata"))
                         .toLocalDate()
                         .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
             }

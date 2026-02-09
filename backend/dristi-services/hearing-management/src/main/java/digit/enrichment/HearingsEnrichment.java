@@ -1,5 +1,6 @@
 package digit.enrichment;
 
+import digit.config.Configuration;
 import digit.config.HearingSlotStatus;
 import digit.config.MdmsDataConfig;
 import digit.web.models.Hearing;
@@ -22,11 +23,13 @@ import static digit.config.ServiceConstants.*;
 public class HearingsEnrichment {
 
     private final MdmsDataConfig mdmsDataConfig;
+    private final Configuration config;
 
 
     @Autowired
-    public HearingsEnrichment(MdmsDataConfig mdmsDataConfig) {
+    public HearingsEnrichment(MdmsDataConfig mdmsDataConfig, Configuration config) {
         this.mdmsDataConfig = mdmsDataConfig;
+        this.config = config;
     }
 
     public List<HearingSearchResponse> enrichHearings(List<Hearing> hearingList) {
@@ -39,7 +42,7 @@ public class HearingsEnrichment {
                     .filter(hearing -> hearing.getStartTime() != null)
                     .collect(Collectors.groupingBy(
                             hearing -> Instant.ofEpochMilli(hearing.getStartTime())
-                                    .atZone(ZoneId.of("Asia/Kolkata"))
+                                    .atZone(ZoneId.of(config.getZoneId()))
                                     .toLocalDate()
                                     .toString(),
                             Collectors.mapping(hearing -> HearingResponse.builder()

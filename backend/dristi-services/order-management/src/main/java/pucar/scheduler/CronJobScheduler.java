@@ -41,7 +41,7 @@ import static pucar.config.ServiceConstants.*;
 @EnableScheduling
 public class CronJobScheduler {
 
-    private static final ZoneId ZONE_ID = ZoneId.of("Asia/Kolkata");
+    private final ZoneId ZONE_ID;
 
     private final PendingTaskUtil pendingTaskUtil;
     private final Configuration config;
@@ -65,6 +65,7 @@ public class CronJobScheduler {
         this.dateUtil = dateUtil;
         this.caseUtil = caseUtil;
         this.requestInfoGenerator = requestInfoGenerator;
+        this.ZONE_ID = ZoneId.of(config.getZoneId());
     }
 
     public void sendNotificationForProcessPaymentPending() {
