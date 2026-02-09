@@ -76,6 +76,7 @@ export const temaplateOrConfigurationConfig = {
         enableGlobalSearch: false,
         enableColumnSort: true,
         resultsJsonPath: "data",
+        manualPagination: true,
       },
       children: {},
       show: true,

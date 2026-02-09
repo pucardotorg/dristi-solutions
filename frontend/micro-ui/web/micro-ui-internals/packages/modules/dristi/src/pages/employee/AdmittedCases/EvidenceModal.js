@@ -15,13 +15,14 @@ import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import { cleanString, getDate, getOrderActionName, getOrderTypes, removeInvalidNameParts, setApplicationStatus } from "../../../Utils";
+import { cleanString, getDate, getOrderActionName, getOrderTypes, setApplicationStatus } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
 import DOMPurify from "dompurify";
+import { getUserInfo } from "../../../../../submissions/src/utils";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -61,7 +62,9 @@ const EvidenceModal = ({
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const userInfo = Digit.UserService.getUser()?.info;
   const user = Digit.UserService.getUser()?.info?.name;
-  const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK"].includes(role?.code)), [userInfo?.roles]);
+  const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
+    userInfo?.roles,
+  ]);
   const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
@@ -76,7 +79,11 @@ const EvidenceModal = ({
   const applicationNumber = urlParams.get("applicationNumber");
   const compositeOrderObj = history.location?.state?.compositeOrderObj;
   const [reasonOfApplication, setReasonOfApplication] = useState("");
-
+  const [userInfoMap, setUserInfoMap] = useState({
+    senderUser: null,
+    createdByUser: null,
+    onBehalfOfUser: null,
+  });
   const setData = (data) => {
     setFormData(data);
   };
@@ -111,6 +118,88 @@ const EvidenceModal = ({
   useEffect(() => {
     setBusinessOfTheDay(computeDefaultBOTD);
   }, [computeDefaultBOTD, setBusinessOfTheDay]);
+
+  useEffect(() => {
+    if (!(documentSubmission?.length > 0) && !artifact) return;
+    if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
+      return; // directly show onwner name in case of employees, no individual api calling.
+    }
+
+    let officeAdvocateUuid = "";
+    let createdBy = "";
+    let onBehalfOfUuid = "";
+
+    if (documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList) {
+      const { officeAdvocateUserUuid, auditDetails, auditdetails, onBehalfOf } =
+        documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList;
+      officeAdvocateUuid = officeAdvocateUserUuid;
+      createdBy = auditDetails?.createdBy || auditdetails?.createdBy;
+      onBehalfOfUuid = onBehalfOf?.[0];
+    } else if (artifact?.artifactList) {
+      const { officeAdvocateUserUuid, auditDetails } = artifact?.artifactList;
+      officeAdvocateUuid = officeAdvocateUserUuid;
+      createdBy = auditDetails?.createdBy;
+    }
+
+    const uuids = [...new Set([officeAdvocateUuid, createdBy, onBehalfOfUuid].filter(Boolean))];
+
+    if (uuids.length === 0) {
+      setUserInfoMap({
+        senderUser: null,
+        createdByUser: null,
+        onBehalfOfUser: null,
+      });
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchUsers = async () => {
+      try {
+        const result = await getUserInfo(uuids);
+
+        const lookup = new Map((result || []).map((user) => [user.userUuid, user.name]));
+
+        if (!isMounted) return;
+
+        setUserInfoMap({
+          senderUser: officeAdvocateUuid
+            ? { uuid: officeAdvocateUuid, name: lookup.get(officeAdvocateUuid) }
+            : createdBy
+            ? { uuid: createdBy, name: lookup.get(createdBy) }
+            : null,
+          createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
+          onBehalfOfUser: onBehalfOfUuid ? { uuid: onBehalfOfUuid, name: lookup.get(onBehalfOfUuid) } : null,
+        });
+      } catch (error) {
+        console.error("Failed to fetch user info", error);
+      }
+    };
+
+    fetchUsers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [documentSubmission, artifact]);
+
+  const senderName = useMemo(() => {
+    if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
+      return documentSubmission?.[0]?.artifactList?.owner;
+    }
+    return currentDiaryEntry && artifact
+      ? artifact?.sender
+      : userInfoMap?.onBehalfOfUser?.name
+      ? `${userInfoMap?.senderUser?.name} on Behalf of ${userInfoMap?.onBehalfOfUser?.name}`
+      : userInfoMap?.senderUser?.name;
+  }, [userInfoMap, artifact, currentDiaryEntry, documentSubmission]);
+
+  const createdByName = useMemo(() => {
+    if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
+      return null;
+    }
+    return userInfoMap?.createdByUser?.name;
+  }, [userInfoMap, documentSubmission]);
 
   const documentApplicationType = useMemo(() => documentSubmission?.[0]?.applicationList?.applicationType, [documentSubmission]);
 
@@ -201,15 +290,7 @@ const EvidenceModal = ({
     }
     return label;
   }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
-  const actionCustomLabel = useMemo(() => {
-    let label = "";
-    if (modalType === "Submissions") {
-      if (userType === "employee") {
-        label = t("SET_TERMS_OF_BAIL");
-      }
-    }
-    return label;
-  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
+
   const actionCancelLabel = useMemo(() => {
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
@@ -280,38 +361,6 @@ const EvidenceModal = ({
   const submissionComment = Digit.Hooks.useCustomAPIMutationHook(addSubmissionComment);
   const evidenceComment = Digit.Hooks.useCustomAPIMutationHook(addEvidenceComment);
 
-  // const markAsReadPayload = {
-  //   tenantId: tenantId,
-  //   artifact: {
-  //     tenantId: tenantId,
-  //     caseId: caseId,
-  //     artifactType: "AFFIDAVIT",
-  //     sourceType: "COURT",
-  //     application: documentSubmission[0]?.details.applicationId,
-  //     isActive: true,
-  //     isEvidence: true,
-  //     status: documentSubmission[0]?.status,
-  //     file: documentSubmission.map((doc) => {
-  //       return {
-  //         id: doc?.applicationContent?.id,
-  //         documentType: doc?.applicationContent?.documentType,
-  //         fileStore: doc?.applicationContent?.fileStoreId,
-  //         documentUid: doc?.applicationContent?.documentUid,
-  //         additionalDetails: doc?.applicationContent?.additionalDetails,
-  //       };
-  //     }),
-  //     comments: [],
-  //     auditDetails: documentSubmission[0]?.details.auditDetails,
-  //     workflow: {
-  //       comments: documentSubmission[0]?.applicationList?.workflow.comments,
-  //       documents: [{}],
-  //       id: documentSubmission[0]?.applicationList?.workflow.id,
-  //       status: documentSubmission[0]?.applicationList?.workflow?.status,
-  //       action: "TYPE DEPOSITION",
-  //     },
-  //   },
-  // };
-
   const respondApplicationPayload = {
     ...documentSubmission?.[0]?.applicationList,
     statuteSection: {
@@ -358,18 +407,6 @@ const EvidenceModal = ({
       ...documentSubmission?.[0]?.applicationList?.workflow,
       action: SubmissionWorkflowAction.REJECT,
     },
-  };
-
-  const applicationCommentsPayload = (newComment) => {
-    return {
-      ...documentSubmission[0]?.applicationList,
-      statuteSection: { ...documentSubmission[0]?.applicationList?.statuteSection, tenantId: tenantId },
-      comment: documentSubmission[0]?.applicationList.comment ? [...documentSubmission[0]?.applicationList.comment, newComment] : [newComment],
-      workflow: {
-        ...documentSubmission[0]?.applicationList?.workflow,
-        action: "RESPOND",
-      },
-    };
   };
 
   const onSuccess = async () => {
@@ -682,13 +719,6 @@ const EvidenceModal = ({
                   />
                 )}
               </React.Fragment>
-              {/* <DocViewerWrapper
-                fileStoreId={artifact?.file?.fileStore}
-                tenantId={tenantId}
-                docWidth={"calc(80vw * 62 / 100)"}
-                docHeight={"unset"}
-                showDownloadOption={false}
-              /> */}
             </div>
           ) : (
             documentSubmission?.map((docSubmission, index) => (
@@ -995,25 +1025,6 @@ const EvidenceModal = ({
     }
   };
 
-  const handleUpdateBusinessOfDayEntry = async () => {
-    try {
-      await DRISTIService.aDiaryEntryUpdate(
-        {
-          diaryEntry: {
-            ...currentDiaryEntry,
-            businessOfDay: businessOfTheDay,
-          },
-        },
-        {}
-      ).then(async () => {
-        history.goBack();
-      });
-    } catch (error) {
-      console.error("error: ", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
-    }
-  };
-
   const documentUploaderConfig = useMemo(
     () => [
       {
@@ -1069,12 +1080,6 @@ const EvidenceModal = ({
     []
   );
 
-  const onDocumentUpload = async (fileData, filename, tenantId) => {
-    if (fileData?.fileStore) return fileData;
-    const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
-    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
-  };
-
   useEffect(() => {
     if (!(currentDiaryEntry && artifact)) {
       fetchRecursiveData(documentSubmission?.[0]?.applicationList);
@@ -1086,16 +1091,6 @@ const EvidenceModal = ({
       setShowConfirmationModal({ type: isApplicationAccepted?.value ? "accept" : "reject" });
     }
   }, [documentSubmission, isApplicationAccepted]);
-
-  // const customLabelShow = useMemo(() => {
-  //   return (
-  //     isJudge &&
-  //     ["REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType) &&
-  //     userRoles.includes("SUBMISSION_APPROVER") &&
-  //     [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
-  //     modalType === "Submissions"
-  //   );
-  // }, [isJudge, documentSubmission, userRoles, applicationStatus, modalType]);
 
   return (
     <React.Fragment>
@@ -1283,9 +1278,19 @@ const EvidenceModal = ({
                       <h3>{t("SENDER")}</h3>
                     </div>
                     <div className="info-value">
-                      <h3>{currentDiaryEntry && artifact ? artifact?.sender : removeInvalidNameParts(documentSubmission[0]?.details?.sender)}</h3>
+                      <h3>{senderName}</h3>
                     </div>
                   </div>
+                  {createdByName && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("CREATED_BY")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>{createdByName}</h3>
+                      </div>
+                    </div>
+                  )}
                   {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingDate && (
                     <div className="info-row">
                       <div className="info-key">
@@ -1347,33 +1352,6 @@ const EvidenceModal = ({
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>{showDocument}</div>
               </div>
-              {/* {modalType === "Documents" && isJudge && (
-                <div>
-                  <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <TextInput
-                      className="field desktop-w-full"
-                      onChange={(e) => {
-                        setBusinessOfTheDay(e.target.value);
-                      }}
-                      disable={isDisabled}
-                      defaultValue={currentDiaryEntry?.businessOfDay || computeDefaultBOTD}
-                      style={{ minWidth: "500px" }}
-                      textInputStyle={{ maxWidth: "100%" }}
-                    />
-                    {currentDiaryEntry && (
-                      <Button
-                        label={t("SAVE")}
-                        variation={"primary"}
-                        style={{ padding: 15, boxShadow: "none" }}
-                        onButtonClick={() => {
-                          handleUpdateBusinessOfDayEntry();
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
-              )} */}
             </div>
             {(userRoles.includes("SUBMISSION_RESPONDER") || userType === "employee") && (
               <div className={`application-comment`}>

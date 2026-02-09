@@ -300,7 +300,8 @@ async function search_application(
   tenantId,
   applicationId,
   requestinfo,
-  courtId
+  courtId,
+  filingNumber
 ) {
   return await axios({
     method: "post",
@@ -311,6 +312,7 @@ async function search_application(
       criteria: {
         tenantId: tenantId,
         applicationNumber: applicationId,
+        ...(filingNumber && { filingNumber: filingNumber }),
         ...(courtId && { courtId: courtId }),
       },
     },
@@ -629,8 +631,8 @@ async function search_templateConfiguration(
     return await axios({
       method: "post",
       url: URL.resolve(
-        config.host.templateConfiguration,  // TODO : confirm host and path and update
-        config.paths.template_configuration_search 
+        config.host.templateConfiguration,
+        config.paths.template_configuration_search
       ),
       data: {
         RequestInfo: requestinfo,

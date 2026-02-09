@@ -40,6 +40,7 @@ const AddOrderTypeModal = ({
   setBailBondRequired,
   policeStationData,
   caseDetails,
+  miscellaneousProcessTemplateDropDown,
 }) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -531,6 +532,12 @@ const AddOrderTypeModal = ({
                     secondaryLabel={t(cancelLabel)}
                     showSecondaryLabel={true}
                     onSubmit={() => {
+                      if (formdata?.processTemplate) {
+                        const selectedTemplate = miscellaneousProcessTemplateDropDown?.find(
+                          (template) => template?.id === formdata?.processTemplate?.id
+                        );
+                        formdata.processTemplate = selectedTemplate ? selectedTemplate : formdata?.processTemplate;
+                      }
                       const updatedFormData = {
                         ...formdata,
                         ...(orderType?.code === "ACCEPT_BAIL" && {

@@ -1,0 +1,137 @@
+{
+  "tenantId": "kl",
+  "business": "task",
+  "businessService": "miscellaneuos-process",
+  "businessServiceSla": 4320000000,
+  "states": [
+    {
+      "sla": null,
+      "state": null,
+      "applicationStatus": null,
+      "docUploadRequired": true,
+      "isStartState": true,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "CREATE",
+          "nextState": "ISSUE_PROCESS",
+          "roles": ["TASK_CREATOR"]
+        }
+      ]
+    },
+    {
+      "sla": 172800000,
+      "state": "ISSUE_PROCESS",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "SEND",
+          "nextState": "PROCESS_SENT",
+          "roles": ["TASK_EDITOR", "SYSTEM", "SYSTEM_ADMIN"]
+        },
+        {
+          "action": "ABANDON",
+          "nextState": "ABATED",
+          "roles": ["SYSTEM", "SYSTEM_ADMIN"]
+        }
+      ]
+    },
+    {
+      "sla": 3888000000,
+      "state": "PROCESS_SENT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "SERVED",
+          "nextState": "DELIVERED",
+          "roles": ["TASK_EDITOR", "SYSTEM", "SYSTEM_ADMIN"]
+        },
+        {
+          "action": "NOT_SERVED",
+          "nextState": "RE_ISSUE",
+          "roles": ["TASK_EDITOR", "SYSTEM", "SYSTEM_ADMIN", "AUTO_ESCALATE"]
+        },
+        {
+          "action": "OTHER",
+          "nextState": "OTHER",
+          "roles": ["SYSTEM", "SYSTEM_ADMIN"]
+        },
+        {
+          "action": "ABANDON",
+          "nextState": "ABATED",
+          "roles": ["SYSTEM", "SYSTEM_ADMIN"]
+        }
+      ]
+    },
+    {
+      "sla": 86400000,
+      "state": "RE_ISSUE",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "NEW_PROCESS",
+          "nextState": "UNDELIVERED",
+          "roles": ["TASK_CREATOR", "TASK_EDITOR", "SYSTEM", "SYSTEM_ADMIN"]
+        }
+      ]
+    },
+    {
+      "sla": null,
+      "state": "DELIVERED",
+      "applicationStatus": "ACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false
+    },
+    {
+      "sla": null,
+      "state": "UNDELIVERED",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false
+    },
+    {
+      "sla": null,
+      "state": "ABATED",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false
+    },
+    {
+      "sla": null,
+      "state": "OTHER",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false
+    },
+    {
+      "sla": null,
+      "state": "EXPIRED",
+      "applicationStatus": "INACTIVE",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true,
+      "isStateUpdatable": false
+    }
+  ]
+}

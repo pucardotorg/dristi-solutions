@@ -20,7 +20,7 @@ import {
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
-import { getFilingType } from "../../../Utils";
+import { getCaseEditAllowedAssignees, getFilingType } from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
@@ -356,14 +356,17 @@ function CaseFileAdmission({ t, path }) {
     ];
   }, [caseDetails]);
 
+  // Case correction/edition is allowed to all complainant side parties including poa holders, advocates, advocate's associated office members.
+  // but no need to send uuid of office members in assignee payload
+  const allComplainantSideUuids = useMemo(() => {
+    return getCaseEditAllowedAssignees(caseDetails);
+  }, [caseDetails]);
+
   const updateCaseDetails = async (action, data = {}) => {
     const newcasedetails = {
       ...caseDetails,
       additionalDetails: { ...caseDetails.additionalDetails, judge: data },
     };
-    const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
-    let assignees = [];
-    assignees.push(caseCreatedByUuid);
     let filteredDocuments = caseDetails?.documents || [];
     if (action === "SEND_BACK") {
       filteredDocuments = filteredDocuments?.filter(
@@ -381,7 +384,7 @@ function CaseFileAdmission({ t, path }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === "SEND_BACK" && { assignes: assignees || [], comments: data?.comment }),
+            ...(action === "SEND_BACK" && { assignes: [...allComplainantSideUuids] || [], comments: data?.comment }),
           },
         },
         tenantId,
