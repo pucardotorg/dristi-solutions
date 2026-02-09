@@ -38,10 +38,10 @@ public class AdvocateOfficeMemberConsumer {
         this.configuration = configuration;
     }
 
-    @KafkaListener(topics = "${kafka.topics.advocate.office.member.save}")
-    public void listenAddMember(ConsumerRecord<String, Map<String, Object>> consumerRecord) {
+    @KafkaListener(topics = "${kafka.topics.advocate.office.member.analytics}")
+    public void listenAddMemberAnalytics(ConsumerRecord<String, Map<String, Object>> consumerRecord) {
         try {
-            log.info("Received add member event from topic: {}", consumerRecord.topic());
+            log.info("Received add member analytics trigger from topic: {}", consumerRecord.topic());
             Map<String, Object> jsonMap = consumerRecord.value();
             AdvocateOfficeCaseMemberRequest request = objectMapper.convertValue(jsonMap, AdvocateOfficeCaseMemberRequest.class);
 
