@@ -160,6 +160,7 @@ public class ServiceConstants {
     public static final String ADVOCATE="ADVOCATE";
 
     public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
+    public static final String ADVOCATE_CLERK_ROLE = "ADVOCATE_CLERK_ROLE";
 
     public static final String DATE_PATTERN = "dd.MM.yyyy";
 

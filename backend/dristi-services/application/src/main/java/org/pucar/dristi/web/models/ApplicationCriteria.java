@@ -1,11 +1,13 @@
 package org.pucar.dristi.web.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -64,4 +66,12 @@ public class ApplicationCriteria {
     @JsonProperty("isHideBailCaseBundle")
     private Boolean isHideBailCaseBundle = false;
 
+    @JsonIgnore
+    private List<String> advocateAndClerkUuids = new ArrayList<>();
+
+    @JsonIgnore
+    private boolean isAdvocate = false;
+
+    @JsonIgnore
+    private boolean isClerk = false;
 }

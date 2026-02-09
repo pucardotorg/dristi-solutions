@@ -68,6 +68,9 @@ public class Artifact {
 
 	private String application = null;
 
+	@JsonProperty("officeAdvocateUserUuid")
+	private String officeAdvocateUserUuid = null;
+
 	@JsonProperty("hearing")
 
 	private String hearing = null;

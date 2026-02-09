@@ -98,4 +98,7 @@ public class CaseCriteria {
     @Valid
     private Pagination pagination = null;
 
+    @JsonProperty("isClerk")
+    private Boolean isClerk = null;
+
 }

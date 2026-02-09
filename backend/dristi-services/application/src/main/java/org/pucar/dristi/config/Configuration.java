@@ -268,4 +268,7 @@ public class Configuration {
     @Value("${egov.evidence.create.path}")
     private String evidenceServiceCreatePath;
 
+    @Value("${state.level.tenant.id}")
+    private String stateLevelTenantId;
+
 }
