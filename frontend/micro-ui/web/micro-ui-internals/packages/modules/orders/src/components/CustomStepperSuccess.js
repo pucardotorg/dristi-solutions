@@ -41,6 +41,8 @@ const CustomStepperSuccess = ({
       txt = "Proclamation";
     } else if (orderType === "ATTACHMENT") {
       txt = "Attachment";
+    } else if (orderType === "MISCELLANEOUS_PROCESS") {
+      txt = "Miscellaneous Process";
     } else {
       txt = "Notice";
     }

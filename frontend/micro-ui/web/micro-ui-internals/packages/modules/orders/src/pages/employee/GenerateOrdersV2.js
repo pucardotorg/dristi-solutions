@@ -218,7 +218,6 @@ const ErrorAttendeesKey = "attendees";
 const GenerateOrdersV2 = () => {
   const { t } = useTranslation();
   const history = useHistory();
-  // Component state and hooks can be added here as needed
   const [presentAttendees, setPresentAttendees] = useState([]);
   const [absentAttendees, setAbsentAttendees] = useState([]);
   const [purposeOfHearing, setPurposeOfHearing] = useState("");
@@ -227,7 +226,7 @@ const GenerateOrdersV2 = () => {
   const [showEditOrderModal, setEditOrderModal] = useState(false);
   const [showAddOrderModal, setAddOrderModal] = useState(false);
   const EditSendBackModal = Digit?.ComponentRegistryService?.getComponent("EditSendBackModal");
-  const [orderType, setOrderType] = useState({}); // not sure it needed
+  const [orderType, setOrderType] = useState({});
   const [showOrderValidationModal, setShowOrderValidationModal] = useState({ showModal: false, errorMessage: "" });
   const [orderTitle, setOrderTitle] = useState(null);
   const setValueRef = useRef([]);
@@ -2518,7 +2517,7 @@ const GenerateOrdersV2 = () => {
   };
 
   const handleEditConfirmationOrder = async () => {
-    if(orderType?.code === "MISCELLANEOUS_PROCESS"){
+    if (orderType?.code === "MISCELLANEOUS_PROCESS") {
       await refectMiscellaneous();
     }
     setAddOrderModal(true);
@@ -2935,7 +2934,7 @@ const GenerateOrdersV2 = () => {
           courtId: caseDetails?.courtId,
         };
         const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
-        payload = await _getTaskPayload(taskCaseDetails, orderData, caseDetails?.filingDate, hearingDate, caseNumber);
+        payload = await _getTaskPayload(taskCaseDetails, orderData, caseDetails?.filingDate, hearingDate, caseNumber, caseDetails?.filingNumber);
         break;
       default:
         break;
@@ -5015,7 +5014,7 @@ const GenerateOrdersV2 = () => {
           setBailBondRequired={setBailBondRequired}
           policeStationData={sortedPoliceStations}
           caseDetails={caseDetails}
-          miscellaneousProcessTemplateDropDown = {miscellaneousProcessTemplateDropDown}
+          miscellaneousProcessTemplateDropDown={miscellaneousProcessTemplateDropDown}
         />
       )}
       {showMandatoryFieldsErrorModal?.showModal && (

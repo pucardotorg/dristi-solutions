@@ -709,7 +709,7 @@ export const _getPartiesOptions = (caseDetails, type = "all", isFlat = false) =>
   return isFlat ? result?.map((item) => item?.data || {}) : result;
 };
 
-export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, scheduleHearing, caseNumber) => {
+export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, scheduleHearing, caseNumber, filingNumber) => {
   const orderDetails = orderData?.orderDetails || {};
   const selectAddresee = orderDetails?.selectAddresee || [];
   const processTemplateAddressee = orderDetails?.processTemplate?.addressee;
@@ -729,6 +729,7 @@ export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, schedule
       caseFilingDate: filingDate,
       nextHearingDate: scheduleHearing,
       caseNumber: caseNumber,
+      filingNumber: filingNumber
     };
 
     deliveryChannels = {
