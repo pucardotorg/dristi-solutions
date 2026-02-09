@@ -485,4 +485,10 @@ public class Configuration {
 
 	@Value("${advocate.office.case.member.update.topic}")
 	private String advocateOfficeCaseMemberUpdateTopic;
+
+	@Value("${advocate.office.case.member.analytics.topic}")
+	private String advocateOfficeCaseMemberAnalyticsTopic;
+
+	@Value("${batch.size}")
+	private int batchSize;
 }
