@@ -1225,7 +1225,7 @@ export const UICustomizations = {
               ...list,
               srNo: index + 1,
             }));
-            return { data: updatedList, totalCount: data?.totalCount };
+            return { data: updatedList, count: data?.TotalCount || data?.totalCount || 0 };
           },
         },
       };

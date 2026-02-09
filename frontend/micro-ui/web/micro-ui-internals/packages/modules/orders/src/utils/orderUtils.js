@@ -724,7 +724,7 @@ export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, schedule
       ...orderDetails?.processTemplate,
       issueDate: orderData?.auditDetails?.lastModifiedTime,
       caseFilingDate: filingDate,
-      nextHearingDate: scheduleHearing?.startTime,
+      nextHearingDate: scheduleHearing,
       caseNumber: caseNumber,
     };
 

@@ -634,7 +634,7 @@ const GenerateOrdersV2 = () => {
   const caseCourtId = useMemo(() => caseDetails?.courtId || localStorage.getItem("courtId"), [caseDetails]);
   const hearingNumber = useMemo(() => currentOrder?.hearingNumber || currentOrder?.additionalDetails?.hearingId || "", [currentOrder]);
 
-  const { data: miscellaneousTemplateData, isLoading: isMiscellaneousTemplateLoading } = useSearchMiscellaneousTemplate(
+  const { data: miscellaneousTemplateData, isLoading: isMiscellaneousTemplateLoading, refetch: refectMiscellaneous } = useSearchMiscellaneousTemplate(
     {
       criteria: {
         tenantId: tenantId,
@@ -644,7 +644,7 @@ const GenerateOrdersV2 = () => {
     },
     {},
     filingNumber,
-    Boolean(filingNumber && caseCourtId && orderType?.code === "MISCELLANEOUS_PROCESS")
+    Boolean(filingNumber && caseCourtId && orderType?.code === "MISCELLANEOUS_PROCESS" && showAddOrderModal === true)
   );
 
   const miscellaneousProcessTemplateDropDown = useMemo(() => {
@@ -2223,40 +2223,6 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("submissionDocuments", updatedFormdata.submissionDocuments);
       }
 
-      // if (orderType === "CASE_TRANSFER") {
-      //   updatedFormdata.caseTransferredTo = applicationDetails?.applicationDetails?.selectRequestedCourt;
-      // setValueRef?.current?.[index]?.("caseTransferredTo", updatedFormdata.caseTransferredTo);
-      //   updatedFormdata.grounds = { text: applicationDetails?.applicationDetails?.groundsForSeekingTransfer };
-      // setValueRef?.current?.[index]?.("grounds", updatedFormdata.grounds);
-
-      // }
-
-      // if (currentOrderType === "WITHDRAWAL_ACCEPT") {
-      //   if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
-      //     updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
-      //     setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
-
-      //     updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
-      //     setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
-
-      //     updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
-      //     setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
-      //   }
-      // }
-
-      // if (currentOrderType === "WITHDRAWAL_REJECT") {
-      //   if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
-      //     updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
-      //     setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
-
-      //     updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
-      //     setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
-
-      //     updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
-      //     setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
-      //   }
-      // }
-
       if (currentOrderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
         if (newApplicationDetails?.applicationType === applicationTypes.EXTENSION_SUBMISSION_DEADLINE) {
           updatedFormdata.documentName = newApplicationDetails?.additionalDetails?.formdata?.documentType?.value;
@@ -2264,12 +2230,6 @@ const GenerateOrdersV2 = () => {
 
           updatedFormdata.originalDeadline = newApplicationDetails?.additionalDetails?.formdata?.initialSubmissionDate;
           setValueRef?.current?.[index]?.("originalDeadline", updatedFormdata.originalDeadline);
-
-          // updatedFormdata.proposedSubmissionDate = newApplicationDetails?.additionalDetails?.formdata?.changedSubmissionDate;
-          // setValueRef?.current?.[index]?.("proposedSubmissionDate", updatedFormdata.proposedSubmissionDate);
-
-          // updatedFormdata.originalSubmissionOrderDate = newApplicationDetails?.additionalDetails?.orderDate;
-          // setValueRef?.current?.[index]?.("originalSubmissionOrderDate", updatedFormdata.originalSubmissionOrderDate);
         }
       }
 
@@ -2545,7 +2505,10 @@ const GenerateOrdersV2 = () => {
     setEditOrderModal(true);
   };
 
-  const handleEditConfirmationOrder = () => {
+  const handleEditConfirmationOrder = async () => {
+    if(orderType?.code === "MISCELLANEOUS_PROCESS"){
+      await refectMiscellaneous();
+    }
     setAddOrderModal(true);
   };
 
@@ -4990,6 +4953,7 @@ const GenerateOrdersV2 = () => {
           setBailBondRequired={setBailBondRequired}
           policeStationData={sortedPoliceStations}
           caseDetails={caseDetails}
+          miscellaneousProcessTemplateDropDown = {miscellaneousProcessTemplateDropDown}
         />
       )}
       {showMandatoryFieldsErrorModal?.showModal && (

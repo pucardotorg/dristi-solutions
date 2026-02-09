@@ -561,13 +561,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
             selectedDelievery?.key === "NOT_DELIVERED" &&
             !(orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT")
           ) {
+            let action = "";
+            if (orderType === "MISCELLANEOUS_PROCESS") {
+              action = "NEW_PROCESS";
+            } else {
+              action = orderType === "SUMMONS" ? "NEW_SUMMON" : "NEW_NOTICE";
+            }
+
             await taskService.updateTask(
               {
                 task: {
                   ...res.task,
                   workflow: {
                     ...res.task?.workflow,
-                    action: orderType === "SUMMONS" ? "NEW_SUMMON" : "NEW_NOTICE",
+                    action: action,
                   },
                 },
               },
