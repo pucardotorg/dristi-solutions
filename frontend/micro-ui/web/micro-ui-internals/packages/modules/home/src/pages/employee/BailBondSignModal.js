@@ -86,6 +86,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
               courtId: courtId,
               bailId: queryStrings.bailId || selectedBailBond?.businessObject?.bailDetails?.bailId || selectedBailBond?.bailId,
               fuzzySearch: false,
+              filingNumber,
             },
             pagination: {
               limit: 10,

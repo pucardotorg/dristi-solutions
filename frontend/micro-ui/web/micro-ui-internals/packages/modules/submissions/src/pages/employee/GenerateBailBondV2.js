@@ -150,6 +150,7 @@ const GenerateBailBondV2 = () => {
     {
       criteria: {
         bailId: bailBondId,
+        filingNumber,
       },
       tenantId,
     },

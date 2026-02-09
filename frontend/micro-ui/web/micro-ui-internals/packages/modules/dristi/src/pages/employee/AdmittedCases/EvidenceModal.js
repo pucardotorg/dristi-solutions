@@ -131,6 +131,9 @@ const EvidenceModal = ({
 
   useEffect(() => {
     if (!documentSubmission?.length > 0 && !artifact) return;
+    if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
+      return; // directly show onwner name in case of employees, no individual api calling.
+    }
 
     let officeAdvocateUuid = "";
     let createdBy = "";
@@ -191,16 +194,22 @@ const EvidenceModal = ({
   }, [documentSubmission, artifact]);
 
   const senderName = useMemo(() => {
+    if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
+      return documentSubmission?.[0]?.artifactList?.owner;
+    }
     return currentDiaryEntry && artifact
       ? artifact?.sender
       : userInfoMap?.onBehalfOfUser?.name
       ? `${userInfoMap?.senderUser?.name} on Behalf of ${userInfoMap?.onBehalfOfUser?.name}`
       : userInfoMap?.senderUser?.name;
-  }, [userInfoMap, artifact, currentDiaryEntry]);
+  }, [userInfoMap, artifact, currentDiaryEntry, documentSubmission]);
 
   const createdByname = useMemo(() => {
+    if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
+      return null;
+    }
     return userInfoMap?.createdByUser?.name;
-  }, [userInfoMap]);
+  }, [userInfoMap, documentSubmission]);
 
   const documentApplicationType = useMemo(() => documentSubmission?.[0]?.applicationList?.applicationType, [documentSubmission]);
 
