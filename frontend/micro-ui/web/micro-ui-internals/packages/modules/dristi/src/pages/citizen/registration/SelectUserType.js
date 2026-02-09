@@ -276,11 +276,12 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
       },
     };
     setParams(latestParams);
-    if (
-      ((userTypeSelcted === "LITIGANT" || userTypeSelcted === "ADVOCATE_CLERK") && !data?.Individual?.[0]?.individualId) ||
-      (userTypeSelcted === "ADVOCATE_CLERK" && data?.Individual?.[0]?.individualId)
-    ) {
+    if (userTypeSelcted === "LITIGANT" && !data?.Individual?.[0]?.individualId) {
+      // Litigants go directly to terms and conditions
       history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`, { newParams: latestParams });
+    } else if (userTypeSelcted === "ADVOCATE" || userTypeSelcted === "ADVOCATE_CLERK") {
+      // Both advocates and advocate clerks go to additional details (BAR verification)
+      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/additional-details`, { newParams: latestParams });
     } else {
       history.push(`/${window?.contextPath}/citizen/dristi/home/registration/additional-details`, { newParams: latestParams });
     }

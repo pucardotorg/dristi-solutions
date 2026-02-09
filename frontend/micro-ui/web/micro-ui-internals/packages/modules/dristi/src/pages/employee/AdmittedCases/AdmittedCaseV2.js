@@ -26,7 +26,7 @@ import { Urls } from "../../../hooks";
 import { getFormattedName } from "@egovernments/digit-ui-module-hearings/src/utils";
 import { admitCaseSubmitConfig, scheduleCaseAdmissionConfig, selectParticipantConfig } from "../../citizen/FileCase/Config/admissionActionConfig";
 import Modal from "../../../components/Modal";
-import { getDate, removeInvalidNameParts } from "../../../Utils";
+import { getAllAssociatedPartyUuids, getAuthorizedUuid, getDate, removeInvalidNameParts } from "../../../Utils";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import VoidSubmissionBody from "./VoidSubmissionBody";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
@@ -132,6 +132,8 @@ const AdmittedCaseV2 = () => {
   const { hearingId, taskOrderType, artifactNumber, fromHome, openExaminationModal, examinationDocNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
   const activeTab = urlParams.get("tab") || "Overview";
@@ -558,11 +560,11 @@ const AdmittedCaseV2 = () => {
     );
   }, [caseDetails, allAdvocates]);
   const listAllAdvocates = useMemo(() => Object.values(allAdvocates || {}).flat(), [allAdvocates]);
-  const isAdvocatePresent = useMemo(() => listAllAdvocates?.includes(userInfo?.uuid), [listAllAdvocates, userInfo?.uuid]);
+  const isAdvocatePresent = useMemo(() => listAllAdvocates?.includes(authorizedUuid), [listAllAdvocates, authorizedUuid]);
 
-  const onBehalfOfuuid = useMemo(() => Object.keys(allAdvocates)?.find((key) => allAdvocates[key].includes(userInfo?.uuid)), [
+  const onBehalfOfuuid = useMemo(() => Object.keys(allAdvocates)?.find((key) => allAdvocates[key].includes(authorizedUuid)), [
     allAdvocates,
-    userInfo?.uuid,
+    authorizedUuid,
   ]);
   const { data: applicationData, isLoading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
@@ -781,13 +783,17 @@ const AdmittedCaseV2 = () => {
 
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
+      // This is redundant for document tab, used only for submissions tab
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
       const status = docObj?.[0]?.applicationList?.status;
-      const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
+      const applicationCreatedByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
       const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
       const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
       const documentStatus = docObj?.[0]?.artifactList?.status;
-      if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
+      const allAllowedPartiesForApplicationsActions = getAllAssociatedPartyUuids(caseDetails, applicationCreatedByUuid);
+      const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentCreatedByUuid);
+
+      if (documentStatus === "PENDING_E-SIGN" && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
         history.push(
           `/${window?.contextPath}/${
             isCitizen ? "citizen" : "employee"
@@ -802,7 +808,7 @@ const AdmittedCaseV2 = () => {
           SubmissionWorkflowState.DRAFT_IN_PROGRESS,
         ].includes(status)
       ) {
-        if (createdByUuid === userInfo?.uuid) {
+        if (allAllowedPartiesForApplicationsActions.includes(userUuid)) {
           history.push(
             `/${window?.contextPath}/${
               isCitizen ? "citizen" : "employee"
@@ -2217,8 +2223,8 @@ const AdmittedCaseV2 = () => {
   }, [caseDetails]);
 
   const complainantsList = useMemo(() => {
-    const loggedinUserUuid = userInfo?.uuid;
-    // If logged in person is an advocate
+    const loggedinUserUuid = authorizedUuid;
+    // If logged in person is an advocate/jr. adv/clerk (office member of senior advocate)
     const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
     const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
     const accusedLoggedIn = pipAccuseds?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
@@ -2249,7 +2255,7 @@ const AdmittedCaseV2 = () => {
       ];
     }
     return [];
-  }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
+  }, [caseDetails, pipComplainants, pipAccuseds, authorizedUuid]);
 
   const handleCitizenAction = useCallback(
     async (option) => {
@@ -2268,7 +2274,7 @@ const AdmittedCaseV2 = () => {
                   moduleName: "Pending Tasks Service",
                   moduleSearchCriteria: {
                     isCompleted: false,
-                    ...(isCitizen && { assignedTo: userInfo?.uuid }),
+                    ...(isCitizen && { assignedTo: authorizedUuid }),
                     ...(courtId && { courtId }),
                     filingNumber,
                     entityType: "bail bond",
@@ -3355,7 +3361,11 @@ const AdmittedCaseV2 = () => {
         style={{ position: showJoinCase ? "" : "", top: "72px", width: "100%", zIndex: 150, background: "white", gap: "0px" }}
       >
         <div className="admitted-case-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {caseDetails?.caseTitle && <Header styles={{ marginBottom: "0px" }}>{caseDetails?.caseTitle}</Header>}
+          {caseApiLoading || isCaseFetching ? (
+            <Loader />
+          ) : caseDetails?.caseTitle ? (
+            <Header styles={{ marginBottom: "0px" }}>{caseDetails?.caseTitle}</Header>
+          ) : null}
           <div className="make-submission-action" style={{ display: "flex", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
             {(showMakeSubmission || isCitizen) && (
               <div className="evidence-header-wrapper">
@@ -3460,17 +3470,11 @@ const AdmittedCaseV2 = () => {
                               <Button
                                 variation={"primary"}
                                 isDisabled={apiCalled}
-                                label={t(
-                                  hasHearingPriorityView
-                                    ? "CS_CASE_END_START_NEXT_HEARING"
-                                    : "CS_CASE_NEXT_HEARING"
-                                )}
+                                label={t(hasHearingPriorityView ? "CS_CASE_END_START_NEXT_HEARING" : "CS_CASE_NEXT_HEARING")}
                                 subLabel={
                                   hasHearingPriorityView
                                     ? null
-                                    : `(${formatDate(
-                                        new Date(parseInt(homeNextHearingFilter?.homeFilterDate))
-                                      )
+                                    : `(${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
                                         .split("-")
                                         .join("/")})`
                                 }
@@ -3496,9 +3500,7 @@ const AdmittedCaseV2 = () => {
                               <Button
                                 variation={"primary"}
                                 label={t("CS_CASE_NEXT_HEARING")}
-                                subLabel={`(${formatDate(
-                                  new Date(parseInt(homeNextHearingFilter?.homeFilterDate))
-                                )
+                                subLabel={`(${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
                                   .split("-")
                                   .join("/")})`}
                                 children={<RightArrow />}

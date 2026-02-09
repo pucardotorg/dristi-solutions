@@ -850,9 +850,25 @@ export const UICustomizations = {
 
   registerUserHomeConfig: {
     customValidationCheck: (data) => {
-      return !data?.applicationNumber_WILDCARD.trim() ? { label: "Please enter a valid application Number", error: true } : false;
+      // Application number is optional; only validate format/length if user enters something
+      const appNo = data?.applicationNumber_WILDCARD?.trim() || "";
+      if (appNo.length > 0 && appNo.length < 2) {
+        return { label: "Please enter a valid application Number", error: true };
+      }
+      return false;
     },
     preProcess: (requestCriteria, additionalDetails) => {
+      const userType = requestCriteria?.state?.searchForm?.userType;
+
+      // Determine business service based on selected user type
+      let businessService = ["user-registration-advocate"];
+      let moduleName = "Advocate services";
+
+      if (userType === "Advocate Clerk") {
+        businessService = ["user-registration-advocate-clerk"];
+        moduleName = "Advocate Clerk Service";
+      }
+
       const moduleSearchCriteria = {
         ...requestCriteria?.body?.inbox?.moduleSearchCriteria,
         ...requestCriteria?.state?.searchForm,
@@ -873,6 +889,8 @@ export const UICustomizations = {
             },
             processSearchCriteria: {
               ...requestCriteria?.body?.inbox?.processSearchCriteria,
+              businessService: businessService,
+              moduleName: moduleName,
               tenantId: window?.Digit.ULBService.getStateId(),
             },
             tenantId: window?.Digit.ULBService.getStateId(),
@@ -906,9 +924,13 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${value}&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
+                  applicationNumber || ""
+                }&individualId=${individualId}&type=${usertype}`}
               >
-                {String(value ? (column?.translate ? t(column?.prefix ? `${column?.prefix}${value}` : value) : value) : t("ES_COMMON_NA"))}
+                {applicationNumber
+                  ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)
+                  : t("ES_COMMON_NA")}
               </Link>
             </span>
           );

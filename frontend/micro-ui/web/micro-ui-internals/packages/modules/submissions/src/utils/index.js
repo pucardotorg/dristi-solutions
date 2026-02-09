@@ -151,4 +151,31 @@ export const getFormattedName = (firstName, middleName, lastName, designation, p
   return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
 };
 
+export const getUserInfo = async (uuidList) => {
+  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const uuids = [...new Set(uuidList)];
+
+  const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+    {
+      Individual: {
+        userUuid: uuids,
+      },
+    },
+    { tenantId, limit: 1000, offset: 0 },
+    "",
+    true
+  );
+  if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
+    const userData = individualData?.Individual?.map((user) => {
+      const userName = `${user?.name?.givenName} ${user?.name?.familyName || ""}`.trim();
+      return {
+        userUuid: user?.userUuid,
+        name: userName,
+      };
+    });
+    return userData;
+  }
+  return [];
+};
+
 export default {};

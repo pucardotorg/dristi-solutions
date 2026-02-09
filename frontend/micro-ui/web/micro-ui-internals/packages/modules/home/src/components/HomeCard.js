@@ -13,28 +13,8 @@ const HomeCard = () => {
 
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
-  const propsForModuleCard = {
-    Icon: <PropertyHouse />,
-    moduleName: t("Hearings"),
-    kpis: [],
-    links: [
-      {
-        label: t("Home"),
-        link: homePath,
-      },
-      {
-        label: t("Inside Hearing"),
-        link: `/${window?.contextPath}/employee/home/inside-hearing`,
-      },
-      {
-        label: t("ADMISSION HEARING"),
-        link: `/${window?.contextPath}/employee/home/view-hearing`,
-      },
-    ],
-  };
 
   return <div />;
-  // return <EmployeeModuleCard {...propsForModuleCard} />;
 };
 
 export default HomeCard;

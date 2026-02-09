@@ -9,13 +9,28 @@ import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
 import ActionEdit from "../components/ActionEdit";
 import ReactTooltip from "react-tooltip";
-import { _getDigitilizationPatiresName, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
+import {
+  _getDigitilizationPatiresName,
+  getAssistantAdvocateMembersForPartiesTab,
+  getAuthorizedUuid,
+  getClerkMembersForPartiesTab,
+  getDate,
+  modifiedEvidenceNumber,
+  removeInvalidNameParts,
+} from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
-import BailBondModal from "../../../home/src/pages/employee/BailBondModal";
+
+export const getSelectedAdvocate = () => {
+  try {
+    return JSON.parse(localStorage.getItem("SELECTED_ADVOCATE"));
+  } catch {
+    return null;
+  }
+};
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -1322,7 +1337,8 @@ export const UICustomizations = {
           select: (data) => {
             const allLitigantAdvocatesMapping = getAdvocates(data.criteria[0].responseList[0]);
             const userInfo = Digit.UserService.getUser()?.info;
-            const editorUuid = userInfo?.uuid;
+            const userUuid = userInfo?.uuid;
+            const editorUuid = getAuthorizedUuid(userUuid);
 
             // Either an advocate who is representing any "complainant" or any "PIP complainant" ->> only these
             // 2 type can edit details of any complainant/accused from actions in parties tab.
@@ -1458,6 +1474,12 @@ export const UICustomizations = {
                 };
               }) || [];
 
+            //List of all the clerks working for senior advocates in the case
+            const advocateOfficeClerks = getClerkMembersForPartiesTab(data);
+
+            //List of all the assistant advocates working for senior advocates in the case
+            const advocateOfficeAssistantAdvocates = getAssistantAdvocateMembersForPartiesTab(data);
+
             const allParties = [
               ...finalLitigantsData,
               ...unjoinedAccused,
@@ -1465,6 +1487,8 @@ export const UICustomizations = {
               ...joinStatusPendingAdvocates,
               ...finalPoaHoldersData,
               ...witnessDetails,
+              ...advocateOfficeClerks,
+              ...advocateOfficeAssistantAdvocates,
             ];
             const paginatedParties = allParties.slice(offset, offset + limit);
             return {
@@ -1487,14 +1511,18 @@ export const UICustomizations = {
         case "PARTY_NAME":
           return removeInvalidNameParts(value) || "";
 
-        case "ASSOCIATED_WITH":
-          const associatedWith =
-            row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType)
+        case "ASSOCIATED_WITH": {
+          let associatedWith =
+            row?.partyType === "ADVOCATE" || ["poa.regular"].includes(row?.partyType)
               ? row?.representingList
               : row?.partyType === "witness"
               ? t(row?.associatedWith)
               : "";
+          if (Array.isArray(row?.associatedWith)) {
+            associatedWith = row.associatedWith.filter(Boolean).join(", ");
+          }
           return associatedWith || "";
+        }
         case "STATUS":
           const caseJoinStatus = ["respondent.primary", "respondent.additional"].includes(row?.partyType)
             ? t("JOINED")
@@ -1519,7 +1547,15 @@ export const UICustomizations = {
           return <span>{formattedDate}</span>;
         case "PARTY_TYPE":
           const partyType = value === "ADVOCATE" ? `${t("ADVOCATE")}` : partyTypes[value] ? t(partyTypes[value]) : t(value);
-          return partyType === "unJoinedAccused" ? "Accused" : partyType === "witness" ? t("WITNESS") : partyType;
+          return partyType === "unJoinedAccused"
+            ? "Accused"
+            : partyType === "witness"
+            ? t("WITNESS")
+            : partyType === "CLERK"
+            ? t("CLERK_PARTY_TYPE")
+            : partyType === "ASSISTANT_ADVOCATE"
+            ? t("ASSISTANT_ADVOCATE_PARTY_TYPE")
+            : partyType;
         case "ACTIONS":
           return row?.isEditable ? (
             <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
@@ -1556,7 +1592,8 @@ export const UICustomizations = {
         : row?.individualId;
       const caseId = row?.caseId;
       const isAdvocate = row?.isAdvocateEditor;
-      const editorUuid = userInfo?.uuid;
+      const userUuid = userInfo?.uuid;
+      const editorUuid = getAuthorizedUuid(userUuid);
 
       return [
         {
@@ -2649,6 +2686,7 @@ export const UICustomizations = {
       const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
       const isCitizen = userRoles?.includes("CITIZEN");
       const userUUID = Digit.UserService.getUser()?.info?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUUID);
       return {
         ...requestCriteria,
         body: {
@@ -2660,7 +2698,7 @@ export const UICustomizations = {
               ...(courtId ? { courtId } : {}),
               ...(requestCriteria?.state?.searchForm?.type?.code ? { type: requestCriteria.state.searchForm.type.code } : {}),
               ...(requestCriteria?.state?.searchForm?.documentNumber ? { documentNumber: requestCriteria.state.searchForm.documentNumber } : {}),
-              ...(isCitizen ? { assignedTo: [userUUID] } : {}),
+              ...(isCitizen ? { assignedTo: [authorizedUuid] } : {}),
               ...(!isCitizen ? { assignedRoles: [...userRoles] } : {}),
             },
             limit: requestCriteria?.state?.tableForm?.limit || 10,

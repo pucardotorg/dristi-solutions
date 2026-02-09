@@ -1,9 +1,11 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useContext } from "react";
 import useESign from "@egovernments/digit-ui-module-orders/src/hooks/orders/useESign";
 import useDocumentUpload from "@egovernments/digit-ui-module-orders/src/hooks/orders/useDocumentUpload";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { Urls } from "../hooks/services/Urls";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSignedDocumentUploadID, combinedFileStoreId }) {
   const [isSigned, setIsSigned] = useState(false);
@@ -18,9 +20,13 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${combinedFileStoreId}`;
   const { uploadDocuments } = useDocumentUpload();
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
+  const { advocateData } = useContext(AdvocateDataContext);
+  const storedAdvocate = advocateData;
 
   const name = "Signature";
-  const isAdvocate = userInfo?.roles?.some((role) => ["ADVOCATE_CLERK_ROLE", "ADVOCATE_ROLE"].includes(role.code));
+  const isAdvocateOrClerk = userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role.code));
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -108,27 +114,29 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
             </h2>
           </div>
           <div style={{ display: "flex" }}>
-            <Button
-              label={""}
-              onButtonClick={handleClickEsign}
-              style={{ boxShadow: "none", backgroundColor: "#007E7E", border: "none", padding: "20px 30px", maxWidth: "fit-content" }}
-              textStyles={{
-                width: "unset",
-              }}
-            >
-              <h1
-                style={{
-                  fontFamily: "Roboto",
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  lineHeight: "18.75px",
-                  textAlign: "center",
-                  color: "#FFFFFF",
+            {authorizedUuid === userUuid && ( // only advocate himself can esign. not junior adv/clerk
+              <Button
+                label={""}
+                onButtonClick={handleClickEsign}
+                style={{ boxShadow: "none", backgroundColor: "#007E7E", border: "none", padding: "20px 30px", maxWidth: "fit-content" }}
+                textStyles={{
+                  width: "unset",
                 }}
               >
-                {t("CS_ESIGN")}
-              </h1>
-            </Button>
+                <h1
+                  style={{
+                    fontFamily: "Roboto",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    lineHeight: "18.75px",
+                    textAlign: "center",
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {t("CS_ESIGN")}
+                </h1>
+              </Button>
+            )}
             <Button
               icon={<FileUploadIcon />}
               label={""}
@@ -182,9 +190,9 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
               paddingBottom: "10px",
             }}
           >
-            {cleanString(userInfo?.name)}
+            {isAdvocateOrClerk && storedAdvocate?.advocateName ? cleanString(storedAdvocate?.advocateName) : cleanString(userInfo?.name)}
           </div>
-          {isAdvocate && <div>{t("ADVOCATE_KERALA_HIGH_COURT")}</div>}
+          {isAdvocateOrClerk && <div>{t("ADVOCATE_KERALA_HIGH_COURT")}</div>}
         </div>
       )}
     </div>

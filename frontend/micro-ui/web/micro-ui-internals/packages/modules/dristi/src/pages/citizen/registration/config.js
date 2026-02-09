@@ -84,44 +84,47 @@ export const userTypeOptions = [
     },
     subText: "ADVOCATE_SUB_TEXT",
   },
-  // DO NOT REMOVE THE BELOW COMMENTED CODE.
-  // Disabled advocate clerk option from user registration as per production side demand.
-  // {
-  //   code: "ADVOCATE_CLERK",
-  //   name: "ADVOCATE_CLERK_TEXT",
-  //   showBarDetails: true,
-  //   hasStateRegistrationNo: true,
-  //   isVerified: true,
-  //   role: [
-  //     "ADVOCATE_CLERK_ROLE",
-  //     "CASE_CREATOR",
-  //     "CASE_EDITOR",
-  //     "CASE_VIEWER",
-  //     "EVIDENCE_CREATOR",
-  //     "EVIDENCE_VIEWER",
-  //     "EVIDENCE_EDITOR",
-  //     "APPLICATION_CREATOR",
-  //     "APPLICATION_VIEWER",
-  //     "HEARING_VIEWER",
-  //     "ORDER_VIEWER",
-  //     "SUBMISSION_CREATOR",
-  //     "SUBMISSION_RESPONDER",
-  //     "SUBMISSION_DELETE",
-  //     "TASK_VIEWER",
-  //     "HEARING_ACCEPTOR",
-  //     "USER_REGISTER",
-  //     "ADVOCATE_VIEWER",
-  //     "ADVOCATE_APPLICATION_VIEWER",
-  //     "PENDING_TASK_CREATOR",
-  //   ],
-  //   apiDetails: {
-  //     serviceName: "/advocate/clerk/v1/_create",
-  //     requestKey: "clerk",
-  //     AdditionalFields: ["stateRegnNumber"],
-  //   },
-
-  //   subText: "ADVOCATE_CLERK_SUB_TEXT",
-  // },
+  {
+    code: "ADVOCATE_CLERK",
+    name: "ADVOCATE_CLERK_TEXT",
+    showBarDetails: true,
+    hasBarRegistrationNo: true,
+    isVerified: true,
+    role: [
+      "ADVOCATE_CLERK_ROLE",
+      "CASE_CREATOR",
+      "CASE_EDITOR",
+      "CASE_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
+      "APPLICATION_CREATOR",
+      "APPLICATION_VIEWER",
+      "HEARING_VIEWER",
+      "ORDER_VIEWER",
+      "SUBMISSION_CREATOR",
+      "SUBMISSION_RESPONDER",
+      "SUBMISSION_DELETE",
+      "TASK_VIEWER",
+      "HEARING_ACCEPTOR",
+      "USER_REGISTER",
+      "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
+      "PLEA_VIEWER",
+      "MEDIATION_VIEWER",
+      "EXAMINATION_VIEWER",
+    ],
+    apiDetails: {
+      serviceName: "/advocate/clerk/v1/_create",
+      requestKey: "clerk",
+      AdditionalFields: ["barRegistrationNumber"],
+    },
+    subText: "ADVOCATE_CLERK_SUB_TEXT",
+  },
 ];
 
 export const newConfig = [
@@ -779,3 +782,47 @@ export const advocateClerkConfig = [
     ],
   },
 ];
+
+export const advocateClerkVerificationConfig = [
+  {
+    body: [
+      {
+        type: "component",
+        component: "AdvocateDetailComponent",
+        key: "clientDetails",
+        populators: {
+          inputs: [
+            {
+              label: "CLERK_REGISTRATION_NUMBER",
+              type: "text",
+              name: "barRegistrationNumber",
+              validation: {
+                isRequired: true,
+                errMsg: "CLERK_REGISTRATION_NUMBER_INVALID_PATTERN",
+                maxlength: 20,
+                minlength: 1,
+              },
+              isMandatory: true,
+              isDependentOn: "selectUserType",
+              clearFields: { stateRegnNumber: "" },
+              dependentKey: { selectUserType: ["showBarDetails", "hasBarRegistrationNo"] },
+            },
+            {
+              label: "CLERK_ID_DOCUMENT",
+              type: "documentUpload",
+              name: "barCouncilId",
+              validation: {
+                isRequired: true,
+              },
+              isMandatory: true,
+              allowedFileTypes: /(.*?)(png|jpeg|jpg|pdf)$/i,
+              isDependentOn: "selectUserType",
+              dependentKey: { selectUserType: ["showBarDetails"] },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+

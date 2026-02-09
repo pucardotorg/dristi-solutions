@@ -4,7 +4,7 @@ import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-re
 import { useTranslation } from "react-i18next";
 import isEqual from "lodash/isEqual";
 import ReviewDocumentSubmissionModal from "../../components/ReviewDocumentSubmissionModal";
-import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, getAuthorizedUuid, getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import SubmissionDocumentSuccessModal from "../../components/SubmissionDocumentSuccessModal";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
@@ -63,17 +63,19 @@ const SubmissionDocuments = ({ path }) => {
   ]);
 
   const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "Direct"), [filingTypeData?.FilingType]);
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        userUuid: [userInfo?.uuid],
+        userUuid: [authorizedUuid],
       },
     },
     { tenantId, limit: 1000, offset: 0 },
     "Home",
     "",
-    userInfo?.uuid
+    authorizedUuid
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
 
@@ -139,9 +141,9 @@ const SubmissionDocuments = ({ path }) => {
   }, [caseData]);
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
-  const onBehalfOfuuid = useMemo(() => Object.keys(allAdvocates)?.find((key) => allAdvocates[key].includes(userInfo?.uuid)), [
+  const onBehalfOfuuid = useMemo(() => Object.keys(allAdvocates)?.find((key) => allAdvocates[key].includes(authorizedUuid)), [
     allAdvocates,
-    userInfo?.uuid,
+    authorizedUuid,
   ]);
   const onBehalfOfLitigent = useMemo(() => caseDetails?.litigants?.find((item) => item?.additionalDetails?.uuid === onBehalfOfuuid), [
     caseDetails,
@@ -241,7 +243,7 @@ const SubmissionDocuments = ({ path }) => {
     isAssignedRole = false,
     assignedRole = [],
   }) => {
-    const assignes = !isAssignedRole ? [userInfo?.uuid] || [] : [];
+    const assignes = !isAssignedRole ? [authorizedUuid] || [] : [];
     await DRISTIService.customApiService(Urls.application.pendingTask, {
       pendingTask: {
         name,
@@ -285,10 +287,11 @@ const SubmissionDocuments = ({ path }) => {
               comments: [],
               file,
               sourceType,
-              sourceID: isEmployee ? userInfo?.uuid : individualId,
+              officeAdvocateUserUuid: authorizedUuid !== userUuid ? authorizedUuid : null, // Only sending in case clerk/jr adv is creating doc.
+              sourceID: isEmployee ? authorizedUuid : individualId,
               filingType: filingType,
               additionalDetails: {
-                uuid: userInfo?.uuid,
+                uuid: authorizedUuid,
                 formdata,
               },
               workflow: {

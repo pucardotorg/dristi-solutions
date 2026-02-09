@@ -243,9 +243,21 @@ export const filterValidAddresses = (addressDetails = []) => {
   });
 };
 
+export const extractedSeniorAdvocates = (officeMembersData = {}) => {
+  const members = officeMembersData?.members || [];
+  return members.map((member, index) => {
+    return {
+      advocateName: member?.officeAdvocateName || "",
+      id: member?.officeAdvocateId,
+      value: member?.officeAdvocateId,
+      uuid: member?.officeAdvocateUserUuid,
+    };
+  });
+};
+
 export const isRichTextEmpty = (html) => {
   if (!html) return true;
-  const plainText = html?.replace(/<[^>]*>/g, '').trim();
+  const plainText = html?.replace(/<[^>]*>/g, "").trim();
   return plainText?.length === 0;
 };
 

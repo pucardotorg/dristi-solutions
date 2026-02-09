@@ -107,6 +107,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
           {
             criteria: {
               filingNumber: filingNumber,
+              caseid: caseId || "",
               ...(courtId && { courtId }),
             },
             tenantId,
@@ -273,7 +274,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
       } catch (e) {}
       const caseDetailsRes = await DRISTIService.caseDetailSearchService(
         {
-          criteria: { filingNumber },
+          criteria: { filingNumber, caseId: caseId || "" },
           tenantId,
         },
         {}
