@@ -154,49 +154,28 @@ export const getFormattedName = (firstName, middleName, lastName, designation, p
 export const getUserInfo = async (uuidList) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const uuids = [...new Set(uuidList)];
-  if (uuids) {
-    const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
-      {
-        Individual: {
-          userUuid: uuidList || [],
-        },
+
+  const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+    {
+      Individual: {
+        userUuid: uuids,
       },
-      { tenantId, limit: 1000, offset: 0 },
-      "",
-      true
-    );
-    if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
-      const userData = individualData?.Individual?.map((user) => {
-        const userName = `${user?.name?.givenName} ${user?.name?.familyName || ""}`.trim();
-        return {
-          userUuid: user?.userUuid,
-          name: userName,
-        };
-      });
-      return userData;
-    }
-  }
-};
-
-export const getUserNames = async (uuidList = []) => {
-  if (!Array.isArray(uuidList) || uuidList.length === 0) return [];
-
-  const tenantId = Digit.ULBService.getCurrentTenantId();
-  const uuids = [...new Set(uuidList)?.filter(Boolean)];
-
-  const individualData = await Digit.DRISTIService.searchIndividualUser(
-    { Individual: { userUuid: uuids } },
+    },
     { tenantId, limit: 1000, offset: 0 },
     "",
     true
   );
-
-  return (
-    individualData?.Individual?.map((user) => ({
-      userUuid: user?.userUuid,
-      name: `${user?.name?.givenName} ${user?.name?.familyName || ""}`.trim(),
-    })) || []
-  );
+  if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
+    const userData = individualData?.Individual?.map((user) => {
+      const userName = `${user?.name?.givenName} ${user?.name?.familyName || ""}`.trim();
+      return {
+        userUuid: user?.userUuid,
+        name: userName,
+      };
+    });
+    return userData;
+  }
+  return [];
 };
 
 export default {};

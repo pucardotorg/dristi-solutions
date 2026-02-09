@@ -103,9 +103,6 @@ const EvidenceHearingHeader = ({
           <div className="sub-details-text">{t(caseData?.substage || "")}</div>
         </div>
         <div className="judge-action-block">
-          <div className="evidence-header-wrapper">
-            <div className="evidence-hearing-header" style={{ background: "transparent" }}></div>
-          </div>
           {userRoles.includes("EMPLOYEE") ? (
             <div className="evidence-header-wrapper">
               <div className="evidence-hearing-header" style={{ background: "transparent" }}>

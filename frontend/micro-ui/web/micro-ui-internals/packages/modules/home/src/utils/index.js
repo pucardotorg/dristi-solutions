@@ -243,8 +243,9 @@ export const filterValidAddresses = (addressDetails = []) => {
   });
 };
 
-export const extractedSeniorAdvocates = (officeMembersData = []) => {
-  return officeMembersData?.members?.map((member, index) => {
+export const extractedSeniorAdvocates = (officeMembersData = {}) => {
+  const members = officeMembersData?.members || [];
+  return members.map((member, index) => {
     return {
       advocateName: member?.officeAdvocateName || "",
       id: member?.officeAdvocateId,

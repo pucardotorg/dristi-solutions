@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useContext } from "react";
 import useESign from "@egovernments/digit-ui-module-orders/src/hooks/orders/useESign";
 import useDocumentUpload from "@egovernments/digit-ui-module-orders/src/hooks/orders/useDocumentUpload";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { Urls } from "../hooks/services/Urls";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSignedDocumentUploadID, combinedFileStoreId }) {
   const [isSigned, setIsSigned] = useState(false);
@@ -21,7 +22,8 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
   const authorizedUuid = getAuthorizedUuid(userUuid);
-  const storedAdvocate = JSON.parse(localStorage.getItem("selectedAdvocate"));
+  const { advocateData } = useContext(AdvocateDataContext);
+  const storedAdvocate = advocateData;
 
   const name = "Signature";
   const isAdvocateOrClerk = userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role.code));

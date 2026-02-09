@@ -519,7 +519,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: allComplainantSideUuids, comments: commentSendBack }), //TODO: check all scenarios for clerk flow.(remove clerk/jr uuid from here when back end changes are done)
+            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: allComplainantSideUuids, comments: commentSendBack }),
             ...(action === CaseWorkflowAction.VALIDATE && { comments: comment }),
           },
           ...(action === CaseWorkflowAction.VALIDATE && { judgeId, courtId, benchId }),

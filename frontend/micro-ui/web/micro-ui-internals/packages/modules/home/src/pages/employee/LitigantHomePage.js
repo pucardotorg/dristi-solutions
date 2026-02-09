@@ -3,12 +3,6 @@ import { Button } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import JoinCaseHome from "../../../../cases/src/pages/employee/JoinCaseHome";
-import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
-import UploadIdType from "@egovernments/digit-ui-module-dristi/src/pages/citizen/registration/UploadIdType";
-import { uploadResponseDocumentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/Config/resgisterRespondentConfig";
-import OtpComponent from "../../../../cases/src/components/OtpComponent";
-import CustomStepperSuccess from "@egovernments/digit-ui-module-orders/src/components/CustomStepperSuccess";
-import { updateCaseDetails } from "../../../../cases/src/utils/joinCaseUtils";
 import ClerkWithoutAdvocateView from "../../components/ClerkWithoutAdvocateView";
 const FileNewCaseIcon = () => (
   <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">

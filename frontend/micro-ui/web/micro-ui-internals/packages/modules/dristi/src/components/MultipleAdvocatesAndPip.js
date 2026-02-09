@@ -333,7 +333,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
       },
     },
     { tenantId, limit: 1000, offset: 0 },
-    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid}`,
+    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid || ""}`,
     "HOME",
     userInfo?.uuid && isUserLoggedIn
   );

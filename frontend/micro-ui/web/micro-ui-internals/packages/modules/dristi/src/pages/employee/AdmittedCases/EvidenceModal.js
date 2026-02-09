@@ -15,15 +15,7 @@ import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import {
-  cleanString,
-  getAuthorizedUuid,
-  getDate,
-  getOrderActionName,
-  getOrderTypes,
-  removeInvalidNameParts,
-  setApplicationStatus,
-} from "../../../Utils";
+import { cleanString, getDate, getOrderActionName, getOrderTypes, setApplicationStatus } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
@@ -69,8 +61,6 @@ const EvidenceModal = ({
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const userInfo = Digit.UserService.getUser()?.info;
-  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
-  const authorizedUuid = getAuthorizedUuid(userUuid);
   const user = Digit.UserService.getUser()?.info?.name;
   const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
     userInfo?.roles,
@@ -130,7 +120,7 @@ const EvidenceModal = ({
   }, [computeDefaultBOTD, setBusinessOfTheDay]);
 
   useEffect(() => {
-    if (!documentSubmission?.length > 0 && !artifact) return;
+    if (!(documentSubmission?.length > 0) && !artifact) return;
     if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
       return; // directly show onwner name in case of employees, no individual api calling.
     }
@@ -168,7 +158,7 @@ const EvidenceModal = ({
       try {
         const result = await getUserInfo(uuids);
 
-        const lookup = new Map(result.map((user) => [user.userUuid, user.name]));
+        const lookup = new Map((result || []).map((user) => [user.userUuid, user.name]));
 
         if (!isMounted) return;
 
@@ -204,7 +194,7 @@ const EvidenceModal = ({
       : userInfoMap?.senderUser?.name;
   }, [userInfoMap, artifact, currentDiaryEntry, documentSubmission]);
 
-  const createdByname = useMemo(() => {
+  const createdByName = useMemo(() => {
     if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
       return null;
     }
@@ -1291,13 +1281,13 @@ const EvidenceModal = ({
                       <h3>{senderName}</h3>
                     </div>
                   </div>
-                  {createdByname && (
+                  {createdByName && (
                     <div className="info-row">
                       <div className="info-key">
                         <h3>{t("CREATED_BY")}</h3>
                       </div>
                       <div className="info-value">
-                        <h3>{createdByname}</h3>
+                        <h3>{createdByName}</h3>
                       </div>
                     </div>
                   )}

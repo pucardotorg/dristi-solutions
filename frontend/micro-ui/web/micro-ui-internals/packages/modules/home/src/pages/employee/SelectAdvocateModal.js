@@ -1,7 +1,7 @@
 //here choose primary advocate under whom the logged in clerk/junior advocate will take action.
-import { CloseSvg, CheckBox, Dropdown } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, Dropdown } from "@egovernments/digit-ui-react-components";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { LabelFieldPair } from "@egovernments/digit-ui-react-components";
 

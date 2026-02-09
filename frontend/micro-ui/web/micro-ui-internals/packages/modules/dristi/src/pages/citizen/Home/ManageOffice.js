@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
 
 const DeleteIcon = () => (

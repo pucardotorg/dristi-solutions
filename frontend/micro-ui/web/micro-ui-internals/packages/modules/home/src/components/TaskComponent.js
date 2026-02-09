@@ -100,8 +100,7 @@ const TasksComponent = ({
     joinCasePaymentModal: false,
     data: {},
   });
-  const { AdvocateData } = useContext(AdvocateDataContext);
-  const selectedSeniorAdvocate = AdvocateData;
+  const { AdvocateData: selectedSeniorAdvocate } = useContext(AdvocateDataContext);
 
   const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),

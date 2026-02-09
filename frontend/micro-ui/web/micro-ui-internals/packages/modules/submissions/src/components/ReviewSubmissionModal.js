@@ -179,7 +179,7 @@ function ReviewSubmissionModal({
 
     if (uuids.length === 0) {
       setUserInfoMap({
-        officeAdvocateUser: null,
+        senderUser: null,
         createdByUser: null,
         onBehalfOfUser: null,
       });
@@ -193,7 +193,7 @@ function ReviewSubmissionModal({
         const result = await getUserInfo(uuids); // [{ userUuid, name }]
 
         // Build lookup map (O(1))
-        const lookup = new Map(result.map((user) => [user.userUuid, user.name]));
+        const lookup = new Map((result || []).map((user) => [user.userUuid, user.name]));
 
         if (!isMounted) return;
 
@@ -276,7 +276,9 @@ function ReviewSubmissionModal({
               <h3 style={getStyles("infoKey")}>{t("SENDER")}</h3>
               <h3 style={getStyles("infoValue")}>
                 {userInfoMap?.senderUser?.name
-                  ? `${userInfoMap?.senderUser?.name} on Behalf of ${userInfoMap?.onBehalfOfUser?.name}`
+                  ? userInfoMap?.onBehalfOfUser?.name
+                    ? `${userInfoMap?.senderUser?.name} on Behalf of ${userInfoMap?.onBehalfOfUser?.name}`
+                    : userInfoMap?.senderUser?.name
                   : application?.additionalDetails?.owner || ""}
               </h3>
             </div>
@@ -288,10 +290,12 @@ function ReviewSubmissionModal({
               </div>
             )}
 
-            <div style={getStyles("infoRow")}>
-              <h3 style={getStyles("infoKey")}>{t("CREATED_BY")}</h3>
-              <h3 style={getStyles("infoValue")}>{userInfoMap?.createdByUser?.name || ""}</h3>
-            </div>
+            {userInfoMap?.createdByUser?.name && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("CREATED_BY")}</h3>
+                <h3 style={getStyles("infoValue")}>{userInfoMap?.createdByUser?.name || ""}</h3>
+              </div>
+            )}
 
             {application?.additionalDetails?.formdata?.initialHearingDate && (
               <div style={getStyles("infoRow")}>

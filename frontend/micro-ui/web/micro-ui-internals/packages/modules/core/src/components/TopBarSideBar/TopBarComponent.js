@@ -2,12 +2,34 @@ import React, { useEffect, useState, useMemo, useContext, useRef, useCallback } 
 import PropTypes from "prop-types";
 import { useLocation, useHistory } from "react-router-dom";
 // import BackButton from "./BackButton";
-import { Dropdown, Hamburger, NotificationBell } from "@egovernments/digit-ui-react-components";
+import { Hamburger, NotificationBell } from "@egovernments/digit-ui-react-components";
 import ProfileComponent from "./ProfileComponent";
 import { AdvocateDataContext } from "../../Module";
-import { userTypeOptions } from "@egovernments/digit-ui-module-home/src/configs/BenchHomeConfig";
-import { extractedSeniorAdvocates } from "@egovernments/digit-ui-module-home/src/utils";
-import { AdvocateProfileUserIcon, AdvocateProfileChevronIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import { extractedSeniorAdvocates, userTypeOptions } from "../../Utils";
+
+const AdvocateProfileUserIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M8.00006 2.66666C6.71139 2.66666 5.66672 3.71133 5.66672 4.99999C5.66672 6.28866 6.71139 7.33333 8.00006 7.33333C9.28872 7.33333 10.3334 6.28866 10.3334 4.99999C10.3334 3.71133 9.28872 2.66666 8.00006 2.66666ZM4.33339 4.99999C4.33339 2.97495 5.97501 1.33333 8.00006 1.33333C10.0251 1.33333 11.6667 2.97495 11.6667 4.99999C11.6667 7.02504 10.0251 8.66666 8.00006 8.66666C5.97501 8.66666 4.33339 7.02504 4.33339 4.99999ZM6.21757 9.66663C6.25561 9.66664 6.29421 9.66666 6.33339 9.66666H9.66672C9.7059 9.66666 9.7445 9.66664 9.78255 9.66663C10.6007 9.66633 11.1594 9.66612 11.6343 9.81019C12.6997 10.1334 13.5334 10.967 13.8565 12.0324C14.0006 12.5073 14.0004 13.066 14.0001 13.8842C14.0001 13.9222 14.0001 13.9608 14.0001 14C14.0001 14.3682 13.7016 14.6667 13.3334 14.6667C12.9652 14.6667 12.6667 14.3682 12.6667 14C12.6667 13.0211 12.6595 12.6795 12.5806 12.4194C12.3867 11.7802 11.8865 11.28 11.2473 11.0861C10.9872 11.0072 10.6456 11 9.66672 11H6.33339C5.35451 11 5.01286 11.0072 4.75282 11.0861C4.11362 11.28 3.61341 11.7802 3.41951 12.4194C3.34063 12.6795 3.33339 13.0211 3.33339 14C3.33339 14.3682 3.03491 14.6667 2.66672 14.6667C2.29853 14.6667 2.00006 14.3682 2.00006 14C2.00006 13.9608 2.00004 13.9222 2.00003 13.8842C1.99972 13.066 1.99952 12.5073 2.14359 12.0324C2.46676 10.967 3.30043 10.1334 4.36577 9.81019C4.84071 9.66612 5.39938 9.66633 6.21757 9.66663Z"
+      fill="#334155"
+    />
+  </svg>
+);
+
+const AdvocateProfileChevronIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g clipPath="url(#clip0_13787_1210)">
+      <path d="M16.59 8.59L12 13.17L7.41 8.59L6 10L12 16L18 10L16.59 8.59Z" fill="#007E7E" />
+    </g>
+    <defs>
+      <clipPath id="clip0_13787_1210">
+        <rect width="24" height="24" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+);
 
 const ManageOfficeIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -104,7 +126,7 @@ const TopBarComponent = ({
   const [selectedAdvocate, setSelectedAdvocate] = useState(null);
   const { AdvocateData, setAdvocateDataContext } = useContext(AdvocateDataContext);
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
-  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userInfo = useMemo(() => JSON.parse(window.localStorage.getItem("user-info")), []);
   // Check if user is an advocate (has ADVOCATE_ROLE)
   const isAdvocate = useMemo(() => {
     return userDetails?.info?.roles?.some((role) => role?.code === "ADVOCATE_ROLE");
@@ -259,7 +281,8 @@ const TopBarComponent = ({
 
   const disableAdvocateChange = useMemo(() => {
     // Allow changing advocate only on home screen.
-    return pathname !== "/ui/citizen/home/home-pending-task";
+    const homePath = `/${window?.contextPath}/citizen/home/home-pending-task`;
+    return pathname !== homePath;
   }, [pathname]);
 
   const hasMembers = Array.isArray(seniorAdvocates) && seniorAdvocates?.length > 0;

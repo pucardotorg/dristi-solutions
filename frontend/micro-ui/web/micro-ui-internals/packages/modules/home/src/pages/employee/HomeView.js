@@ -83,7 +83,6 @@ const HomeView = () => {
   const [taskType, setTaskType] = useState(state?.taskType || {});
   const [caseType, setCaseType] = useState(state?.caseType || {});
   const [showSelectAdvocateModal, setShowSelectAdvocateModal] = useState(false);
-  const citizenDataLoadingRef = useRef(null);
   const initialCountFetchRef = useRef(false);
   const { AdvocateData } = useContext(AdvocateDataContext);
   const selectedSeniorAdvocate = AdvocateData;
@@ -422,12 +421,6 @@ const HomeView = () => {
   }, [citizenCaseData]);
 
   useEffect(() => {
-    if (citizenCaseData) {
-      citizenDataLoadingRef.current = true;
-    }
-  }, [citizenCaseData]);
-
-  useEffect(() => {
     const isAnyLoading = isLoading || isFetching || isSearchLoading || isOutcomeLoading || isCitizenCaseDataLoading || !additionalDetails;
     if (!isAnyLoading && tabConfigs && rowClickData && rolesToConfigMappingData && userInfoType) {
       setOnRowClickData(rowClickData);
@@ -595,16 +588,7 @@ const HomeView = () => {
     return false;
   }, [userType, advocateId, selectedSeniorAdvocate?.id]);
 
-  if (
-    isLoading ||
-    isFetching ||
-    isSearchLoading ||
-    isOrdersLoading ||
-    isOutcomeLoading ||
-    isCitizenCaseDataLoading ||
-    isLoadingMembers ||
-    citizenDataLoadingRef.current === false
-  ) {
+  if (isLoading || isFetching || isSearchLoading || isOrdersLoading || isOutcomeLoading || isCitizenCaseDataLoading || isLoadingMembers) {
     return <Loader />;
   }
   const showToast = (type, message, duration = 5000) => {
