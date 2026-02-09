@@ -89,6 +89,7 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
                             .isLPRCase(rs.getBoolean("isLPRCase"))
                             .witnessDetails(getObjectListFromJson(rs.getString("witnessdetails"), new TypeReference<>() {
                             }))
+                            .advocateOffices(new ArrayList<>())
                             .build();
                 }
 

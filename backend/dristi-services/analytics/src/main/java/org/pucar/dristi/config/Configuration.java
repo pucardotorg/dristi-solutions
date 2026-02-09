@@ -73,6 +73,12 @@ public class Configuration {
 	@Value("${egov.case.search.endpoint}")
 	private String caseSearchPath;
 
+	@Value("${egov.advocate.case.search.endpoint}")
+	private String advocateCaseSearchPath;
+
+	@Value("${egov.case.member.advocates.endpoint}")
+	private String caseMemberAdvocatesPath;
+
 	//Evidence Config
 	@Value("${egov.evidence.host}")
 	private String evidenceHost;
@@ -128,6 +134,12 @@ public class Configuration {
 
 	@Value("${egov.mdms.case.outcome.master.name}")
 	private String mdmsCaseOutcomeMasterName;
+
+	@Value("${egov.mdms.assignee.to.office.members.module.name}")
+	private String mdmsAssigneeToOfficeMembersModuleName;
+
+	@Value("${egov.mdms.assignee.to.office.members.master.name}")
+	private String mdmsAssigneeToOfficeMembersMasterName;
 
 	@Value("${create.demand.topic.name}")
 	private String demandGenerateTopic;
@@ -249,6 +261,19 @@ public class Configuration {
 
 	@Value("${dristi.task-management.search.endpoint}")
 	private String taskManagementSearchEndpoint;
+
+	// Workflow Service config
+	@Value("${egov.workflow.host}")
+	private String workflowHost;
+
+	@Value("${egov.workflow.assignee.upsert.endpoint}")
+	private String workflowAssigneeUpsertEndpoint;
+
+	@Value("${egov.workflow.assignee.search.endpoint}")
+	private String workflowAssigneeSearchEndpoint;
+
+	@Value("${egov.workflow.process.search.endpoint}")
+	private String workflowProcessSearchEndpoint;
 
 	@PostConstruct
 	public void init() {
