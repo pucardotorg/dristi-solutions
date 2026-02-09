@@ -631,7 +631,7 @@ async function search_templateConfiguration(
     return await axios({
       method: "post",
       url: URL.resolve(
-        config.host.templateConfiguration, // TODO : confirm host and path and update
+        config.host.templateConfiguration,
         config.paths.template_configuration_search
       ),
       data: {
