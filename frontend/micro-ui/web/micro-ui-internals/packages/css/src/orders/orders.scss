@@ -1182,7 +1182,6 @@
       .field {
         .select-wrap {
           .options-card {
-            margin-top: 42px;
             max-height: 220px !important;
           }
         }
@@ -2182,7 +2181,7 @@
     .card-content {
       display: flex;
       flex-direction: column;
-      gap: 0;
+      gap: 16px;
 
       .input-label {
         font-size: 16px;

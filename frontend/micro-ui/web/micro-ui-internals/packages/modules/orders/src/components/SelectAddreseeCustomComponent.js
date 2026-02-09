@@ -1,6 +1,7 @@
-import { CardLabelError, Dropdown } from "@egovernments/digit-ui-components";
+import { CardLabelError } from "@egovernments/digit-ui-components";
 import { CustomAddIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import React, { useMemo } from "react";
+import { Dropdown } from "@egovernments/digit-ui-react-components";
 
 const SelectAddreseeCustomComponent = ({ t, config, formData = {}, onSelect, errors }) => {
   const inputs = useMemo(
