@@ -119,6 +119,10 @@ public class CourtCase {
     @Valid
     private List<AdvocateMapping> representatives = new ArrayList<>();
 
+    @JsonProperty("advocateOffices")
+    @Valid
+    private List<AdvocateOffice> advocateOffices = new ArrayList<>();
+
     @JsonProperty("documents")
     @Valid
     private List<Document> documents = new ArrayList<>();
