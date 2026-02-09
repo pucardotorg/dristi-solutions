@@ -1207,14 +1207,13 @@ export const UICustomizations = {
   templateOrConfigurationHomeConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
-
       return {
         ...requestCriteria,
         body: {
           criteria: { tenantId, searchableText: requestCriteria?.state?.searchForm?.process || "" },
           pagination: {
-            limit: requestCriteria?.state?.searchForm?.limit || 10,
-            offSet: requestCriteria?.state?.searchForm?.offset || 0,
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offSet: requestCriteria?.state?.tableForm?.offset || 0,
           },
         },
         config: {
