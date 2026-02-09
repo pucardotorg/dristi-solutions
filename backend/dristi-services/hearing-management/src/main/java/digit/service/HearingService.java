@@ -1,5 +1,6 @@
 package digit.service;
 
+import digit.config.Configuration;
 import digit.enrichment.HearingsEnrichment;
 import digit.util.HearingUtil;
 import digit.util.SchedulerUtil;
@@ -29,11 +30,14 @@ public class HearingService {
 
     private final SchedulerUtil schedulerUtil;
 
+    private final Configuration config;
+
     @Autowired
-    public HearingService(HearingUtil hearingUtil, HearingsEnrichment hearingsEnrichment, SchedulerUtil schedulerUtil) {
+    public HearingService(HearingUtil hearingUtil, HearingsEnrichment hearingsEnrichment, SchedulerUtil schedulerUtil, Configuration config) {
         this.hearingUtil = hearingUtil;
         this.hearingsEnrichment = hearingsEnrichment;
         this.schedulerUtil = schedulerUtil;
+        this.config = config;
     }
 
     public HearingSearchListResponse searchHearings(HearingSearchRequest hearingSearchRequest) {
@@ -103,7 +107,7 @@ public class HearingService {
 
     private String convertLongDateToDateString(Long date) {
         return Instant.ofEpochMilli(date)
-                .atZone(ZoneId.of("Asia/Kolkata"))
+                .atZone(ZoneId.of(config.getZoneId()))
                 .toLocalDate()
                 .toString();
     }

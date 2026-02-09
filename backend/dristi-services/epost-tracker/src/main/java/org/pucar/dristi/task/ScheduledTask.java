@@ -64,7 +64,7 @@ public class ScheduledTask {
         log.info("Starting scheduled email notification...");
 
         String tenantId = ePostConfiguration.getEgovStateTenantId();
-        ZoneId kolkataZone = ZoneId.of("Asia/Kolkata");
+        ZoneId kolkataZone = ZoneId.of(ePostConfiguration.getZoneId());
         LocalDate today = LocalDate.now(kolkataZone);
 
         // Calculate previous month's date range
@@ -216,7 +216,7 @@ public class ScheduledTask {
     }
 
     private String getFormattedDate() {
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of(ePostConfiguration.getZoneId()));
 
         // Create a DateTimeFormatter with the desired format
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, h:mm a z");

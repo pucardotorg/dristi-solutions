@@ -481,7 +481,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
             return LocalDate.now(); // fallback to current date
         }
         return Instant.ofEpochMilli(timestamp)
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneId.of(properties.getApplicationZoneId()))
                 .toLocalDate();
     }
 

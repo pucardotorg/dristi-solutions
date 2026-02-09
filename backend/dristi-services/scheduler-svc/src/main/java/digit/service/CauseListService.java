@@ -766,10 +766,10 @@ public class CauseListService {
 
     public List<CauseListSearchCriteria> generateRecentSearchCriteriaList(RecentCauseListSearchCriteria recentCauseListSearchCriteria) {
         List<CauseListSearchCriteria> criteriaList = new ArrayList<>();
-        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+        LocalDate today = LocalDate.now(ZoneId.of(config.getZoneId()));
         LocalDate yesterday = today.minusDays(1);
         LocalDate tomorrow = today.plusDays(1);
-        LocalTime now = LocalTime.now(ZoneId.of("Asia/Kolkata"));
+        LocalTime now = LocalTime.now(ZoneId.of(config.getZoneId()));
         String courtId = recentCauseListSearchCriteria.getCourtId();
 
         criteriaList.add(CauseListSearchCriteria.builder().searchDate(today).courtId(courtId).build());

@@ -177,7 +177,7 @@ public class Hearing {
         if (null != dateTime) {
             if (dateTime > 0) {
                 formattedDateTime = Instant.ofEpochMilli(dateTime)
-                        .atZone(ZoneId.systemDefault())
+                        .atZone(ZoneId.of("Asia/Kolkata"))
                         .toLocalDateTime()
                         .format(DateTimeFormatter.ofPattern(pattern));
             }

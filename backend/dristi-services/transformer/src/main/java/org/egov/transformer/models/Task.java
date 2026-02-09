@@ -111,7 +111,7 @@ public class Task {
         if (null != dateTime) {
             if (dateTime > 0) {
                 formattedDateTime = Instant.ofEpochMilli(dateTime)
-                        .atZone(ZoneId.systemDefault())
+                        .atZone(ZoneId.of("Asia/Kolkata"))
                         .toLocalDate()
                         .format(DateTimeFormatter.ofPattern(pattern));
             }

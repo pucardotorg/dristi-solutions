@@ -157,7 +157,7 @@ public class Application {
         if (null != this.createdDate) {
             if (this.createdDate > 0) {
                 formattedDate = Instant.ofEpochMilli(this.createdDate)
-                        .atZone(ZoneId.systemDefault())
+                        .atZone(ZoneId.of("Asia/Kolkata"))
                         .toLocalDate()
                         .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
             }

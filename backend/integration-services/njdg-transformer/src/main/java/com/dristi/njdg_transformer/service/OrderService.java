@@ -307,7 +307,7 @@ public class OrderService {
             return null;
         }
         return Instant.ofEpochMilli(timestamp)
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneId.of(properties.getApplicationZoneId()))
                 .toLocalDate();
     }
 

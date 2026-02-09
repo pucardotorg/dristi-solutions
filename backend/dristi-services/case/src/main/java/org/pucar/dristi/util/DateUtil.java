@@ -25,7 +25,7 @@ public class DateUtil {
      */
     public Instant getInstantFrom(String time) {
         LocalTime localTime = LocalTime.parse(time);
-        ZonedDateTime currentDate = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+        ZonedDateTime currentDate = ZonedDateTime.now(ZoneId.of(configuration.getZoneId()));
         ZonedDateTime zonedDateTime = currentDate.with(localTime);
 
         return Date.from(zonedDateTime.toInstant()).toInstant();
@@ -33,7 +33,7 @@ public class DateUtil {
 
     public LocalDate getLocalDateFromEpoch(long startTime) {
         return Instant.ofEpochMilli(startTime)
-                .atZone(ZoneId.of("Asia/Kolkata"))
+                .atZone(ZoneId.of(configuration.getZoneId()))
                 .toLocalDate();
     }
 

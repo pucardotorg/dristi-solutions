@@ -1,5 +1,7 @@
 package com.dristi.njdg_transformer.utils;
 
+import com.dristi.njdg_transformer.config.TransformerProperties;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +16,10 @@ import java.time.format.DateTimeFormatter;
  */
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class DateUtil {
+
+    private final TransformerProperties properties;
 
     /**
      * Format timestamp to LocalDate
@@ -29,7 +34,7 @@ public class DateUtil {
         
         try {
             LocalDate date = Instant.ofEpochMilli(timestamp)
-                    .atZone(ZoneId.systemDefault())
+                    .atZone(ZoneId.of(properties.getApplicationZoneId()))
                     .toLocalDate();
             log.info("Formatted timestamp {} to date: {}", timestamp, date);
             return date;
@@ -53,7 +58,7 @@ public class DateUtil {
         
         try {
             Integer year = Integer.valueOf(Instant.ofEpochMilli(timestamp)
-                    .atZone(ZoneId.systemDefault())
+                    .atZone(ZoneId.of(properties.getApplicationZoneId()))
                     .toLocalDate()
                     .format(DateTimeFormatter.ofPattern("yyyy")));
             log.info("Extracted year {} from timestamp: {}", year, timestamp);

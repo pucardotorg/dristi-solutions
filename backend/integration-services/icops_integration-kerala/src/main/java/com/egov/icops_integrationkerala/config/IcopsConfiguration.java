@@ -81,6 +81,10 @@ public class IcopsConfiguration {
     @Value("${egov.idgen.name}")
     private String idName;
 
+    // Timezone
+    @Value("${app.zone.id}")
+    private String applicationZoneId;
+
     @Value("${egov.oauth.url}")
     private String url;
 
