@@ -192,8 +192,25 @@ function OrderReviewModal({
     setUpdateLoading(true);
     handleDocumentUpload(async (fileStoreId) => {
       if (fileStoreId) {
+        let hearingNumber = "";
+        const todayDate = new Date().toISOString().split("T")[0];
+
+        if (order?.orderCategory === "INTERMEDIATE" && order?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+          const hearingDate = order?.additionalDetails?.formdata?.newHearingDate;
+          if (hearingDate === todayDate) {
+            hearingNumber = order?.additionalDetails?.refHearingId;
+          }
+        } else {
+          const acceptRescheduleRequest = order?.compositeItems?.find((item) => item?.orderType === "ACCEPT_RESCHEDULING_REQUEST");
+          const hearingDate = acceptRescheduleRequest?.orderSchema?.additionalDetails?.formdata?.newHearingDate;
+
+          if (hearingDate === todayDate) {
+            hearingNumber = acceptRescheduleRequest?.orderSchema?.additionalDetails?.refHearingId;
+          }
+        }
         const updatedOrder = {
           ...order,
+          ...(hearingNumber && { hearingNumber: order?.hearingNumber || hearingNumber }),
           additionalDetails: {
             ...order.additionalDetails,
             // businessOfTheDay: businessDay,

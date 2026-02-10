@@ -1,7 +1,8 @@
-import { CardLabelError, Dropdown } from "@egovernments/digit-ui-components";
+import { CardLabelError } from "@egovernments/digit-ui-components";
 import { CustomMultiSelectDropdown } from "@egovernments/digit-ui-module-dristi/src/components/CustomMultiSelectDropdown";
 import { CustomAddIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import React, { useMemo, useState } from "react";
+import { Dropdown } from "@egovernments/digit-ui-react-components";
 
 const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors }) => {
   const [activeDropdownIndex, setActiveDropdownIndex] = useState(null);

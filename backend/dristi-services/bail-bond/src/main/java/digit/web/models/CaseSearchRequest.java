@@ -31,6 +31,9 @@ public class CaseSearchRequest {
     @JsonProperty("flow")
     private String flow;
 
+    @JsonProperty("tenantId")
+    private String tenantId;
+
     public CaseSearchRequest addCriteriaItem(CaseCriteria criteriaItem) {
         this.criteria.add(criteriaItem);
         return this;

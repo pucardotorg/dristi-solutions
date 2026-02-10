@@ -844,6 +844,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
         msg = t("SUCCESSFULLY_SIGNED_PROCLAMATION");
       } else if (orderType === "ATTACHMENT") {
         msg = t("SUCCESSFULLY_SIGNED_ATTACHMENT");
+      } else if (orderType === "MISCELLANEOUS_PROCESS") {
+        msg = t("SUCCESSFULLY_SIGNED_MISCELLANEOUS_PROCESS");
       } else {
         msg = t("SUCCESSFULLY_SIGNED_SUMMON");
       }
@@ -856,6 +858,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
         msg = t("SENT_PROCLAMATION_VIA");
       } else if (orderType === "ATTACHMENT") {
         msg = t("SENT_ATTACHMENT_VIA");
+      } else if (orderType === "MISCELLANEOUS_PROCESS") {
+        msg = t("SENT_MISCELLANEOUS_PROCESS_VIA");
       } else {
         msg = t("SENT_SUMMONS_VIA");
       }

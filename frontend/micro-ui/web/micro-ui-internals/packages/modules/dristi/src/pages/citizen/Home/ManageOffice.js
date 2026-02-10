@@ -62,7 +62,7 @@ const ManageOffice = () => {
   // Get the logged-in advocate's ID from responseList for officeAdvocateUserUuid
   const officeAdvocateUserUuid = useMemo(() => {
     return userInfo?.uuid;
-  }, []);
+  }, [userInfo?.uuid]);
 
   // Get the logged-in advocate's name from additionalDetails.username for officeAdvocateName
   const officeAdvocateName = useMemo(() => {
@@ -475,10 +475,10 @@ const ManageOffice = () => {
                 <p className="manage-office-empty__title">{t("NOT_WORKING_FOR_ANY_ADVOCATES") || "You are not working for any advocates."}</p>
               </React.Fragment>
             ) : (
-              <>
+              <React.Fragment>
                 <p className="manage-office-empty__title">{t("NO_DATA_TO_DISPLAY") || "No data to display."}</p>
                 <p className="manage-office-empty__subtitle">{t("PLEASE_ADD_MEMBER") || "Please add member"}</p>
-              </>
+              </React.Fragment>
             )}
           </div>
         )}

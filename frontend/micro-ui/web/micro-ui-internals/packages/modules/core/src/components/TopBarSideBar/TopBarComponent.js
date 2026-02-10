@@ -126,7 +126,7 @@ const TopBarComponent = ({
   const [selectedAdvocate, setSelectedAdvocate] = useState(null);
   const { AdvocateData, setAdvocateDataContext } = useContext(AdvocateDataContext);
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
-  const userInfo = useMemo(() => JSON.parse(window.localStorage.getItem("user-info")), []);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   // Check if user is an advocate (has ADVOCATE_ROLE)
   const isAdvocate = useMemo(() => {
     return userDetails?.info?.roles?.some((role) => role?.code === "ADVOCATE_ROLE");

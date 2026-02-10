@@ -497,7 +497,7 @@ class CaseQueryBuilderTest {
         String query = queryBuilder.getRepresentativesSearchQuery(ids, preparedStmtList,preparedStmtArgList);
 
         // Assert
-        String expectedQuery = " SELECT rep.id as id, rep.tenantid as tenantid, rep.advocateid as advocateid, rep.case_id as case_id,  rep.isactive as isactive, rep.additionaldetails as additionaldetails, rep.createdby as createdby, rep.lastmodifiedby as lastmodifiedby, rep.createdtime as createdtime, rep.lastmodifiedtime as lastmodifiedtime , rep.hassigned as hassigned  FROM dristi_case_representatives rep WHERE rep.case_id IN (?,?,?) AND rep.isactive = true";
+        String expectedQuery = " SELECT rep.id as id, rep.tenantid as tenantid, rep.advocateid as advocateid, rep.case_id as case_id,  rep.isactive as isactive, rep.additionaldetails as additionaldetails, rep.createdby as createdby, rep.lastmodifiedby as lastmodifiedby, rep.createdtime as createdtime, rep.lastmodifiedtime as lastmodifiedtime , rep.hassigned as hassigned, rep.advocate_filing_status as advocate_filing_status  FROM dristi_case_representatives rep WHERE rep.case_id IN (?,?,?) AND rep.isactive = true";
         assertEquals(expectedQuery, query);
         assertEquals(3, preparedStmtList.size());
         assertEquals("1", preparedStmtList.get(0));

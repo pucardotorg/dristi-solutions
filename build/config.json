@@ -15,6 +15,14 @@
         "language": "java",
         "version": "17"
     },
+    "advocate-office-management": {
+        "service_group": "core-services",
+        "db_source_path": "backend/dristi-services/advocate-office-management/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile.v2",
+        "service_source_path": "backend/dristi-services/advocate-office-management",
+        "language": "java",
+        "version": "17"
+    },
     "analytics": {
         "service_group": "core-services",
         "db_source_path": "",
@@ -389,10 +397,10 @@
     "inbox": {
         "service_group": "core-services",
         "db_source_path": "",
-        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/digit-services/inbox",
         "language": "java",
-        "version": "8"
+        "version": "17"
     },
     "individual": {
         "service_group": "core-services",
