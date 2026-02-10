@@ -56,7 +56,7 @@ public class CompositeOrderService implements OrderProcessor {
                 order.setHearingNumber(compositeOrderItem.getHearingNumber());
             if (compositeOrderItem.getHearingType() != null && !compositeOrderItem.getHearingType().equals(oldHearingType))
                 order.setHearingType(compositeOrderItem.getHearingType());
-            if (compositeOrderItem.getScheduledHearingNumber() != null && E_SIGN.equalsIgnoreCase(order.getWorkflow().getAction()) && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType()))
+            if (compositeOrderItem.getScheduledHearingNumber() != null && E_SIGN.equalsIgnoreCase(order.getWorkflow().getAction()) && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(compositeOrderItem.getOrderType()))
                 order.setScheduledHearingNumber(compositeOrderItem.getScheduledHearingNumber());
 
         }
