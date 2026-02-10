@@ -490,17 +490,19 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
         const scheduleItem = currentOrder?.compositeItems?.find((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE");
         const acceptRescheduleRequest = currentOrder?.compositeItems?.find((item) => item?.orderType === "ACCEPT_RESCHEDULING_REQUEST");
 
-        if(acceptRescheduleRequest && !scheduleItem && hearingDate){
-          const dateChanged = formatDate(new Date(acceptRescheduleRequest?.orderSchema?.orderDetails?.newHearingDate)) !== hearingDate;
+        if (acceptRescheduleRequest && !scheduleItem && hearingDate) {
+          const dateChanged =
+            !currentOrder?.nextHearingDate &&
+            formatDate(new Date(acceptRescheduleRequest?.orderSchema?.orderDetails?.newHearingDate)) !== hearingDate;
           if (dateChanged) {
             itemErrors?.push({
               key: "DATE_OF_HEARING",
               errorMessage: "THIS_DOES_NOT_MATCH_WITH_NEXT_HEARING_DATE",
             });
           }
-        }
-        else if (scheduleItem && hearingDate) {
-          const dateChanged = formatDate(new Date(scheduleItem?.orderSchema?.orderDetails?.hearingDate)) !== hearingDate;
+        } else if (scheduleItem && hearingDate) {
+          const dateChanged =
+            !currentOrder?.nextHearingDate && formatDate(new Date(scheduleItem?.orderSchema?.orderDetails?.hearingDate)) !== hearingDate;
           if (dateChanged) {
             itemErrors?.push({
               key: "DATE_OF_HEARING",
@@ -729,7 +731,7 @@ export const _getTaskPayload = (taskCaseDetails, orderData, filingDate, schedule
       caseFilingDate: filingDate,
       nextHearingDate: scheduleHearing,
       caseNumber: caseNumber,
-      filingNumber: filingNumber
+      filingNumber: filingNumber,
     };
 
     deliveryChannels = {
