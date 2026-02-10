@@ -119,6 +119,12 @@ public class DigitalDocumentService {
                 workflow.setAction(E_SIGN);
                 digitalizedDocument.setWorkflow(workflow);
 
+                if (TypeEnum.MEDIATION.equals(digitalizedDocument.getType())) {
+                    digitalizedDocument.getMediationDetails().getPartyDetails().stream()
+                            .filter(partyDetails -> partyDetails.getMobileNumber().equals(request.getMobileNumber()))
+                            .forEach(partyDetails -> partyDetails.setHasSigned(true));
+                }
+
                 digitalizedDocumentResponse = digitalizedDocumentUtil.updateDigitalizeDoc(digitalizedDocument, createInternalRequestInfoWithSystemUserType());
                 log.info("method=updateDigitalDocument, status=COMPLETED, request={}", request);
             } else {
