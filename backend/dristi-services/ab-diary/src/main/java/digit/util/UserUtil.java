@@ -11,6 +11,7 @@ import digit.repository.ServiceRequestRepository;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import java.time.format.DateTimeParseException;
 
 import java.util.*;
 
@@ -26,12 +27,16 @@ public class UserUtil {
     @Autowired
     private Configuration configs;
 
+    @Autowired
+    private DateTimeUtil dateTimeUtil;
+
 
     @Autowired
-    public UserUtil(ObjectMapper mapper, ServiceRequestRepository serviceRequestRepository, Configuration configs) {
+    public UserUtil(ObjectMapper mapper, ServiceRequestRepository serviceRequestRepository, Configuration configs, DateTimeUtil dateTimeUtil) {
         this.mapper = mapper;
         this.serviceRequestRepository = serviceRequestRepository;
         this.configs = configs;
+        this.dateTimeUtil = dateTimeUtil;
     }
 
     /**
@@ -57,6 +62,10 @@ public class UserUtil {
         {
             throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE,OBJECTMAPPER_UNABLE_TO_CONVERT);
         }
+        catch(DateTimeParseException e)
+        {
+            throw new CustomException(INVALID_DATE_FORMAT_CODE, INVALID_DATE_FORMAT_MESSAGE);
+        }
     }
 
 
@@ -69,16 +78,21 @@ public class UserUtil {
         List<LinkedHashMap> users = (List<LinkedHashMap>)responseMap.get(USER);
         String format1 = DOB_FORMAT_D_M_Y_H_M_S;
         if(users!=null){
-            users.forEach( map -> {
-                        map.put(CREATED_DATE,dateTolong((String)map.get(CREATED_DATE),format1));
-                        if((String)map.get(LAST_MODIFIED_DATE)!=null)
-                            map.put(LAST_MODIFIED_DATE,dateTolong((String)map.get(LAST_MODIFIED_DATE),format1));
-                        if((String)map.get(DOB)!=null)
-                            map.put(DOB,dateTolong((String)map.get(DOB),dobFormat));
-                        if((String)map.get(PWD_EXPIRY_DATE)!=null)
-                            map.put(PWD_EXPIRY_DATE,dateTolong((String)map.get(PWD_EXPIRY_DATE),format1));
-                    }
-            );
+            for (LinkedHashMap map : users) {
+                try {
+                    map.put(CREATED_DATE, dateTolong((String) map.get(CREATED_DATE), format1));
+                    if ((String) map.get(LAST_MODIFIED_DATE) != null)
+                        map.put(LAST_MODIFIED_DATE, dateTolong((String) map.get(LAST_MODIFIED_DATE), format1));
+                    if ((String) map.get(DOB) != null)
+                        map.put(DOB, dateTolong((String) map.get(DOB), dobFormat));
+                    if ((String) map.get(PWD_EXPIRY_DATE) != null)
+                        map.put(PWD_EXPIRY_DATE, dateTolong((String) map.get(PWD_EXPIRY_DATE), format1));
+                } catch (CustomException e) {
+                    throw e; // Re-throw CustomException
+                } catch (Exception e) {
+                    throw new CustomException(INVALID_DATE_FORMAT_CODE, INVALID_DATE_FORMAT_MESSAGE);
+                }
+            }
         }
     }
 
@@ -90,7 +104,7 @@ public class UserUtil {
      */
     private Long dateTolong(String date,String format){
         try {
-            return DateTimeUtil.toEpochMillis(date, format);
+            return dateTimeUtil.toEpochMillis(date, format);
         } catch (Exception e) {
             throw new CustomException(INVALID_DATE_FORMAT_CODE, INVALID_DATE_FORMAT_MESSAGE);
         }

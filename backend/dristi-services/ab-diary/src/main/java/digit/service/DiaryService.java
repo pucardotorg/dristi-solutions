@@ -47,7 +47,9 @@ public class DiaryService {
 
     private final CaseUtil caseUtil;
 
-    public DiaryService(Producer producer, Configuration configuration, DiaryRepository diaryRepository, ADiaryValidator validator, ADiaryEnrichment enrichment, DiaryEntryService diaryEntryService, FileStoreUtil fileStoreUtil, PdfServiceUtil pdfServiceUtil, WorkflowService workflowService, CaseUtil caseUtil) {
+    private final DateTimeUtil dateTimeUtil;
+
+    public DiaryService(Producer producer, Configuration configuration, DiaryRepository diaryRepository, ADiaryValidator validator, ADiaryEnrichment enrichment, DiaryEntryService diaryEntryService, FileStoreUtil fileStoreUtil, PdfServiceUtil pdfServiceUtil, WorkflowService workflowService, CaseUtil caseUtil, DateTimeUtil dateTimeUtil) {
         this.producer = producer;
         this.configuration = configuration;
         this.diaryRepository = diaryRepository;
@@ -58,6 +60,7 @@ public class DiaryService {
         this.pdfServiceUtil = pdfServiceUtil;
         this.workflowService = workflowService;
         this.caseUtil = caseUtil;
+        this.dateTimeUtil = dateTimeUtil;
     }
 
     public List<CaseDiaryListItem> searchCaseDiaries(CaseDiarySearchRequest searchRequest) {
@@ -143,14 +146,14 @@ public class DiaryService {
             }
             caseDiaryEntries.forEach(entry -> {
                 if (entry.getHearingDate() != null) {
-                    entry.setDate(DateTimeUtil.formatEpochMillis(entry.getHearingDate(), DOB_FORMAT_D_M_Y));
+                    entry.setDate(dateTimeUtil.formatEpochMillis(entry.getHearingDate(), DOB_FORMAT_D_M_Y));
                 }
             });
 
             CaseDiary caseDiary = generateRequest.getDiary();
 
             caseDiary.setCaseDiaryEntries(caseDiaryEntries);
-            caseDiary.setDate(DateTimeUtil.formatEpochMillis(caseDiary.getDiaryDate(), DOB_FORMAT_D_M_Y));
+            caseDiary.setDate(dateTimeUtil.formatEpochMillis(caseDiary.getDiaryDate(), DOB_FORMAT_D_M_Y));
             generateRequest.setDiary(caseDiary);
 
             ByteArrayResource byteArrayResource = generateCaseDiary(caseDiary, generateRequest.getRequestInfo());

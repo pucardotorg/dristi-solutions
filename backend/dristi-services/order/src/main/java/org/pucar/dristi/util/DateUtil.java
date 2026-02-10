@@ -27,9 +27,8 @@ public class DateUtil {
      */
     public Instant getInstantFrom(String time) {
         LocalTime localTime = LocalTime.parse(time);
-        ZonedDateTime zonedDateTime = ZonedDateTime.now()
-                .with(localTime)
-                .withZoneSameLocal(ZoneId.of(config.getZoneId()));
+        ZoneId zoneId = ZoneId.of(config.getZoneId());
+        ZonedDateTime zonedDateTime = ZonedDateTime.now(zoneId).with(localTime);
 
         return zonedDateTime.toInstant();
     }

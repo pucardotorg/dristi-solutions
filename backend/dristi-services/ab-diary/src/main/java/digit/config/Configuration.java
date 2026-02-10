@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
+import java.time.ZoneId;
 
 @Component
 @Data
@@ -159,6 +160,9 @@ public class Configuration {
 
     @Value("${schedule.cron.expression}")
     private String cronExpression;
+
+    @Value("${app.zone.id}")
+    private ZoneId zoneId;
 
     @Bean
     public String scheduleCronExpression() {
