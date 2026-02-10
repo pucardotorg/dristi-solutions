@@ -185,7 +185,7 @@ const NoticeProcessModal = ({
   );
 
   const hearingDetails = useMemo(() => {
-    if (!hearingsData?.HearingList || !hearingsDataFromParent?.HearingList) return [];
+    if (!hearingsData?.HearingList && !hearingsDataFromParent?.HearingList) return [];
     const hearingDetails = hearingsDataFromParent || hearingsData;
 
     if (currentHearingId) {
