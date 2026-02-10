@@ -1,0 +1,124 @@
+openapi: 3.0.0
+info:
+  title: Evidence Management Service
+  description: APIs for managing digital evidence artifacts in DRISTI
+  version: 1.0.0
+
+servers:
+  - url: /evidence-services
+    description: Evidence service base path
+
+tags:
+  - name: Evidence
+  - name: Comments
+  - name: Signatures
+
+paths:
+  /v1/_create:
+    post:
+      tags: [Evidence]
+      summary: Create evidence artifact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceRequest'
+      responses:
+        '200':
+          description: Evidence created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceResponse'
+
+  /v1/_update:
+    post:
+      tags: [Evidence]
+      summary: Update evidence artifact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceRequest'
+      responses:
+        '200':
+          description: Evidence updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceResponse'
+
+  /v1/_search:
+    post:
+      tags: [Evidence]
+      summary: Search evidence artifacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceSearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceSearchResponse'
+
+  /v1/_addcomment:
+    post:
+      tags: [Comments]
+      summary: Add comment to evidence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceCommentRequest'
+      responses:
+        '200':
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceResponse'
+
+  /v1/_getUnsignedArtifacts:
+    post:
+      tags: [Signatures]
+      summary: Get unsigned evidence artifacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceSearchRequest'
+      responses:
+        '200':
+          description: Unsigned artifacts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceSearchResponse'
+
+  /v1/_updateSignatureDetails:
+    post:
+      tags: [Signatures]
+      summary: Update digital signature details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceSignatureUpdateRequest'
+      responses:
+        '200':
+          description: Signature updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/s
+
