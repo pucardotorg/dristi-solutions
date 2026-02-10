@@ -282,7 +282,7 @@ const AdmittedCaseV2 = () => {
 
   const caseData = apiCaseData || historyCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
-  const caseCourtId = localStorage.getItem("courtId");
+  const caseCourtId = !isCitizen ? localStorage.getItem("courtId") : caseDetails?.courtId;
   const latestCaseDetails = useMemo(() => apiCaseData?.cases || historyCaseData?.cases || {}, [apiCaseData, historyCaseData]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
@@ -2102,6 +2102,8 @@ const AdmittedCaseV2 = () => {
     0
   );
 
+  console.log(filingNumber && !historyOrderData && caseCourtId, "fetching orders with courtId", caseCourtId);
+  
   const ordersData = useMemo(() => historyOrderData || apiOrdersData, [historyOrderData, apiOrdersData]);
 
   const onTabChange = useCallback(
@@ -2122,7 +2124,7 @@ const AdmittedCaseV2 = () => {
   const hasAnyRelevantOrderType = useMemo(() => {
     if (!ordersData?.list) return false;
 
-    const validTypes = ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"];
+    const validTypes = ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"];
 
     return ordersData.list.some((item) => {
       if (item?.orderCategory === "COMPOSITE") {
