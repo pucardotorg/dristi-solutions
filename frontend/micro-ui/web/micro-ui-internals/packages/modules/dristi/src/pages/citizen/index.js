@@ -248,7 +248,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
               <BackButton />
             </div>
           )}
-          {(location.pathname.includes("/edit-profile") || location.pathname.includes("/manage-office")) && (
+          {((location.pathname.includes("/view-case") && location.pathname.includes("/edit-profile")) ||
+            location.pathname.includes("/manage-office")) && (
             <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 48 }}></Breadcrumb>
           )}
 
