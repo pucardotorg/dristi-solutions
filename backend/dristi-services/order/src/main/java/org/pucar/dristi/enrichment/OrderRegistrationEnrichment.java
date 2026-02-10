@@ -230,7 +230,7 @@ public String processOrderText(String orderType, String orderSchema, RequestInfo
                 Long dueDateInMilliSecond = JsonPath.read(orderSchema, path.substring("GET_DUE_DATE".length()));
                 if (dueDateInMilliSecond != null) {
                     LocalDate dueDate = Instant.ofEpochMilli(dueDateInMilliSecond).atZone(ZoneId.of(configuration.getZoneId())).toLocalDate();
-                    long daysRemaining = Duration.between(LocalDate.now().atStartOfDay(), dueDate.atStartOfDay()).toDays();
+                    long daysRemaining = Duration.between(LocalDate.now(ZoneId.of(configuration.getZoneId())).atStartOfDay(), dueDate.atStartOfDay()).toDays();
                     text = text.replace("[" + path + "]", Long.toString(daysRemaining));
                 }
             } else if (path.startsWith("GET_LOCAL_DATE")) {

@@ -51,6 +51,7 @@ class DigitalizedDocumentServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(configuration.getZoneId()).thenReturn("Asia/Kolkata");
         WorkflowObject workflowObject = new WorkflowObject();
         workflowObject.setAction("CREATE");
         document = DigitalizedDocument.builder()

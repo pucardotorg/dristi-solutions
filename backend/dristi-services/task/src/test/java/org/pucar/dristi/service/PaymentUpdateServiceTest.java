@@ -301,6 +301,8 @@ class PaymentUpdateServiceTest {
 
 
         when(caseUtil.getCaseDetails(any(TaskRequest.class))).thenReturn(cases);
+        when(config.getZoneId()).thenReturn("Asia/Kolkata");
+        when(config.getEnvelopeSlaValue()).thenReturn(86400000L);
 
         // Spy the service to verify internal method call
         PaymentUpdateService spyService = spy(paymentUpdateService);

@@ -31,7 +31,7 @@ public class DateUtil {
                 .with(localTime)
                 .withZoneSameLocal(ZoneId.of(config.getZoneId()));
 
-        return Date.from(zonedDateTime.toInstant()).toInstant();
+        return zonedDateTime.toInstant();
     }
 
 

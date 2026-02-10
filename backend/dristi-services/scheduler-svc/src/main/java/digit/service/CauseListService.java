@@ -166,7 +166,7 @@ public class CauseListService {
                     .judgeId(causeList.get(0).getJudgeId())
                     .fileStoreId(document.getFileStore())
                     .date(dateUtil.getLocalDateFromEpoch(causeList.get(0).getStartTime()).toString())
-                    .createdTime(dateUtil.getEpochFromLocalDateTime(LocalDateTime.now()))
+                    .createdTime(dateUtil.getEpochFromLocalDateTime(LocalDateTime.now(ZoneId.of(config.getZoneId()))))
                     .createdBy(uuid == null ? serviceConstants.SYSTEM_ADMIN : uuid)
                     .build();
 
@@ -207,13 +207,13 @@ public class CauseListService {
 
     private Long getToDate(String hearingDate) {
         return hearingDate == null
-                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(1).atTime(LocalTime.MAX))
+                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now(ZoneId.of(config.getZoneId())).toLocalDate().plusDays(1).atTime(LocalTime.MAX))
                 : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).atTime(LocalTime.MAX));
     }
 
     private Long getFromDate(String hearingDate) {
         return hearingDate == null
-                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(1).atStartOfDay())
+                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now(ZoneId.of(config.getZoneId())).toLocalDate().plusDays(1).atStartOfDay())
                 : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).atStartOfDay());
     }
 
@@ -352,7 +352,7 @@ public class CauseListService {
 
     private List<CauseList> getCauseListForTomorrow(CauseListSearchCriteria searchCriteria) {
         if (searchCriteria != null && searchCriteria.getSearchDate() != null
-                && searchCriteria.getSearchDate().isAfter(LocalDate.now().plusDays(1))) {
+                && searchCriteria.getSearchDate().isAfter(LocalDate.now(ZoneId.of(config.getZoneId())).plusDays(1))) {
             throw new CustomException("DK_CL_APP_ERR", "CauseList Search date cannot be after than tomorrow");
         }
         return causeListRepository.getCauseLists(searchCriteria);
@@ -360,7 +360,7 @@ public class CauseListService {
 
     public List<String> getFileStoreForCauseList(CauseListSearchCriteria searchCriteria) {
         if (searchCriteria != null && searchCriteria.getSearchDate() != null
-                && searchCriteria.getSearchDate().isAfter(LocalDate.now().plusDays(1))) {
+                && searchCriteria.getSearchDate().isAfter(LocalDate.now(ZoneId.of(config.getZoneId())).plusDays(1))) {
             throw new CustomException("DK_CL_APP_ERR", "CauseList Search date cannot be after than tomorrow");
         }
         return causeListRepository.getCauseListFileStore(searchCriteria);

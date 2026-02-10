@@ -13,6 +13,7 @@ import org.egov.common.models.individual.Address;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,7 +88,7 @@ public class AdvocateService {
                     
                     if (individual.getDateOfBirth() != null) {
                         dob = individual.getDateOfBirth().toInstant()
-                                .atZone(java.time.ZoneId.of(properties.getApplicationZoneId()))
+                                .atZone(ZoneId.of(properties.getApplicationZoneId()))
                                 .toLocalDate();
                     }
                     
