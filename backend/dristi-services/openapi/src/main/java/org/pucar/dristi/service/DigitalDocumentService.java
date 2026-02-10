@@ -65,10 +65,6 @@ public class DigitalDocumentService {
                 return null;
             }
 
-            if (TypeEnum.MEDIATION.equals(digitalizedDocument.getType())) {
-                filterMediationPartyDetails(digitalizedDocument, request.getMobileNumber());
-            }
-
             return response;
         } catch (Exception e) {
             log.error("method=searchDigitalDocument, status=FAILED, request={}", request, e);
@@ -120,9 +116,7 @@ public class DigitalDocumentService {
                 digitalizedDocument.setWorkflow(workflow);
 
                 if (TypeEnum.MEDIATION.equals(digitalizedDocument.getType())) {
-                    digitalizedDocument.getMediationDetails().getPartyDetails().stream()
-                            .filter(partyDetails -> partyDetails.getMobileNumber().equals(request.getMobileNumber()))
-                            .forEach(partyDetails -> partyDetails.setHasSigned(true));
+                    digitalizedDocument.setMediationDetails(request.getMediationDetails());
                 }
 
                 digitalizedDocumentResponse = digitalizedDocumentUtil.updateDigitalizeDoc(digitalizedDocument, createInternalRequestInfoWithSystemUserType());
@@ -157,14 +151,6 @@ public class DigitalDocumentService {
             }
         }
         return mobileNumbers;
-    }
-
-    private void filterMediationPartyDetails(DigitalizedDocument digitalizedDocument, String mobileNumber) {
-        if (digitalizedDocument.getMediationDetails() != null && digitalizedDocument.getMediationDetails().getPartyDetails() != null) {
-            digitalizedDocument.getMediationDetails().getPartyDetails().stream()
-                    .filter(party -> !mobileNumber.equals(party.getMobileNumber()))
-                    .forEach(party -> party.setMobileNumber(null));
-        }
     }
 
     private RequestInfo createInternalRequestInfoWithSystemUserType() {
