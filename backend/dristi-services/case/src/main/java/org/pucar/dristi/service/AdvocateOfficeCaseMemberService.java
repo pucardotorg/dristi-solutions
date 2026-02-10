@@ -69,7 +69,7 @@ public class AdvocateOfficeCaseMemberService {
             log.info("Processing {} cases in {} batches of max size {}", totalCases, batchCount, batchSize);
 
             List<AdvocateOfficeCaseMember> currentBatch = new ArrayList<>();
-            int processedCount = 0;
+            int publishedBatchCount = 0;
 
             for (int i = 0; i < totalCases; i++) {
                 String caseId = caseIds.get(i);
@@ -97,7 +97,7 @@ public class AdvocateOfficeCaseMemberService {
                 boolean isLastCase = i == totalCases - 1;
 
                 if (isBatchFull || isLastCase) {
-                    processedCount++;
+                    publishedBatchCount++;
                     
                     AdvocateOfficeCaseMemberRequest batchRequest = AdvocateOfficeCaseMemberRequest.builder()
                             .requestInfo(request.getRequestInfo())
@@ -109,8 +109,8 @@ public class AdvocateOfficeCaseMemberService {
 
                     // Push to save topic for persistence
                     producer.push(configuration.getAdvocateOfficeCaseMemberSaveTopic(), batchRequest);
-                    log.info("Successfully published batch {}/{} with {} members to save topic", 
-                             processedCount, batchCount, currentBatch.size());
+                    log.info("Successfully published batch {}/{} with {} members to save topic",
+                            publishedBatchCount, batchCount, currentBatch.size());
 
                     // Push to analytics topic only for the LAST batch to trigger processing
                     // This avoids: 1) RecordTooLargeException (message size limit)
