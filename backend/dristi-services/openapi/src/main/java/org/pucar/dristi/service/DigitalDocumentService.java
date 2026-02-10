@@ -58,16 +58,7 @@ public class DigitalDocumentService {
             }
 
             DigitalizedDocument digitalizedDocument = response.getDocuments().get(0);
-            List<String> mobileNumbers = new ArrayList<>();
-            if (TypeEnum.PLEA.equals(digitalizedDocument.getType())) {
-                if (digitalizedDocument.getPleaDetails() != null && digitalizedDocument.getPleaDetails().getAccusedMobileNumber() != null) {
-                    mobileNumbers.add(digitalizedDocument.getPleaDetails().getAccusedMobileNumber());
-                }
-            } else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
-                if (digitalizedDocument.getExaminationOfAccusedDetails() != null && digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber() != null) {
-                    mobileNumbers.add(digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber());
-                }
-            }
+            List<String> mobileNumbers = getMobileNumbers(digitalizedDocument);
 
             if (!mobileNumbers.contains(request.getMobileNumber())) {
                 return null;
@@ -102,16 +93,7 @@ public class DigitalDocumentService {
 
             DigitalizedDocument digitalizedDocument = response.getDocuments().get(0);
 
-            List<String> mobileNumbers = new ArrayList<>();
-            if (TypeEnum.PLEA.equals(digitalizedDocument.getType())) {
-                if (digitalizedDocument.getPleaDetails() != null && digitalizedDocument.getPleaDetails().getAccusedMobileNumber() != null) {
-                    mobileNumbers.add(digitalizedDocument.getPleaDetails().getAccusedMobileNumber());
-                }
-            } else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
-                if (digitalizedDocument.getExaminationOfAccusedDetails() != null && digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber() != null) {
-                    mobileNumbers.add(digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber());
-                }
-            }
+            List<String> mobileNumbers = getMobileNumbers(digitalizedDocument);
 
             DigitalizedDocumentResponse digitalizedDocumentResponse;
             if (mobileNumbers.contains(request.getMobileNumber())) {
@@ -143,6 +125,27 @@ public class DigitalDocumentService {
             log.error("method=updateDigitalDocument, status=FAILED, request={}", request, e);
             throw new CustomException(DIGITALIZE_UPDATE_EXCEPTION, "Digitalize document service exception");
         }
+    }
+
+    private List<String> getMobileNumbers(DigitalizedDocument digitalizedDocument) {
+        List<String> mobileNumbers = new ArrayList<>();
+        if (TypeEnum.PLEA.equals(digitalizedDocument.getType())) {
+            if (digitalizedDocument.getPleaDetails() != null && digitalizedDocument.getPleaDetails().getAccusedMobileNumber() != null) {
+                mobileNumbers.add(digitalizedDocument.getPleaDetails().getAccusedMobileNumber());
+            }
+        } else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
+            if (digitalizedDocument.getExaminationOfAccusedDetails() != null && digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber() != null) {
+                mobileNumbers.add(digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber());
+            }
+        } else if (TypeEnum.MEDIATION.equals(digitalizedDocument.getType())) {
+            if (digitalizedDocument.getMediationDetails() != null && digitalizedDocument.getMediationDetails().getPartyDetails() != null) {
+                digitalizedDocument.getMediationDetails().getPartyDetails().stream()
+                        .map(MediationPartyDetails::getMobileNumber)
+                        .filter(m -> m != null)
+                        .forEach(mobileNumbers::add);
+            }
+        }
+        return mobileNumbers;
     }
 
     private RequestInfo createInternalRequestInfoWithSystemUserType() {
