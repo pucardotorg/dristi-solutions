@@ -56,6 +56,11 @@ public class CompositeOrderService implements OrderProcessor {
                 order.setHearingNumber(compositeOrderItem.getHearingNumber());
             if (compositeOrderItem.getHearingType() != null && !compositeOrderItem.getHearingType().equals(oldHearingType))
                 order.setHearingType(compositeOrderItem.getHearingType());
+            /*If we are rescheduling the hearing to today and scheduling new hearing by passing a composite order having items- ACCEPT_RESCHEDULING_REQUEST,SCHEDULE_OF_HEARING_DATE, NOTICE
+             in order payload "scheduleHearingNumber" is having the hearingNumber of current scheduled hearing and while processing the SCHEDULE_OF_HEARING_DATE we are overriding
+             "scheduleHearingNumber" with new value, but while processing the 3rd composite item "NOTICE" it was again overriding the "scheduleHearingNumber" to old value, So now it will only be updated if
+              composite item has orderType= SCHEDULE_OF_HEARING_DATE
+            */
             if (compositeOrderItem.getScheduledHearingNumber() != null && E_SIGN.equalsIgnoreCase(order.getWorkflow().getAction()) && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(compositeOrderItem.getOrderType()))
                 order.setScheduledHearingNumber(compositeOrderItem.getScheduledHearingNumber());
 
