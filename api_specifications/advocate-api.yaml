@@ -1,0 +1,336 @@
+openapi: 3.0.0
+
+info:
+  title: Advocate Registry Service
+  description: |
+    This API manages advocate registration and related operations.
+    It provides endpoints for creating, updating, and searching advocate records.
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Base API path
+
+tags:
+  - name: Advocate
+    description: APIs to manage advocate registrations
+  - name: Clerk
+    description: APIs to manage advocate clerk registrations
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Advocate]
+      summary: Register a new advocate
+      description: Creates a new advocate registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+                authToken: e1be8e68-f294-4a44-ac67-3595c83e92dd
+                userInfo:
+                  uuid: 64220357-defd-4abd-bcc3-e4b278203917
+                  tenantId: kl
+              advocate:
+                tenantId: kl
+                individualId: 9e8d13f2-7d6c-4a8c-b9cb-97c1b8fd6f21
+                barCouncilNumber: KL/2016/1234
+                barCouncilName: Kerala Bar Council
+                yearOfEnrollment: 2016
+                specialization:
+                  - Criminal Law
+                  - Civil Law
+                status: PENDING_VERIFICATION
+      responses:
+        '200':
+          description: Advocate registered successfully
+          content:
+            application/json:
+              example:
+                advocates:
+                  - id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
+                    tenantId: kl
+                    barCouncilNumber: KL/2016/1234
+                    status: PENDING_VERIFICATION
+
+  /v1/_update:
+    post:
+      tags: [Advocate]
+      summary: Update advocate details
+      description: Update an existing advocate's information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              requestInfo:
+                apiId: Rainmaker
+              advocate:
+                id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
+                tenantId: kl
+                specialization:
+                  - Criminal Law
+                  - Cyber Law
+                status: ACTIVE
+      responses:
+        '200':
+          description: Advocate updated successfully
+          content:
+            application/json:
+              example:
+                advocates:
+                  - id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
+                    status: ACTIVE
+
+  /v1/_search:
+    post:
+      tags: [Advocate]
+      summary: Search advocates
+      description: Search for advocates based on criteria
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            example: 10
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            example: 0
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              requestInfo:
+                apiId: Rainmaker
+              criteria:
+                tenantId: kl
+                status: ACTIVE
+              tenantId: kl
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              example:
+                advocates:
+                  - id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
+                    individualId: 9e8d13f2-7d6c-4a8c-b9cb-97c1b8fd6f21
+                    barCouncilNumber: KL/2016/1234
+                    status: ACTIVE
+
+  /v1/status/_search:
+    post:
+      tags: [Advocate]
+      summary: Search advocates by status
+      description: Search for advocates by registration status
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            example: ACTIVE
+        - in: query
+          name: tenantId
+          schema:
+            type: string
+            example: kl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              requestInfo:
+                apiId: Rainmaker
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              example:
+                advocates:
+                  - id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
+                    status: ACTIVE
+
+  /v1/applicationnumber/_search:
+    post:
+      tags: [Advocate]
+      summary: Search advocate by application number
+      description: Search for an advocate by application number
+      parameters:
+        - in: query
+          name: applicationNumber
+          schema:
+            type: string
+            example: ADV-APP-2024-00012
+        - in: query
+          name: tenantId
+          schema:
+            type: string
+            example: kl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              requestInfo:
+                apiId: Rainmaker
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              example:
+                advocates:
+                  - id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
+                    barCouncilNumber: KL/2016/1234
+
+components:
+  schemas:
+
+    AdvocateRequest:
+      type: object
+      description: Request payload for advocate create/update
+      properties:
+        requestInfo:
+          description: DIGIT request metadata
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        advocate:
+          $ref: '#/components/schemas/Advocate'
+      example:
+        requestInfo:
+          apiId: Rainmaker
+        advocate:
+          tenantId: kl
+          barCouncilNumber: KL/2016/1234
+
+    AdvocateResponse:
+      type: object
+      description: Advocate response wrapper
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        advocates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Advocate'
+
+    AdvocateListResponse:
+      type: object
+      description: Advocate list response
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        advocates:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateCriteria'
+
+    AdvocateSearchRequest:
+      type: object
+      description: Search request with criteria
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/AdvocateCriteria'
+        tenantId:
+          type: string
+          example: kl
+
+    AdvocateSimpleSearchRequest:
+      type: object
+      description: Simple search request with RequestInfo only
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+
+    Advocate:
+      type: object
+      description: Advocate master entity
+      required: [tenantId, individualId]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique advocate identifier
+          example: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
+        tenantId:
+          type: string
+          description: Tenant identifier
+          example: kl
+        individualId:
+          type: string
+          format: uuid
+          description: Linked individual ID
+          example: 9e8d13f2-7d6c-4a8c-b9cb-97c1b8fd6f21
+        barCouncilNumber:
+          type: string
+          description: Bar council registration number
+          example: KL/2016/1234
+        barCouncilName:
+          type: string
+          description: Name of bar council
+          example: Kerala Bar Council
+        yearOfEnrollment:
+          type: integer
+          description: Year of enrollment
+          example: 2016
+        specialization:
+          type: array
+          description: Legal practice areas
+          items:
+            type: string
+          example:
+            - Criminal Law
+            - Civil Law
+        status:
+          type: string
+          description: Registration status
+          enum: [ACTIVE, INACTIVE, PENDING_VERIFICATION, REJECTED]
+          example: ACTIVE
+        additionalDetails:
+          type: object
+          description: Additional metadata
+          example:
+            remarks: Verified by bar council
+        auditDetails:
+          description: Audit metadata
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+
+    AdvocateCriteria:
+      type: object
+      description: Advocate search filters
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Filter by advocate ID
+          example: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
+        individualId:
+          type: string
+          format: uuid
+          description: Filter by individual ID
+          example: 9e8d13f2-7d6c-4a8c-b9cb-97c1b8fd6f21
+        barCouncilNumber:
+          type: string
+          description: Filter by bar council number
+          example: KL/2016/1234
+        status:
+          type: string
+          description: Filter by registration status
+          example: ACTIVE
+        tenantId:
+          type: string
+          description: Tenant identifier
+          example: kl
+

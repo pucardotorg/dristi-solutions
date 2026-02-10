@@ -1,0 +1,305 @@
+openapi: 3.0.0
+
+info:
+  title: Evidence Management Service
+  description: APIs for managing digital evidence artifacts in DRISTI
+  version: 1.0.0
+
+servers:
+  - url: /evidence-services
+    description: Evidence service base path
+
+tags:
+  - name: Evidence
+    description: APIs for evidence lifecycle
+  - name: Comments
+    description: APIs for managing evidence comments
+  - name: Signatures
+    description: APIs for managing digital signatures
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Evidence]
+      summary: Create evidence artifact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvidenceRequest'
+            example:
+              artifact:
+                tenantId: kl
+                artifactNumber: KL-000299-2024-AR3
+                filingNumber: KL-000299-2024
+                caseId: 2f6fe4ae-352f-420d-b243-679191b4ba01
+                artifactType: SWORN_STATEMENT
+                sourceType: COMPLAINANT
+                sourceID: IND-2024-09-29-000429
+                createdDate: 1729672787816
+                isActive: true
+                isEvidence: true
+                file:
+                  id: c5c3a28d-11d3-4dec-98b2-2ce8fa1079a7
+                  documentType: application/pdf
+                  fileStore: 21e76574-e6f7-44ab-8de0-d7c7b1230a3a
+              requestInfo:
+                apiId: Rainmaker
+                authToken: a4202e06-6a46-4602-8f05-21c2f063c129
+      responses:
+        '200':
+          description: Evidence created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceResponse'
+
+  /v1/_update:
+    post:
+      tags: [Evidence]
+      summary: Update evidence artifact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              artifact:
+                id: 6247bb14-405c-4c2c-b7a7-95aa6509b447
+                status: VERIFIED
+              requestInfo:
+                apiId: Rainmaker
+      responses:
+        '200':
+          description: Evidence updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceResponse'
+
+  /v1/_search:
+    post:
+      tags: [Evidence]
+      summary: Search evidence artifacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              criteria:
+                caseId: 2f6fe4ae-352f-420d-b243-679191b4ba01
+                tenantId: kl
+              requestInfo:
+                apiId: Rainmaker
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceSearchResponse'
+
+  /v1/_addcomment:
+    post:
+      tags: [Comments]
+      summary: Add comment to evidence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              artifactId: 6247bb14-405c-4c2c-b7a7-95aa6509b447
+              comment: Verified during hearing
+              requestInfo:
+                apiId: Rainmaker
+      responses:
+        '200':
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceResponse'
+
+  /v1/_getUnsignedArtifacts:
+    post:
+      tags: [Signatures]
+      summary: Get unsigned evidence artifacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              criteria:
+                tenantId: kl
+                isSigned: false
+              requestInfo:
+                apiId: Rainmaker
+      responses:
+        '200':
+          description: Unsigned artifacts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceSearchResponse'
+
+  /v1/_updateSignatureDetails:
+    post:
+      tags: [Signatures]
+      summary: Update digital signature details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              artifactId: 6247bb14-405c-4c2c-b7a7-95aa6509b447
+              signatureId: ESIGN-2024-00045
+              requestInfo:
+                apiId: Rainmaker
+      responses:
+        '200':
+          description: Signature updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceResponse'
+
+components:
+  schemas:
+
+    EvidenceRequest:
+      type: object
+      description: Evidence create or update request
+      properties:
+        artifact:
+          $ref: '#/components/schemas/EvidenceArtifact'
+        requestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+
+    EvidenceResponse:
+      type: object
+      description: Evidence response wrapper
+      properties:
+        artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceArtifact'
+
+    EvidenceSearchRequest:
+      type: object
+      description: Evidence search request
+      properties:
+        criteria:
+          $ref: '#/components/schemas/EvidenceSearchCriteria'
+        requestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+
+    EvidenceSearchResponse:
+      type: object
+      description: Evidence search response
+      properties:
+        artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceArtifact'
+
+    EvidenceArtifact:
+      type: object
+      description: Digital evidence artifact
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 6247bb14-405c-4c2c-b7a7-95aa6509b447
+        tenantId:
+          type: string
+          example: kl
+        artifactNumber:
+          type: string
+          example: KL-000299-2024-AR3
+        filingNumber:
+          type: string
+          example: KL-000299-2024
+        caseId:
+          type: string
+          format: uuid
+          example: 2f6fe4ae-352f-420d-b243-679191b4ba01
+        artifactType:
+          type: string
+          example: SWORN_STATEMENT
+        sourceType:
+          type: string
+          example: COMPLAINANT
+        sourceID:
+          type: string
+          example: IND-2024-09-29-000429
+        createdDate:
+          type: integer
+          format: int64
+          example: 1729672787816
+        isActive:
+          type: boolean
+          example: true
+        isEvidence:
+          type: boolean
+          example: true
+        owner:
+          type: string
+          example: First Complainant
+        file:
+          $ref: '#/components/schemas/EvidenceFile'
+        comments:
+          type: array
+          items:
+            type: string
+          example: []
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+
+    EvidenceFile:
+      type: object
+      description: File metadata
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: c5c3a28d-11d3-4dec-98b2-2ce8fa1079a7
+        documentType:
+          type: string
+          example: application/pdf
+        fileStore:
+          type: string
+          example: 21e76574-e6f7-44ab-8de0-d7c7b1230a3a
+
+    EvidenceSearchCriteria:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          example: kl
+        caseId:
+          type: string
+          format: uuid
+          example: 2f6fe4ae-352f-420d-b243-679191b4ba01
+
+    RequestInfo:
+      type: object
+      description: DIGIT request metadata
+      properties:
+        apiId:
+          type: string
+          example: Rainmaker
+        authToken:
+          type: string
+          example: a4202e06-6a46-4602-8f05-21c2f063c129
+
+    AuditDetails:
+      type: object
+      properties:
+        createdBy:
+          type: string
+          example: c1c4a708-afd6-4c9c-91a5-fd6c8517fb39
+        createdTime:
+          type: integer
+          example: 1729672787816
+

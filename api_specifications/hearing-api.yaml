@@ -1,0 +1,417 @@
+openapi: 3.0.0
+
+info:
+  title: Hearing Management Service
+  description: APIs to manage court hearings in DRISTI
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Hearing service base path
+
+tags:
+  - name: Hearings
+    description: APIs to create, update, search and manage hearings
+  - name: Witness Depositions
+    description: APIs related to witness deposition documents
+  - name: Bulk
+    description: APIs for bulk hearing operations
+  - name: Utilities
+    description: Utility endpoints
+
+paths:
+
+  /v1/create:
+    post:
+      tags: [Hearings]
+      summary: Create hearing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+                authToken: a4202e06-6a46-4602-8f05-21c2f063c129
+                msgId: 1730978058982|en_IN
+              tenantId: kl
+              hearing:
+                tenantId: kl
+                filingNumber:
+                  - KL-000105-2024
+                cnrNumbers:
+                  - KLKM520001742024
+                hearingType: APPEARANCE
+                status: true
+                attendees:
+                  - name: Anandu Menon
+                    individualId: IND-2024-09-24-000370
+                    type: Complainant
+                  - name: radhesh
+                    type: Complainant
+                  - name: Rithik Behera
+                    individualId: IND-2024-10-30-000636
+                    type: Advocate
+                startTime: 1731283200000
+                endTime: 1731283200000
+                workflow: null
+                documents: []
+                presidedBy:
+                  judgeId:
+                    - JUDGE_ID
+                  benchId: BENCH_ID
+                  courtId: KLKM52
+      responses:
+        '200':
+          description: Hearing created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HearingResponse'
+
+  /v1/update:
+    post:
+      tags: [Hearings]
+      summary: Update hearing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingRequest'
+      responses:
+        '200':
+          description: Hearing updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HearingResponse'
+
+  /v1/search:
+    post:
+      tags: [Hearings]
+      summary: Search hearings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingSearchRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+              criteria:
+                filingNumber: KL-000105-2024
+                tenantId: kl
+      responses:
+        '200':
+          description: Search result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HearingSearchResponse'
+
+  /v1/exists:
+    post:
+      tags: [Hearings]
+      summary: Check hearing exists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingExistsRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+              hearingId: 7d9fcb5a-1a6e-4a4b-8c6f-3bfa1d2d9d22
+      responses:
+        '200':
+          description: Exists result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HearingExistsResponse'
+
+  /v1/update/time:
+    post:
+      tags: [Hearings]
+      summary: Update hearing time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTimeRequest'
+            example:
+              hearingId: 7d9fcb5a-1a6e-4a4b-8c6f-3bfa1d2d9d22
+              startTime: 1731290400000
+              endTime: 1731294000000
+              requestInfo:
+                apiId: Rainmaker
+      responses:
+        '200':
+          description: Time updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateTimeResponse'
+
+  /v1/bulk/_reschedule:
+    post:
+      tags: [Bulk]
+      summary: Bulk reschedule hearings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkRescheduleRequest'
+      responses:
+        '202':
+          description: Bulk reschedule accepted
+
+  /v1/bulk/_update:
+    post:
+      tags: [Bulk]
+      summary: Bulk update hearings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HearingUpdateBulkRequest'
+      responses:
+        '202':
+          description: Bulk update accepted
+
+  /witnessDeposition/v1/uploadPdf:
+    post:
+      tags: [Witness Depositions]
+      summary: Upload deposition PDF
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                hearingId:
+                  type: string
+                  format: uuid
+                  description: Hearing identifier
+                file:
+                  type: string
+                  format: binary
+                  description: Deposition PDF file
+      responses:
+        '200':
+          description: Deposition uploaded successfully
+
+components:
+  schemas:
+
+    HearingRequest:
+      type: object
+      description: Hearing create/update request
+      required: [requestInfo, tenantId, hearing]
+      properties:
+        requestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        tenantId:
+          type: string
+          example: kl
+        hearing:
+          $ref: '#/components/schemas/Hearing'
+
+    HearingResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        hearing:
+          $ref: '#/components/schemas/Hearing'
+
+    HearingSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/HearingSearchCriteria'
+
+    HearingSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        hearings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hearing'
+
+    HearingExistsRequest:
+      type: object
+      required: [requestInfo, hearingId]
+      properties:
+        requestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        hearingId:
+          type: string
+          format: uuid
+
+    HearingExistsResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        exists:
+          type: boolean
+          example: true
+
+    UpdateTimeRequest:
+      type: object
+      required: [requestInfo, hearingId, startTime, endTime]
+      properties:
+        requestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        hearingId:
+          type: string
+          format: uuid
+        startTime:
+          type: integer
+          description: Epoch milliseconds
+        endTime:
+          type: integer
+          description: Epoch milliseconds
+
+    UpdateTimeResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+
+    BulkRescheduleRequest:
+      type: object
+      properties:
+        hearingIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        newDate:
+          type: integer
+          example: 1731369600000
+        requestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+
+    HearingUpdateBulkRequest:
+      type: object
+      properties:
+        hearings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hearing'
+        requestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+
+    Hearing:
+      type: object
+      description: Hearing entity
+      properties:
+        tenantId:
+          type: string
+          example: kl
+        filingNumber:
+          type: array
+          items:
+            type: string
+          example: [KL-000105-2024]
+        cnrNumbers:
+          type: array
+          items:
+            type: string
+          example: [KLKM520001742024]
+        hearingType:
+          type: string
+          example: APPEARANCE
+        status:
+          type: boolean
+          example: true
+        attendees:
+          type: array
+          items:
+            $ref: '#/components/schemas/HearingAttendee'
+        startTime:
+          type: integer
+          example: 1731283200000
+        endTime:
+          type: integer
+          example: 1731283200000
+        workflow:
+          type: object
+          nullable: true
+        documents:
+          type: array
+          items:
+            type: object
+        presidedBy:
+          $ref: '#/components/schemas/PresidedBy'
+
+    HearingAttendee:
+      type: object
+      properties:
+        name:
+          type: string
+        individualId:
+          type: string
+          example: IND-2024-09-24-000370
+        type:
+          type: string
+          example: Advocate
+
+    PresidedBy:
+      type: object
+      properties:
+        judgeId:
+          type: array
+          items:
+            type: string
+        benchId:
+          type: string
+        courtId:
+          type: string
+
+    HearingSearchCriteria:
+      type: object
+      properties:
+        filingNumber:
+          type: string
+        cnrNumber:
+          type: string
+        tenantId:
+          type: string
+
+    RequestInfo:
+      type: object
+      properties:
+        apiId:
+          type: string
+          example: Rainmaker
+        authToken:
+          type: string
+        msgId:
+          type: string
+        plainAccessRequest:
+          type: object
+
+    ResponseInfo:
+      type: object
+      properties:
+        status:
+          type: string
+          example: successful
+

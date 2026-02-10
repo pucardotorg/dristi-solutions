@@ -1,0 +1,321 @@
+openapi: 3.0.0
+
+info:
+  title: Application Service
+  description: APIs for managing applications in DRISTI
+  version: 1.0.0
+
+servers:
+  - url: /application-services
+    description: Application service base path
+
+tags:
+  - name: Application
+    description: APIs for creating, updating, searching, and managing applications
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Application]
+      summary: Create application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationRequest'
+            example:
+              application:
+                tenantId: kl
+                caseId: 2f6fe4ae-352f-420d-b243-679191b4ba01
+                applicationType: BAIL
+                status: DRAFT
+                isActive: true
+              requestInfo:
+                apiId: Rainmaker
+                authToken: 123e4567-e89b-12d3-a456-426614174000
+      responses:
+        '200':
+          description: Application created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+
+  /v1/_update:
+    post:
+      tags: [Application]
+      summary: Update application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              application:
+                id: 9b2d5c52-bc2f-4d92-8e39-1e94c6e50c41
+                status: SUBMITTED
+              requestInfo:
+                apiId: Rainmaker
+      responses:
+        '200':
+          description: Application updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+
+  /v1/_search:
+    post:
+      tags: [Application]
+      summary: Search applications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              criteria:
+                caseId: 2f6fe4ae-352f-420d-b243-679191b4ba01
+                tenantId: kl
+              pagination:
+                limit: 10
+                offset: 0
+              requestInfo:
+                apiId: Rainmaker
+      responses:
+        '200':
+          description: Search result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationSearchResponse'
+
+  /v1/_exists:
+    post:
+      tags: [Application]
+      summary: Check if application exists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              applicationNumber: APP-2024-000123
+              requestInfo:
+                apiId: Rainmaker
+      responses:
+        '200':
+          description: Exists response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationExistsResponse'
+
+  /v1/_addcomment:
+    post:
+      tags: [Application]
+      summary: Add comment to application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              applicationId: 9b2d5c52-bc2f-4d92-8e39-1e94c6e50c41
+              comment: Application verified and forwarded
+              requestInfo:
+                apiId: Rainmaker
+      responses:
+        '200':
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+
+components:
+  schemas:
+
+    ApplicationRequest:
+      type: object
+      description: Wrapper for application create/update request
+      required: [requestInfo, application]
+      properties:
+        requestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        application:
+          $ref: '#/components/schemas/Application'
+
+    ApplicationResponse:
+      type: object
+      description: Application response wrapper
+      properties:
+        responseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        application:
+          $ref: '#/components/schemas/Application'
+
+    ApplicationSearchRequest:
+      type: object
+      description: Application search request
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/ApplicationSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ApplicationSearchResponse:
+      type: object
+      description: Application search response
+      properties:
+        responseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+        totalCount:
+          type: integer
+          example: 1
+
+    ApplicationExistsRequest:
+      type: object
+      description: Request to check application existence
+      required: [requestInfo, applicationNumber]
+      properties:
+        requestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        applicationNumber:
+          type: string
+          example: APP-2024-000123
+
+    ApplicationExistsResponse:
+      type: object
+      description: Application existence response
+      properties:
+        responseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        exists:
+          type: boolean
+          example: true
+
+    ApplicationCommentRequest:
+      type: object
+      description: Add comment to application
+      required: [requestInfo, applicationId, comment]
+      properties:
+        requestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        applicationId:
+          type: string
+          format: uuid
+          example: 9b2d5c52-bc2f-4d92-8e39-1e94c6e50c41
+        comment:
+          type: string
+          example: Application verified and forwarded
+
+    Application:
+      type: object
+      description: Application entity
+      required: [tenantId, caseId, applicationType, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 9b2d5c52-bc2f-4d92-8e39-1e94c6e50c41
+        tenantId:
+          type: string
+          example: kl
+        caseId:
+          type: string
+          format: uuid
+          example: 2f6fe4ae-352f-420d-b243-679191b4ba01
+        applicationNumber:
+          type: string
+          example: APP-2024-000123
+        applicationType:
+          type: string
+          example: BAIL
+        status:
+          type: string
+          example: DRAFT
+        isActive:
+          type: boolean
+          example: true
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+        additionalDetails:
+          type: object
+          example: {}
+        auditDetails:
+          $ref: '#/components/schemas/AuditDetails'
+
+    ApplicationSearchCriteria:
+      type: object
+      description: Criteria for searching applications
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        caseId:
+          type: string
+          format: uuid
+          example: 2f6fe4ae-352f-420d-b243-679191b4ba01
+        applicationNumber:
+          type: string
+          example: APP-2024-000123
+        status:
+          type: string
+          example: DRAFT
+        tenantId:
+          type: string
+          example: kl
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          example: 10
+        offset:
+          type: integer
+          example: 0
+
+    RequestInfo:
+      type: object
+      properties:
+        apiId:
+          type: string
+          example: Rainmaker
+        authToken:
+          type: string
+          example: 123e4567-e89b-12d3-a456-426614174000
+
+    ResponseInfo:
+      type: object
+      properties:
+        status:
+          type: string
+          example: successful
+
+    Workflow:
+      type: object
+      description: Workflow metadata
+      properties:
+        action:
+          type: string
+          example: SUBMIT
+
+    AuditDetails:
+      type: object
+      properties:
+        createdBy:
+          type: string
+          example: 64220357-defd-4abd-bcc3-e4b278203917
+        createdTime:
+          type: integer
+          example: 1730969353967
+

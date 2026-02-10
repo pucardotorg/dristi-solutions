@@ -1,0 +1,434 @@
+openapi: 3.0.0
+
+info:
+  title: Case Management Service API
+  description: |
+    DIGIT Case Management Service responsible for retrieval of complete case files,
+    grouping of related cases and generation of case bundles.
+  version: 1.0.0
+
+servers:
+  - url: /casemanagement/v1
+    description: Case Management Service
+
+tags:
+  - name: Case Management
+    description: APIs for retrieving and managing case files
+  - name: Case Grouping
+    description: APIs for grouping and ungrouping cases
+  - name: Case Bundles
+    description: APIs for generating case bundles
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /case/files/_search:
+    post:
+      tags: [Case Management]
+      summary: Retrieve case files
+      description: Retrieve complete case file including hearings, witnesses, orders and artifacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseFileSearchRequest'
+            example:
+              requestInfo:
+                apiId: Dristi
+                authToken: jwt-token
+                msgId: 1730970507148|en_IN
+                userInfo:
+                  uuid: 9cfb721e-590c-455b-b255-9ff3045add25
+                  userName: judge01
+                  tenantId: kl
+              criteria:
+                filingNumber: KL-000105-2024
+                tenantId: kl
+      responses:
+        '200':
+          description: Case files retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseFileSearchResponse'
+
+  /case/groups:
+    post:
+      tags: [Case Grouping]
+      summary: Create case group
+      description: Create a logical group of related cases
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseGroupRequest'
+            example:
+              requestInfo:
+                apiId: Dristi
+                authToken: jwt-token
+              caseGroup:
+                groupName: Connected Matters – Bail
+                description: Bail related connected cases
+                caseIds:
+                  - 7f7a7a0e-2c7d-4b79-b69a-9c5a2c4b31d1
+                  - 1e0c44e6-6c57-45e6-8f95-bcfe09a2a831
+      responses:
+        '201':
+          description: Case group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseGroupResponse'
+
+  /case/groups/{groupId}:
+    delete:
+      tags: [Case Grouping]
+      summary: Delete case group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Case group identifier
+          example: a01b2c3d-45ef-6789-abcd-1234567890ef
+      responses:
+        '200':
+          description: Case group deleted successfully
+
+  /case/bundles:
+    post:
+      tags: [Case Bundles]
+      summary: Generate case bundle
+      description: Generate downloadable bundle for a single case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseBundleRequest'
+            example:
+              requestInfo:
+                apiId: Dristi
+                authToken: jwt-token
+              caseId: 7f7a7a0e-2c7d-4b79-b69a-9c5a2c4b31d1
+              includeDocuments: true
+      responses:
+        '202':
+          description: Case bundle generation initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseBundleResponse'
+
+  /case/bundles/bulk:
+    post:
+      tags: [Case Bundles]
+      summary: Generate case bundles in bulk
+      description: Generate bundles for multiple cases using search criteria
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkCaseBundleRequest'
+            example:
+              requestInfo:
+                apiId: Dristi
+                authToken: jwt-token
+              criteria:
+                caseType: CRIMINAL
+                status:
+                  - ACTIVE
+                fromDate: 2024-01-01
+                toDate: 2024-12-31
+      responses:
+        '202':
+          description: Bulk case bundle generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkCaseBundleResponse'
+
+components:
+
+  schemas:
+
+    CaseFileSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          description: DIGIT request metadata
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/CaseSearchCriteria'
+
+    CaseSearchCriteria:
+      type: object
+      description: Search parameters for identifying a case
+      properties:
+        caseId:
+          type: string
+          format: uuid
+          description: Internal case UUID
+          example: 7f7a7a0e-2c7d-4b79-b69a-9c5a2c4b31d1
+        filingNumber:
+          type: string
+          description: Filing number of the case
+          example: KL-000105-2024
+        caseNumber:
+          type: string
+          description: Court assigned case number
+          example: CNR-KLKM52-000123-2024
+        tenantId:
+          type: string
+          description: Tenant identifier
+          example: kl
+      anyOf:
+        - required: [caseId]
+        - required: [filingNumber]
+        - required: [caseNumber]
+
+    CaseFileSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        caseFiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseFile'
+
+    CaseFile:
+      type: object
+      description: Complete case file
+      properties:
+        case:
+          $ref: '#/components/schemas/CourtCase'
+        hearings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hearing'
+        witnesses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Witness'
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderTasks'
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Application'
+        evidence:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artifact'
+
+    CourtCase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 7f7a7a0e-2c7d-4b79-b69a-9c5a2c4b31d1
+        caseNumber:
+          type: string
+          example: CNR-KLKM52-000123-2024
+        filingNumber:
+          type: string
+          example: KL-000105-2024
+        status:
+          type: string
+          example: ACTIVE
+
+    Hearing:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        hearingNumber:
+          type: string
+          example: HRG-2024-01
+
+    Witness:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Ramesh Kumar
+
+    OrderTasks:
+      type: object
+      properties:
+        order:
+          $ref: '#/components/schemas/Order'
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderNumber:
+          type: string
+          example: ORD-KL-2024-011
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskType:
+          type: string
+          example: VERIFY_DOCUMENT
+        status:
+          type: string
+          example: PENDING
+
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        applicationNumber:
+          type: string
+          example: APP-KL-2024-221
+
+    Artifact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: BailBond.pdf
+
+    CaseGroupRequest:
+      type: object
+      required: [requestInfo, caseGroup]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        caseGroup:
+          $ref: '#/components/schemas/CaseGroup'
+
+    CaseGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        caseIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        groupName:
+          type: string
+          example: Connected Matters – Bail
+        description:
+          type: string
+          example: Bail related connected cases
+        status:
+          type: string
+          example: ACTIVE
+
+    CaseGroupResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        caseGroup:
+          $ref: '#/components/schemas/CaseGroup'
+
+    CaseBundleRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        caseId:
+          type: string
+          format: uuid
+          example: 7f7a7a0e-2c7d-4b79-b69a-9c5a2c4b31d1
+        includeDocuments:
+          type: boolean
+          example: true
+
+    CaseBundleResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        bundleId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          example: IN_PROGRESS
+        downloadUrl:
+          type: string
+          format: uri
+          example: https://dristi-kerala-qa.pucar.org/bundles/123/download
+
+    BulkCaseBundleRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          type: object
+          properties:
+            caseType:
+              type: string
+              example: CRIMINAL
+            status:
+              type: array
+              items:
+                type: string
+            fromDate:
+              type: string
+              format: date
+            toDate:
+              type: string
+              format: date
+
+    BulkCaseBundleResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        bulkRequestId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          example: IN_PROGRESS
+        totalCases:
+          type: integer
+          example: 120
+        processedCases:
+          type: integer
+          example: 45
+        failedCases:
+          type: integer
+          example: 2
+

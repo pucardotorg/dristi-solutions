@@ -1,0 +1,292 @@
+openapi: 3.0.0
+
+info:
+  title: Case and Witness Registry
+  description: APIs for managing court cases, witnesses and related entities.
+  version: 2.0.0
+
+servers:
+  - url: /api
+
+tags:
+  - name: Case
+  - name: Witness
+  - name: Address
+  - name: Utilities
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Case]
+      summary: Create a new case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+            example:
+              RequestInfo:
+                apiId: Rainmaker
+                authToken: e1be8e68-f294-4a44-ac67-3595c83e92dd
+                msgId: 1730969385812|en_IN
+                userInfo:
+                  uuid: 64220357-defd-4abd-bcc3-e4b278203917
+                  userName: "6397742296"
+                  tenantId: kl
+              case:
+                tenantId: kl
+                resolutionMechanism: COURT
+                caseTitle: "Radhesh vs State"
+                caseDescription: "Cheque bounce case"
+                filingNumber: "KL-000454-2024"
+                caseCategory: CRIMINAL
+                status: DRAFT_IN_PROGRESS
+      responses:
+        '201':
+          description: Case created
+          content:
+            application/json:
+              example:
+                cases:
+                  - id: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+                    tenantId: kl
+                    filingNumber: "KL-000454-2024"
+                    status: DRAFT_IN_PROGRESS
+
+  /v1/_update:
+    post:
+      tags: [Case]
+      summary: Update case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+            example:
+              RequestInfo:
+                apiId: Rainmaker
+                authToken: e1be8e68-f294-4a44-ac67-3595c83e92dd
+                userInfo:
+                  uuid: 64220357-defd-4abd-bcc3-e4b278203917
+                  tenantId: kl
+              case:
+                id: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+                tenantId: kl
+                caseTitle: "Radhesh vs State"
+                status: DRAFT_IN_PROGRESS
+                workflow:
+                  action: SAVE_DRAFT
+      responses:
+        '200':
+          description: Case updated
+          content:
+            application/json:
+              example:
+                cases:
+                  - id: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+                    status: DRAFT_IN_PROGRESS
+
+  /v1/_search:
+    post:
+      tags: [Case]
+      summary: Search cases
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              RequestInfo:
+                apiId: Rainmaker
+              criteria:
+                tenantId: kl
+                filingNumber: "KL-000454-2024"
+                defaultFields: false
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              example:
+                cases:
+                  - id: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+                    caseTitle: "Radhesh vs State"
+                    filingNumber: "KL-000454-2024"
+                    status: DRAFT_IN_PROGRESS
+
+  /v1/_exists:
+    post:
+      tags: [Case]
+      summary: Check if case exists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              tenantId: kl
+              filingNumber: "KL-000454-2024"
+      responses:
+        '200':
+          description: Exists response
+          content:
+            application/json:
+              example:
+                exists: true
+
+  /v2/search/details:
+    post:
+      tags: [Case]
+      summary: Get detailed case information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              RequestInfo:
+                apiId: Rainmaker
+              criteria:
+                tenantId: kl
+                caseId: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+      responses:
+        '200':
+          description: Case details
+          content:
+            application/json:
+              example:
+                case:
+                  id: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+                  caseTitle: "Radhesh vs State"
+                  filingNumber: "KL-000454-2024"
+                  caseCategory: CRIMINAL
+                  status: DRAFT_IN_PROGRESS
+
+  /v1/address/_add:
+    post:
+      tags: [Address]
+      summary: Add address to party
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              RequestInfo:
+                apiId: Rainmaker
+              partyAddressList:
+                - caseId: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+                  partyId: PARTY_ID
+                  address:
+                    city: Kollam
+                    district: Kollam
+                    state: Kerala
+                    pincode: "691013"
+                    locality: Vidya Nagar
+      responses:
+        '200':
+          description: Address added
+          content:
+            application/json:
+              example:
+                partyAddressList:
+                  - caseId: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+                    partyId: PARTY_ID
+
+  /v1/_generatePdf:
+    post:
+      tags: [Utilities]
+      summary: Generate case PDF
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              RequestInfo:
+                apiId: Rainmaker
+              criteria:
+                tenantId: kl
+                caseId: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+      responses:
+        '200':
+          description: PDF generated
+          content:
+            application/json:
+              example:
+                message: "PDF generated successfully"
+
+components:
+  schemas:
+
+    CaseRequest:
+      type: object
+      description: Wrapper object for case create/update
+      properties:
+        RequestInfo:
+          $ref: '#/components/schemas/RequestInfo'
+        case:
+          $ref: '#/components/schemas/CourtCase'
+      example:
+        RequestInfo:
+          apiId: Rainmaker
+        case:
+          tenantId: kl
+          caseTitle: "Radhesh vs State"
+
+    CourtCase:
+      type: object
+      description: Court case entity
+      properties:
+        id:
+          type: string
+          example: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+        tenantId:
+          type: string
+          example: kl
+        caseTitle:
+          type: string
+          example: "Radhesh vs State"
+        filingNumber:
+          type: string
+          example: "KL-000454-2024"
+        caseCategory:
+          type: string
+          example: CRIMINAL
+        status:
+          type: string
+          example: DRAFT_IN_PROGRESS
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+
+    CaseSearchCriteria:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          example: kl
+        filingNumber:
+          type: string
+          example: "KL-000454-2024"
+        defaultFields:
+          type: boolean
+          example: false
+
+    Workflow:
+      type: object
+      properties:
+        action:
+          type: string
+          example: SAVE_DRAFT
+
+    RequestInfo:
+      type: object
+      properties:
+        apiId:
+          type: string
+          example: Rainmaker
+        authToken:
+          type: string
+          example: e1be8e68-f294-4a44-ac67-3595c83e92dd
+        msgId:
+          type: string
+          example: 1730969385812|en_IN
+

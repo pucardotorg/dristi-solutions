@@ -1,0 +1,271 @@
+openapi: 3.0.0
+info:
+  title: Order Management Service
+  description: APIs to manage court orders in DRISTI
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Base API path
+
+tags:
+  - name: Orders
+  - name: Order Items
+
+paths:
+
+  /v1/create:
+    post:
+      tags: [Orders]
+      summary: Create a new court order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+                authToken: a4202e06-6a46-4602-8f05-21c2f063c129
+                msgId: 1730977593273|en_IN
+              order:
+                tenantId: kl
+                filingNumber: KL-000105-2024
+                cnrNumber: KLKM520001742024
+                hearingNumber: KL-000105-2024-HR1
+                orderType: undefined
+                status: DRAFT_IN_PROGRESS
+                isActive: true
+                createdDate: 1730794124145
+                additionalDetails:
+                  isReIssueSummons: true
+      responses:
+        '200':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /v1/update:
+    post:
+      tags: [Orders]
+      summary: Update an existing order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '200':
+          description: Order updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /v1/search:
+    post:
+      tags: [Orders]
+      summary: Search orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderSearchRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+                authToken: 9e737b13-14d2-45e7-8b96-09de66952e81
+                msgId: 1730970507148|en_IN
+              criteria:
+                tenantId: kl
+                filingNumber: KL-000105-2024
+              pagination:
+                limit: 10
+                offset: 0
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+
+  /v1/exists:
+    post:
+      tags: [Orders]
+      summary: Check order existence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderExistsRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+                authToken: token
+              orderIds:
+                - 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
+      responses:
+        '200':
+          description: Exists response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderExistsResponse'
+
+components:
+  schemas:
+
+    OrderRequest:
+      type: object
+      required: [requestInfo, order]
+      properties:
+        requestInfo:
+          description: Metadata for API request
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+        order:
+          $ref: '#/components/schemas/Order'
+
+    OrderResponse:
+      type: object
+      properties:
+        responseInfo:
+          description: Metadata for API response
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        order:
+          $ref: '#/components/schemas/Order'
+
+    Order:
+      type: object
+      description: Court order entity
+      required: [tenantId, orderType, status, isActive, createdDate]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique order identifier
+          example: 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
+        tenantId:
+          type: string
+          description: Tenant identifier
+          example: kl
+        filingNumber:
+          type: string
+          description: Case filing number
+          example: KL-000105-2024
+        cnrNumber:
+          type: string
+          description: CNR number
+          example: KLKM520001742024
+        hearingNumber:
+          type: string
+          description: Hearing reference number
+          example: KL-000105-2024-HR1
+        orderNumber:
+          type: string
+          description: Generated order number
+          example: KL-000105-2024-OR3
+        orderType:
+          type: string
+          description: Type of order
+          example: undefined
+        status:
+          type: string
+          description: Current order status
+          example: DRAFT_IN_PROGRESS
+        isActive:
+          type: boolean
+          description: Flag indicating if order is active
+          example: true
+        createdDate:
+          type: integer
+          description: Epoch timestamp when order was created
+          example: 1730794124145
+        additionalDetails:
+          type: object
+          description: Additional order metadata
+          example:
+            isReIssueSummons: true
+        auditDetails:
+          description: Audit metadata
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails
+
+    OrderSearchRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+        criteria:
+          $ref: '#/components/schemas/OrderSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    OrderSearchCriteria:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          description: Tenant filter
+          example: kl
+        filingNumber:
+          type: string
+          description: Filing number filter
+          example: KL-000105-2024
+
+    OrderListResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        totalCount:
+          type: integer
+          example: 1
+
+    OrderExistsRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+        orderIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    OrderExistsResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        order:
+          type: array
+          items:
+            type: object
+            properties:
+              orderId:
+                type: string
+                example: 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
+              exists:
+                type: boolean
+                example: true
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          example: 10
+        offset:
+          type: integer
+          example: 0
+
