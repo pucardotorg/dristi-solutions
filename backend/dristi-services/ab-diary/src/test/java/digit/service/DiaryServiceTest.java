@@ -5,6 +5,7 @@ import digit.enrichment.ADiaryEnrichment;
 import digit.kafka.Producer;
 import digit.repository.DiaryRepository;
 import digit.util.CaseUtil;
+import digit.util.DateTimeUtil;
 import digit.util.FileStoreUtil;
 import digit.util.PdfServiceUtil;
 import digit.validators.ADiaryValidator;
@@ -21,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ByteArrayResource;
 
+import java.time.ZoneId;
 import java.util.*;
 
 import static digit.config.ServiceConstants.*;
@@ -61,6 +63,9 @@ public class DiaryServiceTest {
 
     @Mock
     private CaseUtil caseUtil;
+
+    @Mock
+    private DateTimeUtil dateTimeUtil;
 
     @InjectMocks
     private DiaryService diaryService;

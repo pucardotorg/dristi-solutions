@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 public class UserUtilTest {
@@ -32,6 +33,9 @@ public class UserUtilTest {
 
     @Mock
     private Configuration configs;
+
+    @Mock
+    private DateTimeUtil dateTimeUtil;
 
     @InjectMocks
     private UserUtil userUtil;
@@ -106,6 +110,7 @@ public class UserUtilTest {
 
         when(configs.getUserSearchEndpoint()).thenReturn("/user/search");
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(responseMap);
+        when(dateTimeUtil.toEpochMillis(anyString(), anyString())).thenThrow(new RuntimeException("Invalid date format"));
 
         // Test & Verify
         assertThrows(CustomException.class, () -> userUtil.userCall(userRequest, uri));
