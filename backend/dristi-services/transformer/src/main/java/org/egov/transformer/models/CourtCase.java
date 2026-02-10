@@ -264,7 +264,7 @@ public class CourtCase {
         if (this.getJudgementDate() != null) {
             transformedDates.setJudgementDate(parseDate(this.getJudgementDate(), zoneId));
         }
-        this.setDates(transformedDates);
+        this.dates = transformedDates;
     }
 
     @JsonProperty("filingDate")
