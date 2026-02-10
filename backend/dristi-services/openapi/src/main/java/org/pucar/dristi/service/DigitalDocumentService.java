@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -62,6 +63,10 @@ public class DigitalDocumentService {
 
             if (!mobileNumbers.contains(request.getMobileNumber())) {
                 return null;
+            }
+
+            if (TypeEnum.MEDIATION.equals(digitalizedDocument.getType())) {
+                filterMediationPartyDetails(digitalizedDocument, request.getMobileNumber());
             }
 
             return response;
@@ -141,11 +146,19 @@ public class DigitalDocumentService {
             if (digitalizedDocument.getMediationDetails() != null && digitalizedDocument.getMediationDetails().getPartyDetails() != null) {
                 digitalizedDocument.getMediationDetails().getPartyDetails().stream()
                         .map(MediationPartyDetails::getMobileNumber)
-                        .filter(m -> m != null)
+                        .filter(Objects::nonNull)
                         .forEach(mobileNumbers::add);
             }
         }
         return mobileNumbers;
+    }
+
+    private void filterMediationPartyDetails(DigitalizedDocument digitalizedDocument, String mobileNumber) {
+        if (digitalizedDocument.getMediationDetails() != null && digitalizedDocument.getMediationDetails().getPartyDetails() != null) {
+            digitalizedDocument.getMediationDetails().getPartyDetails().stream()
+                    .filter(party -> !mobileNumber.equals(party.getMobileNumber()))
+                    .forEach(party -> party.setMobileNumber(null));
+        }
     }
 
     private RequestInfo createInternalRequestInfoWithSystemUserType() {
