@@ -2247,7 +2247,11 @@ const GenerateOrdersV2 = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+            updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          } else {
+            updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
@@ -2297,7 +2301,11 @@ const GenerateOrdersV2 = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+            updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          } else {
+            updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
@@ -2353,7 +2361,11 @@ const GenerateOrdersV2 = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+            updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          } else {
+            updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
@@ -3394,7 +3406,12 @@ const GenerateOrdersV2 = () => {
 
         cfg?.forEach((section) => {
           section?.body?.forEach((field) => {
-            if (!field?.populators?.hideInForm && field?.isMandatory && hearingDateKeys.has(field?.key)) {
+            if (
+              !field?.populators?.hideInForm &&
+              field?.isMandatory &&
+              hearingDateKeys.has(field?.key) &&
+              !item?.orderSchema?.additionalDetails?.formdata?.[field?.key]
+            ) {
               mandatoryDateFields.push(field);
             }
           });
@@ -3537,7 +3554,6 @@ const GenerateOrdersV2 = () => {
 
             return acceptIndex !== -1 && scheduleIndex > acceptIndex;
           })();
-
           if (!hasValidRescheduleBypass) {
             setShowErrorToast({
               label: isHearingScheduled
