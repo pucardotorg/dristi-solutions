@@ -2362,9 +2362,9 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
-            updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+            updatedFormdata.dateOfHearing = formatDate(new Date(currentOrder?.nextHearingDate));
           } else {
-            updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+            updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
           }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
@@ -3361,6 +3361,19 @@ const GenerateOrdersV2 = () => {
         };
       }
 
+      if (orderFormData?.orderType?.code === "ACCEPT_RESCHEDULING_REQUEST") {
+        const hearingDate = orderFormData?.newHearingDate;
+        const baseOrder = updatedOrderData && typeof updatedOrderData === "object" ? updatedOrderData : {};
+
+        if (hearingDate && hearingDate !== todayDate) {
+          updatedOrderData = {
+            ...baseOrder,
+            nextHearingDate: null,
+            purposeOfNextHearing: null,
+          };
+        }
+      }
+
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
       if (isAcceptBailOrder && requestBailBond) {
         await createPendingTaskForJudge(updateOrderResponse?.order);
@@ -3958,7 +3971,7 @@ const GenerateOrdersV2 = () => {
       await updateOrder(
         {
           ...currentOrder,
-          ...(hearingNumber && { hearingNumber: currentOrder?.hearingNumber || hearingNumber }),
+          ...(hearingNumber && { hearingNumber: currentOrder?.hearingNumber || hearingNumber, scheduledHearingNumber: null }),
           additionalDetails: {
             ...currentOrder?.additionalDetails,
             businessOfTheDay: businessOfTheDay,

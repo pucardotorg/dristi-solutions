@@ -1194,11 +1194,12 @@ const TasksComponent = ({
     return {
       handleClose: () => {
         if (isPaymentCompleted) {
-          triggerSurvey("TASK_PAYMENT", () => {
+          triggerSurvey("TASK_PAYMENT", async () => {
             setShowCourierServiceModal(false);
             setHideCancelButton(false);
             setCourierServicePendingTask(null);
             setCourierOrderDetails({});
+            await refetch()
           });
         } else {
           setShowCourierServiceModal(false);
