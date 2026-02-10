@@ -39,7 +39,7 @@ public class DateStringConverter {
             instant = Instant.ofEpochMilli(timestamp);
         }
         // Convert Instant to LocalDate using IST time zone
-        LocalDate localDate = instant.atZone(ZoneId.of(config.getApplicationZoneId())).toLocalDate();
+        LocalDate localDate = instant.atZone(ZoneId.of(config.getZoneId())).toLocalDate();
 
         // Format the LocalDate object to the new date string
         return localDate.format(newFormat);

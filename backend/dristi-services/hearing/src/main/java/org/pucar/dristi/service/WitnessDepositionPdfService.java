@@ -191,7 +191,7 @@ public class WitnessDepositionPdfService {
             return null;
         }
         LocalDate birthDate = dateOfBirth.toInstant().atZone(ZoneId.of(config.getZoneId())).toLocalDate();
-        Period period = Period.between(birthDate, LocalDate.now());
+        Period period = Period.between(birthDate, LocalDate.now(ZoneId.of(config.getZoneId())));
         return period.getYears();
     }
 

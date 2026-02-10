@@ -29,11 +29,12 @@ public class DateUtilTest {
 
     @Test
     public void shouldReturnStartAndEndOfYear2021InSeconds() {
+        when(config.getZoneId()).thenReturn("Asia/Kolkata");
         List<Long> result = dateUtil.getYearInSeconds(2021);
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertEquals(1609459200000L, result.get(0));
-        assertEquals(1640995199999L, result.get(1));
+        assertEquals(1609439400000L, result.get(0));
+        assertEquals(1640975399999L, result.get(1));
     }
 
     @Test
@@ -43,36 +44,37 @@ public class DateUtilTest {
 
     @Test
     public void shouldHandleEdgeCaseYears() {
+        when(config.getZoneId()).thenReturn("Asia/Kolkata");
         List<Long> result1970 = dateUtil.getYearInSeconds(1970);
-        assertEquals(0, result1970.get(0));
+        assertEquals(-19800000L, result1970.get(0));
         // Test leap year
         List<Long> result2024 = dateUtil.getYearInSeconds(2024);
         assertNotNull(result2024);
         assertEquals(2, result2024.size());
-        assertEquals(1704067200000L, result2024.get(0)); // 2024-01-01 00:00:00 UTC
-        assertEquals(1735689599999L, result2024.get(1)); // 2024-12-31 23:59:59.999 UTC
+        assertEquals(1704047400000L, result2024.get(0)); // 2024-01-01 00:00:00 IST
+        assertEquals(1735669799999L, result2024.get(1)); // 2024-12-31 23:59:59.999 IST
     }
 
     @Test
     public void shouldReturnEpochFromLocalDateTime() {
         // Only set up the mock here
-        when(config.getZoneId()).thenReturn("UTC");
+        when(config.getZoneId()).thenReturn("Asia/Kolkata");
 
         LocalDateTime dateTime = LocalDateTime.of(2025, 6, 26, 20, 57, 0);
         Long epochMillis = dateUtil.getEpochFromLocalDateTime(dateTime);
-        assertEquals(1750971420000L, epochMillis);
+        assertEquals(1750951620000L, epochMillis);
     }
 
     public void shouldReturnEpochFromLocalDateInUTC() {
         // Arrange
-        when(config.getZoneId()).thenReturn("UTC");
+        when(config.getZoneId()).thenReturn("Asia/Kolkata");
         LocalDate date = LocalDate.of(2025, 6, 26);
 
         // Act
         Long epochMillis = dateUtil.getEpochFromLocalDate(date);
 
         // Assert
-        assertEquals(1750896000000L, epochMillis); // 2025-06-26T00:00:00Z in millis
+        assertEquals(1750876200000L, epochMillis); // 2025-06-26T00:00:00+05:30 in millis
     }
 
     @Test

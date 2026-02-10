@@ -12,8 +12,6 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Component
@@ -91,14 +89,11 @@ public class UserUtil {
      * @return Long value of date
      */
     private Long dateTolong(String date,String format){
-        SimpleDateFormat f = new SimpleDateFormat(format);
-        Date d = null;
         try {
-            d = f.parse(date);
-        } catch (ParseException e) {
-            throw new CustomException(INVALID_DATE_FORMAT_CODE,INVALID_DATE_FORMAT_MESSAGE);
+            return DateTimeUtil.toEpochMillis(date, format);
+        } catch (Exception e) {
+            throw new CustomException(INVALID_DATE_FORMAT_CODE, INVALID_DATE_FORMAT_MESSAGE);
         }
-        return  d.getTime();
     }
 
     /**
