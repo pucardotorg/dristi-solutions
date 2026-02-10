@@ -18,6 +18,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static pucar.config.ServiceConstants.E_SIGN;
+import static pucar.config.ServiceConstants.SCHEDULE_OF_HEARING_DATE;
+
 @Service
 @Slf4j
 public class CompositeOrderService implements OrderProcessor {
@@ -53,7 +56,7 @@ public class CompositeOrderService implements OrderProcessor {
                 order.setHearingNumber(compositeOrderItem.getHearingNumber());
             if (compositeOrderItem.getHearingType() != null && !compositeOrderItem.getHearingType().equals(oldHearingType))
                 order.setHearingType(compositeOrderItem.getHearingType());
-            if (compositeOrderItem.getScheduledHearingNumber() != null)
+            if (compositeOrderItem.getScheduledHearingNumber() != null && E_SIGN.equalsIgnoreCase(order.getWorkflow().getAction()) && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType()))
                 order.setScheduledHearingNumber(compositeOrderItem.getScheduledHearingNumber());
 
         }
