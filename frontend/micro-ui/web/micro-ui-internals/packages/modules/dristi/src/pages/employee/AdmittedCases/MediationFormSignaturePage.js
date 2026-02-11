@@ -73,7 +73,7 @@ const MediationFormSignaturePage = () => {
 
   const { handleEsign } = isUserLoggedIn ? eSignLoggedIn : eSignOpenApi;
 
-  const pageModule = isCitizen ? "ci" : "en";
+  const pageModule = isUserLoggedIn ? (isCitizen ? "ci" : "en") : "ci";
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -522,14 +522,10 @@ const MediationFormSignaturePage = () => {
     }
 
     if (!documentNumber) {
-      console.log("redirect", documentNumber);
-
       history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
   }, [documentNumber, history, ifUserAuthorized, isUserLoggedIn, tenantId, type, userType]);
 
-  debugger;
-  console.log("inside mediation form", signatureDocumentId);
   return (
     <React.Fragment>
       <div className="mediation-form-signature">

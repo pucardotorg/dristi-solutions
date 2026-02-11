@@ -193,7 +193,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/digitalized-document-sign`,
     `${path}/home/mediation-form-sign`,
   ];
-  debugger;
+
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;
@@ -210,10 +210,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   ) {
     history.push(`${path}/home`);
   }
-  console.log("retrievedObject", retrievedObject, result);
-  if (retrievedObject && openRoute.includes(retrievedObject?.path)) {
-    console.log("result", result, fileStoreId);
 
+  if (retrievedObject && openRoute.includes(retrievedObject?.path)) {
     if (result) {
       sessionStorage.setItem("isSignSuccess", result);
     }
