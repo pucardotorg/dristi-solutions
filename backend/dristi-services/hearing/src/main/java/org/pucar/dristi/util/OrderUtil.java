@@ -109,7 +109,7 @@ public class OrderUtil {
 
         OrderSearchRequest searchRequest = OrderSearchRequest.builder()
                 .criteria(criteria)
-                .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
+                .pagination(Pagination.builder().limit(100.0).offSet(0.0).order(org.pucar.dristi.web.models.Order.ASC).sortBy("createdDate").build())
                 .build();
 
         OrderListResponse response = getOrders(searchRequest);
