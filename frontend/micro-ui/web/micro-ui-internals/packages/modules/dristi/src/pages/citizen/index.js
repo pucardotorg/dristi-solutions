@@ -69,8 +69,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
 
-  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  let homePath = `/${window?.contextPath}/${userInfoType}/home/home-pending-task`;
+  if (!isEpostUser && userInfoType === "employee") homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
 
   const isLitigantPartialRegistered = useMemo(() => {
