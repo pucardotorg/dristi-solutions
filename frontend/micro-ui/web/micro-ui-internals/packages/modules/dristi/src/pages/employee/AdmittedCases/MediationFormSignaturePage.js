@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { ActionBar, Button, Toast, Loader, CloseSvg, LabelFieldPair, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
 import useSearchDigitalization from "../../../../../submissions/src/hooks/submissions/useSearchDigitalization";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
@@ -12,10 +12,14 @@ import { DRISTIService } from "../../../services";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import Modal from "../../../components/Modal";
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
+import useOpenApiSearchDigitizedDocuments from "../../../../../submissions/src/hooks/submissions/useOpenApiSearchDigitizedDocuments";
+import { useQuery } from "react-query";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { Urls } from "../../../../../submissions/src/hooks/services/Urls";
+import useESignOpenApi from "../../../../../submissions/src/hooks/submissions/useESignOpenApi";
 
 const MediationFormSignaturePage = () => {
   const { t } = useTranslation();
-  const tenantId = Digit.ULBService.getCurrentTenantId();
   const history = useHistory();
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
@@ -27,7 +31,16 @@ const MediationFormSignaturePage = () => {
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [loader, setLoader] = useState(false);
   const [uploadLoader, setUploadLoader] = useState(false);
-  const { documentNumber, filingNumber, courtId } = Digit.Hooks.useQueryParams();
+  const {
+    digitalizedDocumentId: documentId,
+    documentNumber: documentNumberUrl,
+    filingNumber,
+    courtId,
+    type,
+    tenantId: tenantIdFromUrl,
+  } = Digit.Hooks.useQueryParams();
+  const documentNumber = documentId || documentNumberUrl;
+  const tenantId = tenantIdFromUrl || Digit.ULBService.getCurrentTenantId();
   const caseCourtId = courtId || localStorage.getItem("courtId");
   const [showUploadSignatureModal, setShowUploadSignatureModal] = useState(false);
   const [showPartySelectionModal, setShowPartySelectionModal] = useState(false);
@@ -42,7 +55,6 @@ const MediationFormSignaturePage = () => {
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [showSkipConfirmModal, setShowSkipConfirmModal] = useState(false);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
-  const { handleEsign } = Digit.Hooks.orders.useESign();
   const [selectedParty, setSelectedParty] = useState(() => {
     try {
       return JSON.parse(sessionStorage.getItem("selectedParty")) || null;
@@ -50,6 +62,16 @@ const MediationFormSignaturePage = () => {
       return null;
     }
   });
+  const location = useLocation();
+  const token = window.localStorage.getItem("token");
+  const isAuthorised = location?.state?.isAuthorised;
+  const isUserLoggedIn = Boolean(token);
+  const mobileNumber = location?.state?.mobileNumber;
+
+  const eSignLoggedIn = Digit.Hooks.orders.useESign();
+  const eSignOpenApi = useESignOpenApi();
+
+  const { handleEsign } = isUserLoggedIn ? eSignLoggedIn : eSignOpenApi;
 
   const pageModule = isCitizen ? "ci" : "en";
 
@@ -85,6 +107,21 @@ const MediationFormSignaturePage = () => {
     };
   }, [name]);
 
+  const {
+    data: digitizedDocumentsOpenData,
+    isLoading: isDigitizedDocumentsOpenOpenLoading,
+    refetch: refetchDigitizedDocumentsOpenData,
+  } = useOpenApiSearchDigitizedDocuments(
+    {
+      tenantId,
+      documentNumber: documentNumber,
+      mobileNumber: mobileNumber,
+    },
+    {},
+    `digitized-documents-details-${documentNumber}`,
+    Boolean(documentNumber && mobileNumber && !isUserLoggedIn)
+  );
+
   const { data: digitalizationData, isLoading: isMediationSearchResponseLoading, refetch: refetchDigitalizationData } = useSearchDigitalization(
     {
       criteria: {
@@ -95,17 +132,52 @@ const MediationFormSignaturePage = () => {
     },
     {},
     `digitilization-${documentNumber}`,
-    Boolean(documentNumber && caseCourtId),
+    Boolean(documentNumber && caseCourtId && isUserLoggedIn),
     5 * 60
   );
 
   const digitalizationServiceDetails = useMemo(() => {
-    return digitalizationData?.documents?.[0] || {};
-  }, [digitalizationData]);
+    return digitizedDocumentsOpenData?.documents?.[0] || digitalizationData?.documents?.[0] || {};
+  }, [digitizedDocumentsOpenData, digitalizationData]);
+
+  const ifUserAuthorized = useMemo(() => {
+    if (isUserLoggedIn) {
+      const mobNumber = digitalizationServiceDetails?.mediationDetails?.partyDetails?.map((party) => party?.mobileNumber);
+      return mobNumber?.includes(userInfo?.mobileNumber);
+    }
+    return isAuthorised;
+  }, [digitalizationServiceDetails, isAuthorised, isUserLoggedIn, userInfo?.mobileNumber]);
+
+  const hasUserSigned = useMemo(() => {
+    return digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((party) => party?.mobileNumber === mobileNumber)?.hasSigned;
+  }, [digitalizationServiceDetails?.mediationDetails?.partyDetails, mobileNumber]);
 
   const mediationFileStoreId = useMemo(() => {
     return digitalizationServiceDetails?.documents?.[0]?.fileStore;
   }, [digitalizationServiceDetails]);
+
+  const { data: { file: documentPreviewPdf } = {}, isFetching: isLoading } = useQuery({
+    queryKey: ["DigitizedDocumentSignaturePdf", tenantId, documentNumber, userInfo?.uuid, mediationFileStoreId],
+    retry: 3,
+    cacheTime: 0,
+    queryFn: async () => {
+      return axiosInstance
+        .post(
+          `${Urls.openApi.FileFetchByFileStore}`,
+          {
+            tenantId: "kl",
+            fileStoreId: mediationFileStoreId,
+            moduleName: "mediation-document",
+          },
+          { responseType: "blob" }
+        )
+        .then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
+    },
+    onError: (error) => {
+      console.error("Failed to fetch order preview PDF:", error);
+    },
+    enabled: Boolean(mediationFileStoreId && !isUserLoggedIn),
+  });
 
   const poaPartyDetails = useMemo(() => {
     const parties = digitalizationServiceDetails?.mediationDetails?.partyDetails || [];
@@ -132,7 +204,7 @@ const MediationFormSignaturePage = () => {
     },
     { tenantId },
     filingNumber + digitalizationServiceDetails?.orderNumber + "REFERRAL_CASE_TO_ADR",
-    Boolean(filingNumber && digitalizationServiceDetails?.orderNumber && caseCourtId)
+    Boolean(filingNumber && digitalizationServiceDetails?.orderNumber && caseCourtId && isUserLoggedIn)
   );
 
   const mediationOrderDetails = useMemo(() => {
@@ -162,35 +234,47 @@ const MediationFormSignaturePage = () => {
 
       const updatedPartyDetails = parties?.map((party) => {
         if (isUpload) return { ...party, hasSigned: true };
-        if (isESign && (party?.uniqueId === selectedId || party?.uniqueId === userId)) {
+        if (isESign && (party?.uniqueId === selectedId || party?.uniqueId === userId || party?.mobileNumber === mobileNumber)) {
           return { ...party, hasSigned: true };
         }
         return party;
       });
+      if (isUserLoggedIn) {
+        await submissionService.updateDigitalization({
+          digitalizedDocument: {
+            ...digitalizationServiceDetails,
+            mediationDetails: {
+              ...digitalizationServiceDetails?.mediationDetails,
+              partyDetails: updatedPartyDetails,
+            },
+            ...((signatureDocumentId || fileStoreId) && {
+              documents: [
+                {
+                  ...digitalizationServiceDetails?.documents?.[0],
+                  fileStore: signatureDocumentId || fileStoreId,
+                  documentType: "SIGNED",
+                },
+              ],
+            }),
+            workflow: {
+              action: digitalizationAction,
 
-      await submissionService.updateDigitalization({
-        digitalizedDocument: {
-          ...digitalizationServiceDetails,
+              documents: [{}],
+            },
+          },
+        });
+      } else {
+        await submissionService.updateOpenDigitizedDocument({
+          tenantId,
+          documentNumber: documentNumber,
+          mobileNumber: mobileNumber,
+          fileStoreId: signatureDocumentId,
           mediationDetails: {
             ...digitalizationServiceDetails?.mediationDetails,
             partyDetails: updatedPartyDetails,
           },
-          ...((signatureDocumentId || fileStoreId) && {
-            documents: [
-              {
-                ...digitalizationServiceDetails?.documents?.[0],
-                fileStore: signatureDocumentId || fileStoreId,
-                documentType: "SIGNED",
-              },
-            ],
-          }),
-          workflow: {
-            action: digitalizationAction,
-
-            documents: [{}],
-          },
-        },
-      });
+        });
+      }
       setShowSuccessModal(true);
     } catch (error) {
       throw error;
@@ -272,7 +356,7 @@ const MediationFormSignaturePage = () => {
   const handleEsignAction = async () => {
     setLoader(true);
     try {
-      if (isCitizen) {
+      if (isCitizen && isUserLoggedIn) {
         const caseLockStatus = await DRISTIService.getCaseLockStatus(
           {},
           {
@@ -295,8 +379,11 @@ const MediationFormSignaturePage = () => {
       if (mockESignEnabled) {
         try {
           setSignatureDocumentId(mediationFileStoreId);
-
-          await handleCaseUnlockingWhenMockESign();
+          if (isUserLoggedIn) {
+            await handleCaseUnlockingWhenMockESign();
+          } else {
+            setEsignSuccess(true);
+          }
         } catch (error) {
           console.error("Error:", error);
           setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -316,9 +403,13 @@ const MediationFormSignaturePage = () => {
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("fileStoreId");
     sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
-    history.replace(
-      `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${digitalizationServiceDetails?.caseId}&filingNumber=${filingNumber}&tab=Documents`
-    );
+    if (isUserLoggedIn) {
+      history.replace(
+        `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${digitalizationServiceDetails?.caseId}&filingNumber=${filingNumber}&tab=Documents`
+      );
+    } else {
+      window.location.replace(process.env.REACT_APP_PROXY_API || "https://oncourts.kerala.gov.in");
+    }
   };
 
   const closeToast = () => {
@@ -333,7 +424,11 @@ const MediationFormSignaturePage = () => {
         setLoader(true);
         try {
           await updateMediationDocument(isCitizen ? MediationWorkflowAction.E_SIGN : MediationWorkflowAction.SIGN);
-          await refetchDigitalizationData();
+          if (isUserLoggedIn) {
+            await refetchDigitalizationData();
+          } else {
+            await refetchDigitizedDocumentsOpenData();
+          }
         } catch (error) {
           console.error("Error:", error);
           setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -345,7 +440,7 @@ const MediationFormSignaturePage = () => {
     };
 
     esignMediationUpdate();
-  }, [isEsignSuccess, digitalizationServiceDetails?.documentNumber, isCitizen]);
+  }, [isEsignSuccess, digitalizationServiceDetails?.documentNumber, isCitizen, isUserLoggedIn]);
 
   const handleCaseUnlocking = async () => {
     await DRISTIService.setCaseUnlock({}, { uniqueId: documentNumber, tenantId: tenantId });
@@ -395,7 +490,7 @@ const MediationFormSignaturePage = () => {
       }
     }
     if (esignProcess && digitalizationServiceDetails?.documentNumber) {
-      if (isCitizen) {
+      if (isCitizen && isUserLoggedIn) {
         handleCaseUnlocking();
       }
       sessionStorage.removeItem("esignProcess");
@@ -419,10 +514,22 @@ const MediationFormSignaturePage = () => {
     }
   }, [showErrorToast]);
 
+  useEffect(() => {
+    if (!isUserLoggedIn && !ifUserAuthorized) {
+      history.replace(
+        `/${window?.contextPath}/citizen/dristi/home/digitalized-document-login?tenantId=${tenantId}&documentNumber=${documentNumber}&type=${type}`
+      );
+    }
+
+    if (!documentNumber) {
+      history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+    }
+  }, [documentNumber, history, ifUserAuthorized, isUserLoggedIn, tenantId, type, userType]);
+
   return (
     <React.Fragment>
       <div className="mediation-form-signature">
-        {(loader || isMediationSearchResponseLoading || isOrdersLoading) && (
+        {(loader || isLoading || isDigitizedDocumentsOpenOpenLoading || isMediationSearchResponseLoading || isOrdersLoading) && (
           <div className="submit-loader">
             <Loader />
           </div>
@@ -449,19 +556,20 @@ const MediationFormSignaturePage = () => {
 
           <div className="right-panel">
             <div className="doc-viewer">
-              {(signatureDocumentId || mediationFileStoreId) && (
+              {(isUserLoggedIn ? signatureDocumentId || mediationFileStoreId : documentPreviewPdf) && (
                 <DocViewerWrapper
                   docWidth="100%"
                   docHeight="100%"
-                  fileStoreId={signatureDocumentId || mediationFileStoreId}
+                  fileStoreId={isUserLoggedIn && (signatureDocumentId || mediationFileStoreId)}
+                  selectedDocs={!isUserLoggedIn && documentPreviewPdf ? [documentPreviewPdf] : []}
                   tenantId={tenantId}
                   docViewerCardClassName="doc-card"
                   showDownloadOption={false}
                 />
               )}
             </div>
-            <div style={{ flex: 1 }} title={mediationOrderDetails?.status === OrderWorkflowState.PUBLISHED && t("ORDER_ALREADY_PUBLISHED")}>
-              {isMediationCreator && (
+            {isUserLoggedIn && isMediationCreator && (
+              <div style={{ flex: 1 }} title={mediationOrderDetails?.status === OrderWorkflowState.PUBLISHED && t("ORDER_ALREADY_PUBLISHED")}>
                 <Button
                   className={"edit-button"}
                   variation="secondary"
@@ -470,12 +578,13 @@ const MediationFormSignaturePage = () => {
                   isDisabled={mediationOrderDetails?.status === OrderWorkflowState.PUBLISHED}
                   icon={<EditPencilIcon width="20" height="20" />}
                 />
-              )}
-            </div>
+              </div>
+            )}
           </div>
           <ActionBar className="action-bar">
             <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
-              {isCitizen &&
+              {isUserLoggedIn &&
+                isCitizen &&
                 digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_E_SIGN &&
                 digitalizationServiceDetails?.mediationDetails?.partyDetails?.some((party) => party?.hasSigned) && (
                   <Button
@@ -494,7 +603,7 @@ const MediationFormSignaturePage = () => {
                   />
                 )}
               <div style={{ display: "flex", justifyContent: "flex-end", width: "100%", gap: "20px" }}>
-                {(signatureDocumentId || mediationFileStoreId) && (
+                {isUserLoggedIn && (signatureDocumentId || mediationFileStoreId) && (
                   <Button
                     label={t("PRINT_DOCUMENT_MEDIATION")}
                     variation={"secondary"}
@@ -510,30 +619,32 @@ const MediationFormSignaturePage = () => {
                     onButtonClick={() => downloadPdf(tenantId, signatureDocumentId || mediationFileStoreId)}
                   />
                 )}
-                {((isMediationCreator && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_E_SIGN) || isCitizen) && (
-                  <Button
-                    label={isMediationCreator ? t("UPLOAD_SIGNED_COPY_MEDIATION") : t("BACK_MEDIATION")}
-                    variation={"secondary"}
-                    style={{ boxShadow: "none", backgroundColor: "#fff", padding: "8px 24px", width: "fit-content" }}
-                    textStyles={{
-                      fontFamily: "Roboto",
-                      fontSize: "16px",
-                      fontWeight: 700,
-                      lineHeight: "18.75px",
-                      textAlign: "center",
-                      color: "#007E7E",
-                    }}
-                    onButtonClick={() => {
-                      if (isMediationCreator) {
-                        setShowUploadSignatureModal(true);
-                      } else {
-                        history.goBack();
-                      }
-                    }}
-                  />
-                )}
-                {((isMediationApprover && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_REVIEW) ||
-                  (isCitizen && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_E_SIGN)) && (
+                {isUserLoggedIn &&
+                  ((isMediationCreator && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_E_SIGN) || isCitizen) && (
+                    <Button
+                      label={isMediationCreator ? t("UPLOAD_SIGNED_COPY_MEDIATION") : t("BACK_MEDIATION")}
+                      variation={"secondary"}
+                      style={{ boxShadow: "none", backgroundColor: "#fff", padding: "8px 24px", width: "fit-content" }}
+                      textStyles={{
+                        fontFamily: "Roboto",
+                        fontSize: "16px",
+                        fontWeight: 700,
+                        lineHeight: "18.75px",
+                        textAlign: "center",
+                        color: "#007E7E",
+                      }}
+                      onButtonClick={() => {
+                        if (isMediationCreator) {
+                          setShowUploadSignatureModal(true);
+                        } else {
+                          history.goBack();
+                        }
+                      }}
+                    />
+                  )}
+                {((isUserLoggedIn && isMediationApprover && digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_REVIEW) ||
+                  ((isCitizen || (!isUserLoggedIn && isAuthorised && !hasUserSigned)) &&
+                    digitalizationServiceDetails?.status === MediationWorkflowState.PENDING_E_SIGN)) && (
                   <Button
                     label={t("E_SIGN_MEDIATION")}
                     variation={"primary"}
