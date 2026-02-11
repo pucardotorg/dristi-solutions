@@ -218,7 +218,6 @@ const ErrorAttendeesKey = "attendees";
 const GenerateOrdersV2 = () => {
   const { t } = useTranslation();
   const history = useHistory();
-  // Component state and hooks can be added here as needed
   const [presentAttendees, setPresentAttendees] = useState([]);
   const [absentAttendees, setAbsentAttendees] = useState([]);
   const [purposeOfHearing, setPurposeOfHearing] = useState("");
@@ -227,7 +226,7 @@ const GenerateOrdersV2 = () => {
   const [showEditOrderModal, setEditOrderModal] = useState(false);
   const [showAddOrderModal, setAddOrderModal] = useState(false);
   const EditSendBackModal = Digit?.ComponentRegistryService?.getComponent("EditSendBackModal");
-  const [orderType, setOrderType] = useState({}); // not sure it needed
+  const [orderType, setOrderType] = useState({});
   const [showOrderValidationModal, setShowOrderValidationModal] = useState({ showModal: false, errorMessage: "" });
   const [orderTitle, setOrderTitle] = useState(null);
   const setValueRef = useRef([]);
@@ -2248,7 +2247,11 @@ const GenerateOrdersV2 = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+            updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          } else {
+            updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
@@ -2298,7 +2301,11 @@ const GenerateOrdersV2 = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+            updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          } else {
+            updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
@@ -2354,7 +2361,11 @@ const GenerateOrdersV2 = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+            updatedFormdata.dateOfHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          } else {
+            updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
@@ -2518,7 +2529,7 @@ const GenerateOrdersV2 = () => {
   };
 
   const handleEditConfirmationOrder = async () => {
-    if(orderType?.code === "MISCELLANEOUS_PROCESS"){
+    if (orderType?.code === "MISCELLANEOUS_PROCESS") {
       await refectMiscellaneous();
     }
     setAddOrderModal(true);
@@ -2935,7 +2946,7 @@ const GenerateOrdersV2 = () => {
           courtId: caseDetails?.courtId,
         };
         const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
-        payload = await _getTaskPayload(taskCaseDetails, orderData, caseDetails?.filingDate, hearingDate, caseNumber);
+        payload = await _getTaskPayload(taskCaseDetails, orderData, caseDetails?.filingDate, hearingDate, caseNumber, caseDetails?.filingNumber);
         break;
       default:
         break;
@@ -3350,6 +3361,19 @@ const GenerateOrdersV2 = () => {
         };
       }
 
+      if (orderFormData?.orderType?.code === "ACCEPT_RESCHEDULING_REQUEST") {
+        const hearingDate = orderFormData?.newHearingDate;
+        const baseOrder = updatedOrderData && typeof updatedOrderData === "object" ? updatedOrderData : {};
+
+        if (hearingDate && hearingDate !== todayDate) {
+          updatedOrderData = {
+            ...baseOrder,
+            nextHearingDate: null,
+            purposeOfNextHearing: null,
+          };
+        }
+      }
+
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
       if (isAcceptBailOrder && requestBailBond) {
         await createPendingTaskForJudge(updateOrderResponse?.order);
@@ -3395,7 +3419,12 @@ const GenerateOrdersV2 = () => {
 
         cfg?.forEach((section) => {
           section?.body?.forEach((field) => {
-            if (!field?.populators?.hideInForm && field?.isMandatory && hearingDateKeys.has(field?.key)) {
+            if (
+              !field?.populators?.hideInForm &&
+              field?.isMandatory &&
+              hearingDateKeys.has(field?.key) &&
+              !item?.orderSchema?.additionalDetails?.formdata?.[field?.key]
+            ) {
               mandatoryDateFields.push(field);
             }
           });
@@ -3538,7 +3567,6 @@ const GenerateOrdersV2 = () => {
 
             return acceptIndex !== -1 && scheduleIndex > acceptIndex;
           })();
-
           if (!hasValidRescheduleBypass) {
             setShowErrorToast({
               label: isHearingScheduled
@@ -3943,7 +3971,7 @@ const GenerateOrdersV2 = () => {
       await updateOrder(
         {
           ...currentOrder,
-          ...(hearingNumber && { hearingNumber: currentOrder?.hearingNumber || hearingNumber }),
+          ...(hearingNumber && { hearingNumber: currentOrder?.hearingNumber || hearingNumber, scheduledHearingNumber: null }),
           additionalDetails: {
             ...currentOrder?.additionalDetails,
             businessOfTheDay: businessOfTheDay,
@@ -5015,7 +5043,7 @@ const GenerateOrdersV2 = () => {
           setBailBondRequired={setBailBondRequired}
           policeStationData={sortedPoliceStations}
           caseDetails={caseDetails}
-          miscellaneousProcessTemplateDropDown = {miscellaneousProcessTemplateDropDown}
+          miscellaneousProcessTemplateDropDown={miscellaneousProcessTemplateDropDown}
         />
       )}
       {showMandatoryFieldsErrorModal?.showModal && (
