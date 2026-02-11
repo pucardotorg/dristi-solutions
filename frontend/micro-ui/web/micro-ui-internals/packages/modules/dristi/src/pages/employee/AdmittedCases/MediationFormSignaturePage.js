@@ -74,6 +74,7 @@ const MediationFormSignaturePage = () => {
   const { handleEsign } = isUserLoggedIn ? eSignLoggedIn : eSignOpenApi;
 
   const pageModule = isUserLoggedIn ? (isCitizen ? "ci" : "en") : "ci";
+  const [esignMobileNumber, setEsignMobileNumber] = useState("");
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -115,11 +116,11 @@ const MediationFormSignaturePage = () => {
     {
       tenantId,
       documentNumber: documentNumber,
-      mobileNumber: mobileNumber,
+      mobileNumber: mobileNumber || esignMobileNumber,
     },
     {},
     `digitized-documents-details-${documentNumber}`,
-    Boolean(documentNumber && mobileNumber && !isUserLoggedIn)
+    Boolean(documentNumber && (mobileNumber || esignMobileNumber) && !isUserLoggedIn)
   );
 
   const { data: digitalizationData, isLoading: isMediationSearchResponseLoading, refetch: refetchDigitalizationData } = useSearchDigitalization(
@@ -149,8 +150,9 @@ const MediationFormSignaturePage = () => {
   }, [digitalizationServiceDetails, isAuthorised, isUserLoggedIn, userInfo?.mobileNumber]);
 
   const hasUserSigned = useMemo(() => {
-    return digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((party) => party?.mobileNumber === mobileNumber)?.hasSigned;
-  }, [digitalizationServiceDetails?.mediationDetails?.partyDetails, mobileNumber]);
+    return digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((party) => party?.mobileNumber === (mobileNumber || esignMobileNumber))
+      ?.hasSigned;
+  }, [digitalizationServiceDetails?.mediationDetails?.partyDetails, mobileNumber, esignMobileNumber]);
 
   const mediationFileStoreId = useMemo(() => {
     return digitalizationServiceDetails?.documents?.[0]?.fileStore;
@@ -234,7 +236,10 @@ const MediationFormSignaturePage = () => {
 
       const updatedPartyDetails = parties?.map((party) => {
         if (isUpload) return { ...party, hasSigned: true };
-        if (isESign && (party?.uniqueId === selectedId || party?.uniqueId === userId || party?.mobileNumber === mobileNumber)) {
+        if (
+          isESign &&
+          (party?.uniqueId === selectedId || party?.uniqueId === userId || party?.mobileNumber === (mobileNumber || esignMobileNumber))
+        ) {
           return { ...party, hasSigned: true };
         }
         return party;
@@ -267,7 +272,7 @@ const MediationFormSignaturePage = () => {
         await submissionService.updateOpenDigitizedDocument({
           tenantId,
           documentNumber: documentNumber,
-          mobileNumber: mobileNumber,
+          mobileNumber: mobileNumber || esignMobileNumber,
           fileStoreId: signatureDocumentId,
           mediationDetails: {
             ...digitalizationServiceDetails?.mediationDetails,
@@ -389,6 +394,7 @@ const MediationFormSignaturePage = () => {
           setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
         }
       } else {
+        sessionStorage.setItem("mobileNumber", mobileNumber);
         handleEsign(name, pageModule, mediationFileStoreId, getPlaceholder());
       }
     } catch (error) {
@@ -480,10 +486,12 @@ const MediationFormSignaturePage = () => {
     const storedESignObj = sessionStorage.getItem("signStatus");
     const parsedESignObj = JSON.parse(storedESignObj);
     const esignProcess = sessionStorage.getItem("esignProcess");
+    const mobileNumber = sessionStorage.getItem("mobileNumber");
 
     if (isSignSuccess) {
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
       if (isSignSuccess === "success" && matchedSignStatus) {
+        setEsignMobileNumber(JSON.parse(mobileNumber));
         const fileStoreId = sessionStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
         setEsignSuccess(true);
@@ -500,10 +508,11 @@ const MediationFormSignaturePage = () => {
       sessionStorage.removeItem("isSignSuccess");
       sessionStorage.removeItem("signStatus");
       sessionStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("mobileNumber");
     }, 2000);
 
     return () => clearTimeout(cleanupTimer);
-  }, [tenantId, digitalizationServiceDetails, isCitizen]);
+  }, [tenantId, digitalizationServiceDetails, isCitizen, isUserLoggedIn]);
 
   useEffect(() => {
     if (showErrorToast) {
