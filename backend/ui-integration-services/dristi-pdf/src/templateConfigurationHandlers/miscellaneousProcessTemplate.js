@@ -95,6 +95,8 @@ async function miscellaneousProcessTemplate(
 
     const caseNumber = templateData?.caseNumber || "";
 
+    const nbwDate = templateData?.nbwDate ? formatDate(templateData.nbwDate, "DD-MM-YYYY") : "";
+
     const coverLetterSelected = templateData?.isCoverLetterRequired || false;
 
     let policeAddresseeSelected = false;
@@ -136,6 +138,7 @@ async function miscellaneousProcessTemplate(
           addresseeDetails: addresseeDetails,  
 
           date: formattedToday,
+          nbwDate: nbwDate,
           coverLetterText: htmlToFormattedText(coverLetterText),
           showAccusedNameAddress: showAccusedNameAddress,
           accusedNameAddress: accusedNameAddress, // array with name and address already computed
