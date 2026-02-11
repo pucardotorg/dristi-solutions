@@ -55,4 +55,7 @@ public class MiscellaneuosDetails {
 
     @JsonProperty("coverLetterText")
     private String coverLetterText = null;
+
+    @JsonProperty("filingNumber")
+    private String filingNumber;
 }
