@@ -24,7 +24,7 @@ const initialAdvocateData = {};
 export const AdvocateDataContext = createContext({});
 
 const DigitUIWrapper = ({ stateCode, enabledModules, moduleReducers, defaultLanding }) => {
-  const { isLoading, data: initData } = Digit.Hooks.useInitStore(stateCode, enabledModules);
+  const { isLoading, data: initData } = Digit.Hooks.useInitStore(stateCode, enabledModules, "dristi");
 
   const moduleData = useMemo(() => {
     if (!initData?.modules) {

@@ -18,6 +18,7 @@ export const HearingsModule = ({ stateCode, userType, tenants }) => {
     stateCode,
     moduleCode,
     language,
+    modulePrefix: "dristi",
   });
 
   if (isLoading) {

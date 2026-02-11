@@ -89,7 +89,7 @@ export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const moduleCode = ["DRISTI", "CASE", "ORDERS", "SUBMISSIONS", "HEARINGS"];
   const tenantID = tenants?.[0]?.code?.split(".")?.[0];
   const language = Digit.StoreData.getCurrentLanguage();
-  const { isLoading } = Digit.Services.useStore({ stateCode, moduleCode, language });
+  const { isLoading } = Digit.Services.useStore({ stateCode, moduleCode, language, modulePrefix: "dristi" });
   const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit]); //here
   const hasCitizenRoute = useMemo(() => path?.includes(`/${window?.contextPath}/citizen`), [path]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);

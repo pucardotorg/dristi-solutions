@@ -36,6 +36,7 @@ export const OrdersModule = ({ stateCode, userType, tenants }) => {
     stateCode,
     moduleCode,
     language,
+    modulePrefix: "dristi",
   });
 
   if (isLoading) {
