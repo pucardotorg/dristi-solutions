@@ -4346,7 +4346,10 @@ const GenerateOrdersV2 = () => {
             try {
               response = await ordersService.updateOrder(reqbody, { tenantId });
             } catch (error) {
-              toast.error(t("SOMETHING_WENT_WRONG"));
+              const errorCode = error?.response?.data?.Errors?.[0]?.code;
+              const errorMsg =
+                errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+              toast.error(errorMsg);
             }
           } else {
             const compositeItems = [
@@ -4419,7 +4422,10 @@ const GenerateOrdersV2 = () => {
             `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
           );
         } catch (error) {
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          const errorCode = error?.response?.data?.Errors?.[0]?.code;
+          const errorMsg =
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+          toast.error(errorMsg);
         }
       } else {
         const reqbody = {
@@ -4487,10 +4493,18 @@ const GenerateOrdersV2 = () => {
           sessionStorage.setItem("currentOrderType", orderType);
           await refetchOrdersData();
           history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
-        } catch (error) {}
+        } catch (error) {
+          const errorCode = error?.response?.data?.Errors?.[0]?.code;
+          const errorMsg =
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+          toast.error(errorMsg);
+        }
       }
     } catch (error) {
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      const errorCode = error?.response?.data?.Errors?.[0]?.code;
+      const errorMsg =
+        errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+      toast.error(errorMsg);
     }
   };
 
