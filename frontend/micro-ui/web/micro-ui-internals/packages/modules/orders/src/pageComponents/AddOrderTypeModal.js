@@ -117,6 +117,12 @@ const AddOrderTypeModal = ({
       }
     }
 
+    if(currentOrderType && ["ACCEPT_RESCHEDULING_REQUEST"].includes(currentOrderType)) {
+      if(formData?.newHearingDate && Object.keys(formState?.errors).includes("newHearingDate")) {
+        clearFormErrors?.current?.[index]?.("newHearingDate");
+      }
+    }
+
     if (currentOrderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(currentOrderType)) {
       if (formData?.submissionDeadline && formData?.responseInfo?.responseDeadline) {
         if (new Date(formData?.submissionDeadline).getTime() >= new Date(formData?.responseInfo?.responseDeadline).getTime()) {
