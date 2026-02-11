@@ -67,7 +67,7 @@ public class ApplicationCriteria {
     private Boolean isHideBailCaseBundle = false;
 
     @JsonIgnore
-    private List<String> advocateAndClerkUuids = new ArrayList<>();
+    private List<String> officeAdvocateUserUuids = new ArrayList<>();
 
     @JsonIgnore
     private boolean isAdvocate = false;

@@ -21,7 +21,7 @@ public class ApplicationQueryBuilder {
     private static final String     BASE_APP_QUERY =
             " SELECT app.id as id, app.tenantid as tenantid, app.caseid as caseid, app.filingnumber as filingnumber, app.cnrnumber as cnrnumber," +
                     " app.referenceid as referenceid, app.createddate as createddate, app.applicationcreatedby as applicationcreatedby," +
-                    " app.onbehalfof as onbehalfof, app.officeadvocateuseruuid as officeadvocateuseruuid, app.applicationtype as applicationtype, app.applicationnumber as applicationnumber," +
+                    " app.onbehalfof as onbehalfof, app.asuser as asuser, app.applicationtype as applicationtype, app.applicationnumber as applicationnumber," +
                     " app.statuteSection as statuteSection, app.issuedby as issuedby, app.status as status, app.courtId as courtId, app.comment as comment, app.isactive as isactive," +
                     " app.additionaldetails as additionaldetails,"+
                     " app.applicationcmpnumber as applicationcmpnumber,"+
@@ -94,20 +94,20 @@ public class ApplicationQueryBuilder {
             }
 
             if (requestInfo != null && requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null) {
-                List<String> advocateAndClerkUuids = applicationCriteria.getAdvocateAndClerkUuids();
+                List<String> officeAdvocateUserUuids = applicationCriteria.getOfficeAdvocateUserUuids();
                 boolean isAdvocateOrClerk = applicationCriteria.isAdvocate() || applicationCriteria.isClerk();
-                boolean hasUserUuidsList = advocateAndClerkUuids != null && !advocateAndClerkUuids.isEmpty();
+                boolean hasUserUuidsList = officeAdvocateUserUuids != null && !officeAdvocateUserUuids.isEmpty();
 
                 addClauseIfRequired(query, firstCriteria);
 
                 if (isAdvocateOrClerk && hasUserUuidsList) {
-                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.createdBy IN (");
-                    for (int i = 0; i < advocateAndClerkUuids.size(); i++) {
+                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.asuser IN (");
+                    for (int i = 0; i < officeAdvocateUserUuids.size(); i++) {
                         query.append("?");
-                        if (i < advocateAndClerkUuids.size() - 1) {
+                        if (i < officeAdvocateUserUuids.size() - 1) {
                             query.append(", ");
                         }
-                        preparedStmtList.add(advocateAndClerkUuids.get(i));
+                        preparedStmtList.add(officeAdvocateUserUuids.get(i));
                         preparedStmtArgList.add(Types.VARCHAR);
                     }
                     query.append(")))");
@@ -121,10 +121,10 @@ public class ApplicationQueryBuilder {
 
             // TODO : remove this, this is temporary fix (#5016)
             // --------- REQUEST_FOR_BAIL visibility ----------
-            List<String> advocateAndClerkUuids = applicationCriteria.getAdvocateAndClerkUuids();
+            List<String> officeAdvocateUserUuids = applicationCriteria.getOfficeAdvocateUserUuids();
             boolean isAdvocateOrClerk = applicationCriteria.isAdvocate() || applicationCriteria.isClerk();
             applyRequestForBailVisibility(
-                    query, firstCriteria, userUuid, advocateAndClerkUuids, isAdvocateOrClerk,
+                    query, firstCriteria, userUuid, officeAdvocateUserUuids, isAdvocateOrClerk,
                     preparedStmtList, preparedStmtArgList);
 
             return query.toString();
@@ -165,7 +165,7 @@ public class ApplicationQueryBuilder {
             preparedStmtList.add(userUuids.toArray(new String[0]));
             preparedStmtArgList.add(Types.ARRAY);
 
-            query.append("OR app.createdBy IN (");
+            query.append("OR app.asuser IN (");
             for (int i = 0; i < userUuids.size(); i++) {
                 query.append("?");
                 if (i < userUuids.size() - 1) {

@@ -47,7 +47,7 @@ public class EvidenceSearchCriteria {
     private String userUuid;
 
     @JsonIgnore
-    private List<String> advocateAndClerkUuids = new ArrayList<>();
+    private List<String> officeAdvocateUserUuids = new ArrayList<>();
 
     @JsonIgnore
     private boolean isCitizen = false;

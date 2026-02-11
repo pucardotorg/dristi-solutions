@@ -61,7 +61,7 @@ public class ApplicationRepository {
 
             // TODO : remove this, this is temporary fix (#5016)
             String userUuid = getCitizenUserUuid(applicationSearchRequest);
-            enrichAdvocateAndClerkUuids(applicationSearchRequest);
+            enrichOfficeAdvocateUserUuids(applicationSearchRequest);
 
             String applicationQuery = queryBuilder.getApplicationSearchQuery(applicationSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList, userUuid,applicationSearchRequest.getRequestInfo());
             applicationQuery = queryBuilder.addOrderByQuery(applicationQuery, applicationSearchRequest.getPagination());
@@ -132,7 +132,7 @@ public class ApplicationRepository {
         return userUuid;
     }
 
-    private void enrichAdvocateAndClerkUuids(ApplicationSearchRequest applicationSearchRequest) {
+    private void enrichOfficeAdvocateUserUuids(ApplicationSearchRequest applicationSearchRequest) {
         RequestInfo requestInfo = applicationSearchRequest.getRequestInfo();
         ApplicationCriteria criteria = applicationSearchRequest.getCriteria();
 
@@ -204,25 +204,7 @@ public class ApplicationRepository {
                 }
 
                 if (userBelongsToOffice) {
-                    if (office.getOfficeAdvocateUserUuid() != null) {
-                        uuidSet.add(office.getOfficeAdvocateUserUuid());
-                    }
-
-                    if (office.getAdvocates() != null) {
-                        office.getAdvocates().forEach(advocate -> {
-                            if (advocate.getMemberUserUuid() != null) {
-                                uuidSet.add(advocate.getMemberUserUuid());
-                            }
-                        });
-                    }
-
-                    if (office.getClerks() != null) {
-                        office.getClerks().forEach(clerk -> {
-                            if (clerk.getMemberUserUuid() != null) {
-                                uuidSet.add(clerk.getMemberUserUuid());
-                            }
-                        });
-                    }
+                    uuidSet.add(office.getOfficeAdvocateUserUuid());
                 }
             }
 
@@ -230,8 +212,8 @@ public class ApplicationRepository {
                 uuidSet.add(userUuid);
             }
 
-            log.info("Enriched advocateAndClerkUuids for application search: {}", uuidSet);
-            criteria.setAdvocateAndClerkUuids(new ArrayList<>(uuidSet));
+            log.info("Enriched officeAdvocateUserUuids for application search: {}", uuidSet);
+            criteria.setOfficeAdvocateUserUuids(new ArrayList<>(uuidSet));
 
         } catch (Exception e) {
             log.error("Error while enriching advocate/clerk UUIDs for application search", e);
