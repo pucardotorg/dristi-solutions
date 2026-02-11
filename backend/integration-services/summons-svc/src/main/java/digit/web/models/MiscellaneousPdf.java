@@ -51,4 +51,7 @@ public class MiscellaneousPdf  {
     @JsonProperty("nextHearingDate")
     private Long nextHearingDate;
 
+    @JsonProperty("nbwDate")
+    private Long nbwDate;
+
 }
