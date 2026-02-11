@@ -522,10 +522,14 @@ const MediationFormSignaturePage = () => {
     }
 
     if (!documentNumber) {
+      console.log("redirect", documentNumber);
+
       history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
   }, [documentNumber, history, ifUserAuthorized, isUserLoggedIn, tenantId, type, userType]);
 
+  debugger;
+  console.log("inside mediation form", signatureDocumentId);
   return (
     <React.Fragment>
       <div className="mediation-form-signature">
