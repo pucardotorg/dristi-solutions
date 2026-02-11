@@ -13,6 +13,7 @@ import Breadcrumb from "../../components/BreadCrumb";
 import SelectEmail from "./registration/SelectEmail";
 import ViewCase from "./view-case";
 import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
+import MediationFormSignaturePage from "../employee/AdmittedCases/MediationFormSignaturePage";
 
 const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const [hideBack, setHideBack] = useState(false);
@@ -152,6 +153,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     "/home/evidence-login",
     "/home/digitalized-document-sign",
     "/home/digitalized-document-login",
+    "/home/mediation-form-sign",
     "/home/payment-login",
     "/home/sms-payment",
   ];
@@ -180,6 +182,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/evidence-login`,
     `${path}/home/digitalized-document-sign`,
     `${path}/home/digitalized-document-login`,
+    `${path}/home/mediation-form-sign`,
     `${path}/home/payment-login`,
     `${path}/home/sms-payment`,
   ];
@@ -188,7 +191,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/evidence-sign`,
     `${path}/home/sms-payment`,
     `${path}/home/digitalized-document-sign`,
+    `${path}/home/mediation-form-sign`,
   ];
+
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;
@@ -205,6 +210,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   ) {
     history.push(`${path}/home`);
   }
+
   if (retrievedObject && openRoute.includes(retrievedObject?.path)) {
     if (result) {
       sessionStorage.setItem("isSignSuccess", result);
@@ -346,6 +352,10 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
           <Route path={`${path}/home/digitalized-document-sign`}>
             <DigitizedDocumentsSignaturePage />
+          </Route>
+
+          <Route path={`${path}/home/mediation-form-sign`}>
+            <MediationFormSignaturePage />
           </Route>
 
           <Route path={`${path}/home/payment-login`}>

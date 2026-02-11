@@ -451,7 +451,7 @@ export const DigitalDocumentSignModal = ({
       const fileStoreId = effectiveRowData?.documents?.[0]?.fileStore;
       await downloadPdf(tenantId, fileStoreId);
     } catch (error) {
-      console.log("Error: ", error);
+      console.error("Error: ", error);
     }
   };
 
