@@ -588,6 +588,11 @@ const HomeView = () => {
     return false;
   }, [userType, advocateId, selectedSeniorAdvocate?.id]);
 
+  // When a clerk has no advocates linked yet, we show the "No Advocates Linked" empty state.
+  // In that scenario, the Home / All Cases breadcrumb should be hidden.
+  const hideBreadcrumbForUnlinkedClerk =
+    individualId && userType === "ADVOCATE_CLERK" && userInfoType === "citizen" && unAssociatedClerk;
+
   if (isLoading || isFetching || isSearchLoading || isOrdersLoading || isOutcomeLoading || isCitizenCaseDataLoading || isLoadingMembers) {
     return <Loader />;
   }
@@ -620,7 +625,7 @@ const HomeView = () => {
 
   return (
     <React.Fragment>
-      {<ProjectBreadCrumb location={window.location} t={t} />}
+      {!hideBreadcrumbForUnlinkedClerk && <ProjectBreadCrumb location={window.location} t={t} />}
       <div className="home-view-hearing-container">
         {individualId &&
         userType &&

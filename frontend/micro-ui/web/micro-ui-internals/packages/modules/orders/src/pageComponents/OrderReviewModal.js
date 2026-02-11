@@ -210,7 +210,7 @@ function OrderReviewModal({
         }
         const updatedOrder = {
           ...order,
-          ...(hearingNumber && { hearingNumber: order?.hearingNumber || hearingNumber }),
+          ...(hearingNumber && { hearingNumber: order?.hearingNumber || hearingNumber, scheduledHearingNumber: null }),
           additionalDetails: {
             ...order.additionalDetails,
             // businessOfTheDay: businessDay,
