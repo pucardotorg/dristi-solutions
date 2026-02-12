@@ -101,7 +101,7 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
                     >
                       <OutlinedInfoIcon right={0} />
                     </span>
-                    <ReactTooltip id={`${inputs?.label}-tooltip`} place="bottom" content={inputs?.tooltipValue || ""}>
+                    <ReactTooltip id={`${inputs?.label}-tooltip`} place="right" content={inputs?.tooltipValue || ""}>
                       {t(inputs?.tooltipValue || inputs.label)}
                     </ReactTooltip>
                   </div>
