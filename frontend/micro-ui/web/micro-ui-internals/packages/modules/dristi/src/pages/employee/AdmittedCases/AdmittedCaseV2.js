@@ -786,12 +786,13 @@ const AdmittedCaseV2 = () => {
       // This is redundant for document tab, used only for submissions tab
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
       const status = docObj?.[0]?.applicationList?.status;
-      const applicationCreatedByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
-      const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
+      const applicationOwnerUuid = docObj?.[0]?.applicationList?.asUser;
+      const documentOwnerUuid = docObj?.[0]?.artifactList?.asUser;
+
       const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
       const documentStatus = docObj?.[0]?.artifactList?.status;
-      const allAllowedPartiesForApplicationsActions = getAllAssociatedPartyUuids(caseDetails, applicationCreatedByUuid);
-      const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentCreatedByUuid);
+      const allAllowedPartiesForApplicationsActions = getAllAssociatedPartyUuids(caseDetails, applicationOwnerUuid);
+      const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentOwnerUuid);
 
       if (documentStatus === "PENDING_E-SIGN" && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
         history.push(
@@ -2102,8 +2103,6 @@ const AdmittedCaseV2 = () => {
     0
   );
 
-  console.log(filingNumber && !historyOrderData && caseCourtId, "fetching orders with courtId", caseCourtId);
-  
   const ordersData = useMemo(() => historyOrderData || apiOrdersData, [historyOrderData, apiOrdersData]);
 
   const onTabChange = useCallback(
@@ -2678,15 +2677,16 @@ const AdmittedCaseV2 = () => {
 
   const handleOrdersTab = useCallback(() => {
     if (history.location?.state?.orderObj) {
+      showOrderReviewModal && setShowOrderReviewModal(false);
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`, {
         homeFilteredData: homeFilteredData,
         homeActiveTab: homeActiveTab,
       });
     } else {
-      if (showOrderReviewModal) setShowOrderReviewModal(false);
-      if (showNotificationModal) setShowNotificationModal(false);
+      showOrderReviewModal && setShowOrderReviewModal(false);
+      showNotificationModal && setShowNotificationModal(false);
     }
-  }, [history, userType, caseId, filingNumber, showOrderReviewModal, showNotificationModal]);
+  }, [history, userType, caseId, filingNumber, showOrderReviewModal, showNotificationModal, homeFilteredData, homeActiveTab]);
 
   const handleExtensionRequest = useCallback(
     (orderNumber, itemId, litigant, litigantIndId) => {

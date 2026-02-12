@@ -203,6 +203,10 @@ function CaseType({ t }) {
                         tenantId,
                         representing: [],
                         advocateFilingStatus: "caseOwner",
+                        additionalDetails: {
+                          uuid: selectedAdvocateUuid,
+                          advocateName: advocateName,
+                        },
                       },
                     ]
                   : [],

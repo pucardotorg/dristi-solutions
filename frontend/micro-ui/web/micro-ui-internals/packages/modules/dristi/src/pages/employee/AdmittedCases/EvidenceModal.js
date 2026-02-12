@@ -15,14 +15,14 @@ import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import { cleanString, getDate, getOrderActionName, getOrderTypes, setApplicationStatus } from "../../../Utils";
+import { cleanString, getAllAssociatedPartyUuids, getDate, getOrderActionName, getOrderTypes, setApplicationStatus } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
 import DOMPurify from "dompurify";
-import { getUserInfo } from "../../../../../submissions/src/utils";
+import { getUserInfoFromIndividualId, getUserInfoFromUuids } from "../../../../../submissions/src/utils";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -125,23 +125,42 @@ const EvidenceModal = ({
       return; // directly show onwner name in case of employees, no individual api calling.
     }
 
-    let officeAdvocateUuid = "";
+    let senderUuid = "";
     let createdBy = "";
     let onBehalfOfUuid = "";
 
-    if (documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList) {
-      const { officeAdvocateUserUuid, auditDetails, auditdetails, onBehalfOf } =
-        documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList;
-      officeAdvocateUuid = officeAdvocateUserUuid;
+    if (documentSubmission?.[0]?.artifactList?.filingType === "CASE_FILING") {
+      const createdByIndividualId = documentSubmission?.[0]?.artifactList?.sourceID; // For efiling documents, only source Id is available
+      const fetchUserInfo = async () => {
+        try {
+          const result = await getUserInfoFromIndividualId(createdByIndividualId);
+          setUserInfoMap((prev) => ({
+            ...prev,
+            createdByUser: {
+              uuid: result?.[0]?.uuid,
+              name: result?.[0]?.name,
+            },
+          }));
+        } catch (error) {
+          console.error("Failed to fetch user info", error);
+        }
+      };
+      if (createdByIndividualId) {
+        fetchUserInfo();
+        return;
+      }
+    } else if (documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList) {
+      const { asUser, auditDetails, auditdetails, onBehalfOf } = documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList;
+      senderUuid = asUser;
       createdBy = auditDetails?.createdBy || auditdetails?.createdBy;
       onBehalfOfUuid = onBehalfOf?.[0];
     } else if (artifact?.artifactList) {
-      const { officeAdvocateUserUuid, auditDetails } = artifact?.artifactList;
-      officeAdvocateUuid = officeAdvocateUserUuid;
+      const { asUser, auditDetails } = artifact?.artifactList;
+      senderUuid = asUser;
       createdBy = auditDetails?.createdBy;
     }
 
-    const uuids = [...new Set([officeAdvocateUuid, createdBy, onBehalfOfUuid].filter(Boolean))];
+    const uuids = [...new Set([senderUuid, createdBy, onBehalfOfUuid].filter(Boolean))];
 
     if (uuids.length === 0) {
       setUserInfoMap({
@@ -156,15 +175,15 @@ const EvidenceModal = ({
 
     const fetchUsers = async () => {
       try {
-        const result = await getUserInfo(uuids);
+        const result = await getUserInfoFromUuids(uuids);
 
         const lookup = new Map((result || []).map((user) => [user.userUuid, user.name]));
 
         if (!isMounted) return;
 
         setUserInfoMap({
-          senderUser: officeAdvocateUuid
-            ? { uuid: officeAdvocateUuid, name: lookup.get(officeAdvocateUuid) }
+          senderUser: senderUuid
+            ? { uuid: senderUuid, name: lookup.get(senderUuid) }
             : createdBy
             ? { uuid: createdBy, name: lookup.get(createdBy) }
             : null,
@@ -243,7 +262,9 @@ const EvidenceModal = ({
       if (modalType === "Documents") {
         return false;
       }
-      if (userInfo?.uuid === createdBy) {
+      const asUser = documentSubmission?.[0]?.applicationList?.asUser || documentSubmission?.[0]?.artifactList?.asUser;
+      const allPartiesIncludingMembers = getAllAssociatedPartyUuids(caseData?.case, asUser);
+      if (allPartiesIncludingMembers?.includes(userInfo?.uuid)) {
         return [SubmissionWorkflowState.DELETED].includes(applicationStatus) ? false : true;
       }
       if (isLitigent && [...allAdvocates?.[userInfo?.uuid], userInfo?.uuid]?.includes(createdBy)) {
@@ -257,7 +278,7 @@ const EvidenceModal = ({
       }
       return false;
     }
-  }, [userType, isJudge, modalType, userRoles, applicationStatus, isBail, documentSubmission, userInfo?.uuid, createdBy, isLitigent, allAdvocates]);
+  }, [userType, isJudge, modalType, userRoles, applicationStatus, documentSubmission, userInfo?.uuid, createdBy, isLitigent, allAdvocates, caseData]);
 
   const actionSaveLabel = useMemo(() => {
     let label = "";
@@ -266,7 +287,9 @@ const EvidenceModal = ({
         const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
         label = applicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" ? t("REVIEW_CHANGES") : t("Approve");
       } else {
-        if (userInfo?.uuid === createdBy) {
+        const asUser = documentSubmission?.[0]?.applicationList?.asUser || documentSubmission?.[0]?.artifactList?.asUser;
+        const allPartiesIncludingMembers = getAllAssociatedPartyUuids(caseData?.case, asUser);
+        if (allPartiesIncludingMembers?.includes(userInfo?.uuid)) {
           label = t("DOWNLOAD_SUBMISSION");
         } else if (isLitigent && [...allAdvocates?.[userInfo?.uuid], userInfo?.uuid]?.includes(createdBy)) {
           label = t("DOWNLOAD_SUBMISSION");
@@ -289,7 +312,7 @@ const EvidenceModal = ({
       }
     }
     return label;
-  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
+  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType, caseData]);
 
   const actionCancelLabel = useMemo(() => {
     if (
@@ -896,7 +919,8 @@ const EvidenceModal = ({
           history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
         } catch (error) {
           const errorCode = error?.response?.data?.Errors?.[0]?.code;
-          const errorMsg = errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+          const errorMsg =
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
           toast.error(errorMsg);
         }
       } else {
@@ -1277,14 +1301,16 @@ const EvidenceModal = ({
                     </div>
                   )}
 
-                  <div className="info-row">
-                    <div className="info-key">
-                      <h3>{t("SENDER")}</h3>
+                  {senderName && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("SENDER")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>{senderName}</h3>
+                      </div>
                     </div>
-                    <div className="info-value">
-                      <h3>{senderName}</h3>
-                    </div>
-                  </div>
+                  )}
                   {createdByName && (
                     <div className="info-row">
                       <div className="info-key">
