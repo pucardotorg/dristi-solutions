@@ -1,21 +1,12 @@
--- update 2 tables
+-- update 3 tables
+update dristi_application da
+set asuser = da.createdby
+where da.asuser is null
 
-UPDATE dristi_application da
-SET officeadvocateuseruuid = da.createdby
-WHERE EXISTS (
-    SELECT 1
-    FROM dristi_advocate dad
-             JOIN individual i
-                  ON i.individualid = dad.individualid
-    WHERE i.useruuid = da.createdby
-);
+update dristi_evidence_artifact dea
+set asuser = dea.createdby
+where dea.asuser is null
 
-UPDATE dristi_evidence_artifact dea
-SET officeadvocateuseruuid = dea.createdby
-WHERE EXISTS (
-    SELECT 1
-    FROM dristi_advocate dad
-             JOIN individual i
-                  ON i.individualid = dad.individualid
-    WHERE i.useruuid = dea.createdby
-);
+update dristi_bail db
+set as_user = db.created_by
+where db.as_user is null

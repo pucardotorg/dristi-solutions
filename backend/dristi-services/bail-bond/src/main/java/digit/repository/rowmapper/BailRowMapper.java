@@ -62,6 +62,7 @@ public class BailRowMapper implements ResultSetExtractor<List<Bail>> {
                             .bailId(rs.getString("bailId"))
                             .isActive(rs.getBoolean("bailIsActive"))
                             .auditDetails(auditDetails)
+                            .asUser(rs.getString("as_user"))
                             .documents(new ArrayList<>())
                             .sureties(new ArrayList<>())
                             .build();
