@@ -795,7 +795,7 @@ export const getAssistantAdvocateMembersForPartiesTab = (data) => {
 // For advocates/clerks, we need to return the uuid of the senior office advocate selected from home dropdown.
 export const getAuthorizedUuid = (currentLoggedInUserUuid) => {
   if (!currentLoggedInUserUuid) return currentLoggedInUserUuid;
-  const storedAdvocate = JSON.parse(localStorage.getItem("selectedAdvocate"));
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
   // This means logged in user is not an advocate or clerk, so return same uuid
   if (!storedAdvocate?.uuid) return currentLoggedInUserUuid;
 
