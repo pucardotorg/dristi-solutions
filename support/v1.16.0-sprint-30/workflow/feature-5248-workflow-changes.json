@@ -63,7 +63,7 @@
         {
           "action": "OTHER",
           "nextState": "OTHER",
-          "roles": ["SYSTEM", "SYSTEM_ADMIN"]
+          "roles": ["TASK_EDITOR", "SYSTEM", "SYSTEM_ADMIN"]
         },
         {
           "action": "ABANDON",
