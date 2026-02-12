@@ -57,13 +57,9 @@ public class EvidenceQueryBuilder {
             List<String> workflowStatus = criteria.getWorkflowStatus();
             String evidenceNumber = criteria.getEvidenceNumber();
             Boolean isActive = criteria.getIsActive();
-            String citizenUserUuid = null;
-            List<String> officeAdvocateUserUuids = null;
+            String asUser = null;
             if (!criteria.getIsCourtEmployee()) {
-                citizenUserUuid = criteria.getUserUuid();
-                if (criteria.getOfficeAdvocateUserUuids() != null && !criteria.getOfficeAdvocateUserUuids().isEmpty()) {
-                    officeAdvocateUserUuids = criteria.getOfficeAdvocateUserUuids();
-                }
+                asUser = criteria.getAsUser();
             }
 
             // Build the query using the extracted fields
@@ -102,8 +98,8 @@ public class EvidenceQueryBuilder {
             // TODO : remove this, this is temporary fix (#5016)
             // --------- REQUEST_FOR_BAIL evidence visibility ----------
             applyRequestForBailEvidenceVisibility(
-                    query, firstCriteria, citizenUserUuid, officeAdvocateUserUuids,
-                    preparedStmtList, preparedStmtArgList, criteria);
+                    query, firstCriteria, asUser,
+                    preparedStmtList, preparedStmtArgList);
 
             return query.toString();
         } catch (Exception e) {
@@ -114,22 +110,16 @@ public class EvidenceQueryBuilder {
 
     public String getCitizenQuery(List<String> statusList, EvidenceSearchCriteria searchCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         StringBuilder queryBuilder = new StringBuilder();
-        String loggedInUserUuid = searchCriteria.getUserUuid();
-        List<String> userUuids = searchCriteria.getOfficeAdvocateUserUuids();
-        boolean isAdvocateOrClerk = searchCriteria.isAdvocate() || searchCriteria.isClerk();
+        String asUser = searchCriteria.getAsUser();
 
         if (searchCriteria.getOwner() == null) {
             queryBuilder.append(" AND ( ");
-            if (isAdvocateOrClerk && userUuids != null && !userUuids.isEmpty()) {
-                queryBuilder.append(addUserCriteriaForList(userUuids, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
-            } else {
-                queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
-            }
+            queryBuilder.append(addUserCriteria(asUser, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
             queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
             queryBuilder.append(" )) ");
         }
 
-        else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
+        else if(!searchCriteria.getOwner().toString().equals(asUser)) {
             queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
         }
 
@@ -138,17 +128,17 @@ public class EvidenceQueryBuilder {
 
     public String getEmployeeQuery(List<String> statusList, EvidenceSearchCriteria searchCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         StringBuilder queryBuilder = new StringBuilder();
-        String loggedInUserUuid = searchCriteria.getUserUuid();
+        String asUser = searchCriteria.getAsUser();
 
         if(searchCriteria.isCourtEmployeeCanSign()){
             if (searchCriteria.getOwner() == null) {
                 queryBuilder.append(" AND ( ");
-                queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
+                queryBuilder.append(addUserCriteria(asUser, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
                 queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
                 queryBuilder.append(" )) ");
             }
 
-            else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
+            else if(!searchCriteria.getOwner().toString().equals(asUser)) {
                 queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
             }
         }
@@ -159,47 +149,15 @@ public class EvidenceQueryBuilder {
         return queryBuilder.toString();
     }
 
-    private String addUserCriteria(String loggedInUserUuid, String filingNumber, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    private String addUserCriteria(String asUser, String filingNumber, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         StringBuilder queryBuilder = new StringBuilder();
-        queryBuilder.append(" art.createdBy = ? ");
-        preparedStmtList.add(loggedInUserUuid);
+        queryBuilder.append(" art.asUser = ? ");
+        preparedStmtList.add(asUser);
         preparedStmtArgList.add(Types.VARCHAR);
 
-        queryBuilder.append(" OR ( art.createdBy <> ? ");
-        preparedStmtList.add(loggedInUserUuid);
+        queryBuilder.append(" OR ( art.asUser <> ? ");
+        preparedStmtList.add(asUser);
         preparedStmtArgList.add(Types.VARCHAR);
-
-        queryBuilder.append(" AND art.filingNumber = ? ");
-        preparedStmtList.add(filingNumber);
-        preparedStmtArgList.add(Types.VARCHAR);
-
-        return queryBuilder.toString();
-    }
-
-    private String addUserCriteriaForList(List<String> userUuids, String filingNumber, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        StringBuilder queryBuilder = new StringBuilder();
-
-        queryBuilder.append(" art.asUser IN (");
-        for (int i = 0; i < userUuids.size(); i++) {
-            queryBuilder.append("?");
-            if (i < userUuids.size() - 1) {
-                queryBuilder.append(", ");
-            }
-            preparedStmtList.add(userUuids.get(i));
-            preparedStmtArgList.add(Types.VARCHAR);
-        }
-        queryBuilder.append(") ");
-
-        queryBuilder.append(" OR ( art.asUser NOT IN (");
-        for (int i = 0; i < userUuids.size(); i++) {
-            queryBuilder.append("?");
-            if (i < userUuids.size() - 1) {
-                queryBuilder.append(", ");
-            }
-            preparedStmtList.add(userUuids.get(i));
-            preparedStmtArgList.add(Types.VARCHAR);
-        }
-        queryBuilder.append(") ");
 
         queryBuilder.append(" AND art.filingNumber = ? ");
         preparedStmtList.add(filingNumber);
@@ -291,15 +249,12 @@ public class EvidenceQueryBuilder {
     }
 
     // TODO : need
-    private void applyRequestForBailEvidenceVisibility(StringBuilder query, boolean firstCriteria, String userUuid, List<String> userUuids, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, EvidenceSearchCriteria criteria) {
+    private void applyRequestForBailEvidenceVisibility(StringBuilder query, boolean firstCriteria, String asUser, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
 
         // If user info is missing, do not restrict visibility
-        if (userUuid == null || userUuid.isEmpty()) {
+        if (asUser == null || asUser.isEmpty()) {
             return;
         }
-
-        boolean isAdvocateOrClerk = criteria.isAdvocate() || criteria.isClerk();
-        boolean hasUserUuidsList = userUuids != null && !userUuids.isEmpty();
 
         addClauseIfRequired(query, firstCriteria);
 
@@ -318,36 +273,16 @@ public class EvidenceQueryBuilder {
         preparedStmtList.add(REQUEST_FOR_BAIL);
         preparedStmtArgList.add(Types.VARCHAR);
 
-        if (isAdvocateOrClerk && hasUserUuidsList) {
-            query.append("app.onBehalfOf ??| ?::text[] ");
-            preparedStmtList.add(userUuids.toArray(new String[0]));
-            preparedStmtArgList.add(Types.ARRAY);
+        query.append("app.onBehalfOf @> ?::jsonb ")
+                .append("OR app.asUser = ?)")
+                .append(")")
+                .append(")");
 
-            query.append("OR app.asUser IN (");
-            for (int i = 0; i < userUuids.size(); i++) {
-                query.append("?");
-                if (i < userUuids.size() - 1) {
-                    query.append(", ");
-                }
-                preparedStmtList.add(userUuids.get(i));
-                preparedStmtArgList.add(Types.VARCHAR);
-            }
-            query.append(")")
-                    .append(")")
-                    .append(")")
-                    .append(")");
-        } else {
-            query.append("app.onBehalfOf @> ?::jsonb ")
-                    .append("OR app.createdBy = ?)")
-                    .append(")")
-                    .append(")");
+        preparedStmtList.add("[\"" + asUser + "\"]");
+        preparedStmtArgList.add(Types.VARCHAR);
 
-            preparedStmtList.add("[\"" + userUuid + "\"]");
-            preparedStmtArgList.add(Types.VARCHAR);
-
-            preparedStmtList.add(userUuid);
-            preparedStmtArgList.add(Types.VARCHAR);
-        }
+        preparedStmtList.add(asUser);
+        preparedStmtArgList.add(Types.VARCHAR);
     }
 
     public String getTotalCountQuery(String baseQuery) {

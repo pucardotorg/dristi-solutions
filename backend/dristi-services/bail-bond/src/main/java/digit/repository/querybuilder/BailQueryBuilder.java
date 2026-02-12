@@ -151,27 +151,10 @@ public class BailQueryBuilder {
             preparedStmtArgList.add(Types.VARCHAR);
         }
 
-        if (criteria.getUserUuid() != null && !criteria.getUserUuid().isEmpty()) {
-            List<String> officeAdvocateUserUuids = criteria.getOfficeAdvocateUserUuids();
-            boolean isAdvocateOrClerk = criteria.isAdvocate() || criteria.isClerk();
-            boolean hasUserUuidsList = officeAdvocateUserUuids != null && !officeAdvocateUserUuids.isEmpty();
-
-            if (isAdvocateOrClerk && hasUserUuidsList) {
-                query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.as_user IN (");
-                for (int i = 0; i < officeAdvocateUserUuids.size(); i++) {
-                    query.append("?");
-                    if (i < officeAdvocateUserUuids.size() - 1) {
-                        query.append(", ");
-                    }
-                    preparedStmtList.add(officeAdvocateUserUuids.get(i));
-                    preparedStmtArgList.add(Types.VARCHAR);
-                }
-                query.append("))) ");
-            } else {
-                query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.created_by = ?)) ");
-                preparedStmtList.add(criteria.getUserUuid());
-                preparedStmtArgList.add(Types.VARCHAR);
-            }
+        if (criteria.getAsUser() != null && !criteria.getAsUser().isEmpty()) {
+            query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.as_user = ?)) ");
+            preparedStmtList.add(criteria.getAsUser());
+            preparedStmtArgList.add(Types.VARCHAR);
         }
     }
 
@@ -197,39 +180,14 @@ public class BailQueryBuilder {
     }
 
     private void addOwnerCriteria(BailSearchCriteria criteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        String userUuid = criteria.getUserUuid();
-        if (userUuid != null && !userUuid.isEmpty()) {
-            List<String> officeAdvocateUserUuids = criteria.getOfficeAdvocateUserUuids();
-            boolean isAdvocateOrClerk = criteria.isAdvocate() || criteria.isClerk();
-            boolean hasUserUuidsList = officeAdvocateUserUuids != null && !officeAdvocateUserUuids.isEmpty();
+        String asUser = criteria.getAsUser();
+        if (asUser != null && !asUser.isEmpty()) {
 
-            if (isAdvocateOrClerk && hasUserUuidsList) {
-                query.append(" AND (bail.litigant_id IN (");
-                for (int i = 0; i < officeAdvocateUserUuids.size(); i++) {
-                    query.append("?");
-                    if (i < officeAdvocateUserUuids.size() - 1) {
-                        query.append(", ");
-                    }
-                    preparedStmtList.add(officeAdvocateUserUuids.get(i));
-                    preparedStmtArgList.add(Types.VARCHAR);
-                }
-                query.append(") OR bail.as_user IN (");
-                for (int i = 0; i < officeAdvocateUserUuids.size(); i++) {
-                    query.append("?");
-                    if (i < officeAdvocateUserUuids.size() - 1) {
-                        query.append(", ");
-                    }
-                    preparedStmtList.add(officeAdvocateUserUuids.get(i));
-                    preparedStmtArgList.add(Types.VARCHAR);
-                }
-                query.append("))");
-            } else {
-                query.append(" AND (bail.litigant_id = ? OR bail.created_by = ?)");
-                preparedStmtList.add(userUuid);
-                preparedStmtList.add(userUuid);
-                preparedStmtArgList.add(Types.VARCHAR);
-                preparedStmtArgList.add(Types.VARCHAR);
-            }
+            query.append(" AND (bail.litigant_id = ? OR bail.as_user = ?)");
+            preparedStmtList.add(asUser);
+            preparedStmtList.add(asUser);
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtArgList.add(Types.VARCHAR);
         }
     }
 }

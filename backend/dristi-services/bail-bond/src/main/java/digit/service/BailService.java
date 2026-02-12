@@ -531,99 +531,9 @@ public class BailService {
             }
             case "citizen" -> {
                 bailSearchRequest.getCriteria().setUserUuid(userInfo.getUuid());
-                enrichOfficeAdvocateUserUuids(requestInfo, bailSearchRequest.getCriteria());
             }
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
-    }
-
-    private void enrichOfficeAdvocateUserUuids(RequestInfo requestInfo, BailSearchCriteria searchCriteria) {
-        User userInfo = requestInfo.getUserInfo();
-        String userUuid = userInfo.getUuid();
-        String tenantId = config.getTenantId();
-
-        boolean isAdvocate = hasRole(userInfo, ADVOCATE_ROLE);
-        boolean isClerk = hasRole(userInfo, ADVOCATE_CLERK_ROLE);
-
-        if (!isAdvocate && !isClerk) {
-            return;
-        }
-
-        searchCriteria.setAdvocate(isAdvocate);
-        searchCriteria.setClerk(isClerk);
-
-        String filingNumber = searchCriteria.getFilingNumber();
-
-        if (filingNumber == null || filingNumber.isEmpty()) {
-            return;
-        }
-
-        try {
-            CaseCriteria caseCriteria = CaseCriteria.builder()
-                    .filingNumber(filingNumber)
-                    .defaultFields(false)
-                    .build();
-
-            CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
-                    .requestInfo(requestInfo)
-                    .criteria(Collections.singletonList(caseCriteria))
-                    .tenantId(tenantId)
-                    .build();
-
-            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
-            if (caseDetails == null || !caseDetails.isArray() || caseDetails.isEmpty()) {
-                return;
-            }
-
-            CourtCase courtCase = objectMapper.convertValue(caseDetails.get(0), CourtCase.class);
-
-            if (courtCase.getAdvocateOffices() == null) {
-                return;
-            }
-
-            Set<String> uuidSet = new HashSet<>();
-            List<AdvocateOffice> advocateOffices = courtCase.getAdvocateOffices();
-
-            for (AdvocateOffice office : advocateOffices) {
-                boolean userBelongsToOffice = false;
-
-                if (isClerk && office.getClerks() != null) {
-                    userBelongsToOffice = office.getClerks().stream()
-                            .anyMatch(clerk -> userUuid.equals(clerk.getMemberUserUuid()));
-                }
-
-                if (isAdvocate) {
-                    if (userUuid.equals(office.getOfficeAdvocateUserUuid())) {
-                        userBelongsToOffice = true;
-                    } else if (office.getAdvocates() != null) {
-                        userBelongsToOffice = userBelongsToOffice || office.getAdvocates().stream()
-                                .anyMatch(advocate -> userUuid.equals(advocate.getMemberUserUuid()));
-                    }
-                }
-
-                if (userBelongsToOffice) {
-                    uuidSet.add(office.getOfficeAdvocateUserUuid());
-                }
-            }
-
-            if (isAdvocate) {
-                uuidSet.add(userUuid);
-            }
-
-            log.info("Enriched officeAdvocateUserUuids for bail search: {}", uuidSet);
-            searchCriteria.setOfficeAdvocateUserUuids(new ArrayList<>(uuidSet));
-
-        } catch (Exception e) {
-            log.error("Error while enriching advocate/clerk UUIDs for bail search", e);
-        }
-    }
-
-    private boolean hasRole(User userInfo, String roleCode) {
-        if (userInfo.getRoles() == null) {
-            return false;
-        }
-        return userInfo.getRoles().stream()
-                .anyMatch(role -> roleCode.equals(role.getCode()));
     }
 
     public List<BailToSign> createBailToSignRequest(BailsToSignRequest request) {
