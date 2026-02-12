@@ -338,7 +338,7 @@ const TemplateOrConfigurationPage = () => {
             setRowData(null);
           }}
           config={modifiedFormConfig}
-          saveLabel={formdata?.isCoverLetterRequired?.code === "YES" ? "SAVE_AND_PREVIEW" : "NEXT"}
+          saveLabel={formdata?.isCoverLetterRequired?.code !== "YES" ? "SAVE_AND_PREVIEW" : "NEXT"}
           cancelLabel={"GO_BACK"}
           defaultValues={getDefaultValues}
           formdata={formdata}
@@ -355,7 +355,7 @@ const TemplateOrConfigurationPage = () => {
             setStepper(1);
           }}
           config={coverLetterTextConfig}
-          saveLabel={"NEXT"}
+          saveLabel={"SAVE_AND_PREVIEW"}
           cancelLabel={"GO_BACK"}
           defaultValues={getDefaultValues}
           formdata={coverLetterText}
@@ -376,7 +376,7 @@ const TemplateOrConfigurationPage = () => {
               setStepper(rowData?.isCoverLetterRequired ? 2 : 1);
             }
           }}
-          saveLabel={"NEXT"}
+          saveLabel={"SAVE"}
           cancelLabel={"GO_BACK"}
           handleSubmit={() => {
             setStepper(0);
