@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models.digital_document;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -31,5 +32,9 @@ public class OpenApiDigitalDocumentRequest {
 
     @JsonProperty("courtId")
     private String courtId;
+
+    @JsonProperty("mediationDetails")
+    @Valid
+    private MediationDetails mediationDetails = null;
 
 }
