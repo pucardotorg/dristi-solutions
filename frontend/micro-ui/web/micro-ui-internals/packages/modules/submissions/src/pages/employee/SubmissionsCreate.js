@@ -1577,7 +1577,11 @@ const SubmissionsCreate = ({ path }) => {
         setFormdata(updatedFormData);
       }
 
-      const action = restrictedApplicationTypes.includes(applicationType) ? SubmissionWorkflowAction.SUBMIT : SubmissionWorkflowAction.SAVEDRAFT;
+      const isEligibleForSubmission =
+        restrictedApplicationTypes.includes(applicationType) ||
+        ((orderNumber || orderRefNumber) && ["SUBMIT_BAIL_DOCUMENTS", "PRODUCTION_DOCUMENTS"].includes(applicationType));
+
+      const action = isEligibleForSubmission ? SubmissionWorkflowAction.SUBMIT : SubmissionWorkflowAction.SAVEDRAFT;
       if (applicationNumber) {
         const res = await submitSubmission({ update: true, action });
         await applicationRefetch();
@@ -1604,6 +1608,21 @@ const SubmissionsCreate = ({ path }) => {
                 assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
               });
             }
+            ["SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
+              (orderNumber || orderRefNumber) &&
+              (await createPendingTask({
+                refId: `${itemId ? `${itemId}_` : ""}${authorizedUuid}_${orderNumber || orderRefNumber}`,
+                isCompleted: true,
+                status: "Completed",
+                ...(applicationType === "SUBMIT_BAIL_DOCUMENTS" && { name: t("SUBMIT_BAIL_DOCUMENTS") }),
+              }));
+            ["PRODUCTION_DOCUMENTS"].includes(applicationType) &&
+              (orderNumber || orderRefNumber) &&
+              (await createPendingTask({
+                refId: `${itemId ? `${itemId}_` : ""}${litigantIndId}_${authorizedUuid}_${orderNumber || orderRefNumber}`,
+                isCompleted: true,
+                status: "Completed",
+              }));
           }
           history.replace(
             orderNumber
@@ -1719,21 +1738,6 @@ const SubmissionsCreate = ({ path }) => {
               assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
             });
           }
-          ["SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
-            (orderNumber || orderRefNumber) &&
-            (await createPendingTask({
-              refId: `${itemId ? `${itemId}_` : ""}${authorizedUuid}_${orderNumber || orderRefNumber}`,
-              isCompleted: true,
-              status: "Completed",
-              ...(applicationType === "SUBMIT_BAIL_DOCUMENTS" && { name: t("SUBMIT_BAIL_DOCUMENTS") }),
-            }));
-          ["PRODUCTION_DOCUMENTS"].includes(applicationType) &&
-            (orderNumber || orderRefNumber) &&
-            (await createPendingTask({
-              refId: `${itemId ? `${itemId}_` : ""}${litigantIndId}_${authorizedUuid}_${orderNumber || orderRefNumber}`,
-              isCompleted: true,
-              status: "Completed",
-            }));
         }
       }
       const pdfFile = new File([applicationPreviewPdf], applicationPreviewFileName, { type: "application/pdf" });
@@ -1989,7 +1993,7 @@ const SubmissionsCreate = ({ path }) => {
             label={t("REVIEW_SUBMISSION")}
             className={"submission-create submission-form-filed-style"}
             secondaryLabel={t("SAVE_AS_DRAFT")}
-            showSecondaryLabel={restrictedApplicationTypes?.includes(applicationType) ? false : true}
+            showSecondaryLabel={restrictedApplicationTypes?.includes(applicationType) ? false : orderNumber ? false : true}
             onSecondayActionClick={handleSaveDraft}
             config={modifiedFormConfig}
             defaultValues={defaultFormValue}
