@@ -894,7 +894,11 @@ const EvidenceModal = ({
           });
           sessionStorage.setItem("currentOrderType", orderType);
           history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
-        } catch (error) {}
+        } catch (error) {
+          const errorCode = error?.response?.data?.Errors?.[0]?.code;
+          const errorMsg = errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+          toast.error(errorMsg);
+        }
       } else {
         if (showConfirmationModal.type === "reject") {
           await handleRejectApplication();

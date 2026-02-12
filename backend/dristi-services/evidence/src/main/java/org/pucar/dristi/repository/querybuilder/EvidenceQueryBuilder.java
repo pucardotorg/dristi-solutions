@@ -17,7 +17,7 @@ public class EvidenceQueryBuilder {
 
     private static final String BASE_ARTIFACT_QUERY = " SELECT art.id as id, art.tenantId as tenantId, art.artifactNumber as artifactNumber, " +
             "art.evidenceNumber as evidenceNumber, art.externalRefNumber as externalRefNumber, art.caseId as caseId, " +
-            "art.application as application, art.officeAdvocateUserUuid as officeAdvocateUserUuid, art.filingNumber as filingNumber, art.hearing as hearing, art.orders as orders, art.mediaType as mediaType, " +
+            "art.application as application, art.asUser as asUser, art.filingNumber as filingNumber, art.hearing as hearing, art.orders as orders, art.mediaType as mediaType, " +
             "art.artifactType as artifactType, art.sourceType as sourceType, art.sourceID as sourceID, art.courtId as courtId, art.sourceName as sourceName, art.applicableTo as applicableTo, " +
             "art.comments as comments, art.file as file, art.createdDate as createdDate, art.isActive as isActive, art.isEvidence as isEvidence, art.status as status, art.description as description, " +
             "art.artifactDetails as artifactDetails, art.additionalDetails as additionalDetails, art.createdBy as createdBy, " +
@@ -58,11 +58,11 @@ public class EvidenceQueryBuilder {
             String evidenceNumber = criteria.getEvidenceNumber();
             Boolean isActive = criteria.getIsActive();
             String citizenUserUuid = null;
-            List<String> advocateAndClerkUserUuids = null;
+            List<String> officeAdvocateUserUuids = null;
             if (!criteria.getIsCourtEmployee()) {
                 citizenUserUuid = criteria.getUserUuid();
-                if (criteria.getAdvocateAndClerkUuids() != null && !criteria.getAdvocateAndClerkUuids().isEmpty()) {
-                    advocateAndClerkUserUuids = criteria.getAdvocateAndClerkUuids();
+                if (criteria.getOfficeAdvocateUserUuids() != null && !criteria.getOfficeAdvocateUserUuids().isEmpty()) {
+                    officeAdvocateUserUuids = criteria.getOfficeAdvocateUserUuids();
                 }
             }
 
@@ -102,7 +102,7 @@ public class EvidenceQueryBuilder {
             // TODO : remove this, this is temporary fix (#5016)
             // --------- REQUEST_FOR_BAIL evidence visibility ----------
             applyRequestForBailEvidenceVisibility(
-                    query, firstCriteria, citizenUserUuid, advocateAndClerkUserUuids,
+                    query, firstCriteria, citizenUserUuid, officeAdvocateUserUuids,
                     preparedStmtList, preparedStmtArgList, criteria);
 
             return query.toString();
@@ -115,7 +115,7 @@ public class EvidenceQueryBuilder {
     public String getCitizenQuery(List<String> statusList, EvidenceSearchCriteria searchCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         StringBuilder queryBuilder = new StringBuilder();
         String loggedInUserUuid = searchCriteria.getUserUuid();
-        List<String> userUuids = searchCriteria.getAdvocateAndClerkUuids();
+        List<String> userUuids = searchCriteria.getOfficeAdvocateUserUuids();
         boolean isAdvocateOrClerk = searchCriteria.isAdvocate() || searchCriteria.isClerk();
 
         if (searchCriteria.getOwner() == null) {
@@ -179,7 +179,7 @@ public class EvidenceQueryBuilder {
     private String addUserCriteriaForList(List<String> userUuids, String filingNumber, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         StringBuilder queryBuilder = new StringBuilder();
 
-        queryBuilder.append(" art.createdBy IN (");
+        queryBuilder.append(" art.asUser IN (");
         for (int i = 0; i < userUuids.size(); i++) {
             queryBuilder.append("?");
             if (i < userUuids.size() - 1) {
@@ -190,7 +190,7 @@ public class EvidenceQueryBuilder {
         }
         queryBuilder.append(") ");
 
-        queryBuilder.append(" OR ( art.createdBy NOT IN (");
+        queryBuilder.append(" OR ( art.asUser NOT IN (");
         for (int i = 0; i < userUuids.size(); i++) {
             queryBuilder.append("?");
             if (i < userUuids.size() - 1) {
@@ -323,7 +323,7 @@ public class EvidenceQueryBuilder {
             preparedStmtList.add(userUuids.toArray(new String[0]));
             preparedStmtArgList.add(Types.ARRAY);
 
-            query.append("OR app.createdBy IN (");
+            query.append("OR app.asUser IN (");
             for (int i = 0; i < userUuids.size(); i++) {
                 query.append("?");
                 if (i < userUuids.size() - 1) {

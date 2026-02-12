@@ -2247,7 +2247,11 @@ const GenerateOrdersV2 = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+            updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          } else {
+            updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
@@ -2297,7 +2301,11 @@ const GenerateOrdersV2 = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+            updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          } else {
+            updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
@@ -2353,7 +2361,11 @@ const GenerateOrdersV2 = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+            updatedFormdata.dateOfHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          } else {
+            updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
@@ -3349,6 +3361,19 @@ const GenerateOrdersV2 = () => {
         };
       }
 
+      if (orderFormData?.orderType?.code === "ACCEPT_RESCHEDULING_REQUEST") {
+        const hearingDate = orderFormData?.newHearingDate;
+        const baseOrder = updatedOrderData && typeof updatedOrderData === "object" ? updatedOrderData : {};
+
+        if (hearingDate && hearingDate !== todayDate) {
+          updatedOrderData = {
+            ...baseOrder,
+            nextHearingDate: null,
+            purposeOfNextHearing: null,
+          };
+        }
+      }
+
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
       if (isAcceptBailOrder && requestBailBond) {
         await createPendingTaskForJudge(updateOrderResponse?.order);
@@ -3394,7 +3419,12 @@ const GenerateOrdersV2 = () => {
 
         cfg?.forEach((section) => {
           section?.body?.forEach((field) => {
-            if (!field?.populators?.hideInForm && field?.isMandatory && hearingDateKeys.has(field?.key)) {
+            if (
+              !field?.populators?.hideInForm &&
+              field?.isMandatory &&
+              hearingDateKeys.has(field?.key) &&
+              !item?.orderSchema?.additionalDetails?.formdata?.[field?.key]
+            ) {
               mandatoryDateFields.push(field);
             }
           });
@@ -3537,7 +3567,6 @@ const GenerateOrdersV2 = () => {
 
             return acceptIndex !== -1 && scheduleIndex > acceptIndex;
           })();
-
           if (!hasValidRescheduleBypass) {
             setShowErrorToast({
               label: isHearingScheduled
@@ -3942,7 +3971,7 @@ const GenerateOrdersV2 = () => {
       await updateOrder(
         {
           ...currentOrder,
-          ...(hearingNumber && { hearingNumber: currentOrder?.hearingNumber || hearingNumber }),
+          ...(hearingNumber && { hearingNumber: currentOrder?.hearingNumber || hearingNumber, scheduledHearingNumber: null }),
           additionalDetails: {
             ...currentOrder?.additionalDetails,
             businessOfTheDay: businessOfTheDay,
@@ -4317,7 +4346,10 @@ const GenerateOrdersV2 = () => {
             try {
               response = await ordersService.updateOrder(reqbody, { tenantId });
             } catch (error) {
-              toast.error(t("SOMETHING_WENT_WRONG"));
+              const errorCode = error?.response?.data?.Errors?.[0]?.code;
+              const errorMsg =
+                errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+              toast.error(errorMsg);
             }
           } else {
             const compositeItems = [
@@ -4390,7 +4422,10 @@ const GenerateOrdersV2 = () => {
             `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
           );
         } catch (error) {
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          const errorCode = error?.response?.data?.Errors?.[0]?.code;
+          const errorMsg =
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+          toast.error(errorMsg);
         }
       } else {
         const reqbody = {
@@ -4458,10 +4493,18 @@ const GenerateOrdersV2 = () => {
           sessionStorage.setItem("currentOrderType", orderType);
           await refetchOrdersData();
           history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
-        } catch (error) {}
+        } catch (error) {
+          const errorCode = error?.response?.data?.Errors?.[0]?.code;
+          const errorMsg =
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+          toast.error(errorMsg);
+        }
       }
     } catch (error) {
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      const errorCode = error?.response?.data?.Errors?.[0]?.code;
+      const errorMsg =
+        errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+      toast.error(errorMsg);
     }
   };
 

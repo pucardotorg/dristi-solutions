@@ -116,4 +116,7 @@ public class PendingTask {
     @JsonProperty("nextHearingDate")
     private String nextHearingDate = null;
 
+    @JsonProperty("createdTime")
+    private Long createdTime = null;
+
 }

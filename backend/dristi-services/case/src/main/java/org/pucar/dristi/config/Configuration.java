@@ -1,5 +1,6 @@
 package org.pucar.dristi.config;
 
+import jakarta.validation.constraints.Min;
 import org.egov.tracer.config.TracerConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
@@ -485,4 +486,11 @@ public class Configuration {
 
 	@Value("${advocate.office.case.member.update.topic}")
 	private String advocateOfficeCaseMemberUpdateTopic;
+
+	@Value("${advocate.office.case.member.analytics.topic}")
+	private String advocateOfficeCaseMemberAnalyticsTopic;
+
+	@Value("${batch.size}")
+	@Min(1)
+	private int batchSize;
 }

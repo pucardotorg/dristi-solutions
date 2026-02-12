@@ -16,7 +16,6 @@ function NoticeSummonPaymentModal({
   formDataKey,
   taskManagementList,
   courierOrderDetails,
-  refetchPendingTasks,
   setIsPaymentCompleted,
 }) {
   const { t } = useTranslation();
@@ -178,7 +177,6 @@ function NoticeSummonPaymentModal({
         if (fileStoreId) {
           setReceiptFilstoreId(fileStoreId);
           setIsPaymentCompleted(true);
-          await refetchPendingTasks();
           setHideCancelButton(true);
         }
       } else {

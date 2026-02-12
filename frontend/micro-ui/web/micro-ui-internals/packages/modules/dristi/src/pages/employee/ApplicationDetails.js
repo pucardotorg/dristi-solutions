@@ -402,7 +402,15 @@ const ApplicationDetails = ({ location, match }) => {
           )}
           {showApproveModal && (
             <Modal
-              headerBarMain={<Heading label={t("CONFIRM_APPROVE_ADVOCATE_APPLICATION_HEADER")} />}
+              headerBarMain={
+                <Heading
+                  label={
+                    userType === "ADVOCATE_CLERK"
+                      ? t("CONFIRM_APPROVE_ADVOCATE_CLERK_APPLICATION_HEADER")
+                      : t("CONFIRM_APPROVE_ADVOCATE_APPLICATION_HEADER")
+                  }
+                />
+              }
               headerBarEnd={<CloseBtn onClick={() => !isSubmittingAction && setShowApproveModal(false)} />}
               actionCancelLabel={t("CS_BACK")}
               actionCancelOnSubmit={() => {
@@ -420,7 +428,11 @@ const ApplicationDetails = ({ location, match }) => {
                   <Loader />
                 </div>
               ) : (
-                <div style={{ padding: "20px 0px" }}>{t(`CONFIRM_APPROVE_ADVOCATE_APPLICATION_TEXT`)}</div>
+                <div style={{ padding: "20px 0px" }}>
+                  {userType === "ADVOCATE_CLERK"
+                    ? t("CONFIRM_APPROVE_ADVOCATE_CLERK_APPLICATION_TEXT")
+                    : t("CONFIRM_APPROVE_ADVOCATE_APPLICATION_TEXT")}
+                </div>
               )}
             </Modal>
           )}

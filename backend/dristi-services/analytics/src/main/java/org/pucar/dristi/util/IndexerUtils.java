@@ -248,7 +248,7 @@ public class IndexerUtils {
             }
         }
 
-        Long createdTime = clock.millis();
+        Long createdTime = pendingTask.getCreatedTime() != null ? pendingTask.getCreatedTime() : clock.millis();
 
         Long expiryTime = pendingTask.getExpiryDate();
         try {
@@ -349,7 +349,7 @@ public class IndexerUtils {
             }
         }
 
-        Long createdTime = clock.millis();
+        Long createdTime = pendingTask.getCreatedTime() != null ? pendingTask.getCreatedTime() : clock.millis();
 
         Long expiryTime = pendingTask.getExpiryDate();
         try {
