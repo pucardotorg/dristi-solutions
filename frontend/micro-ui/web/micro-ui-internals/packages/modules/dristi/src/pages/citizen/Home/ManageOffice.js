@@ -524,7 +524,7 @@ const ManageOffice = () => {
                   <div className="manage-office-search-field">
                     <label className="manage-office-search-field__label">{t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}</label>
                     <div className="manage-office-search-field__control">
-                      <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="manage-office-search-field__country">
+                      <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="manage-office-search-field__country" disabled>
                         <option value="+91">+91</option>
                       </select>
                       <input
