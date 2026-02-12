@@ -2,7 +2,7 @@ openapi: 3.0.0
 
 info:
   title: Task Management Service API
-  description: |
+  description: >
     DIGIT Task Management Service responsible for creation, assignment,
     tracking, workflow transitions and reporting of tasks.
   version: 1.0.0
@@ -13,9 +13,7 @@ servers:
 
 tags:
   - name: Tasks
-    description: APIs for managing tasks
   - name: Task Assignment
-    description: APIs for assigning tasks
 
 security:
   - bearerAuth: []
@@ -35,19 +33,15 @@ paths:
             example:
               requestInfo:
                 apiId: Dristi
-                authToken: jwt-token
+                authToken: <AUTH_TOKEN>
                 msgId: 1712345678901|en_IN
-                userInfo:
-                  uuid: 9cfb721e-590c-455b-b255-9ff3045add25
-                  userName: judge01
-                  tenantId: kl
               task:
                 tenantId: kl
                 title: Verify Bail Bond
                 description: Verify submitted bail bond documents
                 priority: HIGH
+                status: PENDING
                 assignee: 111e4567-e89b-12d3-a456-426614174000
-
       responses:
         '201':
           description: Task created
@@ -69,12 +63,11 @@ paths:
             example:
               requestInfo:
                 apiId: Dristi
-                authToken: jwt-token
+                authToken: <AUTH_TOKEN>
               task:
                 id: 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
                 tenantId: kl
                 status: IN_PROGRESS
-
       responses:
         '200':
           description: Task updated
@@ -96,7 +89,7 @@ paths:
             example:
               requestInfo:
                 apiId: Dristi
-                authToken: jwt-token
+                authToken: <AUTH_TOKEN>
                 msgId: 1770615520763|en_IN
               criteria:
                 tenantId: kl
@@ -105,7 +98,6 @@ paths:
               pagination:
                 limit: 10
                 offset: 0
-
       responses:
         '200':
           description: Task search result
@@ -127,13 +119,12 @@ paths:
             example:
               requestInfo:
                 apiId: Dristi
-                authToken: jwt-token
+                authToken: <AUTH_TOKEN>
               tenantId: kl
               taskIds:
                 - 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
               assignee: 111e4567-e89b-12d3-a456-426614174000
               comment: Assigning for verification
-
       responses:
         '202':
           description: Assignment accepted
@@ -163,40 +154,53 @@ components:
 
     Task:
       type: object
-      required: [tenantId, title]
+      required: [tenantId, title, status]
       properties:
         id:
           type: string
           format: uuid
           example: 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
+
         taskNumber:
           type: string
           example: KL-000734-2026-TK1
+
         tenantId:
           type: string
           example: kl
+
         title:
           type: string
           example: Verify Bail Bond
+
         description:
           type: string
           example: Verify submitted bail bond documents
+
         status:
           type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED, CANCELLED]
           example: PENDING
+
         priority:
           type: string
           enum: [HIGH, MEDIUM, LOW]
           example: HIGH
+
         assignee:
           type: string
           format: uuid
+
         workflow:
           $ref: '#/components/schemas/Workflow'
+
         additionalDetails:
           type: object
           example:
             caseId: 2f6fe4ae-352f-420d-b243-679191b4ba01
+
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
 
     Workflow:
       type: object
@@ -240,6 +244,9 @@ components:
         status:
           type: string
           example: PENDING
+        assignee:
+          type: string
+          format: uuid
 
     TaskResponse:
       type: object
@@ -263,7 +270,7 @@ components:
 
     TaskAssignmentRequest:
       type: object
-      required: [requestInfo, taskIds, assignee, tenantId]
+      required: [requestInfo, tenantId, taskIds, assignee]
       properties:
         requestInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
@@ -299,5 +306,6 @@ components:
             properties:
               taskId:
                 type: string
+                format: uuid
               errorMessage:
                 type: string
