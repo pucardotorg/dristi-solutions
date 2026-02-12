@@ -271,8 +271,15 @@ const ApplicationDetails = ({ location, match }) => {
   }, [individualData, fullName, t]);
 
   const barDetails = useMemo(() => {
+    // const registrationNumberLabel = userType === "ADVOCATE_CLERK" ? t("CLERK_REGISTRATION_NUMBER") : t("CS_BAR_REGISTRATION_NUMBER");
+    // const documentLabel = userType === "ADVOCATE_CLERK" ? t("CLERK_ID_DOCUMENT") : t("CS_BAR_COUNCIL_ID");
+
+    // For clerk, use stateRegnNumber; for advocate, use barRegistrationNumber from AdditionalFields
+    const registrationNumber =
+      userType === "ADVOCATE_CLERK" ? searchResult?.[0]?.stateRegnNumber : searchResult?.[0]?.[userTypeDetail?.apiDetails?.AdditionalFields?.[0]];
+
     return [
-      { title: t("CS_BAR_REGISTRATION_NUMBER"), content: searchResult?.[0]?.[userTypeDetail?.apiDetails?.AdditionalFields?.[0]] || "N/A" },
+      { title: t("CS_BAR_REGISTRATION_NUMBER"), content: registrationNumber || "N/A" },
       {
         title: t("CS_BAR_COUNCIL_ID"),
         image: true,
@@ -290,7 +297,7 @@ const ApplicationDetails = ({ location, match }) => {
         image: true,
       },
     ];
-  }, [fileStoreId, searchResult, tenantId, userTypeDetail?.apiDetails?.AdditionalFields]);
+  }, [fileStoreId, searchResult, tenantId, userTypeDetail?.apiDetails?.AdditionalFields, userType, t]);
 
   const aadharData = useMemo(() => {
     return [
@@ -345,7 +352,7 @@ const ApplicationDetails = ({ location, match }) => {
             />
 
             <DocumentDetailCard cardData={personalData} />
-            {type === "advocate" && userType !== "ADVOCATE_CLERK" && (
+            {type === "advocate" && (userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") && (
               <DocumentDetailCard onClick={() => handleImageModalOpen(fileStoreId, fileName)} cardData={barDetails} />
             )}
           </div>
