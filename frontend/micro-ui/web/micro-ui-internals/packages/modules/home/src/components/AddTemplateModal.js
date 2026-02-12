@@ -30,8 +30,8 @@ const AddTemplateModal = ({
         const oldValue = formDataCopy[key];
         let value = oldValue;
         if (typeof value === "string") {
-          if (value.length > 200) {
-            value = value.slice(0, 200);
+          if (value.length > 100) {
+            value = value.slice(0, 100);
           }
           let updatedValue = formatName(value);
           if (updatedValue !== oldValue) {

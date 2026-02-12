@@ -6299,6 +6299,8 @@ export const configMiscellaneousProcess = [
           optionsKey: "formattedAddress",
           addressOptionKey: "id",
           hideInForm: true,
+          labelChildren: "OutlinedInfoIcon",
+          tooltipValue: "SELECTED_PARTIES_ADDRESS_WILL_BE_PRINTED_ON_ORDER"
         },
       },
     ],
