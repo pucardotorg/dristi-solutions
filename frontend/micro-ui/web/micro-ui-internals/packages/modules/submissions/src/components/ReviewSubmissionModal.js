@@ -5,7 +5,7 @@ import { Toast } from "@egovernments/digit-ui-react-components";
 
 import { Urls } from "../hooks/services/Urls";
 import { useQuery } from "react-query";
-import { convertToDateInputFormat, getUserInfo } from "../utils/index";
+import { convertToDateInputFormat, getUserInfoFromUuids } from "../utils/index";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const Heading = (props) => {
@@ -173,9 +173,9 @@ function ReviewSubmissionModal({
 
   useEffect(() => {
     if (!application) return;
-    const { officeAdvocateUserUuid, createdBy, onBehalfOf } = application;
+    const { asUser, createdBy, onBehalfOf } = application;
     const onBehalfOfUuid = onBehalfOf?.[0];
-    const uuids = [...new Set([officeAdvocateUserUuid, createdBy, onBehalfOfUuid].filter(Boolean))];
+    const uuids = [...new Set([asUser, createdBy, onBehalfOfUuid].filter(Boolean))];
 
     if (uuids.length === 0) {
       setUserInfoMap({
@@ -190,7 +190,7 @@ function ReviewSubmissionModal({
 
     const fetchUsers = async () => {
       try {
-        const result = await getUserInfo(uuids); // [{ userUuid, name }]
+        const result = await getUserInfoFromUuids(uuids); // [{ userUuid, name }]
 
         // Build lookup map (O(1))
         const lookup = new Map((result || []).map((user) => [user.userUuid, user.name]));
@@ -198,7 +198,7 @@ function ReviewSubmissionModal({
         if (!isMounted) return;
 
         setUserInfoMap({
-          senderUser: officeAdvocateUserUuid ? { uuid: officeAdvocateUserUuid, name: lookup.get(officeAdvocateUserUuid) } : null,
+          senderUser: asUser ? { uuid: asUser, name: lookup.get(asUser) } : null,
 
           createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
 
@@ -274,13 +274,7 @@ function ReviewSubmissionModal({
 
             <div style={getStyles("infoRow")}>
               <h3 style={getStyles("infoKey")}>{t("SENDER")}</h3>
-              <h3 style={getStyles("infoValue")}>
-                {userInfoMap?.senderUser?.name
-                  ? userInfoMap?.onBehalfOfUser?.name
-                    ? `${userInfoMap?.senderUser?.name} on Behalf of ${userInfoMap?.onBehalfOfUser?.name}`
-                    : userInfoMap?.senderUser?.name
-                  : application?.additionalDetails?.owner || ""}
-              </h3>
+              <h3 style={getStyles("infoValue")}>{userInfoMap?.senderUser?.name}</h3>
             </div>
 
             {additionalDetails && (

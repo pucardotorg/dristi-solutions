@@ -1,14 +1,13 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../components/Modal";
 import { Button, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
-import { DRISTIService } from "../../../services";
 import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import useGetDiaryEntry from "../../../hooks/dristi/useGetDiaryEntry";
-import { getAuthorizedUuid } from "../../../Utils";
+import { getAllAssociatedPartyUuids, getAuthorizedUuid } from "../../../Utils";
 
 function PublishedOrderModal({
   t,
@@ -209,7 +208,12 @@ function PublishedOrderModal({
         )
         ?.flat()
         ?.filter(Boolean) || [];
-    const allSubmissionParty = [...submissionParty, isAuthority].filter(Boolean);
+
+    const submissionPartiesIncludingOfficeMembers = submissionParty?.flatMap((partyUuid) => {
+      const allMembers = getAllAssociatedPartyUuids(caseDetails, partyUuid); // Include memebrs like jr.advocate/ clerk who are associated with respective advocates
+      return [...allMembers];
+    });
+    const allSubmissionParty = [...new Set([...submissionPartiesIncludingOfficeMembers, isAuthority]?.filter(Boolean))];
     return (
       allSubmissionParty?.includes(userUuid) &&
       userRoles.includes("SUBMISSION_CREATOR") &&
@@ -222,9 +226,7 @@ function PublishedOrderModal({
       ].includes(caseStatus)
     );
   }, [
-    compositeMandatorySubmissionItems,
     mandatorySubmissionItemId,
-    compositeSetTermsOfBailItems,
     setTermBailItemId,
     caseDetails,
     allAdvocates,

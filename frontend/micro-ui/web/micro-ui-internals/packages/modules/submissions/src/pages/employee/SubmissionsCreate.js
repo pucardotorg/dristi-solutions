@@ -1371,7 +1371,7 @@ const SubmissionsCreate = ({ path }) => {
             applicationType,
             status: caseDetails?.status,
             isActive: true,
-            officeAdvocateUserUuid: authorizedUuid !== userUuid ? authorizedUuid : null, // Only sending in case clerk/jr adv is creating application.
+            asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
             createdBy: userUuid,
             statuteSection: { tenantId },
             additionalDetails: {

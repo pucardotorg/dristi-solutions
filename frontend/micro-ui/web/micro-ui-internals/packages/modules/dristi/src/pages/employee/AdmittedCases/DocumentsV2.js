@@ -239,8 +239,8 @@ const DocumentsV2 = ({
         }
       } else if (docObj?.[0]?.isBail) {
         const bailStatus = docObj?.[0]?.artifactList?.status;
-        const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditDetails?.createdBy;
-        const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentCreatedByUuid);
+        const documentOwnerUuid = docObj?.[0]?.artifactList?.asUser;
+        const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentOwnerUuid);
 
         const bailBondId = docObj?.[0]?.artifactList?.bailId;
         const filingNumber = docObj?.[0]?.artifactList?.filingNumber;
@@ -308,12 +308,12 @@ const DocumentsV2 = ({
       } else {
         const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
         const status = docObj?.[0]?.applicationList?.status;
-        const applicationCreatedByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
-        const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
+        const applicationOwnerUuid = docObj?.[0]?.applicationList?.asUser;
+        const documentOwnerUuid = docObj?.[0]?.artifactList?.asUser;
         const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
         const documentStatus = docObj?.[0]?.artifactList?.status;
-        const allAllowedPartiesForApplicationsActions = getAllAssociatedPartyUuids(caseDetails, applicationCreatedByUuid);
-        const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentCreatedByUuid);
+        const allAllowedPartiesForApplicationsActions = getAllAssociatedPartyUuids(caseDetails, applicationOwnerUuid);
+        const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentOwnerUuid);
         if (documentStatus === "PENDING_E-SIGN" && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
           history.push(
             `/${window?.contextPath}/${
