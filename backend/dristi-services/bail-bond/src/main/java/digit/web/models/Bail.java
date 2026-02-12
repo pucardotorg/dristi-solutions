@@ -138,6 +138,9 @@ public class Bail {
     @JsonProperty("caseNumber")
     private String caseNumber = null;
 
+    @JsonProperty("asUser")
+    private String asUser = null;
+
     /**
      * Type of the case.
      */
