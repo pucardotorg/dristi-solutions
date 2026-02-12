@@ -3,11 +3,11 @@ import { Modal, CloseSvg, InboxSearchComposer } from "@egovernments/digit-ui-rea
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
-import { formatDate } from "../../utils";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
 import ReviewNoticeModal from "@egovernments/digit-ui-module-orders/src/components/ReviewNoticeModal";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const modalPopup = {
   height: "72%",
@@ -351,7 +351,7 @@ const NoticeProcessModal = ({
           </div>
           <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
             <span style={{ minWidth: "40%" }}>{t("CS_NEXT_HEARING")}</span>
-            <span>{currentHearingId ? formatDate(new Date(hearingDetails?.startTime), "DD-MM-YYYY") : t("No Hearing Schedueled")}</span>
+            <span>{currentHearingId ? DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), "DD-MM-YYYY") : t("No Hearing Schedueled")}</span>
           </div>
         </div>
         <div style={{ marginLeft: "10px" }}>
@@ -472,12 +472,12 @@ const NoticeProcessModal = ({
               <div className="case-info-column" style={{ justifyContent: "flex-start", gap: "10px", flexDirection: "row" }}>
                 <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
                   <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("ORDER_ISSUED_ON")}:</span>
-                  <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.createdDate), "DD-MM-YYYY")}</span>
+                  <span>{DateUtils.getFormattedDate(new Date(orderList[activeIndex.orderIndex]?.createdDate), "DD-MM-YYYY")}</span>
                 </div>
                 <hr className="vertical-line" />
                 <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
                   <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("HEARING_DATE")}:</span>
-                  <span>{formatDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY")}</span>
+                  <span>{DateUtils.getFormattedDate(new Date(hearingByNumber?.HearingList?.[0]?.startTime), "DD-MM-YYYY")}</span>
                 </div>
               </div>
               <div style={{ marginLeft: "10px" }}>

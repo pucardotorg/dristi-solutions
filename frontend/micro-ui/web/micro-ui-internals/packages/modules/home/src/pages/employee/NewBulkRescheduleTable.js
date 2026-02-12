@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { TextInput, LabelFieldPair, SubmitBar } from "@egovernments/digit-ui-react-components";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const NewBulkRescheduleTable = ({
   t,
@@ -56,13 +57,6 @@ const NewBulkRescheduleTable = ({
     },
   };
 
-  const formatDate = (date) => {
-    const newDateForm = new Date(date);
-    return (
-      newDateForm.getFullYear() + "-" + String(newDateForm.getMonth() + 1).padStart(2, "0") + "-" + String(newDateForm.getDate()).padStart(2, "0")
-    );
-  };
-
   const handleClear = async () => {
     setBulkFormData(defaultBulkFormData);
     await handleBulkHearingSearch(defaultBulkFormData);
@@ -108,7 +102,7 @@ const NewBulkRescheduleTable = ({
                 className="home-input"
                 key={"fromDate"}
                 type={"date"}
-                value={bulkFormData?.fromDate ? formatDate(bulkFormData?.fromDate) : ""}
+                value={bulkFormData?.fromDate ? DateUtils.getFormattedDate(bulkFormData?.fromDate, "YYYY-MM-DD") : ""}
                 onChange={(e) => {
                   setBulkFormData((prev) => ({ ...prev, fromDate: new Date(e.target.value).setHours(0, 0, 0, 0) }));
                 }}
@@ -123,7 +117,7 @@ const NewBulkRescheduleTable = ({
                 className="home-input"
                 key={"toDate"}
                 type={"date"}
-                value={bulkFormData?.toDate ? formatDate(bulkFormData?.toDate) : ""}
+                value={bulkFormData?.toDate ? DateUtils.getFormattedDate(bulkFormData?.toDate, "YYYY-MM-DD") : ""}
                 onChange={(e) => {
                   setBulkFormData((prev) => ({ ...prev, toDate: new Date(e.target.value).setHours(0, 0, 0, 0) }));
                 }}

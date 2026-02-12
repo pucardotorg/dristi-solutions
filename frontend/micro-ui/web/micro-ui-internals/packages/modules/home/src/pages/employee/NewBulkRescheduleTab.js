@@ -11,6 +11,7 @@ import { Urls } from "@egovernments/digit-ui-module-hearings/src/hooks/services/
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import _ from "lodash";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -277,7 +278,11 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       const diaryEntries = newHearingData?.map((hearing) => {
         return {
           courtId: courtId,
-          businessOfDay: `No sitting notified on ${formatDate(hearing?.originalHearingDate)}. Case posted to ${formatDate(hearing?.hearingDate)}`,
+          businessOfDay: `No sitting notified on ${DateUtils.getFormattedDate(
+            hearing?.originalHearingDate,
+            "DD-MM-YYYY",
+            "/"
+          )}. Case posted to ${DateUtils.getFormattedDate(hearing?.hearingDate, "DD-MM-YYYY", "/")}`,
           tenantId: tenantId,
           entryDate: new Date().setHours(0, 0, 0, 0),
           hearingDate: hearing?.startTime,
@@ -327,11 +332,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       setBulkFormData((prev) => ({ ...prev, reason: null }));
     }
     setStepper((prev) => prev - 1);
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
   };
 
   const onSumbitReschedule = async () => {
