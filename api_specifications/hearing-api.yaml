@@ -163,6 +163,28 @@ paths:
         '202':
           description: Bulk update accepted
 
+  /witnessDeposition/v1/uploadPdf:
+    post:
+      tags: [Witness Depositions]
+      summary: Upload deposition PDF
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [hearingId, file]
+              properties:
+                hearingId:
+                  type: string
+                  format: uuid
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Deposition uploaded successfully
+
 components:
 
   schemas:
@@ -270,11 +292,12 @@ components:
 
     Hearing:
       type: object
-      required: [tenantId, hearingType, status, startTime, endTime]
+      required: [id, tenantId, hearingType, status, startTime, endTime]
       properties:
         id:
           type: string
           format: uuid
+          example: 7d9fcb5a-1a6e-4a4b-8c6f-3bfa1d2d9d22
         tenantId:
           type: string
         filingNumber:
