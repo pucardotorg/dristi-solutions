@@ -2192,3 +2192,11 @@
     }
   }
 }
+
+.override-icon-position svg {
+  position: static !important;
+  right: auto !important;
+  top: auto !important;
+  display: inline-block;
+  vertical-align: middle;
+}

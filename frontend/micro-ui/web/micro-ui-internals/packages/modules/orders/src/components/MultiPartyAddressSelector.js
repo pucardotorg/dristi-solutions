@@ -1,8 +1,9 @@
 import { CardLabelError } from "@egovernments/digit-ui-components";
 import { CustomMultiSelectDropdown } from "@egovernments/digit-ui-module-dristi/src/components/CustomMultiSelectDropdown";
-import { CustomAddIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import { CustomAddIcon, OutlinedInfoIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import React, { useMemo, useState } from "react";
 import { Dropdown } from "@egovernments/digit-ui-react-components";
+import ReactTooltip from "react-tooltip";
 
 const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors }) => {
   const [activeDropdownIndex, setActiveDropdownIndex] = useState(null);
@@ -87,7 +88,24 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
 
             <div className="card-content">
               <div>
-                <p className="input-label">{t("PARTY_NAME")}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                  <p className="input-label" style={{ margin: 0 }}>
+                    {t("PARTY_NAME")}
+                  </p>
+
+                  <div className="override-icon-position">
+                    <span
+                      style={{ color: "#77787B", display: "flex", alignItems: "center", cursor: "pointer" }}
+                      data-tip
+                      data-for={`${inputs.label}-tooltip`}
+                    >
+                      <OutlinedInfoIcon right={0} />
+                    </span>
+                    <ReactTooltip id={`${inputs?.label}-tooltip`} place="bottom" content={inputs?.tooltipValue || ""}>
+                      {t(inputs?.tooltipValue || inputs.label)}
+                    </ReactTooltip>
+                  </div>
+                </div>
                 <Dropdown
                   t={t}
                   option={availableOptions || []}
