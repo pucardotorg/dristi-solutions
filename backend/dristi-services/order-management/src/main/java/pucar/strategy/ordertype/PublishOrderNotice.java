@@ -190,6 +190,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
             }
         }
 
+        log.info("Getting advocate mappings with litigant");
         Map<String, List<String>> litigantAdvocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
         List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, "complainant");
         List<String> assignees = new ArrayList<>();
@@ -218,6 +219,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
 
         }
 
+        log.info("assignees list :: {}",assignees);
         for (String userUUID : assignees) {
             if (uniqueSet.contains(userUUID)) {
                 continue;
@@ -227,9 +229,10 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
             uniqueSet.add(userUUID);
         }
 
+        log.info("Getting sla");
         Long sla = pendingTaskUtil.getStateSlaBasedOnOrderType(order.getOrderType());
         String applicationNumber = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "refApplicationId"), String.class);
-
+        log.info("Application number :: {}",applicationNumber);
         Map<String, Object> additionalDetails = new HashMap<>();
         additionalDetails.put("applicationNumber", applicationNumber);
         additionalDetails.put("litigants", complainantIndividualId);
@@ -240,7 +243,11 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         try {
 
             String itemId = getItemId(order);
+            log.info("itemId :: {}",itemId);
+
             String referenceId = MANUAL + (itemId != null ? itemId + "_" : "") + COMPLAINANT + "_" + order.getOrderNumber();
+
+            log.info("Creating payment pending task for referenceId :: {}",referenceId);
 
             PendingTask pendingTask = PendingTask.builder()
                     .referenceId(referenceId)
@@ -261,6 +268,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
                     .build();
 
             pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo).pendingTask(pendingTask).build());
+            log.info("Created payment pending task for referenceId :: {}",referenceId);
 
             try {
 
