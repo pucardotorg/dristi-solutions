@@ -35,7 +35,7 @@ paths:
               requestInfo:
                 apiId: Rainmaker
                 msgId: 1730970507148|en_IN
-                authToken: jwt-token
+                authToken: <AUTH_TOKEN>
                 userInfo:
                   uuid: 64220357-defd-4abd-bcc3-e4b278203917
                   tenantId: kl

@@ -36,6 +36,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EvidenceResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
 
   /v1/_update:
     post:
@@ -54,6 +58,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EvidenceResponse'
+        '400':
+          description: Bad request
 
   /v1/_search:
     post:
@@ -154,3 +160,156 @@ components:
       type: object
       required: [requestInfo, criteria]
       properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          $ref: '#/components/schemas/EvidenceSearchCriteria'
+        pagination:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination"
+
+    EvidenceCommentRequest:
+      type: object
+      required: [requestInfo, artifactId, comment]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        artifactId:
+          type: string
+          format: uuid
+        comment:
+          $ref: '#/components/schemas/EvidenceComment'
+
+    EvidenceSignatureRequest:
+      type: object
+      required: [requestInfo, artifactId, signatureDetails]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        artifactId:
+          type: string
+          format: uuid
+        signatureDetails:
+          $ref: '#/components/schemas/SignatureDetails'
+
+    # --------------------------
+    # RESPONSES
+    # --------------------------
+
+    EvidenceResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        artifact:
+          $ref: '#/components/schemas/EvidenceArtifact'
+
+    EvidenceSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        artifacts:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceArtifact'
+        totalCount:
+          type: integer
+          example: 1
+
+    # --------------------------
+    # CORE MODELS
+    # --------------------------
+
+    EvidenceArtifact:
+      type: object
+      required:
+        - tenantId
+        - filingNumber
+        - artifactType
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 3f3d8c3b-3b2c-4e9b-8c3e-2b4d5f6a7c8d
+        tenantId:
+          type: string
+          example: kl
+        filingNumber:
+          type: string
+          example: KL-000105-2024
+        cnrNumber:
+          type: string
+          example: KLKM520001742024
+        artifactType:
+          type: string
+          example: DOCUMENT
+        fileStoreId:
+          type: string
+          example: abc123-file-id
+        status:
+          type: string
+          example: ACTIVE
+        isSigned:
+          type: boolean
+          example: false
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/EvidenceComment'
+        signatureDetails:
+          $ref: '#/components/schemas/SignatureDetails'
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
+
+    EvidenceSearchCriteria:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+        artifactType:
+          type: string
+        isSigned:
+          type: boolean
+        artifactIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    EvidenceComment:
+      type: object
+      required: [commentText]
+      properties:
+        id:
+          type: string
+          format: uuid
+        commentText:
+          type: string
+          example: Verified by court clerk
+        commentedBy:
+          type: string
+          example: clerk-user
+        commentedTime:
+          type: integer
+          format: int64
+
+    SignatureDetails:
+      type: object
+      properties:
+        signedBy:
+          type: string
+          example: JUDGE_001
+        signedTime:
+          type: integer
+          format: int64
+        signatureType:
+          type: string
+          example: DIGITAL
+        certificateId:
+          type: string
+          example: CERT-12345

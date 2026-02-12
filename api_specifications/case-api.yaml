@@ -161,9 +161,9 @@ components:
 
     CaseRequest:
       type: object
-      required: [RequestInfo, case]
+      required: [requestInfo, case]
       properties:
-        RequestInfo:
+        requestInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
         case:
           $ref: '#/components/schemas/CourtCase'
@@ -171,7 +171,7 @@ components:
     CaseResponse:
       type: object
       properties:
-        ResponseInfo:
+        responseInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
         cases:
           type: array
@@ -180,9 +180,9 @@ components:
 
     CaseSearchRequest:
       type: object
-      required: [RequestInfo, criteria]
+      required: [requestInfo, criteria]
       properties:
-        RequestInfo:
+        requestInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
         criteria:
           $ref: '#/components/schemas/CaseSearchCriteria'
@@ -192,7 +192,7 @@ components:
     CaseSearchResponse:
       type: object
       properties:
-        ResponseInfo:
+        responseInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
         cases:
           type: array
@@ -203,9 +203,9 @@ components:
 
     CaseExistsRequest:
       type: object
-      required: [RequestInfo, tenantId, filingNumber]
+      required: [requestInfo, tenantId, filingNumber]
       properties:
-        RequestInfo:
+        requestInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
         tenantId:
           type: string
@@ -215,16 +215,16 @@ components:
     CaseExistsResponse:
       type: object
       properties:
-        ResponseInfo:
+        responseInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
         exists:
           type: boolean
 
     CaseDetailsRequest:
       type: object
-      required: [RequestInfo, criteria]
+      required: [requestInfo, criteria]
       properties:
-        RequestInfo:
+        requestInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
         criteria:
           type: object
@@ -237,16 +237,16 @@ components:
     CaseDetailsResponse:
       type: object
       properties:
-        ResponseInfo:
+        responseInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
         case:
           $ref: '#/components/schemas/CourtCase'
 
     AddressRequest:
       type: object
-      required: [RequestInfo, partyAddressList]
+      required: [requestInfo, partyAddressList]
       properties:
-        RequestInfo:
+        requestInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
         partyAddressList:
           type: array
@@ -263,7 +263,7 @@ components:
     AddressResponse:
       type: object
       properties:
-        ResponseInfo:
+        responseInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
         partyAddressList:
           type: array
@@ -272,9 +272,9 @@ components:
 
     CasePdfRequest:
       type: object
-      required: [RequestInfo, criteria]
+      required: [requestInfo, criteria]
       properties:
-        RequestInfo:
+        requestInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
         criteria:
           type: object
@@ -287,7 +287,7 @@ components:
     CasePdfResponse:
       type: object
       properties:
-        ResponseInfo:
+        responseInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
         message:
           type: string
