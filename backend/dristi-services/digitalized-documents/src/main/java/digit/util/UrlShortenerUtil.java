@@ -47,9 +47,13 @@ public class UrlShortenerUtil {
     }
 
     public String createShortenedUrl(String tenantId, String documentNumber, String type) {
+        return createShortenedUrl(tenantId, documentNumber, type, configs.getBaseUrl());
+    }
+
+    public String createShortenedUrl(String tenantId, String documentNumber, String type, String basePath) {
 
         try {
-            String baseUrl = configs.getDomainUrl() + configs.getBaseUrl();
+            String baseUrl = configs.getDomainUrl() + basePath;
 
             // Build the final long URL with query parameters
             String longUrl = String.format(configs.getLongUrl(), baseUrl, tenantId, documentNumber, type);
