@@ -1160,12 +1160,12 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
         ?.body?.[0]?.populators?.inputs?.filter((data) => !data?.showOptional)
         ?.some((data) => {
           const isEmpty = /^\s*$/.test(formData?.poaAddressDetails?.[data?.name]);
-          return (
-            isEmpty ||
-            !formData?.poaAddressDetails?.[data?.name]?.match(
-              window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
-            )
-          );
+          return data?.name !== "typeOfAddress"
+            ? false
+            : isEmpty ||
+                !formData?.poaAddressDetails?.[data?.name]?.match(
+                  window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
+                );
         }))
   ) {
     setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
@@ -3020,7 +3020,7 @@ export const updateCaseDetails = async ({
                         artifactType: "OTHER",
                         sourceType: "COMPLAINANT",
                         caseId: caseDetails?.id,
-                        officeAdvocateUserUuid: authorizedUuid !== userUuid ? authorizedUuid : null, // Only sending in case clerk/jr adv is creating doc.
+                        asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
                         sourceID: individualId,
                         filingNumber: caseDetails?.filingNumber,
                         tenantId,

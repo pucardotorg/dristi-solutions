@@ -900,6 +900,7 @@ const GenerateBailBondV2 = () => {
           caseTitle: caseDetails?.caseTitle,
           cnrNumber: caseDetails?.cnrNumber,
           caseType: caseDetails?.caseType,
+          asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
           documents: [],
           additionalDetails: {
             createdUserName: userInfo?.name,
