@@ -1,29 +1,30 @@
 openapi: 3.0.0
 
 info:
-  title: Advocate Registry Service
+  title: Advocate Registry Service API
   description: |
-    This API manages advocate registration and related operations.
-    It provides endpoints for creating, updating, and searching advocate records.
+    DIGIT Advocate Registry Service responsible for advocate registration,
+    update and search operations across tenants.
   version: 1.0.0
 
 servers:
-  - url: /api
-    description: Base API path
+  - url: /advocateregistry/v1
+    description: Advocate Registry Base Path
 
 tags:
   - name: Advocate
-    description: APIs to manage advocate registrations
-  - name: Clerk
-    description: APIs to manage advocate clerk registrations
+    description: APIs for advocate registration lifecycle
+
+security:
+  - bearerAuth: []
 
 paths:
 
-  /v1/_create:
+  /_create:
     post:
       tags: [Advocate]
       summary: Register a new advocate
-      description: Creates a new advocate registration
+      description: Creates a new advocate registration entry.
       requestBody:
         required: true
         content:
@@ -33,7 +34,8 @@ paths:
             example:
               requestInfo:
                 apiId: Rainmaker
-                authToken: e1be8e68-f294-4a44-ac67-3595c83e92dd
+                msgId: 1730970507148|en_IN
+                authToken: jwt-token
                 userInfo:
                   uuid: 64220357-defd-4abd-bcc3-e4b278203917
                   tenantId: kl
@@ -49,25 +51,23 @@ paths:
                 status: PENDING_VERIFICATION
       responses:
         '200':
-          description: Advocate registered successfully
+          description: Advocate created successfully
           content:
             application/json:
-              example:
-                advocates:
-                  - id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
-                    tenantId: kl
-                    barCouncilNumber: KL/2016/1234
-                    status: PENDING_VERIFICATION
+              schema:
+                $ref: '#/components/schemas/AdvocateResponse'
 
-  /v1/_update:
+  /_update:
     post:
       tags: [Advocate]
       summary: Update advocate details
-      description: Update an existing advocate's information
+      description: Updates an existing advocate record.
       requestBody:
         required: true
         content:
           application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateRequest'
             example:
               requestInfo:
                 apiId: Rainmaker
@@ -83,16 +83,14 @@ paths:
           description: Advocate updated successfully
           content:
             application/json:
-              example:
-                advocates:
-                  - id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
-                    status: ACTIVE
+              schema:
+                $ref: '#/components/schemas/AdvocateResponse'
 
-  /v1/_search:
+  /_search:
     post:
       tags: [Advocate]
       summary: Search advocates
-      description: Search for advocates based on criteria
+      description: Search advocates using filter criteria.
       parameters:
         - in: query
           name: limit
@@ -108,154 +106,83 @@ paths:
         required: true
         content:
           application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateSearchRequest'
             example:
               requestInfo:
                 apiId: Rainmaker
               criteria:
                 tenantId: kl
                 status: ACTIVE
-              tenantId: kl
       responses:
         '200':
-          description: Search results
+          description: Advocate list
           content:
             application/json:
-              example:
-                advocates:
-                  - id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
-                    individualId: 9e8d13f2-7d6c-4a8c-b9cb-97c1b8fd6f21
-                    barCouncilNumber: KL/2016/1234
-                    status: ACTIVE
-
-  /v1/status/_search:
-    post:
-      tags: [Advocate]
-      summary: Search advocates by status
-      description: Search for advocates by registration status
-      parameters:
-        - in: query
-          name: status
-          schema:
-            type: string
-            example: ACTIVE
-        - in: query
-          name: tenantId
-          schema:
-            type: string
-            example: kl
-      requestBody:
-        required: true
-        content:
-          application/json:
-            example:
-              requestInfo:
-                apiId: Rainmaker
-      responses:
-        '200':
-          description: Search results
-          content:
-            application/json:
-              example:
-                advocates:
-                  - id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
-                    status: ACTIVE
-
-  /v1/applicationnumber/_search:
-    post:
-      tags: [Advocate]
-      summary: Search advocate by application number
-      description: Search for an advocate by application number
-      parameters:
-        - in: query
-          name: applicationNumber
-          schema:
-            type: string
-            example: ADV-APP-2024-00012
-        - in: query
-          name: tenantId
-          schema:
-            type: string
-            example: kl
-      requestBody:
-        required: true
-        content:
-          application/json:
-            example:
-              requestInfo:
-                apiId: Rainmaker
-      responses:
-        '200':
-          description: Search results
-          content:
-            application/json:
-              example:
-                advocates:
-                  - id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
-                    barCouncilNumber: KL/2016/1234
+              schema:
+                $ref: '#/components/schemas/AdvocateSearchResponse'
 
 components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
 
     AdvocateRequest:
       type: object
-      description: Request payload for advocate create/update
+      description: Request wrapper for advocate create/update.
+      required: [requestInfo, advocate]
       properties:
         requestInfo:
           description: DIGIT request metadata
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
         advocate:
           $ref: '#/components/schemas/Advocate'
-      example:
-        requestInfo:
-          apiId: Rainmaker
-        advocate:
-          tenantId: kl
-          barCouncilNumber: KL/2016/1234
-
-    AdvocateResponse:
-      type: object
-      description: Advocate response wrapper
-      properties:
-        responseInfo:
-          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
-        advocates:
-          type: array
-          items:
-            $ref: '#/components/schemas/Advocate'
-
-    AdvocateListResponse:
-      type: object
-      description: Advocate list response
-      properties:
-        responseInfo:
-          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
-        advocates:
-          type: array
-          items:
-            $ref: '#/components/schemas/AdvocateCriteria'
 
     AdvocateSearchRequest:
       type: object
-      description: Search request with criteria
+      description: Request wrapper for advocate search.
+      required: [requestInfo, criteria]
       properties:
         requestInfo:
+          description: DIGIT request metadata
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
         criteria:
           $ref: '#/components/schemas/AdvocateCriteria'
-        tenantId:
-          type: string
-          example: kl
 
-    AdvocateSimpleSearchRequest:
+    AdvocateResponse:
       type: object
-      description: Simple search request with RequestInfo only
+      description: Advocate create/update response.
       properties:
-        requestInfo:
-          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        responseInfo:
+          description: DIGIT response metadata
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        advocates:
+          type: array
+          description: List of advocates
+          items:
+            $ref: '#/components/schemas/Advocate'
+
+    AdvocateSearchResponse:
+      type: object
+      description: Advocate search response wrapper.
+      properties:
+        responseInfo:
+          description: DIGIT response metadata
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        advocates:
+          type: array
+          description: Matching advocate records
+          items:
+            $ref: '#/components/schemas/Advocate'
 
     Advocate:
       type: object
-      description: Advocate master entity
+      description: Advocate master entity.
       required: [tenantId, individualId]
       properties:
         id:
@@ -264,27 +191,33 @@ components:
           readOnly: true
           description: Unique advocate identifier
           example: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
+
         tenantId:
           type: string
           description: Tenant identifier
           example: kl
+
         individualId:
           type: string
           format: uuid
-          description: Linked individual ID
+          description: Linked individual record ID
           example: 9e8d13f2-7d6c-4a8c-b9cb-97c1b8fd6f21
+
         barCouncilNumber:
           type: string
-          description: Bar council registration number
+          description: Official bar council registration number
           example: KL/2016/1234
+
         barCouncilName:
           type: string
-          description: Name of bar council
+          description: Name of the registering bar council
           example: Kerala Bar Council
+
         yearOfEnrollment:
           type: integer
-          description: Year of enrollment
+          description: Year advocate enrolled in bar council
           example: 2016
+
         specialization:
           type: array
           description: Legal practice areas
@@ -293,44 +226,50 @@ components:
           example:
             - Criminal Law
             - Civil Law
+
         status:
           type: string
-          description: Registration status
+          description: Advocate registration status
           enum: [ACTIVE, INACTIVE, PENDING_VERIFICATION, REJECTED]
           example: ACTIVE
+
         additionalDetails:
           type: object
-          description: Additional metadata
+          description: Additional metadata about advocate
           example:
-            remarks: Verified by bar council
+            remarks: Verified by state authority
+
         auditDetails:
-          description: Audit metadata
+          description: Audit information
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
 
     AdvocateCriteria:
       type: object
-      description: Advocate search filters
+      description: Search filters for advocate lookup.
       properties:
         id:
           type: string
           format: uuid
           description: Filter by advocate ID
           example: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
+
         individualId:
           type: string
           format: uuid
-          description: Filter by individual ID
+          description: Filter by linked individual ID
           example: 9e8d13f2-7d6c-4a8c-b9cb-97c1b8fd6f21
+
         barCouncilNumber:
           type: string
-          description: Filter by bar council number
+          description: Filter by bar council registration number
           example: KL/2016/1234
+
         status:
           type: string
           description: Filter by registration status
           example: ACTIVE
+
         tenantId:
           type: string
           description: Tenant identifier
           example: kl
-

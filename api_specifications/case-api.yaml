@@ -14,6 +14,9 @@ tags:
   - name: Address
   - name: Utilities
 
+security:
+  - bearerAuth: []
+
 paths:
 
   /v1/_create:
@@ -26,34 +29,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CaseRequest'
-            example:
-              RequestInfo:
-                apiId: Rainmaker
-                authToken: e1be8e68-f294-4a44-ac67-3595c83e92dd
-                msgId: 1730969385812|en_IN
-                userInfo:
-                  uuid: 64220357-defd-4abd-bcc3-e4b278203917
-                  userName: "6397742296"
-                  tenantId: kl
-              case:
-                tenantId: kl
-                resolutionMechanism: COURT
-                caseTitle: "Radhesh vs State"
-                caseDescription: "Cheque bounce case"
-                filingNumber: "KL-000454-2024"
-                caseCategory: CRIMINAL
-                status: DRAFT_IN_PROGRESS
       responses:
         '201':
           description: Case created
           content:
             application/json:
-              example:
-                cases:
-                  - id: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
-                    tenantId: kl
-                    filingNumber: "KL-000454-2024"
-                    status: DRAFT_IN_PROGRESS
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
 
   /v1/_update:
     post:
@@ -65,29 +47,13 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/CaseRequest'
-            example:
-              RequestInfo:
-                apiId: Rainmaker
-                authToken: e1be8e68-f294-4a44-ac67-3595c83e92dd
-                userInfo:
-                  uuid: 64220357-defd-4abd-bcc3-e4b278203917
-                  tenantId: kl
-              case:
-                id: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
-                tenantId: kl
-                caseTitle: "Radhesh vs State"
-                status: DRAFT_IN_PROGRESS
-                workflow:
-                  action: SAVE_DRAFT
       responses:
         '200':
           description: Case updated
           content:
             application/json:
-              example:
-                cases:
-                  - id: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
-                    status: DRAFT_IN_PROGRESS
+              schema:
+                $ref: '#/components/schemas/CaseResponse'
 
   /v1/_search:
     post:
@@ -97,24 +63,15 @@ paths:
         required: true
         content:
           application/json:
-            example:
-              RequestInfo:
-                apiId: Rainmaker
-              criteria:
-                tenantId: kl
-                filingNumber: "KL-000454-2024"
-                defaultFields: false
+            schema:
+              $ref: '#/components/schemas/CaseSearchRequest'
       responses:
         '200':
           description: Search results
           content:
             application/json:
-              example:
-                cases:
-                  - id: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
-                    caseTitle: "Radhesh vs State"
-                    filingNumber: "KL-000454-2024"
-                    status: DRAFT_IN_PROGRESS
+              schema:
+                $ref: '#/components/schemas/CaseSearchResponse'
 
   /v1/_exists:
     post:
@@ -124,16 +81,15 @@ paths:
         required: true
         content:
           application/json:
-            example:
-              tenantId: kl
-              filingNumber: "KL-000454-2024"
+            schema:
+              $ref: '#/components/schemas/CaseExistsRequest'
       responses:
         '200':
           description: Exists response
           content:
             application/json:
-              example:
-                exists: true
+              schema:
+                $ref: '#/components/schemas/CaseExistsResponse'
 
   /v2/search/details:
     post:
@@ -143,24 +99,15 @@ paths:
         required: true
         content:
           application/json:
-            example:
-              RequestInfo:
-                apiId: Rainmaker
-              criteria:
-                tenantId: kl
-                caseId: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+            schema:
+              $ref: '#/components/schemas/CaseDetailsRequest'
       responses:
         '200':
           description: Case details
           content:
             application/json:
-              example:
-                case:
-                  id: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
-                  caseTitle: "Radhesh vs State"
-                  filingNumber: "KL-000454-2024"
-                  caseCategory: CRIMINAL
-                  status: DRAFT_IN_PROGRESS
+              schema:
+                $ref: '#/components/schemas/CaseDetailsResponse'
 
   /v1/address/_add:
     post:
@@ -170,27 +117,15 @@ paths:
         required: true
         content:
           application/json:
-            example:
-              RequestInfo:
-                apiId: Rainmaker
-              partyAddressList:
-                - caseId: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
-                  partyId: PARTY_ID
-                  address:
-                    city: Kollam
-                    district: Kollam
-                    state: Kerala
-                    pincode: "691013"
-                    locality: Vidya Nagar
+            schema:
+              $ref: '#/components/schemas/AddressRequest'
       responses:
         '200':
           description: Address added
           content:
             application/json:
-              example:
-                partyAddressList:
-                  - caseId: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
-                    partyId: PARTY_ID
+              schema:
+                $ref: '#/components/schemas/AddressResponse'
 
   /v1/_generatePdf:
     post:
@@ -200,93 +135,206 @@ paths:
         required: true
         content:
           application/json:
-            example:
-              RequestInfo:
-                apiId: Rainmaker
-              criteria:
-                tenantId: kl
-                caseId: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+            schema:
+              $ref: '#/components/schemas/CasePdfRequest'
       responses:
         '200':
           description: PDF generated
           content:
             application/json:
-              example:
-                message: "PDF generated successfully"
+              schema:
+                $ref: '#/components/schemas/CasePdfResponse'
 
 components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
+
+    # -------------------------------
+    # WRAPPER REQUEST / RESPONSE
+    # -------------------------------
 
     CaseRequest:
       type: object
-      description: Wrapper object for case create/update
+      required: [RequestInfo, case]
       properties:
         RequestInfo:
-          $ref: '#/components/schemas/RequestInfo'
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
         case:
           $ref: '#/components/schemas/CourtCase'
-      example:
+
+    CaseResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourtCase'
+
+    CaseSearchRequest:
+      type: object
+      required: [RequestInfo, criteria]
+      properties:
         RequestInfo:
-          apiId: Rainmaker
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          $ref: '#/components/schemas/CaseSearchCriteria'
+        pagination:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination"
+
+    CaseSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourtCase'
+        totalCount:
+          type: integer
+
+    CaseExistsRequest:
+      type: object
+      required: [RequestInfo, tenantId, filingNumber]
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        tenantId:
+          type: string
+        filingNumber:
+          type: string
+
+    CaseExistsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        exists:
+          type: boolean
+
+    CaseDetailsRequest:
+      type: object
+      required: [RequestInfo, criteria]
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          type: object
+          properties:
+            tenantId:
+              type: string
+            caseId:
+              type: string
+
+    CaseDetailsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
         case:
-          tenantId: kl
-          caseTitle: "Radhesh vs State"
+          $ref: '#/components/schemas/CourtCase'
+
+    AddressRequest:
+      type: object
+      required: [RequestInfo, partyAddressList]
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        partyAddressList:
+          type: array
+          items:
+            type: object
+            properties:
+              caseId:
+                type: string
+              partyId:
+                type: string
+              address:
+                type: object
+
+    AddressResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        partyAddressList:
+          type: array
+          items:
+            type: object
+
+    CasePdfRequest:
+      type: object
+      required: [RequestInfo, criteria]
+      properties:
+        RequestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          type: object
+          properties:
+            tenantId:
+              type: string
+            caseId:
+              type: string
+
+    CasePdfResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        message:
+          type: string
+
+    # -------------------------------
+    # DOMAIN MODELS
+    # -------------------------------
 
     CourtCase:
       type: object
-      description: Court case entity
       properties:
         id:
           type: string
-          example: 52ef09b1-98fb-4204-89bb-08f01f77cb4b
+          format: uuid
         tenantId:
           type: string
-          example: kl
         caseTitle:
           type: string
-          example: "Radhesh vs State"
+        caseDescription:
+          type: string
         filingNumber:
           type: string
-          example: "KL-000454-2024"
         caseCategory:
           type: string
-          example: CRIMINAL
+        resolutionMechanism:
+          type: string
         status:
           type: string
-          example: DRAFT_IN_PROGRESS
         workflow:
           $ref: '#/components/schemas/Workflow'
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
 
     CaseSearchCriteria:
       type: object
       properties:
         tenantId:
           type: string
-          example: kl
         filingNumber:
           type: string
-          example: "KL-000454-2024"
+        caseId:
+          type: string
         defaultFields:
           type: boolean
-          example: false
 
     Workflow:
       type: object
       properties:
         action:
           type: string
-          example: SAVE_DRAFT
-
-    RequestInfo:
-      type: object
-      properties:
-        apiId:
-          type: string
-          example: Rainmaker
-        authToken:
-          type: string
-          example: e1be8e68-f294-4a44-ac67-3595c83e92dd
-        msgId:
-          type: string
-          example: 1730969385812|en_IN
-

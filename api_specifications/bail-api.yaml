@@ -1,4 +1,5 @@
 openapi: 3.0.0
+
 info:
   title: Bail Management Service
   description: APIs for managing bail bonds and digital signing in DRISTI
@@ -30,7 +31,7 @@ paths:
             example:
               requestInfo:
                 apiId: Rainmaker
-                authToken: bearer-token
+                authToken: <AUTH_TOKEN>
                 msgId: 1730977593273|en_IN
               bail:
                 tenantId: kl
@@ -39,12 +40,6 @@ paths:
                 bailType: PERSONAL
                 status: DRAFT
                 amount: 50000
-                suretyDetails:
-                  name: Ramesh Kumar
-                  address: Kochi, Kerala
-                  contactNumber: "9876543210"
-                  idProof: AADHAR
-                  relationship: Brother
                 isActive: true
       responses:
         '201':
@@ -82,17 +77,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/BailSearchRequest'
-            example:
-              requestInfo:
-                apiId: Rainmaker
-                authToken: bearer-token
-                msgId: 1730970507148|en_IN
-              criteria:
-                tenantId: kl
-                bailNumber: KL-BAIL-2024-00012
-              pagination:
-                limit: 10
-                offset: 0
       responses:
         '200':
           description: Bail search result
@@ -111,12 +95,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/BailsToSignRequest'
-            example:
-              requestInfo:
-                apiId: Rainmaker
-                authToken: bearer-token
-              bailIds:
-                - 6247bb14-405c-4c2c-b7a7-95aa6509b447
       responses:
         '200':
           description: Bails ready for signing
@@ -135,15 +113,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateSignedBailRequest'
-            example:
-              requestInfo:
-                apiId: Rainmaker
-                authToken: bearer-token
-              signedBails:
-                - bailId: 6247bb14-405c-4c2c-b7a7-95aa6509b447
-                  signature: BASE64_SIGNATURE
-                  signedBy: uatJudge01
-                  signedOn: "2024-11-06T10:30:00Z"
       responses:
         '200':
           description: Signed bails updated
@@ -167,8 +136,7 @@ components:
       required: [requestInfo, bail]
       properties:
         requestInfo:
-          description: Metadata for API request
-          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
         bail:
           $ref: '#/components/schemas/Bail'
 
@@ -176,100 +144,62 @@ components:
       type: object
       properties:
         responseInfo:
-          description: Metadata for API response
-          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
         bails:
           type: array
           items:
             $ref: '#/components/schemas/Bail'
 
-    Bail:
-      type: object
-      description: Bail bond entity
-      required: [tenantId, caseId, bailNumber, bailType, status]
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique bail identifier
-          example: 6247bb14-405c-4c2c-b7a7-95aa6509b447
-        tenantId:
-          type: string
-          description: Tenant identifier
-          example: kl
-        caseId:
-          type: string
-          format: uuid
-          description: Linked case ID
-          example: 2f6fe4ae-352f-420d-b243-679191b4ba01
-        bailNumber:
-          type: string
-          description: Bail reference number
-          example: KL-BAIL-2024-00012
-        bailType:
-          type: string
-          description: Type of bail
-          example: PERSONAL
-        status:
-          type: string
-          description: Bail status
-          enum: [DRAFT, ISSUED, EXECUTED, CANCELLED]
-          example: DRAFT
-        amount:
-          type: number
-          format: double
-          description: Bail amount
-          example: 50000
-        suretyDetails:
-          $ref: '#/components/schemas/SuretyDetails'
-        documents:
-          type: array
-          description: Supporting documents
-          items:
-            $ref: '#/components/schemas/Document'
-        additionalDetails:
-          type: object
-          description: Additional metadata
-          example:
-            isDigitallySigned: false
-        auditDetails:
-          description: Audit metadata
-          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails
-
     BailSearchRequest:
       type: object
       properties:
         requestInfo:
-          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
         criteria:
           $ref: '#/components/schemas/BailSearchCriteria'
         pagination:
-          $ref: '#/components/schemas/Pagination'
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination"
 
-    BailSearchCriteria:
+    BailSearchResponse:
       type: object
       properties:
-        tenantId:
-          type: string
-          description: Tenant filter
-          example: kl
-        bailNumber:
-          type: string
-          description: Bail number filter
-          example: KL-BAIL-2024-00012
-        caseId:
-          type: string
-          format: uuid
-          description: Case ID filter
-        status:
-          type: string
-          description: Bail status filter
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        bails:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bail'
+        totalCount:
+          type: integer
+          example: 1
+
+    UpdateSignedBailRequest:
+      type: object
+      required: [requestInfo, signedBails]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        signedBails:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignedBail'
+
+    UpdateSignedBailResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        updatedBailIds:
+          type: array
+          items:
+            type: string
+            format: uuid
 
     BailsToSignRequest:
       type: object
       properties:
         requestInfo:
-          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
         bailIds:
           type: array
           items:
@@ -280,29 +210,11 @@ components:
       type: object
       properties:
         responseInfo:
-          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
         bailList:
           type: array
           items:
             $ref: '#/components/schemas/BailToSign'
-
-    BailToSign:
-      type: object
-      properties:
-        bailId:
-          type: string
-          format: uuid
-          example: 6247bb14-405c-4c2c-b7a7-95aa6509b447
-        bailNumber:
-          type: string
-          example: KL-BAIL-2024-00012
-        signUrl:
-          type: string
-          format: uri
-          example: https://esign.dristi.gov.in/sign/123
-        documentType:
-          type: string
-          example: BAIL_BOND
 
     SignedBail:
       type: object
@@ -313,60 +225,62 @@ components:
           format: uuid
         signature:
           type: string
-          description: Base64 encoded digital signature
         signedBy:
           type: string
-          example: uatJudge01
         signedOn:
           type: string
           format: date-time
 
-    SuretyDetails:
+    BailSearchCriteria:
       type: object
       properties:
-        name:
+        tenantId:
           type: string
-          example: Ramesh Kumar
-        address:
+        bailNumber:
           type: string
-          example: Kochi, Kerala
-        contactNumber:
+        caseId:
           type: string
-          example: "9876543210"
-        idProof:
+          format: uuid
+        status:
           type: string
-          example: AADHAR
-        relationship:
-          type: string
-          example: Brother
 
-    Document:
+    Bail:
       type: object
+      required: [tenantId, caseId, bailNumber, bailType, status]
       properties:
         id:
           type: string
           format: uuid
-        documentType:
+        tenantId:
           type: string
-          example: BAIL_BOND_PDF
-        fileStoreId:
+        caseId:
           type: string
-        documentUid:
+          format: uuid
+        bailNumber:
+          type: string
+        bailType:
           type: string
         status:
           type: string
-          example: ACTIVE
+          enum: [DRAFT, ISSUED, EXECUTED, CANCELLED]
+        amount:
+          type: number
+          format: double
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
 
-    Pagination:
+    BailToSign:
       type: object
       properties:
-        limit:
-          type: integer
-          example: 10
-        offset:
-          type: integer
-          example: 0
-        totalCount:
-          type: integer
-          readOnly: true
-
+        bailId:
+          type: string
+          format: uuid
+        bailNumber:
+          type: string
+        signUrl:
+          type: string
+          format: uri
+        documentType:
+          type: string
