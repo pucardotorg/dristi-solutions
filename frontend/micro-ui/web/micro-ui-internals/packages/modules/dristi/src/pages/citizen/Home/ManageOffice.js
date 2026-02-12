@@ -173,6 +173,14 @@ const ManageOffice = () => {
         const individual = individualResponse?.Individual?.[0];
         // Get userType from searched individual (same as HomeView: individualData.Individual[0].additionalFields.fields)
         const memberUserType = individual?.additionalFields?.fields?.find((obj) => obj?.key === "userType")?.value;
+
+        if (memberUserType === "ADVOCATE") {
+          // TODO: For this Sprint we are not allowing to add Advocate as a member (remove this block later)
+          setSearchError(t("ADDING_ADVOCATE_MEMBER_IS_NOT_ALLOWED"));
+          setSearchResult(null);
+          return;
+        }
+
         // Per userType, use same URL pattern as HomeView: ADVOCATE -> /advocate/v1/_search, else -> /advocate/clerk/v1/_search
         const searchUrl = memberUserType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search";
 
@@ -518,8 +526,6 @@ const ManageOffice = () => {
                     <div className="manage-office-search-field__control">
                       <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="manage-office-search-field__country">
                         <option value="+91">+91</option>
-                        <option value="+1">+1</option>
-                        <option value="+44">+44</option>
                       </select>
                       <input
                         type="tel"
