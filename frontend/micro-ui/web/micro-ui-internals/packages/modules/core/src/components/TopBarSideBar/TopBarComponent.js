@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo, useContext, useRef, useCallback } from "react";
 import PropTypes from "prop-types";
 import { useLocation, useHistory } from "react-router-dom";
-// import BackButton from "./BackButton";
 import { Hamburger, NotificationBell } from "@egovernments/digit-ui-react-components";
 import ProfileComponent from "./ProfileComponent";
 import { AdvocateDataContext } from "../../Module";
 import { extractedSeniorAdvocates, userTypeOptions } from "../../Utils";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 
 const AdvocateProfileUserIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -128,7 +128,11 @@ const TopBarComponent = ({
   const { AdvocateData, setAdvocateDataContext } = useContext(AdvocateDataContext);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-  // Check if user is an advocate (has ADVOCATE_ROLE)
+  const [individualData, setIndividualData] = useState(null);
+  const [individualDataLoading, setIndividualDataLoading] = useState(false);
+  const [refetchedSearchData, setRefetchedSearchData] = useState(false);
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+
   const isAdvocate = useMemo(() => {
     return userDetails?.info?.roles?.some((role) => role?.code === "ADVOCATE_ROLE");
   }, [userDetails?.info?.roles]);
@@ -140,40 +144,85 @@ const TopBarComponent = ({
   const handleManageOfficeClick = () => {
     history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office`);
   };
-  // const showHaburgerorBackButton = () => {
-  //   if (pathname === `/${window?.contextPath}citizen` || pathname === `/${window?.contextPath}/citizen/` || pathname === `/${window?.contextPath}/citizen/select-language`) {
-  //     return <Hamburger handleClick={toggleSidebar} />;
-  //   } else {
-  //     return <BackButton className="top-back-btn" />;
-  //   }
-  // };
   const emblemBigImageLink = window?.globalConfigs?.getConfig("EMBLEM_BIG");
   const onCourtsImageLink = window?.globalConfigs?.getConfig("ON_COURTS_LOGO");
 
-  const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: individualDataa, isLoading, isFetching, refetch } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         userUuid: [userInfo?.uuid],
       },
     },
-    { tenantId, limit: 1000, offset: 0 },
+    { tenantId, limit: 500, offset: 0 },
     "Home",
-    userInfo?.uuid || "",
-    Boolean(userInfo?.uuid && isUserLoggedIn),
-    6 * 1000
+    `${token}-${userInfo?.uuid}-${isUserLoggedIn}`,
+    Boolean(userInfo?.uuid && isUserLoggedIn)
   );
-  const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
 
-  const userType = useMemo(() => individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [
+  const userType = useMemo(
+    () =>
+      individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value ||
+      individualDataa?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value,
+    [individualDataa?.Individual, individualData?.Individual]
+  );
+
+  useEffect(() => {
+    const refetchIndividual = async () => {
+      try {
+        setIndividualDataLoading(true);
+        const individualResponse = await DRISTIService.searchIndividualUser(
+          {
+            Individual: {
+              userUuid: [userInfo?.uuid],
+            },
+          },
+          { tenantId, limit: 600, offset: 0 }
+        );
+
+        const userType = individualResponse?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value;
+        const individualId = individualResponse?.Individual?.[0]?.individualId;
+
+        const res = await DRISTIService?.searchAdvocateClerk(
+          userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search",
+          { criteria: [{ individualId: individualId }], tenantId: tenantId },
+          { tenantId: tenantId, limit: 150 }
+        );
+        setIndividualData({ ...individualResponse });
+        setRefetchedSearchData({ ...res });
+      } catch (error) {
+        console.error("Error fetching individual data", error);
+      } finally {
+        setIndividualDataLoading(false);
+      }
+    };
+
+    // Listen for the custom event to trigger refetchIndividual
+    const handleRefetchEvent = () => {
+      Boolean(userInfo?.uuid && isUserLoggedIn) && refetchIndividual();
+    };
+
+    // Add event listener
+    window.addEventListener("refetchIndividualData", handleRefetchEvent);
+    // refetchIndividual();
+
+    // Clean up event listener on unmount
+    return () => {
+      window.removeEventListener("refetchIndividualData", handleRefetchEvent);
+    };
+  }, [tenantId, userInfo?.uuid]);
+
+  const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId || individualDataa?.Individual?.[0]?.individualId, [
     individualData?.Individual,
+    individualDataa?.Individual,
   ]);
-  const { data: searchData, isLoading: isSearchLoading } = Digit?.Hooks?.dristi?.useGetAdvocateClerk(
+
+  const { data: searchData, isLoading: isSearchLoading, refetch: refetchAdvocateClerk } = Digit?.Hooks?.dristi?.useGetAdvocateClerk(
     {
       criteria: [{ individualId }],
       tenantId,
     },
-    { tenantId },
-    individualId,
+    { tenantId, limit: 400 },
+    `${individualId}-${isUserLoggedIn}-${userType}-${token}-${userInfo?.uuid}-${individualData?.Individual?.[0]?.individualId || ""}`,
     Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
@@ -183,8 +232,8 @@ const TopBarComponent = ({
   }, [userType]);
 
   const searchResult = useMemo(() => {
-    return searchData?.[`${userTypeDetail?.apiDetails?.requestKey}s`]?.[0]?.responseList;
-  }, [searchData, userTypeDetail?.apiDetails?.requestKey]);
+    return (refetchedSearchData || searchData)?.[`${userTypeDetail?.apiDetails?.requestKey}s`]?.[0]?.responseList;
+  }, [refetchedSearchData, searchData, userTypeDetail?.apiDetails?.requestKey]);
 
   const isApprovalPending = useMemo(() => {
     if (!searchResult) return true;
@@ -217,7 +266,7 @@ const TopBarComponent = ({
       },
     },
     { tenantId },
-    searchCriteria,
+    searchCriteria + isApprovalPending,
     Boolean((advocateId || advClerkId) && tenantId && !isApprovalPending)
   );
 
@@ -247,12 +296,19 @@ const TopBarComponent = ({
     }
   };
 
-  const resolveSelectedAdvocate = ({ storedAdvocate, seniorAdvocates, advocateId }) => {
-    // If already selected and page refreshed -> keep the same
-    if (storedAdvocate?.id) return storedAdvocate;
+  const resolvedAdvocate = useMemo(() => {
+    if (!(refetchedSearchData || searchData) || isSearchLoading || !(individualData || individualDataa) || (!isApprovalPending && !officeMembersData))
+      return null;
 
-    // Do nothing till senior advocates list is not generated.
-    if (!seniorAdvocates?.length) return null;
+    if (storedAdvocate?.id) {
+      if (seniorAdvocates?.length === 0) {
+        sessionStorage.removeItem("selectedAdvocate");
+        setSelectedAdvocate(null);
+        setAdvocateDataContext(null);
+        return null;
+      }
+      if (seniorAdvocates?.filter((o) => o?.id === storedAdvocate?.id)?.length) return storedAdvocate;
+    }
 
     // if an Advocate logs in -> select himself initially.
     if (advocateId) {
@@ -261,24 +317,39 @@ const TopBarComponent = ({
 
     //if clerk is logged in -> select first senior Advocate initially.
     return seniorAdvocates[0];
-  };
+  }, [
+    seniorAdvocates,
+    storedAdvocate,
+    advocateId,
+    individualData,
+    individualDataa,
+    isApprovalPending,
+    officeMembersData,
+    searchData,
+    refetchedSearchData,
+    isSearchLoading,
+    setAdvocateDataContext,
+  ]);
 
   useEffect(() => {
-    const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
-
-    const resolvedAdvocate = resolveSelectedAdvocate({
-      storedAdvocate,
-      seniorAdvocates,
-      advocateId,
-    });
-
     if (!resolvedAdvocate?.id) return;
     if (resolvedAdvocate.id === selectedAdvocate?.id) return;
 
     setSelectedAdvocate(resolvedAdvocate);
     setAdvocateDataContext(resolvedAdvocate);
     sessionStorage.setItem("selectedAdvocate", JSON.stringify(resolvedAdvocate));
-  }, [seniorAdvocates, advocateId, selectedAdvocate?.id, setAdvocateDataContext]);
+  }, [
+    seniorAdvocates,
+    advocateId,
+    selectedAdvocate?.id,
+    setAdvocateDataContext,
+    resolvedAdvocate,
+    searchData,
+    individualData,
+    individualDataa,
+    isApprovalPending,
+    officeMembersData,
+  ]);
 
   const disableAdvocateChange = useMemo(() => {
     // Allow changing advocate only on home screen.
@@ -321,12 +392,13 @@ const TopBarComponent = ({
 
         <div className="RightMostTopBarOptions">
           {/* Manage Office button & Advocate profile dropdown - only visible for advocates / clerks */}
-          {isSearchLoading || isApprovalPending
+          {isSearchLoading || isApprovalPending || individualDataLoading
             ? null
             : isUserLoggedIn &&
               !isSearchLoading &&
               !isApprovalPending &&
               hasMembers &&
+              !individualDataLoading &&
               (isAdvocate || isAdvocateClerk) && (
                 <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
                   <AdvocateProfileDropdown

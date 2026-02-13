@@ -9,12 +9,15 @@ import { CustomAddIcon } from "../icons/svgIndex";
 import Button from "./Button";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import { DRISTIService } from "../services";
-import { getFilingType } from "../Utils";
+import { getAuthorizedUuid, getFilingType } from "../Utils";
 
 function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
   const [documentData, setDocumentData] = useState(formData?.[config.key] ? formData?.[config.key] : []);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { caseId } = window?.Digit.Hooks.useQueryParams();
+  const userInfo = Digit.UserService.getUser()?.info;
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const inputs = useMemo(
     () =>
@@ -107,6 +110,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
           caseId: caseId,
           filingNumber: config?.filingNumber,
           tenantId,
+          asUser: authorizedUuid,
           artifactId: currentDocumentDataCopy?.[index].document?.[0]?.artifactId,
           comments: [],
           filingType: filingType,
