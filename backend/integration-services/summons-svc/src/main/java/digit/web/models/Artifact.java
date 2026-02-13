@@ -151,5 +151,8 @@ public class Artifact {
 
     private Object additionalDetails = null;
 
+    @JsonProperty("asUser")
+    private String asUser = null;
+
 }
 

@@ -57,6 +57,9 @@ public class EvidenceSearchCriteria {
 
     @JsonIgnore
     private boolean isClerk = false;
+    
+    @JsonProperty("asUser")
+    private String asUser = null;
 
     @JsonIgnore
     private boolean isCourtEmployee = false;
