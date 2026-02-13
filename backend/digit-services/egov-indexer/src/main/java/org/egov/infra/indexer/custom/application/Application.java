@@ -65,6 +65,9 @@ public class Application {
     @Valid
     private List<UUID> onBehalfOf = null;
 
+    @JsonProperty("asUser")
+    private String asUser = null;
+
     @JsonProperty("applicationCMPNumber")
     private String applicationCMPNumber = null;
 
