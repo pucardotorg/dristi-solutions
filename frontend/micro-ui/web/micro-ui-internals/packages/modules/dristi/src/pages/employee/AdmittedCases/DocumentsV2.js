@@ -40,7 +40,7 @@ const DocumentsV2 = ({
   const history = useHistory();
   const { t } = useTranslation();
 
-  const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
   const { downloadPdf } = useDownloadCasePdf();
@@ -256,7 +256,9 @@ const DocumentsV2 = ({
 
           if (bailStatus === "PENDING_E-SIGN") {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/dristi/home/bail-bond-sign?tenantId=${tenantId}&bailbondId=${bailBondId}`
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/dristi/home/bail-bond-sign?tenantId=${tenantId}&bailbondId=${bailBondId}&filingNumber=${filingNumber}&caseId=${caseId}`
             );
           }
 

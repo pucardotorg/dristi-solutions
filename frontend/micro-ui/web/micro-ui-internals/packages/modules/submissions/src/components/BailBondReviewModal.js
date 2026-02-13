@@ -63,6 +63,7 @@ const BailBondReviewModal = ({
               qrCode: false,
               bailBondPdfType: bailBondPreviewSubmissionTypeMap["BAIL_BOND"], // need to change
               courtId: courtId,
+              filingNumber: bailBondDetails?.filingNumber,
             },
             responseType: "blob",
           }

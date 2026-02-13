@@ -1,5 +1,6 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import React, { useMemo, useState } from "react";
 
 const Heading = (props) => {
@@ -25,14 +26,16 @@ const GenericUploadSignatureModal = ({
   setLoader,
   loader,
   fileStoreId,
-  title="SELECT_MODE_SIGNING",
-  infoText="BAIL_SIGN_INFO"
+  title = "SELECT_MODE_SIGNING",
+  infoText = "BAIL_SIGN_INFO",
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [formData, setFormData] = useState({});
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const name = "Signature";
+  const userUuid = Digit.UserService.getUser()?.info?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -78,6 +81,13 @@ const GenericUploadSignatureModal = ({
       }
     }
   };
+  const saveLabel = useMemo(() => {
+    if (authorizedUuid !== userUuid) {
+      // only advocate himself can esign. not junior adv/clerk
+      return null;
+    }
+    return t("CS_ESIGN");
+  }, [t, authorizedUuid, userUuid]);
 
   return (
     <React.Fragment>
@@ -86,7 +96,7 @@ const GenericUploadSignatureModal = ({
         headerBarEnd={<CloseBtn onClick={handleCloseSignatureModal} />}
         actionCancelLabel={t("CS_COMMON_DOWNLOAD")}
         actionCancelOnSubmit={handleDownload}
-        actionSaveLabel={t("CS_ESIGN")}
+        actionSaveLabel={saveLabel}
         actionCustomLabel={t("UPLOAD_SIGNED_COPY")}
         actionCustomLabelSubmit={() => setShowUploadSignature(true)}
         actionSaveOnSubmit={handleESign}

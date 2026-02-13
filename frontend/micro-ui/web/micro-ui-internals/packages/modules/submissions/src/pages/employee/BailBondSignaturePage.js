@@ -12,11 +12,13 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { getAllAssociatedPartyUuids } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 
 const BailBondSignaturePage = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { bailbondId } = Digit.Hooks.useQueryParams();
+  const { bailbondId, filingNumber, caseId } = Digit.Hooks.useQueryParams();
   const mobileNumber = location?.state?.mobileNumber;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [viewportWidth, setViewportWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1920);
@@ -50,6 +52,7 @@ const BailBondSignaturePage = () => {
     {
       criteria: {
         bailId: bailbondId,
+        filingNumber: filingNumber,
       },
       tenantId,
     },
@@ -62,14 +65,31 @@ const BailBondSignaturePage = () => {
     return bailBond?.bails?.[0] || bailBondOpenData;
   }, [bailBond, bailBondOpenData]);
 
+  const { data: caseData, refetch: refetchCaseData, isLoading: isCaseLoading } = useSearchCaseService(
+    {
+      criteria: [
+        {
+          filingNumber: filingNumber,
+          caseId: caseId,
+        },
+      ],
+      tenantId,
+    },
+    {},
+    `case-details-${filingNumber}-${caseId}`,
+    filingNumber,
+    Boolean(filingNumber && isUserLoggedIn)
+  );
+
   const isCreator = useMemo(() => {
     if (!isUserLoggedIn) return false;
 
-    const createdByUuid = bailBondDetails?.auditDetails?.createdBy;
+    const bailBondAsUser = bailBondDetails?.asUser;
+    const allowedParties = getAllAssociatedPartyUuids(caseData?.criteria?.[0]?.responseList?.[0], bailBondAsUser);
     const loggedInUserUuid = userInfo?.uuid;
 
-    return Boolean(createdByUuid && loggedInUserUuid && createdByUuid === loggedInUserUuid);
-  }, [isUserLoggedIn, bailBondDetails?.auditDetails?.createdBy, userInfo?.uuid]);
+    return Boolean(loggedInUserUuid && allowedParties?.includes(loggedInUserUuid));
+  }, [isUserLoggedIn, userInfo?.uuid, caseData, bailBondDetails?.asUser]);
 
   const fileStoreId = useMemo(() => {
     return bailBondDetails?.documents?.[0]?.fileStore;
@@ -270,7 +290,7 @@ const BailBondSignaturePage = () => {
     }
   };
 
-  if (isBailDataLoading || isBailBondLoading) {
+  if (isBailDataLoading || isBailBondLoading || isCaseLoading) {
     return <Loader />;
   }
 
