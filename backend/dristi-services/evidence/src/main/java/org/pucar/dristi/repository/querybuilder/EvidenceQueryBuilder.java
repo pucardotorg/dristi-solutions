@@ -251,7 +251,6 @@ public class EvidenceQueryBuilder {
     // TODO : need
     private void applyRequestForBailEvidenceVisibility(StringBuilder query, boolean firstCriteria, String asUser, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
 
-        // If user info is missing, do not restrict visibility
         if (asUser == null || asUser.isEmpty()) {
             return;
         }
@@ -265,18 +264,17 @@ public class EvidenceQueryBuilder {
                 .append("OR ")
                 .append("art.application IN (SELECT app.applicationNumber FROM dristi_application app WHERE app.applicationType = ? AND app.filingNumber = art.filingNumber ")
                 .append("AND ")
-                .append("(");
-
-        preparedStmtList.add(REQUEST_FOR_BAIL);
-        preparedStmtArgList.add(Types.VARCHAR);
-
-        preparedStmtList.add(REQUEST_FOR_BAIL);
-        preparedStmtArgList.add(Types.VARCHAR);
-
-        query.append("app.onBehalfOf @> ?::jsonb ")
+                .append("(")
+                .append("app.onBehalfOf @> ?::jsonb ")
                 .append("OR app.asUser = ?)")
                 .append(")")
                 .append(")");
+
+        preparedStmtList.add(REQUEST_FOR_BAIL);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(REQUEST_FOR_BAIL);
+        preparedStmtArgList.add(Types.VARCHAR);
 
         preparedStmtList.add("[\"" + asUser + "\"]");
         preparedStmtArgList.add(Types.VARCHAR);

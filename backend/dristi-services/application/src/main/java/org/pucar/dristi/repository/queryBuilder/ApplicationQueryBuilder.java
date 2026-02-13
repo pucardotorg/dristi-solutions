@@ -94,6 +94,7 @@ public class ApplicationQueryBuilder {
             }
 
             if (requestInfo != null && requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null) {
+                addClauseIfRequired(query, firstCriteria);
                 query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.asuser = ?))");
                 preparedStmtList.add(asUser);
                 preparedStmtArgList.add(Types.VARCHAR);
@@ -129,18 +130,18 @@ public class ApplicationQueryBuilder {
                 .append("(")
                 .append("app.applicationType = ? ")
                 .append("AND ")
-                .append("(");
-
-        preparedStmtList.add(REQUEST_FOR_BAIL);
-        preparedStmtArgList.add(Types.VARCHAR);
-
-        preparedStmtList.add(REQUEST_FOR_BAIL);
-        preparedStmtArgList.add(Types.VARCHAR);
-
-        query.append("app.onBehalfOf @> ?::jsonb ")
-                .append("OR app.asUser = ?)")
+                .append("(")
+                .append("app.onBehalfOf @> ?::jsonb ")
+                .append("OR app.asUser = ?")
+                .append(")")
                 .append(")")
                 .append(")");
+
+        preparedStmtList.add(REQUEST_FOR_BAIL);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(REQUEST_FOR_BAIL);
+        preparedStmtArgList.add(Types.VARCHAR);
 
         preparedStmtList.add("[\"" + asUser + "\"]");
         preparedStmtArgList.add(Types.VARCHAR);
