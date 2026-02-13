@@ -590,6 +590,9 @@ export const UICustomizations = {
           if (processType === "NOTICE") {
             const noticeType = row?.taskDetails?.noticeDetails?.noticeType || "NOTICE";
             return t(noticeType);
+          } else if (processType === "MISCELLANEOUS_PROCESS") {
+            const miscType = row?.taskDetails?.miscellaneuosDetails?.processTitle || "MISCELLANEOUS_PROCESS";
+            return t(miscType);
           }
           return t(value);
         case "DELIEVERY_CHANNEL":
