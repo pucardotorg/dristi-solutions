@@ -9,6 +9,21 @@ const { formatDate } = require("./formatDate");
 const { getStringAddressDetails } = require("../utils/addressUtils");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
+function formatAddressee(text = "", type = "full") {
+  const formatted = text
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase());
+
+  if (type === "district") {
+    const parts = formatted.split(",");
+    return parts.length > 1
+      ? parts[1].trim()
+      : formatted;
+  }
+  return formatted;
+}
+
 
 async function miscellaneousProcessTemplate(
   req,
@@ -104,6 +119,7 @@ async function miscellaneousProcessTemplate(
 
     if(templateData?.addressee === "POLICE"){
       policeAddresseeSelected = true;
+      templateData.addresseeDetails = formatAddressee(templateData?.addresseeDetails);
     } else if(templateData?.addressee === "OTHER"){
       otherAddresseeSelected = true;
     }
@@ -136,6 +152,7 @@ async function miscellaneousProcessTemplate(
           policeAddresseeSelected: policeAddresseeSelected,
 
           addresseeDetails: addresseeDetails,  
+          addresseeDetailsDistrict: formatAddressee(addresseeDetails, "district"),
 
           date: formattedToday,
           nbwDate: nbwDate,
