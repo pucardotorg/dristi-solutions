@@ -68,6 +68,7 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
   const entityId = req.query.entityId;
   const code = req.query.code;
   const requestInfo = req.body.RequestInfo;
+  const filingNumber = req.query.filingNumber;
 
   const missingFields = [];
   if (!cnrNumber) missingFields.push("cnrNumber");
@@ -106,7 +107,7 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
     }
 
     const resBailBond = await handleApiCall(
-      () => search_bailBond(tenantId, bailBondId, requestInfo),
+      () => search_bailBond(tenantId, bailBondId, requestInfo, filingNumber),
       "Failed to query bailBond service"
     );
 
