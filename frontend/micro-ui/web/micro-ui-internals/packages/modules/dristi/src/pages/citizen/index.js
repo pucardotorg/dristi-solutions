@@ -63,7 +63,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
       },
     },
     { tenantId, limit: 1000, offset: 0 },
-    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid}`,
+    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid || ""}`,
     "",
     userInfo?.uuid && isUserLoggedIn
   );
