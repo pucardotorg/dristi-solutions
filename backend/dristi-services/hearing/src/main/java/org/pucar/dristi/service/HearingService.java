@@ -151,7 +151,7 @@ public class HearingService {
             hearing.setCourtCaseNumber(hearingRequest.getHearing().getCourtCaseNumber() != null ? hearingRequest.getHearing().getCourtCaseNumber() : hearing.getCourtCaseNumber());
             hearing.setCaseReferenceNumber(hearingRequest.getHearing().getCaseReferenceNumber() != null ? hearingRequest.getHearing().getCaseReferenceNumber() : hearing.getCaseReferenceNumber());
             String newHearingType = null;
-            if(hearing.getWorkflow()!=null && (hearing.getWorkflow().getAction().equalsIgnoreCase(MARK_COMPLETE) || hearing.getWorkflow().getAction().equalsIgnoreCase(UPDATE_DATE))){
+            if(hearing.getWorkflow()!=null && (hearing.getWorkflow().getAction().equalsIgnoreCase(MARK_COMPLETE) || hearing.getWorkflow().getAction().equalsIgnoreCase(UPDATE_DATE) || hearing.getWorkflow().getAction().equalsIgnoreCase(RESCHEDULE_ONGOING))){
                 newHearingType = hearingRequest.getHearing().getHearingType();
                 hearing.setHearingType(newHearingType);
             }
@@ -206,6 +206,7 @@ public class HearingService {
                 OpenHearing openHearing = openHearings.get(0);
                 String status = hearingRequest.getHearing().getStatus();
                 openHearing.setStatus(status);
+                openHearing.setHearingType(hearingRequest.getHearing().getHearingType());
                 enrichStatusOrderInOpenHearing(requestInfo, openHearing);
 
                 try {
