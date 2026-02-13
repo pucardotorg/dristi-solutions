@@ -134,6 +134,9 @@ public class Artifact {
 	@Valid
 	private Workflow workflow = null;
 
+	@JsonProperty("asUser")
+	private String asUser = null;
+
 	public Artifact addApplicableToItem(String applicableToItem) {
 		if (this.applicableTo == null) {
 			this.applicableTo = new ArrayList<>();
