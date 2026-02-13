@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -42,6 +43,7 @@ public class EvidenceSearchCriteria {
     private String evidenceNumber;
     private Boolean isActive = true;
     private Boolean isHideBailCaseBundle = false;
+    private String asUser;
 
     @JsonIgnore
     private String userUuid;
@@ -57,9 +59,6 @@ public class EvidenceSearchCriteria {
 
     @JsonIgnore
     private boolean isClerk = false;
-    
-    @JsonProperty("asUser")
-    private String asUser = null;
 
     @JsonIgnore
     private boolean isCourtEmployee = false;
