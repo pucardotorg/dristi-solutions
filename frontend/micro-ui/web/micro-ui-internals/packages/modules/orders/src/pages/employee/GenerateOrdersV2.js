@@ -3936,6 +3936,7 @@ const GenerateOrdersV2 = () => {
                 additionalDetails: {
                   uuid: authorizedUuid,
                 },
+                asUser: userInfo?.uuid,
               },
             };
             return DRISTIService.createEvidence(evidenceReqBody);

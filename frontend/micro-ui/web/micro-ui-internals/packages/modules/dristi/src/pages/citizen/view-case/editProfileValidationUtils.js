@@ -1,9 +1,9 @@
 import { Urls } from "../../../hooks";
 import { DRISTIService } from "../../../services";
-import { cleanString, combineMultipleFiles, documentsTypeMapping } from "../../../Utils";
+import { cleanString, combineMultipleFiles, documentsTypeMapping, getAuthorizedUuid } from "../../../Utils";
 import { SubmissionWorkflowAction } from "../../../Utils/submissionWorkflow";
 import { efilingDocumentKeyAndTypeMapping } from "../FileCase/Config/efilingDocumentKeyAndTypeMapping";
-import { formatName, onDocumentUpload, sendDocumentForOcr, updateIndividualUser } from "../FileCase/EfilingValidationUtils";
+import { formatName, onDocumentUpload, sendDocumentForOcr } from "../FileCase/EfilingValidationUtils";
 
 export const editComplainantValidation = ({
   formData,
@@ -654,6 +654,8 @@ export const updateProfileData = async ({
     };
   }
   const referenceId = `MANUAL_${uniqueId}_${editorUuid}_${caseDetails?.id}`;
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const applicationReqBody = {
     tenantId,
@@ -669,6 +671,7 @@ export const updateProfileData = async ({
       applicationType: "CORRECTION_IN_COMPLAINANT_DETAILS",
       status: caseDetails?.status,
       isActive: true,
+      asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
       createdBy: userInfo?.uuid,
       statuteSection: { tenantId },
       additionalDetails: {
@@ -737,7 +740,7 @@ export const updateProfileData = async ({
       tenantId
     );
 
-    const res = await DRISTIService.createApplication(applicationReqBody, { tenantId })
+    const res = await DRISTIService.createApplication(applicationReqBody, { tenantId });
 
     return res;
   } catch (error) {

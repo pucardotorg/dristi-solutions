@@ -362,7 +362,7 @@ const ApplicationDetails = ({ location, match }) => {
               <SubmitBar
                 label={t("Go_Back_Home")}
                 onSubmit={() => {
-                  history.push(`/${window?.contextPath}/citizen/dristi/home`);
+                  history.push(`/${window?.contextPath}/citizen/dristi/home?refetchIndividual=${true}`);
                 }}
                 className="action-button-width"
               />

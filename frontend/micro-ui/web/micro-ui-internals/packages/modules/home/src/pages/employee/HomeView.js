@@ -95,7 +95,7 @@ const HomeView = () => {
   const hasViewAllCasesAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_ALL_CASES"), [roles]);
 
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
-  const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
   const courtId = localStorage.getItem("courtId");
@@ -590,8 +590,7 @@ const HomeView = () => {
 
   // When a clerk has no advocates linked yet, we show the "No Advocates Linked" empty state.
   // In that scenario, the Home / All Cases breadcrumb should be hidden.
-  const hideBreadcrumbForUnlinkedClerk =
-    individualId && userType === "ADVOCATE_CLERK" && userInfoType === "citizen" && unAssociatedClerk;
+  const hideBreadcrumbForUnlinkedClerk = individualId && userType === "ADVOCATE_CLERK" && userInfoType === "citizen" && unAssociatedClerk;
 
   if (isLoading || isFetching || isSearchLoading || isOrdersLoading || isOutcomeLoading || isCitizenCaseDataLoading || isLoadingMembers) {
     return <Loader />;
