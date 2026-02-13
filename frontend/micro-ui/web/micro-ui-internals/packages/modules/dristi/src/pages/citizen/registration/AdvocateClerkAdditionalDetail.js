@@ -169,6 +169,38 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
     history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`, { newParams: { ...params, formData } });
   };
 
+  // Map stateRegnNumber to barRegistrationNumber for form default values
+  const mappedDefaultValues = useMemo(() => {
+    const formData = params?.formData || {};
+    if (formData?.clientDetails) {
+      // If stateRegnNumber exists but barRegistrationNumber doesn't, map it
+      if (formData.clientDetails.stateRegnNumber && !formData.clientDetails.barRegistrationNumber) {
+        return {
+          ...formData,
+          clientDetails: {
+            ...formData.clientDetails,
+            barRegistrationNumber: formData.clientDetails.stateRegnNumber,
+          },
+        };
+      }
+      // Also check if stateRegnNumber is at the root level (from API response)
+      if (!formData.clientDetails.barRegistrationNumber && !formData.clientDetails.stateRegnNumber) {
+        // Check if stateRegnNumber exists in params directly (from API)
+        const stateRegnNumber = params?.stateRegnNumber || params?.advocate?.stateRegnNumber;
+        if (stateRegnNumber) {
+          return {
+            ...formData,
+            clientDetails: {
+              ...formData.clientDetails,
+              barRegistrationNumber: stateRegnNumber,
+            },
+          };
+        }
+      }
+    }
+    return formData;
+  }, [params?.formData, params?.stateRegnNumber, params?.advocate?.stateRegnNumber]);
+
   useEffect(() => {
     const handleRedirect = async () => {
       if (!params?.IndividualPayload) {
@@ -180,6 +212,11 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
 
         const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
         const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
+
+        // Map stateRegnNumber to barRegistrationNumber if needed
+        if (newParams?.formData?.clientDetails?.stateRegnNumber && !newParams?.formData?.clientDetails?.barRegistrationNumber) {
+          newParams.formData.clientDetails.barRegistrationNumber = newParams.formData.clientDetails.stateRegnNumber;
+        }
 
         if (barCouncilFileStoreId && barCouncilFilename) {
           const barCouncilUri = `${
@@ -249,7 +286,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
         }}
         isDisabled={isDisabled}
         label={"CS_COMMON_CONTINUE"}
-        defaultValues={{ ...params?.formData } || {}}
+        defaultValues={mappedDefaultValues || {}}
         submitInForm
         onFormValueChange={onFormValueChange}
       ></FormComposerV2>
