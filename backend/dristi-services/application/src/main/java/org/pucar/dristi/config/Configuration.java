@@ -271,4 +271,7 @@ public class Configuration {
     @Value("${state.level.tenant.id}")
     private String stateLevelTenantId;
 
+    @Value("${app.zone.id}")
+    private String zoneId;
+
 }

@@ -6,6 +6,7 @@ import digit.kafka.Producer;
 import digit.repository.DiaryRepository;
 import digit.util.CaseUtil;
 import digit.util.FileStoreUtil;
+import digit.util.DateTimeUtil;
 import digit.util.PdfServiceUtil;
 import digit.validators.ADiaryValidator;
 import digit.web.models.*;
@@ -19,7 +20,6 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.text.SimpleDateFormat;
 
 import static digit.config.ServiceConstants.*;
 
@@ -47,7 +47,9 @@ public class DiaryService {
 
     private final CaseUtil caseUtil;
 
-    public DiaryService(Producer producer, Configuration configuration, DiaryRepository diaryRepository, ADiaryValidator validator, ADiaryEnrichment enrichment, DiaryEntryService diaryEntryService, FileStoreUtil fileStoreUtil, PdfServiceUtil pdfServiceUtil, WorkflowService workflowService, CaseUtil caseUtil) {
+    private final DateTimeUtil dateTimeUtil;
+
+    public DiaryService(Producer producer, Configuration configuration, DiaryRepository diaryRepository, ADiaryValidator validator, ADiaryEnrichment enrichment, DiaryEntryService diaryEntryService, FileStoreUtil fileStoreUtil, PdfServiceUtil pdfServiceUtil, WorkflowService workflowService, CaseUtil caseUtil, DateTimeUtil dateTimeUtil) {
         this.producer = producer;
         this.configuration = configuration;
         this.diaryRepository = diaryRepository;
@@ -58,6 +60,7 @@ public class DiaryService {
         this.pdfServiceUtil = pdfServiceUtil;
         this.workflowService = workflowService;
         this.caseUtil = caseUtil;
+        this.dateTimeUtil = dateTimeUtil;
     }
 
     public List<CaseDiaryListItem> searchCaseDiaries(CaseDiarySearchRequest searchRequest) {
@@ -120,9 +123,6 @@ public class DiaryService {
             validator.validateGenerateRequest(generateRequest);
             enrichment.enrichGenerateRequestForDiary(generateRequest);
 
-            SimpleDateFormat dateFormat = new SimpleDateFormat(DOB_FORMAT_D_M_Y);
-            dateFormat.setTimeZone(TimeZone.getDefault());
-
             //TODO: use strategy design pattern to get case diary entries based on diaryType
 
 //            if (generateRequest.getDiary().getDiaryType().equalsIgnoreCase())
@@ -146,16 +146,14 @@ public class DiaryService {
             }
             caseDiaryEntries.forEach(entry -> {
                 if (entry.getHearingDate() != null) {
-                    Date date = new Date(entry.getHearingDate());
-                    entry.setDate(dateFormat.format(date));
+                    entry.setDate(dateTimeUtil.formatEpochMillis(entry.getHearingDate(), DOB_FORMAT_D_M_Y));
                 }
             });
 
             CaseDiary caseDiary = generateRequest.getDiary();
 
             caseDiary.setCaseDiaryEntries(caseDiaryEntries);
-            dateFormat.setTimeZone(TimeZone.getTimeZone(IST_TIME_ZONE));
-            caseDiary.setDate(dateFormat.format(new Date(caseDiary.getDiaryDate())));
+            caseDiary.setDate(dateTimeUtil.formatEpochMillis(caseDiary.getDiaryDate(), DOB_FORMAT_D_M_Y));
             generateRequest.setDiary(caseDiary);
 
             ByteArrayResource byteArrayResource = generateCaseDiary(caseDiary, generateRequest.getRequestInfo());

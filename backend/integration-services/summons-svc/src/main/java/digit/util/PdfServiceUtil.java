@@ -385,7 +385,7 @@ public class PdfServiceUtil {
     private String formatDateFromMillis(long millis) {
         try {
             ZonedDateTime dateTime = Instant.ofEpochMilli(millis)
-                    .atZone(ZoneId.of("Asia/Kolkata"));
+                    .atZone(ZoneId.of(config.getZoneId()));
 
             String day = String.valueOf(dateTime.getDayOfMonth());
 
