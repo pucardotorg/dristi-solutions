@@ -141,16 +141,24 @@ public class HearingRegistrationEnrichment {
                 if (processInstance.get(i) != null) {
                     String action = processInstance.get(i).getAction();
                     if (START.equalsIgnoreCase(action)) {
+                        boolean wasRescheduled = false;
                         for (int j = i - 1; j >= 0; j--) {
                             if (processInstance.get(j) != null) {
                                 String otherAction = processInstance.get(j).getAction();
                                 if (PASS_OVER.equalsIgnoreCase(otherAction)) {
                                     Long passOverTime = processInstance.get(j).getAuditDetails().getCreatedTime();
                                     Long startTime = processInstance.get(i).getAuditDetails().getCreatedTime();
+                                    if(hearingDuration==null)
+                                        hearingDuration=0L;
                                     hearingDuration = hearingDuration + (passOverTime - startTime);
                                     i--;
                                     break;
 
+                                } else if (RESCHEDULE_ONGOING.equalsIgnoreCase(otherAction)) {
+                                    hearingDuration = null;
+                                    i--;
+                                    wasRescheduled=true;
+                                    break;
                                 } else if (ABANDON.equalsIgnoreCase(otherAction)) {
                                     hearingDuration = null;
                                     break;
@@ -158,7 +166,7 @@ public class HearingRegistrationEnrichment {
                             }
                             i--;
                         }
-                        if (hearingDuration == null) {
+                        if (hearingDuration == null && !wasRescheduled) {
                             break;
                         }
                     }

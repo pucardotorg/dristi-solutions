@@ -378,9 +378,10 @@ public class BailService {
             assignees.add(bailRequest.getBail().getLitigantId());
             workflow.setAssignes(assignees);
             if (!bailRequest.getBail().getLitigantId().equalsIgnoreCase(bailRequest.getBail().getAuditDetails().getCreatedBy())) {
-                ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails(), bailRequest.getBail().getAuditDetails().getCreatedBy());
+                // Advocate/Clerk created the bail
+                ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails(), bailRequest.getBail().getAsUser());
                 workflow.setAdditionalDetails(additionalDetails);
-                assignees.add(bailRequest.getBail().getAuditDetails().getCreatedBy());
+                assignees.add(bailRequest.getBail().getAsUser());
                 workflow.setAssignes(assignees);
             }
         }

@@ -178,6 +178,9 @@ public class Bail {
     @JsonProperty("bailId")
     private String bailId = null;
 
+    @JsonProperty("asUser")
+    private String asUser = null;
+
 
     public Bail addSuretiesItem(Surety suretiesItem) {
         if (this.sureties == null) {
