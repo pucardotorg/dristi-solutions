@@ -62,7 +62,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
       },
     },
     { tenantId, limit: 1000, offset: 0 },
-    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid}`,
+    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid || ""}`,
     "",
     userInfo?.uuid && isUserLoggedIn
   );
@@ -249,9 +249,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
             </div>
           )}
           {((location.pathname.includes("/view-case") && location.pathname.includes("/edit-profile")) ||
-            location.pathname.includes("/manage-office")) && (
-            <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 48 }}></Breadcrumb>
-          )}
+            location.pathname.includes("/manage-office")) && <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 48 }}></Breadcrumb>}
 
           {userType !== "LITIGANT" && (
             <PrivateRoute exact path={`${path}/home/application-details`} component={(props) => <ApplicationDetails {...props} />} />
