@@ -18,7 +18,7 @@ function formatAddressee(text = "", type = "full") {
   if (type === "district") {
     const parts = formatted.split(",");
     return parts.length > 1
-      ? parts[1].trim()
+      ? parts[parts.length - 1].trim()
       : formatted;
   }
   return formatted;
@@ -119,7 +119,6 @@ async function miscellaneousProcessTemplate(
 
     if(templateData?.addressee === "POLICE"){
       policeAddresseeSelected = true;
-      templateData.addresseeDetails = formatAddressee(templateData?.addresseeDetails);
     } else if(templateData?.addressee === "OTHER"){
       otherAddresseeSelected = true;
     }
@@ -151,8 +150,10 @@ async function miscellaneousProcessTemplate(
 
           policeAddresseeSelected: policeAddresseeSelected,
 
-          addresseeDetails: addresseeDetails,  
-          addresseeDetailsDistrict: formatAddressee(addresseeDetails, "district"),
+          addresseeDetails: policeAddresseeSelected ? formatAddressee(addresseeDetails) : addresseeDetails,  
+          addresseeDetailsDistrict: policeAddresseeSelected
+            ? formatAddressee(addresseeDetails, "district")
+            : "",
 
           date: formattedToday,
           nbwDate: nbwDate,
