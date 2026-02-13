@@ -1,0 +1,311 @@
+openapi: 3.0.0
+
+info:
+  title: Task Management Service API
+  description: >
+    DIGIT Task Management Service responsible for creation, assignment,
+    tracking, workflow transitions and reporting of tasks.
+  version: 1.0.0
+
+servers:
+  - url: /task-services
+    description: Task Service Base Path
+
+tags:
+  - name: Tasks
+  - name: Task Assignment
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Tasks]
+      summary: Create task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+            example:
+              requestInfo:
+                apiId: Dristi
+                authToken: <AUTH_TOKEN>
+                msgId: 1712345678901|en_IN
+              task:
+                tenantId: kl
+                title: Verify Bail Bond
+                description: Verify submitted bail bond documents
+                priority: HIGH
+                status: PENDING
+                assignee: 111e4567-e89b-12d3-a456-426614174000
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /v1/_update:
+    post:
+      tags: [Tasks]
+      summary: Update task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+            example:
+              requestInfo:
+                apiId: Dristi
+                authToken: <AUTH_TOKEN>
+              task:
+                id: 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
+                tenantId: kl
+                status: IN_PROGRESS
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /v1/_search:
+    post:
+      tags: [Tasks]
+      summary: Search tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskSearchRequest'
+            example:
+              requestInfo:
+                apiId: Dristi
+                authToken: <AUTH_TOKEN>
+                msgId: 1770615520763|en_IN
+              criteria:
+                tenantId: kl
+                taskNumber: KL-000734-2026-TK1
+                courtId: KLKM52
+              pagination:
+                limit: 10
+                offset: 0
+      responses:
+        '200':
+          description: Task search result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskSearchResponse'
+
+  /v1/_assign:
+    post:
+      tags: [Task Assignment]
+      summary: Assign tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskAssignmentRequest'
+            example:
+              requestInfo:
+                apiId: Dristi
+                authToken: <AUTH_TOKEN>
+              tenantId: kl
+              taskIds:
+                - 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
+              assignee: 111e4567-e89b-12d3-a456-426614174000
+              comment: Assigning for verification
+      responses:
+        '202':
+          description: Assignment accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskAssignmentResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    TaskRequest:
+      type: object
+      required: [requestInfo, task]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        task:
+          $ref: '#/components/schemas/Task'
+
+    Task:
+      type: object
+      required: [tenantId, title, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
+
+        taskNumber:
+          type: string
+          example: KL-000734-2026-TK1
+
+        tenantId:
+          type: string
+          example: kl
+
+        title:
+          type: string
+          example: Verify Bail Bond
+
+        description:
+          type: string
+          example: Verify submitted bail bond documents
+
+        status:
+          type: string
+          enum: [PENDING, IN_PROGRESS, COMPLETED, CANCELLED]
+          example: PENDING
+
+        priority:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+          example: HIGH
+
+        assignee:
+          type: string
+          format: uuid
+
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+
+        additionalDetails:
+          type: object
+          example:
+            caseId: 2f6fe4ae-352f-420d-b243-679191b4ba01
+
+        auditDetails:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
+
+    Workflow:
+      type: object
+      properties:
+        action:
+          type: string
+          example: ASSIGN
+        comments:
+          type: string
+          example: Assigned for verification
+        assignees:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    TaskSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        criteria:
+          $ref: '#/components/schemas/TaskSearchCriteria'
+        pagination:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination"
+
+    TaskSearchCriteria:
+      type: object
+      required: [tenantId]
+      properties:
+        tenantId:
+          type: string
+          example: kl
+        taskNumber:
+          type: string
+          example: KL-000734-2026-TK1
+        courtId:
+          type: string
+          example: KLKM52
+        status:
+          type: string
+          example: PENDING
+        assignee:
+          type: string
+          format: uuid
+
+    TaskResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        task:
+          $ref: '#/components/schemas/Task'
+
+    TaskSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        pagination:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination"
+
+    TaskAssignmentRequest:
+      type: object
+      required: [requestInfo, tenantId, taskIds, assignee]
+      properties:
+        requestInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
+        tenantId:
+          type: string
+          example: kl
+        taskIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        assignee:
+          type: string
+          format: uuid
+        comment:
+          type: string
+          example: Assigning for verification
+
+    TaskAssignmentResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
+        success:
+          type: array
+          items:
+            type: string
+            format: uuid
+        failed:
+          type: array
+          items:
+            type: object
+            properties:
+              taskId:
+                type: string
+                format: uuid
+              errorMessage:
+                type: string
