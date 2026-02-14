@@ -14,7 +14,7 @@ RUN cd web/ \
     && yarn install \
     && yarn build:webpack 
 
-FROM nginx:mainline-alpine
+FROM nginx:1.29.5-alpine3.23
 ENV WORK_DIR=/var/web/ui
 
 RUN mkdir -p ${WORK_DIR}
