@@ -110,7 +110,9 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
           </h1>
           <div>
             <h2 style={{ fontFamily: "Roboto", fontSize: "16px", fontWeight: 400, lineHeight: "18.75px", textAlign: "left" }}>
-              {t("SUBMISSION_DOCUMENT_SIGNATURE_SUBTEXT")}
+              {authorizedUuid === userUuid
+                ? t("SUBMISSION_DOCUMENT_SIGNATURE_SUBTEXT_MAIN")
+                : t("SUBMISSION_DOCUMENT_SIGNATURE_SUBTEXT_CLERK_OR_JUNIOR_ADV")}
             </h2>
           </div>
           <div style={{ display: "flex" }}>

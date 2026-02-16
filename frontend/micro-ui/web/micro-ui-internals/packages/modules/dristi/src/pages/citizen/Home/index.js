@@ -18,6 +18,14 @@ function CitizenHome({ tenantId, setHideBack }) {
   const [isFetching, setIsFetching] = useState(true);
   const [isFetchingAdvoacte, setIsFetchingAdvocate] = useState(true);
   const userInfoType = Digit.UserService.getType();
+  const { refetchIndividual } = Digit.Hooks.useQueryParams();
+
+  useEffect(() => {
+    if (refetchIndividual === "true" || refetchIndividual === true) {
+      const event = new CustomEvent("refetchIndividualData");
+      window.dispatchEvent(event);
+    }
+  }, [refetchIndividual]);
 
   const { data, isLoading, refetch } = Digit.Hooks.dristi.useGetIndividualUser(
     {
@@ -46,20 +54,25 @@ function CitizenHome({ tenantId, setHideBack }) {
 
     if (!data?.Individual || data?.Individual.length === 0) return false;
 
-    if (data?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
+    if (data?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE" || role?.code === "ADVOCATE_CLERK_ROLE")) return false;
 
     const address = data?.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
   }, [data?.Individual, userInfoType]);
 
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
-  const { data: searchData, isLoading: isSearchLoading, refetch: refetchAdvocateClerk } = Digit.Hooks.dristi.useGetAdvocateClerk(
+  const {
+    data: searchData,
+    isLoading: isSearchLoading,
+    refetch: refetchAdvocateClerk,
+    isFetching: refetchingAdvocateClerk,
+  } = Digit?.Hooks?.dristi?.useGetAdvocateClerk(
     {
       criteria: [{ individualId }],
       tenantId,
     },
     { tenantId },
-    moduleCode,
+    individualId,
     Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
@@ -111,12 +124,6 @@ function CitizenHome({ tenantId, setHideBack }) {
   ]);
 
   const registrationIsDoneApprovalIsPending = individualId && isApprovalPending && !isRejected && !isLitigantPartialRegistered;
-  useEffect(() => {
-    setHideBack(userHasIncompleteRegistration || registrationIsDoneApprovalIsPending);
-    return () => {
-      setHideBack(false);
-    };
-  }, [userHasIncompleteRegistration, registrationIsDoneApprovalIsPending, setHideBack]);
 
   useEffect(() => {
     setHideBack(userHasIncompleteRegistration || registrationIsDoneApprovalIsPending);
@@ -127,7 +134,7 @@ function CitizenHome({ tenantId, setHideBack }) {
 
   useGetAccessToken("citizen.refresh-token", individualId && !isApprovalPending && !isRejected);
 
-  if (isLoading || isSearchLoading || isFetching || isFetchingAdvoacte) {
+  if (isLoading || isSearchLoading || refetchingAdvocateClerk || isFetching || isFetchingAdvoacte) {
     return <Loader />;
   }
 
