@@ -71,6 +71,7 @@ paths:
             example:
               requestInfo:
                 apiId: Rainmaker
+                authToken: <AUTH_TOKEN>
               advocate:
                 id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
                 tenantId: kl
@@ -91,17 +92,6 @@ paths:
       tags: [Advocate]
       summary: Search advocates
       description: Search advocates using filter criteria.
-      parameters:
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            example: 10
-        - in: query
-          name: offset
-          schema:
-            type: integer
-            example: 0
       requestBody:
         required: true
         content:
@@ -111,9 +101,13 @@ paths:
             example:
               requestInfo:
                 apiId: Rainmaker
+                authToken: <AUTH_TOKEN>
               criteria:
                 tenantId: kl
                 status: ACTIVE
+              pagination:
+                limit: 10
+                offset: 0
       responses:
         '200':
           description: Advocate list
@@ -138,7 +132,6 @@ components:
       required: [requestInfo, advocate]
       properties:
         requestInfo:
-          description: DIGIT request metadata
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
         advocate:
           $ref: '#/components/schemas/Advocate'
@@ -149,21 +142,20 @@ components:
       required: [requestInfo, criteria]
       properties:
         requestInfo:
-          description: DIGIT request metadata
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
         criteria:
           $ref: '#/components/schemas/AdvocateCriteria'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination'
 
     AdvocateResponse:
       type: object
       description: Advocate create/update response.
       properties:
         responseInfo:
-          description: DIGIT response metadata
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
         advocates:
           type: array
-          description: List of advocates
           items:
             $ref: '#/components/schemas/Advocate'
 
@@ -172,13 +164,15 @@ components:
       description: Advocate search response wrapper.
       properties:
         responseInfo:
-          description: DIGIT response metadata
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
         advocates:
           type: array
-          description: Matching advocate records
           items:
             $ref: '#/components/schemas/Advocate'
+        totalCount:
+          type: integer
+          description: Total records matching criteria
+          example: 57
 
     Advocate:
       type: object
@@ -189,38 +183,31 @@ components:
           type: string
           format: uuid
           readOnly: true
-          description: Unique advocate identifier
           example: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
 
         tenantId:
           type: string
-          description: Tenant identifier
           example: kl
 
         individualId:
           type: string
           format: uuid
-          description: Linked individual record ID
           example: 9e8d13f2-7d6c-4a8c-b9cb-97c1b8fd6f21
 
         barCouncilNumber:
           type: string
-          description: Official bar council registration number
           example: KL/2016/1234
 
         barCouncilName:
           type: string
-          description: Name of the registering bar council
           example: Kerala Bar Council
 
         yearOfEnrollment:
           type: integer
-          description: Year advocate enrolled in bar council
           example: 2016
 
         specialization:
           type: array
-          description: Legal practice areas
           items:
             type: string
           example:
@@ -229,18 +216,15 @@ components:
 
         status:
           type: string
-          description: Advocate registration status
           enum: [ACTIVE, INACTIVE, PENDING_VERIFICATION, REJECTED]
           example: ACTIVE
 
         additionalDetails:
           type: object
-          description: Additional metadata about advocate
           example:
             remarks: Verified by state authority
 
         auditDetails:
-          description: Audit information
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
 
     AdvocateCriteria:
@@ -250,26 +234,16 @@ components:
         id:
           type: string
           format: uuid
-          description: Filter by advocate ID
-          example: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
 
         individualId:
           type: string
           format: uuid
-          description: Filter by linked individual ID
-          example: 9e8d13f2-7d6c-4a8c-b9cb-97c1b8fd6f21
 
         barCouncilNumber:
           type: string
-          description: Filter by bar council registration number
-          example: KL/2016/1234
 
         status:
           type: string
-          description: Filter by registration status
-          example: ACTIVE
 
         tenantId:
           type: string
-          description: Tenant identifier
-          example: kl
