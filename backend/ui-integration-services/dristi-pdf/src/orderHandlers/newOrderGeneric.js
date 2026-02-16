@@ -29,6 +29,13 @@ const _getBailOrderData = (order) => {
   };
 };
 
+const isNotToday = (dateString) => {
+  if (!dateString) return false;
+  const today = new Date().setHours(0, 0, 0, 0);
+  const targetDate = new Date(dateString).setHours(0, 0, 0, 0);
+  return today !== targetDate;
+};
+
 async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
   const cnrNumber = req.query.cnrNumber;
   const entityId = req.query.entityId;
@@ -244,6 +251,58 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       };
     })();
 
+    const isRescheduleApplicationCompositeOrder = (() => {
+      if (order?.orderCategory === "INTERMEDIATE") {
+        if(order?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+          const rawDate = order?.orderDetails?.newHearingDate;
+          const isValidDate = isNotToday(rawDate);
+          return {
+            isReschedule: isValidDate,
+            nextHearingDate: isValidDate ? formatDate(rawDate, "DD-MM-YYYY") : "",
+            purposeOfNextHearing: isValidDate 
+              ? (messagesMap[order?.orderDetails?.purposeOfHearing] || "") 
+              : "",
+          };
+        }
+
+        return { isReschedule: false };
+      }
+
+      const scheduleItem = order?.compositeItems?.find(
+        (item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+      );
+      const acceptItem = order?.compositeItems?.find(
+        (item) => item?.orderType === "ACCEPT_RESCHEDULING_REQUEST"
+      );
+
+      const isBothPresent = Boolean(scheduleItem && acceptItem);
+      if(!isBothPresent && acceptItem) { 
+        const rawDate = acceptItem?.orderSchema?.orderDetails?.newHearingDate;
+        const isValidDate = isNotToday(rawDate);
+        return {
+          isReschedule: isValidDate,
+          nextHearingDate: isValidDate ? formatDate(rawDate, "DD-MM-YYYY") : "",
+          purposeOfNextHearing: isValidDate 
+            ? (messagesMap[acceptItem?.orderSchema?.orderDetails?.purposeOfHearing] || "") 
+            : "",
+        };
+      }
+      return {
+        isReschedule: isBothPresent,
+        nextHearingDate: isBothPresent
+          ? formatDate(
+              scheduleItem?.orderSchema?.orderDetails?.hearingDate,
+              "DD-MM-YYYY"
+            )
+          : "",
+        purposeOfNextHearing: isBothPresent
+          ? messagesMap[
+              scheduleItem?.orderSchema?.orderDetails?.purposeOfHearing
+            ]
+          : "",
+      };
+    })();
+
     const nextHearingDate = order?.nextHearingDate
       ? formatDate(new Date(order?.nextHearingDate), "DD-MM-YYYY")
       : hearingScheduled?.startTime
@@ -267,6 +326,20 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
     const itemText = htmlToFormattedText(order?.itemText || "");
     const bailOrderData = _getBailOrderData(order);
 
+    const isHearingEnabled = Boolean(
+      isRescheduleApplicationCompositeOrder?.isReschedule || isNextHearing
+    );
+
+    const finalPurposeOfHearing =
+      isRescheduleApplicationCompositeOrder?.isReschedule
+        ? isRescheduleApplicationCompositeOrder?.purposeOfNextHearing
+        : purposeOfNextHearing;
+
+    const finalNextHearingDate =
+      isRescheduleApplicationCompositeOrder?.isReschedule
+        ? isRescheduleApplicationCompositeOrder?.nextHearingDate
+        : nextHearingDate;
+
     const data = {
       Data: [
         {
@@ -282,9 +355,9 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
           listOfPresentAttendees,
           listOfAbsentAttendees,
           itemText,
-          isNextHearing,
-          purposeOfNextHearing,
-          nextHearingDate,
+          isNextHearing: isHearingEnabled,
+          purposeOfNextHearing: finalPurposeOfHearing,
+          nextHearingDate: finalNextHearingDate,
           judgeSignature: judgeDetails.judgeSignature,
           courtSeal: judgeDetails.courtSeal,
           qrCodeUrl: base64Url,

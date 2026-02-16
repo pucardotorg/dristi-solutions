@@ -12,6 +12,7 @@ import org.mockito.MockitoAnnotations;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.util.MdmsUtil;
+import org.pucar.dristi.web.models.AssigneeToOfficeMembersType;
 import org.pucar.dristi.web.models.CaseOutcomeType;
 import org.pucar.dristi.web.models.CaseOverallStatusType;
 import org.pucar.dristi.web.models.PendingTaskType;
@@ -52,6 +53,8 @@ class MdmsDataConfigTest {
         when(configuration.getMdmsCaseOverallStatusMasterName()).thenReturn("mdmsCaseOverallStatusMasterName");
         when(configuration.getMdmsCaseOutcomeModuleName()).thenReturn("mdmsCaseOutcomeModuleName");
         when(configuration.getMdmsCaseOutcomeMasterName()).thenReturn("mdmsCaseOutcomeMasterName");
+        when(configuration.getMdmsAssigneeToOfficeMembersMasterName()).thenReturn("mdmsAssigneeToOfficeMembersMasterName");
+        when(configuration.getMdmsAssigneeToOfficeMembersModuleName()).thenReturn("mdmsAssigneeToOfficeMembersModuleName");
     }
 
     @Test
@@ -90,6 +93,18 @@ class MdmsDataConfigTest {
         caseOutcomeTypeJson2.put("orderType", "order2");
         caseOutcomeTypeList.add(caseOutcomeTypeJson2);
 
+        // Prepare mock MDMS data for assigneeToOfficeMembersTypeMap
+        JSONArray assigneeToOfficeMembersTypeList = new JSONArray();
+        JSONObject assigneeToOfficeMembersTypeJson1 = new JSONObject();
+        assigneeToOfficeMembersTypeJson1.put("workflowModule", "module1");
+        assigneeToOfficeMembersTypeJson1.put("states", List.of("state1", "state2"));
+        assigneeToOfficeMembersTypeList.add(assigneeToOfficeMembersTypeJson1);
+
+        JSONObject assigneeToOfficeMembersTypeJson2 = new JSONObject();
+        assigneeToOfficeMembersTypeJson2.put("workflowModule", "module2");
+        assigneeToOfficeMembersTypeJson2.put("states", List.of("state3", "state4"));
+        assigneeToOfficeMembersTypeList.add(assigneeToOfficeMembersTypeJson2);
+
         Map<String, JSONArray> pendingTaskMasterData = new HashMap<>();
         pendingTaskMasterData.put("mdmsPendingTaskMasterName", pendingTaskTypeList);
 
@@ -99,10 +114,14 @@ class MdmsDataConfigTest {
         Map<String, JSONArray> caseOutcomeMasterData = new HashMap<>();
         caseOutcomeMasterData.put("mdmsCaseOutcomeMasterName", caseOutcomeTypeList);
 
+        Map<String, JSONArray> assigneeToOfficeMembersMasterData = new HashMap<>();
+        assigneeToOfficeMembersMasterData.put("mdmsAssigneeToOfficeMembersMasterName", assigneeToOfficeMembersTypeList);
+
         Map<String, Map<String, JSONArray>> mdmsModuleData = new HashMap<>();
         mdmsModuleData.put("mdmsPendingTaskModuleName", pendingTaskMasterData);
         mdmsModuleData.put("mdmsCaseOverallStatusModuleName", caseOverallStatusMasterData);
         mdmsModuleData.put("mdmsCaseOutcomeModuleName", caseOutcomeMasterData);
+        mdmsModuleData.put("mdmsAssigneeToOfficeMembersModuleName", assigneeToOfficeMembersMasterData);
 
         when(mdmsUtil.fetchMdmsData(any(RequestInfo.class), any(String.class), any(String.class), anyList())).thenReturn(mdmsModuleData);
 
@@ -136,6 +155,17 @@ class MdmsDataConfigTest {
         CaseOutcomeType caseOutcomeType2 = new CaseOutcomeType();
         caseOutcomeType2.setOrderType("order2");
         when(objectMapper.convertValue(caseOutcomeTypeJson2, CaseOutcomeType.class)).thenReturn(caseOutcomeType2);
+
+        // Mock objectMapper behavior for assigneeToOfficeMembersTypeMap
+        AssigneeToOfficeMembersType assigneeToOfficeMembersType1 = new AssigneeToOfficeMembersType();
+        assigneeToOfficeMembersType1.setWorkflowModule("module1");
+        assigneeToOfficeMembersType1.setStates(List.of("state1", "state2"));
+        when(objectMapper.convertValue(assigneeToOfficeMembersTypeJson1, AssigneeToOfficeMembersType.class)).thenReturn(assigneeToOfficeMembersType1);
+
+        AssigneeToOfficeMembersType assigneeToOfficeMembersType2 = new AssigneeToOfficeMembersType();
+        assigneeToOfficeMembersType2.setWorkflowModule("module2");
+        assigneeToOfficeMembersType2.setStates(List.of("state3", "state4"));
+        when(objectMapper.convertValue(assigneeToOfficeMembersTypeJson2, AssigneeToOfficeMembersType.class)).thenReturn(assigneeToOfficeMembersType2);
 
         // Execute the method
         mdmsDataConfig.loadConfigData();
@@ -183,5 +213,19 @@ class MdmsDataConfigTest {
         CaseOutcomeType outcomeType2 = mdmsDataConfig.getCaseOutcomeTypeMap().get("order2");
         assertNotNull(outcomeType2);
         assertEquals("order2", outcomeType2.getOrderType());
+
+        // Verify the results for assigneeToOfficeMembersTypeMap
+        assertNotNull(mdmsDataConfig.getAssigneeToOfficeMembersTypeMap());
+        assertEquals(2, mdmsDataConfig.getAssigneeToOfficeMembersTypeMap().size());
+
+        AssigneeToOfficeMembersType assigneeConfig1 = mdmsDataConfig.getAssigneeToOfficeMembersTypeMap().get("module1");
+        assertNotNull(assigneeConfig1);
+        assertEquals("module1", assigneeConfig1.getWorkflowModule());
+        assertEquals(List.of("state1", "state2"), assigneeConfig1.getStates());
+
+        AssigneeToOfficeMembersType assigneeConfig2 = mdmsDataConfig.getAssigneeToOfficeMembersTypeMap().get("module2");
+        assertNotNull(assigneeConfig2);
+        assertEquals("module2", assigneeConfig2.getWorkflowModule());
+        assertEquals(List.of("state3", "state4"), assigneeConfig2.getStates());
     }
 }

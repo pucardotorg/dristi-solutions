@@ -1,11 +1,11 @@
 import { DocumentSearchConfig } from "./DocumentsV2Config";
-import { InboxSearchComposer, Toast } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import "./tabs.css";
 import { SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
-import { getDate } from "../../../Utils";
+import { getAllAssociatedPartyUuids, getAuthorizedUuid, getDate } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
 import { MediationWorkflowState } from "../../../Utils/orderWorkflow";
@@ -40,7 +40,9 @@ const DocumentsV2 = ({
   const history = useHistory();
   const { t } = useTranslation();
 
-  const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const { downloadPdf } = useDownloadCasePdf();
 
   const isCitizen = userRoles?.includes("CITIZEN");
@@ -237,12 +239,14 @@ const DocumentsV2 = ({
         }
       } else if (docObj?.[0]?.isBail) {
         const bailStatus = docObj?.[0]?.artifactList?.status;
-        const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditDetails?.createdBy;
+        const documentOwnerUuid = docObj?.[0]?.artifactList?.asUser;
+        const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentOwnerUuid);
+
         const bailBondId = docObj?.[0]?.artifactList?.bailId;
         const filingNumber = docObj?.[0]?.artifactList?.filingNumber;
         const caseId = docObj?.[0]?.artifactList?.caseId;
         if (isCitizen) {
-          if (bailStatus === "DRAFT_IN_PROGRESS" && documentCreatedByUuid === userInfo?.uuid) {
+          if (bailStatus === "DRAFT_IN_PROGRESS" && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
             history.push(
               `/${window?.contextPath}/${
                 isCitizen ? "citizen" : "employee"
@@ -252,7 +256,9 @@ const DocumentsV2 = ({
 
           if (bailStatus === "PENDING_E-SIGN") {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/dristi/home/bail-bond-sign?tenantId=${tenantId}&bailbondId=${bailBondId}`
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/dristi/home/bail-bond-sign?tenantId=${tenantId}&bailbondId=${bailBondId}&filingNumber=${filingNumber}&caseId=${caseId}`
             );
           }
 
@@ -280,7 +286,7 @@ const DocumentsV2 = ({
         const sourceID = docObj?.[0]?.artifactList?.sourceID;
         const token = window.localStorage.getItem("token");
         const isUserLoggedIn = Boolean(token);
-        if (documentStatus === "PENDING_E-SIGN" && sourceID === userInfo?.uuid && isUserLoggedIn) {
+        if (documentStatus === "PENDING_E-SIGN" && sourceID === userUuid && isUserLoggedIn) {
           history.push(
             `/${
               window?.contextPath
@@ -304,11 +310,13 @@ const DocumentsV2 = ({
       } else {
         const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
         const status = docObj?.[0]?.applicationList?.status;
-        const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
-        const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
+        const applicationOwnerUuid = docObj?.[0]?.applicationList?.asUser;
+        const documentOwnerUuid = docObj?.[0]?.artifactList?.asUser;
         const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
         const documentStatus = docObj?.[0]?.artifactList?.status;
-        if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
+        const allAllowedPartiesForApplicationsActions = getAllAssociatedPartyUuids(caseDetails, applicationOwnerUuid);
+        const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentOwnerUuid);
+        if (documentStatus === "PENDING_E-SIGN" && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
           history.push(
             `/${window?.contextPath}/${
               isCitizen ? "citizen" : "employee"
@@ -318,7 +326,7 @@ const DocumentsV2 = ({
         if (
           [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
         ) {
-          if (createdByUuid === userInfo?.uuid) {
+          if (allAllowedPartiesForApplicationsActions.includes(userUuid)) {
             history.push(
               `/${window?.contextPath}/${
                 isCitizen ? "citizen" : "employee"
@@ -393,8 +401,8 @@ const DocumentsV2 = ({
               requestBody: {
                 ...tabConfig.apiDetails.requestBody,
                 criteria: {
-                  caseId: caseDetails?.id,
-                  filingNumber: caseDetails?.filingNumber,
+                  caseId: caseId,
+                  filingNumber: filingNumber,
                   tenantId: tenantId,
                   ...(caseCourtId && { courtId: caseCourtId }),
                 },
@@ -451,7 +459,6 @@ const DocumentsV2 = ({
                 criteria: {
                   ...(tabConfig.apiDetails?.requestBody?.criteria || {}),
                   filingNumber: filingNumber,
-                  ...(isCitizen && { owner: userInfo?.uuid }),
                 },
               },
             },
@@ -542,7 +549,7 @@ const DocumentsV2 = ({
     };
 
     return getTabConfig(activeTabConfig);
-  }, [activeTab, userInfo, isCitizen, evidenceTypeOptions]);
+  }, [activeTab, userInfo, isCitizen, evidenceTypeOptions, caseDetails, userUuid, caseId, filingNumber]);
   const newTabSearchConfig = useMemo(
     () => ({
       ...DocumentSearchConfig,
@@ -565,8 +572,9 @@ const DocumentsV2 = ({
     }
   }, [setShowMakeAsEvidenceModal]);
   const config = useMemo(() => {
+    if (!caseDetails?.filingNumber) return null; // wait for caseDetails to load
     return newTabSearchConfig?.TabSearchconfig;
-  }, [newTabSearchConfig?.TabSearchconfig]);
+  }, [newTabSearchConfig?.TabSearchconfig, caseDetails?.filingNumber]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -610,9 +618,11 @@ const DocumentsV2 = ({
           );
         })}
       </div>
-
-      <InboxSearchComposer key={`${config?.label}-${counter}`} configs={config} showTab={false}></InboxSearchComposer>
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {config ? (
+        <InboxSearchComposer key={`${config?.label}-${counter}-${caseDetails?.filingNumber}`} configs={config} showTab={false}></InboxSearchComposer>
+      ) : (
+        <Loader></Loader>
+      )}
     </React.Fragment>
   );
 };

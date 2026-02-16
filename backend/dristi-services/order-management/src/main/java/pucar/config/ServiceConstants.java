@@ -23,6 +23,7 @@ public class ServiceConstants {
     public static final String E_SIGN = "E-SIGN";
     public static final String SIGNED = "SIGNED";
     public static final String COMPOSITE = "COMPOSITE";
+    public static final String MISCELLANEOUS_PROCESS = "MISCELLANEOUS_PROCESS";
 
     public static final String COORDINATES_ERROR = "COORDINATES_ERROR";
     public static final String EMPTY_ORDERS_ERROR = "EMPTY_ORDERS_ERROR";
@@ -83,6 +84,9 @@ public class ServiceConstants {
     public static final String ABANDON = "ABANDON";
     public static final String ABANDONED = "ABANDONED";
     public static final String CLOSE = "CLOSE";
+    public static final String MARK_COMPLETE = "MARK_COMPLETE";
+    public static final String UPDATE_DATE = "UPDATE_DATE";
+    public static final String RESCHEDULE_ONGOING = "RESCHEDULE_ONGOING";
     public static final String COMPLETED = "COMPLETED";
     public static final String ABATED = "ABATED";
     public static final String SAVE_DRAFT = "SAVE_DRAFT";
@@ -112,8 +116,9 @@ public class ServiceConstants {
     public static final String ISSUE_ORDER = "ISSUE_ORDER";
     public static final String UNSIGNED = "UNSIGNED";
     public static final String DELETE = "DELETE";
-    public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
     public static final String SUBMIT_BULK_ESIGN = "SUBMIT_BULK_E-SIGN";
+    public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
+
     // order type
     public static final String ACCEPTANCE_REJECTION_DCA = "ACCEPTANCE_REJECTION_DCA";
     public static final String ACCEPT_BAIL = "ACCEPT_BAIL";
@@ -150,6 +155,7 @@ public class ServiceConstants {
     public static final String WITHDRAWAL = "WITHDRAWAL";
     public static final String MOVE_CASE_TO_LONG_PENDING_REGISTER = "MOVE_CASE_TO_LONG_PENDING_REGISTER";
     public static final String MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER = "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER";
+    public static final String ACCEPT_RESCHEDULING_REQUEST = "ACCEPT_RESCHEDULING_REQUEST";
 
     public static final String SMS = "SMS";
 

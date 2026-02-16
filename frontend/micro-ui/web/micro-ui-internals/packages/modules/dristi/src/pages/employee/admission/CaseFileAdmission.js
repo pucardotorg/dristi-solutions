@@ -20,7 +20,7 @@ import {
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
-import { getFilingType, runComprehensiveSanitizer } from "../../../Utils";
+import { getAuthorizedUuid, getCaseEditAllowedAssignees, getFilingType, runComprehensiveSanitizer } from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
@@ -108,6 +108,8 @@ function CaseFileAdmission({ t, path }) {
   const [isLoader, setLoader] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
   const courtId = localStorage.getItem("courtId");
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   // const employeeCrumbs = useMemo(
   //   () => [
@@ -356,14 +358,17 @@ function CaseFileAdmission({ t, path }) {
     ];
   }, [caseDetails]);
 
+  // Case correction/edition is allowed to all complainant side parties including poa holders, advocates, advocate's associated office members.
+  // but no need to send uuid of office members in assignee payload
+  const allComplainantSideUuids = useMemo(() => {
+    return getCaseEditAllowedAssignees(caseDetails);
+  }, [caseDetails]);
+
   const updateCaseDetails = async (action, data = {}) => {
     const newcasedetails = {
       ...caseDetails,
       additionalDetails: { ...caseDetails.additionalDetails, judge: data },
     };
-    const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
-    let assignees = [];
-    assignees.push(caseCreatedByUuid);
     let filteredDocuments = caseDetails?.documents || [];
     if (action === "SEND_BACK") {
       filteredDocuments = filteredDocuments?.filter(
@@ -381,7 +386,7 @@ function CaseFileAdmission({ t, path }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === "SEND_BACK" && { assignes: assignees || [], comments: data?.comment }),
+            ...(action === "SEND_BACK" && { assignes: [...allComplainantSideUuids] || [], comments: data?.comment }),
           },
         },
         tenantId,
@@ -661,6 +666,7 @@ function CaseFileAdmission({ t, path }) {
                       artifactType: documentTypeMapping[data?.key],
                       sourceType: "COMPLAINANT",
                       sourceID: individualId,
+                      asUser: userInfo?.uuid,
                       caseId: caseDetails?.id,
                       filingNumber: caseDetails?.filingNumber,
                       cnrNumber: res?.cases?.[0]?.cnrNumber,
@@ -778,6 +784,7 @@ function CaseFileAdmission({ t, path }) {
         cnrNumber: caseDetails?.cnrNumber,
         cmpNumber: caseDetails?.cmpNumber,
         caseId: caseDetails?.id,
+        asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
         createdDate: new Date().getTime(),
         applicationType: "DELAY_CONDONATION",
         status: caseDetails?.status,
@@ -958,7 +965,7 @@ function CaseFileAdmission({ t, path }) {
             tenantId,
           },
         });
-        history.push(
+        history.replace(
           `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })

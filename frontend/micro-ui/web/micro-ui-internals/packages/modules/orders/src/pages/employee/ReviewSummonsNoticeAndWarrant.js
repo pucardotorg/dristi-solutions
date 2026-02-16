@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { InboxSearchComposer, SubmitBar, Toast, CloseSvg, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
@@ -77,10 +77,86 @@ function getAction(selectedDelievery, orderType) {
   return orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "NOT_DELIVERED" : "NOT_SERVED";
 }
 
+// Tab configuration mapping - maps tab labels to their storage keys
+const TAB_CONFIG_MAP = {
+  PENDING_RPAD_COLLECTION: { storageKey: "pendingRpadStoredConfig" },
+  PENDING_SIGN: { storageKey: "pendingSignStoredConfig" },
+  SIGNED: { storageKey: "signedStoredConfig" },
+  SENT: { storageKey: "sentStoredConfig" },
+};
+
+// Helper to get storage key for a tab label
+const getStorageKeyForTab = (tabLabel) => TAB_CONFIG_MAP[tabLabel]?.storageKey || null;
+
+// Helper to get all storage keys
+const getAllStorageKeys = () => Object.values(TAB_CONFIG_MAP).map((config) => config.storageKey);
+
+// Helper to get stored config from sessionStorage
+const getStoredConfig = (storageKey) => {
+  if (!storageKey) return null;
+  const stored = sessionStorage.getItem(storageKey);
+  if (!stored) return null;
+  try {
+    return JSON.parse(stored);
+  } catch (e) {
+    return null;
+  }
+};
+
+// Helper to store config in sessionStorage
+const storeConfig = (storageKey, config) => {
+  if (!storageKey || !config) return;
+  try {
+    sessionStorage.setItem(storageKey, JSON.stringify(config));
+  } catch (e) {
+    // Ignore storage errors
+  }
+};
+
+// Helper to clear stored config
+const clearStoredConfig = (storageKey) => {
+  if (storageKey) {
+    sessionStorage.removeItem(storageKey);
+  }
+};
+
+// Helper to clear all stored configs
+const clearAllStoredConfigs = () => {
+  getAllStorageKeys().forEach((key) => sessionStorage.removeItem(key));
+};
+
+// Helper to check if orderType is empty
+const isOrderTypeEmpty = (orderType) => {
+  return !orderType || orderType === "" || (typeof orderType === "string" && orderType.trim() === "");
+};
+
+// Helper to create updated config with form values
+const createUpdatedConfig = (baseConfig, formValues) => ({
+  ...baseConfig,
+  sections: {
+    ...baseConfig?.sections,
+    search: {
+      ...baseConfig?.sections?.search,
+      uiConfig: {
+        ...baseConfig?.sections?.search?.uiConfig,
+        defaultValues: formValues,
+      },
+    },
+  },
+});
+
 const ReviewSummonsNoticeAndWarrant = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
+  // Single ref object to track latest form values for all tabs
+  const latestFormValuesRefs = useRef({
+    PENDING_RPAD_COLLECTION: null,
+    PENDING_SIGN: null,
+    SIGNED: null,
+    SENT: null,
+  });
+  const isInitialLoadRef = useRef(false); // Track if this is the initial load after "Send for Sign" - start as false so normal searches work
   const roles = Digit.UserService.getUser()?.info?.roles;
 
   const hasViewAttachmentAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_ATTACHMENT"), [roles]);
@@ -88,6 +164,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const hasViewSummonsAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_SUMMONS"), [roles]);
   const hasViewWarrantAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_WARRANT"), [roles]);
   const hasViewNoticeAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_NOTICE"), [roles]);
+  const hasViewMiscellaneousAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_PROCESS_MISCELLANEOUS"), [roles]);
 
   const hasSignAttachmentAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_ATTACHMENT"), [roles]);
   const hasSignProclamationAccess = useMemo(() => roles?.some((role) => role?.code === "SIGN_PROCESS_PROCLAMATION"), [roles]);
@@ -297,7 +374,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }
 
       setShowActionModal(false);
+      // Set flag to prevent onFormValueChange from overwriting during reload (for PENDING_SIGN tab)
+      isInitialLoadRef.current = true;
       setReload(!reload);
+      setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, 1000);
     } catch (error) {
       setShowErrorToast({
         message: t("SEND_FAILED"),
@@ -408,18 +490,33 @@ const ReviewSummonsNoticeAndWarrant = () => {
         setShowErrorToast({ message: t("DOCUMENT_SENT_SUCCESSFULLY", { successful, total }), error: false });
         setTimeout(() => setShowErrorToast(null), 3000);
         setBulkSendList((prev) => prev?.filter((item) => !selectedItems.some((s) => s.taskNumber === item.taskNumber)) || []);
+        // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
+        isInitialLoadRef.current = true;
         setReload(!reload);
+        setTimeout(() => {
+          isInitialLoadRef.current = false;
+        }, 1000);
       } else {
         setShowErrorToast({ message: t("FAILED_TO_SEND_DOCUMENTS", { failed, total }), error: true });
         setTimeout(() => setShowErrorToast(null), 5000);
         setBulkSendList([]);
+        // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
+        isInitialLoadRef.current = true;
         setReload((prev) => prev + 1);
+        setTimeout(() => {
+          isInitialLoadRef.current = false;
+        }, 1000);
       }
     } catch (error) {
       setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
       setTimeout(() => setShowErrorToast(null), 5000);
       setBulkSendList([]);
+      // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
+      isInitialLoadRef.current = true;
       setReload((prev) => prev + 1);
+      setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, 1000);
     } finally {
       setIsSubmitting(false);
       setIsBulkSending(false);
@@ -465,13 +562,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
             selectedDelievery?.key === "NOT_DELIVERED" &&
             !(orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT")
           ) {
+            let action = "";
+            if (orderType === "MISCELLANEOUS_PROCESS") {
+              action = "NEW_PROCESS";
+            } else {
+              action = orderType === "SUMMONS" ? "NEW_SUMMON" : "NEW_NOTICE";
+            }
+
             await taskService.updateTask(
               {
                 task: {
                   ...res.task,
                   workflow: {
                     ...res.task?.workflow,
-                    action: orderType === "SUMMONS" ? "NEW_SUMMON" : "NEW_NOTICE",
+                    action: action,
                   },
                 },
               },
@@ -501,7 +605,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
           });
         }
         setShowActionModal(false);
+        // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
+        isInitialLoadRef.current = true;
         setReload(!reload);
+        setTimeout(() => {
+          isInitialLoadRef.current = false;
+        }, 1000);
       } catch (error) {
         console.error("Error updating task data:", error);
       }
@@ -563,8 +672,37 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setBulkSignList([]);
     setBulkSendList([]);
     setBulkRpadList([]);
+    // Clear stored config when switching tabs
+    clearAllStoredConfigs();
     setReload(!reload);
   };
+
+  // Clear sessionStorage when component unmounts (user navigates away) or page refreshes
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const isEsignInProgress =
+        (typeof window !== "undefined" && sessionStorage.getItem("esignProcess")) ||
+        (typeof window !== "undefined" && sessionStorage.getItem("eSignWindowObject"));
+      if (!isEsignInProgress) {
+        clearAllStoredConfigs();
+      }
+    };
+
+    // Add event listener for page refresh
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // Cleanup function - runs when component unmounts (user navigates away)
+    return () => {
+      // Remove event listener
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      const isEsignInProgress =
+        (typeof window !== "undefined" && sessionStorage.getItem("esignProcess")) ||
+        (typeof window !== "undefined" && sessionStorage.getItem("eSignWindowObject"));
+      if (!isEsignInProgress) {
+        clearAllStoredConfigs();
+      }
+    };
+  }, []);
 
   function findNextHearings(objectsList) {
     const now = Date.now();
@@ -644,7 +782,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
+        { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
           key: "NEXT_HEARING_DATE",
@@ -707,6 +845,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
         msg = t("SUCCESSFULLY_SIGNED_PROCLAMATION");
       } else if (orderType === "ATTACHMENT") {
         msg = t("SUCCESSFULLY_SIGNED_ATTACHMENT");
+      } else if (orderType === "MISCELLANEOUS_PROCESS") {
+        msg = t("SUCCESSFULLY_SIGNED_MISCELLANEOUS_PROCESS");
       } else {
         msg = t("SUCCESSFULLY_SIGNED_SUMMON");
       }
@@ -719,6 +859,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
         msg = t("SENT_PROCLAMATION_VIA");
       } else if (orderType === "ATTACHMENT") {
         msg = t("SENT_ATTACHMENT_VIA");
+      } else if (orderType === "MISCELLANEOUS_PROCESS") {
+        msg = t("SENT_MISCELLANEOUS_PROCESS_VIA");
       } else {
         msg = t("SENT_SUMMONS_VIA");
       }
@@ -727,6 +869,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [documents, orderType, deliveryChannel]);
 
   const handleSubmitEsign = useCallback(async () => {
+    // Set flag to prevent onFormValueChange from clearing sessionStorage during this operation
+    isInitialLoadRef.current = true;
+
     try {
       let localStorageID = "";
       if (mockESignEnabled) {
@@ -827,6 +972,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
       console.error("Error uploading document:", error);
     } finally {
       setIsLoading(false);
+      // Reset the flag after a delay to allow re-renders to complete
+      setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, 1000);
     }
   }, [rowData, signatureId, tenantId]);
 
@@ -937,7 +1086,21 @@ const ReviewSummonsNoticeAndWarrant = () => {
       setShowErrorToast({ message: t("DOCUMENT_SENT_FOR_BULK_SIGN_SUCCESSFULLY", { total: 1 }), error: false });
       setTimeout(() => setShowErrorToast(null), 3000);
       setShowActionModal(false);
+
+      // Remove the sent case from the list immediately
+      if (rowData?.taskNumber) {
+        setBulkRpadList((prev) => prev?.filter((item) => item?.taskNumber !== rowData.taskNumber) || []);
+      }
+
+      // Don't update sessionStorage here - it should only be updated when search is clicked
+      // The reload will use the stored config from sessionStorage (which was set when search was clicked)
+      // Set flag to prevent onFormValueChange from overwriting during reload
+      isInitialLoadRef.current = true;
       setReload((prev) => !prev);
+      // Reset flag after a short delay to allow initial form load to complete
+      setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, 1000);
     } catch (error) {
       setShowErrorToast({ message: t("FAILED_TO_PERFORM_BULK_SEND"), error: true });
       setTimeout(() => setShowErrorToast(null), 5000);
@@ -1058,11 +1221,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
     const criteriaList = selectedItems?.map((item) => {
       const fileStoreId = item?.documents?.[0]?.fileStore || "";
-
+      const placeHolder = item?.taskType === "MISCELLANEOUS_PROCESS" ? "Judicial Magistrate of First Class" : "Signature";
       return {
         fileStoreId: fileStoreId,
         taskNumber: item?.taskNumber || item?.id || item?.businessId,
-        placeholder: "Signature",
+        placeholder: placeHolder,
         tenantId: tenantId,
       };
     });
@@ -1232,7 +1395,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
           // Only remove tasks that were successfully processed (non-police + successfully sent police tasks)
           setBulkSignList((prev) => (Array.isArray(prev) ? prev.filter((p) => !tasksToRemove.has(p.taskNumber)) : []));
+          // Set flag to prevent onFormValueChange from overwriting during reload
+          isInitialLoadRef.current = true;
           setReload((prev) => prev + 1);
+          // Reset flag after a short delay to allow initial form load to complete
+          setTimeout(() => {
+            isInitialLoadRef.current = false;
+          }, 1000);
           // Reset the count and police tasks when modal closes
           setShowBulkSignSuccessModal(true);
         } catch (e) {
@@ -1485,7 +1654,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       // closeButtonAction={false}
                       submitButtonAction={() => {
                         setShowActionModal(false);
+                        // Set flag to prevent onFormValueChange from overwriting during reload
+                        isInitialLoadRef.current = true;
                         setReload(!reload);
+                        setTimeout(() => {
+                          isInitialLoadRef.current = false;
+                        }, 1000);
                       }}
                       t={t}
                       submissionData={submissionDataIcops}
@@ -1609,7 +1783,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       // closeButtonAction={false}
                       submitButtonAction={() => {
                         setShowActionModal(false);
+                        // Set flag to prevent onFormValueChange from overwriting during reload
+                        isInitialLoadRef.current = true;
                         setReload(!reload);
+                        setTimeout(() => {
+                          isInitialLoadRef.current = false;
+                        }, 1000);
                       }}
                       t={t}
                       submissionData={submissionDataIcops}
@@ -1770,11 +1949,68 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setRowData({});
   }, []);
 
+  // Store config in sessionStorage when search is performed (detected via onFormValueChange)
   const onFormValueChange = useCallback(
     (form) => {
       const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
-      const isSignedTab = currentConfig?.label === "SIGNED";
-      const isPendingRpadTab = currentConfig?.label === "PENDING_RPAD_COLLECTION";
+      const tabLabel = currentConfig?.label;
+      const storageKey = getStorageKeyForTab(tabLabel);
+      const isSignedTab = tabLabel === "SIGNED";
+      const isPendingRpadTab = tabLabel === "PENDING_RPAD_COLLECTION";
+
+      // Track latest form values for supported tabs
+      if (storageKey) {
+        if (form?.searchForm) {
+          let searchFormValues = { ...form.searchForm };
+
+          // If orderType is empty string but we have a previous object value in ref, preserve it
+          const refOrderType = latestFormValuesRefs.current[tabLabel]?.orderType;
+          if (isOrderTypeEmpty(searchFormValues.orderType) && refOrderType && typeof refOrderType === "object") {
+            searchFormValues.orderType = refOrderType;
+          }
+
+          latestFormValuesRefs.current[tabLabel] = searchFormValues;
+        } else {
+          const parsedConfig = getStoredConfig(storageKey);
+          if (parsedConfig?.sections?.search?.uiConfig?.defaultValues) {
+            latestFormValuesRefs.current[tabLabel] = parsedConfig.sections.search.uiConfig.defaultValues;
+          }
+        }
+      }
+
+      // Store config ONLY when searchForm is present (means search button was clicked)
+      if (storageKey && form?.searchForm) {
+        // Don't update during initial load after reload or after clear search
+        if (isInitialLoadRef.current || clearSearchClickedRef.current) {
+          return;
+        }
+
+        const formValues = form.searchForm;
+        const configArray = isJudge ? getJudgeDefaultConfig(courtId) : SummonsTabsConfig?.SummonsTabsConfig;
+        const baseConfig = configArray?.[activeTabIndex];
+
+        if (baseConfig) {
+          let processedFormValues = { ...formValues };
+
+          // If orderType is empty string but we have it in ref, use ref value
+          if (isOrderTypeEmpty(processedFormValues.orderType)) {
+            const refOrderType = latestFormValuesRefs.current[tabLabel]?.orderType;
+            if (refOrderType && typeof refOrderType === "object") {
+              processedFormValues.orderType = refOrderType;
+            } else {
+              const storedOrderType = getStoredConfig(storageKey)?.sections?.search?.uiConfig?.defaultValues?.orderType;
+              if (storedOrderType && typeof storedOrderType === "object") {
+                processedFormValues.orderType = storedOrderType;
+              }
+            }
+          }
+
+          // Create and store updated config with form values as defaultValues
+          const updatedConfig = createUpdatedConfig(baseConfig, processedFormValues);
+          storeConfig(storageKey, updatedConfig);
+        }
+      }
+
       if (Array.isArray(form?.searchResult) && form.searchResult.length > 0) {
         const updatedData = form.searchResult.map((item) => ({
           ...item,
@@ -1852,8 +2088,28 @@ const ReviewSummonsNoticeAndWarrant = () => {
       }
     };
 
+    // Check sessionStorage for stored config first (for supported tabs)
     const configArray = isJudge ? getJudgeDefaultConfig(courtId) : SummonsTabsConfig?.SummonsTabsConfig;
-    const baseConfig = configArray?.[activeTabIndex];
+    const currentTabConfig = configArray?.[activeTabIndex];
+
+    let baseConfig;
+    let hasStoredConfig = false;
+
+    // Get storage key for current tab (if supported)
+    const storageKey = getStorageKeyForTab(currentTabConfig?.label);
+
+    if (storageKey) {
+      const parsedConfig = getStoredConfig(storageKey);
+      if (parsedConfig) {
+        baseConfig = parsedConfig;
+        hasStoredConfig = true;
+      } else {
+        baseConfig = currentTabConfig;
+      }
+    } else {
+      // For other tabs, use the default config
+      baseConfig = currentTabConfig;
+    }
 
     if (!baseConfig) return null;
 
@@ -1874,7 +2130,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 (item.code === "PROCLAMATION" && ${hasViewProclamationAccess}) ||
                 (item.code === "SUMMONS" && ${hasViewSummonsAccess}) ||
                 (item.code === "WARRANT" && ${hasViewWarrantAccess}) ||
-                (item.code === "NOTICE" && ${hasViewNoticeAccess})
+                (item.code === "NOTICE" && ${hasViewNoticeAccess}) ||
+                (item.code === "MISCELLANEOUS_PROCESS" && ${hasViewMiscellaneousAccess}) 
               );
             }`,
             },
@@ -1884,7 +2141,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return field;
     });
 
-    return {
+    const finalConfig = {
       ...baseConfig,
       sections: {
         ...baseConfig?.sections,
@@ -1892,6 +2149,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
           ...baseConfig?.sections?.search,
           uiConfig: {
             ...baseConfig?.sections?.search?.uiConfig,
+            // Always preserve defaultValues from baseConfig if they exist
+            // When using stored config, this will have the search values
+            // When not using stored config, this will be undefined/empty (form won't reset)
+            defaultValues: baseConfig?.sections?.search?.uiConfig?.defaultValues,
             fields: updatedFields,
           },
         },
@@ -1922,6 +2183,18 @@ const ReviewSummonsNoticeAndWarrant = () => {
         activeTabIndex: activeTabIndex,
       },
     };
+
+    // Force a new object reference when defaultValues change to ensure useEffect triggers in Inboxheader
+    // This ensures the form resets when config changes
+    return {
+      ...finalConfig,
+      _defaultValuesHash:
+        hasStoredConfig && finalConfig?.sections?.search?.uiConfig?.defaultValues
+          ? `${finalConfig.sections.search.uiConfig.defaultValues.orderType?.code || ""}-${
+              finalConfig.sections.search.uiConfig.defaultValues.channel?.code || ""
+            }`
+          : "no-defaults",
+    };
   }, [
     isJudge,
     courtId,
@@ -1931,7 +2204,48 @@ const ReviewSummonsNoticeAndWarrant = () => {
     hasViewSummonsAccess,
     hasViewWarrantAccess,
     hasViewNoticeAccess,
+    hasViewMiscellaneousAccess,
+    reload, // Added to ensure config re-reads from sessionStorage after "Send for Sign"
   ]);
+
+  // Ref to track if clear search was clicked - used to trigger reload
+  const clearSearchClickedRef = useRef(false);
+
+  // Clear search button handler - clears sessionStorage when clear search is clicked on supported tabs
+  useEffect(() => {
+    const currentConfig = isJudge ? getJudgeDefaultConfig(courtId)?.[activeTabIndex] : SummonsTabsConfig?.SummonsTabsConfig?.[activeTabIndex];
+    const tabLabel = currentConfig?.label;
+    const storageKey = getStorageKeyForTab(tabLabel);
+
+    // Only handle clear search for tabs that have storage
+    if (!storageKey) return;
+
+    const handleClearSearchClick = (e) => {
+      const target = e.target;
+      // Check if clicked element or its parent is a link-label with "Clear" text
+      const linkLabel = target?.closest(".link-label") || (target?.classList?.contains("link-label") ? target : null);
+
+      if (linkLabel && linkLabel.textContent?.toLowerCase()?.includes("clear")) {
+        // Clear stored config when clear search is clicked
+        clearStoredConfig(storageKey);
+        latestFormValuesRefs.current[tabLabel] = {};
+
+        // Set flag and trigger reload after a short delay to let the form reset first
+        clearSearchClickedRef.current = true;
+        setTimeout(() => {
+          setReload((prev) => !prev);
+          clearSearchClickedRef.current = false;
+        }, 100);
+      }
+    };
+
+    // Use document level event delegation with capture phase
+    document.addEventListener("click", handleClearSearchClick, true);
+
+    return () => {
+      document.removeEventListener("click", handleClearSearchClick, true);
+    };
+  }, [activeTabIndex, isJudge, courtId]);
 
   // Header checkbox functionality: Controls all visible row checkboxes.
   // When header is checked/unchecked, all rows follow. When any individual row checkbox is clicked,
@@ -2110,9 +2424,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
             </div>
             <div className="review-process-page inbox-search-wrapper">
               <InboxSearchComposer
-                key={`inbox-composer-${reload}`}
+                key={`inbox-composer-${reload}-${config?.label || "default"}-${
+                  config?.sections?.search?.uiConfig?.defaultValues?.orderType?.code || "no-orderType"
+                }-${config?.sections?.search?.uiConfig?.defaultValues?.channel?.code || "no-channel"}-${config?._defaultValuesHash || "no-hash"}`}
                 configs={config}
-                defaultValues={defaultValues}
+                defaultValues={config?.sections?.search?.uiConfig?.defaultValues || defaultValues}
                 showTab={true}
                 tabData={tabData}
                 onTabChange={onTabChange}

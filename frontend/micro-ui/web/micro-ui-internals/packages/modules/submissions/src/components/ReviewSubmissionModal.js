@@ -5,7 +5,7 @@ import { Toast } from "@egovernments/digit-ui-react-components";
 
 import { Urls } from "../hooks/services/Urls";
 import { useQuery } from "react-query";
-import { convertToDateInputFormat } from "../utils/index";
+import { convertToDateInputFormat, getUserInfoFromUuids } from "../utils/index";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const Heading = (props) => {
@@ -26,36 +26,36 @@ const getStyles = (key) => {
       position: "relative",
       padding: "16px 24px",
       background: "#f7f5f3",
-      display: "flex",
-      flexWrap: "wrap",
-      gap: "20px",
-      alignItems: "flex-start",
+      display: "grid",
+      gridTemplateColumns: "220px 1fr",
+      gap: "10px 24px",
+      alignItems: "baseline",
     },
 
     infoRow: {
-      display: "flex",
-      alignItems: "flex-start",
-      gap: "10px",
+      display: "contents",
     },
 
     infoKey: {
-      width: "fit-content",
       margin: 0,
       fontFamily: "Roboto",
       fontSize: "16px",
       fontWeight: 700,
-      lineHeight: "18.75px",
+      lineHeight: "1.4",
       color: "#0a0a0a",
+      whiteSpace: "nowrap",
     },
 
     infoValue: {
-      width: "fit-content",
       margin: 0,
       fontFamily: "Roboto",
       fontSize: "16px",
       fontWeight: 400,
-      lineHeight: "18.75px",
+      lineHeight: "1.4",
       color: "#3d3c3c",
+      wordBreak: "normal",
+      overflowWrap: "anywhere",
+      textAlign: "left",
     },
   };
 
@@ -86,6 +86,7 @@ const SubmissionPreviewSubmissionTypeMap = {
   CORRECTION_IN_COMPLAINANT_DETAILS: "application-profile-edit",
   ADDING_WITNESSES: "application-witness-deposition",
   APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS: "poa-claim-application",
+  ADVANCEMENT_OR_ADJOURNMENT_APPLICATION: "application-reschedule-hearing",
 };
 
 const onDocumentUpload = async (fileData, filename) => {
@@ -113,6 +114,11 @@ function ReviewSubmissionModal({
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showErrorToast, setShowErrorToast] = useState(null);
+  const [userInfoMap, setUserInfoMap] = useState({
+    senderUser: null,
+    createdByUser: null,
+    onBehalfOfUser: null,
+  });
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -155,6 +161,7 @@ function ReviewSubmissionModal({
               qrCode: false,
               applicationType: SubmissionPreviewSubmissionTypeMap[application?.applicationType],
               courtId: courtId || application?.courtId,
+              filingNumber: application?.filingNumber,
             },
             responseType: "blob",
           }
@@ -163,6 +170,51 @@ function ReviewSubmissionModal({
     },
     enabled: !!application?.applicationNumber && !!application?.cnrNumber && !!SubmissionPreviewSubmissionTypeMap[application?.applicationType],
   });
+
+  useEffect(() => {
+    if (!application) return;
+    const { asUser, createdBy, onBehalfOf } = application;
+    const onBehalfOfUuid = onBehalfOf?.[0];
+    const uuids = [...new Set([asUser, createdBy, onBehalfOfUuid].filter(Boolean))];
+
+    if (uuids.length === 0) {
+      setUserInfoMap({
+        senderUser: null,
+        createdByUser: null,
+        onBehalfOfUser: null,
+      });
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchUsers = async () => {
+      try {
+        const result = await getUserInfoFromUuids(uuids); // [{ userUuid, name }]
+
+        // Build lookup map (O(1))
+        const lookup = new Map((result || []).map((user) => [user.userUuid, user.name]));
+
+        if (!isMounted) return;
+
+        setUserInfoMap({
+          senderUser: asUser ? { uuid: asUser, name: lookup.get(asUser) } : null,
+
+          createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
+
+          onBehalfOfUser: onBehalfOfUuid ? { uuid: onBehalfOfUuid, name: lookup.get(onBehalfOfUuid) } : null,
+        });
+      } catch (error) {
+        console.error("Failed to fetch user info", error);
+      }
+    };
+
+    fetchUsers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [application]);
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
@@ -222,13 +274,47 @@ function ReviewSubmissionModal({
 
             <div style={getStyles("infoRow")}>
               <h3 style={getStyles("infoKey")}>{t("SENDER")}</h3>
-              <h3 style={getStyles("infoValue")}>{sender || application?.additionalDetails?.owner || ""}</h3>
+              <h3 style={getStyles("infoValue")}>{userInfoMap?.senderUser?.name}</h3>
             </div>
 
             {additionalDetails && (
               <div style={getStyles("infoRow")}>
                 <h3 style={getStyles("infoKey")}>{t("ADDITIONAL_DETAILS")}</h3>
                 <h3 style={getStyles("infoValue")}>{t(additionalDetails)}</h3>
+              </div>
+            )}
+
+            {userInfoMap?.createdByUser?.name && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("CREATED_BY")}</h3>
+                <h3 style={getStyles("infoValue")}>{userInfoMap?.createdByUser?.name || ""}</h3>
+              </div>
+            )}
+
+            {application?.additionalDetails?.formdata?.initialHearingDate && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("CURRENT_HEARING_DATE")}</h3>
+                <h3 style={getStyles("infoValue")}>
+                  {application?.additionalDetails?.formdata?.initialHearingDate?.split("-")?.reverse()?.join("-")}
+                </h3>
+              </div>
+            )}
+            {application?.additionalDetails?.formdata?.newHearingDates?.join(", ") && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("PROPOSED_HEARING_DATE")}</h3>
+                <h3 style={getStyles("infoValue")}>{application?.additionalDetails?.formdata?.newHearingDates?.join(", ")}</h3>
+              </div>
+            )}
+            {application?.additionalDetails?.formdata?.initialHearingPurpose && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("PURPOSE_OF_NEXT_HEARING")}</h3>
+                <h3 style={getStyles("infoValue")}>{t(application?.additionalDetails?.formdata?.initialHearingPurpose)}</h3>
+              </div>
+            )}
+            {application?.additionalDetails?.formdata?.isAllPartiesAgreed?.code && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("OTHER_PARTIES_CONSENT")}</h3>
+                <h3 style={getStyles("infoValue")}>{t(application?.additionalDetails?.formdata?.isAllPartiesAgreed?.code)}</h3>
               </div>
             )}
           </div>

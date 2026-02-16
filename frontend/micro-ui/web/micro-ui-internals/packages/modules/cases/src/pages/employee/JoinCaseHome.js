@@ -20,7 +20,7 @@ import JoinCaseSuccess from "./joinCaseComponent/JoinCaseSuccess";
 import LitigantVerification from "./joinCaseComponent/LitigantVerification";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import POAInfo from "./joinCaseComponent/POAInfo";
-import { cleanString, combineMultipleFiles, removeInvalidNameParts } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { cleanString, combineMultipleFiles, getAuthorizedUuid, removeInvalidNameParts } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/submissionWorkflow";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
@@ -125,6 +125,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const authorizedUuid = getAuthorizedUuid(userInfo?.uuid);
 
   const closeToast = () => {
     setShowErrorToast(false);
@@ -1152,6 +1153,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 filingNumber: caseDetails?.filingNumber,
                 litigant: litigantData,
                 representative: {
+                  advocateFilingStatus: "other",
                   advocateId: advocateData?.id,
                   ...(selectPartyData?.isReplaceAdvocate?.value === "YES" && {
                     isReplacing: true,
@@ -1334,7 +1336,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 return {
                   documentType: poaDoc?.documentType,
                   fileStore: poaDoc?.fileStore,
-                  documentName:poaDoc?.additionalDetails?.documentName,
+                  documentName: poaDoc?.additionalDetails?.documentName,
                   additionalDetails: {
                     name: poaDoc?.additionalDetails?.documentName,
                   },
@@ -1381,6 +1383,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 },
                 documents: [...documents],
                 onBehalfOf: [userInfo?.uuid],
+                asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
                 comment: [],
                 applicationDetails: {
                   taskNumber: taskNumber,

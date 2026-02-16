@@ -1,6 +1,6 @@
 import { Loader } from "@egovernments/digit-ui-components";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
 import Button from "../../../components/Button";
 import CustomDetailsCard from "../../../components/CustomDetailsCard";
@@ -12,6 +12,7 @@ import { DRISTIService } from "../../../services";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import { userTypeOptions } from "../registration/config";
 import CustomDetailsDropdownCard from "../../../components/CustomDetailsDropdownCard";
+import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 const customNoteConfig = {
   populators: {
@@ -83,15 +84,18 @@ function CaseType({ t }) {
     const isUserLoggedIn = Boolean(token);
     const moduleCode = "DRISTI";
     const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+    const { AdvocateData } = useContext(AdvocateDataContext);
+    const selectedSeniorAdvocate = AdvocateData;
+    const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
     const roles = userInfo?.roles;
     const { data: individualData, isLoading, refetch, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
       {
         Individual: {
-          userUuid: [userInfo?.uuid],
+          userUuid: selectedAdvocateUuid ? [selectedAdvocateUuid] : [userInfo?.uuid],
         },
       },
       { tenantId, limit: 1000, offset: 0 },
-      moduleCode,
+      `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid}`,
       "",
       userInfo?.uuid && isUserLoggedIn
     );
@@ -126,8 +130,8 @@ function CaseType({ t }) {
       },
       {},
       individualId,
-      userType,
-      "/advocate/v1/_search"
+      Boolean(!selectedAdvocateUuid && isUserLoggedIn && individualId && userType !== "LITIGANT"), // no need to search call if already adv mapping exists
+      userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
     );
 
     if (userType === "ADVOCATE" && searchData) {
@@ -148,8 +152,8 @@ function CaseType({ t }) {
     }, [searchData, userTypeDetail?.apiDetails?.requestKey]);
 
     const advocateId = useMemo(() => {
-      return searchResult?.[0]?.responseList?.[0]?.id;
-    }, [searchResult]);
+      return userType === "ADVOCATE" ? searchResult?.[0]?.responseList?.[0]?.id : null;
+    }, [searchResult, userType]);
 
     if (isLoading || isFetching || isSearchLoading || mdmsLoading || isComplainantRespondentTypeLoading) {
       return <Loader />;
@@ -192,12 +196,17 @@ function CaseType({ t }) {
                   },
                 ],
                 litigants: [],
-                representatives: advocateId
+                representatives: selectedAdvocateId
                   ? [
                       {
-                        advocateId: advocateId,
+                        advocateId: selectedAdvocateId,
                         tenantId,
                         representing: [],
+                        advocateFilingStatus: "caseOwner",
+                        additionalDetails: {
+                          uuid: selectedAdvocateUuid,
+                          advocateName: advocateName,
+                        },
                       },
                     ]
                   : [],
@@ -218,7 +227,7 @@ function CaseType({ t }) {
                 additionalDetails: {
                   payerMobileNo: individualData?.Individual?.[0]?.mobileNumber,
                   payerName: `${givenName} ${familyName}`,
-                  ...(advocateId
+                  ...(selectedAdvocateId
                     ? {
                         advocateDetails: {
                           formdata: [
@@ -400,7 +409,7 @@ function CaseType({ t }) {
           }) || [],
       },
     ];
-  }, [page, statuteData, t]);
+  }, [page, statuteData]);
 
   useEffect(() => {
     if (page !== 0) return;

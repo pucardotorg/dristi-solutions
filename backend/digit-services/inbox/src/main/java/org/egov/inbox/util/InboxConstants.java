@@ -79,7 +79,6 @@ public class InboxConstants {
     public static final String OPEN_HEARING_INDEX = "open-hearing-index";
     public static final String ORDER_NOTIFICATION_INDEX = "order-notification-view";
     public static final String PENDING_BULK_E_SIGN = "PENDING_BULK_E-SIGN";
-
     public static final String DRAFT_IN_PROGRESS = "DRAFT_IN_PROGRESS";
     public static final String PUBLISHED = "PUBLISHED";
 
@@ -111,4 +110,5 @@ public class InboxConstants {
                     "  }, " +
                     "  \"order\": \"desc\" " +
                     "} }";
+
 }

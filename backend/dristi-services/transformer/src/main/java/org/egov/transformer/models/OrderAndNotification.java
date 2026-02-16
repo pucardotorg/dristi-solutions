@@ -61,13 +61,13 @@ public class OrderAndNotification {
     @JsonProperty("createdTime")
     private Long createdTime = null;
 
+    @JsonProperty("lastModifiedTime")
+    private Long lastModifiedTime = null;
+
     @JsonProperty("caseTitle")
     private String caseTitle = null;
 
     @JsonProperty("caseSTNumber")
     private String caseSTNumber = null;
-
-    @JsonProperty("lastModifiedTime")
-    private Long lastModifiedTime = null;
 
 }

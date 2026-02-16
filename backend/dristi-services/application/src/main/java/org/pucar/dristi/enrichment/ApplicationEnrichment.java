@@ -105,7 +105,6 @@ public class ApplicationEnrichment {
                 log.error("CourtId not found for the filingNumber :: {}", applicationRequest.getApplication().getFilingNumber());
                 throw new CustomException(ENRICHMENT_EXCEPTION, "CourtId not found for the filingNumber :: " + applicationRequest.getApplication().getFilingNumber());
             }
-
             String currentYear = dateUtil.getCurrentYear();
             String tenantId = courtId + "_" +
                     applicationRequest.getApplication().getFilingNumber().replace("-", "") + "_" +

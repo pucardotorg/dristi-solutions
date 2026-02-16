@@ -111,6 +111,7 @@ public class TaskService {
                     || body.getTask().getTaskType().equalsIgnoreCase("ATTACHMENT")) {
                 updateCase(body);
             }
+
             producer.push(config.getTaskCreateTopic(), body);
 
             String status = body.getTask().getStatus();
@@ -235,11 +236,13 @@ public class TaskService {
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
             log.info("status , taskType : {} , {} ", status, taskType);
-            if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status) || PROCLAMATION_SENT.equalsIgnoreCase(status) || ATTACHMENT_SENT.equalsIgnoreCase(status)){
+            if (PROCESS_SENT.equalsIgnoreCase(status) || SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status) || PROCLAMATION_SENT.equalsIgnoreCase(status) || ATTACHMENT_SENT.equalsIgnoreCase(status)){
                 String acknowledgementId = summonUtil.sendSummons(body);
                 updateAcknowledgementId(body, acknowledgementId);
-                closeEnvelopePendingTaskOfRpad(body);
+                if(!PROCESS_SENT.equalsIgnoreCase(status))
+                 closeEnvelopePendingTaskOfRpad(body);
             }
+
             List<String> fileStoreIds = new ArrayList<>();
             if(body.getTask().getDocuments() != null){
                 for (Document document : body.getTask().getDocuments()) {
@@ -256,7 +259,6 @@ public class TaskService {
             if (taskType.equalsIgnoreCase(JOIN_CASE)) {
                 topicBasedOnStatus.pushToTopicBasedOnStatus(status, body);
             }
-
             producer.push(config.getTaskUpdateTopic(), body);
 
             if (!isValidTask) {
@@ -350,6 +352,8 @@ public class TaskService {
                     config.getTaskJoinCaseBusinessServiceName(), workflow, config.getTaskjoinCaseBusinessName());
             case JOIN_CASE_PAYMENT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
+            case MISCELLANEOUS_PROCESS -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                    config.getTaskMiscellaneusBusinessServiceName(), workflow, config.getTaskMiscellaneusBusinessName());
             case GENERIC -> updateWorkflow(requestInfo, tenantId, taskNumber, workflow);
             default -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
@@ -481,12 +485,14 @@ public class TaskService {
             addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_NOTICE, NOTICE);
             addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_PROCLAMATION, PROCLAMATION);
             addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_ATTACHMENT, ATTACHMENT);
+            addOrderTypeIfRolePresent(orderType, userRoles, ROLE_VIEW_PROCESS_MISCELLANEOUS, MISCELLANEOUS_PROCESS);
         } else {
             removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_SUMMONS, SUMMON);
             removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_WARRANT, WARRANT);
             removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_NOTICE, NOTICE);
             removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_PROCLAMATION, PROCLAMATION);
             removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_ATTACHMENT, ATTACHMENT);
+            removeOrderTypeIfRoleMissing(orderType, userRoles, ROLE_VIEW_PROCESS_MISCELLANEOUS, MISCELLANEOUS_PROCESS);
         }
         return orderType;
     }

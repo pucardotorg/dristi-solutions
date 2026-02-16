@@ -22,6 +22,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.enrichment.EnrichmentService;
 import org.pucar.dristi.kafka.Producer;
+import org.pucar.dristi.repository.AdvocateOfficeCaseMemberRepository;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
@@ -90,6 +91,8 @@ public class CaseService {
     private final OrderUtil orderUtil;
     private final DateUtil dateUtil;
     private final InboxUtil inboxUtil;
+    private final AdvocateOfficeCaseMemberRepository advocateOfficeCaseMemberRepository;
+
 
     @Autowired
     public CaseService(@Lazy CaseRegistrationValidator validator,
@@ -104,7 +107,7 @@ public class CaseService {
                        HearingUtil analyticsUtil,
                        UserService userService,
                        PaymentCalculaterUtil paymentCalculaterUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil, InboxUtil inboxUtil) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateOfficeCaseMemberRepository advocateOfficeCaseMemberRepository) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -130,6 +133,7 @@ public class CaseService {
         this.orderUtil = orderUtil;
         this.dateUtil = dateUtil;
         this.inboxUtil = inboxUtil;
+        this.advocateOfficeCaseMemberRepository = advocateOfficeCaseMemberRepository;
     }
 
     public static List<String> extractIndividualIds(JsonNode rootNode) {
@@ -306,6 +310,9 @@ public class CaseService {
         try {
             validator.validateCaseRegistration(body);
 
+            // Validate that user is authorized to file on behalf of the advocate
+            validator.validateAdvocateAuthorization(body.getRequestInfo(), body.getCases());
+
             enrichmentUtil.enrichCaseRegistrationOnCreate(body);
 
             workflowService.updateWorkflowStatus(body);
@@ -411,6 +418,8 @@ public class CaseService {
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
+            // Enrich advocate office case members
+            enrichmentUtil.enrichAdvocateOffices(caseRequest, caseRequest.getCases().getAuditdetails());
 
             // conditional enrichment using strategy
             enrichmentService.enrichCourtCase(caseRequest);
@@ -538,8 +547,30 @@ public class CaseService {
             caseRequest.getCases().setDocuments(isActiveTrueDocuments);
             caseRequest.getCases().setRepresentatives(activeAdvocateMapping);
             caseRequest.getCases().setLitigants(activeParty);
+            caseRequest.getCases().setAdvocateOffices(
+                    Optional.ofNullable(caseRequest.getCases().getAdvocateOffices())
+                            .orElse(Collections.emptyList())
+                            .stream()
+                            .peek(office -> {
+                                office.setAdvocates(
+                                        office.getAdvocates().stream()
+                                                .filter(AdvocateOfficeMember::getIsActive)
+                                                .toList()
+                                );
+                                office.setClerks(
+                                        office.getClerks().stream()
+                                                .filter(AdvocateOfficeMember::getIsActive)
+                                                .toList()
+                                );
+                            })
+                            .filter(office ->
+                                    !office.getAdvocates().isEmpty() || !office.getClerks().isEmpty()
+                            )
+                            .toList()
+            );
 
-            log.info("Updating the case in redis cache after filtering the documents, advocates and litigants : {}", caseRequest.getCases().getId());
+
+            log.info("Updating the case in redis cache after filtering the documents, advocates, litigants, poa holders and advocate offices : {}", caseRequest.getCases().getId());
 
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
@@ -2247,6 +2278,13 @@ public class CaseService {
                 courtCase.setAdditionalDetails(modifyAdditionalDetails(joinCaseRequest.getRequestInfo(), courtCase.getAdditionalDetails(), representingJoinCase, joinCaseData.getRepresentative()));
             }
         });
+
+        // Enrich advocate office members for the joining advocate
+        CaseRequest caseRequestForOffice = CaseRequest.builder()
+                .requestInfo(joinCaseRequest.getRequestInfo())
+                .cases(caseObj)
+                .build();
+        enrichmentUtil.enrichAdvocateOffices(caseRequestForOffice, auditDetails);
 
         log.info("Pushing join case representative details :: {}", caseObj);
         producer.push(config.getRepresentativeJoinCaseTopic(), caseObj);
@@ -5071,6 +5109,15 @@ public class CaseService {
                     }
                 }
 
+                // Enrich advocate office case members for the joining advocate
+                CaseRequest caseRequestForOffice = CaseRequest.builder()
+                        .requestInfo(requestInfo)
+                        .cases(courtCase)
+                        .build();
+                enrichmentUtil.enrichAdvocateOffices(caseRequestForOffice, auditDetails);
+
+                courtCaseObj.setAdvocateOffices(caseRequestForOffice.getCases().getAdvocateOffices());
+
                 producer.push(config.getRepresentativeJoinCaseTopic(), courtCaseObj);
 
                 if (partyType.contains("complainant")) {
@@ -5712,6 +5759,7 @@ public class CaseService {
                 //update open hearing index
                 updateHearingIndexForReplaceAdvocate(fullName,individualTryingToReplace.getIndividualId(),isAccusedAdvocate,hearing,courtCase.getCourtId(),namesToBeRemoved);
             }
+
 
             hearingUtil.updateTranscriptAdditionalAttendees(hearingRequest);
 
@@ -6428,5 +6476,17 @@ public class CaseService {
         }
         
         return caseConversionDetails;
+    }
+
+    public List<AdvocateCaseInfo> getCasesByAdvocateId(AdvocateCasesRequest request) {
+        try {
+            log.info("Fetching cases for advocateId: {}", request.getAdvocateId());
+            List<AdvocateCaseInfo> cases = advocateOfficeCaseMemberRepository.getCasesByAdvocateId(request.getAdvocateId());
+            log.info("Found {} cases for advocateId: {}", cases.size(), request.getAdvocateId());
+            return cases;
+        } catch (Exception e) {
+            log.error("Error fetching cases for advocateId: {}", request.getAdvocateId(), e);
+            throw new CustomException("ADVOCATE_CASES_FETCH_ERROR", "Error fetching cases for advocate: " + e.getMessage());
+        }
     }
 }

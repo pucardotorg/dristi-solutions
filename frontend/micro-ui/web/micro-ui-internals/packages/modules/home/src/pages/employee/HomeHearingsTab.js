@@ -293,6 +293,18 @@ const HomeHearingsTab = ({
       }
       let dropDownitems = [];
       const hearingDetails = row?.businessObject?.hearingDetails;
+
+      const startDate = hearingDetails?.fromDate || hearingDetails?.toDate;
+      const isFutureHearing = startDate ? new Date(startDate).setHours(0, 0, 0, 0) > new Date().setHours(0, 0, 0, 0) : false;
+      if ((hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") && isFutureHearing) {
+        dropDownitems.push({
+          label: "FUTURE_HEARING_CANNOT_BE_STARTED",
+          id: "start_hearing_disabled",
+          action: () => {},
+        });
+        return dropDownitems;
+      }
+
       if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
         if (!hasHearingPriorityView) {
           dropDownitems.push({
@@ -478,6 +490,8 @@ const HomeHearingsTab = ({
       const hearingDetails = row?.businessObject?.hearingDetails;
       const offset = page * rowsPerPage;
       const orderStatus = hearingDetails?.orderStatus?.toLowerCase();
+      const startDate = hearingDetails?.fromDate || hearingDetails?.toDate;
+      const isFutureHearing = startDate ? new Date(startDate).setHours(0, 0, 0, 0) > new Date().setHours(0, 0, 0, 0) : false;
       return (
         <tr key={row?.id || idx} className="custom-table-row">
           <td>{hearingDetails?.serialNumber || offset + idx + 1}</td>
@@ -599,7 +613,7 @@ const HomeHearingsTab = ({
                   ) : null}
                 </div>
               )}
-              {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && hasHearingPriorityView && hasHearingEditAccess && (
+              {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && hasHearingPriorityView && hasHearingEditAccess && !isFutureHearing && (
                 <div
                   style={{
                     position: "relative",

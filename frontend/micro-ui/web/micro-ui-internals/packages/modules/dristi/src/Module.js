@@ -30,7 +30,6 @@ import VerifyPhoneNumber from "./components/VerifyPhoneNumber";
 import { UICustomizations } from "./configs/UICustomizations";
 import SelectEmptyComponent from "./components/SelectEmptyComponent";
 import ScrutinyInfo from "./components/ScrutinyInfo";
-import AdvocateNameDetails from "./components/AdvocateNameDetails";
 import { CustomizedHooks } from "./hooks";
 import FileCase from "./pages/citizen/FileCase";
 import Login from "./pages/citizen/Login";
@@ -58,7 +57,6 @@ import useBillSearch from "./hooks/dristi/useBillSearch";
 import SelectTranscriptTextArea from "./components/SelectTranscriptTextArea";
 import SelectMultiUpload from "./components/SelectMultiUpload";
 import SupportingDocsComponent from "./components/SupportingDocsComponent";
-import MultipleAdvocateNameDetails from "./components/MultipleAdvocateNameDetails";
 import BoxComplainant from "./components/BoxComplainant";
 import MultipleAdvocatesAndPip from "./components/MultipleAdvocatesAndPip";
 import MultiSelectDropdown from "./components/MultiSelectDropdown";
@@ -80,6 +78,9 @@ import PencilIconEdit from "./components/PencilIconEdit";
 import ProcessCourierService from "./components/ProcessCourierService";
 import CourierService from "./components/CourierService";
 import CustomText from "./components/CustomText";
+import SelectBulkDateInputs from "./components/SelectBulkDateInputs";
+import SelectCustomHearingDate from "./components/SelectCustomHearingDate";
+import EditDeleteModal from "./components/EditDeleteModal";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -173,7 +174,6 @@ const componentsToRegister = {
   SelectUploadDocWithName,
   SelectEmptyComponent,
   ScrutinyInfo,
-  AdvocateNameDetails,
   CustomRadioInfoComponent,
   Modal,
   CommentComponent,
@@ -197,7 +197,6 @@ const componentsToRegister = {
   SelectTranscriptTextArea,
   SelectMultiUpload,
   SupportingDocsComponent,
-  MultipleAdvocateNameDetails,
   MultipleAdvocatesAndPip,
   BoxComplainant,
   MultiSelectDropdown,
@@ -220,6 +219,9 @@ const componentsToRegister = {
   ProcessCourierService,
   CourierService,
   CustomText,
+  SelectBulkDateInputs,
+  SelectCustomHearingDate,
+  EditDeleteModal,
 };
 
 const overrideHooks = () => {

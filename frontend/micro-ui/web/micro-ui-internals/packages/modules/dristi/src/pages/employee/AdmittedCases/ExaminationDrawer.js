@@ -119,11 +119,13 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
 
   const examinationQuestionOptions = useMemo(() => {
     return (
-      examinationQuestionsData?.map((item) => ({
-        code: item?.code,
-        title: item?.title,
-        label: item?.label,
-      }))?.reverse() || []
+      examinationQuestionsData
+        ?.map((item) => ({
+          code: item?.code,
+          title: item?.title,
+          label: item?.label,
+        }))
+        ?.reverse() || []
     );
   }, [examinationQuestionsData]);
 

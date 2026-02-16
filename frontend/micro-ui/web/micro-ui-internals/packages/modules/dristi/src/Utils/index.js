@@ -499,6 +499,8 @@ export const getOrderTypes = (applicationType, type) => {
       return type === "reject" ? "CHECKOUT_REJECT" : "CHECKOUT_ACCEPTANCE";
     case "DELAY_CONDONATION":
       return "ACCEPTANCE_REJECTION_DCA";
+    case "ADVANCEMENT_OR_ADJOURNMENT_APPLICATION":
+      return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "ACCEPT_RESCHEDULING_REQUEST";
     default:
       return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "APPROVE_VOLUNTARY_SUBMISSIONS";
   }
@@ -643,6 +645,46 @@ export const getComplainantSideAdvocates = (caseDetails) => {
     });
 };
 
+//advocates and clerk members who are associated with complainants.
+export const getAdvocateOfficeMembers = (caseDetails) => {
+  const advocateOfficeMembers =
+    caseDetails?.advocateOffices?.flatMap((rep) => {
+      const memberClerks = (rep?.clerks || []).map((clerk) => ({
+        name: clerk?.memberName,
+        partyUuid: clerk?.memberUserUuid,
+        partyType: "memberClerk",
+      }));
+
+      const memberAdvocates = (rep?.advocates || []).map((advocate) => ({
+        name: advocate?.memberName,
+        partyUuid: advocate?.memberUserUuid,
+        partyType: "memberAdvocate",
+      }));
+
+      return [...memberClerks, ...memberAdvocates];
+    }) || [];
+
+  return advocateOfficeMembers?.filter(Boolean);
+};
+
+export const getCaseEditAllowedAssignees = (caseDetails) => {
+  const complainants = getComplainants(caseDetails) || [];
+  const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants) || [];
+  const advocates = getComplainantSideAdvocates(caseDetails) || [];
+  // No need to send uuid of office members in assignee payload
+  const allParties = [...complainants, ...poaHolders, ...advocates];
+  return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+};
+
+export const getAllComplainantSideUuids = (caseDetails) => {
+  const complainants = getComplainants(caseDetails) || [];
+  const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants) || [];
+  const advocates = getComplainantSideAdvocates(caseDetails) || [];
+  const advvocateOfficeMembers = getAdvocateOfficeMembers(caseDetails) || [];
+  const allParties = [...complainants, ...poaHolders, ...advocates, ...advvocateOfficeMembers];
+  return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+};
+
 export const getFileByFileStore = async (uri, filename) => {
   const token = localStorage.getItem("token");
   try {
@@ -675,4 +717,202 @@ export const getNotUploadedFileName = (key) => {
     "swornStatement.document": "SWORN_STATEMENT_DOCUMENT",
   };
   return mapping[key] || "Document";
+};
+
+export const advocateCaseFilingStatusTypes = {
+  CASE_OWNER: "caseOwner",
+  OTHER: "other",
+};
+
+export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
+  const isOwnerAdvocate = caseDetails?.representatives?.find((rep) => rep?.advocateFilingStatus === advocateCaseFilingStatusTypes?.CASE_OWNER);
+  //if neither a senior advocate nor junior adv/clerk did the filing on his behalf that means litigant only did case filing and only he/she can have edit draft access.
+  if (!isOwnerAdvocate) {
+    return [createdByUuid];
+  }
+  const advocateOffices = caseDetails?.advocateOffices || [];
+  // If Senior advocate created the case directly (no office mapping)
+  if (advocateOffices.length === 0) {
+    return [createdByUuid];
+  }
+
+  const ownerAdvocateUuid = isOwnerAdvocate?.additionalDetails?.uuid;
+  //Now we have to check all the advocates and clerks members associated with this advocate and they all can edit the case draft
+  const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateUserUuid === ownerAdvocateUuid);
+  if (!matchingOffice) {
+    // Fallback
+    return [createdByUuid];
+  }
+  const advocates = matchingOffice?.advocates || [];
+  const clerks = matchingOffice?.clerks || [];
+  // Collect all memberUserUuid
+  const editableUsers = [
+    ownerAdvocateUuid, // senior advocate himself
+    ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
+    ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
+  ];
+
+  // Remove null/undefined + de-duplicate
+  return Array.from(new Set((editableUsers || []).filter(Boolean)));
+};
+
+export const getLoggedInUserOnBehalfOfUuid = (caseDetails, currentLoggedInUserUuid) => {
+  const isAdvocate = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === currentLoggedInUserUuid);
+  // if current user is not a clerk/jr adv then return current user uuid.
+  if (isAdvocate) {
+    return currentLoggedInUserUuid;
+  } else if (!isAdvocate) {
+    //If logged in user is a junior adv working under a senior in the case.
+    const advocateUuidIfJuniorAdvocateAssistant = caseDetails?.advocateOffices?.find((office) =>
+      office?.advocates?.find((adv) => adv?.memberUserUuid === currentLoggedInUserUuid)
+    )?.officeAdvocateUserUuid;
+    //If logged in user is a clerk working under a senior in the case.
+    const advocateUuidIfClerkAssistant = caseDetails?.advocateOffices?.find((office) =>
+      office?.clerks?.find((clerk) => clerk?.memberUserUuid === currentLoggedInUserUuid)
+    )?.officeAdvocateUserUuid;
+
+    if (advocateUuidIfJuniorAdvocateAssistant) {
+      return advocateUuidIfJuniorAdvocateAssistant;
+    } else if (advocateUuidIfClerkAssistant) {
+      return advocateUuidIfClerkAssistant;
+    }
+
+    //if logged in user is POA or litigant.
+    else return currentLoggedInUserUuid;
+  }
+};
+
+export const getClerkMembersForPartiesTab = (data) => {
+  const advocateOffices = data?.criteria[0]?.responseList[0]?.advocateOffices || [];
+  const advocateOfficeClerks =
+    advocateOffices?.flatMap((rep) => {
+      const officeAdvocateUuid = rep?.officeAdvocateUserUuid;
+      const officeAdvocateName = rep?.officeAdvocateName;
+      const memberClerks = (rep?.clerks || []).map((clerk) => ({
+        name: clerk?.memberName,
+        partyUuid: clerk?.memberUserUuid,
+        officeAdvocateUuid: officeAdvocateUuid,
+        officeAdvocateName: officeAdvocateName,
+        partyType: "CLERK",
+        isEditable: false,
+        status: "JOINED",
+      }));
+
+      return memberClerks;
+    }) || [];
+  const mergedAdvocateOfficeClerks = Array.from(
+    advocateOfficeClerks
+      .reduce((map, clerk) => {
+        if (!clerk?.partyUuid) return map;
+
+        if (!map.has(clerk.partyUuid)) {
+          map.set(clerk.partyUuid, {
+            name: clerk.name,
+            partyUuid: clerk.partyUuid,
+            associatedWithUuid: [clerk.officeAdvocateUuid],
+            associatedWith: [clerk.officeAdvocateName],
+            partyType: clerk.partyType,
+            isEditable: clerk.isEditable,
+            status: clerk.status,
+          });
+        } else {
+          const existing = map.get(clerk.partyUuid);
+          if (clerk.officeAdvocateUuid && !existing.associatedWithUuid.includes(clerk.officeAdvocateUuid)) {
+            existing.associatedWithUuid.push(clerk.officeAdvocateUuid);
+            existing.associatedWith.push(clerk.officeAdvocateName);
+          }
+        }
+        return map;
+      }, new Map())
+      .values()
+  );
+
+  return mergedAdvocateOfficeClerks;
+};
+
+export const getAssistantAdvocateMembersForPartiesTab = (data) => {
+  const advocateOffices = data?.criteria[0]?.responseList[0]?.advocateOffices || [];
+
+  const advocateOfficeAssistantAdvocates =
+    advocateOffices?.flatMap((rep) => {
+      const officeAdvocateUuid = rep?.officeAdvocateUserUuid;
+      const officeAdvocateName = rep?.officeAdvocateName;
+      const memberAdvocates = (rep?.advocates || []).map((clerk) => ({
+        name: clerk?.memberName,
+        partyUuid: clerk?.memberUserUuid,
+        officeAdvocateUuid: officeAdvocateUuid,
+        officeAdvocateName: officeAdvocateName,
+        partyType: "ASSISTANT_ADVOCATE",
+        isEditable: false,
+        status: "JOINED",
+      }));
+
+      return memberAdvocates;
+    }) || [];
+  const mergedAdvocateOfficeAssistantAdvocates = Array.from(
+    advocateOfficeAssistantAdvocates
+      .reduce((map, assistantAdvocate) => {
+        if (!assistantAdvocate?.partyUuid) return map;
+
+        if (!map.has(assistantAdvocate.partyUuid)) {
+          map.set(assistantAdvocate.partyUuid, {
+            name: assistantAdvocate.name,
+            partyUuid: assistantAdvocate.partyUuid,
+            associatedWithUuid: [assistantAdvocate.officeAdvocateUuid],
+            associatedWith: [assistantAdvocate.officeAdvocateName],
+            partyType: assistantAdvocate.partyType,
+            isEditable: assistantAdvocate.isEditable,
+            status: assistantAdvocate.status,
+          });
+        } else {
+          const existing = map.get(assistantAdvocate.partyUuid);
+          if (assistantAdvocate.officeAdvocateUuid && !existing.associatedWithUuid.includes(assistantAdvocate.officeAdvocateUuid)) {
+            existing.associatedWithUuid.push(assistantAdvocate.officeAdvocateUuid);
+            existing.associatedWith.push(assistantAdvocate.officeAdvocateName);
+          }
+        }
+        return map;
+      }, new Map())
+      .values()
+  );
+
+  return mergedAdvocateOfficeAssistantAdvocates;
+};
+
+// In case of citizen login, we need to extract the user id of the user on behalf of whom the junior advocate/clerk is viewing/doing actions from UI.
+// For other citizens like litigant/POA, we need to return the same uuid.
+// For advocates/clerks, we need to return the uuid of the senior office advocate selected from home dropdown.
+export const getAuthorizedUuid = (currentLoggedInUserUuid) => {
+  if (!currentLoggedInUserUuid) return currentLoggedInUserUuid;
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+  // This means logged in user is not an advocate or clerk, so return same uuid
+  if (!storedAdvocate?.uuid) return currentLoggedInUserUuid;
+
+  //This means logged in user is Advocate but selected himself/herself from home dropdown.
+  if (storedAdvocate.uuid === currentLoggedInUserUuid) return currentLoggedInUserUuid;
+
+  //This means logged in user is Clerk/junior advocate and has selected some senior office advocate from home dropdown.
+  if (storedAdvocate.uuid !== currentLoggedInUserUuid) return storedAdvocate.uuid;
+
+  return currentLoggedInUserUuid;
+};
+
+export const getAllAssociatedPartyUuids = (caseDetails, ownerUuid) => {
+  // First check if owner is present in any office
+  const ownerOffice = caseDetails?.advocateOffices?.find((office) => office?.officeAdvocateUserUuid === ownerUuid);
+  if (ownerOffice) {
+    const officeAdvocateUuid = ownerOffice?.officeAdvocateUserUuid;
+    const advocates = ownerOffice?.advocates || [];
+    const clerks = ownerOffice?.clerks || [];
+    // Collect all memberUserUuid
+    const editableUsers = [
+      officeAdvocateUuid,
+      ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
+      ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
+    ];
+
+    // Remove null/undefined + de-duplicate
+    return Array.from(new Set((editableUsers || []).filter(Boolean)));
+  }
+  return [ownerUuid];
 };

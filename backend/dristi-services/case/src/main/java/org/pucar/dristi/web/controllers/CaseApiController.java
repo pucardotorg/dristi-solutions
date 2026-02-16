@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.pucar.dristi.scheduling.CronJobScheduler;
+import org.pucar.dristi.service.AdvocateOfficeCaseMemberService;
 import org.pucar.dristi.service.CasePdfService;
 import org.pucar.dristi.service.CaseService;
 import org.pucar.dristi.service.CaseServiceV2;
@@ -15,6 +16,8 @@ import org.pucar.dristi.service.WitnessService;
 import org.pucar.dristi.util.ResponseInfoFactory;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.advocateofficemember.MemberAdvocatesRequest;
+import org.pucar.dristi.web.models.advocateofficemember.MemberAdvocatesResponse;
 import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -46,15 +49,18 @@ public class CaseApiController {
     private final CasePdfService casePdfService;
     private final CronJobScheduler cronJobScheduler;
 
+    private final AdvocateOfficeCaseMemberService advocateOfficeCaseMemberService;
+
 
     @Autowired
-    public CaseApiController(CaseService caseService, CaseServiceV2 caseServiceV2, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService, CronJobScheduler cronJobScheduler) {
+    public CaseApiController(CaseService caseService, CaseServiceV2 caseServiceV2, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService, CronJobScheduler cronJobScheduler, AdvocateOfficeCaseMemberService advocateOfficeCaseMemberService) {
         this.caseService = caseService;
         this.caseServiceV2 = caseServiceV2;
         this.witnessService = witnessService;
         this.responseInfoFactory = responseInfoFactory;
         this.casePdfService = casePdfService;
         this.cronJobScheduler = cronJobScheduler;
+        this.advocateOfficeCaseMemberService = advocateOfficeCaseMemberService;
     }
 
     @PostMapping(value = "/v1/_create")
@@ -324,4 +330,33 @@ public class CaseApiController {
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @PostMapping(value = "/v1/advocate/_cases")
+    public ResponseEntity<AdvocateCasesResponse> getAdvocateCases(
+            @Parameter(in = ParameterIn.DEFAULT, description = "Advocate ID + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody AdvocateCasesRequest body) {
+        log.info("api=/v1/advocate/_cases, result=IN_PROGRESS");
+        List<AdvocateCaseInfo> cases = caseService.getCasesByAdvocateId(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        AdvocateCasesResponse response = AdvocateCasesResponse.builder()
+                .cases(cases)
+                .responseInfo(responseInfo)
+                .build();
+        log.info("api=/v1/advocate/_cases, result=SUCCESS");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/member/_advocates")
+    public ResponseEntity<MemberAdvocatesResponse> getMemberAdvocates(
+            @Parameter(in = ParameterIn.DEFAULT, description = "Member User UUID and Case ID + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody MemberAdvocatesRequest body) {
+        log.info("api=/v1/member/_advocates, result=IN_PROGRESS");
+        List<String> advocateUuids = advocateOfficeCaseMemberService.getAdvocatesForMember(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        MemberAdvocatesResponse response = MemberAdvocatesResponse.builder()
+                .advocateUuids(advocateUuids)
+                .responseInfo(responseInfo)
+                .build();
+        log.info("api=/v1/member/_advocates, result=SUCCESS");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
 }

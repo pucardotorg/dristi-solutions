@@ -25,6 +25,7 @@ public class BailQueryBuilder {
                     "bail.additional_details as bailAdditionalDetails, bail.is_active as bailIsActive, " +
                     "bail.created_by as bailCreatedBy, bail.last_modified_by as bailLastModifiedBy, " +
                     "bail.created_time as bailCreatedTime, bail.last_modified_time as bailLastModifiedTime, " +
+                    "bail.as_user as as_user, " +
 
                     "bail_doc.id as bailDocId, bail_doc.tenant_id as bailDocTenantId, bail_doc.bail_id as bailDocBailId, " +
                     "bail_doc.filestore_id as bailDocFilestoreId, bail_doc.document_uid as bailDocUid, " +
@@ -126,7 +127,7 @@ public class BailQueryBuilder {
         addBailCriteria(criteria.getTenantId(), query, "bail.tenant_id = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getId(), query, "bail.id = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getLitigantIndividualId(), query, "bail.litigant_id = ?", preparedStmtList, preparedStmtArgList);
-        addOwnerCriteria(criteria.getOwner(), query, preparedStmtList, preparedStmtArgList);
+        addOwnerCriteria(criteria, query, preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getSuretyMobileNumber(), query, "srt.surety_mobile_number = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getCourtId(), query, "bail.court_id = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getFilingNumber(), query, "bail.filing_number = ?", preparedStmtList, preparedStmtArgList);
@@ -151,19 +152,26 @@ public class BailQueryBuilder {
         }
 
         if (criteria.getUserUuid() != null && !criteria.getUserUuid().isEmpty()) {
-            query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.created_by = ?)) ");
-            preparedStmtList.add(criteria.getUserUuid());
-            preparedStmtArgList.add(Types.VARCHAR);
-        }
-    }
+            List<String> officeAdvocateUserUuids = criteria.getOfficeAdvocateUserUuids();
+            boolean isAdvocateOrClerk = criteria.isAdvocate() || criteria.isClerk();
+            boolean hasUserUuidsList = officeAdvocateUserUuids != null && !officeAdvocateUserUuids.isEmpty();
 
-    private void addOwnerCriteria(String owner, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        if (owner != null && !owner.isEmpty()) {
-            query.append(" AND (bail.litigant_id = ? OR bail.created_by = ?)");
-            preparedStmtList.add(owner);
-            preparedStmtList.add(owner);
-            preparedStmtArgList.add(Types.VARCHAR);
-            preparedStmtArgList.add(Types.VARCHAR);
+            if (isAdvocateOrClerk && hasUserUuidsList) {
+                query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.as_user IN (");
+                for (int i = 0; i < officeAdvocateUserUuids.size(); i++) {
+                    query.append("?");
+                    if (i < officeAdvocateUserUuids.size() - 1) {
+                        query.append(", ");
+                    }
+                    preparedStmtList.add(officeAdvocateUserUuids.get(i));
+                    preparedStmtArgList.add(Types.VARCHAR);
+                }
+                query.append("))) ");
+            } else {
+                query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.created_by = ?)) ");
+                preparedStmtList.add(criteria.getUserUuid());
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
         }
     }
 
@@ -185,6 +193,43 @@ public class BailQueryBuilder {
                     .append(") ");
             preparedStmtList.addAll(criteria);
             criteria.forEach(i -> preparedStmtArgList.add(Types.VARCHAR));
+        }
+    }
+
+    private void addOwnerCriteria(BailSearchCriteria criteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        String userUuid = criteria.getUserUuid();
+        if (userUuid != null && !userUuid.isEmpty()) {
+            List<String> officeAdvocateUserUuids = criteria.getOfficeAdvocateUserUuids();
+            boolean isAdvocateOrClerk = criteria.isAdvocate() || criteria.isClerk();
+            boolean hasUserUuidsList = officeAdvocateUserUuids != null && !officeAdvocateUserUuids.isEmpty();
+
+            if (isAdvocateOrClerk && hasUserUuidsList) {
+                query.append(" AND (bail.litigant_id IN (");
+                for (int i = 0; i < officeAdvocateUserUuids.size(); i++) {
+                    query.append("?");
+                    if (i < officeAdvocateUserUuids.size() - 1) {
+                        query.append(", ");
+                    }
+                    preparedStmtList.add(officeAdvocateUserUuids.get(i));
+                    preparedStmtArgList.add(Types.VARCHAR);
+                }
+                query.append(") OR bail.as_user IN (");
+                for (int i = 0; i < officeAdvocateUserUuids.size(); i++) {
+                    query.append("?");
+                    if (i < officeAdvocateUserUuids.size() - 1) {
+                        query.append(", ");
+                    }
+                    preparedStmtList.add(officeAdvocateUserUuids.get(i));
+                    preparedStmtArgList.add(Types.VARCHAR);
+                }
+                query.append("))");
+            } else {
+                query.append(" AND (bail.litigant_id = ? OR bail.created_by = ?)");
+                preparedStmtList.add(userUuid);
+                preparedStmtList.add(userUuid);
+                preparedStmtArgList.add(Types.VARCHAR);
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
         }
     }
 }

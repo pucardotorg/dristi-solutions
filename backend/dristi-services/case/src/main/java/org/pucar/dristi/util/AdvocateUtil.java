@@ -5,6 +5,7 @@ import static org.pucar.dristi.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -123,6 +124,44 @@ public class AdvocateUtil {
 
 
 		return list.stream().map(Advocate::getIndividualId).collect(Collectors.toSet());
+	}
+
+	public JsonNode searchClerkByIndividualId(RequestInfo requestInfo, String individualId) {
+		try {
+            String uri = configs.getAdvocateHost() +
+                    configs.getAdvocateClerkPath();
+
+			Map<String, Object> request = new HashMap<>();
+			request.put("RequestInfo", requestInfo);
+
+			Map<String, Object> criteria = new HashMap<>();
+			criteria.put("individualId", individualId);
+
+			request.put("criteria", List.of(criteria));
+
+			Object responseMap = restTemplate.postForObject(uri, request, Map.class);
+			if (responseMap == null) {
+				return null;
+			}
+
+			JsonNode rootNode = mapper.valueToTree(responseMap);
+			JsonNode clerksNode = rootNode.path("clerks");
+			if (!clerksNode.isArray() || clerksNode.isEmpty()) {
+				return null;
+			}
+
+			for (JsonNode group : clerksNode) {
+				JsonNode responseList = group.path("responseList");
+				if (responseList.isArray() && !responseList.isEmpty()) {
+					return responseList.get(0);
+				}
+			}
+
+			return null;
+		} catch (Exception e) {
+			log.error("Error while searching clerks with individualId: {}", individualId, e);
+			return null;
+		}
 	}
 
 }

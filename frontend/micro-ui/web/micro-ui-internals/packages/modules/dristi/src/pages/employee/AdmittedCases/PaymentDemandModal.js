@@ -236,10 +236,10 @@ const PaymentDemandModal = ({
     }
   }, [isSubmitting, paymentItems, dueDate, caseDetails, tenantId, totalAmount, selectedParty, comments, setShowPaymentConfirmationModal]);
 
-  const handleCommentChage = ((e) => {
+  const handleCommentChage = (e) => {
     const val = sanitizeData(e.target.value);
     setComments(val);
-  });
+  };
 
   if (isOptionsLoading) {
     return <Loader />;

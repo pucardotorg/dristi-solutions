@@ -1,7 +1,15 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
-import { combineMultipleFiles, documentsTypeMapping, extractValue, generateUUID, isEmptyValue, TaskManagementWorkflowAction } from "../../../Utils";
+import {
+  combineMultipleFiles,
+  documentsTypeMapping,
+  extractValue,
+  generateUUID,
+  getAuthorizedUuid,
+  isEmptyValue,
+  TaskManagementWorkflowAction,
+} from "../../../Utils";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 import { userTypeOptions } from "../registration/config";
@@ -1201,12 +1209,12 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
         ?.body?.[0]?.populators?.inputs?.filter((data) => !data?.showOptional)
         ?.some((data) => {
           const isEmpty = /^\s*$/.test(formData?.poaAddressDetails?.[data?.name]);
-          return (
-            isEmpty ||
-            !formData?.poaAddressDetails?.[data?.name]?.match(
-              window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
-            )
-          );
+          return data?.name !== "typeOfAddress"
+            ? false
+            : isEmpty ||
+                !formData?.poaAddressDetails?.[data?.name]?.match(
+                  window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
+                );
         }))
   ) {
     setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
@@ -1623,15 +1631,17 @@ const documentUploadHandler = async (document, index, prevCaseDetails, data, pag
 
 const fetchBasicUserInfo = async (caseDetails, tenantId) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
     {
       Individual: {
-        userUuid: [userInfo?.uuid],
+        userUuid: [authorizedUuid],
       },
     },
     { tenantId, limit: 1000, offset: 0 },
     "",
-    userInfo?.uuid
+    authorizedUuid
   );
 
   return individualData?.Individual?.[0]?.individualId;
@@ -3033,6 +3043,9 @@ export const updateCaseDetails = async ({
       },
     };
   }
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   if (selected === "prayerSwornStatement") {
     let additionalDocs = [];
     const newFormData = await Promise.all(
@@ -3056,6 +3069,7 @@ export const updateCaseDetails = async ({
                         artifactType: "OTHER",
                         sourceType: "COMPLAINANT",
                         caseId: caseDetails?.id,
+                        asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
                         sourceID: individualId,
                         filingNumber: caseDetails?.filingNumber,
                         tenantId,
@@ -3343,6 +3357,9 @@ export const updateCaseDetails = async ({
           uuid: data?.advocate?.auditDetails?.createdBy,
         },
         representing: representing,
+        advocateFilingStatus: "other", // For new advocates except case creator advocate
+        // (if senior adv or his jr adv/clerk member created case on his behalf then its already present in existing case reprentatives as advocateFilingStatus: "caseOwner")
+        //and it will be overridden automatically in updatedRepresentatives logic written below.
       };
     });
 

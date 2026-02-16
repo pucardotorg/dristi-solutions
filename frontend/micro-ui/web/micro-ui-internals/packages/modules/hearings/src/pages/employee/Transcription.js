@@ -258,7 +258,6 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
       <input type="radio" id="micInput" name="inputSource" value="mic" defaultChecked ref={inputSourceRef} style={{ display: "none" }} />
 
       {!isConnected && <div />}
-
       {isConnected && webSocketStatus === "Connected" && !isRecording && (
         <div style={{ textAlign: "right" }}>
           <button onClick={startRecording} title="Start Recording">

@@ -2,7 +2,18 @@ import React from "react";
 import FormStep from "../../../components/FormStep";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
 
-const SelectMobileNumber = ({ t, onSelect, mobileNumber, onMobileChange, config, canSubmit, isRegister, isUserLoggedIn, className, cooldownTime = 0 }) => {
+const SelectMobileNumber = ({
+  t,
+  onSelect,
+  mobileNumber,
+  onMobileChange,
+  config,
+  canSubmit,
+  isRegister,
+  isUserLoggedIn,
+  className,
+  cooldownTime = 0,
+}) => {
   return (
     <div className={`login-form ${className}`}>
       <FormStep

@@ -22,6 +22,7 @@ const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
 const applicationProfileEdit = require("../applicationHandlers/applicationProfileEdit");
 const applicationWitnessDeposition = require("../applicationHandlers/applicationWitnessDeposition");
 const applicationPoaClaim = require("../applicationHandlers/applicationPoaClaim");
+const applicationRescheduleHearing = require("../applicationHandlers/applicationRescheduleHearing");
 
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
@@ -40,6 +41,7 @@ router.post(
     const requestInfo = req.body.RequestInfo;
     let qrCode = req.query.qrCode;
     const courtId = req.query.courtId;
+    const filingNumber = req.query.filingNumber;
 
     // Set qrCode to false if it is undefined, null, or empty
     if (!qrCode) {
@@ -60,7 +62,13 @@ router.post(
     const resApplication = await handleApiCall(
       res,
       () =>
-        search_application(tenantId, applicationNumber, requestInfo, courtId),
+        search_application(
+          tenantId,
+          applicationNumber,
+          requestInfo,
+          courtId,
+          filingNumber
+        ),
       "Failed to query application service"
     );
     const application = resApplication?.data?.applicationList[0];
@@ -107,6 +115,15 @@ router.post(
           break;
         case "application-reschedule-request":
           await applicationRescheduleRequest(
+            req,
+            res,
+            qrCode,
+            application,
+            courtCaseJudgeDetails
+          );
+          break;
+        case "application-reschedule-hearing":
+          await applicationRescheduleHearing(
             req,
             res,
             qrCode,

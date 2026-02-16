@@ -79,11 +79,10 @@ const EvidenceHearingHeader = ({
     userInfo?.uuid,
   ]);
 
-  const isAdvocatePresent = useMemo(() => (userRoles?.includes("ADVOCATE_ROLE") ? true : allAdvocates.includes(userInfo?.uuid)), [
-    allAdvocates,
-    userInfo?.uuid,
-    userRoles,
-  ]);
+  const isAdvocatePresent = useMemo(
+    () => (userRoles?.includes("ADVOCATE_ROLE") || userRoles?.includes("ADVOCATE_CLERK_ROLE") ? true : allAdvocates.includes(userInfo?.uuid)),
+    [allAdvocates, userInfo?.uuid, userRoles]
+  );
 
   const showMakeSubmission = useMemo(() => {
     return isAdvocatePresent && userRoles?.includes("SUBMISSION_CREATOR");
@@ -104,30 +103,6 @@ const EvidenceHearingHeader = ({
           <div className="sub-details-text">{t(caseData?.substage || "")}</div>
         </div>
         <div className="judge-action-block">
-          <div className="evidence-header-wrapper">
-            <div className="evidence-hearing-header" style={{ background: "transparent" }}>
-              {/* <div className="evidence-actions">
-                <Button
-                  style={{
-                    backgroundColor: "#fff",
-                  }}
-                  textStyles={{
-                    // fontFamily: "Roboto",
-                    // fontSize: "16px",
-                    // fontWeight: 700,
-                    // lineHeight: "18.75px",
-                    // textAlign: "center",
-                    // color: "#007E7E",
-                  }}
-                  variation={"tertiary"}
-                  label={"Share"}
-                  icon={"Share"}
-                  iconFill={"#007E7E"}
-                  className={"take-action-btn-class"}
-                ></Button>
-              </div> */}
-            </div>
-          </div>
           {userRoles.includes("EMPLOYEE") ? (
             <div className="evidence-header-wrapper">
               <div className="evidence-hearing-header" style={{ background: "transparent" }}>

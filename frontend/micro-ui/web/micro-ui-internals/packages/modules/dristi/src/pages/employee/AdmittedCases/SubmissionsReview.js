@@ -8,6 +8,7 @@ import { useGetPendingTask } from "../../../../../home/src/hooks/useGetPendingTa
 import { useHistory } from "react-router-dom";
 import { DRISTIService } from "../../../services";
 import { formatDateDDMMYYYY } from "../../../../../home/src/utils";
+import { getAuthorizedUuid } from "../../../Utils";
 
 const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal }) => {
   const { t } = useTranslation();
@@ -17,6 +18,8 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
   const [documentSubmission, setDocumentSubmission] = useState();
   const [comment, setComment] = useState("");
   const userInfo = Digit.UserService.getUser()?.info;
+  const authorizedUuid = getAuthorizedUuid(userInfo?.uuid);
+
   const userRoles = userInfo?.roles.map((role) => role.code);
   const { caseId } = Digit.Hooks.useQueryParams();
   const history = useHistory();
@@ -116,7 +119,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
           entityType: "application-order-submission-feedback",
           filingNumber: filingNumber,
           isCompleted: false,
-          assignedTo: userInfo?.uuid,
+          assignedTo: authorizedUuid,
           ...(caseData?.case?.courtId && { courtId: caseData?.case?.courtId }),
         },
         limit: 10000,
@@ -136,7 +139,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
           entityType: "application-order-submission-default",
           filingNumber: filingNumber,
           isCompleted: false,
-          assignedTo: userInfo?.uuid,
+          assignedTo: authorizedUuid,
           ...(caseData?.case?.courtId && { courtId: caseData?.case?.courtId }),
         },
         limit: 10000,
@@ -280,9 +283,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
                     marginLeft: "2px",
                   }}
                 >
-                  {app?.createdDate
-                    ? formatDateDDMMYYYY(app?.createdDate)
-                    : "N/A"}
+                  {app?.createdDate ? formatDateDDMMYYYY(app?.createdDate) : "N/A"}
                 </span>
               </div>
             </div>

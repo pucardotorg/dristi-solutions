@@ -19,14 +19,13 @@ const mdmsProxy = createProxyMiddleware({
 });
 
 module.exports = function (app) {
-
   app.use((req, res, next) => {
     // Set X-Frame-Options header to prevent the page from being embedded in iframes from other domains
-    res.setHeader('X-Frame-Options', 'DENY');
-    
+    res.setHeader("X-Frame-Options", "DENY");
+
     // Set Content-Security-Policy header with frame-ancestors directive for enhanced protection
-    res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");
-    
+    res.setHeader("Content-Security-Policy", "frame-ancestors 'none'");
+
     next();
   });
 
@@ -143,6 +142,8 @@ module.exports = function (app) {
     "/inportal-survey/v1/remind-me-later",
     "/task-management",
     "/digitalized-documents",
+    "/advocate-office-management",
+    "/template-configuration",
   ].forEach((location) => app.use(location, createProxy));
   ["/pb-egov-assets"].forEach((location) => app.use(location, assetsProxy));
   ["/mdms-v2/v2/_create"].forEach((location) => app.use(location, mdmsProxy));

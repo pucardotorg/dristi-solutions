@@ -25,6 +25,7 @@ import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } fro
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
+import TemplateOrConfigurationPage from "./TemplateOrConfigurationPage";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -68,6 +69,7 @@ const MainHomeScreen = () => {
     OFFLINE_PAYMENTS: 0,
     SCRUTINISE_CASES: 0,
     REGISTRATION: 0,
+    RESCHEDULE_REQUEST: 0,
     REVIEW_PROCESS: 0,
     // VIEW_APPLICATION: 0,
     // SCHEDULE_HEARING: 0,
@@ -106,6 +108,7 @@ const MainHomeScreen = () => {
   const hasViewOthers = useMemo(() => assignedRoles?.includes("VIEW_OTHERS_APPLICATION"), [assignedRoles]);
   const hasCaseReviewerAccess = useMemo(() => assignedRoles?.includes("CASE_REVIEWER"), [assignedRoles]);
   const hasViewProcessManagementAccess = useMemo(() => assignedRoles?.includes("VIEW_PROCESS_MANAGEMENT"), [assignedRoles]);
+  const hasViewReschedulingRequestAccess = useMemo(() => assignedRoles?.includes("VIEW_RESCHEDULING_REQUESTS"), [assignedRoles]);
 
   const today = new Date();
 
@@ -298,6 +301,11 @@ const MainHomeScreen = () => {
             isOnlyCountRequired: true,
             actionCategory: "Register cases",
           },
+          searchReschedulingRequestApplications: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Rescheduling Request",
+          },
           searchNoticeAndSummons: {
             date: null,
             isOnlyCountRequired: true,
@@ -350,12 +358,14 @@ const MainHomeScreen = () => {
       const registerUsersCount = res?.registerUsersData?.count || 0;
       const offlinePaymentsCount = res?.offlinePaymentsData?.count || 0;
       const noticeAndSummonsCount = res?.noticeAndSummonsData?.count || 0;
+      const rescheduleHearingRequestCount = res?.reschedulingRequestData?.totalCount || 0;
 
       setPendingTaskCount({
         REGISTER_USERS: registerUsersCount,
         OFFLINE_PAYMENTS: offlinePaymentsCount,
         SCRUTINISE_CASES: scrutinyCasesCount,
         REGISTRATION: registerCount,
+        RESCHEDULE_REQUEST: rescheduleHearingRequestCount,
         REVIEW_PROCESS: reviwCount,
         BAIL_BOND_STATUS: bailBondStatusCount,
         NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
@@ -403,6 +413,7 @@ const MainHomeScreen = () => {
       criteria: {
         filingNumber: courierServicePendingTask?.filingNumber,
         tenantId: tenantId,
+        caseId: courierServicePendingTask?.caseId || "",
       },
     },
     {},
@@ -833,9 +844,11 @@ const MainHomeScreen = () => {
   }, [courierServiceSteps]);
 
   useEffect(() => {
-    fetchPendingTaskCounts();
-    fetchHearingCount(filters, activeTab);
-  }, []);
+    if (userType === "employee") {
+      fetchPendingTaskCounts();
+      fetchHearingCount(filters, activeTab);
+    }
+  }, [userType]);
 
   const options = {};
   if (hasViewRegisterUserAccess) {
@@ -868,6 +881,9 @@ const MainHomeScreen = () => {
   // },
 
   const applicationOptions = {};
+  if (hasViewReschedulingRequestAccess) {
+    applicationOptions.RESCHEDULE_REQUEST = { name: "HOME_RESCHEDULE_REQUEST" };
+  }
   if (hasViewReschedulApplicationAccess) {
     applicationOptions.RESCHEDULE_APPLICATIONS = { name: "HOME_RESCHEDULE_APPLICATIONS" };
   }
@@ -885,7 +901,7 @@ const MainHomeScreen = () => {
       setSelectedBailBond(row);
     };
 
-    if (["REGISTRATION", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(activeTab)) {
+    if (["REGISTRATION", "NOTICE_SUMMONS_MANAGEMENT", "RESCHEDULE_REQUEST"]?.includes(activeTab)) {
       updatedConfig.sections.search.uiConfig.fields = [
         {
           label: "CS_CASE_NAME_ADVOCATE",
@@ -962,6 +978,21 @@ const MainHomeScreen = () => {
       });
     }
 
+    if (activeTab === "RESCHEDULE_REQUEST") {
+      updatedConfig.sections.searchResult.uiConfig.columns.push(
+        {
+          label: "DATE_OF_APPLICATION",
+          jsonPath: "dateOfApplication",
+          additionalCustomization: true,
+        },
+        {
+          label: "DATE_OF_NEXT_HEARING",
+          jsonPath: "nextHearingDate",
+          additionalCustomization: true,
+        }
+      );
+    }
+
     updatedConfig = {
       ...updatedConfig,
       sections: {
@@ -985,6 +1016,10 @@ const MainHomeScreen = () => {
                   : column;
               })
               ?.filter((column) => {
+                if (activeTab === "RESCHEDULE_REQUEST") {
+                  if (column?.label === "STAGE") return false;
+                  if (column?.label === "ADVOCATES") return false;
+                }
                 if (activeTab !== "OTHERS" && column?.label === "APPLICATION_TYPE") return false;
                 if (activeTab === "REGISTRATION") {
                   if (column?.label === "STAGE") return false;
@@ -1050,8 +1085,8 @@ const MainHomeScreen = () => {
   );
 
   useEffect(() => {
-    getTotalCountForTab(scrutinyPendingTaskConfig);
-  }, [scrutinyPendingTaskConfig]);
+    userType === "employee" && getTotalCountForTab(scrutinyPendingTaskConfig);
+  }, [scrutinyPendingTaskConfig, userType]);
 
   const handleTabChange = (title, label) => {
     if (title !== activeTabTitle) {
@@ -1138,7 +1173,11 @@ const MainHomeScreen = () => {
           pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount }}
           showToast={showToast}
         />
-        {activeTab === "TOTAL_HEARINGS_TAB" ? (
+        {activeTab === "TEMPLATE_OR_CONFIGURATION" ? (
+          <div className="home-bulk-sign">
+            <TemplateOrConfigurationPage />
+          </div>
+        ) : activeTab === "TOTAL_HEARINGS_TAB" ? (
           <div className="home-bulk-reschedule">
             <HomeHearingsTab
               t={t}

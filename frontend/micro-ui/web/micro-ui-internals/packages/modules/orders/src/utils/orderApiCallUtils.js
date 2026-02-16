@@ -104,6 +104,7 @@ export const addOrderItem = async (
           mediationCentre: t(orderSchema?.orderDetails?.mediationCentre) || "",
           modeOfSigning: "INITIATE_E-SIGN",
         }),
+        ...(order?.orderType === "ACCEPT_RESCHEDULING_REQUEST" && { currentDate: new Date().getTime() }),
       },
       additionalDetails: item?.orderSchema?.additionalDetails,
       ...(orderSchema?.orderDetails?.refApplicationId && {

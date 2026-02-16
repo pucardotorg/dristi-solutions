@@ -1,0 +1,2 @@
+ALTER TABLE dristi_bail
+ADD COLUMN as_user VARCHAR(64)

@@ -1,8 +1,8 @@
 import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
-import { advocateClerkConfig } from "./config";
+import { advocateClerkConfig, advocateClerkVerificationConfig } from "./config";
 import { getFileByFileStore } from "../../../Utils";
 
 const headerStyle = {
@@ -35,6 +35,14 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
   const setFormErrors = useRef(null);
 
   const tenantId = Digit.ULBService.getCurrentTenantId();
+
+  // Determine if user is registering as advocate clerk
+  const isAdvocateClerk = params?.userType?.clientDetails?.selectUserType?.code === "ADVOCATE_CLERK";
+
+  // Use different config based on user type
+  const currentConfig = useMemo(() => {
+    return isAdvocateClerk ? advocateClerkVerificationConfig : advocateClerkConfig;
+  }, [isAdvocateClerk]);
   const closeToast = () => {
     setShowErrorToast(false);
   };
@@ -53,7 +61,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
 
   const validateFormData = (data) => {
     let isValid = true;
-    advocateClerkConfig.forEach((curr) => {
+    currentConfig.forEach((curr) => {
       if (!isValid) return;
       if (!(curr.body[0].key in data) || !data[curr.body[0].key]) {
         isValid = false;
@@ -109,7 +117,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
     }
 
     let isDisabled = false;
-    advocateClerkConfig.forEach((curr) => {
+    currentConfig.forEach((curr) => {
       if (isDisabled) return;
       if (!(curr.body[0].key in formData) || !formData[curr.body[0].key]) {
         return;
@@ -161,6 +169,38 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
     history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`, { newParams: { ...params, formData } });
   };
 
+  // Map stateRegnNumber to barRegistrationNumber for form default values
+  const mappedDefaultValues = useMemo(() => {
+    const formData = params?.formData || {};
+    if (formData?.clientDetails) {
+      // If stateRegnNumber exists but barRegistrationNumber doesn't, map it
+      if (formData.clientDetails.stateRegnNumber && !formData.clientDetails.barRegistrationNumber) {
+        return {
+          ...formData,
+          clientDetails: {
+            ...formData.clientDetails,
+            barRegistrationNumber: formData.clientDetails.stateRegnNumber,
+          },
+        };
+      }
+      // Also check if stateRegnNumber is at the root level (from API response)
+      if (!formData.clientDetails.barRegistrationNumber && !formData.clientDetails.stateRegnNumber) {
+        // Check if stateRegnNumber exists in params directly (from API)
+        const stateRegnNumber = params?.stateRegnNumber || params?.advocate?.stateRegnNumber;
+        if (stateRegnNumber) {
+          return {
+            ...formData,
+            clientDetails: {
+              ...formData.clientDetails,
+              barRegistrationNumber: stateRegnNumber,
+            },
+          };
+        }
+      }
+    }
+    return formData;
+  }, [params?.formData, params?.stateRegnNumber, params?.advocate?.stateRegnNumber]);
+
   useEffect(() => {
     const handleRedirect = async () => {
       if (!params?.IndividualPayload) {
@@ -172,6 +212,11 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
 
         const barCouncilFileStoreId = newParams?.formData?.clientDetails?.barCouncilId?.[1]?.fileStoreId;
         const barCouncilFilename = newParams?.formData?.clientDetails?.barCouncilId?.[0];
+
+        // Map stateRegnNumber to barRegistrationNumber if needed
+        if (newParams?.formData?.clientDetails?.stateRegnNumber && !newParams?.formData?.clientDetails?.barRegistrationNumber) {
+          newParams.formData.clientDetails.barRegistrationNumber = newParams.formData.clientDetails.stateRegnNumber;
+        }
 
         if (barCouncilFileStoreId && barCouncilFilename) {
           const barCouncilUri = `${
@@ -224,7 +269,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
     <div className="advocate-additional-details">
       <div className="id-verificatin-header">
         <p className="vefifcation-header" style={headerStyle}>
-          {t("CORE_ADVOCATE_VERFICATION")}
+          {t(isAdvocateClerk ? "CORE_ADVOCATE_CLERK_VERFICATION" : "CORE_ADVOCATE_VERFICATION")}
         </p>
         <p className="vefifcation-sub-header" style={subHeaderStyle}>
           {t("CORE_ADVOCATE_AUTHENTICITY_TEXT")}
@@ -234,14 +279,14 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
         </p>
       </div>
       <FormComposerV2
-        config={advocateClerkConfig}
+        config={currentConfig}
         t={t}
         onSubmit={(props) => {
           onSubmit(props);
         }}
         isDisabled={isDisabled}
         label={"CS_COMMON_CONTINUE"}
-        defaultValues={{ ...params?.formData } || {}}
+        defaultValues={mappedDefaultValues || {}}
         submitInForm
         onFormValueChange={onFormValueChange}
       ></FormComposerV2>

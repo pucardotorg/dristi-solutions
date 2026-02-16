@@ -1,8 +1,13 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import isEqual from "lodash/isEqual";
-import { CloseBtn, Heading } from "../utils/orderUtils";
+import { _getPartiesOptions, CloseBtn, Heading } from "../utils/orderUtils";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
+import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
+import { generateUUID } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
@@ -34,6 +39,9 @@ const AddOrderTypeModal = ({
   persistedDefaultValues,
   bailBondRequired,
   setBailBondRequired,
+  policeStationData,
+  caseDetails,
+  miscellaneousProcessTemplateDropDown,
 }) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -75,6 +83,45 @@ const AddOrderTypeModal = ({
         setFormErrors?.current?.[index]?.("amount", { message: t("Amount should be greater that 0") });
       } else if ((!hasAmount || (Number.isFinite(amountNum) && amountNum >= 0)) && hasAmountError) {
         clearFormErrors?.current?.[index]?.("amount");
+      }
+    }
+
+    if (currentOrderType && ["MISCELLANEOUS_PROCESS"]?.includes(currentOrderType)) {
+      if (!isEqual(formData?.processTemplate, formdata?.processTemplate) && (formdata?.selectAddresee || formdata?.selectedPartiesDetails)) {
+        setValue("selectAddresee", null);
+        setValue("selectedPartiesDetails", null);
+      }
+
+      const isSelectAddreseeValid =
+        Array.isArray(formData?.selectAddresee) &&
+        formData?.selectAddresee?.length > 0 &&
+        formData?.selectAddresee?.every((item) => item && Object.keys(item)?.length > 0);
+
+      if (isSelectAddreseeValid && Object.keys(formState?.errors).includes("selectAddresee")) {
+        clearFormErrors?.current?.[index]?.("selectAddresee");
+      }
+
+      const addressee = formData?.processTemplate?.addressee;
+
+      if (addressee) {
+        if (["POLICE", "OTHER"].includes(addressee)) {
+          const isPartiesDetailsValid =
+            Array.isArray(formData?.selectedPartiesDetails) &&
+            formData?.selectedPartiesDetails?.length > 0 &&
+            formData?.selectedPartiesDetails?.every(
+              (item) => item?.selectedParty?.name && Array.isArray(item?.selectedAddresses) && item?.selectedAddresses?.length > 0
+            );
+
+          if (isPartiesDetailsValid && Object.keys(formState?.errors).includes("selectedPartiesDetails")) {
+            clearFormErrors?.current?.[index]?.("selectedPartiesDetails");
+          }
+        }
+      }
+    }
+
+    if (currentOrderType && ["ACCEPT_RESCHEDULING_REQUEST"].includes(currentOrderType)) {
+      if (formData?.newHearingDate && Object.keys(formState?.errors).includes("newHearingDate")) {
+        clearFormErrors?.current?.[index]?.("newHearingDate");
       }
     }
 
@@ -339,6 +386,30 @@ const AddOrderTypeModal = ({
     return natureOfDisposal;
   }, [newCurrentOrder]);
 
+  const addresseeOptions = useMemo(() => {
+    if (orderType?.code === "MISCELLANEOUS_PROCESS") {
+      const option = formdata?.processTemplate?.addressee;
+      const data = {
+        uniqueId: generateUUID(),
+        name: formdata?.processTemplate?.addresseeName,
+      };
+
+      switch (option) {
+        case "POLICE":
+          return policeStationData;
+        case "RESPONDENT":
+          return _getPartiesOptions(caseDetails, "respondent", true);
+        case "COMPLAINTANT":
+          return _getPartiesOptions(caseDetails, "complainant", true);
+        case "OTHER":
+          return [data];
+        default:
+          return [];
+      }
+    }
+    return [];
+  }, [caseDetails, formdata, orderType?.code, policeStationData]);
+
   return (
     <React.Fragment>
       <Modal
@@ -353,12 +424,24 @@ const AddOrderTypeModal = ({
               {(() => {
                 const isAcceptBail = orderType?.code === "ACCEPT_BAIL";
                 const isReferralToADR = orderType?.code === "REFERRAL_CASE_TO_ADR";
+                const isMiscellaneousTemplate = orderType?.code === "MISCELLANEOUS_PROCESS";
                 const bt = formdata?.bailType;
                 const bailTypeCode = (typeof bt === "string" ? bt : bt?.code || bt?.type || "").toUpperCase();
                 const showSuretyFields = !isAcceptBail || bailTypeCode === "SURETY";
                 const isMediation = formdata?.ADRMode?.name === "MEDIATION";
 
                 let effectiveConfig = modifiedFormConfig;
+
+                // Show OrderType for Take Cognizance order
+                if (orderType?.code === "TAKE_COGNIZANCE") {
+                  effectiveConfig.forEach((section) => {
+                    section.body.forEach((field) => {
+                      if (field.populators?.customStyle) {
+                        delete field.populators.customStyle;
+                      }
+                    });
+                  });
+                }
 
                 if (isAcceptBail) {
                   effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
@@ -383,6 +466,33 @@ const AddOrderTypeModal = ({
                           hideInForm: shouldHide,
                         },
                       };
+                    }),
+                  }));
+                } else if (isMiscellaneousTemplate) {
+                  effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
+                    ...conf,
+                    body: conf?.body?.map((field) => {
+                      if (field?.key === "selectAddresee") {
+                        return {
+                          ...field,
+                          populators: {
+                            ...field?.populators,
+                            options: addresseeOptions,
+                          },
+                        };
+                      }
+
+                      if (field?.key === "selectedPartiesDetails") {
+                        return {
+                          ...field,
+                          populators: {
+                            ...field?.populators,
+                            hideInForm: ["POLICE", "OTHER"]?.includes(formdata?.processTemplate?.addressee) ? false : true,
+                            options: _getPartiesOptions(caseDetails) || [],
+                          },
+                        };
+                      }
+                      return field;
                     }),
                   }));
                 }
@@ -441,6 +551,12 @@ const AddOrderTypeModal = ({
                     secondaryLabel={t(cancelLabel)}
                     showSecondaryLabel={true}
                     onSubmit={() => {
+                      if (formdata?.processTemplate) {
+                        const selectedTemplate = miscellaneousProcessTemplateDropDown?.find(
+                          (template) => template?.id === formdata?.processTemplate?.id
+                        );
+                        formdata.processTemplate = selectedTemplate ? selectedTemplate : formdata?.processTemplate;
+                      }
                       const updatedFormData = {
                         ...formdata,
                         ...(orderType?.code === "ACCEPT_BAIL" && {

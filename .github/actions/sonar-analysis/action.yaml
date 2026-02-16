@@ -48,6 +48,15 @@ runs:
           echo "$key=$value" >> $GITHUB_ENV
         done
 
+    - name: Cache Maven dependencies (.m2)
+      if: ${{ env.language == 'java' }}
+      uses: actions/cache@v5
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-m2
+        restore-keys: |
+          ${{ runner.os }}-m2
+
     - name: print env
       shell: bash
       run: |
@@ -69,7 +78,6 @@ runs:
       with:
         java-version: ${{ env.version }}
         distribution: 'temurin'
-        cache: maven
 
     # - name: Dependency check
     #   uses: dependency-check/Dependency-Check_Action@main
@@ -84,7 +92,7 @@ runs:
     #     args: "--disableOssIndex"
 
     - name: Build and analyze for ${{ inputs.service_name }}
-      if: ${{ env.language == 'java' }}
+      if: ${{ env.language == 'java' && env.version == 17 }}
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.ghub_token }}
@@ -110,14 +118,4 @@ runs:
     #     matrix: ${{ matrix.service }}
     #   if: ${{ env.language == 'java' }}
 
-    - name: Build and analyze (Java)
-      if: ${{ env.language == 'java' }}
-      env:
-        GITHUB_TOKEN: ${{ inputs.ghub_token }}
-        SONAR_TOKEN: ${{ inputs.sonar_token }}
-      shell: bash
-      run: | 
-        # FIX: Use env context for service_source_path
-
-        mvn -B -f ${{ env.service_source_path }}/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=${{ inputs.service_name }} -Dsonar.organization=pucar -Dsonar.host.url=${{ inputs.sonar_url }}
 

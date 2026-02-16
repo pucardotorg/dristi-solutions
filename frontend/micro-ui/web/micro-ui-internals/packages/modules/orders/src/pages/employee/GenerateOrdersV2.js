@@ -67,6 +67,8 @@ import {
   configsCaseSettlementAccept,
   configsCaseSettlementReject,
   configsAbateCase,
+  configAcceptReschedulingRequest,
+  configMiscellaneousProcess,
 } from "../../configs/ordersCreateConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -90,6 +92,7 @@ import {
   getSafeFileExtension,
 } from "../../utils";
 import {
+  _getTaskPayload,
   channelTypeEnum,
   checkValidation,
   compositeOrderAllowedTypes,
@@ -114,10 +117,12 @@ import TasksComponent from "../../../../home/src/components/TaskComponent";
 import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
 import {
   checkAcceptRejectOrderValidation,
+  getAuthorizedUuid,
   getOrderActionName,
   getOrderTypes,
   setApplicationStatus,
 } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import useSearchMiscellaneousTemplate from "../../hooks/orders/useSearchMiscellaneousTemplate";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -162,6 +167,8 @@ const configKeys = {
   COST: configsCost,
   WITNESS_BATTA: configsWitnessBatta,
   ABATE_CASE: configsAbateCase,
+  ACCEPT_RESCHEDULING_REQUEST: configAcceptReschedulingRequest,
+  MISCELLANEOUS_PROCESS: configMiscellaneousProcess,
 };
 
 const stateSlaMap = {
@@ -201,6 +208,8 @@ const stateSlaMap = {
   WITNESS_BATTA: 3,
   DRAFT_IN_PROGRESS: 2,
   ABATE_CASE: 3,
+  ACCEPT_RESCHEDULING_REQUEST: 3,
+  MISCELLANEOUS_PROCESS: 3,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
@@ -209,7 +218,6 @@ const ErrorAttendeesKey = "attendees";
 const GenerateOrdersV2 = () => {
   const { t } = useTranslation();
   const history = useHistory();
-  // Component state and hooks can be added here as needed
   const [presentAttendees, setPresentAttendees] = useState([]);
   const [absentAttendees, setAbsentAttendees] = useState([]);
   const [purposeOfHearing, setPurposeOfHearing] = useState("");
@@ -218,7 +226,7 @@ const GenerateOrdersV2 = () => {
   const [showEditOrderModal, setEditOrderModal] = useState(false);
   const [showAddOrderModal, setAddOrderModal] = useState(false);
   const EditSendBackModal = Digit?.ComponentRegistryService?.getComponent("EditSendBackModal");
-  const [orderType, setOrderType] = useState({}); // not sure it needed
+  const [orderType, setOrderType] = useState({});
   const [showOrderValidationModal, setShowOrderValidationModal] = useState({ showModal: false, errorMessage: "" });
   const [orderTitle, setOrderTitle] = useState(null);
   const setValueRef = useRef([]);
@@ -233,10 +241,11 @@ const GenerateOrdersV2 = () => {
   const courtId = localStorage.getItem("courtId");
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
-  const [caseApiError, setCaseApiError] = useState(undefined);
   // Flag to prevent multiple breadcrumb updates
   const isBreadCrumbsParamsDataSet = useRef(false);
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
@@ -278,6 +287,26 @@ const GenerateOrdersV2 = () => {
   const isApplicationAccepted = history.location?.state?.isApplicationAccepted;
   const hasCalledApplicationAction = useRef(false);
   const [respondents, setRespondents] = useState([]);
+  const hasInitialized = useRef(false);
+
+  const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }]);
+  const sortedPoliceStations = useMemo(() => {
+    const stations = policeStationData?.case?.PoliceStation || [];
+    const updatedStationData = stations?.map((data) => {
+      const { code, ...rest } = data;
+      return {
+        ...rest,
+        uniqueId: code,
+      };
+    });
+    return [...updatedStationData].sort((a, b) => {
+      const nameA = (a?.name || "").toUpperCase();
+      const nameB = (b?.name || "").toUpperCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
+  }, [policeStationData]);
 
   const fetchCaseDetails = async () => {
     try {
@@ -305,7 +334,7 @@ const GenerateOrdersV2 = () => {
         isBreadCrumbsParamsDataSet.current = true;
       }
     } catch (err) {
-      setCaseApiError(err);
+      return null;
     } finally {
       setIsCaseDetailsLoading(false);
     }
@@ -604,6 +633,28 @@ const GenerateOrdersV2 = () => {
 
   const caseCourtId = useMemo(() => caseDetails?.courtId || localStorage.getItem("courtId"), [caseDetails]);
   const hearingNumber = useMemo(() => currentOrder?.hearingNumber || currentOrder?.additionalDetails?.hearingId || "", [currentOrder]);
+
+  const { data: miscellaneousTemplateData, isLoading: isMiscellaneousTemplateLoading, refetch: refectMiscellaneous } = useSearchMiscellaneousTemplate(
+    {
+      criteria: {
+        tenantId: tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
+      tenantId,
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber && caseCourtId && orderType?.code === "MISCELLANEOUS_PROCESS" && showAddOrderModal === true)
+  );
+
+  const miscellaneousProcessTemplateDropDown = useMemo(() => {
+    return (
+      miscellaneousTemplateData?.list?.map((template) => {
+        const { auditDetails, ...result } = template;
+        return result;
+      }) || []
+    );
+  }, [miscellaneousTemplateData]);
 
   const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading, isFetching: isOrdersFetching } = useSearchOrdersService(
     {
@@ -969,6 +1020,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "DISMISS_CASE",
@@ -987,6 +1039,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       } else if (isBailApplicationPending) {
@@ -1008,6 +1061,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "TAKE_COGNIZANCE",
@@ -1026,6 +1080,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       } else {
@@ -1048,6 +1103,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "TAKE_COGNIZANCE",
@@ -1067,6 +1123,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       }
@@ -1086,6 +1143,7 @@ const GenerateOrdersV2 = () => {
                 "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
                 "COST",
                 "WITNESS_BATTA",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "SUMMONS",
@@ -1100,6 +1158,7 @@ const GenerateOrdersV2 = () => {
                 "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
                 "COST",
                 "WITNESS_BATTA",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       } else if (!caseDetails?.lprNumber) {
@@ -1122,6 +1181,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "SUMMONS",
@@ -1141,6 +1201,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       } else {
@@ -1162,6 +1223,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
             : [
                 "SUMMONS",
@@ -1180,6 +1242,7 @@ const GenerateOrdersV2 = () => {
                 "COST",
                 "WITNESS_BATTA",
                 "ABATE_CASE",
+                "MISCELLANEOUS_PROCESS",
               ]
         );
       }
@@ -1201,6 +1264,7 @@ const GenerateOrdersV2 = () => {
         "COST",
         "WITNESS_BATTA",
         "ABATE_CASE",
+        "MISCELLANEOUS_PROCESS",
       ]);
     }
 
@@ -1505,6 +1569,10 @@ const GenerateOrdersV2 = () => {
           body: item.body.map((input) => ({
             ...input,
             disable: true,
+            populators: {
+              ...input.populators,
+              customStyle: { display: "none" },
+            },
           })),
         })) || [];
 
@@ -1526,6 +1594,10 @@ const GenerateOrdersV2 = () => {
         selectedOrderType = currentOrder?.orderType || orderType?.code || "";
         currentSelectedOrder = currentOrder;
       }
+
+      const currentSelectedOrderRelatedApplication = applicationData?.applicationList?.find(
+        (application) => application?.applicationNumber === currentSelectedOrder?.additionalDetails?.formdata?.refApplicationId
+      );
 
       if (selectedOrderType && configKeys.hasOwnProperty(selectedOrderType)) {
         let orderTypeForm = configKeys[selectedOrderType];
@@ -1630,6 +1702,40 @@ const GenerateOrdersV2 = () => {
                     populators: {
                       ...field.populators,
                       options: purposeOfHearingData,
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+        if (["ACCEPT_RESCHEDULING_REQUEST"].includes(selectedOrderType)) {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "hearingPurpose") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: purposeOfHearingData,
+                    },
+                  };
+                }
+
+                if (field.key === "newHearingDate") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      inputs: [
+                        {
+                          ...field.populators.inputs[0],
+                          options: currentSelectedOrderRelatedApplication?.additionalDetails?.formdata?.newHearingDates || [],
+                        },
+                      ],
                     },
                   };
                 }
@@ -1863,6 +1969,26 @@ const GenerateOrdersV2 = () => {
           });
         }
 
+        if (["MISCELLANEOUS_PROCESS"].includes(selectedOrderType)) {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "processTemplate") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: miscellaneousProcessTemplateDropDown || [],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+
         formConfig = [...formConfig, ...orderTypeForm];
       }
 
@@ -1911,8 +2037,8 @@ const GenerateOrdersV2 = () => {
       return updatedConfig;
     },
     [
-      currentOrder,
       applicationTypeConfigUpdated,
+      currentOrder,
       orderType?.code,
       complainants,
       respondents,
@@ -1920,11 +2046,15 @@ const GenerateOrdersV2 = () => {
       poaHolders,
       unJoinedLitigant,
       witnesses,
+      purposeOfHearingData,
+      applicationData?.applicationList,
       caseDetails?.id,
       caseDetails?.filingNumber,
       t,
       groupedWarrantOptions,
       warrantSubtypeCode,
+      bailTypeData,
+      miscellaneousProcessTemplateDropDown,
     ]
   );
 
@@ -2093,40 +2223,6 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("submissionDocuments", updatedFormdata.submissionDocuments);
       }
 
-      // if (orderType === "CASE_TRANSFER") {
-      //   updatedFormdata.caseTransferredTo = applicationDetails?.applicationDetails?.selectRequestedCourt;
-      // setValueRef?.current?.[index]?.("caseTransferredTo", updatedFormdata.caseTransferredTo);
-      //   updatedFormdata.grounds = { text: applicationDetails?.applicationDetails?.groundsForSeekingTransfer };
-      // setValueRef?.current?.[index]?.("grounds", updatedFormdata.grounds);
-
-      // }
-
-      // if (currentOrderType === "WITHDRAWAL_ACCEPT") {
-      //   if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
-      //     updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
-      //     setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
-
-      //     updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
-      //     setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
-
-      //     updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
-      //     setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
-      //   }
-      // }
-
-      // if (currentOrderType === "WITHDRAWAL_REJECT") {
-      //   if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
-      //     updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
-      //     setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
-
-      //     updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
-      //     setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
-
-      //     updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
-      //     setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
-      //   }
-      // }
-
       if (currentOrderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
         if (newApplicationDetails?.applicationType === applicationTypes.EXTENSION_SUBMISSION_DEADLINE) {
           updatedFormdata.documentName = newApplicationDetails?.additionalDetails?.formdata?.documentType?.value;
@@ -2134,12 +2230,6 @@ const GenerateOrdersV2 = () => {
 
           updatedFormdata.originalDeadline = newApplicationDetails?.additionalDetails?.formdata?.initialSubmissionDate;
           setValueRef?.current?.[index]?.("originalDeadline", updatedFormdata.originalDeadline);
-
-          // updatedFormdata.proposedSubmissionDate = newApplicationDetails?.additionalDetails?.formdata?.changedSubmissionDate;
-          // setValueRef?.current?.[index]?.("proposedSubmissionDate", updatedFormdata.proposedSubmissionDate);
-
-          // updatedFormdata.originalSubmissionOrderDate = newApplicationDetails?.additionalDetails?.orderDate;
-          // setValueRef?.current?.[index]?.("originalSubmissionOrderDate", updatedFormdata.originalSubmissionOrderDate);
         }
       }
 
@@ -2149,12 +2239,19 @@ const GenerateOrdersV2 = () => {
         );
         const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
           (item) =>
-            item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(item?.orderType)
+            item?.isEnabled &&
+            ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING", "ACCEPT_RESCHEDULING_REQUEST"].includes(
+              item?.orderType
+            )
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+            updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          } else {
+            updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
@@ -2196,12 +2293,19 @@ const GenerateOrdersV2 = () => {
         );
         const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
           (item) =>
-            item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(item?.orderType)
+            item?.isEnabled &&
+            ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING", "ACCEPT_RESCHEDULING_REQUEST"].includes(
+              item?.orderType
+            )
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+            updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          } else {
+            updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
@@ -2238,19 +2342,30 @@ const GenerateOrdersV2 = () => {
           setValueRef?.current?.[index]?.("noticeOrder", updatedFormdata.noticeOrder);
         }
       }
-      if (currentOrderType === "WARRANT" || currentOrderType === "PROCLAMATION" || currentOrderType === "ATTACHMENT") {
+      if (
+        currentOrderType === "WARRANT" ||
+        currentOrderType === "PROCLAMATION" ||
+        currentOrderType === "ATTACHMENT" ||
+        currentOrderType === "MISCELLANEOUS_PROCESS"
+      ) {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
         const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
           (item) =>
             item?.isEnabled &&
-            ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "INITIATING_RESCHEDULING_OF_HEARING_DATE"].includes(item?.orderType)
+            ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "INITIATING_RESCHEDULING_OF_HEARING_DATE", "ACCEPT_RESCHEDULING_REQUEST"].includes(
+              item?.orderType
+            )
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+            updatedFormdata.dateOfHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          } else {
+            updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+          }
         } else if (isHearingScheduled || isHearingInPassedOver) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
@@ -2267,7 +2382,10 @@ const GenerateOrdersV2 = () => {
         );
         const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
           (item) =>
-            item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(item?.orderType)
+            item?.isEnabled &&
+            ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING", "ACCEPT_RESCHEDULING_REQUEST"].includes(
+              item?.orderType
+            )
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.hearingDate = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
@@ -2283,6 +2401,15 @@ const GenerateOrdersV2 = () => {
         }
         setValueRef?.current?.[index]?.("hearingDate", updatedFormdata.hearingDate);
       }
+      if (currentOrderType === "ACCEPT_RESCHEDULING_REQUEST" && !updatedFormdata?.hearingPurpose) {
+        const oldHearingPurpose = purposeOfHearingData?.find((purpose) => purpose?.code === updatedFormdata?.originalHearingPurpose);
+
+        if (oldHearingPurpose) {
+          updatedFormdata.hearingPurpose = oldHearingPurpose;
+          setValueRef?.current?.[index]?.("hearingPurpose", oldHearingPurpose);
+        }
+      }
+
       if (
         [
           "RESCHEDULE_OF_HEARING_DATE",
@@ -2291,6 +2418,7 @@ const GenerateOrdersV2 = () => {
           "INITIATING_RESCHEDULING_OF_HEARING_DATE",
           "CHECKOUT_ACCEPTANCE",
           "CHECKOUT_REJECT",
+          "ACCEPT_RESCHEDULING_REQUEST",
         ].includes(currentOrderType)
       ) {
         updatedFormdata.originalHearingDate =
@@ -2409,7 +2537,10 @@ const GenerateOrdersV2 = () => {
     setEditOrderModal(true);
   };
 
-  const handleEditConfirmationOrder = () => {
+  const handleEditConfirmationOrder = async () => {
+    if (orderType?.code === "MISCELLANEOUS_PROCESS") {
+      await refectMiscellaneous();
+    }
     setAddOrderModal(true);
   };
 
@@ -2811,9 +2942,25 @@ const GenerateOrdersV2 = () => {
           },
         };
         break;
+      case "MISCELLANEOUS_PROCESS":
+        const hearingDate = new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime();
+        const taskCaseDetails = {
+          title: caseDetails?.caseTitle,
+          year: new Date(caseDetails).getFullYear(),
+          hearingDate: hearingDate,
+          judgeName: "",
+          courtName: courtDetails?.name,
+          courtAddress: courtDetails?.address,
+          courtPhone: courtDetails?.phone,
+          courtId: caseDetails?.courtId,
+        };
+        const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
+        payload = await _getTaskPayload(taskCaseDetails, orderData, caseDetails?.filingDate, hearingDate, caseNumber, caseDetails?.filingNumber);
+        break;
       default:
         break;
     }
+    if (orderType === "MISCELLANEOUS_PROCESS") return payload;
     if (Object.keys(payload || {}).length > 0 && !Array.isArray(selectedChannel)) return [payload];
     else if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
       const channelPayloads = await Promise.all(
@@ -2911,7 +3058,7 @@ const GenerateOrdersV2 = () => {
           });
           for (const item of updatedOrders) {
             const matchedItem = order?.compositeItems?.find((compositeItem) => compositeItem?.id === item?.order?.itemId);
-            if (["WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(item?.order?.orderType)) {
+            if (["WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"]?.includes(item?.order?.orderType)) {
               const payloads = await createTaskPayload(item?.order?.orderType, item);
               if (matchedItem) {
                 const newItem = {
@@ -2930,7 +3077,7 @@ const GenerateOrdersV2 = () => {
               newCompositeItems?.push(matchedItem);
             }
           }
-        } else if (["WARRANT", "PROCLAMATION", "ATTACHMENT"]?.includes(order?.orderType)) {
+        } else if (["WARRANT", "PROCLAMATION", "ATTACHMENT", "MISCELLANEOUS_PROCESS"]?.includes(order?.orderType)) {
           const payloads = await createTaskPayload(order?.orderType, { order });
           taskDetails = JSON.stringify(payloads);
         }
@@ -3026,6 +3173,7 @@ const GenerateOrdersV2 = () => {
             mediationCentre: t(orderSchema?.orderDetails?.mediationCentre) || "",
             modeOfSigning: "INITIATE_E-SIGN",
           }),
+          ...(order?.orderType === "ACCEPT_RESCHEDULING_REQUEST" && { currentDate: new Date().getTime() }),
         },
       };
       const isAssignDateRescheduleHearingOrder =
@@ -3061,7 +3209,7 @@ const GenerateOrdersV2 = () => {
                       namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
                     },
                   }),
-                refHearingId: order?.hearingNumber || lastCompletedHearing?.hearingId,
+                refHearingId: order?.additionalDetails?.refHearingId || order?.hearingNumber || lastCompletedHearing?.hearingId,
               },
               ...(currentScheduledHearing && {
                 scheduledHearingNumber: currentScheduledHearing?.hearingId,
@@ -3210,7 +3358,31 @@ const GenerateOrdersV2 = () => {
       const updatedFormData = await replaceUploadedDocsWithCombinedFile(orderFormData);
       const isAcceptBailOrder = orderFormData?.orderType?.code === "ACCEPT_BAIL";
       const requestBailBond = orderFormData?.requestBailBond;
-      const updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
+      let updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
+
+      if (orderFormData?.orderType?.code === "MISCELLANEOUS_PROCESS") {
+        const miscItemText = orderFormData?.processTemplate?.orderText || "";
+        const baseOrder = updatedOrderData && typeof updatedOrderData === "object" ? updatedOrderData : {};
+
+        updatedOrderData = {
+          ...baseOrder,
+          itemText: [baseOrder.itemText, miscItemText].filter(Boolean).join(" "),
+        };
+      }
+
+      if (orderFormData?.orderType?.code === "ACCEPT_RESCHEDULING_REQUEST") {
+        const hearingDate = orderFormData?.newHearingDate;
+        const baseOrder = updatedOrderData && typeof updatedOrderData === "object" ? updatedOrderData : {};
+
+        if (hearingDate && hearingDate !== todayDate) {
+          updatedOrderData = {
+            ...baseOrder,
+            nextHearingDate: null,
+            purposeOfNextHearing: null,
+          };
+        }
+      }
+
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
       if (isAcceptBailOrder && requestBailBond) {
         await createPendingTaskForJudge(updateOrderResponse?.order);
@@ -3256,7 +3428,12 @@ const GenerateOrdersV2 = () => {
 
         cfg?.forEach((section) => {
           section?.body?.forEach((field) => {
-            if (!field?.populators?.hideInForm && field?.isMandatory && hearingDateKeys.has(field?.key)) {
+            if (
+              !field?.populators?.hideInForm &&
+              field?.isMandatory &&
+              hearingDateKeys.has(field?.key) &&
+              !item?.orderSchema?.additionalDetails?.formdata?.[field?.key]
+            ) {
               mandatoryDateFields.push(field);
             }
           });
@@ -3380,16 +3557,37 @@ const GenerateOrdersV2 = () => {
         }
 
         if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType) && (isHearingScheduled || isHearingInProgress || isHearingOptout)) {
-          setShowErrorToast({
-            label: isHearingScheduled
-              ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE")
-              : isHearingInProgress
-              ? t("HEARING_IS_ALREADY_IN_PROGRESS_FOR_THIS_CASE")
-              : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
-            error: true,
-          });
-          hasError = true;
-          break;
+          const isIntermediate = currentOrder?.orderCategory === "INTERMEDIATE";
+
+          const hasValidRescheduleBypass = (() => {
+            if (isIntermediate || !currentOrder?.compositeItems) return false;
+
+            const acceptIndex = currentOrder?.compositeItems?.findIndex((item) => {
+              if (item?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+                const selectedDateTimestamp = item?.orderSchema?.orderDetails?.newHearingDate;
+                const isToday = selectedDateTimestamp && new Date(selectedDateTimestamp).toDateString() === new Date().toDateString();
+
+                return isToday && isHearingScheduled;
+              }
+              return false;
+            });
+
+            const scheduleIndex = currentOrder?.compositeItems?.findIndex((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE");
+
+            return acceptIndex !== -1 && scheduleIndex > acceptIndex;
+          })();
+          if (!hasValidRescheduleBypass) {
+            setShowErrorToast({
+              label: isHearingScheduled
+                ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE")
+                : isHearingInProgress
+                ? t("HEARING_IS_ALREADY_IN_PROGRESS_FOR_THIS_CASE")
+                : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
         }
 
         if (["SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
@@ -3417,6 +3615,31 @@ const GenerateOrdersV2 = () => {
           });
           hasError = true;
           break;
+        }
+
+        if (["ACCEPT_RESCHEDULING_REQUEST"]?.includes(orderType)) {
+          const rescheduleStatus = hearingsData?.HearingList?.find((data) => data?.hearingId === additionalDetails?.refHearingId);
+
+          if (!["SCHEDULED", "IN_PROGRESS", "PASSED_OVER"]?.includes(rescheduleStatus?.status)) {
+            setShowErrorToast({
+              label: t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
+
+          const newHearingDate = additionalDetails?.formdata?.newHearingDate;
+          const todayDate = new Date().toISOString().split("T")[0];
+
+          if ((currentInProgressHearing || currentOrder?.hearingNumber) && !skipScheduling && newHearingDate !== todayDate) {
+            setShowErrorToast({
+              label: t("SAME_HEARING_RESCHEDULE_DATE"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
         }
 
         if (
@@ -3717,11 +3940,12 @@ const GenerateOrdersV2 = () => {
                 comments: [],
                 file, // already uploaded doc or file object
                 sourceType: "COURT",
-                sourceID: userInfo?.uuid,
+                sourceID: authorizedUuid,
                 filingType: "DIRECT",
                 additionalDetails: {
-                  uuid: userInfo?.uuid,
+                  uuid: authorizedUuid,
                 },
+                asUser: userInfo?.uuid,
               },
             };
             return DRISTIService.createEvidence(evidenceReqBody);
@@ -3736,9 +3960,28 @@ const GenerateOrdersV2 = () => {
       if (isBailRejected) {
         await createPendingTaskForEmployee(currentOrder, true);
       }
+
+      let hearingNumber = "";
+      const todayDate = new Date().toISOString().split("T")[0];
+
+      if (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+        const hearingDate = currentOrder?.additionalDetails?.formdata?.newHearingDate;
+        if (hearingDate === todayDate) {
+          hearingNumber = currentOrder?.additionalDetails?.refHearingId;
+        }
+      } else {
+        const acceptRescheduleRequest = currentOrder?.compositeItems?.find((item) => item?.orderType === "ACCEPT_RESCHEDULING_REQUEST");
+        const hearingDate = acceptRescheduleRequest?.orderSchema?.additionalDetails?.formdata?.newHearingDate;
+
+        if (hearingDate === todayDate) {
+          hearingNumber = acceptRescheduleRequest?.orderSchema?.additionalDetails?.refHearingId;
+        }
+      }
+
       await updateOrder(
         {
           ...currentOrder,
+          ...(hearingNumber && { hearingNumber: currentOrder?.hearingNumber || hearingNumber, scheduledHearingNumber: null }),
           additionalDetails: {
             ...currentOrder?.additionalDetails,
             businessOfTheDay: businessOfTheDay,
@@ -3969,6 +4212,7 @@ const GenerateOrdersV2 = () => {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
       const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
       const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
+      const currentHearingPurpose = documentSubmission?.[0]?.applicationList?.applicationDetails?.initialHearingPurpose || "";
       const caseNumber =
         (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
         caseDetails?.courtCaseNumber ||
@@ -3981,6 +4225,7 @@ const GenerateOrdersV2 = () => {
           name: `ORDER_TYPE_${orderType}`,
         },
         refApplicationId: refApplicationId,
+        ...(currentHearingPurpose && { originalHearingPurpose: currentHearingPurpose }),
         applicationStatus: documentSubmission?.[0]?.applicationList?.applicationType
           ? setApplicationStatus(type, documentSubmission[0].applicationList.applicationType)
           : null,
@@ -3996,6 +4241,7 @@ const GenerateOrdersV2 = () => {
       const hearingNumber =
         ["INITIATING_RESCHEDULING_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(orderType) &&
         documentSubmission?.[0]?.applicationList?.additionalDetails?.hearingId;
+      const refHearingId = documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.refHearingId;
       const parties = documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
         parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }],
       };
@@ -4009,6 +4255,7 @@ const GenerateOrdersV2 = () => {
         ...(hearingNumber && {
           hearingNumber: hearingNumber,
         }),
+        ...(refHearingId && { refHearingId: refHearingId }),
       };
       const isSameOrder =
         currentOrder?.orderCategory === "COMPOSITE"
@@ -4111,7 +4358,10 @@ const GenerateOrdersV2 = () => {
             try {
               response = await ordersService.updateOrder(reqbody, { tenantId });
             } catch (error) {
-              toast.error(t("SOMETHING_WENT_WRONG"));
+              const errorCode = error?.response?.data?.Errors?.[0]?.code;
+              const errorMsg =
+                errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+              toast.error(errorMsg);
             }
           } else {
             const compositeItems = [
@@ -4184,7 +4434,10 @@ const GenerateOrdersV2 = () => {
             `/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
           );
         } catch (error) {
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          const errorCode = error?.response?.data?.Errors?.[0]?.code;
+          const errorMsg =
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+          toast.error(errorMsg);
         }
       } else {
         const reqbody = {
@@ -4252,10 +4505,18 @@ const GenerateOrdersV2 = () => {
           sessionStorage.setItem("currentOrderType", orderType);
           await refetchOrdersData();
           history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
-        } catch (error) {}
+        } catch (error) {
+          const errorCode = error?.response?.data?.Errors?.[0]?.code;
+          const errorMsg =
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+          toast.error(errorMsg);
+        }
       }
     } catch (error) {
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      const errorCode = error?.response?.data?.Errors?.[0]?.code;
+      const errorMsg =
+        errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+      toast.error(errorMsg);
     }
   };
 
@@ -4307,13 +4568,32 @@ const GenerateOrdersV2 = () => {
     isOrderTypeLoading,
   ]);
 
+  useEffect(() => {
+    if (!hasInitialized.current && currentOrder && (currentInProgressHearing || currentOrder?.hearingNumber)) {
+      const todayDate = new Date().toISOString().split("T")[0];
+      let hearingDate = null;
+
+      if (currentOrder?.orderCategory === "INTERMEDIATE" && currentOrder?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+        hearingDate = currentOrder?.additionalDetails?.formdata?.newHearingDate;
+      } else {
+        const acceptRescheduleRequest = currentOrder?.compositeItems?.find((item) => item?.orderType === "ACCEPT_RESCHEDULING_REQUEST");
+        hearingDate = acceptRescheduleRequest?.orderSchema?.additionalDetails?.formdata?.newHearingDate;
+      }
+
+      if (hearingDate && hearingDate !== todayDate) {
+        setSkipScheduling(true);
+        hasInitialized.current = true;
+      }
+    }
+  }, [currentInProgressHearing, currentOrder]);
+
   if (isLoading || isCaseDetailsLoading || isHearingFetching || isOrderTypeLoading || isPurposeOfHearingLoading || isBailTypeLoading) {
     return <Loader />;
   }
 
   return (
     <React.Fragment>
-      {(isApiCallLoading || addOrderTypeLoader || isOrdersLoading) && (
+      {(isApiCallLoading || addOrderTypeLoader || isOrdersLoading || isMiscellaneousTemplateLoading) && (
         <div
           style={{
             width: "100vw",
@@ -4355,7 +4635,6 @@ const GenerateOrdersV2 = () => {
             <TasksComponent
               taskType={taskType}
               setTaskType={setTaskType}
-              uuid={userInfo?.uuid}
               userInfoType={userInfoType}
               filingNumber={filingNumber}
               inCase={true}
@@ -4788,6 +5067,9 @@ const GenerateOrdersV2 = () => {
           setWarrantSubtypeCode={setWarrantSubtypeCode}
           bailBondRequired={bailBondRequired}
           setBailBondRequired={setBailBondRequired}
+          policeStationData={sortedPoliceStations}
+          caseDetails={caseDetails}
+          miscellaneousProcessTemplateDropDown={miscellaneousProcessTemplateDropDown}
         />
       )}
       {showMandatoryFieldsErrorModal?.showModal && (

@@ -76,7 +76,7 @@ export const bailBondConfig = [
           ],
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
-      }
+      },
     ],
   },
   {
@@ -278,7 +278,7 @@ export const bailBondConfig = [
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -303,7 +303,7 @@ export const bailBondConfig = [
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -329,7 +329,7 @@ export const bailBondConfig = [
                     maxFileSize: 10,
                     maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",

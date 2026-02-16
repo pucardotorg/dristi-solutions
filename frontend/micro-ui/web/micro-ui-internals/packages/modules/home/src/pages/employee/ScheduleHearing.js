@@ -6,6 +6,7 @@ import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.m
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 import { HomeService, Urls } from "../../hooks/services";
 import { InfoCard } from "@egovernments/digit-ui-components";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const hearingTypeOptions = [{}];
 
@@ -138,10 +139,12 @@ function ScheduleHearing({
 
   const fetchBasicUserInfo = async () => {
     const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+    const userUuid = userInfo?.uuid;
+    const authorizedUuid = getAuthorizedUuid(userUuid);
     const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
       {
         Individual: {
-          userUuid: [userInfo?.uuid],
+          userUuid: [authorizedUuid],
         },
       },
       { tenantId, limit: 1000, offset: 0 },

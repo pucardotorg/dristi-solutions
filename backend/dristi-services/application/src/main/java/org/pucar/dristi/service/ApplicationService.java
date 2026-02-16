@@ -110,27 +110,28 @@ public class ApplicationService {
 
             }
             List<String> fileStoreIds = new ArrayList<>();
-            if (applicationRequest.getApplication().getDocuments() != null) {
+            if(applicationRequest.getApplication().getDocuments()!=null) {
                 for (Document document : applicationRequest.getApplication().getDocuments()) {
                     if (!document.getIsActive()) {
                         fileStoreIds.add(document.getFileStore());
                     }
                 }
             }
-            if (!fileStoreIds.isEmpty()) {
+            if(!fileStoreIds.isEmpty()){
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, applicationRequest.getApplication().getTenantId());
                 log.info("Deleted files for application with ids: {}", fileStoreIds);
             }
+
             if (PENDINGPAYMENT.equalsIgnoreCase(application.getStatus())) {
                 List<Document> documents = application.getDocuments();
                 if (documents == null || documents.isEmpty()) {
                     log.info("No documents found for application {}", application.getApplicationNumber());
-                } else {
+                }else {
                     List<Document> unsignedDocuments = documents.stream()
                             .filter(doc -> !"SIGNED".equalsIgnoreCase(doc.getDocumentType()))
                             .toList();
                     for (Document doc : unsignedDocuments) {
-                        if (doc.getIsActive()) {
+                        if(doc.getIsActive()) {
                             EvidenceRequest evidenceRequest = new EvidenceRequest();
                             evidenceRequest.setRequestInfo(applicationRequest.getRequestInfo());
                             Artifact artifact = new Artifact();
@@ -158,6 +159,7 @@ public class ApplicationService {
                     }
                 }
             }
+
             boolean isSubmitAction = applicationRequest.getApplication().getWorkflow() != null && SUBMIT.equalsIgnoreCase(applicationRequest.getApplication().getWorkflow().getAction());
             smsNotificationUtil.callNotificationService(applicationRequest, application.getStatus(), application.getApplicationType(), isSubmitAction);
             producer.push(config.getApplicationUpdateTopic(), applicationRequest);
@@ -216,6 +218,7 @@ public class ApplicationService {
             return null;
         }
     }
+
 
     private <T> void filterDocuments(List<T> entities,
                                      Function<T, List<Document>> getDocs,

@@ -26,9 +26,6 @@ const AddressBailBond = ({
     };
   }, [config.populators.inputs]);
 
-
-
-
   const setValue2 = (value, input) => {
     onSelect(config.key, { ...formData, [input]: value }, { shouldValidate: true });
   };

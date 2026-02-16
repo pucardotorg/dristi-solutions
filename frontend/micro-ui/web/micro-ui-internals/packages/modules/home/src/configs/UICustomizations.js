@@ -12,6 +12,7 @@ import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
 import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
 import { formatDateWithTime } from "../../../orders/src/utils";
+import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components/EditDeleteModal";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -545,7 +546,7 @@ export const UICustomizations = {
           criteria: {
             ...filterList,
             completeStatus: completeStatusData,
-            orderType: filterList?.orderType && filterList?.orderType?.code !== "" ? [filterList?.orderType?.code] : [],
+            orderType: filterList?.orderType && filterList?.orderType?.code !== "" ? [filterList?.orderType?.code] : null,
             ...(noticeType && { noticeType }),
             ...(deliveryChanel && { deliveryChanel }),
             ...(hearingDate !== null && { hearingDate }),
@@ -589,6 +590,9 @@ export const UICustomizations = {
           if (processType === "NOTICE") {
             const noticeType = row?.taskDetails?.noticeDetails?.noticeType || "NOTICE";
             return t(noticeType);
+          } else if (processType === "MISCELLANEOUS_PROCESS") {
+            const miscType = row?.taskDetails?.miscellaneuosDetails?.processTitle || "MISCELLANEOUS_PROCESS";
+            return t(miscType);
           }
           return t(value);
         case "DELIEVERY_CHANNEL":
@@ -849,9 +853,25 @@ export const UICustomizations = {
 
   registerUserHomeConfig: {
     customValidationCheck: (data) => {
-      return !data?.applicationNumber_WILDCARD.trim() ? { label: "Please enter a valid application Number", error: true } : false;
+      // Application number is optional; only validate format/length if user enters something
+      const appNo = data?.applicationNumber_WILDCARD?.trim() || "";
+      if (appNo.length > 0 && appNo.length < 2) {
+        return { label: "Please enter a valid application Number", error: true };
+      }
+      return false;
     },
     preProcess: (requestCriteria, additionalDetails) => {
+      const userType = requestCriteria?.state?.searchForm?.userType;
+
+      // Determine business service based on selected user type
+      let businessService = ["user-registration-advocate"];
+      let moduleName = "Advocate services";
+
+      if (userType === "Advocate Clerk") {
+        businessService = ["user-registration-advocate-clerk"];
+        moduleName = "Advocate Clerk Service";
+      }
+
       const moduleSearchCriteria = {
         ...requestCriteria?.body?.inbox?.moduleSearchCriteria,
         ...requestCriteria?.state?.searchForm,
@@ -872,6 +892,8 @@ export const UICustomizations = {
             },
             processSearchCriteria: {
               ...requestCriteria?.body?.inbox?.processSearchCriteria,
+              businessService: businessService,
+              moduleName: moduleName,
               tenantId: window?.Digit.ULBService.getStateId(),
             },
             tenantId: window?.Digit.ULBService.getStateId(),
@@ -905,9 +927,13 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${value}&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
+                  applicationNumber || ""
+                }&individualId=${individualId}&type=${usertype}`}
               >
-                {String(value ? (column?.translate ? t(column?.prefix ? `${column?.prefix}${value}` : value) : value) : t("ES_COMMON_NA"))}
+                {applicationNumber
+                  ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)
+                  : t("ES_COMMON_NA")}
               </Link>
             </span>
           );
@@ -1175,6 +1201,46 @@ export const UICustomizations = {
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
         case "EVIDENCE_NUMBER":
           return modifiedEvidenceNumber(value, row?.businessObject?.artifactDetails?.filingNumber);
+        default:
+          return value || "";
+      }
+    },
+  },
+
+  templateOrConfigurationHomeConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      return {
+        ...requestCriteria,
+        body: {
+          criteria: { tenantId, searchableText: requestCriteria?.state?.searchForm?.process || "" },
+          pagination: {
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offSet: requestCriteria?.state?.tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const lists = data?.list || [];
+            const updatedList = lists?.map((list, index) => ({
+              ...list,
+              srNo: index + 1,
+            }));
+            return { data: updatedList, count: data?.TotalCount || data?.totalCount || 0 };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "TEMPLATE_OR_PROCESS_TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        case "CS_ACTIONS":
+          return <EditDeleteModal rowData={row} colData={column} value={value} isDelete={true} isEdit={true} />;
+        case "DATE_CREATED":
+          return formatDateDDMMYYYY(row?.auditDetails?.createdTime);
         default:
           return value || "";
       }

@@ -175,6 +175,14 @@ export const UICustomizations = {
           return { text: text || "" };
         },
       },
+      default: {
+        formToSchema: (obj) => {
+          return obj;
+        },
+        schemaToForm: (obj) => {
+          return obj;
+        },
+      },
     },
     formToSchema: (formData, formConfig) => {
       const transformedFormData = {};

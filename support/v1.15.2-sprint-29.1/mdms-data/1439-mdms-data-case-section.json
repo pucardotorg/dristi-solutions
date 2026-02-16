@@ -3,20 +3,20 @@
     "tenantId": "kl",
     "moduleName": "case",
     "masterName": "Section",
-    "mdmsPayload": {
-      "id": "a961cd9e-98db-4355-8de4-97962f348ef0",
-      "tenantId": "kl",
-      "schemaCode": "case.Section",
-      "uniqueIdentifier": "1",
-      "data": {
-        "id": 1,
-        "isActive": true,
-        "statuteId": 1,
-        "effectiveTo": "Present",
-        "effectiveFrom": "01/03/1882",
-        "sectionHeading": "138"
-      },
-      "isActive": true
+    "mdmsPayload":  {
+        "id": "a961cd9e-98db-4355-8de4-97962f348ef0",
+        "tenantId": "kl",
+        "schemaCode": "case.Section",
+        "uniqueIdentifier": "1",
+        "data": {
+            "id": 1,
+            "isActive": true,
+            "statuteId": 1,
+            "effectiveTo": "Present",
+            "effectiveFrom": "01/03/1882",
+            "sectionHeading": "138"
+        },
+        "isActive": true
     }
   }
 ]

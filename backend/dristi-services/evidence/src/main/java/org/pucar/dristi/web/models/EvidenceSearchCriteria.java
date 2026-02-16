@@ -43,12 +43,22 @@ public class EvidenceSearchCriteria {
     private String evidenceNumber;
     private Boolean isActive = true;
     private Boolean isHideBailCaseBundle = false;
+    private String asUser;
 
     @JsonIgnore
     private String userUuid;
 
     @JsonIgnore
+    private List<String> officeAdvocateUserUuids = new ArrayList<>();
+
+    @JsonIgnore
     private boolean isCitizen = false;
+
+    @JsonIgnore
+    private boolean isAdvocate = false;
+
+    @JsonIgnore
+    private boolean isClerk = false;
 
     @JsonIgnore
     private boolean isCourtEmployee = false;

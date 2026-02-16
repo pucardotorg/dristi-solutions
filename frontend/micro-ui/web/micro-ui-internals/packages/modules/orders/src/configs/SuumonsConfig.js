@@ -130,7 +130,7 @@ export const SummonsTabsConfig = {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
                     select:
-                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
+                      "(data) => { return data?.Order?.CourtStaffOrderType?.map(item => ({ ...item, name: item.code === 'MISCELLANEOUS_PROCESS' ? 'Others' : item.name })).sort((a, b) => a.name.localeCompare(b.name)); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -248,7 +248,7 @@ export const SummonsTabsConfig = {
           apiOperation: "SEARCH",
           criteria: {
             applicationStatus: "SIGN_PENDING",
-            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"],
+            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT", "ISSUE_PROCESS"],
             isPendingCollection: false,
           },
         },
@@ -304,7 +304,7 @@ export const SummonsTabsConfig = {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
                     select:
-                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
+                      "(data) => { return data?.Order?.CourtStaffOrderType?.map(item => ({ ...item, name: item.code === 'MISCELLANEOUS_PROCESS' ? 'Others' : item.name })).sort((a, b) => a.name.localeCompare(b.name)); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -539,7 +539,7 @@ export const SummonsTabsConfig = {
           apiOperation: "SEARCH",
           criteria: {
             applicationStatus: "SIGNED",
-            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT"],
+            completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT", "ISSUE_PROCLAMATION", "ISSUE_ATTACHMENT", "ISSUE_PROCESS"],
             isPendingCollection: false,
           },
         },
@@ -620,7 +620,7 @@ export const SummonsTabsConfig = {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
                     select:
-                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
+                      "(data) => { return data?.Order?.CourtStaffOrderType?.map(item => ({ ...item, name: item.name === 'Miscellaneous' ? 'Others' : item.name })).sort((a, b) => a.name.localeCompare(b.name)); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -789,7 +789,7 @@ export const SummonsTabsConfig = {
         },
         requestBody: {
           criteria: {
-            completeStatus: ["ATTACHMENT_SENT", "PROCLAMATION_SENT", "SUMMON_SENT", "WARRANT_SENT", "NOTICE_SENT"],
+            completeStatus: ["ATTACHMENT_SENT", "PROCLAMATION_SENT", "SUMMON_SENT", "WARRANT_SENT", "NOTICE_SENT", "PROCESS_SENT"],
             isPendingCollection: false,
           },
         },
@@ -845,7 +845,7 @@ export const SummonsTabsConfig = {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
                     select:
-                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
+                      "(data) => { return data?.Order?.CourtStaffOrderType?.map(item => ({ ...item, name: item.code === 'MISCELLANEOUS_PROCESS' ? 'Others' : item.name })).sort((a, b) => a.name.localeCompare(b.name)); }",
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
@@ -1048,7 +1048,7 @@ export const SummonsTabsConfig = {
                     moduleName: "Order",
                     masterName: "CourtStaffOrderType",
                     select:
-                      "(data) => {return data['Order'].CourtStaffOrderType?.map((item) => {return item;}).sort((a, b) => a.name.localeCompare(b.name));}",
+                      "(data) => { return data?.Order?.CourtStaffOrderType?.map(item => ({ ...item, name: item.code === 'MISCELLANEOUS_PROCESS' ? 'Others' : item.name })).sort((a, b) => a.name.localeCompare(b.name)); }",
                     // moduleName: "Order,Notice",
                     // masterName: "CourtStaffOrderType,NoticeType",
                     // select:

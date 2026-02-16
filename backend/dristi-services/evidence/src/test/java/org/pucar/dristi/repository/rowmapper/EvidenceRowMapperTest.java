@@ -38,6 +38,7 @@ class EvidenceRowMapperTest {
         when(rs.getString("externalRefNumber")).thenReturn("externalRefNumber1");
         when(rs.getString("caseId")).thenReturn("caseId1");
         when(rs.getString("application")).thenReturn("application1");
+        when(rs.getString("asUser")).thenReturn("asUser1");
         when(rs.getString("filingNumber")).thenReturn("filingNumber1");
         when(rs.getString("hearing")).thenReturn("hearing1");
         when(rs.getString("orders")).thenReturn("order1");

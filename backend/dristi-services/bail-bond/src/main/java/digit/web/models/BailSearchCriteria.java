@@ -1,6 +1,7 @@
 package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
@@ -9,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Validated
@@ -45,6 +47,10 @@ public class BailSearchCriteria {
 
     @JsonProperty("suretyMobileNumber")
     private String suretyMobileNumber;
+
+    // TODO : remove this, this is temporary fix (#5016)
+    @JsonProperty("owner")
+    private String owner;
 
     @JsonProperty("status")
     private List<String> status;
@@ -120,8 +126,13 @@ public class BailSearchCriteria {
     @JsonProperty("fuzzySearch")
     private Boolean fuzzySearch=false;
 
-    // TODO : remove this, this is temporary fix (#5016)
-    @JsonProperty("owner")
-    private String owner;
+    @JsonIgnore
+    private List<String> officeAdvocateUserUuids = new ArrayList<>();
+
+    @JsonIgnore
+    private boolean isAdvocate = false;
+
+    @JsonIgnore
+    private boolean isClerk = false;
 
 }

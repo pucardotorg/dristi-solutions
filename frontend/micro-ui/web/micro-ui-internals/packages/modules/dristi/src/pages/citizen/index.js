@@ -1,17 +1,18 @@
 import { BackButton, Loader, PrivateRoute, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch, useRouteMatch } from "react-router-dom";
 import { Route, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { useToast } from "../../components/Toast/useToast";
-import AdmittedCases from "../employee/AdmittedCases/AdmittedCase";
 import ApplicationDetails from "../employee/ApplicationDetails";
 import CitizenHome from "./Home";
 import LandingPage from "./Home/LandingPage";
+import ManageOffice from "./Home/ManageOffice";
 import { newConfig, userTypeOptions } from "./registration/config";
 import Breadcrumb from "../../components/BreadCrumb";
 import SelectEmail from "./registration/SelectEmail";
 import ViewCase from "./view-case";
+import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const [hideBack, setHideBack] = useState(false);
@@ -39,6 +40,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const isUserLoggedIn = Boolean(token);
   const userInfoType = Digit.UserService.getType();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const { AdvocateData } = useContext(AdvocateDataContext);
+  const selectedSeniorAdvocate = AdvocateData;
+  const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
@@ -54,19 +58,19 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const { data, isLoading, refetch } = Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        userUuid: [userInfo?.uuid],
+        userUuid: selectedAdvocateUuid ? [selectedAdvocateUuid] : [userInfo?.uuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
       },
     },
     { tenantId, limit: 1000, offset: 0 },
-    moduleCode,
+    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid || ""}`,
     "",
     userInfo?.uuid && isUserLoggedIn
   );
 
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
 
-  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  let homePath = `/${window?.contextPath}/${userInfoType}/home/home-pending-task`;
+  if (!isEpostUser && userInfoType === "employee") homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
 
   const isLitigantPartialRegistered = useMemo(() => {
@@ -128,6 +132,12 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
       path: `${path}/home/view-case/edit-profile`,
       content: t("EDIT_LITIGANT_DETAILS"),
       show: location.pathname.includes("/edit-profile"),
+      isLast: true,
+    },
+    {
+      path: `${path}/home/manage-office`,
+      content: t("OFFICE_MANAGEMENT") || "Office Management",
+      show: location.pathname.includes("/manage-office"),
       isLast: true,
     },
   ];
@@ -238,7 +248,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
               <BackButton />
             </div>
           )}
-          {location.pathname.includes("/edit-profile") && <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>}
+          {((location.pathname.includes("/view-case") && location.pathname.includes("/edit-profile")) ||
+            location.pathname.includes("/manage-office")) && <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 48 }}></Breadcrumb>}
 
           {userType !== "LITIGANT" && (
             <PrivateRoute exact path={`${path}/home/application-details`} component={(props) => <ApplicationDetails {...props} />} />
@@ -271,6 +282,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
           <PrivateRoute path={`${path}/home/view-case`}>
             <ViewCase />
+          </PrivateRoute>
+          <PrivateRoute exact path={`${path}/home/manage-office`}>
+            <ManageOffice />
           </PrivateRoute>
           <div
             className={

@@ -9,6 +9,7 @@ import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-dristi/s
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min.js";
 import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
 import { formatName } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils.js";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
 
 const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmployee, showToast, onAddSuccess, style }) => {
   const { t } = useTranslation();
@@ -25,6 +26,8 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [currentFormErrors, setCurrentFormErrors] = useState({});
   const [addressErrors, setAddressError] = useState([]);
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -69,13 +72,13 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
   const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        userUuid: [userInfo?.uuid],
+        userUuid: [authorizedUuid],
       },
     },
     { tenantId, limit: 1000, offset: 0 },
     "Home",
     "",
-    userInfo?.uuid
+    authorizedUuid
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
 
@@ -122,7 +125,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
   }, [caseDetails]);
 
   const complainantsList = useMemo(() => {
-    const loggedinUserUuid = userInfo?.uuid;
+    const loggedinUserUuid = authorizedUuid;
     // If logged in person is an advocate
     const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
     const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
@@ -223,7 +226,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
           }
         });
       } else {
-        const litigant = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid)?.representing?.[0];
+        const litigant = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === authorizedUuid)?.representing?.[0];
         const ownerType = litigant?.partyType?.includes("complainant") ? "COMPLAINANT" : "ACCUSED";
         const newWitnesses = witnessFormList?.map((data) => {
           return {
@@ -250,7 +253,8 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
                 createdDate: new Date().getTime(),
                 applicationType: "ADDING_WITNESSES",
                 isActive: true,
-                createdBy: userInfo?.uuid,
+                asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
+                createdBy: userUuid,
                 statuteSection: { tenantId },
                 additionalDetails: {
                   witnessDetails: newWitnesses,

@@ -4,6 +4,7 @@ import Modal from "../../../dristi/src/components/Modal";
 import { Urls } from "../hooks/services/Urls";
 import { FileUploadIcon } from "../../../dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 function SubmissionSignatureModal({
   t,
@@ -27,6 +28,9 @@ function SubmissionSignatureModal({
   const name = "Signature";
   const advocatePlaceholder = "Advocate Signature";
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const applicationPlaceHolder = useMemo(() => {
     if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
@@ -130,12 +134,14 @@ function SubmissionSignatureModal({
           <div className="not-signed">
             <h1 style={{ color: "#3d3c3c", fontSize: "24px", fontWeight: "bold" }}>{t("YOUR_SIGNATURE")}</h1>
             <div className="buttons-div">
-              <Button
-                label={t("CS_ESIGN_AADHAR")}
-                onClick={handleClickEsign}
-                className={"aadhar-sign-in"}
-                labelClassName={"submission-aadhar-sign-in"}
-              ></Button>
+              {authorizedUuid === userUuid && ( // Alllowing only for senior adv himself, not junior adv/clerks
+                <Button
+                  label={t("CS_ESIGN_AADHAR")}
+                  onClick={handleClickEsign}
+                  className={"aadhar-sign-in"}
+                  labelClassName={"submission-aadhar-sign-in"}
+                ></Button>
+              )}
               <Button
                 icon={<FileUploadIcon />}
                 label={t("CS_UPLOAD_ESIGNATURE")}

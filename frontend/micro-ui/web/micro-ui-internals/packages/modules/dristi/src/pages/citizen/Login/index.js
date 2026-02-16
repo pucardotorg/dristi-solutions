@@ -138,12 +138,12 @@ const Login = ({ stateCode }) => {
   const startOtpCooldown = () => {
     // Set initial cooldown to 60 seconds (1 minute)
     setOtpCooldown(60);
-    
+
     // Clear any existing timer
     if (otpCooldownTimer) {
       clearInterval(otpCooldownTimer);
     }
-    
+
     // Create a new timer that decrements the cooldown every second
     const timer = setInterval(() => {
       setOtpCooldown((prevCooldown) => {
@@ -155,7 +155,7 @@ const Login = ({ stateCode }) => {
         return prevCooldown - 1;
       });
     }, 1000);
-    
+
     // Save the timer ID for cleanup
     setOtpCooldownTimer(timer);
   };
@@ -182,10 +182,10 @@ const Login = ({ stateCode }) => {
     if (!err) {
       // Start the cooldown timer when OTP is successfully sent
       startOtpCooldown();
-      
+
       // Keep the button disabled during cooldown
       // setCanSubmitNo will be set to true by the timer when cooldown ends
-      
+
       setOtpError(false);
       setState((prev) => ({
         ...prev,

@@ -79,7 +79,8 @@ class ArtifactTest {
                 witnessEmails,
                 "PW1",
                 "PENDING_E-SIGN",
-                false
+                false,
+                "uuid"
         );
 
         assertEquals(id, artifact.getId());

@@ -300,7 +300,8 @@ async function search_application(
   tenantId,
   applicationId,
   requestinfo,
-  courtId
+  courtId,
+  filingNumber
 ) {
   return await axios({
     method: "post",
@@ -311,6 +312,7 @@ async function search_application(
       criteria: {
         tenantId: tenantId,
         applicationNumber: applicationId,
+        ...(filingNumber && { filingNumber: filingNumber }),
         ...(courtId && { courtId: courtId }),
       },
     },
@@ -530,7 +532,12 @@ async function search_multiple_cases(criteria, tenantId, requestinfo) {
   }
 }
 
-async function search_bailBond(tenantId, bailBondId, requestinfo) {
+async function search_bailBond(
+  tenantId,
+  bailBondId,
+  requestinfo,
+  filingNumber
+) {
   return await axios({
     method: "post",
     url: URL.resolve(config.host.bailBond, config.paths.bail_bond_search),
@@ -540,6 +547,7 @@ async function search_bailBond(tenantId, bailBondId, requestinfo) {
       criteria: {
         tenantId: tenantId,
         bailId: bailBondId,
+        filingNumber: filingNumber,
       },
     },
   });
@@ -619,6 +627,34 @@ async function search_digitalizedDocuments(
   }
 }
 
+async function search_templateConfiguration(
+  tenantId,
+  requestinfo,
+  criteria,
+  pagination
+) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(
+        config.host.templateConfiguration,
+        config.paths.template_configuration_search
+      ),
+      data: {
+        RequestInfo: requestinfo,
+        criteria,
+        // pagination,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(
+      `Error in ${config.paths.template_configuration_search}: ${error.message}`
+    );
+    throw error;
+  }
+}
+
 module.exports = {
   pool,
   create_pdf,
@@ -651,4 +687,5 @@ module.exports = {
   search_bailBond_v2,
   search_task_mangement,
   search_digitalizedDocuments,
+  search_templateConfiguration,
 };

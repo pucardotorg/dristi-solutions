@@ -1,4 +1,3 @@
-
 package org.pucar.dristi.web.models;
 
 import java.util.ArrayList;
@@ -156,6 +155,9 @@ public class Artifact {
 
     @Valid
     private WorkflowObject workflow = null;
+
+    @JsonProperty("asUser")
+    private String asUser = null;
 
     public Artifact addApplicableToItem(String applicableToItem) {
         if (this.applicableTo == null) {

@@ -298,27 +298,27 @@ public class TaskCreationService {
             log.warn("Court code is null or empty, returning default judge name");
             return configuration.getJudgeName();
         }
-        
+
         try {
             JsonNode judgeDetails = hrmsUtil.getJudgeForCourtroom(requestInfo, code);
-            
+
             if (judgeDetails == null) {
                 log.warn("No judge details found for courtroom: {}, returning default judge name", code);
                 return configuration.getJudgeName();
             }
-            
+
             JsonNode userNode = judgeDetails.get("user");
             if (userNode == null || userNode.isNull()) {
                 log.warn("User node is null in judge details for courtroom: {}, returning default judge name", code);
                 return configuration.getJudgeName();
             }
-            
+
             JsonNode nameNode = userNode.get("name");
             if (nameNode == null || nameNode.isNull() || nameNode.asText().isEmpty()) {
                 log.warn("Name is null or empty in judge details for courtroom: {}, returning default judge name", code);
                 return configuration.getJudgeName();
             }
-            
+
             return nameNode.asText();
         } catch (Exception e) {
             log.error("Error fetching judge name for courtroom: {}, returning default judge name", code, e);

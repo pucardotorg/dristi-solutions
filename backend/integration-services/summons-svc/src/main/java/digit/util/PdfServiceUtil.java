@@ -3,6 +3,9 @@ package digit.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import digit.config.Configuration;
 import digit.web.models.*;
+import digit.web.models.orders.OrderCriteria;
+import digit.web.models.orders.OrderListResponse;
+import digit.web.models.orders.OrderSearchRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
@@ -14,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.InputStream;
@@ -41,12 +45,89 @@ public class PdfServiceUtil {
 
     private final IcopsUtil icopsUtil;
 
+    private final OrderUtil orderUtil;
+
     @Autowired
-    public PdfServiceUtil(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, IcopsUtil icopsUtil) {
+    public PdfServiceUtil(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, IcopsUtil icopsUtil, OrderUtil orderUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.caseUtil = caseUtil;
         this.icopsUtil = icopsUtil;
+        this.orderUtil = orderUtil;
+    }
+
+    public ByteArrayResource generatePdfFromEgovPdfService(TaskRequest taskRequest, String tenantId, String courtId) {
+        try {
+            StringBuilder uri = new StringBuilder();
+            uri.append(config.getEgovPdfServiceHost())
+                    .append(config.getEgovPdfServiceEndpoint())
+                    .append("?tenantId=").append(tenantId).append("&qrCode=false&courtId=").append(courtId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            TaskDetails taskDetails = taskRequest.getTask().getTaskDetails();
+
+            MiscellaneousPdf miscellaneousPdf = new MiscellaneousPdf();
+            miscellaneousPdf.setCourtId(taskDetails.getMiscellaneuosDetails().getCourtId());
+            miscellaneousPdf.setProcessTitle(taskDetails.getMiscellaneuosDetails().getProcessTitle());
+            miscellaneousPdf.setProcessText(taskDetails.getMiscellaneuosDetails().getProcessText());
+            miscellaneousPdf.setAddressee(taskDetails.getMiscellaneuosDetails().getAddressee());
+            miscellaneousPdf.setAddresseeName(taskDetails.getMiscellaneuosDetails().getAddresseeName());
+            String addresseeDetails = null;
+            if(taskDetails.getRespondentDetails()!=null){
+                addresseeDetails = taskDetails.getRespondentDetails().getName();
+            }
+            if(taskDetails.getComplainantDetails()!=null){
+                addresseeDetails = taskDetails.getComplainantDetails().getName();
+            }
+            if(taskDetails.getOthers()!=null){
+                addresseeDetails = taskDetails.getOthers().getName();
+            }
+            if(taskDetails.getPoliceDetails()!=null){
+                addresseeDetails = taskDetails.getPoliceDetails().getName()+", "+taskDetails.getPoliceDetails().getDistrict();
+            }
+             miscellaneousPdf.setAddresseeDetails(addresseeDetails);
+
+            miscellaneousPdf.setOrderText(taskDetails.getMiscellaneuosDetails().getOrderText());
+            miscellaneousPdf.setCoverLetterText(taskDetails.getMiscellaneuosDetails().getCoverLetterText());
+            miscellaneousPdf.setCaseNumber(taskDetails.getMiscellaneuosDetails().getCaseNumber());
+            miscellaneousPdf.setIsCoverLetterRequired(taskDetails.getMiscellaneuosDetails().getIsCoverLetterRequired());
+            miscellaneousPdf.setNextHearingDate(taskDetails.getMiscellaneuosDetails().getNextHearingDate());
+            miscellaneousPdf.setPartyDetails(taskDetails.getPartyDetails());
+
+            OrderCriteria criteria = OrderCriteria.builder()
+                    .filingNumber(taskDetails.getMiscellaneuosDetails().getFilingNumber())
+                    .orderType("WARRANT")
+                    .status("PUBLISHED")
+                    .tenantId(tenantId)
+                    .courtId(courtId)
+                    .build();
+
+            OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                    .criteria(criteria)
+                    .requestInfo(taskRequest.getRequestInfo())
+                    .pagination(Pagination.builder().limit(1.0).offSet(0.0).build())
+                    .build();
+
+            OrderListResponse response = orderUtil.getOrders(searchRequest);
+            if (response != null && !CollectionUtils.isEmpty(response.getList())) {
+                log.info("Enriching nbwDate for non bailable warrant");
+                miscellaneousPdf.setNbwDate(response.getList().get(0).getAuditDetails().getLastModifiedTime());
+            }
+            MiscellaneousPdfRequest miscellaneousPdfRequest = MiscellaneousPdfRequest.builder()
+                    .templateConfiguration(miscellaneousPdf).requestInfo(taskRequest.getRequestInfo()).build();
+
+            HttpEntity<MiscellaneousPdfRequest> requestEntity = new HttpEntity<>(miscellaneousPdfRequest, headers);
+
+            ResponseEntity<ByteArrayResource> responseEntity = restTemplate.postForEntity(uri.toString(),
+                    requestEntity, ByteArrayResource.class);
+
+            return responseEntity.getBody();
+        } catch (Exception e) {
+            log.error("Error getting response from Pdf Service", e);
+            throw new CustomException("SU_PDF_APP_ERROR", "Error getting response from Pdf Service");
+        }
     }
 
     public ByteArrayResource generatePdfFromPdfService(TaskRequest taskRequest, String tenantId,

@@ -320,6 +320,19 @@ export const downloadFile = (responseBlob, fileName) => {
 };
 
 export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, taskDetails) => {
+  if (orderType === "MISCELLANEOUS_PROCESS") {
+    const type = taskDetails?.miscellaneuosDetails?.addressee || "";
+
+    switch (type) {
+      case "POLICE":
+        return `${taskDetails?.policeDetails?.name}, ${taskDetails?.policeDetails?.district}`;
+      case "OTHER":
+        return `${taskDetails?.others?.name}`;
+      default:
+        return taskDetails?.respondentDetails?.name || taskDetails?.complainantDetails?.name || "";
+    }
+  }
+
   const formDataKeyMap = {
     NOTICE: "noticeOrder",
     SUMMONS: "SummonsOrder",
@@ -418,14 +431,24 @@ export const getSafeFileExtension = (fileName, fallback = "pdf") => {
 
   const lastDotIndex = fileName?.lastIndexOf(".");
 
-  if (
-    lastDotIndex <= 0 || 
-    lastDotIndex === fileName?.length - 1
-  ) {
+  if (lastDotIndex <= 0 || lastDotIndex === fileName?.length - 1) {
     return fallback;
   }
 
   const extension = fileName?.substring(lastDotIndex + 1)?.toLowerCase();
 
   return extension || fallback;
+};
+
+export const mapAddressDetails = (addressDetails, isIndividualData = false) => {
+  return addressDetails?.map((address) => ({
+    locality: address?.addressDetails?.locality || address?.street || address?.locality || "",
+    city: address?.addressDetails?.city || address?.city || "",
+    district: address?.addressDetails?.district || address?.addressLine2 || address?.district || "",
+    pincode: address?.addressDetails?.pincode || address?.pincode || "",
+    state: address?.addressDetails?.state || address?.state || "",
+    address: isIndividualData ? undefined : address?.addressDetails,
+    id: address?.id,
+    ...(address?.geoLocationDetails && { geoLocationDetails: address.geoLocationDetails }),
+  }));
 };

@@ -7,7 +7,6 @@ import { getFormattedName } from "../../../../../hearings/src/utils";
 import isEmpty from "lodash/isEmpty";
 import { TextArea } from "@egovernments/digit-ui-components";
 import TranscriptComponent from "../../../../../hearings/src/pages/employee/Transcription";
-import WitnessModal from "../../../../../hearings/src/components/WitnessModal";
 import { Urls } from "../../../hooks";
 import { getFilingType } from "../../../Utils";
 import { hearingService } from "../../../../../hearings/src/hooks/services";
@@ -722,7 +721,8 @@ const WitnessDrawerV2 = ({
             sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
             tag: selectedWitnessType?.value,
             sourceID: selectedWitness?.value,
-            sourceName: party?.sourceName, // confirm?
+            asUser: selectedWitness?.value, // This field is added as part of advocate office management feature requirement.
+            sourceName: party?.sourceName,
             filingType: filingType,
             description: formatDepositionText(witnessDepositionText),
             additionalDetails: {
@@ -1122,7 +1122,8 @@ const WitnessDrawerV2 = ({
             sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
             tag: selectedWitnessType?.value,
             sourceID: selectedWitness?.value,
-            sourceName: party?.sourceName, // confirm?
+            asUser: selectedWitness?.value, // This field is added as part of advocate office management feature requirement.
+            sourceName: party?.sourceName,
             filingType: filingType,
             description: formatDepositionText(witnessDepositionText),
             additionalDetails: {

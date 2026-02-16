@@ -78,7 +78,7 @@ public class MinioRepository implements CloudFilesManager {
         });
     }
 
-    
+
 
     private void push(MultipartFile multipartFile, String fileNameWithPath) {
         try {

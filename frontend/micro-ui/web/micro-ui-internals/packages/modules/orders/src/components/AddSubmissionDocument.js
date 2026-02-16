@@ -209,7 +209,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         key={input.name}
                         value={docObj?.[input.name] || ""}
                         onChange={(e) => {
-                          const newValue = sanitizeData(e.target.value)
+                          const newValue = sanitizeData(e.target.value);
                           setValue(newValue, input.name, input, index);
                         }}
                         disable={input.isDisabled || disable}

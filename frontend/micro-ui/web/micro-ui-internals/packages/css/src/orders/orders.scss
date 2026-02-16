@@ -378,14 +378,14 @@
   }
 }
 
-.success-modal{
+.success-modal {
   &.popup-module {
     .popup-module-main {
       .popup-module-action-bar {
         .selector-button-border {
           gap: 6px;
           h2 {
-           width: fit-content !important;
+            width: fit-content !important;
           }
         }
       }
@@ -1177,18 +1177,38 @@
 
   .new-order {
     padding: 24px !important;
-  }
-  .order-type-action{
-      .submit-bar-disabled {
-        width:164px !important;
+
+    .label-field-pair {
+      .field {
+        .select-wrap {
+          .options-card {
+            max-height: 220px !important;
+          }
+        }
       }
     }
+  }
+  .order-type-action {
+    .submit-bar-disabled {
+      width: 164px !important;
+    }
+  }
 }
 
 .order-type-form-modal {
   width: 100% !important;
   margin-bottom: 0 !important;
   padding: 0 !important;
+
+  .pdf-viewer-container {
+    padding-bottom: 0px !important;
+    .docviewer-wrapper {
+      margin-top: 0px !important;
+      .employeeCard {
+        margin-bottom: 0px !important;
+      }
+    }
+  }
 
   .label-field-pair {
     .field {
@@ -1989,7 +2009,7 @@
           .employee-card-input {
             margin-bottom: 0px !important;
 
-            &::placeholder{
+            &::placeholder {
               color: #b1b4b6;
             }
           }
@@ -2123,12 +2143,60 @@
   }
 }
 
-.text-validaion-input{
-  .text-input{
-    .employee-card-input{
-      &::placeholder{
+.text-validaion-input {
+  .text-input {
+    .employee-card-input {
+      &::placeholder {
         color: #b1b4b6;
       }
     }
   }
+}
+
+.multi-party-address-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  .party-card {
+    position: relative;
+    & + .party-card {
+      margin-top: 20px;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: 0px;
+      right: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+
+    .card-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+
+      .input-label {
+        font-size: 16px;
+        font-weight: 400;
+        margin-bottom: 8px;
+        margin-top: 0px;
+      }
+    }
+  }
+}
+
+.override-icon-position svg {
+  position: static !important;
+  right: auto !important;
+  top: auto !important;
+  display: inline-block;
+  vertical-align: middle;
 }

@@ -107,9 +107,10 @@ function UploadSignatureModal({
           setError={setErrors}
           clearErrors={clearError}
         />
-        {fileUploadError && (<div className="error-message" style={{ color: "red", marginTop: "8px" }}>
-          {t(fileUploadError)}
-        </div>
+        {fileUploadError && (
+          <div className="error-message" style={{ color: "red", marginTop: "8px" }}>
+            {t(fileUploadError)}
+          </div>
         )}
       </div>
       {showDownloadText && (

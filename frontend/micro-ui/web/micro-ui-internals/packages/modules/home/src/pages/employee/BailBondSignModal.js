@@ -87,6 +87,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
               courtId: courtId,
               bailId: queryStrings.bailId || selectedBailBond?.businessObject?.bailDetails?.bailId || selectedBailBond?.bailId,
               fuzzySearch: false,
+              filingNumber,
             },
             pagination: {
               limit: 10,
@@ -110,7 +111,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       }
     };
     fetchBailBondData();
-  }, [queryStrings.bailId, tenantId, courtId, selectedBailBond?.bailId, selectedBailBond?.businessObject?.bailDetails?.bailId]);
+  }, [queryStrings.bailId, tenantId, courtId, selectedBailBond?.bailId, selectedBailBond?.businessObject?.bailDetails?.bailId, filingNumber]);
 
   const CloseBtn = useCallback((props) => {
     return (

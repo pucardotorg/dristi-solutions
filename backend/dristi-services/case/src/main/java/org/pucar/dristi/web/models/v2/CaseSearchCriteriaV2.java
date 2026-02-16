@@ -34,4 +34,7 @@ public class CaseSearchCriteriaV2 {
 
     @JsonProperty("judgeId")
     private String judgeId;
+
+    @JsonProperty("isClerk")
+    private Boolean isClerk = null;
 }

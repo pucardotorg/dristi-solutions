@@ -18,20 +18,20 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 @Slf4j
 public class ApplicationQueryBuilder {
 
-    private static final String BASE_APP_QUERY =
+    private static final String     BASE_APP_QUERY =
             " SELECT app.id as id, app.tenantid as tenantid, app.caseid as caseid, app.filingnumber as filingnumber, app.cnrnumber as cnrnumber," +
                     " app.referenceid as referenceid, app.createddate as createddate, app.applicationcreatedby as applicationcreatedby," +
-                    " app.onbehalfof as onbehalfof, app.applicationtype as applicationtype, app.applicationnumber as applicationnumber," +
+                    " app.onbehalfof as onbehalfof, app.asuser as asuser, app.applicationtype as applicationtype, app.applicationnumber as applicationnumber," +
                     " app.statuteSection as statuteSection, app.issuedby as issuedby, app.status as status, app.courtId as courtId, app.comment as comment, app.isactive as isactive," +
-                    " app.additionaldetails as additionaldetails," +
-                    " app.applicationcmpnumber as applicationcmpnumber," +
-                    " app.reason_for_application as reason_for_application," +
-                    " app.application_details as application_details," +
+                    " app.additionaldetails as additionaldetails,"+
+                    " app.applicationcmpnumber as applicationcmpnumber,"+
+                    " app.reason_for_application as reason_for_application,"+
+                    " app.application_details as application_details,"+
                     " app.createdby as createdby," +
                     " app.lastmodifiedby as lastmodifiedby, app.createdtime as createdtime, app.lastmodifiedtime as lastmodifiedtime," +
                     " app.status as status ";
 
-    private static final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
+    private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
 
     private static final String DOCUMENT_SELECT_QUERY_APP = "SELECT doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore," +
             "doc.documentuid as documentuid, doc.additionaldetails as additionaldetails, doc.application_id as application_id, doc.documentorder as documentorder, doc.isactive as isactive";
@@ -65,22 +65,22 @@ public class ApplicationQueryBuilder {
             query.append(FROM_APP_TABLE);
 
             boolean firstCriteria = true; // To check if it's the first criteria
-            firstCriteria = addMultipleCriteria(applicationCriteria.getOnBehalfOf(), query, firstCriteria, preparedStmtList, preparedStmtArgList);
-            firstCriteria = addCriteria(applicationCriteria.getId(), query, firstCriteria, "app.id = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addCriteria(applicationCriteria.getFilingNumber(), query, firstCriteria, "app.filingNumber = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addCriteria(applicationCriteria.getApplicationType(), query, firstCriteria, "app.applicationType = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addCriteria(applicationCriteria.getCnrNumber(), query, firstCriteria, "app.cnrNumber = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addCriteria(applicationCriteria.getTenantId(), query, firstCriteria, "app.tenantId = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addCriteria(applicationCriteria.getStatus(), query, firstCriteria, "app.status = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addCriteria(applicationCriteria.getCourtId(), query, firstCriteria, "app.courtId = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addCriteria(applicationCriteria.getReferenceId(), query, firstCriteria, "app.referenceId = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addCriteria(applicationCriteria.getOwner() != null ? applicationCriteria.getOwner().toString() : null, query, firstCriteria, "app.createdBy = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addPartialCriteriaForApplicationCMPNumber(applicationCriteria.getApplicationCMPNumber(), query, firstCriteria, preparedStmtList, preparedStmtArgList);
+            firstCriteria = addMultipleCriteria(applicationCriteria.getOnBehalfOf(), query, firstCriteria, preparedStmtList,preparedStmtArgList);
+            firstCriteria = addCriteria(applicationCriteria.getId(), query, firstCriteria, "app.id = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addCriteria(applicationCriteria.getFilingNumber(), query, firstCriteria, "app.filingNumber = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addCriteria(applicationCriteria.getApplicationType(), query, firstCriteria, "app.applicationType = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addCriteria(applicationCriteria.getCnrNumber(), query, firstCriteria, "app.cnrNumber = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addCriteria(applicationCriteria.getTenantId(), query, firstCriteria, "app.tenantId = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addCriteria(applicationCriteria.getStatus(), query, firstCriteria, "app.status = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addCriteria(applicationCriteria.getCourtId(), query, firstCriteria, "app.courtId = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addCriteria(applicationCriteria.getReferenceId(), query, firstCriteria, "app.referenceId = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addCriteria(applicationCriteria.getOwner()!=null?applicationCriteria.getOwner().toString():null, query, firstCriteria, "app.createdBy = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addPartialCriteriaForApplicationCMPNumber(applicationCriteria.getApplicationCMPNumber(), query, firstCriteria, preparedStmtList,preparedStmtArgList);
 
             if (applicationCriteria.getIsFuzzySearch() == null || !applicationCriteria.getIsFuzzySearch()) {
-               firstCriteria = addCriteria(applicationCriteria.getApplicationNumber(), query, firstCriteria, "LOWER(app.applicationNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList);
+                firstCriteria = addCriteria(applicationCriteria.getApplicationNumber() , query, firstCriteria, "LOWER(app.applicationNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList);
             } else {
-               firstCriteria = addPartialCriteria(applicationCriteria.getApplicationNumber(), query, firstCriteria, preparedStmtList, preparedStmtArgList);
+                firstCriteria = addPartialCriteria(applicationCriteria.getApplicationNumber(), query, firstCriteria, preparedStmtList,preparedStmtArgList);
             }
 
             // TODO : remove this, this is temporary fix (#5016)
@@ -94,32 +94,55 @@ public class ApplicationQueryBuilder {
             }
 
             if (requestInfo != null && requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null) {
+                List<String> officeAdvocateUserUuids = applicationCriteria.getOfficeAdvocateUserUuids();
+                boolean isAdvocateOrClerk = applicationCriteria.isAdvocate() || applicationCriteria.isClerk();
+                boolean hasUserUuidsList = officeAdvocateUserUuids != null && !officeAdvocateUserUuids.isEmpty();
+
                 addClauseIfRequired(query, firstCriteria);
-                query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.createdBy = ?))");
-                preparedStmtList.add(userUuid);
-                preparedStmtArgList.add(Types.VARCHAR);
+
+                if (isAdvocateOrClerk && hasUserUuidsList) {
+                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.asuser IN (");
+                    for (int i = 0; i < officeAdvocateUserUuids.size(); i++) {
+                        query.append("?");
+                        if (i < officeAdvocateUserUuids.size() - 1) {
+                            query.append(", ");
+                        }
+                        preparedStmtList.add(officeAdvocateUserUuids.get(i));
+                        preparedStmtArgList.add(Types.VARCHAR);
+                    }
+                    query.append(")))");
+                } else {
+                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.createdBy = ?))");
+                    preparedStmtList.add(userUuid);
+                    preparedStmtArgList.add(Types.VARCHAR);
+                }
                 firstCriteria = false;
             }
 
             // TODO : remove this, this is temporary fix (#5016)
             // --------- REQUEST_FOR_BAIL visibility ----------
+            List<String> officeAdvocateUserUuids = applicationCriteria.getOfficeAdvocateUserUuids();
+            boolean isAdvocateOrClerk = applicationCriteria.isAdvocate() || applicationCriteria.isClerk();
             applyRequestForBailVisibility(
-                    query, firstCriteria, userUuid,
+                    query, firstCriteria, userUuid, officeAdvocateUserUuids, isAdvocateOrClerk,
                     preparedStmtList, preparedStmtArgList);
 
             return query.toString();
+
         } catch (Exception e) {
-            log.error("Error while building application search query {}", e.getMessage());
+            log.error("Error while building application search query", e);
             throw new CustomException(APPLICATION_SEARCH_QUERY_EXCEPTION, "Error occurred while building the application search query: " + e.getMessage());
         }
     }
 
-    private void applyRequestForBailVisibility(StringBuilder query, boolean firstCriteria, String userUuid, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    private void applyRequestForBailVisibility(StringBuilder query, boolean firstCriteria, String userUuid, List<String> userUuids, boolean isAdvocateOrClerk, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
 
         // If user info is missing, do not restrict visibility
         if (userUuid == null || userUuid.isEmpty()) {
             return;
         }
+
+        boolean hasUserUuidsList = userUuids != null && !userUuids.isEmpty();
 
         addClauseIfRequired(query, firstCriteria);
 
@@ -129,12 +152,7 @@ public class ApplicationQueryBuilder {
                 .append("(")
                 .append("app.applicationType = ? ")
                 .append("AND ")
-                .append("(")
-                .append("app.onBehalfOf @> ?::jsonb ")
-                .append("OR app.createdBy = ?")
-                .append(")")
-                .append(")")
-                .append(")");
+                .append("(");
 
         preparedStmtList.add(REQUEST_FOR_BAIL);
         preparedStmtArgList.add(Types.VARCHAR);
@@ -142,13 +160,37 @@ public class ApplicationQueryBuilder {
         preparedStmtList.add(REQUEST_FOR_BAIL);
         preparedStmtArgList.add(Types.VARCHAR);
 
-        preparedStmtList.add("[\"" + userUuid + "\"]");
-        preparedStmtArgList.add(Types.VARCHAR);
+        if (isAdvocateOrClerk && hasUserUuidsList) {
+            query.append("app.onBehalfOf ??| ?::text[] ");
+            preparedStmtList.add(userUuids.toArray(new String[0]));
+            preparedStmtArgList.add(Types.ARRAY);
 
-        preparedStmtList.add(userUuid);
-        preparedStmtArgList.add(Types.VARCHAR);
+            query.append("OR app.asuser IN (");
+            for (int i = 0; i < userUuids.size(); i++) {
+                query.append("?");
+                if (i < userUuids.size() - 1) {
+                    query.append(", ");
+                }
+                preparedStmtList.add(userUuids.get(i));
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
+            query.append(")")
+                    .append(")")
+                    .append(")")
+                    .append(")");
+        } else {
+            query.append("app.onBehalfOf @> ?::jsonb ")
+                    .append("OR app.createdBy = ?)")
+                    .append(")")
+                    .append(")");
+
+            preparedStmtList.add("[\"" + userUuid + "\"]");
+            preparedStmtArgList.add(Types.VARCHAR);
+
+            preparedStmtList.add(userUuid);
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
     }
-
     boolean addMultipleCriteria(List<UUID> criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
@@ -228,7 +270,6 @@ public class ApplicationQueryBuilder {
         preparedStatementArgList.add(Types.DOUBLE);
         return query + " LIMIT ? OFFSET ?";
     }
-
     public String addOrderByQuery(String query, Pagination pagination) {
         if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";")) {
             return query + DEFAULT_ORDERBY_CLAUSE;
@@ -251,7 +292,7 @@ public class ApplicationQueryBuilder {
                         .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
                         .append(")");
                 preparedStmtList.addAll(ids);
-                ids.forEach(i -> preparedStmtArgListDoc.add(Types.VARCHAR));
+                ids.forEach(i->preparedStmtArgListDoc.add(Types.VARCHAR));
             }
 
             return query.toString();

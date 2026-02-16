@@ -241,4 +241,7 @@ public class ServiceConstants {
 	public static final String Trial = "Trial";
 	public static final String DOCUMENT_SUBMITTED = "DOCUMENT_SUBMITTED";
 	public static final String REQUEST_FOR_BAIL = "REQUEST_FOR_BAIL";
+
+	public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
+	public static final String ADVOCATE_CLERK_ROLE = "ADVOCATE_CLERK_ROLE";
 }

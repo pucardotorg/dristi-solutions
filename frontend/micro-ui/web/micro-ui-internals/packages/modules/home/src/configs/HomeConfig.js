@@ -1133,7 +1133,10 @@ export const pendingTaskCaseActions = {
     actionName: "E-Sign Pending",
     redirectDetails: {
       url: "/dristi/home/file-case/sign-complaint",
-      params: [{ key: "filingNumber", value: "filingNumber" }],
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseId", value: "id" },
+      ],
     },
   },
   "PENDING_E-SIGN-2": {
@@ -1141,7 +1144,10 @@ export const pendingTaskCaseActions = {
     actionName: "E-Sign Pending",
     redirectDetails: {
       url: "/dristi/home/file-case/sign-complaint",
-      params: [{ key: "filingNumber", value: "filingNumber" }],
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseId", value: "id" },
+      ],
     },
   },
   PENDING_SIGN: {
@@ -1149,7 +1155,10 @@ export const pendingTaskCaseActions = {
     actionName: "E-Sign Pending",
     redirectDetails: {
       url: "/dristi/home/file-case/sign-complaint",
-      params: [{ key: "filingNumber", value: "filingNumber" }],
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseId", value: "id" },
+      ],
     },
   },
   "PENDING_RE_E-SIGN": {
@@ -1157,7 +1166,10 @@ export const pendingTaskCaseActions = {
     actionName: "E-Sign Pending",
     redirectDetails: {
       url: "/dristi/home/file-case/sign-complaint",
-      params: [{ key: "filingNumber", value: "filingNumber" }],
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseId", value: "id" },
+      ],
     },
   },
   "PENDING_RE_E-SIGN-2": {
@@ -1165,7 +1177,10 @@ export const pendingTaskCaseActions = {
     actionName: "E-Sign Pending",
     redirectDetails: {
       url: "/dristi/home/file-case/sign-complaint",
-      params: [{ key: "filingNumber", value: "filingNumber" }],
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseId", value: "id" },
+      ],
     },
   },
   PENDING_RE_SIGN: {
@@ -1173,7 +1188,10 @@ export const pendingTaskCaseActions = {
     actionName: "E-Sign Pending",
     redirectDetails: {
       url: "/dristi/home/file-case/sign-complaint",
-      params: [{ key: "filingNumber", value: "filingNumber" }],
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseId", value: "id" },
+      ],
     },
   },
   PENDING_ADMISSION: {
@@ -1730,7 +1748,11 @@ export const pendingTaskForBailBondActions = {
     actionName: "E-Sign Pending",
     redirectDetails: {
       url: "/dristi/home/bail-bond-sign",
-      params: [{ key: "bailbondId", value: "referenceId" }],
+      params: [
+        { key: "bailbondId", value: "referenceId" },
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseId", value: "id" },
+      ],
     },
   },
   PENDING_RAISE_BAIL_BOND: {

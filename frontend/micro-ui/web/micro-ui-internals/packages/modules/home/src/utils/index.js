@@ -243,4 +243,33 @@ export const filterValidAddresses = (addressDetails = []) => {
   });
 };
 
+export const extractedSeniorAdvocates = (officeMembersData = {}) => {
+  const members = officeMembersData?.members || [];
+  return members.map((member, index) => {
+    return {
+      advocateName: member?.officeAdvocateName || "",
+      id: member?.officeAdvocateId,
+      value: member?.officeAdvocateId,
+      uuid: member?.officeAdvocateUserUuid,
+    };
+  });
+};
+
+export const isRichTextEmpty = (html) => {
+  if (!html) return true;
+  const plainText = html?.replace(/<[^>]*>/g, "").trim();
+  return plainText?.length === 0;
+};
+
+export const formatName = (value, capitalize = true) => {
+  let cleanedValue = value
+    .replace(/[^a-zA-Z\s]/g, "")
+    .trimStart()
+    .replace(/ +/g, " ");
+
+  if (!capitalize) return cleanedValue;
+
+  return cleanedValue;
+};
+
 export default {};

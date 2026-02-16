@@ -9,7 +9,7 @@ import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/d
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory, useLocation } from "react-router-dom";
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
-import { combineMultipleFiles, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { submissionService } from "../../hooks/services";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionWorkflow";
@@ -76,6 +76,8 @@ const GenerateBailBondV2 = () => {
   const pendingTaskrefId = state?.state?.params?.actualReferenceId || null;
   // const pendingTaskId = state?.state?.params?.refId || null;
   const userInfo = Digit.UserService.getUser()?.info;
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -148,6 +150,7 @@ const GenerateBailBondV2 = () => {
     {
       criteria: {
         bailId: bailBondId,
+        filingNumber,
       },
       tenantId,
     },
@@ -165,7 +168,7 @@ const GenerateBailBondV2 = () => {
         moduleName: "Pending Tasks Service",
         moduleSearchCriteria: {
           isCompleted: false,
-          ...(isCitizen ? { assignedTo: userInfo?.uuid } : { assignedRole: [...roles] }),
+          ...(isCitizen ? { assignedTo: authorizedUuid } : { assignedRole: [...roles] }),
           ...(courtId && { courtId }),
           filingNumber,
           entityType: "bail bond",
@@ -230,7 +233,7 @@ const GenerateBailBondV2 = () => {
   }, [caseDetails]);
 
   const complainantsList = useMemo(() => {
-    const loggedinUserUuid = userInfo?.uuid;
+    const loggedinUserUuid = authorizedUuid;
     // If logged in person is an advocate
     const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
     const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
@@ -897,6 +900,7 @@ const GenerateBailBondV2 = () => {
           caseTitle: caseDetails?.caseTitle,
           cnrNumber: caseDetails?.cnrNumber,
           caseType: caseDetails?.caseType,
+          asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
           documents: [],
           additionalDetails: {
             createdUserName: userInfo?.name,
@@ -1227,7 +1231,7 @@ const GenerateBailBondV2 = () => {
   }, [complainantToProcessUuid, complainantsList]);
 
   useEffect(() => {
-    if (!isCaseDetailsLoading && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS") {
+    if (caseDetails?.id && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS") {
       history.replace(
         `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`
       );
