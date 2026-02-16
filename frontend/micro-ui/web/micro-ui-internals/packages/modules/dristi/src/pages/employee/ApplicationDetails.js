@@ -275,10 +275,13 @@ const ApplicationDetails = ({ location, match }) => {
     const registrationNumber =
       userType === "ADVOCATE_CLERK" ? searchResult?.[0]?.stateRegnNumber : searchResult?.[0]?.[userTypeDetail?.apiDetails?.AdditionalFields?.[0]];
 
+    const registrationNumberLabel = userType === "ADVOCATE_CLERK" ? t("CLERK_REGISTRATION_NUMBER") : t("CS_BAR_REGISTRATION_NUMBER");
+    const documentLabel = userType === "ADVOCATE_CLERK" ? t("CLERK_ID") : t("CS_BAR_COUNCIL_ID");
+
     return [
-      { title: t("CS_BAR_REGISTRATION_NUMBER"), content: registrationNumber || "N/A" },
+      { title: registrationNumberLabel, content: registrationNumber || "N/A" },
       {
-        title: t("CS_BAR_COUNCIL_ID"),
+        title: documentLabel,
         image: true,
         content: fileName,
       },
