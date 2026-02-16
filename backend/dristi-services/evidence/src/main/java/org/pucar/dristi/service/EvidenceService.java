@@ -485,7 +485,7 @@ public class EvidenceService {
                 case CITIZEN_UPPER -> {
                     searchCriteria.setIsCitizen(true);
                     searchCriteria.setUserUuid(userInfo.getUuid());
-                    enrichAdvocateAndClerkUuids(requestInfo, searchCriteria);
+                    enrichOfficeAdvocateUserUuids(requestInfo, searchCriteria);
                 }
                 case EMPLOYEE_UPPER -> {
                     searchCriteria.setIsCourtEmployee(true);
@@ -498,7 +498,7 @@ public class EvidenceService {
         }
     }
 
-    private void enrichAdvocateAndClerkUuids(RequestInfo requestInfo, EvidenceSearchCriteria searchCriteria) {
+    private void enrichOfficeAdvocateUserUuids(RequestInfo requestInfo, EvidenceSearchCriteria searchCriteria) {
         User userInfo = requestInfo.getUserInfo();
         String userUuid = userInfo.getUuid();
         String tenantId = config.getTenantId();
@@ -549,25 +549,7 @@ public class EvidenceService {
                 }
 
                 if (userBelongsToOffice) {
-                    if (office.getOfficeAdvocateUserUuid() != null) {
-                        uuidSet.add(office.getOfficeAdvocateUserUuid());
-                    }
-
-                    if (office.getAdvocates() != null) {
-                        office.getAdvocates().forEach(advocate -> {
-                            if (advocate.getMemberUserUuid() != null) {
-                                uuidSet.add(advocate.getMemberUserUuid());
-                            }
-                        });
-                    }
-
-                    if (office.getClerks() != null) {
-                        office.getClerks().forEach(clerk -> {
-                            if (clerk.getMemberUserUuid() != null) {
-                                uuidSet.add(clerk.getMemberUserUuid());
-                            }
-                        });
-                    }
+                    uuidSet.add(office.getOfficeAdvocateUserUuid());
                 }
             }
 
@@ -575,8 +557,8 @@ public class EvidenceService {
                 uuidSet.add(userUuid);
             }
 
-            searchCriteria.setAdvocateAndClerkUuids(new ArrayList<>(uuidSet));
-            log.info("Enriched userUuids for advocate/clerk search: {}", uuidSet);
+            log.info("Enriched officeAdvocateUserUuids for evidence search: {}", uuidSet);
+            searchCriteria.setOfficeAdvocateUserUuids(new ArrayList<>(uuidSet));
 
         } catch (Exception e) {
             log.error("Error while enriching advocate/clerk UUIDs for evidence search", e);

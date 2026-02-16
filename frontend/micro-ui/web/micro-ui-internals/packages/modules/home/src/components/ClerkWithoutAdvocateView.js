@@ -9,8 +9,8 @@ const ClerkWithoutAdvocateView = () => {
     <div
       style={{
         width: "100%",
-        maxWidth: "800px",
-        margin: "40px auto 0",
+        maxWidth: "100%",
+        margin: "40px 0 0",
         backgroundColor: "#FFFFFF",
         borderRadius: "8px",
         border: "1px solid #E8E8E8",

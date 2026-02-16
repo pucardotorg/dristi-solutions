@@ -50,6 +50,7 @@ class BailServiceTest {
         when(config.getBailEncrypt()).thenReturn("ENCRYPT");
         when(config.getBailDecrypt()).thenReturn("DECRYPT");
         when(config.getZoneId()).thenReturn("Asia/Kolkata");
+        when(config.getTenantId()).thenReturn("kl");
     }
 
     // ---- TESTS FOR createBail() ----

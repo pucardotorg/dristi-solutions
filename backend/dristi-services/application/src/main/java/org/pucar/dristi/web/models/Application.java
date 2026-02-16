@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.models.Workflow;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
@@ -68,8 +67,8 @@ public class Application {
     @Valid
     private List<UUID> onBehalfOf = null;
 
-    @JsonProperty("officeAdvocateUserUuid")
-    private String officeAdvocateUserUuid = null;
+    @JsonProperty("asUser")
+    private String asUser = null;
 
     @JsonProperty("applicationCMPNumber")
     private String applicationCMPNumber = null;

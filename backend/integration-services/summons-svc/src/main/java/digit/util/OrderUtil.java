@@ -3,9 +3,12 @@ package digit.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
+import digit.repository.ServiceRequestRepository;
 import digit.web.models.VcEntityCriteria;
 import digit.web.models.VcEntityOrderSearchRequest;
 import digit.web.models.VcOrderSearchPagination;
+import digit.web.models.orders.OrderListResponse;
+import digit.web.models.orders.OrderSearchRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -27,10 +30,13 @@ public class OrderUtil {
 
     private final ObjectMapper objectMapper;
 
-    public OrderUtil(RestTemplate restTemplate, Configuration configuration, ObjectMapper objectMapper) {
+    private final ServiceRequestRepository serviceRequestRepository;
+
+    public OrderUtil(RestTemplate restTemplate, Configuration configuration, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository) {
         this.restTemplate = restTemplate;
         this.configuration = configuration;
         this.objectMapper = objectMapper;
+        this.serviceRequestRepository = serviceRequestRepository;
     }
 
     public String fetchSignedFileStore(String referenceId, String tenantId, RequestInfo requestInfo)  {
@@ -82,5 +88,18 @@ public class OrderUtil {
         }
 
         return filestoreId;
+    }
+
+    public OrderListResponse getOrders(OrderSearchRequest searchRequest) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getOrderSearchHost()).append(configuration.getOrderSearchPath());
+        try {
+            log.info("Calling order service with URI: {}", uri);
+            Object response = serviceRequestRepository.fetchResult(uri, searchRequest);
+            return objectMapper.convertValue(response, OrderListResponse.class);
+        } catch (Exception e) {
+            log.error("ERROR_WHILE_FETCHING_FROM_ORDER", e);
+            return null;
+        }
     }
 }

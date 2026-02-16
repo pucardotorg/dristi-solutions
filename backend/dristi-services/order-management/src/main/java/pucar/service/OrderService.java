@@ -1,5 +1,8 @@
 package pucar.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -57,6 +60,27 @@ public class OrderService {
 
     public Order createOrder(@Valid OrderRequest request) {
         log.info("creating order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", request.getOrder().getOrderNumber(), request.getOrder().getOrderType());
+       try {
+           boolean isRescheduleRequest = Optional.ofNullable(request.getOrder().getCompositeItems())
+                   .map(obj -> (List<Map<String, Object>>) obj)
+                   .orElse(List.of())
+                   .stream()
+                   .anyMatch(item -> ACCEPT_RESCHEDULING_REQUEST.equals(String.valueOf(item.get("orderType"))));
+           if(ACCEPT_RESCHEDULING_REQUEST.equalsIgnoreCase(request.getOrder().getOrderType()) || isRescheduleRequest){
+               ObjectMapper mapper = new ObjectMapper();
+               String json = mapper.writeValueAsString(request.getOrder().getAdditionalDetails());
+               String refHearingId = JsonPath.read(json, "$.refHearingId");
+               List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(request.getRequestInfo())
+                       .criteria(HearingCriteria.builder().filingNumber(request.getOrder().getFilingNumber()).tenantId(request.getOrder().getTenantId()).hearingId(refHearingId).build()).build());
+               Hearing hearing = hearings.get(0);
+               if(hearing.getStatus().equalsIgnoreCase(COMPLETED)){
+                   throw new CustomException("HEARING_ALREADY_COMPLETED", "Cannot raise accept reschedule request order for already completed hearing");
+               }
+           }
+       }catch (JsonProcessingException ex){
+           throw new CustomException("ERROR", "Error occurred while processing json");
+       }
+
         LocalDate today = LocalDate.now(ZoneId.of(configuration.getZoneId()));
         Long now = dateUtil.getEPochFromLocalDate(today);
         request.getOrder().setCreatedDate(now);
@@ -88,15 +112,7 @@ public class OrderService {
 
         orderProcessor.preProcessOrder(request);
 
-        boolean isRescheduleRequest = Optional.ofNullable(order.getCompositeItems())
-                .map(obj -> (List<Map<String, Object>>) obj)
-                .orElse(List.of())
-                .stream()
-                .anyMatch(item -> ACCEPT_RESCHEDULING_REQUEST.equals(String.valueOf(item.get("orderType"))));
-
-        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction())
-                && request.getOrder().getNextHearingDate() != null
-                && !ACCEPT_RESCHEDULING_REQUEST.equalsIgnoreCase(order.getOrderType()) && !isRescheduleRequest) {
+        if (E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate() != null) {
             hearingUtil.preProcessScheduleNextHearing(request);
         }
 

@@ -532,7 +532,12 @@ async function search_multiple_cases(criteria, tenantId, requestinfo) {
   }
 }
 
-async function search_bailBond(tenantId, bailBondId, requestinfo) {
+async function search_bailBond(
+  tenantId,
+  bailBondId,
+  requestinfo,
+  filingNumber
+) {
   return await axios({
     method: "post",
     url: URL.resolve(config.host.bailBond, config.paths.bail_bond_search),
@@ -542,6 +547,7 @@ async function search_bailBond(tenantId, bailBondId, requestinfo) {
       criteria: {
         tenantId: tenantId,
         bailId: bailBondId,
+        filingNumber: filingNumber,
       },
     },
   });

@@ -66,8 +66,11 @@ public class ApplicationCriteria {
     @JsonProperty("isHideBailCaseBundle")
     private Boolean isHideBailCaseBundle = false;
 
+    @JsonProperty("asUser")
+    private String asUser = null;
+
     @JsonIgnore
-    private List<String> advocateAndClerkUuids = new ArrayList<>();
+    private List<String> officeAdvocateUserUuids = new ArrayList<>();
 
     @JsonIgnore
     private boolean isAdvocate = false;

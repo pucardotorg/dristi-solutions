@@ -9,6 +9,21 @@ const { formatDate } = require("./formatDate");
 const { getStringAddressDetails } = require("../utils/addressUtils");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
+function formatAddressee(text = "", type = "full") {
+  const formatted = text
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase());
+
+  if (type === "district") {
+    const parts = formatted.split(",");
+    return parts.length > 1
+      ? parts[parts.length - 1].trim()
+      : formatted;
+  }
+  return formatted;
+}
+
 
 async function miscellaneousProcessTemplate(
   req,
@@ -95,6 +110,8 @@ async function miscellaneousProcessTemplate(
 
     const caseNumber = templateData?.caseNumber || "";
 
+    const nbwDate = templateData?.nbwDate ? formatDate(templateData.nbwDate, "DD-MM-YYYY") : "";
+
     const coverLetterSelected = templateData?.isCoverLetterRequired || false;
 
     let policeAddresseeSelected = false;
@@ -133,9 +150,13 @@ async function miscellaneousProcessTemplate(
 
           policeAddresseeSelected: policeAddresseeSelected,
 
-          addresseeDetails: addresseeDetails,  
+          addresseeDetails: policeAddresseeSelected ? formatAddressee(addresseeDetails) : addresseeDetails,  
+          addresseeDetailsDistrict: policeAddresseeSelected
+            ? formatAddressee(addresseeDetails, "district")
+            : "",
 
           date: formattedToday,
+          nbwDate: nbwDate,
           coverLetterText: htmlToFormattedText(coverLetterText),
           showAccusedNameAddress: showAccusedNameAddress,
           accusedNameAddress: accusedNameAddress, // array with name and address already computed

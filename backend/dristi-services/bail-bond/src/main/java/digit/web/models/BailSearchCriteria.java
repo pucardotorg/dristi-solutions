@@ -127,7 +127,7 @@ public class BailSearchCriteria {
     private Boolean fuzzySearch=false;
 
     @JsonIgnore
-    private List<String> advocateAndClerkUuids = new ArrayList<>();
+    private List<String> officeAdvocateUserUuids = new ArrayList<>();
 
     @JsonIgnore
     private boolean isAdvocate = false;

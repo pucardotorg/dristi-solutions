@@ -35,7 +35,7 @@ const ManageOffice = () => {
   );
 
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData?.Individual]);
-  const userType = useMemo(() => individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [
+  const userType = useMemo(() => individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj?.key === "userType")?.value, [
     individualData?.Individual,
   ]);
 
@@ -52,7 +52,7 @@ const ManageOffice = () => {
   );
 
   const userTypeDetail = useMemo(() => {
-    return userTypeOptions.find((item) => item.code === userType) || {};
+    return userTypeOptions?.find((item) => item?.code === userType) || {};
   }, [userType]);
 
   const advocateSearchResult = useMemo(() => {
@@ -99,7 +99,6 @@ const ManageOffice = () => {
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [searchResult, setSearchResult] = useState(null);
   const [searchError, setSearchError] = useState(null);
-  const [memberSearchQuery, setMemberSearchQuery] = useState("");
   const [toast, setToast] = useState(null);
 
   // Auto-close toast after 5 seconds
@@ -170,17 +169,25 @@ const ManageOffice = () => {
         { tenantId: tenantId, limit: 10, offset: 0 }
       );
 
-      if (individualResponse?.Individual && individualResponse.Individual.length > 0) {
-        const individual = individualResponse.Individual[0];
+      if (individualResponse?.Individual && individualResponse?.Individual?.length > 0) {
+        const individual = individualResponse?.Individual?.[0];
         // Get userType from searched individual (same as HomeView: individualData.Individual[0].additionalFields.fields)
-        const memberUserType = individual?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value;
+        const memberUserType = individual?.additionalFields?.fields?.find((obj) => obj?.key === "userType")?.value;
+
+        if (memberUserType === "ADVOCATE") {
+          // TODO: For this Sprint we are not allowing to add Advocate as a member (remove this block later)
+          setSearchError(t("ADDING_ADVOCATE_MEMBER_IS_NOT_ALLOWED"));
+          setSearchResult(null);
+          return;
+        }
+
         // Per userType, use same URL pattern as HomeView: ADVOCATE -> /advocate/v1/_search, else -> /advocate/clerk/v1/_search
         const searchUrl = memberUserType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search";
 
         const typeResponse = await window?.Digit?.DRISTIService?.searchAdvocateClerk(
           searchUrl,
           {
-            criteria: [{ individualId: individual.individualId }],
+            criteria: [{ individualId: individual?.individualId }],
             tenantId: tenantId,
           },
           { tenantId: tenantId, limit: 10, offset: 0 }
@@ -196,7 +203,7 @@ const ManageOffice = () => {
         if (!firstRecord && !memberUserType) {
           const clerkRes = await window?.Digit?.DRISTIService?.searchAdvocateClerk(
             "/advocate/clerk/v1/_search",
-            { criteria: [{ individualId: individual.individualId }], tenantId: tenantId },
+            { criteria: [{ individualId: individual?.individualId }], tenantId: tenantId },
             { tenantId: tenantId, limit: 10, offset: 0 }
           );
           const clerkList = clerkRes?.clerks;
@@ -206,7 +213,7 @@ const ManageOffice = () => {
           } else {
             const advRes = await window?.Digit?.DRISTIService?.searchAdvocateClerk(
               "/advocate/v1/_search",
-              { criteria: [{ individualId: individual.individualId }], tenantId: tenantId },
+              { criteria: [{ individualId: individual?.individualId }], tenantId: tenantId },
               { tenantId: tenantId, limit: 10, offset: 0 }
             );
             const advList = advRes?.advocates;
@@ -218,17 +225,18 @@ const ManageOffice = () => {
         const clerkData = designation === "Clerk" ? firstRecord : null;
         const advocateData = designation === "Advocate" ? firstRecord : null;
 
-        const name = individual.name?.givenName
-          ? `${individual.name.givenName}${individual.name.familyName ? " " + individual.name.familyName : ""}`
+        const name = individual?.name?.givenName
+          ? `${individual?.name?.givenName}${individual?.name?.familyName ? " " + individual?.name?.familyName : ""}`
           : "N/A";
 
         // Validation: do not allow adding if this mobile number is already a member of the office
         const normalizeMobile = (val) => (val || "").replace(/\D/g, "");
         const searchedMobile = normalizeMobile(countryCode) + normalizeMobile(mobileNumber);
         const isAlreadyMember = (officeMembers || []).some((m) => {
-          const existing = normalizeMobile(m.memberMobileNumber);
+          const existing = normalizeMobile(m?.memberMobileNumber);
           return (
-            existing === searchedMobile || (existing.length >= 10 && searchedMobile.length >= 10 && existing.slice(-10) === searchedMobile.slice(-10))
+            existing === searchedMobile ||
+            (existing?.length >= 10 && searchedMobile?.length >= 10 && existing?.slice(-10) === searchedMobile?.slice(-10))
           );
         });
         if (isAlreadyMember) {
@@ -238,9 +246,9 @@ const ManageOffice = () => {
           setSearchResult({
             name: name,
             designation: firstRecord ? designation : "Individual",
-            mobileNumber: `${countryCode} ${mobileNumber.slice(0, 5)} ${mobileNumber.slice(5)}`,
-            email: individual.email || "N/A",
-            individualId: individual.userUuid,
+            mobileNumber: `${countryCode} ${mobileNumber?.slice(0, 5)} ${mobileNumber?.slice(5)}`,
+            email: individual?.email || "N/A",
+            individualId: individual?.userUuid,
             clerkData: clerkData,
             advocateData: advocateData,
           });
@@ -272,10 +280,10 @@ const ManageOffice = () => {
       };
       // Get memberId from responseList: id from clerk/advocate search (same as senior's API spec)
       const memberId =
-        searchResult.designation === "Clerk"
-          ? searchResult.clerkData?.id
-          : searchResult.designation === "Advocate"
-          ? searchResult.advocateData?.id
+        searchResult?.designation === "Clerk"
+          ? searchResult?.clerkData?.id
+          : searchResult?.designation === "Advocate"
+          ? searchResult?.advocateData?.id
           : null;
 
       if (!memberId) {
@@ -291,9 +299,9 @@ const ManageOffice = () => {
             tenantId: tenantId,
             officeAdvocateId: officeAdvocateId,
             officeAdvocateName: officeAdvocateName,
-            memberType: memberTypeMap[searchResult.designation] || "ADVOCATE_CLERK",
+            memberType: memberTypeMap[searchResult?.designation] || "ADVOCATE_CLERK",
             memberId: memberId,
-            memberName: searchResult.name,
+            memberName: searchResult?.name,
             memberMobileNumber: mobileNumber,
             accessType: "ALL_CASES",
             allowCaseCreate: true,
@@ -317,15 +325,6 @@ const ManageOffice = () => {
       setSearchResult(null);
       setMobileNumber("");
     }
-  };
-
-  const handleClearSearch = () => {
-    setMemberSearchQuery("");
-  };
-
-  const handleMemberSearch = () => {
-    // Filter is applied automatically via filteredMembers
-    console.log("Searching for:", memberSearchQuery);
   };
 
   const filteredMembers = useMemo(() => {
@@ -364,8 +363,8 @@ const ManageOffice = () => {
         ? {
             id: memberToRemove?.id,
             tenantId: tenantId,
-            officeAdvocateId: memberToRemove?.officeAdvocateId != null ? memberToRemove.officeAdvocateId : memberToRemove?.advocateId,
-            memberType: memberToRemove?.memberType != null && memberToRemove.memberType !== "" ? memberToRemove.memberType : "ADVOCATE_CLERK",
+            officeAdvocateId: memberToRemove?.officeAdvocateId != null ? memberToRemove?.officeAdvocateId : memberToRemove?.advocateId,
+            memberType: memberToRemove?.memberType != null && memberToRemove?.memberType !== "" ? memberToRemove?.memberType : "ADVOCATE_CLERK",
             memberId: memberToRemove?.memberId,
             memberUserUuid: memberToRemove?.memberUserUuid,
             officeAdvocateUserUuid: memberToRemove?.officeAdvocateUserUuid,
@@ -403,13 +402,13 @@ const ManageOffice = () => {
 
       <div className="manage-office-tabs-wrapper">
         <div className="manage-office-tabs">
-          {tabs.map((tab) => (
+          {tabs?.map((tab) => (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`manage-office-tab${activeTab === tab.id ? " manage-office-tab--active" : ""}`}
+              key={tab?.id}
+              onClick={() => setActiveTab(tab?.id)}
+              className={`manage-office-tab${activeTab === tab?.id ? " manage-office-tab--active" : ""}`}
             >
-              {tab.label}
+              {tab?.label}
             </button>
           ))}
         </div>
@@ -431,7 +430,7 @@ const ManageOffice = () => {
           <div className="manage-office-loader">
             <Loader />
           </div>
-        ) : displayMembers.length > 0 ? (
+        ) : displayMembers?.length > 0 ? (
           <div>
             {/* Table Header: 4 columns for Advocates I'm working for, 5 for My Advocates/Clerks */}
             <div className={`manage-office-table-header${activeTab === "advocatesWorkingFor" ? " manage-office-table-header--working-for" : ""}`}>
@@ -442,21 +441,23 @@ const ManageOffice = () => {
               <span>{t("ACTION") || "Action"}</span>
             </div>
             {/* Table Rows */}
-            {displayMembers.map((member) => (
+            {displayMembers?.map((member) => (
               <div
                 key={member.id || member.memberId}
                 className={`manage-office-table-row${activeTab === "advocatesWorkingFor" ? " manage-office-table-row--working-for" : ""}`}
               >
                 <span className={activeTab === "advocatesWorkingFor" ? "manage-office-name" : "manage-office-name manage-office-name--clickable"}>
-                  {activeTab === "advocatesWorkingFor" ? member.officeAdvocateName || member.memberName : member.memberName}
+                  {activeTab === "advocatesWorkingFor" ? member?.officeAdvocateName || member?.memberName : member?.memberName}
                 </span>
-                <span>{member.memberMobileNumber || member.officeAdvocateMobileNumber}</span>
+                <span>{member?.memberMobileNumber || member?.officeAdvocateMobileNumber}</span>
                 {activeTab !== "advocatesWorkingFor" && (
-                  <span>{member.memberType === "ADVOCATE_CLERK" ? "Clerk" : member.memberType === "ADVOCATE" ? "Advocate" : member.memberType}</span>
+                  <span>
+                    {member?.memberType === "ADVOCATE_CLERK" ? "Clerk" : member?.memberType === "ADVOCATE" ? "Advocate" : member?.memberType}
+                  </span>
                 )}
                 <span>
                   <span className="manage-office-access-pill">
-                    {member.accessType === "ALL_CASES" ? t("ALL_CASES") || "All Cases" : t("SPECIFIC_CASES") || "Specific Cases"}
+                    {member?.accessType === "ALL_CASES" ? t("ALL_CASES") || "All Cases" : t("SPECIFIC_CASES") || "Specific Cases"}
                   </span>
                 </span>
                 <span className={`manage-office-actions${activeTab === "advocatesWorkingFor" ? " manage-office-actions--compact" : ""}`}>
@@ -504,29 +505,27 @@ const ManageOffice = () => {
                   <div className="manage-office-search-card">
                     <div className="manage-office-search-card__col">
                       <p className="manage-office-search-card__label">{t("NAME") || "Name"}</p>
-                      <p className="manage-office-search-card__value">{searchResult.name}</p>
+                      <p className="manage-office-search-card__value">{searchResult?.name}</p>
                     </div>
                     <div className="manage-office-search-card__col">
                       <p className="manage-office-search-card__label">{t("DESIGNATION") || "Designation"}</p>
-                      <p className="manage-office-search-card__value">{searchResult.designation}</p>
+                      <p className="manage-office-search-card__value">{searchResult?.designation}</p>
                     </div>
                     <div className="manage-office-search-card__col">
                       <p className="manage-office-search-card__label">{t("MOBILE_NUMBER") || "Mobile number"}</p>
-                      <p className="manage-office-search-card__value">{searchResult.mobileNumber}</p>
+                      <p className="manage-office-search-card__value">{searchResult?.mobileNumber}</p>
                     </div>
                     <div className="manage-office-search-card__col">
                       <p className="manage-office-search-card__label">{t("EMAIL") || "Email"}</p>
-                      <p className="manage-office-search-card__value">{searchResult.email}</p>
+                      <p className="manage-office-search-card__value">{searchResult?.email}</p>
                     </div>
                   </div>
                 ) : (
                   <div className="manage-office-search-field">
                     <label className="manage-office-search-field__label">{t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}</label>
                     <div className="manage-office-search-field__control">
-                      <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="manage-office-search-field__country">
+                      <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="manage-office-search-field__country" disabled>
                         <option value="+91">+91</option>
-                        <option value="+1">+1</option>
-                        <option value="+44">+44</option>
                       </select>
                       <input
                         type="tel"
@@ -552,9 +551,9 @@ const ManageOffice = () => {
                   ) : (
                     <button
                       onClick={handleSearch}
-                      disabled={!mobileNumber || mobileNumber.length < 10}
+                      disabled={!mobileNumber || mobileNumber?.length < 10}
                       className={`manage-office-btn manage-office-btn--primary${
-                        !mobileNumber || mobileNumber.length < 10 ? " manage-office-btn--disabled" : ""
+                        !mobileNumber || mobileNumber?.length < 10 ? " manage-office-btn--disabled" : ""
                       }`}
                     >
                       {t("SEARCH") || "Search"}
@@ -605,7 +604,7 @@ const ManageOffice = () => {
       )}
 
       {/* Toast Notification: auto-close after 5s, close button to dismiss manually */}
-      {toast && <Toast label={toast.label} onClose={() => setToast(null)} error={toast.type === "error"} isDleteBtn={true} />}
+      {toast && <Toast label={toast?.label} onClose={() => setToast(null)} error={toast?.type === "error"} isDleteBtn={true} />}
     </div>
   );
 };

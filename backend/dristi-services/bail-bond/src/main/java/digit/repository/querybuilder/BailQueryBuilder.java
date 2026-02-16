@@ -25,6 +25,7 @@ public class BailQueryBuilder {
                     "bail.additional_details as bailAdditionalDetails, bail.is_active as bailIsActive, " +
                     "bail.created_by as bailCreatedBy, bail.last_modified_by as bailLastModifiedBy, " +
                     "bail.created_time as bailCreatedTime, bail.last_modified_time as bailLastModifiedTime, " +
+                    "bail.as_user as as_user, " +
 
                     "bail_doc.id as bailDocId, bail_doc.tenant_id as bailDocTenantId, bail_doc.bail_id as bailDocBailId, " +
                     "bail_doc.filestore_id as bailDocFilestoreId, bail_doc.document_uid as bailDocUid, " +
@@ -151,18 +152,18 @@ public class BailQueryBuilder {
         }
 
         if (criteria.getUserUuid() != null && !criteria.getUserUuid().isEmpty()) {
-            List<String> advocateAndClerkUuids = criteria.getAdvocateAndClerkUuids();
+            List<String> officeAdvocateUserUuids = criteria.getOfficeAdvocateUserUuids();
             boolean isAdvocateOrClerk = criteria.isAdvocate() || criteria.isClerk();
-            boolean hasUserUuidsList = advocateAndClerkUuids != null && !advocateAndClerkUuids.isEmpty();
+            boolean hasUserUuidsList = officeAdvocateUserUuids != null && !officeAdvocateUserUuids.isEmpty();
 
             if (isAdvocateOrClerk && hasUserUuidsList) {
-                query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.created_by IN (");
-                for (int i = 0; i < advocateAndClerkUuids.size(); i++) {
+                query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.as_user IN (");
+                for (int i = 0; i < officeAdvocateUserUuids.size(); i++) {
                     query.append("?");
-                    if (i < advocateAndClerkUuids.size() - 1) {
+                    if (i < officeAdvocateUserUuids.size() - 1) {
                         query.append(", ");
                     }
-                    preparedStmtList.add(advocateAndClerkUuids.get(i));
+                    preparedStmtList.add(officeAdvocateUserUuids.get(i));
                     preparedStmtArgList.add(Types.VARCHAR);
                 }
                 query.append("))) ");
@@ -198,27 +199,27 @@ public class BailQueryBuilder {
     private void addOwnerCriteria(BailSearchCriteria criteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         String userUuid = criteria.getUserUuid();
         if (userUuid != null && !userUuid.isEmpty()) {
-            List<String> advocateAndClerkUuids = criteria.getAdvocateAndClerkUuids();
+            List<String> officeAdvocateUserUuids = criteria.getOfficeAdvocateUserUuids();
             boolean isAdvocateOrClerk = criteria.isAdvocate() || criteria.isClerk();
-            boolean hasUserUuidsList = advocateAndClerkUuids != null && !advocateAndClerkUuids.isEmpty();
+            boolean hasUserUuidsList = officeAdvocateUserUuids != null && !officeAdvocateUserUuids.isEmpty();
 
             if (isAdvocateOrClerk && hasUserUuidsList) {
                 query.append(" AND (bail.litigant_id IN (");
-                for (int i = 0; i < advocateAndClerkUuids.size(); i++) {
+                for (int i = 0; i < officeAdvocateUserUuids.size(); i++) {
                     query.append("?");
-                    if (i < advocateAndClerkUuids.size() - 1) {
+                    if (i < officeAdvocateUserUuids.size() - 1) {
                         query.append(", ");
                     }
-                    preparedStmtList.add(advocateAndClerkUuids.get(i));
+                    preparedStmtList.add(officeAdvocateUserUuids.get(i));
                     preparedStmtArgList.add(Types.VARCHAR);
                 }
-                query.append(") OR bail.created_by IN (");
-                for (int i = 0; i < advocateAndClerkUuids.size(); i++) {
+                query.append(") OR bail.as_user IN (");
+                for (int i = 0; i < officeAdvocateUserUuids.size(); i++) {
                     query.append("?");
-                    if (i < advocateAndClerkUuids.size() - 1) {
+                    if (i < officeAdvocateUserUuids.size() - 1) {
                         query.append(", ");
                     }
-                    preparedStmtList.add(advocateAndClerkUuids.get(i));
+                    preparedStmtList.add(officeAdvocateUserUuids.get(i));
                     preparedStmtArgList.add(Types.VARCHAR);
                 }
                 query.append("))");

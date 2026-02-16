@@ -117,6 +117,12 @@ const AddOrderTypeModal = ({
       }
     }
 
+    if(currentOrderType && ["ACCEPT_RESCHEDULING_REQUEST"].includes(currentOrderType)) {
+      if(formData?.newHearingDate && Object.keys(formState?.errors).includes("newHearingDate")) {
+        clearFormErrors?.current?.[index]?.("newHearingDate");
+      }
+    }
+
     if (currentOrderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(currentOrderType)) {
       if (formData?.submissionDeadline && formData?.responseInfo?.responseDeadline) {
         if (new Date(formData?.submissionDeadline).getTime() >= new Date(formData?.responseInfo?.responseDeadline).getTime()) {
@@ -423,6 +429,17 @@ const AddOrderTypeModal = ({
                 const isMediation = formdata?.ADRMode?.name === "MEDIATION";
 
                 let effectiveConfig = modifiedFormConfig;
+
+                // Show OrderType for Take Cognizance order
+                if (orderType?.code === "TAKE_COGNIZANCE") {
+                  effectiveConfig.forEach(section => {
+                    section.body.forEach(field => {
+                      if (field.populators?.customStyle) {
+                        delete field.populators.customStyle;
+                      }
+                    });
+                  });
+                }
 
                 if (isAcceptBail) {
                   effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({

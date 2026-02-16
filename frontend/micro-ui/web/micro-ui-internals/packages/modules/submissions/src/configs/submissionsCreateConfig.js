@@ -2728,21 +2728,6 @@ export const configsAdvancementOrAdjournment = [
         },
       },
       {
-        inline: true,
-        label: "ORIGINAL_HEARING_DATE",
-        disable: true,
-        isMandatory: true,
-        key: "initialHearingPurpose",
-        schemaKeyPath: "applicationDetails.initialHearingPurpose",
-        transformer: "text",
-        type: "text",
-        populators: {
-          name: "initialHearingPurpose",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          customStyle: { display: "none" },
-        },
-      },
-      {
         key: "newHearingDates",
         type: "component",
         label: "SUGGESTED_NEW_HEARING_DATES",

@@ -378,9 +378,10 @@ public class BailService {
             assignees.add(bailRequest.getBail().getLitigantId());
             workflow.setAssignes(assignees);
             if (!bailRequest.getBail().getLitigantId().equalsIgnoreCase(bailRequest.getBail().getAuditDetails().getCreatedBy())) {
-                ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails(), bailRequest.getBail().getAuditDetails().getCreatedBy());
+                // Advocate/Clerk created the bail
+                ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails(), bailRequest.getBail().getAsUser());
                 workflow.setAdditionalDetails(additionalDetails);
-                assignees.add(bailRequest.getBail().getAuditDetails().getCreatedBy());
+                assignees.add(bailRequest.getBail().getAsUser());
                 workflow.setAssignes(assignees);
             }
         }
@@ -531,13 +532,13 @@ public class BailService {
             }
             case "citizen" -> {
                 bailSearchRequest.getCriteria().setUserUuid(userInfo.getUuid());
-                enrichAdvocateAndClerkUuids(requestInfo, bailSearchRequest.getCriteria());
+                enrichOfficeAdvocateUserUuids(requestInfo, bailSearchRequest.getCriteria());
             }
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
     }
 
-    private void enrichAdvocateAndClerkUuids(RequestInfo requestInfo, BailSearchCriteria searchCriteria) {
+    private void enrichOfficeAdvocateUserUuids(RequestInfo requestInfo, BailSearchCriteria searchCriteria) {
         User userInfo = requestInfo.getUserInfo();
         String userUuid = userInfo.getUuid();
         String tenantId = config.getTenantId();
@@ -602,25 +603,7 @@ public class BailService {
                 }
 
                 if (userBelongsToOffice) {
-                    if (office.getOfficeAdvocateUserUuid() != null) {
-                        uuidSet.add(office.getOfficeAdvocateUserUuid());
-                    }
-
-                    if (office.getAdvocates() != null) {
-                        office.getAdvocates().forEach(advocate -> {
-                            if (advocate.getMemberUserUuid() != null) {
-                                uuidSet.add(advocate.getMemberUserUuid());
-                            }
-                        });
-                    }
-
-                    if (office.getClerks() != null) {
-                        office.getClerks().forEach(clerk -> {
-                            if (clerk.getMemberUserUuid() != null) {
-                                uuidSet.add(clerk.getMemberUserUuid());
-                            }
-                        });
-                    }
+                    uuidSet.add(office.getOfficeAdvocateUserUuid());
                 }
             }
 
@@ -628,8 +611,8 @@ public class BailService {
                 uuidSet.add(userUuid);
             }
 
-            log.info("Enriched advocateAndClerkUuids for bail search: {}", uuidSet);
-            searchCriteria.setAdvocateAndClerkUuids(new ArrayList<>(uuidSet));
+            log.info("Enriched officeAdvocateUserUuids for bail search: {}", uuidSet);
+            searchCriteria.setOfficeAdvocateUserUuids(new ArrayList<>(uuidSet));
 
         } catch (Exception e) {
             log.error("Error while enriching advocate/clerk UUIDs for bail search", e);
