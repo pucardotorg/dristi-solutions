@@ -584,10 +584,7 @@ export const UICustomizations = {
       const taskDetails = handleTaskDetails(row?.taskDetails);
       const delieveryDate = formatNoticeDeliveryDate(taskDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
       const hearingDate = formatNoticeDeliveryDate(taskDetails?.caseDetails?.hearingDate);
-      const activeTab = searchResult?.additionalDetails?.activeTab || "";
-      const isDisposedTab = activeTab === "DISPOSED";
-      const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+      const caseId = (row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
 
       switch (key) {
         // case "CASE_NAME_ID":
