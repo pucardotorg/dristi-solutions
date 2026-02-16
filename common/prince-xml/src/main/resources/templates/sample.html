@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PDF Export</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: blue; }
+        .content { margin: 20px 0; }
+        .signature-area { margin-top: 50px; }
+    </style>
+</head>
+<body>
+    <h1>Hello, ${name}!</h1>
+    <div class="content">
+        <p>Welcome to our PDF generation system.</p>
+        <p>Email: ${email}</p>
+        <p>Date: ${date}</p>
+        <p>Message: ${message}</p>
+    </div>
+    
+    <div class="signature-area">
+        <p>Digital signature will appear below if enabled:</p>
+        <!-- Signature field will be added automatically if enabled -->
+    </div>
+</body>
+</html>
