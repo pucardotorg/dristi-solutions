@@ -2686,178 +2686,175 @@ export const poaClaimingConfig = [
 
 export const configsAdvancementOrAdjournment = [
   {
-      {
-        label: "refHearingId",
-        isMandatory: false,
-        key: "refHearingId",
-        disable: true,
-        type: "text",
-        schemaKeyPath: "applicationDetails.refHearingId",
-        populators: { name: "refHearingId", customStyle: { display: "none" } },
-      },
-      {
-        inline: true,
-        label: "CHOOSE_COMPLAINANT",
-        isMandatory: true,
-        type: "dropdown",
-        key: "selectComplainant",
-        populators: {
-          optionsKey: "name",
-          styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "complainantOne",
-              name: "ComplainantOne",
-            },
-          ],
+    label: "refHearingId",
+    isMandatory: false,
+    key: "refHearingId",
+    disable: true,
+    type: "text",
+    schemaKeyPath: "applicationDetails.refHearingId",
+    populators: { name: "refHearingId", customStyle: { display: "none" } },
+  },
+  {
+    inline: true,
+    label: "CHOOSE_COMPLAINANT",
+    isMandatory: true,
+    type: "dropdown",
+    key: "selectComplainant",
+    populators: {
+      optionsKey: "name",
+      styles: { maxWidth: "100%" },
+      options: [
+        {
+          code: "complainantOne",
+          name: "ComplainantOne",
         },
-      },
-      {
-        label: "hearing purpose",
-        isMandatory: false,
-        key: "initialHearingPurpose",
-        disable: true,
-        type: "text",
-        schemaKeyPath: "applicationDetails.initialHearingPurpose",
-        populators: { name: "initialHearingPurpose", customStyle: { display: "none" } },
-      },
-      {
-        inline: true,
-        label: "ORIGINAL_HEARING_DATE",
-        disable: true,
-        isMandatory: true,
-        key: "initialHearingDate",
-        schemaKeyPath: "applicationDetails.initialHearingDate",
-        transformer: "date",
-        type: "date",
-        populators: {
-          name: "initialHearingDate",
-          error: "CORE_REQUIRED_FIELD_ERROR",
+      ],
+    },
+  },
+  {
+    label: "hearing purpose",
+    isMandatory: false,
+    key: "initialHearingPurpose",
+    disable: true,
+    type: "text",
+    schemaKeyPath: "applicationDetails.initialHearingPurpose",
+    populators: { name: "initialHearingPurpose", customStyle: { display: "none" } },
+  },
+  {
+    inline: true,
+    label: "ORIGINAL_HEARING_DATE",
+    disable: true,
+    isMandatory: true,
+    key: "initialHearingDate",
+    schemaKeyPath: "applicationDetails.initialHearingDate",
+    transformer: "date",
+    type: "date",
+    populators: {
+      name: "initialHearingDate",
+      error: "CORE_REQUIRED_FIELD_ERROR",
+    },
+  },
+  {
+    type: "component",
+    component: "SelectCustomNote",
+    key: "bulkDateInputNote",
+    populators: {
+      inputs: [
+        {
+          infoHeader: "CS_COMMON_NOTE",
+          infoText: "SELECT_MULTIPLE_DATE_INFO_MESSAGE",
+          showTooltip: true,
+          type: "InfoComponent",
         },
-      },
-      {
-        type: "component",
-        component: "SelectCustomNote",
-        key: "bulkDateInputNote",
-        populators: {
-          inputs: [
-            {
-              infoHeader: "CS_COMMON_NOTE",
-              infoText: "SELECT_MULTIPLE_DATE_INFO_MESSAGE",
-              showTooltip: true,
-              type: "InfoComponent",
-            },
-          ],
-        },
-      },
-      {
-        key: "newHearingDates",
-        type: "component",
-        label: "SUGGESTED_NEW_HEARING_DATES",
-        component: "SelectBulkDateInputs",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "newHearingDates",
-              error: "ERR_HRMS_INVALID_MOB_NO",
-              label: "SUGGESTED_NEW_HEARING_DATES",
-              isMandatory: true,
-              placeholder: "DD/MM/YYYY",
-              customStyleLabelField: { display: "flex", justifyContent: "space-between" },
-              maxSelected: 5,
-              isShowHearing: false,
-              validation: {
-                isRequired: true,
-                minDate: new Date().toISOString().split("T")[0],
-                errMsg: "CORE_REQUIRED_FIELD_ERROR",
-              },
-            },
-          ],
-          validation: {},
-        },
-        withoutLabel: true,
-      },
-      {
-        label: "HAVE_ALL_PARTIES_AGREED",
-        isMandatory: true,
-        key: "isAllPartiesAgreed",
-        type: "radio",
-        schemaKeyPath: "applicationDetails.isAllPartiesAgreed",
-        transformer: "customDropdown",
-        populators: {
-          name: "isAllPartiesAgreed",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          required: true,
+      ],
+    },
+  },
+  {
+    key: "newHearingDates",
+    type: "component",
+    label: "SUGGESTED_NEW_HEARING_DATES",
+    component: "SelectBulkDateInputs",
+    isMandatory: true,
+    populators: {
+      inputs: [
+        {
+          name: "newHearingDates",
+          error: "ERR_HRMS_INVALID_MOB_NO",
+          label: "SUGGESTED_NEW_HEARING_DATES",
           isMandatory: true,
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-          options: [
-            {
-              code: "YES",
-              name: "YES",
-            },
-            {
-              code: "NO",
-              name: "NO",
-            },
-          ],
-        },
-      },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "reasonForRequest",
-        schemaKeyPath: "applicationDetails.reasonForRequest",
-        transformer: "customTextArea",
-        isMandatory: true,
-        isInfinite: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "REASON_FOR_REQUEST",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
+          placeholder: "DD/MM/YYYY",
+          customStyleLabelField: { display: "flex", justifyContent: "space-between" },
+          maxSelected: 5,
+          isShowHearing: false,
           validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
+            isRequired: true,
+            minDate: new Date().toISOString().split("T")[0],
+            errMsg: "CORE_REQUIRED_FIELD_ERROR",
           },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+        },
+      ],
+      validation: {},
+    },
+    withoutLabel: true,
+  },
+  {
+    label: "HAVE_ALL_PARTIES_AGREED",
+    isMandatory: true,
+    key: "isAllPartiesAgreed",
+    type: "radio",
+    schemaKeyPath: "applicationDetails.isAllPartiesAgreed",
+    transformer: "customDropdown",
+    populators: {
+      name: "isAllPartiesAgreed",
+      optionsKey: "name",
+      error: "CORE_REQUIRED_FIELD_ERROR",
+      required: true,
+      isMandatory: true,
+      customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+      options: [
+        {
+          code: "YES",
+          name: "YES",
+        },
+        {
+          code: "NO",
+          name: "NO",
+        },
+      ],
+    },
+  },
+  {
+    inline: true,
+    type: "component",
+    component: "SelectCustomTextArea",
+    key: "reasonForRequest",
+    schemaKeyPath: "applicationDetails.reasonForRequest",
+    transformer: "customTextArea",
+    isMandatory: true,
+    isInfinite: true,
+    populators: {
+      inputs: [
+        {
+          name: "text",
+          textAreaSubHeader: "REASON_FOR_REQUEST",
+          subHeaderClassName: "dristi-font-big-bold",
+          placeholder: "TYPE_HERE_PLACEHOLDER",
+          type: "TextAreaComponent",
+          textAreaStyle: {
+            fontSize: "16px",
+            fontWeight: 400,
+            marginBottom: 0,
+          },
+        },
+      ],
+      validation: {
+        customValidationFn: {
+          moduleName: "dristiSubmissions",
+          masterName: "alphaNumericValidation",
         },
       },
-      {
-        type: "component",
-        key: "supportingDocuments",
-        component: "SelectMultiUpload",
-        disable: false,
-        isMandatory: false,
-        populators: {
-          inputs: [
-            {
-              name: "uploadedDocs",
-              isMandatory: false,
-              isOptional: true,
-              label: "Supporting Documents",
-              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-              uploadGuidelines: "UPLOAD_DOC_10",
-              maxFileSize: 10,
-              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            },
-          ],
+      customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+    },
+  },
+  {
+    type: "component",
+    key: "supportingDocuments",
+    component: "SelectMultiUpload",
+    disable: false,
+    isMandatory: false,
+    populators: {
+      inputs: [
+        {
+          name: "uploadedDocs",
+          isMandatory: false,
+          isOptional: true,
+          label: "Supporting Documents",
+          fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+          uploadGuidelines: "UPLOAD_DOC_10",
+          maxFileSize: 10,
+          maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
         },
-      },
-    ],
+      ],
+    },
   },
 ];
