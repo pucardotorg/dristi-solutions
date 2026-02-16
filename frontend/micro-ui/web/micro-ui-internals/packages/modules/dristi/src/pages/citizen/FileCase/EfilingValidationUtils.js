@@ -1827,12 +1827,17 @@ export const updateCaseDetails = async ({
                   await updateIndividualUser({ data: data?.data, documentData, tenantId, individualData: Individual?.Individual?.[0] });
                 }
               }
+              const pipDocuments =
+                caseDetails?.litigants?.find(
+                  (litigant) => litigant?.individualId === data?.data?.complainantVerification?.individualDetails?.individualId
+                )?.documents || [];
               return {
                 tenantId,
                 caseId: caseDetails?.id,
                 partyCategory: data?.data?.complainantType?.code,
                 individualId: data?.data?.complainantVerification?.individualDetails?.individualId,
                 partyType: index === 0 ? "complainant.primary" : "complainant.additional",
+                documents: pipDocuments,
                 additionalDetails: {
                   fullName: getFullName(" ", data?.data?.firstName, data?.data?.middleName, data?.data?.lastName),
                   uuid: userUuid ? userUuid : null,
