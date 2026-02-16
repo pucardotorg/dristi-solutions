@@ -93,7 +93,7 @@ public class ApplicationQueryBuilder {
                 firstCriteria = false;
             }
 
-            if (requestInfo != null && requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null) {
+            if (asUser != null) {
                 addClauseIfRequired(query, firstCriteria);
                 query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.asuser = ?))");
                 preparedStmtList.add(asUser);
