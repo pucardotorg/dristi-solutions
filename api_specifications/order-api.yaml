@@ -1,0 +1,380 @@
+openapi: 3.0.0
+info:
+  title: Order Management Service
+  description: |
+    This API manages court orders and related operations.
+    - Create and update court orders
+    - Search and retrieve order details
+    - Manage order items
+    - Handle order existence checks
+  version: 1.0.0
+
+tags:
+  - name: Orders
+    description: APIs for managing court orders
+  - name: Order Items
+    description: APIs for managing items within orders
+
+servers:
+  - url: /api
+    description: Base API path
+
+paths:
+  /v1/create:
+    post:
+      tags: [Orders]
+      summary: Create a new order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '200':
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /v1/update:
+    post:
+      tags: [Orders]
+      summary: Update an order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '200':
+          description: Order updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /v1/search:
+    post:
+      tags: [Orders]
+      summary: Search orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderSearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+
+  /v1/exists:
+    post:
+      tags: [Orders]
+      summary: Check order existence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderExistsRequest'
+      responses:
+        '200':
+          description: Order existence result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderExistsResponse'
+
+  /v2/add-item:
+    post:
+      tags: [Order Items]
+      summary: Add item to order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '200':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /v2/remove-item:
+    post:
+      tags: [Order Items]
+      summary: Remove item from order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveItemRequest'
+      responses:
+        '200':
+          description: Item removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+
+  /v1/order-details:
+    post:
+      tags: [Orders]
+      summary: Get order details
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderDetailsRequest'
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetailsResponse'
+
+components:
+  schemas:
+
+    OrderRequest:
+      type: object
+      required: [requestInfo, order]
+      properties:
+        requestInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+        order:
+          $ref: '#/components/schemas/Order'
+
+    OrderResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        order:
+          $ref: '#/components/schemas/Order'
+
+    OrderExistsRequest:
+      type: object
+      required: [requestInfo, orderIds]
+      properties:
+        requestInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+        orderIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    OrderExistsResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        order:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderExists'
+
+    OrderSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+        criteria:
+          $ref: '#/components/schemas/OrderSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    OrderListResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        totalCount:
+          type: integer
+
+    RemoveItemRequest:
+      type: object
+      required: [requestInfo, orderId, itemId]
+      properties:
+        requestInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+        orderId:
+          type: string
+          format: uuid
+        itemId:
+          type: string
+          format: uuid
+
+    OrderDetailsRequest:
+      type: object
+      required: [requestInfo]
+      properties:
+        requestInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
+        orderNumber:
+          type: string
+        orderUniqueId:
+          type: string
+          format: uuid
+
+    OrderDetailsResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        orderDetailsDTO:
+          $ref: '#/components/schemas/OrderDetailsDTO'
+
+    Order:
+      type: object
+      required: [tenantId, orderType, status, isActive, createdDate]
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+        orderNumber:
+          type: string
+        orderType:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, ISSUED, EXECUTED, CANCELLED]
+        isActive:
+          type: boolean
+        createdDate:
+          type: string
+          format: date-time
+        lastModifiedDate:
+          type: string
+          format: date-time
+        caseId:
+          type: string
+          format: uuid
+        hearingId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        itemCode:
+          type: string
+        description:
+          type: string
+        quantity:
+          type: number
+          format: double
+        rate:
+          type: number
+          format: double
+        amount:
+          type: number
+          format: double
+        additionalDetails:
+          type: object
+
+    OrderExists:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        exists:
+          type: boolean
+
+    OrderSearchCriteria:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        orderNumber:
+          type: string
+        caseId:
+          type: string
+          format: uuid
+        hearingId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        orderType:
+          type: string
+        fromDate:
+          type: string
+          format: date
+        toDate:
+          type: string
+          format: date
+
+    OrderDetailsDTO:
+      type: object
+      properties:
+        orderNumber:
+          type: string
+        orderDate:
+          type: string
+          format: date
+        caseNumber:
+          type: string
+        hearingDate:
+          type: string
+          format: date
+        judgeName:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        totalAmount:
+          type: number
+          format: double
+        status:
+          type: string
+        additionalDetails:
+          type: object
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          default: 10
+        offset:
+          type: integer
+          default: 0
+

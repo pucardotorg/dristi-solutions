@@ -1,0 +1,286 @@
+openapi: 3.0.0
+info:
+  title: Task Service API
+  description: |
+    This API provides functionality for managing tasks in the system.
+    It allows creating, updating, searching tasks and managing workflows.
+  version: 1.0.0
+
+servers:
+  - url: "/task/v1"
+    description: Task Service API
+
+tags:
+  - name: Tasks
+    description: Operations related to task management
+  - name: Task Workflow
+    description: Operations related to task workflow management
+
+security:
+  - bearerAuth: []
+
+paths:
+  /tasks/_create:
+    post:
+      tags: [Tasks]
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /tasks/_update:
+    post:
+      tags: [Tasks]
+      summary: Update an existing task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          description: Invalid input or task not found
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /tasks/_search:
+    post:
+      tags: [Tasks]
+      summary: Search tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskSearchRequest'
+      responses:
+        '200':
+          description: Tasks matching search criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskSearchResponse'
+        '400':
+          description: Invalid search criteria
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /tasks/{id}/_workflow:
+    post:
+      tags: [Task Workflow]
+      summary: Update task workflow
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskWorkflowRequest'
+      responses:
+        '200':
+          description: Workflow updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          description: Invalid workflow update
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TaskRequest:
+      type: object
+      required: [requestInfo, task]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        task:
+          $ref: '#/components/schemas/Task'
+
+    Task:
+      type: object
+      required: [taskType, title, tenantId]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        taskNumber:
+          type: string
+          readOnly: true
+        taskType:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+        title:
+          type: string
+        description:
+          type: string
+        assignee:
+          type: string
+          format: uuid
+        assigner:
+          type: string
+          format: uuid
+        dueDate:
+          type: string
+          format: date-time
+        createdDate:
+          type: string
+          format: date-time
+          readOnly: true
+        lastModifiedDate:
+          type: string
+          format: date-time
+          readOnly: true
+        additionalDetails:
+          type: object
+        action:
+          type: string
+        businessService:
+          type: string
+        module:
+          type: string
+        tenantId:
+          type: string
+
+    TaskSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/TaskSearchCriteria'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    TaskSearchCriteria:
+      type: object
+      required: [tenantId]
+      properties:
+        id:
+          type: array
+          items:
+            type: string
+            format: uuid
+        taskNumber:
+          type: array
+          items:
+            type: string
+        taskType:
+          type: array
+          items:
+            type: string
+        status:
+          type: array
+          items:
+            type: string
+        assignee:
+          type: array
+          items:
+            type: string
+            format: uuid
+        assigner:
+          type: array
+          items:
+            type: string
+            format: uuid
+        fromDate:
+          type: string
+          format: date-time
+        toDate:
+          type: string
+          format: date-time
+        tenantId:
+          type: string
+
+    TaskWorkflowRequest:
+      type: object
+      required: [requestInfo, workflow]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+
+    Workflow:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+        comment:
+          type: string
+        assignees:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    TaskResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        task:
+          $ref: '#/components/schemas/Task'
+
+    TaskSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
