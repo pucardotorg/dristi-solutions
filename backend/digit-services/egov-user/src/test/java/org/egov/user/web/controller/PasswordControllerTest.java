@@ -9,13 +9,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.utils.MultiStateInstanceUtil;
-import org.egov.encryption.masking.MaskingService;
 import org.egov.user.Resources;
 import org.egov.user.TestConfiguration;
 import org.egov.user.domain.model.NonLoggedInUserUpdatePasswordRequest;
 import org.egov.user.domain.service.UserService;
 import org.egov.user.security.CustomAuthenticationKeyGenerator;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +27,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-@Ignore("Requires MDMS service configuration")
 @RunWith(SpringRunner.class)
 @WebMvcTest(PasswordController.class)
 @Import(TestConfiguration.class)
@@ -52,9 +49,6 @@ public class PasswordControllerTest {
     
     @MockBean
     private MultiStateInstanceUtil multiStateInstanceUtil;
-
-    @MockBean
-    private MaskingService maskingService;
 
     private Resources resources = new Resources();
 

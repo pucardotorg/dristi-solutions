@@ -207,8 +207,8 @@ public class UserRepository {
         
         String tenantId = oldUser.getTenantId();
         if(UserType.CITIZEN.equals(oldUser.getType()) && tenantId.contains("."))
-        		tenantId = tenantId.split("/backend/digit-services/egov-user/src/main/java/org/egov/user/persistence/repository/UserRepository.java")[0];
-        	
+        		tenantId = tenantId.split("//.")[0];
+
         updateuserInputs.put("tenantid", tenantId);
         updateuserInputs.put("AadhaarNumber", user.getAadhaarNumber());
 

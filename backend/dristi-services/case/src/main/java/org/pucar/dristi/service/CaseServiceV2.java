@@ -161,8 +161,8 @@ public class CaseServiceV2 {
             return caseSummaryLists;
         } catch (CustomException e) {
             // Return empty list for clerk access issues
-            if ("CLERK_ACCESS_DENIED".equals(e.getCode()) || 
-                "CLERK_MEMBER_NOT_FOUND".equals(e.getCode()) || 
+            if ("CLERK_ACCESS_DENIED".equals(e.getCode()) ||
+                "CLERK_MEMBER_NOT_FOUND".equals(e.getCode()) ||
                 "CLERK_NOT_MEMBER".equals(e.getCode())) {
                 log.info("Clerk access denied: {}", e.getMessage());
                 return new ArrayList<>();

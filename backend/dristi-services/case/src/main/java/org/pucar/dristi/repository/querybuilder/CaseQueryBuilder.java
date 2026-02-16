@@ -208,7 +208,7 @@ public class CaseQueryBuilder {
 
         if (officeAdvocateId != null && !officeAdvocateId.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
-            
+
             if (Boolean.TRUE.equals(isMemberActiveInCase)) {
                 // Member wants to view only cases where they are active members
                 query.append("(cases.id IN (" +
@@ -951,13 +951,13 @@ public class CaseQueryBuilder {
     public String getValidateAdvocateOfficeCaseMemberQuery(List<Object> preparedStmtList, List<Integer> preparedStmtArgList, String officeAdvocateId, String memberId) {
         String query = "SELECT COUNT(*) FROM dristi_advocate_office_case_member " +
                 "WHERE office_advocate_id = ? AND member_id = ? AND is_active = true";
-        
+
         preparedStmtList.add(officeAdvocateId);
         preparedStmtArgList.add(Types.VARCHAR);
-        
+
         preparedStmtList.add(memberId);
         preparedStmtArgList.add(Types.VARCHAR);
-        
+
         return query;
     }
 
@@ -970,16 +970,16 @@ public class CaseQueryBuilder {
 
         preparedStmtList.add(caseId);
         preparedStmtArgList.add(Types.VARCHAR);
-        
+
         return query;
     }
 
     public String getCaseIdFromFilingNumberQuery(List<Object> preparedStmtList, List<Integer> preparedStmtArgList, String filingNumber) {
         String query = "SELECT id FROM dristi_cases WHERE filingnumber = ?";
-        
+
         preparedStmtList.add(filingNumber);
         preparedStmtArgList.add(Types.VARCHAR);
-        
+
         return query;
     }
 }

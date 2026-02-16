@@ -96,4 +96,20 @@ public class TransformerProperties {
 
     @Value("${notification.order.business.template}")
     private String notificationOrderBusinessTemplate;
+
+    //Inbox
+    @Value("${egov.inbox.host}")
+    private String inboxHost;
+
+    @Value("${egov.inbox.search.endpoint}")
+    private String inboxSearchEndPoint;
+
+    @Value("${egov.inbox.search.limit}")
+    private Integer limit;
+
+    @Value("${egov.inbox.search.offset}")
+    private Integer offset;
+
+    @Value("${notification.order.processing.delay.ms}")
+    private Long notificationOrderProcessingDelay;
 }

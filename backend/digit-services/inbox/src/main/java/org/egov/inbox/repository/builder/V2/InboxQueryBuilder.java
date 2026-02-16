@@ -334,7 +334,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
 
     private void addModuleSearchCriteriaToBaseQuery
             (Map<String, Object> params, Map<String, String> nameToPathMap,
-             Map<String, SearchParam.Operator> nameToOperator, Map<String, String> nameToNestedPath, 
+             Map<String, SearchParam.Operator> nameToOperator, Map<String, String> nameToNestedPath,
              Map<String, SearchParam> nameToSearchParam, List<Object> mustClauseList) {
 
         // Group nested params by their nestedPath
@@ -345,7 +345,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         params.keySet().forEach(key -> {
             if (!(key.equals(SORT_ORDER_CONSTANT) || key.equals(SORT_BY_CONSTANT))) {
                 SearchParam searchParam = nameToSearchParam.get(key);
-                
+
                 // Check if this param has OR paths configured
                 if (searchParam != null && !CollectionUtils.isEmpty(searchParam.getOrPaths())) {
                     orQueryKeys.add(key);
@@ -510,7 +510,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
 
     private Map<String, Object> buildNestedTermClause(String nestedPath, String path, Object value) {
         Map<String, Object> termClause = buildTermClause(path, value);
-        
+
         Map<String, Object> nestedInner = new HashMap<>();
         nestedInner.put("path", nestedPath);
         nestedInner.put(QUERY_KEY, termClause);

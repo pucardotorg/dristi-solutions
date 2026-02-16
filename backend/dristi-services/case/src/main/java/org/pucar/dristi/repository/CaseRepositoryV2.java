@@ -696,14 +696,14 @@ public class CaseRepositoryV2 {
         try {
             List<Object> preparedStmtList = new ArrayList<>();
             List<Integer> preparedStmtArgList = new ArrayList<>();
-            
+
             String query = queryBuilder.getValidateAdvocateOfficeCaseMemberQuery(preparedStmtList, preparedStmtArgList, officeAdvocateId, memberId);
-            
+
             Integer count = jdbcTemplate.queryForObject(query, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), Integer.class);
-            
+
             return count > 0;
         } catch (Exception e) {
-            log.error("Error validating advocate office case member for officeAdvocateId: {}, memberId: {}", 
+            log.error("Error validating advocate office case member for officeAdvocateId: {}, memberId: {}",
                 officeAdvocateId, memberId, e);
             return false;
         }
@@ -718,7 +718,7 @@ public class CaseRepositoryV2 {
                 caseId = getCaseIdFromFilingNumber(filingNumber);
             }
             String query = queryBuilder.getOfficeAdvocateIdsByMemberIdAndCaseIdQuery(preparedStmtList, preparedStmtArgList, memberId, caseId);
-            
+
             return jdbcTemplate.queryForList(query, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), String.class);
         } catch (Exception e) {
             log.error("Error getting office advocate IDs for memberId: {}, caseId: {}", memberId, caseId, e);
@@ -759,7 +759,7 @@ public class CaseRepositoryV2 {
 
         // Since this is CaseRepositoryV2, we're dealing with a single case, not a list
         List<AdvocateOfficeCaseMember> caseAdvocateOfficeMembers = rowsByCaseId.getOrDefault(courtCase.getId(), List.of());
-        
+
         if (caseAdvocateOfficeMembers.isEmpty()) {
             courtCase.setAdvocateOffices(new ArrayList<>());
             return;
@@ -787,7 +787,7 @@ public class CaseRepositoryV2 {
                     .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(rep))
                     .officeAdvocateUserUuid(extractAdvocateUuidFromAdditionalDetails(rep))
                     .build());
-            
+
             // Separate advocates and clerks based on memberType
             List<AdvocateOfficeMember> advocates = officeRows.stream()
                     .filter(r -> "ADVOCATE".equals(r.getMemberType().toString()))
@@ -848,20 +848,20 @@ public class CaseRepositoryV2 {
         if (filingNumber == null || filingNumber.isEmpty()) {
             return null;
         }
-        
+
         try {
             List<Object> preparedStmtList = new ArrayList<>();
             List<Integer> preparedStmtArgList = new ArrayList<>();
-            
+
             String query = queryBuilder.getCaseIdFromFilingNumberQuery(preparedStmtList, preparedStmtArgList, filingNumber);
-            
+
             log.info("Fetching case ID for filing number: {}", filingNumber);
-            
+
             List<String> caseIds = jdbcTemplate.query(query, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),
                     (rs, rowNum) -> rs.getString("id"));
-            
+
             if (!caseIds.isEmpty()) return caseIds.get(0);
-            
+
             log.warn("No case found for filing number: {}", filingNumber);
             return null;
         } catch (Exception e) {

@@ -29,7 +29,6 @@ import java.util.TimeZone;
 
 import org.apache.commons.io.IOUtils;
 import org.egov.common.utils.MultiStateInstanceUtil;
-import org.egov.encryption.masking.MaskingService;
 import org.egov.user.TestConfiguration;
 import org.egov.user.domain.exception.InvalidUserSearchCriteriaException;
 import org.egov.user.domain.model.Action;
@@ -63,7 +62,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-@Ignore("Requires MDMS service configuration")
 @RunWith(SpringRunner.class)
 @WebMvcTest(UserController.class)
 @Import(TestConfiguration.class)
@@ -83,9 +81,6 @@ public class UserControllerTest {
 
     @MockBean
     private CustomAuthenticationKeyGenerator authenticationKeyGenerator;
-
-    @MockBean
-    private MaskingService maskingService;
 
     @Test
     @WithMockUser

@@ -183,6 +183,7 @@ class OrderConsumerTest {
 
         orderConsumer.listen(consumerRecord, "order-topic");
 
+        // OrderConsumer calls orderNotificationService.processOrdersWithHearings() for hearing processing
         verify(orderNotificationService).processOrdersWithHearings(any(Order.class), any(RequestInfo.class));
     }
 
