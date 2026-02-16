@@ -2714,6 +2714,15 @@ export const configsAdvancementOrAdjournment = [
         },
       },
       {
+        label: "hearing purpose",
+        isMandatory: false,
+        key: "initialHearingPurpose",
+        disable: true,
+        type: "text",
+        schemaKeyPath: "applicationDetails.initialHearingPurpose",
+        populators: { name: "initialHearingPurpose", customStyle: { display: "none" } },
+      },
+      {
         inline: true,
         label: "ORIGINAL_HEARING_DATE",
         disable: true,
