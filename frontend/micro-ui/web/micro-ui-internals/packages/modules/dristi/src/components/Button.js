@@ -30,7 +30,7 @@ const Button = (props) => {
       onChange={props?.onChange}
     >
       {props?.icon && props.icon}
-      {(props?.label && props?.subLabel) && (
+      {props?.label && props?.subLabel && (
         <div>
           {props?.label && (
             <div className={props.labelClassName} style={{ ...{ width: "100%" }, ...props?.textStyles }}>
@@ -39,12 +39,12 @@ const Button = (props) => {
           )}
           {props?.subLabel && (
             <div className={props.subLabelClassName} style={props?.subTextStyles}>
-              {props.subLabel}  
+              {props.subLabel}
             </div>
           )}
         </div>
       )}
-      {(props?.label && !props?.subLabel) && (
+      {props?.label && !props?.subLabel && (
         <h2 className={props.labelClassName} style={{ ...{ width: "100%" }, ...props?.textStyles }}>
           {props.label}
         </h2>

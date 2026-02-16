@@ -3,6 +3,7 @@ import Modal from "./Modal";
 import { CloseSvg, Loader, TextArea } from "@egovernments/digit-ui-react-components";
 import SelectCustomNote from "./SelectCustomNote";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { sanitizeData } from "../Utils";
 
 function SendCaseBackModal({
   loading,
@@ -19,7 +20,8 @@ function SendCaseBackModal({
   handleCloseModal,
 }) {
   const handleChange = (event) => {
-    setComment(event.target.value);
+    const newValue = sanitizeData(event.target.value);
+    setComment(newValue);
   };
 
   const Heading = (props) => {

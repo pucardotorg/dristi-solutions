@@ -182,7 +182,7 @@ export const UICustomizations = {
         schemaToForm: (obj) => {
           return obj;
         },
-      }
+      },
     },
     formToSchema: (formData, formConfig) => {
       const transformedFormData = {};

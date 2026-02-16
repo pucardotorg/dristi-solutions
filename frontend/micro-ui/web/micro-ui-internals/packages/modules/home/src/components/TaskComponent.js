@@ -1199,7 +1199,7 @@ const TasksComponent = ({
             setHideCancelButton(false);
             setCourierServicePendingTask(null);
             setCourierOrderDetails({});
-            await refetch()
+            await refetch();
           });
         } else {
           setShowCourierServiceModal(false);

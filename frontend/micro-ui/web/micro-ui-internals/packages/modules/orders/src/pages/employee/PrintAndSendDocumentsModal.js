@@ -6,6 +6,7 @@ import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import { Urls } from "../../hooks/services/Urls";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
 import DocumentPrintComponent from "../../components/DocumentPrintComponent";
+import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const PrintAndSendDocumentsModal = ({ onClose, stepper, setStepper, rowData, form, setForm, fileStoreId }) => {
   const [tempForm, setTempForm] = useState(form);
@@ -41,6 +42,7 @@ const PrintAndSendDocumentsModal = ({ onClose, stepper, setStepper, rowData, for
   };
 
   const onFormValueChange = (setValue, formData, formState) => {
+    runComprehensiveSanitizer({ formData, setValue });
     if (JSON.stringify(tempForm) !== JSON.stringify(formData)) {
       setTempForm(formData);
     }

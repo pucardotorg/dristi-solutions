@@ -10,6 +10,7 @@ import Menu from "../../components/Menu";
 import { useToast } from "../../components/Toast/useToast";
 import { ErrorInfoIcon, SuccessIcon } from "../../icons/svgIndex";
 import ImageModal from "../../components/ImageModal";
+import { sanitizeData } from "../../Utils";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;

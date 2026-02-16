@@ -320,7 +320,6 @@ export const downloadFile = (responseBlob, fileName) => {
 };
 
 export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, taskDetails) => {
-
   if (orderType === "MISCELLANEOUS_PROCESS") {
     const type = taskDetails?.miscellaneuosDetails?.addressee || "";
 

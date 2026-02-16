@@ -17,11 +17,10 @@ import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
-import { getCaseEditAllowedAssignees } from "../../../Utils";
+import { getCaseEditAllowedAssignees, runComprehensiveSanitizer } from "../../../Utils";
 import isEqual from "lodash/isEqual";
-const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
-const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
+const judgeId = "JUDGE_ID";
+const benchId = "BENCH_ID";
 
 const downloadButtonStyle = {
   backgroundColor: "white",
@@ -94,6 +93,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
   const [loading, setLoading] = useState(false);
+  const courtId = localStorage.getItem("courtId");
 
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
@@ -108,6 +108,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
+      runComprehensiveSanitizer({ formData, setValue });
       setFormdata((prev) => {
         return { ...prev, data: formData };
       });

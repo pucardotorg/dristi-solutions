@@ -17,6 +17,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
   const [pageModule, setPageModule] = useState("en");
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const [fileUploadError, setFileUploadError] = useState(null);
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
   const name = "Signature";
   const signPlaceHolder = "Signature";
@@ -50,6 +51,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -63,6 +65,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
         console.error("error", error);
         setFormData({});
         handleSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -255,6 +258,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
           config={uploadModalConfig}
           formData={formData}
           onSubmit={onSubmit}
+          fileUploadError={fileUploadError}
         />
       )}
     </div>

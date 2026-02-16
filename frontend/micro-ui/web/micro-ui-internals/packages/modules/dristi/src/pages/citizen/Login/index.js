@@ -64,6 +64,8 @@ const Login = ({ stateCode }) => {
   const searchParams = Digit.Hooks.useQueryParams();
   const [canSubmitOtp, setCanSubmitOtp] = useState(true);
   const [canSubmitNo, setCanSubmitNo] = useState(true);
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const [otpCooldownTimer, setOtpCooldownTimer] = useState(null);
   const [isUserRegistered, setIsUserRegistered] = useState(true);
   const [{ showOtpModal }, setState] = useState({ showOtpModal: false });
 
@@ -132,6 +134,41 @@ const Login = ({ stateCode }) => {
     setIsUserRegistered(true);
   };
 
+  // Function to start the OTP cooldown timer
+  const startOtpCooldown = () => {
+    // Set initial cooldown to 60 seconds (1 minute)
+    setOtpCooldown(60);
+
+    // Clear any existing timer
+    if (otpCooldownTimer) {
+      clearInterval(otpCooldownTimer);
+    }
+
+    // Create a new timer that decrements the cooldown every second
+    const timer = setInterval(() => {
+      setOtpCooldown((prevCooldown) => {
+        if (prevCooldown <= 1) {
+          clearInterval(timer);
+          setCanSubmitNo(true);
+          return 0;
+        }
+        return prevCooldown - 1;
+      });
+    }, 1000);
+
+    // Save the timer ID for cleanup
+    setOtpCooldownTimer(timer);
+  };
+
+  // Cleanup timer on component unmount
+  useEffect(() => {
+    return () => {
+      if (otpCooldownTimer) {
+        clearInterval(otpCooldownTimer);
+      }
+    };
+  }, [otpCooldownTimer]);
+
   const selectMobileNumber = async (mobileNumber) => {
     setOtpError(false);
     setCanSubmitNo(false);
@@ -143,7 +180,12 @@ const Login = ({ stateCode }) => {
     };
     const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
     if (!err) {
-      setCanSubmitNo(true);
+      // Start the cooldown timer when OTP is successfully sent
+      startOtpCooldown();
+
+      // Keep the button disabled during cooldown
+      // setCanSubmitNo will be set to true by the timer when cooldown ends
+
       setOtpError(false);
       setState((prev) => ({
         ...prev,
@@ -255,9 +297,10 @@ const Login = ({ stateCode }) => {
               config={stepItems[0]}
               mobileNumber={params.mobileNumber || ""}
               onMobileChange={handleMobileChange}
-              canSubmit={canSubmitNo}
+              canSubmit={canSubmitNo && otpCooldown === 0}
               isUserLoggedIn={isUserLoggedIn}
               showRegisterLink={isUserRegistered && !location.state?.role}
+              cooldownTime={otpCooldown}
               t={t}
             />
           </Route>
