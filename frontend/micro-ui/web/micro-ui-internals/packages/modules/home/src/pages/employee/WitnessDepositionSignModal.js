@@ -80,7 +80,6 @@ export const WitnessDepositionSignModal = ({
   const name = "Signature";
   const pageModule = "en";
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
-  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const witnessDepositionDocuments = useMemo(() => {
     return effectiveRowData?.businessObject?.artifactDetails?.file || effectiveRowData?.file || docObj?.artifactList.file
@@ -304,40 +303,30 @@ export const WitnessDepositionSignModal = ({
   }, [checkSignStatus, name, formData, uploadModalConfig, setIsSigned]);
 
   const onESignClick = useCallback(() => {
-    if (mockESignEnabled) {
-      setIsSigned(true);
-    } else {
-      try {
-        setLoader(true);
+    try {
+      setLoader(true);
 
-        sessionStorage.setItem("witnessDepositionStepper", stepper);
-        sessionStorage.setItem("bulkWitnessDepositionSignSelectedItem", JSON.stringify(effectiveRowData));
-        sessionStorage.setItem("homeActiveTab", "BULK_WITNESS_DEPOSITION_SIGN");
-        if (witnessDepositionPaginationData?.limit) sessionStorage.setItem("bulkWitnessDepositionSignlimit", witnessDepositionPaginationData?.limit);
-        if (witnessDepositionPaginationData?.caseTitle)
-          sessionStorage.setItem("bulkWitnessDepositionSignCaseTitle", witnessDepositionPaginationData?.caseTitle);
-        if (witnessDepositionPaginationData?.offset)
-          sessionStorage.setItem("bulkWitnessDepositionSignoffset", witnessDepositionPaginationData?.offset);
-        handleEsign(name, pageModule, selectedWitnessDepositionFilestoreid, "Judicial Magistrate of First Class");
-      } catch (error) {
-        console.error("E-sign navigation error:", error);
-        setLoader(false);
-      } finally {
-        setLoader(false);
-      }
+      sessionStorage.setItem("witnessDepositionStepper", stepper);
+      sessionStorage.setItem("bulkWitnessDepositionSignSelectedItem", JSON.stringify(effectiveRowData));
+      sessionStorage.setItem("homeActiveTab", "BULK_WITNESS_DEPOSITION_SIGN");
+      if (witnessDepositionPaginationData?.limit) sessionStorage.setItem("bulkWitnessDepositionSignlimit", witnessDepositionPaginationData?.limit);
+      if (witnessDepositionPaginationData?.caseTitle)
+        sessionStorage.setItem("bulkWitnessDepositionSignCaseTitle", witnessDepositionPaginationData?.caseTitle);
+      if (witnessDepositionPaginationData?.offset) sessionStorage.setItem("bulkWitnessDepositionSignoffset", witnessDepositionPaginationData?.offset);
+      handleEsign(name, pageModule, selectedWitnessDepositionFilestoreid, "Judicial Magistrate of First Class");
+    } catch (error) {
+      console.error("E-sign navigation error:", error);
+      setLoader(false);
+    } finally {
+      setLoader(false);
     }
   }, [stepper, effectiveRowData, witnessDepositionPaginationData, handleEsign, selectedWitnessDepositionFilestoreid]);
 
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${selectedWitnessDepositionFilestoreid}`;
   const uploadSignedPdf = async () => {
     try {
-      let newFilestore = "";
-      if (mockESignEnabled) {
-        newFilestore = selectedWitnessDepositionFilestoreid;
-      } else {
-        const localStorageID = sessionStorage.getItem("fileStoreId");
-        newFilestore = witnessDepositionSignedPdf || localStorageID;
-      }
+      const localStorageID = sessionStorage.getItem("fileStoreId");
+      const newFilestore = witnessDepositionSignedPdf || localStorageID;
       // fileStoreIds.delete(newFilestore);
       // if (ADiarypdf) {
       //   fileStoreIds.delete(ADiarypdf);
