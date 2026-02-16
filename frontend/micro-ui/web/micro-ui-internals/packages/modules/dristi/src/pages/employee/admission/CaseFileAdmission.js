@@ -20,7 +20,13 @@ import {
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
-import { getAuthorizedUuid, getCaseEditAllowedAssignees, getFilingType, runComprehensiveSanitizer } from "../../../Utils";
+import {
+  advocateCaseFilingStatusTypes,
+  getAuthorizedUuid,
+  getCaseEditAllowedAssignees,
+  getFilingType,
+  runComprehensiveSanitizer,
+} from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
@@ -598,6 +604,18 @@ function CaseFileAdmission({ t, path }) {
     return individualData?.Individual?.[0]?.individualId;
   };
 
+  const efilingCreatorMainUser = useMemo(() => {
+    // If either an advocate or its associated members(jr. advocate/clerk) created the case.
+    const isAdvocateOfficeCreator = caseDetails?.representatives?.find(
+      (rep) => rep?.advocateFilingStatus === advocateCaseFilingStatusTypes?.CASE_OWNER
+    );
+    if (isAdvocateOfficeCreator) {
+      return isAdvocateOfficeCreator?.additionalDetails?.uuid;
+    }
+    // else if a complainant created the case
+    return caseDetails?.auditDetails?.createdBy;
+  }, [caseDetails]);
+
   const handleRegisterCase = async () => {
     setIsDisabled(true);
     setCaseADmitLoader(true);
@@ -666,7 +684,7 @@ function CaseFileAdmission({ t, path }) {
                       artifactType: documentTypeMapping[data?.key],
                       sourceType: "COMPLAINANT",
                       sourceID: individualId,
-                      asUser: userInfo?.uuid,
+                      asUser: efilingCreatorMainUser, // Sending uuid of the main advocate even if clerk/jr. adv has filed/edited the case.
                       caseId: caseDetails?.id,
                       filingNumber: caseDetails?.filingNumber,
                       cnrNumber: res?.cases?.[0]?.cnrNumber,
@@ -784,7 +802,7 @@ function CaseFileAdmission({ t, path }) {
         cnrNumber: caseDetails?.cnrNumber,
         cmpNumber: caseDetails?.cmpNumber,
         caseId: caseDetails?.id,
-        asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
+        asUser: efilingCreatorMainUser, // Sending uuid of the main advocate even if clerk/jr. adv has filed/edited the case.
         createdDate: new Date().getTime(),
         applicationType: "DELAY_CONDONATION",
         status: caseDetails?.status,
@@ -802,7 +820,7 @@ function CaseFileAdmission({ t, path }) {
         comment: [],
         workflow: {
           id: "workflow123",
-          action: SubmissionWorkflowAction.SUBMIT,
+          action: SubmissionWorkflowAction.CREATE,
           status: "in_progress",
           comments: "Workflow comments",
           documents: [{}],
