@@ -2714,6 +2714,15 @@ export const configsAdvancementOrAdjournment = [
         },
       },
       {
+        label: "hearing purpose",
+        isMandatory: false,
+        key: "initialHearingPurpose",
+        disable: true,
+        type: "text",
+        schemaKeyPath: "applicationDetails.initialHearingPurpose",
+        populators: { name: "initialHearingPurpose", customStyle: { display: "none" } },
+      },
+      {
         inline: true,
         label: "ORIGINAL_HEARING_DATE",
         disable: true,
@@ -2725,6 +2734,21 @@ export const configsAdvancementOrAdjournment = [
         populators: {
           name: "initialHearingDate",
           error: "CORE_REQUIRED_FIELD_ERROR",
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomNote",
+        key: "bulkDateInputNote",
+        populators: {
+          inputs: [
+            {
+              infoHeader: "CS_COMMON_NOTE",
+              infoText: "SELECT_MULTIPLE_DATE_INFO_MESSAGE",
+              showTooltip: true,
+              type: "InfoComponent",
+            },
+          ],
         },
       },
       {
@@ -2760,6 +2784,8 @@ export const configsAdvancementOrAdjournment = [
         isMandatory: true,
         key: "isAllPartiesAgreed",
         type: "radio",
+        schemaKeyPath: "applicationDetails.isAllPartiesAgreed",
+        transformer: "customDropdown",
         populators: {
           name: "isAllPartiesAgreed",
           optionsKey: "name",
