@@ -217,6 +217,7 @@ export const UICustomizations = {
         ...("sortBy" in additionalDetails && {
           [additionalDetails.sortBy]: undefined,
           sortBy: undefined,
+          activeTab: undefined,
         }),
         ...(requestCriteria?.body?.criteria?.outcome && {
           outcome: outcomeTypeData,
@@ -324,6 +325,7 @@ export const UICustomizations = {
         ...("sortBy" in additionalDetails && {
           [additionalDetails.sortBy]: undefined,
           sortBy: undefined,
+          activeTab: undefined,
         }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
@@ -416,6 +418,7 @@ export const UICustomizations = {
         ...("sortBy" in additionalDetails && {
           [additionalDetails.sortBy]: undefined,
           sortBy: undefined,
+          activeTab: undefined,
         }),
         ...(requestCriteria?.body?.criteria?.outcome && {
           outcome: outcomeTypeData,
