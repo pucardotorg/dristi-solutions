@@ -19,6 +19,7 @@ import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import CustomPopUp from "./CustomPopUp";
 import CustomReviewCard from "./CustomReviewCard";
 import ImageModal from "./ImageModal";
+import { sanitizeData } from "../Utils";
 
 const extractValue = (data, key) => {
   if (!key.includes(".")) {
@@ -665,7 +666,8 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
               value={scrutinyError}
               onChange={(e) => {
                 const { value } = e.target;
-                setScrutinyError(value);
+                const newValue = sanitizeData(value);
+                setScrutinyError(newValue);
               }}
               maxlength={config.textAreaMaxLength || "255"}
               style={{ minWidth: "300px", maxWidth: "300px", maxHeight: "150px", minHeight: "50px" }}

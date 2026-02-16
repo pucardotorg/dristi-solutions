@@ -125,6 +125,11 @@ const formatDate = (date) => {
 
 const AdmittedCaseV2 = () => {
   const { t } = useTranslation();
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+
+  const [apiCalled, setApiCalled] = useState(false);
+  const [passOver, setPassOver] = useState(false);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
   const location = useLocation();
   const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
@@ -140,11 +145,6 @@ const AdmittedCaseV2 = () => {
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
   const userRoles = useMemo(() => roles.map((role) => role.code), [roles]);
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-
-  const [apiCalled, setApiCalled] = useState(false);
-  const [passOver, setPassOver] = useState(false);
-  const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
   const [showWitnessModal, setShowWitnessModal] = useState(false);
   const [showExaminationModal, setShowExaminationModal] = useState(openExaminationModal || false);

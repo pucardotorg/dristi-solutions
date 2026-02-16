@@ -30,7 +30,7 @@ const SelectOtp = ({
   const location = useLocation();
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
-  const [timeLeft, setTimeLeft] = useState(25);
+  const [timeLeft, setTimeLeft] = useState(60);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [user, setUser] = useState(null);
 

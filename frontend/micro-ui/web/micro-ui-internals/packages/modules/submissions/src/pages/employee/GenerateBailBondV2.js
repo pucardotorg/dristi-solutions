@@ -9,7 +9,7 @@ import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/d
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory, useLocation } from "react-router-dom";
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
-import { combineMultipleFiles, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { submissionService } from "../../hooks/services";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionWorkflow";
@@ -574,7 +574,7 @@ const GenerateBailBondV2 = () => {
   };
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-    // Continue with the existing validation logic
+    runComprehensiveSanitizer({ formData, setValue });
     if (formData?.bailAmount <= 0 && !Object.keys(formState?.errors).includes("bailAmount")) {
       setError("bailAmount", { message: t("Must be greater than zero") });
     } else if (formData?.bailAmount > 0 && Object.keys(formState?.errors).includes("bailAmount")) {

@@ -216,6 +216,55 @@ export const showToastForComplainant = ({ formData, setValue, selected, setSucce
   }
 };
 
+export const sanitizeInput = (input) => {
+  if (!input) return "";
+
+  let sanitized = String(input);
+
+  // Remove script blocks completely
+  sanitized = sanitized.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+
+  // Remove iframes
+  sanitized = sanitized.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "");
+
+  // Remove dangerous elements
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>/gi, "");
+
+  // Remove event handlers
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*(["'])(?:[\s\S]*?)\1/gi, "");
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^\s>]+/gi, "");
+
+  // Remove javascript: protocol
+  sanitized = sanitized.replace(/\bjavascript:/gi, "");
+
+  // Remove ALL HTML tags
+  sanitized = sanitized.replace(/<\/?[a-z][\w:-]*\b[^>]*>/gi, "");
+
+  return sanitized;
+};
+
+export const runGenericTextSanitizer = ({ formData, setValue }) => {
+  if (!formData || typeof formData !== "object") return;
+
+  Object.keys(formData).forEach((key) => {
+    const value = formData[key];
+
+    if (typeof value === "string") {
+      const sanitized = sanitizeInput(value);
+      if (sanitized !== value) {
+        const element = document?.querySelector(`[name="${key}"]`);
+        const start = element?.selectionStart;
+        const end = element?.selectionEnd;
+        setValue(key, sanitized);
+        setTimeout(() => {
+          element?.setSelectionRange(start, end);
+        }, 0);
+      }
+    }
+  });
+};
+
 export const checkIfscValidation = ({ formData, setValue, selected }) => {
   if (selected === "chequeDetails") {
     const formDataCopy = structuredClone(formData);
@@ -1455,7 +1504,7 @@ export const onDocumentUpload = async (documentType = "Document", fileData, file
     const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
     return { file: fileUploadRes?.data, fileType: fileData.type, filename };
   } catch (error) {
-    throw new DocumentUploadError(`Document upload failed: ${error.message}`, documentType);
+    throw new DocumentUploadError(`Document upload failed: ${error.message}`, documentType, error?.response?.data?.Errors?.[0]?.code);
   }
 };
 

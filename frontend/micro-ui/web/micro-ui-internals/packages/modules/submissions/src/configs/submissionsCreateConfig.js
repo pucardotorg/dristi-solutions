@@ -2686,7 +2686,6 @@ export const poaClaimingConfig = [
 
 export const configsAdvancementOrAdjournment = [
   {
-    body: [
       {
         label: "refHearingId",
         isMandatory: false,

@@ -10,7 +10,7 @@ import { RightArrow } from "../../../icons/svgIndex";
 import isEqual from "lodash/isEqual";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 import { useToast } from "../../../components/Toast/useToast";
-import { documentLabels, getFilingType } from "../../../Utils";
+import { documentLabels, getFilingType, runComprehensiveSanitizer } from "../../../Utils";
 import {
   editCheckDuplicateMobileEmailValidation,
   editCheckNameValidation,
@@ -606,6 +606,7 @@ const EditProfile = ({ path }) => {
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index, currentDisplayIndex) => {
     editCheckNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
+    runComprehensiveSanitizer({ formData, setValue });
     if (!isEqual(formData, formdata[index].data)) {
       editCheckDuplicateMobileEmailValidation({
         formData,

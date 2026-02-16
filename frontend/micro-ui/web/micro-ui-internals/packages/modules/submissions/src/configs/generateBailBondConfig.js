@@ -76,7 +76,7 @@ export const bailBondConfig = [
           ],
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
-      }
+      },
     ],
   },
   {

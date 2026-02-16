@@ -8,6 +8,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import { generateUUID } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
   keys.forEach((key) => {
@@ -61,6 +62,7 @@ const AddOrderTypeModal = ({
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     applyMultiSelectDropdownFix(setValue, formData, multiSelectDropdownKeys);
+    runComprehensiveSanitizer({ formData, setValue });
 
     const currentOrderType = orderType?.code || "";
 
@@ -117,8 +119,8 @@ const AddOrderTypeModal = ({
       }
     }
 
-    if(currentOrderType && ["ACCEPT_RESCHEDULING_REQUEST"].includes(currentOrderType)) {
-      if(formData?.newHearingDate && Object.keys(formState?.errors).includes("newHearingDate")) {
+    if (currentOrderType && ["ACCEPT_RESCHEDULING_REQUEST"].includes(currentOrderType)) {
+      if (formData?.newHearingDate && Object.keys(formState?.errors).includes("newHearingDate")) {
         clearFormErrors?.current?.[index]?.("newHearingDate");
       }
     }
@@ -432,8 +434,8 @@ const AddOrderTypeModal = ({
 
                 // Show OrderType for Take Cognizance order
                 if (orderType?.code === "TAKE_COGNIZANCE") {
-                  effectiveConfig.forEach(section => {
-                    section.body.forEach(field => {
+                  effectiveConfig.forEach((section) => {
+                    section.body.forEach((field) => {
                       if (field.populators?.customStyle) {
                         delete field.populators.customStyle;
                       }
