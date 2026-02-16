@@ -1291,7 +1291,7 @@ const EvidenceModal = ({
                       </div>
                     </div>
                   )}
-                  {createdByName && (
+                  {/* {createdByName && (
                     <div className="info-row">
                       <div className="info-key">
                         <h3>{t("CREATED_BY")}</h3>
@@ -1300,7 +1300,7 @@ const EvidenceModal = ({
                         <h3>{createdByName}</h3>
                       </div>
                     </div>
-                  )}
+                  )} */}
                   {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingDate && (
                     <div className="info-row">
                       <div className="info-key">
