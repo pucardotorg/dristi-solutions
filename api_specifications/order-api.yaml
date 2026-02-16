@@ -28,22 +28,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/OrderRequest'
-            example:
-              requestInfo:
-                apiId: Rainmaker
-                authToken: <AUTH_TOKEN>
-                msgId: 1730977593273|en_IN
-              order:
-                tenantId: kl
-                filingNumber: KL-000105-2024
-                cnrNumber: KLKM520001742024
-                hearingNumber: KL-000105-2024-HR1
-                orderType: SUMMONS
-                status: DRAFT_IN_PROGRESS
-                isActive: true
-                createdDate: 1730794124145
-                additionalDetails:
-                  isReIssueSummons: true
       responses:
         '201':
           description: Order successfully created
@@ -62,14 +46,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/OrderRequest'
-            example:
-              requestInfo:
-                apiId: Rainmaker
-                authToken: <AUTH_TOKEN>
-              order:
-                id: 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
-                status: ISSUED
-                isActive: true
       responses:
         '200':
           description: Order successfully updated
@@ -88,17 +64,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/OrderSearchRequest'
-            example:
-              requestInfo:
-                apiId: Rainmaker
-                authToken: <AUTH_TOKEN>
-                msgId: 1730970507148|en_IN
-              criteria:
-                tenantId: kl
-                filingNumber: KL-000105-2024
-              pagination:
-                limit: 10
-                offset: 0
       responses:
         '200':
           description: Search results
@@ -117,12 +82,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/OrderExistsRequest'
-            example:
-              requestInfo:
-                apiId: Rainmaker
-                authToken: <AUTH_TOKEN>
-              orderIds:
-                - 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
       responses:
         '200':
           description: Existence check response
@@ -166,10 +125,8 @@ components:
         id:
           type: string
           format: uuid
-          example: 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
         tenantId:
           type: string
-          example: kl
         filingNumber:
           type: string
         cnrNumber:
@@ -178,13 +135,10 @@ components:
           type: string
         orderNumber:
           type: string
-          example: KL-000105-2024-OR3
         orderType:
           type: string
-          example: SUMMONS
         status:
           type: string
-          example: DRAFT_IN_PROGRESS
         isActive:
           type: boolean
         createdDate:
@@ -223,12 +177,13 @@ components:
       properties:
         responseInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
-        list:
+        orders:
           type: array
           items:
             $ref: '#/components/schemas/Order'
         totalCount:
           type: integer
+          description: Total number of records matching search criteria
 
     OrderExistsRequest:
       type: object

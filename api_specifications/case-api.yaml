@@ -30,7 +30,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CaseRequest'
       responses:
-        '201':
+        '200':
           description: Case created
           content:
             application/json:
@@ -156,7 +156,7 @@ components:
   schemas:
 
     # -------------------------------
-    # WRAPPER REQUEST / RESPONSE
+    # WRAPPERS
     # -------------------------------
 
     CaseRequest:
@@ -252,13 +252,14 @@ components:
           type: array
           items:
             type: object
+            required: [caseId, partyId, address]
             properties:
               caseId:
                 type: string
               partyId:
                 type: string
               address:
-                type: object
+                $ref: '#/components/schemas/Address'
 
     AddressResponse:
       type: object
@@ -269,6 +270,13 @@ components:
           type: array
           items:
             type: object
+            properties:
+              caseId:
+                type: string
+              partyId:
+                type: string
+              address:
+                $ref: '#/components/schemas/Address'
 
     CasePdfRequest:
       type: object
@@ -298,6 +306,10 @@ components:
 
     CourtCase:
       type: object
+      required:
+        - tenantId
+        - id
+        - caseTitle
       properties:
         id:
           type: string
@@ -320,6 +332,31 @@ components:
           $ref: '#/components/schemas/Workflow'
         auditDetails:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
+
+    Address:
+      type: object
+      required:
+        - doorNo
+        - street
+        - city
+        - district
+        - state
+        - pincode
+      properties:
+        doorNo:
+          type: string
+        street:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        country:
+          type: string
 
     CaseSearchCriteria:
       type: object

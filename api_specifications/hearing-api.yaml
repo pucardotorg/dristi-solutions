@@ -14,6 +14,9 @@ tags:
   - name: Witness Depositions
   - name: Bulk
 
+security:
+  - bearerAuth: []
+
 paths:
 
   /v1/_create:
@@ -26,35 +29,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/HearingRequest'
-            example:
-              requestInfo:
-                apiId: Rainmaker
-                authToken: <AUTH_TOKEN>
-                msgId: 1730978058982|en_IN
-              tenantId: kl
-              hearing:
-                tenantId: kl
-                filingNumber:
-                  - KL-000105-2024
-                cnrNumbers:
-                  - KLKM520001742024
-                hearingType: APPEARANCE
-                status: SCHEDULED
-                attendees:
-                  - name: Anandu Menon
-                    individualId: IND-2024-09-24-000370
-                    type: Complainant
-                  - name: Rithik Behera
-                    individualId: IND-2024-10-30-000636
-                    type: Advocate
-                startTime: 1731283200000
-                endTime: 1731286800000
-                presidedBy:
-                  judgeId:
-                    - JUDGE_001
-                  benchId: BENCH_01
-                  courtId: KLKM52
-
       responses:
         '200':
           description: Hearing created
@@ -135,57 +109,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/UpdateTimeResponse'
 
-  /v1/bulk/_reschedule:
-    post:
-      tags: [Bulk]
-      summary: Bulk reschedule hearings
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/BulkRescheduleRequest'
-      responses:
-        '202':
-          description: Bulk reschedule accepted
-
-  /v1/bulk/_update:
-    post:
-      tags: [Bulk]
-      summary: Bulk update hearings
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HearingUpdateBulkRequest'
-      responses:
-        '202':
-          description: Bulk update accepted
-
-  /witnessDeposition/v1/uploadPdf:
-    post:
-      tags: [Witness Depositions]
-      summary: Upload deposition PDF
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              required: [hearingId, file]
-              properties:
-                hearingId:
-                  type: string
-                  format: uuid
-                file:
-                  type: string
-                  format: binary
-      responses:
-        '200':
-          description: Deposition uploaded successfully
-
 components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 
   schemas:
 
@@ -216,6 +146,8 @@ components:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
         criteria:
           $ref: '#/components/schemas/HearingSearchCriteria'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
 
     HearingSearchResponse:
       type: object
@@ -226,6 +158,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Hearing'
+        totalCount:
+          type: integer
+          description: Total number of records matching search criteria
 
     HearingExistsRequest:
       type: object
@@ -265,30 +200,20 @@ components:
         responseInfo:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo"
 
-    BulkRescheduleRequest:
+    Pagination:
       type: object
-      required: [requestInfo, hearingIds, newDate]
       properties:
-        requestInfo:
-          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
-        hearingIds:
-          type: array
-          items:
-            type: string
-            format: uuid
-        newDate:
+        limit:
           type: integer
-
-    HearingUpdateBulkRequest:
-      type: object
-      required: [requestInfo, hearings]
-      properties:
-        requestInfo:
-          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
-        hearings:
-          type: array
-          items:
-            $ref: '#/components/schemas/Hearing'
+          default: 10
+        offset:
+          type: integer
+          default: 0
+        sortBy:
+          type: string
+        order:
+          type: string
+          enum: [ASC, DESC]
 
     Hearing:
       type: object
@@ -297,7 +222,6 @@ components:
         id:
           type: string
           format: uuid
-          example: 7d9fcb5a-1a6e-4a4b-8c6f-3bfa1d2d9d22
         tenantId:
           type: string
         filingNumber:
@@ -310,7 +234,6 @@ components:
             type: string
         hearingType:
           type: string
-          example: APPEARANCE
         status:
           type: string
           enum: [SCHEDULED, COMPLETED, CANCELLED, ADJOURNED]
@@ -322,10 +245,6 @@ components:
           type: integer
         endTime:
           type: integer
-        documents:
-          type: array
-          items:
-            type: object
         presidedBy:
           $ref: '#/components/schemas/PresidedBy'
         auditDetails:

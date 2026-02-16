@@ -30,18 +30,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TaskRequest'
-            example:
-              requestInfo:
-                apiId: Dristi
-                authToken: <AUTH_TOKEN>
-                msgId: 1712345678901|en_IN
-              task:
-                tenantId: kl
-                title: Verify Bail Bond
-                description: Verify submitted bail bond documents
-                priority: HIGH
-                status: PENDING
-                assignee: 111e4567-e89b-12d3-a456-426614174000
       responses:
         '201':
           description: Task created
@@ -60,14 +48,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TaskRequest'
-            example:
-              requestInfo:
-                apiId: Dristi
-                authToken: <AUTH_TOKEN>
-              task:
-                id: 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
-                tenantId: kl
-                status: IN_PROGRESS
       responses:
         '200':
           description: Task updated
@@ -86,18 +66,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TaskSearchRequest'
-            example:
-              requestInfo:
-                apiId: Dristi
-                authToken: <AUTH_TOKEN>
-                msgId: 1770615520763|en_IN
-              criteria:
-                tenantId: kl
-                taskNumber: KL-000734-2026-TK1
-                courtId: KLKM52
-              pagination:
-                limit: 10
-                offset: 0
       responses:
         '200':
           description: Task search result
@@ -116,15 +84,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/TaskAssignmentRequest'
-            example:
-              requestInfo:
-                apiId: Dristi
-                authToken: <AUTH_TOKEN>
-              tenantId: kl
-              taskIds:
-                - 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
-              assignee: 111e4567-e89b-12d3-a456-426614174000
-              comment: Assigning for verification
       responses:
         '202':
           description: Assignment accepted
@@ -159,33 +118,26 @@ components:
         id:
           type: string
           format: uuid
-          example: 03cbbf4d-42ac-4c99-8bba-2e548a7d2f18
 
         taskNumber:
           type: string
-          example: KL-000734-2026-TK1
 
         tenantId:
           type: string
-          example: kl
 
         title:
           type: string
-          example: Verify Bail Bond
 
         description:
           type: string
-          example: Verify submitted bail bond documents
 
         status:
           type: string
           enum: [PENDING, IN_PROGRESS, COMPLETED, CANCELLED]
-          example: PENDING
 
         priority:
           type: string
           enum: [HIGH, MEDIUM, LOW]
-          example: HIGH
 
         assignee:
           type: string
@@ -196,8 +148,6 @@ components:
 
         additionalDetails:
           type: object
-          example:
-            caseId: 2f6fe4ae-352f-420d-b243-679191b4ba01
 
         auditDetails:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
@@ -207,10 +157,8 @@ components:
       properties:
         action:
           type: string
-          example: ASSIGN
         comments:
           type: string
-          example: Assigned for verification
         assignees:
           type: array
           items:
@@ -234,16 +182,12 @@ components:
       properties:
         tenantId:
           type: string
-          example: kl
         taskNumber:
           type: string
-          example: KL-000734-2026-TK1
         courtId:
           type: string
-          example: KLKM52
         status:
           type: string
-          example: PENDING
         assignee:
           type: string
           format: uuid
@@ -265,8 +209,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Task'
-        pagination:
-          $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination"
+        totalCount:
+          type: integer
+          description: Total number of records matching search criteria
 
     TaskAssignmentRequest:
       type: object
@@ -276,7 +221,6 @@ components:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo"
         tenantId:
           type: string
-          example: kl
         taskIds:
           type: array
           items:
@@ -287,7 +231,6 @@ components:
           format: uuid
         comment:
           type: string
-          example: Assigning for verification
 
     TaskAssignmentResponse:
       type: object
