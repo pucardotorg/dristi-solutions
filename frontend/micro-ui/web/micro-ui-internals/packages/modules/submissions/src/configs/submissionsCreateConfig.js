@@ -2728,6 +2728,21 @@ export const configsAdvancementOrAdjournment = [
         },
       },
       {
+        type: "component",
+        component: "SelectCustomNote",
+        key: "bulkDateInputNote",
+        populators: {
+          inputs: [
+            {
+              infoHeader: "CS_COMMON_NOTE",
+              infoText: "SELECT_MULTIPLE_DATE_INFO_MESSAGE",
+              showTooltip: true,
+              type: "InfoComponent",
+            },
+          ],
+        },
+      },
+      {
         key: "newHearingDates",
         type: "component",
         label: "SUGGESTED_NEW_HEARING_DATES",
@@ -2760,6 +2775,8 @@ export const configsAdvancementOrAdjournment = [
         isMandatory: true,
         key: "isAllPartiesAgreed",
         type: "radio",
+        schemaKeyPath: "applicationDetails.isAllPartiesAgreed",
+        transformer: "customDropdown",
         populators: {
           name: "isAllPartiesAgreed",
           optionsKey: "name",
