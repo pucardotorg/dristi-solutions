@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useHistory } from "react-router-dom";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
 
@@ -18,6 +19,7 @@ const DeleteIcon = () => (
 
 const ManageOffice = () => {
   const { t } = useTranslation();
+  const history = useHistory();
   const tenantId = window?.Digit?.ULBService?.getCurrentTenantId();
   const userInfo = window?.Digit?.UserService?.getUser()?.info;
 
@@ -446,7 +448,18 @@ const ManageOffice = () => {
                 key={member.id || member.memberId}
                 className={`manage-office-table-row${activeTab === "advocatesWorkingFor" ? " manage-office-table-row--working-for" : ""}`}
               >
-                <span className={activeTab === "advocatesWorkingFor" ? "manage-office-name" : "manage-office-name manage-office-name--clickable"}>
+                <span
+                  className={activeTab === "advocatesWorkingFor" ? "manage-office-name" : "manage-office-name manage-office-name--clickable"}
+                  role={activeTab === "myAdvocatesClerks" ? "button" : undefined}
+                  onClick={
+                    activeTab === "myAdvocatesClerks"
+                      ? () =>
+                          history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office/manage-member`, {
+                            member,
+                          })
+                      : undefined
+                  }
+                >
                   {activeTab === "advocatesWorkingFor" ? member?.officeAdvocateName || member?.memberName : member?.memberName}
                 </span>
                 <span>{member?.memberMobileNumber || member?.officeAdvocateMobileNumber}</span>

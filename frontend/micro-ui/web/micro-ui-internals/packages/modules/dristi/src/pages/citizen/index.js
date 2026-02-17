@@ -8,6 +8,7 @@ import ApplicationDetails from "../employee/ApplicationDetails";
 import CitizenHome from "./Home";
 import LandingPage from "./Home/LandingPage";
 import ManageOffice from "./Home/ManageOffice";
+import ManageOfficeMember from "./Home/ManageOfficeMember";
 import { newConfig, userTypeOptions } from "./registration/config";
 import Breadcrumb from "../../components/BreadCrumb";
 import SelectEmail from "./registration/SelectEmail";
@@ -139,6 +140,12 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
       path: `${path}/home/manage-office`,
       content: t("OFFICE_MANAGEMENT") || "Office Management",
       show: location.pathname.includes("/manage-office"),
+      isLast: !location.pathname.includes("/manage-member"),
+    },
+    {
+      path: `${path}/home/manage-office/manage-member`,
+      content: t("MANAGE_MEMBER") || "Manage Member",
+      show: location.pathname.includes("/manage-member"),
       isLast: true,
     },
   ];
@@ -254,7 +261,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
             </div>
           )}
           {((location.pathname.includes("/view-case") && location.pathname.includes("/edit-profile")) ||
-            location.pathname.includes("/manage-office")) && <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 48 }}></Breadcrumb>}
+            location.pathname.includes("/manage-office") ||
+            location.pathname.includes("/manage-member")) && <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 48 }}></Breadcrumb>}
 
           {userType !== "LITIGANT" && (
             <PrivateRoute exact path={`${path}/home/application-details`} component={(props) => <ApplicationDetails {...props} />} />
@@ -290,6 +298,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
           </PrivateRoute>
           <PrivateRoute exact path={`${path}/home/manage-office`}>
             <ManageOffice />
+          </PrivateRoute>
+          <PrivateRoute exact path={`${path}/home/manage-office/manage-member`}>
+            <ManageOfficeMember />
           </PrivateRoute>
           <div
             className={
