@@ -993,7 +993,7 @@ const ComplainantSignature = ({ path }) => {
     };
 
     esignCaseUpdate();
-  }, [isEsignSuccess, caseDetails]);
+  }, [isEsignSuccess, caseDetails, state]);
 
   useEffect(() => {
     const handleCaseUnlocking = async () => {
