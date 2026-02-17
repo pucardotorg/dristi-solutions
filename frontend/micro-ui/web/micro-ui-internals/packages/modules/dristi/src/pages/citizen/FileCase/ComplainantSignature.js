@@ -1026,17 +1026,18 @@ const ComplainantSignature = ({ path }) => {
       if (isSignSuccess === "success" && matchedSignStatus) {
         const fileStoreId = sessionStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
-        setEsignSuccess(true);
       }
     }
     if (esignProcess && caseDetails?.filingNumber) {
       handleCaseUnlocking();
-      sessionStorage.removeItem("esignProcess");
     }
 
-    sessionStorage.removeItem("isSignSuccess");
-    localStorage.removeItem("signStatus");
-    sessionStorage.removeItem("fileStoreId");
+    setTimeout(() => {
+      sessionStorage.removeItem("esignProcess");
+      sessionStorage.removeItem("isSignSuccess");
+      localStorage.removeItem("signStatus");
+      sessionStorage.removeItem("fileStoreId");
+    }, 3000);
   }, [caseDetails, tenantId]);
 
   const isRightPannelEnable = () => {
