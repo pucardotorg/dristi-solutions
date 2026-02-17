@@ -23,7 +23,7 @@
     "@egovernments/digit-ui-module-home": "0.0.1",
     "@egovernments/digit-ui-module-orders": "0.0.1",
     "@egovernments/digit-ui-module-submissions": "0.0.1",
-    "@egovernments/digit-ui-react-components": "1.8.2-beta.11",
+    "@egovernments/digit-ui-react-components": "1.9.0",
     "jszip": "^3.10.1",
     "dristi-ui-css": "0.1.0-dristi-kerala.2",
     "babel-loader": "8.1.0",
