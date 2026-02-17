@@ -26,19 +26,7 @@ const ManageOfficeMember = () => {
   const designation = member?.memberType === "ADVOCATE_CLERK" ? (t("CLERK") || "Clerk") : member?.memberType === "ADVOCATE" ? (t("ADVOCATE") || "Advocate") : member?.memberType || "—";
   const mobileNumber = member?.memberMobileNumber ? `+91 ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(0, 5)} ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(5)}` : "—";
 
-  const assignCasesConfigWithTenant = useMemo(
-    () => ({
-      ...assignCasesConfig,
-      apiDetails: {
-        ...assignCasesConfig.apiDetails,
-        requestBody: {
-          tenantId: tenantId || "",
-          criteria: [{ tenantId: tenantId || "" }],
-        },
-      },
-    }),
-    [tenantId]
-  );
+  const assignCasesConfigWithTenant = useMemo(() => assignCasesConfig(), []);
 
   const handleGoBack = () => {
     history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office`);
@@ -112,6 +100,7 @@ const ManageOfficeMember = () => {
       </div>
 
       <div className="assign-cases-section">
+        <h2 className="assign-cases-section-title">{t("ASSIGN_CASES") || "Assign Cases"}</h2>
         <div className="inbox-search-wrapper manage-office-member-inbox">
           <InboxSearchComposer
             customStyle={sectionsParentStyle}

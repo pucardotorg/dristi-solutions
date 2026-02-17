@@ -681,6 +681,33 @@
 
 .assign-cases-section {
   margin-bottom: 24px;
+
+  .assign-cases-section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #231f20;
+    margin: 0 0 1rem;
+  }
+
+  .assign-cases-controls {
+    margin-bottom: 1rem;
+  }
+
+  .assign-cases-assign-all-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .assign-cases-assign-all-label {
+    font-size: 14px;
+    font-weight: 400;
+    color: #231f20;
+  }
+
+  .assign-cases-assign-all-select {
+    min-width: 120px;
+  }
 }
 
 .manage-office-member-inbox {

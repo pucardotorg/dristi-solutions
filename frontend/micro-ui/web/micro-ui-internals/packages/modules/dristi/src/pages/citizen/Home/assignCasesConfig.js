@@ -2,76 +2,81 @@
  * Config for Assign Cases section on Manage Office Member page.
  * Uses case/v1/_search for case search.
  */
-export const assignCasesConfig = {
-  label: "ASSIGN_CASES",
-  type: "inbox",
-  apiDetails: {
-    serviceName: "/case/v1/_search",
-    requestParam: {},
-    requestBody: {
-      criteria: [{}],
+export const assignCasesConfig = () => {
+  return {
+    type: "search",
+    apiDetails: {
+      serviceName: "/case/v1/_search",
+      requestParam: {
+        tenantId: Digit.ULBService.getCurrentTenantId(),
+      },
+      requestBody: {
+        tenantId: Digit.ULBService.getCurrentTenantId(),
+        criteria: [],
+      },
+      masterName: "commonUiConfig",
+      moduleName: "assignCasesConfig",
+      minParametersForSearchForm: 1,
+      tableFormJsonPath: "requestParam",
+      filterFormJsonPath: "requestBody.criteria.[0]",
+      searchFormJsonPath: "requestBody.criteria.[0]",
     },
-    minParametersForSearchForm: 0,
-    masterName: "commonUiConfig",
-    moduleName: "assignCasesConfig",
-    searchFormJsonPath: "requestBody.criteria[0]",
-    tableFormJsonPath: "requestBody.inbox",
-  },
-  sections: {
-    search: {
-      uiConfig: {
-        headerStyle: null,
-        type: "registration-requests-table-search",
-        primaryLabel: "ES_COMMON_SEARCH",
-        secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
-        minReqFields: 0,
-        defaultValues: {
-          filingNumber: "",
-        },
-        fields: [
-          {
-            label: "SEARCH_CASE_NAME_OR_NUMBER",
-            type: "text",
-            isMandatory: false,
-            disable: false,
-            populators: {
-              name: "filingNumber",
-              error: "BR_PATTERN_ERR_MSG",
-              validation: {
-                pattern: {},
-                minlength: 0,
+    sections: {
+      search: {
+        uiConfig: {
+          formClassName: "custom-both-clear-search",
+          primaryLabel: "ES_COMMON_SEARCH",
+          secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+          minReqFields: 0,
+          defaultValues: {
+            assignAll: "ASSIGN_ALL",
+            filingNumber: "",
+          },
+          fields: [
+            {
+              label: "ASSIGN",
+              isMandatory: false,
+              key: "assignAll",
+              type: "dropdown",
+              populators: {
+                name: "assignAll",
+                optionsKey: "name",
+                error: "Should not be empty",
+                options: [{ code: "ASSIGN_ALL", name: "Assign All" }],
               },
             },
-          },
-        ],
+            {
+              label: "SEARCH_CASE_NAME_OR_NUMBER",
+              isMandatory: false,
+              key: "filingNumber",
+              type: "text",
+              populators: {
+                name: "filingNumber",
+                error: "Should not be empty",
+              },
+            },
+          ],
+        },
+        show: true,
       },
-      label: "ASSIGN_CASES",
-      children: {},
-      show: true,
-    },
-    searchResult: {
-      label: "",
-      uiConfig: {
-        columns: [
-          {
-            label: "CASE_NAME",
-            jsonPath: "caseTitle",
-            additionalCustomization: true,
-          },
-          {
-            label: "CASE_NUMBER",
-            jsonPath: "filingNumber",
-            additionalCustomization: true,
-          },
-        ],
-        enableGlobalSearch: false,
-        enableColumnSort: true,
-        resultsJsonPath: "criteria[0].responseList",
+      searchResult: {
+        tenantId: Digit.ULBService.getCurrentTenantId(),
+        uiConfig: {
+          columns: [
+            {
+              label: "CASE_NAME",
+              jsonPath: "caseTitle",
+            },
+            {
+              label: "CASE_NUMBER",
+              jsonPath: "filingNumber",
+            },
+          ],
+          enableColumnSort: true,
+          resultsJsonPath: "criteria.[0].responseList",
+        },
+        show: true,
       },
-      children: {},
-      show: true,
     },
-  },
-  additionalSections: {},
-  additionalDetails: "filingNumber",
+  };
 };
