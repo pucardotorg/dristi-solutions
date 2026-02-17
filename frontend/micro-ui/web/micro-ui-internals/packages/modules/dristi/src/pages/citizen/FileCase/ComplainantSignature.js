@@ -279,7 +279,7 @@ const ComplainantSignature = ({ path }) => {
       tenantId,
     },
     {},
-    `case-details-${filingNumber}`,
+    `case-details-${filingNumber}-${isEsignSuccess}`,
     filingNumber,
     Boolean(filingNumber)
   );
@@ -992,7 +992,7 @@ const ComplainantSignature = ({ path }) => {
     const esignCaseUpdate = async () => {
       console.log("useeffect1", isLoading, isEsignSuccess, caseDetails?.filingNumber);
 
-      if (!isLoading && isEsignSuccess && caseDetails?.filingNumber) {
+      if (isEsignSuccess && caseDetails?.filingNumber) {
         await updateCase(state).then(async () => {
           console.log("useeffect123", isLoading, isEsignSuccess, caseDetails?.filingNumber);
           await refetchCaseData();
@@ -1002,10 +1002,15 @@ const ComplainantSignature = ({ path }) => {
     };
 
     esignCaseUpdate();
-  }, [isEsignSuccess, caseDetails, isLoading]);
+  }, [isEsignSuccess, caseDetails?.filingNumber]);
+
+  useEffect(() => {
+    console.log("remounted");
+  }, []);
 
   useEffect(() => {
     console.log("set-esign");
+    if (!caseDetails?.filingNumber || isLoading) return;
 
     const handleCaseUnlocking = async () => {
       await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
@@ -1030,16 +1035,14 @@ const ComplainantSignature = ({ path }) => {
       }
     }
     if (esignProcess && caseDetails?.filingNumber) {
+      sessionStorage.removeItem("esignProcess");
       handleCaseUnlocking();
     }
 
-    setTimeout(() => {
-      sessionStorage.removeItem("esignProcess");
-      sessionStorage.removeItem("isSignSuccess");
-      localStorage.removeItem("signStatus");
-      sessionStorage.removeItem("fileStoreId");
-    }, 3000);
-  }, [caseDetails, tenantId]);
+    sessionStorage.removeItem("isSignSuccess");
+    localStorage.removeItem("signStatus");
+    sessionStorage.removeItem("fileStoreId");
+  }, [caseDetails, tenantId, isLoading]);
 
   const isRightPannelEnable = () => {
     if (isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) {
