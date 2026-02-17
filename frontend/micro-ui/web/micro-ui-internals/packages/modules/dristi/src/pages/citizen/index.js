@@ -226,9 +226,12 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     history.push(`${path}/home/registration/user-name`);
   }
   if (result) {
+    console.log("result", result);
     sessionStorage.setItem("isSignSuccess", result);
   }
   if (fileStoreId) {
+    console.log("fileStoreId", fileStoreId);
+
     sessionStorage.setItem("fileStoreId", fileStoreId);
   }
   if (isUserLoggedIn && retrievedObject) {

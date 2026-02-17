@@ -1005,6 +1005,8 @@ const ComplainantSignature = ({ path }) => {
   }, [isEsignSuccess, caseDetails, isLoading]);
 
   useEffect(() => {
+    console.log("set-esign");
+
     const handleCaseUnlocking = async () => {
       await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
     };
@@ -1013,9 +1015,14 @@ const ComplainantSignature = ({ path }) => {
     const storedESignObj = sessionStorage.getItem("signStatus");
     const parsedESignObj = JSON.parse(storedESignObj);
     const esignProcess = sessionStorage.getItem("esignProcess");
+    console.log("set-esign1", isSignSuccess);
 
     if (isSignSuccess) {
+      console.log("set-esign12", isSignSuccess);
+
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
+      console.log("set-esign123", isSignSuccess, matchedSignStatus);
+
       if (isSignSuccess === "success" && matchedSignStatus) {
         const fileStoreId = sessionStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
