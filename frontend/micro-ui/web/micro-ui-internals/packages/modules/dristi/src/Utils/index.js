@@ -736,9 +736,9 @@ export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
     return [createdByUuid];
   }
 
-  const ownerAdvocateUuid = isOwnerAdvocate?.additionalDetails?.uuid;
+  const ownerAdvocateId = isOwnerAdvocate?.advocateId;
   //Now we have to check all the advocates and clerks members associated with this advocate and they all can edit the case draft
-  const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateUserUuid === ownerAdvocateUuid);
+  const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateId === ownerAdvocateId);
   if (!matchingOffice) {
     // Fallback
     return [createdByUuid];
@@ -747,7 +747,7 @@ export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
   const clerks = matchingOffice?.clerks || [];
   // Collect all memberUserUuid
   const editableUsers = [
-    ownerAdvocateUuid, // senior advocate himself
+    matchingOffice?.officeAdvocateUserUuid, // senior advocate himself
     ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
     ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
   ];
