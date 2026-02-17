@@ -1026,6 +1026,7 @@ const ComplainantSignature = ({ path }) => {
       if (isSignSuccess === "success" && matchedSignStatus) {
         const fileStoreId = sessionStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
+        setEsignSuccess(true);
       }
     }
     if (esignProcess && caseDetails?.filingNumber) {
