@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { InfoCircleIcon } from "../../../icons/svgIndex";
 import { assignCasesConfig } from "./assignCasesConfig";
 
 const sectionsParentStyle = {
@@ -92,7 +93,9 @@ const ManageOfficeMember = () => {
       </div>
 
       <div className="manage-office-member-info-banner">
-        <span className="manage-office-member-info-icon" aria-hidden>ℹ</span>
+        <span className="manage-office-member-info-icon" aria-hidden>
+          <InfoCircleIcon />
+        </span>
         <span>
           {t("MANAGE_OFFICE_MEMBER_ACCESS_INFO") ||
             "The member will have complete access to all documents and details in the cases assigned to them. Please keep in mind the privacy and security of case data before sharing access."}

@@ -560,8 +560,12 @@
 }
 
 .manage-office-member-title {
-  font-size: 32px;
+  font-family: Roboto, sans-serif;
   font-weight: 700;
+  font-style: normal;
+  font-size: 32px;
+  line-height: 100%;
+  letter-spacing: 0%;
   margin-bottom: 32px;
   color: #231f20;
 }
@@ -595,15 +599,23 @@
 }
 
 .manage-office-member-detail-label {
-  font-size: 14px;
+  font-family: var(--font-family-body, Roboto, sans-serif);
   font-weight: 400;
-  color: #77787b;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1.25;
+  letter-spacing: 0%;
+  color: var(--text-muted, #64748b);
 }
 
 .manage-office-member-detail-value {
+  font-family: var(--font-family-body, Roboto, sans-serif);
+  font-weight: 600;
+  font-style: normal;
   font-size: 16px;
-  font-weight: 700;
-  color: #231f20;
+  line-height: 1.5;
+  letter-spacing: 0%;
+  color: var(--text-headings, #0f172a);
 }
 
 .manage-office-member-options {
@@ -625,9 +637,13 @@
 }
 
 .manage-office-member-option-label {
-  font-size: 16px;
+  font-family: var(--font-family-body, Roboto, sans-serif);
   font-weight: 400;
-  color: #231f20;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1.25;
+  letter-spacing: 0%;
+  color: var(--text-muted, #64748b);
   white-space: nowrap;
 }
 
@@ -674,19 +690,27 @@
 }
 
 .manage-office-member-info-icon {
-  color: #007e7e;
-  font-weight: 700;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+
+  svg {
+    display: block;
+  }
 }
 
 .assign-cases-section {
   margin-bottom: 24px;
 
   .assign-cases-section-title {
-    font-size: 1.25rem;
+    font-family: Roboto, sans-serif;
     font-weight: 700;
+    font-style: normal;
+    font-size: 32px;
+    line-height: 100%;
+    letter-spacing: 0%;
     color: #231f20;
-    margin: 0 0 1rem;
   }
 
   .assign-cases-controls {
