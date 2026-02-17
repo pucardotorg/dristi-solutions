@@ -4,6 +4,7 @@
  */
 export const assignCasesConfig = () => {
   return {
+    label: "ASSIGN_CASES",
     type: "search",
     apiDetails: {
       serviceName: "/case/v1/_search",

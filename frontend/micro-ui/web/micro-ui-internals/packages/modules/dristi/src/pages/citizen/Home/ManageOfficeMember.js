@@ -100,7 +100,7 @@ const ManageOfficeMember = () => {
       </div>
 
       <div className="assign-cases-section">
-        <h2 className="assign-cases-section-title">{t("ASSIGN_CASES") || "Assign Cases"}</h2>
+        <h2 className="assign-cases-section-title">{t(assignCasesConfigWithTenant?.label) || "Assign Cases"}</h2>
         <div className="inbox-search-wrapper manage-office-member-inbox">
           <InboxSearchComposer
             customStyle={sectionsParentStyle}
