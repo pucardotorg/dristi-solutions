@@ -364,8 +364,11 @@ export const UICustomizations = {
                   feePaidDate: taskDetail?.deliveryChannels?.feePaidDate,
                 };
               });
-            additionalDetails?.setHasTasks(taskData.length > 0);
-            return { list: taskData };
+            if (typeof additionalDetails?.setHasTasks === "function") {
+              additionalDetails.setHasTasks(taskData.length > 0);
+            }
+
+            return { list: taskData || [] };
           },
         },
       };
