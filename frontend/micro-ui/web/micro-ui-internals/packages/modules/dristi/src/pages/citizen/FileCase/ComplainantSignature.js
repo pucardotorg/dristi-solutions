@@ -219,6 +219,10 @@ const ComplainantSignature = ({ path }) => {
   const [calculationResponse, setCalculationResponse] = useState({});
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const updatedOnceRef = useRef(null);
+  const isLitigant = useMemo(() => {
+    if (userInfo?.type !== "CITIZEN") return false;
+    return !userInfo?.roles?.some((role) => role.code === "ADVOCATE_ROLE" || role.code === "ADVOCATE_CLERK_ROLE");
+  }, [userInfo]);
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -1018,12 +1022,20 @@ const ComplainantSignature = ({ path }) => {
     };
   }, []);
 
+  const clearStorage = () => {
+    sessionStorage.removeItem("esignProcess");
+    sessionStorage.removeItem("isSignSuccess");
+    localStorage.removeItem("signStatus");
+    sessionStorage.removeItem("fileStoreId");
+  };
+
   useEffect(() => {
     const esignCaseUpdate = async () => {
       const isTopbarMounted = sessionStorage.getItem("isTopbarMounted");
       console.log("useeffect1", isLoading, isEsignSuccess, caseDetails?.filingNumber, isTopbarMounted, updatedOnceRef.current);
+      const ifRemountCheck = isLitigant ? !updatedOnceRef.current : !updatedOnceRef.current && isTopbarMounted;
 
-      if (!isLoading && isEsignSuccess && caseDetails?.filingNumber && isTopbarMounted && !updatedOnceRef.current) {
+      if (!isLoading && isEsignSuccess && caseDetails?.filingNumber && ifRemountCheck) {
         await updateCase(state).then(async () => {
           console.log("useeffect123", isLoading, isEsignSuccess, caseDetails?.filingNumber);
           await refetchCaseData();
@@ -1032,11 +1044,12 @@ const ComplainantSignature = ({ path }) => {
       }
     };
 
+    if (!userInfo) return;
     esignCaseUpdate();
     return () => {
       console.log("useeffect1234", updatedOnceRef.current);
     };
-  }, [isEsignSuccess, caseDetails, isLoading]);
+  }, [isEsignSuccess, caseDetails, isLoading, isLitigant, userInfo]);
 
   useEffect(() => {
     if (!caseDetails?.filingNumber || isLoading) return;
@@ -1067,26 +1080,20 @@ const ComplainantSignature = ({ path }) => {
       handleCaseUnlocking();
     }
 
-    setTimeout(() => {
-      sessionStorage.removeItem("esignProcess");
-      sessionStorage.removeItem("isSignSuccess");
-      localStorage.removeItem("signStatus");
-      sessionStorage.removeItem("fileStoreId");
-    }, 3000);
-  }, [caseDetails, tenantId, isLoading]);
+    if (!isLitigant) {
+      setTimeout(() => {
+        clearStorage();
+      }, 3000);
+    } else {
+      clearStorage();
+    }
+  }, [caseDetails, tenantId, isLoading, isLitigant]);
 
   const isRightPannelEnable = () => {
     if (isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) {
       return !(isCurrentAdvocateSigned || isOtherAdvocateSigned || isCurrentPoaSigned || isEsignSuccess || uploadDoc);
     }
     return !(isCurrentLitigantSigned || isCurrentPoaSigned || (isCurrentLitigantContainPoa && !isCurrentPersonPoa) || isEsignSuccess);
-  };
-
-  const clearStorage = () => {
-    sessionStorage.removeItem("esignProcess");
-    sessionStorage.removeItem("isSignSuccess");
-    localStorage.removeItem("signStatus");
-    sessionStorage.removeItem("fileStoreId");
   };
 
   if (isLoading || isCaseDataFetching) {
