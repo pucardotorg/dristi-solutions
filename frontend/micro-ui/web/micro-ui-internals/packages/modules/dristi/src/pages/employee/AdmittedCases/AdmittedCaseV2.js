@@ -3606,7 +3606,7 @@ const AdmittedCaseV2 = () => {
               <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                 <p style={delayCondonationTextStyle}>
                   {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" &&
-                    ["PENDING_REGISTRATION", "UNDER_SCRUTINY"]?.includes(caseDetails?.status)) ||
+                    ["PENDING_REGISTRATION", "UNDER_SCRUTINY", "PENDING_PAYMENT"]?.includes(caseDetails?.status)) ||
                   (delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
                   isDelayApplicationPending
                     ? t("DELAY_CONDONATION_FILED")
