@@ -268,7 +268,7 @@ const ComplainantSignature = ({ path }) => {
     }
   };
 
-  const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
+  const { data: caseData, refetch: refetchCaseData, isLoading, isFetching: isCaseDataFetching } = useSearchCaseService(
     {
       criteria: [
         {
@@ -283,6 +283,7 @@ const ComplainantSignature = ({ path }) => {
     filingNumber,
     Boolean(filingNumber)
   );
+  console.log("isCaseDataFetching", isCaseDataFetching, isLoading);
 
   const caseDetails = useMemo(
     () => ({
@@ -833,10 +834,13 @@ const ComplainantSignature = ({ path }) => {
 
   const updateCase = async (state) => {
     setLoader(true);
+    console.log("updatecase1");
     const caseDocList = updateSignedDocInCaseDoc();
+    console.log("updatecase12");
     let tempDocList = [...caseDocList];
     const isSignedDocumentsPresent = tempDocList?.some((doc) => doc?.documentType === "case.complaint.signed");
     if (isSignedDocumentsPresent) tempDocList = tempDocList?.filter((doc) => doc?.documentType !== "case.complaint.unsigned");
+    console.log("updatecase123");
 
     try {
       await DRISTIService.caseUpdateService(
@@ -982,20 +986,27 @@ const ComplainantSignature = ({ path }) => {
     );
   };
 
+  console.log("caseDetails", caseDetails, isEsignSuccess, isLoading);
+
   useEffect(() => {
     const esignCaseUpdate = async () => {
-      if (isEsignSuccess && caseDetails?.filingNumber) {
+      console.log("useeffect1", isLoading, isEsignSuccess, caseDetails?.filingNumber);
+
+      if (!isLoading && isEsignSuccess && caseDetails?.filingNumber) {
         await updateCase(state).then(async () => {
-          setEsignSuccess(false);
+          console.log("useeffect123", isLoading, isEsignSuccess, caseDetails?.filingNumber);
           await refetchCaseData();
+          setEsignSuccess(false);
         });
       }
     };
 
     esignCaseUpdate();
-  }, [isEsignSuccess, caseDetails]);
+  }, [isEsignSuccess, caseDetails, isLoading]);
 
   useEffect(() => {
+    console.log("set-esign");
+
     const handleCaseUnlocking = async () => {
       await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
     };
@@ -1004,9 +1015,14 @@ const ComplainantSignature = ({ path }) => {
     const storedESignObj = sessionStorage.getItem("signStatus");
     const parsedESignObj = JSON.parse(storedESignObj);
     const esignProcess = sessionStorage.getItem("esignProcess");
+    console.log("set-esign1", isSignSuccess);
 
     if (isSignSuccess) {
+      console.log("set-esign12", isSignSuccess);
+
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
+      console.log("set-esign123", isSignSuccess, matchedSignStatus);
+
       if (isSignSuccess === "success" && matchedSignStatus) {
         const fileStoreId = sessionStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
@@ -1015,13 +1031,15 @@ const ComplainantSignature = ({ path }) => {
     }
     if (esignProcess && caseDetails?.filingNumber) {
       handleCaseUnlocking();
-      sessionStorage.removeItem("esignProcess");
     }
 
-    sessionStorage.removeItem("isSignSuccess");
-    localStorage.removeItem("signStatus");
-    sessionStorage.removeItem("fileStoreId");
-  }, [caseDetails]);
+    setTimeout(() => {
+      sessionStorage.removeItem("esignProcess");
+      sessionStorage.removeItem("isSignSuccess");
+      localStorage.removeItem("signStatus");
+      sessionStorage.removeItem("fileStoreId");
+    }, 3000);
+  }, [caseDetails, tenantId]);
 
   const isRightPannelEnable = () => {
     if (isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) {
@@ -1030,7 +1048,7 @@ const ComplainantSignature = ({ path }) => {
     return !(isCurrentLitigantSigned || isCurrentPoaSigned || (isCurrentLitigantContainPoa && !isCurrentPersonPoa) || isEsignSuccess);
   };
 
-  if (isLoading) {
+  if (isLoading || isCaseDataFetching) {
     return <Loader />;
   }
 
