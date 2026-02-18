@@ -226,7 +226,10 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
           }
         });
       } else {
-        const litigant = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === authorizedUuid)?.representing?.[0];
+        const litigant =
+          caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === authorizedUuid)?.representing?.[0] ||
+          caseDetails?.litigants?.find((litigant) => litigant?.additionalDetails?.uuid === authorizedUuid);
+
         const ownerType = litigant?.partyType?.includes("complainant") ? "COMPLAINANT" : "ACCUSED";
         const newWitnesses = witnessFormList?.map((data) => {
           return {
