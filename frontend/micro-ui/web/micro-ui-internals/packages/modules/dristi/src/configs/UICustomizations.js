@@ -2774,6 +2774,24 @@ export const UICustomizations = {
         return;
     }
   },
+  assignCasesConfig: {
+    additionalCustomizations: (row, key, column, value, t) => {
+      switch (key) {
+        case "SELECT":
+          return (
+            <input
+              type="checkbox"
+              className="custom-checkbox"
+              onClick={(e) => e.stopPropagation()}
+              style={{ cursor: "pointer", width: "20px", height: "20px" }}
+            />
+          );
+        default:
+          return value != null ? value : "";
+      }
+    },
+  },
+
   DristiCaseUtils: {
     getAllCaseRepresentativesUUID: (caseData) => {
       let representatives = {};

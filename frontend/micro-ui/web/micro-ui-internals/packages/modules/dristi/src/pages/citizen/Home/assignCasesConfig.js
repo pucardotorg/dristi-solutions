@@ -69,6 +69,11 @@ export const assignCasesConfig = () => {
         uiConfig: {
           columns: [
             {
+              label: "SELECT",
+              columnType: "checkbox",
+              additionalCustomization: true,
+            },
+            {
               label: "CASE_NAME",
               jsonPath: "caseTitle",
             },

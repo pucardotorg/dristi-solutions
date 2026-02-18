@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
@@ -28,6 +28,106 @@ const ManageOfficeMember = () => {
   const mobileNumber = member?.memberMobileNumber ? `+91 ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(0, 5)} ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(5)}` : "—";
 
   const assignCasesConfigWithTenant = useMemo(() => assignCasesConfig(), []);
+
+  // Select-all and row checkboxes for Assign Cases table (same pattern as sign process tab)
+  useEffect(() => {
+    let isHeaderControlledClick = false;
+    const container = document.querySelector(".manage-office-member-inbox");
+
+    const handleHeaderCheckboxClick = (e) => {
+      e.stopPropagation();
+      const headerCheckbox = e.target;
+      const shouldBeChecked = headerCheckbox.checked;
+      const tableBody = container?.querySelector("tbody");
+      if (tableBody) {
+        const allRows = tableBody.querySelectorAll("tr");
+        const checkboxesToClick = [];
+        allRows.forEach((row) => {
+          const rowCheckbox = row.querySelector('input[type="checkbox"]');
+          if (rowCheckbox && rowCheckbox.checked !== shouldBeChecked) {
+            checkboxesToClick.push(rowCheckbox);
+          }
+        });
+        if (checkboxesToClick.length > 0) {
+          isHeaderControlledClick = true;
+          checkboxesToClick.forEach((checkbox) => checkbox.click());
+          setTimeout(() => {
+            isHeaderControlledClick = false;
+          }, 200);
+        }
+      }
+    };
+
+    const handleRowCheckboxClick = () => {
+      if (!isHeaderControlledClick) {
+        const headerCheckbox = container?.querySelector('input[type="checkbox"][data-header-checkbox="true"]');
+        if (headerCheckbox && headerCheckbox.checked) {
+          headerCheckbox.checked = false;
+        }
+      }
+    };
+
+    const injectHeaderCheckbox = () => {
+      const tableHeaders = container?.querySelectorAll("th, [role=\"columnheader\"]") || [];
+      let selectHeader = null;
+      for (let i = 0; i < tableHeaders.length; i++) {
+        const header = tableHeaders[i];
+        const headerText = header.textContent?.trim() || "";
+        if (i === 0 || headerText === "" || headerText.toLowerCase().includes("select")) {
+          selectHeader = header;
+          break;
+        }
+      }
+      if (selectHeader) {
+        const existingCheckbox = selectHeader.querySelector('input[type="checkbox"]');
+        if (!existingCheckbox) {
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.className = "custom-checkbox header-checkbox";
+          checkbox.style.cssText = "cursor: pointer; width: 20px; height: 20px;";
+          checkbox.setAttribute("data-header-checkbox", "true");
+          checkbox.addEventListener("click", handleHeaderCheckboxClick);
+          selectHeader.innerHTML = "";
+          selectHeader.appendChild(checkbox);
+        } else if (!existingCheckbox.hasAttribute("data-header-checkbox")) {
+          existingCheckbox.setAttribute("data-header-checkbox", "true");
+          existingCheckbox.addEventListener("click", handleHeaderCheckboxClick);
+        }
+      }
+    };
+
+    const attachRowCheckboxHandlers = () => {
+      const tableBody = container?.querySelector("tbody");
+      if (tableBody) {
+        tableBody.querySelectorAll("tr").forEach((row) => {
+          const rowCheckbox = row.querySelector('input[type="checkbox"]');
+          if (rowCheckbox && !rowCheckbox.hasAttribute("data-row-handler-attached")) {
+            rowCheckbox.setAttribute("data-row-handler-attached", "true");
+            rowCheckbox.addEventListener("click", handleRowCheckboxClick);
+          }
+        });
+      }
+    };
+
+    injectHeaderCheckbox();
+    attachRowCheckboxHandlers();
+    const timeoutId = setTimeout(() => {
+      injectHeaderCheckbox();
+      attachRowCheckboxHandlers();
+    }, 100);
+
+    const observer = new MutationObserver(() => {
+      injectHeaderCheckbox();
+      attachRowCheckboxHandlers();
+    });
+    if (container) {
+      observer.observe(container, { childList: true, subtree: true });
+    }
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, []);
 
   const handleGoBack = () => {
     history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office`);
