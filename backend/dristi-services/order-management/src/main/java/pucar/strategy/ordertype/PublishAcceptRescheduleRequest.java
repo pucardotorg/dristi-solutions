@@ -123,7 +123,7 @@ public class PublishAcceptRescheduleRequest implements OrderUpdateStrategy {
             StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
             hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
         } else {
-            if (IN_PROGRESS.equalsIgnoreCase(hearing.getStatus())) {
+            if (IN_PROGRESS.equalsIgnoreCase(hearing.getStatus()) || PASSED_OVER.equalsIgnoreCase(hearing.getStatus())) {
                 WorkflowObject workflow = new WorkflowObject();
                 workflow.setAction(RESCHEDULE_ONGOING);
                 workflow.setComments("Update Hearing");
