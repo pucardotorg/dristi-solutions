@@ -5,12 +5,11 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { InfoCard, Loader } from "@egovernments/digit-ui-components";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
 import DocumentModal from "../../components/DocumentModal";
-import { formatDate } from "../../../../hearings/src/utils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { ordersService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { paymentType } from "../../utils/paymentType";
-import { extractFeeMedium, getAuthorizedUuid, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
@@ -489,7 +488,7 @@ const PaymentForRPADModal = ({ path }) => {
         : addressDetails;
     return [
       { key: "Issued to", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
-      { key: "Next Hearing Date", value: formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },
+      { key: "Next Hearing Date", value: DateUtils.getFormattedDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },
       {
         key: "Delivery Channel",
         value: `RPAD (${formattedAddress})`,

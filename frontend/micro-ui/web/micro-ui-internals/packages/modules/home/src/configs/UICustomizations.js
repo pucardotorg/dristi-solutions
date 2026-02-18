@@ -1,17 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { formatDate } from "../../../cases/src/utils";
-import { formatDateDDMMYYYY, formatNoticeDeliveryDate } from "../utils";
+import {formatNoticeDeliveryDate } from "../utils";
 import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
 import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
-import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
 import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
-import { formatDateWithTime } from "../../../orders/src/utils";
 import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components/EditDeleteModal";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
@@ -89,9 +87,9 @@ export const UICustomizations = {
           return value ? `${Math.round(value)}/-` : "-";
         case "BOOKING_DATE":
         case "BOOKING_DATE_TIME":
-          return formatDateWithTime(value) || "-";
+          return DateUtils.formatDateWithTime(value) || "-";
         case "RECIEVED_DATE":
-          return formatDateWithTime(value) || "-";
+          return DateUtils.formatDateWithTime(value) || "-";
         case "ADDRESS":
           return `${row?.respondentName}, ${value}` || "-";
         case "TASK_TYPE":
@@ -276,7 +274,7 @@ export const UICustomizations = {
         case "CS_STAGE":
           return t(value);
         case "CS_FILING_DATE":
-          return <span>{formatDate(new Date(value))}</span>;
+          return <span>{DateUtils.getFormattedDate(new Date(value))}</span>;
         case "CS_CASE_NUMBER_HOME":
           return caseId;
         case "CS_LAST_EDITED":
@@ -466,7 +464,7 @@ export const UICustomizations = {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
         case "CS_FILING_DATE":
-          return <span>{formatDate(new Date(value))}</span>;
+          return <span>{DateUtils.getFormattedDate(new Date(value))}</span>;
         case "CD_OUTCOME":
           return t(value);
         case "CS_STAGE":
@@ -595,7 +593,7 @@ export const UICustomizations = {
         case "STATUS":
           return t(value); // document status
         case "ISSUE_DATE":
-          return `${formatDate(new Date(value))}`;
+          return `${DateUtils.getFormattedDate(new Date(value))}`;
         case "PROCESS_TYPE":
           const processType = value?.toUpperCase?.();
           if (processType === "NOTICE") {
@@ -855,7 +853,7 @@ export const UICustomizations = {
           return <ADiaryRowClick rowData={row} colData={column} value={value} />;
 
         case "NEXT_HEARING_DATE":
-          return <span>{value ? formatDateDDMMYYYY(value) : ""}</span>;
+          return <span>{value ? DateUtils.getFormattedDate(value) : ""}</span>;
         default:
           return value || "";
       }
@@ -1251,7 +1249,7 @@ export const UICustomizations = {
         case "CS_ACTIONS":
           return <EditDeleteModal rowData={row} colData={column} value={value} isDelete={true} isEdit={true} />;
         case "DATE_CREATED":
-          return formatDateDDMMYYYY(row?.auditDetails?.createdTime);
+          return DateUtils.getFormattedDate(row?.auditDetails?.createdTime);
         default:
           return value || "";
       }

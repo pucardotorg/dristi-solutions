@@ -2,11 +2,11 @@ import CustomCaseInfoDiv from "@egovernments/digit-ui-module-dristi/src/componen
 import { Button, CheckSvg } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
 import { createShorthand } from "../../../utils/joinCaseUtils";
-import { formatDate } from "../../../utils";
 import NameListWithModal from "../../../components/NameListWithModal";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { RightArrow } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { useTranslation } from "react-i18next";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const JoinCaseSuccess = ({
   success,
@@ -62,7 +62,7 @@ const JoinCaseSuccess = ({
         },
         {
           key: "CS_FILING_DATE",
-          value: formatDate(new Date(caseDetails?.filingDate)),
+          value: DateUtils.getFormattedDate(new Date(caseDetails?.filingDate)),
         },
       ];
     }
