@@ -8,11 +8,11 @@ import SubmitBar from "../../components/SubmitBar";
 import EpostUpdateStatus from "./EpostUpdateStatus";
 import { updateEpostStatusPendingConfig, updateEpostStatusConfig } from "../../configs/EpostFormConfigs";
 import { EpostService } from "../../hooks/services";
-import { downloadFile, getEpochRangeFromDateIST, getEpochRangeFromMonthIST } from "../../utils";
 import { Urls } from "../../hooks/services/Urls";
-import { _getDate, _getStatus } from "../../utils";
+import { _getStatus, downloadFile } from "../../utils";
 import EmptyTable from "../../components/InboxComposerHeader.js/EmptyTable";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const defaultSearchValues = {
   pagination: { sortBy: "", order: "" },
@@ -28,7 +28,7 @@ const defaultSearchValues = {
 const convertToFormData = (t, obj, dropdownData) => {
   const bookingData = [null, 0]?.includes(obj?.bookingDate) ? null : obj?.bookingDate;
   const formdata = {
-    statusDate: _getDate(),
+    statusDate: DateUtils.getFormattedDate(new Date(), "YYYY-MM-DD"),
     remarks: {
       text: obj?.remarks || "",
     },
@@ -43,6 +43,7 @@ const EpostTrackingPage = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const history = useHistory();
+  const { getEpochRangeFromMonthIST, getEpochRangeFromDateIST } = DateUtils;
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const accessToken = window.localStorage.getItem("token");
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -429,7 +430,7 @@ const EpostTrackingPage = () => {
       const { start: selectedStartDate, end: selectedEndDate } = getEpochRangeFromDateIST(formData?.statusDate);
       if (selectedRowData?.receivedDate > selectedEndDate) {
         setFormErrors?.current("statusDate", {
-          message: `${t("DATE_STATUS_ERROR")} (${_getDate(selectedRowData?.receivedDate, true)})`,
+          message: `${t("DATE_STATUS_ERROR")} (${DateUtils.getFormattedDate(selectedRowData?.receivedDate)})`,
         });
         return;
       }
