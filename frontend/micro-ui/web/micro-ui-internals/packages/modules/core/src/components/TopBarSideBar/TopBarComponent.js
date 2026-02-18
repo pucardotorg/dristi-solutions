@@ -334,10 +334,15 @@ const TopBarComponent = ({
   useEffect(() => {
     if (!resolvedAdvocate?.id) return;
     if (resolvedAdvocate.id === selectedAdvocate?.id) return;
-
-    setSelectedAdvocate(resolvedAdvocate);
-    setAdvocateDataContext(resolvedAdvocate);
-    sessionStorage.setItem("selectedAdvocate", JSON.stringify(resolvedAdvocate));
+    const eSignPath = `/${window?.contextPath}/citizen/dristi/home/file-case/sign-complaint`;
+    if (resolvedAdvocate?.id !== storedAdvocate?.id || !AdvocateData?.id) {
+      setSelectedAdvocate(resolvedAdvocate);
+      setAdvocateDataContext(resolvedAdvocate);
+      sessionStorage.setItem("selectedAdvocate", JSON.stringify(resolvedAdvocate));
+      if (pathname === eSignPath) {
+        sessionStorage.setItem("isTopbarMounted", true);
+      }
+    }
   }, [
     seniorAdvocates,
     advocateId,
@@ -349,6 +354,9 @@ const TopBarComponent = ({
     individualDataa,
     isApprovalPending,
     officeMembersData,
+    storedAdvocate,
+    AdvocateData,
+    pathname,
   ]);
 
   const disableAdvocateChange = useMemo(() => {
