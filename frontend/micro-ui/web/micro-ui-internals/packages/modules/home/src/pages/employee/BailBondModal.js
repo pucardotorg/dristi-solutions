@@ -6,6 +6,7 @@ import { Loader, CloseSvg } from "@egovernments/digit-ui-react-components";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { Urls } from "../../hooks";
 import { HomeService } from "../../hooks/services";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const CloseBtn = (props) => {
   return (
@@ -27,12 +28,6 @@ const CloseBtn = (props) => {
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const formatDate = (date) => {
-  if (!date) return "";
-  const convertedDate = new Date(date);
-  return convertedDate.toLocaleDateString();
 };
 
 const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, showToast = () => {} }) => {
@@ -140,7 +135,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
           name: `${t("BAIL_BOND")} ${index + 1}`,
           advocate: individualIdAdvocateNameMapping[bond?.litigantId] || "",
           litigantName: bond?.litigantName,
-          date: formatDate(bond?.auditDetails?.createdTime),
+          date: DateUtils.getFormattedDate(bond?.auditDetails?.createdTime, "DD-MM-YYYY", "/") || "",
           bailId: bond?.bailId,
           fileStoreId: bond?.documents?.find((doc) => doc?.documentType === "SIGNED")?.fileStore,
         }));

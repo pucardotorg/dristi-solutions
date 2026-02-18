@@ -68,12 +68,6 @@ export const updateCustomConfigs = () => {
   // setupLibraries("Utils", "parsingUtils", { ...window?.Digit?.Utils?.parsingUtils, ...parsingUtils });
 };
 
-export const formatDateYYMMDD = (date) => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${year}-${month}-${day}`;
-};
 
 export const getFormattedDate = (epochTime) => {
   const date = new Date(epochTime);
@@ -142,14 +136,6 @@ export const formatNoticeDeliveryDate = (inputDate) => {
   const yyyy = dateObj.getFullYear();
 
   return `${dd}-${mm}-${yyyy}`;
-};
-
-export const formatDateDDMMYYYY = (date) => {
-  const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${day}-${month}-${year}`;
 };
 
 export const createOrUpdateTask = async ({ type, existingTask, courierData, formData, filingNumber, tenantId, isLast }) => {

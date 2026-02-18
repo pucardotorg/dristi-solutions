@@ -96,7 +96,6 @@ import {
   channelTypeEnum,
   checkValidation,
   compositeOrderAllowedTypes,
-  formatDate,
   generateAddress,
   getFormData,
   getMandatoryFieldsErrors,
@@ -117,6 +116,7 @@ import TasksComponent from "../../../../home/src/components/TaskComponent";
 import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
 import {
   checkAcceptRejectOrderValidation,
+  DateUtils,
   getAuthorizedUuid,
   getOrderActionName,
   getOrderTypes,
@@ -2130,6 +2130,7 @@ const GenerateOrdersV2 = () => {
         };
       }
 
+      const requiredDateFormat = "YYYY-MM-DD";
       const newCurrentOrder =
         currentOrder?.orderCategory === "COMPOSITE"
           ? {
@@ -2172,25 +2173,37 @@ const GenerateOrdersV2 = () => {
         );
         setValueRef?.current?.[index]?.("addressRespondant", updatedFormdata.addressRespondant);
 
-        updatedFormdata.dateChequeReturnMemo = formatDate(new Date(caseDetails?.caseDetails?.chequeDetails?.formdata?.[0]?.data?.depositDate));
+        updatedFormdata.dateChequeReturnMemo = DateUtils.getFormattedDate(
+          new Date(caseDetails?.caseDetails?.chequeDetails?.formdata?.[0]?.data?.depositDate),
+          requiredDateFormat
+        );
         setValueRef?.current?.[index]?.("dateChequeReturnMemo", updatedFormdata.dateChequeReturnMemo);
 
-        updatedFormdata.dateFiling = formatDate(new Date(caseDetails?.filingDate));
+        updatedFormdata.dateFiling = DateUtils.getFormattedDate(new Date(caseDetails?.filingDate), requiredDateFormat);
         setValueRef?.current?.[index]?.("dateFiling", updatedFormdata.dateFiling);
 
-        updatedFormdata.dateApprehension = formatDate(new Date(publishedBailOrder?.auditDetails?.lastModifiedTime)) || "";
+        updatedFormdata.dateApprehension =
+          DateUtils.getFormattedDate(new Date(publishedBailOrder?.auditDetails?.lastModifiedTime), requiredDateFormat) || "";
         setValueRef?.current?.[index]?.("dateApprehension", updatedFormdata.dateApprehension);
 
-        updatedFormdata.dateofReleaseOnBail = formatDate(new Date(publishedBailOrder?.auditDetails?.lastModifiedTime)) || "";
+        updatedFormdata.dateofReleaseOnBail =
+          DateUtils.getFormattedDate(new Date(publishedBailOrder?.auditDetails?.lastModifiedTime), requiredDateFormat) || "";
         setValueRef?.current?.[index]?.("dateofReleaseOnBail", updatedFormdata.dateofReleaseOnBail);
 
-        updatedFormdata.dateofCommencementTrial = formatDate(new Date(publishedBailOrder?.auditDetails?.lastModifiedTime)) || "";
+        updatedFormdata.dateofCommencementTrial =
+          DateUtils.getFormattedDate(new Date(publishedBailOrder?.auditDetails?.lastModifiedTime), requiredDateFormat) || "";
         setValueRef?.current?.[index]?.("dateofCommencementTrial", updatedFormdata.dateofCommencementTrial);
 
-        updatedFormdata.dateofCloseTrial = formatDate(new Date(hearingsList?.[hearingsList?.length - 2]?.startTime));
+        updatedFormdata.dateofCloseTrial = DateUtils.getFormattedDate(
+          new Date(hearingsList?.[hearingsList?.length - 2]?.startTime),
+          requiredDateFormat
+        );
         setValueRef?.current?.[index]?.("dateofCloseTrial", updatedFormdata.dateofCloseTrial);
 
-        updatedFormdata.dateofSentence = formatDate(new Date(hearingsList?.[hearingsList?.length - 1]?.startTime));
+        updatedFormdata.dateofSentence = DateUtils.getFormattedDate(
+          new Date(hearingsList?.[hearingsList?.length - 1]?.startTime),
+          requiredDateFormat
+        );
         setValueRef?.current?.[index]?.("dateofSentence", updatedFormdata.dateofSentence);
 
         updatedFormdata.offense = "Section 138 of Negotiable Instruments Act";
@@ -2248,14 +2261,14 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
-            updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+            updatedFormdata.dateForHearing = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), requiredDateFormat);
           } else {
             updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
           }
         } else if (isHearingScheduled || isHearingInPassedOver) {
-          updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
+          updatedFormdata.dateForHearing = DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), requiredDateFormat);
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
-          updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          updatedFormdata.dateForHearing = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), requiredDateFormat);
         } else if (!currentOrder?.nextHearingDate && skipScheduling) {
           // make sure to clear the previously set next hearing date in case of skipScheduling
           updatedFormdata.dateForHearing = "";
@@ -2302,14 +2315,14 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
-            updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+            updatedFormdata.dateForHearing = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), requiredDateFormat);
           } else {
             updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
           }
         } else if (isHearingScheduled || isHearingInPassedOver) {
-          updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
+          updatedFormdata.dateForHearing = DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), requiredDateFormat);
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
-          updatedFormdata.dateForHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          updatedFormdata.dateForHearing = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), requiredDateFormat);
         } else if (!currentOrder?.nextHearingDate && skipScheduling) {
           // make sure to clear the previously set next hearing date in case of skipScheduling
           updatedFormdata.dateForHearing = "";
@@ -2362,14 +2375,14 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           if (currentOrder?.nextHearingDate && rescheduleHearingItem?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
-            updatedFormdata.dateOfHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+            updatedFormdata.dateOfHearing = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), requiredDateFormat);
           } else {
             updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
           }
         } else if (isHearingScheduled || isHearingInPassedOver) {
-          updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
+          updatedFormdata.dateOfHearing = DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), requiredDateFormat);
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
-          updatedFormdata.dateOfHearing = formatDate(new Date(currentOrder?.nextHearingDate));
+          updatedFormdata.dateOfHearing = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), requiredDateFormat);
         } else if (!currentOrder?.nextHearingDate && skipScheduling) {
           // make sure to clear the previously set next hearing date in case of skipScheduling
           updatedFormdata.dateOfHearing = "";
@@ -2392,9 +2405,9 @@ const GenerateOrdersV2 = () => {
         } else if (rescheduleHearingItem) {
           updatedFormdata.hearingDate = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
         } else if (isHearingScheduled || isHearingInPassedOver) {
-          updatedFormdata.hearingDate = formatDate(new Date(hearingDetails?.startTime));
+          updatedFormdata.hearingDate = DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), requiredDateFormat);
         } else if (currentOrder?.nextHearingDate && !skipScheduling) {
-          updatedFormdata.hearingDate = formatDate(new Date(currentOrder?.nextHearingDate));
+          updatedFormdata.hearingDate = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), requiredDateFormat);
         } else if (!currentOrder?.nextHearingDate && skipScheduling) {
           // make sure to clear the previously set next hearing date in case of skipScheduling
           updatedFormdata.hearingDate = "";

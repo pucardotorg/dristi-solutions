@@ -4,11 +4,11 @@ import { Modal, CloseSvg, Button, InboxSearchComposer } from "@egovernments/digi
 import { useTranslation } from "react-i18next";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
 import useSearchOrdersService from "../../../../orders/src/hooks/orders/useSearchOrdersService";
-import { formatDate } from "../../utils";
 import { hearingService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const modalPopup = {
   height: "70%",
@@ -203,7 +203,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               type: orderType,
               name: `ORDER_TYPE_${orderType}`,
             },
-            dateOfHearing: formatDate(new Date(hearingDetails?.startTime)),
+            dateOfHearing: DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), "YYYY-MM-DD"),
             warrantFor: respondentName,
           },
         },
@@ -356,13 +356,13 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           </div>
           <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
             <span style={{ minWidth: "40%" }}>{t("Next Hearing Date")}</span>
-            <span>{hearingDetails?.startTime && formatDate(new Date(hearingDetails?.startTime), "DD-MM-YYYY")}</span>
+            <span>{hearingDetails?.startTime && DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), "DD-MM-YYYY")}</span>
           </div>
           {totalSummons > 0 && (
             <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <span style={{ minWidth: "40%" }}>{t("Last Summon issued on")}</span>
               <span>
-                {lastSummon.createdDate && formatDate(new Date(lastSummon?.createdDate), "DD-MM-YYYY")} (Round {totalSummons})
+                {lastSummon.createdDate && DateUtils.getFormattedDate(new Date(lastSummon?.createdDate), "DD-MM-YYYY")} (Round {totalSummons})
               </span>
             </div>
           )}
@@ -370,7 +370,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <span style={{ minWidth: "40%" }}>{t("Last Warrant issued on")}</span>
               <span>
-                {lastWarrant?.createdDate && formatDate(new Date(lastWarrant?.createdDate), "DD-MM-YYYY")} (Round {totalWarrants})
+                {lastWarrant?.createdDate && DateUtils.getFormattedDate(new Date(lastWarrant?.createdDate), "DD-MM-YYYY")} (Round {totalWarrants})
               </span>
             </div>
           )}
@@ -378,7 +378,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
               <span style={{ minWidth: "40%" }}>{t("Last Notice issued on")}</span>
               <span>
-                {lastNotice?.createdDate && formatDate(new Date(lastNotice?.createdDate), "DD-MM-YYYY")} (Round {totalNotices})
+                {lastNotice?.createdDate && DateUtils.getFormattedDate(new Date(lastNotice?.createdDate), "DD-MM-YYYY")} (Round {totalNotices})
               </span>
             </div>
           )}
