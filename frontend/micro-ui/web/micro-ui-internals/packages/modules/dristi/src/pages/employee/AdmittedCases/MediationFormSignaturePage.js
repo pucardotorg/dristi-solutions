@@ -150,8 +150,9 @@ const MediationFormSignaturePage = () => {
   }, [digitalizationServiceDetails, isAuthorised, isUserLoggedIn, userInfo?.mobileNumber]);
 
   const hasUserSigned = useMemo(() => {
-    return digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((party) => party?.mobileNumber === (mobileNumber || esignMobileNumber))
-      ?.hasSigned;
+    return digitalizationServiceDetails?.mediationDetails?.partyDetails?.find(
+      (party) => party?.mobileNumber === (mobileNumber || esignMobileNumber)?.toString()
+    )?.hasSigned;
   }, [digitalizationServiceDetails?.mediationDetails?.partyDetails, mobileNumber, esignMobileNumber]);
 
   const mediationFileStoreId = useMemo(() => {
@@ -238,7 +239,7 @@ const MediationFormSignaturePage = () => {
         if (isUpload) return { ...party, hasSigned: true };
         if (
           isESign &&
-          (party?.uniqueId === selectedId || party?.uniqueId === userId || party?.mobileNumber === (mobileNumber || esignMobileNumber))
+          (party?.uniqueId === selectedId || party?.uniqueId === userId || party?.mobileNumber === (mobileNumber || esignMobileNumber)?.toString())
         ) {
           return { ...party, hasSigned: true };
         }
@@ -324,7 +325,7 @@ const MediationFormSignaturePage = () => {
     const party =
       selectedParty ||
       digitalizationServiceDetails?.mediationDetails?.partyDetails?.find(
-        (p) => p?.uniqueId === userInfo?.uuid || p?.mobileNumber === (mobileNumber || esignMobileNumber)
+        (p) => p?.uniqueId === userInfo?.uuid || p?.mobileNumber === (mobileNumber || esignMobileNumber)?.toString()
       );
     if (!party) return "";
 
@@ -495,7 +496,7 @@ const MediationFormSignaturePage = () => {
     if (isSignSuccess) {
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
       if (isSignSuccess === "success" && matchedSignStatus) {
-        setEsignMobileNumber(mobileNumber);
+        setEsignMobileNumber(JSON.parse(mobileNumber));
         const fileStoreId = sessionStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
         setEsignSuccess(true);
