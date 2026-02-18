@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActionBar, SubmitBar, Loader, Button, CloseSvg } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
@@ -218,6 +218,7 @@ const ComplainantSignature = ({ path }) => {
   const name = "Signature";
   const [calculationResponse, setCalculationResponse] = useState({});
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const updatedOnceRef = useRef(null);
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -378,6 +379,13 @@ const ComplainantSignature = ({ path }) => {
     }
     return false;
   }, [allComplainantSideUuids, userInfo?.uuid, caseDetails?.status]);
+
+  useEffect(() => {
+    console.log("complainant-mounted");
+    return () => {
+      console.log("complainant-unmounted");
+    };
+  }, []);
 
   useEffect(() => {
     if ([CaseWorkflowState?.DRAFT_IN_PROGRESS, CaseWorkflowState.CASE_REASSIGNED]?.includes(caseDetails?.status)) {
@@ -844,6 +852,8 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const updateCase = async (state) => {
+    updatedOnceRef.current = true;
+    sessionStorage.removeItem("isTopbarMounted");
     setLoader(true);
     console.log("updatecase1");
     const caseDocList = updateSignedDocInCaseDoc();
@@ -993,17 +1003,27 @@ const ComplainantSignature = ({ path }) => {
         isCurrentPoaSigned ||
         (![CaseWorkflowState?.PENDING_RE_SIGN, CaseWorkflowState.PENDING_SIGN]?.includes(caseDetails?.status) && isCurrentLitigantContainPoa) ||
         uploadDoc ||
-        (isSelectedEsign && isMemberOnBehalfOfOwnerAdvocate)) // If junior adv/clerk is on this screen.
+        (isSelectedEsign && isMemberOnBehalfOfOwnerAdvocate)) && // If junior adv/clerk is on this screen.
+      !Loading &&
+      !isLoading
     );
   };
 
-  console.log("caseDetails", caseDetails, isEsignSuccess, isLoading);
+  console.log("caseDetails", caseDetails, isEsignSuccess, isLoading, updatedOnceRef.current);
+
+  useEffect(() => {
+    return () => {
+      console.log("useeffect12345", updatedOnceRef.current);
+      updatedOnceRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const esignCaseUpdate = async () => {
-      console.log("useeffect1", isLoading, isEsignSuccess, caseDetails?.filingNumber);
+      const isTopbarMounted = sessionStorage.getItem("isTopbarMounted");
+      console.log("useeffect1", isLoading, isEsignSuccess, caseDetails?.filingNumber, isTopbarMounted, updatedOnceRef.current);
 
-      if (!isLoading && isEsignSuccess && caseDetails?.filingNumber) {
+      if (!isLoading && isEsignSuccess && caseDetails?.filingNumber && isTopbarMounted && !updatedOnceRef.current) {
         await updateCase(state).then(async () => {
           console.log("useeffect123", isLoading, isEsignSuccess, caseDetails?.filingNumber);
           await refetchCaseData();
@@ -1013,11 +1033,14 @@ const ComplainantSignature = ({ path }) => {
     };
 
     esignCaseUpdate();
+    return () => {
+      console.log("useeffect1234", updatedOnceRef.current);
+    };
   }, [isEsignSuccess, caseDetails, isLoading]);
 
   useEffect(() => {
+    if (!caseDetails?.filingNumber || isLoading) return;
     console.log("set-esign");
-
     const handleCaseUnlocking = async () => {
       await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
     };
@@ -1050,13 +1073,20 @@ const ComplainantSignature = ({ path }) => {
       localStorage.removeItem("signStatus");
       sessionStorage.removeItem("fileStoreId");
     }, 3000);
-  }, [caseDetails, tenantId]);
+  }, [caseDetails, tenantId, isLoading]);
 
   const isRightPannelEnable = () => {
     if (isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) {
       return !(isCurrentAdvocateSigned || isOtherAdvocateSigned || isCurrentPoaSigned || isEsignSuccess || uploadDoc);
     }
     return !(isCurrentLitigantSigned || isCurrentPoaSigned || (isCurrentLitigantContainPoa && !isCurrentPersonPoa) || isEsignSuccess);
+  };
+
+  const clearStorage = () => {
+    sessionStorage.removeItem("esignProcess");
+    sessionStorage.removeItem("isSignSuccess");
+    localStorage.removeItem("signStatus");
+    sessionStorage.removeItem("fileStoreId");
   };
 
   if (isLoading || isCaseDataFetching) {
@@ -1217,6 +1247,7 @@ const ComplainantSignature = ({ path }) => {
               label={t("EDIT_A_CASE")}
               variation={"secondary"}
               onButtonClick={() => {
+                clearStorage();
                 setEditCaseModal(true);
               }}
               style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
@@ -1228,6 +1259,7 @@ const ComplainantSignature = ({ path }) => {
                 textAlign: "center",
                 color: "#007E7E",
               }}
+              isDisabled={Loading || isLoading}
             />
           )}
           <SubmitBar
@@ -1237,7 +1269,10 @@ const ComplainantSignature = ({ path }) => {
                 <RightArrow />
               </div>
             }
-            onSubmit={() => handleSubmit(state)}
+            onSubmit={() => {
+              clearStorage();
+              handleSubmit(state);
+            }}
             style={styles.submitButton}
             disabled={!isSubmitEnabled()}
           />
