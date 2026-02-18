@@ -70,6 +70,7 @@ const ManageOfficeMember = () => {
               value={allowCaseCreate}
               onChange={(e) => setAllowCaseCreate(e.target.value)}
               className="manage-office-member-select"
+              disabled
             >
               <option value="Yes">{t("YES") || "Yes"}</option>
               <option value="No">{t("NO") || "No"}</option>
@@ -81,6 +82,7 @@ const ManageOfficeMember = () => {
               value={addToNewCasesAuto}
               onChange={(e) => setAddToNewCasesAuto(e.target.value)}
               className="manage-office-member-select"
+              disabled
             >
               <option value="Yes">{t("YES") || "Yes"}</option>
               <option value="No">{t("NO") || "No"}</option>

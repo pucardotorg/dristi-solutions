@@ -30,20 +30,24 @@ export const assignCasesConfig = () => {
           secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
           minReqFields: 0,
           defaultValues: {
-            assignAll: "ASSIGN_ALL",
+            assignmentStatus: "ALL",
             filingNumber: "",
           },
           fields: [
             {
-              label: "ASSIGN",
+              label: "ASSIGNMENT_STATUS",
               isMandatory: false,
-              key: "assignAll",
+              key: "assignmentStatus",
               type: "dropdown",
               populators: {
-                name: "assignAll",
+                name: "assignmentStatus",
                 optionsKey: "name",
                 error: "Should not be empty",
-                options: [{ code: "ASSIGN_ALL", name: "Assign All" }],
+                options: [
+                  { code: "ALL", name: "All" },
+                  { code: "ASSIGNED", name: "Assigned Cases" },
+                  { code: "UNASSIGNED", name: "Unassigned Cases" },
+                ],
               },
             },
             {

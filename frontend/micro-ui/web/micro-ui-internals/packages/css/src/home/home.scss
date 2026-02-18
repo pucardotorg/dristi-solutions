@@ -577,15 +577,15 @@
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 24px;
-  gap: 32px;
+  gap: 0;
   align-items: flex-start;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .manage-office-member-details {
   display: flex;
   flex-direction: row;
-  gap: 32px;
+  gap: 0;
   align-items: flex-start;
   flex: 0 0 auto;
 }
@@ -593,9 +593,15 @@
 .manage-office-member-detail-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   font-size: 16px;
   flex: 0 0 auto;
+
+  &:not(:first-child) {
+    border-left: 1px solid #d6d5d4;
+    margin-left: 32px;
+    padding-left: 32px;
+  }
 }
 
 .manage-office-member-detail-label {
@@ -606,6 +612,7 @@
   line-height: 1.25;
   letter-spacing: 0%;
   color: var(--text-muted, #64748b);
+  min-height: 2.5em;
 }
 
 .manage-office-member-detail-value {
@@ -621,19 +628,28 @@
 .manage-office-member-options {
   display: flex;
   flex-direction: row;
-  align-items: flex-end;
-  gap: 32px;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0;
+  flex-wrap: nowrap;
   flex: 1;
   min-width: 0;
+  border-left: 1px solid #d6d5d4;
+  margin-left: 32px;
+  padding-left: 32px;
 }
 
 .manage-office-member-option {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
   flex: 0 0 auto;
   min-width: 0;
+
+  &:not(:first-of-type) {
+    border-left: 1px solid #d6d5d4;
+    margin-left: 32px;
+    padding-left: 32px;
+  }
 }
 
 .manage-office-member-option-label {
@@ -644,7 +660,7 @@
   line-height: 1.25;
   letter-spacing: 0%;
   color: var(--text-muted, #64748b);
-  white-space: nowrap;
+  min-height: 2.5em;
 }
 
 .manage-office-member-select {
@@ -661,6 +677,14 @@
   background-position: right 12px center;
   background-size: 12px 8px;
   padding-right: 36px;
+
+  &:disabled {
+    background-color: #f5f5f5;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.7;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
 }
 
 .manage-office-member-remove-btn {
@@ -673,9 +697,13 @@
   font-weight: 500;
   cursor: pointer;
   margin-left: auto;
-  align-self: flex-end;
+  align-self: center;
   height: fit-content;
   white-space: nowrap;
+  border-left: 1px solid #d6d5d4;
+  padding-left: 32px;
+  margin-left: 32px;
+  flex-shrink: 0;
 }
 
 .manage-office-member-info-banner {
