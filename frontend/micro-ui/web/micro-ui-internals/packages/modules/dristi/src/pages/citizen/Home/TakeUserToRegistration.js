@@ -102,7 +102,8 @@ function TakeUserToRegistration({ message, isRejected, isLitigantPartialRegister
                 },
               ],
             ],
-            barRegistrationNumber: advocate?.barRegistrationNumber || "",
+            // For clerk, use stateRegnNumber; for advocate, use barRegistrationNumber
+            barRegistrationNumber: advocate?.stateRegnNumber || advocate?.barRegistrationNumber || "",
           },
         },
       };

@@ -2414,6 +2414,15 @@ const GenerateOrdersV2 = () => {
         }
         setValueRef?.current?.[index]?.("hearingDate", updatedFormdata.hearingDate);
       }
+      if (currentOrderType === "ACCEPT_RESCHEDULING_REQUEST" && !updatedFormdata?.hearingPurpose) {
+        const oldHearingPurpose = purposeOfHearingData?.find((purpose) => purpose?.code === updatedFormdata?.originalHearingPurpose);
+
+        if (oldHearingPurpose) {
+          updatedFormdata.hearingPurpose = oldHearingPurpose;
+          setValueRef?.current?.[index]?.("hearingPurpose", oldHearingPurpose);
+        }
+      }
+
       if (
         [
           "RESCHEDULE_OF_HEARING_DATE",
@@ -4215,6 +4224,7 @@ const GenerateOrdersV2 = () => {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
       const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
       const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
+      const currentHearingPurpose = documentSubmission?.[0]?.applicationList?.applicationDetails?.initialHearingPurpose || "";
       const caseNumber =
         (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
         caseDetails?.courtCaseNumber ||
@@ -4227,6 +4237,7 @@ const GenerateOrdersV2 = () => {
           name: `ORDER_TYPE_${orderType}`,
         },
         refApplicationId: refApplicationId,
+        ...(currentHearingPurpose && { originalHearingPurpose: currentHearingPurpose }),
         applicationStatus: documentSubmission?.[0]?.applicationList?.applicationType
           ? setApplicationStatus(type, documentSubmission[0].applicationList.applicationType)
           : null,

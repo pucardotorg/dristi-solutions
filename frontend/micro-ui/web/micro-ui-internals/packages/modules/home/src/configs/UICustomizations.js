@@ -215,6 +215,7 @@ export const UICustomizations = {
         ...("sortBy" in additionalDetails && {
           [additionalDetails.sortBy]: undefined,
           sortBy: undefined,
+          activeTab: undefined,
         }),
         ...(requestCriteria?.body?.criteria?.outcome && {
           outcome: outcomeTypeData,
@@ -254,8 +255,10 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const hasST = row?.courtCaseNumber && row?.courtCaseNumber?.includes("ST/");
-      const caseId = (hasST && row?.courtCaseNumber) || row?.cmpNumber || row?.filingNumber;
+      const activeTab = searchResult?.additionalDetails?.activeTab || "";
+      const isDisposedTab = activeTab === "DISPOSED";
+      const caseId =
+        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "Draft Name":
         case "CS_CASE_NAME":
@@ -320,6 +323,7 @@ export const UICustomizations = {
         ...("sortBy" in additionalDetails && {
           [additionalDetails.sortBy]: undefined,
           sortBy: undefined,
+          activeTab: undefined,
         }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
@@ -350,8 +354,10 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const hasST = row?.courtCaseNumber && row?.courtCaseNumber?.includes("ST/");
-      const caseId = (hasST && row?.courtCaseNumber) || row?.cmpNumber || row?.filingNumber;
+      const activeTab = searchResult?.additionalDetails?.activeTab || "";
+      const isDisposedTab = activeTab === "DISPOSED";
+      const caseId =
+        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -410,6 +416,7 @@ export const UICustomizations = {
         ...("sortBy" in additionalDetails && {
           [additionalDetails.sortBy]: undefined,
           sortBy: undefined,
+          activeTab: undefined,
         }),
         ...(requestCriteria?.body?.criteria?.outcome && {
           outcome: outcomeTypeData,
@@ -449,8 +456,10 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const hasST = row?.courtCaseNumber && row?.courtCaseNumber?.includes("ST/");
-      const caseId = (hasST && row?.courtCaseNumber) || row?.cmpNumber || row?.filingNumber;
+      const activeTab = searchResult?.additionalDetails?.activeTab || "";
+      const isDisposedTab = activeTab === "DISPOSED";
+      const caseId =
+        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -573,8 +582,10 @@ export const UICustomizations = {
       const taskDetails = handleTaskDetails(row?.taskDetails);
       const delieveryDate = formatNoticeDeliveryDate(taskDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
       const hearingDate = formatNoticeDeliveryDate(taskDetails?.caseDetails?.hearingDate);
-      const hasST = row?.courtCaseNumber && row?.courtCaseNumber?.includes("ST/");
-      const caseId = (hasST && row?.courtCaseNumber) || row?.cmpNumber || row?.filingNumber;
+      const activeTab = searchResult?.additionalDetails?.activeTab || "";
+      const isDisposedTab = activeTab === "DISPOSED";
+      const caseId =
+        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
 
       switch (key) {
         // case "CASE_NAME_ID":
@@ -588,6 +599,9 @@ export const UICustomizations = {
           if (processType === "NOTICE") {
             const noticeType = row?.taskDetails?.noticeDetails?.noticeType || "NOTICE";
             return t(noticeType);
+          } else if (processType === "MISCELLANEOUS_PROCESS") {
+            const miscType = row?.taskDetails?.miscellaneuosDetails?.processTitle || "MISCELLANEOUS_PROCESS";
+            return t(miscType);
           }
           return t(value);
         case "DELIEVERY_CHANNEL":

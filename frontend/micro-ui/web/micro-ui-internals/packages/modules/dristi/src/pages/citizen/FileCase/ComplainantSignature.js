@@ -986,7 +986,8 @@ const ComplainantSignature = ({ path }) => {
         isCurrentLitigantSigned ||
         isCurrentPoaSigned ||
         (![CaseWorkflowState?.PENDING_RE_SIGN, CaseWorkflowState.PENDING_SIGN]?.includes(caseDetails?.status) && isCurrentLitigantContainPoa) ||
-        uploadDoc)
+        uploadDoc ||
+        (isSelectedEsign && isMemberOnBehalfOfOwnerAdvocate)) // If junior adv/clerk is on this screen.
     );
   };
 
