@@ -321,7 +321,11 @@ const MediationFormSignaturePage = () => {
   const getPlaceholder = () => {
     if (isMediationApprover) return "Signature of Magistrate";
 
-    const party = selectedParty || digitalizationServiceDetails?.mediationDetails?.partyDetails?.find((p) => p?.uniqueId === userInfo?.uuid);
+    const party =
+      selectedParty ||
+      digitalizationServiceDetails?.mediationDetails?.partyDetails?.find(
+        (p) => p?.uniqueId === userInfo?.uuid || p?.mobileNumber === (mobileNumber || esignMobileNumber)
+      );
     if (!party) return "";
 
     const typeLabel = party.partyType === "COMPLAINANT" ? "Complainant" : "Accused";
@@ -491,7 +495,7 @@ const MediationFormSignaturePage = () => {
     if (isSignSuccess) {
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
       if (isSignSuccess === "success" && matchedSignStatus) {
-        setEsignMobileNumber(JSON.parse(mobileNumber));
+        setEsignMobileNumber(mobileNumber);
         const fileStoreId = sessionStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
         setEsignSuccess(true);
