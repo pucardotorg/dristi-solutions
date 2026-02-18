@@ -2814,6 +2814,7 @@ export const configsAdvancementOrAdjournment = [
         transformer: "customTextArea",
         isMandatory: true,
         isInfinite: true,
+        withoutLabel: true,
         populators: {
           inputs: [
             {
