@@ -106,9 +106,6 @@ public class ESignService {
 
         setAuditDetails(eSignParameter, request.getRequestInfo());
 
-        eSignParameter.setStatus(STATUS_PENDING);
-        producer.push(configuration.getEsignCreateTopic(), request);
-
         ESignXmlForm myRequestXmlForm = new ESignXmlForm();
         myRequestXmlForm.setId("");
         myRequestXmlForm.setType("A");
@@ -116,9 +113,10 @@ public class ESignService {
         myRequestXmlForm.setESignRequest(xmlData);
         myRequestXmlForm.setAspTxnID(eSignXmlData.getTxn());
         myRequestXmlForm.setContentType("application/xml");
-        
+
+        eSignParameter.setStatus(STATUS_PENDING);
         eSignParameter.setRequestBlob(myRequestXmlForm);
-        
+        producer.push(configuration.getEsignCreateTopic(), request);
         log.info("Method=signDoc ,Result=Success");
 
         return myRequestXmlForm;
@@ -150,7 +148,6 @@ public class ESignService {
             log.info("Method=signDocWithDigitalSignature ,Result=InProgress, filestoreId:{},tenantId:{}", fileStoreId, tenantId);
             Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, tenantId);
 
-            // Save response blob and update status
             eSignDetails.setResponseBlob(eSignParameter);
             eSignDetails.setStatus(STATUS_SUCCESS);
 
@@ -169,12 +166,10 @@ public class ESignService {
             return signedFileStoreId;
         } catch (Exception e) {
             log.error("Method=signDocWithDigitalSignature ,Result=Error, Error:{}", e.toString());
-                                        // Update status to FAILURE on error
             eSignDetails.setResponseBlob(eSignParameter);
             eSignDetails.setStatus(STATUS_FAILURE);
             eSignDetails.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
             
-            // Still push the update to record the failure
             ESignRequest eSignRequest = ESignRequest.builder()
                     .eSignParameter(eSignDetails).requestInfo(request.getRequestInfo()).build();
             producer.push(configuration.getEsignUpdateTopic(), eSignRequest);
