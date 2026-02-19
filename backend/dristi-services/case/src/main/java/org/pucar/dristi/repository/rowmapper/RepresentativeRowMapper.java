@@ -11,6 +11,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
 import org.pucar.dristi.web.models.AdvocateMapping;
+import org.pucar.dristi.web.models.Advocate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
@@ -52,6 +53,34 @@ public class RepresentativeRowMapper implements ResultSetExtractor<Map<UUID, Lis
                 PGobject pgObject = (PGobject) rs.getObject("additionalDetails");
                 if (pgObject != null)
                     advocateMapping.setAdditionalDetails(objectMapper.readTree(pgObject.getValue()));
+
+                // read joined advocate fields (if present)
+                String advId = null;
+                try {
+                    advId = rs.getString("advocate_id");
+                } catch (Exception ignored) { }
+
+                if (advId != null) {
+                    Advocate advocate = Advocate.builder().build();
+                    try { advocate.setId(UUID.fromString(advId)); } catch (Exception ignored) {}
+                    try { advocate.setTenantId(rs.getString("advocate_tenantid")); } catch (Exception ignored) {}
+                    try { advocate.setApplicationNumber(rs.getString("advocate_applicationnumber")); } catch (Exception ignored) {}
+                    try { advocate.setStatus(rs.getString("advocate_status")); } catch (Exception ignored) {}
+                    try { advocate.setBarRegistrationNumber(rs.getString("advocate_barregistrationnumber")); } catch (Exception ignored) {}
+                    try { advocate.setAdvocateType(rs.getString("advocate_type")); } catch (Exception ignored) {}
+                   // try { advocate.setOrganisationID(rs.getString("advocate_organisationid")); } catch (Exception ignored) {}
+                    try { advocate.setIndividualId(rs.getString("advocate_individualid")); } catch (Exception ignored) {}
+                    try { advocate.setIsActive(rs.getBoolean("advocate_isactive")); } catch (Exception ignored) {}
+
+                    PGobject advAdditional = (PGobject) rs.getObject("advocate_additionaldetails");
+                    if (advAdditional != null) {
+                        try {
+                            advocate.setAdditionalDetails(objectMapper.readTree(advAdditional.getValue()));
+                        } catch (Exception ignored) {}
+                    }
+
+                    advocateMapping.setAdvocate(advocate);
+                }
 
                 if (advocateMap.containsKey(uuid)) {
                     advocateMap.get(uuid).add(advocateMapping);

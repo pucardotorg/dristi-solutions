@@ -22,7 +22,7 @@ public class CaseQueryBuilder {
     private static final String BASE_CASE_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
             "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.accesscode as accesscode, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber, " +
             " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby," +
-            " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails";
+            " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails ";
 
     private static final String BASE_CASE_SUMMARY_LIST_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.courtid as courtid, cases.casetitle as casetitle, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
             " cases.cmpnumber as cmpnumber, cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.status as status, cases.pendingadvocaterequests as pendingadvocaterequests, cases.substage as substage, cases.filingdate as filingdate,cases.lastmodifiedtime as lastmodifiedtime, cases.createdtime as createdtime, cases.isLPRCase as isLPRCase, cases.lprNumber as lprNumber";
@@ -69,8 +69,9 @@ public class CaseQueryBuilder {
 
 
     private static final String BASE_REPRESENTATIVES_QUERY = " SELECT rep.id as id, rep.tenantid as tenantid, rep.advocateid as advocateid, rep.case_id as case_id, " +
-            " rep.isactive as isactive, rep.additionaldetails as additionaldetails, rep.createdby as createdby," +
-            " rep.lastmodifiedby as lastmodifiedby, rep.createdtime as createdtime, rep.lastmodifiedtime as lastmodifiedtime , rep.hassigned as hassigned, rep.advocate_filing_status as advocate_filing_status ";
+        " rep.isactive as isactive, rep.additionaldetails as additionaldetails, rep.createdby as createdby," +
+        " rep.lastmodifiedby as lastmodifiedby, rep.createdtime as createdtime, rep.lastmodifiedtime as lastmodifiedtime , rep.hassigned as hassigned, rep.advocate_filing_status as advocate_filing_status, " +
+        " da.id as advocate_id, da.tenantid as advocate_tenantid, da.applicationnumber as advocate_applicationnumber, da.status as advocate_status, da.barregistrationnumber as advocate_barregistrationnumber, da.advocatetype as advocate_type, da.organisationid as advocate_organisationid, da.individualid as advocate_individualid, da.isactive as advocate_isactive, da.additionaldetails as advocate_additionaldetails ";
 
     private static final String BASE_REPRESENTATIVES_SUMMARY_QUERY = " SELECT  rep.case_id as case_id, rep.id as id, rep.advocateid as advocateid, rep.additionaldetails as additionaldetails";
 
@@ -737,6 +738,8 @@ public class CaseQueryBuilder {
         try {
             StringBuilder query = new StringBuilder(BASE_REPRESENTATIVES_QUERY);
             query.append(FROM_REPRESENTATIVES_TABLE);
+            // Join with advocate table to fetch authoritative advocate fields
+            query.append(" LEFT JOIN dristi_advocate da ON rep.advocateid = da.id");
             if (!ids.isEmpty()) {
                 query.append(" WHERE rep.case_id IN (")
                         .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))

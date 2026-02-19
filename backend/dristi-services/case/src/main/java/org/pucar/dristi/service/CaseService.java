@@ -84,6 +84,7 @@ public class CaseService {
     private final EvidenceUtil evidenceUtil;
     private final EvidenceValidator evidenceValidator;
     private final PaymentCalculaterUtil paymentCalculaterUtil;
+    private final org.pucar.dristi.enrichment.AdvocateDetailBlockBuilder advocateDetailBlockBuilder;
 
     private final CaseUtil caseUtil;
 
@@ -107,7 +108,7 @@ public class CaseService {
                        HearingUtil analyticsUtil,
                        UserService userService,
                        PaymentCalculaterUtil paymentCalculaterUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateOfficeCaseMemberRepository advocateOfficeCaseMemberRepository) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateOfficeCaseMemberRepository advocateOfficeCaseMemberRepository, org.pucar.dristi.enrichment.AdvocateDetailBlockBuilder advocateDetailBlockBuilder) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -134,6 +135,7 @@ public class CaseService {
         this.dateUtil = dateUtil;
         this.inboxUtil = inboxUtil;
         this.advocateOfficeCaseMemberRepository = advocateOfficeCaseMemberRepository;
+        this.advocateDetailBlockBuilder = advocateDetailBlockBuilder;
     }
 
     public static List<String> extractIndividualIds(JsonNode rootNode) {
@@ -377,6 +379,11 @@ public class CaseService {
                     decryptedCourtCases.forEach(
                             courtCase -> {
                                 enrichAdvocateJoinedStatus(courtCase, caseCriteria.getAdvocateId());
+                                try {
+                                    advocateDetailBlockBuilder.buildAndSet(courtCase);
+                                } catch (Exception e) {
+                                    log.error("Error building AdvocateDetailBlock in CaseService.searchCases: {}", e.toString());
+                                }
                             });
                 });
                 caseCriteria.setResponseList(decryptedCourtCases);

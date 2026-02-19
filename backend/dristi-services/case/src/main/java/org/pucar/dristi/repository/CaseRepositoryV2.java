@@ -10,6 +10,7 @@ import org.pucar.dristi.repository.querybuilder.CaseQueryBuilder;
 import org.pucar.dristi.repository.rowmapper.*;
 import org.pucar.dristi.repository.rowmapper.v2.*;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.advocateDetails.*;
 import org.pucar.dristi.web.models.advocateofficemember.*;
 import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,10 +51,11 @@ public class CaseRepositoryV2 {
     private final PoaRowMapperV2 poaRowMapperV2;
     private final AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper;
     private final ObjectMapper objectMapper;
+    private final org.pucar.dristi.enrichment.AdvocateDetailBlockBuilder advocateDetailBlockBuilder;
 
 
     @Autowired
-    public CaseRepositoryV2(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, CaseListSummaryRowMapper caseListSummaryRowMapper, CaseSummarySearchRowMapper caseSummarySearchRowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper, RepresentativeRowMapperV2 representativeRowMapperV2, RepresentingRowMapperV2 representingRowMapperV2, LitigantRowMapperV2 litigantRowMapperV2, StatuteSectionRowMapperV2 statuteSectionRowMapperV2, PoaRowMapperV2 poaRowMapperV2, AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper, ObjectMapper objectMapper) {
+    public CaseRepositoryV2(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, CaseListSummaryRowMapper caseListSummaryRowMapper, CaseSummarySearchRowMapper caseSummarySearchRowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper, RepresentativeRowMapperV2 representativeRowMapperV2, RepresentingRowMapperV2 representingRowMapperV2, LitigantRowMapperV2 litigantRowMapperV2, StatuteSectionRowMapperV2 statuteSectionRowMapperV2, PoaRowMapperV2 poaRowMapperV2, AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper, ObjectMapper objectMapper, org.pucar.dristi.enrichment.AdvocateDetailBlockBuilder advocateDetailBlockBuilder) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
@@ -78,6 +80,7 @@ public class CaseRepositoryV2 {
         this.poaRowMapperV2 = poaRowMapperV2;
         this.advocateOfficeCaseMemberRowMapper = advocateOfficeCaseMemberRowMapper;
         this.objectMapper = objectMapper;
+        this.advocateDetailBlockBuilder = advocateDetailBlockBuilder;
     }
 
     public List<CaseSummarySearch> getCaseSummary(CaseSummarySearchRequest caseSummarySearchRequest) {
@@ -446,6 +449,18 @@ public class CaseRepositoryV2 {
 
         if (!idsRepresenting.isEmpty())
             setRepresentingDocuments(courtCase, idsRepresenting);
+
+        // Populate AdvocateDetailBlock using litigants, representatives and documents
+        setAdvocateDetailBlock(courtCase, ids);
+    }
+
+    private void setAdvocateDetailBlock(CourtCase courtCase, List<String> ids) {
+        // Delegate to centralized builder for consistency across v1/v2
+        try {
+            advocateDetailBlockBuilder.buildAndSet(courtCase);
+        } catch (Exception e) {
+            log.error("Error while delegating AdvocateDetailBlock build: {}", e.toString());
+        }
     }
 
     private void setPoaDocuments(CourtCase courtCase, List<String> individualIdsPoaHolder) {
