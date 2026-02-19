@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.util.CacheUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.PendingTaskUtil;
 import org.pucar.dristi.util.WorkflowUtil;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 
+import static org.pucar.dristi.web.models.enums.OfficeManagementStatus.COMPLETED;
+
 @Slf4j
 @Component
 public class AdvocateOfficeMemberConsumer {
@@ -30,12 +33,15 @@ public class AdvocateOfficeMemberConsumer {
 
     private final Configuration configuration;
 
-    public AdvocateOfficeMemberConsumer(PendingTaskUtil pendingTaskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, WorkflowUtil workflowUtil, Configuration configuration) {
+    private final CacheUtil cacheUtil;
+
+    public AdvocateOfficeMemberConsumer(PendingTaskUtil pendingTaskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, WorkflowUtil workflowUtil, Configuration configuration, CacheUtil cacheUtil) {
         this.pendingTaskUtil = pendingTaskUtil;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
         this.workflowUtil = workflowUtil;
         this.configuration = configuration;
+        this.cacheUtil = cacheUtil;
     }
 
     @KafkaListener(topics = "${kafka.topics.advocate.office.member.analytics}")
@@ -111,6 +117,10 @@ public class AdvocateOfficeMemberConsumer {
                             } catch (Exception e) {
                                 log.error("Error upserting assignees for process instance: {}", processInstanceId, e);
                             }
+                        }
+
+                        for (String memberUserUuid : memberUuidSet) {
+                            cacheUtil.save(officeAdvocateUuid + "-" + memberUserUuid, COMPLETED);
                         }
                     } else {
                         log.info("No process instance IDs found for office advocate: {} matching MDMS configuration", officeAdvocateUuid);
@@ -236,6 +246,8 @@ public class AdvocateOfficeMemberConsumer {
                     log.error("Error processing workflow deactivation for case: {}", filingNumber, e);
                 }
             }
+
+            cacheUtil.save(officeAdvocateUuid + "-" + memberUserUuid, COMPLETED);
 
             log.info("Completed processing workflow assignee deactivation for member: {}", memberUserUuid);
         } catch (Exception e) {

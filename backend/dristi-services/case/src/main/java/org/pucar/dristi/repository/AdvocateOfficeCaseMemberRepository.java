@@ -1,7 +1,12 @@
 package org.pucar.dristi.repository;
 
 import lombok.extern.slf4j.Slf4j;
+import org.pucar.dristi.repository.querybuilder.AdvocateOfficeCaseMemberQueryBuilder;
+import org.pucar.dristi.repository.rowmapper.CaseMemberInfoRowMapper;
 import org.pucar.dristi.web.models.AdvocateCaseInfo;
+import org.pucar.dristi.web.models.Pagination;
+import org.pucar.dristi.web.models.advocateofficemember.CaseMemberInfo;
+import org.pucar.dristi.web.models.advocateofficemember.CaseMemberSearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -14,10 +19,16 @@ import java.util.List;
 public class AdvocateOfficeCaseMemberRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final AdvocateOfficeCaseMemberQueryBuilder queryBuilder;
+    private final CaseMemberInfoRowMapper caseMemberInfoRowMapper;
 
     @Autowired
-    public AdvocateOfficeCaseMemberRepository(JdbcTemplate jdbcTemplate) {
+    public AdvocateOfficeCaseMemberRepository(JdbcTemplate jdbcTemplate,
+                                              AdvocateOfficeCaseMemberQueryBuilder queryBuilder,
+                                              CaseMemberInfoRowMapper caseMemberInfoRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
+        this.queryBuilder = queryBuilder;
+        this.caseMemberInfoRowMapper = caseMemberInfoRowMapper;
     }
 
     public List<String> getCaseIdsByAdvocateId(String advocateId) {
@@ -62,6 +73,49 @@ public class AdvocateOfficeCaseMemberRepository {
         } catch (Exception e) {
             log.error("Error fetching advocate UUIDs for member: {} and case: {}", memberUserUuid, caseId, e);
             return new ArrayList<>();
+        }
+    }
+
+    public List<CaseMemberInfo> searchCaseMembers(CaseMemberSearchCriteria criteria,
+                                                  Pagination pagination) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        try {
+            String query = queryBuilder.getCaseMembersSearchQuery(criteria, preparedStmtList, preparedStmtArgList);
+            query = queryBuilder.addOrderByQuery(query, pagination);
+
+            if (pagination != null) {
+                query = queryBuilder.addPaginationQuery(query, preparedStmtList, pagination, preparedStmtArgList);
+            }
+
+            return jdbcTemplate.query(query,
+                    preparedStmtList.toArray(),
+                    preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),
+                    caseMemberInfoRowMapper);
+        } catch (Exception e) {
+            log.error("Error searching case members for officeAdvocateUserUuid: {} and memberUserUuid: {}",
+                    criteria.getOfficeAdvocateUserUuid(), criteria.getMemberUserUuid(), e);
+            return new ArrayList<>();
+        }
+    }
+
+    public Integer getCaseMembersTotalCount(CaseMemberSearchCriteria criteria) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        try {
+            String baseQuery = queryBuilder.getCaseMembersSearchQuery(criteria, preparedStmtList, preparedStmtArgList);
+            String countQuery = queryBuilder.getTotalCountQuery(baseQuery);
+
+            return jdbcTemplate.queryForObject(countQuery,
+                    preparedStmtList.toArray(),
+                    preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),
+                    Integer.class);
+        } catch (Exception e) {
+            log.error("Error getting total count for officeAdvocateUserUuid: {} and memberUserUuid: {}",
+                    criteria.getOfficeAdvocateUserUuid(), criteria.getMemberUserUuid(), e);
+            return 0;
         }
     }
 

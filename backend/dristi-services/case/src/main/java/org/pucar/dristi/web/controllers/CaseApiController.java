@@ -16,16 +16,12 @@ import org.pucar.dristi.service.WitnessService;
 import org.pucar.dristi.util.ResponseInfoFactory;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
-import org.pucar.dristi.web.models.advocateofficemember.MemberAdvocatesRequest;
-import org.pucar.dristi.web.models.advocateofficemember.MemberAdvocatesResponse;
+import org.pucar.dristi.web.models.advocateofficemember.*;
 import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -356,6 +352,31 @@ public class CaseApiController {
                 .responseInfo(responseInfo)
                 .build();
         log.info("api=/v1/member/_advocates, result=SUCCESS");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/_searchCaseMember")
+    public ResponseEntity<CaseMemberSearchResponse> searchCaseMember(
+            @Parameter(in = ParameterIn.DEFAULT, description = "Search criteria for case members by office advocate and member UUIDs + RequestInfo meta data.", required = true, schema = @Schema()) 
+            @Valid @RequestBody CaseMemberSearchRequest body) {
+        log.info("api=/v1/_searchCaseMember, result=IN_PROGRESS");
+        CaseMemberSearchResponse searchResponse = advocateOfficeCaseMemberService.searchCaseMembers(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        searchResponse.setResponseInfo(responseInfo);
+        log.info("api=/v1/_searchCaseMember, result=SUCCESS, found {} cases out of {} total", 
+                searchResponse.getCases().size(), searchResponse.getTotalCount());
+        return new ResponseEntity<>(searchResponse, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/v1/_processCaseMember", method = RequestMethod.POST)
+    public ResponseEntity<ProcessCaseMemberResponse> advocateOfficeV1ProcessCaseMemberPost(@Parameter(in = ParameterIn.DEFAULT, description = "Details for processing case member + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody ProcessCaseMemberRequest body) {
+        log.info("Processing case member: {}", body);
+        advocateOfficeCaseMemberService.processCaseMember(body);
+        ProcessCaseMemberResponse response = ProcessCaseMemberResponse.builder()
+                .processCaseMember(body.getProcessCaseMember())
+                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true))
+                .build();
+        log.info("Case member processed successfully: {}", response);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
