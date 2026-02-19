@@ -1122,7 +1122,7 @@ public class IndexerUtils {
         if (epoch == null) return "";
 
         return Instant.ofEpochMilli(epoch)
-                .atZone(ZoneId.of("Asia/Kolkata"))
+                .atZone(ZoneId.of(config.getZoneId()))
                 .toLocalDate()
                 .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }

@@ -196,4 +196,7 @@ public class Configuration {
     @Value("${dristi.esign.signature.height:50}")
     private int esignSignatureHeight;
 
+    @Value("${app.zone.id}")
+    private String zoneId;
+
 }

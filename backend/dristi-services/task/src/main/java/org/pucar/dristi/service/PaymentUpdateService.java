@@ -454,7 +454,7 @@ public class PaymentUpdateService {
 
     private void updateDeliveryChannels(Task task) {
         // Indian time zone (IST)
-        ZoneId indianZone = ZoneId.of("Asia/Kolkata");
+        ZoneId indianZone = ZoneId.of(config.getZoneId());
         String todayDate = LocalDate.now(indianZone).format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
 
         JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
@@ -575,7 +575,7 @@ public class PaymentUpdateService {
 
         String entityType = getEntityType(taskType);
 
-        ZoneId zoneId = ZoneId.of("Asia/Kolkata");
+        ZoneId zoneId = ZoneId.of(config.getZoneId());
         ZonedDateTime istTime = ZonedDateTime.now(zoneId);
         long currentISTMillis = istTime.toInstant().toEpochMilli();
 

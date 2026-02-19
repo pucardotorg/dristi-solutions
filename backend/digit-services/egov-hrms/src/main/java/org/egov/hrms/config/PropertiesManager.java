@@ -113,4 +113,7 @@ public class PropertiesManager {
 
 	@Value("${decryption.abac.enable}")
 	private Boolean isDecryptionEnable;
+
+	@Value("${app.zone.id}")
+	public String applicationZoneId;
 }

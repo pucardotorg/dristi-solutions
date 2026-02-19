@@ -168,7 +168,7 @@ public class CronJobScheduler {
 
     public boolean shouldTriggerSmsForErrorsPending(long createdTime) {
 
-        Instant currentTime = ZonedDateTime.now(ZoneId.of("Asia/Kolkata")).toInstant();
+        Instant currentTime = ZonedDateTime.now(ZoneId.of(config.getZoneId())).toInstant();
         Instant createdInstant = Instant.ofEpochMilli(createdTime);
         long threeDaysInMillis = Duration.ofDays(3).toMillis();
         long twentyDaysInMillis = Duration.ofDays(smsErrorsPendingDuration).toMillis();

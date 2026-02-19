@@ -546,7 +546,7 @@ public class EmployeeValidator {
 	private void validateDeactivationDetails(Employee existingEmp, Employee updatedEmployeeData, Map<String, String> errorMap, Map<String, List<String>> mdmsData){
 		if(!CollectionUtils.isEmpty(updatedEmployeeData.getDeactivationDetails())) {
 			Date date = new Date();
-			Date  currentDateStartTime = Date.from(date.toInstant().atZone(ZoneId.systemDefault())
+			Date  currentDateStartTime = Date.from(date.toInstant().atZone(ZoneId.of(propertiesManager.getApplicationZoneId()))
 					.truncatedTo(ChronoUnit.DAYS).toInstant());
 			for (DeactivationDetails deactivationDetails : updatedEmployeeData.getDeactivationDetails()) {
 				if (deactivationDetails.getId()==null){

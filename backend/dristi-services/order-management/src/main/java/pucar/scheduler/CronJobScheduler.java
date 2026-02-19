@@ -41,7 +41,7 @@ import static pucar.config.ServiceConstants.*;
 @EnableScheduling
 public class CronJobScheduler {
 
-    private static final ZoneId ZONE_ID = ZoneId.of("Asia/Kolkata");
+    private final ZoneId zoneId;
 
     private final PendingTaskUtil pendingTaskUtil;
     private final Configuration config;
@@ -65,6 +65,7 @@ public class CronJobScheduler {
         this.dateUtil = dateUtil;
         this.caseUtil = caseUtil;
         this.requestInfoGenerator = requestInfoGenerator;
+        this.zoneId = ZoneId.of(config.getZoneId());
     }
 
     public void sendNotificationForProcessPaymentPending() {
@@ -77,8 +78,8 @@ public class CronJobScheduler {
             SMSTemplateData smsTemplateData = SMSTemplateData.builder()
                     .tenantId(config.getStateLevelTenantId())
                     .build();
-            LocalDate today = LocalDate.now(ZONE_ID);
-            log.debug("Current date in {}: {}", ZONE_ID, today);
+            LocalDate today = LocalDate.now(zoneId);
+            log.debug("Current date in {}: {}", zoneId, today);
 
             int processedCount = 0;
             int skippedCount = 0;
@@ -145,7 +146,7 @@ public class CronJobScheduler {
 
     private boolean isCreatedToday(long createdTime, LocalDate today) {
         Instant createdInstant = Instant.ofEpochMilli(createdTime);
-        LocalDate createdDate = createdInstant.atZone(ZONE_ID).toLocalDate();
+        LocalDate createdDate = createdInstant.atZone(zoneId).toLocalDate();
         boolean result = createdDate.equals(today);
 
         if (log.isTraceEnabled()) {
@@ -203,8 +204,8 @@ public class CronJobScheduler {
             SMSTemplateData smsTemplateData = SMSTemplateData.builder()
                     .tenantId(config.getStateLevelTenantId())
                     .build();
-            LocalDate today = LocalDate.now(ZONE_ID);
-            log.debug("Current date in {}: {}", ZONE_ID, today);
+            LocalDate today = LocalDate.now(zoneId);
+            log.debug("Current date in {}: {}", zoneId, today);
 
             int processedCount = 0;
             int skippedCount = 0;
@@ -258,8 +259,8 @@ public class CronJobScheduler {
 
     private boolean isMultipleOfThreeDaysSinceCreation(long createdTime) {
         Instant createdInstant = Instant.ofEpochMilli(createdTime);
-        LocalDate createdDate = createdInstant.atZone(ZONE_ID).toLocalDate();
-        LocalDate today = LocalDate.now(ZONE_ID);
+        LocalDate createdDate = createdInstant.atZone(zoneId).toLocalDate();
+        LocalDate today = LocalDate.now(zoneId);
 
         long daysBetween = ChronoUnit.DAYS.between(createdDate, today);
         boolean isMultipleOfThree = daysBetween > 0 && daysBetween % 3 == 0;

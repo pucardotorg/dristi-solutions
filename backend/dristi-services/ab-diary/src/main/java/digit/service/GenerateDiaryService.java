@@ -42,12 +42,10 @@ public class GenerateDiaryService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private static final String TIME_ZONE = "Asia/Kolkata";
-
     // This runs everyday at 11:59 PM
     //0 59 23 * * *
 
-    @Scheduled(cron = "#{@scheduleCronExpression}", zone = TIME_ZONE)
+    @Scheduled(cron = "#{@scheduleCronExpression}", zone = "${app.zone.id}")
     public void generateDiary() {
         log.info("Starting cron job for generating diary");
 
@@ -83,11 +81,12 @@ public class GenerateDiaryService {
     }
 
     private Long generateDiaryDate() {
-        // Get current date
-        LocalDate today = LocalDate.now();
+        // Get current date using configured zone
+        ZoneId configuredZoneId = configuration.getZoneId();
+        LocalDate today = LocalDate.now(configuredZoneId);
 
         // Get 12:00 AM time for today
-        ZonedDateTime midnight = today.atStartOfDay(ZoneId.of(TIME_ZONE));
+        ZonedDateTime midnight = today.atStartOfDay(configuredZoneId);
 
         // Convert to epoch milliseconds
         long epochMillis = midnight.toInstant().toEpochMilli();

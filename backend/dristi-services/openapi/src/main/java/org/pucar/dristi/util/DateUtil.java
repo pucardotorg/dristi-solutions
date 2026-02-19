@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import static java.time.ZoneOffset.UTC;
-
 @Component
 public class DateUtil {
 
@@ -25,12 +23,12 @@ public class DateUtil {
     public List<Long> getYearInSeconds(Integer year) {
 
         try {
-            Calendar startOfYear = Calendar.getInstance(TimeZone.getTimeZone(UTC));
+            Calendar startOfYear = Calendar.getInstance(TimeZone.getTimeZone(config.getZoneId()));
             startOfYear.set(year, Calendar.JANUARY, 1, 0, 0, 0);
             startOfYear.set(Calendar.MILLISECOND, 0);
             long startOfYearMillis = startOfYear.getTimeInMillis();
 
-            Calendar endOfYear = Calendar.getInstance(TimeZone.getTimeZone(UTC));
+            Calendar endOfYear = Calendar.getInstance(TimeZone.getTimeZone(config.getZoneId()));
             endOfYear.set(year, Calendar.DECEMBER, 31, 23, 59, 59);
             endOfYear.set(Calendar.MILLISECOND, 999);
             long endOfYearMillis = endOfYear.getTimeInMillis();

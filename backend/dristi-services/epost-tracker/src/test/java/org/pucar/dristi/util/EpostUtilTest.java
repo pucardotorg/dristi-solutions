@@ -82,6 +82,7 @@ class EpostUtilTest {
 
         when(idgenUtil.getIdList(any(), any(), any(), any(), anyInt())).thenReturn(Collections.singletonList("PN123"));
         when(config.getEgovStateTenantId()).thenReturn("tenantId");
+        when(config.getZoneId()).thenReturn("Asia/Kolkata");
         when(requestInfo.getUserInfo()).thenReturn(user);
 
         // Act

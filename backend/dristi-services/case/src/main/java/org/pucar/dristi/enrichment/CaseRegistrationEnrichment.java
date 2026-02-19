@@ -457,7 +457,7 @@ public class CaseRegistrationEnrichment {
     }
 
     private String getCurrentYearAsString() {
-        LocalDate currentDate = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+        LocalDate currentDate = LocalDate.now(ZoneId.of(config.getZoneId()));
         return String.valueOf(currentDate.getYear());
     }
 

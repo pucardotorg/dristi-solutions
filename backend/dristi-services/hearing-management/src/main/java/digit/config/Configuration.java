@@ -115,4 +115,7 @@ public class Configuration {
 
     @Value("${dristi.hearing.search.endpoint}")
     private String HearingSearchEndPoint;
+
+    @Value("${app.zone.id}")
+    private String zoneId;
 }
