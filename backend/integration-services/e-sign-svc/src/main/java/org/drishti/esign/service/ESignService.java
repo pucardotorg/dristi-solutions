@@ -98,10 +98,7 @@ public class ESignService {
         } catch (Exception e) {
             log.error("Method=signDoc ,Result=Error, private key and xml data");
             log.error("Method=signDoc, Error:{}", e.toString());
-            // Set status to FAILURE on error
-            eSignParameter.setStatus(STATUS_FAILURE);
             throw new CustomException("E_SIGN_EXCEPTION", "Exception Occurred while generating the request");
-
         }
 
         setAuditDetails(eSignParameter, request.getRequestInfo());
@@ -148,15 +145,14 @@ public class ESignService {
             log.info("Method=signDocWithDigitalSignature ,Result=InProgress, filestoreId:{},tenantId:{}", fileStoreId, tenantId);
             Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, tenantId);
 
-            eSignDetails.setResponseBlob(eSignParameter);
-            eSignDetails.setStatus(STATUS_SUCCESS);
-
             MultipartFile multipartFile;
             multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFileV2(resource, response, eSignDetails);
             String signedFileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
             eSignDetails.setSignedFileStoreId(signedFileStoreId);
             eSignDetails.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+            eSignDetails.setResponseBlob(eSignParameter);
+            eSignDetails.setStatus(STATUS_SUCCESS);
             ESignRequest eSignRequest = ESignRequest.builder()
                     .eSignParameter(eSignDetails).requestInfo(request.getRequestInfo()).build();
 

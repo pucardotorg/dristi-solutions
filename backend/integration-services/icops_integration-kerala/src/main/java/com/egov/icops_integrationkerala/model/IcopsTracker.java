@@ -1,14 +1,12 @@
 package com.egov.icops_integrationkerala.model;
 
 import lombok.*;
-import org.springframework.stereotype.Component;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Component
 public class IcopsTracker {
     private String processNumber;
     private String tenantId;

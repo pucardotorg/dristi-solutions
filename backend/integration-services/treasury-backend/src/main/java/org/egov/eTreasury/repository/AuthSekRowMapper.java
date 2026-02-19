@@ -23,6 +23,7 @@ public class AuthSekRowMapper implements RowMapper<AuthSek> {
         authSek.setPaidBy(rs.getString("paid_by"));
         authSek.setSessionTime(rs.getLong("session_time"));
         authSek.setDepartmentId(rs.getString("department_id"));
+        authSek.setRequestBlob(rs.getObject("request_blob"));
         return authSek;
     }
 }
