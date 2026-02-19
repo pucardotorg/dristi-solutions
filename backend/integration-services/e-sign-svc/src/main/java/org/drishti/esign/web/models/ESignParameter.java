@@ -39,8 +39,17 @@ public class ESignParameter {
     @JsonProperty("signPlaceHolder")
     private String signPlaceHolder;
 
-    @JsonProperty("filePath")
-    private String filePath;
+    @JsonProperty("unsignedFilePath")
+    private String unsignedFilePath;
+
+    @JsonProperty("requestBlob")
+    private Object requestBlob;
+
+    @JsonProperty("responseBlob")
+    private Object responseBlob;
+
+    @JsonProperty("status")
+    private String status;
 
     @JsonProperty("auditDetails")
     @Valid

@@ -1,6 +1,7 @@
 package org.drishti.esign.service;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.text.pdf.PdfReader;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -27,6 +28,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.drishti.esign.config.ServiceConstants.PRIVATE_KEY_FILE_NAME;
+import static org.drishti.esign.config.ServiceConstants.STATUS_PENDING;
+import static org.drishti.esign.config.ServiceConstants.STATUS_SUCCESS;
+import static org.drishti.esign.config.ServiceConstants.STATUS_FAILURE;
 
 
 @Service
@@ -42,11 +46,12 @@ public class ESignService {
     private final FileStoreUtil fileStoreUtil;
     private final Producer producer;
     private final Configuration configuration;
+    private final ObjectMapper objectMapper;
 
     private final EsignRequestRepository repository;
 
     @Autowired
-    public ESignService(PdfEmbedder pdfEmbedder, XmlSigning xmlSigning, Encryption encryption, XmlFormDataSetter formDataSetter, XmlGenerator xmlGenerator, FileStoreUtil fileStoreUtil, Producer producer, Configuration configuration, EsignRequestRepository repository) {
+    public ESignService(PdfEmbedder pdfEmbedder, XmlSigning xmlSigning, Encryption encryption, XmlFormDataSetter formDataSetter, XmlGenerator xmlGenerator, FileStoreUtil fileStoreUtil, Producer producer, Configuration configuration, EsignRequestRepository repository, ObjectMapper objectMapper) {
         this.pdfEmbedder = pdfEmbedder;
         this.xmlSigning = xmlSigning;
         this.encryption = encryption;
@@ -56,6 +61,7 @@ public class ESignService {
         this.producer = producer;
         this.configuration = configuration;
         this.repository = repository;
+        this.objectMapper = objectMapper;
     }
 
     public ESignXmlForm signDoc(ESignRequest request, HttpServletRequest servletRequest) {
@@ -93,12 +99,9 @@ public class ESignService {
             log.error("Method=signDoc ,Result=Error, private key and xml data");
             log.error("Method=signDoc, Error:{}", e.toString());
             throw new CustomException("E_SIGN_EXCEPTION", "Exception Occurred while generating the request");
-
         }
 
         setAuditDetails(eSignParameter, request.getRequestInfo());
-
-        producer.push(configuration.getEsignCreateTopic(), request);
 
         ESignXmlForm myRequestXmlForm = new ESignXmlForm();
         myRequestXmlForm.setId("");
@@ -107,6 +110,10 @@ public class ESignService {
         myRequestXmlForm.setESignRequest(xmlData);
         myRequestXmlForm.setAspTxnID(eSignXmlData.getTxn());
         myRequestXmlForm.setContentType("application/xml");
+
+        eSignParameter.setStatus(STATUS_PENDING);
+        eSignParameter.setRequestBlob(myRequestXmlForm);
+        producer.push(configuration.getEsignCreateTopic(), request);
         log.info("Method=signDoc ,Result=Success");
 
         return myRequestXmlForm;
@@ -134,22 +141,37 @@ public class ESignService {
         String tenantId = eSignParameter.getTenantId();
         String response = eSignParameter.getResponse();
 
-        log.info("Method=signDocWithDigitalSignature ,Result=InProgress, filestoreId:{},tenantId:{}", fileStoreId, tenantId);
-        Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, tenantId);
+        try {
+            log.info("Method=signDocWithDigitalSignature ,Result=InProgress, filestoreId:{},tenantId:{}", fileStoreId, tenantId);
+            Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, tenantId);
 
-        MultipartFile multipartFile;
-        multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFileV2(resource, response, eSignDetails);
-        String signedFileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+            MultipartFile multipartFile;
+            multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFileV2(resource, response, eSignDetails);
+            String signedFileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
-        eSignDetails.setSignedFileStoreId(signedFileStoreId);
-        eSignDetails.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
-        ESignRequest eSignRequest = ESignRequest.builder()
-                .eSignParameter(eSignDetails).requestInfo(request.getRequestInfo()).build();
+            eSignDetails.setSignedFileStoreId(signedFileStoreId);
+            eSignDetails.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+            eSignDetails.setResponseBlob(eSignParameter);
+            eSignDetails.setStatus(STATUS_SUCCESS);
+            ESignRequest eSignRequest = ESignRequest.builder()
+                    .eSignParameter(eSignDetails).requestInfo(request.getRequestInfo()).build();
 
-        producer.push(configuration.getEsignUpdateTopic(), eSignRequest);
+            producer.push(configuration.getEsignUpdateTopic(), eSignRequest);
 
-        log.info("Method=signDocWithDigitalSignature ,Result=Success");
-        return signedFileStoreId;
+            log.info("Method=signDocWithDigitalSignature ,Result=Success");
+            return signedFileStoreId;
+        } catch (Exception e) {
+            log.error("Method=signDocWithDigitalSignature ,Result=Error, Error:{}", e.toString());
+            eSignDetails.setResponseBlob(eSignParameter);
+            eSignDetails.setStatus(STATUS_FAILURE);
+            eSignDetails.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+            
+            ESignRequest eSignRequest = ESignRequest.builder()
+                    .eSignParameter(eSignDetails).requestInfo(request.getRequestInfo()).build();
+            producer.push(configuration.getEsignUpdateTopic(), eSignRequest);
+            
+            throw new CustomException("E_SIGN_FAILURE", "E-signature process failed: " + e.getMessage());
+        }
     }
 
 

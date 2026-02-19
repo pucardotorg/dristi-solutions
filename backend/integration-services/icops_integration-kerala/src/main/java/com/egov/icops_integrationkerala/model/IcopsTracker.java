@@ -21,4 +21,7 @@ public class IcopsTracker {
     private String bookingDate;
     private String receivedDate;
     private String acknowledgementId;
+    private Object requestBlob;
+    private Object responseBlob;
+    private String failureReason;
 }

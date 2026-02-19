@@ -21,7 +21,7 @@ public class EsignRowMapper implements RowMapper<ESignParameter> {
                 .pageModule(rs.getString("pagemodule"))
                 .signPlaceHolder(rs.getString("signplaceholder"))
                 .signedFileStoreId(rs.getString("signedfilestoreid"))
-                .filePath(rs.getString("filepath"))
+                .unsignedFilePath(rs.getString("unsigned_filepath"))
                 .auditDetails(AuditDetails.builder()
                         .createdBy(rs.getString("createdby"))
                         .createdTime(rs.getLong("createdtime"))
