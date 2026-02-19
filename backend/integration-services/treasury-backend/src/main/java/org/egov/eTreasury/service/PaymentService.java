@@ -167,6 +167,9 @@ public class PaymentService {
             ChallanDetails challanDetails  = treasuryEnrichment.generateChallanDetails(challanData, requestInfo);
 
             AuthSek authSek = buildAuthSek(challanData, secretMap, decryptedSek, challanDetails.getDepartmentId());
+
+            authSek.setRequestBlob(challanDetails);
+            log.info("Saved ChallanDetails as request blob for departmentId: {}", challanDetails.getDepartmentId());
             saveAuthTokenAndSek(requestInfo, authSek);
 
             String postBody;
@@ -261,6 +264,17 @@ public class PaymentService {
 
             TransactionDetails transactionDetails = objectMapper.readValue(decryptedData, TransactionDetails.class);
             TreasuryPaymentData data = createTreasuryPaymentData(transactionDetails, authSek);
+            
+            // Save request blob from AuthSek
+            if (authSek.getRequestBlob() != null) {
+                data.setRequestBlob(authSek.getRequestBlob());
+                log.info("Retrieved request blob from AuthSek for departmentId: {}", authSek.getDepartmentId());
+            }
+            
+            // Save TreasuryParams as response blob
+            data.setResponseBlob(treasuryParams);
+            log.info("Saved TreasuryParams as response blob for departmentId: {}", authSek.getDepartmentId());
+
             treasuryEnrichment.enrichTreasuryPaymentData(data, requestInfo);
             requestInfo.getUserInfo().setTenantId(config.getEgovStateTenantId());
 

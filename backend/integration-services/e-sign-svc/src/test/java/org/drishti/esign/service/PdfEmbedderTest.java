@@ -44,7 +44,7 @@ public class PdfEmbedderTest {
         sampleResponse = "<UserX509Certificate>MIICertificateContentNA</UserX509Certificate>";
 
         eSignParameter = ESignParameter.builder()
-                .filePath("file://")
+                .unsignedFilePath("file://")
                 .id("123")
                 .authType("A")
                 .fileStoreId("file-456")

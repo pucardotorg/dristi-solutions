@@ -220,6 +220,7 @@ public class IcopsEnrichment {
                 .rowVersion(0)
                 .bookingDate(currentDate)
                 .acknowledgementId(channelMessage.getAcknowledgeUniqueNumber())
+                .requestBlob(processRequest)
                 .build();
     }
 

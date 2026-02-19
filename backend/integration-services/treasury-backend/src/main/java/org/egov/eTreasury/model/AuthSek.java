@@ -23,4 +23,5 @@ public class AuthSek {
     private String paidBy;
     private long sessionTime;
     private String departmentId;
+    private Object requestBlob;
 }
