@@ -13,6 +13,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
+import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -172,7 +173,14 @@ public class IcopsService {
             icopsTracker.setFailureReason(icopsProcessReport.getProcessFailureReason());
         }
         icopsTracker.setResponseBlob(icopsProcessReport);
-        icopsTracker.setReceivedDate(LocalDateTime.now(ZoneId.of(config.getZoneId())).toString());
+        ZoneId zone;
+        try {
+            zone = ZoneId.of(config.getZoneId());
+        } catch (DateTimeException e) {
+            log.warn("Invalid zoneId '{}' in config, falling back to UTC", config.getZoneId());
+            zone = ZoneId.of("UTC");
+        }
+        icopsTracker.setReceivedDate(LocalDateTime.now(zone).toString());
     }
 
     public LocationBasedJurisdiction getLocationBasedJurisdiction(LocationRequest request) throws Exception {

@@ -264,14 +264,12 @@ public class PaymentService {
 
             TransactionDetails transactionDetails = objectMapper.readValue(decryptedData, TransactionDetails.class);
             TreasuryPaymentData data = createTreasuryPaymentData(transactionDetails, authSek);
-            
-            // Save request blob from AuthSek
+
             if (authSek.getRequestBlob() != null) {
                 data.setRequestBlob(authSek.getRequestBlob());
                 log.info("Retrieved request blob from AuthSek for departmentId: {}", authSek.getDepartmentId());
             }
-            
-            // Save TreasuryParams as response blob
+
             data.setResponseBlob(treasuryParams);
             log.info("Saved TreasuryParams as response blob for departmentId: {}", authSek.getDepartmentId());
 

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.eTreasury.model.AuthSek;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
