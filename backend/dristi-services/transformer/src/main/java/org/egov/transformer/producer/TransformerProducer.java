@@ -8,14 +8,14 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class TransformerProducer {
-    private final CustomKafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaProducerService kafkaProducerService;
 
     @Autowired
-    public TransformerProducer(CustomKafkaTemplate<String, Object> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
+    public TransformerProducer(KafkaProducerService kafkaProducerService) {
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     public void push(String topic, Object value) {
-        this.kafkaTemplate.send(topic, value);
+        this.kafkaProducerService.send(topic, value);
     }
 }

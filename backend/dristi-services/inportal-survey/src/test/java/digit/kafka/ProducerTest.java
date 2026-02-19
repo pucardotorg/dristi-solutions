@@ -1,7 +1,5 @@
 package digit.kafka;
 
-import org.egov.tracer.kafka.CustomKafkaTemplate;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,7 +12,7 @@ import static org.mockito.Mockito.*;
 public class ProducerTest {
 
     @Mock
-    private CustomKafkaTemplate<String, Object> kafkaTemplate;
+    private KafkaProducerService kafkaProducerService;
 
     @InjectMocks
     private Producer producer;
@@ -29,7 +27,7 @@ public class ProducerTest {
         producer.push(topic, value);
 
         // Assert
-        verify(kafkaTemplate, times(1)).send(topic, value);
+        verify(kafkaProducerService, times(1)).send(topic, value);
     }
 
     @Test
@@ -42,7 +40,7 @@ public class ProducerTest {
         producer.push(topic, value);
 
         // Assert
-        verify(kafkaTemplate, times(1)).send(topic, value);
+        verify(kafkaProducerService, times(1)).send(topic, value);
     }
 
     @Test
@@ -55,7 +53,7 @@ public class ProducerTest {
         producer.push(topic, value);
 
         // Assert
-        verify(kafkaTemplate, times(1)).send(null, value);
+        verify(kafkaProducerService, times(1)).send(null, value);
     }
 
     @Test
@@ -68,7 +66,7 @@ public class ProducerTest {
         producer.push(topic, value);
 
         // Assert
-        verify(kafkaTemplate, times(1)).send(topic, null);
+        verify(kafkaProducerService, times(1)).send(topic, null);
     }
 
     @Test
@@ -81,7 +79,7 @@ public class ProducerTest {
         producer.push(topic, value);
 
         // Assert
-        verify(kafkaTemplate, times(1)).send("", value);
+        verify(kafkaProducerService, times(1)).send("", value);
     }
 
     @Test
@@ -94,7 +92,7 @@ public class ProducerTest {
         producer.push(topic, value);
 
         // Assert
-        verify(kafkaTemplate, times(1)).send(topic, value);
+        verify(kafkaProducerService, times(1)).send(topic, value);
     }
 
     @Test
@@ -110,9 +108,9 @@ public class ProducerTest {
         producer.push(topic2, value2);
 
         // Assert
-        verify(kafkaTemplate, times(1)).send(topic1, value1);
-        verify(kafkaTemplate, times(1)).send(topic2, value2);
-        verify(kafkaTemplate, times(2)).send(anyString(), any());
+        verify(kafkaProducerService, times(1)).send(topic1, value1);
+        verify(kafkaProducerService, times(1)).send(topic2, value2);
+        verify(kafkaProducerService, times(2)).send(anyString(), any());
     }
 
     @Test
@@ -129,10 +127,10 @@ public class ProducerTest {
         producer.push(topic, value3);
 
         // Assert
-        verify(kafkaTemplate, times(1)).send(topic, value1);
-        verify(kafkaTemplate, times(1)).send(topic, value2);
-        verify(kafkaTemplate, times(1)).send(topic, value3);
-        verify(kafkaTemplate, times(3)).send(eq(topic), any());
+        verify(kafkaProducerService, times(1)).send(topic, value1);
+        verify(kafkaProducerService, times(1)).send(topic, value2);
+        verify(kafkaProducerService, times(1)).send(topic, value3);
+        verify(kafkaProducerService, times(3)).send(eq(topic), any());
     }
 
     @Test
@@ -152,7 +150,7 @@ public class ProducerTest {
         for (String topic : topics) {
             Object value = "value-for-" + topic;
             producer.push(topic, value);
-            verify(kafkaTemplate, times(1)).send(topic, value);
+            verify(kafkaProducerService, times(1)).send(topic, value);
         }
     }
 
@@ -163,24 +161,24 @@ public class ProducerTest {
 
         // String
         producer.push(topic, "string-value");
-        verify(kafkaTemplate, times(1)).send(topic, "string-value");
+        verify(kafkaProducerService, times(1)).send(topic, "string-value");
 
         // Integer
         producer.push(topic, 123);
-        verify(kafkaTemplate, times(1)).send(topic, 123);
+        verify(kafkaProducerService, times(1)).send(topic, 123);
 
         // Long
         producer.push(topic, 123456789L);
-        verify(kafkaTemplate, times(1)).send(topic, 123456789L);
+        verify(kafkaProducerService, times(1)).send(topic, 123456789L);
 
         // Boolean
         producer.push(topic, true);
-        verify(kafkaTemplate, times(1)).send(topic, true);
+        verify(kafkaProducerService, times(1)).send(topic, true);
 
         // Array
         String[] array = {"a", "b", "c"};
         producer.push(topic, array);
-        verify(kafkaTemplate, times(1)).send(topic, array);
+        verify(kafkaProducerService, times(1)).send(topic, array);
     }
 
     @Test
@@ -193,8 +191,8 @@ public class ProducerTest {
         producer.push(topic, value);
 
         // Assert
-        verify(kafkaTemplate, times(1)).send(topic, value);
-        verifyNoMoreInteractions(kafkaTemplate);
+        verify(kafkaProducerService, times(1)).send(topic, value);
+        verifyNoMoreInteractions(kafkaProducerService);
     }
 
     // Helper class for testing complex objects
