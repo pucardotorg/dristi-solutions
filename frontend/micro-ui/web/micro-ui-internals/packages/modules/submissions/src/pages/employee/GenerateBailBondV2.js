@@ -900,6 +900,7 @@ const GenerateBailBondV2 = () => {
           caseTitle: caseDetails?.caseTitle,
           cnrNumber: caseDetails?.cnrNumber,
           caseType: caseDetails?.caseType,
+          asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
           documents: [],
           additionalDetails: {
             createdUserName: userInfo?.name,
@@ -1230,7 +1231,7 @@ const GenerateBailBondV2 = () => {
   }, [complainantToProcessUuid, complainantsList]);
 
   useEffect(() => {
-    if (!isCaseDetailsLoading && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS") {
+    if (caseDetails?.id && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS") {
       history.replace(
         `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`
       );

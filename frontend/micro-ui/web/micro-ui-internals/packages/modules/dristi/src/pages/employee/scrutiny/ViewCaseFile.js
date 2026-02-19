@@ -10,14 +10,13 @@ import SuccessModal from "../../../components/SuccessModal";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { CustomArrowDownIcon, FileDownloadIcon, FlagIcon } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
-import { formatDate } from "../../citizen/FileCase/CaseType";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 
 import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
-import { getCaseEditAllowedAssignees } from "../../../Utils";
+import { DateUtils, getCaseEditAllowedAssignees } from "../../../Utils";
 import isEqual from "lodash/isEqual";
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
@@ -715,7 +714,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     },
     {
       key: "SUBMITTED_ON",
-      value: formatDate(new Date(caseDetails?.filingDate)),
+      value: DateUtils.getFormattedDate(new Date(caseDetails?.filingDate)),
     },
   ];
 

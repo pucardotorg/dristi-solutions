@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -58,16 +59,7 @@ public class DigitalDocumentService {
             }
 
             DigitalizedDocument digitalizedDocument = response.getDocuments().get(0);
-            List<String> mobileNumbers = new ArrayList<>();
-            if (TypeEnum.PLEA.equals(digitalizedDocument.getType())) {
-                if (digitalizedDocument.getPleaDetails() != null && digitalizedDocument.getPleaDetails().getAccusedMobileNumber() != null) {
-                    mobileNumbers.add(digitalizedDocument.getPleaDetails().getAccusedMobileNumber());
-                }
-            } else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
-                if (digitalizedDocument.getExaminationOfAccusedDetails() != null && digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber() != null) {
-                    mobileNumbers.add(digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber());
-                }
-            }
+            List<String> mobileNumbers = getMobileNumbers(digitalizedDocument);
 
             if (!mobileNumbers.contains(request.getMobileNumber())) {
                 return null;
@@ -102,16 +94,7 @@ public class DigitalDocumentService {
 
             DigitalizedDocument digitalizedDocument = response.getDocuments().get(0);
 
-            List<String> mobileNumbers = new ArrayList<>();
-            if (TypeEnum.PLEA.equals(digitalizedDocument.getType())) {
-                if (digitalizedDocument.getPleaDetails() != null && digitalizedDocument.getPleaDetails().getAccusedMobileNumber() != null) {
-                    mobileNumbers.add(digitalizedDocument.getPleaDetails().getAccusedMobileNumber());
-                }
-            } else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
-                if (digitalizedDocument.getExaminationOfAccusedDetails() != null && digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber() != null) {
-                    mobileNumbers.add(digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber());
-                }
-            }
+            List<String> mobileNumbers = getMobileNumbers(digitalizedDocument);
 
             DigitalizedDocumentResponse digitalizedDocumentResponse;
             if (mobileNumbers.contains(request.getMobileNumber())) {
@@ -132,6 +115,10 @@ public class DigitalDocumentService {
                 workflow.setAction(E_SIGN);
                 digitalizedDocument.setWorkflow(workflow);
 
+                if (TypeEnum.MEDIATION.equals(digitalizedDocument.getType())) {
+                    digitalizedDocument.setMediationDetails(request.getMediationDetails());
+                }
+
                 digitalizedDocumentResponse = digitalizedDocumentUtil.updateDigitalizeDoc(digitalizedDocument, createInternalRequestInfoWithSystemUserType());
                 log.info("method=updateDigitalDocument, status=COMPLETED, request={}", request);
             } else {
@@ -143,6 +130,27 @@ public class DigitalDocumentService {
             log.error("method=updateDigitalDocument, status=FAILED, request={}", request, e);
             throw new CustomException(DIGITALIZE_UPDATE_EXCEPTION, "Digitalize document service exception");
         }
+    }
+
+    private List<String> getMobileNumbers(DigitalizedDocument digitalizedDocument) {
+        List<String> mobileNumbers = new ArrayList<>();
+        if (TypeEnum.PLEA.equals(digitalizedDocument.getType())) {
+            if (digitalizedDocument.getPleaDetails() != null && digitalizedDocument.getPleaDetails().getAccusedMobileNumber() != null) {
+                mobileNumbers.add(digitalizedDocument.getPleaDetails().getAccusedMobileNumber());
+            }
+        } else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
+            if (digitalizedDocument.getExaminationOfAccusedDetails() != null && digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber() != null) {
+                mobileNumbers.add(digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber());
+            }
+        } else if (TypeEnum.MEDIATION.equals(digitalizedDocument.getType())) {
+            if (digitalizedDocument.getMediationDetails() != null && digitalizedDocument.getMediationDetails().getPartyDetails() != null) {
+                digitalizedDocument.getMediationDetails().getPartyDetails().stream()
+                        .map(MediationPartyDetails::getMobileNumber)
+                        .filter(Objects::nonNull)
+                        .forEach(mobileNumbers::add);
+            }
+        }
+        return mobileNumbers;
     }
 
     private RequestInfo createInternalRequestInfoWithSystemUserType() {

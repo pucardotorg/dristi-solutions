@@ -126,7 +126,7 @@ const TopBarComponent = ({
   const isUserLoggedIn = Boolean(token);
   const [selectedAdvocate, setSelectedAdvocate] = useState(null);
   const { AdvocateData, setAdvocateDataContext } = useContext(AdvocateDataContext);
-  const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   // Check if user is an advocate (has ADVOCATE_ROLE)
   const isAdvocate = useMemo(() => {
@@ -243,7 +243,7 @@ const TopBarComponent = ({
     if (advocate && advocate?.id !== AdvocateData?.id) {
       setSelectedAdvocate({ ...advocate });
       setAdvocateDataContext({ ...advocate });
-      localStorage.setItem("selectedAdvocate", JSON.stringify({ ...advocate }));
+      sessionStorage.setItem("selectedAdvocate", JSON.stringify({ ...advocate }));
     }
   };
 
@@ -264,7 +264,7 @@ const TopBarComponent = ({
   };
 
   useEffect(() => {
-    const storedAdvocate = JSON.parse(localStorage.getItem("selectedAdvocate"));
+    const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
 
     const resolvedAdvocate = resolveSelectedAdvocate({
       storedAdvocate,
@@ -277,7 +277,7 @@ const TopBarComponent = ({
 
     setSelectedAdvocate(resolvedAdvocate);
     setAdvocateDataContext(resolvedAdvocate);
-    localStorage.setItem("selectedAdvocate", JSON.stringify(resolvedAdvocate));
+    sessionStorage.setItem("selectedAdvocate", JSON.stringify(resolvedAdvocate));
   }, [seniorAdvocates, advocateId, selectedAdvocate?.id, setAdvocateDataContext]);
 
   const disableAdvocateChange = useMemo(() => {

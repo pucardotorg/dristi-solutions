@@ -669,7 +669,18 @@ const ComplainantSignature = ({ path }) => {
     } else {
       if (isOwnerAdvocateSelf) {
         const advocate = caseDetails?.representatives?.find((advocate) => advocate?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
-        placeholder = `Advocate ${advocate?.representing?.[0]?.additionalDetails?.currentPosition} Signature`;
+        const representingWithAllUnsigned = advocate?.representing?.find((rep) => {
+          // match litigant using UUID
+          const litigant = litigants?.find((lit) => lit?.additionalDetails?.uuid === rep?.additionalDetails?.uuid);
+
+          // if no litigant → skip
+          if (!litigant?.representatives?.length) return false;
+
+          // check all representatives unsigned
+          return litigant.representatives.every((r) => r?.hasSigned === false);
+        });
+
+        placeholder = `Advocate ${representingWithAllUnsigned?.additionalDetails?.currentPosition} Signature`;
         return placeholder; // Return placeholder directly for advocate filing case
       } else {
         const litigant = litigants?.find((litigant) => litigant?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
@@ -986,7 +997,8 @@ const ComplainantSignature = ({ path }) => {
         isCurrentLitigantSigned ||
         isCurrentPoaSigned ||
         (![CaseWorkflowState?.PENDING_RE_SIGN, CaseWorkflowState.PENDING_SIGN]?.includes(caseDetails?.status) && isCurrentLitigantContainPoa) ||
-        uploadDoc)
+        uploadDoc ||
+        (isSelectedEsign && isMemberOnBehalfOfOwnerAdvocate)) // If junior adv/clerk is on this screen.
     );
   };
 

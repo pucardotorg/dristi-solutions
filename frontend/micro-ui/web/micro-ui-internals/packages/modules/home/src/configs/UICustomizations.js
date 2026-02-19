@@ -1,17 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { formatDate } from "../../../cases/src/utils";
-import { formatDateDDMMYYYY, formatNoticeDeliveryDate } from "../utils";
+import {formatNoticeDeliveryDate } from "../utils";
 import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
 import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
-import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
 import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
-import { formatDateWithTime } from "../../../orders/src/utils";
 import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components/EditDeleteModal";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
@@ -89,9 +87,9 @@ export const UICustomizations = {
           return value ? `${Math.round(value)}/-` : "-";
         case "BOOKING_DATE":
         case "BOOKING_DATE_TIME":
-          return formatDateWithTime(value) || "-";
+          return DateUtils.formatDateWithTime(value) || "-";
         case "RECIEVED_DATE":
-          return formatDateWithTime(value) || "-";
+          return DateUtils.formatDateWithTime(value) || "-";
         case "ADDRESS":
           return `${row?.respondentName}, ${value}` || "-";
         case "TASK_TYPE":
@@ -217,6 +215,7 @@ export const UICustomizations = {
         ...("sortBy" in additionalDetails && {
           [additionalDetails.sortBy]: undefined,
           sortBy: undefined,
+          activeTab: undefined,
         }),
         ...(requestCriteria?.body?.criteria?.outcome && {
           outcome: outcomeTypeData,
@@ -256,8 +255,10 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const hasST = row?.courtCaseNumber && row?.courtCaseNumber?.includes("ST/");
-      const caseId = (hasST && row?.courtCaseNumber) || row?.cmpNumber || row?.filingNumber;
+      const activeTab = searchResult?.additionalDetails?.activeTab || "";
+      const isDisposedTab = activeTab === "DISPOSED";
+      const caseId =
+        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "Draft Name":
         case "CS_CASE_NAME":
@@ -273,7 +274,7 @@ export const UICustomizations = {
         case "CS_STAGE":
           return t(value);
         case "CS_FILING_DATE":
-          return <span>{formatDate(new Date(value))}</span>;
+          return <span>{DateUtils.getFormattedDate(new Date(value))}</span>;
         case "CS_CASE_NUMBER_HOME":
           return caseId;
         case "CS_LAST_EDITED":
@@ -322,6 +323,7 @@ export const UICustomizations = {
         ...("sortBy" in additionalDetails && {
           [additionalDetails.sortBy]: undefined,
           sortBy: undefined,
+          activeTab: undefined,
         }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
@@ -352,8 +354,10 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const hasST = row?.courtCaseNumber && row?.courtCaseNumber?.includes("ST/");
-      const caseId = (hasST && row?.courtCaseNumber) || row?.cmpNumber || row?.filingNumber;
+      const activeTab = searchResult?.additionalDetails?.activeTab || "";
+      const isDisposedTab = activeTab === "DISPOSED";
+      const caseId =
+        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -412,6 +416,7 @@ export const UICustomizations = {
         ...("sortBy" in additionalDetails && {
           [additionalDetails.sortBy]: undefined,
           sortBy: undefined,
+          activeTab: undefined,
         }),
         ...(requestCriteria?.body?.criteria?.outcome && {
           outcome: outcomeTypeData,
@@ -451,13 +456,15 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const hasST = row?.courtCaseNumber && row?.courtCaseNumber?.includes("ST/");
-      const caseId = (hasST && row?.courtCaseNumber) || row?.cmpNumber || row?.filingNumber;
+      const activeTab = searchResult?.additionalDetails?.activeTab || "";
+      const isDisposedTab = activeTab === "DISPOSED";
+      const caseId =
+        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
         case "CS_FILING_DATE":
-          return <span>{formatDate(new Date(value))}</span>;
+          return <span>{DateUtils.getFormattedDate(new Date(value))}</span>;
         case "CD_OUTCOME":
           return t(value);
         case "CS_STAGE":
@@ -575,8 +582,10 @@ export const UICustomizations = {
       const taskDetails = handleTaskDetails(row?.taskDetails);
       const delieveryDate = formatNoticeDeliveryDate(taskDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
       const hearingDate = formatNoticeDeliveryDate(taskDetails?.caseDetails?.hearingDate);
-      const hasST = row?.courtCaseNumber && row?.courtCaseNumber?.includes("ST/");
-      const caseId = (hasST && row?.courtCaseNumber) || row?.cmpNumber || row?.filingNumber;
+      const activeTab = searchResult?.additionalDetails?.activeTab || "";
+      const isDisposedTab = activeTab === "DISPOSED";
+      const caseId =
+        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
 
       switch (key) {
         // case "CASE_NAME_ID":
@@ -584,12 +593,15 @@ export const UICustomizations = {
         case "STATUS":
           return t(value); // document status
         case "ISSUE_DATE":
-          return `${formatDate(new Date(value))}`;
+          return `${DateUtils.getFormattedDate(new Date(value))}`;
         case "PROCESS_TYPE":
           const processType = value?.toUpperCase?.();
           if (processType === "NOTICE") {
             const noticeType = row?.taskDetails?.noticeDetails?.noticeType || "NOTICE";
             return t(noticeType);
+          } else if (processType === "MISCELLANEOUS_PROCESS") {
+            const miscType = row?.taskDetails?.miscellaneuosDetails?.processTitle || "MISCELLANEOUS_PROCESS";
+            return t(miscType);
           }
           return t(value);
         case "DELIEVERY_CHANNEL":
@@ -841,7 +853,7 @@ export const UICustomizations = {
           return <ADiaryRowClick rowData={row} colData={column} value={value} />;
 
         case "NEXT_HEARING_DATE":
-          return <span>{value ? formatDateDDMMYYYY(value) : ""}</span>;
+          return <span>{value ? DateUtils.getFormattedDate(value) : ""}</span>;
         default:
           return value || "";
       }
@@ -1237,7 +1249,7 @@ export const UICustomizations = {
         case "CS_ACTIONS":
           return <EditDeleteModal rowData={row} colData={column} value={value} isDelete={true} isEdit={true} />;
         case "DATE_CREATED":
-          return formatDateDDMMYYYY(row?.auditDetails?.createdTime);
+          return DateUtils.getFormattedDate(row?.auditDetails?.createdTime);
         default:
           return value || "";
       }

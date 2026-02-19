@@ -1,0 +1,359 @@
+openapi: 3.0.0
+info:
+  title: Task Service API
+  description: |
+    This API provides functionality for managing tasks in the system.
+    It supports task creation, updates, searching, and workflow transitions.
+  version: 1.0.0
+
+servers:
+  - url: /task/v1
+    description: Task Service API
+
+tags:
+  - name: Tasks
+    description: APIs related to task lifecycle management
+  - name: Task Workflow
+    description: APIs related to task workflow transitions
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /tasks/_create:
+    post:
+      tags: [Tasks]
+      summary: Create a new task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+                authToken: 9e737b13-14d2-45e7-8b96-09de66952e81
+                msgId: 1730970507148|en_IN
+                plainAccessRequest: {}
+              task:
+                taskType: HEARING_PREPARATION
+                title: Prepare hearing documents
+                description: Collect and verify all documents before hearing
+                priority: HIGH
+                status: OPEN
+                assignee: 7c2d8e6a-2e65-4f8c-bb4c-b8c0c6e93f12
+                assigner: 9b4a71aa-cc4d-4a21-9c7c-3e06b2a5df22
+                dueDate: 2026-03-01T18:30:00Z
+                businessService: HEARING
+                module: DRISTI
+                tenantId: kl
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /tasks/_update:
+    post:
+      tags: [Tasks]
+      summary: Update an existing task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+                authToken: token-value
+                msgId: update|en_IN
+              task:
+                id: 1bcb1c66-55b2-4d87-9c91-7f6d92d0b112
+                title: Prepare hearing documents (updated)
+                status: IN_PROGRESS
+                priority: MEDIUM
+                tenantId: kl
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /tasks/_search:
+    post:
+      tags: [Tasks]
+      summary: Search tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskSearchRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+                authToken: token-value
+                msgId: search|en_IN
+              criteria:
+                taskType: [HEARING_PREPARATION]
+                status: [OPEN, IN_PROGRESS]
+                assignee:
+                  - 7c2d8e6a-2e65-4f8c-bb4c-b8c0c6e93f12
+                tenantId: kl
+              pagination:
+                limit: 10
+                offset: 0
+      responses:
+        '200':
+          description: Tasks matching criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskSearchResponse'
+
+  /tasks/{id}/_workflow:
+    post:
+      tags: [Task Workflow]
+      summary: Perform workflow action on a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 1bcb1c66-55b2-4d87-9c91-7f6d92d0b112
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskWorkflowRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+                authToken: token-value
+                msgId: workflow|en_IN
+              workflow:
+                action: COMPLETE
+                comment: Task completed successfully
+                assignees:
+                  - 7c2d8e6a-2e65-4f8c-bb4c-b8c0c6e93f12
+      responses:
+        '200':
+          description: Workflow updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    TaskRequest:
+      type: object
+      required: [requestInfo, task]
+      properties:
+        requestInfo:
+          description: Standard DIGIT request metadata
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        task:
+          $ref: '#/components/schemas/Task'
+
+    Task:
+      type: object
+      required: [taskType, title, tenantId]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique task identifier
+          example: 1bcb1c66-55b2-4d87-9c91-7f6d92d0b112
+        taskNumber:
+          type: string
+          description: System-generated human-readable task number
+          example: TASK-2026-00012
+        taskType:
+          type: string
+          description: Type/category of task
+          example: HEARING_PREPARATION
+        status:
+          type: string
+          description: Current task status
+          example: OPEN
+        priority:
+          type: string
+          enum: [HIGH, MEDIUM, LOW]
+          description: Priority of the task
+          example: HIGH
+        title:
+          type: string
+          description: Short title of the task
+          example: Prepare hearing documents
+        description:
+          type: string
+          description: Detailed description of the task
+          example: Collect affidavits, notices, and evidence files
+        assignee:
+          type: string
+          format: uuid
+          description: UUID of the user assigned to the task
+          example: 7c2d8e6a-2e65-4f8c-bb4c-b8c0c6e93f12
+        assigner:
+          type: string
+          format: uuid
+          description: UUID of the user who assigned the task
+          example: 9b4a71aa-cc4d-4a21-9c7c-3e06b2a5df22
+        dueDate:
+          type: string
+          format: date-time
+          description: Task due date
+          example: 2026-03-01T18:30:00Z
+        createdDate:
+          type: string
+          format: date-time
+          description: Task creation timestamp
+          example: 2026-02-10T09:30:00Z
+        lastModifiedDate:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: 2026-02-11T10:00:00Z
+        additionalDetails:
+          type: object
+          description: Any extra metadata
+          example:
+            source: HEARING_MODULE
+        action:
+          type: string
+          description: Last workflow action performed
+          example: COMPLETE
+        businessService:
+          type: string
+          description: Associated business service
+          example: HEARING
+        module:
+          type: string
+          description: Module name
+          example: DRISTI
+        tenantId:
+          type: string
+          description: Tenant identifier
+          example: kl
+
+    TaskSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          description: Standard DIGIT request metadata
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/TaskSearchCriteria'
+        pagination:
+          description: Pagination details
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    TaskSearchCriteria:
+      type: object
+      required: [tenantId]
+      properties:
+        id:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: List of task IDs
+        taskNumber:
+          type: array
+          items:
+            type: string
+          description: List of task numbers
+        taskType:
+          type: array
+          items:
+            type: string
+          description: Task types to filter
+        status:
+          type: array
+          items:
+            type: string
+          description: Task statuses to filter
+        assignee:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Assigned users
+        tenantId:
+          type: string
+          description: Tenant identifier
+          example: kl
+
+    TaskWorkflowRequest:
+      type: object
+      required: [requestInfo, workflow]
+      properties:
+        requestInfo:
+          description: Standard DIGIT request metadata
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        workflow:
+          $ref: '#/components/schemas/Workflow'
+
+    Workflow:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          description: Workflow action to perform
+          example: COMPLETE
+        comment:
+          type: string
+          description: Comment for workflow transition
+          example: Task finished successfully
+        assignees:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Users to assign next
+          example:
+            - 7c2d8e6a-2e65-4f8c-bb4c-b8c0c6e93f12
+
+    TaskResponse:
+      type: object
+      properties:
+        responseInfo:
+          description: Standard DIGIT response metadata
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        task:
+          $ref: '#/components/schemas/Task'
+
+    TaskSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          description: Standard DIGIT response metadata
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+

@@ -2,6 +2,7 @@ import _ from "lodash";
 import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const overrideHooks = () => {
   Object.keys(CustomisedHooks).map((ele) => {
@@ -55,13 +56,6 @@ export const getCourtFeeAmountByPaymentType = (courtFeeAmount = [], paymentCode)
   return courtFeeAmount?.find((data) => data?.paymentCode === paymentCode)?.amount || "";
 };
 
-export const formatDate = (date) => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
-
 export const convertToDateInputFormat = (dateInput) => {
   let date;
 
@@ -78,7 +72,7 @@ export const convertToDateInputFormat = (dateInput) => {
     console.error("Invalid input type or format");
   }
 
-  return formatDate(date);
+  return DateUtils.getFormattedDate(date);
 };
 
 export function convertTaskResponseToPayload(responseArray, id = null) {
@@ -151,7 +145,7 @@ export const getFormattedName = (firstName, middleName, lastName, designation, p
   return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
 };
 
-export const getUserInfo = async (uuidList) => {
+export const getUserInfoFromUuids = async (uuidList) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const uuids = [...new Set(uuidList)];
 
@@ -170,6 +164,32 @@ export const getUserInfo = async (uuidList) => {
       const userName = `${user?.name?.givenName} ${user?.name?.familyName || ""}`.trim();
       return {
         userUuid: user?.userUuid,
+        name: userName,
+      };
+    });
+    return userData;
+  }
+  return [];
+};
+
+export const getUserInfoFromIndividualId = async (individualId) => {
+  const tenantId = Digit.ULBService.getCurrentTenantId();
+
+  const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+    {
+      Individual: {
+        individualId: individualId,
+      },
+    },
+    { tenantId, limit: 1000, offset: 0 },
+    "",
+    true
+  );
+  if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
+    const userData = individualData?.Individual?.map((user) => {
+      const userName = `${user?.name?.givenName} ${user?.name?.familyName || ""}`.trim();
+      return {
+        uuid: user?.userUuid,
         name: userName,
       };
     });

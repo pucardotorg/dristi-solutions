@@ -287,7 +287,7 @@ const SubmissionDocuments = ({ path }) => {
               comments: [],
               file,
               sourceType,
-              officeAdvocateUserUuid: authorizedUuid !== userUuid ? authorizedUuid : null, // Only sending in case clerk/jr adv is creating doc.
+              asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
               sourceID: isEmployee ? authorizedUuid : individualId,
               filingType: filingType,
               additionalDetails: {

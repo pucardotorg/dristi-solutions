@@ -22,8 +22,8 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
   const authorizedUuid = getAuthorizedUuid(userUuid);
-  const { advocateData } = useContext(AdvocateDataContext);
-  const storedAdvocate = advocateData;
+  const { AdvocateData } = useContext(AdvocateDataContext);
+  const storedAdvocate = AdvocateData;
 
   const name = "Signature";
   const isAdvocateOrClerk = userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role.code));

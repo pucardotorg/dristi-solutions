@@ -111,6 +111,9 @@ public class Application {
     @Valid
     private WorkflowObject workflow = null;
 
+    @JsonProperty("asUser")
+    private String asUser = null;
+
 
     public boolean isResponseRequired() {
         if (additionalDetails instanceof Map) {

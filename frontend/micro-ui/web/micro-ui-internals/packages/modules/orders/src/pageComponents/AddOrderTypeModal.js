@@ -430,6 +430,17 @@ const AddOrderTypeModal = ({
 
                 let effectiveConfig = modifiedFormConfig;
 
+                // Show OrderType for Take Cognizance order
+                if (orderType?.code === "TAKE_COGNIZANCE") {
+                  effectiveConfig.forEach(section => {
+                    section.body.forEach(field => {
+                      if (field.populators?.customStyle) {
+                        delete field.populators.customStyle;
+                      }
+                    });
+                  });
+                }
+
                 if (isAcceptBail) {
                   effectiveConfig = (modifiedFormConfig || [])?.map((conf) => ({
                     ...conf,

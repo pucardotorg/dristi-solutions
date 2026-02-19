@@ -85,13 +85,6 @@ export function isEmptyObject(obj) {
   return true;
 }
 
-export const formatDate = (date) => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
-
 export const getMDMSObj = (mdmsdata = [], codekey, code) => {
   if (!code || !mdmsdata || mdmsdata?.length == 0) {
     return {};
@@ -795,7 +788,7 @@ export const getAssistantAdvocateMembersForPartiesTab = (data) => {
 // For advocates/clerks, we need to return the uuid of the senior office advocate selected from home dropdown.
 export const getAuthorizedUuid = (currentLoggedInUserUuid) => {
   if (!currentLoggedInUserUuid) return currentLoggedInUserUuid;
-  const storedAdvocate = JSON.parse(localStorage.getItem("selectedAdvocate"));
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
   // This means logged in user is not an advocate or clerk, so return same uuid
   if (!storedAdvocate?.uuid) return currentLoggedInUserUuid;
 
@@ -808,71 +801,114 @@ export const getAuthorizedUuid = (currentLoggedInUserUuid) => {
   return currentLoggedInUserUuid;
 };
 
-export const getAllAssociatedPartyUuids = (caseDetails, createdByUuid) => {
-  const isCreatorAdvocate = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === createdByUuid);
-  //if neither a senior advocate nor junior adv/clerk did the filing on his behalf that means litigant only did case filing and only he/she can have edit draft access.
-  if (isCreatorAdvocate) {
-    const advocateOffices = caseDetails?.advocateOffices || [];
-    // means creator is main advocate himself/PIP
-    if (advocateOffices.length === 0) {
-      return [createdByUuid];
-    }
-
-    // If advocate office is found for the creator advocate.
-    const creatorAdvocateUuid = isCreatorAdvocate?.additionalDetails?.uuid;
-    //Now we have to check all the advocates and clerks members associated with this advocate and they all can edit the case draft
-    const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateUserUuid === creatorAdvocateUuid);
-    if (!matchingOffice) {
-      // Fallback
-      return [createdByUuid];
-    }
-    const advocates = matchingOffice?.advocates || [];
-    const clerks = matchingOffice?.clerks || [];
+export const getAllAssociatedPartyUuids = (caseDetails, ownerUuid) => {
+  // First check if owner is present in any office
+  const ownerOffice = caseDetails?.advocateOffices?.find((office) => office?.officeAdvocateUserUuid === ownerUuid);
+  if (ownerOffice) {
+    const officeAdvocateUuid = ownerOffice?.officeAdvocateUserUuid;
+    const advocates = ownerOffice?.advocates || [];
+    const clerks = ownerOffice?.clerks || [];
     // Collect all memberUserUuid
     const editableUsers = [
-      creatorAdvocateUuid, // senior advocate himself
+      officeAdvocateUuid,
       ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
       ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
     ];
 
     // Remove null/undefined + de-duplicate
     return Array.from(new Set((editableUsers || []).filter(Boolean)));
-  } else if (!isCreatorAdvocate) {
-    // this means creator could be a junior advocate/clerk
-
-    //check if creator was junior adv.
-    const isCreatorJuniorAdvMatchingOffice = caseDetails?.advocateOffices?.find((office) =>
-      office?.advocates?.find((adv) => adv?.memberUserUuid === createdByUuid)
-    );
-
-    //check if creator was clerk
-    const isCreatorClerkMatchingOffice = caseDetails?.advocateOffices?.find((office) =>
-      office?.clerks?.find((clerk) => clerk?.memberUserUuid === createdByUuid)
-    );
-
-    let matchingOffice = null;
-    //if creator was junior adv or clerk, return the uuid of the senior office advocate associated with the creator.
-    if (isCreatorJuniorAdvMatchingOffice) {
-      matchingOffice = { ...isCreatorJuniorAdvMatchingOffice };
-    } else if (isCreatorClerkMatchingOffice) {
-      matchingOffice = { ...isCreatorClerkMatchingOffice };
-    }
-    if (matchingOffice) {
-      const officeAdvocateUuid = matchingOffice?.officeAdvocateUserUuid;
-      const advocates = matchingOffice?.advocates || [];
-      const clerks = matchingOffice?.clerks || [];
-      // Collect all memberUserUuid
-      const editableUsers = [
-        officeAdvocateUuid,
-        ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
-        ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
-      ];
-
-      // Remove null/undefined + de-duplicate
-      return Array.from(new Set((editableUsers || []).filter(Boolean)));
-    }
-
-    //if creator was litigant/POA, return the uuid of the creator.
-    return [createdByUuid];
   }
+  return [ownerUuid];
+};
+
+export const DateUtils = {
+  IST_OFFSET: 5.5 * 60 * 60 * 1000,
+  IST_TIMEZONE: "Asia/Kolkata",
+
+  getFormattedDate: (value, format = "DD-MM-YYYY", separator = "-") => {
+    if (!value) return "";
+
+    const date = value instanceof Date ? value : new Date(value);
+    if (isNaN(date.getTime())) return "";
+    const istDate = new Date(date.toLocaleString("en-US", { timeZone: DateUtils.IST_TIMEZONE }));
+
+    const year = istDate.getFullYear();
+    const month = String(istDate.getMonth() + 1).padStart(2, "0");
+    const day = String(istDate.getDate()).padStart(2, "0");
+
+    if (format !== "DD-MM-YYYY") {
+      return `${year}${separator}${month}${separator}${day}`;
+    }
+    return `${day}${separator}${month}${separator}${year}`;
+  },
+
+  getISTEpoch(year, month, day, hour, minute, second, ms) {
+    const utcDate = Date.UTC(year, month, day, hour, minute, second, ms - DateUtils.IST_OFFSET);
+    return utcDate;
+  },
+
+  getEpochRangeFromDateIST(dateStr) {
+    if (!dateStr) return { start: null, end: null };
+
+    const [year, month, day] = dateStr.split("-").map(Number);
+    const monthIndex = month - 1;
+
+    const start = DateUtils.getISTEpoch(year, monthIndex, day, 0, 0, 0, 0);
+    const end = DateUtils.getISTEpoch(year, monthIndex, day, 23, 59, 59, 999);
+
+    return { start, end };
+  },
+
+  getEpochRangeFromMonthIST(monthStr) {
+    if (!monthStr) return { start: null, end: null };
+    const [year, month] = monthStr.split("-").map(Number);
+    const monthIndex = month - 1;
+    const start = DateUtils.getISTEpoch(year, monthIndex, 1, 0, 0, 0, 0);
+
+    // Gets the number of the last day of the month
+    const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+    const end = DateUtils.getISTEpoch(year, monthIndex, lastDay, 23, 59, 59, 999);
+
+    return { start, end };
+  },
+
+  formatDateWithTime(dateInput, showTime = false) {
+    if (!dateInput) return "-";
+
+    const date = new Date(dateInput);
+
+    if (isNaN(date.getTime())) return "N/A";
+    const dateInIST = new Date(date.getTime() + DateUtils.IST_OFFSET);
+
+    const day = String(dateInIST.getUTCDate()).padStart(2, "0");
+    const month = String(dateInIST.getUTCMonth() + 1).padStart(2, "0");
+    const year = dateInIST.getUTCFullYear();
+    let formattedDate = `${day}-${month}-${year}`;
+    if (showTime) {
+      const hours = String(dateInIST.getUTCHours()).padStart(2, "0");
+      const minutes = String(dateInIST.getUTCMinutes()).padStart(2, "0");
+      const seconds = String(dateInIST.getUTCSeconds()).padStart(2, "0");
+
+      formattedDate += ` ${hours}:${minutes}:${seconds}`;
+    }
+
+    return formattedDate;
+  },
+
+  _toEpoch(dateString) {
+    if (!dateString) return null;
+    const [year, month, day] = dateString.split("-").map(Number);
+    const utcDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    return utcDate.getTime() - istOffset;
+  },
+
+  // Function to format a date object into "20th June 2024"
+  formatDateInMonth(date) {
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const day = formatWithSuffix(date.getDate());
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day} ${month} ${year}`;
+  },
 };

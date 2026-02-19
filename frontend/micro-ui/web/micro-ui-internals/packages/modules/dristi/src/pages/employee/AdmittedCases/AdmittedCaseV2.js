@@ -26,7 +26,7 @@ import { Urls } from "../../../hooks";
 import { getFormattedName } from "@egovernments/digit-ui-module-hearings/src/utils";
 import { admitCaseSubmitConfig, scheduleCaseAdmissionConfig, selectParticipantConfig } from "../../citizen/FileCase/Config/admissionActionConfig";
 import Modal from "../../../components/Modal";
-import { getAllAssociatedPartyUuids, getAuthorizedUuid, getDate, removeInvalidNameParts } from "../../../Utils";
+import { DateUtils, getAllAssociatedPartyUuids, getAuthorizedUuid, getDate, removeInvalidNameParts } from "../../../Utils";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import VoidSubmissionBody from "./VoidSubmissionBody";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
@@ -112,16 +112,6 @@ const CloseBtn = (props) => {
 const actionEnabledStatuses = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION"];
 const viewEnabledStatuses = [...actionEnabledStatuses, "CASE_DISMISSED"];
 const judgeReviewStages = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION", "CASE_DISMISSED"];
-
-const formatDate = (date) => {
-  if (date instanceof Date && !isNaN(date)) {
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  }
-  return "";
-};
 
 const AdmittedCaseV2 = () => {
   const { t } = useTranslation();
@@ -775,7 +765,7 @@ const AdmittedCaseV2 = () => {
       },
       {
         key: "SUBMITTED_ON",
-        value: formatDate(new Date(caseDetails?.filingDate)),
+        value: DateUtils.getFormattedDate(new Date(caseDetails?.filingDate)),
       },
     ],
     [caseCourtId, caseDetails?.caseCategory, caseDetails?.filingDate, caseDetails?.filingNumber, t]
@@ -786,12 +776,13 @@ const AdmittedCaseV2 = () => {
       // This is redundant for document tab, used only for submissions tab
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
       const status = docObj?.[0]?.applicationList?.status;
-      const applicationCreatedByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
-      const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
+      const applicationOwnerUuid = docObj?.[0]?.applicationList?.asUser;
+      const documentOwnerUuid = docObj?.[0]?.artifactList?.asUser;
+
       const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
       const documentStatus = docObj?.[0]?.artifactList?.status;
-      const allAllowedPartiesForApplicationsActions = getAllAssociatedPartyUuids(caseDetails, applicationCreatedByUuid);
-      const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentCreatedByUuid);
+      const allAllowedPartiesForApplicationsActions = getAllAssociatedPartyUuids(caseDetails, applicationOwnerUuid);
+      const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentOwnerUuid);
 
       if (documentStatus === "PENDING_E-SIGN" && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
         history.push(
@@ -2101,8 +2092,6 @@ const AdmittedCaseV2 = () => {
     Boolean(filingNumber && !historyOrderData && caseCourtId),
     0
   );
-
-  console.log(filingNumber && !historyOrderData && caseCourtId, "fetching orders with courtId", caseCourtId);
   
   const ordersData = useMemo(() => historyOrderData || apiOrdersData, [historyOrderData, apiOrdersData]);
 
@@ -2678,15 +2667,16 @@ const AdmittedCaseV2 = () => {
 
   const handleOrdersTab = useCallback(() => {
     if (history.location?.state?.orderObj) {
+      showOrderReviewModal && setShowOrderReviewModal(false);
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`, {
         homeFilteredData: homeFilteredData,
         homeActiveTab: homeActiveTab,
       });
     } else {
-      if (showOrderReviewModal) setShowOrderReviewModal(false);
-      if (showNotificationModal) setShowNotificationModal(false);
+      showOrderReviewModal && setShowOrderReviewModal(false);
+      showNotificationModal && setShowNotificationModal(false);
     }
-  }, [history, userType, caseId, filingNumber, showOrderReviewModal, showNotificationModal]);
+  }, [history, userType, caseId, filingNumber, showOrderReviewModal, showNotificationModal, homeFilteredData, homeActiveTab]);
 
   const handleExtensionRequest = useCallback(
     (orderNumber, itemId, litigant, litigantIndId) => {
@@ -2745,7 +2735,7 @@ const AdmittedCaseV2 = () => {
         documents: [],
         additionalDetails: {
           formdata: {
-            hearingDate: formatDate(date).split("-").reverse().join("-"),
+            hearingDate: DateUtils.getFormattedDate(date).split("-").reverse().join("-"),
             hearingPurpose: data.purpose,
             orderType: {
               code: "SCHEDULE_OF_HEARING_DATE",
@@ -3476,7 +3466,7 @@ const AdmittedCaseV2 = () => {
                                 subLabel={
                                   hasHearingPriorityView
                                     ? null
-                                    : `(${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
+                                    : `(${DateUtils.getFormattedDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
                                         .split("-")
                                         .join("/")})`
                                 }
@@ -3502,7 +3492,7 @@ const AdmittedCaseV2 = () => {
                               <Button
                                 variation={"primary"}
                                 label={t("CS_CASE_NEXT_HEARING")}
-                                subLabel={`(${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
+                                subLabel={`(${DateUtils.getFormattedDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
                                   .split("-")
                                   .join("/")})`}
                                 children={<RightArrow />}

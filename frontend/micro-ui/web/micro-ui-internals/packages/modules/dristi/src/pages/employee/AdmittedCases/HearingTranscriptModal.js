@@ -2,18 +2,11 @@ import { CloseSvg, TextArea } from "@egovernments/digit-ui-components";
 import React, { useEffect } from "react";
 import Modal from "../../../components/Modal";
 import { SubmitBar } from "@egovernments/digit-ui-react-components";
-
-const formatDate = (epochTime) => {
-  const date = new Date(epochTime);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};
+import { DateUtils } from "../../../Utils";
 
 function HearingTranscriptModal({ t, hearing, setShowHearingTranscriptModal }) {
   const Heading = () => {
-    return <h1 className="heading-m">{`${t(hearing?.hearingType)} Hearing- ${formatDate(hearing?.startTime)}`}</h1>;
+    return <h1 className="heading-m">{`${t(hearing?.hearingType)} Hearing- ${DateUtils.getFormattedDate(hearing?.startTime)}`}</h1>;
   };
 
   const CloseBtn = (props) => {

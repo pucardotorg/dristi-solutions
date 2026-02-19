@@ -3,7 +3,7 @@ import Modal from "../../../dristi/src/components/Modal";
 import CustomCopyTextDiv from "../../../dristi/src/components/CustomCopyTextDiv";
 import { FileDownloadIcon } from "../../../dristi/src/icons/svgIndex";
 import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
-import { formatDate } from "../utils";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 function SubmissionDocumentSuccessModal({ documentSubmissionNumber, t, handleSuccessDownloadSubmission, handleClose }) {
   const submissionModalInfo = {
@@ -12,7 +12,7 @@ function SubmissionDocumentSuccessModal({ documentSubmissionNumber, t, handleSuc
     caseInfo: [
       {
         key: t("DOCUMENT_SUBMISSION_DATE"),
-        value: formatDate(new Date()),
+        value: DateUtils.getFormattedDate(new Date()),
         copyData: false,
       },
       {

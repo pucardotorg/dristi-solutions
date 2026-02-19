@@ -8,8 +8,8 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
-import { formatDate } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const CloseBtn = (props) => {
   return (
@@ -213,7 +213,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
         { label: "ADVOCATE_NAME", value: getFullName(" ", firstName, middleName, lastName) },
         { label: "BAR_REGISTRATION_NO", value: taskDetails?.advocateDetails?.barRegistrationNumber },
         { label: "MOBILE_NUMBER", value: taskDetails?.advocateDetails?.mobileNumber },
-        { label: "REQUEST_DATE", value: formatDate(new Date(taskDetails?.advocateDetails?.requestedDate)) },
+        { label: "REQUEST_DATE", value: DateUtils.getFormattedDate(new Date(taskDetails?.advocateDetails?.requestedDate)) },
       ],
       vakalatnama: {
         label: "VAKALATNAMA",
