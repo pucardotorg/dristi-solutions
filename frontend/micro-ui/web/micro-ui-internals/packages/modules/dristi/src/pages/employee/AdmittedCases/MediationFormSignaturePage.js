@@ -399,7 +399,9 @@ const MediationFormSignaturePage = () => {
           setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
         }
       } else {
-        sessionStorage.setItem("mobileNumber", mobileNumber);
+        if (!isUserLoggedIn) {
+          sessionStorage.setItem("mobileNumber", mobileNumber);
+        }
         handleEsign(name, pageModule, mediationFileStoreId, getPlaceholder());
       }
     } catch (error) {
@@ -496,7 +498,7 @@ const MediationFormSignaturePage = () => {
     if (isSignSuccess) {
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
       if (isSignSuccess === "success" && matchedSignStatus) {
-        setEsignMobileNumber(JSON.parse(mobileNumber));
+        setEsignMobileNumber(mobileNumber ? JSON.parse(mobileNumber) : "");
         const fileStoreId = sessionStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
         setEsignSuccess(true);
