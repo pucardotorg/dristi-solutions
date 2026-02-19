@@ -91,4 +91,6 @@ public class ServiceConstants {
     public static final String ADVOCATE_NOT_FOUND_MESSAGE = "Advocate not found";
     public static final String ADVOCATE_CLERK_NOT_FOUND_MESSAGE = "Advocate clerk not found";
 
+    public static final String PROCESS_VALIDATION_ERROR = "PROCESS_VALIDATION_ERROR";
+
 }

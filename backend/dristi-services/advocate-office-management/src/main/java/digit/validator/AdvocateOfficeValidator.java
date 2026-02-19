@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -199,18 +200,7 @@ public class AdvocateOfficeValidator {
 
         validateRequestInfo(request.getRequestInfo());
 
-        ProcessCaseMember processCaseMember = request.getProcessCaseMember();
-
-        MemberSearchCriteria searchCriteria = MemberSearchCriteria.builder()
-                .officeAdvocateUserUuid(processCaseMember.getAdvocateUserUuid())
-                .memberUserUuid(processCaseMember.getMemberUserUuid())
-                .isActive(true)
-                .build();
-
-        List<AddMember> existingMembers = advocateOfficeRepository.getMembers(searchCriteria, null);
-        if (existingMembers.isEmpty()) {
-            throw new CustomException(MEMBER_NOT_FOUND, MEMBER_NOT_FOUND_MESSAGE);
-        }
+        ProcessCaseMember processCaseMember = getProcessCaseMember(request);
 
         List<String> addCaseIds = processCaseMember.getAddCaseIds();
 
@@ -220,5 +210,42 @@ public class AdvocateOfficeValidator {
             throw new CustomException("INVALID_REQUEST", "Either addCaseIds or removeCaseIds must be provided");
         }
 
+
+        MemberSearchCriteria searchCriteria = MemberSearchCriteria.builder()
+                .officeAdvocateUserUuid(processCaseMember.getOfficeAdvocateUserUuid())
+                .memberUserUuid(processCaseMember.getMemberUserUuid())
+                .isActive(true)
+                .build();
+
+        List<AddMember> existingMembers = advocateOfficeRepository.getMembers(searchCriteria, null);
+        if (existingMembers.isEmpty()) {
+            throw new CustomException(MEMBER_NOT_FOUND, MEMBER_NOT_FOUND_MESSAGE);
+        }
+
+    }
+
+    private ProcessCaseMember getProcessCaseMember(ProcessCaseMemberRequest request) {
+        ProcessCaseMember processCaseMember = request.getProcessCaseMember();
+
+        if (processCaseMember.getOfficeAdvocateId() == null) {
+            throw new CustomException(PROCESS_VALIDATION_ERROR,"Office Advocate ID is required.");
+        }
+
+        if (processCaseMember.getMemberId() == null) {
+            throw new CustomException(PROCESS_VALIDATION_ERROR,"Member ID is required.");
+        }
+
+        if (processCaseMember.getOfficeAdvocateName() == null) {
+            throw new CustomException(PROCESS_VALIDATION_ERROR,"Office Advocate name is required.");
+        }
+
+        if (processCaseMember.getMemberType() == null) {
+            throw  new CustomException(PROCESS_VALIDATION_ERROR,"Member type is required.");
+        }
+
+        if (processCaseMember.getMemberName() == null) {
+            throw new CustomException(PROCESS_VALIDATION_ERROR,"Member name is required.");
+        }
+        return processCaseMember;
     }
 }

@@ -154,65 +154,6 @@ public class AdvocateOfficeCaseMemberService {
             throw e;
         }
     }
-//
-//    public void processCaseMember(ProcessCaseMemberRequest request) {
-//        try {
-//            log.info("Processing case member request for advocateUserUuid: {}, memberUserUuid: {}",
-//                    request.getProcessCaseMember().getOfficeAdvocateUserUuid(),
-//                    request.getProcessCaseMember().getMemberUserUuid());
-//
-//            ProcessCaseMember processCaseMember = request.getProcessCaseMember();
-//
-//            List<String> addCaseIds = processCaseMember.getAddCaseIds();
-//
-//            if (addCaseIds != null && !addCaseIds.isEmpty()) {
-//                for (String caseId : addCaseIds) {
-//                    AdvocateOfficeCaseMember member = AdvocateOfficeCaseMember.builder()
-//                            .id(UUID.randomUUID())
-//                            .tenantId(processCaseMember.getTenantId())
-//                            .officeAdvocateId(processCaseMember.getOfficeAdvocateId())
-//                            .officeAdvocateName(processCaseMember.getOfficeAdvocateName())
-//                            .officeAdvocateUserUuid(processCaseMember.getOfficeAdvocateUserUuid().toString())
-//                            .caseId(UUID.fromString(caseId))
-//                            .memberId(processCaseMember.getMemberId())
-//                            .memberUserUuid(processCaseMember.getMemberUserUuid().toString())
-//                            .memberType(processCaseMember.getMemberType())
-//                            .memberName(processCaseMember.getMemberName())
-//                            .isActive(true)
-//                            .auditDetails(createAuditDetailsForProcessCaseMember(request))
-//                            .build();
-//                }
-//            }
-//
-//            List<String> removeCaseIds = processCaseMember.getRemoveCaseIds();
-//
-//            if (removeCaseIds != null && !removeCaseIds.isEmpty()) {
-//                for (String caseId : removeCaseIds) {
-//                    AdvocateOfficeCaseMember member = AdvocateOfficeCaseMember.builder()
-//                            .id(UUID.randomUUID())
-//                            .tenantId(processCaseMember.getTenantId())
-//                            .officeAdvocateId(processCaseMember.getOfficeAdvocateId())
-//                            .officeAdvocateName(processCaseMember.getOfficeAdvocateName())
-//                            .officeAdvocateUserUuid(processCaseMember.getOfficeAdvocateUserUuid().toString())
-//                            .caseId(UUID.fromString(caseId))
-//                            .memberId(processCaseMember.getMemberId())
-//                            .memberUserUuid(processCaseMember.getMemberUserUuid().toString())
-//                            .memberType(processCaseMember.getMemberType())
-//                            .memberName(processCaseMember.getMemberName())
-//                            .isActive(false)
-//                            .auditDetails(createAuditDetailsForProcessCaseMember(request))
-//                            .build();
-//                }
-//            }
-//
-//            producer.push(configuration.getProcessCaseSpecificAccessTopic(), request);
-//            log.info("Successfully published process case member request to topic");
-//
-//        } catch (Exception e) {
-//            log.error("Error processing case member request", e);
-//            throw e;
-//        }
-//    }
 
     private AuditDetails createAuditDetails(AddMemberRequest request) {
         Long currentTime = System.currentTimeMillis();
@@ -457,44 +398,46 @@ public class AdvocateOfficeCaseMemberService {
                     request.getProcessCaseMember().getMemberUserUuid());
 
             ProcessCaseMember processCaseMember = request.getProcessCaseMember();
-            List<AdvocateOfficeCaseMember> members = new ArrayList<>();
 
-            // ADD CASES
+            int batchSize = configuration.getBatchSize();
+            List<AdvocateOfficeCaseMember> currentBatch = new ArrayList<>();
+
+            int totalCases = 0;
+
+            // Combine both lists logically
             List<String> addCaseIds = processCaseMember.getAddCaseIds();
-            if (addCaseIds != null && !addCaseIds.isEmpty()) {
-                for (String caseId : addCaseIds) {
-                    members.add(buildCaseMember(processCaseMember, caseId, true, request));
-                }
-            }
-
-            // REMOVE CASES
             List<String> removeCaseIds = processCaseMember.getRemoveCaseIds();
-            if (removeCaseIds != null && !removeCaseIds.isEmpty()) {
-                for (String caseId : removeCaseIds) {
-                    members.add(buildCaseMember(processCaseMember, caseId, false, request));
+
+            if (addCaseIds != null) totalCases += addCaseIds.size();
+            if (removeCaseIds != null) totalCases += removeCaseIds.size();
+
+            int processed = 0;
+
+            // -------- ADD CASES ----------
+            if (addCaseIds != null) {
+                for (String caseId : addCaseIds) {
+                    currentBatch.add(
+                            buildCaseMember(processCaseMember, caseId, true, request)
+                    );
+
+                    processed++;
+                    pushBatchIfNeeded(currentBatch, batchSize, processed, totalCases, request);
                 }
             }
 
-            if (members.isEmpty()) {
-                log.info("No caseIds provided for processing.");
-                return;
+            // -------- REMOVE CASES ----------
+            if (removeCaseIds != null) {
+                for (String caseId : removeCaseIds) {
+                    currentBatch.add(
+                            buildCaseMember(processCaseMember, caseId, false, request)
+                    );
+
+                    processed++;
+                    pushBatchIfNeeded(currentBatch, batchSize, processed, totalCases, request);
+                }
             }
 
-            // Build request for DB + Redis
-            AdvocateOfficeCaseMemberRequest memberRequest =
-                    AdvocateOfficeCaseMemberRequest.builder()
-                            .requestInfo(request.getRequestInfo())
-                            .members(members)
-                            .build();
-
-            updateRedisCacheForProcessCaseMember(memberRequest);
-
-            producer.push(configuration.getAdvocateOfficeCaseMemberUpdateTopic(), memberRequest);
-
-            // Existing analytics / processing topic
-            producer.push(configuration.getProcessCaseSpecificAccessTopic(), request);
-
-            log.info("Successfully processed case member request");
+            log.info("Completed processing {} cases in batches", totalCases);
 
         } catch (Exception e) {
             log.error("Error processing case member request", e);
@@ -630,6 +573,34 @@ public class AdvocateOfficeCaseMemberService {
         if (office.getClerks() != null) {
             office.getClerks().removeIf(m ->
                     member.getMemberUserUuid().equals(m.getMemberUserUuid()));
+        }
+    }
+
+    private void pushBatchIfNeeded(
+            List<AdvocateOfficeCaseMember> currentBatch,
+            int batchSize,
+            int processed,
+            int totalCases,
+            ProcessCaseMemberRequest originalRequest) {
+
+        boolean isBatchFull = currentBatch.size() >= batchSize;
+        boolean isLastRecord = processed == totalCases;
+
+        if (isBatchFull || isLastRecord) {
+
+            AdvocateOfficeCaseMemberRequest memberRequest =
+                    AdvocateOfficeCaseMemberRequest.builder()
+                            .requestInfo(originalRequest.getRequestInfo())
+                            .members(new ArrayList<>(currentBatch))
+                            .build();
+
+            updateRedisCacheForProcessCaseMember(memberRequest);
+
+            producer.push(configuration.getProcessCaseSpecificAccessTopic(), memberRequest);
+
+            log.info("Published batch of size {}", currentBatch.size());
+
+            currentBatch.clear();
         }
     }
 

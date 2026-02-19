@@ -1,6 +1,7 @@
 package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import digit.web.models.enums.MemberType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -25,15 +26,30 @@ public class ProcessCaseMember {
     @JsonProperty("removeCaseIds")
     private List<String> removeCaseIds = new ArrayList<>();
 
-    @JsonProperty("advocateUserUuid")
+    @JsonProperty("officeAdvocateUserUuid")
     @Valid
     @NotNull
-    private UUID advocateUserUuid;
+    private UUID officeAdvocateUserUuid;
 
     @JsonProperty("memberUserUuid")
     @Valid
     @NotNull
     private UUID memberUserUuid;
+
+    @JsonProperty("officeAdvocateId")
+    private UUID officeAdvocateId;
+
+    @JsonProperty("memberId")
+    private UUID memberId;
+
+    @JsonProperty("officeAdvocateName")
+    private String officeAdvocateName;
+
+    @JsonProperty("memberType")
+    private MemberType memberType;
+
+    @JsonProperty("memberName")
+    private String memberName;
 
     @JsonProperty("tenantId")
     @Valid
