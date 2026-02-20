@@ -12,15 +12,19 @@ import lombok.extern.slf4j.Slf4j;
 public class Producer {
 
 	@Autowired
-	private CustomKafkaTemplate<String, Object> kafkaTemplate;
+	private final KafkaProducerService kafkaProducerService;
 	
 	@Autowired
 	private MultiStateInstanceUtil centralInstanceUtil;
-	
-	public void push(String tenantId, String topic, Object value) {
+
+    public Producer(KafkaProducerService kafkaProducerService) {
+        this.kafkaProducerService = kafkaProducerService;
+    }
+
+    public void push(String tenantId, String topic, Object value) {
 
 		String updatedTopic = centralInstanceUtil.getStateSpecificTopicName(tenantId, topic);
 		log.info("The Kafka topic for the tenantId : " + tenantId + " is : " + updatedTopic);
-		kafkaTemplate.send(updatedTopic, value);
+		kafkaProducerService.send(updatedTopic, value);
 	}
 }

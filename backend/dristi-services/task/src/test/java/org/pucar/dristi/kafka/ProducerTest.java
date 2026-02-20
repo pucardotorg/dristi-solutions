@@ -13,7 +13,7 @@ import static org.mockito.Mockito.verify;
  class ProducerTest {
 
     @Mock
-    private CustomKafkaTemplate<String, Object> kafkaTemplate;
+    private KafkaProducerService kafkaProducerService;
 
     @InjectMocks
     private Producer producer;
@@ -33,6 +33,6 @@ import static org.mockito.Mockito.verify;
         producer.push(topic, value);
 
         // Assert
-        verify(kafkaTemplate, times(1)).send(topic, value);
+        verify(kafkaProducerService, times(1)).send(topic, value);
     }
 }
