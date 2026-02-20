@@ -68,6 +68,9 @@ public class ServiceConstants {
     
     public static final String LEAVE_OFFICE_ERROR = "LEAVE_OFFICE_ERROR";
     public static final String LEAVE_OFFICE_ERROR_MESSAGE = "Error while processing leave office: ";
+
+    public static final String UPDATE_MEMBER_ACCESS_ERROR = "UPDATE_MEMBER_ACCESS_ERROR";
+    public static final String UPDATE_MEMBER_ACCESS_ERROR_MESSAGE = "Error while updating member access: ";
     
     public static final String SEARCH_MEMBER_ERROR = "SEARCH_MEMBER_ERROR";
     public static final String SEARCH_MEMBER_ERROR_MESSAGE = "Error while searching members: ";
@@ -87,5 +90,7 @@ public class ServiceConstants {
     public static final String ADVOCATE_CLERK_NOT_FOUND = "ADVOCATE_CLERK_NOT_FOUND";
     public static final String ADVOCATE_NOT_FOUND_MESSAGE = "Advocate not found";
     public static final String ADVOCATE_CLERK_NOT_FOUND_MESSAGE = "Advocate clerk not found";
+
+    public static final String PROCESS_VALIDATION_ERROR = "PROCESS_VALIDATION_ERROR";
 
 }

@@ -283,4 +283,88 @@ public class WorkflowUtil {
             return Collections.emptyList();
         }
     }
+
+    public List<String> searchProcessInstanceIdsOnBusinessIdAndAssignee(
+            RequestInfo requestInfo,
+            String assigneeUuid,
+            String businessId,
+            String tenantId) {
+
+        List<String> allProcessInstanceIds = new ArrayList<>();
+
+        try {
+
+            // If no MDMS configuration, do direct search with businessId + assignee
+            if (mdmsDataConfig.getAssigneeToOfficeMembersTypeMap() == null || mdmsDataConfig.getAssigneeToOfficeMembersTypeMap().isEmpty()) {
+
+                AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
+                        .tenantId(tenantId)
+                        .uuid(assigneeUuid)
+                        .businessId(businessId)
+                        .build();
+
+                AssigneeSearchRequest searchRequest = AssigneeSearchRequest.builder()
+                        .requestInfo(requestInfo)
+                        .criteria(criteria)
+                        .build();
+
+                StringBuilder url = new StringBuilder();
+                url.append(config.getWorkflowHost()).append(config.getWorkflowAssigneeSearchEndpoint());
+
+                log.info("Searching workflow process instances with assignee: {}, businessId: {} (No MDMS filter)", assigneeUuid, businessId);
+
+                Object response = requestRepository.fetchResult(url, searchRequest);
+                ProcessInstanceIdResponse processInstanceIdResponse = mapper.convertValue(response, ProcessInstanceIdResponse.class);
+
+                if (processInstanceIdResponse != null && processInstanceIdResponse.getProcessInstanceIds() != null) {
+                    return processInstanceIdResponse.getProcessInstanceIds();
+                }
+
+                return Collections.emptyList();
+            }
+
+            // If MDMS configuration exists, apply businessService + states + businessId filter
+            for (AssigneeToOfficeMembersType mdmsConfig : mdmsDataConfig.getAssigneeToOfficeMembersTypeMap().values()) {
+
+                if (mdmsConfig.getWorkflowModule() != null && mdmsConfig.getStates() != null && !mdmsConfig.getStates().isEmpty()) {
+
+                    AssigneeSearchCriteria criteria = AssigneeSearchCriteria.builder()
+                            .tenantId(tenantId)
+                            .uuid(assigneeUuid)
+                            .businessService(mdmsConfig.getWorkflowModule())
+                            .states(mdmsConfig.getStates())
+                            .businessId(businessId)
+                            .build();
+
+                    AssigneeSearchRequest searchRequest = AssigneeSearchRequest.builder()
+                            .requestInfo(requestInfo)
+                            .criteria(criteria)
+                            .build();
+
+                    StringBuilder url = new StringBuilder();
+                    url.append(config.getWorkflowHost()).append(config.getWorkflowAssigneeSearchEndpoint());
+
+                    log.info("Searching workflow with assignee: {}, businessService: {}, states: {}, businessId: {}", assigneeUuid, mdmsConfig.getWorkflowModule(), mdmsConfig.getStates(), businessId);
+
+                    Object response = requestRepository.fetchResult(url, searchRequest);
+                    ProcessInstanceIdResponse processInstanceIdResponse = mapper.convertValue(response, ProcessInstanceIdResponse.class);
+
+                    if (processInstanceIdResponse != null && processInstanceIdResponse.getProcessInstanceIds() != null) {
+
+                        allProcessInstanceIds.addAll(processInstanceIdResponse.getProcessInstanceIds());
+                    }
+                }
+            }
+
+            log.info("Found total {} process instance IDs for assignee: {} and businessId: {}",
+                    allProcessInstanceIds.size(), assigneeUuid, businessId);
+
+            return allProcessInstanceIds;
+
+        } catch (Exception e) {
+            log.error("Error searching workflow process instances with assignee: {} and businessId: {}",
+                    assigneeUuid, businessId, e);
+            return Collections.emptyList();
+        }
+    }
 }

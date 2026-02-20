@@ -102,10 +102,27 @@ public class Configuration {
     @Value("${dristi.advocate.clerk.search.endpoint}")
     private String advocateClerkSearchEndPoint;
 
+    //Case Service Config
+    @Value("${dristi.case.host}")
+    private String caseHost;
+
+    @Value("${dristi.case.member.search.endpoint}")
+    private String caseMemberSearchEndPoint;
+
+    @Value("${dristi.process.case.member.endpoint}")
+    private String processCaseMemberEndPoint;
+
     //Advocate Office Kafka Topics
     @Value("${add.member.kafka.create.topic}")
     private String addMemberTopic;
 
     @Value("${leave.office.kafka.create.topic}")
     private String leaveOfficeTopic;
+
+    @Value("${update.member.access.kafka.topic}")
+    private String updateMemberAccessTopic;
+
+    @Value("${spring.redis.timeout}")
+    private Long redisTimeout;
+
 }

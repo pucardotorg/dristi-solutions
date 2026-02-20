@@ -490,6 +490,9 @@ public class Configuration {
 	@Value("${advocate.office.case.member.analytics.topic}")
 	private String advocateOfficeCaseMemberAnalyticsTopic;
 
+	@Value("${process.case.specific.access.topic}")
+	private String processCaseSpecificAccessTopic;
+
 	@Value("${batch.size}")
 	@Min(1)
 	private int batchSize;

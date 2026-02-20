@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -154,5 +155,97 @@ public class AdvocateOfficeValidator {
         if (request.getSearchCriteria() == null) {
             throw new CustomException(SEARCH_CRITERIA_NULL, SEARCH_CRITERIA_NULL_MESSAGE);
         }
+    }
+
+    public AddMember validateUpdateMemberAccessRequest(UpdateMemberAccessRequest request) {
+        validateRequestInfo(request.getRequestInfo());
+
+        UpdateMemberAccess updateMemberAccess = request.getUpdateMemberAccess();
+        if (updateMemberAccess == null) {
+            throw new CustomException(UPDATE_MEMBER_ACCESS_ERROR, "Update member access payload cannot be null");
+        }
+
+        MemberSearchCriteria searchCriteria = MemberSearchCriteria.builder()
+                .officeAdvocateId(updateMemberAccess.getOfficeAdvocateId())
+                .memberId(updateMemberAccess.getMemberId())
+                .build();
+
+        List<AddMember> existingMembers = advocateOfficeRepository.getMembers(searchCriteria, null);
+        if (existingMembers.isEmpty()) {
+            throw new CustomException(MEMBER_NOT_FOUND, MEMBER_NOT_FOUND_MESSAGE);
+        }
+
+        AddMember existingMember = getMember(existingMembers);
+
+        String userUuid = request.getRequestInfo().getUserInfo().getUuid();
+        if (!existingMember.getOfficeAdvocateUserUuid().toString().equals(userUuid)) {
+            throw new CustomException(UNAUTHORIZED, "User is not authorized to update access for member");
+        }
+
+        return existingMember;
+
+    }
+
+    private AddMember getMember(List<AddMember> existingMembers) {
+        AddMember existingMember = existingMembers.get(0);
+
+        if (!Boolean.TRUE.equals(existingMember.getIsActive())) {
+            throw new CustomException(MEMBER_NOT_FOUND, MEMBER_NOT_FOUND_MESSAGE);
+        }
+
+        return existingMember;
+    }
+
+    public void validateProcessCaseMemberRequest(ProcessCaseMemberRequest request) {
+
+        validateRequestInfo(request.getRequestInfo());
+
+        ProcessCaseMember processCaseMember = getProcessCaseMember(request);
+
+        List<String> addCaseIds = processCaseMember.getAddCaseIds();
+
+        List<String> removeCaseIds = processCaseMember.getRemoveCaseIds();
+
+        if ((addCaseIds == null || addCaseIds.isEmpty()) && (removeCaseIds == null || removeCaseIds.isEmpty())) {
+            throw new CustomException("INVALID_REQUEST", "Either addCaseIds or removeCaseIds must be provided");
+        }
+
+
+        MemberSearchCriteria searchCriteria = MemberSearchCriteria.builder()
+                .officeAdvocateUserUuid(processCaseMember.getOfficeAdvocateUserUuid())
+                .memberUserUuid(processCaseMember.getMemberUserUuid())
+                .isActive(true)
+                .build();
+
+        List<AddMember> existingMembers = advocateOfficeRepository.getMembers(searchCriteria, null);
+        if (existingMembers.isEmpty()) {
+            throw new CustomException(MEMBER_NOT_FOUND, MEMBER_NOT_FOUND_MESSAGE);
+        }
+
+    }
+
+    private ProcessCaseMember getProcessCaseMember(ProcessCaseMemberRequest request) {
+        ProcessCaseMember processCaseMember = request.getProcessCaseMember();
+
+        if (processCaseMember.getOfficeAdvocateId() == null) {
+            throw new CustomException(PROCESS_VALIDATION_ERROR,"Office Advocate ID is required.");
+        }
+
+        if (processCaseMember.getMemberId() == null) {
+            throw new CustomException(PROCESS_VALIDATION_ERROR,"Member ID is required.");
+        }
+
+        if (processCaseMember.getOfficeAdvocateName() == null) {
+            throw new CustomException(PROCESS_VALIDATION_ERROR,"Office Advocate name is required.");
+        }
+
+        if (processCaseMember.getMemberType() == null) {
+            throw  new CustomException(PROCESS_VALIDATION_ERROR,"Member type is required.");
+        }
+
+        if (processCaseMember.getMemberName() == null) {
+            throw new CustomException(PROCESS_VALIDATION_ERROR,"Member name is required.");
+        }
+        return processCaseMember;
     }
 }
