@@ -216,6 +216,7 @@ public class CaseQueryBuilder {
                                 " FROM dristi_advocate_office_case_member aocm" +
                                 " WHERE aocm.office_advocate_id = ?" +
                                 " AND aocm.member_user_uuid = ?" +
+                                " AND aocm.case_id = cases.id" +
                                 " AND aocm.is_active = true))" +
                                 " AND (cases.status NOT IN ('DELETED_DRAFT'))"
                         );
