@@ -51,7 +51,7 @@
         "service_group": "core-services",
         "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile.v2",
-        "service_source_path": "backend/dristi-services/bank-details",
+        "service_source_path": "backend/integration-services/bank-details",
         "language": "java",
         "version": "17"
     },
