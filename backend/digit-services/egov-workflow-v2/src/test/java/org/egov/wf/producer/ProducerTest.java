@@ -20,8 +20,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @ContextConfiguration(classes = {Producer.class})
 @ExtendWith(SpringExtension.class)
 class ProducerTest {
-    @MockBean(name = "customKafkaTemplate")
-    private CustomKafkaTemplate<String, Object> customKafkaTemplate;
+
+    @MockBean
+    private KafkaProducerService kafkaProducerService;
 
     @Autowired
     private Producer producer;
@@ -34,11 +35,9 @@ class ProducerTest {
         when(workflowConfig.getIsEnvironmentCentralInstance()).thenReturn(true);
         ProducerRecord<String, Object> producerRecord = new ProducerRecord<>("Topic", "Value");
 
-        when(customKafkaTemplate.send((String) any(), (Object) any())).thenReturn(
-                new SendResult<>(producerRecord, new RecordMetadata(new TopicPartition("Topic", 1), 1L, 1, 10L, 3, 3)));
         producer.push("42", "Topic", "Value");
         verify(workflowConfig).getIsEnvironmentCentralInstance();
-        verify(customKafkaTemplate).send((String) any(), (Object) any());
+        verify(kafkaProducerService).send((String) any(), (Object) any());
     }
 
     @Test
@@ -46,11 +45,9 @@ class ProducerTest {
         when(workflowConfig.getIsEnvironmentCentralInstance()).thenReturn(false);
         ProducerRecord<String, Object> producerRecord = new ProducerRecord<>("Topic", "Value");
 
-        when(customKafkaTemplate.send((String) any(), (Object) any())).thenReturn(
-                new SendResult<>(producerRecord, new RecordMetadata(new TopicPartition("Topic", 1), 1L, 1, 10L, 3, 3)));
         producer.push("42", "Topic", "Value");
         verify(workflowConfig).getIsEnvironmentCentralInstance();
-        verify(customKafkaTemplate).send((String) any(), (Object) any());
+        verify(kafkaProducerService).send((String) any(), (Object) any());
     }
 
     @Test
@@ -58,11 +55,9 @@ class ProducerTest {
         when(workflowConfig.getIsEnvironmentCentralInstance()).thenReturn(true);
         ProducerRecord<String, Object> producerRecord = new ProducerRecord<>("Topic", "Value");
 
-        when(customKafkaTemplate.send((String) any(), (Object) any())).thenReturn(
-                new SendResult<>(producerRecord, new RecordMetadata(new TopicPartition("Topic", 1), 1L, 1, 10L, 3, 3)));
         producer.push("org.egov.wf.producer.Producer", "Topic", "Value");
         verify(workflowConfig).getIsEnvironmentCentralInstance();
-        verify(customKafkaTemplate).send((String) any(), (Object) any());
+        verify(kafkaProducerService).send((String) any(), (Object) any());
     }
 }
 

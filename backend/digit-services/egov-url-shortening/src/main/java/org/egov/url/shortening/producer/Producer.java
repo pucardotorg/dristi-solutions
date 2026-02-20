@@ -11,9 +11,9 @@ import org.springframework.stereotype.Service;
 public class Producer {
 
     @Autowired
-    private CustomKafkaTemplate<String, Object> kafkaTemplate;
+    private KafkaProducerService kafkaProducerService;
 
     public void push(String topic, Object value) {
-        kafkaTemplate.send(topic, value);
+        kafkaProducerService.send(topic, value);
     }
 }

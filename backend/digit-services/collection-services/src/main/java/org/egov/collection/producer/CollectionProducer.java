@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CollectionProducer {
 
 	@Autowired
-    private CustomKafkaTemplate<String, Object> kafkaTemplate;
+    private KafkaProducerService kafkaProducerService;
 
     @Autowired
     private MultiStateInstanceUtil centralInstanceUtil;
@@ -22,7 +22,7 @@ public class CollectionProducer {
 
         String updatedTopic = centralInstanceUtil.getStateSpecificTopicName(tenantId, topic);
         log.info("The Kafka topic for the tenantId : " + tenantId + " is : " + updatedTopic);
-        kafkaTemplate.send(updatedTopic, value);
+        kafkaProducerService.send(updatedTopic, value);
     }
 
 
