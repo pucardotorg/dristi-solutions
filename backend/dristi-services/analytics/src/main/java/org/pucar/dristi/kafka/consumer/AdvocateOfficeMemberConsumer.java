@@ -19,6 +19,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.web.models.enums.OfficeManagementStatus.COMPLETED;
 
@@ -179,6 +180,136 @@ public class AdvocateOfficeMemberConsumer {
         }
     }
 
+    @KafkaListener(topics = "${process.case.specific.access.topic}")
+    public void listenProcessCaseSpecificAccess(ConsumerRecord<String, Map<String, Object>> consumerRecord) {
+        try {
+            log.info("Received process case specific access event from topic: {}", consumerRecord.topic());
+            Map<String, Object> jsonMap = consumerRecord.value();
+            AdvocateOfficeCaseMemberRequest request = objectMapper.convertValue(jsonMap, AdvocateOfficeCaseMemberRequest.class);
+
+            if (request.getMembers() == null || request.getMembers().isEmpty()) {
+                log.info("No members found in request, skipping the event.");
+                return;
+            }
+
+            RequestInfo requestInfo = request.getRequestInfo();
+
+            // Group members by case ID to process them in batches
+            Map<UUID, List<AdvocateOfficeCaseMember>> membersByCase = request.getMembers().stream()
+                    .collect(Collectors.groupingBy(AdvocateOfficeCaseMember::getCaseId));
+
+            for (Map.Entry<UUID, List<AdvocateOfficeCaseMember>> entry : membersByCase.entrySet()) {
+                UUID caseId = entry.getKey();
+                List<AdvocateOfficeCaseMember> membersForCase = entry.getValue();
+                AdvocateOfficeCaseMember firstMember = membersForCase.get(0);
+                String tenantId = firstMember.getTenantId();
+                String officeAdvocateUuid = firstMember.getOfficeAdvocateUserUuid();
+
+                try {
+                    // Get case details to find filingNumber (businessId for workflow)
+                    CaseCriteria criteria = CaseCriteria.builder()
+                            .caseId(caseId.toString())
+                            .defaultFields(false)
+                            .build();
+                    CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                            .requestInfo(requestInfo)
+                            .criteria(Collections.singletonList(criteria))
+                            .build();
+                    JsonNode caseInfo = caseUtil.searchCaseDetails(caseSearchRequest);
+                    if (caseInfo == null || caseInfo.get(0) == null || caseInfo.get(0).get("filingNumber") == null) {
+                        log.error("Could not find case details or filingNumber for caseId: {}", caseId);
+                        continue;
+                    }
+                    String filingNumber = caseInfo.get(0).get("filingNumber").textValue();
+
+                    updatePendingTasksForCase(officeAdvocateUuid, filingNumber, caseInfo);
+
+                    List<String> processInstanceIds = workflowUtil.searchProcessInstanceIdsOnBusinessIdAndAssignee(
+                            requestInfo,
+                            officeAdvocateUuid,
+                            tenantId,
+                            filingNumber
+                    );
+
+                    if (processInstanceIds != null && !processInstanceIds.isEmpty()) {
+                        // Process active members by adding them to the workflow
+                        Set<String> activeMemberUuids = membersForCase.stream()
+                                .filter(m -> Boolean.TRUE.equals(m.getIsActive()))
+                                .map(AdvocateOfficeCaseMember::getMemberUserUuid)
+                                .collect(Collectors.toSet());
+
+                        if (!activeMemberUuids.isEmpty()) {
+                            for (String processInstanceId : processInstanceIds) {
+                                try {
+                                    workflowUtil.upsertAssignees(requestInfo, activeMemberUuids, processInstanceId, tenantId);
+                                    log.info("Successfully upserted {} assignees to process instance {} for case {}", activeMemberUuids.size(), processInstanceId, filingNumber);
+                                } catch (Exception e) {
+                                    log.error("Error upserting assignees for process instance: {}", processInstanceId, e);
+                                }
+                            }
+                        }
+                    } else {
+                        log.info("No process instance found for case with filingNumber: {}", filingNumber);
+                    }
+
+                    // Process inactive members by deactivating them
+                    List<AdvocateOfficeCaseMember> inactiveMembers = membersForCase.stream()
+                            .filter(m -> !Boolean.TRUE.equals(m.getIsActive()))
+                            .toList();
+
+                    for (AdvocateOfficeCaseMember member : inactiveMembers) {
+                        String memberUserUuid = member.getMemberUserUuid();
+                        String currentOfficeAdvocateUuid = member.getOfficeAdvocateUserUuid();
+
+                        // Check if the member is associated with the case through other advocates
+                        List<String> advocateUuidsForMemberInCase = caseUtil.getAdvocatesForMember(requestInfo, memberUserUuid, caseId.toString());
+                        List<String> otherAdvocateUuids = new ArrayList<>(advocateUuidsForMemberInCase);
+                        otherAdvocateUuids.remove(currentOfficeAdvocateUuid);
+
+                        log.info("For case {}, after excluding office advocate {}, member {} has {} other advocate(s)",
+                                filingNumber, currentOfficeAdvocateUuid, memberUserUuid, otherAdvocateUuids.size());
+
+                        // Search for process instances where this member is an assignee, excluding those where other advocates are also assignees
+                        List<String> processInstanceIdsToDeactivate = workflowUtil.searchProcessInstanceIdsWithExclude(
+                                requestInfo,
+                                memberUserUuid,
+                                otherAdvocateUuids,
+                                filingNumber,
+                                tenantId
+                        );
+
+                        if (processInstanceIdsToDeactivate != null && !processInstanceIdsToDeactivate.isEmpty()) {
+                            log.info("Found {} process instances to deactivate assignee for member: {} in case: {}", processInstanceIdsToDeactivate.size(), memberUserUuid, filingNumber);
+
+                            for (String processInstanceId : processInstanceIdsToDeactivate) {
+                                try {
+                                    workflowUtil.deactivateAssignee(requestInfo, memberUserUuid, processInstanceId, tenantId);
+                                    log.info("Successfully deactivated assignee {} from process instance {} in case {}", memberUserUuid, processInstanceId, filingNumber);
+                                } catch (Exception e) {
+                                    log.error("Error deactivating assignee for process instance: {} in case: {}", processInstanceId, filingNumber, e);
+                                }
+                            }
+                        } else {
+                            log.info("No process instances found for member: {} in case: {} to deactivate", memberUserUuid, filingNumber);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("Error processing individual member for case specific access: caseId {}", caseId, e);
+                }
+
+                for (AdvocateOfficeCaseMember member : membersForCase)
+                {
+                    cacheUtil.save(member.getOfficeAdvocateUserUuid() + "-" + member.getMemberUserUuid(), COMPLETED);
+                }
+
+            }
+
+            log.info("Successfully processed case specific access event for {} members.", request.getMembers().size());
+        } catch (Exception e) {
+            log.error("Error processing process case specific access event", e);
+        }
+    }
+
     private void processLeaveOfficeWorkflowDeactivation(String memberUserUuid, String officeAdvocateUuid, String advocateId, String tenantId, RequestInfo requestInfo) {
         try {
             log.info("Processing workflow assignee deactivation for member: {} leaving office of advocate: {}", memberUserUuid, officeAdvocateUuid);
@@ -282,47 +413,48 @@ public class AdvocateOfficeMemberConsumer {
                 }
 
                 processedCaseIds.add(caseId);
-
-                try {
-                    log.info("Fetching pending tasks for case with filingNumber: {} assigned to advocate: {}", filingNumber, advocateUuid);
-                    JsonNode response = pendingTaskUtil.callPendingTaskByFilingNumberAndAssignedTo(filingNumber, advocateUuid);
-
-                    if (response != null && response.has("hits") && response.get("hits").has("hits")) {
-                        JsonNode hits = response.get("hits").get("hits");
-                        if (hits.isArray() && !hits.isEmpty()) {
-                            List<JsonNode> pendingTasks = new ArrayList<>();
-                            for (JsonNode hit : hits) {
-                                pendingTasks.add(hit);
-                            }
-                            log.info("Found {} pending tasks for filingNumber: {} assigned to advocate: {}", pendingTasks.size(), filingNumber, advocateUuid);
-
-                            // Fetch case details once for this filingNumber and caseId
-                            CaseCriteria criteria = CaseCriteria.builder()
-                                    .filingNumber(filingNumber)
-                                    .caseId(caseId)
-                                    .defaultFields(false)
-                                    .build();
-                            CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
-                                    .requestInfo(requestInfo)
-                                    .criteria(Collections.singletonList(criteria))
-                                    .build();
-                            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
-
-                            // Update pending tasks with case details
-                            pendingTaskUtil.updatePendingTask(pendingTasks, caseDetails);
-                            log.info("Successfully updated pending tasks for filingNumber: {}", filingNumber);
-                        }
-                    }
-                } catch (Exception e) {
-                    log.error("Error processing pending tasks for filingNumber: {} assigned to advocate: {}", filingNumber, advocateUuid, e);
-                    // Continue with next case even if one fails
-                }
+                // Fetch case details once for this filingNumber and caseId
+                CaseCriteria criteria = CaseCriteria.builder()
+                        .filingNumber(filingNumber)
+                        .caseId(caseId)
+                        .defaultFields(false)
+                        .build();
+                CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                        .requestInfo(requestInfo)
+                        .criteria(Collections.singletonList(criteria))
+                        .build();
+                JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+                updatePendingTasksForCase(advocateUuid, filingNumber, caseDetails);
             }
 
             log.info("Completed updating pending tasks for advocate: {}", advocateUuid);
 
         } catch (Exception e) {
             log.error("Error updating pending tasks for advocate: {}", advocateUuid, e);
+        }
+    }
+
+    private void updatePendingTasksForCase(String advocateUuid, String filingNumber,JsonNode caseDetails) {
+        try {
+            log.info("Fetching pending tasks for case with filingNumber: {} assigned to advocate: {}", filingNumber, advocateUuid);
+            JsonNode response = pendingTaskUtil.callPendingTaskByFilingNumberAndAssignedTo(filingNumber, advocateUuid);
+
+            if (response != null && response.has("hits") && response.get("hits").has("hits")) {
+                JsonNode hits = response.get("hits").get("hits");
+                if (hits.isArray() && !hits.isEmpty()) {
+                    List<JsonNode> pendingTasks = new ArrayList<>();
+                    for (JsonNode hit : hits) {
+                        pendingTasks.add(hit);
+                    }
+                    log.info("Found {} pending tasks for filingNumber: {} assigned to advocate: {}", pendingTasks.size(), filingNumber, advocateUuid);
+
+                    // Update pending tasks with case details
+                    pendingTaskUtil.updatePendingTask(pendingTasks, caseDetails);
+                    log.info("Successfully updated pending tasks for filingNumber: {}", filingNumber);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error processing pending tasks for filingNumber: {} assigned to advocate: {}", filingNumber, advocateUuid, e);
         }
     }
 }

@@ -397,6 +397,8 @@ public class AdvocateOfficeCaseMemberService {
                     request.getProcessCaseMember().getOfficeAdvocateUserUuid(),
                     request.getProcessCaseMember().getMemberUserUuid());
 
+            cacheService.save(request.getProcessCaseMember().getOfficeAdvocateUserUuid() + "-" + request.getProcessCaseMember().getMemberUserUuid(), IN_PROGRESS);
+
             ProcessCaseMember processCaseMember = request.getProcessCaseMember();
 
             int batchSize = configuration.getBatchSize();
