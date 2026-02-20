@@ -81,4 +81,127 @@ export const convertToDateInputFormat = (dateInput) => {
   return formatDate(date);
 };
 
+export function convertTaskResponseToPayload(responseArray, id = null) {
+  if (!Array.isArray(responseArray) || !responseArray.length) return null;
+
+  let data = [];
+  if (id) {
+    const matchedTask = responseArray?.find((task) =>
+      task?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field?.value === id)
+    );
+    data = matchedTask?.fields || [];
+  } else {
+    data = responseArray?.[0]?.fields || [];
+  }
+  const flatData = data;
+  const structuredData = {};
+
+  function setDeepValue(obj, path, value) {
+    const parts = path?.replace(/\[(\w+)\]/g, ".$1")?.split(".");
+    let current = obj;
+    for (let i = 0; i < parts?.length; i++) {
+      const key = parts[i];
+      if (i === parts.length - 1) {
+        current[key] = value;
+      } else {
+        if (!current[key] || typeof current[key] !== "object") {
+          current[key] = isNaN(parts[i + 1]) ? {} : [];
+        }
+        current = current[key];
+      }
+    }
+  }
+
+  flatData?.forEach(({ key, value }) => {
+    const normalizedValue = value === "null" ? null : value === "true" ? true : value === "false" ? false : value;
+    setDeepValue(structuredData, key, normalizedValue);
+  });
+
+  const pendingTask = {
+    name: structuredData?.name,
+    entityType: structuredData?.entityType,
+    referenceId: structuredData?.referenceId,
+    status: structuredData?.status,
+    assignedTo: structuredData?.assignedTo,
+    assignedRole: structuredData?.assignedRole,
+    actionCategory: structuredData?.actionCategory,
+    cnrNumber: structuredData?.cnrNumber,
+    filingNumber: structuredData?.filingNumber,
+    caseId: structuredData?.caseId,
+    caseTitle: structuredData?.caseTitle,
+    isCompleted: structuredData?.isCompleted,
+    expiryDate: structuredData?.expiryDate,
+    stateSla: structuredData?.stateSla,
+    additionalDetails: structuredData?.additionalDetails,
+    courtId: structuredData?.courtId,
+  };
+
+  return pendingTask;
+}
+
+export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
+  const nameParts = [firstName, middleName, lastName]
+    ?.map((part) => part?.trim())
+    ?.filter(Boolean)
+    ?.join(" ")
+    ?.trim();
+
+  const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
+
+  return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
+};
+
+export const getUserInfoFromUuids = async (uuidList) => {
+  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const uuids = [...new Set(uuidList)];
+
+  const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+    {
+      Individual: {
+        userUuid: uuids,
+      },
+    },
+    { tenantId, limit: 1000, offset: 0 },
+    "",
+    true
+  );
+  if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
+    const userData = individualData?.Individual?.map((user) => {
+      const userName = `${user?.name?.givenName} ${user?.name?.familyName || ""}`.trim();
+      return {
+        userUuid: user?.userUuid,
+        name: userName,
+      };
+    });
+    return userData;
+  }
+  return [];
+};
+
+export const getUserInfoFromIndividualId = async (individualId) => {
+  const tenantId = Digit.ULBService.getCurrentTenantId();
+
+  const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+    {
+      Individual: {
+        individualId: individualId,
+      },
+    },
+    { tenantId, limit: 1000, offset: 0 },
+    "",
+    true
+  );
+  if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
+    const userData = individualData?.Individual?.map((user) => {
+      const userName = `${user?.name?.givenName} ${user?.name?.familyName || ""}`.trim();
+      return {
+        uuid: user?.userUuid,
+        name: userName,
+      };
+    });
+    return userData;
+  }
+  return [];
+};
+
 export default {};

@@ -29,7 +29,8 @@ function OrderSignatureModal({
   setSignedDocumentUploadID,
   orderPdfFileStoreID,
   businessOfDay,
-  selectedOrder,
+  setSignedOrderPdfFileName,
+  // selectedOrder,
 }) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = useESign();
@@ -37,11 +38,15 @@ function OrderSignatureModal({
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [pageModule, setPageModule] = useState("en");
+  const [loader, setLoader] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${orderPdfFileStoreID}`;
   const { uploadDocuments } = useDocumentUpload();
   const name = "Signature";
   const judgePlaceholder = order?.orderCategory === "COMPOSITE" ? "Fduy44hjb" : "Signature";
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const [fileUploadError, setFileUploadError] = useState(null);
+
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -52,8 +57,8 @@ function OrderSignatureModal({
             // documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -73,26 +78,41 @@ function OrderSignatureModal({
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
+        setLoader(true);
+        setSignedOrderPdfFileName(formData?.uploadSignature?.Signature?.[0]?.name);
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
+        setLoader(false);
         setFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
+      setLoader(false);
     }
   };
 
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus]);
+
+  const handleClickEsign = () => {
+    if (mockESignEnabled) {
+      setIsSigned(true);
+    } else {
+      sessionStorage.setItem("orderPDF", orderPdfFileStoreID);
+      handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder);
+    }
+  };
 
   return !openUploadSignatureModal ? (
     <Modal
@@ -125,19 +145,7 @@ function OrderSignatureModal({
           <div className="not-signed">
             <h1>{t("YOUR_SIGNATURE")}</h1>
             <div className="sign-button-wrap">
-              <Button
-                label={t("CS_ESIGN")}
-                onButtonClick={() => {
-                  // setOpenAadharModal(true);
-                  // setIsSigned(true);
-                  sessionStorage.setItem("orderPDF", orderPdfFileStoreID);
-                  sessionStorage.setItem("businessOfTheDay", businessOfDay);
-                  sessionStorage.setItem("currentSelectedOrder", selectedOrder);
-                  handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder);
-                }}
-                className={"aadhar-sign-in"}
-                labelClassName={"aadhar-sign-in"}
-              />
+              <Button label={t("CS_ESIGN")} onButtonClick={handleClickEsign} className={"aadhar-sign-in"} labelClassName={"aadhar-sign-in"} />
               <Button
                 icon={<FileUploadIcon />}
                 label={t("UPLOAD_DIGITAL_SIGN_CERTI")}
@@ -179,6 +187,8 @@ function OrderSignatureModal({
       config={uploadModalConfig}
       formData={formData}
       onSubmit={onSubmit}
+      isDisabled={loader}
+      fileUploadError={fileUploadError}
     />
   );
 }

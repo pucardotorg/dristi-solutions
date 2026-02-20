@@ -1,26 +1,32 @@
 import { BackButton, FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import { Urls } from "../../../hooks";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
-import { CustomArrowDownIcon, FileDownloadIcon, RightArrow, WarningInfoRedIcon } from "../../../icons/svgIndex";
+import { FileDownloadIcon, WarningInfoRedIcon } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { OrderTypes, OrderWorkflowAction } from "../../../Utils/orderWorkflow";
+import Breadcrumb from "../../../components/BreadCrumb";
+
 import { formatDate } from "../../citizen/FileCase/CaseType";
 import {
   admitCaseSubmitConfig,
   registerCaseConfig,
-  scheduleCaseAdmissionConfig,
   scheduleCaseSubmitConfig,
-  selectParticipantConfig,
   sendBackCase,
 } from "../../citizen/FileCase/Config/admissionActionConfig";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
-import { generateUUID, getFilingType } from "../../../Utils";
+import {
+  advocateCaseFilingStatusTypes,
+  getAuthorizedUuid,
+  getCaseEditAllowedAssignees,
+  getFilingType,
+  runComprehensiveSanitizer,
+} from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
@@ -88,6 +94,8 @@ function CaseFileAdmission({ t, path }) {
   const [submitModalInfo, setSubmitModalInfo] = useState(null);
   const [formdata, setFormdata] = useState({ isenabled: true, data: {}, displayindex: 0 });
   const location = useLocation();
+  const homeFilterData = location?.state?.homeFilteredData;
+
   const todayDate = new Date().getTime();
   const searchParams = new URLSearchParams(location.search);
   const caseId = searchParams.get("caseId");
@@ -97,18 +105,36 @@ function CaseFileAdmission({ t, path }) {
   const [createAdmissionOrder, setCreateAdmissionOrder] = useState(true);
   const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
   const [updateCounter, setUpdateCounter] = useState(0);
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isCaseApprover = roles.some((role) => role.code === "CASE_APPROVER");
-  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const userInfo = Digit?.UserService?.getUser()?.info;
+  const roles = userInfo?.roles;
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isCaseApprover = roles?.some((role) => role.code === "CASE_APPROVER"); // check
   const moduleCode = "case-default";
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const [isLoader, setLoader] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
+  const courtId = localStorage.getItem("courtId");
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
+
+  // const employeeCrumbs = useMemo(
+  //   () => [
+  //     {
+  //       path: `/${window?.contextPath}/employee/home/home-screen`,
+  //       content: t("ES_COMMON_HOME"),
+  //       show: true,
+  //       isLast: false,
+  //       homeActiveTab: location?.state?.homeActiveTab || null,
+  //     },
+  //   ],
+  //   [location?.state?.homeActiveTab, t]
+  // );
   const { data: caseFetchResponse, isLoading, refetch } = useSearchCaseService(
     {
       criteria: [
         {
           caseId: caseId,
+          ...(courtId && userInfoType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -119,6 +145,7 @@ function CaseFileAdmission({ t, path }) {
     Boolean(caseId)
   );
   const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
 
@@ -138,7 +165,7 @@ function CaseFileAdmission({ t, path }) {
     moduleCode,
     config: {
       enabled: Boolean(caseDetails?.filingNumber && tenantId),
-      cacheTime: 0,
+      cacheTime: 10,
     },
   });
 
@@ -156,11 +183,12 @@ function CaseFileAdmission({ t, path }) {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const { data: applicationData, isLoading: isApplicationLoading, refetch: applicationRefetch } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -168,12 +196,13 @@ function CaseFileAdmission({ t, path }) {
       criteria: {
         filingNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     filingNumber + "allApplications",
-    filingNumber
+    Boolean(filingNumber && caseCourtId)
   );
 
   const isDelayApplicationPending = useMemo(
@@ -204,6 +233,47 @@ function CaseFileAdmission({ t, path }) {
         ?.hearingId,
     [hearingDetails?.HearingList]
   );
+
+  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "TOTAL_HEARINGS_TAB", [location?.state?.homeActiveTab]);
+  useEffect(() => {
+    const unlisten = history.listen((location, action) => {
+      if (action === "POP" && location?.pathname?.includes("home-screen")) {
+        history.replace(location.pathname, {
+          ...location.state,
+          homeActiveTab: homeActiveTab,
+        });
+      }
+    });
+
+    return () => {
+      unlisten();
+    };
+  }, [history, homeActiveTab]);
+
+  const employeeCrumbs = useMemo(
+    () => [
+      {
+        path: `/${window?.contextPath}/${userInfoType}/home/home-screen`,
+        content: t("ES_COMMON_HOME"),
+        show: true,
+        isLast: false,
+        homeFilteredData: homeFilterData,
+      },
+      {
+        path: `/${window?.contextPath}/${userInfoType}/home/home-screen`,
+        content: t("HOME_REGISTER_CASES"),
+        show: homeActiveTab === "REGISTRATION",
+        homeActiveTab: homeActiveTab,
+        isLast: false,
+      },
+      {
+        content: t("VIEW"),
+        show: homeActiveTab === "REGISTRATION",
+        isLast: true,
+      },
+    ],
+    [userInfoType, t, homeFilterData, homeActiveTab]
+  );
   const nextActions = useMemo(() => workFlowDetails?.nextActions || [{}], [workFlowDetails]);
 
   const primaryAction = useMemo(
@@ -221,8 +291,36 @@ function CaseFileAdmission({ t, path }) {
 
   const formConfig = useMemo(() => {
     if (!caseDetails) return null;
+    const reviewFileConfig = structuredClone(reviewCaseFileFormConfig);
+    reviewFileConfig?.[0]?.body?.push({
+      type: "component",
+      component: "SelectReviewAccordion",
+      key: "paymentDetails",
+      label: "CS_PAYMENT_DETAILS",
+      number: 4,
+      withoutLabel: true,
+      populators: {
+        inputs: [
+          {
+            key: "paymentReceipt",
+            name: "paymentReceipt",
+            label: "CS_PAYMENT_RECEIPT",
+            icon: "PaymentDetailsIcon",
+            disableScrutiny: true,
+            config: [
+              {
+                type: "image",
+                label: "",
+                value: ["document"],
+              },
+            ],
+            data: {},
+          },
+        ],
+      },
+    });
     return [
-      ...reviewCaseFileFormConfig?.map((form) => {
+      ...reviewFileConfig?.map((form) => {
         return {
           ...form,
           body: form.body?.map((section) => {
@@ -234,7 +332,28 @@ function CaseFileAdmission({ t, path }) {
                   delete input.data;
                   return {
                     ...input,
-                    data: caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {},
+                    data:
+                      input?.key === "witnessDetails"
+                        ? caseDetails?.witnessDetails?.map((witness) => {
+                            return {
+                              data: witness,
+                            };
+                          }) || {}
+                        : input?.key === "paymentReceipt"
+                        ? [
+                            {
+                              data: {
+                                document:
+                                  caseDetails?.documents
+                                    ?.filter((doc) => doc?.documentType === "PAYMENT_RECEIPT")
+                                    ?.map((doc) => ({
+                                      ...doc,
+                                      fileName: doc?.documentType,
+                                    })) || [],
+                              },
+                            },
+                          ]
+                        : caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {},
                   };
                 }),
               },
@@ -245,105 +364,17 @@ function CaseFileAdmission({ t, path }) {
     ];
   }, [caseDetails]);
 
-  const handleIssueNotice = async (hearingDate, hearingNumber) => {
-    try {
-      const orderBody = {
-        createdDate: null,
-        tenantId,
-        cnrNumber: caseDetails?.cnrNumber,
-        filingNumber: caseDetails?.filingNumber,
-        statuteSection: {
-          tenantId,
-        },
-        orderTitle: "NOTICE",
-        orderCategory: "INTERMEDIATE",
-        orderType: "NOTICE",
-        status: "",
-        isActive: true,
-        workflow: {
-          action: OrderWorkflowAction.SAVE_DRAFT,
-          comments: "Creating order",
-          assignes: null,
-          rating: null,
-          documents: [{}],
-        },
-        documents: [],
-        ...(hearingNumber && { hearingNumber }),
-        additionalDetails: {
-          formdata: {
-            orderType: {
-              code: "NOTICE",
-              type: "NOTICE",
-              name: "ORDER_TYPE_NOTICE",
-            },
-            hearingDate,
-          },
-        },
-      };
-      DRISTIService.customApiService(Urls.dristi.ordersCreate, { order: orderBody }, { tenantId })
-        .then((res) => {
-          DRISTIService.customApiService(Urls.dristi.pendingTask, {
-            pendingTask: {
-              name: t("DRAFT_IN_PROGRESS_ISSUE_NOTICE"),
-              entityType: "order-default",
-              referenceId: `MANUAL_${res?.order?.orderNumber}`,
-              status: "DRAFT_IN_PROGRESS",
-              assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
-              cnrNumber: updatedCaseDetails?.cnrNumber,
-              filingNumber: caseDetails?.filingNumber,
-              caseId: caseDetails?.id,
-              caseTitle: caseDetails?.caseTitle,
-              isCompleted: false,
-              stateSla: todayDate + stateSla.NOTICE,
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-          history.push(
-            `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
-            {
-              caseId: caseDetails?.id,
-              tab: "Orders",
-            }
-          );
-        })
-        .catch();
-    } catch (error) {}
-  };
+  // Case correction/edition is allowed to all complainant side parties including poa holders, advocates, advocate's associated office members.
+  // but no need to send uuid of office members in assignee payload
+  const allComplainantSideUuids = useMemo(() => {
+    return getCaseEditAllowedAssignees(caseDetails);
+  }, [caseDetails]);
 
   const updateCaseDetails = async (action, data = {}) => {
-    let respondentDetails = caseDetails?.additionalDetails?.respondentDetails;
-    let witnessDetails = caseDetails?.additionalDetails?.witnessDetails;
-    if (action === "ADMIT") {
-      respondentDetails = {
-        ...caseDetails?.additionalDetails?.respondentDetails,
-        formdata: caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((data) => ({
-          ...data,
-          data: {
-            ...data?.data,
-            uuid: generateUUID(),
-          },
-        })),
-      };
-      witnessDetails = {
-        ...caseDetails?.additionalDetails?.witnessDetails,
-        formdata: caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((data) => ({
-          ...data,
-          data: {
-            ...data?.data,
-            uuid: generateUUID(),
-          },
-        })),
-      };
-    }
     const newcasedetails = {
       ...caseDetails,
-      additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
+      additionalDetails: { ...caseDetails.additionalDetails, judge: data },
     };
-    const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
-    let assignees = [];
-    assignees.push(caseCreatedByUuid);
     let filteredDocuments = caseDetails?.documents || [];
     if (action === "SEND_BACK") {
       filteredDocuments = filteredDocuments?.filter(
@@ -361,7 +392,7 @@ function CaseFileAdmission({ t, path }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === "SEND_BACK" && { assignes: assignees || [], comments: data?.comment }),
+            ...(action === "SEND_BACK" && { assignes: [...allComplainantSideUuids] || [], comments: data?.comment }),
           },
         },
         tenantId,
@@ -450,6 +481,7 @@ function CaseFileAdmission({ t, path }) {
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
+      runComprehensiveSanitizer({ formData, setValue });
       setFormdata((prev) => {
         return { ...prev, data: formData };
       });
@@ -572,48 +604,17 @@ function CaseFileAdmission({ t, path }) {
     return individualData?.Individual?.[0]?.individualId;
   };
 
-  const handleAdmitCase = async () => {
-    setCaseADmitLoader(true);
-    updateCaseDetails("ADMIT", formdata).then(async (res) => {
-      setModalInfo({ ...modalInfo, page: 1 });
-      setCaseADmitLoader(false);
-      const { HearingList = [] } = await Digit.HearingService.searchHearings({
-        hearing: { tenantId },
-        criteria: {
-          tenantID: tenantId,
-          filingNumber: caseDetails?.filingNumber,
-        },
-      });
-      const hearingData =
-        HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED")) || {};
-      if (hearingData.hearingId) {
-        hearingData.workflow = hearingData.workflow || {};
-        hearingData.workflow.action = "ABANDON";
-        await Digit.HearingService.updateHearings(
-          { tenantId, hearing: hearingData, hearingType: "", status: "" },
-          { applicationNumber: "", cnrNumber: "" }
-        );
-      }
-      DRISTIService.customApiService(Urls.dristi.pendingTask, {
-        pendingTask: {
-          name: "Schedule Hearing",
-          entityType: "case-default",
-          referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-          status: "SCHEDULE_HEARING",
-          assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
-          cnrNumber: updatedCaseDetails?.cnrNumber,
-          filingNumber: caseDetails?.filingNumber,
-          caseId: caseDetails?.id,
-          caseTitle: caseDetails?.caseTitle,
-          isCompleted: false,
-          stateSla: todayDate + stateSla.SCHEDULE_HEARING,
-          additionalDetails: {},
-          tenantId,
-        },
-      });
-    });
-  };
+  const efilingCreatorMainUser = useMemo(() => {
+    // If either an advocate or its associated members(jr. advocate/clerk) created the case.
+    const isAdvocateOfficeCreator = caseDetails?.representatives?.find(
+      (rep) => rep?.advocateFilingStatus === advocateCaseFilingStatusTypes?.CASE_OWNER
+    );
+    if (isAdvocateOfficeCreator) {
+      return isAdvocateOfficeCreator?.additionalDetails?.uuid;
+    }
+    // else if a complainant created the case
+    return caseDetails?.auditDetails?.createdBy;
+  }, [caseDetails]);
 
   const handleRegisterCase = async () => {
     setIsDisabled(true);
@@ -683,6 +684,7 @@ function CaseFileAdmission({ t, path }) {
                       artifactType: documentTypeMapping[data?.key],
                       sourceType: "COMPLAINANT",
                       sourceID: individualId,
+                      asUser: efilingCreatorMainUser, // Sending uuid of the main advocate even if clerk/jr. adv has filed/edited the case.
                       caseId: caseDetails?.id,
                       filingNumber: caseDetails?.filingNumber,
                       cnrNumber: res?.cases?.[0]?.cnrNumber,
@@ -735,47 +737,6 @@ function CaseFileAdmission({ t, path }) {
       setIsDisabled(false);
       setShowModal(true);
     });
-  };
-
-  const scheduleHearing = async ({ purpose, participant, date }) => {
-    return DRISTIService.createHearings(
-      {
-        hearing: {
-          tenantId: tenantId,
-          filingNumber: [caseDetails.filingNumber],
-          hearingType: purpose,
-          status: true,
-          courtCaseNumber: caseDetails?.courtCaseNumber,
-          cmpNumber: caseDetails?.cmpNumber,
-          attendees: [
-            ...Object.values(participant)
-              .map((val) => val.attendees.map((attendee) => JSON.parse(attendee)))
-              .flat(Infinity),
-          ],
-          startTime: Date.parse(
-            `${date
-              .split(" ")
-              .map((date, i) => (i === 0 ? date.slice(0, date.length - 2) : date))
-              .join(" ")}`
-          ),
-          endTime: Date.parse(
-            `${date
-              .split(" ")
-              .map((date, i) => (i === 0 ? date.slice(0, date.length - 2) : date))
-              .join(" ")}`
-          ),
-          workflow: {
-            action: "CREATE",
-            assignes: [],
-            comments: "Create new Hearing",
-            documents: [{}],
-          },
-          documents: [],
-        },
-        tenantId,
-      },
-      { tenantId: tenantId }
-    );
   };
 
   const isDelayCondonationApplicable = useMemo(
@@ -841,6 +802,7 @@ function CaseFileAdmission({ t, path }) {
         cnrNumber: caseDetails?.cnrNumber,
         cmpNumber: caseDetails?.cmpNumber,
         caseId: caseDetails?.id,
+        asUser: efilingCreatorMainUser, // Sending uuid of the main advocate even if clerk/jr. adv has filed/edited the case.
         createdDate: new Date().getTime(),
         applicationType: "DELAY_CONDONATION",
         status: caseDetails?.status,
@@ -870,26 +832,6 @@ function CaseFileAdmission({ t, path }) {
     } catch (error) {
       console.error("Failed to create applications :>> ", error);
     }
-  };
-
-  const handleScheduleCase = async (props) => {
-    const hearingData = await scheduleHearing({ purpose: "ADMISSION", date: props.date, participant: props.participant });
-    setSubmitModalInfo({
-      ...scheduleCaseAdmissionConfig,
-      caseInfo: [
-        ...caseInfo,
-        {
-          key: "CS_ISSUE_NOTICE",
-          value: props.date,
-        },
-        {
-          hearingNumber: hearingData?.hearing?.hearingNumber,
-        },
-      ],
-    });
-    updateCaseDetails("SCHEDULE_ADMISSION_HEARING", props).then((res) => {
-      setModalInfo({ ...modalInfo, page: 2 });
-    });
   };
 
   const handleScheduleNextHearing = () => {
@@ -929,7 +871,7 @@ function CaseFileAdmission({ t, path }) {
     DRISTIService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId })
       .then((res) => {
         history.push(
-          `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+          `/${window?.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
           {
             caseId: caseId,
             tab: "Orders",
@@ -937,12 +879,13 @@ function CaseFileAdmission({ t, path }) {
         );
         DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
+            actionCategory: "Schedule Hearing",
             name: "Schedule Hearing",
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
             status: "SCHEDULE_HEARING",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["PENDING_TASK_ORDER"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
             caseId: caseDetails?.id,
@@ -959,21 +902,6 @@ function CaseFileAdmission({ t, path }) {
       });
   };
 
-  const updateConfigWithCaseDetails = (config, caseDetails) => {
-    const litigantsNames = caseDetails.litigants?.map((litigant) => {
-      return { name: litigant.additionalDetails.fullName, individualId: litigant.individualId };
-    });
-
-    config.checkBoxes.forEach((checkbox) => {
-      if (checkbox.key === "Litigants") {
-        checkbox.dependentFields = litigantsNames;
-      }
-    });
-
-    return config;
-  };
-
-  const updatedConfig = caseDetails && updateConfigWithCaseDetails(selectParticipantConfig, caseDetails);
   const sidebar = ["litigentDetails", "caseSpecificDetails", "additionalDetails"];
   const labels = {
     litigentDetails: "CS_LITIGENT_DETAILS",
@@ -1029,7 +957,7 @@ function CaseFileAdmission({ t, path }) {
             referenceId: `MANUAL_${res.order.orderNumber}`,
             status: "DRAFT_IN_PROGRESS",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["PENDING_TASK_ORDER"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
             caseId: caseDetails?.id,
@@ -1055,8 +983,8 @@ function CaseFileAdmission({ t, path }) {
             tenantId,
           },
         });
-        history.push(
-          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+        history.replace(
+          `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })
       .catch((err) => {});
@@ -1076,10 +1004,16 @@ function CaseFileAdmission({ t, path }) {
   };
 
   if (!caseId || (caseDetails && caseDetails?.status === CaseWorkflowState.CASE_ADMITTED)) {
-    return <Redirect to="/" />;
+    return caseId ? (
+      <Redirect
+        to={`/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`}
+      />
+    ) : (
+      <Redirect to="/" />
+    );
   }
 
-  if (isLoading || isWorkFlowLoading || isLoader || caseAdmitLoader) {
+  if (isLoading || isWorkFlowLoading || isLoader || caseAdmitLoader || isApplicationLoading || isFilingTypeLoading) {
     return <Loader />;
   }
   const scrollToHeading = (heading) => {
@@ -1087,140 +1021,145 @@ function CaseFileAdmission({ t, path }) {
     scroller.scrollIntoView({ block: "center", behavior: "smooth" });
   };
   return (
-    <div className={"case-and-admission"}>
-      <div className="view-case-file">
-        <div className="file-case">
-          <div className="file-case-side-stepper">
-            <div className="file-case-select-form-section">
-              {sidebar?.map((key, index) => (
-                <div className="accordion-wrapper">
-                  <div key={index} className="accordion-title" onClick={() => scrollToHeading(`${index + 1}. ${t(labels[key])}`)}>
-                    <div>{`${index + 1}. ${t(labels[key])}`}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="file-case-form-section">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <BackButton style={{ marginBottom: 0 }}></BackButton>
-              <button style={{ display: "flex", alignItems: "center", background: "none" }} onClick={handleDownloadPdf}>
-                <span style={{ display: "flex", alignItems: "center" }}>
-                  <FileDownloadIcon svgStyle={downloadSvgStyle} pathStyle={downloadPathStyle} />
-                </span>
-                <span style={downloadButtonTextStyle}>{t("CS_COMMON_DOWNLOAD")}</span>
-              </button>
-            </div>
-            <div className="employee-card-wrapper">
-              <div className="header-content">
-                <div className="header-details" style={{ justifyContent: "normal", gap: "8px" }}>
-                  <Header>{caseDetails?.caseTitle}</Header>
-                  {delayCondonationData?.delayCondonationType?.code === "NO" && (
-                    <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
-                      <p style={delayCondonationTextStyle}>
-                        {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && "PENDING_REGISTRATION" === caseDetails?.status) ||
-                        (delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
-                        isDelayApplicationPending ||
-                        isDelayApplicationCompleted
-                          ? t("DELAY_CONDONATION_FILED")
-                          : t("DELAY_CONDONATION_NOT_FILED")}
-                      </p>
+    <React.Fragment>
+      <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>
+
+      <div className={"case-and-admission"}>
+        <div className="view-case-file">
+          <div className="file-case">
+            <div className="file-case-side-stepper">
+              <div className="file-case-select-form-section">
+                {sidebar?.map((key, index) => (
+                  <div className="accordion-wrapper">
+                    <div key={index} className="accordion-title" onClick={() => scrollToHeading(`${index + 1}. ${t(labels[key])}`)}>
+                      <div>{`${index + 1}. ${t(labels[key])}`}</div>
                     </div>
-                  )}
-                </div>
-              </div>
-              <CustomCaseInfoDiv t={t} data={caseInfo} style={{ margin: "24px 0px" }} />
-              {caseDetails?.additionalDetails?.scrutinyComment && (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    backgroundColor: "#fdf7ec",
-                    padding: "10px",
-                    fontSize: "14px",
-                    fontFamily: "Arial, sans-serif",
-                    margin: "16px 0px",
-                  }}
-                >
-                  <div style={{ marginRight: "8px" }}>
-                    <WarningInfoRedIcon />
                   </div>
-                  <p style={{ margin: 0, fontWeight: "bold" }}>
-                    {t("FSO_COMMENTS")} <span style={{ fontWeight: "normal" }}>{caseDetails?.additionalDetails?.scrutinyComment}</span>
-                  </p>
-                </div>
-              )}
-              <FormComposerV2
-                // by disabling label, we hide the action bar for court room manager.
-                label={isCourtRoomManager ? false : isCaseApprover ? t(primaryAction?.label || "") : false}
-                config={formConfig}
-                onSubmit={onSubmit}
-                // defaultValues={}
-                onSecondayActionClick={onSaveDraft}
-                defaultValues={{}}
-                onFormValueChange={onFormValueChange}
-                cardStyle={{ minWidth: "100%" }}
-                isDisabled={isButtonDisabled}
-                cardClassName={`e-filing-card-form-style review-case-file`}
-                secondaryLabel={
-                  [CaseWorkflowState.PENDING_RESPONSE, CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status)
-                    ? t("HEARING_IS_SCHEDULED")
-                    : t(tertiaryAction.label || "")
-                }
-                showSecondaryLabel={Boolean(tertiaryAction?.action)}
-                actionClassName={"case-file-admission-action-bar"}
-                showSkip={secondaryAction?.label}
-                onSkip={onSendBack}
-                skiplabel={t(secondaryAction?.label || "")}
-                noBreakLine
-                skipStyle={{ position: "fixed", left: "20px", bottom: "18px", color: "#007E7E", fontWeight: "700" }}
-              />
-              {showErrorToast && <Toast error={true} label={t(showErrorToast)} isDleteBtn={true} onClose={closeToast} />}
-              {showScheduleHearingModal && (
-                <ScheduleHearing
-                  setUpdateCounter={setUpdateCounter}
-                  showToast={() => {}}
-                  tenantId={tenantId}
-                  caseData={caseRelatedData}
-                  setShowModal={setShowScheduleHearingModal}
-                  caseAdmittedSubmit={caseAdmittedSubmit}
-                  isCaseAdmitted={false}
-                  createAdmissionOrder={createAdmissionOrder}
-                  delayCondonationData={delayCondonationData}
-                  hearingDetails={hearingDetails}
-                  isDelayApplicationPending={isDelayApplicationPending}
-                  isDelayApplicationCompleted={isDelayApplicationPending}
-                />
-              )}
-              {showModal && (
-                <AdmissionActionModal
-                  t={t}
-                  setShowModal={setShowModal}
-                  setSubmitModalInfo={setSubmitModalInfo}
-                  submitModalInfo={submitModalInfo}
-                  modalInfo={modalInfo}
-                  setModalInfo={setModalInfo}
-                  handleSendCaseBack={handleSendCaseBack}
-                  handleScheduleNextHearing={handleScheduleNextHearing}
-                  caseDetails={caseDetails}
-                  caseAdmittedSubmit={caseAdmittedSubmit}
-                  createAdmissionOrder={createAdmissionOrder}
-                  isAdmissionHearingAvailable={Boolean(currentHearingId)}
-                  delayCondonationData={delayCondonationData}
-                  hearingDetails={hearingDetails}
-                  isDelayApplicationPending={isDelayApplicationPending}
-                  isDelayApplicationCompleted={isDelayApplicationPending}
-                  tenantId={tenantId}
-                ></AdmissionActionModal>
-              )}
+                ))}
+              </div>
             </div>
-          </div>
-          <div className={"file-case-checklist"}>
-            <WorkflowTimeline t={t} applicationNo={caseDetails?.filingNumber} tenantId={tenantId} businessService="case-default" />
+            <div className="file-case-form-section">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <BackButton style={{ marginBottom: 0 }}></BackButton>
+                <button style={{ display: "flex", alignItems: "center", background: "none" }} onClick={handleDownloadPdf}>
+                  <span style={{ display: "flex", alignItems: "center" }}>
+                    <FileDownloadIcon svgStyle={downloadSvgStyle} pathStyle={downloadPathStyle} />
+                  </span>
+                  <span style={downloadButtonTextStyle}>{t("CS_COMMON_DOWNLOAD")}</span>
+                </button>
+              </div>
+              <div className="employee-card-wrapper">
+                <div className="header-content">
+                  <div className="header-details" style={{ justifyContent: "normal", gap: "8px" }}>
+                    <Header>{caseDetails?.caseTitle}</Header>
+                    {delayCondonationData?.delayCondonationType?.code === "NO" && (
+                      <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
+                        <p style={delayCondonationTextStyle}>
+                          {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" &&
+                            ["PENDING_REGISTRATION", "UNDER_SCRUTINY", "PENDING_PAYMENT"]?.includes(caseDetails?.status)) ||
+                          (delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
+                          isDelayApplicationPending ||
+                          isDelayApplicationCompleted
+                            ? t("DELAY_CONDONATION_FILED")
+                            : t("DELAY_CONDONATION_NOT_FILED")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <CustomCaseInfoDiv t={t} data={caseInfo} style={{ margin: "24px 0px" }} />
+                {caseDetails?.additionalDetails?.scrutinyComment && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      backgroundColor: "#fdf7ec",
+                      padding: "10px",
+                      fontSize: "14px",
+                      fontFamily: "Arial, sans-serif",
+                      margin: "16px 0px",
+                    }}
+                  >
+                    <div style={{ marginRight: "8px" }}>
+                      <WarningInfoRedIcon />
+                    </div>
+                    <p style={{ margin: 0, fontWeight: "bold" }}>
+                      {t("FSO_COMMENTS")} <span style={{ fontWeight: "normal" }}>{caseDetails?.additionalDetails?.scrutinyComment}</span>
+                    </p>
+                  </div>
+                )}
+                <FormComposerV2
+                  // by disabling label, we hide the action bar for court room manager.
+                  label={isCaseApprover ? t(primaryAction?.label || "") : false}
+                  config={formConfig}
+                  onSubmit={onSubmit}
+                  // defaultValues={}
+                  onSecondayActionClick={onSaveDraft}
+                  defaultValues={{}}
+                  onFormValueChange={onFormValueChange}
+                  cardStyle={{ minWidth: "100%" }}
+                  isDisabled={isButtonDisabled}
+                  cardClassName={`e-filing-card-form-style review-case-file`}
+                  secondaryLabel={
+                    [CaseWorkflowState.PENDING_RESPONSE, CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status)
+                      ? t("HEARING_IS_SCHEDULED")
+                      : t(tertiaryAction.label || "")
+                  }
+                  showSecondaryLabel={Boolean(tertiaryAction?.action)}
+                  actionClassName={"case-file-admission-action-bar"}
+                  showSkip={secondaryAction?.label}
+                  onSkip={onSendBack}
+                  skiplabel={t(secondaryAction?.label || "")}
+                  noBreakLine
+                  skipStyle={{ position: "fixed", left: "20px", bottom: "18px", color: "#007E7E", fontWeight: "700" }}
+                />
+                {showErrorToast && <Toast error={true} label={t(showErrorToast)} isDleteBtn={true} onClose={closeToast} />}
+                {showScheduleHearingModal && (
+                  <ScheduleHearing
+                    setUpdateCounter={setUpdateCounter}
+                    showToast={() => {}}
+                    tenantId={tenantId}
+                    caseData={caseRelatedData}
+                    setShowModal={setShowScheduleHearingModal}
+                    caseAdmittedSubmit={caseAdmittedSubmit}
+                    isCaseAdmitted={false}
+                    createAdmissionOrder={createAdmissionOrder}
+                    delayCondonationData={delayCondonationData}
+                    hearingDetails={hearingDetails}
+                    isDelayApplicationPending={isDelayApplicationPending}
+                    isDelayApplicationCompleted={isDelayApplicationPending}
+                  />
+                )}
+                {showModal && (
+                  <AdmissionActionModal
+                    t={t}
+                    setShowModal={setShowModal}
+                    setSubmitModalInfo={setSubmitModalInfo}
+                    submitModalInfo={submitModalInfo}
+                    modalInfo={modalInfo}
+                    setModalInfo={setModalInfo}
+                    handleSendCaseBack={handleSendCaseBack}
+                    handleScheduleNextHearing={handleScheduleNextHearing}
+                    caseDetails={caseDetails}
+                    caseAdmittedSubmit={caseAdmittedSubmit}
+                    createAdmissionOrder={createAdmissionOrder}
+                    isAdmissionHearingAvailable={Boolean(currentHearingId)}
+                    delayCondonationData={delayCondonationData}
+                    hearingDetails={hearingDetails}
+                    isDelayApplicationPending={isDelayApplicationPending}
+                    isDelayApplicationCompleted={isDelayApplicationPending}
+                    tenantId={tenantId}
+                  ></AdmissionActionModal>
+                )}
+              </div>
+            </div>
+            <div className={"file-case-checklist"}>
+              <WorkflowTimeline t={t} applicationNo={caseDetails?.filingNumber} tenantId={tenantId} businessService="case-default" />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </React.Fragment>
   );
 }
 

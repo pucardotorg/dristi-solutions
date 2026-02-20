@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActionBar, SubmitBar, Loader, Button, CloseSvg } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
@@ -8,11 +8,19 @@ import { useTranslation } from "react-i18next";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { DRISTIService } from "../../../services";
-import { getSuffixByBusinessCode, getUniqueAcronym } from "../../../Utils";
+import {
+  findCaseDraftEditAllowedParties,
+  getAllComplainantSideUuids,
+  getLoggedInUserOnBehalfOfUuid,
+  getSuffixByBusinessCode,
+  getUniqueAcronym,
+} from "../../../Utils";
 import UploadSignatureModal from "../../../components/UploadSignatureModal";
 import { Urls } from "../../../hooks";
 import { useToast } from "../../../components/Toast/useToast";
 import Modal from "../../../components/Modal";
+import { mergeBreakdowns } from "./EfilingValidationUtils";
+import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 
 const getStyles = () => ({
   container: { display: "flex", flexDirection: "row", marginBottom: "50px" },
@@ -158,13 +166,14 @@ const caseType = {
   act: "Negotiable Instruments Act",
   section: "138",
   courtName: "Kollam S-138 Special Court",
-  href: "https://districts.ecourts.gov.in/sites/default/files/study%20circles.pdf",
+  href: "https://www.indiacode.nic.in/bitstream/123456789/2189/1/a1881-26.pdf",
 };
 
 const complainantWorkflowACTION = {
   UPLOAD_DOCUMENT: "UPLOAD",
   ESIGN: "E-SIGN",
   EDIT_CASE: "EDIT_CASE",
+  EDIT_UNSIGNED_CASE: "EDIT_UNSIGNED_CASE",
 };
 
 const complainantWorkflowState = {
@@ -178,6 +187,7 @@ const complainantWorkflowState = {
 
 const stateSla = {
   PENDING_PAYMENT: 2,
+  RE_PENDING_PAYMENT: 2,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
@@ -187,7 +197,7 @@ const ComplainantSignature = ({ path }) => {
   const history = useHistory();
   const toast = useToast();
   const Digit = window.Digit || {};
-  const { filingNumber } = Digit.Hooks.useQueryParams();
+  const { filingNumber, caseId } = Digit.Hooks.useQueryParams();
   const todayDate = new Date().getTime();
   const [Loading, setLoader] = useState(false);
   const [isEsignSuccess, setEsignSuccess] = useState(false);
@@ -195,10 +205,10 @@ const ComplainantSignature = ({ path }) => {
   const [isDocumentUpload, setDocumentUpload] = useState(false);
   const [isEditCaseModal, setEditCaseModal] = useState(false);
   const [formData, setFormData] = useState({});
+  const [fileUploadError, setFileUploadError] = useState(null);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const styles = getStyles();
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isAdvocateFilingCase = roles?.some((role) => role.code === "ADVOCATE_ROLE");
   const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [signatureDocumentId, setSignatureDocumentId] = useState(null);
@@ -207,6 +217,12 @@ const ComplainantSignature = ({ path }) => {
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const name = "Signature";
   const [calculationResponse, setCalculationResponse] = useState({});
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const updatedOnceRef = useRef(null);
+  const isLitigant = useMemo(() => {
+    if (userInfo?.type !== "CITIZEN") return false;
+    return !userInfo?.roles?.some((role) => role.code === "ADVOCATE_ROLE" || role.code === "ADVOCATE_CLERK_ROLE");
+  }, [userInfo]);
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -217,8 +233,8 @@ const ComplainantSignature = ({ path }) => {
             name: name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -239,6 +255,7 @@ const ComplainantSignature = ({ path }) => {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -251,15 +268,17 @@ const ComplainantSignature = ({ path }) => {
       } catch (error) {
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
 
-  const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
+  const { data: caseData, refetch: refetchCaseData, isLoading, isFetching: isCaseDataFetching } = useSearchCaseService(
     {
       criteria: [
         {
           filingNumber: filingNumber,
+          caseId: caseId,
         },
       ],
       tenantId,
@@ -269,6 +288,7 @@ const ComplainantSignature = ({ path }) => {
     filingNumber,
     Boolean(filingNumber)
   );
+  console.log("isCaseDataFetching", isCaseDataFetching, isLoading);
 
   const caseDetails = useMemo(
     () => ({
@@ -276,23 +296,31 @@ const ComplainantSignature = ({ path }) => {
     }),
     [caseData]
   );
-  const caseId = useMemo(() => caseDetails?.id, [caseDetails]);
+
+  // if logged in user is jr adv/clerk -? get uuid of senior advocate who filed the case(case owner)
+  // if logged in user is senior advocate(case owner) -? get uuid of himself
+  // if logged in user is litigant/poa -? get uuid of himself
+  const loggedInUserOnBehalfOfUuid = useMemo(() => {
+    const loggedInUserOnBehalfOfUuid = getLoggedInUserOnBehalfOfUuid(caseDetails, userInfo?.uuid);
+    return loggedInUserOnBehalfOfUuid;
+  }, [userInfo, caseDetails]);
+
+  // if the senior advocate who himself filed the case(case owner) has logged in.
+  const isOwnerAdvocateSelf = useMemo(() => roles?.some((role) => role.code === "ADVOCATE_ROLE") && loggedInUserOnBehalfOfUuid === userInfo?.uuid, [
+    roles,
+    loggedInUserOnBehalfOfUuid,
+    userInfo,
+  ]);
+
+  // If the member(clerk/junior advocate) has logged in on behalf of senior advocate who filed the case(case owner).
+  const isMemberOnBehalfOfOwnerAdvocate = useMemo(
+    () => roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"]?.includes(role.code)) && loggedInUserOnBehalfOfUuid !== userInfo?.uuid,
+    [roles, loggedInUserOnBehalfOfUuid, userInfo]
+  );
 
   const DocumentFileStoreId = useMemo(() => {
     return caseDetails?.additionalDetails?.signedCaseDocument;
   }, [caseDetails]);
-
-  const advocateDetails = useMemo(() => {
-    const advocateData = caseDetails?.additionalDetails?.advocateDetails?.formdata?.[0]?.data;
-    if (advocateData?.isAdvocateRepresenting?.code === "YES") {
-      return advocateData;
-    }
-    return null;
-  }, [caseDetails]);
-
-  const advocateUuid = useMemo(() => {
-    return advocateDetails?.advocateBarRegNumberWithName?.[0]?.advocateUuid || "";
-  }, [advocateDetails]);
 
   const litigants = useMemo(() => {
     return caseDetails?.litigants
@@ -324,35 +352,86 @@ const ComplainantSignature = ({ path }) => {
     });
   }, [caseDetails, litigants]);
 
-  const isFilingParty = useMemo(() => {
-    return caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
-  }, [caseDetails?.auditDetails?.createdBy, userInfo?.uuid]);
+  // Case correction/edition is allowed to all complainant side parties including poa holders, advocates, advocate's associated office members.
+  const allComplainantSideUuids = useMemo(() => {
+    return getAllComplainantSideUuids(caseDetails);
+  }, [caseDetails]);
+
+  const caseDraftEditAllowedParties = useMemo(() => {
+    const createdByUuid = caseDetails?.auditDetails?.createdBy;
+    // Parties who are allowed to edit case details during filing draft stage:
+    // 1. If the case created by litigant -> only that litigant can have the edit access.
+    // 2. If the case created by Advocate/clerk -> The primary advocate(the owner i.e. senior advocate) and all its associated office members(like clerks, junior advocates) can have the edit access.
+    return findCaseDraftEditAllowedParties(caseDetails, createdByUuid);
+  }, [caseDetails]);
+
+  // Parties which are allowed to edit during efiling process
+  const isEFilingEditAllowedMember = useMemo(() => {
+    if ([CaseWorkflowState?.PENDING_SIGN, CaseWorkflowState.PENDING_E_SIGN]?.includes(caseDetails?.status)) {
+      const loggedInUserUuid = userInfo?.uuid;
+      const isEditingAllowedToUser = caseDraftEditAllowedParties?.includes(loggedInUserUuid);
+      return isEditingAllowedToUser;
+    }
+    return false;
+  }, [caseDraftEditAllowedParties, userInfo?.uuid, caseDetails?.status]);
+
+  // Parties which are allowed to edit during case correction process
+  const isCaseCorrectionAllowedMember = useMemo(() => {
+    if ([CaseWorkflowState?.PENDING_RE_SIGN, CaseWorkflowState.PENDING_RE_E_SIGN]?.includes(caseDetails?.status)) {
+      const isCaseCorrectionAllowed = allComplainantSideUuids?.includes(userInfo?.uuid);
+      return isCaseCorrectionAllowed;
+    }
+    return false;
+  }, [allComplainantSideUuids, userInfo?.uuid, caseDetails?.status]);
+
+  useEffect(() => {
+    console.log("complainant-mounted");
+    return () => {
+      console.log("complainant-unmounted");
+    };
+  }, []);
+
+  useEffect(() => {
+    if ([CaseWorkflowState?.DRAFT_IN_PROGRESS, CaseWorkflowState.CASE_REASSIGNED]?.includes(caseDetails?.status)) {
+      history.replace(`/${window?.contextPath}/${userInfoType}/dristi/home/file-case/case?caseId=${caseId}&selected=complainantDetails`);
+    } else if (
+      caseDetails?.status &&
+      ![
+        CaseWorkflowState?.PENDING_RE_SIGN,
+        CaseWorkflowState.PENDING_RE_E_SIGN,
+        CaseWorkflowState.PENDING_E_SIGN,
+        CaseWorkflowState.PENDING_SIGN,
+      ]?.includes(caseDetails?.status)
+    ) {
+      history.replace(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`);
+    }
+  }, [caseDetails, caseId, history, isLoading, allComplainantSideUuids, userInfoType]);
 
   const isCurrentLitigantSigned = useMemo(() => {
-    return litigants?.some((lit) => lit?.hasSigned && lit?.additionalDetails?.uuid === userInfo?.uuid);
-  }, [litigants, userInfo?.uuid]);
+    return litigants?.some((lit) => lit?.hasSigned && lit?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
+  }, [litigants, loggedInUserOnBehalfOfUuid]);
 
   const isCurrentAdvocateSigned = useMemo(() => {
-    return caseDetails?.representatives?.some((advocate) => advocate?.hasSigned && advocate?.additionalDetails?.uuid === userInfo?.uuid);
-  }, [caseDetails?.representatives, userInfo?.uuid]);
+    return caseDetails?.representatives?.some((advocate) => advocate?.hasSigned && advocate?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
+  }, [caseDetails?.representatives, loggedInUserOnBehalfOfUuid]);
 
   const isCurrentPoaSigned = useMemo(() => {
-    return caseDetails?.poaHolders?.some((poa) => poa?.hasSigned && poa?.additionalDetails?.uuid === userInfo?.uuid);
-  }, [caseDetails, userInfo]);
+    return caseDetails?.poaHolders?.some((poa) => poa?.hasSigned && poa?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
+  }, [caseDetails, loggedInUserOnBehalfOfUuid]);
 
-  const isCurrentLitigantContainPoa = useMemo(() => litigants?.some((lit) => lit?.additionalDetails?.uuid === userInfo?.uuid && lit?.poaHolder), [
-    litigants,
-    userInfo,
-  ]);
+  const isCurrentLitigantContainPoa = useMemo(
+    () => litigants?.some((lit) => lit?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid && lit?.poaHolder),
+    [litigants, loggedInUserOnBehalfOfUuid]
+  );
 
-  const isCurrentPersonPoa = useMemo(() => caseDetails?.poaHolders?.some((poaHolder) => poaHolder?.additionalDetails?.uuid === userInfo?.uuid), [
-    caseDetails,
-    userInfo,
-  ]);
+  const isCurrentPersonPoa = useMemo(
+    () => caseDetails?.poaHolders?.some((poaHolder) => poaHolder?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid),
+    [caseDetails, loggedInUserOnBehalfOfUuid]
+  );
 
   const isCurrentPersonPoaComplainant = useMemo(
-    () => isCurrentPersonPoa && litigants?.some((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid),
-    [litigants, userInfo, isCurrentPersonPoa]
+    () => isCurrentPersonPoa && litigants?.some((litigant) => litigant?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid),
+    [litigants, loggedInUserOnBehalfOfUuid, isCurrentPersonPoa]
   );
 
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
@@ -377,6 +456,36 @@ const ComplainantSignature = ({ path }) => {
       return (litigantSigned || poaHolderSigned) && anyRepresentativeSigned;
     });
   }, [litigants]);
+
+  const paymentCriteriaList = useMemo(() => {
+    const processCourierDetails =
+      caseDetails?.additionalDetails?.processCourierService?.formdata?.map((process) => process?.data?.multipleAccusedProcessCourier) || [];
+    return processCourierDetails.flatMap((accused) => {
+      const combinations = [];
+      const addressList = accused?.addressDetails?.filter((addr) => addr?.checked) || [];
+      const courierGroups = [
+        { taskType: "NOTICE", channels: accused?.noticeCourierService || [] },
+        { taskType: "SUMMONS", channels: accused?.summonsCourierService || [] },
+      ];
+      courierGroups.forEach(({ taskType, channels }) => {
+        channels.forEach((channel) => {
+          addressList.forEach((address) => {
+            const pincode = address?.addressDetails?.pincode;
+            if (pincode && channel?.channelId) {
+              combinations.push({
+                channelId: channel.channelId,
+                receiverPincode: pincode,
+                tenantId,
+                id: `${taskType}_${channel.channelId}_${address?.id}`,
+                taskType,
+              });
+            }
+          });
+        });
+      });
+      return combinations;
+    });
+  }, [caseDetails, tenantId]);
 
   const closePendingTask = async ({ status, assignee, closeUploadDoc }) => {
     const entityType = "case-default";
@@ -410,8 +519,13 @@ const ComplainantSignature = ({ path }) => {
           fileStore: signatureDocumentId,
           fileName: "case Complaint Signed Document",
           isActive: false,
+          toDelete: true,
         });
       }
+
+      const action = [CaseWorkflowState?.PENDING_SIGN, CaseWorkflowState.PENDING_E_SIGN]?.includes(caseDetails?.status)
+        ? complainantWorkflowACTION.EDIT_CASE
+        : complainantWorkflowACTION.EDIT_UNSIGNED_CASE;
 
       await DRISTIService.caseUpdateService(
         {
@@ -424,7 +538,7 @@ const ComplainantSignature = ({ path }) => {
             documents: tempDocs,
             workflow: {
               ...caseDetails?.workflow,
-              action: complainantWorkflowACTION.EDIT_CASE,
+              action: action,
               assignes: [],
             },
           },
@@ -433,10 +547,10 @@ const ComplainantSignature = ({ path }) => {
         tenantId
       ).then(async (res) => {
         if ([complainantWorkflowState.CASE_REASSIGNED, complainantWorkflowState.DRAFT_IN_PROGRESS].includes(res?.cases?.[0]?.status)) {
-          if (isAdvocateFilingCase && isSelectedUploadDoc) {
+          if ((isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) && isSelectedUploadDoc) {
             await closePendingTask({
               status: state,
-              assignee: userInfo?.uuid,
+              assignee: loggedInUserOnBehalfOfUuid,
               closeUploadDoc: true,
             });
           }
@@ -485,7 +599,7 @@ const ComplainantSignature = ({ path }) => {
 
   function getOtherAdvocatesForClosing() {
     // Step 1: Find the representative with current uuid
-    const currentAdvocate = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid);
+    const currentAdvocate = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
 
     if (!currentAdvocate) {
       return [];
@@ -497,7 +611,7 @@ const ComplainantSignature = ({ path }) => {
     // Step 2: Iterate through other representatives to compare
     const matchingRepresentatives = caseDetails?.representatives?.filter((rep) => {
       // Skip the target representative itself
-      if (rep?.additionalDetails?.uuid === userInfo?.uuid) return true;
+      if (rep?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid) return true;
 
       const otherAdvocateLitigants = rep?.representing;
 
@@ -524,7 +638,7 @@ const ComplainantSignature = ({ path }) => {
   const isOtherAdvocateSigned = useMemo(() => {
     // Find the litigant(s) that have a representative with current uuid
     const litigantsWithCurrentAdv = litigants?.filter((litigant) =>
-      litigant?.representatives?.some((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid)
+      litigant?.representatives?.some((rep) => rep?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid)
     );
 
     // If there are no litigants with current uuid, return false
@@ -532,7 +646,7 @@ const ComplainantSignature = ({ path }) => {
 
     // Check if every such litigant has at least one signed representative
     return litigantsWithCurrentAdv?.every((litigant) => litigant?.representatives?.some((rep) => rep?.hasSigned));
-  }, [litigants, userInfo?.uuid]);
+  }, [litigants, loggedInUserOnBehalfOfUuid]);
 
   const handleCasePdf = () => {
     downloadPdf(tenantId, signatureDocumentId ? signatureDocumentId : DocumentFileStoreId);
@@ -542,7 +656,7 @@ const ComplainantSignature = ({ path }) => {
     let placeholder = "";
 
     if (isCurrentPersonPoaComplainant) {
-      const litigant = litigants?.find((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid);
+      const litigant = litigants?.find((litigant) => litigant?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
       const poaHolder = poaHolders?.find((poa) => poa?.individualId === litigant?.individualId);
       const representedNames = poaHolder?.representingLitigants
         ?.map((rep) => rep?.additionalDetails?.fullName)
@@ -550,24 +664,40 @@ const ComplainantSignature = ({ path }) => {
         ?.join(", ");
       placeholder = `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}, PoA holder for ${representedNames}`;
     } else if (isCurrentPersonPoa) {
-      const poaHolder = poaHolders?.find((poa) => poa?.additionalDetails?.uuid === userInfo?.uuid);
+      const poaHolder = poaHolders?.find((poa) => poa?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
       const representedNames = poaHolder?.representingLitigants
         ?.map((rep) => rep?.additionalDetails?.fullName)
         ?.filter(Boolean)
         ?.join(", ");
       placeholder = `${poaHolder?.name} - PoA holder for ${representedNames}`;
     } else {
-      if (isAdvocateFilingCase) {
-        const advocate = caseDetails?.representatives?.find((advocate) => advocate?.additionalDetails?.uuid === userInfo?.uuid);
-        placeholder = `Advocate ${advocate?.representing?.[0]?.additionalDetails?.currentPosition} Signature`;
+      if (isOwnerAdvocateSelf) {
+        const advocate = caseDetails?.representatives?.find((advocate) => advocate?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
+        const representingWithAllUnsigned = advocate?.representing?.find((rep) => {
+          // match litigant using UUID
+          const litigant = litigants?.find((lit) => lit?.additionalDetails?.uuid === rep?.additionalDetails?.uuid);
+
+          // if no litigant → skip
+          if (!litigant?.representatives?.length) return false;
+
+          // check all representatives unsigned
+          return litigant.representatives.every((r) => r?.hasSigned === false);
+        });
+
+        placeholder = `Advocate ${representingWithAllUnsigned?.additionalDetails?.currentPosition} Signature`;
         return placeholder; // Return placeholder directly for advocate filing case
       } else {
-        const litigant = litigants?.find((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid);
+        const litigant = litigants?.find((litigant) => litigant?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid);
         placeholder = `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}`;
       }
     }
 
     return getUniqueAcronym(placeholder);
+  };
+
+  const handleCaseUnlockingWhenMockESign = async () => {
+    await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
+    setEsignSuccess(true);
   };
 
   const handleEsignAction = async () => {
@@ -584,11 +714,21 @@ const ComplainantSignature = ({ path }) => {
         toast.error(t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"));
         setLoader(false);
         return;
+      }
+
+      await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "ESIGN" } }, {});
+
+      setLoader(false);
+
+      if (mockESignEnabled) {
+        try {
+          await handleCaseUnlockingWhenMockESign();
+        } catch (error) {
+          console.error("Error:", error);
+          toast.error(t("SOMETHING_WENT_WRONG"));
+        }
       } else {
-        await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "ESIGN" } }, {}).then(() => {
-          setLoader(false);
-          handleEsign(name, "ci", DocumentFileStoreId, getPlaceholder());
-        });
+        handleEsign(name, "ci", DocumentFileStoreId, getPlaceholder());
       }
     } catch (error) {
       console.error("Error:", error);
@@ -642,6 +782,16 @@ const ComplainantSignature = ({ path }) => {
 
   const callCreateDemandAndCalculation = async (caseDetails, tenantId, caseId) => {
     const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
+
+    const processCourierCalculationResponse = await DRISTIService.getSummonsPaymentBreakup(
+      {
+        Criteria: paymentCriteriaList,
+      },
+      {}
+    );
+    const calculationList = processCourierCalculationResponse?.Calculation || [];
+    const allBreakdowns = calculationList?.flatMap((item) => item?.breakDown);
+
     const calculationResponse = await DRISTIService.getPaymentBreakup(
       {
         EFillingCalculationCriteria: [
@@ -659,44 +809,23 @@ const ComplainantSignature = ({ path }) => {
       "dristi",
       Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
     );
+    const mergedBreakdowns = mergeBreakdowns(calculationResponse?.Calculation?.[0]?.breakDown || [], allBreakdowns || []);
+    const totalAmount = mergedBreakdowns?.reduce((sum, item) => sum + item?.amount, 0);
+    const updatedCalculation = (calculationResponse?.Calculation || [])?.map((calc) => ({
+      ...calc,
+      totalAmount,
+      breakDown: mergedBreakdowns,
+    }));
 
-    // await DRISTIService.createDemand({
-    //   Demands: [
-    //     {
-    //       tenantId,
-    //       consumerCode: caseDetails?.filingNumber + `_${suffix}`,
-    //       consumerType: "case-default",
-    //       businessService: "case-default",
-    //       taxPeriodFrom: taxPeriod?.fromDate,
-    //       taxPeriodTo: taxPeriod?.toDate,
-    //       demandDetails: [
-    //         {
-    //           taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
-    //           taxAmount: calculationResponse?.Calculation?.[0]?.totalAmount,
-    //           collectionAmount: 0,
-    //           isDelayCondonation: isDelayCondonation,
-    //         },
-    //       ],
-    //       additionalDetails: {
-    //         filingNumber: caseDetails?.filingNumber,
-    //         chequeDetails: chequeDetails,
-    //         cnrNumber: caseDetails?.cnrNumber,
-    //         payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
-    //         payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
-    //         isDelayCondonation: isDelayCondonation,
-    //       },
-    //     },
-    //   ],
-    // });
     await DRISTIService.etreasuryCreateDemand({
       tenantId,
       entityType: "case-default",
       filingNumber: caseDetails?.filingNumber,
       consumerCode: caseDetails?.filingNumber + `_${suffix}`,
-      calculation: calculationResponse?.Calculation,
+      calculation: updatedCalculation,
     });
 
-    return calculationResponse;
+    return { Calculation: updatedCalculation };
   };
 
   const updateSignedDocInCaseDoc = () => {
@@ -718,7 +847,7 @@ const ComplainantSignature = ({ path }) => {
     if (isSelectedUploadDoc) {
       updateCase(state);
     } else {
-      if (isLastPersonSigned && state === "PENDING_PAYMENT") {
+      if (isLastPersonSigned && (state === "PENDING_PAYMENT" || state === "RE_PENDING_PAYMENT")) {
         history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
       } else {
         history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
@@ -727,11 +856,16 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const updateCase = async (state) => {
+    updatedOnceRef.current = true;
+    sessionStorage.removeItem("isTopbarMounted");
     setLoader(true);
+    console.log("updatecase1");
     const caseDocList = updateSignedDocInCaseDoc();
+    console.log("updatecase12");
     let tempDocList = [...caseDocList];
     const isSignedDocumentsPresent = tempDocList?.some((doc) => doc?.documentType === "case.complaint.signed");
     if (isSignedDocumentsPresent) tempDocList = tempDocList?.filter((doc) => doc?.documentType !== "case.complaint.unsigned");
+    console.log("updatecase123");
 
     try {
       await DRISTIService.caseUpdateService(
@@ -754,18 +888,18 @@ const ComplainantSignature = ({ path }) => {
         tenantId
       )
         .then(async (res) => {
-          if (isAdvocateFilingCase && isSelectedUploadDoc) {
+          if ((isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) && isSelectedUploadDoc) {
             await closePendingTask({
               status: state,
-              assignee: userInfo?.uuid,
+              assignee: loggedInUserOnBehalfOfUuid,
               closeUploadDoc: true,
             });
           }
           if (isSelectedEsign) {
-            if (!isAdvocateFilingCase) {
+            if (!isOwnerAdvocateSelf && !isMemberOnBehalfOfOwnerAdvocate) {
               await closePendingTask({
                 status: state,
-                assignee: userInfo?.uuid,
+                assignee: loggedInUserOnBehalfOfUuid,
               });
             } else {
               const advocates = getOtherAdvocatesForClosing();
@@ -778,7 +912,7 @@ const ComplainantSignature = ({ path }) => {
               await Promise.all(promises);
             }
           }
-          if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
+          if (res?.cases?.[0]?.status === "PENDING_PAYMENT" || res?.cases?.[0]?.status === "RE_PENDING_PAYMENT") {
             // Extract UUIDs of litigants and representatives if available
             const uuids = [
               ...(Array.isArray(caseDetails?.litigants)
@@ -815,7 +949,25 @@ const ComplainantSignature = ({ path }) => {
                 tenantId,
               },
             });
-            const calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+            let calculation = null;
+            if (!res?.cases?.[0]?.additionalDetails?.lastSubmissionConsumerCode) {
+              calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+            } else {
+              const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
+              try {
+                calculation = await DRISTIService.getTreasuryPaymentBreakup(
+                  {
+                    tenantId: tenantId,
+                  },
+                  { consumerCode: res?.cases?.[0]?.additionalDetails?.lastSubmissionConsumerCode },
+                  "dristi",
+                  Boolean(caseDetails?.filingNumber && suffix)
+                );
+                calculation = { Calculation: [calculation?.TreasuryHeadMapping?.calculation] };
+              } catch (error) {
+                console.error("Error fetching treasury payment breakup:", error);
+              }
+            }
             setCalculationResponse(calculation);
             setLoader(false);
             if (isSelectedUploadDoc) {
@@ -842,23 +994,66 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const isSubmitEnabled = () => {
-    return isEsignSuccess || isCurrentAdvocateSigned || isCurrentLitigantSigned || isCurrentPoaSigned || isCurrentLitigantContainPoa || uploadDoc;
+    return (
+      [
+        CaseWorkflowState?.PENDING_RE_SIGN,
+        CaseWorkflowState.PENDING_RE_E_SIGN,
+        CaseWorkflowState.PENDING_E_SIGN,
+        CaseWorkflowState.PENDING_SIGN,
+      ]?.includes(caseDetails?.status) &&
+      (isEsignSuccess ||
+        isCurrentAdvocateSigned ||
+        isCurrentLitigantSigned ||
+        isCurrentPoaSigned ||
+        (![CaseWorkflowState?.PENDING_RE_SIGN, CaseWorkflowState.PENDING_SIGN]?.includes(caseDetails?.status) && isCurrentLitigantContainPoa) ||
+        uploadDoc ||
+        (isSelectedEsign && isMemberOnBehalfOfOwnerAdvocate)) && // If junior adv/clerk is on this screen.
+      !Loading &&
+      !isLoading
+    );
+  };
+
+  console.log("caseDetails", caseDetails, isEsignSuccess, isLoading, updatedOnceRef.current);
+
+  useEffect(() => {
+    return () => {
+      console.log("useeffect12345", updatedOnceRef.current);
+      updatedOnceRef.current = false;
+    };
+  }, []);
+
+  const clearStorage = () => {
+    sessionStorage.removeItem("esignProcess");
+    sessionStorage.removeItem("isSignSuccess");
+    localStorage.removeItem("signStatus");
+    sessionStorage.removeItem("fileStoreId");
   };
 
   useEffect(() => {
     const esignCaseUpdate = async () => {
-      if (isEsignSuccess && caseDetails?.filingNumber) {
+      const isTopbarMounted = sessionStorage.getItem("isTopbarMounted");
+      console.log("useeffect1", isLoading, isEsignSuccess, caseDetails?.filingNumber, isTopbarMounted, updatedOnceRef.current);
+      const ifRemountCheck = isLitigant ? !updatedOnceRef.current : !updatedOnceRef.current && isTopbarMounted;
+
+      if (!isLoading && isEsignSuccess && caseDetails?.filingNumber && ifRemountCheck) {
         await updateCase(state).then(async () => {
-          setEsignSuccess(false);
+          console.log("useeffect123", isLoading, isEsignSuccess, caseDetails?.filingNumber);
           await refetchCaseData();
+          setEsignSuccess(false);
         });
       }
     };
 
+    if (!userInfo) return;
     esignCaseUpdate();
-  }, [isEsignSuccess, caseDetails]);
+    return () => {
+      console.log("useeffect1234", updatedOnceRef.current);
+    };
+  }, [isEsignSuccess, caseDetails, isLoading, isLitigant, userInfo]);
 
   useEffect(() => {
+    if (!caseDetails?.filingNumber || isLoading) return;
+    console.log("set-esign");
     const handleCaseUnlocking = async () => {
       await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
     };
@@ -867,9 +1062,14 @@ const ComplainantSignature = ({ path }) => {
     const storedESignObj = sessionStorage.getItem("signStatus");
     const parsedESignObj = JSON.parse(storedESignObj);
     const esignProcess = sessionStorage.getItem("esignProcess");
+    console.log("set-esign1", isSignSuccess);
 
     if (isSignSuccess) {
+      console.log("set-esign12", isSignSuccess);
+
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
+      console.log("set-esign123", isSignSuccess, matchedSignStatus);
+
       if (isSignSuccess === "success" && matchedSignStatus) {
         const fileStoreId = sessionStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
@@ -878,22 +1078,25 @@ const ComplainantSignature = ({ path }) => {
     }
     if (esignProcess && caseDetails?.filingNumber) {
       handleCaseUnlocking();
-      sessionStorage.removeItem("esignProcess");
     }
 
-    sessionStorage.removeItem("isSignSuccess");
-    localStorage.removeItem("signStatus");
-    sessionStorage.removeItem("fileStoreId");
-  }, [caseDetails]);
+    if (!isLitigant) {
+      setTimeout(() => {
+        clearStorage();
+      }, 3000);
+    } else {
+      clearStorage();
+    }
+  }, [caseDetails, tenantId, isLoading, isLitigant]);
 
   const isRightPannelEnable = () => {
-    if (isAdvocateFilingCase) {
+    if (isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) {
       return !(isCurrentAdvocateSigned || isOtherAdvocateSigned || isCurrentPoaSigned || isEsignSuccess || uploadDoc);
     }
     return !(isCurrentLitigantSigned || isCurrentPoaSigned || (isCurrentLitigantContainPoa && !isCurrentPersonPoa) || isEsignSuccess);
   };
 
-  if (isLoading) {
+  if (isLoading || isCaseDataFetching) {
     return <Loader />;
   }
 
@@ -944,7 +1147,7 @@ const ComplainantSignature = ({ path }) => {
                 {litigant?.additionalDetails?.fullName}
                 {litigant?.hasSigned ||
                 litigant?.poaHolder?.hasSigned ||
-                (litigant?.additionalDetails?.uuid === userInfo?.uuid && (isEsignSuccess || uploadDoc)) ? (
+                (litigant?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid && (isEsignSuccess || uploadDoc)) ? (
                   <span style={{ ...styles.signedLabel, alignItems: "right" }}>{t("SIGNED")}</span>
                 ) : (
                   <span style={{ ...styles.unSignedLabel, alignItems: "right" }}>{t("PENDING")}</span>
@@ -964,7 +1167,8 @@ const ComplainantSignature = ({ path }) => {
                       litigant?.representatives?.some(
                         (rep) => rep?.additionalDetails?.uuid === litigant?.poaHolder?.additionalDetails?.uuid && litigant?.poaHolder?.hasSigned
                       ) ||
-                      (litigant?.representatives?.some((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid) && (isEsignSuccess || uploadDoc)) ? (
+                      (litigant?.representatives?.some((rep) => rep?.additionalDetails?.uuid === loggedInUserOnBehalfOfUuid) &&
+                        (isEsignSuccess || uploadDoc)) ? (
                         <span style={styles.signedLabel}>{t("SIGNED")}</span>
                       ) : (
                         <span style={styles.unSignedLabel}>{t("PENDING")}</span>
@@ -1008,9 +1212,19 @@ const ComplainantSignature = ({ path }) => {
         {isRightPannelEnable() && (
           <div style={styles.signaturePanel}>
             <div style={styles.signatureTitle}>{t("ADD_SIGNATURE")}</div>
-            {isSelectedUploadDoc && isAdvocateFilingCase && isFilingParty && <p style={styles.signatureDescription}>{t("EITHER_ESIGN_UPLOAD")}</p>}
-            {isSelectedUploadDoc && !isAdvocateFilingCase && <p style={styles.signatureDescription}>{t("ONLY_ADVOCATES_CAN_UPLOAD_SIGNED_COPY")}</p>}
-            {isSelectedEsign && (
+            {isSelectedUploadDoc && isOwnerAdvocateSelf && (isEFilingEditAllowedMember || isCaseCorrectionAllowedMember) && (
+              <p style={styles.signatureDescription}>{t("EITHER_ESIGN_UPLOAD")}</p>
+            )}
+            {isSelectedUploadDoc && isMemberOnBehalfOfOwnerAdvocate && (isEFilingEditAllowedMember || isCaseCorrectionAllowedMember) && (
+              <p style={styles.signatureDescription}>{t("YOU_CAN_ONLY_UPLOAD_SIGNED_COPY")}</p>
+            )}
+            {isSelectedUploadDoc && !(isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) && (
+              <p style={styles.signatureDescription}>{t("ONLY_ADVOCATES_AND_ASSOCIATED_MEMBERS_CAN_UPLOAD_SIGNED_COPY")}</p>
+            )}
+            {isSelectedEsign && isMemberOnBehalfOfOwnerAdvocate && (
+              <p style={styles.signatureDescription}>{t("YOU_ARE_NOT_AUTHORIZED_TO_DO_ESIGN")}</p>
+            )}
+            {isSelectedEsign && !isMemberOnBehalfOfOwnerAdvocate && (
               <button style={styles.esignButton} onClick={handleEsignAction}>
                 {t("CS_ESIGN")}
               </button>
@@ -1020,11 +1234,11 @@ const ComplainantSignature = ({ path }) => {
               <button
                 style={{
                   ...styles.uploadButton,
-                  opacity: isAdvocateFilingCase ? 1 : 0.5,
-                  cursor: isAdvocateFilingCase ? "pointer" : "default",
+                  opacity: isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate ? 1 : 0.5,
+                  cursor: isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate ? "pointer" : "default",
                 }}
                 onClick={handleUploadFile}
-                disabled={!isAdvocateFilingCase}
+                disabled={!(isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate)}
               >
                 <FileUploadIcon />
                 <span style={{ marginLeft: "8px" }}>{t("UPLOAD_SIGNED_PDF")}</span>
@@ -1035,11 +1249,12 @@ const ComplainantSignature = ({ path }) => {
       </div>
       <ActionBar>
         <div style={styles.actionBar}>
-          {isFilingParty && ((isSelectedEsign && !isLastPersonSigned) || isSelectedUploadDoc) && (
+          {(isEFilingEditAllowedMember || isCaseCorrectionAllowedMember) && ((isSelectedEsign && !isLastPersonSigned) || isSelectedUploadDoc) && (
             <Button
               label={t("EDIT_A_CASE")}
               variation={"secondary"}
               onButtonClick={() => {
+                clearStorage();
                 setEditCaseModal(true);
               }}
               style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
@@ -1051,6 +1266,7 @@ const ComplainantSignature = ({ path }) => {
                 textAlign: "center",
                 color: "#007E7E",
               }}
+              isDisabled={Loading || isLoading}
             />
           )}
           <SubmitBar
@@ -1060,7 +1276,10 @@ const ComplainantSignature = ({ path }) => {
                 <RightArrow />
               </div>
             }
-            onSubmit={() => handleSubmit(state)}
+            onSubmit={() => {
+              clearStorage();
+              handleSubmit(state);
+            }}
             style={styles.submitButton}
             disabled={!isSubmitEnabled()}
           />
@@ -1079,6 +1298,7 @@ const ComplainantSignature = ({ path }) => {
           showWarning={true}
           warningText={t("UPLOAD_SIGNED_DOC_WARNING")}
           onSubmit={onSubmit}
+          fileUploadError={fileUploadError}
         />
       )}
       {isEditCaseModal && (

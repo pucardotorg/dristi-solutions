@@ -1,0 +1,8 @@
+[
+  // need to add these roles for judge
+  {
+    "code": "EVIDENCE_APPROVER",
+    "name": "EVIDENCE_APPROVER",
+    "description": "EVIDENCE_APPROVER"
+  }
+]

@@ -51,7 +51,7 @@ function TermsConditions({ params = {}, setParams = () => {}, path, refetchIndiv
     }
     const data = params?.registrationData;
     setParams({ ...params, ...termsAndConditionData });
-    const uploadedDocument = Digit?.SessionStorage?.get("UploadedDocument");
+    const uploadedDocument = params?.uploadedDocument;
     const aadhaarNumber = Digit?.SessionStorage?.get("aadharNumber");
     const identifierId = uploadedDocument ? uploadedDocument?.filedata?.files?.[0]?.fileStoreId : aadhaarNumber;
     const identifierIdDetails = uploadedDocument
@@ -174,10 +174,14 @@ function TermsConditions({ params = {}, setParams = () => {}, path, refetchIndiv
                     username: data?.userDetails?.firstName + " " + data?.userDetails?.lastName,
                     filename: document.filename,
                   },
-                  ...data?.clientDetails?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
-                    res[curr] = data?.clientDetails[curr];
-                    return res;
-                  }, {}),
+                  ...(data?.clientDetails?.selectUserType?.code === "ADVOCATE_CLERK"
+                    ? {
+                        stateRegnNumber: data?.clientDetails?.barRegistrationNumber,
+                      }
+                    : data?.clientDetails?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
+                        res[curr] = data?.clientDetails[curr];
+                        return res;
+                      }, {})),
                 },
               ],
             };
@@ -234,10 +238,14 @@ function TermsConditions({ params = {}, setParams = () => {}, path, refetchIndiv
                 additionalDetails: {
                   username: data?.userDetails?.firstName + " " + data?.userDetails?.lastName,
                 },
-                ...data?.clientDetails?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
-                  res[curr] = "DEFAULT_VALUE";
-                  return res;
-                }, {}),
+                ...(data?.clientDetails?.selectUserType?.code === "ADVOCATE_CLERK"
+                  ? {
+                      stateRegnNumber: "DEFAULT_VALUE",
+                    }
+                  : data?.clientDetails?.selectUserType?.apiDetails?.AdditionalFields?.reduce((res, curr) => {
+                      res[curr] = "DEFAULT_VALUE";
+                      return res;
+                    }, {})),
               },
             ],
           };

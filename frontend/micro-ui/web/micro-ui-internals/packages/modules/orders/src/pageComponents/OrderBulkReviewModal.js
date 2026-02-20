@@ -77,7 +77,7 @@ function OrderBulkReviewModal({ t, history, orderDetails }) {
         )
         .then(async (response) => {
           history.replace(
-            `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${response?.order?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
+            `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${response?.order?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
           );
         });
     } catch (e) {
@@ -112,7 +112,7 @@ function OrderBulkReviewModal({ t, history, orderDetails }) {
               <React.Fragment>
                 <div className="review-order-modal-document-div" style={{ padding: "0px 20px", width: "100%", overflow: "auto" }}>
                   {showDocument}
-                  <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
+                  {/* <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
                   <div style={{ display: "flex", gap: "10px" }}>
                     <TextInput
                       className="field desktop-w-full"
@@ -121,7 +121,7 @@ function OrderBulkReviewModal({ t, history, orderDetails }) {
                       style={{ minWidth: "500px" }}
                       textInputStyle={{ maxWidth: "100%" }}
                     />
-                  </div>
+                  </div> */}
                 </div>
               </React.Fragment>
             }

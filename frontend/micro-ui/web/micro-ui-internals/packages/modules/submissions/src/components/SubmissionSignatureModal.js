@@ -4,20 +4,41 @@ import Modal from "../../../dristi/src/components/Modal";
 import { Urls } from "../hooks/services/Urls";
 import { FileUploadIcon } from "../../../dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
-function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup, setSignedDocumentUploadID, applicationPdfFileStoreId }) {
+function SubmissionSignatureModal({
+  t,
+  handleProceed,
+  handleCloseSignaturePopup,
+  setSignedDocumentUploadID,
+  applicationPdfFileStoreId,
+  applicationType,
+}) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [formData, setFormData] = useState({}); // storing the file upload data
   const [pageModule, setPageModule] = useState("ci");
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
-
+  const [loader, setLoader] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${applicationPdfFileStoreId}`;
   const name = "Signature";
   const advocatePlaceholder = "Advocate Signature";
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
+
+  const applicationPlaceHolder = useMemo(() => {
+    if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
+      return name;
+    } else {
+      return advocatePlaceholder;
+    }
+  }, [applicationType]);
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -28,8 +49,8 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
             name: name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -49,19 +70,24 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
+        setLoader(true);
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
         setOpenUploadSignatureModal(false);
       } catch (error) {
+        setLoader(false);
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
+      setLoader(false);
     }
   };
 
@@ -79,6 +105,15 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
         <CloseSvg />
       </div>
     );
+  };
+
+  const handleClickEsign = () => {
+    if (mockESignEnabled) {
+      setIsSigned(true);
+    } else {
+      sessionStorage.setItem("applicationPDF", applicationPdfFileStoreId);
+      handleEsign(name, pageModule, applicationPdfFileStoreId, applicationPlaceHolder);
+    }
   };
 
   return !openUploadSignatureModal ? (
@@ -99,17 +134,14 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
           <div className="not-signed">
             <h1 style={{ color: "#3d3c3c", fontSize: "24px", fontWeight: "bold" }}>{t("YOUR_SIGNATURE")}</h1>
             <div className="buttons-div">
-              <Button
-                label={t("CS_ESIGN_AADHAR")}
-                onClick={() => {
-                  // setOpenAadharModal(true);
-                  // setIsSigned(true);
-                  sessionStorage.setItem("applicationPDF", applicationPdfFileStoreId);
-                  handleEsign(name, pageModule, applicationPdfFileStoreId, advocatePlaceholder);
-                }}
-                className={"aadhar-sign-in"}
-                labelClassName={"submission-aadhar-sign-in"}
-              ></Button>
+              {authorizedUuid === userUuid && ( // Alllowing only for senior adv himself, not junior adv/clerks
+                <Button
+                  label={t("CS_ESIGN_AADHAR")}
+                  onClick={handleClickEsign}
+                  className={"aadhar-sign-in"}
+                  labelClassName={"submission-aadhar-sign-in"}
+                ></Button>
+              )}
               <Button
                 icon={<FileUploadIcon />}
                 label={t("CS_UPLOAD_ESIGNATURE")}
@@ -151,6 +183,8 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
       config={uploadModalConfig}
       formData={formData}
       onSubmit={onSubmit}
+      isDisabled={loader}
+      fileUploadError={fileUploadError}
     />
   );
 }

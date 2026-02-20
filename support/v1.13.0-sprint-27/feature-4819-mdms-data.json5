@@ -1,0 +1,10 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "LandingPage.LiveCauseListRefetchTimeInterval",
+  "uniqueIdentifier": "1",
+  "data": {
+    "id": "1",
+    "timeInSecs": 5
+  },
+  "isActive": true
+}

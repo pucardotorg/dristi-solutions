@@ -130,7 +130,7 @@ const CitizenHome = ({ modules, getCitizenMenu, fetchedCitizen, isLoading }) => 
 
 const EmployeeHome = ({ modules, additionalComponent }) => {
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isJudge = roles.some((role) => role.code === "CASE_APPROVER");
+  const isJudge = roles?.some((role) => role.code === "CASE_APPROVER");
   return (
     <>
       <div className="employee-app-container">

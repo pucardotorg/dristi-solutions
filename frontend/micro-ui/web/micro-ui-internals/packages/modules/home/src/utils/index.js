@@ -2,6 +2,8 @@ import _ from "lodash";
 import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
+import { TaskManagementWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 
 const formatWithSuffix = (day) => {
   if (day > 3 && day < 21) return `${day}th`;
@@ -73,6 +75,28 @@ export const formatDateYYMMDD = (date) => {
   return `${year}-${month}-${day}`;
 };
 
+export const getFormattedDate = (epochTime) => {
+  const date = new Date(epochTime);
+  const formattedDate = date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  return formattedDate;
+};
+
+export const checkIfDueDatePassed = (dueDate) => {
+  if (!dueDate) return false;
+
+  const slaDate = new Date(dueDate);
+  const today = new Date();
+
+  // Set both dates to midnight to ignore time
+  slaDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  return slaDate < today;
+};
+
 export const getSuffixByBusinessCode = (paymentType = [], businessCode) => {
   return paymentType?.find((data) => data?.businessService?.some((businessService) => businessService?.businessCode === businessCode))?.suffix || "";
 };
@@ -118,6 +142,134 @@ export const formatNoticeDeliveryDate = (inputDate) => {
   const yyyy = dateObj.getFullYear();
 
   return `${dd}-${mm}-${yyyy}`;
+};
+
+export const formatDateDDMMYYYY = (date) => {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
+export const createOrUpdateTask = async ({ type, existingTask, courierData, formData, filingNumber, tenantId, isLast }) => {
+  if (!courierData) return;
+
+  const uniqueId = courierData?.uniqueId || courierData?.data?.uniqueId;
+  const matchedFormData = formData?.find((item) => (item?.data?.uniqueId || item?.uniqueId) === uniqueId)?.data;
+
+  // Build new party object
+  const baseParty = {
+    addresses: courierData?.addressDetails?.filter((addr) => addr?.checked) || [],
+    deliveryChannels: courierData?.[`${type?.toLowerCase()}CourierService`],
+  };
+
+  const newParty =
+    courierData?.partyType === "Respondent"
+      ? { ...baseParty, respondentDetails: { ...matchedFormData, uniqueId } }
+      : courierData?.partyType === "Witness"
+      ? { ...baseParty, witnessDetails: { ...matchedFormData, uniqueId } }
+      : baseParty;
+
+  // Merge with existing task if present
+  let updatedPartyDetails = [];
+
+  if (existingTask) {
+    const existingParties = existingTask?.partyDetails || [];
+
+    const existingIndex = existingParties.findIndex((party) => {
+      const partyUniqueId = party?.respondentDetails?.uniqueId || party?.witnessDetails?.uniqueId;
+      return partyUniqueId === uniqueId;
+    });
+
+    if (existingIndex !== -1) {
+      // Update existing
+      existingParties[existingIndex] = newParty;
+      updatedPartyDetails = existingParties;
+    } else {
+      // Add new
+      updatedPartyDetails = [...existingParties, newParty];
+    }
+  } else {
+    updatedPartyDetails = [newParty];
+  }
+
+  const taskManagementPayload = existingTask
+    ? {
+        ...existingTask,
+        partyDetails: updatedPartyDetails,
+        workflow: {
+          action:
+            type === "SUMMONS"
+              ? existingTask?.partyType === "COURT"
+                ? isLast
+                  ? TaskManagementWorkflowAction.COMPLETE_WITHOUT_PAYMENT
+                  : TaskManagementWorkflowAction.UPDATE_WITHOUT_PAYMENT
+                : TaskManagementWorkflowAction.UPDATE
+              : TaskManagementWorkflowAction.UPDATE,
+        },
+      }
+    : {
+        filingNumber,
+        tenantId,
+        taskType: type,
+        partyDetails: updatedPartyDetails,
+        courtId: courierData?.courtId,
+        orderNumber: courierData?.orderNumber,
+        orderItemId: courierData?.orderItemId,
+        partyType: courierData?.witnessPartyType,
+        workflow: {
+          action:
+            type === "SUMMONS"
+              ? courierData?.witnessPartyType === "COURT"
+                ? isLast
+                  ? TaskManagementWorkflowAction.COMPLETE_WITHOUT_PAYMENT
+                  : TaskManagementWorkflowAction.CREATE_WITHOUT_PAYMENT
+                : TaskManagementWorkflowAction.CREATE
+              : TaskManagementWorkflowAction.CREATE,
+        },
+      };
+
+  const serviceMethod = existingTask ? DRISTIService.updateTaskManagementService : DRISTIService.createTaskManagementService;
+
+  await serviceMethod({ taskManagement: taskManagementPayload });
+};
+
+export const filterValidAddresses = (addressDetails = []) => {
+  return addressDetails?.filter((addr) => {
+    const a = addr?.addressDetails || {};
+    const hasValidValue = (v) => v != null && String(v)?.trim() !== "";
+    return hasValidValue(a?.city) && hasValidValue(a?.district) && hasValidValue(a?.state) && hasValidValue(a?.pincode) && hasValidValue(a?.locality);
+  });
+};
+
+export const extractedSeniorAdvocates = (officeMembersData = {}) => {
+  const members = officeMembersData?.members || [];
+  return members.map((member, index) => {
+    return {
+      advocateName: member?.officeAdvocateName || "",
+      id: member?.officeAdvocateId,
+      value: member?.officeAdvocateId,
+      uuid: member?.officeAdvocateUserUuid,
+    };
+  });
+};
+
+export const isRichTextEmpty = (html) => {
+  if (!html) return true;
+  const plainText = html?.replace(/<[^>]*>/g, "").trim();
+  return plainText?.length === 0;
+};
+
+export const formatName = (value, capitalize = true) => {
+  let cleanedValue = value
+    .replace(/[^a-zA-Z\s]/g, "")
+    .trimStart()
+    .replace(/ +/g, " ");
+
+  if (!capitalize) return cleanedValue;
+
+  return cleanedValue;
 };
 
 export default {};

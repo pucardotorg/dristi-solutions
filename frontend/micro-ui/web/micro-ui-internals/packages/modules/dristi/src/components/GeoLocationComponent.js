@@ -11,6 +11,16 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
   const [isLoading, setIsLoading] = useState(false);
 
   const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }]);
+  const sortedPoliceStations = useMemo(() => {
+    const stations = policeStationData?.case?.PoliceStation || [];
+    return [...stations].sort((a, b) => {
+      const nameA = (a?.name || "").toUpperCase();
+      const nameB = (b?.name || "").toUpperCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
+  }, [policeStationData]);
   const resetFieldsConfig = {
     jurisdictionKnown: {
       YES: ["latitude", "longitude"],
@@ -234,7 +244,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
             setValue("policeStation", selectedOption);
           }}
           selected={locationFormData?.[config.key]?.["policeStation"]}
-          option={policeStationData?.case?.PoliceStation}
+          option={sortedPoliceStations}
           optionKey={"name"}
           type="dropdown"
           disable={disable || locationFormData?.[config.key]?.["jurisdictionKnown"]?.code === "NO"}

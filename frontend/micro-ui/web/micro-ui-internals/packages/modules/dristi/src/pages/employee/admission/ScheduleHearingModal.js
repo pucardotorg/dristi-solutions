@@ -157,6 +157,7 @@ function ScheduleHearing({
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
+  const courtId = localStorage.getItem("courtId");
   const { t } = useTranslation();
   const history = useHistory();
   const shortCaseInfo = useMemo(() => {
@@ -178,6 +179,8 @@ function ScheduleHearing({
       criteria: [
         {
           filingNumber: oldCaseDetails?.filingNumber,
+          caseId: oldCaseDetails?.id || "",
+          ...(courtId && userInfoType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -189,21 +192,6 @@ function ScheduleHearing({
   );
   const caseDetails = useMemo(() => caseData?.criteria[0]?.responseList[0], [caseData]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
-
-  const { data: applicationData } = Digit.Hooks.submissions.useSearchSubmissionService(
-    {
-      criteria: {
-        filingNumber: filingNumber,
-        tenantId: tenantId,
-        applicationType: "RE_SCHEDULE",
-        status: "COMPLETED",
-      },
-      tenantId,
-    },
-    {},
-    "",
-    true
-  );
 
   const { data: dateResponse } = Digit.Hooks.home.useSearchReschedule(
     {
@@ -279,7 +267,7 @@ function ScheduleHearing({
   const handleClose = () => {
     history.goBack();
   };
-  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+  const judgeId = localStorage.getItem("judgeId");
 
   const handleSubmit = async (data) => {
     if (status !== "OPTOUT") {
@@ -328,12 +316,13 @@ function ScheduleHearing({
         .then(async (res) => {
           await HomeService.customApiService(Urls.dristi.pendingTask, {
             pendingTask: {
+              actionCategory: "Schedule Hearing",
               name: "Schedule Hearing",
               entityType: "case-default",
               referenceId: `MANUAL_${caseDetails?.filingNumber}`,
               status: "SCHEDULE_HEARING",
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["PENDING_TASK_ORDER"],
               cnrNumber: caseDetails?.cnrNumber,
               filingNumber: caseDetails?.filingNumber,
               caseId: caseDetails?.id,
@@ -343,7 +332,7 @@ function ScheduleHearing({
               tenantId,
             },
           });
-          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
           setIsSubmitDisabled(false);
         })
         .catch((err) => {

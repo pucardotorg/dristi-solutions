@@ -27,20 +27,17 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
   }, []);
 
   const joinRoom = () => {
-    console.log(websocket, "websocket join room", WebSocket.OPEN);
     if (websocket && websocket.readyState === WebSocket.OPEN) {
       const message = {
         type: "joined_room",
         room_id: roomId,
       };
-      console.log(websocket, message, "websocket join room success");
 
       websocket.send(JSON.stringify(message));
     }
   };
 
   const createRoom = () => {
-    console.log(websocket, "websocket create room");
     if (websocket && websocket.readyState === WebSocket.OPEN) {
       const message = {
         type: "create_room",
@@ -54,19 +51,16 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
     const websocketAddress = "wss://dristi-kerala-dev.pucar.org/transcription";
 
     if (!websocketAddress) {
-      console.log("WebSocket address is required.");
       return;
     }
 
     const ws = new WebSocket(websocketAddress);
 
     ws.onopen = () => {
-      console.log("WebSocket connection established");
       setWebSocketStatus("Connected");
     };
 
     ws.onclose = (event) => {
-      console.log("WebSocket connection closed", event);
       setWebSocketStatus("Not Connected");
     };
 
@@ -263,39 +257,7 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
     <div>
       <input type="radio" id="micInput" name="inputSource" value="mic" defaultChecked ref={inputSourceRef} style={{ display: "none" }} />
 
-      {!isConnected && (
-        <div style={{ textAlign: "right" }}>
-          {/* <button
-            onClick={() => {
-              createRoom();
-              setIsConnected(true);
-            }}
-            title="Connect"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clip-path="url(#clip0_4370_85284)">
-                <path
-                  d="M12 2C10.34 2 9 3.34 9 5V7H15V5C15 3.34 13.66 2 12 2ZM5 8C3.34 8 2 9.34 2 11V13C2 14.66 3.34 16 5 16H7V8H5ZM19 8H17V16H19C20.66 16 22 14.66 22 13V11C22 9.34 20.66 8 19 8ZM11 18H13V20H11V18Z"
-                  fill="#3D3C3C"
-                />
-                <path d="M7 8L17 8" stroke="#3D3C3C" stroke-width="2" stroke-linecap="round" />
-                <path d="M12 16L12 20" stroke="#3D3C3C" stroke-width="2" stroke-linecap="round" />
-              </g>
-              <defs>
-                <clipPath id="clip0_4370_85284">
-                  <rect width="24" height="24" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
-          </button> */}
-          <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
-            <title>Loading...</title>
-            <circle cx="50" cy="50" fill="none" stroke="#1d3f72" strokeWidth="10" r="35" strokeDasharray="164.93361431346415 56.97787143782138">
-              <animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" values="0 50 50;360 50 50" keyTimes="0;1" />
-            </circle>
-          </svg>
-        </div>
-      )}
+      {!isConnected && <div />}
       {isConnected && webSocketStatus === "Connected" && !isRecording && (
         <div style={{ textAlign: "right" }}>
           <button onClick={startRecording} title="Start Recording">

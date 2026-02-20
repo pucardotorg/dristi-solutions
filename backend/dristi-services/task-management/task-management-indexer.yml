@@ -1,0 +1,69 @@
+ServiceMaps:
+  serviceName: task-management-service
+  version: 1.0.0
+  mappings:
+    - topic: save-task-management
+      configKey: INDEX
+      indexes:
+        - name: task-management-index
+          type: general
+          id: $.id
+          isBulk: false
+          timeStampField: $.auditDetails.createdTime
+          jsonPath: $.taskManagement
+          customJsonMapping:
+            indexMapping: {"Data":{"taskDetails":{},"history":{}}}
+            fieldMapping:
+              - inJsonPath: $.id
+                outJsonPath: $.Data.taskDetails.id
+              - inJsonPath: $.caseFilingNumber
+                outJsonPath: $.Data.taskDetails.caseFilingNumber
+              - inJsonPath: $.status
+                outJsonPath: $.Data.taskDetails.status
+              - inJsonPath: $.courtId
+                outJsonPath: $.Data.taskDetails.courtId
+              - inJsonPath: $.orderNumber
+                outJsonPath: $.Data.taskDetails.orderNumber
+              - inJsonPath: $.partyDetails
+                outJsonPath: $.Data.taskDetails.partyDetails
+              - inJsonPath: $.additionalDetails
+                outJsonPath: $.Data.taskDetails.additionalDetails
+              - inJsonPath: $.auditDetails.createdBy
+                outJsonPath: $.Data.taskDetails.createdBy
+              - inJsonPath: $.auditDetails.lastModifiedBy
+                outJsonPath: $.Data.taskDetails.lastModifiedBy
+              - inJsonPath: $.auditDetails.createdTime
+                outJsonPath: $.Data.taskDetails.createdTime
+              - inJsonPath: $.auditDetails.lastModifiedTime
+                outJsonPath: $.Data.taskDetails.lastModifiedTime
+
+    - topic: update-task-management
+      configKey: INDEX
+      indexes:
+        - name: task-management-index
+          type: general
+          id: $.id
+          isBulk: false
+          timeStampField: $.auditDetails.lastModifiedTime
+          jsonPath: $.taskManagement
+          customJsonMapping:
+            indexMapping: {"Data":{"taskDetails":{},"history":{}}}
+            fieldMapping:
+              - inJsonPath: $.id
+                outJsonPath: $.Data.taskDetails.id
+              - inJsonPath: $.caseFilingNumber
+                outJsonPath: $.Data.taskDetails.caseFilingNumber
+              - inJsonPath: $.status
+                outJsonPath: $.Data.taskDetails.status
+              - inJsonPath: $.courtId
+                outJsonPath: $.Data.taskDetails.courtId
+              - inJsonPath: $.orderNumber
+                outJsonPath: $.Data.taskDetails.orderNumber
+              - inJsonPath: $.partyDetails
+                outJsonPath: $.Data.taskDetails.partyDetails
+              - inJsonPath: $.additionalDetails
+                outJsonPath: $.Data.taskDetails.additionalDetails
+              - inJsonPath: $.auditDetails.lastModifiedBy
+                outJsonPath: $.Data.taskDetails.lastModifiedBy
+              - inJsonPath: $.auditDetails.lastModifiedTime
+                outJsonPath: $.Data.taskDetails.lastModifiedTime

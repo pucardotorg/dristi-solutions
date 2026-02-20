@@ -1,7 +1,8 @@
 import { Request } from "@egovernments/digit-ui-libraries";
 import isEmpty from "lodash/isEmpty";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DocumentUploadError } from "./errorUtil";
+import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/utils/orderUtils";
 
 export const ServiceRequest = async ({
   serviceName,
@@ -112,10 +113,16 @@ export const removeInvalidNameParts = (name) => {
     .join(" ");
 };
 
-export const modifiedEvidenceNumber = (value) => {
-  return value && typeof value === "string" ? value.split("-").pop() : value;
+export const modifiedEvidenceNumber = (value, filingNumber = null) => {
+  if (value && typeof value === "string") {
+    if (filingNumber && typeof filingNumber === "string" && value.startsWith(filingNumber)) {
+      return value.slice(filingNumber.length + 1).trim();
+    } else {
+      return value.split("-").pop();
+    }
+  }
+  return value;
 };
-
 export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
   const processedPaymentType = paymentType?.toLowerCase()?.includes("application");
   return processedPaymentType ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;
@@ -173,6 +180,7 @@ export const documentsTypeMapping = {
   pipAffidavitFileUploadRespondent: "RESPONDENT_PIP_AFFIDAVIT",
   nocJudgeOrder: "NOC_JUDGE_ORDER",
   supportingDocument: "SUPPORTING_DOCUMENT",
+  lprDocument: "LPR_DOCUMENT",
 };
 
 export const documentLabels = {
@@ -196,10 +204,24 @@ export const documentLabels = {
   COMPLAINANT_PIP_AFFIDAVIT: "COMPLAINANT_PIP_AFFIDAVIT",
 };
 
+export const caseFileLabels = {
+  "case.authorizationproof.complainant": "COMPLAINANT_AUTHORIZATION_PROOF",
+  "case.authorizationproof.accused": "ACCUSED_AUTHORIZATION_PROOF",
+  "case.cheque": "DISHONORED_CHEQUE",
+  "case.cheque.depositslip": "PROOF_OF_DEPOSIT_OF_CHEQUE",
+  "case.cheque.returnmemo": "CHEQUE_RETURN_MEMO",
+  "case.demandnotice": "LEGAL_DEMAND_NOTICE",
+  "case.demandnotice.proof": "PROOF_OF_DISPATCH_OF_LEGAL_DEMAND_NOTICE",
+  "case.demandnotice.serviceproof": "PROOF_OF_ACKNOWLEDGMENT",
+  "case.replynotice": "PROOF_OF_REPLY",
+  "case.liabilityproof": "PROOF_OF_DEBT_LIABILITY",
+  "case.docs": "OTHERS_DOCUMENT",
+};
+
 export const getFileByFileStoreId = async (uri) => {
   const token = localStorage.getItem("token");
   try {
-    const response = await axios.get(uri, {
+    const response = await axiosInstance.get(uri, {
       responseType: "blob", // To treat the response as a binary Blob
       headers: {
         "auth-token": `${token}`,
@@ -241,7 +263,7 @@ export const combineMultipleFiles = async (pdfFilesArray, finalFileName = "combi
     const token = localStorage.getItem("token");
     // ${Urls.CombineDocuments} // check- Should use this but it is causing circular dependency, need to relocate Urls
     const combineDocumentsUrl = `${window.location.origin}/egov-pdf/dristi-pdf/combine-documents?tenantId=${tenantId}`;
-    const response = await axios.post(combineDocumentsUrl, formData, {
+    const response = await axiosInstance.post(combineDocumentsUrl, formData, {
       headers: {
         "auth-token": `${token}`,
       },
@@ -346,4 +368,551 @@ export const isEmptyValue = (value) => {
   } else {
     return false;
   }
+};
+
+export const sanitizeInput = (input) => {
+  if (!input) return "";
+
+  let sanitized = String(input);
+
+  // Remove script blocks completely
+  sanitized = sanitized.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+
+  // Remove iframes
+  sanitized = sanitized.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "");
+
+  // Remove dangerous elements
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>/gi, "");
+
+  // Remove event handlers
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*(["'])(?:[\s\S]*?)\1/gi, "");
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^\s>]+/gi, "");
+
+  // Remove javascript: protocol
+  sanitized = sanitized.replace(/\bjavascript:/gi, "");
+
+  // Remove ALL HTML tags
+  sanitized = sanitized.replace(/<\/?[a-z][\w:-]*\b[^>]*>/gi, "");
+
+  return sanitized;
+};
+
+export const sanitizeData = (data) => {
+  if (typeof data === "string") {
+    return sanitizeInput(data);
+  }
+  if (Array.isArray(data)) {
+    return data.map(sanitizeInput);
+  }
+  if (typeof data === "object" && data !== null) {
+    return Object.keys(data).reduce((acc, key) => {
+      acc[key] = sanitizeInput(data[key]);
+      return acc;
+    }, {});
+  }
+
+  return data;
+};
+
+const RICH_TEXT_FIELDS = [
+  "reasonForFiling",
+  "reasonForApplication",
+  "comments",
+  "applicationDetails",
+  "reasonForApplicationOfBail",
+  "additionalInformation",
+  "reasonForDelay",
+  "additionalInformation",
+];
+
+export const runComprehensiveSanitizer = ({ formData, setValue, ignoredKeys = [] }) => {
+  if (!formData || typeof formData !== "object") return;
+
+  Object.keys(formData).forEach((key) => {
+    const originalValue = formData[key];
+    if (typeof originalValue === "string") {
+      if (ignoredKeys?.includes(key)) {
+        return;
+      }
+      const sanitizedValue = sanitizeData(originalValue);
+      if (sanitizedValue !== originalValue) {
+        const element = document?.querySelector(`[name="${key}"]`);
+        const start = element?.selectionStart;
+        const end = element?.selectionEnd;
+        setValue(key, sanitizedValue);
+        if (element) {
+          setTimeout(() => {
+            element.setSelectionRange(start, end);
+          }, 0);
+        }
+      }
+    }
+
+    if (typeof originalValue === "object" && originalValue !== null && !RICH_TEXT_FIELDS.includes(key) && !ignoredKeys?.includes(key)) {
+      runComprehensiveSanitizer({
+        formData: originalValue,
+        setValue,
+        ignoredKeys,
+      });
+    }
+  });
+};
+
+export const TaskManagementWorkflowAction = {
+  CREATE_UPFRONT_PAYMENT: "CREATE_UPFRONT_PAYMENT",
+  UPDATE_UPFRONT_PAYMENT: "UPDATE_UPFRONT_PAYMENT",
+  EXPIRE: "EXPIRE",
+  CREATE: "CREATE",
+  UPDATE: "UPDATE",
+  CREATE_WITHOUT_PAYMENT: "CREATE_WITHOUT_PAYMENT",
+  UPDATE_WITHOUT_PAYMENT: "UPDATE_WITHOUT_PAYMENT",
+  COMPLETE_WITHOUT_PAYMENT: "COMPLETE_WITHOUT_PAYMENT",
+};
+
+export const TaskManagementWorkflowState = {
+  PENDING_PAYMENT: "PENDING_PAYMENT",
+  TASK_CREATION: "TASK_CREATION",
+  COMPLETED: "COMPLETED",
+};
+
+export const getOrderTypes = (applicationType, type) => {
+  switch (applicationType) {
+    case "RE_SCHEDULE":
+      return type === "reject" ? "REJECTION_RESCHEDULE_REQUEST" : "INITIATING_RESCHEDULING_OF_HEARING_DATE";
+    case "WITHDRAWAL":
+      return type === "reject" ? "WITHDRAWAL_REJECT" : "WITHDRAWAL_ACCEPT";
+    case "TRANSFER":
+      return type === "reject" ? "CASE_TRANSFER_REJECT" : "CASE_TRANSFER_ACCEPT";
+    case "SETTLEMENT":
+      return type === "reject" ? "SETTLEMENT_REJECT" : "SETTLEMENT_ACCEPT";
+    case "BAIL_BOND":
+      return "BAIL";
+    case "SURETY":
+      return "BAIL";
+    case "REQUEST_FOR_BAIL":
+    case "SUBMIT_BAIL_DOCUMENTS":
+      return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
+    case "EXTENSION_SUBMISSION_DEADLINE":
+      return "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
+    case "CHECKOUT_REQUEST":
+      return type === "reject" ? "CHECKOUT_REJECT" : "CHECKOUT_ACCEPTANCE";
+    case "DELAY_CONDONATION":
+      return "ACCEPTANCE_REJECTION_DCA";
+    case "ADVANCEMENT_OR_ADJOURNMENT_APPLICATION":
+      return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "ACCEPT_RESCHEDULING_REQUEST";
+    default:
+      return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "APPROVE_VOLUNTARY_SUBMISSIONS";
+  }
+};
+
+export const setApplicationStatus = (type, applicationType) => {
+  if (["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(applicationType)) {
+    return type === "SET_TERM_BAIL" ? "SET_TERM_BAIL" : type === "accept" ? "APPROVED" : "REJECTED";
+  }
+  if (["DELAY_CONDONATION"].includes(applicationType)) {
+    return type === "accept" ? "APPROVED" : "REJECTED";
+  }
+  return type === "accept" ? "APPROVED" : "REJECTED";
+};
+
+export const checkOrderTypeValidation = (a, b) => {
+  let errorObj = { isIncompatible: false, isDuplicate: false };
+  for (let i = 0; i < compositeOrderAllowedTypes?.length; i++) {
+    const currentObj = compositeOrderAllowedTypes?.[i];
+    if (currentObj?.orderTypes?.includes(a)) {
+      if (currentObj?.unAllowedOrderTypes?.includes(b)) {
+        if (a === b) {
+          errorObj.isDuplicate = true;
+        } else {
+          errorObj.isIncompatible = true;
+        }
+        break;
+      }
+    }
+  }
+  return errorObj;
+};
+
+export const checkAcceptRejectOrderValidation = (orderType, compositeOrderObj) => {
+  if (compositeOrderObj?.orderCategory === "INTERMEDIATE") {
+    const orderTypeA = compositeOrderObj?.additionalDetails?.formdata?.orderType?.code;
+    const { isIncompatible, isDuplicate } = checkOrderTypeValidation(orderTypeA, orderType);
+    return isIncompatible || isDuplicate;
+  }
+  return compositeOrderObj?.compositeItems?.some((item) => {
+    if (!item?.isEnabled) return false;
+    const orderTypeA = item?.orderSchema?.additionalDetails?.formdata?.orderType?.code;
+    const { isIncompatible, isDuplicate } = checkOrderTypeValidation(orderTypeA, orderType);
+    return isIncompatible || isDuplicate;
+  });
+};
+
+export const getOrderActionName = (applicationType, type) => {
+  switch (applicationType) {
+    case "RE_SCHEDULE":
+      return type === "reject" ? "REJECTION_ORDER_RESCHEDULE_REQUEST" : "ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE";
+    case "WITHDRAWAL":
+      return type === "reject" ? "ORDER_FOR_ACCEPT_WITHDRAWAL" : "ORDER_FOR_REJECT_WITHDRAWAL";
+    case "TRANSFER":
+      return type === "reject" ? "ORDER_FOR_CASE_TRANSFER_REJECT" : "ORDER_FOR_CASE_TRANSFER_ACCEPT";
+    case "SETTLEMENT":
+      return type === "reject" ? "ORDER_FOR_REJECT_SETTLEMENT" : "ORDER_FOR_ACCEPT_SETTLEMENT";
+    case "BAIL_BOND":
+      return "ORDER_FOR_BAIL";
+    case "SURETY":
+      return "ORDER_FOR_BAIL";
+    case "EXTENSION_SUBMISSION_DEADLINE":
+      return "ORDER_EXTENSION_SUBMISSION_DEADLINE";
+    case "REQUEST_FOR_BAIL":
+    case "SUBMIT_BAIL_DOCUMENTS":
+      return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
+    case "CHECKOUT_REQUEST":
+      return type === "reject" ? "REJECT_CHECKOUT_REQUEST" : "ACCEPT_CHECKOUT_REQUEST";
+    case "DELAY_CONDONATION":
+      return "ACCEPTANCE_REJECTION_DCA";
+    default:
+      return type === "reject" ? "REJECT_ORDER_VOLUNTARY_SUBMISSIONS" : "APPROVE_ORDER_VOLUNTARY_SUBMISSIONS";
+  }
+};
+
+export const _getDigitilizationPatiresName = (data) => {
+  if (data?.type === "PLEA") {
+    return data?.pleaDetails?.accusedName?.trim() || "";
+  } else if (data?.type === "EXAMINATION_OF_ACCUSED") {
+    return data?.examinationOfAccusedDetails?.accusedName?.trim() || "";
+  } else if (data?.type === "MEDIATION") {
+    return (
+      data?.mediationDetails?.partyDetails
+        ?.map((p) => p.partyName)
+        ?.filter(Boolean)
+        ?.join(", ") || ""
+    );
+  }
+};
+
+export const getComplainants = (caseDetails) => {
+  return (
+    caseDetails?.litigants
+      ?.filter((item) => item?.partyType?.includes("complainant"))
+      ?.map((item) => {
+        const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+        const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
+        if (poaHolder) {
+          return {
+            name: `${fullName} (Complainant, PoA Holder)`,
+            partyUuid: item?.additionalDetails?.uuid,
+            individualId: item?.individualId,
+          };
+        }
+        return {
+          name: `${fullName} (Complainant)`,
+          partyUuid: item?.additionalDetails?.uuid,
+          individualId: item?.individualId,
+          partyType: "complainant",
+        };
+      }) || []
+  );
+};
+
+//poa holders who are associated with complainants.
+export const getComplainantsSidePoAHolders = (caseDetails, complainants) => {
+  return (
+    caseDetails?.poaHolders
+      ?.filter((item) => item?.representingLitigants?.every((rep) => complainants?.find((c) => c?.individualId === rep?.individualId)))
+      ?.map((item) => {
+        const fullName = removeInvalidNameParts(item?.name);
+        return {
+          name: `${fullName} (PoA Holder)`,
+          partyUuid: item?.additionalDetails?.uuid,
+          individualId: item?.individualId,
+          partyType: "Complainant's poaHolder",
+        };
+      }) || []
+  );
+};
+
+//advocates who are associated with complainants.
+export const getComplainantSideAdvocates = (caseDetails) => {
+  return caseDetails?.representatives
+    ?.filter((rep) => rep?.representing?.every((lit) => lit?.partyType?.includes("complainant")))
+    ?.map((rep) => {
+      return {
+        name: rep?.additionalDetails?.advocateName,
+        partyUuid: rep?.additionalDetails?.uuid,
+        partyType: "advocate",
+      };
+    });
+};
+
+//advocates and clerk members who are associated with complainants.
+export const getAdvocateOfficeMembers = (caseDetails) => {
+  const advocateOfficeMembers =
+    caseDetails?.advocateOffices?.flatMap((rep) => {
+      const memberClerks = (rep?.clerks || []).map((clerk) => ({
+        name: clerk?.memberName,
+        partyUuid: clerk?.memberUserUuid,
+        partyType: "memberClerk",
+      }));
+
+      const memberAdvocates = (rep?.advocates || []).map((advocate) => ({
+        name: advocate?.memberName,
+        partyUuid: advocate?.memberUserUuid,
+        partyType: "memberAdvocate",
+      }));
+
+      return [...memberClerks, ...memberAdvocates];
+    }) || [];
+
+  return advocateOfficeMembers?.filter(Boolean);
+};
+
+export const getCaseEditAllowedAssignees = (caseDetails) => {
+  const complainants = getComplainants(caseDetails) || [];
+  const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants) || [];
+  const advocates = getComplainantSideAdvocates(caseDetails) || [];
+  // No need to send uuid of office members in assignee payload
+  const allParties = [...complainants, ...poaHolders, ...advocates];
+  return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+};
+
+export const getAllComplainantSideUuids = (caseDetails) => {
+  const complainants = getComplainants(caseDetails) || [];
+  const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants) || [];
+  const advocates = getComplainantSideAdvocates(caseDetails) || [];
+  const advvocateOfficeMembers = getAdvocateOfficeMembers(caseDetails) || [];
+  const allParties = [...complainants, ...poaHolders, ...advocates, ...advvocateOfficeMembers];
+  return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+};
+
+export const getFileByFileStore = async (uri, filename) => {
+  const token = localStorage.getItem("token");
+  try {
+    const response = await axiosInstance.get(uri, {
+      responseType: "blob",
+      headers: {
+        "auth-token": `${token}`,
+      },
+    });
+    // Create a file object from the response Blob
+    const file = new File([response.data], filename, {
+      type: response.data.type || "application/pdf",
+    });
+    return file;
+  } catch (error) {
+    console.error("Error fetching file:", error);
+    throw error;
+  }
+};
+
+export const getNotUploadedFileName = (key) => {
+  const mapping = {
+    "companyDetailsUpload.document": "Company documents",
+    "inquiryAffidavitFileUpload.document": "AFFIDAVIT_UNDER_225",
+    "depositChequeFileUpload.document": "CS_PROOF_DEPOSIT_CHEQUE",
+    "debtLiabilityFileUpload.document": "CS_PROOF_DEBT",
+    "proofOfAcknowledgmentFileUpload.document": "PROOF_LEGAL_DEMAND_NOTICE_FILE_NAME",
+    "proofOfReplyFileUpload.document": "CS_PROOF_TO_REPLY_DEMAND_NOTICE_FILE_NAME",
+    "condonationFileUpload.document": "CONDONATION_DOCUMENT",
+    "swornStatement.document": "SWORN_STATEMENT_DOCUMENT",
+  };
+  return mapping[key] || "Document";
+};
+
+export const advocateCaseFilingStatusTypes = {
+  CASE_OWNER: "caseOwner",
+  OTHER: "other",
+};
+
+export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
+  const isOwnerAdvocate = caseDetails?.representatives?.find((rep) => rep?.advocateFilingStatus === advocateCaseFilingStatusTypes?.CASE_OWNER);
+  //if neither a senior advocate nor junior adv/clerk did the filing on his behalf that means litigant only did case filing and only he/she can have edit draft access.
+  if (!isOwnerAdvocate) {
+    return [createdByUuid];
+  }
+  const advocateOffices = caseDetails?.advocateOffices || [];
+  // If Senior advocate created the case directly (no office mapping)
+  if (advocateOffices.length === 0) {
+    return [createdByUuid];
+  }
+
+  const ownerAdvocateId = isOwnerAdvocate?.advocateId;
+  //Now we have to check all the advocates and clerks members associated with this advocate and they all can edit the case draft
+  const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateId === ownerAdvocateId);
+  if (!matchingOffice) {
+    // Fallback
+    return [createdByUuid];
+  }
+  const advocates = matchingOffice?.advocates || [];
+  const clerks = matchingOffice?.clerks || [];
+  // Collect all memberUserUuid
+  const editableUsers = [
+    matchingOffice?.officeAdvocateUserUuid, // senior advocate himself
+    ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
+    ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
+  ];
+
+  // Remove null/undefined + de-duplicate
+  return Array.from(new Set((editableUsers || []).filter(Boolean)));
+};
+
+export const getLoggedInUserOnBehalfOfUuid = (caseDetails, currentLoggedInUserUuid) => {
+  const isAdvocate = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === currentLoggedInUserUuid);
+  // if current user is not a clerk/jr adv then return current user uuid.
+  if (isAdvocate) {
+    return currentLoggedInUserUuid;
+  } else if (!isAdvocate) {
+    //If logged in user is a junior adv working under a senior in the case.
+    const advocateUuidIfJuniorAdvocateAssistant = caseDetails?.advocateOffices?.find((office) =>
+      office?.advocates?.find((adv) => adv?.memberUserUuid === currentLoggedInUserUuid)
+    )?.officeAdvocateUserUuid;
+    //If logged in user is a clerk working under a senior in the case.
+    const advocateUuidIfClerkAssistant = caseDetails?.advocateOffices?.find((office) =>
+      office?.clerks?.find((clerk) => clerk?.memberUserUuid === currentLoggedInUserUuid)
+    )?.officeAdvocateUserUuid;
+
+    if (advocateUuidIfJuniorAdvocateAssistant) {
+      return advocateUuidIfJuniorAdvocateAssistant;
+    } else if (advocateUuidIfClerkAssistant) {
+      return advocateUuidIfClerkAssistant;
+    }
+
+    //if logged in user is POA or litigant.
+    else return currentLoggedInUserUuid;
+  }
+};
+
+export const getClerkMembersForPartiesTab = (data) => {
+  const advocateOffices = data?.criteria[0]?.responseList[0]?.advocateOffices || [];
+  const advocateOfficeClerks =
+    advocateOffices?.flatMap((rep) => {
+      const officeAdvocateUuid = rep?.officeAdvocateUserUuid;
+      const officeAdvocateName = rep?.officeAdvocateName;
+      const memberClerks = (rep?.clerks || []).map((clerk) => ({
+        name: clerk?.memberName,
+        partyUuid: clerk?.memberUserUuid,
+        officeAdvocateUuid: officeAdvocateUuid,
+        officeAdvocateName: officeAdvocateName,
+        partyType: "CLERK",
+        isEditable: false,
+        status: "JOINED",
+      }));
+
+      return memberClerks;
+    }) || [];
+  const mergedAdvocateOfficeClerks = Array.from(
+    advocateOfficeClerks
+      .reduce((map, clerk) => {
+        if (!clerk?.partyUuid) return map;
+
+        if (!map.has(clerk.partyUuid)) {
+          map.set(clerk.partyUuid, {
+            name: clerk.name,
+            partyUuid: clerk.partyUuid,
+            associatedWithUuid: [clerk.officeAdvocateUuid],
+            associatedWith: [clerk.officeAdvocateName],
+            partyType: clerk.partyType,
+            isEditable: clerk.isEditable,
+            status: clerk.status,
+          });
+        } else {
+          const existing = map.get(clerk.partyUuid);
+          if (clerk.officeAdvocateUuid && !existing.associatedWithUuid.includes(clerk.officeAdvocateUuid)) {
+            existing.associatedWithUuid.push(clerk.officeAdvocateUuid);
+            existing.associatedWith.push(clerk.officeAdvocateName);
+          }
+        }
+        return map;
+      }, new Map())
+      .values()
+  );
+
+  return mergedAdvocateOfficeClerks;
+};
+
+export const getAssistantAdvocateMembersForPartiesTab = (data) => {
+  const advocateOffices = data?.criteria[0]?.responseList[0]?.advocateOffices || [];
+
+  const advocateOfficeAssistantAdvocates =
+    advocateOffices?.flatMap((rep) => {
+      const officeAdvocateUuid = rep?.officeAdvocateUserUuid;
+      const officeAdvocateName = rep?.officeAdvocateName;
+      const memberAdvocates = (rep?.advocates || []).map((clerk) => ({
+        name: clerk?.memberName,
+        partyUuid: clerk?.memberUserUuid,
+        officeAdvocateUuid: officeAdvocateUuid,
+        officeAdvocateName: officeAdvocateName,
+        partyType: "ASSISTANT_ADVOCATE",
+        isEditable: false,
+        status: "JOINED",
+      }));
+
+      return memberAdvocates;
+    }) || [];
+  const mergedAdvocateOfficeAssistantAdvocates = Array.from(
+    advocateOfficeAssistantAdvocates
+      .reduce((map, assistantAdvocate) => {
+        if (!assistantAdvocate?.partyUuid) return map;
+
+        if (!map.has(assistantAdvocate.partyUuid)) {
+          map.set(assistantAdvocate.partyUuid, {
+            name: assistantAdvocate.name,
+            partyUuid: assistantAdvocate.partyUuid,
+            associatedWithUuid: [assistantAdvocate.officeAdvocateUuid],
+            associatedWith: [assistantAdvocate.officeAdvocateName],
+            partyType: assistantAdvocate.partyType,
+            isEditable: assistantAdvocate.isEditable,
+            status: assistantAdvocate.status,
+          });
+        } else {
+          const existing = map.get(assistantAdvocate.partyUuid);
+          if (assistantAdvocate.officeAdvocateUuid && !existing.associatedWithUuid.includes(assistantAdvocate.officeAdvocateUuid)) {
+            existing.associatedWithUuid.push(assistantAdvocate.officeAdvocateUuid);
+            existing.associatedWith.push(assistantAdvocate.officeAdvocateName);
+          }
+        }
+        return map;
+      }, new Map())
+      .values()
+  );
+
+  return mergedAdvocateOfficeAssistantAdvocates;
+};
+
+// In case of citizen login, we need to extract the user id of the user on behalf of whom the junior advocate/clerk is viewing/doing actions from UI.
+// For other citizens like litigant/POA, we need to return the same uuid.
+// For advocates/clerks, we need to return the uuid of the senior office advocate selected from home dropdown.
+export const getAuthorizedUuid = (currentLoggedInUserUuid) => {
+  if (!currentLoggedInUserUuid) return currentLoggedInUserUuid;
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+  // This means logged in user is not an advocate or clerk, so return same uuid
+  if (!storedAdvocate?.uuid) return currentLoggedInUserUuid;
+
+  //This means logged in user is Advocate but selected himself/herself from home dropdown.
+  if (storedAdvocate.uuid === currentLoggedInUserUuid) return currentLoggedInUserUuid;
+
+  //This means logged in user is Clerk/junior advocate and has selected some senior office advocate from home dropdown.
+  if (storedAdvocate.uuid !== currentLoggedInUserUuid) return storedAdvocate.uuid;
+
+  return currentLoggedInUserUuid;
+};
+
+export const getAllAssociatedPartyUuids = (caseDetails, ownerUuid) => {
+  // First check if owner is present in any office
+  const ownerOffice = caseDetails?.advocateOffices?.find((office) => office?.officeAdvocateUserUuid === ownerUuid);
+  if (ownerOffice) {
+    const officeAdvocateUuid = ownerOffice?.officeAdvocateUserUuid;
+    const advocates = ownerOffice?.advocates || [];
+    const clerks = ownerOffice?.clerks || [];
+    // Collect all memberUserUuid
+    const editableUsers = [
+      officeAdvocateUuid,
+      ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
+      ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
+    ];
+
+    // Remove null/undefined + de-duplicate
+    return Array.from(new Set((editableUsers || []).filter(Boolean)));
+  }
+  return [ownerUuid];
 };

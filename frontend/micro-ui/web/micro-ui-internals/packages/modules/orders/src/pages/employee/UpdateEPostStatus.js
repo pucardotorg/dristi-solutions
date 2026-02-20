@@ -117,10 +117,9 @@ const UpdateEPostStatus = ({ onClose, rowData, form, setForm, setShowDocument })
     };
     try {
       const data = await EpostService.EpostUpdate(requestBody, {});
-      console.log("updated successfully");
       handleNavigate("employee/orders/tracking");
     } catch (error) {
-      console.log("error updating Status");
+      console.error("error updating Status");
     }
   };
 

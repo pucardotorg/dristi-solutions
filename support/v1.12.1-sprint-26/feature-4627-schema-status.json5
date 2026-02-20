@@ -1,0 +1,35 @@
+// TODO : create this new schema
+{
+  "tenantId": "kl",
+  "code": "Epost.status",
+  "description": null,
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "required": [
+      "id",
+      "code",
+      "name",
+      "statustype"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "code": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "statustype": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true
+}

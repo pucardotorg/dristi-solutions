@@ -1,0 +1,1067 @@
+{
+  "tenantId": "kl",
+  "masterName": "CaseManagement",
+  "moduleName": "case_bundle_master",
+  "mdmsPayload": [
+    [
+      {
+        "id": "3cd525fc-5a69-4244-aed1-ad5a16935605",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "46",
+        "data": {
+          "id": "46",
+          "name": "filings",
+          "Items": "Proof of authorization (Accused)",
+          "sorton": "10",
+          "doctype": "case.authorizationproof.accused",
+          "section": "Initial Filings",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "5eea71ba-9e58-4a55-8be5-5345f235437d",
+          "lastModifiedBy": "5eea71ba-9e58-4a55-8be5-5345f235437d",
+          "createdTime": 1734507129740,
+          "lastModifiedTime": 1734510911444
+        }
+      },
+      {
+        "id": "7186cb4e-ed48-470e-aed3-eb2ef0cfbca1",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": "1",
+          "name": "titlepage",
+          "Items": "Case Cover Page",
+          "sorton": "null",
+          "doctype": "",
+          "section": "Case Cover Page",
+          "isactive": "yes",
+          "docketpagerequired": "no"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732867340228,
+          "lastModifiedTime": 1732867340228
+        }
+      },
+      {
+        "id": "957e03c3-4850-4e18-a7fe-d8a383e6023a",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "2",
+        "data": {
+          "id": "2",
+          "name": "adiary",
+          "Items": "ADiary",
+          "sorton": "null",
+          "doctype": "",
+          "section": "Case History",
+          "isactive": "no",
+          "docketpagerequired": "no"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732867312627,
+          "lastModifiedTime": 1732867312627
+        }
+      },
+      {
+        "id": "0fdbca72-c9ef-43d0-a253-4e80bef81631",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": "3",
+          "name": "pendingapplications",
+          "Items": "Applications",
+          "sorton": "applicationCMPNumber",
+          "doctype": "",
+          "section": "Pending Applications",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732867282462,
+          "lastModifiedTime": 1748947490899
+        }
+      },
+      {
+        "id": "f5bcb57e-2c7f-473f-a394-3ddaa096be30",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "4",
+        "data": {
+          "id": "4",
+          "name": "pendingapplicationobjections",
+          "Items": "Objections",
+          "sorton": "With associated application",
+          "doctype": "",
+          "section": "Pending Applications",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732867252046,
+          "lastModifiedTime": 1749115919126
+        }
+      },
+      {
+        "id": "f08bc47f-5fe4-40f7-8a10-972c3200bf15",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "5",
+        "data": {
+          "id": "5",
+          "name": "complaint",
+          "Items": "",
+          "sorton": "null",
+          "doctype": "",
+          "section": "Complaint",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732867199347,
+          "lastModifiedTime": 1748947386689
+        }
+      },
+      {
+        "id": "e51025bc-2198-476e-9ca4-eb00d33b65eb",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "6",
+        "data": {
+          "id": "6",
+          "name": "filings",
+          "Items": "Cheque",
+          "sorton": "1",
+          "doctype": "case.cheque",
+          "section": "Initial Filings",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732867135272,
+          "lastModifiedTime": 1732867135272
+        }
+      },
+      {
+        "id": "eed50972-dda4-4316-995b-54e3dfa58d0a",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "7",
+        "data": {
+          "id": "7",
+          "name": "filings",
+          "Items": "Cheque Deposit Slip",
+          "sorton": "2",
+          "doctype": "case.cheque.depositslip",
+          "section": "Initial Filings",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732867102708,
+          "lastModifiedTime": 1748949264987
+        }
+      },
+      {
+        "id": "d2b1e8ce-adb0-4676-9bc5-b56350b73025",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "8",
+        "data": {
+          "id": "8",
+          "name": "filings",
+          "Items": "Cheque Return Memo",
+          "sorton": "3",
+          "doctype": "case.cheque.returnmemo",
+          "section": "Initial Filings",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732867076752,
+          "lastModifiedTime": 1732867076752
+        }
+      },
+      {
+        "id": "39e2c7ba-ddbb-4abd-b0be-99865d5c82eb",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "9",
+        "data": {
+          "id": "9",
+          "name": "filings",
+          "Items": "Demand Notice",
+          "sorton": "4",
+          "doctype": "case.demandnotice",
+          "section": "Initial Filings",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732867050038,
+          "lastModifiedTime": 1732867050038
+        }
+      },
+      {
+        "id": "c3b48c71-9038-464c-b182-504ad8c811e9",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "10",
+        "data": {
+          "id": "10",
+          "name": "filings",
+          "Items": "Proof of dispatch of demand notice",
+          "sorton": "5",
+          "doctype": "case.demandnotice.proof",
+          "section": "Initial Filings",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732867023091,
+          "lastModifiedTime": 1748949303618
+        }
+      },
+      {
+        "id": "e742741b-9429-4c5a-befe-4c93610434b8",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "11",
+        "data": {
+          "id": "11",
+          "name": "filings",
+          "Items": "Proof of service of demand notice",
+          "sorton": "6",
+          "doctype": "case.demandnotice.serviceproof",
+          "section": "Initial Filings",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732867001007,
+          "lastModifiedTime": 1748949322211
+        }
+      },
+      {
+        "id": "e254904a-6047-4184-a363-62177c276f68",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "12",
+        "data": {
+          "id": "12",
+          "name": "filings",
+          "Items": "Reply Notice",
+          "sorton": "7",
+          "doctype": "case.replynotice",
+          "section": "Initial Filings",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732866976658,
+          "lastModifiedTime": 1748949344575
+        }
+      },
+      {
+        "id": "d9eecb7a-8bf7-404a-89bf-cf946d0fe1a8",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "13",
+        "data": {
+          "id": "13",
+          "name": "filings",
+          "Items": "Proof of liability",
+          "sorton": "8",
+          "doctype": "case.liabilityproof",
+          "section": "Initial Filings",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732866951703,
+          "lastModifiedTime": 1748949359075
+        }
+      },
+      {
+        "id": "a42d018b-b51b-4be3-b4ea-ec68f9b1968a",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "14",
+        "data": {
+          "id": "14",
+          "name": "filings",
+          "Items": "Proof of authorization (Complainant)",
+          "sorton": "9",
+          "doctype": "case.authorizationproof.complainant",
+          "section": "Initial Filings",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "5eea71ba-9e58-4a55-8be5-5345f235437d",
+          "createdTime": 1732866923108,
+          "lastModifiedTime": 1734507080647
+        }
+      },
+      {
+        "id": "e47e9322-740d-41dd-bb89-54d779cb7309",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "15",
+        "data": {
+          "id": "15",
+          "name": "filings",
+          "Items": "Additional Documents",
+          "sorton": "11",
+          "doctype": "case.docs",
+          "section": "Initial Filings",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732866885900,
+          "lastModifiedTime": 1748949389724
+        }
+      },
+      {
+        "id": "ac3afb92-8e66-42d2-b10c-b1902a98974b",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "16",
+        "data": {
+          "id": "16",
+          "name": "affidavit",
+          "Items": "Affidavit under Section 223 BNSS",
+          "sorton": "1",
+          "doctype": "case.affidavit.223bnss",
+          "section": "Affidavits",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732866847858,
+          "lastModifiedTime": 1732866847858
+        }
+      },
+      {
+        "id": "bed5c242-cf04-4ae0-86fa-bbdfa07b043f",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "17",
+        "data": {
+          "id": "17",
+          "name": "affidavit",
+          "Items": "Affidavit of proof under Section 225 BNSS",
+          "sorton": "2",
+          "doctype": "case.affidavit.225bnss",
+          "section": "Affidavits",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732866797871,
+          "lastModifiedTime": 1748949419137
+        }
+      },
+      {
+        "id": "8eaf0b02-dbb7-440e-83cb-7260f87fff69",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "18",
+        "data": {
+          "id": "18",
+          "name": "vakalat",
+          "Items": "Vakalatnama",
+          "sorton": "active/inactive",
+          "doctype": "",
+          "section": "Vakalats",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732866749743,
+          "lastModifiedTime": 1732866749743
+        }
+      },
+      {
+        "id": "945098aa-ce97-402f-a72d-4fc7193f057c",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "19",
+        "data": {
+          "id": "19",
+          "name": "additionalfilings",
+          "Items": "Evidence",
+          "sorton": "createdDate",
+          "doctype": "",
+          "section": "Additional Filings",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732866715280,
+          "lastModifiedTime": 1748952849725
+        }
+      },
+      {
+        "id": "64a8107b-8cd3-4ae3-9b1e-92adbded5739",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "20",
+        "data": {
+          "id": "20",
+          "name": "mandatorysubmissions",
+          "Items": "Mandatory Submissions of Court - Other document types and sub-types",
+          "sorton": "applicationCMPNumber",
+          "doctype": "",
+          "section": "Mandatory Submissions",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732866639925,
+          "lastModifiedTime": 1748949773738
+        }
+      },
+      {
+        "id": "0c2e1bb5-d0ae-4b77-8652-872d4429d7e8",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "21",
+        "data": {
+          "id": "21",
+          "name": "complainantevidence",
+          "Items": "Depositions [Examination]",
+          "sorton": "date",
+          "doctype": "",
+          "section": "Evidence of Complainant",
+          "isactive": "no",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732866602984,
+          "lastModifiedTime": 1732866602984
+        }
+      },
+      {
+        "id": "27c1b9e1-d95a-461c-80a7-15ada838564f",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "22",
+        "data": {
+          "id": "22",
+          "name": "complainantevidence",
+          "Items": "Exhibits",
+          "sorton": "publishedDate",
+          "doctype": "",
+          "section": "Evidence of Complainant",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732866560325,
+          "lastModifiedTime": 1748950468381
+        }
+      },
+      {
+        "id": "1cf6b727-ef93-4565-9af7-5e1d85b25e94",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "23",
+        "data": {
+          "id": "23",
+          "name": "complainantevidence",
+          "Items": "Additional documents submitted and not marked as exhibits",
+          "sorton": "Date of submission",
+          "doctype": "",
+          "section": "Evidence of Complainant",
+          "isactive": "no",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "cf0b78ba-c58d-4314-ab02-aa69111f48e6",
+          "createdTime": 1732866497734,
+          "lastModifiedTime": 1732866549736
+        }
+      },
+      {
+        "id": "bdd0e275-2a18-4adc-9f02-642cf03a78c5",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "24",
+        "data": {
+          "id": "24",
+          "name": "313",
+          "Items": "",
+          "sorton": "null",
+          "doctype": "",
+          "section": "313 examination equivalent and plea of Accused",
+          "isactive": "no",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732866458049,
+          "lastModifiedTime": 1732866458049
+        }
+      },
+      {
+        "id": "79292fd0-8de0-451d-b8aa-84422ac6912e",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "25",
+        "data": {
+          "id": "25",
+          "name": "accusedstatement",
+          "Items": "",
+          "sorton": "null",
+          "doctype": "",
+          "section": "Written statement by the accused",
+          "isactive": "no",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732866436358,
+          "lastModifiedTime": 1732866436358
+        }
+      },
+      {
+        "id": "e73a6d0e-6db4-48b1-a47f-3b289587f04a",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "26",
+        "data": {
+          "id": "26",
+          "name": "accusedevidence",
+          "Items": "Depositions",
+          "sorton": "date",
+          "doctype": "",
+          "section": "Evidence of Accused",
+          "isactive": "no",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732866403641,
+          "lastModifiedTime": 1732866403641
+        }
+      },
+      {
+        "id": "ca8c0e1e-f433-49a2-8c8c-db43e4ad3916",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "27",
+        "data": {
+          "id": "27",
+          "name": "accusedevidence",
+          "Items": "Exhibits",
+          "sorton": "publishedDate",
+          "doctype": "",
+          "section": "Evidence of Accused",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732866373242,
+          "lastModifiedTime": 1748950439475
+        }
+      },
+      {
+        "id": "fdb93680-db2c-44e9-96a4-3b4ef29680a6",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "28",
+        "data": {
+          "id": "28",
+          "name": "accusedevidence",
+          "Items": "Additional documents submitted and not marked as exhibits",
+          "sorton": "Date of submission",
+          "doctype": "",
+          "section": "Evidence of Accused",
+          "isactive": "no",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732866332750,
+          "lastModifiedTime": 1732866332750
+        }
+      },
+      {
+        "id": "ceca56f8-e32e-4a7a-a81e-6a53775a1614",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "29",
+        "data": {
+          "id": "29",
+          "name": "courtevidencedepositions",
+          "Items": "Depositions",
+          "sorton": "createdDate",
+          "doctype": "",
+          "section": "Court Evidence",
+          "isactive": "yes",
+          "docketpagerequired": "no"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732866265346,
+          "lastModifiedTime": 1748952875106
+        }
+      },
+      {
+        "id": "1b374688-d3fc-445d-9412-7865eb43a749",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "30",
+        "data": {
+          "id": "30",
+          "name": "courtevidence",
+          "Items": "Exhibits",
+          "sorton": "publishedDate",
+          "doctype": "",
+          "section": "Court Evidence",
+          "isactive": "yes",
+          "docketpagerequired": "no"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732866240444,
+          "lastModifiedTime": 1748950836808
+        }
+      },
+      {
+        "id": "5ca0959c-de29-4387-9cfb-c9b3c3623237",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "31",
+        "data": {
+          "id": "31",
+          "name": "courtevidence",
+          "Items": "Additional documents submitted and marked as exhibits",
+          "sorton": "Date of submission",
+          "doctype": "",
+          "section": "Court Evidence",
+          "isactive": "no",
+          "docketpagerequired": "no"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732866210829,
+          "lastModifiedTime": 1732866210829
+        }
+      },
+      {
+        "id": "ebc293f2-2836-4f20-baeb-7a6522690a7a",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "32",
+        "data": {
+          "id": "32",
+          "name": "courtnotes",
+          "Items": "Prepared by the Court (Once Note taking feature built)",
+          "sorton": "date",
+          "doctype": "",
+          "section": "Court Notes",
+          "isactive": "no",
+          "docketpagerequired": "no"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "cf0b78ba-c58d-4314-ab02-aa69111f48e6",
+          "createdTime": 1732866064363,
+          "lastModifiedTime": 1732866166282
+        }
+      },
+      {
+        "id": "e38eccec-29ca-44ee-bc21-e0f9551b9711",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "33",
+        "data": {
+          "id": "33",
+          "name": "complainantnotes",
+          "Items": "Submitted by Complainant",
+          "sorton": "date",
+          "doctype": "",
+          "section": "Complainant Notes",
+          "isactive": "no",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732866030320,
+          "lastModifiedTime": 1732866030320
+        }
+      },
+      {
+        "id": "d477dffc-ae61-452c-ac10-0619c4249ad6",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "34",
+        "data": {
+          "id": "34",
+          "name": "accusednotes",
+          "Items": "Submitted by Accused",
+          "sorton": "date",
+          "doctype": "",
+          "section": "Accused Notes",
+          "isactive": "no",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732865997147,
+          "lastModifiedTime": 1732865997147
+        }
+      },
+      {
+        "id": "b270b067-9bf2-4ff0-b602-e985b1b5cf00",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "35",
+        "data": {
+          "id": "35",
+          "name": "applications",
+          "Items": "Application",
+          "sorton": "applicationCMPNumber",
+          "doctype": "",
+          "section": "Disposed Application",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732865964570,
+          "lastModifiedTime": 1748951304927
+        }
+      },
+      {
+        "id": "f8001036-dcd0-4816-b1a9-5225c733804f",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "36",
+        "data": {
+          "id": "36",
+          "name": "applicationobjections",
+          "Items": "Objections",
+          "sorton": "With associated application",
+          "doctype": "",
+          "section": "Disposed Application",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732865934799,
+          "lastModifiedTime": 1749115952428
+        }
+      },
+      {
+        "id": "a2097d57-a35f-40c9-bfbd-5cef59610835",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "37",
+        "data": {
+          "id": "37",
+          "name": "applicationsorders",
+          "Items": "Orders",
+          "sorton": "With associated application",
+          "doctype": "",
+          "section": "Disposed Application",
+          "isactive": "yes",
+          "docketpagerequired": "no"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732865888414,
+          "lastModifiedTime": 1749116495801
+        }
+      },
+      {
+        "id": "be77b557-27eb-4812-a4c2-c3f73a9356bf",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "38",
+        "data": {
+          "id": "38",
+          "name": "baildocument",
+          "Items": "Bail Application",
+          "sorton": "applicationCMPNumber",
+          "doctype": "",
+          "section": "Bail documents",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732865845837,
+          "lastModifiedTime": 1748951833081
+        }
+      },
+      {
+        "id": "ab8b3c5e-304f-4853-a811-de982ae0dfdf",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "39",
+        "data": {
+          "id": "39",
+          "name": "baildocument",
+          "Items": "Bail Bond",
+          "sorton": "",
+          "doctype": "",
+          "section": "Bail documents",
+          "isactive": "no",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732865819334,
+          "lastModifiedTime": 1732865819334
+        }
+      },
+      {
+        "id": "16273636-dd4e-47db-84f4-7844063c1e4f",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "40",
+        "data": {
+          "id": "40",
+          "name": "memos",
+          "Items": "",
+          "sorton": "",
+          "doctype": "",
+          "section": "Memos",
+          "isactive": "no",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732865779088,
+          "lastModifiedTime": 1732865779088
+        }
+      },
+      {
+        "id": "5761b2be-82c4-4613-b06f-dd81c0093e3b",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "41",
+        "data": {
+          "id": "41",
+          "name": "processes",
+          "Items": "Notice",
+          "sorton": "",
+          "doctype": "",
+          "section": "Processes",
+          "isactive": "yes",
+          "docketpagerequired": "no"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732865746823,
+          "lastModifiedTime": 1732865746823
+        }
+      },
+      {
+        "id": "8c5f1b3b-cd8c-4508-ab9a-bb339cc17853",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "42",
+        "data": {
+          "id": "42",
+          "name": "processes",
+          "Items": "Summons",
+          "sorton": "",
+          "doctype": "",
+          "section": "Processes",
+          "isactive": "yes",
+          "docketpagerequired": "no"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1732865734156,
+          "lastModifiedTime": 1732865734156
+        }
+      },
+      {
+        "id": "d168e6db-3caa-4074-b474-2f748c731b6e",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "43",
+        "data": {
+          "id": "43",
+          "name": "processes",
+          "Items": "Warrants",
+          "sorton": "",
+          "doctype": "",
+          "section": "Processes",
+          "isactive": "yes",
+          "docketpagerequired": "no"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732865707158,
+          "lastModifiedTime": 1748952945888
+        }
+      },
+      {
+        "id": "2e842e70-4e4f-49a3-9a43-1ec0fe7f980e",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "44",
+        "data": {
+          "id": "44",
+          "name": "paymentreceipts",
+          "Items": "Payment Receipts",
+          "sorton": "paymentDate",
+          "doctype": "",
+          "section": "Payment Receipts",
+          "isactive": "yes",
+          "docketpagerequired": "yes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732865659089,
+          "lastModifiedTime": 1749116556566
+        }
+      },
+      {
+        "id": "f20e308b-e6a3-444b-b62c-6ca28b4db28c",
+        "tenantId": "kl",
+        "schemaCode": "CaseManagement.case_bundle_master",
+        "uniqueIdentifier": "45",
+        "data": {
+          "id": "45",
+          "name": "orders",
+          "Items": "Orders",
+          "sorton": "createdDate",
+          "doctype": "",
+          "section": "Orders",
+          "isactive": "yes",
+          "docketpagerequired": "no"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1732865585721,
+          "lastModifiedTime": 1749116569666
+        }
+      }
+    ]
+  ]
+}

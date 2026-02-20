@@ -1,5 +1,4 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
-import Axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "react-query";
 import Modal from "../../../dristi/src/components/Modal";
@@ -7,6 +6,7 @@ import { Urls } from "../hooks/services/Urls";
 import { Toast, TextInput } from "@egovernments/digit-ui-react-components";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const onDocumentUpload = async (fileData, filename) => {
   try {
@@ -32,6 +32,8 @@ function OrderReviewModal({
   businessOfDay,
   updateOrder,
   setShowBulkModal,
+  courtId,
+  saveSignLater,
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
@@ -40,7 +42,7 @@ function OrderReviewModal({
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [isDisabled, setIsDisabled] = useState();
   const orderFileStore = order?.documents?.find((doc) => doc?.documentType === "SIGNED")?.fileStore;
-  const [businessDay, setBusinessDay] = useState(businessOfDay);
+  // const [businessDay, setBusinessDay] = useState(businessOfDay);
   const [isUpdateLoading, setUpdateLoading] = useState(false);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const accessToken = window.localStorage.getItem("token");
@@ -63,25 +65,30 @@ function OrderReviewModal({
     retry: 3,
     cacheTime: 0,
     queryFn: async () => {
-      return Axios({
-        method: "POST",
-        url: Urls.orders.orderPreviewPdf,
-        params: {
-          tenantId: tenantId,
-          orderId: order?.id,
-          cnrNumber: order?.cnrNumber,
-          qrCode: false,
-        },
-        data: {
-          RequestInfo: {
-            authToken: accessToken,
-            userInfo: userInfo,
-            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+      return axiosInstance
+        .post(
+          Urls.orders.orderPreviewPdf,
+          {
+            RequestInfo: {
+              authToken: accessToken,
+              userInfo: userInfo,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Dristi",
+            },
           },
-        },
-        responseType: "blob",
-      }).then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
+          {
+            params: {
+              tenantId: tenantId,
+              orderId: order?.id,
+              cnrNumber: order?.cnrNumber,
+              qrCode: false,
+              courtId: courtId,
+              orderPreviewKey: "new-order-generic",
+            },
+            responseType: "blob",
+          }
+        )
+        .then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
@@ -138,8 +145,8 @@ function OrderReviewModal({
       >
         {orderPreviewPdf || orderFileStore ? (
           <DocViewerWrapper
-            docWidth={"calc(80vw* 62/ 100)"}
-            docHeight={"50vh"}
+            docWidth={"100%"}
+            docHeight={"100%"}
             selectedDocs={[orderPreviewPdf]}
             fileStoreId={orderFileStore}
             tenantId={tenantId}
@@ -185,11 +192,28 @@ function OrderReviewModal({
     setUpdateLoading(true);
     handleDocumentUpload(async (fileStoreId) => {
       if (fileStoreId) {
+        let hearingNumber = "";
+        const todayDate = new Date().toISOString().split("T")[0];
+
+        if (order?.orderCategory === "INTERMEDIATE" && order?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+          const hearingDate = order?.additionalDetails?.formdata?.newHearingDate;
+          if (hearingDate === todayDate) {
+            hearingNumber = order?.additionalDetails?.refHearingId;
+          }
+        } else {
+          const acceptRescheduleRequest = order?.compositeItems?.find((item) => item?.orderType === "ACCEPT_RESCHEDULING_REQUEST");
+          const hearingDate = acceptRescheduleRequest?.orderSchema?.additionalDetails?.formdata?.newHearingDate;
+
+          if (hearingDate === todayDate) {
+            hearingNumber = acceptRescheduleRequest?.orderSchema?.additionalDetails?.refHearingId;
+          }
+        }
         const updatedOrder = {
           ...order,
+          ...(hearingNumber && { hearingNumber: order?.hearingNumber || hearingNumber, scheduledHearingNumber: null }),
           additionalDetails: {
             ...order.additionalDetails,
-            businessOfTheDay: businessDay,
+            // businessOfTheDay: businessDay,
           },
         };
         await updateOrder(updatedOrder, OrderWorkflowAction.SUBMIT_BULK_E_SIGN, fileStoreId)
@@ -210,14 +234,14 @@ function OrderReviewModal({
   return (
     <React.Fragment>
       <Modal
-        headerBarMain={<Heading label={t("REVIEW_ORDERS_HEADING")} />}
+        headerBarMain={<Heading label={t("CS_PREVIEW_ORDER")} />}
         headerBarEnd={<CloseBtn onClick={handleReviewGoBack} />}
         actionCancelLabel={showActions && t("BULK_EDIT")}
         actionCustomLabel={showActions && t("ADD_SIGNATURE")}
-        actionSaveLabel={showActions && t("SAVE_FINALISE_AND_SIGN_LATER")}
-        isBackButtonDisabled={isLoading || isUpdateLoading || !businessDay}
-        isCustomButtonDisabled={isLoading || isUpdateLoading || !businessDay}
-        isDisabled={isLoading || isUpdateLoading || !businessDay}
+        actionSaveLabel={saveSignLater && t("SAVE_FINALISE_AND_SIGN_LATER")}
+        isBackButtonDisabled={isLoading || isUpdateLoading}
+        isCustomButtonDisabled={isLoading || isUpdateLoading}
+        isDisabled={isLoading || isUpdateLoading}
         actionCancelOnSubmit={handleReviewGoBack}
         actionCustomLabelSubmit={handleAddSignature}
         customActionStyle={{ border: "1px solid #007E7E", backgroundColor: "white" }}
@@ -226,14 +250,14 @@ function OrderReviewModal({
         className={"review-order-modal"}
       >
         <div className="review-order-body-main">
-          <div className="review-order-modal-list-div">
+          {/* <div className="review-order-modal-list-div">
             <div className="review-order-type-side-stepper">
               <h1> {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)} </h1>
             </div>
-          </div>
+          </div> */}
           <div className="review-order-modal-document-div" style={{ padding: 0, overflow: "auto" }}>
             {showDocument}
-            <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
+            {/* <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
             <div style={{ display: "flex", gap: "10px" }}>
               <TextInput
                 className="field desktop-w-full"
@@ -255,7 +279,7 @@ function OrderReviewModal({
                   onButtonClick={handleUpdateBusinessOfDayEntry}
                 />
               )}
-            </div>
+            </div> */}
           </div>
         </div>
         {showErrorToast && (

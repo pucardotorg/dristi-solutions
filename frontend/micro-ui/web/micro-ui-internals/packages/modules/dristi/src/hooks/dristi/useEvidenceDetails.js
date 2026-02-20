@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "react-query";
-import useGetSubmissions from "./useGetSubmissions";
 import { DRISTIService } from "../../services";
 
 const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest, state, changeQueryName = "Random" }) => {
@@ -33,7 +32,13 @@ const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest
         true
       );
       if (owner?.Employees?.length > 1) return "";
-      return `${owner?.Individual?.[0]?.name?.givenName} ${owner?.Individual?.[0]?.name?.familyName || ""}`.trim();
+
+      return {
+        name: `${owner?.Individual?.[0]?.name?.givenName} ${owner?.Individual?.[0]?.name?.familyName || ""}`.trim(),
+        fullname: `${owner?.Individual?.[0]?.name?.givenName} ${owner?.Individual?.[0]?.name?.otherNames || ""} ${
+          owner?.Individual?.[0]?.name?.familyName || ""
+        }`.trim(),
+      };
     }
   };
 
@@ -50,13 +55,16 @@ const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest
 
     const ownerNames = await Promise.all(
       uniqueArtifacts?.map(async (artifact) => {
-        const ownerName = await getOwnerName(artifact);
-        return { owner: ownerName, sourceID: artifact.sourceID };
+        const names = await getOwnerName(artifact);
+        const ownerName = names?.name || names || "";
+        const fullName = names?.fullname || names || "";
+        return { owner: ownerName, fullName: fullName, sourceID: artifact.sourceID };
       })
     );
     const artifacts = res?.artifacts?.map((artifact) => {
       const ownerName = ownerNames?.find((item) => item.sourceID === artifact.sourceID)?.owner;
-      return { ...artifact, owner: ownerName };
+      const ownerFullName = ownerNames?.find((item) => item.sourceID === artifact.sourceID)?.fullName;
+      return { ...artifact, owner: ownerName, ownerFullName: ownerFullName };
     });
 
     return {

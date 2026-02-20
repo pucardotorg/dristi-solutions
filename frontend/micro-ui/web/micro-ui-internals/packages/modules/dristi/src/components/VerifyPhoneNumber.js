@@ -216,7 +216,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
       },
       { tenantId: stateCode, limit: 10, offset: 0 }
     )
-      .then((individualData) => {
+      .then(async (individualData) => {
         if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
           let permanentAddress;
           let currentAddress;
@@ -250,9 +250,9 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
           const data = {
             "addressDetails-select": {
               pincode: permanentAddress?.pincode || "",
-              district: permanentAddress?.addressLine2 || "Rangareddy",
+              district: permanentAddress?.addressLine2 || "",
               city: permanentAddress?.city || "",
-              state: permanentAddress?.addressLine1 || "Telangana",
+              state: permanentAddress?.addressLine1 || "",
               coordinates: {
                 longitude: permanentAddress?.longitude || "",
                 latitude: permanentAddress?.latitude || "",
@@ -261,9 +261,9 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
             },
             "currentAddressDetails-select": {
               pincode: currentAddress?.pincode || "",
-              district: currentAddress?.addressLine2 || "Rangareddy",
+              district: currentAddress?.addressLine2 || "",
               city: currentAddress?.city || "",
-              state: currentAddress?.addressLine1 || "Telangana",
+              state: currentAddress?.addressLine1 || "",
               coordinates: {
                 longitude: currentAddress?.longitude || "",
                 latitude: currentAddress?.latitude || "",

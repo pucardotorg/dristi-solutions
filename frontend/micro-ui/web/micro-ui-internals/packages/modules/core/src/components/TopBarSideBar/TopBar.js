@@ -37,7 +37,7 @@ const TopBar = ({
       if (usersResponse && usersResponse.user && usersResponse.user.length) {
         const userDetails = usersResponse.user[0];
         const thumbs = userDetails?.photo?.split(",");
-        setProfilePic(thumbs?.at(0) || null); 
+        setProfilePic(thumbs?.at(0) || null);
       }
     }
   }, [profilePic !== null, userDetails?.info?.uuid]);
@@ -45,7 +45,7 @@ const TopBar = ({
   const CitizenHomePageTenantId = Digit.ULBService.getCitizenCurrentTenant(true);
 
   let history = useHistory();
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
 
   const conditionsToDisableNotificationCountTrigger = () => {
     if (Digit.UserService?.getUser()?.info?.type === "EMPLOYEE") return false;
@@ -83,6 +83,7 @@ const TopBar = ({
   if (CITIZEN) {
     return (
       <TopBarComponent
+        t={t}
         img={stateInfo?.logoUrlWhite}
         isMobile={true}
         toggleSidebar={updateSidebar}
@@ -149,6 +150,7 @@ const TopBar = ({
       <div
         className="hambuger-back-wrapper"
         onClick={() => {
+          sessionStorage.removeItem("homeActiveTab");
           if (isEpostUser) {
             history.push(pathname);
           } else {

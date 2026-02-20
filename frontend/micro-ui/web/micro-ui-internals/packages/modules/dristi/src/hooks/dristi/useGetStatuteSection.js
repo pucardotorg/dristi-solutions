@@ -1,6 +1,6 @@
 import _ from "lodash";
 
-const useGetStatuteSection = (moduleName = "case", masterName = [{ name: "Statute" }, { name: "Section" }]) => {
+const useGetStatuteSection = (moduleName = "case", masterName = [{ name: "Statute" }, { name: "Section" }, {name: "CaseCategory"}]) => {
   return Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), moduleName, masterName, {
     select: (data) => {
       let newData = {};

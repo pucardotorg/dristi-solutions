@@ -8,7 +8,7 @@ const fieldStyle = { marginRight: 0 };
 const MakeSubmissionBail = () => {
   const { t } = useTranslation();
   const [formdata, setFormdata] = useState({}); // will get all the data in formData
-  const { submissionId: submissionId } = Digit.Hooks.useQueryParams(); // query paramas
+  const { submissionId } = Digit.Hooks.useQueryParams(); // query paramas
   const tenantId = Digit.ULBService.getCurrentTenantId();
 
   const submissionType = useMemo(() => {
@@ -42,7 +42,6 @@ const MakeSubmissionBail = () => {
   };
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-    console.log(formData, "callled");
     if (JSON.stringify(formData) !== JSON.stringify(formdata)) {
       setFormdata(formData);
     }

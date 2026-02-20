@@ -1,0 +1,20 @@
+// TODO :  can be done through UI add this new entry
+{
+  "tenantId": "kl",
+  "schemaCode": "payment.paymentType",
+  "uniqueIdentifier": "29",
+  "data": {
+    // TODO : check the last used id in environment and give id based on that
+    "id": 29,
+    "suffix": "TASK_COURT_POST_PROCESS",
+    "paymentType": "Task Court Post Process Fees",
+    "businessService": [
+      {
+        "id": 1,
+        "businessCode": "task-management-payment"
+      }
+    ],
+    "deliveryChannel": "ONLINE"
+  },
+  "isActive": true
+}

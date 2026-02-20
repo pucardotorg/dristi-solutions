@@ -1,5 +1,7 @@
 import { Request } from "@egovernments/digit-ui-libraries";
 export const Urls = {
+  getEvidencesToSign: "/evidence/v1/_getArtifactsToSign",
+  updateSignedEvidences: "/evidence/v1/_updateSignedArtifacts",
   getPendingTaskFields: "/inbox/v2/_getFields",
   caseSearch: "/case/v1/_search",
   caseSearchList: "/case/v2/search/list",
@@ -12,8 +14,38 @@ export const Urls = {
   generateADiaryPDF: "/ab-diary/case/diary/v1/generate",
   updateADiaryPDF: "/ab-diary/case/diary/v1/update",
   searchADiary: "/ab-diary/case/diary/v1/search",
+  inboxSearch: "/inbox/v2/index/_search",
+  pendingTaskSearch: "/inbox/v2/_getFields/actionCategory",
+  updateSignedBailBonds: "/bail-bond/v1/_updateSignedBails",
+  getBailBondsToSign: "/bail-bond/v1/_getBailsToSign",
+  bailBondUpdate: "/bail-bond/v1/_update",
+  bailBondSearch: "/bail-bond/v1/_search",
+  updateSignedWitnessDepositions: "/evidence/v1/_updateSignedArtifacts",
+  getWitnessDepositionsToSign: "/evidence/v1/_getArtifactsToSign",
+  witnessDepositionUpdate: "/evidence/v1/_update",
+  witnessDepositionSearch: "/evidence/v1/_search",
+  updateTemplate: "/template-configuration/v1/update",
+  createTemplate: "/template-configuration/v1/create",
+  searchTemplate: "/template-configuration/v1/search",
+  searchTemplatePdf: "/egov-pdf/template-configuration",
 };
 export const HomeService = {
+  InboxSearch: (data, params) =>
+    Request({
+      url: Urls.inboxSearch,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
+  pendingTaskSearch: (data, params) =>
+    Request({
+      url: Urls.pendingTaskSearch,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
   getPendingTaskService: (data, params) =>
     Request({
       url: Urls.getPendingTaskFields,
@@ -74,4 +106,108 @@ export const HomeService = {
       params,
     });
   },
+  getBailBondsToSign: (data, params) =>
+    Request({
+      url: Urls.getBailBondsToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedBailBonds: (data, params) =>
+    Request({
+      url: Urls.updateSignedBailBonds,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateBailBond: (data, params) =>
+    Request({
+      url: Urls.bailBondUpdate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  searchBailBond: (data, params) =>
+    Request({
+      url: Urls.bailBondSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  getWitnessDepositionsToSign: (data, params) =>
+    Request({
+      url: Urls.getWitnessDepositionsToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedWitnessDepositions: (data, params) =>
+    Request({
+      url: Urls.updateSignedWitnessDepositions,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateWitnessDeposition: (data, params) =>
+    Request({
+      url: Urls.witnessDepositionUpdate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  searchWitnessDeposition: (data, params) =>
+    Request({
+      url: Urls.witnessDepositionSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  getEvidencesToSign: (data, params) =>
+    Request({
+      url: Urls.getEvidencesToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedEvidences: (data, params) =>
+    Request({
+      url: Urls.updateSignedEvidences,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  createTemplate: (data, params) =>
+    Request({
+      url: Urls.createTemplate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateTemplate: (data, params) =>
+    Request({
+      url: Urls.updateTemplate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  searchTemplate: (data, params) =>
+    Request({
+      url: Urls.searchTemplate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
 };

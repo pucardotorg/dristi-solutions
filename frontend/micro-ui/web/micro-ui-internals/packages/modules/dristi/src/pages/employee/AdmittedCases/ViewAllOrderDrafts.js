@@ -45,7 +45,7 @@ const ViewAllOrderDrafts = ({ t, setShow, draftOrderList, filingNumber }) => {
           <div
             onClick={() => {
               setShow(false);
-              history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
+              history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
             }}
             style={{ cursor: "pointer", fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#007E7E" }}
           >

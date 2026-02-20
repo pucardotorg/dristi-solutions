@@ -1,0 +1,43 @@
+// TODO : can update this data through workbench
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentTypeToBreakupMapping",
+    // TODO : get uniqueIdentifier from respective payment type for summons and notice
+    "uniqueIdentifier": "6",
+    "data": {
+      "breakUpList": [
+        {
+          "breakUpCode": "E_POST",
+          "breakUpName": "E Post"
+        },
+        {
+          "breakUpCode": "COURT_FEE",
+          "breakUpName": "Court Fee"
+        }
+      ],
+      "paymentType": "6"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentTypeToBreakupMapping",
+    // TODO : get uniqueIdentifier from respective payment type for summons and notice
+    "uniqueIdentifier": "10",
+    "data": {
+      "breakUpList": [
+        {
+          "breakUpCode": "COURT_FEE",
+          "breakUpName": "Court Fee"
+        },
+        {
+          "breakUpCode": "E_POST",
+          "breakUpName": "E Post"
+        }
+      ],
+      "paymentType": "10"
+    },
+    "isActive": true
+  }
+]

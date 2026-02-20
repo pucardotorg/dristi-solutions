@@ -1,0 +1,77 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "mdmsPayload": [
+      {
+        "id": "c8623e83-8448-4ad2-a66c-a451b8af0464",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2742",
+        "data": {
+          "id": 2742,
+          "code": "2742",
+          "url": "/inbox/v2/_getFields/actionCategory",
+          "name": "Get Fields Inbox for actions",
+          "displayName": "Get Fields Inbox for actions",
+          "orderNumber": 0,
+          "serviceCode": "inbox"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1748423033927,
+          "lastModifiedTime": 1748423033927
+        }
+      }
+    ]
+  },
+  {
+    "moduleName":"ACCESSCONTROL-ROLEACTIONS",
+    "masterName":"roleactions",
+    "mdmsPayload": [
+      {
+        "id": "017963c4-d9b1-4b52-a3b7-1621de839588",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "481",
+        "data": {
+          "id": 481,
+          "actionid": 2742,
+          "actioncode": "2742",
+          "tenantid": "kl",
+          "rolecode": "EMPLOYEE"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1748423457747,
+          "lastModifiedTime": 1748423457747
+        }
+      },
+      {
+        "id": "50a6ed24-bc7c-4d29-a322-84b0c238459d",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "482",
+        "data": {
+          "id": 482,
+          "actionid": 2742,
+          "rolecode": "SUPERUSER",
+          "tenantid": "kl",
+          "actioncode": "2742"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1748423548409,
+          "lastModifiedTime": 1748423548409
+        }
+      }
+    ]
+  }
+]

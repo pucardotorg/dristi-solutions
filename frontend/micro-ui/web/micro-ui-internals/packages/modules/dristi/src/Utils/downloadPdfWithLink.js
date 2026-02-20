@@ -1,4 +1,4 @@
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const downloadPdfWithLink = async (url, fileName) => {
   if (!Boolean(url)) {
@@ -6,7 +6,7 @@ const downloadPdfWithLink = async (url, fileName) => {
   }
 
   try {
-    const response = await axios.get(url, {
+    const response = await axiosInstance.get(url, {
       responseType: "blob",
     });
     const mimeType = response.data.type;

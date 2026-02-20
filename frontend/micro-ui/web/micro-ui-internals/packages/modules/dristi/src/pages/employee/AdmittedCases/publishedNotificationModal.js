@@ -8,7 +8,7 @@ function PublishedNotificationModal({ t, notification, handleDownload, filingNum
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const courtId = localStorage.getItem("courtId");
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;

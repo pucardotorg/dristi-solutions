@@ -1,9 +1,9 @@
 import { Urls } from "../../../hooks";
 import { DRISTIService } from "../../../services";
-import { cleanString, combineMultipleFiles, documentsTypeMapping } from "../../../Utils";
+import { cleanString, combineMultipleFiles, documentsTypeMapping, getAuthorizedUuid } from "../../../Utils";
 import { SubmissionWorkflowAction } from "../../../Utils/submissionWorkflow";
 import { efilingDocumentKeyAndTypeMapping } from "../FileCase/Config/efilingDocumentKeyAndTypeMapping";
-import { formatName, onDocumentUpload, sendDocumentForOcr, updateIndividualUser } from "../FileCase/EfilingValidationUtils";
+import { formatName, onDocumentUpload, sendDocumentForOcr } from "../FileCase/EfilingValidationUtils";
 
 export const editComplainantValidation = ({
   formData,
@@ -34,7 +34,13 @@ export const editComplainantValidation = ({
     } else {
       clearFormDataErrors("complainantVerification");
     }
-    if (!(formData?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file || formData?.complainantId?.complainantId === true)) {
+    if (
+      !(
+        formData?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file ||
+        formData?.complainantId?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file ||
+        formData?.complainantId?.complainantId === true
+      )
+    ) {
       setShowErrorToast(true);
       setFormErrors("complainantId", { message: "COMPLAINANT_ID_PROOF_IS_MANDATORY" });
       return true;
@@ -231,28 +237,28 @@ export const editCheckDuplicateMobileEmailValidation = ({
       }) || [];
 
   const witnessMobileNumbersArray =
-    caseDetails?.additionalDetails?.witnessDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.phonenumbers?.mobileNumber && data?.data?.phonenumbers?.mobileNumber.length !== 0) {
+    caseDetails?.witnessDetails
+      ?.filter((data) => {
+        if (data?.phonenumbers?.mobileNumber && data?.phonenumbers?.mobileNumber?.length > 0) {
           return true;
         } else return false;
       })
-      .map((data) => {
-        return data?.data?.phonenumbers?.mobileNumber;
+      ?.map((data) => {
+        return data?.phonenumbers?.mobileNumber;
       })
-      .reduce((acc, curr) => acc.concat(curr), []) || [];
+      ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
   const witnessEmailsArray =
-    caseDetails?.additionalDetails?.witnessDetails?.formdata
-      .filter((data) => {
-        if (data?.data?.emails?.emailId && data?.data?.emails?.emailId.length !== 0) {
+    caseDetails?.witnessDetails
+      ?.filter((data) => {
+        if (data?.emails?.emailId && data?.emails?.emailId?.length > 0) {
           return true;
         } else return false;
       })
-      .map((data) => {
-        return data?.data?.emails?.emailId;
+      ?.map((data) => {
+        return data?.emails?.emailId;
       })
-      .reduce((acc, curr) => acc.concat(curr), []) || [];
+      ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
   if (selected === "respondentDetails") {
     const currentMobileNumber = formData?.phonenumbers?.textfieldValue;
@@ -376,14 +382,10 @@ export const updateProfileData = async ({
             companyDetailsUpload: null,
             supportingDocument: null,
           };
-          if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
+          const idProof = data?.data?.complainantId?.complainantId?.ID_Proof || data?.data?.complainantId?.complainantId?.complainantId?.ID_Proof;
+          if (idProof?.[0]?.[1]?.file) {
             const documentType = documentsTypeMapping["complainantId"];
-            const uploadedData = await onDocumentUpload(
-              documentType,
-              data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
-              data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
-              tenantId
-            );
+            const uploadedData = await onDocumentUpload(documentType, idProof?.[0]?.[1]?.file, idProof?.[0]?.[0], tenantId);
             const doc = {
               documentType,
               fileStore: uploadedData.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
@@ -652,7 +654,8 @@ export const updateProfileData = async ({
     };
   }
   const referenceId = `MANUAL_${uniqueId}_${editorUuid}_${caseDetails?.id}`;
-  const ifProfileRequestAlreadyExists = caseDetails?.additionalDetails?.profileRequests?.find((req) => req?.pendingTaskRefId === referenceId);
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const applicationReqBody = {
     tenantId,
@@ -668,6 +671,7 @@ export const updateProfileData = async ({
       applicationType: "CORRECTION_IN_COMPLAINANT_DETAILS",
       status: caseDetails?.status,
       isActive: true,
+      asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
       createdBy: userInfo?.uuid,
       statuteSection: { tenantId },
       additionalDetails: {
@@ -697,7 +701,7 @@ export const updateProfileData = async ({
       comment: [],
       workflow: {
         id: "workflow123",
-        action: SubmissionWorkflowAction.CREATE,
+        action: SubmissionWorkflowAction.SUBMIT,
         status: "in_progress",
         comments: "Workflow comments",
         documents: [{}],
@@ -705,69 +709,42 @@ export const updateProfileData = async ({
     },
   };
 
-  if (ifProfileRequestAlreadyExists) {
-    toast.error(t("AN_EDIT_PROFILE_REQUEST_ALREADY_EXISTS"));
-    history.goBack();
-  } else {
-    try {
-      // await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-      //   pendingTask: {
-      //     name: "Review Litigant Details Change",
-      //     entityType: "case-default",
-      //     referenceId,
-      //     status: "PROFILE_EDIT_REQUEST",
-      //     assignedTo: [],
-      //     assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
-      //     cnrNumber: caseDetails?.cnrNumber,
-      //     filingNumber: caseDetails?.filingNumber,
-      //     caseId: caseDetails?.id,
-      //     caseTitle: caseDetails?.caseTitle,
-      //     isCompleted: false,
-      //     additionalDetails: {
-      //       dateOfApplication: new Date().getTime(),
-      //       uniqueId: uniqueId,
-      //     },
-      //     tenantId,
-      //   },
-      // });
+  try {
+    // await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+    //   pendingTask: {
+    //     name: "Review Litigant Details Change",
+    //     entityType: "case-default",
+    //     referenceId,
+    //     status: "PROFILE_EDIT_REQUEST",
+    //     assignedTo: [],
+    //     assignedRole: ["JUDGE_ROLE"],
+    //     cnrNumber: caseDetails?.cnrNumber,
+    //     filingNumber: caseDetails?.filingNumber,
+    //     caseId: caseDetails?.id,
+    //     caseTitle: caseDetails?.caseTitle,
+    //     isCompleted: false,
+    //     additionalDetails: {
+    //       dateOfApplication: new Date().getTime(),
+    //       uniqueId: uniqueId,
+    //     },
+    //     tenantId,
+    //   },
+    // });
 
-      // history.goBack();
-      let evidenceReqBody = {};
+    // history.goBack();
 
-      await DRISTIService.createProfileRequest(
-        {
-          profile: { ...profilePayload },
-        },
-        tenantId
-      );
+    await DRISTIService.createProfileRequest(
+      {
+        profile: { ...profilePayload },
+      },
+      tenantId
+    );
 
-      const res = await DRISTIService.createApplication(applicationReqBody, { tenantId });
+    const res = await DRISTIService.createApplication(applicationReqBody, { tenantId });
 
-      docList?.forEach((docs) => {
-        evidenceReqBody = {
-          artifact: {
-            artifactType: "DOCUMENTARY",
-            caseId: caseDetails?.id,
-            application: res?.application?.applicationNumber,
-            filingNumber: caseDetails?.filingNumber,
-            tenantId,
-            comments: [],
-            file: docs,
-            sourceType,
-            sourceID: individualId,
-            filingType: filingType,
-            additionalDetails: {
-              uuid: userInfo?.uuid,
-            },
-          },
-        };
-        DRISTIService.createEvidence(evidenceReqBody);
-      });
-
-      return res;
-    } catch (error) {
-      toast.error(t("SOMETHING_WENT_WRONG"));
-      console.error(error);
-    }
+    return res;
+  } catch (error) {
+    toast.error(t("SOMETHING_WENT_WRONG"));
+    console.error(error);
   }
 };

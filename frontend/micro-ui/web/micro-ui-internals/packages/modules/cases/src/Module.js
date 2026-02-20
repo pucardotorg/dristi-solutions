@@ -9,7 +9,6 @@ import JoinCasePayment from "./pages/employee/joinCaseComponent/JoinCasePayment"
 
 export const CasesModule = ({ stateCode, userType, tenants }) => {
   const { path, url } = useRouteMatch();
-  console.log(path);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const moduleCode = ["case", "common", "workflow"];
   const language = Digit.StoreData.getCurrentLanguage();

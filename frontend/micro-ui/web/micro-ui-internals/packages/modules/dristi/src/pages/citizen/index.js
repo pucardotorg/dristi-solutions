@@ -1,17 +1,18 @@
 import { BackButton, Loader, PrivateRoute, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch, useRouteMatch } from "react-router-dom";
 import { Route, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { useToast } from "../../components/Toast/useToast";
-import AdmittedCases from "../employee/AdmittedCases/AdmittedCase";
 import ApplicationDetails from "../employee/ApplicationDetails";
 import CitizenHome from "./Home";
 import LandingPage from "./Home/LandingPage";
+import ManageOffice from "./Home/ManageOffice";
 import { newConfig, userTypeOptions } from "./registration/config";
 import Breadcrumb from "../../components/BreadCrumb";
 import SelectEmail from "./registration/SelectEmail";
 import ViewCase from "./view-case";
+import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const [hideBack, setHideBack] = useState(false);
@@ -23,14 +24,30 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const history = useHistory();
   const Registration = Digit?.ComponentRegistryService?.getComponent("DRISTIRegistration");
   const Response = Digit?.ComponentRegistryService?.getComponent("DRISTICitizenResponse");
+  const BailBondSignaturePage = Digit?.ComponentRegistryService?.getComponent("BailBondSignaturePage");
+  const WitnessDepositionSignaturePage = Digit?.ComponentRegistryService?.getComponent("WitnessDepositionSignaturePage");
+  const DigitizedDocumentsSignaturePage = Digit?.ComponentRegistryService?.getComponent("DigitizedDocumentsSignaturePage");
+  const DigitizedDocumentLoginPage = Digit?.ComponentRegistryService?.getComponent("DigitizedDocumentLoginPage");
+  const BailBondLoginPage = Digit?.ComponentRegistryService?.getComponent("BailBondLoginPage");
+  const WitnessDepositionLoginPage = Digit?.ComponentRegistryService?.getComponent("WitnessDepositionLoginPage");
+  const PaymentLoginPage = Digit?.ComponentRegistryService?.getComponent("PaymentLoginPage");
+  const SmsPaymentPage = Digit?.ComponentRegistryService?.getComponent("SmsPaymentPage");
+
+  const BailBondLinkExpiredPage = Digit?.ComponentRegistryService?.getComponent("BailBondLinkExpiredPage");
   const Login = Digit?.ComponentRegistryService?.getComponent("DRISTILogin");
   const FileCase = Digit?.ComponentRegistryService?.getComponent("FileCase");
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const userInfoType = Digit.UserService.getType();
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const { AdvocateData } = useContext(AdvocateDataContext);
+  const selectedSeniorAdvocate = AdvocateData;
+  const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
+
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
   const moduleCode = "DRISTI";
-  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   if (isUserLoggedIn && userInfo) {
     const user = {
       access_token: token,
@@ -41,15 +58,19 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const { data, isLoading, refetch } = Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        userUuid: [userInfo?.uuid],
+        userUuid: selectedAdvocateUuid ? [selectedAdvocateUuid] : [userInfo?.uuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
       },
     },
     { tenantId, limit: 1000, offset: 0 },
-    moduleCode,
+    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid || ""}`,
     "",
     userInfo?.uuid && isUserLoggedIn
   );
 
+  const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
+
+  let homePath = `/${window?.contextPath}/${userInfoType}/home/home-pending-task`;
+  if (!isEpostUser && userInfoType === "employee") homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
 
   const isLitigantPartialRegistered = useMemo(() => {
@@ -63,7 +84,6 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     return !address || (Array.isArray(address) && address.length === 0);
   }, [data?.Individual, userInfoType]);
 
-  const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
   const { data: searchData, isLoading: isSearchLoading } = Digit.Hooks.dristi.useGetAdvocateClerk(
     {
       criteria: [{ individualId }],
@@ -96,7 +116,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
   const citizenCrumb = [
     {
-      path: `/${window?.contextPath}/citizen/home/home-pending-task`,
+      path: homePath,
       content: t("ES_COMMON_HOME"),
       show: !hideHomeCrumb.includes(location.pathname),
       isLast: false,
@@ -114,6 +134,26 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
       show: location.pathname.includes("/edit-profile"),
       isLast: true,
     },
+    {
+      path: `${path}/home/manage-office`,
+      content: t("OFFICE_MANAGEMENT") || "Office Management",
+      show: location.pathname.includes("/manage-office"),
+      isLast: true,
+    },
+  ];
+
+  const hideBackRoutes = [
+    "/home/access-expired",
+    "/home/bail-bond-login",
+    "/home/bail-bond-sign",
+    "/login",
+    "/registration/email",
+    "/home/evidence-sign",
+    "/home/evidence-login",
+    "/home/digitalized-document-sign",
+    "/home/digitalized-document-login",
+    "/home/payment-login",
+    "/home/sms-payment",
   ];
 
   const whiteListedRoutes = [
@@ -133,18 +173,53 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/registration/additional-details`,
     `${path}/home/registration/upload-id`,
     `${path}/home/registration/terms-condition`,
+    `${path}/home/bail-bond-sign`,
+    `${path}/home/bail-bond-login`,
+    `${path}/home/access-expired`,
+    `${path}/home/evidence-sign`,
+    `${path}/home/evidence-login`,
+    `${path}/home/digitalized-document-sign`,
+    `${path}/home/digitalized-document-login`,
+    `${path}/home/payment-login`,
+    `${path}/home/sms-payment`,
+  ];
+  const openRoute = [
+    `${path}/home/bail-bond-sign`,
+    `${path}/home/evidence-sign`,
+    `${path}/home/sms-payment`,
+    `${path}/home/digitalized-document-sign`,
   ];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
-  const retrievedObject = JSON.parse(eSignWindowObject);
+  const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;
+
   if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname)) {
     history.push(`${path}/home/login`);
   }
-  if (!isRejected && individualId && !isLitigantPartialRegistered && whiteListedRoutes.includes(location.pathname)) {
+  if (
+    !isRejected &&
+    individualId &&
+    !isLitigantPartialRegistered &&
+    whiteListedRoutes.includes(location.pathname) &&
+    !openRoute.includes(location.pathname)
+  ) {
     history.push(`${path}/home`);
   }
+  if (retrievedObject && openRoute.includes(retrievedObject?.path)) {
+    if (result) {
+      sessionStorage.setItem("isSignSuccess", result);
+    }
+    if (fileStoreId) {
+      sessionStorage.setItem("fileStoreId", fileStoreId);
+    }
+    history.push(`${retrievedObject?.path}${retrievedObject?.param}`, {
+      mobileNumber: Boolean(sessionStorage.getItem("mobileNumber")) ? JSON.parse(sessionStorage.getItem("mobileNumber")) : null,
+      isAuthorised: true,
+    });
+    sessionStorage.removeItem("eSignWindowObject");
+  }
 
-  if (isUserLoggedIn && !location.pathname.includes(`${path}/home`)) {
+  if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !openRoute.includes(location.pathname)) {
     history.push(`${path}/home`);
   }
   if (isUserLoggedIn && registerScreenRoute.includes(location.pathname)) {
@@ -168,12 +243,13 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     <div className={"pt-citizen"}>
       <Switch>
         <React.Fragment>
-          {!hideBack && !(location.pathname.includes("/login") || location.pathname.includes("/registration/email") || individualId) && (
+          {!hideBack && !(hideBackRoutes.some((route) => location.pathname.includes(route)) || individualId) && (
             <div className="back-button-home">
               <BackButton />
             </div>
           )}
-          {location.pathname.includes("/view-case") && <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>}
+          {((location.pathname.includes("/view-case") && location.pathname.includes("/edit-profile")) ||
+            location.pathname.includes("/manage-office")) && <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 48 }}></Breadcrumb>}
 
           {userType !== "LITIGANT" && (
             <PrivateRoute exact path={`${path}/home/application-details`} component={(props) => <ApplicationDetails {...props} />} />
@@ -207,6 +283,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
           <PrivateRoute path={`${path}/home/view-case`}>
             <ViewCase />
           </PrivateRoute>
+          <PrivateRoute exact path={`${path}/home/manage-office`}>
+            <ManageOffice />
+          </PrivateRoute>
           <div
             className={
               location.pathname.includes("/response") ||
@@ -236,6 +315,42 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
           <Route path={`${path}/landing-page`}>
             <LandingPage />
+          </Route>
+
+          <Route path={`${path}/home/access-expired`}>
+            <BailBondLinkExpiredPage />
+          </Route>
+
+          <Route path={`${path}/home/bail-bond-login`}>
+            <BailBondLoginPage />
+          </Route>
+
+          <Route path={`${path}/home/bail-bond-sign`}>
+            <BailBondSignaturePage />
+          </Route>
+
+          <Route path={`${path}/home/evidence-login`}>
+            <WitnessDepositionLoginPage />
+          </Route>
+
+          <Route path={`${path}/home/evidence-sign`}>
+            <WitnessDepositionSignaturePage />
+          </Route>
+
+          <Route path={`${path}/home/digitalized-document-login`}>
+            <DigitizedDocumentLoginPage />
+          </Route>
+
+          <Route path={`${path}/home/digitalized-document-sign`}>
+            <DigitizedDocumentsSignaturePage />
+          </Route>
+
+          <Route path={`${path}/home/payment-login`}>
+            <PaymentLoginPage />
+          </Route>
+
+          <Route path={`${path}/home/sms-payment`}>
+            <SmsPaymentPage />
           </Route>
         </React.Fragment>
       </Switch>

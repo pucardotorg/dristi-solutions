@@ -1,4 +1,4 @@
-FROM egovio/alpine-node-builder-14:yarn AS build
+FROM node:14.21.3-alpine AS build
 # FROM ghcr.io/egovernments/alpine-node-builder-14:yarn AS build
 RUN apk update && apk upgrade
 RUN apk add --no-cache git>2.30.0
@@ -6,13 +6,16 @@ ARG WORK_DIR
 WORKDIR /app
 ENV NODE_OPTIONS "--max-old-space-size=8168"
 
+ARG REACT_APP_STATE_LEVEL_TENANT_ID
+ENV REACT_APP_STATE_LEVEL_TENANT_ID ${REACT_APP_STATE_LEVEL_TENANT_ID}
+
 COPY ${WORK_DIR} .
 RUN ls -lah
 
 RUN cd web/ \
     &&  ./install-deps.sh \
     && yarn install \
-    && yarn build:webpack
+    && yarn build:webpack 
 
 FROM nginx:mainline-alpine
 ENV WORK_DIR=/var/web/ui

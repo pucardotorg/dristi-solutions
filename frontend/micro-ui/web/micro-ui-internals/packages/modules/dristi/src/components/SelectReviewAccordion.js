@@ -19,6 +19,7 @@ import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import CustomPopUp from "./CustomPopUp";
 import CustomReviewCard from "./CustomReviewCard";
 import ImageModal from "./ImageModal";
+import { sanitizeData } from "../Utils";
 
 const extractValue = (data, key) => {
   if (!key.includes(".")) {
@@ -38,8 +39,8 @@ const extractValue = (data, key) => {
 
 function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, formState, control, setError }) {
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isScrutiny = useMemo(() => roles.some((role) => role.code === "CASE_REVIEWER"), [roles]);
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isScrutiny = useMemo(() => roles?.some((role) => role.code === "CASE_REVIEWER"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const isPrevScrutiny = config?.isPrevScrutiny || false;
   const [isOpen, setOpen] = useState(true);
   const history = useHistory();
@@ -53,12 +54,14 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
   const [formDataLoad, setFormDataLoad] = useState(true);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const isCitizen = useMemo(() => (userInfo?.type === "CITIZEN" ? true : false), [userInfo]);
+  const courtId = localStorage.getItem("courtId");
 
   const { isLoading, data: caseData } = useSearchCaseService(
     {
       criteria: [
         {
           caseId: caseId,
+          ...(!isScrutiny && !isCitizen && courtId && { courtId }),
         },
       ],
       tenantId,
@@ -489,169 +492,172 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
           <CustomArrowDownIcon />
         </span>
       </div>
-      <div style={{ maxHeight: "fit-content" }} className={`accordion-item ${!isOpen ? "collapsed" : ""}`}>
-        <div className="accordion-content">
-          {inputs.map((input, index) => {
-            showFlagIcon = isScrutiny && !input?.disableScrutiny ? true : false;
-            const sectionValue = formData && formData[config.key] && formData[config.key]?.[input.name];
-            const sectionError = sectionValue?.scrutinyMessage?.FSOError;
-            const prevSectionError = input?.prevErrors?.scrutinyMessage?.FSOError;
-            let bgclassname = sectionError && isScrutiny ? "error" : "";
-            bgclassname = sectionError && isCaseReAssigned ? "preverror" : bgclassname;
-            const sectionErrorClassname = sectionError === prevSectionError ? "prevsection" : "section";
-            if (isPrevScrutiny && !input?.disableScrutiny) {
-              showFlagIcon = prevSectionError ? true : false;
-              bgclassname = prevSectionError ? "preverror" : "";
-            }
+      {isOpen && (
+        <div style={{ maxHeight: "fit-content" }} className={`accordion-item`}>
+          <div className="accordion-content">
+            {inputs.map((input, index) => {
+              showFlagIcon = isScrutiny && state === CaseWorkflowState.UNDER_SCRUTINY && !input?.disableScrutiny ? true : false;
+              const sectionValue = formData && formData[config.key] && formData[config.key]?.[input.name];
+              const sectionError = sectionValue?.scrutinyMessage?.FSOError;
+              const prevSectionError = input?.prevErrors?.scrutinyMessage?.FSOError;
+              let bgclassname = sectionError && isScrutiny ? "error" : "";
+              bgclassname = sectionError && isCaseReAssigned ? "preverror" : bgclassname;
+              const sectionErrorClassname = sectionError === prevSectionError ? "prevsection" : "section";
+              if (isPrevScrutiny && !input?.disableScrutiny) {
+                showFlagIcon = prevSectionError ? true : false;
+                bgclassname = prevSectionError ? "preverror" : "";
+              }
 
-            return (
-              <div className={`content-item ${bgclassname}`}>
-                <div className="item-header">
-                  <div className="header-left">
-                    {input?.icon && <Icon icon={input?.icon} />}
-                    <span>{t(input?.label)}</span>
-                  </div>
-                  {input?.data?.length === 0 && (
-                    <span style={{ fontFamily: "Roboto", fontSize: "14px", fontWeight: 400 }}>{t(input?.noDataText)}</span>
-                  )}
-                  {input?.isFilingParty && !isScrutiny && !isJudge && (isCaseReAssigned || isDraftInProgress) && (
-                    <div
-                      className="header-right"
-                      style={{ display: "contents" }}
-                      onClick={(e) => {
-                        history.push(`?caseId=${caseId}&selected=${input?.key}`);
-                      }}
-                    >
-                      <EditPencilIcon />
+              return (
+                <div className={`content-item ${bgclassname}`}>
+                  <div className="item-header">
+                    <div className="header-left">
+                      {input?.icon && <Icon icon={input?.icon} />}
+                      <span>{t(input?.label)}</span>
                     </div>
-                  )}
-                  {showFlagIcon && input?.data?.length > 0 && (
-                    <div
-                      style={{ cursor: "pointer" }}
-                      onClick={(e) => {
-                        handleOpenPopup(e, config.key, input?.name);
-                      }}
-                      key={index}
-                    >
-                      {sectionError ? (
-                        <React.Fragment>
-                          <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
-                            {" "}
-                            <EditPencilIcon />
-                          </span>
-                          <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
-                            {t("CS_CLICK_TO_EDIT")}
-                          </ReactTooltip>
-                        </React.Fragment>
-                      ) : (
-                        <FlagIcon />
-                      )}
-                    </div>
-                  )}
-                </div>
-                {sectionError && isScrutiny && (
-                  <div className={`scrutiny-error ${sectionErrorClassname}`}>
-                    {prevSectionError === sectionError ? (
-                      <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
-                    ) : (
-                      <FlagIcon isError={true} />
+                    {input?.data?.length === 0 && (
+                      <span style={{ fontFamily: "Roboto", fontSize: "14px", fontWeight: 400 }}>{t(input?.noDataText)}</span>
                     )}
-                    {sectionError}
-                  </div>
-                )}
-                {Array.isArray(input.data) &&
-                  input.data.map((item, index) => {
-                    const dataErrors = sectionValue?.form?.[index];
-                    const prevDataErrors = input?.prevErrors?.form?.[index] || {};
-                    const titleHeading = input.name === "chequeDetails" ? true : false;
-                    let updatedConfig = input?.config?.filter((inputConfig) => {
-                      if (!inputConfig?.dependentOn || !inputConfig?.dependentValue) {
-                        return true;
-                      } else {
-                        if (extractValue(item.data, inputConfig?.dependentOn) === inputConfig?.dependentValue) {
-                          return true;
-                        }
-                        return false;
-                      }
-                    });
-                    if (input?.key === "advocateDetails") {
-                      if (input?.data?.[index]?.data?.multipleAdvocatesAndPip?.isComplainantPip?.code === "NO") {
-                        updatedConfig = [
-                          ...updatedConfig,
-                          {
-                            type: "text",
-                            label: "CS_NUMBER_OF_ADVOCATES",
-                            value: `multipleAdvocatesAndPip.numberOfAdvocates`,
-                            enableScrutinyField: true,
-                          },
-                          ...input.data[index].data.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
-                            ?.map((litigant, index) => [
-                              {
-                                type: "text",
-                                style: { fontWeight: "bold" },
-                                label: `${index + 1}. Advocate Name`,
-                                value: `multipleAdvocatesAndPip.multipleAdvocateNameDetails[${index}].advocateBarRegNumberWithName.advocateName`,
-                              },
-                              {
-                                type: "text",
-                                label: "CS_BAR_REGISTRATION",
-                                value: `multipleAdvocatesAndPip.multipleAdvocateNameDetails[${index}].advocateBarRegNumberWithName.barRegistrationNumberOriginal`,
-                              },
-                              {
-                                type: "image",
-                                label: "CS_ID_PROOF",
-                                value: [`multipleAdvocatesAndPip.multipleAdvocateNameDetails[${index}].advocateNameDetails.advocateIdProof`],
-                              },
-                            ])
-                            .flatMap((list) => list),
-                          {
-                            type: "image",
-                            label: "VAKALATNAMA",
-                            value: [`multipleAdvocatesAndPip.vakalatnamaFileUpload.document`],
-                            enableScrutinyField: true,
-                          },
-                        ];
-                      } else if (input?.data?.[index]?.data?.multipleAdvocatesAndPip?.isComplainantPip?.code === "YES") {
-                        updatedConfig = [
-                          ...updatedConfig,
-                          {
-                            type: "image",
-                            label: "UPLOAD_PIP_AFFIDAVIT",
-                            value: [`multipleAdvocatesAndPip.pipAffidavitFileUpload.document`],
-                            enableScrutinyField: true,
-                          },
-                        ];
-                      }
-                    }
-                    return (
-                      <CustomReviewCard
-                        isScrutiny={isScrutiny}
-                        isJudge={isJudge}
-                        config={updatedConfig}
-                        titleIndex={index + 1}
-                        data={item?.data}
+                    {input?.isEditingAllowed && !isScrutiny && !isJudge && (isCaseReAssigned || isDraftInProgress) && (
+                      <div
+                        className="header-right"
+                        style={{ display: "contents" }}
+                        onClick={(e) => {
+                          history.push(`?caseId=${caseId}&selected=${input?.key}`);
+                        }}
+                      >
+                        <EditPencilIcon />
+                      </div>
+                    )}
+                    {showFlagIcon && input?.data?.length > 0 && (
+                      <div
+                        style={{ cursor: "pointer" }}
+                        onClick={(e) => {
+                          handleOpenPopup(e, config.key, input?.name);
+                        }}
                         key={index}
-                        dataIndex={index}
-                        t={t}
-                        handleOpenPopup={handleOpenPopup}
-                        handleClickImage={handleClickImage}
-                        setShowImageModal={setShowImageModal}
-                        formData={formData}
-                        input={input}
-                        dataErrors={dataErrors}
-                        prevDataErrors={prevDataErrors}
-                        configKey={config.key}
-                        titleHeading={titleHeading}
-                        isPrevScrutiny={isPrevScrutiny}
-                        isCaseReAssigned={isCaseReAssigned}
-                      />
-                    );
-                  })}
-              </div>
-            );
-          })}
+                      >
+                        {sectionError ? (
+                          <React.Fragment>
+                            <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
+                              {" "}
+                              <EditPencilIcon />
+                            </span>
+                            <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
+                              {t("CS_CLICK_TO_EDIT")}
+                            </ReactTooltip>
+                          </React.Fragment>
+                        ) : (
+                          <FlagIcon />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {sectionError && isScrutiny && (
+                    <div className={`scrutiny-error ${sectionErrorClassname}`}>
+                      {prevSectionError === sectionError ? (
+                        <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
+                      ) : (
+                        <FlagIcon isError={true} />
+                      )}
+                      {sectionError}
+                    </div>
+                  )}
+                  {Array.isArray(input.data) &&
+                    input.data.map((item, index) => {
+                      const dataErrors = sectionValue?.form?.[index];
+                      const prevDataErrors = input?.prevErrors?.form?.[index] || {};
+                      const titleHeading = input.name === "chequeDetails" ? true : false;
+                      let updatedConfig = input?.config?.filter((inputConfig) => {
+                        if (!inputConfig?.dependentOn || !inputConfig?.dependentValue) {
+                          return true;
+                        } else {
+                          if (extractValue(item.data, inputConfig?.dependentOn) === inputConfig?.dependentValue) {
+                            return true;
+                          }
+                          return false;
+                        }
+                      });
+                      if (input?.key === "advocateDetails") {
+                        if (input?.data?.[index]?.data?.multipleAdvocatesAndPip?.isComplainantPip?.code === "NO") {
+                          updatedConfig = [
+                            ...updatedConfig,
+                            {
+                              type: "text",
+                              label: "CS_NUMBER_OF_ADVOCATES",
+                              value: `multipleAdvocatesAndPip.numberOfAdvocates`,
+                              enableScrutinyField: true,
+                            },
+                            ...input.data[index].data.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
+                              ?.map((litigant, index) => [
+                                {
+                                  type: "text",
+                                  style: { fontWeight: "bold" },
+                                  label: `${index + 1}. Advocate Name`,
+                                  value: `multipleAdvocatesAndPip.multipleAdvocateNameDetails[${index}].advocateBarRegNumberWithName.advocateName`,
+                                },
+                                {
+                                  type: "text",
+                                  label: "CS_BAR_REGISTRATION",
+                                  value: `multipleAdvocatesAndPip.multipleAdvocateNameDetails[${index}].advocateBarRegNumberWithName.barRegistrationNumberOriginal`,
+                                },
+                                {
+                                  type: "image",
+                                  label: "CS_ID_PROOF",
+                                  value: [`multipleAdvocatesAndPip.multipleAdvocateNameDetails[${index}].advocateNameDetails.advocateIdProof`],
+                                },
+                              ])
+                              .flatMap((list) => list),
+                            {
+                              type: "image",
+                              label: "VAKALATNAMA",
+                              value: [`multipleAdvocatesAndPip.vakalatnamaFileUpload.document`],
+                              enableScrutinyField: true,
+                            },
+                          ];
+                        } else if (input?.data?.[index]?.data?.multipleAdvocatesAndPip?.isComplainantPip?.code === "YES") {
+                          updatedConfig = [
+                            ...updatedConfig,
+                            {
+                              type: "image",
+                              label: "UPLOAD_PIP_AFFIDAVIT",
+                              value: [`multipleAdvocatesAndPip.pipAffidavitFileUpload.document`],
+                              enableScrutinyField: true,
+                            },
+                          ];
+                        }
+                      }
+                      return (
+                        <CustomReviewCard
+                          isScrutiny={isScrutiny}
+                          isJudge={isJudge}
+                          config={updatedConfig}
+                          titleIndex={index + 1}
+                          data={item?.data}
+                          key={index}
+                          dataIndex={index}
+                          t={t}
+                          handleOpenPopup={handleOpenPopup}
+                          handleClickImage={handleClickImage}
+                          setShowImageModal={setShowImageModal}
+                          formData={formData}
+                          input={input}
+                          dataErrors={dataErrors}
+                          prevDataErrors={prevDataErrors}
+                          configKey={config.key}
+                          titleHeading={titleHeading}
+                          isPrevScrutiny={isPrevScrutiny}
+                          isCaseReAssigned={isCaseReAssigned}
+                          state={state}
+                        />
+                      );
+                    })}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
       {isPopupOpen && (
         <CustomPopUp anchorRef={popupAnchor.current} popupstyle={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}>
           <Fragment>
@@ -660,7 +666,8 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
               value={scrutinyError}
               onChange={(e) => {
                 const { value } = e.target;
-                setScrutinyError(value);
+                const newValue = sanitizeData(value);
+                setScrutinyError(newValue);
               }}
               maxlength={config.textAreaMaxLength || "255"}
               style={{ minWidth: "300px", maxWidth: "300px", maxHeight: "150px", minHeight: "50px" }}

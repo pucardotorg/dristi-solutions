@@ -1,0 +1,108 @@
+[
+    {
+        "tenantId": "kl",
+        "moduleName": "Order",
+        "masterName": "OrderType",
+        "mdmsPayload": [
+            {
+                "0": {
+                    "id": "8c2b399f-48c1-4d90-85fb-2bb495ebabef",
+                    "tenantId": "kl",
+                    "schemaCode": "Order.OrderType",
+                    "uniqueIdentifier": "41",
+                    "data": {
+                        "id": 41,
+                        "code": "SETTLEMENT_REJECT",
+                        "type": "SETTLEMENT_REJECT",
+                        "isactive": false
+                    },
+                    "isActive": true
+                }
+            },
+            {
+                "1": {
+                    "id": "3c885636-a814-4db1-8fb2-0bd3948375c0",
+                    "tenantId": "kl",
+                    "schemaCode": "Order.OrderType",
+                    "uniqueIdentifier": "40",
+                    "data": {
+                        "id": 40,
+                        "code": "SETTLEMENT_ACCEPT",
+                        "type": "SETTLEMENT_ACCEPT",
+                        "isactive": false
+                    },
+                    "isActive": true
+                }
+            },
+            {
+                "2": {
+                    "id": "f22d6e78-bdd6-47f0-bbc5-f59d58a5bb02",
+                    "tenantId": "kl",
+                    "schemaCode": "Order.OrderType",
+                    "uniqueIdentifier": "39",
+                    "data": {
+                        "id": 39,
+                        "code": "CASE_TRANSFER_REJECT",
+                        "type": "CASE_TRANSFER_REJECT",
+                        "isactive": false
+                    },
+                    "isActive": true
+                }
+            },
+            {
+                "3": {
+                    "id": "8f57d3cd-c72a-40be-971d-2c4731ffbea2",
+                    "tenantId": "kl",
+                    "schemaCode": "Order.OrderType",
+                    "uniqueIdentifier": "38",
+                    "data": {
+                        "id": 38,
+                        "code": "CASE_TRANSFER_ACCEPT",
+                        "type": "CASE_TRANSFER_ACCEPT",
+                        "isactive": false
+                    },
+                    "isActive": true
+                }
+            }
+        ]
+    },
+    {
+        "moduleName": "case",
+        "masterName": "OutcomeType",
+        "tenantId": "kl",
+        "mdmsPayload": [
+            {
+                "3": {
+                    "id": "da2f7b1a-4e26-4894-9953-c1f86037459c",
+                    "tenantId": "kl",
+                    "schemaCode": "case.OutcomeType",
+                    "uniqueIdentifier": "2",
+                    "data": {
+                        "id": "2",
+                        "outcome": "SETTLED",
+                        "orderType": "SETTLEMENT_ACCEPT",
+                        "isJudgement": false,
+                        "judgementList": []
+                    },
+                    "isActive": true
+                }
+            },
+            {
+                "4": {
+                    "id": "efc397c9-c6e3-4447-adde-7e652065950d",
+                    "tenantId": "kl",
+                    "schemaCode": "case.OutcomeType",
+                    "uniqueIdentifier": "3",
+                    "data": {
+                        "id": "3",
+                        "outcome": "TRANSFERRED",
+                        "orderType": "CASE_TRANSFER_ACCEPT",
+                        "isJudgement": false,
+                        "judgementList": []
+                    },
+                    "isActive": true
+                }
+            }
+        ]
+    }
+]

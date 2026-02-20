@@ -1,6 +1,7 @@
 import get from "lodash/get";
 import set from "lodash/set";
 import { getFormattedName } from "../utils";
+import { formatDate } from "../utils/orderUtils";
 
 //create functions here based on module name set in mdms(eg->SearchProjectConfig)
 //how to call these -> Digit?.Customizations?.[masterName]?.[moduleName]
@@ -64,9 +65,43 @@ export const UICustomizations = {
           }
         },
       },
+      adrDropDown: {
+        formToSchema: (option) => {
+          return option?.name;
+        },
+        schemaToForm: async (value, mdmsConfig) => {
+          if (mdmsConfig && mdmsConfig.moduleName && mdmsConfig.masterName) {
+            // fetch mdms by criteria
+            const mdmsData = await Digit.MDMSService.getDataByCriteria(
+              Digit.ULBService.getCurrentTenantId(),
+              { details: { moduleDetails: [{ moduleName: mdmsConfig.moduleName, masterDetails: [{ name: mdmsConfig.masterName }] }] } },
+              mdmsConfig.moduleName
+            );
+
+            const select = mdmsConfig?.select
+              ? Digit.Utils.createFunction(mdmsConfig?.select)
+              : (data) => {
+                  const optionsData = get(data, `${mdmsConfig?.moduleName}.${mdmsConfig?.masterName}`, []);
+                  return optionsData
+                    .filter((opt) => (opt?.hasOwnProperty("active") ? opt.active : true))
+                    .map((opt) => ({ ...opt, name: `${mdmsConfig?.localePrefix}_${Digit.Utils.locale.getTransformedLocale(opt.code)}` }));
+                };
+
+            return select(mdmsData).find((option) => option.name === value);
+          }
+        },
+      },
       date: {
         formToSchema: (dateString) => {
           return dateString ? new Date(dateString).getTime() : null;
+        },
+        schemaToForm: (date) => {
+          return date ? new Date(date).toISOString().split("T")[0] : null;
+        },
+      },
+      customDate: {
+        formToSchema: (dateString) => {
+          return dateString ? formatDate(new Date(dateString), "DD-MM-YYYY") : null;
         },
         schemaToForm: (date) => {
           return date ? new Date(date).toISOString().split("T")[0] : null;
@@ -98,7 +133,7 @@ export const UICustomizations = {
               value?.party?.data?.middleName,
               value?.party?.data?.lastName,
               isWitness ? value?.party?.data?.witnessDesignation : null,
-              partyTypeLabel,
+              partyTypeLabel
             );
           } catch (error) {
             console.error("Error in parsing party name", error);
@@ -109,12 +144,43 @@ export const UICustomizations = {
           throw new Error("Not implemented");
         },
       },
+      noticeOrderPartyName: {
+        formToSchema: (value) => {
+          try {
+            if (!Array?.isArray(value?.party) || value?.party?.length === 0) return [];
+
+            return value?.party?.map((p) => {
+              const isWitness = p?.data?.partyType?.toLowerCase() === "witness";
+              const partyTypeLabel = isWitness ? "(witness)" : null;
+
+              return getFormattedName(
+                p?.data?.firstName,
+                p?.data?.middleName,
+                p?.data?.lastName,
+                isWitness ? p?.data?.witnessDesignation : null,
+                partyTypeLabel
+              );
+            });
+          } catch (error) {
+            console.error("Error in parsing party name", error);
+            return [];
+          }
+        },
+      },
       customTextArea: {
         formToSchema: (obj) => {
           return obj?.text || "";
         },
         schemaToForm: (text) => {
           return { text: text || "" };
+        },
+      },
+      default: {
+        formToSchema: (obj) => {
+          return obj;
+        },
+        schemaToForm: (obj) => {
+          return obj;
         },
       },
     },

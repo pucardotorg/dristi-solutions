@@ -1,24 +1,31 @@
 import React, { useEffect, useMemo, useState } from "react";
-import CustomCard from "../../../components/CustomCard";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import ApplicationAwaitingPage from "./ApplicationAwaitingPage";
 import TakeUserToRegistration from "./TakeUserToRegistration";
 import { userTypeOptions } from "../registration/config";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { CaseInProgressIcon, ClosedCasesIcon, FileCaseIcon, JoinCaseIcon, MyHearingsIcon, PendingActionsIcon } from "../../../icons/svgIndex";
 import Home from "./litigantHome";
 import { useGetAccessToken } from "../../../hooks/useGetAccessToken";
+import { useTranslation } from "react-i18next";
 
 function CitizenHome({ tenantId, setHideBack }) {
   const Digit = window?.Digit || {};
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
-  const history = useHistory();
+  const { t } = useTranslation();
   const moduleCode = "DRISTI";
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [isFetching, setIsFetching] = useState(true);
   const [isFetchingAdvoacte, setIsFetchingAdvocate] = useState(true);
   const userInfoType = Digit.UserService.getType();
+  const { refetchIndividual } = Digit.Hooks.useQueryParams();
+
+  useEffect(() => {
+    if (refetchIndividual === "true" || refetchIndividual === true) {
+      const event = new CustomEvent("refetchIndividualData");
+      window.dispatchEvent(event);
+    }
+  }, [refetchIndividual]);
 
   const { data, isLoading, refetch } = Digit.Hooks.dristi.useGetIndividualUser(
     {
@@ -47,20 +54,25 @@ function CitizenHome({ tenantId, setHideBack }) {
 
     if (!data?.Individual || data?.Individual.length === 0) return false;
 
-    if (data?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
+    if (data?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE" || role?.code === "ADVOCATE_CLERK_ROLE")) return false;
 
     const address = data?.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
   }, [data?.Individual, userInfoType]);
 
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
-  const { data: searchData, isLoading: isSearchLoading, refetch: refetchAdvocateClerk } = Digit.Hooks.dristi.useGetAdvocateClerk(
+  const {
+    data: searchData,
+    isLoading: isSearchLoading,
+    refetch: refetchAdvocateClerk,
+    isFetching: refetchingAdvocateClerk,
+  } = Digit?.Hooks?.dristi?.useGetAdvocateClerk(
     {
       criteria: [{ individualId }],
       tenantId,
     },
     { tenantId },
-    moduleCode,
+    individualId,
     Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
@@ -100,6 +112,11 @@ function CitizenHome({ tenantId, setHideBack }) {
     );
   }, [searchResult, userType]);
 
+  const rejectionReason = useMemo(() => {
+    if (!isRejected) return null;
+    return searchResult?.find((obj) => obj?.status === "INACTIVE")?.workflow?.comments || "NA";
+  }, [isRejected, searchResult]);
+
   const userHasIncompleteRegistration = useMemo(() => !individualId || isRejected || isLitigantPartialRegistered, [
     individualId,
     isLitigantPartialRegistered,
@@ -107,12 +124,6 @@ function CitizenHome({ tenantId, setHideBack }) {
   ]);
 
   const registrationIsDoneApprovalIsPending = individualId && isApprovalPending && !isRejected && !isLitigantPartialRegistered;
-  useEffect(() => {
-    setHideBack(userHasIncompleteRegistration || registrationIsDoneApprovalIsPending);
-    return () => {
-      setHideBack(false);
-    };
-  }, [userHasIncompleteRegistration, registrationIsDoneApprovalIsPending, setHideBack]);
 
   useEffect(() => {
     setHideBack(userHasIncompleteRegistration || registrationIsDoneApprovalIsPending);
@@ -123,7 +134,7 @@ function CitizenHome({ tenantId, setHideBack }) {
 
   useGetAccessToken("citizen.refresh-token", individualId && !isApprovalPending && !isRejected);
 
-  if (isLoading || isSearchLoading || isFetching || isFetchingAdvoacte) {
+  if (isLoading || isSearchLoading || refetchingAdvocateClerk || isFetching || isFetchingAdvoacte) {
     return <Loader />;
   }
 
@@ -159,10 +170,11 @@ function CitizenHome({ tenantId, setHideBack }) {
       {registrationIsDoneApprovalIsPending && <ApplicationAwaitingPage individualId={individualId} />}
       {userHasIncompleteRegistration && (
         <TakeUserToRegistration
-          message={isRejected ? "CS_REJECT_MESSAGE" : "CS_REGISTRATION_MESSAGE"}
+          message={isRejected ? `${t("CS_REJECT_MESSAGE")} due to ${rejectionReason}. ${t("KINDLY_REGISTER_AGAIN")}` : t("CS_REGISTRATION_MESSAGE")}
           isRejected={isRejected}
+          isLitigantPartialRegistered={isLitigantPartialRegistered}
           data={data}
-          userType={searchResult?.[0]?.additionalDetails?.userType}
+          advocate={searchResult?.[0]}
         />
       )}
     </div>

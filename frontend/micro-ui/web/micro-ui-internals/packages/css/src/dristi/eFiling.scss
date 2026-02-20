@@ -502,6 +502,13 @@
     color: #0a0a0a;
   }
 
+  .toast-success.error {
+    h2 {
+      font-weight: normal !important;
+      color: white !important;
+    }
+  }
+
   .custom-text-area-main-div {
     .custom-text-area-header-div {
       gap: 12px !important;
@@ -1389,6 +1396,111 @@
       color: #77787b;
     }
   }
+
+  .payment-wrapper {
+    display: flex !important;
+    flex-direction: column;
+    margin: 20px 0px;
+    gap: 10px;
+
+    .digit-infobanner-wrap {
+      background-color: #ecf3fd;
+      padding: 12px 12px 12px 12px;
+
+      .digit-infobanner-header-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .individualElement {
+        width: 100%;
+      }
+      .info-card-content {
+        color: #3d3c3c;
+        width: 100%;
+        ul {
+          list-style-type: disc;
+          margin-top: 10px;
+          margin-bottom: 0;
+          margin-left: 0;
+          padding-left: 1.5rem;
+          li {
+            margin-bottom: 6px;
+            color: #3d3c3c;
+            padding-left: 8px;
+            &:last-child {
+              margin-bottom: 0;
+            }
+            &::marker {
+              color: #3d3c3c;
+            }
+          }
+        }
+      }
+    }
+
+    .total-payment {
+      display: flex;
+      flex-direction: column;
+      padding: 12px 0px;
+      border-bottom: 1px solid #bbbbbd;
+
+      .total-payment-item {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 16px;
+
+        .total-payment-label {
+          color: #3d3c3c;
+        }
+
+        .total-payment-amount {
+          color: #0a0a0a;
+          font-weight: 500;
+        }
+      }
+    }
+
+    .breakdown-payment {
+      display: flex;
+      flex-direction: column;
+      max-height: 180px;
+      overflow-y: auto;
+      padding: 4px 12px;
+
+      .breakdown-payment-item {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        color: #77787b;
+        margin-bottom: 8px;
+      }
+    }
+
+    .pay-online-button {
+      font-family: Roboto;
+      font-size: 16px !important;
+      font-weight: 700;
+      padding: 8px 24px;
+      max-width: 100%;
+      line-height: 18.75px;
+      border: 1px solid #007e7e !important;
+      background-color: white !important;
+      border: none;
+      color: #007e7e;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      h2 {
+        text-align: center;
+        width: auto !important;
+        color: #007e7e !important;
+      }
+    }
+  }
 }
 
 .e-filing-payment-breakdown {
@@ -1646,7 +1758,7 @@
         width: 100%;
         position: sticky;
         padding-right: 40px;
-        top: 72px
+        top: 72px;
       }
     }
 
@@ -1961,6 +2073,306 @@
           text-align: center;
         }
       }
+    }
+  }
+}
+
+.process-courier-service {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  .accused-process-courier {
+    margin-top: 20px !important;
+    .header {
+      font-size: 24px;
+      font-weight: 700;
+      color: #3d3c3c;
+    }
+    .process-courier-container {
+      padding: 0;
+      margin-top: 20px;
+    }
+
+    .header-row {
+      display: flex;
+      font-size: 16px;
+      font-weight: 700;
+      color: #231f20;
+      border-bottom: 1px solid #bbbbbd;
+      padding: 12px;
+    }
+
+    .process-section {
+      flex: 1;
+    }
+
+    .courier-section {
+      flex: 1;
+    }
+
+    .row {
+      display: flex;
+      border-bottom: 1px solid #e8e8e8;
+      align-items: center;
+      min-height: 68px;
+    }
+
+    .label-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      height: 100%;
+      margin-left: 12px;
+    }
+
+    .label {
+      font-size: 16px;
+      font-weight: 400;
+      color: #0a0a0a;
+    }
+
+    .info-icon {
+      margin-left: 8px;
+      margin-top: 8px;
+      cursor: pointer;
+
+      .place-bottom {
+        max-width: 250px;
+        word-wrap: break-word;
+        opacity: 1 !important;
+        padding: 12px;
+        line-height: 16px;
+        border-radius: 8px;
+        text-align: center;
+      }
+    }
+
+    .optional {
+      color: #77787b;
+      font-size: 16px;
+      margin-left: 8px;
+    }
+
+    .dropdown-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      height: 100%;
+      margin-right: 12px;
+      .disabled {
+        border-color: #77787b !important;
+      }
+    }
+
+    .address-section {
+      margin-top: 24px;
+    }
+
+    .address-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #bbbbbd;
+      padding: 12px;
+    }
+
+    .address-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #231f20;
+    }
+
+    .address-note {
+      font-size: 14px;
+      color: #9e400a;
+      font-style: italic;
+    }
+
+    .address-list {
+      padding: 12px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .address-item {
+      display: flex;
+      align-items: center;
+    }
+
+    .address-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-right: 12px;
+      accent-color: #0b6efd;
+    }
+
+    .add-address-btn {
+      font-size: 16px !important;
+      font-weight: 700;
+      padding: 12px;
+      max-width: 100%;
+      background-color: white !important;
+      border: none;
+      color: #007e7e;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      h2 {
+        color: #007e7e !important;
+      }
+    }
+
+    .no-addresses {
+      color: #505a5f;
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+
+    h2.heading-m {
+      font-size: 24px;
+      font-weight: 700;
+      color: #3d3c3c;
+    }
+  }
+  .popup-module-action-bar {
+    .selector-button-border {
+      height: 2.5rem;
+      border: solid 1px #007e7e;
+
+      h2 {
+        font-family: Roboto;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 18.75px;
+        text-align: center;
+        color: #007e7e !important;
+      }
+    }
+
+    .selector-button-primary-disabled {
+      height: 2.5rem;
+      width: fit-content !important;
+      h2 {
+        font-family: Roboto;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 18.75px;
+        text-align: center;
+        color: #fff !important;
+      }
+    }
+
+    .selector-button-primary {
+      height: 2.5rem;
+      width: fit-content !important;
+      h2 {
+        font-family: Roboto;
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 18.75px;
+        text-align: center;
+        color: #fff !important;
+      }
+    }
+  }
+  .header-wrap {
+    width: 100%;
+    height: 52px;
+    padding: 20px 24px;
+    border-bottom: 1px #e8e8e8 solid;
+    .header-content.popup-header-fix {
+      .main-heading {
+        font-family: Roboto;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 28.13px;
+        text-align: center;
+        margin: 0px;
+      }
+    }
+    .header-end {
+      div {
+        padding-right: 0px !important;
+      }
+    }
+  }
+
+  .address-card-input {
+    margin: 20px 0px;
+    column-gap: 20px;
+    .heading {
+      font-size: 16px;
+      font-weight: 400;
+      color: #0b0c0c;
+      margin-bottom: 4px;
+    }
+    input {
+      margin-bottom: 0;
+    }
+    input:disabled {
+      border-color: #9e9e9e !important;
+      color: #b1b4b6 !important;
+    }
+    .card-label-error {
+      color: #b91900 !important;
+      margin-bottom: 0;
+    }
+  }
+}
+
+.removal-custom-chip {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f5f5f5;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  gap: 6px;
+}
+
+.removal-custom-chip__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #cfcfcf;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #a9a9a9;
+  }
+
+  svg {
+    pointer-events: none;
+  }
+}
+
+.bulk-input-container-date-picker {
+
+  .bulk-input-date-picker-section{
+    .custom-date-picker {
+      margin-bottom: 5px !important;
+    }
+    .card-label-error{
+      margin-top: 0px !important;
+      margin-bottom: 0px !important;
+    }
+  }
+
+  .toast-success.error {
+    background-color: red;
+
+    h2 {
+      color: white !important;
+    }
+
+    svg {
+      fill: white;
     }
   }
 }

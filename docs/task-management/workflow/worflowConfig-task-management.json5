@@ -1,0 +1,141 @@
+{
+  "tenantId": "kl",
+  "businessService": "task-management-payment",
+  "business": "task-management",
+  "businessServiceSla": null,
+  "states": [
+    {
+      "sla": null,
+      "state": null,
+      "applicationStatus": null,
+      "docUploadRequired": false,
+      "isStartState": true,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "CREATE",
+          "nextState": "PENDING_PAYMENT",
+          "roles": [
+            "PENDING_TASK_CREATOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN",
+            "PROCESS_MANAGEMENT_CREATOR"
+          ]
+        },
+        {
+          "action": "CREATE_UPFRONT_PAYMENT",
+          "nextState": "TASK_CREATION",
+          "roles": [
+            "PENDING_TASK_CREATOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        }
+      ]
+    },
+    {
+      "sla": null,
+      "state": "TASK_CREATION",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "UPDATE_UPFRONT_PAYMENT",
+          "nextState": "TASK_CREATION",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN",
+            "PENDING_TASK_CREATOR"
+          ]
+        },
+        {
+          "action": "COMPLETE_TASK_CREATION",
+          "nextState": "TASK_CREATED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "EXPIRE",
+          "nextState": "EXPIRED",
+          "roles": [
+            "PENDING_TASK_CREATOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        }
+      ]
+    },
+    {
+      "sla": null,
+      "state": "PENDING_PAYMENT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "action": "MAKE_PAYMENT",
+          "nextState": "COMPLETED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
+        },
+        {
+          "action": "EXPIRE",
+          "nextState": "EXPIRED",
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN",
+            "PENDING_TASK_CREATOR",
+            "PROCESS_MANAGEMENT_EDITOR"
+          ]
+        },
+        {
+          "action": "UPDATE",
+          "nextState": "PENDING_PAYMENT",
+          "roles": [
+            "PENDING_TASK_CREATOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN",
+            "PROCESS_MANAGEMENT_EDITOR"
+          ]
+        }
+      ]
+    },
+    {
+      "sla": null,
+      "state": "COMPLETED",
+      "applicationStatus": "ACTIVE",
+      "isStateUpdatable": false,
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true
+    },
+    {
+      "sla": null,
+      "state": "EXPIRED",
+      "applicationStatus": "INACTIVE",
+      "isStateUpdatable": false,
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true
+    },
+    {
+      "sla": null,
+      "state": "TASK_CREATED",
+      "applicationStatus": "INACTIVE",
+      "isStateUpdatable": false,
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": true
+    }
+  ]
+}

@@ -40,7 +40,8 @@ const ScheduleHearing = ({
           tenantId: tenantId,
           filingNumber: [caseData.filingNumber],
           hearingType: data.purpose,
-          courtCaseNumber: caseData?.case?.courtCaseNumber,
+          courtCaseNumber:
+            (caseData?.case?.isLPRCase ? caseData?.case?.lprNumber : caseData?.case?.courtCaseNumber) || caseData?.case?.courtCaseNumber,
           cmpNumber: caseData?.case?.cmpNumber,
           status: true,
           attendees: [
@@ -126,8 +127,8 @@ const ScheduleHearing = ({
     const litigantsNames = caseDetails.litigants?.map((litigant) => {
       return { name: litigant.additionalDetails.fullName, individualId: litigant.individualId, type: partyTypes[litigant.partyType] };
     });
-    const witnessNames = caseDetails.additionalDetails.witnessDetails.formdata?.map((data) => {
-      return { name: `${data.data.firstName} ${data.data.lastName}`, type: "Witness" };
+    const witnessNames = caseDetails?.witnessDetails?.map((data) => {
+      return { name: `${data?.firstName} ${data?.lastName}`, type: "Witness" };
     });
 
     config.checkBoxes.forEach((checkbox) => {

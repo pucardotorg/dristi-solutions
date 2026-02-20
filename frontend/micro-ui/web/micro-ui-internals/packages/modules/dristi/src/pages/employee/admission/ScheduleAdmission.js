@@ -5,6 +5,7 @@ import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import { formatDateInMonth, getMDMSObj } from "../../../Utils";
 import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
+import useSortedMDMSData from "../../../hooks/dristi/useSortedMDMSData";
 
 function ScheduleAdmission({
   config,
@@ -45,7 +46,7 @@ function ScheduleAdmission({
   // };
   const [nextFiveDates, setNextFiveDates] = useState([]);
   const [showErrorToast, setShowErrorToast] = useState(false);
-  const { data: hearingTypeData, isLoading } = useGetStatuteSection("Hearing", [{ name: "HearingType" }]);
+  const { data: hearingTypeOptions } = useSortedMDMSData("Hearing", "HearingType", "type", t);
   const isAdmissionHearingScheduled = useMemo(() => {
     if (!hearingDetails?.HearingList?.length) {
       return false;
@@ -96,10 +97,6 @@ function ScheduleAdmission({
       );
     }
   }, [hearingDetails]);
-
-  const hearingTypes = useMemo(() => {
-    return hearingTypeData?.HearingType || [];
-  }, [hearingTypeData]);
 
   const defaultHearingType = useMemo(() => {
     if (isDelayApplicationPending || isDelayApplicationCompleted || delayCondonationData?.isDcaSkippedInEFiling?.code === "NO") {
@@ -186,10 +183,10 @@ function ScheduleAdmission({
       name: "hearingType",
       optionsKey: "type",
       isMandatory: true,
-      options: hearingTypes,
+      options: hearingTypeOptions,
       defaultValue: defaultHearingType,
     };
-  }, [hearingTypes, defaultHearingType]);
+  }, [hearingTypeOptions, defaultHearingType]);
 
   function dateToEpoch(date) {
     return Math.floor(new Date(date).getTime());

@@ -9,9 +9,15 @@ const ProjectBreadCrumb = ({ location }) => {
   const { t } = useTranslation();
   const userInfo = window?.Digit?.UserService?.getUser?.()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const crumbs = [
     {
-      path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
+      path: homePath,
       content: t("ES_COMMON_HOME"),
       show: true,
     },
@@ -87,7 +93,7 @@ const SelectEmail = ({
       localStorage.setItem("user-info", JSON.stringify({ ...localUserInfo, emailId: info?.emailId }));
       localStorage.setItem("Citizen.user-info", JSON.stringify({ ...localCitizenUserInfo, emailId: info?.emailId }));
       if (!isProfile) {
-        history.push(`${path}/user-name`);
+        history.push(`${path}/user-name`, { newParams: { ...params, email: email } });
       } else {
         history.replace(`/${window?.contextPath}/citizen/dristi/home`);
       }

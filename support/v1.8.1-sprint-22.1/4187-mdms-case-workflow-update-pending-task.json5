@@ -1,0 +1,33 @@
+[
+  {
+    "tenantId" : "kl",
+    "moduleName" : "common-masters",
+    "masterName" : "PendingTaskType",
+    "mdmsPayload": [
+      {
+        "id": "da4e2dbe-dab6-477d-a932-a737b02b7d91",
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "16",
+        "data": {
+          "id": "16",
+          "actor": "Judge/CMO",
+          "state": "PENDING_RESPONSE",
+          "isgeneric": false,
+          "screenType": "home",
+          "pendingTask": "Admit/Dismiss case",
+          "closerAction": [
+            "REJECT",
+            "ADMIT",
+            "RESPOND"
+          ],
+          "triggerAction": [
+            "REGISTER"
+          ],
+          "workflowModule": "case-default"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

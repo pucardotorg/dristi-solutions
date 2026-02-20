@@ -1,0 +1,65 @@
+[
+  {
+    "id": "76e3d36d-f564-4663-9f5e-b0cad119d4ff",
+    "tenantId": "kl",
+    "schemaCode": "court.hearings",
+    "uniqueIdentifier": "17",
+    "data": {
+      "id": 17,
+      "priority": 120,
+      "hearingName": "Application Review", // new name
+      "hearingTime": "10",
+      "hearingType": "APPLICATION_REVIEW",
+      "unitOfMeasurement": "Minutes"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1749194092282,
+      "lastModifiedTime": 1758784131976
+    }
+  },
+  {
+    "id": "30252388-2920-4952-a190-9b54b47397e2",
+    "tenantId": "kl",
+    "schemaCode": "court.hearings",
+    "uniqueIdentifier": "16",
+    "data": {
+      "id": 16,
+      "priority": 105,
+      "hearingName": "Cognizance", // new name
+      "hearingTime": "10",
+      "hearingType": "COGNIZANCE",
+      "unitOfMeasurement": "Minutes"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1749194044097,
+      "lastModifiedTime": 1758784188212
+    }
+  },
+  {
+    "id": "22ce58ac-c5c9-438c-ba56-53a080460735",
+    "tenantId": "kl",
+    "schemaCode": "court.hearings",
+    "uniqueIdentifier": "15",
+    "data": {
+      "id": 15,
+      "priority": 75,
+      "hearingName": "Delay Condonation And Admission", // new name
+      "hearingTime": "10",
+      "hearingType": "DELAY_CONDONATION_AND_ADMISSION",
+      "unitOfMeasurement": "Minutes"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1741339817565,
+      "lastModifiedTime": 1758784219046
+    }
+  }
+]

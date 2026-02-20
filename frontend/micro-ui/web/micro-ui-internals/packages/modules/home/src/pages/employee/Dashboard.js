@@ -1,42 +1,23 @@
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
-import TasksComponent from "../../components/TaskComponent";
 import { BreadCrumb } from "@egovernments/digit-ui-react-components";
 import { MailBoxIcon, CaseDynamicsIcon, ThreeUserIcon, DownloadIcon, ExpandIcon, CollapseIcon, FilterIcon, DocumentIcon } from "../../../homeIcon";
-import CustomDateRangePicker from "../../components/CustomDateRangePicker";
+
+const METABASE_URL = "https://oncourts.kerala.gov.in/pucar-dashboard/public/dashboard/981a30b4-c33a-4f11-96a6-1242d95717e2";
 
 const DashboardPage = () => {
   const { t } = useTranslation();
   const { select } = Digit.Hooks.useQueryParams();
-  const getCurrentDate = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate() + 1).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
   const history = useHistory();
   const [stepper, setStepper] = useState(Number(select) || 0);
-  const [selectedRange, setSelectedRange] = useState({ startDate: "2024-11-14", endDate: getCurrentDate() });
   const [downloadingIndices, setDownloadingIndices] = useState([]);
   const [navbarCollapsed, setNavbarCollapsed] = useState(false);
-  const userInfo = Digit?.UserService?.getUser()?.info;
-  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const userRoles = Digit?.UserService?.getUser?.()?.info?.roles || [];
-  const [taskType, setTaskType] = useState({});
   const [jobId, setJobID] = useState("");
   const [headingTxt, setHeadingTxt] = useState("");
-  const [showPicker, setShowPicker] = useState(false);
-  const [dateRange, setDateRange] = useState([
-    {
-      startDate: new Date(2024, 10, 14),
-      endDate: new Date(),
-      key: "selection",
-    },
-  ]);
+  const [metabaseUrl, setMetabaseUrl] = useState(METABASE_URL);
   const [toastMsg, setToastMsg] = useState(null);
   const showToast = (type, message, duration = 5000) => {
     setToastMsg({ key: type, action: message });
@@ -61,8 +42,6 @@ const DashboardPage = () => {
           passwordField.dispatchEvent(new Event("input", { bubbles: true }));
           passwordField.dispatchEvent(new Event("change", { bubbles: true }));
           submitButton.click();
-        } else {
-          console.log("Already logged in or fields missing", iframeDoc, usernameField);
         }
       } catch (err) {
         console.error("Login failed due to cross-origin access issue", err);
@@ -115,23 +94,6 @@ const DashboardPage = () => {
     }
   }, [select]);
 
-  const handleSubmit = () => {
-    const startDate = new Date(dateRange[0].startDate);
-    const endDate = new Date(dateRange[0].endDate);
-
-    startDate.setHours(0, 0, 0, 0);
-
-    endDate.setHours(23, 59, 59, 999);
-
-    const utcStartDate = new Date(startDate.toUTCString());
-    const utcEndDate = new Date(endDate.toUTCString());
-
-    setSelectedRange({
-      startDate: utcStartDate.toISOString(),
-      endDate: utcEndDate.toISOString(),
-    });
-  };
-
   const toggleNavbar = () => {
     setNavbarCollapsed(!navbarCollapsed);
   };
@@ -139,7 +101,7 @@ const DashboardPage = () => {
   const baseUrl = window.location.origin;
 
   const handleClick = () => {
-    history.push(`/${window?.contextPath}/${userInfoType}/home/dashboard/adiary`);
+    history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "CS_HOME_A_DAIRY" });
   };
 
   const { data: kibanaData, isLoading: isDashboardJobIDsLoading } = Digit.Hooks.useCustomMDMS(
@@ -166,9 +128,8 @@ const DashboardPage = () => {
   }, [sortedDashboards, stepper]);
   const handleDownload = async (downloadLink, index) => {
     setDownloadingIndices((prev) => [...prev, index]);
-    console.log("need to remove", process.env.REACT_APP_KIBANA_USERNAME, process.env.REACT_APP_KIBANA_PASSWORD);
-    const username = process.env.REACT_APP_KIBANA_USERNAME || "michaelGeorge";
-    const password = process.env.REACT_APP_KIBANA_PASSWORD || "ONcourts*247";
+    const username = process.env.REACT_APP_KIBANA_USERNAME || "anonymous";
+    const password = process.env.REACT_APP_KIBANA_PASSWORD || "Beehyv@123";
     const credentials = btoa(`${username}:${password}`);
     const config = {
       headers: {
@@ -187,7 +148,7 @@ const DashboardPage = () => {
     let timer;
 
     try {
-      const response = await axios.post(downloadLink, null, config);
+      const response = await axiosInstance.post(downloadLink, null, config);
       if (!response.data?.path) {
         showToast("error", t("ERR_REPORT_PATH"), 50000);
         console.error("Report path not found in the response");
@@ -197,7 +158,7 @@ const DashboardPage = () => {
       const reportUrl = `${baseUrl}${response.data.path}`;
       const tryDownload = async () => {
         try {
-          const csvResponse = await axios.get(reportUrl, {
+          const csvResponse = await axiosInstance.get(reportUrl, {
             ...config,
             responseType: "blob",
           });
@@ -227,8 +188,6 @@ const DashboardPage = () => {
             console.error("Report not ready after max attempts");
 
             setDownloadingIndices((prev) => prev.filter((i) => i !== index));
-          } else {
-            console.log(`Attempt ${attemptCount}: Report not ready yet.`);
           }
         }
       };
@@ -245,10 +204,14 @@ const DashboardPage = () => {
     const { t } = useTranslation();
     const userInfo = window?.Digit?.UserService?.getUser()?.info;
     const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+    const roles = useMemo(() => userInfo?.roles, [userInfo]);
+    const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
+    let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+    if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
     const crumbs = [
       {
-        path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
+        path: homePath,
         content: t("ES_COMMON_HOME"),
         show: true,
       },
@@ -301,6 +264,7 @@ const DashboardPage = () => {
                       onClick={() => {
                         setStepper(1);
                         setHeadingTxt(data.code + "_HEADING");
+                        setMetabaseUrl(data.code === "HEARINGS_DS" ? `${METABASE_URL}?tab=122-hearings-progress` : METABASE_URL);
                         setJobID(data.jobId);
                       }}
                     >
@@ -331,31 +295,16 @@ const DashboardPage = () => {
         </div>
 
         <div className={`main-content ${navbarCollapsed ? "collapsed" : ""}`}>
-          {!isNaN(stepper) && headingTxt?.trim() && (
+          {headingTxt === "AVAILABLE_REPORTS" && !isNaN(stepper) && headingTxt?.trim() && (
             <div className="dashboardTopbar">
               <h2 style={{ fontWeight: "bold", margin: "10px" }}>{t(headingTxt)}</h2>
             </div>
           )}
 
           <div className="dashboard-content">
-            {stepper === 1 && (
-              <div className="date-filter">
-                <CustomDateRangePicker setDateRange={setDateRange} dateRange={dateRange} showPicker={showPicker} setShowPicker={setShowPicker} />
-                <button onClick={handleSubmit} className="filter-button">
-                  <FilterIcon /> {t("ADD_FILTER")}
-                </button>
-              </div>
-            )}
             <div className="content-area">
               <style>{customStyles}</style>
-              {stepper === 1 && (
-                <iframe
-                  src={`${baseUrl}/kibana/app/dashboards#/view/${jobId}?embed=true&chrome=false&_g=(refreshInterval:(pause:!t,value:60000),time:(from:'${selectedRange.startDate}',to:'${selectedRange.endDate}'))&_a=()&hide-filter-bar=true`}
-                  height="600"
-                  width="100%"
-                  title="case"
-                ></iframe>
-              )}{" "}
+              {stepper === 1 && <iframe src={metabaseUrl} height="700" width="100%"></iframe>}{" "}
               {stepper === 2 && (
                 <div style={{ marginTop: "20px", display: "flex", gap: "15px" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 4 }}>
@@ -377,17 +326,6 @@ const DashboardPage = () => {
                       </div>
                     ))}
                   </div>
-                  {/* <div style={{ flex: 2 }}>
-                      <TasksComponent
-                        taskType={taskType}
-                        setTaskType={setTaskType}
-                        isLitigant={userRoles.includes("CITIZEN")}
-                        uuid={userInfo?.uuid}
-                        userInfoType={userInfoType}
-                        hideFilters={true}
-                        isDiary={true}
-                      />
-                    </div> */}
                 </div>
               )}
             </div>

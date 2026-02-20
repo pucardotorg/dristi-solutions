@@ -1,0 +1,15 @@
+{
+  "id": "bf216a7f-be70-441b-8226-0eac62f64f7c",
+  "tenantId": "kl",
+  "schemaCode": "BillingService.TaxPeriod",
+  "uniqueIdentifier": "TPMAG202330",
+  "data": {
+    "code": "TPMAG202330",
+    "toDate": 1901145600000,
+    "service": "task-management-payment",
+    "fromDate": 1680287400000,
+    "periodCycle": "ANNUAL",
+    "financialYear": "2023-30"
+  },
+  "isActive": true
+}

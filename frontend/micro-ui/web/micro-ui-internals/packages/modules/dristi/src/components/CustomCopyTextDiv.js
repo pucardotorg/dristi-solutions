@@ -2,7 +2,18 @@ import React, { useState } from "react";
 import { CardText } from "@egovernments/digit-ui-react-components";
 import { CopyIcon } from "../icons/svgIndex";
 
-const CustomCopyTextDiv = ({ data, t, keyStyle, valueStyle, textWrapperStyle, cardStyle, subCardStyle }) => {
+const CustomCopyTextDiv = ({
+  data,
+  t,
+  keyStyle,
+  valueStyle,
+  textWrapperStyle,
+  cardStyle,
+  subCardStyle,
+  isCenter = false,
+  isShowValue = true,
+  customTextStyle,
+}) => {
   const [copiedIndex, setCopiedIndex] = useState(null); // Track the index of the copied item
 
   const handleCopy = (text) => {
@@ -18,15 +29,17 @@ const CustomCopyTextDiv = ({ data, t, keyStyle, valueStyle, textWrapperStyle, ca
 
   return (
     <div style={{ borderRadius: "10px", backgroundColor: "#F7F5F3", padding: "10px", width: "100%", ...cardStyle }}>
-      {data.map(({ key, value, copyData = true, isLocalization = true }, index) => (
+      {data.map(({ key, value, copyData = true, isLocalization = true, customText = "" }, index) => (
         <div key={index} style={{ display: "flex", marginBottom: "10px", ...subCardStyle }}>
-          <div style={{ flex: 1, ...textWrapperStyle }}>
-            <CardText className={"copy-key-text"} style={keyStyle}>
-              {isLocalization ? t(key) : key}
-            </CardText>
-          </div>
+          {!isCenter && (
+            <div style={{ flex: 1, ...textWrapperStyle }}>
+              <CardText className={"copy-key-text"} style={keyStyle}>
+                {isLocalization ? t(key) : key}
+              </CardText>
+            </div>
+          )}
           <div style={{ display: "flex", alignItems: "center", paddingLeft: "10px" }}>
-            <CardText style={valueStyle}>{t(value)}</CardText>
+            {isShowValue && <CardText style={valueStyle}>{t(value)}</CardText>}
             {copyData && (
               <button
                 style={{
@@ -35,6 +48,7 @@ const CustomCopyTextDiv = ({ data, t, keyStyle, valueStyle, textWrapperStyle, ca
                   gap: "8px",
                   fontSize: "16px",
                   backgroundColor: "transparent",
+                  ...(customTextStyle && customTextStyle),
                 }}
                 onClick={() => {
                   handleCopy(value);
@@ -42,7 +56,7 @@ const CustomCopyTextDiv = ({ data, t, keyStyle, valueStyle, textWrapperStyle, ca
                 }}
               >
                 <CopyIcon />
-                {copiedIndex === index ? "Copied" : "Copy"} {/* Show "Copied" only for the clicked item */}
+                {copiedIndex === index ? "Copied" : `Copy ${customText}`} {/* Show "Copied" only for the clicked item */}
               </button>
             )}
           </div>

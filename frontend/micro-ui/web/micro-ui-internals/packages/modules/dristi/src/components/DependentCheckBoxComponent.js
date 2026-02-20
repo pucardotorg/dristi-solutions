@@ -15,7 +15,6 @@ function CheckboxItem({ name, checked, onToggle, t }) {
 }
 
 function DependentFields({ t, option, selectedValues, handleInputChange }) {
-  console.log("option1", option);
   return (
     <div style={{ display: "flex", flexDirection: "column", margin: "10px 0px" }}>
       <span style={{ display: "flex", flexDirection: "row", gap: "5px", alignItems: "center" }}>

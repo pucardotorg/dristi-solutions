@@ -1,0 +1,1 @@
+ALTER TABLE inportal_survey_tracker rename column expiry_date to last_triggered_date;

@@ -1,0 +1,76 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2766",
+    "data": {
+      "id": 2766,
+      "url": "/analytics/offline-payment/_create",
+      "code": "2766",
+      "name": "offline manual task",
+      "displayName": "offline manual task",
+      "serviceCode": "analytics"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2765",
+    "data": {
+      "id": 2765,
+      "url": "/case/v1/address/_add",
+      "code": "2765",
+      "name": "Add address api",
+      "enabled": true,
+      "displayName": "Add address api ",
+      "serviceCode": "case"
+    },
+    "isActive": true
+  },
+  {
+    "id": "1648537b-15bc-4e7e-98ec-15f863a967ac",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2764",
+    "data": {
+      "id": 2764,
+      "url": "/task-management/v1/_search",
+      "code": "2764",
+      "name": "Task Management search",
+      "displayName": "Task Management search",
+      "serviceCode": "task-management"
+    },
+    "isActive": true
+  },
+  {
+    "id": "04d3d2c6-b5da-41d8-bcce-9f78fceb9daf",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2763",
+    "data": {
+      "id": 2763,
+      "url": "/task-management/v1/_update",
+      "code": "2763",
+      "name": "Task Management update",
+      "displayName": "Task Management update",
+      "serviceCode": "task-management"
+    },
+    "isActive": true
+  },
+  {
+    "id": "7f41e2f5-972f-46b8-9103-af9fc7b30e78",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2762",
+    "data": {
+      "id": 2762,
+      "url": "/task-management/v1/_create",
+      "code": "2762",
+      "name": "Task Management create",
+      "displayName": "Task Management create",
+      "serviceCode": "task-management"
+    },
+    "isActive": true
+  }
+]

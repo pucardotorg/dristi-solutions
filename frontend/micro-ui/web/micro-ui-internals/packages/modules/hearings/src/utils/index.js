@@ -54,7 +54,10 @@ export const updateCustomConfigs = () => {
 };
 
 export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
-  const nameParts = [firstName, middleName, lastName].filter(Boolean).join(" ");
+  const nameParts = [firstName, middleName, lastName]
+    ?.map((part) => part?.trim())
+    ?.filter(Boolean)
+    ?.join(" ");
 
   const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
 

@@ -22,6 +22,7 @@ const MultiSelectDropdown = ({
   config,
   customLabel = "",
   parentRef,
+  isOpenAbove = false,
 }) => {
   const [active, setActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState();
@@ -238,10 +239,9 @@ const MultiSelectDropdown = ({
 
       const spaceBelow = parentRect.bottom - dropdownRect.bottom;
       const spaceAbove = dropdownRect.top - parentRect.top;
-
-      setOpenAbove(spaceBelow < 200 && spaceAbove > spaceBelow);
+      setOpenAbove(isOpenAbove || (spaceBelow < 200 && spaceAbove > spaceBelow));
     }
-  }, [active, parentRef]);
+  }, [active, parentRef, isOpenAbove]);
 
   return (
     <div style={{ marginBottom: "1px" }}>

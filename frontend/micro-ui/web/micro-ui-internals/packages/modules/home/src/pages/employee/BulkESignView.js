@@ -1,4 +1,4 @@
-import { ActionBar, BreadCrumb, Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -8,10 +8,11 @@ import { orderManagementService, ordersService } from "@egovernments/digit-ui-mo
 import { OrderWorkflowAction, OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import OrderBulkReviewModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderBulkReviewModal";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import qs from "qs";
 import { HomeService } from "../../hooks/services";
 import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
+import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -29,28 +30,6 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-const ProjectBreadCrumb = ({ location }) => {
-  const userInfo = window?.Digit?.UserService?.getUser()?.info;
-  let userType = "employee";
-  if (userInfo) {
-    userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
-  }
-  const { t } = useTranslation();
-  const crumbs = [
-    {
-      path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
-      content: t("ES_COMMON_HOME"),
-      show: true,
-    },
-    {
-      path: `/${window?.contextPath}/${userType}`,
-      content: t("BULK_SIGNING"),
-      show: true,
-    },
-  ];
-  return <BreadCrumb crumbs={crumbs} spanStyle={{ maxWidth: "min-content" }} />;
-};
-
 function BulkESignView() {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
@@ -63,12 +42,21 @@ function BulkESignView() {
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleteOrderLoading, setIsDeleteOrderLoading] = useState(false);
+  const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
+  const [signedList, setSignedList] = useState([]);
 
   const [showErrorToast, setShowErrorToast] = useState(null);
   const { orderNumber, deleteOrder } = Digit.Hooks.useQueryParams();
   const [showBulkSignAllModal, setShowBulkSignAllModal] = useState(false);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
+  const courtId = localStorage.getItem("courtId");
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
+  const hasOrderEsignAccess = useMemo(() => roles?.some((role) => role.code === "ORDER_ESIGN"), [roles]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
   };
@@ -88,12 +76,12 @@ function BulkESignView() {
   const { data: ordersData } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { orderNumber: orderNumber },
+      criteria: { orderNumber: orderNumber, ...(courtId && { courtId }) },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },
     orderNumber,
-    Boolean(orderNumber)
+    Boolean(orderNumber && courtId)
   );
 
   const { data: bulkOrdersData } = useSearchOrdersNotificationService(
@@ -110,12 +98,13 @@ function BulkESignView() {
           entityType: "Order",
           tenantId: tenantId,
           status: OrderWorkflowState.PENDING_BULK_E_SIGN,
+          ...(courtId && { courtId }),
         },
       },
     },
     { tenantId },
     `${orderNumber}-${OrderWorkflowState.PENDING_BULK_E_SIGN}`,
-    true
+    Boolean(courtId)
   );
 
   const orderDetails = useMemo(() => ordersData?.list?.[0] || {}, [ordersData]);
@@ -129,7 +118,7 @@ function BulkESignView() {
       }
     }
     if (bulkOrdersData?.totalCount === 0) {
-      history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+      history.replace(homePath);
     }
   }, [history, userType, deleteOrder, orderDetails, bulkOrdersData]);
 
@@ -158,30 +147,46 @@ function BulkESignView() {
 
     const deleteOrderFunc = async (data) => {
       history.push(
-        `/${window?.contextPath}/${userType}/home/bulk-esign-order?orderNumber=${data?.businessObject?.orderNotification?.id}&deleteOrder=true`
+        `/${window?.contextPath}/${userType}/home/home-screen?orderNumber=${data?.businessObject?.orderNotification?.id}&deleteOrder=true`,
+        {
+          homeActiveTab: "CS_HOME_ORDERS",
+        }
       );
     };
 
     const setOrderFunc = async (order) => {
       if (order?.businessObject?.orderNotification?.entityType === "Order") {
         const orderResponse = await ordersService.searchOrder(
-          { criteria: { tenantId: tenantId, orderNumber: order?.businessObject?.orderNotification?.id } },
+          { criteria: { tenantId: tenantId, orderNumber: order?.businessObject?.orderNotification?.id, ...(courtId && { courtId }) } },
           { tenantId }
         );
         order = orderResponse?.list?.[0];
 
         if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
           history.push(
-            `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${order?.filingNumber}&orderNumber=${order?.orderNumber}`
+            `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${order?.filingNumber}&orderNumber=${order?.orderNumber}`
           );
         } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
-          history.push(`/${window?.contextPath}/${userType}/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);
+          history.push(`/${window?.contextPath}/${userType}/home/home-screen?orderNumber=${order?.orderNumber}`, { homeActiveTab: "CS_HOME_ORDERS" });
         }
       }
     };
 
     return {
       ...bulkESignOrderConfig,
+      apiDetails: {
+        ...bulkESignOrderConfig.apiDetails,
+        requestBody: {
+          ...bulkESignOrderConfig.apiDetails.requestBody,
+          inbox: {
+            ...bulkESignOrderConfig.apiDetails.requestBody.inbox,
+            moduleSearchCriteria: {
+              ...bulkESignOrderConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
+              ...(courtId && { courtId }),
+            },
+          },
+        },
+      },
       sections: {
         ...bulkESignOrderConfig.sections,
         searchResult: {
@@ -210,7 +215,7 @@ function BulkESignView() {
         },
       },
     };
-  }, [history, tenantId, userType]);
+  }, [history, tenantId, userType, courtId]);
 
   const onFormValueChange = async (form) => {
     if (Object.keys(form?.searchForm)?.length > 0) {
@@ -228,6 +233,7 @@ function BulkESignView() {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
           endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
         }),
+        ...(courtId && { courtId }),
       };
       await HomeService.customApiService(bulkESignOrderConfig?.apiDetails?.serviceName, {
         inbox: {
@@ -288,7 +294,7 @@ function BulkESignView() {
       try {
         // URL encoding the XML request
         const formData = qs.stringify({ response: order?.request });
-        const response = await axios.post(bulkSignUrl, formData, {
+        const response = await axiosInstance.post(bulkSignUrl, formData, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
           },
@@ -349,12 +355,21 @@ function BulkESignView() {
           },
           {}
         );
-        history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`, {
-          bulkSignSuccess: {
-            show: true,
-            bulkSignOrderListLength: updateOrderResponse?.orders?.length,
-          },
-        });
+        const signedList = updateOrderResponse?.orders;
+
+        if (signedList?.length === 0) {
+          setShowErrorToast({
+            message: t("FAILED_TO_PERFORM_BULK_SIGN"),
+            error: true,
+          });
+          setTimeout(() => {
+            setShowErrorToast(null);
+          }, 3000);
+          return;
+        }
+
+        setSignedList(signedList);
+        setShowBulkSignSuccessModal(true);
       });
     } catch (e) {
       setShowErrorToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
@@ -370,13 +385,12 @@ function BulkESignView() {
         <Loader />
       ) : (
         <React.Fragment>
-          <ProjectBreadCrumb location={window.location} />
-          <div className={"bulk-esign-order-view"}>
-            <div className="header">{t("BULK_SIGN_ORDERS")}</div>
+          <div className={"bulk-esign-order-view select"}>
+            <div className="header">{t("CS_HOME_ORDERS")}</div>
             <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
           </div>
-          <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-            <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
+          {hasOrderEsignAccess && (
+            <div className="bulk-submit-bar">
               <SubmitBar
                 label={t("SIGN_SELECTED_ORDERS")}
                 submit="submit"
@@ -384,7 +398,7 @@ function BulkESignView() {
                 onSubmit={() => setShowBulkSignConfirmModal(true)}
               />
             </div>
-          </ActionBar>
+          )}
         </React.Fragment>
       )}
       {showBulkSignAllModal && <OrderBulkReviewModal t={t} history={history} orderDetails={orderDetails} />}
@@ -430,6 +444,7 @@ function BulkESignView() {
           }
         />
       )}
+      {showBulkSignSuccessModal && <OrderIssueBulkSuccesModal t={t} history={history} bulkSignOrderListLength={signedList?.length} />}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
   );

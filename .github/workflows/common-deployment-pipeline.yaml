@@ -1,0 +1,231 @@
+name: Common Deployment Pipeline
+
+run-name: >
+  ${{
+    github.event_name == 'workflow_dispatch' &&
+      format(
+        'Deploy to {1} : {0}',
+        github.event.inputs.services,
+        github.event.inputs.deployment_env,
+        github.ref_name
+      )
+    || github.event_name == 'pull_request' &&
+      format(
+        'PR: {0}',
+        github.event.pull_request.title
+      )
+    || github.event_name == 'push' &&
+      format(
+        'Code Push: {0}',
+        github.event.head_commit.message
+      )
+  }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      services:
+        required: true
+        description: "Service name in kubernetes cluster in comma separated format (eg: service1, service2)"
+        type: string
+      deployment_env:
+        required: true
+        description: "Deployment environment (eg: dev, qa, demo)"
+        type: choice
+        default: dev
+        options:
+          - dev
+          - qa
+          - demo
+
+  push:
+    branches:
+      - main
+      - develop
+      - release/*
+
+
+jobs:
+  check-diff:
+    name: Check Differences
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+      deployment_env: ${{ steps.set_deployment_environment.outputs.deployment_env }}
+      repo_branch: ${{ steps.set_branch.outputs.BRANCH }}
+    steps:
+      - name: Set github branch
+        id: set_branch
+        run: |
+          BRANCH=""
+          if [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "closed" ]]; then
+            BRANCH="${{ github.event.pull_request.base.ref }}"
+          elif [[ "${{ github.event_name }}" == "pull_request" && "${{ github.event.action }}" == "synchronize" ]]; then
+            BRANCH="${{ github.event.pull_request.head.ref }}"
+          else
+            BRANCH="${{ github.event.ref }}"
+          fi 
+
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+          echo "BRANCH=$BRANCH" >> $GITHUB_OUTPUT
+          # show value *now* using shell variable
+          echo "Set the branch for current job as $BRANCH"
+
+      - name: checkout
+        uses: actions/checkout@v4
+        if: github.event_name != 'workflow_dispatch'
+        with:
+          ref: ${{ env.BRANCH }}
+          fetch-depth: 0
+
+      - name: Set Diff Range
+        if: github.event_name != 'workflow_dispatch'
+        id: diff_range
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "base_ref=origin/${{ github.event.pull_request.base.ref }}" >> "$GITHUB_OUTPUT"
+            echo "head_ref=origin/${{ github.event.pull_request.head.ref }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            echo "base_ref=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+            echo "head_ref=${{ github.event.after }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: check diff
+        if: github.event_name != 'workflow_dispatch'
+        id: check_diff
+        run: |
+          git fetch --all --prune
+
+          BASE=${{ steps.diff_range.outputs.base_ref }}
+          HEAD=${{ steps.diff_range.outputs.head_ref }}
+          
+          echo "performing git diff between $BASE and $HEAD"
+          git diff --name-only "$BASE" "$HEAD" > changed.txt
+
+          services=$(jq -r 'to_entries[] | "\(.key) \(.value.service_source_path)"' build/config.json |
+          while read svc raw_path; do
+            path=$(echo "$raw_path" | sed 's:/*$::')
+
+            if grep -q "^$path/" changed.txt; then
+              echo "$svc"
+            fi
+          done | sort -u)
+
+          echo "Changed services:"
+          echo "$services"
+
+          # SAFE JSON conversion
+          matrix=$(printf "%s\n" "$services" | jq -R -s -c '
+            split("\n")
+            | map(select(. != ""))
+            | map(.)
+          ')
+
+          echo "Matrix JSON:"
+          echo "$matrix"
+
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+
+      - name: create matrix
+        id: create_matrix
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            csv="${{ inputs.services }}"
+            echo "Input CSV: $csv"
+
+            # Convert CSV → JSON array
+            json=$(jq -c -R 'split(",") | map(. | gsub("^\\s+|\\s+$"; ""))' <<< "$csv")
+
+            echo "JSON Array: $json"
+
+            # Export as matrix
+            echo "matrix=$json" >> "$GITHUB_OUTPUT"
+          else
+            echo "Using matrix from check_diff step"
+            MATRIX='${{ steps.check_diff.outputs.matrix }}'
+            echo "Matrix JSON: $MATRIX"
+            echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: set deployment environment
+        id: set_deployment_environment
+        run: |
+          EVENT="${{ github.event_name }}"
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+          REF_NAME="${{ github.ref_name }}"
+          ENV_VALUE=""
+
+          if [[ "$EVENT" == "workflow_dispatch" ]]; then
+            ENV_VALUE="${{ inputs.deployment_env }}"
+          elif [[ "$EVENT" == "pull_request" ]]; then
+            case "$BASE_REF" in
+              main)          ENV_VALUE="demo" ;;
+              develop)       ENV_VALUE="dev" ;;
+              release/*)     ENV_VALUE="qa" ;;
+              *)             ENV_VALUE="dev" ;;
+            esac
+          elif [[ "$EVENT" == "push" ]]; then
+            case "$REF_NAME" in
+              main)          ENV_VALUE="demo" ;;
+              develop)       ENV_VALUE="dev" ;;
+              release/*)     ENV_VALUE="qa" ;;
+              *)             ENV_VALUE="dev" ;;
+            esac
+          fi
+          echo "Final Determined Env: $ENV_VALUE"
+          echo "deployment_env=$ENV_VALUE" >> $GITHUB_ENV
+          echo "deployment_env=$ENV_VALUE" >> $GITHUB_OUTPUT
+
+  build-deploy:
+    name: ${{ matrix.service }} - CI/CD
+    runs-on: ubuntu-latest
+    needs: check-diff
+    continue-on-error: true
+    if: needs.check-diff.outputs.matrix != ''
+    strategy:
+      matrix:
+          service: ${{ fromJSON(needs.check-diff.outputs.matrix) }}
+    environment: 
+      name: ${{ needs.check-diff.outputs.deployment_env }}
+    steps:
+      - name: Print Service Name
+        run: |
+          echo "Service Name: ${{ matrix.service }}"
+          echo "Deployment Environment: ${{ needs.check-diff.outputs.deployment_env }}"
+          echo "output from check-diff: ${{ needs.check-diff.outputs.matrix }}"
+          echo "repo_branch is ${{ needs.check-diff.outputs.repo_branch }}"
+
+      - name: Sonar Analysis
+        uses: pucardotorg/dristi-solutions/.github/actions/sonar-analysis@develop
+        with:
+          service_name: ${{ matrix.service }}
+          sonar_token: ${{ secrets.SONAR_TOKEN_BEEHYV }}
+          branch: ${{ needs.check-diff.outputs.repo_branch }}
+          repo: "pucardotorg/dristi-solutions"
+          ghub_token: ${{ secrets.GHUB_TOKEN }}
+
+      - name: Docker Build
+        id: docker_build
+        uses: pucardotorg/dristi-solutions/.github/actions/docker-build@develop
+        with:
+          service_name: ${{ matrix.service }}
+          docker_password: ${{ secrets.ACR_PASSWORD }}
+          branch: ${{ needs.check-diff.outputs.repo_branch }}
+          esign_private_key: ${{ secrets.ESIGN_PRIVATE_KEY }}
+          esign_public_key: ${{ secrets.ESIGN_PUBLIC_KEY }}
+
+      - name: Deployment Summary
+        run: |
+          echo "Docker image build: docker.io/venkatramireddyb/${{ matrix.service }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
+
+      - name: Deploy to Kubernetes
+        uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
+        with:
+          environment: ${{ needs.check-diff.outputs.deployment_env }}
+          service_group: ${{ env.service_group }}
+          service_name: ${{ matrix.service }}
+          image_tag: ${{ steps.docker_build.outputs.image_tag }}
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+          env_file: ${{ vars.HELMFILE_ENV }}
+          checkout_ref: ${{ vars.DEVOPS_BRANCH }}
+          sops_keys_txt: ${{ secrets.SOPS_KEYS_TXT }}

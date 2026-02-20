@@ -1,8 +1,15 @@
-import { Button, CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useState } from "react";
+import { Button, CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DRISTIService } from "../../../../dristi/src/services";
 import { useTranslation } from "react-i18next";
-import { getFullName, registerIndividualWithNameAndMobileNumber, searchIndividualUserWithUuid, submitJoinCase } from "../../utils/joinCaseUtils";
+import {
+  createPendingTask,
+  getFullName,
+  getTaskDetails,
+  registerIndividualWithNameAndMobileNumber,
+  searchIndividualUserWithUuid,
+  submitJoinCase,
+} from "../../utils/joinCaseUtils";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import SearchCaseAndShowDetails from "./joinCaseComponent/SearchCaseAndShowDetails";
 import AccessCodeValidation from "./joinCaseComponent/AccessCodeValidation";
@@ -12,6 +19,10 @@ import JoinCasePayment from "./joinCaseComponent/JoinCasePayment";
 import JoinCaseSuccess from "./joinCaseComponent/JoinCaseSuccess";
 import LitigantVerification from "./joinCaseComponent/LitigantVerification";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
+import POAInfo from "./joinCaseComponent/POAInfo";
+import { cleanString, combineMultipleFiles, getAuthorizedUuid, removeInvalidNameParts } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/submissionWorkflow";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const CloseBtn = (props) => {
   return (
@@ -37,6 +48,7 @@ const JoinHomeLocalisation = {
   JOIN_CASE_BACK_TEXT: "JOIN_CASE_BACK_TEXT",
   INVALID_ACCESS_CODE_MESSAGE: "INVALID_ACCESS_CODE_MESSAGE",
   JOIN_CASE_SUCCESS: "JOIN_CASE_SUCCESS",
+  APPLICATION_CREATION_FAILED: "APPLICATION_CREATION_FAILED",
 };
 
 const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data }) => {
@@ -47,7 +59,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const courtId = localStorage.getItem("courtId");
 
   const [show, setShow] = useState(false);
 
@@ -66,6 +78,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     userType: { label: "", value: "" },
     partyInvolve: { label: "", value: "" },
     isReplaceAdvocate: { label: "", value: "" },
+    isPoaRightsClaiming: { label: "", value: "" },
     advocateToReplaceList: [],
     approver: { label: "", value: "" },
     reasonForReplacement: "",
@@ -102,10 +115,17 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const [isAdvocateJoined, setIsAdvocateJoined] = useState(false);
   const [alreadyJoinedMobileNumber, setAlreadyJoinedMobileNumber] = useState([]);
   const [taskNumber, setTaskNumber] = useState("");
+  const [bailBondRequired, setBailBondRequired] = useState(false);
+  const [poa, setIsPoa] = useState(false);
+  const [poaJoinedParties, setPoaJoinedParties] = useState([]);
+  const [formdata, setFormData] = useState({});
+  const history = useHistory();
 
   const [isVerified, setIsVerified] = useState(false);
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const authorizedUuid = getAuthorizedUuid(userInfo?.uuid);
 
   const closeToast = () => {
     setShowErrorToast(false);
@@ -141,7 +161,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             {
               criteria: {
                 filingNumber: caseNumber,
-                courtId,
+                ...(courtId && { courtId }),
                 pagination: {
                   limit: 5,
                   offSet: 0,
@@ -234,10 +254,19 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         selectPartyData?.userType &&
         selectPartyData?.userType?.value === "Litigant" &&
         selectPartyData?.partyInvolve?.value &&
+        selectPartyData?.isPoaRightsClaiming?.value === "NO" &&
         party &&
         partyInPerson?.value &&
         ((partyInPerson?.value === "YES" && selectPartyData?.affidavit?.affidavitData) ||
           (partyInPerson?.value === "NO" && !Boolean(party?.individualId)))
+      ) {
+        setIsDisabled(false);
+      } else if (
+        selectPartyData?.userType &&
+        selectPartyData?.userType?.value === "Litigant" &&
+        selectPartyData?.partyInvolve?.value &&
+        selectPartyData?.isPoaRightsClaiming?.value === "YES" &&
+        party?.length > 0
       ) {
         setIsDisabled(false);
       } else if (
@@ -332,6 +361,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       partyInvolve: { label: "", value: "" },
       isReplaceAdvocate: { label: "", value: "" },
       affidavit: {},
+      isPoaRightsClaiming: { label: "", value: "" },
     });
     setPartyInPerson(false);
     setParty({});
@@ -355,19 +385,12 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     setCaseList([]);
     setIsLitigantJoined(false);
     setSuccess(false);
+    setIsPoa(false);
+    setFormData({});
   }, [setShowJoinCase]);
 
   const onSelect = (option) => {
-    if (
-      [
-        "PENDING_RESPONSE",
-        "PENDING_ADMISSION_HEARING",
-        "ADMISSION_HEARING_SCHEDULED",
-        "PENDING_NOTICE",
-        "CASE_ADMITTED",
-        "PENDING_ADMISSION",
-      ].includes(option?.status)
-    ) {
+    if (["PENDING_RESPONSE", "ADMISSION_HEARING_SCHEDULED", "CASE_ADMITTED", "PENDING_ADMISSION"].includes(option?.status)) {
       setIsDisabled(false);
       setCaseDetails(option);
 
@@ -430,6 +453,10 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       const { firstName, middleName, lastName } = data?.data;
 
       const fullName = getFullName(" ", firstName, middleName, lastName);
+      const complaintUuid = data?.data?.complainantVerification?.individualDetails?.userUuid;
+      const poaAuthorizationDocument = complaintUuid === userInfo?.uuid ? data?.data?.poaAuthorizationDocument : null;
+      const isAlreadyPoa = data?.data?.transferredPOA || { code: "NO", name: "NO", showPoaDetails: false };
+      const poaVerification = data?.data?.poaVerification;
 
       return {
         ...data?.data,
@@ -450,8 +477,11 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             userUuid: data?.data?.complainantVerification?.individualDetails?.userUuid,
           },
         },
+        isPoaAvailable: isAlreadyPoa,
+        poaAuthorizationDocument: poaAuthorizationDocument,
+        poaVerification,
         isAdvocateRepresenting: !!isAdvocateRepresenting,
-        advocateRepresentingLength: representatives?.length,
+        advocateRepresentingLength: representatives?.length || 0,
       };
     });
 
@@ -492,6 +522,10 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           const { respondentFirstName, respondentMiddleName, respondentLastName } = data?.data;
 
           fullName = getFullName(" ", respondentFirstName, respondentMiddleName, respondentLastName);
+          const respondentUUID = response?.Individual?.[0]?.userUuid || "";
+          const poaAuthorizationDocument = respondentUUID === userInfo?.uuid ? data?.data?.poaAuthorizationDocument : null;
+          const isAlreadyPoa = data?.data?.transferredPOA || { code: "NO", name: "NO", showPoaDetails: false };
+          const poaVerification = data?.data?.poaVerification;
 
           return {
             ...data?.data,
@@ -515,8 +549,11 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 },
               },
             }),
+            isPoaAvailable: isAlreadyPoa,
+            poaAuthorizationDocument: poaAuthorizationDocument,
+            poaVerification,
             isAdvocateRepresenting: !!isAdvocateRepresenting,
-            advocateRepresentingLength: representatives?.length,
+            advocateRepresentingLength: representatives?.length || 0,
             uniqueId: data?.uniqueId,
             isPip,
           };
@@ -758,6 +795,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   litigants: [individual?.individualId],
                 },
                 tenantId,
+                courtId: caseDetails?.courtId,
               },
             });
           } catch (err) {
@@ -777,6 +815,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   }, [
     caseDetails?.caseTitle,
     caseDetails?.cnrNumber,
+    caseDetails?.courtId,
     caseDetails?.filingNumber,
     caseDetails?.id,
     caseDetails?.litigants,
@@ -837,7 +876,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               });
             }
           } catch (error) {
-            console.log("error :>> ", error);
+            console.error("error :>> ", error);
           }
         } else {
           setStep(step + 1);
@@ -847,9 +886,11 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           selectPartyData?.userType &&
           selectPartyData?.userType?.value === "Litigant" &&
           selectPartyData?.partyInvolve?.value &&
+          selectPartyData?.isPoaRightsClaiming?.value === "NO" &&
           party &&
           partyInPerson?.value
         ) {
+          setIsPoa(false);
           const { isFound } = searchLitigantInRepresentives(caseDetails?.representatives, individualId);
           if (isLitigantJoined && partyInPerson?.value === "NO") {
             setMessageHeader(t("ALREADY_PART_OF_CASE"));
@@ -951,6 +992,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                         stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
                         additionalDetails: { individualId: individual?.individualId, caseId: caseDetails?.id, litigants: [individual?.individualId] },
                         tenantId,
+                        courtId: caseDetails?.courtId,
                       },
                     });
                   } catch (err) {
@@ -974,6 +1016,15 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           }
         } else if (
           selectPartyData?.userType &&
+          selectPartyData?.userType?.value === "Litigant" &&
+          selectPartyData?.partyInvolve?.value &&
+          selectPartyData?.isPoaRightsClaiming?.value === "YES" &&
+          party
+        ) {
+          setIsPoa(true);
+          setStep(step + 1);
+        } else if (
+          selectPartyData?.userType &&
           selectPartyData?.userType?.value === "Advocate" &&
           selectPartyData?.partyInvolve?.value &&
           party?.length > 0 &&
@@ -994,7 +1045,45 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         setIsApiCalled(true);
         const party = litigants;
         const updatedParty = await registerLitigants(party);
-        if (selectPartyData?.isReplaceAdvocate?.value === "NO" || selectPartyData?.isReplaceAdvocate?.value === "YES") {
+        if (selectPartyData?.userType?.value === "Litigant") {
+          try {
+            const poaUpdatedData = await Promise.all(
+              updatedParty?.map(async (user) => {
+                const document = user?.poaAuthorizationDocument?.poaDocument;
+                const hasFileTypeDoc = document?.some((doc) => doc instanceof File || (doc.file && doc.file instanceof File));
+                let uploadedData = {};
+
+                if (hasFileTypeDoc && document?.length > 1) {
+                  const combineDocs = await combineMultipleFiles(document);
+                  uploadedData = await onDocumentUpload(combineDocs[0], "poaAuthorization.pdf", tenantId);
+                } else if (hasFileTypeDoc && document?.length > 0) {
+                  uploadedData = await onDocumentUpload(document[0], "poaAuthorization.pdf", tenantId);
+                }
+
+                return {
+                  ...user,
+                  poaAuthorizationDocument: {
+                    poaDocument: [
+                      {
+                        documentType: "POA_AUTHORIZATION_DOCUMENT",
+                        fileStore: uploadedData?.file?.files?.[0]?.fileStoreId || document?.[0]?.fileStore || "",
+                        additionalDetails: {
+                          documentName: "poaAuthorization.pdf",
+                          fileName: "Company documents",
+                        },
+                      },
+                    ],
+                  },
+                };
+              })
+            );
+            setPoaJoinedParties(poaUpdatedData);
+            setStep(step + 3);
+          } catch (error) {
+            console.error("error :>> ", error);
+          }
+          setIsApiCalled(false);
+        } else if (selectPartyData?.isReplaceAdvocate?.value === "NO" || selectPartyData?.isReplaceAdvocate?.value === "YES") {
           try {
             const litigantData = [
               ...updatedParty
@@ -1064,6 +1153,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 filingNumber: caseDetails?.filingNumber,
                 litigant: litigantData,
                 representative: {
+                  advocateFilingStatus: "other",
                   advocateId: advocateData?.id,
                   ...(selectPartyData?.isReplaceAdvocate?.value === "YES" && {
                     isReplacing: true,
@@ -1162,6 +1252,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                           stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
                           additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id, litigants: [user?.individualId] },
                           tenantId,
+                          courtId: caseDetails?.courtId,
                         },
                       });
                     });
@@ -1201,7 +1292,153 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             setSuccess(true);
           }
         } catch (error) {
-          console.log("error", error);
+          console.error("error", error);
+        }
+        setIsApiCalled(false);
+      } else if (step === 6) {
+        setIsApiCalled(true);
+        try {
+          const poaRepresenting = litigants?.map((party) => {
+            return {
+              uniqueId: party?.uniqueId,
+              individualId: party?.individualId,
+              isRevoking: party?.transferredPOA?.code === "YES" ? true : false,
+              poaAuthDocument: party?.poaAuthorizationDocument?.poaDocument?.[0],
+              existingPoaIndividualId: party?.poaVerification?.individualDetails?.individualId,
+            };
+          });
+
+          const payload = {
+            joinCaseData: {
+              accessCode: validationCode,
+              tenantId: tenantId,
+              filingNumber: caseDetails?.filingNumber,
+              litigant: [],
+              poa: {
+                individualId: individualId,
+                poaRepresenting: poaRepresenting,
+              },
+            },
+          };
+
+          const [res] = await submitJoinCase(payload);
+
+          if (res) {
+            setTaskNumber(res?.paymentTaskNumber);
+            const taskNumber = res?.paymentTaskNumber;
+            const taskSearchResponse = await getTaskDetails(taskNumber, tenantId);
+            const taskDetails = taskSearchResponse?.list?.[0]?.taskDetails;
+            const ownerName = cleanString(userInfo?.name);
+
+            const documents =
+              taskDetails?.individualDetails?.map((res, index) => {
+                const poaDoc = res?.poaAuthDocument || {};
+                return {
+                  documentType: poaDoc?.documentType,
+                  fileStore: poaDoc?.fileStore,
+                  documentName: poaDoc?.additionalDetails?.documentName,
+                  additionalDetails: {
+                    name: poaDoc?.additionalDetails?.documentName,
+                  },
+                };
+              }) || [];
+
+            const applicationReqBody = {
+              tenantId,
+              application: {
+                tenantId,
+                filingNumber: caseDetails?.filingNumber,
+                cnrNumber: caseDetails?.cnrNumber,
+                cmpNumber: caseDetails?.cmpNumber,
+                caseId: caseDetails?.id,
+                referenceId: null,
+                createdDate: new Date().getTime(),
+                applicationType: "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
+                status: "",
+                isActive: true,
+                createdBy: userInfo?.uuid,
+                statuteSection: { tenantId },
+                additionalDetails: {
+                  formdata: {
+                    ...formdata,
+                    submissionType: {
+                      code: "APPLICATION",
+                      name: "APPLICATION",
+                    },
+                    applicationType: {
+                      type: "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
+                      name: "APPLICATION_TYPE_APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
+                      isActive: true,
+                    },
+                  },
+                  caseTitle: caseDetails?.caseTitle,
+                  caseNumber:
+                    (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+                    caseDetails?.courtCaseNumber ||
+                    caseDetails?.cmpNumber ||
+                    caseDetails?.filingNumber,
+                  partyType: selectPartyData?.partyInvolve?.value === "COMPLAINANTS" ? "COMPLAINANTS" : "ACCUSED",
+                  owner: removeInvalidNameParts(ownerName),
+                  onBehalOfName: removeInvalidNameParts(ownerName),
+                },
+                documents: [...documents],
+                onBehalfOf: [userInfo?.uuid],
+                asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
+                comment: [],
+                applicationDetails: {
+                  taskNumber: taskNumber,
+                  taskDetails: taskDetails,
+                },
+                workflow: {
+                  id: "workflow123",
+                  action: SubmissionWorkflowAction.SUBMIT,
+                  status: "in_progress",
+                  comments: "Workflow comments",
+                  documents: [{}],
+                },
+              },
+            };
+
+            const resApplication = await DRISTIService.createApplication(applicationReqBody, { tenantId });
+            if (resApplication) {
+              await createPendingTask({
+                name: t("ESIGN_THE_SUBMISSION_FOR_POA_CLAIM"),
+                status: "ESIGN_THE_SUBMISSION",
+                assignedRole: [],
+                refId: resApplication?.application?.applicationNumber,
+                entityType: "application-voluntary-submission",
+                userInfo: userInfo,
+                cnrNumber: caseDetails?.cnrNumber,
+                filingNumber: caseDetails?.filingNumber,
+                caseId: caseDetails?.id,
+                caseTitle: caseDetails?.caseTitle,
+                applicationType: "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
+                stateSla: todayDate + 2 * 24 * 3600 * 1000,
+                isCompleted: false,
+                tenantId,
+              });
+              history.push(
+                `/${window?.contextPath}/${userInfoType}/submissions/submissions-create?filingNumber=${caseDetails?.filingNumber}&applicationNumber=${resApplication?.application?.applicationNumber}&applicationType=APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS`
+              );
+            } else {
+              setErrors({
+                ...errors,
+                validationCode: {
+                  message: JoinHomeLocalisation.APPLICATION_CREATION_FAILED,
+                },
+              });
+            }
+          } else {
+            setErrors({
+              ...errors,
+              validationCode: {
+                message: JoinHomeLocalisation.INVALID_ACCESS_CODE_MESSAGE,
+              },
+            });
+          }
+          // TODO : create application
+        } catch (error) {
+          console.error("error :>> ", error);
         }
         setIsApiCalled(false);
       }
@@ -1210,15 +1447,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       step,
       validationCode,
       isDisabled,
-      caseDetails?.cnrNumber,
-      caseDetails?.litigants,
-      caseDetails?.filingNumber,
-      caseDetails?.representatives,
-      caseDetails?.id,
-      caseDetails?.status,
-      caseDetails?.additionalDetails?.respondentDetails,
-      caseDetails?.caseTitle,
-      caseDetails?.poaHolders,
+      caseDetails,
       selectPartyData?.userType,
       selectPartyData?.partyInvolve?.value,
       selectPartyData?.isReplaceAdvocate?.value,
@@ -1253,10 +1482,70 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     ]
   );
 
+  const searchApplications = useCallback(
+    async (uuid) => {
+      try {
+        const response = await DRISTIService.searchSubmissions({
+          criteria: {
+            filingNumber: caseDetails?.filingNumber,
+            tenantId,
+            courtId: caseDetails?.courtId,
+            applicationType: "REQUEST_FOR_BAIL",
+            onBehalfOf: [uuid],
+          },
+        });
+
+        return response?.applicationList?.length > 0;
+      } catch (error) {
+        console.error("Error searching applications:", error);
+        return false;
+      }
+    },
+    [caseDetails?.courtId, caseDetails?.filingNumber, tenantId]
+  );
+
+  useEffect(() => {
+    const checkBailBondRequirement = async () => {
+      try {
+        let isBondRequired = true;
+
+        if (selectPartyData?.userType?.value === "Advocate" && selectPartyData?.isReplaceAdvocate?.value === "NO") {
+          const representedPersonUuids = party?.map((item) => item?.uuid).filter(Boolean);
+
+          if (representedPersonUuids?.length > 0) {
+            const applicationChecks = await Promise.all(representedPersonUuids.map((uuid) => searchApplications(uuid)));
+
+            const hasExistingApplication = applicationChecks.some((exists) => exists);
+            isBondRequired = !hasExistingApplication;
+          }
+        } else if (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES") {
+          const litigantUuid = individual?.userUuid;
+          if (litigantUuid) {
+            const hasExistingApplication = await searchApplications(litigantUuid);
+            isBondRequired = !hasExistingApplication;
+          }
+        }
+
+        setBailBondRequired(isBondRequired);
+      } catch (error) {
+        console.error("Error in checkBailBondRequirement:", error);
+        setBailBondRequired(true);
+      }
+    };
+
+    // Only run the check if we have the necessary data
+    if (
+      (selectPartyData?.userType?.value === "Advocate" && selectPartyData?.isReplaceAdvocate?.value === "NO" && party?.length > 0) ||
+      (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES" && individual?.userUuid)
+    ) {
+      checkBailBondRequirement();
+    }
+  }, [selectPartyData, party, individual, partyInPerson, searchApplications]);
+
   const handleKeyDown = useCallback(
     (event) => {
       if (event.key === "Enter") {
-        if (!isDisabled && step !== 3) onProceed();
+        if (!isDisabled && !(step === 2 || step === 3)) onProceed();
         if (step === 0 && isSearchingCase) searchCase(caseNumber);
       }
     },
@@ -1344,12 +1633,14 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           setIsDisabled={setIsDisabled}
           selectPartyData={selectPartyData}
           isApiCalled={isApiCalled}
+          poa={poa}
+          userInfo={userInfo}
         />
       ),
     },
     // 4
     {
-      modalMain: <JoinCasePayment type="join-case-flow" filingNumber={caseDetails?.filingNumber} taskNumber={taskNumber} />,
+      modalMain: <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} />,
     },
     // 5
     {
@@ -1363,10 +1654,49 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           successScreenData={successScreenData}
           isCaseViewDisabled={selectPartyData?.isReplaceAdvocate?.value === "YES" && !isAdvocateJoined}
           type={type}
+          isBailBondRequired={bailBondRequired}
+        />
+      ),
+    },
+    // 6
+    {
+      modalMain: (
+        <POAInfo
+          t={t}
+          poaJoinedParties={poaJoinedParties}
+          onProceed={onProceed}
+          closeModal={closeModal}
+          label={"Poa Joining"}
+          isApiCalled={isApiCalled}
+          isDisabled={isDisabled}
+          setIsDisabled={setIsDisabled}
+          goBack={() => {
+            setFormData({});
+            setStep(step - 3);
+          }}
+          setFormData={setFormData}
+          formdata={formdata}
         />
       ),
     },
   ];
+
+  const getCaseHeaderLabel = (step, type, t) => {
+    const stepLabels = {
+      3: "VERIFY_LITIGANT_DETAILS",
+      4: "PAY_TO_JOIN_CASE",
+    };
+
+    if (stepLabels[step]) {
+      return t(stepLabels[step]);
+    }
+
+    if (type === "external") {
+      return t("CS_CASE_MANAGE_CASE_ACCESS");
+    }
+
+    return t("SEARCH_NEW_CASE");
+  };
 
   return (
     <div>
@@ -1386,7 +1716,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           actionCancelLabel={
             step === 1
               ? t("DOWNLOAD_CASE_FILE")
-              : (step === 2 && type === "external") || step === 3 || step === 4
+              : (step === 2 && type === "external") || step === 3 || step === 4 || step === 6
               ? undefined
               : ((step === 0 && caseDetails?.cnrNumber) || step !== 0) && t(JoinHomeLocalisation.JOIN_CASE_BACK_TEXT)
           }
@@ -1405,6 +1735,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   setSelectPartyData((selectPartyData) => ({
                     ...selectPartyData,
                     partyInvolve: {},
+                    isPoaRightsClaiming: {},
                     affidavit: {},
                   }));
                   setPartyInPerson({});
@@ -1468,16 +1799,35 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           }
           actionSaveOnSubmit={onProceed}
           formId="modal-action"
-          headerBarMain={<Heading label={step === 3 ? t("VERIFY_LITIGANT_DETAILS") : step === 4 ? t("PAY_TO_JOIN_CASE") : t("SEARCH_NEW_CASE")} />}
+          headerBarMain={<Heading label={getCaseHeaderLabel(step, type, t)} />}
           className={`join-a-case-modal${success ? " case-join-success" : ""}${step === 4 ? " join-case-modal-payment" : ""}`}
           isDisabled={isDisabled || isApiCalled}
           isBackButtonDisabled={step === 1 && !isVerified}
           popupStyles={{ width: "fit-content", userSelect: "none" }}
           customActionStyle={{ background: "#fff", boxShadow: "none", border: "1px solid #007e7e" }}
           customActionTextStyle={{ color: "#007e7e" }}
-          hideModalActionbar={step === 3 ? true : false}
+          hideModalActionbar={step === 3 || step === 6 ? true : false}
           popupModuleMianClassName={success ? "success-main" : ""}
         >
+          {isApiCalled && (
+            <div
+              style={{
+                width: "100vw",
+                height: "100vh",
+                zIndex: "9999",
+                position: "fixed",
+                right: "0",
+                display: "flex",
+                top: "0",
+                background: "rgb(234 234 245 / 50%)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              className="submit-loader"
+            >
+              <Loader />
+            </div>
+          )}
           {step >= 0 && modalItem[step]?.modalMain}
         </Modal>
       )}

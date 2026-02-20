@@ -1,0 +1,183 @@
+// TODO : can be add through workbench as well
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "15",
+    "data": {
+      "id": "15",
+      "code": "MISSENT",
+      "name": "Missent",
+      "statustype": "INTERMEDIATE"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "14",
+    "data": {
+      "id": "14",
+      "code": "UNCLAIMED",
+      "name": "Unclaimed",
+      "statustype": "TERMINAL"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "13",
+    "data": {
+      "id": "13",
+      "code": "ADDRESS_MISSING",
+      "name": "Address Missing",
+      "statustype": "TERMINAL"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "12",
+    "data": {
+      "id": "12",
+      "code": "ON_HOLD",
+      "name": "On Hold",
+      "statustype": "INTERMEDIATE"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "11",
+    "data": {
+      "id": "11",
+      "code": "DOOR_LOCKED",
+      "name": "Door Locked",
+      "statustype": "INTERMEDIATE"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "10",
+    "data": {
+      "id": "10",
+      "code": "DECEASED",
+      "name": "Deceased",
+      "statustype": "TERMINAL"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "9",
+    "data": {
+      "id": "9",
+      "code": "NO_SUCH_PERSON_IN_ADDRESS",
+      "name": "No Such Person in the Address",
+      "statustype": "TERMINAL"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "8",
+    "data": {
+      "id": "8",
+      "code": "WRONG_ADDRESS",
+      "name": "Wrong Address",
+      "statustype": "TERMINAL"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "7",
+    "data": {
+      "id": "7",
+      "code": "INSUFFICIENT_ADDRESS",
+      "name": "Insufficient Address",
+      "statustype": "TERMINAL"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "6",
+    "data": {
+      "id": "6",
+      "code": "ADDRESS_LEFT_WITHOUT_INSTRUCTION",
+      "name": "Addressee Left Without Instructions",
+      "statustype": "TERMINAL"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "5",
+    "data": {
+      "id": "5",
+      "code": "ADDRESS_MOVED",
+      "name": "Address Moved",
+      "statustype": "TERMINAL"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "4",
+    "data": {
+      "id": "4",
+      "code": "DELIVERED_TO_REDIRECT_ADDRESS",
+      "name": "Delivered to Redirected Address",
+      "statustype": "TERMINAL"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "3",
+    "data": {
+      "id": "3",
+      "code": "REFUSED",
+      "name": "Refused",
+      "statustype": "TERMINAL"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "2",
+    "data": {
+      "id": "2",
+      "code": "DELIVERED",
+      "name": "Delivered",
+      "statustype": "TERMINAL"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "Epost.status",
+    "uniqueIdentifier": "1",
+    "data": {
+      "id": "1",
+      "code": "BOOKED",
+      "name": "Booked",
+      "statustype": "INTERMEDIATE"
+    },
+    "isActive": true
+  }
+]

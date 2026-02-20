@@ -11,6 +11,9 @@ function ReIssueSummonsModal() {
   const history = useHistory();
   const { hearingId, filingNumber, cnrNumber, orderType, caseId, caseTitle } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
+  const userInfo = Digit.UserService.getUser()?.info;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const courtId = localStorage.getItem("courtId");
   const { data: hearingsData, isLoading: isHearingLoading } = Digit.Hooks.hearings.useGetHearings(
     {
       hearing: { tenantId },
@@ -18,11 +21,12 @@ function ReIssueSummonsModal() {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: hearingId,
+        ...(courtId && userType === "employee" && { courtId }),
       },
     },
     { applicationNumber: "", cnrNumber },
     hearingId,
-    Boolean(hearingId)
+    Boolean(hearingId && userType)
   );
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
 
@@ -88,7 +92,7 @@ function ReIssueSummonsModal() {
             hearingDate: formatDate(new Date(hearingDetails?.startTime)),
           },
         },
-        hearingNumber: hearingId,
+        // hearingNumber: hearingId,
       },
     };
     const res = await ordersService.createOrder(reqbody, { tenantId });
@@ -117,7 +121,7 @@ function ReIssueSummonsModal() {
         referenceId: `MANUAL_${res?.order?.orderNumber}`,
         status: "DRAFT_IN_PROGRESS",
         assignedTo: [],
-        assignedRole: ["JUDGE_ROLE"],
+        assignedRole: ["PENDING_TASK_ORDER"],
         cnrNumber,
         filingNumber,
         caseId: caseId,
@@ -128,7 +132,7 @@ function ReIssueSummonsModal() {
         tenantId,
       },
     });
-    history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+    history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
   };
   const handleRescheduleHearing = async () => {
     try {

@@ -1,0 +1,120 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "INBOX.InboxQueryConfiguration",
+  "uniqueIdentifier": "pending-tasks-index",
+  "data": {
+    "index": "pending-tasks-index",
+    "module": "Pending Tasks Service",
+    "sortBy": {
+      // TODO : update path field value
+      "path": "Data.createdTime",
+      "defaultOrder": "ASC"
+    },
+    "sourceFilterPathList": [
+      "Data"
+    ],
+    "allowedSearchCriteria": [
+      {
+        "name": "id",
+        "path": "Data.id.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "entityType",
+        "path": "Data.entityType.keyword",
+        "operator": "EQUAL",
+        "isMandatory": false
+      },
+      {
+        "name": "referenceId",
+        "path": "Data.referenceId.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "status",
+        "path": "Data.status.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "assignedTo",
+        "path": "Data.assignedTo.uuid.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "assignedRole",
+        "path": "Data.assignedRole.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "cnrNumber",
+        "path": "Data.cnrNumber.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "filingNumber",
+        "path": "Data.filingNumber.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "isCompleted",
+        "path": "Data.isCompleted",
+        "isMandatory": false
+      },
+      {
+        "name": "stateSla",
+        "path": "Data.stateSla",
+        "operator": "LTE",
+        "isMandatory": false
+      },
+      {
+        "name": "businessServiceSla",
+        "path": "Data.businessServiceSla",
+        "isMandatory": false
+      },
+      {
+        "name": "isDiary",
+        "path": "Data.isDiary",
+        "isMandatory": false
+      },
+      {
+        "name": "screenType",
+        "path": "Data.screenType.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "courtId",
+        "path": "Data.courtId.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "substage",
+        "path": "Data.substage.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "searchableFields",
+        "path": "Data.searchableFields.keyword",
+        "operator": "WILDCARD",
+        "isMandatory": false
+      },
+      {
+        "name": "actionCategory",
+        "path": "Data.actionCategory.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "expiryDate",
+        "path": "Data.expiryDate",
+        "operator": "LTE",
+        "isMandatory": false
+      },
+      // TODO: add this field in pending tasks index can be added through workbench
+      {
+        "name": "referenceEntityType",
+        "path": "Data.referenceEntityType.keyword",
+        "isMandatory": false
+      }
+    ]
+  },
+  "isActive": true
+}

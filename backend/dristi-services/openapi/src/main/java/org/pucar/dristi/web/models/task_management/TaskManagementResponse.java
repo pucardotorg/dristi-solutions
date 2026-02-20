@@ -1,0 +1,26 @@
+package org.pucar.dristi.web.models.task_management;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.egov.common.contract.response.ResponseInfo;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class TaskManagementResponse {
+
+    @JsonProperty("ResponseInfo")
+    @Valid
+    private ResponseInfo responseInfo = null;
+
+    @JsonProperty("taskManagement")
+    @Valid
+    private TaskManagement taskManagement = null;
+
+
+}

@@ -121,11 +121,19 @@ export const removeInvalidNameParts = (name) => {
 };
 
 export const constructFullName = (firstName, middleName, lastName) => {
-  return [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
+  return [firstName, middleName, lastName]
+    ?.map((part) => part?.trim())
+    ?.filter(Boolean)
+    ?.join(" ")
+    ?.trim();
 };
 
 export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
-  const nameParts = [firstName, middleName, lastName].filter(Boolean).join(" ");
+  const nameParts = [firstName, middleName, lastName]
+    ?.map((part) => part?.trim())
+    ?.filter(Boolean)
+    ?.join(" ")
+    ?.trim();
 
   const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
 
@@ -153,7 +161,11 @@ export const getRespondantName = (respondentNameData) => {
 };
 
 export const getComplainantName = (complainantDetails) => {
-  const partyName = complainantDetails?.firstName && `${complainantDetails?.firstName || ""} ${complainantDetails?.lastName || ""}`.trim();
+  const partyName =
+    complainantDetails?.firstName &&
+    `${complainantDetails?.firstName?.trim() || ""} ${complainantDetails?.middleName?.trim() || ""} ${
+      complainantDetails?.lastName?.trim() || ""
+    }`.trim();
   if (complainantDetails?.complainantType?.code === "INDIVIDUAL") {
     return partyName;
   }
@@ -198,6 +210,245 @@ export const numberToWords = (num) => {
 };
 
 export const formatAddress = (value) => {
-  const parts = [value.locality, value.city, value.district, value.pincode];
+  const parts = [value?.locality, value?.city, value?.district, value?.pincode];
   return parts.filter((part) => part !== undefined && part !== null && part !== "").join(", ");
+};
+
+const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+
+function getISTEpoch(year, month, day, hour, minute, second, ms) {
+  const utcDate = Date.UTC(year, month, day, hour, minute, second, ms - IST_OFFSET);
+
+  return utcDate;
+}
+
+export function getEpochRangeFromDateIST(dateStr) {
+  if (!dateStr) return { start: null, end: null };
+
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const monthIndex = month - 1;
+
+  const start = getISTEpoch(year, monthIndex, day, 0, 0, 0, 0);
+  const end = getISTEpoch(year, monthIndex, day, 23, 59, 59, 999);
+
+  return { start, end };
+}
+
+export function getEpochRangeFromMonthIST(monthStr) {
+  if (!monthStr) return { start: null, end: null };
+
+  const [year, month] = monthStr.split("-").map(Number);
+  const monthIndex = month - 1;
+
+  const start = getISTEpoch(year, monthIndex, 1, 0, 0, 0, 0);
+
+  // Gets the number of the last day of the month
+  const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+
+  const end = getISTEpoch(year, monthIndex, lastDay, 23, 59, 59, 999);
+
+  return { start, end };
+}
+
+export const formatDateWithTime = (dateInput, showTime = false) => {
+  if (!dateInput) return "-";
+
+  const date = new Date(dateInput);
+
+  if (isNaN(date.getTime())) return "N/A";
+  const dateInIST = new Date(date.getTime() + IST_OFFSET);
+
+  const day = String(dateInIST.getUTCDate()).padStart(2, "0");
+  const month = String(dateInIST.getUTCMonth() + 1).padStart(2, "0");
+  const year = dateInIST.getUTCFullYear();
+
+  let formattedDate = `${day}-${month}-${year}`;
+
+  if (showTime) {
+    const hours = String(dateInIST.getUTCHours()).padStart(2, "0");
+    const minutes = String(dateInIST.getUTCMinutes()).padStart(2, "0");
+    const seconds = String(dateInIST.getUTCSeconds()).padStart(2, "0");
+
+    formattedDate += ` ${hours}:${minutes}:${seconds}`;
+  }
+
+  return formattedDate;
+};
+
+export const _getDate = (epoch, formatDate = false) => {
+  const date = epoch ? new Date(epoch) : new Date();
+
+  const options = { timeZone: "Asia/Kolkata" };
+  const istDate = new Date(date.toLocaleString("en-US", options));
+
+  const year = istDate.getFullYear();
+  const month = String(istDate.getMonth() + 1).padStart(2, "0");
+  const day = String(istDate.getDate()).padStart(2, "0");
+
+  if (formatDate) {
+    return `${day}-${month}-${year}`;
+  }
+
+  return `${year}-${month}-${day}`;
+};
+
+export const _toEpoch = (dateString) => {
+  if (!dateString) return null;
+  const [year, month, day] = dateString.split("-").map(Number);
+  const utcDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  return utcDate.getTime() - istOffset;
+};
+
+export const _getStatus = (status, dropdownData = []) => {
+  if (!status || !dropdownData?.length) return null;
+  return dropdownData?.find((item) => item.code === status) || null;
+};
+
+export const downloadFile = (responseBlob, fileName) => {
+  if (!(responseBlob instanceof Blob)) {
+    throw new Error("Invalid response format for download.");
+  }
+  const url = window.URL.createObjectURL(responseBlob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
+export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, taskDetails) => {
+  if (orderType === "MISCELLANEOUS_PROCESS") {
+    const type = taskDetails?.miscellaneuosDetails?.addressee || "";
+
+    switch (type) {
+      case "POLICE":
+        return `${taskDetails?.policeDetails?.name}, ${taskDetails?.policeDetails?.district}`;
+      case "OTHER":
+        return `${taskDetails?.others?.name}`;
+      default:
+        return taskDetails?.respondentDetails?.name || taskDetails?.complainantDetails?.name || "";
+    }
+  }
+
+  const formDataKeyMap = {
+    NOTICE: "noticeOrder",
+    SUMMONS: "SummonsOrder",
+    WARRANT: "warrantFor",
+    PROCLAMATION: "proclamationFor",
+    ATTACHMENT: "attachmentFor", // same formdata key as WARRANT
+    // Add more types here easily in future
+  };
+
+  const formdata =
+    orderDetails?.orderCategory === "COMPOSITE" ? compositeItem?.orderSchema?.additionalDetails?.formdata : orderDetails?.additionalDetails?.formdata;
+
+  const key = formDataKeyMap[orderType];
+  const partyData = formdata?.[key]?.party?.data;
+
+  const name =
+    getFormattedName(
+      partyData?.firstName?.trim(),
+      partyData?.middleName?.trim(),
+      partyData?.lastName?.trim(),
+      partyData?.witnessDesignation?.trim(),
+      null
+    ) ||
+    (["NOTICE", "SUMMONS"]?.includes(orderType) && (taskDetails?.respondentDetails?.name || taskDetails?.witnessDetails?.name)) ||
+    (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
+    (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
+    (orderType === "ATTACHMENT" && formdata?.attachmentFor?.name) ||
+    formdata?.warrantFor ||
+    formdata?.proclamationFor ||
+    formdata?.attachmentFor ||
+    "";
+
+  return name;
+};
+
+export function convertTaskResponseToPayload(responseArray, id = null) {
+  if (!Array.isArray(responseArray) || !responseArray.length) return null;
+
+  let data = [];
+  if (id) {
+    const matchedTask = responseArray?.find((task) =>
+      task?.fields?.some((field) => field.key === "additionalDetails.litigantUuid" && field?.value === id)
+    );
+    data = matchedTask?.fields || [];
+  } else {
+    data = responseArray?.[0]?.fields || [];
+  }
+  const flatData = data;
+  const structuredData = {};
+
+  function setDeepValue(obj, path, value) {
+    const parts = path?.replace(/\[(\w+)\]/g, ".$1")?.split(".");
+    let current = obj;
+    for (let i = 0; i < parts?.length; i++) {
+      const key = parts[i];
+      if (i === parts.length - 1) {
+        current[key] = value;
+      } else {
+        if (!current[key] || typeof current[key] !== "object") {
+          current[key] = isNaN(parts[i + 1]) ? {} : [];
+        }
+        current = current[key];
+      }
+    }
+  }
+
+  flatData?.forEach(({ key, value }) => {
+    const normalizedValue = value === "null" ? null : value === "true" ? true : value === "false" ? false : value;
+    setDeepValue(structuredData, key, normalizedValue);
+  });
+
+  const pendingTask = {
+    name: structuredData?.name,
+    entityType: structuredData?.entityType,
+    referenceId: structuredData?.referenceId,
+    status: structuredData?.status,
+    assignedTo: structuredData?.assignedTo,
+    assignedRole: structuredData?.assignedRole,
+    actionCategory: structuredData?.actionCategory,
+    cnrNumber: structuredData?.cnrNumber,
+    filingNumber: structuredData?.filingNumber,
+    caseId: structuredData?.caseId,
+    caseTitle: structuredData?.caseTitle,
+    isCompleted: structuredData?.isCompleted,
+    expiryDate: structuredData?.expiryDate,
+    stateSla: structuredData?.stateSla,
+    additionalDetails: structuredData?.additionalDetails,
+    courtId: structuredData?.courtId,
+  };
+
+  return pendingTask;
+}
+
+export const getSafeFileExtension = (fileName, fallback = "pdf") => {
+  if (typeof fileName !== "string" || !fileName?.trim()) return fallback;
+
+  const lastDotIndex = fileName?.lastIndexOf(".");
+
+  if (lastDotIndex <= 0 || lastDotIndex === fileName?.length - 1) {
+    return fallback;
+  }
+
+  const extension = fileName?.substring(lastDotIndex + 1)?.toLowerCase();
+
+  return extension || fallback;
+};
+
+export const mapAddressDetails = (addressDetails, isIndividualData = false) => {
+  return addressDetails?.map((address) => ({
+    locality: address?.addressDetails?.locality || address?.street || address?.locality || "",
+    city: address?.addressDetails?.city || address?.city || "",
+    district: address?.addressDetails?.district || address?.addressLine2 || address?.district || "",
+    pincode: address?.addressDetails?.pincode || address?.pincode || "",
+    state: address?.addressDetails?.state || address?.state || "",
+    address: isIndividualData ? undefined : address?.addressDetails,
+    id: address?.id,
+    ...(address?.geoLocationDetails && { geoLocationDetails: address.geoLocationDetails }),
+  }));
 };
