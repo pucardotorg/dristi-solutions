@@ -3,12 +3,11 @@ import { Loader } from "@egovernments/digit-ui-react-components";
 import ApplicationAwaitingPage from "./ApplicationAwaitingPage";
 import TakeUserToRegistration from "./TakeUserToRegistration";
 import { userTypeOptions } from "../registration/config";
-import { CaseInProgressIcon, ClosedCasesIcon, FileCaseIcon, JoinCaseIcon, MyHearingsIcon, PendingActionsIcon } from "../../../icons/svgIndex";
-import Home from "./litigantHome";
 import { useGetAccessToken } from "../../../hooks/useGetAccessToken";
 import { useTranslation } from "react-i18next";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
-function CitizenHome({ tenantId, setHideBack }) {
+function CitizenHome({ tenantId = "kl", setHideBack = () => {} }) {
   const Digit = window?.Digit || {};
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
@@ -18,7 +17,7 @@ function CitizenHome({ tenantId, setHideBack }) {
   const [isFetching, setIsFetching] = useState(true);
   const [isFetchingAdvoacte, setIsFetchingAdvocate] = useState(true);
   const userInfoType = Digit.UserService.getType();
-
+  const history = useHistory();
   const { data, isLoading, refetch } = Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
@@ -30,15 +29,6 @@ function CitizenHome({ tenantId, setHideBack }) {
     "HOME",
     userInfo?.uuid && isUserLoggedIn
   );
-
-  const cardIcons = [
-    { Icon: <FileCaseIcon />, label: "File a Case", path: "/ui/citizen/dristi/home/file-case" },
-    { Icon: <CaseInProgressIcon />, label: "Case in Progress", path: "/ui/employee/citizen/dristi/case-progress" },
-    { Icon: <MyHearingsIcon />, label: "My hearing", path: "/ui/employee/citzen/dristi/my-hearings" },
-    { Icon: <JoinCaseIcon />, label: "Join a case", path: "/ui/employee/citizen/dristi/join-case" },
-    { Icon: <ClosedCasesIcon />, label: "Closed Cases", path: "/ui/employee/citizen/dristi/closed-cases" },
-    { Icon: <PendingActionsIcon />, label: "Pending Actions", path: "/ui/employee/citizen/dristi/pending-actions" },
-  ];
 
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
   const isLitigantPartialRegistered = useMemo(() => {
@@ -111,6 +101,14 @@ function CitizenHome({ tenantId, setHideBack }) {
   ]);
 
   const registrationIsDoneApprovalIsPending = individualId && isApprovalPending && !isRejected && !isLitigantPartialRegistered;
+
+  useEffect(() => {
+    if (!data || !searchData) return;
+    if (individualId && !isApprovalPending && !isRejected && !isLitigantPartialRegistered) {
+      history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
+    }
+  }, [individualId, isLitigantPartialRegistered, isRejected, history, isApprovalPending, searchResult, data, searchData]);
+
   useEffect(() => {
     setHideBack(userHasIncompleteRegistration || registrationIsDoneApprovalIsPending);
     return () => {
@@ -142,24 +140,6 @@ function CitizenHome({ tenantId, setHideBack }) {
         width: "100%",
       }}
     >
-      {individualId && !isApprovalPending && !isRejected && !isLitigantPartialRegistered && (
-        // cardIcons.map((card, index) => {
-        //   return (
-        //     <CustomCard
-        //       key={index}
-        //       label={card.label}
-        //       Icon={card.Icon}
-        //       style={{ width: "400px", height: "150px" }}
-        //       onClick={() => {
-        //         if (card.label === "File a Case") {
-        //           history.push(card.path);
-        //         }
-        //       }}
-        //     ></CustomCard>
-        //   );
-        // })}
-        <Home />
-      )}
       {registrationIsDoneApprovalIsPending && <ApplicationAwaitingPage individualId={individualId} />}
       {userHasIncompleteRegistration && (
         <TakeUserToRegistration
