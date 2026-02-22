@@ -22,12 +22,19 @@ const ManageOfficeMember = () => {
 
   const [allowCaseCreate, setAllowCaseCreate] = useState(member?.allowCaseCreate !== false ? "Yes" : "No");
   const [addToNewCasesAuto, setAddToNewCasesAuto] = useState(member?.addNewCasesAutomatically !== false ? "Yes" : "No");
+  const [selectedCasesCount, setSelectedCasesCount] = useState(0);
 
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER") || "—";
   const designation = member?.memberType === "ADVOCATE_CLERK" ? (t("CLERK") || "Clerk") : member?.memberType === "ADVOCATE" ? (t("ADVOCATE") || "Advocate") : member?.memberType || "—";
   const mobileNumber = member?.memberMobileNumber ? `+91 ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(0, 5)} ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(5)}` : "—";
 
   const assignCasesConfigWithTenant = useMemo(() => assignCasesConfig(), []);
+
+  const syncSelectedCasesCount = React.useCallback(() => {
+    const container = document.querySelector(".manage-office-member-inbox");
+    const checked = container ? container.querySelectorAll("tbody input[type='checkbox']:checked") : [];
+    setSelectedCasesCount(checked.length);
+  }, []);
 
   // Select-all and row checkboxes for Assign Cases table (same pattern as sign process tab)
   useEffect(() => {
@@ -53,7 +60,8 @@ const ManageOfficeMember = () => {
           checkboxesToClick.forEach((checkbox) => checkbox.click());
           setTimeout(() => {
             isHeaderControlledClick = false;
-          }, 200);
+            syncSelectedCasesCount();
+          }, 250);
         }
       }
     };
@@ -87,11 +95,13 @@ const ManageOfficeMember = () => {
           checkbox.style.cssText = "cursor: pointer; width: 20px; height: 20px;";
           checkbox.setAttribute("data-header-checkbox", "true");
           checkbox.addEventListener("click", handleHeaderCheckboxClick);
+          checkbox.addEventListener("change", syncSelectedCasesCount);
           selectHeader.innerHTML = "";
           selectHeader.appendChild(checkbox);
         } else if (!existingCheckbox.hasAttribute("data-header-checkbox")) {
           existingCheckbox.setAttribute("data-header-checkbox", "true");
           existingCheckbox.addEventListener("click", handleHeaderCheckboxClick);
+          existingCheckbox.addEventListener("change", syncSelectedCasesCount);
         }
       }
     };
@@ -104,21 +114,24 @@ const ManageOfficeMember = () => {
           if (rowCheckbox && !rowCheckbox.hasAttribute("data-row-handler-attached")) {
             rowCheckbox.setAttribute("data-row-handler-attached", "true");
             rowCheckbox.addEventListener("click", handleRowCheckboxClick);
+            rowCheckbox.addEventListener("change", syncSelectedCasesCount);
           }
         });
       }
     };
 
-    injectHeaderCheckbox();
-    attachRowCheckboxHandlers();
-    const timeoutId = setTimeout(() => {
+    const runSync = () => {
       injectHeaderCheckbox();
       attachRowCheckboxHandlers();
-    }, 100);
+      syncSelectedCasesCount();
+    };
+    runSync();
+    const timeoutId = setTimeout(runSync, 100);
 
     const observer = new MutationObserver(() => {
       injectHeaderCheckbox();
       attachRowCheckboxHandlers();
+      syncSelectedCasesCount();
     });
     if (container) {
       observer.observe(container, { childList: true, subtree: true });
@@ -127,7 +140,7 @@ const ManageOfficeMember = () => {
       clearTimeout(timeoutId);
       observer.disconnect();
     };
-  }, []);
+  }, [syncSelectedCasesCount]);
 
   const handleGoBack = () => {
     history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office`);
@@ -218,6 +231,49 @@ const ManageOfficeMember = () => {
       </div>
 
       <footer className="manage-office-member-footer">
+        <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
+          {selectedCasesCount > 0 && (
+            <div
+              className="bulk-info-text assign-cases-selected-banner"
+              style={{
+                boxSizing: "border-box",
+                display: "inline-flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                padding: 12,
+                minWidth: 206,
+                height: 40,
+                whiteSpace: "nowrap",
+                background: "#FFFFFF",
+                border: "0.4px solid #E2E8F0",
+                borderRadius: 4,
+                color: "#0A0A0A",
+                fontFamily: "Roboto, sans-serif",
+                fontStyle: "normal",
+                fontWeight: 400,
+                fontSize: 16,
+                lineHeight: "19px",
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ display: "block", flexShrink: 0 }}
+              >
+                <circle cx="12" cy="12" r="10" stroke="#1D7AEA" strokeWidth="1.2" fill="#EFF6FF" />
+                <path d="M12 10.5v6" stroke="#1D7AEA" strokeWidth="1.2" strokeLinecap="round" />
+                <circle cx="12" cy="7.5" r="1" fill="#1D7AEA" />
+              </svg>
+              <span style={{ whiteSpace: "nowrap" }}>
+                {selectedCasesCount} {selectedCasesCount === 1 ? t("CASE_SELECTED") || "case selected" : t("CASES_SELECTED") || "cases selected"}
+              </span>
+            </div>
+          )}
+        </div>
         <button type="button" onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
           {t("GO_BACK") || "Go Back"}
         </button>
