@@ -555,8 +555,17 @@
 
 /* Manage Office Member page */
 .manage-office-member-page {
-  padding: 30px 48px;
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  padding: 30px 48px;
+}
+
+.manage-office-member-scrollable {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding-bottom: 90px; /* space for fixed footer */
 }
 
 .manage-office-member-title {
@@ -778,11 +787,17 @@
 }
 
 .manage-office-member-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   justify-content: flex-end;
   gap: 16px;
-  margin-top: 24px;
-  padding-bottom: 32px;
+  border-top: 1px solid #d6d5d4;
+  padding: 24px 48px 32px;
+  background: #ffffff;
+  z-index: 100;
 }
 
 .manage-office-modal-overlay {

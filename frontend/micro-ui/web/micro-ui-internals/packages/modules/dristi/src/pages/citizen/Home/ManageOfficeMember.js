@@ -145,9 +145,10 @@ const ManageOfficeMember = () => {
 
   return (
     <div className="manage-office-member-page">
-      <h1 className="manage-office-member-title">{t("MANAGE_OFFICE_MEMBER") || "Manage Office Member"}</h1>
+      <div className="manage-office-member-scrollable">
+        <h1 className="manage-office-member-title">{t("MANAGE_OFFICE_MEMBER") || "Manage Office Member"}</h1>
 
-      <div className="manage-office-member-content-row">
+        <div className="manage-office-member-content-row">
         <div className="manage-office-member-details">
           <div className="manage-office-member-detail-item">
             <span className="manage-office-member-detail-label">{t("CS_NAME") || "Name"}</span>
@@ -204,25 +205,26 @@ const ManageOfficeMember = () => {
         </span>
       </div>
 
-      <div className="assign-cases-section">
-        <h2 className="assign-cases-section-title">{t(assignCasesConfigWithTenant?.label) || "Assign Cases"}</h2>
-        <div className="inbox-search-wrapper manage-office-member-inbox">
-          <InboxSearchComposer
-            customStyle={sectionsParentStyle}
-            configs={assignCasesConfigWithTenant}
-            showTab={false}
-          />
+        <div className="assign-cases-section">
+          <h2 className="assign-cases-section-title">{t(assignCasesConfigWithTenant?.label) || "Assign Cases"}</h2>
+          <div className="inbox-search-wrapper manage-office-member-inbox">
+            <InboxSearchComposer
+              customStyle={sectionsParentStyle}
+              configs={assignCasesConfigWithTenant}
+              showTab={false}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="manage-office-member-footer">
+      <footer className="manage-office-member-footer">
         <button type="button" onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
           {t("GO_BACK") || "Go Back"}
         </button>
         <button type="button" onClick={handleUpdateAccess} className="manage-office-btn manage-office-btn--primary">
           {t("UPDATE_ACCESS") || "Update Access"}
         </button>
-      </div>
+      </footer>
     </div>
   );
 };
