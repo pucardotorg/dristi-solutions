@@ -140,13 +140,7 @@ const TopBarComponent = ({
   const handleManageOfficeClick = () => {
     history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office`);
   };
-  // const showHaburgerorBackButton = () => {
-  //   if (pathname === `/${window?.contextPath}citizen` || pathname === `/${window?.contextPath}/citizen/` || pathname === `/${window?.contextPath}/citizen/select-language`) {
-  //     return <Hamburger handleClick={toggleSidebar} />;
-  //   } else {
-  //     return <BackButton className="top-back-btn" />;
-  //   }
-  // };
+
   const emblemBigImageLink = window?.globalConfigs?.getConfig("EMBLEM_BIG");
   const onCourtsImageLink = window?.globalConfigs?.getConfig("ON_COURTS_LOGO");
 
@@ -324,42 +318,42 @@ const TopBarComponent = ({
           {isSearchLoading || isApprovalPending
             ? null
             : isUserLoggedIn &&
-              !isSearchLoading &&
-              !isApprovalPending &&
-              hasMembers &&
-              (isAdvocate || isAdvocateClerk) && (
-                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
-                  <AdvocateProfileDropdown
-                    t={t}
-                    options={seniorAdvocates}
-                    selected={selectedAdvocate}
-                    onSelect={changeAdvocateSelection}
-                    disabled={disableAdvocateChange}
-                  />
-                  {isAdvocate && (
-                    <button
-                      className="manage-office-btn"
-                      onClick={handleManageOfficeClick}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "8px 16px",
-                        backgroundColor: "white",
-                        border: "1px solid #007E7E",
-                        borderRadius: "4px",
-                        color: "#007E7E",
-                        fontSize: "14px",
-                        fontWeight: "500",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <ManageOfficeIcon />
-                      <span>{t ? t("MANAGE_OFFICE") : "Manage Office"}</span>
-                    </button>
-                  )}
-                </div>
-              )}
+            !isSearchLoading &&
+            !isApprovalPending &&
+            hasMembers &&
+            (isAdvocate || isAdvocateClerk) && (
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
+                <AdvocateProfileDropdown
+                  t={t}
+                  options={seniorAdvocates}
+                  selected={selectedAdvocate}
+                  onSelect={changeAdvocateSelection}
+                  disabled={disableAdvocateChange}
+                />
+                {isAdvocate && (
+                  <button
+                    className="manage-office-btn"
+                    onClick={handleManageOfficeClick}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "8px 16px",
+                      backgroundColor: "white",
+                      border: "1px solid #007E7E",
+                      borderRadius: "4px",
+                      color: "#007E7E",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <ManageOfficeIcon />
+                    <span>{t ? t("MANAGE_OFFICE") : "Manage Office"}</span>
+                  </button>
+                )}
+              </div>
+            )}
           {!hideChangeLangOnSomeUrlsWhenNotLoggedIn && !isUserLoggedIn ? changeLanguage : null}
           {!hideNotificationIconOnSomeUrlsWhenNotLoggedIn ? (
             <div className="EventNotificationWrapper" onClick={onNotificationIconClick}>

@@ -89,10 +89,7 @@ const SubmissionPreviewSubmissionTypeMap = {
   ADVANCEMENT_OR_ADJOURNMENT_APPLICATION: "application-reschedule-hearing",
 };
 
-const onDocumentUpload = async (fileData, filename) => {
-  const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
-  return { file: fileUploadRes?.data, fileType: fileData.type, filename };
-};
+
 
 function ReviewSubmissionModal({
   applicationType,

@@ -3,10 +3,7 @@ import React, { useEffect, useState } from "react";
 import ApplicationInfoComponent from "./ApplicationInfoComponent";
 import { convertToDateInputFormat } from "../utils/index";
 
-const convertToDisplayFormat = (dateStr) => {
-  const [year, month, day] = dateStr.split("-");
-  return `${day}-${month}-${year}`;
-};
+
 
 const UpdateDeliveryStatusComponent = ({
   t,

@@ -161,22 +161,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                 const obj = formInstances?.[formIndex]?.[config?.key] ? formInstances[formIndex]?.[config?.key] : formInstances[formIndex];
                 const instanceLocked = isInstanceLockedAt(formIndex);
 
-                const getAddressConfigWithDisable = () => {
-                  if (!config?.lockPrefilledFields) return input;
-                  const prefilledInstance = initialPrefillRef.current?.[formIndex] || {};
-                  const addressPrefill = prefilledInstance?.[input?.key] || {};
-                  const updatedPopInputs = (input?.populators?.inputs || []).map((addrInput) => ({
-                    ...addrInput,
-                    isDisabled: instanceLocked ? true : Boolean(addrInput?.isDisabled || (addrInput?.name && addressPrefill?.[addrInput?.name])),
-                  }));
-                  return {
-                    ...input,
-                    populators: {
-                      ...(input?.populators || {}),
-                      inputs: updatedPopInputs,
-                    },
-                  };
-                };
+
                 return (
                   <React.Fragment key={inputIndex}>
                     {input?.type === "text" && (

@@ -899,10 +899,10 @@ function EFilingCases({ path }) {
               isDcaSkippedInEFiling: caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
                 ? caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
                 : {
-                    code: "NO",
-                    name: "NO",
-                    showDcaFileUpload: true,
-                  },
+                  code: "NO",
+                  name: "NO",
+                  showDcaFileUpload: true,
+                },
               condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
             };
             if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload) {
@@ -963,10 +963,10 @@ function EFilingCases({ path }) {
             isDcaSkippedInEFiling: caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
               ? caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
               : {
-                  code: "NO",
-                  name: "NO",
-                  showDcaFileUpload: true,
-                },
+                code: "NO",
+                name: "NO",
+                showDcaFileUpload: true,
+              },
             condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
           };
           if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload) {
@@ -1144,15 +1144,15 @@ function EFilingCases({ path }) {
                           data:
                             input.key === "advocateDetails"
                               ? [
-                                  {
-                                    name:
-                                      caseDetails?.additionalDetails?.[input.key]?.formdata?.[0]?.data?.advocateBarRegNumberWithName?.[0]
-                                        ?.advocateName,
-                                  },
-                                ] || []
+                                {
+                                  name:
+                                    caseDetails?.additionalDetails?.[input.key]?.formdata?.[0]?.data?.advocateBarRegNumberWithName?.[0]
+                                      ?.advocateName,
+                                },
+                              ] || []
                               : caseDetails?.additionalDetails?.[input.key]?.formdata?.map((data) => ({
-                                  name: `${data?.data?.firstName || ""} ${data?.data?.middleName || ""} ${data?.data?.lastName || ""}`,
-                                })),
+                                name: `${data?.data?.firstName || ""} ${data?.data?.middleName || ""} ${data?.data?.lastName || ""}`,
+                              })),
                         };
                       }),
                     },
@@ -1510,11 +1510,11 @@ function EFilingCases({ path }) {
                               ((address?.addressDetails?.pincode !==
                                 caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.addressDetails?.pincode &&
                                 caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.complainantType?.code ===
-                                  "INDIVIDUAL") ||
+                                "INDIVIDUAL") ||
                                 (address?.addressDetails?.pincode !==
                                   caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.addressCompanyDetails?.pincode &&
                                   caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.complainantType?.code ===
-                                    "REPRESENTATIVE")) &&
+                                  "REPRESENTATIVE")) &&
                               body?.key === "inquiryAffidavitFileUpload"
                           )
                         ) {
@@ -1705,8 +1705,8 @@ function EFilingCases({ path }) {
                     index + 1 > scrutinyFormLength
                       ? false
                       : scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign)
-                      ? false
-                      : true;
+                        ? false
+                        : true;
                 }
 
                 if (
@@ -1859,15 +1859,7 @@ function EFilingCases({ path }) {
     setFormdata([...formdata, { isenabled: true, data: {}, displayindex: activeForms }]);
   };
 
-  // const handleDeleteForm = (index) => {
-  //   const newArray = formdata.map((item, i) => ({
-  //     ...item,
-  //     isenabled: index === i ? false : item.isenabled,
-  //     displayindex: i < index ? item.displayindex : i === index ? -Infinity : item.displayindex - 1,
-  //   }));
-  //   setConfirmDeleteModal(true);
-  //   setFormdata(newArray);
-  // };
+
 
   const handleSkip = () => {
     setShowConfirmOptionalModal(false);
@@ -1981,9 +1973,9 @@ function EFilingCases({ path }) {
         formdata.map((item, i) => {
           return i === index
             ? {
-                ...item,
-                data: formData,
-              }
+              ...item,
+              data: formData,
+            }
             : item;
         })
       );
@@ -2684,12 +2676,12 @@ function EFilingCases({ path }) {
       newFormData = formdata.map((item, index) =>
         index === serviceOfDemandNoticeModal?.index
           ? {
-              ...item,
-              data: {
-                ...item.data,
-                dateOfService: "",
-              },
-            }
+            ...item,
+            data: {
+              ...item.data,
+              dateOfService: "",
+            },
+          }
           : item
       );
     }
@@ -2764,14 +2756,14 @@ function EFilingCases({ path }) {
     const isDrafted =
       caseDetails?.additionalDetails?.[selected]?.isCompleted || caseDetails?.caseDetails?.[selected]?.isCompleted
         ? isMatch(
-            JSON.parse(
-              JSON.stringify(
-                caseDetails?.additionalDetails?.[selected]?.formdata ||
-                  caseDetails?.caseDetails?.[selected]?.formdata || [{ isenabled: true, data: {}, displayindex: 0 }]
-              )
-            ),
-            JSON.parse(JSON.stringify(formdata.filter((data) => data.isenabled)))
-          )
+          JSON.parse(
+            JSON.stringify(
+              caseDetails?.additionalDetails?.[selected]?.formdata ||
+              caseDetails?.caseDetails?.[selected]?.formdata || [{ isenabled: true, data: {}, displayindex: 0 }]
+            )
+          ),
+          JSON.parse(JSON.stringify(formdata.filter((data) => data.isenabled)))
+        )
         : false;
     const newCaseDetails = {
       ...caseDetails,
@@ -3013,23 +3005,23 @@ function EFilingCases({ path }) {
         ? isPendingESign
           ? ""
           : isCaseReAssigned
-          ? t("CS_COMMONS_NEXT")
-          : isDraftInProgress
-          ? t("CS_CONFIRM_DETAILS")
-          : isPendingReESign
-          ? t("CS_COMMON_CONTINUE")
-          : t("CS_GO_TO_HOME")
+            ? t("CS_COMMONS_NEXT")
+            : isDraftInProgress
+              ? t("CS_CONFIRM_DETAILS")
+              : isPendingReESign
+                ? t("CS_COMMON_CONTINUE")
+                : t("CS_GO_TO_HOME")
         : selected === "addSignature"
-        ? isPendingESign || isPendingReESign
-          ? t("CS_SUBMIT_CASE")
-          : t("CS_COMMON_CONTINUE")
-        : isDisableAllFieldsMode
-        ? t("CS_GO_TO_HOME")
-        : isCaseReAssigned
-        ? t("CS_COMMONS_NEXT")
-        : isPendingESign
-        ? ""
-        : t("CS_COMMON_CONTINUE"),
+          ? isPendingESign || isPendingReESign
+            ? t("CS_SUBMIT_CASE")
+            : t("CS_COMMON_CONTINUE")
+          : isDisableAllFieldsMode
+            ? t("CS_GO_TO_HOME")
+            : isCaseReAssigned
+              ? t("CS_COMMONS_NEXT")
+              : isPendingESign
+                ? ""
+                : t("CS_COMMON_CONTINUE"),
     [isCaseReAssigned, isDisableAllFieldsMode, isPendingESign, selected, t, isDraftInProgress, isPendingReESign]
   );
 
