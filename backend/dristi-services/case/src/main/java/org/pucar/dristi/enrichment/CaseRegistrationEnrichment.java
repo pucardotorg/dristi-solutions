@@ -47,8 +47,8 @@ public class CaseRegistrationEnrichment {
     private final CaseRepositoryV2 caseRepositoryV2;
 
     @Autowired
-    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, 
-                                      AdvocateOfficeUtil advocateOfficeUtil, IdgenUtil idgenUtil, 
+    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil,
+                                      AdvocateOfficeUtil advocateOfficeUtil, IdgenUtil idgenUtil,
                                       CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil, HrmsUtil hrmsUtil, ObjectMapper objectMapper, CaseRepositoryV2 caseRepositoryV2) {
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
@@ -220,7 +220,7 @@ public class CaseRegistrationEnrichment {
     public void enrichAdvocateOffices(CaseRequest caseRequest, AuditDetails auditDetails) {
         CourtCase courtCase = caseRequest.getCases();
         RequestInfo requestInfo = caseRequest.getRequestInfo();
-        
+
         if (courtCase.getRepresentatives() == null || courtCase.getRepresentatives().isEmpty()) {
             return;
         }
@@ -605,7 +605,7 @@ public class CaseRegistrationEnrichment {
         }
     }
 
-    
+
     private void enrichEmployeeUserId(List<Role> roles, CaseSearchCriteriaV2 criteria, RequestInfo requestInfo) {
 
         boolean isCourtAssigned = roles.stream()

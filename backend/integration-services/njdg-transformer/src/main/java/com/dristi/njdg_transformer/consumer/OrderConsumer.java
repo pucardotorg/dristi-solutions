@@ -1,5 +1,6 @@
 package com.dristi.njdg_transformer.consumer;
 
+import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.model.order.Notification;
 import com.dristi.njdg_transformer.model.order.NotificationRequest;
 import com.dristi.njdg_transformer.model.order.Order;
@@ -39,6 +40,7 @@ public class OrderConsumer {
     private final MdmsUtil mdmsUtil;
     private final JsonUtil jsonUtil;
     private final OrderNotificationService orderNotificationService;
+    private final TransformerProperties properties;
 
     @KafkaListener(topics = "#{'${kafka.topics.order}'.split(',')}", groupId = "transformer-order")
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
@@ -84,6 +86,7 @@ public class OrderConsumer {
         log.info("Received notification order message | topic: {} | messageId: {} | partition: {} | offset: {}",
                 payload.topic(), getMessageId(payload), payload.partition(), payload.offset());
         try {
+            Thread.sleep(properties.getNotificationOrderProcessingDelay());
             processNotificationOrder(payload);
         } catch (Exception e) {
             log.error("Error processing notification order | topic: {} | messageId: {} | error: {}",
@@ -102,6 +105,7 @@ public class OrderConsumer {
             if(PUBLISHED_ORDER.equalsIgnoreCase(status)) {
                 orderNotificationService.processNotificationOrders(notification, notificationRequest.getRequestInfo());
             }
+            log.info("Notification order processed successfully | status: {}", status);
         } catch (Exception e) {
             log.error("Error processing notification order | error: {}", e.getMessage(), e);
             throw new RuntimeException("Notification order processing failed", e);

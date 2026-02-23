@@ -37,7 +37,7 @@ public class AuthSekRowMapper implements RowMapper<AuthSek> {
                 authSek.setRequestBlob(jsonNode);
                 log.debug("Successfully parsed request_blob JSON for auth_token: {}", authSek.getAuthToken());
             } catch (Exception e) {
-                log.warn("Failed to parse request_blob JSON for auth_token: {}, setting as raw string. Error: {}", 
+                log.warn("Failed to parse request_blob JSON for auth_token: {}, setting as raw string. Error: {}",
                         authSek.getAuthToken(), e.getMessage());
                 authSek.setRequestBlob(requestBlobJson);
             }

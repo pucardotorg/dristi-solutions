@@ -21,9 +21,6 @@ public class MiscellaneuosDetails {
     @JsonProperty("caseNumber")
     private String caseNumber;
 
-    @JsonProperty("filingNumber")
-    private String filingNumber;
-
     @JsonProperty("id")
     private String id = null;
 
@@ -58,4 +55,7 @@ public class MiscellaneuosDetails {
 
     @JsonProperty("coverLetterText")
     private String coverLetterText = null;
+
+    @JsonProperty("filingNumber")
+    private String filingNumber;
 }

@@ -157,7 +157,7 @@ public class CaseConsumer {
         }
     }
 
-    @KafkaListener(topics = "case-outcome-topic", groupId = "transformer-case")
+    @KafkaListener(topics = "#{'${kafka.topic.case.outcome}'}", groupId = "transformer-case")
     public void listenCaseOutcome(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
         String messageId = extractMessageId(payload);
         String filingNumber = null;
@@ -189,7 +189,7 @@ public class CaseConsumer {
         }
     }
 
-    @KafkaListener(topics = "case-overall-status-topic", groupId = "transformer-case")
+    @KafkaListener(topics = "#{'${kafka.topic.case.overall.status}'}", groupId = "transformer-case")
     public void listenCaseOverallStatus(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
         String messageId = extractMessageId(payload);
         String filingNumber = null;
@@ -220,7 +220,7 @@ public class CaseConsumer {
         }
     }
 
-    @KafkaListener(topics = "update-case-conversion", groupId = "transformer-case")
+    @KafkaListener(topics = "#{'${kafka.topic.case.conversion}'}", groupId = "transformer-case")
     public void listenCaseConversion(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         String messageId = extractMessageId(payload);
         String filingNumber = null;

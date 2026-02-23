@@ -622,7 +622,7 @@
           "uuid": "93967a6f-2b26-4c03-ad9e-916ae8c85ed3",
           "tenantId": "kl",
           "currentState": "c746c51b-43d7-4a3b-b73c-b5e5eaae227f",
-          "action": "EDIT_UNSIGNED_CASE",
+          "action": "EDIT_UNSIGNED_CASE", // todo this used to be EDIT_CASE, update the name
           "nextState": "8a8113bc-f3da-42b1-913d-cdde635221c5",
           "roles": [
             "CASE_CREATOR"
@@ -697,7 +697,7 @@
           "uuid": "0773e52a-aba3-43fa-90ae-db40ef3b6529",
           "tenantId": "kl",
           "currentState": "a7846182-9067-4a24-acd8-4f33bbb4bd7b",
-          "action": "EDIT_UNSIGNED_CASE",
+          "action": "EDIT_UNSIGNED_CASE", // todo this used to be EDIT_CASE, update the name
           "nextState": "8a8113bc-f3da-42b1-913d-cdde635221c5",
           "roles": [
             "CASE_CREATOR"
