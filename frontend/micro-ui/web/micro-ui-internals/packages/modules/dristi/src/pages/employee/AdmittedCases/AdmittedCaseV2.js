@@ -1657,6 +1657,8 @@ const AdmittedCaseV2 = () => {
   }, [newWitnesToast, showToast, t]);
 
   useEffect(() => {
+    const { refApplicationNumber, ...rest } = location?.state || {};
+    const applicationNumber = urlParams.get("applicationNumber") || refApplicationNumber;
     if (applicationData && applicationNumber) {
       const applicationDetails = applicationData?.applicationList?.filter((application) => application?.applicationNumber === applicationNumber)?.[0];
       setDocumentSubmission(
@@ -1685,8 +1687,15 @@ const AdmittedCaseV2 = () => {
         })
       );
       setShow(true);
+      if (refApplicationNumber) {
+        history.replace({
+          pathname: location.pathname,
+          search: location.search,
+          state: Object.keys(rest).length ? rest : null,
+        });
+      }
     }
-  }, [applicationData, applicationNumber]);
+  }, [applicationData, applicationNumber, location?.state?.refApplicationNumber]);  
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
