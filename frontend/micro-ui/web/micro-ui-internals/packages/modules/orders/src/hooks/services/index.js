@@ -77,7 +77,7 @@ export const ordersService = {
   createHearings: (data, params) => {
     const presidedBy = {
       judgeID: [localStorage.getItem("judgeId")],
-      benchID: window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID",
+      benchID: "BENCH_ID",
       courtID: localStorage.getItem("courtId"),
     };
     const updatedData = {

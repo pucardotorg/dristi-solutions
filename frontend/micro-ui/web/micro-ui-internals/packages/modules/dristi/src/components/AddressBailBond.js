@@ -1,6 +1,6 @@
 import { CardLabel, CardLabelError, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
-import { formatAddress } from "../Utils";
+import { formatAddress, sanitizeData } from "../Utils";
 
 const AddressBailBond = ({
   t,
@@ -25,9 +25,6 @@ const AddressBailBond = ({
       inputs: finalInputs,
     };
   }, [config.populators.inputs]);
-
-
-
 
   const setValue2 = (value, input) => {
     onSelect(config.key, { ...formData, [input]: value }, { shouldValidate: true });
@@ -65,7 +62,7 @@ const AddressBailBond = ({
                       name={input.name}
                       value={formData?.[input?.name] || ""}
                       onChange={(e) => {
-                        let value = e.target.value;
+                        let value = sanitizeData(e.target.value);
                         if (input?.isFormatRequired) {
                           value = formatAddress(value);
                         }
