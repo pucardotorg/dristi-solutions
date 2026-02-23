@@ -95,10 +95,13 @@ const HomeView = () => {
   const hasViewAllCasesAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_ALL_CASES"), [roles]);
 
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
-  const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
   const courtId = localStorage.getItem("courtId");
+  const isLitigant = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
+    userInfo?.roles,
+  ]);
 
   const [config, setConfig] = useState(null);
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
@@ -560,10 +563,6 @@ const HomeView = () => {
     history.push(`/${window?.contextPath}/employee/home/home-screen`);
   }
 
-  if (isUserLoggedIn && !individualId && userInfoType === "citizen") {
-    history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
-  }
-
   const data = [
     {
       logo: <InboxIcon />,
@@ -584,14 +583,50 @@ const HomeView = () => {
     } else if (userType === "ADVOCATE" && advocateId === selectedSeniorAdvocate?.id) {
       //TODO: if adv is working as assistant for a senior adv, then not allowed to join case for this sprint
       return true;
+    } else if (isLitigant) {
+      return true;
     }
     return false;
-  }, [userType, advocateId, selectedSeniorAdvocate?.id]);
+  }, [userType, advocateId, selectedSeniorAdvocate?.id, isLitigant]);
+
+  const isRejected = useMemo(() => {
+    return (
+      userType !== "LITIGANT" &&
+      Array.isArray(searchResult) &&
+      searchResult?.length > 0 &&
+      searchResult?.[0]?.isActive === false &&
+      searchResult?.[0]?.status === "INACTIVE"
+    );
+  }, [searchResult, userType]);
+
+
+  useEffect(() => {
+    if (!individualData || !searchResult || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) return;
+
+    const userHasIncompleteRegistration = !individualId || isRejected || isLitigantPartialRegistered;
+
+    const registrationIsDoneApprovalIsPending = individualId && isApprovalPending && !isRejected && !isLitigantPartialRegistered;
+
+    if (isUserLoggedIn && userInfoType === "citizen" && (userHasIncompleteRegistration || registrationIsDoneApprovalIsPending)) {
+      history.push(`/${window?.contextPath}/${userInfoType}/dristi/home`);
+    }
+  }, [
+    isUserLoggedIn,
+    userInfoType,
+    history,
+    individualData,
+    searchResult,
+    individualId,
+    isRejected,
+    isLitigantPartialRegistered,
+    isApprovalPending,
+    userType,
+    unAssociatedClerk,
+  ]);
 
   // When a clerk has no advocates linked yet, we show the "No Advocates Linked" empty state.
   // In that scenario, the Home / All Cases breadcrumb should be hidden.
-  const hideBreadcrumbForUnlinkedClerk =
-    individualId && userType === "ADVOCATE_CLERK" && userInfoType === "citizen" && unAssociatedClerk;
+  const hideBreadcrumbForUnlinkedClerk = individualId && userType === "ADVOCATE_CLERK" && userInfoType === "citizen" && unAssociatedClerk;
 
   if (isLoading || isFetching || isSearchLoading || isOrdersLoading || isOutcomeLoading || isCitizenCaseDataLoading || isLoadingMembers) {
     return <Loader />;

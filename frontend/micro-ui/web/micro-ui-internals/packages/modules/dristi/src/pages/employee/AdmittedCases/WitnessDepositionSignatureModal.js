@@ -31,6 +31,7 @@ const WitnessDepositionSignatureModal = ({
   const [formData, setFormData] = useState({});
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const name = "Signature";
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -61,6 +62,7 @@ const WitnessDepositionSignatureModal = ({
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -73,6 +75,7 @@ const WitnessDepositionSignatureModal = ({
         setLoader(false);
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -171,6 +174,7 @@ const WitnessDepositionSignatureModal = ({
           showDownloadText={true}
           fileStoreId={witnessDepositionFileStoreId}
           cancelLabel={"SUBMIT"}
+          fileUploadError={fileUploadError}
         />
       )}
     </React.Fragment>

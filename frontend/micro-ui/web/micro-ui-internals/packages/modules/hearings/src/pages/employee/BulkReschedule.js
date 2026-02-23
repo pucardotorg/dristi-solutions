@@ -99,6 +99,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
   const [issignLoader, setSignLoader] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
 
@@ -184,6 +185,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const uploadModalConfig = useMemo(() => {
@@ -595,6 +597,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         setSignLoader(false);
         setSignFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setSignLoader(false);
     }
@@ -732,6 +735,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           formData={signFormData}
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
+          fileUploadError={fileUploadError}
         />
       )}
 

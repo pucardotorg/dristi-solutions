@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.egov.icops_integrationkerala.enrichment.IcopsEnrichment;
+import com.egov.icops_integrationkerala.config.IcopsConfiguration;
 import com.egov.icops_integrationkerala.kafka.Producer;
 import com.egov.icops_integrationkerala.model.*;
 import com.egov.icops_integrationkerala.util.*;
@@ -14,12 +15,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class IcopsServiceTest {
 
     @Mock
@@ -45,6 +49,9 @@ class IcopsServiceTest {
 
     @Mock
     private Producer producer;
+
+    @Mock
+    private IcopsConfiguration config;
 
     @InjectMocks
     private IcopsService icopsService;
@@ -83,6 +90,13 @@ class IcopsServiceTest {
         locationRequest = new LocationRequest();
         locationRequest.setLocation(location);
         geoLocationDetails = mock(GeoLocationDetails.class);
+        
+        // Mock config.getZoneId()
+        when(config.getZoneId()).thenReturn("Asia/Kolkata");
+        
+        // Mock icopsEnrichment.createIcopsTrackerBody()
+        when(icopsEnrichment.createIcopsTrackerBody(any(TaskRequest.class), any(ProcessRequest.class), any(ChannelMessage.class), any(DeliveryStatus.class)))
+            .thenReturn(icopsTracker);
     }
 
     @Test
@@ -159,6 +173,7 @@ class IcopsServiceTest {
         when(requestInfoGenerator.generateSystemRequestInfo()).thenReturn(new RequestInfo());
         when(icopsTracker.getRowVersion()).thenReturn(1);
         when(icopsProcessReport.getProcessActionStatus()).thenReturn("Executed");
+        when(icopsProcessReport.getProcessActionRemarks()).thenReturn("Executed successfully");
         ChannelMessage result = icopsService.processPoliceReport(icopsProcessReport);
 
         assertEquals("SUCCESS", result.getAcknowledgementStatus());
@@ -171,6 +186,8 @@ class IcopsServiceTest {
         when(requestInfoGenerator.generateSystemRequestInfo()).thenReturn(new RequestInfo());
         when(icopsTracker.getRowVersion()).thenReturn(1);
         when(icopsProcessReport.getProcessActionStatus()).thenReturn("Not Executed");
+        when(icopsProcessReport.getProcessActionRemarks()).thenReturn("Not executed");
+        when(icopsProcessReport.getProcessFailureReason()).thenReturn("Failure reason");
         ChannelMessage result = icopsService.processPoliceReport(icopsProcessReport);
 
         assertEquals("SUCCESS", result.getAcknowledgementStatus());
@@ -183,6 +200,8 @@ class IcopsServiceTest {
         when(requestInfoGenerator.generateSystemRequestInfo()).thenReturn(new RequestInfo());
         when(icopsTracker.getRowVersion()).thenReturn(1);
         when(icopsProcessReport.getProcessActionStatus()).thenReturn("Else");
+        when(icopsProcessReport.getProcessActionRemarks()).thenReturn("In transit");
+        when(icopsProcessReport.getProcessFailureReason()).thenReturn("In transit failure");
         ChannelMessage result = icopsService.processPoliceReport(icopsProcessReport);
 
         assertEquals("SUCCESS", result.getAcknowledgementStatus());

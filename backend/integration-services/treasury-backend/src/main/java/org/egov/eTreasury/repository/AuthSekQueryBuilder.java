@@ -8,7 +8,7 @@ import org.springframework.util.StringUtils;
 @Component
 public class AuthSekQueryBuilder {
 
-    private static final String BASE_QUERY = "SELECT auth_token, decrypted_sek, bill_id, business_service, service_number, total_due, mobile_number, paid_by, session_time, department_id ";
+    private static final String BASE_QUERY = "SELECT auth_token, decrypted_sek, bill_id, business_service, service_number, total_due, mobile_number, paid_by, session_time, department_id, request_blob ";
 
     private static final String FROM_TABLES = " FROM auth_sek_session_data ";
 

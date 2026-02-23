@@ -52,8 +52,7 @@ initLibraries().then(() => {
 
 function App() {
   const stateCode =
-    window.globalConfigs?.getConfig("STATE_LEVEL_TENANT_ID") ||
-    process.env.REACT_APP_STATE_LEVEL_TENANT_ID;
+    window?.globalConfigs.getConfig("STATE_LEVEL_TENANT_ID") || "kl";
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = userInfo?.roles;
   const assignedRoles = roles?.map((role) => role?.code);

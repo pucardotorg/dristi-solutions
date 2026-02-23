@@ -126,7 +126,7 @@ export const replaceUploadedDocsWithFile = async (t, formData, tenantId) => {
     const hasFileTypeDoc = formData?.supportingDocuments?.uploadedDocs?.some((doc) => doc instanceof File || (doc.file && doc.file instanceof File));
     if (hasFileTypeDoc) {
       try {
-        let combinedDocName =`${t("SUPPORTING_DOCS")}`;
+        let combinedDocName = `${t("SUPPORTING_DOCS")}`;
         let combinedDocumentFile;
         if (Array.isArray(formData?.supportingDocuments?.uploadedDocs) && formData?.supportingDocuments?.uploadedDocs?.length > 1) {
           combinedDocumentFile = await combineMultipleFiles(formData.supportingDocuments.uploadedDocs);
@@ -274,8 +274,12 @@ export const _getDefaultFormValue = (t, applicationDetails) => {
       prayer: {
         text: applicationDetails?.applicationDetails?.prayer || applicationDetails?.additionalDetails?.formdata?.prayer?.text || "",
       },
-      addSurety: applicationDetails?.applicationDetails?.sureties?.length
-        ? { code: "YES", name: t("YES"), showSurety: true }
+      addSurety: applicationDetails?.applicationDetails?.addSurety
+        ? {
+            code: applicationDetails?.applicationDetails?.addSurety,
+            name: t(applicationDetails?.applicationDetails?.addSurety),
+            showSurety: applicationDetails?.applicationDetails?.addSurety === "YES" ? true : false,
+          }
         : { code: "NO", name: t("NO"), showSurety: false },
       sureties: sureties?.map((surety) => ({
         id: surety?.id,

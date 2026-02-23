@@ -2,6 +2,7 @@ import { CardLabel, Dropdown, LabelFieldPair, TextInput } from "@egovernments/di
 import React, { useEffect, useState } from "react";
 import ApplicationInfoComponent from "./ApplicationInfoComponent";
 import { convertToDateInputFormat } from "../utils/index";
+import { sanitizeData } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const convertToDisplayFormat = (dateStr) => {
   const [year, month, day] = dateStr.split("-");
@@ -76,7 +77,7 @@ const UpdateDeliveryStatusComponent = ({
           type={"text"}
           name={"remarks"}
           onChange={(e) => {
-            setRemarks(e?.target?.value);
+            setRemarks(sanitizeData(e?.target?.value));
           }}
         />
       </LabelFieldPair>

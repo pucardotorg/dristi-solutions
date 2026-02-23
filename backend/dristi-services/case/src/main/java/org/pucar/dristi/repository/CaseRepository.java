@@ -141,7 +141,7 @@ public class CaseRepository {
 
             // Get advocate office members only for this specific case
             List<AdvocateOfficeCaseMember> caseAdvocateOfficeMembers = rowsByCaseId.getOrDefault(courtCase.getId(), List.of());
-            
+
             if (caseAdvocateOfficeMembers.isEmpty()) {
                 courtCase.setAdvocateOffices(new ArrayList<>());
                 return;
@@ -169,7 +169,7 @@ public class CaseRepository {
                         .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(rep))
                         .officeAdvocateUserUuid(extractAdvocateUuidFromAdditionalDetails(rep))
                         .build());
-                
+
                 // Separate advocates and clerks based on memberType
                 List<AdvocateOfficeMember> advocates = officeRows.stream()
                         .filter(r -> "ADVOCATE".equals(r.getMemberType().toString()))
