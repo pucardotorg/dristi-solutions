@@ -129,27 +129,7 @@ const EvidenceModal = ({
     let createdBy = "";
     let onBehalfOfUuid = "";
 
-    if (documentSubmission?.[0]?.artifactList?.filingType === "CASE_FILING") {
-      const createdByIndividualId = documentSubmission?.[0]?.artifactList?.sourceID; // For efiling documents, only source Id is available
-      const fetchUserInfo = async () => {
-        try {
-          const result = await getUserInfoFromIndividualId(createdByIndividualId);
-          setUserInfoMap((prev) => ({
-            ...prev,
-            createdByUser: {
-              uuid: result?.[0]?.uuid,
-              name: result?.[0]?.name,
-            },
-          }));
-        } catch (error) {
-          console.error("Failed to fetch user info", error);
-        }
-      };
-      if (createdByIndividualId) {
-        fetchUserInfo();
-        return;
-      }
-    } else if (documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList) {
+    if (documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList) {
       const { asUser, auditDetails, auditdetails, onBehalfOf } = documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList;
       senderUuid = asUser;
       createdBy = auditDetails?.createdBy || auditdetails?.createdBy;
@@ -1311,7 +1291,7 @@ const EvidenceModal = ({
                       </div>
                     </div>
                   )}
-                  {createdByName && (
+                  {/* {createdByName && (
                     <div className="info-row">
                       <div className="info-key">
                         <h3>{t("CREATED_BY")}</h3>
@@ -1320,7 +1300,7 @@ const EvidenceModal = ({
                         <h3>{createdByName}</h3>
                       </div>
                     </div>
-                  )}
+                  )} */}
                   {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingDate && (
                     <div className="info-row">
                       <div className="info-key">
