@@ -81,4 +81,8 @@ public class TreasuryPaymentData {
     private double totalAmount;
 
     private List<FeeBreakDown> feeBreakDown;
+
+    private Object requestBlob;
+
+    private Object responseBlob;
 }
