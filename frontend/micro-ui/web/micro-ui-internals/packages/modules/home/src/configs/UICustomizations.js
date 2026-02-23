@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import {formatNoticeDeliveryDate } from "../utils";
+import { formatNoticeDeliveryDate } from "../utils";
 import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";

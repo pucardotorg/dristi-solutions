@@ -2,6 +2,8 @@ package com.dristi.njdg_transformer.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
+
+import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -60,4 +62,7 @@ public class CaseTypeDetails {
 
     @JsonProperty("jocode")
     private String jocode;
+
+    @JsonProperty("converted_at")
+    private LocalDateTime convertedAt;
 }

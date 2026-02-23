@@ -33,6 +33,7 @@ const GenericUploadSignatureModal = ({
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [formData, setFormData] = useState({});
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
+  const [fileUploadError, setFileUploadError] = useState(null);
   const name = "Signature";
   const userUuid = Digit.UserService.getUser()?.info?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
@@ -66,6 +67,7 @@ const GenericUploadSignatureModal = ({
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -78,6 +80,7 @@ const GenericUploadSignatureModal = ({
         setLoader(false);
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -126,6 +129,7 @@ const GenericUploadSignatureModal = ({
           showDownloadText={true}
           fileStoreId={fileStoreId}
           cancelLabel={"SUBMIT"}
+          fileUploadError={fileUploadError}
         />
       )}
     </React.Fragment>

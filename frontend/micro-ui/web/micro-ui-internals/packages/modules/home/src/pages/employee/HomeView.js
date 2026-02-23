@@ -95,10 +95,13 @@ const HomeView = () => {
   const hasViewAllCasesAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_ALL_CASES"), [roles]);
 
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
-  const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
   const courtId = localStorage.getItem("courtId");
+  const isLitigant = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
+    userInfo?.roles,
+  ]);
 
   const [config, setConfig] = useState(null);
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
@@ -580,9 +583,11 @@ const HomeView = () => {
     } else if (userType === "ADVOCATE" && advocateId === selectedSeniorAdvocate?.id) {
       //TODO: if adv is working as assistant for a senior adv, then not allowed to join case for this sprint
       return true;
+    } else if (isLitigant) {
+      return true;
     }
     return false;
-  }, [userType, advocateId, selectedSeniorAdvocate?.id]);
+  }, [userType, advocateId, selectedSeniorAdvocate?.id, isLitigant]);
 
   const isRejected = useMemo(() => {
     return (
