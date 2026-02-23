@@ -105,7 +105,7 @@ public class CaseUtil {
 
 			log.info("Calling advocate cases API for advocateId: {}", advocateId);
 			Object response = restTemplate.postForObject(uri.toString(), requestBody, Map.class);
-			
+
 			JsonNode jsonNode = mapper.readTree(mapper.writeValueAsString(response));
 			JsonNode casesNode = jsonNode.get("cases");
 
@@ -259,7 +259,7 @@ public class CaseUtil {
 
 			log.info("Calling member advocates API for memberUserUuid: {} and caseId: {}", memberUserUuid, caseId);
 			Object response = restTemplate.postForObject(uri.toString(), requestBody, Map.class);
-			
+
 			JsonNode jsonNode = mapper.readTree(mapper.writeValueAsString(response));
 			JsonNode advocateUuidsNode = jsonNode.get("advocateUuids");
 

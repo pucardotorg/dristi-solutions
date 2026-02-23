@@ -130,7 +130,7 @@ public class PaymentUpdateService {
                 applicationRequest.setApplication(application);
                 applicationRequest.setRequestInfo(requestInfo);
 
-                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus()) || PENDINGREVIEW.equalsIgnoreCase(application.getStatus()) || (COMPLETED.equalsIgnoreCase(application.getStatus()) && REQUEST_FOR_BAIL.equalsIgnoreCase(application.getApplicationType()))) {
+                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus()) || PENDINGREVIEW.equalsIgnoreCase(application.getStatus())) {
                     enrichment.enrichApplicationNumberByCMPNumber(applicationRequest);
                 }
 
