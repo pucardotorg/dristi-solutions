@@ -28,15 +28,11 @@ import java.util.List;
 @RequestMapping("")
 public class BankDetailsApiController {
 
-    private final ObjectMapper objectMapper;
-    private final HttpServletRequest request;
     private final BankDetailsService bankDetailsService;
     private final ResponseInfoFactory responseInfoFactory;
 
     @Autowired
-    public BankDetailsApiController(ObjectMapper objectMapper, HttpServletRequest request, BankDetailsService bankDetailsService, ResponseInfoFactory responseInfoFactory) {
-        this.objectMapper = objectMapper;
-        this.request = request;
+    public BankDetailsApiController(BankDetailsService bankDetailsService, ResponseInfoFactory responseInfoFactory) {
         this.bankDetailsService = bankDetailsService;
         this.responseInfoFactory = responseInfoFactory;
     }
@@ -51,7 +47,7 @@ public class BankDetailsApiController {
                 .bankDetails(bankDetails)
                 .build();
 
-        return ResponseEntity.accepted().body(response);
+        return ResponseEntity.ok(response);
     }
 
 }

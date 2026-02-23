@@ -45,24 +45,21 @@ class BankDetailsApiControllerTest {
     @MockBean
     private ResponseInfoFactory responseInfoFactory;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @Test
     void bankDetailsV1SearchPostSuccess() throws Exception {
         when(bankDetailsService.searchBankDetails(any(BankDetailsSearchRequest.class)))
-                .thenReturn(Collections.singletonList(BankDetails.builder().ifsc("IFSC1").name("Bank").branch("Branch").build()));
+                .thenReturn(Collections.singletonList(BankDetails.builder().ifsc("SBIN0005094").name("Bank").branch("Branch").build()));
         when(responseInfoFactory.createResponseInfoFromRequestInfo(any(RequestInfo.class), Mockito.eq(true)))
                 .thenReturn(ResponseInfo.builder().apiId("api").build());
 
-        String body = "{\"RequestInfo\":{},\"criteria\":[{\"ifsc\":\"IFSC1\"}]}";
+        String body = "{\"RequestInfo\":{},\"criteria\":[{\"ifsc\":\"SBIN0005094\"}]}";
 
         mockMvc.perform(post("/v1/_search")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isAccepted())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.bankDetails", hasSize(1)))
-                .andExpect(jsonPath("$.bankDetails[0].ifsc").value("IFSC1"));
+                .andExpect(jsonPath("$.bankDetails[0].ifsc").value("SBIN0005094"));
     }
 
     @Test

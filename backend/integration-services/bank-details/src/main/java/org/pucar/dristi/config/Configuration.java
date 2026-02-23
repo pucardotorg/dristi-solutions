@@ -12,11 +12,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Data
-@Import({TracerConfiguration.class})
 @NoArgsConstructor
 @AllArgsConstructor
-@Setter
-@Getter
 public class Configuration {
 
     // Razorpay IFSC

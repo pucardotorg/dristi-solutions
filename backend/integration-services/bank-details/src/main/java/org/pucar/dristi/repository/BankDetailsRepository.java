@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestTemplate;
 
 import static org.pucar.dristi.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
+import static org.pucar.dristi.config.ServiceConstants.IFSC_PATTERN;
 
 @Slf4j
 @Repository
@@ -22,6 +23,11 @@ public class BankDetailsRepository {
     }
 
     public JsonNode fetchBankDetails(String ifsc){
+
+        if (ifsc == null || !IFSC_PATTERN.matcher(ifsc).matches()) {
+            throw new CustomException("INVALID_IFSC", "Invalid IFSC code: " + ifsc);
+        }
+
         String uri = configuration.getRazorpayIfscApi() + ifsc;
 
         try{

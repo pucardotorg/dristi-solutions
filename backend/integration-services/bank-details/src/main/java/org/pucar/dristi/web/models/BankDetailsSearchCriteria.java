@@ -7,6 +7,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
+
 /**
  * BankDetailsSearchCriteria
  */
@@ -19,6 +22,8 @@ import org.springframework.validation.annotation.Validated;
 public class BankDetailsSearchCriteria {
 
     @JsonProperty("ifsc")
+    @NotBlank(message = "IFSC code must not be blank")
+    @Pattern(regexp = "^[A-Z]{4}0[A-Z0-9]{6}$", message = "Invalid IFSC code format")
     private String ifsc = null;
 
 }

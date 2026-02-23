@@ -37,10 +37,18 @@ public class BankDetailsService {
                 throw new CustomException("BANK_DETAILS_NOT_FOUND", "Bank details not found for ifsc: " + ifsc);
             }
 
+            String bankName = response.path("BANK").asText(null);
+            String branch = response.path("BRANCH").asText(null);
+            String ifscCode = response.path("IFSC").asText(null);
+
+            if (bankName == null || branch == null || ifscCode == null) {
+                log.info("Incomplete bank details in response for IFSC: {}", ifsc);
+            }
+
             BankDetails bankDetails = BankDetails.builder()
-                    .name(response.path("BANK").asText())
-                    .branch(response.path("BRANCH").asText())
-                    .ifsc(response.path("IFSC").asText())
+                    .name(bankName)
+                    .branch(branch)
+                    .ifsc(ifscCode)
                     .build();
 
             bankDetailsList.add(bankDetails);
