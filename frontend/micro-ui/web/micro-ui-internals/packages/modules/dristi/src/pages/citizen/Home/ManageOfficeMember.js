@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { InfoCircleIcon } from "../../../icons/svgIndex";
 import { assignCasesConfig } from "./assignCasesConfig";
 
@@ -34,6 +34,9 @@ const ManageOfficeMember = () => {
   const [allowCaseCreate, setAllowCaseCreate] = useState(member?.allowCaseCreate !== false ? "Yes" : "No");
   const [addToNewCasesAuto, setAddToNewCasesAuto] = useState(member?.addNewCasesAutomatically !== false ? "Yes" : "No");
   const [selectedCasesCount, setSelectedCasesCount] = useState(0);
+  const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
+  const [isRemovingMember, setIsRemovingMember] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER") || "—";
   const designation = member?.memberType === "ADVOCATE_CLERK" ? (t("CLERK") || "Clerk") : member?.memberType === "ADVOCATE" ? (t("ADVOCATE") || "Advocate") : member?.memberType || "—";
@@ -160,9 +163,42 @@ const ManageOfficeMember = () => {
     history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office`);
   };
 
-  const handleRemoveMember = () => {
-    // TODO: wire remove member API
-    handleGoBack();
+  const handleRemoveMemberClick = () => {
+    setShowRemoveMemberModal(true);
+  };
+
+  const handleCloseRemoveModal = () => {
+    setShowRemoveMemberModal(false);
+  };
+
+  const handleConfirmRemoveMember = async () => {
+    if (!member?.id) {
+      setToast({ label: t("REMOVE_MEMBER_ERROR") || "Failed to remove member. Please try again.", type: "error" });
+      return;
+    }
+    setIsRemovingMember(true);
+    try {
+      const leavePayload = {
+        id: member?.id,
+        tenantId: tenantId,
+        officeAdvocateId: effectiveAdvocateInfo?.advocateId,
+        memberType: member?.memberType,
+        memberId: member?.memberId,
+        memberUserUuid: member?.memberUserUuid,
+        officeAdvocateUserUuid: member?.officeAdvocateUserUuid,
+      };
+      const response = await window?.Digit?.DRISTIService?.leaveOffice({ leaveOffice: leavePayload }, { tenantId });
+      if (response) {
+        setToast({ label: t("MEMBER_REMOVED_SUCCESS") || "Member removed successfully", type: "success" });
+        setShowRemoveMemberModal(false);
+        handleGoBack();
+      }
+    } catch (error) {
+      console.error("Error removing member:", error);
+      setToast({ label: t("REMOVE_MEMBER_ERROR") || "Failed to remove member. Please try again.", type: "error" });
+    } finally {
+      setIsRemovingMember(false);
+    }
   };
 
   const handleUpdateAccess = () => {
@@ -216,7 +252,7 @@ const ManageOfficeMember = () => {
               <option value="No">{t("NO") || "No"}</option>
             </select>
           </div>
-          <button type="button" onClick={handleRemoveMember} className="manage-office-member-remove-btn">
+          <button type="button" onClick={handleRemoveMemberClick} className="manage-office-member-remove-btn">
             {t("REMOVE_MEMBER") || "Remove Member"}
           </button>
         </div>
@@ -295,6 +331,43 @@ const ManageOfficeMember = () => {
           {t("UPDATE_ACCESS") || "Update Access"}
         </button>
       </footer>
+
+      {/* Remove Member Confirmation Modal - same as ManageOffice */}
+      {showRemoveMemberModal && (
+        <div className="manage-office-modal-overlay" onClick={handleCloseRemoveModal}>
+          <div className="manage-office-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="manage-office-modal__header">
+              <h2 className="manage-office-modal__title">{t("REMOVE_MEMBER") || "Remove Member"}</h2>
+              <button onClick={handleCloseRemoveModal} className="manage-office-modal__close">
+                ×
+              </button>
+            </div>
+
+            {isRemovingMember ? (
+              <div className="manage-office-modal-loader">
+                <Loader />
+              </div>
+            ) : (
+              <React.Fragment>
+                <p className="manage-office-remove-text">
+                  {t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?"}
+                </p>
+
+                <div className="manage-office-modal__footer">
+                  <button onClick={handleCloseRemoveModal} className="manage-office-btn manage-office-btn--secondary">
+                    {t("CANCEL") || "Cancel"}
+                  </button>
+                  <button onClick={handleConfirmRemoveMember} className="manage-office-btn manage-office-btn--danger">
+                    {t("REMOVE_MEMBER") || "Remove Member"}
+                  </button>
+                </div>
+              </React.Fragment>
+            )}
+          </div>
+        </div>
+      )}
+
+      {toast && <Toast label={toast?.label} onClose={() => setToast(null)} error={toast?.type === "error"} isDleteBtn={true} />}
     </div>
   );
 };
