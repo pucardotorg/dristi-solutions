@@ -18,7 +18,18 @@ const ManageOfficeMember = () => {
   const history = useHistory();
   const location = useLocation();
   const member = location?.state?.member || {};
+  const advocateInfo = location?.state?.advocateInfo || {};
   const tenantId = window?.Digit?.ULBService?.getCurrentTenantId();
+
+  // Fallback advocateInfo when navigated directly (e.g. refresh)
+  const effectiveAdvocateInfo = useMemo(() => {
+    if (advocateInfo?.officeAdvocateUserUuid && advocateInfo?.advocateId) return advocateInfo;
+    const userInfo = window?.Digit?.UserService?.getUser()?.info;
+    return {
+      officeAdvocateUserUuid: userInfo?.uuid || advocateInfo?.officeAdvocateUserUuid,
+      advocateId: advocateInfo?.advocateId,
+    };
+  }, [advocateInfo]);
 
   const [allowCaseCreate, setAllowCaseCreate] = useState(member?.allowCaseCreate !== false ? "Yes" : "No");
   const [addToNewCasesAuto, setAddToNewCasesAuto] = useState(member?.addNewCasesAutomatically !== false ? "Yes" : "No");
@@ -28,7 +39,10 @@ const ManageOfficeMember = () => {
   const designation = member?.memberType === "ADVOCATE_CLERK" ? (t("CLERK") || "Clerk") : member?.memberType === "ADVOCATE" ? (t("ADVOCATE") || "Advocate") : member?.memberType || "—";
   const mobileNumber = member?.memberMobileNumber ? `+91 ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(0, 5)} ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(5)}` : "—";
 
-  const assignCasesConfigWithTenant = useMemo(() => assignCasesConfig(), []);
+  const assignCasesConfigWithTenant = useMemo(
+    () => assignCasesConfig({ member, advocateInfo: effectiveAdvocateInfo }),
+    [member, effectiveAdvocateInfo]
+  );
 
   const syncSelectedCasesCount = React.useCallback(() => {
     const container = document.querySelector(".manage-office-member-inbox");

@@ -1,26 +1,43 @@
 /**
  * Config for Assign Cases section on Manage Office Member page.
- * Uses case/v1/_search for case search.
+ * Uses advocate-office-management/v1/_searchCaseMember for member case search.
+ * @param {Object} options
+ * @param {Object} options.member - Office member being managed (must have memberUserUuid)
+ * @param {Object} options.advocateInfo - Logged-in advocate info (officeAdvocateUserUuid, advocateId)
  */
-export const assignCasesConfig = () => {
+export const assignCasesConfig = ({ member = {}, advocateInfo = {} } = {}) => {
+  const tenantId = Digit?.ULBService?.getCurrentTenantId();
+  const memberUserUuid = member?.memberUserUuid;
+  const officeAdvocateUserUuid = advocateInfo?.officeAdvocateUserUuid;
+  const advocateId = advocateInfo?.advocateId;
+
   return {
     label: "ASSIGN_CASES",
     type: "search",
     apiDetails: {
-      serviceName: "/case/v1/_search",
+      serviceName: "/advocate-office-management/v1/_searchCaseMember",
       requestParam: {
-        tenantId: Digit.ULBService.getCurrentTenantId(),
+        tenantId,
       },
       requestBody: {
-        tenantId: Digit.ULBService.getCurrentTenantId(),
-        criteria: [],
+        criteria: {
+          tenantId,
+          memberUserUuid,
+          officeAdvocateUserUuid,
+          caseMappingFilterStatus: "ASSIGNED_CASES",
+          advocateId,
+        },
+        pagination: {
+          limit: 100,
+          offSet: 0,
+        },
       },
       masterName: "commonUiConfig",
       moduleName: "assignCasesConfig",
       minParametersForSearchForm: 1,
       tableFormJsonPath: "requestParam",
-      filterFormJsonPath: "requestBody.criteria.[0]",
-      searchFormJsonPath: "requestBody.criteria.[0]",
+      filterFormJsonPath: "requestBody.criteria",
+      searchFormJsonPath: "requestBody.criteria",
     },
     sections: {
       search: {
@@ -30,33 +47,32 @@ export const assignCasesConfig = () => {
           secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
           minReqFields: 0,
           defaultValues: {
-            assignmentStatus: "ALL",
+            caseMappingFilterStatus: "ASSIGNED_CASES",
             filingNumber: "",
           },
           fields: [
             {
               label: "ASSIGNMENT_STATUS",
               isMandatory: false,
-              key: "assignmentStatus",
+              key: "caseMappingFilterStatus",
               type: "dropdown",
               populators: {
-                name: "assignmentStatus",
+                name: "caseMappingFilterStatus",
                 optionsKey: "name",
                 error: "Should not be empty",
                 options: [
-                  { code: "ALL", name: "All" },
-                  { code: "ASSIGNED", name: "Assigned Cases" },
-                  { code: "UNASSIGNED", name: "Unassigned Cases" },
+                  { code: "ASSIGNED_CASES", name: "Assigned Cases" },
+                  { code: "UNASSIGNED_CASES", name: "Unassigned Cases" },
                 ],
               },
             },
             {
               label: "SEARCH_CASE_NAME_OR_NUMBER",
               isMandatory: false,
-              key: "filingNumber",
+              key: "caseSearchText",
               type: "text",
               populators: {
-                name: "filingNumber",
+                name: "caseSearchText",
                 error: "Should not be empty",
               },
             },
@@ -83,7 +99,7 @@ export const assignCasesConfig = () => {
             },
           ],
           enableColumnSort: true,
-          resultsJsonPath: "criteria.[0].responseList",
+          resultsJsonPath: "cases",
         },
         show: true,
       },

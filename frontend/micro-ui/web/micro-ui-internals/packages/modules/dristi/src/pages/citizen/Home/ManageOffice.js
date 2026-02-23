@@ -456,6 +456,10 @@ const ManageOffice = () => {
                       ? () =>
                           history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office/manage-member`, {
                             member,
+                            advocateInfo: {
+                              officeAdvocateUserUuid: officeAdvocateUserUuid,
+                              advocateId: advocateSearchResult?.[0]?.responseList?.[0]?.id || advocateSearchResult?.[0]?.id,
+                            },
                           })
                       : undefined
                   }
