@@ -526,6 +526,18 @@
   gap: 0;
 }
 
+.manage-office-manage-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: #ffffff;
+  color: #007e7e;
+  border: 1px solid #007e7e;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 .manage-office-delete-btn {
   background: none;
   border: none;

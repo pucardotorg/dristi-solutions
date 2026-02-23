@@ -478,6 +478,23 @@ const ManageOffice = () => {
                   </span>
                 </span>
                 <span className={`manage-office-actions${activeTab === "advocatesWorkingFor" ? " manage-office-actions--compact" : ""}`}>
+                  {activeTab === "myAdvocatesClerks" && (
+                    <button
+                      type="button"
+                      className="manage-office-manage-btn"
+                      onClick={() =>
+                        history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office/manage-member`, {
+                          member,
+                          advocateInfo: {
+                            officeAdvocateUserUuid: officeAdvocateUserUuid,
+                            advocateId: advocateSearchResult?.[0]?.responseList?.[0]?.id || advocateSearchResult?.[0]?.id,
+                          },
+                        })
+                      }
+                    >
+                      {t("MANAGE") || "Manage"}
+                    </button>
+                  )}
                   <button onClick={() => handleDeleteClick(member)} className="manage-office-delete-btn">
                     <DeleteIcon />
                   </button>
