@@ -229,7 +229,7 @@ public class CaseQueryBuilder {
                 query.append("(EXISTS (SELECT 1 FROM dristi_advocate_office_case_member aocm " +
                            "WHERE aocm.office_advocate_id = ? " +
                            "AND aocm.member_user_uuid = ? " +
-                            "AND aocm.case_id = cases.id" +
+                           "AND aocm.case_id = cases.id " +
                            "AND aocm.is_active = true) " +
                            "AND cases.id IN (" +
                                 " SELECT dcr.case_id" +
