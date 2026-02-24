@@ -113,6 +113,7 @@ class CaseEnrichmentTest {
         ObjectNode respondentDetails = realMapper.createObjectNode();
         ArrayNode formdata = realMapper.createArrayNode();
         ObjectNode formItem = realMapper.createObjectNode();
+        formItem.put("displayindex", 0);
         ObjectNode data = realMapper.createObjectNode();
         data.put("respondentFirstName", "Jane");
         data.put("respondentLastName", "Smith");
@@ -259,6 +260,7 @@ class CaseEnrichmentTest {
         // Add two parties
         for (int i = 0; i < 2; i++) {
             ObjectNode formItem = realMapper.createObjectNode();
+            formItem.put("displayindex", i + 1);
             ObjectNode data = realMapper.createObjectNode();
             data.put("firstName", "Party " + i);
             
@@ -290,6 +292,7 @@ class CaseEnrichmentTest {
         // Add two parties
         for (int i = 0; i < 2; i++) {
             ObjectNode formItem = realMapper.createObjectNode();
+            formItem.put("displayindex", i + 1);
             ObjectNode data = realMapper.createObjectNode();
             data.put("respondentFirstName", "Party " + i);
             

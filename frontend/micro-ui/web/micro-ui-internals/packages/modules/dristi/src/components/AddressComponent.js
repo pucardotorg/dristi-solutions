@@ -3,6 +3,7 @@ import { CardLabel, TextInput, CardLabelError } from "@egovernments/digit-ui-rea
 import LocationSearch from "./LocationSearch";
 import { ReactComponent as SmallInfoIcon } from "../images/smallInfoIcon.svg";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { sanitizeData } from "../Utils";
 
 const getLocation = (places, code) => {
   let location = null;
@@ -202,7 +203,8 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
                     key={input.name}
                     value={formData && formData[config.key] ? formData[config.key][input.name] : undefined}
                     onChange={(e) => {
-                      setValue(e.target.value, input.name, input?.autoFill);
+                      const newValue = sanitizeData(e.target.value);
+                      setValue(newValue, input.name, input?.autoFill);
                     }}
                     disable={input.isDisabled}
                     defaultValue={undefined}

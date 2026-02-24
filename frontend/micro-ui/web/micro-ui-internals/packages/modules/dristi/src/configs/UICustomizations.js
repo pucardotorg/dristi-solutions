@@ -2381,7 +2381,7 @@ export const UICustomizations = {
               to={{
                 pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
                 search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Submissions&fromHome=true`,
-                state: { homeActiveTab: row?.tab },
+                state: { homeActiveTab: row?.tab, refApplicationNumber: row?.referenceId },
               }}
             >
               {value ? value : "-"}

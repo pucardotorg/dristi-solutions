@@ -351,7 +351,9 @@ const NoticeProcessModal = ({
           </div>
           <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
             <span style={{ minWidth: "40%" }}>{t("CS_NEXT_HEARING")}</span>
-            <span>{currentHearingId ? DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), "DD-MM-YYYY") : t("No Hearing Schedueled")}</span>
+            <span>
+              {currentHearingId ? DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), "DD-MM-YYYY") : t("No Hearing Schedueled")}
+            </span>
           </div>
         </div>
         <div style={{ marginLeft: "10px" }}>

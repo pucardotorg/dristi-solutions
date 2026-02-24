@@ -33,7 +33,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode } from "../../utils";
-import { combineMultipleFiles, DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, DateUtils, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -849,6 +849,7 @@ const SubmissionsCreate = ({ path }) => {
   );
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    runComprehensiveSanitizer({ formData, setValue, ignoredKeys: ["prayer"] });
     if (
       applicationType &&
       ![
@@ -1993,23 +1994,28 @@ const SubmissionsCreate = ({ path }) => {
       )}
       <div className="citizen create-submission" style={{ width: "50%", ...(!isCitizen && { padding: "0 8px 24px 16px" }) }}>
         <Header styles={{ margin: "25px 0px 0px 25px" }}> {t("CREATE_SUBMISSION")}</Header>
-        <div style={{ minHeight: "550px", overflowY: "auto" }}>
-          <FormComposerV2
-            label={t("REVIEW_SUBMISSION")}
-            className={"submission-create submission-form-filed-style"}
-            secondaryLabel={t("SAVE_AS_DRAFT")}
-            showSecondaryLabel={restrictedApplicationTypes?.includes(applicationType) ? false : orderNumber ? false : true}
-            onSecondayActionClick={handleSaveDraft}
-            config={modifiedFormConfig}
-            defaultValues={defaultFormValue}
-            onFormValueChange={onFormValueChange}
-            onSubmit={handleOpenReview}
-            fieldStyle={fieldStyle}
-            key={formKey + isApplicationFetching}
-            isDisabled={isSubmitDisabled}
-            actionClassName={"bail-action-bar"}
-          />
-        </div>
+        {isCaseDetailsLoading ? (
+          <Loader></Loader>
+        ) : (
+          <div style={{ minHeight: "550px", overflowY: "auto" }}>
+            <FormComposerV2
+              label={t("REVIEW_SUBMISSION")}
+              className={"submission-create submission-form-filed-style"}
+              secondaryLabel={t("SAVE_AS_DRAFT")}
+              showSecondaryLabel={restrictedApplicationTypes?.includes(applicationType) ? false : orderNumber ? false : true}
+              onSecondayActionClick={handleSaveDraft}
+              config={modifiedFormConfig}
+              defaultValues={defaultFormValue}
+              onFormValueChange={onFormValueChange}
+              onSubmit={handleOpenReview}
+              fieldStyle={fieldStyle}
+              key={formKey + isApplicationFetching}
+              isDisabled={isSubmitDisabled}
+              actionClassName={"bail-action-bar"}
+              s
+            />
+          </div>
+        )}
         {showReviewModal && (
           <ReviewSubmissionModal
             t={t}

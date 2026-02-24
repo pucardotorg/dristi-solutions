@@ -21,6 +21,7 @@ function SubmissionSignatureModal({
   const [pageModule, setPageModule] = useState("ci");
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const [loader, setLoader] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${applicationPdfFileStoreId}`;
@@ -69,6 +70,7 @@ function SubmissionSignatureModal({
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -83,6 +85,7 @@ function SubmissionSignatureModal({
         setLoader(false);
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setLoader(false);
     }
@@ -181,6 +184,7 @@ function SubmissionSignatureModal({
       formData={formData}
       onSubmit={onSubmit}
       isDisabled={loader}
+      fileUploadError={fileUploadError}
     />
   );
 }

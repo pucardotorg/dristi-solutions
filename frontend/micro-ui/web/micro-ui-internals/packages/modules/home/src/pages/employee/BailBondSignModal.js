@@ -69,6 +69,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const [loader, setLoader] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [bailDocuments, setBailDocuments] = useState([]);
+  const [fileUploadError, setFileUploadError] = useState(null);
   const [bailBondLoader, setBailBondLoader] = useState(false);
   const name = "Signature";
   const pageModule = "en";
@@ -158,6 +159,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onUploadSubmit = useCallback(async () => {
@@ -171,6 +173,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         clearBailBondSessionData();
       } catch (error) {
         console.error("error", error);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       } finally {
         setLoader(false);
       }
@@ -495,6 +498,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           formData={formData}
           onSubmit={onUploadSubmit}
           isDisabled={loader}
+          fileUploadError={fileUploadError}
         />
       )}
       {/* after signing showing signed modal */}
