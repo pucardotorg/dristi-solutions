@@ -5,7 +5,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.kafka.core.KafkaTemplate;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -16,7 +15,7 @@ import static org.mockito.Mockito.*;
 class ProducerTest {
 
     @Mock
-    private KafkaTemplate<String, Object> kafkaTemplate;
+    private KafkaProducerService kafkaProducerService;
 
     @InjectMocks
     private Producer producer;
@@ -26,10 +25,8 @@ class ProducerTest {
         String topic = "test-topic";
         Object value = "test-message";
 
-        when(kafkaTemplate.send(anyString(), any())).thenReturn(null);
-
         assertDoesNotThrow(() -> producer.push(topic, value));
-        verify(kafkaTemplate).send(topic, value);
+        verify(kafkaProducerService).send(topic, value);
     }
 
     @Test
@@ -37,20 +34,16 @@ class ProducerTest {
         String topic = "test-topic";
         TestObject value = new TestObject("test", 123);
 
-        when(kafkaTemplate.send(anyString(), any())).thenReturn(null);
-
         assertDoesNotThrow(() -> producer.push(topic, value));
-        verify(kafkaTemplate).send(topic, value);
+        verify(kafkaProducerService).send(topic, value);
     }
 
     @Test
     void testPush_WithNullValue() {
         String topic = "test-topic";
 
-        when(kafkaTemplate.send(anyString(), any())).thenReturn(null);
-
         assertDoesNotThrow(() -> producer.push(topic, null));
-        verify(kafkaTemplate).send(topic, null);
+        verify(kafkaProducerService).send(topic, null);
     }
 
     @Test
@@ -58,22 +51,17 @@ class ProducerTest {
         String topic = "test-topic";
         Object value = "test-message";
 
-        when(kafkaTemplate.send(anyString(), any()))
-                .thenThrow(new RuntimeException("Kafka error"));
-
         assertDoesNotThrow(() -> producer.push(topic, value));
-        verify(kafkaTemplate).send(topic, value);
+        verify(kafkaProducerService).send(topic, value);
     }
 
     @Test
     void testPush_MultipleMessages() {
-        when(kafkaTemplate.send(anyString(), any())).thenReturn(null);
-
         producer.push("topic1", "message1");
         producer.push("topic2", "message2");
         producer.push("topic3", "message3");
 
-        verify(kafkaTemplate, times(3)).send(anyString(), any());
+        verify(kafkaProducerService, times(3)).send(anyString(), any());
     }
 
     @Test
@@ -81,10 +69,8 @@ class ProducerTest {
         String topic = "";
         Object value = "test-message";
 
-        when(kafkaTemplate.send(anyString(), any())).thenReturn(null);
-
         assertDoesNotThrow(() -> producer.push(topic, value));
-        verify(kafkaTemplate).send(topic, value);
+        verify(kafkaProducerService).send(topic, value);
     }
 
     @Test
@@ -95,10 +81,8 @@ class ProducerTest {
             largePayload.append("data");
         }
 
-        when(kafkaTemplate.send(anyString(), any())).thenReturn(null);
-
         assertDoesNotThrow(() -> producer.push(topic, largePayload.toString()));
-        verify(kafkaTemplate).send(topic, largePayload.toString());
+        verify(kafkaProducerService).send(topic, largePayload.toString());
     }
 
     // Helper class for testing
