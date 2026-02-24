@@ -1,39 +1,66 @@
 package org.egov.demand.producer;
 
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
-import org.apache.kafka.common.TopicPartition;
-import org.egov.tracer.kafka.CustomKafkaTemplate;
+import org.egov.common.utils.MultiStateInstanceUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.kafka.support.SendResult;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@ContextConfiguration(classes = {Producer.class})
-@ExtendWith(SpringExtension.class)
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 class ProducerTest {
-    @MockBean(name = "customKafkaTemplate")
-    private CustomKafkaTemplate customKafkaTemplate;
 
-    @Autowired
+    @Mock
+    private KafkaProducerService kafkaProducerService;
+
+    @Mock
+    private MultiStateInstanceUtil centralInstanceUtil;
+
+    @InjectMocks
     private Producer producer;
 
+    private final String tenantId = "kl";
+    private final String topic = "demand-update";
+    private final String updatedTopic = "kl-demand-update";
+    private final Object payload = new Object();
+
+    @BeforeEach
+    void setup() {
+        when(centralInstanceUtil.getStateSpecificTopicName(tenantId, topic))
+                .thenReturn(updatedTopic);
+    }
 
     @Test
-    void testPush() {
-        ProducerRecord<Object, Object> producerRecord = new ProducerRecord<>("Topic", "Value");
+    void shouldPushMessageToUpdatedTopic() {
 
-        when(this.customKafkaTemplate.send((String) any(), (Object) any())).thenReturn(
-                new SendResult<>(producerRecord, new RecordMetadata(new TopicPartition("Topic", 1), 1L, 1L, 10L, 1L, 3, 3)));
-        this.producer.push("TenantId","Topic", "Value");
-        verify(this.customKafkaTemplate).send((String) any(), (Object) any());
+        // Act
+        producer.push(tenantId, topic, payload);
+
+        // Assert
+        verify(centralInstanceUtil, times(1))
+                .getStateSpecificTopicName(tenantId, topic);
+
+        verify(kafkaProducerService, times(1))
+                .send(updatedTopic, payload);
+    }
+
+    @Test
+    void shouldNotCallKafkaIfTopicResolutionFails() {
+
+        // Arrange
+        when(centralInstanceUtil.getStateSpecificTopicName(tenantId, topic))
+                .thenThrow(new RuntimeException("Topic resolution failed"));
+
+        // Act & Assert
+        try {
+            producer.push(tenantId, topic, payload);
+        } catch (RuntimeException ignored) {
+        }
+
+        verify(kafkaProducerService, never())
+                .send(anyString(), any());
     }
 }
-
