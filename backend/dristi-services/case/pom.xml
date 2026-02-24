@@ -7,7 +7,7 @@
     <name>case</name>
     <version>1.0.0</version>
     <properties>
-        <java.version>17</java.version>
+        <java.version>25</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <jacoco.version>0.8.9</jacoco.version>
@@ -16,7 +16,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.2</version>
+        <version>3.5.11</version>
     </parent>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
