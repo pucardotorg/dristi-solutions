@@ -57,6 +57,9 @@ public class ApplicationRepository {
 
             // TODO : remove this, this is temporary fix (#5016)
             String asUser = applicationSearchRequest.getCriteria().getAsUser();
+            if(asUser == null){
+                asUser = applicationSearchRequest.getRequestInfo().getUserInfo().getUuid();
+            }
 
             String applicationQuery = queryBuilder.getApplicationSearchQuery(applicationSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList, asUser, applicationSearchRequest.getRequestInfo());
             applicationQuery = queryBuilder.addOrderByQuery(applicationQuery, applicationSearchRequest.getPagination());

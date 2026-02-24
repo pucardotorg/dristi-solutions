@@ -112,7 +112,7 @@ public class EvidenceQueryBuilder {
         StringBuilder queryBuilder = new StringBuilder();
         String asUser = searchCriteria.getAsUser();
 
-        if (searchCriteria.getOwner() == null) {
+        if (searchCriteria.getOwner() == null && asUser != null) {
             queryBuilder.append(" AND ( ");
             queryBuilder.append(addUserCriteria(asUser, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
             queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
@@ -131,7 +131,7 @@ public class EvidenceQueryBuilder {
         String asUser = searchCriteria.getAsUser();
 
         if(searchCriteria.isCourtEmployeeCanSign()){
-            if (searchCriteria.getOwner() == null) {
+            if (searchCriteria.getOwner() == null && asUser != null) {
                 queryBuilder.append(" AND ( ");
                 queryBuilder.append(addUserCriteria(asUser, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
                 queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
