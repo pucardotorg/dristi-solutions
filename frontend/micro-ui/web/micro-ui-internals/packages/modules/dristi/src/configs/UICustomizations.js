@@ -2775,6 +2775,38 @@ export const UICustomizations = {
     }
   },
   assignCasesConfig: {
+    // Ensure caseMappingFilterStatus is sent as a string code (e.g. "UNASSIGNED_CASES"),
+    // not as the full dropdown option object.
+    preProcess: (requestCriteria) => {
+      const tenantId = window?.Digit?.ULBService?.getCurrentTenantId();
+      const searchForm = requestCriteria?.state?.searchForm || {};
+
+      const statusValue = searchForm?.caseMappingFilterStatus;
+      let caseMappingFilterStatus = "ALL_CASES";
+      if (typeof statusValue === "string") {
+        caseMappingFilterStatus = statusValue;
+      } else if (statusValue && typeof statusValue === "object" && statusValue.code) {
+        caseMappingFilterStatus = statusValue.code;
+      }
+
+      const caseSearchText = searchForm?.caseSearchText;
+
+      const existingCriteria = requestCriteria?.body?.criteria || {};
+      const existingPagination = requestCriteria?.body?.pagination || { limit: 100, offSet: 0 };
+
+      return {
+        ...requestCriteria,
+        body: {
+          criteria: {
+            ...existingCriteria,
+            tenantId: tenantId || existingCriteria.tenantId,
+            caseMappingFilterStatus,
+            ...(caseSearchText ? { caseSearchText } : {}),
+          },
+          pagination: existingPagination,
+        },
+      };
+    },
     additionalCustomizations: (row, key, column, value, t) => {
       switch (key) {
         case "SELECT":

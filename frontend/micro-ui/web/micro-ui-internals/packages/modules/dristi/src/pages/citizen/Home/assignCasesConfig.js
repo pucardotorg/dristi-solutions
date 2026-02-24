@@ -47,7 +47,7 @@ export const assignCasesConfig = ({ member = {}, advocateInfo = {} } = {}) => {
           secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
           minReqFields: 0,
           defaultValues: {
-            caseMappingFilterStatus: "ASSIGNED_CASES",
+            caseMappingFilterStatus: { code: "ALL_CASES", name: "All Cases" },
             filingNumber: "",
           },
           fields: [
@@ -61,6 +61,7 @@ export const assignCasesConfig = ({ member = {}, advocateInfo = {} } = {}) => {
                 optionsKey: "name",
                 error: "Should not be empty",
                 options: [
+                  { code: "ALL_CASES", name: "All Cases" },
                   { code: "ASSIGNED_CASES", name: "Assigned Cases" },
                   { code: "UNASSIGNED_CASES", name: "Unassigned Cases" },
                 ],

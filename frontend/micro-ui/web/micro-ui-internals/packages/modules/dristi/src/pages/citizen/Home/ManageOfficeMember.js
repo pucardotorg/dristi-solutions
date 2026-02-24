@@ -36,6 +36,8 @@ const ManageOfficeMember = () => {
   const [selectedCasesCount, setSelectedCasesCount] = useState(0);
   const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
   const [isRemovingMember, setIsRemovingMember] = useState(false);
+  const [showUpdateAccessModal, setShowUpdateAccessModal] = useState(false);
+  const [isUpdatingAccess, setIsUpdatingAccess] = useState(false);
   const [toast, setToast] = useState(null);
 
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER") || "—";
@@ -201,9 +203,55 @@ const ManageOfficeMember = () => {
     }
   };
 
-  const handleUpdateAccess = () => {
-    // TODO: wire update access API
-    handleGoBack();
+  const handleUpdateAccessClick = () => {
+    setShowUpdateAccessModal(true);
+  };
+
+  const handleCloseUpdateAccessModal = () => {
+    setShowUpdateAccessModal(false);
+  };
+
+  const handleConfirmUpdateAccess = async () => {
+    if (!member?.memberId || !effectiveAdvocateInfo?.advocateId) {
+      setToast({ label: t("UPDATE_ACCESS_ERROR") || "Failed to update access. Please try again.", type: "error" });
+      return;
+    }
+
+    setIsUpdatingAccess(true);
+    try {
+      const allowCaseCreateFlag = allowCaseCreate === "Yes";
+      const addNewCasesAutomaticallyFlag = addToNewCasesAuto === "Yes";
+      const accessType = member?.accessType || "ALL_CASES";
+
+      const body = {
+        updateMemberAccess: {
+          tenantId,
+          officeAdvocateId: effectiveAdvocateInfo?.advocateId,
+          memberId: member?.memberId,
+          addNewCasesAutomatically: addNewCasesAutomaticallyFlag,
+          accessType,
+          allowCaseCreate: allowCaseCreateFlag,
+        },
+        pagination: {
+          limit: 10,
+          offSet: 0,
+        },
+      };
+
+      const response = await window?.Digit?.DRISTIService?.customApiService("/advocate-office-management/v1/_updateMemberAccess", body, {
+        tenantId,
+      });
+
+      if (response) {
+        setToast({ label: t("UPDATE_ACCESS_SUCCESS") || "Access updated successfully", type: "success" });
+        setShowUpdateAccessModal(false);
+      }
+    } catch (error) {
+      console.error("Error updating member access:", error);
+      setToast({ label: t("UPDATE_ACCESS_ERROR") || "Failed to update access. Please try again.", type: "error" });
+    } finally {
+      setIsUpdatingAccess(false);
+    }
   };
 
   return (
@@ -327,7 +375,7 @@ const ManageOfficeMember = () => {
         <button type="button" onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
           {t("GO_BACK") || "Go Back"}
         </button>
-        <button type="button" onClick={handleUpdateAccess} className="manage-office-btn manage-office-btn--primary">
+        <button type="button" onClick={handleUpdateAccessClick} className="manage-office-btn manage-office-btn--primary">
           {t("UPDATE_ACCESS") || "Update Access"}
         </button>
       </footer>
@@ -359,6 +407,42 @@ const ManageOfficeMember = () => {
                   </button>
                   <button onClick={handleConfirmRemoveMember} className="manage-office-btn manage-office-btn--danger">
                     {t("REMOVE_MEMBER") || "Remove Member"}
+                  </button>
+                </div>
+              </React.Fragment>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Update Access Confirmation Modal */}
+      {showUpdateAccessModal && (
+        <div className="manage-office-modal-overlay" onClick={handleCloseUpdateAccessModal}>
+          <div className="manage-office-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="manage-office-modal__header">
+              <h2 className="manage-office-modal__title">{t("SAVE_CHANGES") || "Save Changes"}</h2>
+              <button onClick={handleCloseUpdateAccessModal} className="manage-office-modal__close">
+                ×
+              </button>
+            </div>
+
+            {isUpdatingAccess ? (
+              <div className="manage-office-modal-loader">
+                <Loader />
+              </div>
+            ) : (
+              <React.Fragment>
+                <p className="manage-office-remove-text">
+                  {t("UPDATE_ACCESS_CONFIRM_MESSAGE") ||
+                    "The Advocate clerk’s access to cases will be modified as per changes."}
+                </p>
+
+                <div className="manage-office-modal__footer">
+                  <button onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
+                    {t("GO_BACK") || "Go Back"}
+                  </button>
+                  <button onClick={handleConfirmUpdateAccess} className="manage-office-btn manage-office-btn--primary">
+                    {t("UPDATE_ACCESS") || "Update Access"}
                   </button>
                 </div>
               </React.Fragment>
