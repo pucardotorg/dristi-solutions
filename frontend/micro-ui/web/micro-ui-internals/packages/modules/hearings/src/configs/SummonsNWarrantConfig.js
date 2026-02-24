@@ -6,7 +6,7 @@
 
 const _getPartyType = (orderType, partyType) => {
   if (orderType === "MISCELLANEOUS_PROCESS") {
-    if(partyType === "other" || partyType === "others"){
+    if (partyType === "other" || partyType === "others") {
       return "others";
     }
 

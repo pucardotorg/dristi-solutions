@@ -3,16 +3,19 @@ package com.dristi.njdg_transformer.controller;
 import com.dristi.njdg_transformer.model.*;
 import com.dristi.njdg_transformer.model.advocate.Advocate;
 import com.dristi.njdg_transformer.model.advocate.AdvocateRequest;
+import com.dristi.njdg_transformer.model.cases.CaseConversionDetails;
+import com.dristi.njdg_transformer.model.cases.CaseConversionRequest;
 import com.dristi.njdg_transformer.model.cases.CaseRequest;
 import com.dristi.njdg_transformer.model.cases.CaseResponse;
 import com.dristi.njdg_transformer.model.cases.CourtCase;
-import com.dristi.njdg_transformer.model.hearing.Hearing;
-import com.dristi.njdg_transformer.model.hearing.HearingRequest;
 import com.dristi.njdg_transformer.model.order.Notification;
 import com.dristi.njdg_transformer.model.order.NotificationRequest;
 import com.dristi.njdg_transformer.model.order.Order;
 import com.dristi.njdg_transformer.model.order.OrderRequest;
-import com.dristi.njdg_transformer.service.*;
+import com.dristi.njdg_transformer.service.AdvocateService;
+import com.dristi.njdg_transformer.service.CaseService;
+import com.dristi.njdg_transformer.service.OrderNotificationService;
+import com.dristi.njdg_transformer.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,9 +43,6 @@ class NJDGControllerTest {
 
     @Mock
     private OrderService orderService;
-
-    @Mock
-    private HearingService hearingService;
 
     @Mock
     private AdvocateService advocateService;
@@ -165,46 +166,6 @@ class NJDGControllerTest {
     }
 
     @Test
-    void testProcessAndUpdateHearing_Success() {
-        Hearing hearing = new Hearing();
-        hearing.setHearingId("H-001");
-        hearing.setStatus("COMPLETED");
-        hearing.setCnrNumbers(Collections.singletonList("CNR-001"));
-
-        HearingRequest hearingRequest = new HearingRequest();
-        hearingRequest.setHearing(hearing);
-        hearingRequest.setRequestInfo(requestInfo);
-
-        HearingDetails hearingDetails = new HearingDetails();
-        hearingDetails.setCino("CNR-001");
-
-        when(hearingService.processAndUpdateHearings(any(Hearing.class), any(RequestInfo.class)))
-                .thenReturn(hearingDetails);
-
-        ResponseEntity<HearingDetails> response = njdgController.processAndUpdateHearing(hearingRequest);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-    }
-
-    @Test
-    void testProcessAndUpdateHearing_Error() {
-        Hearing hearing = new Hearing();
-        hearing.setHearingId("H-001");
-
-        HearingRequest hearingRequest = new HearingRequest();
-        hearingRequest.setHearing(hearing);
-        hearingRequest.setRequestInfo(requestInfo);
-
-        when(hearingService.processAndUpdateHearings(any(Hearing.class), any(RequestInfo.class)))
-                .thenThrow(new RuntimeException("Processing error"));
-
-        ResponseEntity<HearingDetails> response = njdgController.processAndUpdateHearing(hearingRequest);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    }
-
-    @Test
     void testGetNjdgTransformRecord_Success() {
         when(caseService.getNjdgTransformRecord("CNR-001")).thenReturn(njdgRecord);
 
@@ -313,12 +274,13 @@ class NJDGControllerTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
-    // Tests for processBusinessDayOrders endpoint
+    // ========== Tests for processBusinessDayOrders ==========
+
     @Test
     void testProcessBusinessDayOrders_Success() {
         Order order = new Order();
         order.setOrderNumber("ORD-001");
-        order.setFilingNumber("FN-001");
+        order.setStatus("PUBLISHED");
 
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.setOrder(order);
@@ -329,6 +291,12 @@ class NJDGControllerTest {
         ResponseEntity<?> response = njdgController.processBusinessDayOrders(orderRequest);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertEquals("Business day order processed successfully", responseBody.get("message"));
+        assertEquals("ORD-001", responseBody.get("orderNumber"));
         verify(orderNotificationService).processOrdersWithHearings(any(Order.class), any(RequestInfo.class));
     }
 
@@ -341,11 +309,16 @@ class NJDGControllerTest {
         ResponseEntity<?> response = njdgController.processBusinessDayOrders(orderRequest);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertEquals("Order is required", responseBody.get("message"));
         verify(orderNotificationService, never()).processOrdersWithHearings(any(), any());
     }
 
     @Test
-    void testProcessBusinessDayOrders_Error() {
+    void testProcessBusinessDayOrders_Exception() {
         Order order = new Order();
         order.setOrderNumber("ORD-001");
 
@@ -359,56 +332,64 @@ class NJDGControllerTest {
         ResponseEntity<?> response = njdgController.processBusinessDayOrders(orderRequest);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertTrue(responseBody.get("message").contains("Failed to process business day order"));
     }
 
-    // Tests for processOrderNotification endpoint
+    // ========== Tests for processOrderNotification ==========
+
     @Test
     void testProcessOrderNotification_Success() {
-        Notification notification = Notification.builder()
-                .notificationNumber("NOT-001")
-                .tenantId("kl.kollam")
-                .courtId("COURT-001")
-                .createdDate(System.currentTimeMillis())
-                .build();
-        notification.addCaseNumberItem("CASE-001");
+        Notification notification = new Notification();
+        notification.setNotificationNumber("NOTIF-001");
+        notification.setStatus("PUBLISHED");
 
-        NotificationRequest notificationRequest = NotificationRequest.builder()
-                .notification(notification)
-                .requestInfo(requestInfo)
-                .build();
+        NotificationRequest notificationRequest = new NotificationRequest();
+        notificationRequest.setNotification(notification);
+        notificationRequest.setRequestInfo(requestInfo);
 
         doNothing().when(orderNotificationService).processNotificationOrders(any(Notification.class), any(RequestInfo.class));
 
         ResponseEntity<?> response = njdgController.processOrderNotification(notificationRequest);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertEquals("Order notification processed successfully", responseBody.get("message"));
+        assertEquals("NOTIF-001", responseBody.get("notificationNumber"));
         verify(orderNotificationService).processNotificationOrders(any(Notification.class), any(RequestInfo.class));
     }
 
     @Test
     void testProcessOrderNotification_NullNotification() {
-        NotificationRequest notificationRequest = NotificationRequest.builder()
-                .notification(null)
-                .requestInfo(requestInfo)
-                .build();
+        NotificationRequest notificationRequest = new NotificationRequest();
+        notificationRequest.setNotification(null);
+        notificationRequest.setRequestInfo(requestInfo);
 
         ResponseEntity<?> response = njdgController.processOrderNotification(notificationRequest);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertEquals("Notification is required", responseBody.get("message"));
         verify(orderNotificationService, never()).processNotificationOrders(any(), any());
     }
 
     @Test
-    void testProcessOrderNotification_Error() {
-        Notification notification = Notification.builder()
-                .notificationNumber("NOT-001")
-                .tenantId("kl.kollam")
-                .build();
+    void testProcessOrderNotification_Exception() {
+        Notification notification = new Notification();
+        notification.setNotificationNumber("NOTIF-001");
 
-        NotificationRequest notificationRequest = NotificationRequest.builder()
-                .notification(notification)
-                .requestInfo(requestInfo)
-                .build();
+        NotificationRequest notificationRequest = new NotificationRequest();
+        notificationRequest.setNotification(notification);
+        notificationRequest.setRequestInfo(requestInfo);
 
         doThrow(new RuntimeException("Processing error"))
                 .when(orderNotificationService).processNotificationOrders(any(Notification.class), any(RequestInfo.class));
@@ -416,5 +397,88 @@ class NJDGControllerTest {
         ResponseEntity<?> response = njdgController.processOrderNotification(notificationRequest);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertTrue(responseBody.get("message").contains("Failed to process order notification"));
+    }
+
+    // ========== Tests for updateCaseConversionDetails ==========
+
+    @Test
+    void testUpdateCaseConversionDetails_Success() {
+        CaseConversionDetails conversionDetails = CaseConversionDetails.builder()
+                .cnrNumber("CNR-001")
+                .filingNumber("KL-000001-2024")
+                .convertedFrom("CMP")
+                .convertedTo("ST")
+                .preCaseNumber("CMP/001/2024")
+                .postCaseNumber("ST/001/2024")
+                .build();
+
+        CaseConversionRequest conversionRequest = CaseConversionRequest.builder()
+                .caseConversionDetails(conversionDetails)
+                .requestInfo(requestInfo)
+                .build();
+
+        doNothing().when(caseService).updateCaseConversionDetails(any(CaseConversionRequest.class));
+
+        ResponseEntity<?> response = njdgController.updateCaseConversionDetails(conversionRequest);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertEquals("Case conversion details updated successfully", responseBody.get("message"));
+        assertEquals("CNR-001", responseBody.get("cnrNumber"));
+        assertEquals("KL-000001-2024", responseBody.get("filingNumber"));
+        verify(caseService).updateCaseConversionDetails(any(CaseConversionRequest.class));
+    }
+
+    @Test
+    void testUpdateCaseConversionDetails_NullConversionDetails() {
+        CaseConversionRequest conversionRequest = CaseConversionRequest.builder()
+                .caseConversionDetails(null)
+                .requestInfo(requestInfo)
+                .build();
+
+        ResponseEntity<?> response = njdgController.updateCaseConversionDetails(conversionRequest);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertEquals("Case conversion details are required", responseBody.get("message"));
+        verify(caseService, never()).updateCaseConversionDetails(any());
+    }
+
+    @Test
+    void testUpdateCaseConversionDetails_Exception() {
+        CaseConversionDetails conversionDetails = CaseConversionDetails.builder()
+                .cnrNumber("CNR-001")
+                .filingNumber("KL-000001-2024")
+                .convertedFrom("CMP")
+                .convertedTo("ST")
+                .build();
+
+        CaseConversionRequest conversionRequest = CaseConversionRequest.builder()
+                .caseConversionDetails(conversionDetails)
+                .requestInfo(requestInfo)
+                .build();
+
+        doThrow(new RuntimeException("Processing error"))
+                .when(caseService).updateCaseConversionDetails(any(CaseConversionRequest.class));
+
+        ResponseEntity<?> response = njdgController.updateCaseConversionDetails(conversionRequest);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertTrue(response.getBody() instanceof Map);
+        @SuppressWarnings("unchecked")
+        Map<String, String> responseBody = (Map<String, String>) response.getBody();
+        assertTrue(responseBody.get("message").contains("Failed to update case conversion details"));
     }
 }

@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 public class UserUtilTest {
@@ -32,6 +33,9 @@ public class UserUtilTest {
 
     @Mock
     private Configuration configs;
+
+    @Mock
+    private DateTimeUtil dateTimeUtil;
 
     @InjectMocks
     private UserUtil userUtil;
@@ -49,10 +53,10 @@ public class UserUtilTest {
         LinkedHashMap<String, Object> responseMap = new LinkedHashMap<>();
         List<LinkedHashMap<String, Object>> users = new ArrayList<>();
         LinkedHashMap<String, Object> user = new LinkedHashMap<>();
-        user.put("createdDate", "2024-02-10 10:00:00");
-        user.put("lastModifiedDate", "2024-02-10 11:00:00");
+        user.put("createdDate", "10-02-2024 10:00:00");
+        user.put("lastModifiedDate", "10-02-2024 11:00:00");
         user.put("dob", "1990-01-01");
-        user.put("pwdExpiryDate", "2025-02-10 10:00:00");
+        user.put("pwdExpiryDate", "10-02-2025 10:00:00");
         users.add(user);
         responseMap.put("user", users);
 
@@ -106,6 +110,7 @@ public class UserUtilTest {
 
         when(configs.getUserSearchEndpoint()).thenReturn("/user/search");
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(responseMap);
+        when(dateTimeUtil.toEpochMillis(anyString(), anyString())).thenThrow(new RuntimeException("Invalid date format"));
 
         // Test & Verify
         assertThrows(CustomException.class, () -> userUtil.userCall(userRequest, uri));

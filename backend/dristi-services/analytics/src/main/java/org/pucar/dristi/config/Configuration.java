@@ -292,5 +292,7 @@ public class Configuration {
 		bailBondBusinessServiceList = Arrays.asList(bailBondBusinessServices.split(","));
 	}
 
+	@Value("${app.zone.id}")
+	private String zoneId;
 
 }

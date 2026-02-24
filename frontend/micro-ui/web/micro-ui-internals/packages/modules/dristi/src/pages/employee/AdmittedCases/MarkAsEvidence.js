@@ -8,7 +8,7 @@ import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { Urls } from "../../../hooks";
 import { useHistory } from "react-router-dom";
 import { InfoCard } from "@egovernments/digit-ui-components";
-import { set } from "lodash";
+import { sanitizeData } from "../../../Utils";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
@@ -435,7 +435,6 @@ const MarkAsEvidence = ({
         },
         {}
       );
-
       // Check if tag ends with a number
       const hasNumberSuffix = (tag) => {
         if (!tag || !tag.trim()) return false;
@@ -982,7 +981,7 @@ const MarkAsEvidence = ({
                     className="text-input"
                     type="text"
                     value={evidenceNumber}
-                    onChange={(e) => setEvidenceNumber(e.target.value)}
+                    onChange={(e) => setEvidenceNumber(sanitizeData(e.target.value))}
                     maxlength={10}
                     style={{ textAlign: "start", marginBottom: "0px" }}
                   />
@@ -1116,7 +1115,7 @@ const MarkAsEvidence = ({
                 className={evidenceDetails?.isEvidence && !currentDiaryEntry ? "text-input disabled" : "text-input"}
                 type="text"
                 value={businessOfDay}
-                onChange={(e) => setBusinessOfDay(e.target.value)}
+                onChange={(e) => setBusinessOfDay(sanitizeData(e.target.value))}
                 disabled={evidenceDetails?.isEvidence && !currentDiaryEntry}
                 style={{ minWidth: 120, textAlign: "start", marginBottom: "0px" }}
               />

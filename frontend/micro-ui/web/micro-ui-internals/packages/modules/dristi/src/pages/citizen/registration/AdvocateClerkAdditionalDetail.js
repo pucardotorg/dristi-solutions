@@ -35,10 +35,10 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
   const setFormErrors = useRef(null);
 
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  
+
   // Determine if user is registering as advocate clerk
   const isAdvocateClerk = params?.userType?.clientDetails?.selectUserType?.code === "ADVOCATE_CLERK";
-  
+
   // Use different config based on user type
   const currentConfig = useMemo(() => {
     return isAdvocateClerk ? advocateClerkVerificationConfig : advocateClerkConfig;

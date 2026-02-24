@@ -44,7 +44,7 @@ public class CaseApiController {
 
     private final CasePdfService casePdfService;
     private final CronJobScheduler cronJobScheduler;
-    
+
     private final AdvocateOfficeCaseMemberService advocateOfficeCaseMemberService;
 
 

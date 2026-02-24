@@ -63,7 +63,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
       },
     },
     { tenantId, limit: 1000, offset: 0 },
-    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid}`,
+    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid || ""}`,
     "",
     userInfo?.uuid && isUserLoggedIn
   );
@@ -210,7 +210,6 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   ) {
     history.push(`${path}/home`);
   }
-
   if (retrievedObject && openRoute.includes(retrievedObject?.path)) {
     if (result) {
       sessionStorage.setItem("isSignSuccess", result);

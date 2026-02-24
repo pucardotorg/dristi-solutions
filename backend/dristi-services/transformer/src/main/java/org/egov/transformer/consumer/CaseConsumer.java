@@ -25,6 +25,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -158,7 +159,7 @@ public class CaseConsumer {
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(courtCase));
 //            CourtCase existingCourtCase = caseService.fetchCase(courtCase.getFilingNumber());
             CourtCase existingCourtCase = caseService.getCase(courtCase.getFilingNumber(), courtCase.getTenantId(), caseReq.getRequestInfo());
-            courtCase.setDates();
+            courtCase.setDates(ZoneId.of(transformerProperties.getApplicationZoneId()));
             if(null != existingCourtCase) {
                 if(null != existingCourtCase.getBailOrderDetails()) {
                     courtCase.setBailOrderDetails(existingCourtCase.getBailOrderDetails());
@@ -186,7 +187,7 @@ public class CaseConsumer {
 //            CourtCase courtCase = caseService.fetchCase(caseOverallStatus.getFilingNumber());
             //TODO : need to get from indexer once indexer is fixed
             CourtCase courtCase = caseService.getCases(createCaseSearchRequest(caseOverallStatus.getFilingNumber(), caseOverallStatus.getTenantId(), createInternalRequestInfo()));
-            courtCase.setDates();
+            courtCase.setDates(ZoneId.of(transformerProperties.getApplicationZoneId()));
             courtCase.setStage(caseOverallStatus.getStage());
             courtCase.setSubstage(caseOverallStatus.getSubstage());
             CaseRequest caseRequest = new CaseRequest();
@@ -232,7 +233,7 @@ public class CaseConsumer {
 //            CourtCase courtCase = caseService.fetchCase(outcome.getFilingNumber());
             //TODO : need to get from indexer once indexer is fixed
             CourtCase courtCase = caseService.getCases(createCaseSearchRequest(outcome.getFilingNumber(), outcome.getTenantId(), createInternalRequestInfo()));
-            courtCase.setDates();
+            courtCase.setDates(ZoneId.of(transformerProperties.getApplicationZoneId()));
             courtCase.setOutcome(outcome.getOutcome());
             CaseRequest caseRequest = new CaseRequest();
             caseRequest.setCases(courtCase);

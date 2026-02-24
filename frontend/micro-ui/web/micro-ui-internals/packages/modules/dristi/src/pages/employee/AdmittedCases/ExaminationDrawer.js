@@ -33,11 +33,7 @@ const formatAddress = (addr) => {
   return `${locality}, ${city}, ${district}, ${state}, ${pincode}`.trim();
 };
 
-const formatAddressFromIndividualData = (addr) => {
-  if (!addr) return "";
-  const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
-  return `${addressLine1}, ${addressLine2}, ${buildingName}, ${street}, ${city}, ${pincode}`.trim();
-};
+
 
 export const _getPdfConfigForExamination = (documentNumber, caseDetails, courtId, tenantId) => {
   return {
@@ -174,8 +170,8 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
               numberFromIndividual = individualData?.Individual?.[0]?.mobileNumber
                 ? individualData?.Individual?.[0]?.mobileNumber
                 : individualData?.Individual?.[0]?.userDetails?.username
-                ? individualData?.Individual?.[0]?.userDetails?.username
-                : "";
+                  ? individualData?.Individual?.[0]?.userDetails?.username
+                  : "";
             } catch (error) {
               console.error("Error fetching respondent individual data:", error);
             }
@@ -661,13 +657,13 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       const party = allParties?.find((p) => p?.uniqueId === selectedAccused?.value);
       const documentsFile = fileStoreId
         ? [
-            {
-              fileStore: fileStoreId,
-              documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
-              additionalDetails: { name: `${t("S351_EXAMINATION")} (${party?.name}).pdf` },
-              tenantId,
-            },
-          ]
+          {
+            fileStore: fileStoreId,
+            documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
+            additionalDetails: { name: `${t("S351_EXAMINATION")} (${party?.name}).pdf` },
+            tenantId,
+          },
+        ]
         : null;
       const document = activeTabs?.find((tab) => tab?.documentNumber === currentDocumentNumber);
       const reqBody = {

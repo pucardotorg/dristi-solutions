@@ -1,6 +1,7 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import React from "react";
 import { formatAddress, mapAddressDetails } from ".";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -119,16 +120,6 @@ export const getFormData = (orderType, order) => {
 
 export const getOrderData = (orderType, orderFormData) => {
   return ["SUMMONS", "NOTICE", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(orderType) ? orderFormData?.party?.data : orderFormData;
-};
-
-export const formatDate = (date, format) => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  if (format === "DD-MM-YYYY") {
-    return `${day}-${month}-${year}`;
-  }
-  return `${year}-${month}-${day}`;
 };
 
 export const generateAddress = ({
@@ -493,7 +484,7 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
         if (acceptRescheduleRequest && !scheduleItem && hearingDate) {
           const dateChanged =
             !currentOrder?.nextHearingDate &&
-            formatDate(new Date(acceptRescheduleRequest?.orderSchema?.orderDetails?.newHearingDate)) !== hearingDate;
+            DateUtils.getFormattedDate(new Date(acceptRescheduleRequest?.orderSchema?.orderDetails?.newHearingDate), "YYYY-MM-DD") !== hearingDate;
           if (dateChanged) {
             itemErrors?.push({
               key: "DATE_OF_HEARING",
@@ -502,7 +493,8 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
           }
         } else if (scheduleItem && hearingDate) {
           const dateChanged =
-            !currentOrder?.nextHearingDate && formatDate(new Date(scheduleItem?.orderSchema?.orderDetails?.hearingDate)) !== hearingDate;
+            !currentOrder?.nextHearingDate &&
+            DateUtils.getFormattedDate(new Date(scheduleItem?.orderSchema?.orderDetails?.hearingDate), "YYYY-MM-DD") !== hearingDate;
           if (dateChanged) {
             itemErrors?.push({
               key: "DATE_OF_HEARING",
@@ -510,7 +502,7 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
             });
           }
         } else if (currentOrder?.nextHearingDate && hearingDate) {
-          const dateChanged = formatDate(new Date(currentOrder?.nextHearingDate)) !== hearingDate;
+          const dateChanged = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), "YYYY-MM-DD") !== hearingDate;
           if (dateChanged) {
             itemErrors?.push({
               key: "DATE_OF_HEARING",
@@ -587,7 +579,7 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, cu
     if (["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT", "REFERRAL_CASE_TO_ADR"]?.includes(orderType)) {
       const hearingDate = formdata?.dateOfHearing || formdata?.dateForHearing || formdata?.hearingDate;
       if (currentOrder?.nextHearingDate && hearingDate) {
-        const dateChanged = formatDate(new Date(currentOrder?.nextHearingDate)) !== hearingDate;
+        const dateChanged = DateUtils.getFormattedDate(new Date(currentOrder?.nextHearingDate), "YYYY-MM-DD") !== hearingDate;
         if (dateChanged) {
           itemErrors?.push({
             key: "DATE_OF_HEARING",

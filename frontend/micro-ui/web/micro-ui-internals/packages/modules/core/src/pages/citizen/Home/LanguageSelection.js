@@ -44,7 +44,7 @@ const LanguageSelection = () => {
   );
 
   function onSubmit() {
-    history.push(`/${window?.contextPath}/citizen/dristi/landing-page`);
+    history.push(`/${window?.contextPath}/citizen/dristi/home/login`);
   }
 
   return isLoading ? (
