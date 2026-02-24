@@ -102,4 +102,6 @@ public class ServiceConstants {
 
     public static final String DIGITALIZE_UPDATE_EXCEPTION = "DIGITALIZE_UPDATE_EXCEPTION";
 
+    public static final String FILE_UPLOAD_ERROR = "FILE_UPLOAD_ERROR";
+
 }
