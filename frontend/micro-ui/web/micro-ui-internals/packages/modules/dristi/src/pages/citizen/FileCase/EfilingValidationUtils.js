@@ -975,57 +975,7 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
   return allErrorData;
 };
 
-export const advocateDetailsFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors, t, isSubmitDisabled }) => {
-  if (selected === "advocateDetails") {
-    const { boxComplainant, isComplainantPip, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
-      formData?.multipleAdvocatesAndPip || {};
-    let errorObject = {
-      advocateDetailsAbsent: false,
-      vakalatnamaFileUploadAbsent: false,
-      pipAffidavitFileUploadAbsent: false,
-    };
-    if (boxComplainant?.individualId) {
-      let isAnAdvocateMissing = false;
-      let isVakalatnamaFileMissing = false;
-      let isPipAffidavitFileMissing = false;
-      if (isComplainantPip?.code === "NO") {
-        // IF complainant is not party in person, an advocate must be present
-        if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length === 0)) {
-          isAnAdvocateMissing = true;
-        } else if (
-          multipleAdvocateNameDetails &&
-          Array.isArray(multipleAdvocateNameDetails) &&
-          multipleAdvocateNameDetails?.length > 0 &&
-          multipleAdvocateNameDetails?.some((adv) => !adv?.advocateBarRegNumberWithName?.advocateId)
-        ) {
-          isAnAdvocateMissing = true;
-        }
-        // IF complainant is not party in person, there must be a vakalathnama document uploaded.
-        if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
-          isVakalatnamaFileMissing = true;
-        }
-      }
-      if (isComplainantPip?.code === "YES") {
-        // IF complainant is party in person, there must be a PIP affidavit document uploaded.
-        if (!pipAffidavitFileUpload || pipAffidavitFileUpload?.document?.length === 0) {
-          isPipAffidavitFileMissing = true;
-        }
-      }
-      errorObject = {
-        advocateDetailsAbsent: isAnAdvocateMissing,
-        vakalatnamaFileUploadAbsent: isVakalatnamaFileMissing,
-        pipAffidavitFileUploadAbsent: isPipAffidavitFileMissing,
-      };
-    }
-    let mandatoryLeft = false;
-    for (let key in errorObject) {
-      if (errorObject[key] === true) {
-        mandatoryLeft = true;
-      }
-    }
-    // setError("multipleAdvocatesAndPip", errorObject);
-  }
-};
+
 
 export const complainantValidation = ({
   formData,
@@ -1118,8 +1068,8 @@ export const signatureValidation = ({ formData, selected, setShowErrorToast, set
                 ++index;
                 return result;
               }, true) &&
-                formData[curr] &&
-                Object.keys(formData[curr])?.length > 0
+              formData[curr] &&
+              Object.keys(formData[curr])?.length > 0
             );
             index = 0;
             return res;
@@ -1212,9 +1162,9 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
           return data?.name !== "typeOfAddress"
             ? false
             : isEmpty ||
-                !formData?.poaAddressDetails?.[data?.name]?.match(
-                  window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
-                );
+            !formData?.poaAddressDetails?.[data?.name]?.match(
+              window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
+            );
         }))
   ) {
     setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
@@ -1331,14 +1281,14 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
       ? documentData?.fileStore
       : documentData?.file?.files?.[0]?.fileStoreId
     : isComplainant
-    ? data?.complainantId?.complainantId
-    : data?.poaComplainantId?.poaComplainantId;
+      ? data?.complainantId?.complainantId
+      : data?.poaComplainantId?.poaComplainantId;
   const identifierIdDetails = documentData
     ? {
-        fileStoreId: identifierId,
-        filename: documentData?.filename,
-        documentType: documentData?.fileType,
-      }
+      fileStoreId: identifierId,
+      filename: documentData?.filename,
+      documentType: documentData?.fileType,
+    }
     : {};
   const identifierType = documentData
     ? isComplainant
@@ -1465,10 +1415,10 @@ export const updateIndividualUser = async ({ data, documentData, tenantId, indiv
     : data?.complainantId?.complainantId;
   const identifierIdDetails = documentData
     ? {
-        fileStoreId: identifierId,
-        filename: documentData?.filename,
-        documentType: documentData?.fileType,
-      }
+      fileStoreId: identifierId,
+      filename: documentData?.filename,
+      documentType: documentData?.fileType,
+    }
     : {};
   const identifierType = documentData ? data?.complainantId?.complainantId?.selectIdTypeType?.type : "AADHAR";
   let Individual = {
@@ -1709,7 +1659,7 @@ export const updateCaseDetails = async ({
   action = "SAVE_DRAFT",
   isSaveDraftEnabled = false,
   isCaseSignedState = false,
-  setErrorCaseDetails = () => {},
+  setErrorCaseDetails = () => { },
   multiUploadList,
   scrutinyObj,
   caseComplaintDocument,
@@ -1981,13 +1931,13 @@ export const updateCaseDetails = async ({
                         isCurrAddrSame:
                           addressArray?.length > 1
                             ? {
-                                code: "NO",
-                                name: "NO",
-                              }
+                              code: "NO",
+                              name: "NO",
+                            }
                             : {
-                                code: "YES",
-                                name: "YES",
-                              },
+                              code: "YES",
+                              name: "YES",
+                            },
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
@@ -2013,13 +1963,13 @@ export const updateCaseDetails = async ({
                         isCurrAddrSame:
                           addressArray?.length > 1
                             ? {
-                                code: "NO",
-                                name: "NO",
-                              }
+                              code: "NO",
+                              name: "NO",
+                            }
                             : {
-                                code: "YES",
-                                name: "YES",
-                              },
+                              code: "YES",
+                              name: "YES",
+                            },
                       },
                     },
                     userDetails: null,
@@ -2092,13 +2042,13 @@ export const updateCaseDetails = async ({
                         isCurrAddrSame:
                           addressArray?.length > 1
                             ? {
-                                code: "NO",
-                                name: "NO",
-                              }
+                              code: "NO",
+                              name: "NO",
+                            }
                             : {
-                                code: "YES",
-                                name: "YES",
-                              },
+                              code: "YES",
+                              name: "YES",
+                            },
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
@@ -2124,13 +2074,13 @@ export const updateCaseDetails = async ({
                         isCurrAddrSame:
                           addressArray?.length > 1
                             ? {
-                                code: "NO",
-                                name: "NO",
-                              }
+                              code: "NO",
+                              name: "NO",
+                            }
                             : {
-                                code: "YES",
-                                name: "YES",
-                              },
+                              code: "YES",
+                              name: "YES",
+                            },
                       },
                     },
                     userDetails: null,
@@ -2595,11 +2545,11 @@ export const updateCaseDetails = async ({
       const existingLit = caseDetails?.poaHolders?.find((poa) => poa?.individualId === poaHolder?.individualId);
       return existingLit
         ? {
-            ...poaHolder,
-            id: existingLit?.id,
-            auditDetails: existingLit?.auditDetails,
-            hasSigned: existingLit?.hasSigned || false,
-          }
+          ...poaHolder,
+          id: existingLit?.id,
+          auditDetails: existingLit?.auditDetails,
+          hasSigned: existingLit?.hasSigned || false,
+        }
         : poaHolder;
     });
 
@@ -2801,7 +2751,7 @@ export const updateCaseDetails = async ({
             data?.data?.depositDate &&
             data?.data?.issuanceDate &&
             new Date(data?.data?.issuanceDate).setMonth(new Date(data?.data?.issuanceDate).getMonth() + 3) >
-              new Date(data?.data?.depositDate).getTime()
+            new Date(data?.data?.depositDate).getTime()
           ) {
             infoBoxData.data.splice(0, 0, "CS_SIX_MONTH_BEFORE_DEPOSIT_TEXT");
           }
@@ -3651,18 +3601,18 @@ export const createOrUpdateTask = async ({
 
   const taskManagementPayload = existingTask
     ? {
-        ...existingTask,
-        partyDetails,
-        workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.UPDATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.UPDATE },
-      }
+      ...existingTask,
+      partyDetails,
+      workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.UPDATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.UPDATE },
+    }
     : {
-        filingNumber,
-        tenantId,
-        taskType: type,
-        partyDetails,
-        partyType: "RESPONDENT",
-        workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.CREATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.CREATE },
-      };
+      filingNumber,
+      tenantId,
+      taskType: type,
+      partyDetails,
+      partyType: "RESPONDENT",
+      workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.CREATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.CREATE },
+    };
 
   const serviceMethod = existingTask ? DRISTIService.updateTaskManagementService : DRISTIService.createTaskManagementService;
 
