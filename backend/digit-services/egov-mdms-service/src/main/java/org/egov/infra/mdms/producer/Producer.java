@@ -1,17 +1,21 @@
 package org.egov.infra.mdms.producer;
 
-import org.egov.tracer.kafka.CustomKafkaTemplate;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
+@Slf4j
 public class Producer {
 
     @Autowired
-    private CustomKafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaProducerService kafkaProducerService;
 
-    public void push(String topic, Object value) {
-        kafkaTemplate.send(topic, value);
+    public Producer(KafkaProducerService kafkaProducerService) {
+        this.kafkaProducerService = kafkaProducerService;
     }
 
+    public void push(String topic, Object value) {
+        kafkaProducerService.send(topic, value);
+    }
 }

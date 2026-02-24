@@ -14,7 +14,7 @@ public class Producer {
     private WorkflowConfig config;
 
     @Autowired
-    private CustomKafkaTemplate<String, Object> kafkaTemplate;
+    private KafkaProducerService kafkaProducerService;
 
     public void push(String tenantId, String topic, Object value) {
 
@@ -26,6 +26,6 @@ public class Producer {
                 updatedTopic = tenants[1].concat("-").concat(topic);
         }
         log.info("The Kafka topic for the tenantId : " + tenantId + " is : " + updatedTopic);
-        kafkaTemplate.send(updatedTopic, value);
+        kafkaProducerService.send(updatedTopic, value);
     }
 }

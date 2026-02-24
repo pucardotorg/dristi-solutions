@@ -24,7 +24,7 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
       ],
     [config?.populators?.inputs]
   );
-  const [coordinateData, setCoordinateData] = useState({ callbackFunc: () => {} });
+  const [coordinateData, setCoordinateData] = useState({ callbackFunc: () => { } });
 
   const getLatLngByPincode = async (pincode) => {
     const key = window?.globalConfigs?.getConfig("GMAPS_API_KEY");
@@ -125,10 +125,7 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
       onSelect(config.key, { ...formData[config.key], [input]: value });
     }
   }
-  const checkIfValidated = (currentValue, input) => {
-    const isEmpty = /^\s*$/.test(currentValue);
-    return isEmpty || !currentValue.match(window?.Digit.Utils.getPattern(input.validation.patternType) || input.validation.pattern);
-  };
+
 
   return (
     <div style={config?.populators?.customStyle}>
@@ -161,19 +158,19 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
                         isFirstRender && formData[config.key]
                           ? formData[config.key]["locality"]
                           : (() => {
-                              const plusCode = getLocation(location, "plus_code");
-                              const neighborhood = getLocation(location, "neighborhood");
-                              const sublocality_level_1 = getLocation(location, "sublocality_level_1");
-                              const sublocality_level_2 = getLocation(location, "sublocality_level_2");
-                              return [plusCode, neighborhood, sublocality_level_1, sublocality_level_2]
-                                .reduce((result, current) => {
-                                  if (current) {
-                                    result.push(current);
-                                  }
-                                  return result;
-                                }, [])
-                                .join(", ");
-                            })(),
+                            const plusCode = getLocation(location, "plus_code");
+                            const neighborhood = getLocation(location, "neighborhood");
+                            const sublocality_level_1 = getLocation(location, "sublocality_level_1");
+                            const sublocality_level_2 = getLocation(location, "sublocality_level_2");
+                            return [plusCode, neighborhood, sublocality_level_1, sublocality_level_2]
+                              .reduce((result, current) => {
+                                if (current) {
+                                  result.push(current);
+                                }
+                                return result;
+                              }, [])
+                              .join(", ");
+                          })(),
                       coordinates,
                       buildingName: formData && isFirstRender && formData[config.key] ? formData[config.key]["buildingName"] : "",
                       doorNo: formData && isFirstRender && formData[config.key] ? formData[config.key]["doorNo"] : "",

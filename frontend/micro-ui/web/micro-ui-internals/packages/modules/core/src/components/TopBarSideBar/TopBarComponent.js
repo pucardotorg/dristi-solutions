@@ -400,7 +400,7 @@ const TopBarComponent = ({
 
         <div className="RightMostTopBarOptions">
           {/* Manage Office button & Advocate profile dropdown - only visible for advocates / clerks */}
-          {/* {isSearchLoading || isApprovalPending || individualDataLoading
+          {isSearchLoading || isApprovalPending || individualDataLoading
             ? null
             : isUserLoggedIn &&
               !isSearchLoading &&
@@ -439,7 +439,7 @@ const TopBarComponent = ({
                     </button>
                   )}
                 </div>
-              )} */}
+              )}
           {!hideChangeLangOnSomeUrlsWhenNotLoggedIn && !isUserLoggedIn ? changeLanguage : null}
           {!hideNotificationIconOnSomeUrlsWhenNotLoggedIn ? (
             <div className="EventNotificationWrapper" onClick={onNotificationIconClick}>

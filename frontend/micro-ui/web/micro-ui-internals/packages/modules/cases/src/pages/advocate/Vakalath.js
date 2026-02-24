@@ -3,10 +3,7 @@ import { useHistory } from "react-router-dom";
 
 const Vakalath = () => {
   const history = useHistory();
-  const handleNavigate = (path) => {
-    const contextPath = window?.contextPath || ""; // Adjust as per your context path logic
-    history.push(`/${contextPath}${path}`);
-  };
+
 
   const selectedCase = window.Digit.SessionStorage.get("PUCAR_CASE_DATA");
 
