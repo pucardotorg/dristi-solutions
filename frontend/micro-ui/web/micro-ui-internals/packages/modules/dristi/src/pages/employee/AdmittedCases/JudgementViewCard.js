@@ -5,6 +5,7 @@ import { JudgementIcon } from "../../../icons/svgIndex";
 import PublishedOrderModal from "./PublishedOrderModal";
 import useGetOrders from "../../../hooks/dristi/useGetOrders";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import { DateUtils } from "../../../Utils";
 
 const JudgementViewCard = ({ caseData, width }) => {
   const { t } = useTranslation();
@@ -52,16 +53,6 @@ const JudgementViewCard = ({ caseData, width }) => {
 
   const handleButtonClick = () => {
     setShowFinalOutcomeOrder(true);
-  };
-
-  const formatDate = (date, format) => {
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    if (format === "DD-MM-YYYY") {
-      return `${day}-${month}-${year}`;
-    }
-    return `${year}-${month}-${day}`;
   };
 
   const handleCloseJudgementOrder = () => {
@@ -123,7 +114,7 @@ const JudgementViewCard = ({ caseData, width }) => {
                 marginTop: "5px",
               }}
             >
-              {finalOutcomeOrder?.createdDate ? formatDate(new Date(finalOutcomeOrder?.createdDate), "DD-MM-YYYY") : ""}
+              {finalOutcomeOrder?.createdDate ? DateUtils.getFormattedDate(new Date(finalOutcomeOrder?.createdDate)) : ""}
             </div>
           </div>
           <Button variation={"outlined"} onButtonClick={handleButtonClick} label={`View ${t(finalOutcomeOrderType)} Order`} />

@@ -13,12 +13,13 @@ import { ordersService, taskService, processManagementService } from "../../hook
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import qs from "qs";
 import { Urls } from "../../hooks/services/Urls";
-import { convertToDateInputFormat, formatDate, getPartyNameForInfos } from "../../utils/index";
+import { convertToDateInputFormat, getPartyNameForInfos } from "../../utils/index";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
 import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const defaultSearchValues = {
   eprocess: "",
@@ -352,7 +353,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
               ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
               deliveryChannels: {
                 ...task?.taskDetails?.deliveryChannels,
-                statusChangeDate: formatDate(new Date()),
+                statusChangeDate: DateUtils.getFormattedDate(new Date()),
               },
             },
             workflow: {
@@ -736,7 +737,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "ISSUE_TO", value: getPartyNameForInfos(orderDetails, compositeItem, orderType, rowData?.taskDetails) },
         {
           key: "NEXT_HEARING_DATE",
-          value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
+          value: caseDetails?.caseDetails?.hearingDate ? DateUtils.getFormattedDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
         },
         // { key: "AMOUNT_PAID_TEXT", value: `Rs. ${caseDetails?.deliveryChannels?.fees || 100}` },
         { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
@@ -772,7 +773,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
           key: "NEXT_HEARING_DATE",
-          value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
+          value: caseDetails?.caseDetails?.hearingDate ? DateUtils.getFormattedDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
         },
       ];
     }
@@ -786,7 +787,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
           key: "NEXT_HEARING_DATE",
-          value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
+          value: caseDetails?.caseDetails?.hearingDate ? DateUtils.getFormattedDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
         },
         { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
@@ -945,7 +946,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                   ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
                   deliveryChannels: {
                     ...task?.taskDetails?.deliveryChannels,
-                    statusChangeDate: formatDate(new Date()),
+                    statusChangeDate: DateUtils.getFormattedDate(new Date()),
                   },
                 },
                 workflow: {

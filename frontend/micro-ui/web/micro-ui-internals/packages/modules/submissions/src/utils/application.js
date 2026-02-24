@@ -23,16 +23,6 @@ export const _getApplicationAmount = (applicationTypeAmountList, applicationType
   return applicationTypeAmount?.totalAmount || 20;
 };
 
-export const formatDate = (date, format) => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  if (format === "DD-MM-YYYY") {
-    return `${day}-${month}-${year}`;
-  }
-  return `${year}-${month}-${day}`;
-};
-
 export const getModifiedForm = (formConfig, formData) => {
   const updatedConfig = formConfig?.filter((config) => {
     const dependentKeys = config?.dependentKey;
