@@ -89,8 +89,6 @@ const SubmissionPreviewSubmissionTypeMap = {
   ADVANCEMENT_OR_ADJOURNMENT_APPLICATION: "application-reschedule-hearing",
 };
 
-
-
 function ReviewSubmissionModal({
   applicationType,
   application,
@@ -281,12 +279,12 @@ function ReviewSubmissionModal({
               </div>
             )}
 
-            {/* {userInfoMap?.createdByUser?.name && (
+            {userInfoMap?.createdByUser?.name && (
               <div style={getStyles("infoRow")}>
                 <h3 style={getStyles("infoKey")}>{t("CREATED_BY")}</h3>
                 <h3 style={getStyles("infoValue")}>{userInfoMap?.createdByUser?.name || ""}</h3>
               </div>
-            )} */}
+            )}
 
             {application?.additionalDetails?.formdata?.initialHearingDate && (
               <div style={getStyles("infoRow")}>
