@@ -126,6 +126,7 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
     `/home/evidence-login`,
     `/home/digitalized-document-sign`,
     `/home/digitalized-document-login`,
+    `/home/mediation-form-sign`,
     `/home/payment-login`,
     `/home/sms-payment`,
     `/home/access-expired`,

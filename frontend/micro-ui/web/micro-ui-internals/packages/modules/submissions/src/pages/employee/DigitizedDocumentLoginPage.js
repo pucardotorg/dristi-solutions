@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Card, CardHeader, CardLabel, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -43,14 +43,23 @@ const DigitizedDocumentLoginPage = () => {
         setError(true);
         return;
       }
-      history.replace(
-        `/${window?.contextPath}/citizen/dristi/home/digitalized-document-sign?tenantId=${tenantId}&digitalizedDocumentId=${documentNumber}&type=${res?.documents?.[0]?.type}`,
-        {
-          mobileNumber: mobileNumber,
-          tenantId: tenantId,
-          isAuthorised: true,
-        }
-      );
+      const isMediation = type === "MEDIATION" && res?.documents?.[0]?.type === "MEDIATION";
+
+      const basePath = `/${window?.contextPath}/citizen/dristi/home`;
+
+      const route = isMediation ? "mediation-form-sign" : "digitalized-document-sign";
+
+      const queryParams = new URLSearchParams({
+        tenantId,
+        digitalizedDocumentId: documentNumber,
+        ...(isMediation ? {} : { type: res?.documents?.[0]?.type }),
+      }).toString();
+
+      history.replace(`${basePath}/${route}?${queryParams}`, {
+        mobileNumber,
+        tenantId,
+        isAuthorised: true,
+      });
     } catch (error) {
       setError(true);
       return;
@@ -67,7 +76,9 @@ const DigitizedDocumentLoginPage = () => {
         <div className="citizen-form-wrapper">
           <div className="login-form responsive-container">
             <Card>
-              <CardHeader styles={{ lineHeight: 1 }}>{type === "PLEA" ? t("SIGN_PLEA") : t("SIGN_EXAMINATION_OF_ACCUSED")}</CardHeader>
+              <CardHeader styles={{ lineHeight: 1 }}>
+                {type === "PLEA" ? t("SIGN_PLEA") : type === "MEDIATION" ? t("SIGN_MEDIATION") : t("SIGN_EXAMINATION_OF_ACCUSED")}
+              </CardHeader>
               <div className="form-section">
                 <CardLabel>{t(config.label)}</CardLabel>
                 <div className="text-input-width-size field-container">
