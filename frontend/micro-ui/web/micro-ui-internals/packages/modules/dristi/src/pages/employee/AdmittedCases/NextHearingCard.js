@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { DRISTIService } from "../../../services";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
+import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
 
 function timeInMillisFromDateAndTime(date, hhmmssms) {
   const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -83,12 +84,20 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
 
   const day = new Date(scheduledHearing?.startTime).toLocaleDateString("en-in", { weekday: "short" });
 
+  const { data: hearingLink } = useGetHearingLink();
+
   const handleButtonClick = () => {
     const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
     const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
     const searchParams = new URLSearchParams();
     searchParams.set("hearingId", scheduledHearing?.hearingId);
     searchParams.set("filingNumber", scheduledHearing?.filingNumber);
+
+    if (enableJoinButton && hearingLink) {
+      window.open(hearingLink, "_blank");
+      return;
+    }
+
     if (userType === "citizen") {
       history.push(`/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`);
     } else if (scheduledHearing?.status === "SCHEDULED") {
@@ -124,6 +133,29 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
   if (!scheduledHearing) {
     return null;
   }
+  const enableJoinButton = (() => {
+    const now = new Date();
+    const hearingDate = new Date(scheduledHearing?.startTime);
+
+    const isHearingToday = now.toDateString() === hearingDate.toDateString();
+
+    const windowStart = new Date(now);
+    windowStart.setHours(10, 30, 0, 0);
+
+    const windowEnd = new Date(now);
+    windowEnd.setHours(17, 0, 0, 0);
+
+    const isWithinWindow = now >= windowStart && now <= windowEnd;
+
+    const hearingEndedByStatus = [
+      HearingWorkflowState.COMPLETED,
+      HearingWorkflowState.ABATED,
+      HearingWorkflowState.ABANDONED,
+      HearingWorkflowState.OPTOUT,
+    ].includes(scheduledHearing?.status);
+
+    return isHearingToday && isWithinWindow && !hearingEndedByStatus;
+  })();
 
   return (
     <Card
@@ -187,7 +219,7 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
           <Button
             variation={"outlined"}
             onButtonClick={handleButtonClick}
-            isDisabled={scheduledHearing?.status !== "IN_PROGRESS"}
+            isDisabled={!enableJoinButton}
             label={
               scheduledHearing?.status === "SCHEDULED"
                 ? t("AWAIT_START_HEARING")

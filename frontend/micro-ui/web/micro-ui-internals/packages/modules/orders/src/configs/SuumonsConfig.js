@@ -1219,6 +1219,7 @@ export const SummonsTabsConfig = {
       },
       additionalDetails: {
         sortBy: "sortCaseListByDate",
+        activeTab: "DISPOSED",
       },
     },
   ],

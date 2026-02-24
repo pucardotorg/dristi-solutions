@@ -233,11 +233,15 @@ public class CourtCase {
     }
 
     public String parseDate(Long date) {
+        return parseDate(date, ZoneId.of("Asia/Kolkata"));
+    }
+
+    public String parseDate(Long date, ZoneId zoneId) {
         String formattedDate = null;
         if (null != date) {
             if (date > 0) {
                 formattedDate = Instant.ofEpochMilli(date)
-                        .atZone(ZoneId.systemDefault())
+                        .atZone(zoneId)
                         .toLocalDate()
                         .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
             }
@@ -246,17 +250,21 @@ public class CourtCase {
     }
 
     public void setDates() {
+        setDates(ZoneId.of("Asia/Kolkata"));
+    }
+
+    public void setDates(ZoneId zoneId) {
         Dates transformedDates = new Dates();
         if (this.getFilingDate() != null) {
-            transformedDates.setFilingDate(parseDate(this.getFilingDate()));
+            transformedDates.setFilingDate(parseDate(this.getFilingDate(), zoneId));
         }
         if (this.getRegistrationDate() != null) {
-            transformedDates.setRegistrationDate(parseDate(this.getRegistrationDate()));
+            transformedDates.setRegistrationDate(parseDate(this.getRegistrationDate(), zoneId));
         }
         if (this.getJudgementDate() != null) {
-            transformedDates.setJudgementDate(parseDate(this.getJudgementDate()));
+            transformedDates.setJudgementDate(parseDate(this.getJudgementDate(), zoneId));
         }
-        this.setDates(transformedDates);
+        this.dates = transformedDates;
     }
 
     @JsonProperty("filingDate")

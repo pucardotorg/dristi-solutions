@@ -11,6 +11,7 @@ import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/s
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import ADiaryDocumentPdfModal from "./ADiaryDocumentPdfModal";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const buttonStyle = {
   borderRadius: "4px",
@@ -42,12 +43,6 @@ const Heading = ({ label }) => {
   );
 };
 
-const formatDate = (date) => {
-  if (!date) return "";
-  const convertedDate = new Date(date);
-  return convertedDate.toLocaleDateString();
-};
-
 function BulkSignADiaryView() {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const queryStrings = Digit.Hooks.useQueryParams();
@@ -76,6 +71,7 @@ function BulkSignADiaryView() {
   const [showDocumentPdfModal, setShowDocumentPdfModal] = useState({ show: false, rowData: null });
   const [toastMsg, setToastMsg] = useState(null);
   const [reload, setReload] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
@@ -339,6 +335,7 @@ function BulkSignADiaryView() {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onUploadSubmit = async () => {
@@ -355,6 +352,7 @@ function BulkSignADiaryView() {
         setLoader(false);
         setFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setLoader(false);
     }
@@ -532,7 +530,7 @@ function BulkSignADiaryView() {
                   additionalElements={[
                     <p key="note">
                       {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
-                      <span style={{ fontWeight: "bold" }}>{`${t("ADIARY")} - ${formatDate(entryDate)}`}</span>
+                      <span style={{ fontWeight: "bold" }}>{`${t("ADIARY")} - ${DateUtils.getFormattedDate(entryDate, "DD-MM-YYYY", "/")}`}</span>
                     </p>,
                   ]}
                   inline
@@ -586,6 +584,7 @@ function BulkSignADiaryView() {
             formData={formData}
             onSubmit={onUploadSubmit}
             isDisabled={loader}
+            fileUploadError={fileUploadError}
           />
         )}
 
@@ -606,7 +605,7 @@ function BulkSignADiaryView() {
                 additionalElements={[
                   <p key="note">
                     {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
-                    <span style={{ fontWeight: "bold" }}>{`${t("ADIARY")} - ${formatDate(entryDate)}`}</span>
+                    <span style={{ fontWeight: "bold" }}>{`${t("ADIARY")} - ${DateUtils.getFormattedDate(entryDate, "DD-MM-YYYY", "/")}`}</span>
                   </p>,
                 ]}
                 inline

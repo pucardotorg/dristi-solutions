@@ -61,10 +61,6 @@ const BulkRescheduleModal = ({
   const [isLoader, setIsLoader] = useState(false);
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  };
 
   const handleSearch = async () => {
     try {

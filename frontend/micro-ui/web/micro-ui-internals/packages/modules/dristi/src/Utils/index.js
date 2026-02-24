@@ -85,13 +85,6 @@ export function isEmptyObject(obj) {
   return true;
 }
 
-export const formatDate = (date) => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
-
 export const getMDMSObj = (mdmsdata = [], codekey, code) => {
   if (!code || !mdmsdata || mdmsdata?.length == 0) {
     return {};
@@ -368,6 +361,95 @@ export const isEmptyValue = (value) => {
   } else {
     return false;
   }
+};
+
+export const sanitizeInput = (input) => {
+  if (!input) return "";
+
+  let sanitized = String(input);
+
+  // Remove script blocks completely
+  sanitized = sanitized.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+
+  // Remove iframes
+  sanitized = sanitized.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "");
+
+  // Remove dangerous elements
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>/gi, "");
+
+  // Remove event handlers
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*(["'])(?:[\s\S]*?)\1/gi, "");
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^\s>]+/gi, "");
+
+  // Remove javascript: protocol
+  sanitized = sanitized.replace(/\bjavascript:/gi, "");
+
+  // Remove ALL HTML tags
+  sanitized = sanitized.replace(/<\/?[a-z][\w:-]*\b[^>]*>/gi, "");
+
+  return sanitized;
+};
+
+export const sanitizeData = (data) => {
+  if (typeof data === "string") {
+    return sanitizeInput(data);
+  }
+  if (Array.isArray(data)) {
+    return data.map(sanitizeInput);
+  }
+  if (typeof data === "object" && data !== null) {
+    return Object.keys(data).reduce((acc, key) => {
+      acc[key] = sanitizeInput(data[key]);
+      return acc;
+    }, {});
+  }
+
+  return data;
+};
+
+const RICH_TEXT_FIELDS = [
+  "reasonForFiling",
+  "reasonForApplication",
+  "comments",
+  "applicationDetails",
+  "reasonForApplicationOfBail",
+  "additionalInformation",
+  "reasonForDelay",
+  "additionalInformation",
+];
+
+export const runComprehensiveSanitizer = ({ formData, setValue, ignoredKeys = [] }) => {
+  if (!formData || typeof formData !== "object") return;
+
+  Object.keys(formData).forEach((key) => {
+    const originalValue = formData[key];
+    if (typeof originalValue === "string") {
+      if (ignoredKeys?.includes(key)) {
+        return;
+      }
+      const sanitizedValue = sanitizeData(originalValue);
+      if (sanitizedValue !== originalValue) {
+        const element = document?.querySelector(`[name="${key}"]`);
+        const start = element?.selectionStart;
+        const end = element?.selectionEnd;
+        setValue(key, sanitizedValue);
+        if (element) {
+          setTimeout(() => {
+            element.setSelectionRange(start, end);
+          }, 0);
+        }
+      }
+    }
+
+    if (typeof originalValue === "object" && originalValue !== null && !RICH_TEXT_FIELDS.includes(key) && !ignoredKeys?.includes(key)) {
+      runComprehensiveSanitizer({
+        formData: originalValue,
+        setValue,
+        ignoredKeys,
+      });
+    }
+  });
 };
 
 export const TaskManagementWorkflowAction = {
@@ -647,9 +729,9 @@ export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
     return [createdByUuid];
   }
 
-  const ownerAdvocateUuid = isOwnerAdvocate?.additionalDetails?.uuid;
+  const ownerAdvocateId = isOwnerAdvocate?.advocateId;
   //Now we have to check all the advocates and clerks members associated with this advocate and they all can edit the case draft
-  const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateUserUuid === ownerAdvocateUuid);
+  const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateId === ownerAdvocateId);
   if (!matchingOffice) {
     // Fallback
     return [createdByUuid];
@@ -658,7 +740,7 @@ export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
   const clerks = matchingOffice?.clerks || [];
   // Collect all memberUserUuid
   const editableUsers = [
-    ownerAdvocateUuid, // senior advocate himself
+    matchingOffice?.officeAdvocateUserUuid, // senior advocate himself
     ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
     ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
   ];
@@ -826,4 +908,96 @@ export const getAllAssociatedPartyUuids = (caseDetails, ownerUuid) => {
     return Array.from(new Set((editableUsers || []).filter(Boolean)));
   }
   return [ownerUuid];
+};
+
+export const DateUtils = {
+  IST_OFFSET: 5.5 * 60 * 60 * 1000,
+  IST_TIMEZONE: "Asia/Kolkata",
+
+  getFormattedDate: (value, format = "DD-MM-YYYY", separator = "-") => {
+    if (!value) return "";
+
+    const date = value instanceof Date ? value : new Date(value);
+    if (isNaN(date.getTime())) return "";
+    const istDate = new Date(date.toLocaleString("en-US", { timeZone: DateUtils.IST_TIMEZONE }));
+
+    const year = istDate.getFullYear();
+    const month = String(istDate.getMonth() + 1).padStart(2, "0");
+    const day = String(istDate.getDate()).padStart(2, "0");
+
+    if (format !== "DD-MM-YYYY") {
+      return `${year}${separator}${month}${separator}${day}`;
+    }
+    return `${day}${separator}${month}${separator}${year}`;
+  },
+
+  getISTEpoch(year, month, day, hour, minute, second, ms) {
+    const utcDate = Date.UTC(year, month, day, hour, minute, second, ms - DateUtils.IST_OFFSET);
+    return utcDate;
+  },
+
+  getEpochRangeFromDateIST(dateStr) {
+    if (!dateStr) return { start: null, end: null };
+
+    const [year, month, day] = dateStr.split("-").map(Number);
+    const monthIndex = month - 1;
+
+    const start = DateUtils.getISTEpoch(year, monthIndex, day, 0, 0, 0, 0);
+    const end = DateUtils.getISTEpoch(year, monthIndex, day, 23, 59, 59, 999);
+
+    return { start, end };
+  },
+
+  getEpochRangeFromMonthIST(monthStr) {
+    if (!monthStr) return { start: null, end: null };
+    const [year, month] = monthStr.split("-").map(Number);
+    const monthIndex = month - 1;
+    const start = DateUtils.getISTEpoch(year, monthIndex, 1, 0, 0, 0, 0);
+
+    // Gets the number of the last day of the month
+    const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+    const end = DateUtils.getISTEpoch(year, monthIndex, lastDay, 23, 59, 59, 999);
+
+    return { start, end };
+  },
+
+  formatDateWithTime(dateInput, showTime = false) {
+    if (!dateInput) return "-";
+
+    const date = new Date(dateInput);
+
+    if (isNaN(date.getTime())) return "N/A";
+    const dateInIST = new Date(date.getTime() + DateUtils.IST_OFFSET);
+
+    const day = String(dateInIST.getUTCDate()).padStart(2, "0");
+    const month = String(dateInIST.getUTCMonth() + 1).padStart(2, "0");
+    const year = dateInIST.getUTCFullYear();
+    let formattedDate = `${day}-${month}-${year}`;
+    if (showTime) {
+      const hours = String(dateInIST.getUTCHours()).padStart(2, "0");
+      const minutes = String(dateInIST.getUTCMinutes()).padStart(2, "0");
+      const seconds = String(dateInIST.getUTCSeconds()).padStart(2, "0");
+
+      formattedDate += ` ${hours}:${minutes}:${seconds}`;
+    }
+
+    return formattedDate;
+  },
+
+  _toEpoch(dateString) {
+    if (!dateString) return null;
+    const [year, month, day] = dateString.split("-").map(Number);
+    const utcDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    return utcDate.getTime() - istOffset;
+  },
+
+  // Function to format a date object into "20th June 2024"
+  formatDateInMonth(date) {
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const day = formatWithSuffix(date.getDate());
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day} ${month} ${year}`;
+  },
 };

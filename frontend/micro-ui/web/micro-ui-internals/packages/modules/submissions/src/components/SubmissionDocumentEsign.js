@@ -24,6 +24,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const authorizedUuid = getAuthorizedUuid(userUuid);
   const { AdvocateData } = useContext(AdvocateDataContext);
   const storedAdvocate = AdvocateData;
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const name = "Signature";
   const isAdvocateOrClerk = userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role.code));
@@ -61,6 +62,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const cleanString = (input) => {
@@ -83,6 +85,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
       } catch (error) {
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -110,7 +113,9 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
           </h1>
           <div>
             <h2 style={{ fontFamily: "Roboto", fontSize: "16px", fontWeight: 400, lineHeight: "18.75px", textAlign: "left" }}>
-              {t("SUBMISSION_DOCUMENT_SIGNATURE_SUBTEXT")}
+              {authorizedUuid === userUuid
+                ? t("SUBMISSION_DOCUMENT_SIGNATURE_SUBTEXT_MAIN")
+                : t("SUBMISSION_DOCUMENT_SIGNATURE_SUBTEXT_CLERK_OR_JUNIOR_ADV")}
             </h2>
           </div>
           <div style={{ display: "flex" }}>
@@ -206,6 +211,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
       config={uploadModalConfig}
       formData={formData}
       onSubmit={onSubmit}
+      fileUploadError={fileUploadError}
     />
   );
 }

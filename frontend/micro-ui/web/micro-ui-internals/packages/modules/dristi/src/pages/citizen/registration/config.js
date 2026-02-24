@@ -825,4 +825,3 @@ export const advocateClerkVerificationConfig = [
     ],
   },
 ];
-

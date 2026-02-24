@@ -308,6 +308,7 @@ async function applicationRescheduleHearing(
           partyName: partyName,
           qrCodeUrl: base64Url,
           purposeOfHearing: localizedPurposeOfHearing,
+          allPartiesAgreed: application?.applicationDetails?.isAllPartiesAgreed === "YES" ? true : false,
         },
       ],
     };

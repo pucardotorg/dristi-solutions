@@ -1,25 +1,21 @@
 package com.dristi.njdg_transformer.producer;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
 @Slf4j
 public class Producer {
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    @Autowired
+    private final KafkaProducerService kafkaProducerService;
 
-    public Producer(KafkaTemplate<String, Object> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
+    public Producer(KafkaProducerService kafkaProducerService) {
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     public void push(String topic, Object value) {
-        try {
-            kafkaTemplate.send(topic, value);
-            log.info("Message sent successfully.");
-        } catch (Exception e) {
-            log.error("Error in sending message:: {}", e.getMessage());
-        }
+        kafkaProducerService.send(topic, value);
     }
 }

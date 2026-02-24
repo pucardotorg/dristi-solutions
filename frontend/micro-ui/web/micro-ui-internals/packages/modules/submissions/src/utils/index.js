@@ -2,6 +2,7 @@ import _ from "lodash";
 import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const overrideHooks = () => {
   Object.keys(CustomisedHooks).map((ele) => {
@@ -51,16 +52,7 @@ export const getTaxPeriodByBusinessService = (taxPeriod = [], businessService) =
   return taxPeriod?.find((data) => data?.service === businessService) || {};
 };
 
-export const getCourtFeeAmountByPaymentType = (courtFeeAmount = [], paymentCode) => {
-  return courtFeeAmount?.find((data) => data?.paymentCode === paymentCode)?.amount || "";
-};
 
-export const formatDate = (date) => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
 
 export const convertToDateInputFormat = (dateInput) => {
   let date;
@@ -78,7 +70,7 @@ export const convertToDateInputFormat = (dateInput) => {
     console.error("Invalid input type or format");
   }
 
-  return formatDate(date);
+  return DateUtils.getFormattedDate(date);
 };
 
 export function convertTaskResponseToPayload(responseArray, id = null) {

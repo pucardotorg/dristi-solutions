@@ -54,7 +54,7 @@ public class EpostUtil {
                 config.getIdName(),null,1).get(0);
         long currentDate = System.currentTimeMillis();
 
-        ZoneId istZone = ZoneId.of("Asia/Kolkata");
+        ZoneId istZone = ZoneId.of(config.getZoneId());
         long istMillis = Instant.ofEpochMilli(currentDate)
                 .atZone(istZone)
                 .toInstant()

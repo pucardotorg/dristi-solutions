@@ -662,6 +662,7 @@ export const TabJudgeSearchConfig = {
       },
       additionalDetails: {
         sortBy: "sortCaseListByDate",
+        activeTab: "DISPOSED",
       },
     },
     {

@@ -451,6 +451,10 @@ export const TabLitigantSearchConfig = {
           show: true,
         },
       },
+      additionalDetails: {
+        sortBy: "sortCaseListByDate",
+        activeTab: "DISPOSED",
+      },
     },
     {
       label: "CS_LPR",

@@ -71,7 +71,7 @@ const initDigitUI = () => {
   initHomeComponents();
   const moduleReducers = (initData) => ({});
 
-  const stateCode = window?.globalConfigs?.getConfig("STATE_LEVEL_TENANT_ID") || "pb";
+  const stateCode = window?.globalConfigs.getConfig("STATE_LEVEL_TENANT_ID") || "kl";
   initTokens(stateCode);
 
   ReactDOM.render(

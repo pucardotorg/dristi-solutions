@@ -26,7 +26,7 @@ import { Urls } from "../../../hooks";
 import { getFormattedName } from "@egovernments/digit-ui-module-hearings/src/utils";
 import { admitCaseSubmitConfig, scheduleCaseAdmissionConfig, selectParticipantConfig } from "../../citizen/FileCase/Config/admissionActionConfig";
 import Modal from "../../../components/Modal";
-import { getAllAssociatedPartyUuids, getAuthorizedUuid, getDate, removeInvalidNameParts } from "../../../Utils";
+import { DateUtils, getAllAssociatedPartyUuids, getAuthorizedUuid, getDate, removeInvalidNameParts } from "../../../Utils";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import VoidSubmissionBody from "./VoidSubmissionBody";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
@@ -113,18 +113,13 @@ const actionEnabledStatuses = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PE
 const viewEnabledStatuses = [...actionEnabledStatuses, "CASE_DISMISSED"];
 const judgeReviewStages = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION", "CASE_DISMISSED"];
 
-const formatDate = (date) => {
-  if (date instanceof Date && !isNaN(date)) {
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  }
-  return "";
-};
-
 const AdmittedCaseV2 = () => {
   const { t } = useTranslation();
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+
+  const [apiCalled, setApiCalled] = useState(false);
+  const [passOver, setPassOver] = useState(false);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
   const location = useLocation();
   const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
@@ -140,11 +135,6 @@ const AdmittedCaseV2 = () => {
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
   const userRoles = useMemo(() => roles.map((role) => role.code), [roles]);
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-
-  const [apiCalled, setApiCalled] = useState(false);
-  const [passOver, setPassOver] = useState(false);
-  const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
   const [showWitnessModal, setShowWitnessModal] = useState(false);
   const [showExaminationModal, setShowExaminationModal] = useState(openExaminationModal || false);
@@ -775,7 +765,7 @@ const AdmittedCaseV2 = () => {
       },
       {
         key: "SUBMITTED_ON",
-        value: formatDate(new Date(caseDetails?.filingDate)),
+        value: DateUtils.getFormattedDate(new Date(caseDetails?.filingDate)),
       },
     ],
     [caseCourtId, caseDetails?.caseCategory, caseDetails?.filingDate, caseDetails?.filingNumber, t]
@@ -1657,6 +1647,8 @@ const AdmittedCaseV2 = () => {
   }, [newWitnesToast, showToast, t]);
 
   useEffect(() => {
+    const { refApplicationNumber, ...rest } = location?.state || {};
+    const applicationNumber = urlParams.get("applicationNumber") || refApplicationNumber;
     if (applicationData && applicationNumber) {
       const applicationDetails = applicationData?.applicationList?.filter((application) => application?.applicationNumber === applicationNumber)?.[0];
       setDocumentSubmission(
@@ -1685,8 +1677,15 @@ const AdmittedCaseV2 = () => {
         })
       );
       setShow(true);
+      if (refApplicationNumber) {
+        history.replace({
+          pathname: location.pathname,
+          search: location.search,
+          state: Object.keys(rest).length ? rest : null,
+        });
+      }
     }
-  }, [applicationData, applicationNumber]);
+  }, [applicationData, applicationNumber, location?.state?.refApplicationNumber]);  
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
@@ -2745,7 +2744,7 @@ const AdmittedCaseV2 = () => {
         documents: [],
         additionalDetails: {
           formdata: {
-            hearingDate: formatDate(date).split("-").reverse().join("-"),
+            hearingDate: DateUtils.getFormattedDate(date).split("-").reverse().join("-"),
             hearingPurpose: data.purpose,
             orderType: {
               code: "SCHEDULE_OF_HEARING_DATE",
@@ -3476,7 +3475,7 @@ const AdmittedCaseV2 = () => {
                                 subLabel={
                                   hasHearingPriorityView
                                     ? null
-                                    : `(${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
+                                    : `(${DateUtils.getFormattedDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
                                         .split("-")
                                         .join("/")})`
                                 }
@@ -3502,7 +3501,7 @@ const AdmittedCaseV2 = () => {
                               <Button
                                 variation={"primary"}
                                 label={t("CS_CASE_NEXT_HEARING")}
-                                subLabel={`(${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
+                                subLabel={`(${DateUtils.getFormattedDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
                                   .split("-")
                                   .join("/")})`}
                                 children={<RightArrow />}
@@ -3616,7 +3615,10 @@ const AdmittedCaseV2 = () => {
             {delayCondonationData?.delayCondonationType?.code === "NO" && !isDelayApplicationCompleted && (
               <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                 <p style={delayCondonationTextStyle}>
-                  {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) || isDelayApplicationPending
+                  {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" &&
+                    ["PENDING_REGISTRATION", "UNDER_SCRUTINY", "PENDING_PAYMENT"]?.includes(caseDetails?.status)) ||
+                  (delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
+                  isDelayApplicationPending
                     ? t("DELAY_CONDONATION_FILED")
                     : t("DELAY_CONDONATION_NOT_FILED")}
                 </p>

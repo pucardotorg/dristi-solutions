@@ -18,6 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Set;
 
+import org.pucar.dristi.util.FileValidationUtil;
+
 
 @RestController
 public class Controller {
@@ -41,6 +43,10 @@ public class Controller {
             @RequestParam(value = "extractData", required = false) Boolean extractData) {
 
         logger.info("Received request to process image with file: ");
+
+        if (!FileValidationUtil.isValidFile(file)) {
+            return ResponseEntity.badRequest().build();
+        }
         OcrRequest ocrRequest = new OcrRequest()
                 .setKeywords(keywords)
                 .setDistanceCutoff(distanceCutoff)

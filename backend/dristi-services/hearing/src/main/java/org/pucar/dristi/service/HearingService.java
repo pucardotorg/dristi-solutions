@@ -151,7 +151,7 @@ public class HearingService {
             hearing.setCourtCaseNumber(hearingRequest.getHearing().getCourtCaseNumber() != null ? hearingRequest.getHearing().getCourtCaseNumber() : hearing.getCourtCaseNumber());
             hearing.setCaseReferenceNumber(hearingRequest.getHearing().getCaseReferenceNumber() != null ? hearingRequest.getHearing().getCaseReferenceNumber() : hearing.getCaseReferenceNumber());
             String newHearingType = null;
-            if(hearing.getWorkflow()!=null && (hearing.getWorkflow().getAction().equalsIgnoreCase(MARK_COMPLETE) || hearing.getWorkflow().getAction().equalsIgnoreCase(UPDATE_DATE) || hearing.getWorkflow().getAction().equalsIgnoreCase(RESCHEDULE_ONGOING))){
+            if(hearing.getWorkflow()!=null && (hearing.getWorkflow().getAction().equalsIgnoreCase(MARK_COMPLETE) || hearing.getWorkflow().getAction().equalsIgnoreCase(UPDATE_DATE)|| hearing.getWorkflow().getAction().equalsIgnoreCase(RESCHEDULE_ONGOING))){
                 newHearingType = hearingRequest.getHearing().getHearingType();
                 hearing.setHearingType(newHearingType);
             }

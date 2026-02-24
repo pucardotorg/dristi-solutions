@@ -59,6 +59,7 @@ public class CauseListServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(config.getZoneId()).thenReturn("Asia/Kolkata");
     }
 
     @Test
