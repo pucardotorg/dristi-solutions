@@ -12,9 +12,7 @@ const Response = ({ refetch, setHideBack }) => {
   const location = useLocation();
   const history = useHistory();
 
-  // const handleLogout = () => {
-  //   Digit.UserService.logout();
-  // };
+
   useGetAccessToken("citizen.refresh-token", true);
 
   useEffect(() => {

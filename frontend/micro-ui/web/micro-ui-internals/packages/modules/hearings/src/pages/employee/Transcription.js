@@ -26,16 +26,7 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
     initWebSocket();
   }, []);
 
-  const joinRoom = () => {
-    if (websocket && websocket.readyState === WebSocket.OPEN) {
-      const message = {
-        type: "joined_room",
-        room_id: roomId,
-      };
 
-      websocket.send(JSON.stringify(message));
-    }
-  };
 
   const createRoom = () => {
     if (websocket && websocket.readyState === WebSocket.OPEN) {

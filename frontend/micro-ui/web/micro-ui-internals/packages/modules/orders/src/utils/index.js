@@ -46,22 +46,7 @@ export const updateCustomConfigs = () => {
 
 export default {};
 
-export const formatDateDifference = (previousDate) => {
-  const currentDate = new Date();
-  let previousDateObj;
 
-  if (typeof previousDate === "string" && previousDate.includes("-")) {
-    const [day, month, year] = previousDate.split("-");
-    previousDateObj = new Date(year, month - 1, day);
-  } else {
-    previousDateObj = new Date(Number(previousDate));
-  }
-
-  const timeDifference = currentDate - previousDateObj;
-  const dayDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
-
-  return dayDifference;
-};
 
 export const convertToDateInputFormat = (dateInput) => {
   if (!dateInput) {
@@ -133,12 +118,12 @@ export const getRespondantName = (respondentNameData) => {
   const isWitness = respondentNameData?.partyType?.toLowerCase() === "witness";
   const partyName = isWitness
     ? getFormattedName(
-        respondentNameData?.firstName,
-        respondentNameData?.middleName,
-        respondentNameData?.lastName,
-        respondentNameData?.witnessDesignation,
-        null
-      )
+      respondentNameData?.firstName,
+      respondentNameData?.middleName,
+      respondentNameData?.lastName,
+      respondentNameData?.witnessDesignation,
+      null
+    )
     : constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName);
 
   if (respondentNameData?.respondentCompanyName) {
@@ -151,9 +136,8 @@ export const getRespondantName = (respondentNameData) => {
 export const getComplainantName = (complainantDetails) => {
   const partyName =
     complainantDetails?.firstName &&
-    `${complainantDetails?.firstName?.trim() || ""} ${complainantDetails?.middleName?.trim() || ""} ${
-      complainantDetails?.lastName?.trim() || ""
-    }`.trim();
+    `${complainantDetails?.firstName?.trim() || ""} ${complainantDetails?.middleName?.trim() || ""} ${complainantDetails?.lastName?.trim() || ""
+      }`.trim();
   if (complainantDetails?.complainantType?.code === "INDIVIDUAL") {
     return partyName;
   }

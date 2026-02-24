@@ -45,11 +45,7 @@ const handleTaskDetails = (taskDetails) => {
   }
 };
 
-const handleNavigate = (path) => {
-  const contextPath = window?.contextPath || "";
 
-  window.location.href = `/${contextPath}${path}`;
-};
 
 export const UICustomizations = {
   EpostTrackingUiConfig: {
@@ -936,9 +932,8 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
-                  applicationNumber || ""
-                }&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${applicationNumber || ""
+                  }&individualId=${individualId}&type=${usertype}`}
               >
                 {applicationNumber
                   ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)

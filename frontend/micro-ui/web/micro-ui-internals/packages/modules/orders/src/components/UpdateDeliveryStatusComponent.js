@@ -4,10 +4,7 @@ import ApplicationInfoComponent from "./ApplicationInfoComponent";
 import { convertToDateInputFormat } from "../utils/index";
 import { sanitizeData } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
-const convertToDisplayFormat = (dateStr) => {
-  const [year, month, day] = dateStr.split("-");
-  return `${day}-${month}-${year}`;
-};
+
 
 const UpdateDeliveryStatusComponent = ({
   t,

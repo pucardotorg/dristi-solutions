@@ -31,7 +31,7 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
   const [prevDistrict, setPrevDistrict] = useState(null);
 
   const history = useHistory();
-  // const getUserType = () => "EMPLOYEE" || Digit.UserService.getType();
+
 
   useEffect(() => {
     if (!user) {
@@ -131,10 +131,10 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
     } catch (err) {
       setShowToast(
         err?.response?.data?.error_description ||
-          (err?.message === "ES_ERROR_USER_NOT_PERMITTED" && t("ES_ERROR_USER_NOT_PERMITTED")) ||
-          (err?.message === "USER_ACCOUNT_VALIDITY_EXPIRED" && t("USER_ACCOUNT_VALIDITY_EXPIRED")) ||
-          err?.response?.data?.Errors[0]?.message ||
-          t("INVALID_LOGIN_CREDENTIALS")
+        (err?.message === "ES_ERROR_USER_NOT_PERMITTED" && t("ES_ERROR_USER_NOT_PERMITTED")) ||
+        (err?.message === "USER_ACCOUNT_VALIDITY_EXPIRED" && t("USER_ACCOUNT_VALIDITY_EXPIRED")) ||
+        err?.response?.data?.Errors[0]?.message ||
+        t("INVALID_LOGIN_CREDENTIALS")
       );
       setTimeout(closeToast, 5000);
     }
