@@ -1087,7 +1087,7 @@ public class TaskCreationService {
 
         String entityType = getEntityType(taskType);
 
-        ZoneId zoneId = ZoneId.of("Asia/Kolkata");
+        ZoneId zoneId = ZoneId.of(configuration.getZoneId());
         ZonedDateTime istTime = ZonedDateTime.now(zoneId);
         long currentISTMillis = istTime.toInstant().toEpochMilli();
 

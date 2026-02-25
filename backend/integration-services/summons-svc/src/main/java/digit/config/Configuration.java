@@ -329,4 +329,7 @@ public class Configuration {
 
     @Value("${dristi.taxhead.master.code}")
     private String ePostTaxHeadMasterCode;
+
+    @Value("${app.zone.id}")
+    private String zoneId;
 }
