@@ -117,6 +117,7 @@ export const Urls = {
     addOfficeMember: "/advocate-office-management/v1/_addMember",
     searchOfficeMember: "/advocate-office-management/v1/_searchMember",
     leaveOffice: "/advocate-office-management/v1/_leaveOffice",
+    bankDetails: "/bank-details/v1/_search",
   },
   case: {
     addWitness: "/case/v1/add/witness",
