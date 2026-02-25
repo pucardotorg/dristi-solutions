@@ -48,6 +48,7 @@ export const assignCasesConfig = ({ member = {}, advocateInfo = {} } = {}) => {
           minReqFields: 0,
           defaultValues: {
             caseMappingFilterStatus: { code: "ALL_CASES", name: "All Cases" },
+            caseSearchText: "",
             filingNumber: "",
           },
           fields: [

@@ -2814,6 +2814,7 @@ export const UICustomizations = {
             <input
               type="checkbox"
               className="custom-checkbox"
+              defaultChecked={row?.isActive === true}
               onClick={(e) => e.stopPropagation()}
               style={{ cursor: "pointer", width: "20px", height: "20px" }}
             />
