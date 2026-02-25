@@ -18,6 +18,7 @@ import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.v2.Emails;
 import org.pucar.dristi.web.models.v2.PartyType;
+import org.pucar.dristi.web.models.advocateDetails.AdvocateDetailBlock;
 import org.pucar.dristi.web.models.v2.PhoneNumbers;
 import org.pucar.dristi.web.models.v2.WitnessDetails;
 import org.pucar.dristi.web.models.v2.WitnessDetailsRequest;
@@ -512,10 +513,11 @@ public class CaseRegistrationValidator {
         try {
             log.info("operation=validateWitnessRequest, status=IN_PROGRESS, filingNumber: {}", body.getCaseFilingNumber());
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+            List<AdvocateDetailBlock> advocateBlocks = courtCase.getAdvocateDetailBlock();
             List<WitnessDetails> existingWitnesses = courtCase.getWitnessDetails();
             validateMobileNumbersInRequest(body.getWitnessDetails());
             for(WitnessDetails witnessDetails : body.getWitnessDetails()) {
-                validateMobileNumbers(additionalDetails, witnessDetails, existingWitnesses);
+                validateMobileNumbers(additionalDetails, advocateBlocks, witnessDetails, existingWitnesses);
                 validateEmail(additionalDetails, witnessDetails, existingWitnesses);
             }
             log.info("operation=validateWitnessRequest, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
@@ -619,14 +621,20 @@ public class CaseRegistrationValidator {
                 .toList();
     }
 
-    private void validateMobileNumbers(JsonNode additionalDetails, WitnessDetails witnessDetails, List<WitnessDetails> existingWitnesses) {
+    private void validateMobileNumbers(JsonNode additionalDetails, List<AdvocateDetailBlock> advocateBlocks, WitnessDetails witnessDetails, List<WitnessDetails> existingWitnesses) {
 
         if(witnessDetails.getPhoneNumbers() == null || witnessDetails.getPhoneNumbers().getMobileNumber().isEmpty()) {
             return;
         }
         List<String> mobileNumberList = new ArrayList<>();
 
-        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("advocateDetails"), PartyType.ADVOCATE));
+        // Prefer advocate mobile numbers from typed advocateDetailBlock. Fall back to legacy additionalDetails if needed.
+        if (advocateBlocks != null && !advocateBlocks.isEmpty()) {
+            mobileNumberList.addAll(extractAdvocateMobileNumbersFromBlocks(advocateBlocks));
+        } else {
+            mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("advocateDetails"), PartyType.ADVOCATE));
+        }
+
         mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("complainantDetails"), PartyType.COMPLAINANT));
         mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("respondentDetails"), PartyType.RESPONDENT));
         mobileNumberList.addAll(extractWitnessMobileNumbers(existingWitnesses));
@@ -640,6 +648,20 @@ public class CaseRegistrationValidator {
                         "Witness mobile number should not be same as existing parties mobile number");
             }
         }
+    }
+
+    private static List<String> extractAdvocateMobileNumbersFromBlocks(List<AdvocateDetailBlock> blocks) {
+        if (blocks == null || blocks.isEmpty()) return Collections.emptyList();
+        List<String> mobiles = new ArrayList<>();
+        for (AdvocateDetailBlock block : blocks) {
+            if (block == null || block.getAdvocates() == null) continue;
+            for (org.pucar.dristi.web.models.Advocate adv : block.getAdvocates()) {
+                if (adv == null) continue;
+                String mob = adv.getMobileNumber();
+                if (mob != null && !mob.trim().isEmpty()) mobiles.add(mob);
+            }
+        }
+        return mobiles;
     }
 
     public static boolean isNonEmptyText(JsonNode node) {

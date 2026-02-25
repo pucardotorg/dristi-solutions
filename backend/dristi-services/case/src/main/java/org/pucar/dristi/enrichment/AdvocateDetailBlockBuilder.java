@@ -48,10 +48,18 @@ public class AdvocateDetailBlockBuilder {
                         Complainant complainant = Complainant.builder()
                                 .index(idx++)
                                 .individualId(litigant.getIndividualId())
+                                .caseId(litigant.getCaseId())
+                                .partyType(litigant.getPartyType())
+                                .organisationID(litigant.getOrganisationID())
+                                .isActive(litigant.getIsActive())
+                                .isPartyInPerson(litigant.isPartyInPerson())
+                                .documents(litigant.getDocuments() != null ? new java.util.ArrayList<>(litigant.getDocuments()) : null)
+                                .additionalDetails(litigant.getAdditionalDetails())
                                 .firstName(null)
                                 .middleName(null)
                                 .lastName(null)
                                 .mobileNumber(null)
+                                .fullName(null)
                                 .build();
 
                         try {
@@ -61,8 +69,25 @@ public class AdvocateDetailBlockBuilder {
                                 if (litNode.has("middleName")) complainant.setMiddleName(litNode.get("middleName").asText());
                                 if (litNode.has("lastName")) complainant.setLastName(litNode.get("lastName").asText());
                                 if (litNode.has("mobileNumber")) complainant.setMobileNumber(litNode.get("mobileNumber").asText());
+                                // if additionalDetails contains a display/full name, prefer that
+                                if (litNode.has("fullName")) complainant.setFullName(litNode.get("fullName").asText());
                             }
                         } catch (Exception ignored) { }
+
+                        // Derive fullName if not set explicitly
+                        if (complainant.getFullName() == null) {
+                            StringBuilder nameBuilder = new StringBuilder();
+                            if (complainant.getFirstName() != null && !complainant.getFirstName().isBlank()) nameBuilder.append(complainant.getFirstName());
+                            if (complainant.getMiddleName() != null && !complainant.getMiddleName().isBlank()) {
+                                if (nameBuilder.length() > 0) nameBuilder.append(' ');
+                                nameBuilder.append(complainant.getMiddleName());
+                            }
+                            if (complainant.getLastName() != null && !complainant.getLastName().isBlank()) {
+                                if (nameBuilder.length() > 0) nameBuilder.append(' ');
+                                nameBuilder.append(complainant.getLastName());
+                            }
+                            if (nameBuilder.length() > 0) complainant.setFullName(nameBuilder.toString());
+                        }
 
                         List<Document> vakalatnama = caseDocuments.stream()
                                 .filter(d -> d != null && d.getDocumentType() != null && d.getDocumentType().equalsIgnoreCase("VAKALATNAMA_DOC"))

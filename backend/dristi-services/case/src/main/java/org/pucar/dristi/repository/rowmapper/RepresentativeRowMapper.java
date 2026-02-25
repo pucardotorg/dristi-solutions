@@ -79,6 +79,34 @@ public class RepresentativeRowMapper implements ResultSetExtractor<Map<UUID, Lis
                         } catch (Exception ignored) {}
                     }
 
+                    // If advocate additional details contains personal fields, map them to Advocate model
+                    try {
+                        if (advocate.getAdditionalDetails() != null) {
+                            com.fasterxml.jackson.databind.JsonNode advNode = objectMapper.convertValue(advocate.getAdditionalDetails(), com.fasterxml.jackson.databind.JsonNode.class);
+                            if (advNode.has("advocateUuid") && !advNode.get("advocateUuid").isNull()) {
+                                try { advocate.setAdvocateUuid(UUID.fromString(advNode.get("advocateUuid").asText())); } catch (Exception ignored) {}
+                            }
+                            if (advNode.has("firstName")) advocate.setFirstName(advNode.get("firstName").asText());
+                            if (advNode.has("middleName")) advocate.setMiddleName(advNode.get("middleName").asText());
+                            if (advNode.has("lastName")) advocate.setLastName(advNode.get("lastName").asText());
+                            if (advNode.has("mobileNumber")) advocate.setMobileNumber(advNode.get("mobileNumber").asText());
+                        }
+                    } catch (Exception ignored) {}
+
+                    // Also check representative additionalDetails for advocate-like fields (fallback)
+                    try {
+                        if (advocateMapping.getAdditionalDetails() != null) {
+                            com.fasterxml.jackson.databind.JsonNode repNode = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), com.fasterxml.jackson.databind.JsonNode.class);
+                            if (advocate.getAdvocateUuid() == null && repNode.has("advocateUuid") && !repNode.get("advocateUuid").isNull()) {
+                                try { advocate.setAdvocateUuid(UUID.fromString(repNode.get("advocateUuid").asText())); } catch (Exception ignored) {}
+                            }
+                            if ((advocate.getFirstName() == null || advocate.getFirstName().isBlank()) && repNode.has("firstName")) advocate.setFirstName(repNode.get("firstName").asText());
+                            if ((advocate.getMiddleName() == null || advocate.getMiddleName().isBlank()) && repNode.has("middleName")) advocate.setMiddleName(repNode.get("middleName").asText());
+                            if ((advocate.getLastName() == null || advocate.getLastName().isBlank()) && repNode.has("lastName")) advocate.setLastName(repNode.get("lastName").asText());
+                            if ((advocate.getMobileNumber() == null || advocate.getMobileNumber().isBlank()) && repNode.has("mobileNumber")) advocate.setMobileNumber(repNode.get("mobileNumber").asText());
+                        }
+                    } catch (Exception ignored) {}
+
                     advocateMapping.setAdvocate(advocate);
                 }
 
