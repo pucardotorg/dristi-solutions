@@ -182,6 +182,7 @@ const DigitizedDocumentsSignaturePage = () => {
         tenantId,
         documentNumber: documentNumber,
         mobileNumber: accMobileNum,
+        action: "UPLOAD",
         fileStoreId: uploadedFileStoreId,
       };
       const res = await submissionService.updateOpenDigitizedDocument(payload, { tenantId });
