@@ -84,21 +84,28 @@ export const chequeDetailsFormConfig = [
         component: "InputWithSearch",
         isMandatory: true,
         populators: {
-          name: "payeeIfsc",
-          label: "CS_PAYEE_IFSC_CODE",
-          buttonLabel: "CS_SEARCH",
-          validation: {
-            pattern: {
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "ifsc",
+          inputs: [
+            {
+              name: "payeeIfsc",
+              label: "CS_PAYEE_IFSC_CODE",
+              validation: {
+                pattern: {
+                  masterName: "commonUiConfig",
+                  moduleName: "patternValidation",
+                  patternType: "ifsc",
+                },
+                minLength: 11,
+              },
+              errorStyle: {
+                paddingTop: "20px",
+                marginBottom: "0px",
+                fontSize: "12px",
+                width: "70%",
+              },
+              infoTooltipMessage: "PAYEE_IFSC_CODE_SUGGESTION",
             },
-            minLength: 11,
-          },
-          infoTooltipMessage: "PAYEE_IFSC_CODE_SUGGESTION",
+          ],
         },
-        // tooltipValue: "PAYEE_IFSC_CODE_SUGGESTION",
-        // labelChildren: "OutlinedInfoIcon",
       },
     ],
   },
@@ -178,21 +185,28 @@ export const chequeDetailsFormConfig = [
         component: "InputWithSearch",
         isMandatory: true,
         populators: {
-          name: "payerIfsc",
-          label: "CS_PAYER_IFSC_CODE",
-          buttonLabel: "CS_SEARCH",
-          validation: {
-            pattern: {
-              masterName: "commonUiConfig",
-              moduleName: "patternValidation",
-              patternType: "ifsc",
+          inputs: [
+            {
+              name: "payerIfsc",
+              label: "CS_PAYER_IFSC_CODE",
+              validation: {
+                pattern: {
+                  masterName: "commonUiConfig",
+                  moduleName: "patternValidation",
+                  patternType: "ifsc",
+                },
+                minLength: 11,
+              },
+              errorStyle: {
+                paddingTop: "20px",
+                marginBottom: "0px",
+                fontSize: "12px",
+                width: "70%",
+              },
+              infoTooltipMessage: "PAYER_IFSC_CODE_SUGGESTION",
             },
-            minLength: 11,
-          },
-          infoTooltipMessage: "PAYER_IFSC_CODE_SUGGESTION",
+          ],
         },
-        // tooltipValue: "PAYER_IFSC_CODE_SUGGESTION",
-        // labelChildren: "OutlinedInfoIcon",
       },
     ],
   },

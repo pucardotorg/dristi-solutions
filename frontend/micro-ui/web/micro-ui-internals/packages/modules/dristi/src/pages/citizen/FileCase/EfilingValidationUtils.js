@@ -365,9 +365,16 @@ export const fetchBankDetails = async (ifsc) => {
 };
 
 export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValue, getValues, setError, clearErrors, cache }) => {
-  if (!ifsc || ifsc.length !== 11) return;
   if (!cache?.current) {
     console.error("Cache not initialized properly");
+    return;
+  }
+  if (!ifsc) {
+    setError(bankField, { msg: "CORE_REQUIRED_FIELD_ERROR" });
+    return;
+  }
+  if (ifsc.length !== 11) {
+    setError(bankField, { msg: "CS_INVALID_IFSC" });
     return;
   }
   clearErrors(bankField);
@@ -380,7 +387,7 @@ export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValu
 
     if (!bankDetails) {
       cache.current[ifsc] = "FAILED";
-      setError(bankField, { message: "CS_INVALID_IFSC" });
+      setError(bankField, { msg: "CS_INVALID_IFSC" });
       return;
     }
 

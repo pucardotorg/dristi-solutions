@@ -2376,19 +2376,26 @@
   }
 }
 
-.field {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
 .ifsc-text-input {
-  width: 100% !important;
+  max-width: 100% !important;
 }
 
 .ifsc-text-input input {
-  width: 100% !important;
+  max-width: 100% !important;
+}
+.ifsc-text-input.error input {
+  border: 1px solid #d4351c !important;
 }
 
-.text-input {
-  max-width: 100% !important;
+.ifsc-search-btn {
+  font-weight: 700;
+  padding: 8px 24px;
+  border: none;
+  font-size: 16px;
+  background: #007e7e;
+  color: #fff;
+  border-radius: 4px;
+  height: 40px;
+  margin-left: 12px;
+  cursor: pointer;
 }

@@ -1,35 +1,57 @@
-import React, { useState, useEffect, useRef } from "react";
-import { TextInput, Button, CardLabelError, Tooltip } from "@egovernments/digit-ui-react-components";
-import { OutlinedInfoIcon } from "../pages/citizen/FileCase/EFilingCases";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { TextInput, CardLabelError } from "@egovernments/digit-ui-react-components";
 import { handleIfscAutofill } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 
 function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError, clearErrors }) {
   const fetchedIfsc = useRef({});
-  const [value, setValue] = useState(formData?.[config.key]?.[config?.populators?.name] || "");
+  const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
+  const [formdata, setFormData] = useState(formData);
 
   useEffect(() => {
-    setValue(formData?.[config.key]?.[config?.populators?.name] || "");
+    setFormData(formData);
   }, [formData]);
 
-  const handleChange = (e) => {
+  function setValue(value, inputName) {
+    let updatedValue = {
+      ...formData[config.key],
+      [inputName]: value,
+    };
+
+    if (!value) {
+      updatedValue = null;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [config.key]: {
+        ...prev?.[config.key],
+        [inputName]: value,
+      },
+    }));
+
+    onSelect(config.key, updatedValue, { shouldValidate: true });
+  }
+  const handleChange = (e, input) => {
     const newValue = e.target.value;
-    setValue(newValue);
-
-    onSelect(config.key, { [config.populators.name]: newValue }, { shouldValidate: true });
+    setValue(newValue, input.name);
   };
+  const handleSearch = async (input) => {
+    const ifsc = formdata?.[config.key]?.[input.name];
 
-  const handleSearch = async () => {
-    const ifsc = value;
+    if (!ifsc) {
+      setError(config.key, { msg: "CORE_REQUIRED_FIELD_ERROR" });
+      return;
+    }
 
-    if (!ifsc || ifsc.length !== 11) {
-      setError(config.key, { message: "CS_INVALID_IFSC" });
+    if (ifsc.length !== 11) {
+      setError(config.key, { msg: "CS_INVALID_IFSC" });
       return;
     }
 
     clearErrors(config.key);
 
-    const prefix = config.populators.name.replace("Ifsc", "");
+    const prefix = input.name.replace("Ifsc", "");
 
     await handleIfscAutofill({
       ifsc,
@@ -42,55 +64,39 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
       cache: fetchedIfsc,
     });
   };
+  return inputs.map((input) => {
+    return (
+      <div>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <label className="digit-label">{t(input?.label)}</label>
+            <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
+          </div>
 
-  return (
-    // <div className="custom-text-area-main-div">
-    //   <div className="custom-text-area-header-div">
-    //     <label className="digit-label custom-input-label">{t(config?.populators?.label)}</label>
+          <div style={{ display: "flex", width: "100%", gap: "8px", alignItems: "flex-end" }}>
+            <div style={{ flex: 1 }}>
+              <TextInput
+                value={formdata?.[config.key]?.[input.name] || ""}
+                onChange={(e) => handleChange(e, input)}
+                placeholder={t(input?.placeholder)}
+                className={`ifsc-text-input ${errors?.[config.key] ? "error" : ""}`}
+                error={errors?.[config.key]}
+              />
+            </div>
 
-    //     <CustomErrorTooltip message={t(config?.populators?.infoTooltipMessage)} showTooltip={Boolean(config?.populators?.infoTooltipMessage)} icon />
-    //     <Button label={t(config?.populators?.buttonLabel)} onButtonClick={handleSearch} type="button" className="custom-search-button" />
-    //   </div>
-    //   {errors?.[config.key] && <CardLabelError>{t(errors[config.key]?.message || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>}
-    // </div>
-    <div>
-      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-        <label className="digit-label">{t(config?.populators?.label)}</label>
-        <CustomErrorTooltip message={t(config?.populators?.infoTooltipMessage)} showTooltip={Boolean(config?.populators?.infoTooltipMessage)} icon />
-      </div>
-      {/* {config?.tooltipValue && config?.labelChildren === "OutlinedInfoIcon" && (
-        <Tooltip content={t(config.tooltipValue)}>
-          <span className="ifsc-tooltip-icon">
-            <OutlinedInfoIcon />
-          </span>
-        </Tooltip>
-      )} */}
-
-      <div style={{ display: "flex", width: "100%", gap: "8px", alignItems: "flex-end" }}>
-        <div style={{ flex: 1 }}>
-          <TextInput
-            value={value}
-            onChange={handleChange}
-            placeholder={t(config?.populators?.placeholder)}
-            className="ifsc-text-input"
-            style={{ width: "100%" }}
-          />
+            <div>
+              <button className="ifsc-search-btn" onClick={() => handleSearch(input)} type="button">
+                {t("ES_COMMON_SEARCH")}
+              </button>
+            </div>
+          </div>
         </div>
-
-        <div className="ifsc-search-btn">
-          <Button
-            label={t(config?.populators?.buttonLabel)}
-            onButtonClick={handleSearch}
-            className="ifsc-search-button"
-            variation="primary"
-            type="button"
-          />
-        </div>
+        {errors?.[config.key] && (
+          <CardLabelError style={input?.errorStyle}>{t(errors[config.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>
+        )}
       </div>
-
-      {errors?.[config.key] && <CardLabelError>{t(errors[config.key]?.message || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>}
-    </div>
-  );
+    );
+  });
 }
 
 export default InputWithSearch;
