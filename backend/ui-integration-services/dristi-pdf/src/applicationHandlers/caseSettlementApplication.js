@@ -9,6 +9,8 @@ const {
 const { renderError } = require("../utils/renderError");
 const { cleanName } = require("./cleanName");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const { formatDate } = require("./formatDate");
+const { getNameByUuid, getComplaintAndAccusedList } = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -89,7 +91,6 @@ async function caseSettlementApplication(
 
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
 
-    let barRegistrationNumber = "";
     let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
@@ -102,7 +103,6 @@ async function caseSettlementApplication(
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
@@ -168,22 +168,9 @@ async function caseSettlementApplication(
       "November",
       "December",
     ];
-    // const applicationNameMap = {
-    //   BAIL_BOND: "Bail Application - Personal Bail Bond",
-    //   SURETY: "Bail Application - In Person Surety",
-    //   CHECKOUT_REQUEST: "Checkout Application",
-    //   SETTLEMENT: "Case Settlement Application",
-    //   TRANSFER: "Case Transfer Application",
-    //   WITHDRAWAL: "Case Withdrawal",
-    //   PRODUCTION_DOCUMENTS:
-    //     "Application for production of documents or evidence",
-    //   EXTENSION_SUBMISSION_DEADLINE: "Application for Extension of Submission",
-    //   "": "General Application",
-    //   undefined: "General Application",
-    // };
 
     const currentDate = new Date();
-    // const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
+    const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const day = currentDate.getDate();
     const month = months[currentDate.getMonth()];
     const year = currentDate.getFullYear();
@@ -195,32 +182,31 @@ async function caseSettlementApplication(
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
-    const prayer = application?.applicationDetails?.prayer || "";
+      const { complainantList, accusedList } = getComplaintAndAccusedList(
+        courtCase || {}
+      );
     const data = {
       Data: [
         {
-          courtName: mdmsCourtRoom.name,
+          courtComplex: mdmsCourtRoom.name,
           caseType: "Negotiable Instruments Act 138 A",
           caseNumber: caseNumber,
-          caseYear: caseYear,
           caseName: courtCase.caseTitle,
-          applicationNumber: applicationNumber,
-          applicationYear: applicationYear,
+          date: formattedToday,
           partyName: partyName,
           partyType: partyType,
-          dateOfSettlementAggrement: applicationYear, // missing from the form
-          specifyMechanism: "", // nmissing from the form
-          settlementStatus: "", // missing from the form
+          applicationTitle: "APPLICATION FOR SETTLEMENT OF CASE",
+          dateOfSettlementAggrement: applicationYear,
           additionalComments: additionalComments,
-          location: mdmsCourtRoom.state,
           day: day + ordinalSuffix,
           month: month,
           year: year,
-          prayer,
           advocateSignature: "Advocate Signature",
           advocateName: advocateName,
-          barRegistrationNumber: barRegistrationNumber,
           qrCodeUrl: base64Url,
+          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
         },
       ],
     };
