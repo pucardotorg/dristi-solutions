@@ -4654,6 +4654,7 @@ const GenerateOrdersV2 = () => {
               hideFilters={true}
               isApplicationCompositeOrder={true}
               compositeOrderObj={currentOrder}
+              applicationData={applicationData}
             />
             {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <React.Fragment>

@@ -58,6 +58,7 @@ const TasksComponent = ({
   pendingSignOrderList,
   tableView = false,
   needRefresh = false,
+  applicationData = [],
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const CourierService = useMemo(() => Digit.ComponentRegistryService.getComponent("CourierService"), []);
@@ -664,6 +665,12 @@ const TasksComponent = ({
       const applicationType = data?.fields?.find((field) => field.key === "additionalDetails.applicationType")?.value;
       const bailBondId = data?.fields?.find((field) => field.key === "additionalDetails.bailBondId")?.value;
       const courtId = data?.fields?.find((field) => field.key === "courtId")?.value;
+      let applicationName = "";
+
+      if (isApplicationCompositeOrder && !applicationType) {
+        applicationName =
+          applicationData?.applicationList?.find((application) => application?.applicationNumber === referenceId)?.applicationType || "";
+      }
 
       const updateReferenceId = referenceId?.split("_").pop();
       const defaultObj = {
@@ -754,6 +761,7 @@ const TasksComponent = ({
         isCustomFunction,
         referenceId,
         screenType,
+        applicationName: applicationName || applicationType,
       };
     });
 
