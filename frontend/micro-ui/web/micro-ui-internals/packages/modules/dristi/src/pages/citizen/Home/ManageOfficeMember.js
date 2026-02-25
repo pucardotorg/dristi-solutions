@@ -217,20 +217,43 @@ const ManageOfficeMember = () => {
       return;
     }
 
+    const container = document.querySelector(".manage-office-member-inbox");
+    const tbody = container ? container.querySelector("tbody") : null;
+    const addCaseIds = [];
+    const removeCaseIds = [];
+
+    if (tbody) {
+      const rowCheckboxes = tbody.querySelectorAll('input[type="checkbox"][data-case-id]');
+      rowCheckboxes.forEach((checkbox) => {
+        const caseId = checkbox.getAttribute("data-case-id");
+        if (!caseId) return;
+        const initialActive = checkbox.getAttribute("data-initial-active") === "true";
+        const currentlyChecked = checkbox.checked;
+        if (!initialActive && currentlyChecked) {
+          addCaseIds.push(caseId);
+        } else if (initialActive && !currentlyChecked) {
+          removeCaseIds.push(caseId);
+        }
+      });
+    }
+
+    const userInfo = window?.Digit?.UserService?.getUser()?.info || {};
+    const officeAdvocateName = member?.officeAdvocateName || userInfo?.name || "";
+
     setIsUpdatingAccess(true);
     try {
-      const allowCaseCreateFlag = allowCaseCreate === "Yes";
-      const addNewCasesAutomaticallyFlag = addToNewCasesAuto === "Yes";
-      const accessType = member?.accessType || "ALL_CASES";
-
       const body = {
-        updateMemberAccess: {
+        processCaseMember: {
           tenantId,
+          memberUserUuid: member?.memberUserUuid,
+          officeAdvocateUserUuid: effectiveAdvocateInfo?.officeAdvocateUserUuid,
           officeAdvocateId: effectiveAdvocateInfo?.advocateId,
           memberId: member?.memberId,
-          addNewCasesAutomatically: addNewCasesAutomaticallyFlag,
-          accessType,
-          allowCaseCreate: allowCaseCreateFlag,
+          officeAdvocateName,
+          memberType: member?.memberType || "ADVOCATE",
+          memberName: member?.memberName || memberName,
+          addCaseIds,
+          removeCaseIds,
         },
         pagination: {
           limit: 10,
@@ -238,20 +261,27 @@ const ManageOfficeMember = () => {
         },
       };
 
-      const response = await window?.Digit?.DRISTIService?.customApiService("/advocate-office-management/v1/_updateMemberAccess", body, {
+      const response = await window?.Digit?.DRISTIService?.customApiService("/advocate-office-management/v1/_processCaseMember", body, {
         tenantId,
       });
 
       if (response) {
         setToast({ label: t("UPDATE_ACCESS_SUCCESS") || "Access updated successfully", type: "success" });
         setShowUpdateAccessModal(false);
+        handleGoBack();
       }
     } catch (error) {
-      console.error("Error updating member access:", error);
+      console.error("Error processing case member:", error);
       setToast({ label: t("UPDATE_ACCESS_ERROR") || "Failed to update access. Please try again.", type: "error" });
     } finally {
       setIsUpdatingAccess(false);
     }
+
+    // Previously used _updateMemberAccess (commented out):
+    // const allowCaseCreateFlag = allowCaseCreate === "Yes";
+    // const addNewCasesAutomaticallyFlag = addToNewCasesAuto === "Yes";
+    // const accessType = assignmentStatus || member?.accessType || "ALL_CASES";
+    // const response = await window?.Digit?.DRISTIService?.customApiService("/advocate-office-management/v1/_updateMemberAccess", { updateMemberAccess: { ... }, pagination }, { tenantId });
   };
 
   return (
