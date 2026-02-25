@@ -33,6 +33,9 @@ public class OpenApiDigitalDocumentRequest {
     @JsonProperty("courtId")
     private String courtId;
 
+    @JsonProperty("action")
+    private String action;
+
     @JsonProperty("mediationDetails")
     @Valid
     private MediationDetails mediationDetails = null;
