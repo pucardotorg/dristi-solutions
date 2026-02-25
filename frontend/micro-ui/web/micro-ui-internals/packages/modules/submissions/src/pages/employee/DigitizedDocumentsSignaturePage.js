@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ActionBar, SubmitBar, Button, Toast, Loader } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import BailEsignModal from "../../components/BailEsignModal";
+import GenericUploadSignatureModal from "../../components/GenericUploadSignatureModal";
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useQuery } from "react-query";
@@ -10,6 +11,7 @@ import { submissionService } from "../../hooks/services";
 import { useLocation } from "react-router-dom/cjs/react-router-dom";
 import useOpenApiSearchDigitizedDocuments from "../../hooks/submissions/useOpenApiSearchDigitizedDocuments";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 
 const getStyles = () => ({
   details: { color: "#0A0A0A", fontWeight: 700, fontSize: "18px", paddingBottom: "22px" },
@@ -55,13 +57,17 @@ const DigitizedDocumentsSignaturePage = () => {
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [showSigningChoiceModal, setShowSigningChoiceModal] = useState(false);
+  const [showUploadSignature, setShowUploadSignature] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const isCitizen = userRoles?.includes("CITIZEN");
+  const { downloadPdf } = useDownloadCasePdf();
 
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
   const [loader, setLoader] = useState(false);
+  const [uploadLoader, setUploadLoader] = useState(false);
 
   const { data: digitizedDocumentsOpenData, isLoading: isDigitizedDocumentsOpenOpenLoading } = useOpenApiSearchDigitizedDocuments(
     {
@@ -147,12 +153,47 @@ const DigitizedDocumentsSignaturePage = () => {
   });
 
   const handleSubmit = () => {
-    // TODO : update APi Call
-    setShowSignatureModal(true);
+    setShowSigningChoiceModal(true);
+  };
+
+  const handleCloseSigningChoiceModal = () => {
+    setShowSigningChoiceModal(false);
   };
 
   const handleCloseSignatureModal = () => {
     setShowSignatureModal(false);
+  };
+
+  const handleESignChoice = () => {
+    setShowSigningChoiceModal(false);
+    setShowSignatureModal(true);
+  };
+
+  const handleDownloadPdf = () => {
+    if (fileStoreId) {
+      downloadPdf(tenantId, fileStoreId);
+    }
+  };
+
+  const handleUploadSubmit = async (uploadedFileStoreId) => {
+    try {
+      setLoader(true);
+      const payload = {
+        tenantId,
+        documentNumber: documentNumber,
+        mobileNumber: accMobileNum,
+        fileStoreId: uploadedFileStoreId,
+      };
+      const res = await submissionService.updateOpenDigitizedDocument(payload, { tenantId });
+      setShowSigningChoiceModal(false);
+      setShowUploadSignature(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error uploading signed document:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+    }
   };
 
   const handleEsignProceed = async () => {
@@ -341,7 +382,7 @@ const DigitizedDocumentsSignaturePage = () => {
                 <SubmitBar
                   label={
                     <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
-                      <span>{t("PROCEED_TO_E_SIGN")}</span>
+                      <span>{t("PROCEED_TO_SIGN")}</span>
                     </div>
                   }
                   onSubmit={handleSubmit}
@@ -351,6 +392,21 @@ const DigitizedDocumentsSignaturePage = () => {
             </div>
           </ActionBar>
 
+          {showSigningChoiceModal && (
+            <GenericUploadSignatureModal
+              t={t}
+              handleCloseSignatureModal={handleCloseSigningChoiceModal}
+              handleDownload={handleDownloadPdf}
+              handleESign={handleESignChoice}
+              setShowUploadSignature={setShowUploadSignature}
+              showUploadSignature={showUploadSignature}
+              handleSubmit={handleUploadSubmit}
+              setLoader={setUploadLoader}
+              loader={uploadLoader}
+              fileStoreId={fileStoreId}
+              infoText={type === "PLEA" ? "PLEA_SIGN_INFO" : "EXAMINATION_SIGN_INFO"}
+            />
+          )}
           {showSignatureModal && (
             <BailEsignModal
               t={t}
