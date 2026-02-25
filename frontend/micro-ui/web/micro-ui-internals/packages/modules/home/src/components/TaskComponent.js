@@ -666,10 +666,13 @@ const TasksComponent = ({
       const bailBondId = data?.fields?.find((field) => field.key === "additionalDetails.bailBondId")?.value;
       const courtId = data?.fields?.find((field) => field.key === "courtId")?.value;
       let applicationName = "";
+      let applicationCMPNumber = "";
 
-      if (isApplicationCompositeOrder && !applicationType) {
-        applicationName =
-          applicationData?.applicationList?.find((application) => application?.applicationNumber === referenceId)?.applicationType || "";
+      if (isApplicationCompositeOrder) {
+        const application =
+          applicationData?.applicationList?.find((application) => application?.applicationNumber === referenceId) || {};
+          applicationName = application?.applicationType || "";
+          applicationCMPNumber = application?.applicationCMPNumber || "";
       }
 
       const updateReferenceId = referenceId?.split("_").pop();
@@ -762,6 +765,7 @@ const TasksComponent = ({
         referenceId,
         screenType,
         applicationName: applicationName || applicationType,
+        applicationCMPNumber: applicationCMPNumber,
       };
     });
 
