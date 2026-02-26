@@ -13,6 +13,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -148,5 +149,13 @@ public class AdvocateRepository {
                 advocates.forEach(advocate -> advocate.setDocuments(advocateDocumentMap.get(advocate.getId())));
             }
         }
+    }
+
+    public List<String> getDistinctBarRegistrationNumbersForTenant(String tenantId){
+
+        String query = "SELECT DISTINCT barregistrationnumber FROM dristi_advocate " +
+                "WHERE tenantid = ? AND status IN ('INWORKFLOW', 'ACTIVE')";
+
+        return jdbcTemplate.queryForList(query, String.class, tenantId);
     }
 }
