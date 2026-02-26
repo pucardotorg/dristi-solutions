@@ -11,6 +11,10 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const {
+  getNameByUuid,
+  getComplaintAndAccusedList,
+} = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -91,9 +95,7 @@ async function applicationProductionOfDocuments(
     }
 
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
-    let barRegistrationNumber = "";
     let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
@@ -106,7 +108,6 @@ async function applicationProductionOfDocuments(
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
@@ -135,18 +136,6 @@ async function applicationProductionOfDocuments(
         );
       }
       base64Url = imgTag.attr("src");
-    }
-
-    let caseYear;
-    if (typeof courtCase.filingDate === "string") {
-      caseYear = courtCase.filingDate.slice(-4);
-    } else if (courtCase.filingDate instanceof Date) {
-      caseYear = courtCase.filingDate.getFullYear();
-    } else if (typeof courtCase.filingDate === "number") {
-      // Assuming the number is in milliseconds (epoch time)
-      caseYear = new Date(courtCase.filingDate).getFullYear();
-    } else {
-      return renderError(res, "Invalid filingDate format", 500);
     }
 
     const months = [
@@ -189,33 +178,46 @@ async function applicationProductionOfDocuments(
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
-    const prayer = application?.applicationDetails?.prayer || "";
+
+    const onBehalfOfuuid = application?.onBehalfOf?.[0];
+    const onBehalfOfLitigent = courtCase?.litigants?.find(
+      (item) => item.additionalDetails.uuid === onBehalfOfuuid
+    );
+    let partyType = "COURT";
+    if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("complainant")) {
+      partyType = "Complainant";
+    }
+    if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("respondent")) {
+      partyType = "Accused";
+    }
+
+    const { complainantList, accusedList } = getComplaintAndAccusedList(
+      courtCase || {}
+    );
+
     const data = {
       Data: [
         {
           courtComplex: mdmsCourtRoom.name,
           caseType: "Negotiable Instruments Act 138 A",
           caseNumber: caseNumber,
-          caseYear: caseYear,
           caseName: courtCase.caseTitle,
-          judgeName: judgeDetails.name, // FIXME: employee.user.name
-          courtDesignation: judgeDetails.designation, //FIXME: mdmsDesignation.name,
-          addressOfTheCourt: mdmsCourtRoom.state, //FIXME: mdmsCourtRoom.address,
           date: formattedToday,
           partyName: partyName,
-          complainantName: partyName, //FIXME: REMOVE it from both pdf configs and here,
+          partyType: partyType,
           additionalComments,
           reasonForApplication,
-          prayerOptional: "",
-          advocateSignature: "Advocate Signature", //FIXME: It should also come from the application
+          advocateSignature: "Advocate Signature",
           advocateName: advocateName,
           documentList,
-          barRegistrationNumber,
           day: day + ordinalSuffix,
           month: month,
           year: year,
-          prayer,
           qrCodeUrl: base64Url,
+          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
+          applicationTitle: "APPLICATION FOR PRODUCTION OF DOCUMENTS"
         },
       ],
     };
