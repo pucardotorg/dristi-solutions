@@ -75,5 +75,6 @@ module.exports = function (app) {
     "/digitalized-documents",
     "/advocate-office-management",
     "/template-configuration",
+    "/bank-details",
   ].forEach((location) => app.use(location, createProxy));
 };
