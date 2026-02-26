@@ -331,7 +331,6 @@ const ManageOfficeMember = () => {
       if (response) {
         setToast({ label: t("UPDATE_ACCESS_SUCCESS") || "Access updated successfully", type: "success" });
         setShowUpdateAccessModal(false);
-        handleGoBack();
       }
     } catch (error) {
       console.error("Error processing case member:", error);
