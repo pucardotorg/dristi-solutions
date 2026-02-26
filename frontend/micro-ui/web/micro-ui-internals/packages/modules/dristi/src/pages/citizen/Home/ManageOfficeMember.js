@@ -490,6 +490,15 @@ const ManageOfficeMember = () => {
         </button>
       </footer>
 
+      {/* Full-page loader when updating access type directly (not via modal) */}
+      {isUpdatingAccess && !showUpdateAccessModal && (
+        <div className="manage-office-modal-overlay">
+          <div className="manage-office-modal-loader">
+            <Loader />
+          </div>
+        </div>
+      )}
+
       {/* Remove Member Confirmation Modal - same as ManageOffice */}
       {showRemoveMemberModal && (
         <div className="manage-office-modal-overlay" onClick={handleCloseRemoveModal}>
