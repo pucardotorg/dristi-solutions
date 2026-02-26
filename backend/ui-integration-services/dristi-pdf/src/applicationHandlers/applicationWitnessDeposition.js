@@ -10,6 +10,10 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { getStringAddressDetails } = require("../utils/addressUtils");
+const {
+  getNameByUuid,
+  getComplaintAndAccusedList,
+} = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -78,7 +82,6 @@ const applicationWitnessDeposition = async (
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
-    let barRegistrationNumber = "";
     let advocateName = "";
     const advocateIndividualId =
       application?.additionalDetails?.advocateIndividualId;
@@ -91,7 +94,6 @@ const applicationWitnessDeposition = async (
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
@@ -172,6 +174,11 @@ const applicationWitnessDeposition = async (
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+
+    const { complainantList, accusedList } = getComplaintAndAccusedList(
+      courtCase || {}
+    );
+
     const data = {
       Data: [
         {
@@ -188,8 +195,10 @@ const applicationWitnessDeposition = async (
           month: month,
           year: year,
           advocateSignature: "Advocate Signature",
-          barRegistrationNumber,
           qrCodeUrl: base64Url,
+          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
         },
       ],
     };
