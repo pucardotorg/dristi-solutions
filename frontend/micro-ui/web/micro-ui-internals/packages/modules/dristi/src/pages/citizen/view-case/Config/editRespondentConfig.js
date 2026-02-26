@@ -514,7 +514,7 @@ const editRespondentFormconfig = [
       {
         type: "component",
         component: "SelectCustomTextArea",
-        key: "prayer",
+        key: "comments",
         withoutLabel: true,
         isMandatory: false,
         isInfinite: true,
@@ -522,7 +522,7 @@ const editRespondentFormconfig = [
           inputs: [
             {
               name: "text",
-              textAreaSubHeader: "PRAYER",
+              textAreaSubHeader: "COMMENTS",
               type: "TextAreaComponent",
               isOptional: true,
             },
