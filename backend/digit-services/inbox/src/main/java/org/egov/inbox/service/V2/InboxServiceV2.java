@@ -758,21 +758,25 @@ public class InboxServiceV2 {
         return null;
     }
 
+    @Nullable
     private List<Inbox> parseCachedResultToInboxItems(Object cachedResult) {
         List<Inbox> inboxItems = new ArrayList<>();
 
-        if (cachedResult instanceof List) {
+        if (cachedResult instanceof List<?>) {
             List<?> cachedList = (List<?>) cachedResult;
             for (Object cachedInboxItem : cachedList) {
                 if (cachedInboxItem instanceof Map) {
                     Inbox inbox = new Inbox();
                     inbox.setBusinessObject((Map<String, Object>) cachedInboxItem);
                     inboxItems.add(inbox);
+                } else {
+                    return null;
                 }
             }
+            return inboxItems;
         }
 
-        return inboxItems;
+        return null;
     }
 
     private List<Inbox> parseIndexItemsFromSearchResponse(Object result) {

@@ -72,7 +72,11 @@ public class EsUtil {
 
     public void updateOpenHearingInCache(List<OpenHearing> openHearings) {
         try {
-            log.info("Updating redis cache for open hearings:: {}", openHearings);
+            log.info("Updating redis cache for open hearings.");
+            if (openHearings == null || openHearings.isEmpty()) {
+                log.info("No open hearings to update in cache.");
+                return;
+            }
             String courtId = openHearings.get(0).getCourtId() != null ? openHearings.get(0).getCourtId() : config.getCourtId();
             String date = dateUtil.getCurrentDate();
             String key = CACHE_KEY_PREFIX + courtId + ":" + date;

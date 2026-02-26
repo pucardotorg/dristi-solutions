@@ -16,6 +16,9 @@ public class RedisConfig {
     @Value("${spring.redis.host}")
     private String redisHost;
 
+    @Value("${spring.redis.port}")
+    private int redisPort;
+
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
@@ -30,6 +33,7 @@ public class RedisConfig {
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
         redisStandaloneConfiguration.setHostName(redisHost);
+        redisStandaloneConfiguration.setPort(redisPort);
         return new JedisConnectionFactory(redisStandaloneConfiguration);
     }
 }
