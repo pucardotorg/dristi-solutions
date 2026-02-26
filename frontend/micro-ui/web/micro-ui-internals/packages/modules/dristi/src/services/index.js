@@ -659,4 +659,15 @@ export const DRISTIService = {
       data,
       params,
     }),
+  fetchBankDetails: (data, params) =>
+    Request({
+      url: Urls.dristi.bankDetails,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+      method: "POST",
+    }
+  ),
+    
 };
