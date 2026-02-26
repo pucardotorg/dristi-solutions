@@ -95,7 +95,6 @@ public class AdvocateOfficeConsumer {
                 .officeAdvocateId(access.getOfficeAdvocateId())
                 .memberId(access.getMemberId())
                 .tenantId(access.getTenantId())
-                .memberType(MemberType.ADVOCATE)
                 .isActive(true)
                 .build();
 
