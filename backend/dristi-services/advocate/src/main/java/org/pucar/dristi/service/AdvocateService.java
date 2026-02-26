@@ -182,7 +182,7 @@ public class AdvocateService {
             if (APPLICATION_ACTIVE_STATUS.equalsIgnoreCase(advocateRequest.getAdvocate().getStatus())) {
                 //setting true once application approved
                 advocateRequest.getAdvocate().setIsActive(true);
-                validator.validateBarRegistrationNumber(advocateRequest);
+//                validator.validateBarRegistrationNumber(advocateRequest);
             }
 
             producer.push(config.getAdvocateUpdateTopic(), advocateRequest);
