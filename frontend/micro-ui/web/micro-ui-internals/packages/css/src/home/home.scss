@@ -600,7 +600,7 @@
   margin-bottom: 24px;
   gap: 0;
   align-items: flex-start;
-  flex-wrap: nowrap;
+  flex-wrap: wrap; /* allow wrapping on smaller widths */
 }
 
 .manage-office-member-details {
@@ -608,7 +608,8 @@
   flex-direction: row;
   gap: 0;
   align-items: flex-start;
-  flex: 0 0 auto;
+  flex: 1 1 320px;
+  min-width: 260px;
 }
 
 .manage-office-member-detail-item {
@@ -651,9 +652,9 @@
   flex-direction: row;
   align-items: flex-start;
   gap: 0;
-  flex-wrap: nowrap;
-  flex: 1;
-  min-width: 0;
+  flex-wrap: wrap; /* let controls + button wrap */
+  flex: 1 1 320px;
+  min-width: 260px;
   border-left: 1px solid #d6d5d4;
   margin-left: 32px;
   padding-left: 32px;
@@ -708,6 +709,12 @@
   }
 }
 
+.assign-cases-disabled input.custom-checkbox {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .manage-office-member-remove-btn {
   padding: 8px 16px;
   background-color: #bb2c2f;
@@ -717,14 +724,32 @@
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  margin-left: auto;
-  align-self: center;
+  margin-left: auto;      /* push to right within options row */
+  align-self: flex-start;
   height: fit-content;
   white-space: nowrap;
-  border-left: 1px solid #d6d5d4;
-  padding-left: 32px;
-  margin-left: 32px;
+  margin-top: 12px;
   flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .manage-office-member-content-row {
+    flex-direction: column;
+  }
+
+  .manage-office-member-details {
+    flex: 1 1 auto;
+    min-width: 100%;
+  }
+
+  .manage-office-member-options {
+    flex: 1 1 auto;
+    min-width: 100%;
+    border-left: none;
+    margin-left: 0;
+    padding-left: 0;
+    margin-top: 16px;
+  }
 }
 
 .manage-office-member-info-banner {

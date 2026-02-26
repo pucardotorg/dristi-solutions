@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { InboxSearchComposer, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, Loader, Toast, Dropdown } from "@egovernments/digit-ui-react-components";
 import { InfoCircleIcon } from "../../../icons/svgIndex";
 import { assignCasesConfig } from "./assignCasesConfig";
 
@@ -34,11 +34,19 @@ const ManageOfficeMember = () => {
   const [allowCaseCreate, setAllowCaseCreate] = useState(member?.allowCaseCreate !== false ? "Yes" : "No");
   const [addToNewCasesAuto, setAddToNewCasesAuto] = useState(member?.addNewCasesAutomatically !== false ? "Yes" : "No");
   const [selectedCasesCount, setSelectedCasesCount] = useState(0);
+  const [accessType, setAccessType] = useState(member?.accessType || "ALL_CASES");
   const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
   const [isRemovingMember, setIsRemovingMember] = useState(false);
   const [showUpdateAccessModal, setShowUpdateAccessModal] = useState(false);
   const [isUpdatingAccess, setIsUpdatingAccess] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // Auto-close toast after 5 seconds (same pattern as ManageOffice)
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER") || "—";
   const designation = member?.memberType === "ADVOCATE_CLERK" ? (t("CLERK") || "Clerk") : member?.memberType === "ADVOCATE" ? (t("ADVOCATE") || "Advocate") : member?.memberType || "—";
@@ -47,6 +55,19 @@ const ManageOfficeMember = () => {
   const assignCasesConfigWithTenant = useMemo(
     () => assignCasesConfig({ member, advocateInfo: effectiveAdvocateInfo }),
     [member, effectiveAdvocateInfo]
+  );
+
+  const accessTypeOptions = useMemo(
+    () => [
+      { code: "ALL_CASES", name: t("ALL_CASES") || "All Cases" },
+      { code: "SPECIFIC_CASES", name: t("SPECIFIC_CASES") || "Specific Cases" },
+    ],
+    [t]
+  );
+
+  const selectedAccessTypeOption = useMemo(
+    () => accessTypeOptions.find((opt) => opt.code === accessType) || accessTypeOptions[0],
+    [accessTypeOptions, accessType]
   );
 
   const syncSelectedCasesCount = React.useCallback(() => {
@@ -203,6 +224,48 @@ const ManageOfficeMember = () => {
     }
   };
 
+  const callUpdateMemberAccess = async (overrideAccessType) => {
+    if (!member?.memberId || !effectiveAdvocateInfo?.advocateId) {
+      setToast({ label: t("UPDATE_ACCESS_ERROR") || "Failed to update access. Please try again.", type: "error" });
+      return;
+    }
+
+    setIsUpdatingAccess(true);
+    try {
+      const allowCaseCreateFlag = allowCaseCreate === "Yes";
+      const addNewCasesAutomaticallyFlag = addToNewCasesAuto === "Yes";
+      const finalAccessType = overrideAccessType || accessType || member?.accessType || "ALL_CASES";
+
+      const body = {
+        updateMemberAccess: {
+          tenantId,
+          officeAdvocateId: effectiveAdvocateInfo?.advocateId,
+          memberId: member?.memberId,
+          addNewCasesAutomatically: addNewCasesAutomaticallyFlag,
+          accessType: finalAccessType,
+          allowCaseCreate: allowCaseCreateFlag,
+        },
+        pagination: {
+          limit: 10,
+          offSet: 0,
+        },
+      };
+
+      const response = await window?.Digit?.DRISTIService?.customApiService("/advocate-office-management/v1/_updateMemberAccess", body, {
+        tenantId,
+      });
+
+      if (response) {
+        setToast({ label: t("UPDATE_ACCESS_SUCCESS") || "Access updated successfully", type: "success" });
+      }
+    } catch (error) {
+      console.error("Error updating member access:", error);
+      setToast({ label: t("UPDATE_ACCESS_ERROR") || "Failed to update access. Please try again.", type: "error" });
+    } finally {
+      setIsUpdatingAccess(false);
+    }
+  };
+
   const handleUpdateAccessClick = () => {
     setShowUpdateAccessModal(true);
   };
@@ -284,6 +347,12 @@ const ManageOfficeMember = () => {
     // const response = await window?.Digit?.DRISTIService?.customApiService("/advocate-office-management/v1/_updateMemberAccess", { updateMemberAccess: { ... }, pagination }, { tenantId });
   };
 
+  const handleAccessTypeChange = async (option) => {
+    const newType = option?.code || "ALL_CASES";
+    setAccessType(newType);
+    await callUpdateMemberAccess(newType);
+  };
+
   return (
     <div className="manage-office-member-page">
       <div className="manage-office-member-scrollable">
@@ -302,6 +371,17 @@ const ManageOfficeMember = () => {
           <div className="manage-office-member-detail-item">
             <span className="manage-office-member-detail-label">{t("MOBILE_NUMBER") || "Mobile number"}</span>
             <span className="manage-office-member-detail-value">{mobileNumber}</span>
+          </div>
+          <div className="manage-office-member-detail-item">
+            <span className="manage-office-member-detail-label">{t("ACCESS_TYPE") || "Access Type"}</span>
+            <Dropdown
+              t={t}
+              option={accessTypeOptions}
+              selected={selectedAccessTypeOption}
+              optionKey={"name"}
+              select={handleAccessTypeChange}
+              style={{ minWidth: "220px" }}
+            />
           </div>
         </div>
 
@@ -348,7 +428,7 @@ const ManageOfficeMember = () => {
 
         <div className="assign-cases-section">
           <h2 className="assign-cases-section-title">{t(assignCasesConfigWithTenant?.label) || "Assign Cases"}</h2>
-          <div className="inbox-search-wrapper manage-office-member-inbox">
+          <div className={`inbox-search-wrapper manage-office-member-inbox${accessType === "ALL_CASES" ? " assign-cases-disabled" : ""}`}>
             <InboxSearchComposer
               customStyle={sectionsParentStyle}
               configs={assignCasesConfigWithTenant}
