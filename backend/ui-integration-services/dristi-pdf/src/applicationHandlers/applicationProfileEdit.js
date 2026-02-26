@@ -9,6 +9,10 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const {
+  getNameByUuid,
+  getComplaintAndAccusedList,
+} = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -126,7 +130,6 @@ async function applicationProfileEdit(
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
-    let barRegistrationNumber = "";
     let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
@@ -139,7 +142,6 @@ async function applicationProfileEdit(
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
@@ -261,6 +263,10 @@ async function applicationProfileEdit(
         ? oldData?.data?.respondentTypeOfEntity?.name
         : oldData?.data?.complainantTypeOfEntity?.name;
 
+    const { complainantList, accusedList } = getComplaintAndAccusedList(
+      courtCase || {}
+    );
+
     const data = {
       Data: [
         {
@@ -282,7 +288,6 @@ async function applicationProfileEdit(
           month: month,
           year: year,
           qrCodeUrl: base64Url,
-          barRegistrationNumber,
           currentName: partyName,
           currentDetailsLitigantType: currentDetailsLitigantType || "",
           currentAge:
@@ -309,6 +314,10 @@ async function applicationProfileEdit(
           newPermanentAddress: showAddress(newData?.addressDetails) || [],
           newResedentialAddress:
             showAddress(newData?.currentAddressDetails) || [],
+          applicationTitle: "APPLICATION FOR EDITING LITIGANT DETAILS",
+          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
         },
       ],
     };
