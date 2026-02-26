@@ -11,6 +11,10 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const {
+  getNameByUuid,
+  getComplaintAndAccusedList,
+} = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -95,16 +99,12 @@ const applicationBailBond = async (
     }
 
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-    const caseConfigDetails = config.constants.caseDetails;
-    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
     let applicationTitle = "APPLICATION FOR BAIL";
-    let subjectText = "Application for Bail";
     if (application?.applicationType === "SURETY") {
       applicationTitle = "APPLICATION FOR BAIL - In Person Surety";
-      subjectText = "Application for Bail - In Person Surety";
     }
-    let barRegistrationNumber = "";
+
     let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
@@ -117,12 +117,9 @@ const applicationBailBond = async (
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
-
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
 
     const applicationDocuments =
       application?.applicationDetails?.applicationDocuments || [];
@@ -150,12 +147,11 @@ const applicationBailBond = async (
         : [{ documentType: "" }];
 
     const additionalComments = htmlToFormattedText(
-      application?.applicationDetails?.additionalInformation || ""
+      application?.applicationDetails?.additionalComments || ""
     );
     const reasonForApplication = htmlToFormattedText(
       application?.applicationDetails?.reasonForApplicationOfBail || ""
     );
-    const prayer = htmlToFormattedText(application?.applicationDetails?.prayer);
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
@@ -215,10 +211,25 @@ const applicationBailBond = async (
     const year = currentDate.getFullYear();
 
     const ordinalSuffix = getOrdinalSuffix(day);
-    const statuteAndAct = caseConfigDetails.statuteAndAct;
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const { complainantList, accusedList } = getComplaintAndAccusedList(
+      courtCase || {}
+    );
+
+    const onBehalfOfuuid = application?.onBehalfOf?.[0];
+    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const onBehalfOfLitigent = courtCase?.litigants?.find(
+      (item) => item.additionalDetails.uuid === onBehalfOfuuid
+    );
+    let partyType = "COURT";
+    if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("complainant")) {
+      partyType = "Complainant";
+    }
+    if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("respondent")) {
+      partyType = "Accused";
+    }
     const data = {
       Data: [
         {
@@ -227,16 +238,10 @@ const applicationBailBond = async (
           caseNumber: caseNumber,
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
-          judgeName: judgeDetails.name, // FIXME: employee.user.name
-          courtDesignation: judgeDetails.designation, //FIXME: mdmsDesignation.name,
-          addressOfTheCourt: mdmsCourtRoom.state, //FIXME: mdmsCourtRoom.address,
           date: formattedToday,
           partyName: partyName,
+          partyType: partyType,
           applicationTitle,
-          subjectText,
-          statuteAndAct,
-          offenceAgainstAccused: caseConfigDetails.offence,
-          prayer: prayer,
           reasonForApplication,
           documentList,
           additionalComments,
@@ -244,9 +249,11 @@ const applicationBailBond = async (
           month: month,
           year: year,
           advocateSignature: "Advocate Signature",
-          advocateName,
-          barRegistrationNumber,
           qrCodeUrl: base64Url,
+          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
+          advocateName: advocateName,
         },
       ],
     };
