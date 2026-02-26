@@ -526,14 +526,19 @@ public class BailService {
         RequestInfo requestInfo = bailSearchRequest.getRequestInfo();
         User userInfo = requestInfo.getUserInfo();
         String type = userInfo.getType();
+        String userUuid = userInfo.getUuid();
 
         switch (type.toLowerCase()) {
             case "employee", "system" -> {
             }
             case "citizen" -> {
-                bailSearchRequest.getCriteria().setUserUuid(userInfo.getUuid());
+                bailSearchRequest.getCriteria().setUserUuid(userUuid);
             }
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
+        }
+
+        if(bailSearchRequest.getCriteria().getAsUser() == null){
+            bailSearchRequest.getCriteria().setAsUser(userUuid);
         }
     }
 

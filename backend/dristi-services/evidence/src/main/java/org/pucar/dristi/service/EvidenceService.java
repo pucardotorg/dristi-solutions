@@ -481,14 +481,19 @@ public class EvidenceService {
         if(requestInfo != null && requestInfo.getUserInfo() != null) {
             User userInfo = requestInfo.getUserInfo();
             String userType = userInfo.getType();
+            String userUuid = userInfo.getUuid();
             switch (userType.toUpperCase()) {
                 case CITIZEN_UPPER -> {
                     searchCriteria.setIsCitizen(true);
-                    searchCriteria.setUserUuid(userInfo.getUuid());
+                    searchCriteria.setUserUuid(userUuid);
+                    if(searchCriteria.getAsUser() == null){
+                        searchCriteria.setAsUser(userUuid);
+                    }
                 }
                 case EMPLOYEE_UPPER -> {
                     searchCriteria.setIsCourtEmployee(true);
-                    searchCriteria.setUserUuid(userInfo.getUuid());
+                    searchCriteria.setUserUuid(userUuid);
+                    searchCriteria.setAsUser(userUuid);
                     if(canCourtEmployeeSign(searchCriteria, requestInfo)) {
                         searchCriteria.setCourtEmployeeCanSign(true);
                     }

@@ -119,7 +119,7 @@ public class EvidenceQueryBuilder {
             queryBuilder.append(" )) ");
         }
 
-        else if(!searchCriteria.getOwner().toString().equals(asUser)) {
+        else if(searchCriteria.getOwner() != null && !searchCriteria.getOwner().toString().equals(asUser)) {
             queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
         }
 
@@ -138,7 +138,7 @@ public class EvidenceQueryBuilder {
                 queryBuilder.append(" )) ");
             }
 
-            else if(!searchCriteria.getOwner().toString().equals(asUser)) {
+            else if(searchCriteria.getOwner() != null && !searchCriteria.getOwner().toString().equals(asUser)) {
                 queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
             }
         }
