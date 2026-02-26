@@ -154,19 +154,22 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
                         }}
                       /> */}
                       {!config?.isScrutiny && (
-                        <Button
-                          className={"secondary-button-selector"}
-                          variation={"secondary"}
-                          label={t("VERIFY_ID_PROOF")}
-                          labelClassName={"secondary-label-selector"}
-                          onButtonClick={() => {
-                            setState((prev) => ({
-                              ...prev,
-                              showModal: true,
-                              verificationType: "uploadIdProof",
-                            }));
-                          }}
-                        />
+                        <div>
+                          <Button
+                            className={"secondary-button-selector"}
+                            variation={"secondary"}
+                            label={t("VERIFY_ID_PROOF")}
+                            labelClassName={"secondary-label-selector"}
+                            onButtonClick={() => {
+                              setState((prev) => ({
+                                ...prev,
+                                showModal: true,
+                                verificationType: "uploadIdProof",
+                              }));
+                            }}
+                          />
+                          <div className="upload-note">{t("UPLOAD_NOTE")}</div>
+                        </div>
                       )}
                     </div>
                     {errors?.[config.key] && <span className="alert-error">{t(errors?.[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</span>}
