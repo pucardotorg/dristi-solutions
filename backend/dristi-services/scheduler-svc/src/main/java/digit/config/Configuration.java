@@ -315,4 +315,7 @@ public class Configuration {
 
     @Value("${enable.dashboard.metrics.update}")
     private boolean enableDashboardMetricsUpdate;
+
+    @Value("${spring.redis.timeout}")
+    private Long redisTimeout;
 }
