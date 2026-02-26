@@ -267,12 +267,14 @@ export const runGenericTextSanitizer = ({ formData, setValue }) => {
 
 export const checkIfscValidation = ({ formData, setValue, selected }) => {
   if (selected === "chequeDetails") {
-    const formDataCopy = structuredClone(formData);
-    for (const key in formDataCopy) {
+    const chequeData = structuredClone(formData?.chequeDetails || {});
+
+    for (const key in chequeData) {
       switch (key) {
-        case "ifsc":
-          if (Object.hasOwnProperty.call(formDataCopy, key)) {
-            const oldValue = formDataCopy[key];
+        case "payeeIfsc":
+        case "payerIfsc":
+          if (Object.hasOwnProperty.call(chequeData, key)) {
+            const oldValue = chequeData[key];
             let value = oldValue;
 
             if (typeof value === "string") {
@@ -297,7 +299,7 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
                 const element = document.querySelector(`[name="${key}"]`);
                 const start = element?.selectionStart;
                 const end = element?.selectionEnd;
-                setValue(key, updatedValue);
+                setValue(`chequeDetails.${key}`, updatedValue);
                 setTimeout(() => {
                   element?.setSelectionRange(start, end);
                 }, 0);
@@ -305,6 +307,15 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
             }
           }
           break;
+        default:
+          break;
+      }
+    }
+
+    const formDataCopy = structuredClone(formData);
+
+    for (const key in formDataCopy) {
+      switch (key) {
         case "chequeAmount":
           if (Object.hasOwnProperty.call(formDataCopy, key)) {
             const oldValue = formDataCopy[key];
@@ -367,17 +378,11 @@ export const fetchBankDetails = async (ifsc) => {
 export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValue, getValues, setError, clearErrors, cache }) => {
   if (!cache?.current) {
     console.error("Cache not initialized properly");
-    return;
+    return false;
   }
-  if (!ifsc) {
-    setError(bankField, { msg: "CORE_REQUIRED_FIELD_ERROR" });
-    return;
+  if (!ifsc || ifsc.length !== 11) {
+    return false;
   }
-  if (ifsc.length !== 11) {
-    setError(bankField, { msg: "CS_INVALID_IFSC" });
-    return;
-  }
-  clearErrors(bankField);
 
   let bankDetails = cache.current[ifsc];
 
@@ -387,8 +392,8 @@ export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValu
 
     if (!bankDetails) {
       cache.current[ifsc] = "FAILED";
-      setError(bankField, { msg: "CS_INVALID_IFSC" });
-      return;
+      // setError(configKey, { msg: "CS_INVALID_IFSC" });
+      return false;
     }
 
     cache.current[ifsc] = bankDetails;
@@ -404,6 +409,8 @@ export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValu
   if (currentBranch !== bankDetails.branch) {
     setValue(branchField, bankDetails.branch || "");
   }
+
+  return true;
 };
 
 export const checkNameValidation = ({ formData, setValue, selected, reset, index, formdata, clearErrors, formState }) => {
