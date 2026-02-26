@@ -2,6 +2,7 @@ package digit.util;
 
 import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
+import digit.service.CacheService;
 import digit.web.models.OpenHearing;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +25,15 @@ public class EsUtil {
 
     private final RestTemplate restTemplate;
     private final Configuration config;
+    private final CacheService cacheService;
+    private final DateUtil dateUtil;
 
     @Autowired
-    public EsUtil(RestTemplate restTemplate, Configuration config) {
+    public EsUtil(RestTemplate restTemplate, Configuration config, CacheService cacheService, DateUtil dateUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
+        this.cacheService = cacheService;
+        this.dateUtil = dateUtil;
     }
 
 
@@ -63,6 +68,19 @@ public class EsUtil {
         }
 
 
+    }
+
+    public void updateOpenHearingInCache(List<OpenHearing> openHearings) {
+        try {
+            log.info("Updating redis cache for open hearings:: {}", openHearings);
+            String courtId = openHearings.get(0).getCourtId() != null ? openHearings.get(0).getCourtId() : config.getCourtId();
+            String date = dateUtil.getCurrentDate();
+            String key = CACHE_KEY_PREFIX + courtId + ":" + date;
+            cacheService.updateCache(key, openHearings);
+            log.info("Updated redis cache for open hearings:: {}", key);
+        } catch (Exception e) {
+            log.error("Error while updating redis cache for open hearings:: {}", e.getMessage());
+        }
     }
 
 

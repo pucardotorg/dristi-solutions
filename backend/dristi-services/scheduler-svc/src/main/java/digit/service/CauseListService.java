@@ -198,7 +198,7 @@ public class CauseListService {
 
             log.info("Update open hearing index with serialNumber");
             esUtil.updateOpenHearingSerialNumber(openHearings);
-
+            esUtil.updateOpenHearingInCache(openHearings);
             log.info("operation = generateCauseListForJudge, result = SUCCESS, judgeId = {}", courtId);
         } catch (Exception e) {
             log.error("operation = generateCauseListForJudge, result = FAILURE, judgeId = {}, error = {}", courtId, e.getMessage(), e);
