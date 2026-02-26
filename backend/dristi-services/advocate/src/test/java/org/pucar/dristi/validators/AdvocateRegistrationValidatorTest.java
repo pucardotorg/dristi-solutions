@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.AdvocateRepository;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.web.models.Advocate;
@@ -18,6 +20,7 @@ import org.pucar.dristi.web.models.AdvocateSearchCriteria;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -25,6 +28,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
  class AdvocateRegistrationValidatorTest {
 
+    @Spy
     @InjectMocks
     private AdvocateRegistrationValidator validator;
 
@@ -33,6 +37,12 @@ import static org.mockito.Mockito.*;
 
     @Mock
     private AdvocateRepository repository;
+
+    @Mock
+    private Configuration configuration;
+
+    @Mock
+    private Pattern pattern;
 
     private AdvocateRequest advocateRequest;
     private RequestInfo requestInfo;
@@ -50,11 +60,27 @@ import static org.mockito.Mockito.*;
         Advocate advocate = new Advocate();
         advocate.setIndividualId("validIndividualId");
         advocate.setTenantId("validTenantId");
+        advocate.setBarRegistrationNumber("K/123456/2024");
         advocateRequest.setAdvocate(advocate);
 
         when(individualService.searchIndividual(requestInfo, "validIndividualId", new HashMap<>())).thenReturn(true);
+        doNothing().when(validator).validateBarRegistrationNumberFormat(anyString());
 
         assertDoesNotThrow(() -> validator.validateAdvocateRegistration(advocateRequest));
+    }
+
+    @Test
+    void shouldNotThrowException_whenBarRegistrationNumberIsValid() {
+        // Given
+        String regex = "^[A-Z]{2}\\d{4}$";  // Example: AB1234
+        String validNumber = "AB1234";
+
+        when(configuration.getBarRegistrationNumberFormat()).thenReturn(regex);
+
+        // Then
+        assertDoesNotThrow(() ->
+                validator.validateBarRegistrationNumberFormat(validNumber)
+        );
     }
 
     @Test

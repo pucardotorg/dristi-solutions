@@ -70,7 +70,7 @@ public class AdvocateRegistrationValidator {
         validateBarRegistrationNumberUniqueness(advocate.getTenantId(), components, barRegistrationNumber);
     }
 
-    private void validateBarRegistrationNumberFormat(String barRegistrationNumber) {
+    public void validateBarRegistrationNumberFormat(String barRegistrationNumber) {
 
         if(!Pattern.matches(configuration.getBarRegistrationNumberFormat(), barRegistrationNumber))
             throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE,
