@@ -16,8 +16,7 @@ public class AdvocateOfficeCaseMemberQueryBuilder {
             "SELECT DISTINCT r.case_id, c.filingnumber, c.cmpnumber, " +
                     "c.courtcasenumber, c.casetitle, " +
                     "COALESCE(m.is_active, false) as is_active, " +
-                    "COALESCE(m.created_by, r.createdby) as created_by, " +
-                    "CASE WHEN m.is_active = true THEN 'ASSIGNED' ELSE 'UNASSIGNED' END as status " +
+                    "COALESCE(m.created_by, r.createdby) as created_by " +
                     "FROM dristi_case_representatives r " +
                     "INNER JOIN dristi_cases c ON r.case_id = c.id " +
                     "LEFT JOIN dristi_advocate_office_case_member m " +

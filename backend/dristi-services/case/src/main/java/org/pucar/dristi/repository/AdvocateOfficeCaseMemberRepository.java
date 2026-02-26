@@ -1,6 +1,7 @@
 package org.pucar.dristi.repository;
 
 import lombok.extern.slf4j.Slf4j;
+import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.repository.querybuilder.AdvocateOfficeCaseMemberQueryBuilder;
 import org.pucar.dristi.repository.rowmapper.CaseMemberInfoRowMapper;
 import org.pucar.dristi.web.models.AdvocateCaseInfo;
@@ -115,7 +116,7 @@ public class AdvocateOfficeCaseMemberRepository {
         } catch (Exception e) {
             log.error("Error getting total count for officeAdvocateUserUuid: {} and memberUserUuid: {}",
                     criteria.getOfficeAdvocateUserUuid(), criteria.getMemberUserUuid(), e);
-            return 0;
+            throw new CustomException("SEARCJ_CASE_MEMBER_COUNT_ERR", "Error getting total count for case members");
         }
     }
 
