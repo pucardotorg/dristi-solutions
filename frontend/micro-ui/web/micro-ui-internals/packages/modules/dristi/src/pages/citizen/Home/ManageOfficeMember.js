@@ -21,15 +21,20 @@ const ManageOfficeMember = () => {
   const advocateInfo = location?.state?.advocateInfo || {};
   const tenantId = window?.Digit?.ULBService?.getCurrentTenantId();
 
-  // Fallback advocateInfo when navigated directly (e.g. refresh)
+  // Fallback advocateInfo when navigated directly or when advocateInfo.advocateId is missing (e.g. rare race from ManageOffice)
   const effectiveAdvocateInfo = useMemo(() => {
-    if (advocateInfo?.officeAdvocateUserUuid && advocateInfo?.advocateId) return advocateInfo;
     const userInfo = window?.Digit?.UserService?.getUser()?.info;
+    const officeAdvocateUserUuid = advocateInfo?.officeAdvocateUserUuid || userInfo?.uuid;
+    const advocateId =
+      advocateInfo?.advocateId != null ? advocateInfo.advocateId : member?.officeAdvocateId != null ? member.officeAdvocateId : member?.advocateId;
+    if (officeAdvocateUserUuid && advocateId) {
+      return { officeAdvocateUserUuid, advocateId };
+    }
     return {
-      officeAdvocateUserUuid: userInfo?.uuid || advocateInfo?.officeAdvocateUserUuid,
-      advocateId: advocateInfo?.advocateId,
+      officeAdvocateUserUuid,
+      advocateId: advocateId || advocateInfo?.advocateId,
     };
-  }, [advocateInfo]);
+  }, [advocateInfo, member?.officeAdvocateId, member?.advocateId]);
 
   const [allowCaseCreate, setAllowCaseCreate] = useState(member?.allowCaseCreate !== false ? "Yes" : "No");
   const [addToNewCasesAuto, setAddToNewCasesAuto] = useState(member?.addNewCasesAutomatically !== false ? "Yes" : "No");
@@ -49,13 +54,20 @@ const ManageOfficeMember = () => {
   }, [toast]);
 
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER") || "—";
-  const designation = member?.memberType === "ADVOCATE_CLERK" ? (t("CLERK") || "Clerk") : member?.memberType === "ADVOCATE" ? (t("ADVOCATE") || "Advocate") : member?.memberType || "—";
-  const mobileNumber = member?.memberMobileNumber ? `+91 ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(0, 5)} ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(5)}` : "—";
+  const designation =
+    member?.memberType === "ADVOCATE_CLERK"
+      ? t("CLERK") || "Clerk"
+      : member?.memberType === "ADVOCATE"
+      ? t("ADVOCATE") || "Advocate"
+      : member?.memberType || "—";
+  const mobileNumber = member?.memberMobileNumber
+    ? `+91 ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(0, 5)} ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(5)}`
+    : "—";
 
-  const assignCasesConfigWithTenant = useMemo(
-    () => assignCasesConfig({ member, advocateInfo: effectiveAdvocateInfo }),
-    [member, effectiveAdvocateInfo]
-  );
+  const assignCasesConfigWithTenant = useMemo(() => assignCasesConfig({ member, advocateInfo: effectiveAdvocateInfo }), [
+    member,
+    effectiveAdvocateInfo,
+  ]);
 
   const accessTypeOptions = useMemo(
     () => [
@@ -65,10 +77,10 @@ const ManageOfficeMember = () => {
     [t]
   );
 
-  const selectedAccessTypeOption = useMemo(
-    () => accessTypeOptions.find((opt) => opt.code === accessType) || accessTypeOptions[0],
-    [accessTypeOptions, accessType]
-  );
+  const selectedAccessTypeOption = useMemo(() => accessTypeOptions.find((opt) => opt.code === accessType) || accessTypeOptions[0], [
+    accessTypeOptions,
+    accessType,
+  ]);
 
   const syncSelectedCasesCount = React.useCallback(() => {
     const container = document.querySelector(".manage-office-member-inbox");
@@ -137,7 +149,7 @@ const ManageOfficeMember = () => {
     };
 
     const injectHeaderCheckbox = () => {
-      const tableHeaders = container?.querySelectorAll("th, [role=\"columnheader\"]") || [];
+      const tableHeaders = container?.querySelectorAll('th, [role="columnheader"]') || [];
       let selectHeader = null;
       for (let i = 0; i < tableHeaders.length; i++) {
         const header = tableHeaders[i];
@@ -379,81 +391,74 @@ const ManageOfficeMember = () => {
         <h1 className="manage-office-member-title">{t("MANAGE_OFFICE_MEMBER") || "Manage Office Member"}</h1>
 
         <div className="manage-office-member-content-row">
-        <div className="manage-office-member-details">
-          <div className="manage-office-member-detail-item">
-            <span className="manage-office-member-detail-label">{t("CS_NAME") || "Name"}</span>
-            <span className="manage-office-member-detail-value">{memberName}</span>
+          <div className="manage-office-member-details">
+            <div className="manage-office-member-detail-item">
+              <span className="manage-office-member-detail-label">{t("CS_NAME") || "Name"}</span>
+              <span className="manage-office-member-detail-value">{memberName}</span>
+            </div>
+            <div className="manage-office-member-detail-item">
+              <span className="manage-office-member-detail-label">{t("DESIGNATION") || "Designation"}</span>
+              <span className="manage-office-member-detail-value">{designation}</span>
+            </div>
+            <div className="manage-office-member-detail-item">
+              <span className="manage-office-member-detail-label">{t("MOBILE_NUMBER") || "Mobile number"}</span>
+              <span className="manage-office-member-detail-value">{mobileNumber}</span>
+            </div>
+            <div className="manage-office-member-detail-item">
+              <span className="manage-office-member-detail-label">{t("ACCESS_TYPE") || "Access Type"}</span>
+              <Dropdown
+                t={t}
+                option={accessTypeOptions}
+                selected={selectedAccessTypeOption}
+                optionKey={"name"}
+                select={handleAccessTypeChange}
+                style={{ minWidth: "220px" }}
+              />
+            </div>
           </div>
-          <div className="manage-office-member-detail-item">
-            <span className="manage-office-member-detail-label">{t("DESIGNATION") || "Designation"}</span>
-            <span className="manage-office-member-detail-value">{designation}</span>
-          </div>
-          <div className="manage-office-member-detail-item">
-            <span className="manage-office-member-detail-label">{t("MOBILE_NUMBER") || "Mobile number"}</span>
-            <span className="manage-office-member-detail-value">{mobileNumber}</span>
-          </div>
-          <div className="manage-office-member-detail-item">
-            <span className="manage-office-member-detail-label">{t("ACCESS_TYPE") || "Access Type"}</span>
-            <Dropdown
-              t={t}
-              option={accessTypeOptions}
-              selected={selectedAccessTypeOption}
-              optionKey={"name"}
-              select={handleAccessTypeChange}
-              style={{ minWidth: "220px" }}
-            />
+
+          <div className="manage-office-member-options">
+            <div className="manage-office-member-option">
+              <label className="manage-office-member-option-label">{t("ALLOW_MEMBER_TO_FILE_NEW_CASES") || "Allow member to file new cases?"}</label>
+              <select value={allowCaseCreate} onChange={(e) => setAllowCaseCreate(e.target.value)} className="manage-office-member-select" disabled>
+                <option value="Yes">{t("YES") || "Yes"}</option>
+                <option value="No">{t("NO") || "No"}</option>
+              </select>
+            </div>
+            <div className="manage-office-member-option">
+              <label className="manage-office-member-option-label">
+                {t("ADD_MEMBER_TO_NEW_CASES_AUTO") || "Add member to new cases automatically?"}
+              </label>
+              <select
+                value={addToNewCasesAuto}
+                onChange={(e) => setAddToNewCasesAuto(e.target.value)}
+                className="manage-office-member-select"
+                disabled
+              >
+                <option value="Yes">{t("YES") || "Yes"}</option>
+                <option value="No">{t("NO") || "No"}</option>
+              </select>
+            </div>
+            <button type="button" onClick={handleRemoveMemberClick} className="manage-office-member-remove-btn">
+              {t("REMOVE_MEMBER") || "Remove Member"}
+            </button>
           </div>
         </div>
 
-        <div className="manage-office-member-options">
-          <div className="manage-office-member-option">
-            <label className="manage-office-member-option-label">{t("ALLOW_MEMBER_TO_FILE_NEW_CASES") || "Allow member to file new cases?"}</label>
-            <select
-              value={allowCaseCreate}
-              onChange={(e) => setAllowCaseCreate(e.target.value)}
-              className="manage-office-member-select"
-              disabled
-            >
-              <option value="Yes">{t("YES") || "Yes"}</option>
-              <option value="No">{t("NO") || "No"}</option>
-            </select>
-          </div>
-          <div className="manage-office-member-option">
-            <label className="manage-office-member-option-label">{t("ADD_MEMBER_TO_NEW_CASES_AUTO") || "Add member to new cases automatically?"}</label>
-            <select
-              value={addToNewCasesAuto}
-              onChange={(e) => setAddToNewCasesAuto(e.target.value)}
-              className="manage-office-member-select"
-              disabled
-            >
-              <option value="Yes">{t("YES") || "Yes"}</option>
-              <option value="No">{t("NO") || "No"}</option>
-            </select>
-          </div>
-          <button type="button" onClick={handleRemoveMemberClick} className="manage-office-member-remove-btn">
-            {t("REMOVE_MEMBER") || "Remove Member"}
-          </button>
+        <div className="manage-office-member-info-banner">
+          <span className="manage-office-member-info-icon" aria-hidden>
+            <InfoCircleIcon />
+          </span>
+          <span>
+            {t("MANAGE_OFFICE_MEMBER_ACCESS_INFO") ||
+              "The member will have complete access to all documents and details in the cases assigned to them. Please keep in mind the privacy and security of case data before sharing access."}
+          </span>
         </div>
-      </div>
-
-      <div className="manage-office-member-info-banner">
-        <span className="manage-office-member-info-icon" aria-hidden>
-          <InfoCircleIcon />
-        </span>
-        <span>
-          {t("MANAGE_OFFICE_MEMBER_ACCESS_INFO") ||
-            "The member will have complete access to all documents and details in the cases assigned to them. Please keep in mind the privacy and security of case data before sharing access."}
-        </span>
-      </div>
 
         <div className="assign-cases-section">
           <h2 className="assign-cases-section-title">{t(assignCasesConfigWithTenant?.label) || "Assign Cases"}</h2>
           <div className={`inbox-search-wrapper manage-office-member-inbox${accessType === "ALL_CASES" ? " assign-cases-disabled" : ""}`}>
-            <InboxSearchComposer
-              customStyle={sectionsParentStyle}
-              configs={assignCasesConfigWithTenant}
-              showTab={false}
-            />
+            <InboxSearchComposer customStyle={sectionsParentStyle} configs={assignCasesConfigWithTenant} showTab={false} />
           </div>
         </div>
       </div>
@@ -572,8 +577,7 @@ const ManageOfficeMember = () => {
             ) : (
               <React.Fragment>
                 <p className="manage-office-remove-text">
-                  {t("UPDATE_ACCESS_CONFIRM_MESSAGE") ||
-                    "The Advocate clerk’s access to cases will be modified as per changes."}
+                  {t("UPDATE_ACCESS_CONFIRM_MESSAGE") || "The Advocate clerk’s access to cases will be modified as per changes."}
                 </p>
 
                 <div className="manage-office-modal__footer">

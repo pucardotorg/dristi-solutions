@@ -451,7 +451,11 @@ const ManageOffice = () => {
                             member,
                             advocateInfo: {
                               officeAdvocateUserUuid: officeAdvocateUserUuid,
-                              advocateId: advocateSearchResult?.[0]?.responseList?.[0]?.id || advocateSearchResult?.[0]?.id,
+                              advocateId:
+                                advocateSearchResult?.[0]?.responseList?.[0]?.id ||
+                                advocateSearchResult?.[0]?.id ||
+                                member?.officeAdvocateId ||
+                                member?.advocateId,
                             },
                           })
                       : undefined
@@ -480,7 +484,11 @@ const ManageOffice = () => {
                           member,
                           advocateInfo: {
                             officeAdvocateUserUuid: officeAdvocateUserUuid,
-                            advocateId: advocateSearchResult?.[0]?.responseList?.[0]?.id || advocateSearchResult?.[0]?.id,
+                            advocateId:
+                              advocateSearchResult?.[0]?.responseList?.[0]?.id ||
+                              advocateSearchResult?.[0]?.id ||
+                              member?.officeAdvocateId ||
+                              member?.advocateId,
                           },
                         })
                       }
