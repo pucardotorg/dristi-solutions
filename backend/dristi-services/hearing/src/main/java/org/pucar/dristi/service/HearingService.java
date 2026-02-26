@@ -261,12 +261,18 @@ public class HearingService {
                 }
             }
 
+            boolean updated = false;
             for(OpenHearing openHearing1 : openHearingList) {
                 if(openHearing1.getHearingNumber().equalsIgnoreCase(openHearing.getHearingNumber())) {
                     openHearing1.setStatus(openHearing.getStatus());
                     openHearing1.setStatusOrder(openHearing.getStatusOrder());
                     openHearing1.setHearingType(openHearing.getHearingType());
+                    updated = true;
+                    break;
                 }
+            }
+            if(!updated) {
+                openHearingList.add(openHearing);
             }
             cacheService.updateCache(key, openHearingList);
         }

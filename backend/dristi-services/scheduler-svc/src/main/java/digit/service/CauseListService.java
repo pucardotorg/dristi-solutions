@@ -198,7 +198,11 @@ public class CauseListService {
 
             log.info("Update open hearing index with serialNumber");
             esUtil.updateOpenHearingSerialNumber(openHearings);
-            esUtil.updateOpenHearingInCache(openHearings);
+            try {
+                esUtil.updateOpenHearingInCache(openHearings);
+            } catch (Exception e) {
+                log.error("Failed to update open hearing in cache for date: {}, error: {}", causeListDate.toString(), e.getMessage(), e);
+            }
             log.info("operation = generateCauseListForJudge, result = SUCCESS, judgeId = {}", courtId);
         } catch (Exception e) {
             log.error("operation = generateCauseListForJudge, result = FAILURE, judgeId = {}, error = {}", courtId, e.getMessage(), e);

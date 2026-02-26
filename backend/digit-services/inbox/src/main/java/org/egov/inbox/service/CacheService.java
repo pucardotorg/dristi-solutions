@@ -20,14 +20,27 @@ public class CacheService {
     }
 
     public void updateCache(String key, Object value) {
-        redisTemplate.opsForValue().set(key, value, inboxConfiguration.getRedisTimeout(), TimeUnit.MINUTES);
+        try {
+            redisTemplate.opsForValue().set(key, value, inboxConfiguration.getRedisTimeout(), TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.error("Error while updating cache for key: {} ", key, e);
+        }
     }
 
     public Object getCache(String key) {
-        return redisTemplate.opsForValue().get(key);
+        try {
+            return redisTemplate.opsForValue().get(key);
+        } catch (Exception e) {
+            log.error("Error while getting cache for key: {} ", key, e);
+            return null;
+        }
     }
 
     public void deleteCache(String key) {
-        redisTemplate.delete(key);
+        try {
+            redisTemplate.delete(key);
+        } catch (Exception e) {
+            log.error("Error while deleting cache for key: {} ", key, e);
+        }
     }
 }
