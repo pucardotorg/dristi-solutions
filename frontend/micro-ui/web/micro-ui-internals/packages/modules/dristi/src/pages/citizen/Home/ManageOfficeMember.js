@@ -72,8 +72,29 @@ const ManageOfficeMember = () => {
 
   const syncSelectedCasesCount = React.useCallback(() => {
     const container = document.querySelector(".manage-office-member-inbox");
-    const checked = container ? container.querySelectorAll("tbody input[type='checkbox']:checked") : [];
-    setSelectedCasesCount(checked.length);
+    if (!container) {
+      setSelectedCasesCount(0);
+      return;
+    }
+
+    const tbody = container.querySelector("tbody");
+    const rowCheckboxes = tbody ? tbody.querySelectorAll('input[type="checkbox"][data-case-id]') : [];
+
+    let checkedCount = 0;
+    rowCheckboxes.forEach((checkbox) => {
+      if (checkbox.checked) {
+        checkedCount += 1;
+      }
+    });
+
+    setSelectedCasesCount(checkedCount);
+
+    // Sync header "Select All" checkbox state: checked only when all rows are selected
+    const headerCheckbox = container.querySelector('input[type="checkbox"][data-header-checkbox="true"]');
+    if (headerCheckbox) {
+      const total = rowCheckboxes.length;
+      headerCheckbox.checked = total > 0 && checkedCount === total;
+    }
   }, []);
 
   // Select-all and row checkboxes for Assign Cases table (same pattern as sign process tab)
