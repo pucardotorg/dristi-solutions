@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionBar, SubmitBar, Button, Toast, Loader } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import BailEsignModal from "../../components/BailEsignModal";
@@ -68,6 +68,23 @@ const DigitizedDocumentsSignaturePage = () => {
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
   const [loader, setLoader] = useState(false);
   const [uploadLoader, setUploadLoader] = useState(false);
+
+  // Open API file upload for unauthenticated SMS users
+  const openApiUploadDocuments = useCallback(async (files, tenantId) => {
+    const file = files?.[0];
+    if (!file) throw new Error("No file provided");
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("tenantId", tenantId);
+    formData.append("module", "DRISTI");
+
+    const response = await axiosInstance.post(Urls.openApi.fileUpload, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    return response?.data?.files || response?.files || [];
+  }, []);
 
   const { data: digitizedDocumentsOpenData, isLoading: isDigitizedDocumentsOpenOpenLoading } = useOpenApiSearchDigitizedDocuments(
     {
@@ -170,8 +187,21 @@ const DigitizedDocumentsSignaturePage = () => {
   };
 
   const handleDownloadPdf = () => {
-    if (fileStoreId) {
+    if (!fileStoreId) return;
+
+    if (isUserLoggedIn) {
       downloadPdf(tenantId, fileStoreId);
+    } else if (documentPreviewPdf) {
+      // For unauthenticated SMS users, use the already-fetched blob from the open API
+      const blob = new Blob([documentPreviewPdf], { type: documentPreviewPdf.type || "application/pdf" });
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = "downloadedFile.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
     }
   };
 
@@ -406,6 +436,8 @@ const DigitizedDocumentsSignaturePage = () => {
               loader={uploadLoader}
               fileStoreId={fileStoreId}
               infoText={type === "PLEA" ? "PLEA_SIGN_INFO" : "EXAMINATION_SIGN_INFO"}
+              customUploadDocuments={!isUserLoggedIn ? openApiUploadDocuments : undefined}
+              onCustomDownload={!isUserLoggedIn ? handleDownloadPdf : undefined}
             />
           )}
           {showSignatureModal && (
