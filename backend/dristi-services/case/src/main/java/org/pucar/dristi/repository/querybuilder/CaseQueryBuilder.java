@@ -948,6 +948,19 @@ public class CaseQueryBuilder {
         return firstCriteria;
     }
 
+    private boolean addCaseSearchByCnrAndCaseNumberCriteria(CaseSummaryListCriteria criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (criteria.getSearchByCnrAndCaseNumber() != null && !criteria.getSearchByCnrAndCaseNumber().isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(" (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?) or LOWER(cases.cnrNumber) LIKE LOWER(?) OR LOWER(cases.lprnumber) LIKE LOWER(?)  OR LOWER(cases.courtcasenumberbackup) LIKE LOWER(?))");
+            for (int i = 0; i < 6; i++) {
+                preparedStmtList.add("%" + criteria.getSearchByCnrAndCaseNumber() + "%");
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
     public String getValidateAdvocateOfficeCaseMemberQuery(List<Object> preparedStmtList, List<Integer> preparedStmtArgList, String officeAdvocateId, String memberId) {
         String query = "SELECT COUNT(*) FROM dristi_advocate_office_case_member " +
                 "WHERE office_advocate_id = ? AND member_id = ? AND is_active = true";

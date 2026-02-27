@@ -1,31 +1,31 @@
-package org.pucar.dristi.web.models.v2;
-
-import java.util.List;
-
-import org.pucar.dristi.web.models.Pagination;
-import org.springframework.validation.annotation.Validated;
+package org.pucar.dristi.web.models.courtcase;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.pucar.dristi.web.models.Pagination;
+import org.springframework.validation.annotation.Validated;
+
+import java.util.List;
 
 /**
  * CaseCriteria
  */
 @Validated
-@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-15T11:31:40.281899+05:30[Asia/Kolkata]")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CaseSummaryListCriteria {
+public class CaseCriteria {
 
     @JsonProperty("caseId")
     private String caseId = null;
+
+    @JsonProperty("defaultFields")
+    private Boolean defaultFields = false;
 
     @JsonProperty("cnrNumber")
     private String cnrNumber = null;
@@ -38,12 +38,6 @@ public class CaseSummaryListCriteria {
 
     @JsonProperty("courtCaseNumber")
     private String courtCaseNumber = null;
-
-    @JsonProperty("caseSearchText")
-    private String caseSearchText = null;
-
-    @JsonProperty("searchByCnrAndCaseNumber")
-    private String searchByCnrAndCaseNumber = null;
 
     @JsonProperty("filingFromDate")
     @Valid
@@ -60,6 +54,7 @@ public class CaseSummaryListCriteria {
     @JsonProperty("registrationToDate")
     @Valid
     private Long registrationToDate = null;
+    //todo judgeid, stage, substage
 
     @JsonProperty("judgeId")
     private String judgeId = null;
@@ -78,32 +73,13 @@ public class CaseSummaryListCriteria {
     @Valid
     private String advocateId = null;
 
-    @JsonProperty("courtId")
-    private String courtId;
-
     @JsonProperty("status")
     @Valid
     private List<String> status = null;
-
-    @JsonProperty("poaHolderIndividualId")
-    @Valid
-    private String poaHolderIndividualId = null;
 
     @JsonProperty("pagination")
 
     @Valid
     private Pagination pagination = null;
-
-    @JsonProperty("isLPRCase")
-    private Boolean isLPRCase = null;
-
-    @JsonProperty("officeAdvocateId")
-    private String officeAdvocateId = null;
-
-    @JsonProperty("memberId")
-    private String memberId = null;
-
-    @JsonProperty("isMemberActiveInCase")
-    private Boolean isMemberActiveInCase = null;
 
 }

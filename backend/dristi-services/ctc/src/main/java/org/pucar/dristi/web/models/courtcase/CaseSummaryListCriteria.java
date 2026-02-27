@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models.v2;
+package org.pucar.dristi.web.models.courtcase;
 
 import java.util.List;
 

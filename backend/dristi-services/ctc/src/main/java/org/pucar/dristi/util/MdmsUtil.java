@@ -1,0 +1,70 @@
+package org.pucar.dristi.util;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.common.protocol.types.Field;
+import org.pucar.dristi.config.Configuration;
+import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
+import org.egov.common.contract.request.RequestInfo;
+import org.egov.mdms.model.*;
+
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.pucar.dristi.config.ServiceConstants.*;
+
+@Slf4j
+@Component
+public class MdmsUtil {
+
+    private RestTemplate restTemplate;
+
+    private Configuration configs;
+
+    public MdmsUtil(RestTemplate restTemplate, Configuration configs) {
+        this.restTemplate = restTemplate;
+        this.configs = configs;
+    }
+
+    public String fetchMdmsData(RequestInfo requestInfo, String tenantId, String moduleName, List<String> masterNameList) {
+        String response = "";
+        StringBuilder uri = new StringBuilder();
+        uri.append(configs.getMdmsHost()).append(configs.getMdmsEndPoint());
+        MdmsCriteriaReq mdmsCriteriaReq = getMdmsRequest(requestInfo, tenantId, moduleName, masterNameList);
+        try {
+            response = restTemplate.postForObject(uri.toString(), mdmsCriteriaReq, String.class);
+        }catch(Exception e) {
+            log.error(ERROR_WHILE_FETCHING_FROM_MDMS,e);
+        }
+        return response;
+    }
+
+    private MdmsCriteriaReq getMdmsRequest(RequestInfo requestInfo, String tenantId,
+                                           String moduleName, List<String> masterNameList) {
+        List<MasterDetail> masterDetailList = new ArrayList<>();
+        for(String masterName: masterNameList) {
+            MasterDetail masterDetail = new MasterDetail();
+            masterDetail.setName(masterName);
+            masterDetailList.add(masterDetail);
+        }
+
+        ModuleDetail moduleDetail = new ModuleDetail();
+        moduleDetail.setMasterDetails(masterDetailList);
+        moduleDetail.setModuleName(moduleName);
+        List<ModuleDetail> moduleDetailList = new ArrayList<>();
+        moduleDetailList.add(moduleDetail);
+
+        MdmsCriteria mdmsCriteria = new MdmsCriteria();
+        mdmsCriteria.setTenantId(tenantId.split("\\.")[0]);
+        mdmsCriteria.setModuleDetails(moduleDetailList);
+
+        MdmsCriteriaReq mdmsCriteriaReq = new MdmsCriteriaReq();
+        mdmsCriteriaReq.setMdmsCriteria(mdmsCriteria);
+        mdmsCriteriaReq.setRequestInfo(requestInfo);
+
+        return mdmsCriteriaReq;
+    }
+}
