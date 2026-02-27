@@ -90,25 +90,10 @@ public class AdvocateRegistrationValidator {
     }
 
     public void validateBarRegistrationNumberUniqueness(String tenantId, BarRegistrationNumberComponents components, String barRegistrationNumber) {
-        List<String> existingBarRegistrationNumbers = repository.getDistinctBarRegistrationNumbersForTenant(tenantId);
-
-        for(String existingBarRegistrationNumber: existingBarRegistrationNumbers){
-
-            if(!Pattern.matches(configuration.getBarRegistrationNumberFormat(), existingBarRegistrationNumber)){
-                log.info("Skipping validation against existing bar registration number {} due to incorrect format", existingBarRegistrationNumber);
-                continue;
-            }
-
-            BarRegistrationNumberComponents existingComponents = tokenizeBarRegistrationNumber(existingBarRegistrationNumber);
-
-
-            boolean isStateCodeMatching = components.stateCode().equals(existingComponents.stateCode());
-            boolean isNormalizedSerialNumberMatching = components.normalizedSerialNumber().equals(existingComponents.normalizedSerialNumber());
-            boolean isYearMatching = components.year().equals(existingComponents.year());
-            if(isStateCodeMatching && isNormalizedSerialNumberMatching && isYearMatching){
-                throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE,
-                        String.format("Bar Registration Number %s already exists", barRegistrationNumber));
-            }
+        boolean barRegistrationNumberActive = repository.isBarRegistrationNumberActive(tenantId, components.stateCode(), components.normalizedSerialNumber(), components.year());
+        if (barRegistrationNumberActive) {
+            throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE,
+                    String.format("Bar Registration Number %s already exists", barRegistrationNumber));
         }
     }
 

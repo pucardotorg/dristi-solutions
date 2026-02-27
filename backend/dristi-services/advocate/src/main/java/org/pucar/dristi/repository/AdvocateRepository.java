@@ -150,11 +150,18 @@ public class AdvocateRepository {
         }
     }
 
-    public List<String> getDistinctBarRegistrationNumbersForTenant(String tenantId){
+    public boolean isBarRegistrationNumberActive(String tenantId, String stateCode, String normalizedSerialNumber, String year) {
+        String query =
+                "SELECT EXISTS ( " +
+                        " SELECT 1 FROM dristi_advocate " +
+                        " WHERE tenantid = ? " +
+                        " AND status = 'ACTIVE' " +
+                        " AND split_part(barregistrationnumber, '/', 1) = ? " +
+                        " AND split_part(barregistrationnumber, '/', 2)::int = ? " +
+                        " AND split_part(barregistrationnumber, '/', 3) = ? " +
+                        ")";
 
-        String query = "SELECT DISTINCT barregistrationnumber FROM dristi_advocate " +
-                "WHERE tenantid = ? AND status IN ('ACTIVE')";
-
-        return jdbcTemplate.queryForList(query, String.class, tenantId);
+        Boolean exists = jdbcTemplate.queryForObject(query, Boolean.class, tenantId, stateCode, Integer.valueOf(normalizedSerialNumber), year);
+        return Boolean.TRUE.equals(exists);
     }
 }
