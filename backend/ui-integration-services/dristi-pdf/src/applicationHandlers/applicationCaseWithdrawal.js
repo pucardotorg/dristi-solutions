@@ -11,6 +11,24 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const {
+  getNameByUuid,
+  getComplaintAndAccusedList,
+} = require("./getCaseDetails");
+
+function getOrdinalSuffix(day) {
+  if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
+  switch (day % 10) {
+    case 1:
+      return "st"; // 1st, 21st, 31st
+    case 2:
+      return "nd"; // 2nd, 22nd
+    case 3:
+      return "rd"; // 3rd, 23rd
+    default:
+      return "th"; // 4th, 5th, 6th, etc.
+  }
+}
 
 const applicationCaseWithdrawal = async (
   req,
@@ -76,9 +94,7 @@ const applicationCaseWithdrawal = async (
     }
 
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
-    let barRegistrationNumber = "";
     let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
@@ -91,7 +107,6 @@ const applicationCaseWithdrawal = async (
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
@@ -152,12 +167,36 @@ const applicationCaseWithdrawal = async (
       return renderError(res, "Invalid filingDate format", 500);
     }
 
+    const months = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
+    const day = currentDate.getDate();
+    const month = months[currentDate.getMonth()];
+    const year = currentDate.getFullYear();
+    const ordinalSuffix = getOrdinalSuffix(day);
+
+
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const prayer = application?.applicationDetails?.prayer || "";
+    const { complainantList, accusedList } = getComplaintAndAccusedList(
+      courtCase || {}
+    );
+
     const data = {
       Data: [
         {
@@ -167,9 +206,6 @@ const applicationCaseWithdrawal = async (
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
           caseNo: caseNumber,
-          judgeName: judgeDetails.name, // FIXME: employee.user.name
-          courtDesignation: judgeDetails.designation, //FIXME: mdmsDesignation.name,
-          addressOfTheCourt: mdmsCourtRoom.state, //FIXME: mdmsCourtRoom.address,
           date: formattedToday,
           partyName: partyName,
           partyType,
@@ -178,8 +214,14 @@ const applicationCaseWithdrawal = async (
           advocateSignature: "Advocate Signature",
           reasonForWithdrawal,
           advocateName,
-          barRegistrationNumber,
+          applicationTitle: "APPLICATION FOR WITHDRAWAL OF CASE",
           qrCodeUrl: base64Url,
+          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
+          day: day + ordinalSuffix,
+          month: month,
+          year: year,
         },
       ],
     };

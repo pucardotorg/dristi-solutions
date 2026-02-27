@@ -10,6 +10,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const { getNameByUuid, getComplaintAndAccusedList } = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -76,7 +77,6 @@ const applicationCaseTransfer = async (
     }
 
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
     let barRegistrationNumber = "";
     let advocateName = "";
@@ -165,7 +165,22 @@ const applicationCaseTransfer = async (
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
-    const prayer = application?.applicationDetails?.prayer || "";
+    const { complainantList, accusedList } = getComplaintAndAccusedList(
+      courtCase || {}
+    );
+
+    const onBehalfOfuuid = application?.onBehalfOf?.[0];
+    const onBehalfOfLitigent = courtCase?.litigants?.find(
+      (item) => item.additionalDetails.uuid === onBehalfOfuuid
+    );
+    let partyType = "COURT";
+    if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("complainant")) {
+      partyType = "COMPLAINANT";
+    }
+    if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("respondent")) {
+      partyType = "ACCUSED";
+    }
+
     const data = {
       Data: [
         {
@@ -174,17 +189,11 @@ const applicationCaseTransfer = async (
           caseNumber: caseNumber,
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
-          caseNo: caseNumber,
-          originalCourt: "Supreme Court of India", // FIXME:Take current court
+          originalCourt: mdmsCourtRoom.name,
           newCourt: selectRequestedCourt,
-          judgeName: judgeDetails.name, // FIXME: employee.user.name
-          courtDesignation: judgeDetails.designation, //FIXME: mdmsDesignation.name,
-          addressOfTheCourt: mdmsCourtRoom.state, //FIXME: mdmsCourtRoom.address,
           date: formattedToday,
           partyName: partyName,
-          prayer,
-          additionalComments,
-          grounds,
+          additionalComments: additionalComments,
           day: day + ordinalSuffix,
           month: month,
           year: year,
@@ -192,6 +201,12 @@ const applicationCaseTransfer = async (
           advocateName,
           barRegistrationNumber,
           qrCodeUrl: base64Url,
+          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
+          partyType: partyType,
+          applicationTitle: "APPLICATION FOR CASE TRANSFER",
+          reasonForTransfer: grounds, // need to confirm with PO if this is the correct field from application object to be used in template
         },
       ],
     };

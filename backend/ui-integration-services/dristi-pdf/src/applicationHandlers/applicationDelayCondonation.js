@@ -10,6 +10,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const { getComplaintAndAccusedList, getNameByUuid } = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -78,7 +79,6 @@ const applicationDelayCondonation = async (
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
 
     let applicationTitle = "APPLICATION FOR CONDONATION OF DELAY";
-    let barRegistrationNumber = "";
     let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
@@ -91,7 +91,6 @@ const applicationDelayCondonation = async (
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
@@ -108,10 +107,6 @@ const applicationDelayCondonation = async (
     if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("respondent")) {
       partyType = "Accused";
     }
-    const complainantName =
-      courtCase?.litigants?.find(
-        (litigant) => litigant.partyType === "complainant.primary"
-      )?.additionalDetails?.fullName || "";
 
     const additionalComments = htmlToFormattedText(
       application?.applicationDetails?.additionalInformation || ""
@@ -181,7 +176,10 @@ const applicationDelayCondonation = async (
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
-    const prayer = application?.applicationDetails?.prayer || "";
+
+    const { complainantList, accusedList } = getComplaintAndAccusedList(
+      courtCase || {}
+    );
     const data = {
       Data: [
         {
@@ -192,20 +190,20 @@ const applicationDelayCondonation = async (
           filingNumber: courtCase.filingNumber,
           caseName: courtCase.caseTitle,
           date: formattedToday,
-          complainantName: complainantName,
           partyName: partyName,
           partyType: partyType,
           advocateName: advocateName,
           applicationTitle: applicationTitle,
           reasonForDelay: reasonForDelay,
-          prayer,
           additionalComments,
           day: day + ordinalSuffix,
           month: month,
           year: year,
           advocateSignature: "Advocate Signature",
-          barRegistrationNumber,
           qrCodeUrl: base64Url,
+          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
         },
       ],
     };

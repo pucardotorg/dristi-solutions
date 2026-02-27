@@ -10,6 +10,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const { getNameByUuid, getComplaintAndAccusedList } = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -77,9 +78,7 @@ async function applicationGeneric(
     }
 
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
-    let barRegistrationNumber = "";
     let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
@@ -92,7 +91,6 @@ async function applicationGeneric(
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
@@ -193,7 +191,9 @@ async function applicationGeneric(
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
-    const prayer = application?.applicationDetails?.prayer || "";
+    const { complainantList, accusedList } = getComplaintAndAccusedList(
+      courtCase || {}
+    );
     const data = {
       Data: [
         {
@@ -202,28 +202,26 @@ async function applicationGeneric(
           caseNumber: caseNumber,
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
-          judgeName: judgeDetails.name, // FIXME: employee.user.name
-          courtDesignation: judgeDetails.designation, //FIXME: mdmsDesignation.name,
-          addressOfTheCourt: mdmsCourtRoom.state, //FIXME: mdmsCourtRoom.address,
           date: formattedToday,
           applicationName,
           partyName: partyName,
           purposeOfApplication: "asdfasdf",
-          complainantName: partyName, //FIXME: REMOVE it from both pdf configs and here,
-          prayer,
+          complainantName: partyName,
           additionalComments,
           reasonForApplication,
           partyType,
           prayerOptional: " asdasd ",
           advocateSignature: "Advocate Signature",
           advocateName: advocateName,
-          barRegistrationNumber,
           documentSubmissionName: "documents",
           documentId: "documents",
           day: day + ordinalSuffix,
           month: month,
           year: year,
           qrCodeUrl: base64Url,
+          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
         },
       ],
     };
