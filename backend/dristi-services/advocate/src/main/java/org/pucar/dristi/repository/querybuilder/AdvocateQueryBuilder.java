@@ -206,5 +206,4 @@ public class AdvocateQueryBuilder {
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION,"Exception occurred while building the query: "+ e.getMessage());
         }
     }
-
 }
