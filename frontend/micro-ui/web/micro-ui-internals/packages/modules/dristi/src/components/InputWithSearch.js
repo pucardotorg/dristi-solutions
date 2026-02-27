@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useRef, useMemo } from "react";
 import { TextInput, CardLabelError } from "@egovernments/digit-ui-react-components";
 import { handleIfscAutofill } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import CustomErrorTooltip from "./CustomErrorTooltip";
@@ -6,38 +6,39 @@ import CustomErrorTooltip from "./CustomErrorTooltip";
 function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError, clearErrors }) {
   const fetchedIfsc = useRef({});
   const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
-  const [formdata, setFormData] = useState(formData);
-
-  useEffect(() => {
-    setFormData(formData);
-  }, [formData]);
 
   function setValue(value, inputName) {
-    let updatedValue = {
-      ...formData[config.key],
+    const updatedValue = {
+      ...formData?.[config.key],
       [inputName]: value,
     };
 
-    if (!value) {
-      updatedValue = null;
-    }
-
-    setFormData((prev) => ({
-      ...prev,
-      [config.key]: {
-        ...prev?.[config.key],
-        [inputName]: value,
-      },
-    }));
-
     onSelect(config.key, updatedValue, { shouldValidate: true });
   }
+  const formatIFSC = (value = "") => {
+    let updated = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    updated = updated.slice(0, 11);
+    if (updated.length <= 4) {
+      updated = updated.replace(/[^A-Z]/g, "");
+    }
+    if (updated.length >= 5) {
+      updated = updated.slice(0, 4).replace(/[^A-Z]/g, "") + "0" + updated.slice(5);
+    }
+    if (updated.length > 5) {
+      updated = updated.slice(0, 5) + updated.slice(5).replace(/[^A-Z0-9]/g, "");
+    }
+
+    return updated;
+  };
   const handleChange = (e, input) => {
-    const newValue = e.target.value;
+    let newValue = e.target.value;
+    if (input.name.includes("Ifsc")) {
+      newValue = formatIFSC(newValue);
+    }
     setValue(newValue, input.name);
   };
   const handleSearch = async (input) => {
-    const ifsc = formdata?.[config.key]?.[input.name];
+    const ifsc = formData?.[config.key]?.[input.name];
 
     if (!ifsc) {
       setError(config.key, { msg: "CORE_REQUIRED_FIELD_ERROR" });
@@ -49,11 +50,9 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
       return;
     }
 
-    clearErrors(config.key);
-
     const prefix = input.name.replace("Ifsc", "");
 
-    await handleIfscAutofill({
+    const success = await handleIfscAutofill({
       ifsc,
       bankField: `${prefix}BankName`,
       branchField: `${prefix}BranchName`,
@@ -63,6 +62,11 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
       clearErrors,
       cache: fetchedIfsc,
     });
+    if (!success) {
+      setError(config.key, { msg: "CS_INVALID_IFSC" });
+    } else {
+      clearErrors(input.name);
+    }
   };
   return inputs.map((input) => {
     return (
@@ -76,7 +80,8 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
           <div style={{ display: "flex", width: "100%", gap: "8px", alignItems: "flex-end" }}>
             <div style={{ flex: 1 }}>
               <TextInput
-                value={formdata?.[config.key]?.[input.name] || ""}
+                name={input?.name}
+                value={formData?.[config.key]?.[input.name] || ""}
                 onChange={(e) => handleChange(e, input)}
                 placeholder={t(input?.placeholder)}
                 className={`ifsc-text-input ${errors?.[config.key] ? "error" : ""}`}
