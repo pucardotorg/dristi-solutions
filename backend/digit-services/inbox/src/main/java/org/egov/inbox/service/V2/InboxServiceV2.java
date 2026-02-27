@@ -495,8 +495,10 @@ public class InboxServiceV2 {
         searchCriteria.put("actionCategory", criteria.getActionCategory());
         putOrRemove(searchCriteria, "stateSla", criteria.getDate());
 
+        boolean isGroupByFilingNumber = !"Rescheduling Request".equalsIgnoreCase(criteria.getActionCategory());
+
         if (!criteria.getIsOnlyCountRequired()) {
-            PaginatedDataResponse unfiltered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
+            PaginatedDataResponse unfiltered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex(),isGroupByFilingNumber);
             criteria.setTotalCount(unfiltered.getTotalSize());
         }
 
@@ -507,7 +509,7 @@ public class InboxServiceV2 {
         putOrRemove(searchCriteria, "substage", criteria.getSubstage());
 
         // Final filtered search
-        PaginatedDataResponse filtered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
+        PaginatedDataResponse filtered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex(),isGroupByFilingNumber);
         criteria.setCount(filtered.getTotalSize());
 
         if (criteria.getIsOnlyCountRequired()) {
@@ -599,8 +601,8 @@ public class InboxServiceV2 {
         return searchResponse;
     }
 
-    private PaginatedDataResponse getDataFromSimpleSearchGroupByFilingNumber(SearchRequest searchRequest, String index) {
-        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, true);
+    private PaginatedDataResponse getDataFromSimpleSearchGroupByFilingNumber(SearchRequest searchRequest, String index, boolean isGroupByFilingNumber) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, isGroupByFilingNumber);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
             log.info("Query: " + q);
