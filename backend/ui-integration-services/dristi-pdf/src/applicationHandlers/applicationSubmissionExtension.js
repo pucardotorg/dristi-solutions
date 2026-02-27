@@ -11,6 +11,10 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { extractOrderNumber } = require("../utils/extractOrderNumber");
+const {
+  getNameByUuid,
+  getComplaintAndAccusedList,
+} = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -78,7 +82,6 @@ async function applicationSubmissionExtension(
     }
 
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
     const refOrderNumber = extractOrderNumber(
       application?.additionalDetails?.formdata?.refOrderId
@@ -116,7 +119,6 @@ async function applicationSubmissionExtension(
     const documentSubmissionName = order?.orderDetails?.documentName || "";
     const documentId = order?.orderDetails?.documentType?.value | "";
 
-    let barRegistrationNumber = "";
     let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
@@ -129,7 +131,6 @@ async function applicationSubmissionExtension(
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
@@ -218,7 +219,10 @@ async function applicationSubmissionExtension(
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
-    const prayer = application?.applicationDetails?.prayer;
+
+    const { complainantList, accusedList } = getComplaintAndAccusedList(
+      courtCase || {}
+    );
 
     const data = {
       Data: [
@@ -228,9 +232,6 @@ async function applicationSubmissionExtension(
           caseNumber: caseNumber,
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
-          judgeName: judgeDetails.name,
-          courtDesignation: judgeDetails.designation,
-          addressOfTheCourt: mdmsCourtRoom.state,
           date: currentDate,
           partyName: partyName,
           advocateName: advocateName,
@@ -242,11 +243,13 @@ async function applicationSubmissionExtension(
           day: day + ordinalSuffix,
           month: month,
           year: year,
-          prayer,
           additionalComments: benefitOfExtension || additionalComments,
           advocateSignature: "Advocate Signature",
-          barRegistrationNumber,
           qrCodeUrl: base64Url,
+          applicationTitle: "APPLICATION FOR EXTENSION OF SUBMISSION DEADLINE",
+          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
         },
       ],
     };

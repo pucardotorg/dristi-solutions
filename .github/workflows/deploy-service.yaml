@@ -4,10 +4,10 @@ run-name: >
   ${{
     github.event_name == 'workflow_dispatch' &&
       format(
-        'Deploy to {1} : {0}',
+        'Deploy to {1} : {0}:{2}',
         github.event.inputs.service,
         github.event.inputs.deployment_env,
-        github.ref_name
+        github.event.inputs.tag
       )
   }}
 
@@ -40,12 +40,18 @@ on:
           - core-services
 
 jobs:
-  environment: 
-    name: ${{ inputs.deployment_env }}
-  deploy:
+  deploy-to-k8s:
+    name: Deploy to Kubernetes
+    environment: 
+      name: ${{ inputs.deployment_env }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deployment Summary
         run: |
-          echo "deploying: docker.io/venkatramireddyb/${{ inputs.service }}:${{ inputs.tag }} and deploying to ${{ inputs.deployment_env }}"
+          IST_TIME=$(TZ="Asia/Kolkata" date '+%Y-%m-%d %H:%M:%S IST')
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Deployed \`docker.io/venkatramireddyb/${{ inputs.service }}:${{ inputs.tag }}\` to **${{ inputs.deployment_env }}** environment at **$IST_TIME**." >> $GITHUB_STEP_SUMMARY
 
       - name: Deploy to Kubernetes
         uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
