@@ -72,8 +72,8 @@ import static org.mockito.Mockito.*;
     @Test
     void shouldNotThrowException_whenBarRegistrationNumberIsValid() {
         // Given
-        String regex = "^[A-Z]{2}\\d{4}$";  // Example: AB1234
-        String validNumber = "AB1234";
+        String regex = "^[A-Z]{1,3}/\\d{1,6}/\\d{4}$";  // Example: AB1234
+        String validNumber = "K/1234/2025";
 
         when(configuration.getBarRegistrationNumberFormat()).thenReturn(regex);
 

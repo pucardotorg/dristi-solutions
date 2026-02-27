@@ -62,6 +62,10 @@ public class AdvocateRegistrationValidator {
         Advocate advocate = advocateRequest.getAdvocate();
         String barRegistrationNumber = advocate.getBarRegistrationNumber();
 
+        if(ObjectUtils.isEmpty(barRegistrationNumber)){
+            throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "Bar Registration Number is mandatory");
+        }
+
         validateBarRegistrationNumberFormat(barRegistrationNumber);
 
         BarRegistrationNumberComponents components = tokenizeBarRegistrationNumber(barRegistrationNumber);
