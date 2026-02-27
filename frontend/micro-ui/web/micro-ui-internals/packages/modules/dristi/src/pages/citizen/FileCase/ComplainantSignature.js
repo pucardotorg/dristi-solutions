@@ -401,6 +401,8 @@ const ComplainantSignature = ({ path }) => {
         CaseWorkflowState.PENDING_RE_E_SIGN,
         CaseWorkflowState.PENDING_E_SIGN,
         CaseWorkflowState.PENDING_SIGN,
+        CaseWorkflowState.PENDING_PAYMENT,
+        CaseWorkflowState.RE_PENDING_PAYMENT,
       ]?.includes(caseDetails?.status)
     ) {
       history.replace(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`);
@@ -828,6 +830,100 @@ const ComplainantSignature = ({ path }) => {
     return { Calculation: updatedCalculation };
   };
 
+  // Recovery: if case is already in PENDING_PAYMENT/RE_PENDING_PAYMENT but user is on
+  // the sign-complaint page (e.g., due to network failure in .then() after caseUpdateService
+  // succeeded), perform the missed side effects and redirect to the payment page.
+  useEffect(() => {
+    if (
+      !caseDetails?.status ||
+      (caseDetails?.status !== CaseWorkflowState.PENDING_PAYMENT && caseDetails?.status !== CaseWorkflowState.RE_PENDING_PAYMENT) ||
+      isPaymentTypeLoading ||
+      isLoading
+    ) {
+      return;
+    }
+
+    const recoverPendingPayment = async () => {
+      setLoader(true);
+      try {
+        // Step 1: Close old signing pending task (best-effort)
+        try {
+          await closePendingTask({
+            status: caseDetails?.status === CaseWorkflowState.RE_PENDING_PAYMENT ? CaseWorkflowState.PENDING_RE_SIGN : CaseWorkflowState.PENDING_SIGN,
+            assignee: loggedInUserOnBehalfOfUuid,
+            closeUploadDoc: true,
+          });
+        } catch (err) {
+          console.error("Recovery: failed to close old pending task:", err);
+        }
+
+        // Step 2: Create Pending Payment pending task (best-effort)
+        try {
+          const uuids = [
+            ...(Array.isArray(caseDetails?.litigants)
+              ? caseDetails?.litigants?.map((litigant) => ({ uuid: litigant?.additionalDetails?.uuid }))
+              : []),
+            ...(Array.isArray(caseDetails?.representatives)
+              ? caseDetails?.representatives?.map((advocate) => ({ uuid: advocate?.additionalDetails?.uuid }))
+              : []),
+            ...(Array.isArray(caseDetails?.poaHolders)
+              ? caseDetails?.poaHolders?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }))
+              : []),
+          ];
+          await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+            pendingTask: {
+              name: "Pending Payment",
+              entityType: "case-default",
+              referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+              status: CaseWorkflowState.PENDING_PAYMENT,
+              assignedTo: uuids,
+              assignedRole: ["CASE_CREATOR"],
+              cnrNumber: caseDetails?.cnrNumber,
+              filingNumber: caseDetails?.filingNumber,
+              caseId: caseDetails?.id,
+              caseTitle: caseDetails?.caseTitle,
+              isCompleted: false,
+              stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
+              additionalDetails: {},
+              tenantId,
+            },
+          });
+        } catch (err) {
+          console.error("Recovery: failed to create payment pending task:", err);
+        }
+
+        // Step 3: Create demand/calculation and redirect to payment
+        let calculation = null;
+        if (!caseDetails?.additionalDetails?.lastSubmissionConsumerCode) {
+          calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+        } else {
+          const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
+          try {
+            const resp = await DRISTIService.getTreasuryPaymentBreakup(
+              { tenantId },
+              { consumerCode: caseDetails?.additionalDetails?.lastSubmissionConsumerCode },
+              "dristi",
+              Boolean(caseDetails?.filingNumber && suffix)
+            );
+            calculation = { Calculation: [resp?.TreasuryHeadMapping?.calculation] };
+          } catch (error) {
+            console.error("Recovery: error fetching treasury payment breakup:", error);
+          }
+        }
+        setCalculationResponse(calculation);
+        history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculation } });
+      } catch (err) {
+        console.error("Payment recovery failed:", err);
+        toast.error(t("SOMETHING_WENT_WRONG"));
+        history.replace(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`);
+      } finally {
+        setLoader(false);
+      }
+    };
+
+    recoverPendingPayment();
+  }, [caseDetails?.status, caseDetails?.filingNumber, isPaymentTypeLoading, isLoading]);
+
   const updateSignedDocInCaseDoc = () => {
     const tempDocList = structuredClone(caseDetails?.documents || []);
     const index = tempDocList.findIndex((doc) => doc?.documentType === "case.complaint.signed");
@@ -847,7 +943,7 @@ const ComplainantSignature = ({ path }) => {
     if (isSelectedUploadDoc) {
       updateCase(state);
     } else {
-      if (isLastPersonSigned && (state === "PENDING_PAYMENT" || state === "RE_PENDING_PAYMENT")) {
+      if (isLastPersonSigned && (state === CaseWorkflowState.PENDING_PAYMENT || state === CaseWorkflowState.RE_PENDING_PAYMENT)) {
         history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
       } else {
         history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
@@ -912,7 +1008,7 @@ const ComplainantSignature = ({ path }) => {
               await Promise.all(promises);
             }
           }
-          if (res?.cases?.[0]?.status === "PENDING_PAYMENT" || res?.cases?.[0]?.status === "RE_PENDING_PAYMENT") {
+          if (res?.cases?.[0]?.status === CaseWorkflowState.PENDING_PAYMENT || res?.cases?.[0]?.status === CaseWorkflowState.RE_PENDING_PAYMENT) {
             // Extract UUIDs of litigants and representatives if available
             const uuids = [
               ...(Array.isArray(caseDetails?.litigants)
@@ -936,7 +1032,7 @@ const ComplainantSignature = ({ path }) => {
                 name: "Pending Payment",
                 entityType: "case-default",
                 referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-                status: "PENDING_PAYMENT",
+                status: CaseWorkflowState.PENDING_PAYMENT,
                 assignedTo: uuids,
                 assignedRole: ["CASE_CREATOR"],
                 cnrNumber: caseDetails?.cnrNumber,
