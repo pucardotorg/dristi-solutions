@@ -112,6 +112,9 @@ public class Task {
     @JsonProperty("courtId")
     private String courtId;
 
+    @JsonProperty("feePaidDate")
+    private Long feePaidDate = null;
+
 
     public Task addDocumentsItem(Document documentsItem) {
         this.documents.add(documentsItem);

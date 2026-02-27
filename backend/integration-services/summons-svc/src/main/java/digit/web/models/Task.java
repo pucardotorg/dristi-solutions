@@ -110,6 +110,9 @@ public class Task {
     @Valid
     private Workflow workflow = null;
 
+    @JsonProperty("feePaidDate")
+    private Long feePaidDate = null;
+
 
     public Task addDocumentsItem(Document documentsItem) {
         if(this.documents == null || this.documents.isEmpty()){

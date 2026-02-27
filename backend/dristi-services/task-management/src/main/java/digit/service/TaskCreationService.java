@@ -29,6 +29,7 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -132,6 +133,9 @@ public class TaskCreationService {
             for (TaskDetails detail : taskDetailsList) {
                 try {
                     taskTemplate.setTaskDetails(detail);
+                    String feePaidDate = detail.getDeliveryChannel().getFeePaidDate();
+                    Long feePaidDateEpoch = dateUtil.getEPochFromLocalDate(LocalDate.parse(feePaidDate));
+                    taskTemplate.setFeePaidDate(feePaidDateEpoch);
                     Role role = Role.builder().code(TASK_CREATOR).name(TASK_CREATOR).tenantId(taskManagement.getTenantId()).build();
                     requestInfo.getUserInfo().getRoles().add(role);
                     TaskResponse taskResponse = taskUtil.callCreateTask(TaskRequest.builder()

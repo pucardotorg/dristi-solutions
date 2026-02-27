@@ -456,6 +456,7 @@ public class PaymentUpdateService {
         // Indian time zone (IST)
         ZoneId indianZone = ZoneId.of(config.getZoneId());
         String todayDate = LocalDate.now(indianZone).format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+        Long todayDateEpoch = LocalDate.now(indianZone).toEpochDay();
 
         JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
 
@@ -470,6 +471,7 @@ public class PaymentUpdateService {
         }
         deliveryChannels.put("feePaidDate", todayDate);
         task.setTaskDetails(taskDetails);
+        task.setFeePaidDate(todayDateEpoch);
     }
 
     public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {
