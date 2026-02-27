@@ -156,8 +156,11 @@ public class AdvocateRepository {
                         " SELECT 1 FROM dristi_advocate " +
                         " WHERE tenantid = ? " +
                         " AND status = 'ACTIVE' " +
+                        " AND array_length(string_to_array(barregistrationnumber, '/'), 1) = 3 " +
                         " AND split_part(barregistrationnumber, '/', 1) = ? " +
-                        " AND split_part(barregistrationnumber, '/', 2)::int = ? " +
+                        " AND CASE WHEN split_part(barregistrationnumber, '/', 2) ~ '^\\d+$' " +
+                        "          THEN split_part(barregistrationnumber, '/', 2)::int " +
+                        "          END = ? " +
                         " AND split_part(barregistrationnumber, '/', 3) = ? " +
                         ")";
 
