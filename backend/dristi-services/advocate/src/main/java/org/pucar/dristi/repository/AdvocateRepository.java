@@ -154,7 +154,7 @@ public class AdvocateRepository {
     public List<String> getDistinctBarRegistrationNumbersForTenant(String tenantId){
 
         String query = "SELECT DISTINCT barregistrationnumber FROM dristi_advocate " +
-                "WHERE tenantid = ? AND status IN ('INWORKFLOW', 'ACTIVE')";
+                "WHERE tenantid = ? AND status IN ('ACTIVE')";
 
         return jdbcTemplate.queryForList(query, String.class, tenantId);
     }

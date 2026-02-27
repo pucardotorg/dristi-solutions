@@ -9,6 +9,7 @@ import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.web.models.Advocate;
 import org.pucar.dristi.web.models.AdvocateRequest;
 import org.pucar.dristi.web.models.AdvocateSearchCriteria;
+import org.pucar.dristi.web.models.BarRegistrationNumberComponents;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -63,10 +64,7 @@ public class AdvocateRegistrationValidator {
 
         validateBarRegistrationNumberFormat(barRegistrationNumber);
 
-        List<String> barRegistrationNumberParts = List.of(barRegistrationNumber.split("/"));
-
-        BarRegistrationNumberComponents components = parseBarRegistrationNumber(barRegistrationNumberParts);
-
+        BarRegistrationNumberComponents components = tokenizeBarRegistrationNumber(barRegistrationNumber);
         validateBarRegistrationNumberUniqueness(advocate.getTenantId(), components, barRegistrationNumber);
     }
 
@@ -77,7 +75,8 @@ public class AdvocateRegistrationValidator {
                     String.format("Bar Registration Number %s is in invalid format", barRegistrationNumber));
     }
 
-    private BarRegistrationNumberComponents parseBarRegistrationNumber(List<String> barRegistrationNumberParts) {
+    public BarRegistrationNumberComponents tokenizeBarRegistrationNumber(String barRegistrationNumber) {
+        List<String> barRegistrationNumberParts = List.of(barRegistrationNumber.split("/"));
         String stateCode = barRegistrationNumberParts.get(0);
         String serialNumber = barRegistrationNumberParts.get(1);
         String year = barRegistrationNumberParts.get(2);
@@ -86,7 +85,7 @@ public class AdvocateRegistrationValidator {
         return new BarRegistrationNumberComponents(stateCode, normalizedSerialNumber, year);
     }
 
-    private void validateBarRegistrationNumberUniqueness(String tenantId, BarRegistrationNumberComponents components, String originalValue) {
+    public void validateBarRegistrationNumberUniqueness(String tenantId, BarRegistrationNumberComponents components, String barRegistrationNumber) {
         List<String> existingBarRegistrationNumbers = repository.getDistinctBarRegistrationNumbersForTenant(tenantId);
 
         for(String existingBarRegistrationNumber: existingBarRegistrationNumbers){
@@ -96,9 +95,7 @@ public class AdvocateRegistrationValidator {
                 continue;
             }
 
-            List<String> existingBarRegistrationParts = List.of(existingBarRegistrationNumber.split("/"));
-
-            BarRegistrationNumberComponents existingComponents = parseBarRegistrationNumber(existingBarRegistrationParts);
+            BarRegistrationNumberComponents existingComponents = tokenizeBarRegistrationNumber(existingBarRegistrationNumber);
 
 
             boolean isStateCodeMatching = components.stateCode().equals(existingComponents.stateCode());
@@ -106,12 +103,10 @@ public class AdvocateRegistrationValidator {
             boolean isYearMatching = components.year().equals(existingComponents.year());
             if(isStateCodeMatching && isNormalizedSerialNumberMatching && isYearMatching){
                 throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE,
-                        String.format("Bar Registration Number %s already exists", originalValue));
+                        String.format("Bar Registration Number %s already exists", barRegistrationNumber));
             }
         }
     }
-
-    private record BarRegistrationNumberComponents(String stateCode, String normalizedSerialNumber, String year) {}
 
     /**
      * @param advocate  advocate details
