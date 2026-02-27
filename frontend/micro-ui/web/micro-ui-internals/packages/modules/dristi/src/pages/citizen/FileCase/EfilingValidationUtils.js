@@ -1103,41 +1103,6 @@ export const complainantValidation = ({
   }
 };
 
-export const signatureValidation = ({ formData, selected, setShowErrorToast, setErrorMsg, caseDetails }) => {
-  if (selected === "addSignature") {
-    let index = 0;
-    if (
-      !(
-        Object.keys(formData || {}).length > 0 &&
-        Object.keys(formData).reduce((res, curr) => {
-          if (!res) return res;
-          else {
-            res = Boolean(
-              caseDetails?.[curr]?.reduce((result, current) => {
-                if (!result) return result;
-                result = Boolean(formData?.[curr]?.[`${current?.name} ${index}`]);
-                ++index;
-                return result;
-              }, true) &&
-                formData[curr] &&
-                Object.keys(formData[curr])?.length > 0
-            );
-            index = 0;
-            return res;
-          }
-        }, true)
-      )
-    ) {
-      setShowErrorToast(true);
-      setErrorMsg("CS_PLEASE_ADD_SIGNATURE_BEFORE_SUBMIT");
-      return true;
-    }
-  } else {
-    setErrorMsg("");
-    return false;
-  }
-};
-
 export const accusedAddressValidation = ({ formData, selected, setAddressError, config }) => {
   const addressKey = "addressDetails";
   if (
@@ -1887,6 +1852,10 @@ export const updateCaseDetails = async ({
                   fullName: getFullName(" ", data?.data?.firstName, data?.data?.middleName, data?.data?.lastName),
                   uuid: userUuid ? userUuid : null,
                   currentPosition: index + 1,
+                  firstName: data?.data?.firstName,
+                  middleName: data?.data?.middleName,
+                  lastName: data?.data?.lastName,
+                  mobileNumber: data?.data?.complainantVerification?.mobileNumber,
                 },
               };
             } else {
@@ -2035,6 +2004,10 @@ export const updateCaseDetails = async ({
                       fullName: getFullName(" ", firstName, middleName, lastName),
                       uuid: userUuid ? userUuid : null,
                       currentPosition: index + 1,
+                      firstName: firstName,
+                      middleName: middleName,
+                      lastName: lastName,
+                      mobileNumber: data?.data?.complainantVerification?.mobileNumber,
                     },
                   };
                 } else {
@@ -2146,6 +2119,10 @@ export const updateCaseDetails = async ({
                       fullName: getFullName(" ", firstName, middleName, lastName),
                       uuid: userUuid ? userUuid : null,
                       currentPosition: index + 1,
+                      firstName: firstName,
+                      middleName: middleName,
+                      lastName: lastName,
+                      mobileNumber: data?.data?.complainantVerification?.mobileNumber,
                     },
                   };
                 }
@@ -2230,6 +2207,10 @@ export const updateCaseDetails = async ({
                 ],
                 additionalDetails: {
                   uuid: userUuid ? userUuid : null,
+                  firstName: data?.data?.poaFirstName,
+                  middleName: data?.data?.poaMiddleName,
+                  lastName: data?.data?.poaLastName,
+                  mobileNumber: data?.data?.poaVerification?.mobileNumber,
                 },
               };
             } else {
@@ -2318,6 +2299,10 @@ export const updateCaseDetails = async ({
                     ],
                     additionalDetails: {
                       uuid: userUuid ? userUuid : null,
+                      firstName: firstName,
+                      middleName: middleName,
+                      lastName: lastName,
+                      mobileNumber: data?.data?.poaVerification?.mobileNumber,
                     },
                   };
                 }
@@ -3256,24 +3241,32 @@ export const updateCaseDetails = async ({
             data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length > 0 &&
             data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length
           ) {
-            const advSearchPromises = data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
+            const barRegistrationNumbersCriteria = data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
               ?.filter((detail) => detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal)
-              .map((detail) => {
-                return DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
-                  criteria: [
-                    {
-                      barRegistrationNumber: detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal,
-                    },
-                  ],
-                  tenantId,
-                });
-              });
+              .map((detail) => detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal);
 
-            const allAdvocateSearchData = await Promise.all(advSearchPromises);
-            for (let i = 0; i < allAdvocateSearchData?.length; i++) {
+            const allAdvocateSearchData = await Promise.all(
+              DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
+                criteria: barRegistrationNumbersCriteria?.map((barNumber) => ({
+                  barRegistrationNumber: barNumber,
+                })),
+                tenantId,
+              })
+            );
+            for (let i = 0; i < allAdvocateSearchData?.advocates?.length; i++) {
               const document = vakalatnamaDocumentData?.vakalatnamaFileUpload?.document?.[0];
+              const advInFormData = data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.find(
+                (detail) =>
+                  detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal === allAdvocateSearchData?.advocates?.[i]?.barRegistrationNumber
+              );
               advocateDetails.push({
-                advocate: allAdvocateSearchData?.[i].advocates?.[0]?.responseList?.[0],
+                advocate: {
+                  ...allAdvocateSearchData?.advocates?.[i]?.responseList?.[0],
+                  firstName: advInFormData?.firstName,
+                  middleName: advInFormData?.middleName,
+                  lastName: advInFormData?.lastName,
+                  mobileNumber: advInFormData?.advocateMobileNumber,
+                },
                 complainant: {
                   individualId: data?.data?.multipleAdvocatesAndPip?.boxComplainant?.individualId,
                   vakalathnamaDoc: document ? [document] : [],
@@ -3356,6 +3349,10 @@ export const updateCaseDetails = async ({
         additionalDetails: {
           advocateName: data?.advocate?.additionalDetails?.username,
           uuid: data?.advocate?.auditDetails?.createdBy,
+          firstName: data?.advocate?.firstName,
+          middleName: data?.advocate?.middleName,
+          lastName: data?.advocate?.lastName,
+          mobileNumber: data?.advocate?.mobileNumber,
         },
         representing: representing,
         advocateFilingStatus: "other", // For new advocates except case creator advocate
@@ -3527,7 +3524,7 @@ export const updateCaseDetails = async ({
     }
     return doc;
   });
-  const updatedData = transformCaseDataForUpdate(data, "witnessDetails");
+  const updatedData = transformCaseDataForUpdate(data, ["witnessDetails", "advocateDetails"]);
 
   return await DRISTIService.caseUpdateService(
     {
@@ -3538,7 +3535,10 @@ export const updateCaseDetails = async ({
         ...updatedData,
         documents: updatedTempDocList,
         advocateCount:
-          formdata?.[0]?.data?.numberOfAdvocate || caseDetails?.additionalDetails?.advocateDetails?.formdata[0]?.data?.numberOfAdvocate || 0,
+          formdata?.[0]?.data?.numberOfAdvocate ||
+          caseDetails?.additionalDetails?.advocateDetails?.formdata[0]?.data?.numberOfAdvocate ||
+          caseDetails?.advocateDetailsBlock?.[0]?.advocates?.length ||
+          0,
         linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
         workflow: {
           ...caseDetails?.workflow,
@@ -3552,54 +3552,225 @@ export const updateCaseDetails = async ({
   );
 };
 
-export const transformCaseDataForFetching = (caseDetails, key) => {
-  if (key === "witnessDetails" && caseDetails?.witnessDetails?.length > 0) {
-    let updatedCaseData = structuredClone(caseDetails || {});
-    updatedCaseData.additionalDetails = { ...(updatedCaseData?.additionalDetails || {}) };
-    let isCompleted = true;
+export const transformCaseDataForFetching = (caseDetails, keys) => {
+  const keyList = Array.isArray(keys) ? keys : [keys];
+  let updatedCaseData = structuredClone(caseDetails || {});
 
-    const formdata = (caseDetails?.witnessDetails).map(({ uniqueId = "", uiData = {}, ...witnessFormData }) => {
-      if (!uiData?.isCompleted) {
-        isCompleted = false;
-      }
-      return {
-        data: witnessFormData,
-        isenabled: uiData?.isenabled,
-        displayindex: uiData?.displayIndex || 0,
-        uniqueId,
-      };
-    });
+  for (const key of keyList) {
+    if (key === "witnessDetails" && updatedCaseData?.witnessDetails?.length > 0) {
+      updatedCaseData.additionalDetails = { ...(updatedCaseData?.additionalDetails || {}) };
+      let isCompleted = true;
 
-    updatedCaseData.additionalDetails[key] = {
-      formdata,
-      ...(isCompleted && { isCompleted }),
-    };
-    return updatedCaseData;
-  }
-  return caseDetails;
-};
-
-export const transformCaseDataForUpdate = (caseDetails, key) => {
-  const updatedCaseData = structuredClone(caseDetails || {});
-
-  if (key === "witnessDetails") {
-    const { formdata = [], isCompleted = false } = caseDetails?.additionalDetails?.[key] || {};
-    if (formdata?.length > 0) {
-      const witnessDetails = formdata?.map(({ data, isenabled, displayindex, uniqueId }) => {
+      const formdata = updatedCaseData.witnessDetails.map(({ uniqueId = "", uiData = {}, ...witnessFormData }) => {
+        if (!uiData?.isCompleted) {
+          isCompleted = false;
+        }
         return {
-          ...data,
+          data: witnessFormData,
+          isenabled: uiData?.isenabled,
+          displayindex: uiData?.displayIndex || 0,
           uniqueId,
-          uiData: {
-            isenabled,
-            displayIndex: displayindex,
-            isCompleted: isCompleted ? true : false, // force true for all if group isCompleted is true
-          },
         };
       });
-      delete updatedCaseData.additionalDetails[key];
-      updatedCaseData.witnessDetails = witnessDetails;
-    } else updatedCaseData.witnessDetails = [];
+
+      updatedCaseData.additionalDetails[key] = {
+        formdata,
+        ...(isCompleted && { isCompleted }),
+      };
+    }
+
+    if (key === "advocateDetails" && updatedCaseData?.advocateDetailsBlock?.length > 0) {
+      updatedCaseData.additionalDetails = { ...(updatedCaseData?.additionalDetails || {}) };
+      let isCompleted = true;
+
+      const formdata = updatedCaseData?.advocateDetailsBlock?.map((block) => {
+        const {
+          complainant = {},
+          isComplainantPip = {},
+          uiFlags = {},
+          documents = {},
+          advocates = [],
+          displayIndex = 0,
+          isEnabled = true,
+          isFormCompleted = false,
+        } = block;
+
+        if (!isFormCompleted) {
+          isCompleted = false;
+        }
+
+        // Map each advocate to the multipleAdvocateNameDetails shape
+        const multipleAdvocateNameDetails = advocates?.map((advocate) => ({
+          advocateNameDetails: {
+            firstName: advocate?.firstName,
+            middleName: advocate?.middleName,
+            lastName: advocate?.lastName,
+            advocateMobileNumber: advocate?.mobileNumber,
+            advocateIdProof: advocate?.documents || [],
+          },
+          advocateBarRegNumberWithName: {
+            advocateName: getFullName("", advocate?.firstName, advocate?.middleName, advocate?.lastName) || "",
+            isDisable: true,
+            advocateId: advocate?.id || "",
+            advocateUuid: advocate?.advocateUuid || "",
+            individualId: advocate?.individualId || "",
+            barRegistrationNumber: advocate?.barRegistrationNumber
+              ? `${advocate.barRegistrationNumber} (${getFullName("", advocate?.firstName, advocate?.middleName, advocate?.lastName)})`
+              : "",
+            barRegistrationNumberOriginal: advocate?.barRegistrationNumber || "",
+          },
+        }));
+
+        // Map vakalatnama documents
+        const vakalatnamaDocuments = (documents?.vakalatnama || [])?.map((doc) => ({
+          fileStore: doc?.fileStore || "",
+          documentType: doc?.documentType || "",
+          fileName: doc?.additionalDetails?.fileName || "VAKALATNAMA",
+          documentName: doc?.additionalDetails?.documentName || "",
+        }));
+
+        // Map pip affidavit documents
+        const pipAffidavitDocuments = (documents?.pipAffidavit || [])?.map((doc) => ({
+          fileStore: doc?.fileStore || "",
+          documentType: doc?.documentType || "",
+          fileName: doc?.additionalDetails?.fileName || "PIP_AFFIDAVIT",
+          documentName: doc?.additionalDetails?.documentName || "",
+        }));
+
+        return {
+          data: {
+            multipleAdvocatesAndPip: {
+              multipleAdvocateNameDetails,
+              boxComplainant: {
+                firstName: complainant?.firstName,
+                middleName: complainant?.middleName,
+                lastName: complainant?.lastName,
+                mobileNumber: complainant?.mobileNumber,
+                index: complainant?.index,
+                individualId: complainant?.individualId,
+              },
+              showAffidavit: uiFlags?.showAffidavit,
+              isComplainantPip: isComplainantPip,
+              numberOfAdvocates: advocates?.length || 0,
+              showVakalatNamaUpload: uiFlags?.showVakalatNamaUpload,
+              vakalatnamaFileUpload: vakalatnamaDocuments?.length > 0 ? { document: vakalatnamaDocuments } : null,
+              pipAffidavitFileUpload: pipAffidavitDocuments?.length > 0 ? { document: pipAffidavitDocuments } : null,
+            },
+          },
+          isenabled: isEnabled,
+          displayindex: displayIndex,
+          isFormCompleted,
+        };
+      });
+
+      updatedCaseData.additionalDetails["advocateDetails"] = {
+        formdata,
+        ...(isCompleted && { isCompleted }),
+      };
+    }
   }
+
+  return updatedCaseData;
+};
+
+export const transformCaseDataForUpdate = (caseDetails, keys) => {
+  const keyList = Array.isArray(keys) ? keys : [keys];
+  const updatedCaseData = structuredClone(caseDetails || {});
+
+  for (const key of keyList) {
+    if (key === "witnessDetails") {
+      const { formdata = [], isCompleted = false } = caseDetails?.additionalDetails?.[key] || {};
+      if (formdata?.length > 0) {
+        const witnessDetails = formdata?.map(({ data, isenabled, displayindex, uniqueId }) => {
+          return {
+            ...data,
+            uniqueId,
+            uiData: {
+              isenabled,
+              displayIndex: displayindex,
+              isCompleted: isCompleted ? true : false, // force true for all if group isCompleted is true
+            },
+          };
+        });
+        delete updatedCaseData.additionalDetails[key];
+        updatedCaseData.witnessDetails = witnessDetails;
+      } else updatedCaseData.witnessDetails = [];
+    }
+
+    if (key === "advocateDetails") {
+      const { formdata = [], isCompleted = false } = caseDetails?.additionalDetails?.advocateDetails || {};
+      if (formdata?.length > 0) {
+        const advocateDetailsBlock = formdata?.map(({ data, isenabled, displayindex, isFormCompleted }) => {
+          const multipleAdvocatesAndPip = data?.multipleAdvocatesAndPip || {};
+
+          // Map multipleAdvocateNameDetails back to advocates array
+          const advocates = (multipleAdvocatesAndPip?.multipleAdvocateNameDetails || []).map((detail) => ({
+            id: detail?.advocateBarRegNumberWithName?.advocateId || "",
+            barRegistrationNumber: detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal || "",
+            individualId: detail?.advocateBarRegNumberWithName?.individualId || "",
+            additionalDetails: {
+              username: detail?.advocateBarRegNumberWithName?.advocateName || "",
+              mobileNumber: detail?.advocateNameDetails?.advocateMobileNumber || "",
+            },
+            auditDetails: {
+              createdBy: detail?.advocateBarRegNumberWithName?.advocateUuid || "",
+            },
+            documents: detail?.advocateNameDetails?.advocateIdProof || [],
+          }));
+
+          // Map vakalatnama documents back
+          const vakalatnama = (multipleAdvocatesAndPip?.vakalatnamaFileUpload?.document || []).map((doc) => ({
+            fileStore: doc?.fileStore || "",
+            documentType: doc?.documentType || "VAKALATNAMA_DOC",
+            additionalDetails: {
+              fileName: doc?.fileName || "VAKALATNAMA",
+              documentName: doc?.documentName || "",
+            },
+          }));
+
+          // Map pip affidavit documents back
+          const pipAffidavit = (multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document || []).map((doc) => ({
+            fileStore: doc?.fileStore || "",
+            documentType: doc?.documentType || "PIP_AFFIDAVIT_DOC",
+            additionalDetails: {
+              fileName: doc?.fileName || "PIP_AFFIDAVIT",
+              documentName: doc?.documentName || "",
+            },
+          }));
+
+          const boxComplainant = multipleAdvocatesAndPip?.boxComplainant || {};
+
+          return {
+            complainant: {
+              index: boxComplainant?.index,
+              individualId: boxComplainant?.individualId || "",
+              firstName: boxComplainant?.firstName || null,
+              middleName: boxComplainant?.middleName || null,
+              lastName: boxComplainant?.lastName || null,
+              mobileNumber: boxComplainant?.mobileNumber || null,
+            },
+            isComplainantPip: multipleAdvocatesAndPip?.isComplainantPip || {},
+            uiFlags: {
+              showAffidavit: multipleAdvocatesAndPip?.showAffidavit,
+              showVakalatNamaUpload: multipleAdvocatesAndPip?.showVakalatNamaUpload,
+            },
+            documents: {
+              vakalatnama,
+              pipAffidavit,
+            },
+            advocates,
+            displayIndex: displayindex || 0,
+            isEnabled: isenabled,
+            isFormCompleted: isFormCompleted || (isCompleted ? true : false),
+          };
+        });
+
+        delete updatedCaseData.additionalDetails.advocateDetails;
+        updatedCaseData.advocateDetailsBlock = advocateDetailsBlock;
+      } else updatedCaseData.advocateDetailsBlock = [];
+    }
+  }
+
   return updatedCaseData;
 };
 
