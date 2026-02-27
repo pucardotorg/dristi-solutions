@@ -116,11 +116,7 @@ public class DigitalDocumentService {
                 digitalizedDocument.getDocuments().add(document);
 
                 WorkflowObject workflow = new WorkflowObject();
-                if (request.getAction() == null) {
-                    workflow.setAction(E_SIGN);
-                } else {
-                    workflow.setAction(request.getAction());
-                }
+                workflow.setAction(Objects.requireNonNullElse(request.getAction(), E_SIGN));
                 digitalizedDocument.setWorkflow(workflow);
 
                 if (TypeEnum.MEDIATION.equals(digitalizedDocument.getType())) {
@@ -161,7 +157,7 @@ public class DigitalDocumentService {
                         ? digitalizedDocument.getExaminationOfAccusedDetails().getAccusedName()
                         : null;
 
-                documentName = buildFileName("S351_EXAMINATION", accusedName);
+                documentName = buildFileName(S351_EXAMINATION, accusedName);
             }
 
             if (documentName == null) {
@@ -173,7 +169,7 @@ public class DigitalDocumentService {
             return additionalDetails;
 
         } catch (Exception e) {
-            log.warn("method=buildAdditionalDetails, status=FAILED, documentNumber={}",
+            log.error("method=buildAdditionalDetails, status=FAILED, documentNumber={}",
                     digitalizedDocument.getDocumentNumber(), e);
             return null;
         }

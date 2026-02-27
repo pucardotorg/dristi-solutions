@@ -60,6 +60,10 @@ public class FileStoreUtil {
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
+            if (files == null || files.isEmpty()) {
+                throw new CustomException("INVALID_FILE", "File cannot be null or empty");
+            }
+
             // Convert each MultipartFile to a Resource
             for (MultipartFile file : files) {
                 body.add("file", new MultipartInputStreamFileResource(
