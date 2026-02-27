@@ -191,7 +191,6 @@ async function applicationGeneric(
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
-    const prayer = application?.applicationDetails?.prayer || "";
     const { complainantList, accusedList } = getComplaintAndAccusedList(
       courtCase || {}
     );
@@ -208,7 +207,6 @@ async function applicationGeneric(
           partyName: partyName,
           purposeOfApplication: "asdfasdf",
           complainantName: partyName,
-          prayer,
           additionalComments,
           reasonForApplication,
           partyType,
