@@ -57,8 +57,9 @@ public class ApplicationRepository {
 
             // TODO : remove this, this is temporary fix (#5016)
             String asUser = applicationSearchRequest.getCriteria().getAsUser();
-            if(asUser == null){
-                asUser = applicationSearchRequest.getRequestInfo().getUserInfo().getUuid();
+            if(EMPLOYEE_UPPER.equalsIgnoreCase(applicationSearchRequest.getRequestInfo().getUserInfo().getType())){
+                // This field is only used for citizens
+                asUser = null;
             }
 
             String applicationQuery = queryBuilder.getApplicationSearchQuery(applicationSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList, asUser, applicationSearchRequest.getRequestInfo());
