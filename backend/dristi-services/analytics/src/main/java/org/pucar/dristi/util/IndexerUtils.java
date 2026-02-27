@@ -428,6 +428,11 @@ public class IndexerUtils {
 
         log.info("Inside indexer utils build payload:: entityType: {}, referenceId: {}, status: {}, action: {}, tenantId: {}", entityType, referenceId, status, action, tenantId);
         Object object = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, action, tenantId, requestInfo);
+        // Extract computed substage from checkCaseOverAllStatus if available (for case entity types)
+        String computedSubStage = null;
+        if (object instanceof CaseOverallStatus) {
+            computedSubStage = ((CaseOverallStatus) object).getSubstage();
+        }
         Map<String, String> details = processEntity(entityType, referenceId, status, action, object, requestInfo);
 
         // Validate details map using the utility function
@@ -529,7 +534,7 @@ public class IndexerUtils {
 
             String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
             String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
-            caseSubStage = caseDetails.get(0).path("substage").textValue();
+            caseSubStage = computedSubStage != null ? computedSubStage : caseDetails.get(0).path("substage").textValue();
 
             if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
                 caseNumber = courtCaseNumber;
