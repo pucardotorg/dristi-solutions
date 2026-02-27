@@ -59,14 +59,14 @@ public class ApplicationRepository {
 
             // TODO : remove this, this is temporary fix (#5016)
             String asUser = applicationSearchRequest.getCriteria().getAsUser();
-            boolean isEmployee = Optional.of(applicationSearchRequest)
+            boolean isCitizen = Optional.of(applicationSearchRequest)
                     .map(ApplicationSearchRequest::getRequestInfo)
                     .map(RequestInfo::getUserInfo)
                     .map(User::getType)
-                    .map(EMPLOYEE_UPPER::equalsIgnoreCase)
+                    .map(CITIZEN_UPPER::equalsIgnoreCase)
                     .orElse(false);
             // asUser is only used for citizens
-            if(isEmployee){
+            if(!isCitizen){
                 asUser = null;
             }
 
