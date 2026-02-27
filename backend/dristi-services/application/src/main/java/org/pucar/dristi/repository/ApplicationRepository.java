@@ -2,6 +2,8 @@ package org.pucar.dristi.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.queryBuilder.ApplicationQueryBuilder;
@@ -57,8 +59,14 @@ public class ApplicationRepository {
 
             // TODO : remove this, this is temporary fix (#5016)
             String asUser = applicationSearchRequest.getCriteria().getAsUser();
-            if(EMPLOYEE_UPPER.equalsIgnoreCase(applicationSearchRequest.getRequestInfo().getUserInfo().getType())){
-                // This field is only used for citizens
+            boolean isEmployee = Optional.of(applicationSearchRequest)
+                    .map(ApplicationSearchRequest::getRequestInfo)
+                    .map(RequestInfo::getUserInfo)
+                    .map(User::getType)
+                    .map(EMPLOYEE_UPPER::equalsIgnoreCase)
+                    .orElse(false);
+            // asUser is only used for citizens
+            if(isEmployee){
                 asUser = null;
             }
 
