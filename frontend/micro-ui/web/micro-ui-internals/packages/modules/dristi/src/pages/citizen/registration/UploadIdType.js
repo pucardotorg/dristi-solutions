@@ -82,7 +82,7 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
             formData: {
               ...newParams.formData,
               clientDetails: {
-                ...newParams.formData.clientDetails,
+                ...newParams.formData?.clientDetails,
                 barCouncilId: [
                   [
                     barCouncilFilename,
@@ -116,7 +116,7 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
     };
 
     handleRedirect();
-  }, [params.address, params, history, pathOnRefresh, isAdvocateUploading]);
+  }, [params?.address, params, history, pathOnRefresh, isAdvocateUploading]);
 
   return (
     <div className="advocate-additional-details upload-id">

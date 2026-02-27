@@ -830,6 +830,7 @@ export const UICustomizations = {
       const tenantId = window?.Digit.ULBService.getStateId();
       const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
       const status = !filterList?.status || filterList?.status === "PUBLISHED" ? "PUBLISHED" : "EMPTY";
+      const userUuid = Digit.UserService.getUser()?.info?.uuid;
       return {
         ...requestCriteria,
         body: {
@@ -838,6 +839,7 @@ export const UICustomizations = {
             ...requestCriteria.body.criteria,
             ...filterList,
             status: userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order") ? status : filterList?.status,
+            asUser: getAuthorizedUuid(userUuid),
           },
           tenantId,
           pagination: {
@@ -1130,6 +1132,8 @@ export const UICustomizations = {
   },
   FilingsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
+      const userUUID = Digit.UserService.getUser()?.info?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUUID);
       const filterList = Object.keys(requestCriteria.state.searchForm)
         .map((key) => {
           if (requestCriteria.state.searchForm[key]?.type) {
@@ -1158,6 +1162,7 @@ export const UICustomizations = {
           criteria: {
             ...requestCriteria.body.criteria,
             ...filterList,
+            asUser: authorizedUuid,
             status: userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order") ? status : filterList?.status,
           },
           tenantId,
@@ -2634,7 +2639,8 @@ export const UICustomizations = {
       const currentDateInMs = new Date().setHours(23, 59, 59, 999);
       const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
       const isCitizen = userRoles?.includes("CITIZEN");
-
+      const userUUID = Digit.UserService.getUser()?.info?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUUID);
       const limit = requestCriteria?.state?.tableForm?.limit || 10;
       const offSet = requestCriteria?.state?.tableForm?.offset || 0;
       const bailId = requestCriteria?.state?.searchForm?.bailId;
@@ -2647,6 +2653,7 @@ export const UICustomizations = {
             ...requestCriteria?.body?.criteria,
             ...(bailId && { bailId }),
             ...(isCitizen ? {} : { status: ["PENDING_REVIEW", "COMPLETED", "VOID"] }),
+            asUser: authorizedUuid,
             fuzzySearch: true,
           },
           pagination: {

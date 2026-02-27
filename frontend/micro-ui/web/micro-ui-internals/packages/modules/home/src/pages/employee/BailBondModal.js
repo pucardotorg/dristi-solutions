@@ -6,7 +6,7 @@ import { Loader, CloseSvg } from "@egovernments/digit-ui-react-components";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { Urls } from "../../hooks";
 import { HomeService } from "../../hooks/services";
-import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const CloseBtn = (props) => {
   return (
@@ -55,6 +55,8 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
   const caseTitle = row?.caseTitle || queryStrings?.caseTitle;
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [cnrNumber, setCnrNumber] = useState("");
+  const userUUID = Digit.UserService.getUser()?.info?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUUID);
 
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
@@ -90,6 +92,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
             // courtId: courtId,
             filingNumber: filingNumber,
             fuzzySearch: true,
+            asUser: authorizedUuid,
           },
           pagination: {
             limit: 100,

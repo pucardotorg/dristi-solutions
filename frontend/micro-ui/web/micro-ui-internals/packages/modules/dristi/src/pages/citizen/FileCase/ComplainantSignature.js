@@ -1177,12 +1177,23 @@ const ComplainantSignature = ({ path }) => {
     }
   }, [caseDetails, tenantId, isLoading, isLitigant]);
 
-  const isRightPannelEnable = () => {
+  const isRightPannelEnable = useMemo(() => {
     if (isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) {
       return !(isCurrentAdvocateSigned || isOtherAdvocateSigned || isCurrentPoaSigned || isEsignSuccess || uploadDoc);
     }
     return !(isCurrentLitigantSigned || isCurrentPoaSigned || (isCurrentLitigantContainPoa && !isCurrentPersonPoa) || isEsignSuccess);
-  };
+  }, [
+    isOwnerAdvocateSelf,
+    isMemberOnBehalfOfOwnerAdvocate,
+    isCurrentAdvocateSigned,
+    isOtherAdvocateSigned,
+    isEsignSuccess,
+    uploadDoc,
+    isCurrentLitigantSigned,
+    isCurrentPoaSigned,
+    isCurrentLitigantContainPoa,
+    isCurrentPersonPoa,
+  ]);
 
   if (isLoading || isCaseDataFetching) {
     return <Loader />;
@@ -1297,7 +1308,7 @@ const ComplainantSignature = ({ path }) => {
         </div>
       </div>
       <div style={styles.rightPanel}>
-        {isRightPannelEnable() && (
+        {isRightPannelEnable && (
           <div style={styles.signaturePanel}>
             <div style={styles.signatureTitle}>{t("ADD_SIGNATURE")}</div>
             {isSelectedUploadDoc && isOwnerAdvocateSelf && (isEFilingEditAllowedMember || isCaseCorrectionAllowedMember) && (

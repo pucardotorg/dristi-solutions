@@ -667,7 +667,5 @@ export const DRISTIService = {
       data,
       params,
       method: "POST",
-    }
-  ),
-    
+    }),
 };

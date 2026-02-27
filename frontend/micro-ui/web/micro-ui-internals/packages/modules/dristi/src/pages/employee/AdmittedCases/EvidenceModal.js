@@ -15,7 +15,15 @@ import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import { cleanString, getAllAssociatedPartyUuids, getDate, getOrderActionName, getOrderTypes, setApplicationStatus } from "../../../Utils";
+import {
+  cleanString,
+  getAllAssociatedPartyUuids,
+  getAuthorizedUuid,
+  getDate,
+  getOrderActionName,
+  getOrderTypes,
+  setApplicationStatus,
+} from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
@@ -84,6 +92,8 @@ const EvidenceModal = ({
     createdByUser: null,
     onBehalfOfUser: null,
   });
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const setData = (data) => {
     setFormData(data);
   };
@@ -134,6 +144,8 @@ const EvidenceModal = ({
       senderUuid = asUser;
       createdBy = auditDetails?.createdBy || auditdetails?.createdBy;
       onBehalfOfUuid = onBehalfOf?.[0];
+      // For e-filing documents, createdBy will be of judge's uuid but anyways it will not return any data on
+      // individual search and only sender name will be shown for efiling documents.
     } else if (artifact?.artifactList) {
       const { asUser, auditDetails } = artifact?.artifactList;
       senderUuid = asUser;
@@ -611,6 +623,7 @@ const EvidenceModal = ({
         filingNumber,
         artifactNumber,
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
