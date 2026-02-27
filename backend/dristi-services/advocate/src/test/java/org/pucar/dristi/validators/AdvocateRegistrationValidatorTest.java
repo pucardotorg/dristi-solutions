@@ -41,9 +41,6 @@ import static org.mockito.Mockito.*;
     @Mock
     private Configuration configuration;
 
-    @Mock
-    private Pattern pattern;
-
     private AdvocateRequest advocateRequest;
     private RequestInfo requestInfo;
 
