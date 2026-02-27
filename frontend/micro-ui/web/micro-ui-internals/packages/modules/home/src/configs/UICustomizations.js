@@ -45,8 +45,6 @@ const handleTaskDetails = (taskDetails) => {
   }
 };
 
-
-
 export const UICustomizations = {
   EpostTrackingUiConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
@@ -632,6 +630,8 @@ export const UICustomizations = {
           return taskDetails?.deliveryChannels?.statusChangeDate || "-";
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
+        case "PAYMENT_MADE":
+          return taskDetails?.deliveryChannels?.feePaidDate || "-";
         default:
           return t("ES_COMMON_NA");
       }
@@ -932,8 +932,9 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${applicationNumber || ""
-                  }&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
+                  applicationNumber || ""
+                }&individualId=${individualId}&type=${usertype}`}
               >
                 {applicationNumber
                   ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)

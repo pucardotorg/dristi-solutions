@@ -28,9 +28,12 @@ const GenericUploadSignatureModal = ({
   fileStoreId,
   title = "SELECT_MODE_SIGNING",
   infoText = "BAIL_SIGN_INFO",
+  customUploadDocuments,
+  onCustomDownload,
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
+  const { uploadDocuments: defaultUploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
+  const uploadDocuments = customUploadDocuments || defaultUploadDocuments;
   const [formData, setFormData] = useState({});
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [fileUploadError, setFileUploadError] = useState(null);
@@ -74,8 +77,9 @@ const GenericUploadSignatureModal = ({
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
         setLoader(true);
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
-        handleSubmit(uploadedFileId?.[0]?.fileStoreId);
+        const uploadResult = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        const uploadedFileStoreId = uploadResult?.[0]?.fileStoreId;
+        handleSubmit(uploadedFileStoreId);
       } catch (error) {
         setLoader(false);
         console.error("error", error);
@@ -130,6 +134,7 @@ const GenericUploadSignatureModal = ({
           fileStoreId={fileStoreId}
           cancelLabel={"SUBMIT"}
           fileUploadError={fileUploadError}
+          onCustomDownload={onCustomDownload}
         />
       )}
     </React.Fragment>

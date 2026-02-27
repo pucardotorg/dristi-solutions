@@ -179,6 +179,14 @@ public class PaymentUpdateService {
             }
             log.info("In Payment Update, Encrypting: {}", caseRequest.getCases().getId());
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), configuration.getCourtCaseEncrypt(), CourtCase.class));
+            // Merge stage/substage from Redis to prevent overwriting concurrent updates from updateCaseOverallStatus
+            CourtCase latestRedisCase = caseService.searchRedisCache(requestInfo, courtCase.getId().toString());
+            if (latestRedisCase != null) {
+                caseRequest.getCases().setStage(latestRedisCase.getStage());
+                caseRequest.getCases().setSubstage(latestRedisCase.getSubstage());
+                caseRequest.getCases().setStageBackup(latestRedisCase.getStageBackup());
+                caseRequest.getCases().setSubstageBackup(latestRedisCase.getSubstageBackup());
+            }
             cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), caseRequest.getCases());
             if(paymentReceipt!=null){
                 caseRequest.getCases().setDocuments(List.of(paymentReceipt));
