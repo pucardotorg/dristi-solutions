@@ -2792,7 +2792,7 @@ export const UICustomizations = {
       const caseSearchText = searchForm?.caseSearchText;
 
       const existingCriteria = requestCriteria?.body?.criteria || {};
-      const existingPagination = requestCriteria?.body?.pagination || { limit: 100, offSet: 0 };
+      const existingPagination = requestCriteria?.body?.pagination || { limit: 10, offSet: 0 };
 
       return {
         ...requestCriteria,

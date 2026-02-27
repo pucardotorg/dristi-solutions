@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { InboxSearchComposer, Loader, Toast, Dropdown } from "@egovernments/digit-ui-react-components";
-import { InfoCircleIcon } from "../../../icons/svgIndex";
+import { InboxSearchComposer, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { InfoCircleIcon, AdvocateProfileChevronIcon } from "../../../icons/svgIndex";
 import { assignCasesConfig } from "./assignCasesConfig";
 
 const sectionsParentStyle = {
@@ -11,6 +11,48 @@ const sectionsParentStyle = {
   flexDirection: "column",
   gridTemplateColumns: "20% 1fr",
   gap: "1rem",
+};
+
+const AccessTypeDropdown = ({ options = [], selected, onChange }) => {
+  const [open, setOpen] = useState(false);
+
+  const handleToggle = () => {
+    setOpen((prev) => !prev);
+  };
+
+  const handleSelect = (option) => {
+    if (onChange) {
+      onChange(option);
+    }
+    setOpen(false);
+  };
+
+  return (
+    <div className="manage-office-member-access-type">
+      <button type="button" className="manage-office-member-access-type__control" onClick={handleToggle}>
+        <span className="manage-office-member-access-type__value">{selected?.name || ""}</span>
+        <span className="manage-office-member-access-type__arrow" aria-hidden="true">
+          <AdvocateProfileChevronIcon />
+        </span>
+      </button>
+      {open && (
+        <div className="manage-office-member-access-type__menu">
+          {options.map((option) => (
+            <button
+              key={option.code}
+              type="button"
+              className={`manage-office-member-access-type__option${
+                option.code === selected?.code ? " manage-office-member-access-type__option--selected" : ""
+              }`}
+              onClick={() => handleSelect(option)}
+            >
+              {option.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const ManageOfficeMember = () => {
@@ -408,14 +450,7 @@ const ManageOfficeMember = () => {
             </div>
             <div className="manage-office-member-detail-item">
               <span className="manage-office-member-detail-label">{t("ACCESS_TYPE") || "Access Type"}</span>
-              <Dropdown
-                t={t}
-                option={accessTypeOptions}
-                selected={selectedAccessTypeOption}
-                optionKey={"name"}
-                select={handleAccessTypeChange}
-                style={{ minWidth: "220px" }}
-              />
+              <AccessTypeDropdown options={accessTypeOptions} selected={selectedAccessTypeOption} onChange={handleAccessTypeChange} />
             </div>
           </div>
 
