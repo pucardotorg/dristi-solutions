@@ -688,9 +688,10 @@ const HomeView = () => {
                 <UpcomingHearings
                   handleNavigate={handleNavigate}
                   individualData={individualData}
-                  attendeeIndividualId={individualId}
+                  attendeeIndividualId={selectedSeniorAdvocate?.individualId}
                   userInfoType={userInfoType}
-                  advocateId={advocateId}
+                  advocateId={selectedSeniorAdvocate?.id}
+                  selectedSeniorAdvocate={selectedSeniorAdvocate}
                   t={t}
                 />
                 {(viewDashBoards || viewADiary) && (
