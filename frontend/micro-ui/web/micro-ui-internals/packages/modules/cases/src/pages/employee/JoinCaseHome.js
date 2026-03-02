@@ -1492,6 +1492,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             courtId: caseDetails?.courtId,
             applicationType: "REQUEST_FOR_BAIL",
             onBehalfOf: [uuid],
+            asUser: getAuthorizedUuid(uuid),
           },
         });
 

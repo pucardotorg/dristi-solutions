@@ -526,6 +526,18 @@
   gap: 0;
 }
 
+.manage-office-manage-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: #ffffff;
+  color: #007e7e;
+  border: 1px solid #007e7e;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 .manage-office-delete-btn {
   background: none;
   border: none;
@@ -551,6 +563,289 @@
 .manage-office-empty__subtitle {
   font-size: 16px;
   color: #77787b;
+}
+
+/* Manage Office Member page */
+.manage-office-member-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 30px 48px;
+}
+
+.manage-office-member-scrollable {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding-bottom: 90px; /* space for fixed footer */
+}
+
+.manage-office-member-title {
+  font-family: Roboto, sans-serif;
+  font-weight: 700;
+  font-style: normal;
+  font-size: 32px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  margin-bottom: 32px;
+  color: #231f20;
+}
+
+.manage-office-member-content-row {
+  display: flex;
+  flex-direction: row;
+  background-color: #f7f5f3;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+  gap: 0;
+  align-items: flex-start;
+  flex-wrap: wrap; /* allow wrapping on smaller widths */
+}
+
+.manage-office-member-details {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  align-items: flex-start;
+  flex: 1 1 320px;
+  min-width: 260px;
+}
+
+.manage-office-member-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 16px;
+  flex: 0 0 auto;
+
+  &:not(:first-child) {
+    border-left: 1px solid #d6d5d4;
+    margin-left: 32px;
+    padding-left: 32px;
+  }
+}
+
+.manage-office-member-detail-label {
+  font-family: var(--font-family-body, Roboto, sans-serif);
+  font-weight: 400;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1.25;
+  letter-spacing: 0%;
+  color: var(--text-muted, #64748b);
+  min-height: 2.5em;
+}
+
+.manage-office-member-detail-value {
+  font-family: var(--font-family-body, Roboto, sans-serif);
+  font-weight: 600;
+  font-style: normal;
+  font-size: 16px;
+  line-height: 1.5;
+  letter-spacing: 0%;
+  color: var(--text-headings, #0f172a);
+}
+
+.manage-office-member-options {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0;
+  flex-wrap: wrap; /* let controls + button wrap */
+  flex: 1 1 320px;
+  min-width: 260px;
+  border-left: 1px solid #d6d5d4;
+  margin-left: 32px;
+  padding-left: 32px;
+}
+
+.manage-office-member-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 0 0 auto;
+  min-width: 0;
+
+  &:not(:first-of-type) {
+    border-left: 1px solid #d6d5d4;
+    margin-left: 32px;
+    padding-left: 32px;
+  }
+}
+
+.manage-office-member-option-label {
+  font-family: var(--font-family-body, Roboto, sans-serif);
+  font-weight: 400;
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1.25;
+  letter-spacing: 0%;
+  color: var(--text-muted, #64748b);
+  min-height: 2.5em;
+}
+
+.manage-office-member-select {
+  padding: 8px 12px;
+  border: 1px solid #d6d5d4;
+  border-radius: 4px;
+  font-size: 16px;
+  min-width: 80px;
+  background-color: #ffffff;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23334155' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 8px;
+  padding-right: 36px;
+
+  &:disabled {
+    background-color: #f5f5f5;
+    color: #666;
+    cursor: not-allowed;
+    opacity: 0.7;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+}
+
+.assign-cases-disabled input.custom-checkbox {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+.manage-office-member-remove-btn {
+  padding: 8px 16px;
+  background-color: #bb2c2f;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: auto;      /* push to right within options row */
+  align-self: flex-start;
+  height: fit-content;
+  white-space: nowrap;
+  margin-top: 12px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .manage-office-member-content-row {
+    flex-direction: column;
+  }
+
+  .manage-office-member-details {
+    flex: 1 1 auto;
+    min-width: 100%;
+  }
+
+  .manage-office-member-options {
+    flex: 1 1 auto;
+    min-width: 100%;
+    border-left: none;
+    margin-left: 0;
+    padding-left: 0;
+    margin-top: 16px;
+  }
+}
+
+.manage-office-member-info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: #e8f4f8;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #231f20;
+}
+
+.manage-office-member-info-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+
+  svg {
+    display: block;
+  }
+}
+
+.assign-cases-section {
+  margin-bottom: 24px;
+
+  .assign-cases-section-title {
+    font-family: Roboto, sans-serif;
+    font-weight: 700;
+    font-style: normal;
+    font-size: 32px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    color: #231f20;
+  }
+
+  .assign-cases-controls {
+    margin-bottom: 1rem;
+  }
+
+  .assign-cases-assign-all-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .assign-cases-assign-all-label {
+    font-size: 14px;
+    font-weight: 400;
+    color: #231f20;
+  }
+
+  .assign-cases-assign-all-select {
+    min-width: 120px;
+  }
+}
+
+.manage-office-member-inbox {
+  margin-top: 16px;
+
+  /* Keep checkbox column narrow and close to Case Name (same as sign process tabs) */
+  table thead th:first-child,
+  table tbody td:first-child {
+    width: 52px !important;
+    min-width: 44px !important;
+    max-width: 60px !important;
+    text-align: left;
+    padding-left: 16px;
+  }
+
+  .inbox-search-component-wrapper {
+    .sections-parent {
+      .section {
+        border: none;
+        box-shadow: none;
+        background-color: transparent;
+        padding: 0;
+      }
+    }
+  }
+}
+
+.manage-office-member-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  border-top: 1px solid #d6d5d4;
+  padding: 24px 48px 32px;
+  background: #ffffff;
+  z-index: 100;
 }
 
 .manage-office-modal-overlay {

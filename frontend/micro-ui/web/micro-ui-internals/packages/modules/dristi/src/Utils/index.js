@@ -638,6 +638,17 @@ export const getComplainantSideAdvocates = (caseDetails) => {
     });
 };
 
+//all advocates
+export const getAllAdvocates = (caseDetails) => {
+  return caseDetails?.representatives?.map((rep) => {
+    return {
+      name: rep?.additionalDetails?.advocateName,
+      partyUuid: rep?.additionalDetails?.uuid,
+      partyType: "advocate",
+    };
+  });
+};
+
 //advocates and clerk members who are associated with complainants.
 export const getAdvocateOfficeMembers = (caseDetails) => {
   const advocateOfficeMembers =
@@ -660,6 +671,26 @@ export const getAdvocateOfficeMembers = (caseDetails) => {
   return advocateOfficeMembers?.filter(Boolean);
 };
 
+//advocates and clerk members who are associated with current selected advocate in the top dropdown
+export const getSelectedAdvocateOfficeMembers = (caseDetails) => {
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+  const currentAdvocate = caseDetails?.advocateOffices?.find((adv) => adv?.officeAdvocateUserUuid === storedAdvocate?.uuid);
+
+  const memberClerks = (currentAdvocate?.clerks || []).map((clerk) => ({
+    name: clerk?.memberName,
+    partyUuid: clerk?.memberUserUuid,
+    partyType: "memberClerk",
+  }));
+
+  const memberAdvocates = (currentAdvocate?.advocates || []).map((advocate) => ({
+    name: advocate?.memberName,
+    partyUuid: advocate?.memberUserUuid,
+    partyType: "memberAdvocate",
+  }));
+
+  return [...memberClerks, ...memberAdvocates];
+};
+
 export const getCaseEditAllowedAssignees = (caseDetails) => {
   const complainants = getComplainants(caseDetails) || [];
   const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants) || [];
@@ -675,6 +706,13 @@ export const getAllComplainantSideUuids = (caseDetails) => {
   const advocates = getComplainantSideAdvocates(caseDetails) || [];
   const advvocateOfficeMembers = getAdvocateOfficeMembers(caseDetails) || [];
   const allParties = [...complainants, ...poaHolders, ...advocates, ...advvocateOfficeMembers];
+  return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+};
+
+export const getAllAdvocatesAndClerksUuids = (caseDetails) => {
+  const advocates = getAllAdvocates(caseDetails) || [];
+  const advocateOfficeMembers = getSelectedAdvocateOfficeMembers(caseDetails) || [];
+  const allParties = [...advocates, ...advocateOfficeMembers];
   return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
 };
 
@@ -750,29 +788,49 @@ export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
 };
 
 export const getLoggedInUserOnBehalfOfUuid = (caseDetails, currentLoggedInUserUuid) => {
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate")); //selected advocate in the top dropdown.
+
   const isAdvocate = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === currentLoggedInUserUuid);
-  // if current user is not a clerk/jr adv then return current user uuid.
-  if (isAdvocate) {
+  // if logged in user is advocate, we have to also check if he exists in same case as direct advocate as well as junior advocate under another senior adocoate.
+  // and check selected advocate in the top dropdown. -> accordingly return value.
+
+  //If logged in user is a junior adv working under a senior in the case.
+  const advocateUuidIfJuniorAdvocateAssistant = caseDetails?.advocateOffices
+    ?.filter((office) => office?.advocates?.find((adv) => adv?.memberUserUuid === currentLoggedInUserUuid))
+    ?.find((office) => office?.officeAdvocateUserUuid === storedAdvocate?.uuid)?.officeAdvocateUserUuid;
+  //If logged in user is a clerk working under a senior in the case.
+  const advocateUuidIfClerkAssistant = caseDetails?.advocateOffices
+    ?.filter((office) => office?.clerks?.find((clerk) => clerk?.memberUserUuid === currentLoggedInUserUuid))
+    ?.find((office) => office?.officeAdvocateUserUuid === storedAdvocate?.uuid)?.officeAdvocateUserUuid;
+
+  if (advocateUuidIfJuniorAdvocateAssistant) {
+    return advocateUuidIfJuniorAdvocateAssistant;
+  } else if (advocateUuidIfClerkAssistant) {
+    return advocateUuidIfClerkAssistant;
+  } else if (isAdvocate) {
+    // if current user is not a clerk/jr adv then return current user uuid.
     return currentLoggedInUserUuid;
-  } else if (!isAdvocate) {
-    //If logged in user is a junior adv working under a senior in the case.
-    const advocateUuidIfJuniorAdvocateAssistant = caseDetails?.advocateOffices?.find((office) =>
-      office?.advocates?.find((adv) => adv?.memberUserUuid === currentLoggedInUserUuid)
-    )?.officeAdvocateUserUuid;
-    //If logged in user is a clerk working under a senior in the case.
-    const advocateUuidIfClerkAssistant = caseDetails?.advocateOffices?.find((office) =>
-      office?.clerks?.find((clerk) => clerk?.memberUserUuid === currentLoggedInUserUuid)
-    )?.officeAdvocateUserUuid;
-
-    if (advocateUuidIfJuniorAdvocateAssistant) {
-      return advocateUuidIfJuniorAdvocateAssistant;
-    } else if (advocateUuidIfClerkAssistant) {
-      return advocateUuidIfClerkAssistant;
-    }
-
-    //if logged in user is POA or litigant.
-    else return currentLoggedInUserUuid;
   }
+
+  //if logged in user is POA or litigant.
+  else return currentLoggedInUserUuid;
+};
+
+export const checkIfJuniorAndDirectAdvocate = (caseDetails, currentLoggedInUserUuid) => {
+  const isAdvocate = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === currentLoggedInUserUuid);
+  // if logged in user is advocate, we have to also check if he exists in same case as direct advocate as well as junior advocate under another senior adocoate.
+  // and check selected advocate in the top dropdown. -> accordingly return value.
+
+  //If logged in user is a junior adv working under a senior in the case.
+  const ifJuniorAdvocate = caseDetails?.advocateOffices?.find((office) =>
+    office?.advocates?.find((adv) => adv?.memberUserUuid === currentLoggedInUserUuid)
+  );
+
+  if (ifJuniorAdvocate && isAdvocate) {
+    return true;
+  }
+
+  return false;
 };
 
 export const getClerkMembersForPartiesTab = (data) => {
@@ -890,11 +948,36 @@ export const getAuthorizedUuid = (currentLoggedInUserUuid) => {
   return currentLoggedInUserUuid;
 };
 
+export const getAllAssociatedPartyUuidsForBailBondPendingTask = (caseDetails, asUser) => {
+  // First check if owner is present in any office
+  const ownerOffice = caseDetails?.advocateOffices?.find((office) => office?.officeAdvocateUserUuid === asUser);
+  const officeAdvocateUuid = ownerOffice?.officeAdvocateUserUuid;
+
+  if (officeAdvocateUuid) {
+    const advocates = ownerOffice?.advocates || [];
+    const clerks = ownerOffice?.clerks || [];
+    // Collect all memberUserUuid
+    const editableUsers = [
+      officeAdvocateUuid,
+      ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
+      ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
+    ];
+
+    // Remove null/undefined + de-duplicate
+    return Array.from(new Set((editableUsers || []).filter(Boolean)));
+  }
+  return [asUser];
+};
+
 export const getAllAssociatedPartyUuids = (caseDetails, ownerUuid) => {
   // First check if owner is present in any office
   const ownerOffice = caseDetails?.advocateOffices?.find((office) => office?.officeAdvocateUserUuid === ownerUuid);
-  if (ownerOffice) {
-    const officeAdvocateUuid = ownerOffice?.officeAdvocateUserUuid;
+  const officeAdvocateUuid = ownerOffice?.officeAdvocateUserUuid;
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+  // if a clerk or jr advocate is working under multiple senior advocate in same case,
+  // then we have to see if the senior advocate selected in the dropdown is the owner of the application.
+
+  if (officeAdvocateUuid && officeAdvocateUuid === storedAdvocate?.uuid) {
     const advocates = ownerOffice?.advocates || [];
     const clerks = ownerOffice?.clerks || [];
     // Collect all memberUserUuid

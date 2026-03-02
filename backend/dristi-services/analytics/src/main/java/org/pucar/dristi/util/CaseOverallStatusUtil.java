@@ -156,8 +156,9 @@ public class CaseOverallStatusUtil {
 
 	private Object processCaseOverallStatus(JSONObject request, String referenceId, String status, String action, String tenantId) throws JsonProcessingException {
 		RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
-		publishToCaseOverallStatus(determineCaseStage(referenceId,tenantId,status,action,requestInfo), request);
-		return null;
+		CaseOverallStatus caseOverallStatus = determineCaseStage(referenceId,tenantId,status,action,requestInfo);
+		publishToCaseOverallStatus(caseOverallStatus, request);
+		return caseOverallStatus;
 	}
 
 	private Object processHearingCaseOverallStatus(JSONObject request, String referenceId, String action, String tenantId) throws InterruptedException {

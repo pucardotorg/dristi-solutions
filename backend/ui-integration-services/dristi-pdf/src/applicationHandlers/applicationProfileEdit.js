@@ -9,6 +9,10 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const {
+  getNameByUuid,
+  getComplaintAndAccusedList,
+} = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -126,7 +130,6 @@ async function applicationProfileEdit(
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
-    let barRegistrationNumber = "";
     let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
@@ -139,7 +142,6 @@ async function applicationProfileEdit(
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
@@ -250,7 +252,8 @@ async function applicationProfileEdit(
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const reasonForChange =
       application?.additionalDetails?.formdata?.reasonForChange?.text || "";
-    const prayer = application?.additionalDetails?.formdata?.prayer?.text || "";
+    const comments =
+      application?.additionalDetails?.formdata?.comments?.text || "";
 
     const currentCompanyName =
       partyType === "respondent"
@@ -260,6 +263,10 @@ async function applicationProfileEdit(
       partyType === "respondent"
         ? oldData?.data?.respondentTypeOfEntity?.name
         : oldData?.data?.complainantTypeOfEntity?.name;
+
+    const { complainantList, accusedList } = getComplaintAndAccusedList(
+      courtCase || {}
+    );
 
     const data = {
       Data: [
@@ -276,13 +283,11 @@ async function applicationProfileEdit(
           partyName: partyName,
           advocateName,
           reasonForEditing: reasonForChange,
-          prayer,
           advocateSignature: "Advocate Signature",
           day: day + ordinalSuffix,
           month: month,
           year: year,
           qrCodeUrl: base64Url,
-          barRegistrationNumber,
           currentName: partyName,
           currentDetailsLitigantType: currentDetailsLitigantType || "",
           currentAge:
@@ -309,6 +314,11 @@ async function applicationProfileEdit(
           newPermanentAddress: showAddress(newData?.addressDetails) || [],
           newResedentialAddress:
             showAddress(newData?.currentAddressDetails) || [],
+          applicationTitle: "APPLICATION FOR EDITING LITIGANT DETAILS",
+          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
+          additionalComments: comments,
         },
       ],
     };

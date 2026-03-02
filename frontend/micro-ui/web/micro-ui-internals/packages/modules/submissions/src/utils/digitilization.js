@@ -2,7 +2,7 @@ import { Urls } from "../hooks/services/Urls";
 
 export const pleaWorkflowActions = {
   SAVEDRAFT: "SAVE_DRAFT",
-  ESIGN: "INITIATE_E-SIGN",
+  SUBMIT: "SUBMIT",
   UPLOAD: "UPLOAD",
   EDIT: "EDIT",
 };
@@ -55,7 +55,7 @@ export const _getCreatePleaPayload = (caseDetails, formData, tenantId, courtId) 
 
 export const _getUpdatePleaPayload = (t, pleaDetails, formData, tenantId, action, fileStoreId, pleaMobileNumber, partyUUID) => {
   let payload = {};
-  if (action === pleaWorkflowActions.ESIGN) {
+  if (action === pleaWorkflowActions.SUBMIT) {
     const documents = Array.isArray(pleaDetails?.documents) ? pleaDetails.documents : [];
     const documentsFile = fileStoreId
       ? [
@@ -78,7 +78,7 @@ export const _getUpdatePleaPayload = (t, pleaDetails, formData, tenantId, action
           accusedMobileNumber: pleaMobileNumber,
         },
         documents: documentsFile ? [...documentsFile] : documents,
-        workflow: { ...pleaDetails.workflow, action, documents: [{}], ...(action === "INITIATE_E-SIGN" && partyUUID && { assignes: [partyUUID] }) },
+        workflow: { ...pleaDetails.workflow, action, documents: [{}], ...(action === "SUBMIT" && partyUUID && { assignes: [partyUUID] }) },
       },
     };
   } else if (action === pleaWorkflowActions.UPLOAD) {

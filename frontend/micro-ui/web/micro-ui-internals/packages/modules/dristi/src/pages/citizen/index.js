@@ -1,5 +1,5 @@
 import { BackButton, Loader, PrivateRoute, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useContext, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch, useRouteMatch } from "react-router-dom";
 import { Route, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -8,11 +8,11 @@ import ApplicationDetails from "../employee/ApplicationDetails";
 import CitizenHome from "./Home";
 import LandingPage from "./Home/LandingPage";
 import ManageOffice from "./Home/ManageOffice";
+import ManageOfficeMember from "./Home/ManageOfficeMember";
 import { newConfig, userTypeOptions } from "./registration/config";
 import Breadcrumb from "../../components/BreadCrumb";
 import SelectEmail from "./registration/SelectEmail";
 import ViewCase from "./view-case";
-import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 import MediationFormSignaturePage from "../employee/AdmittedCases/MediationFormSignaturePage";
 
 const App = ({ stateCode, tenantId, result, fileStoreId }) => {
@@ -41,8 +41,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const isUserLoggedIn = Boolean(token);
   const userInfoType = Digit.UserService.getType();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-  const { AdvocateData } = useContext(AdvocateDataContext);
-  const selectedSeniorAdvocate = AdvocateData;
+  const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
   const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -139,6 +138,12 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
       path: `${path}/home/manage-office`,
       content: t("OFFICE_MANAGEMENT") || "Office Management",
       show: location.pathname.includes("/manage-office"),
+      isLast: !location.pathname.includes("/manage-member"),
+    },
+    {
+      path: `${path}/home/manage-office/manage-member`,
+      content: t("MANAGE_MEMBER") || "Manage Member",
+      show: location.pathname.includes("/manage-member"),
       isLast: true,
     },
   ];
@@ -254,7 +259,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
             </div>
           )}
           {((location.pathname.includes("/view-case") && location.pathname.includes("/edit-profile")) ||
-            location.pathname.includes("/manage-office")) && <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 48 }}></Breadcrumb>}
+            location.pathname.includes("/manage-office") ||
+            location.pathname.includes("/manage-member")) && <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 48 }}></Breadcrumb>}
 
           {userType !== "LITIGANT" && (
             <PrivateRoute exact path={`${path}/home/application-details`} component={(props) => <ApplicationDetails {...props} />} />
@@ -290,6 +296,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
           </PrivateRoute>
           <PrivateRoute exact path={`${path}/home/manage-office`}>
             <ManageOffice />
+          </PrivateRoute>
+          <PrivateRoute exact path={`${path}/home/manage-office/manage-member`}>
+            <ManageOfficeMember />
           </PrivateRoute>
           <div
             className={

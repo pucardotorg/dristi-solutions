@@ -101,6 +101,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        asUser: authorizedUuid,
         ...(caseData?.case?.courtId && { courtId: caseData?.case?.courtId }),
       },
     },
