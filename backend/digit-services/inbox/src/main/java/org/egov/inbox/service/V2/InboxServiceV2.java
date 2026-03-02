@@ -623,6 +623,10 @@ public class InboxServiceV2 {
         if (aggregations != null) {
             Map<String, Object> uniqueFilingNumbers = (Map<String, Object>) aggregations.get("unique_filing_numbers");
             totalSize = ((Number) uniqueFilingNumbers.get("value")).intValue();
+        } else {
+            // Get total count from hits when aggregations are not present (isGroupByFilingNumber = false)
+            Map<String, Object> hitsTotal = (Map<String, Object>) hits.get("total");
+            totalSize = ((Number) hitsTotal.get("value")).intValue();
         }
         paginatedDataResponse.setTotalSize(totalSize);
 
