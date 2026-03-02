@@ -24,6 +24,7 @@ import org.pucar.dristi.web.models.courtcase.WitnessDetails;
 import org.pucar.dristi.web.models.esign.ESignParameter;
 import org.pucar.dristi.web.models.esign.ESignRequest;
 import org.pucar.dristi.web.models.esign.ESignResponse;
+import org.pucar.dristi.web.models.filestore.StorageResponse;
 import org.pucar.dristi.web.models.inbox.*;
 
 import org.springframework.core.io.Resource;
@@ -31,6 +32,7 @@ import org.springframework.http.ResponseEntity;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -1176,6 +1178,11 @@ public class OpenApiService {
 
         Object response = serviceRequestRepository.fetchResult(uri, addAddressRequest);
         return objectMapper.convertValue(response, AddAddressResponse.class);
+    }
+
+    public StorageResponse uploadFiles(List<MultipartFile> files, String tenantId, String module, String tag, RequestInfo requestInfo) {
+
+        return fileStoreUtil.uploadFiles(files, tenantId, module, tag, requestInfo);
     }
 
 }
