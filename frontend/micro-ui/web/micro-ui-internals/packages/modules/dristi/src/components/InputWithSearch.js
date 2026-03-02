@@ -65,6 +65,7 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
     if (!success) {
       setError(config.key, { msg: "CS_INVALID_IFSC" });
     } else {
+      clearErrors(config.key);
       clearErrors(input.name);
     }
   };
