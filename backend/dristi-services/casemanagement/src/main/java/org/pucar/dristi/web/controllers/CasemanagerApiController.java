@@ -193,7 +193,7 @@ public class CasemanagerApiController {
             DocPreviewResponse docPreviewResponse = DocPreviewResponse.builder().responseInfo(responseInfo).caseBundleNodes(caseBundleNodes).build();
             return ResponseEntity.ok().body(docPreviewResponse);
         } catch (Exception e) {
-            log.error("Error previewing document for filingNumber: {}, documentLabel: {}", request.getFilingNumber(), e);
+            log.error("Error previewing document for filingNumber:: {}", request.getFilingNumber(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

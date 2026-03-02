@@ -2,12 +2,10 @@ package org.pucar.dristi.enrichment;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.ServiceConstants;
+import org.pucar.dristi.service.WorkflowService;
 import org.pucar.dristi.util.IdgenUtil;
-import org.pucar.dristi.util.WorkflowUtil;
-import org.pucar.dristi.web.models.AuditDetails;
 import org.pucar.dristi.web.models.CtcApplication;
 import org.pucar.dristi.web.models.CtcApplicationRequest;
-import org.pucar.dristi.web.models.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +20,7 @@ public class CtcApplicationEnrichment {
     private IdgenUtil idgenUtil;
 
     @Autowired
-    private WorkflowUtil workflowUtil;
+    private WorkflowService workflowService;
 
     public void enrichCreateApplication(CtcApplicationRequest request) {
         CtcApplication application = request.getCtcApplication();

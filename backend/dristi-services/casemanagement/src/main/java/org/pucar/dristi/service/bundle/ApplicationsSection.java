@@ -5,6 +5,7 @@ import org.pucar.dristi.service.CaseBundleSection;
 import org.pucar.dristi.web.models.Application;
 import org.pucar.dristi.web.models.BundleData;
 import org.pucar.dristi.web.models.CaseBundleNode;
+import org.pucar.dristi.web.models.docpreview.DocPreviewRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class ApplicationsSection implements CaseBundleSection {
     }
 
     @Override
-    public CaseBundleNode build(BundleData data) {
+    public CaseBundleNode build(BundleData data, DocPreviewRequest request) {
         if (data == null || data.getApplications() == null || data.getApplications().isEmpty()) return null;
 
         List<CaseBundleNode> children = new ArrayList<>();

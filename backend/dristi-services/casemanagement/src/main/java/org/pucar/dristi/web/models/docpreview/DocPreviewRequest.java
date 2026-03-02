@@ -9,6 +9,9 @@ import org.egov.common.contract.request.RequestInfo;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.pucar.dristi.web.models.CaseBundleNode;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -22,7 +25,13 @@ public class DocPreviewRequest {
     @JsonProperty("filingNumber")
     private String filingNumber;
 
+    @JsonProperty("ctcApplicationNumber")
+    private String ctcApplicationNumber;
+
     @JsonProperty("courtId")
     private String courtId;
+
+    @JsonProperty("caseBundleNode")
+    private List<CaseBundleNode> caseBundleNode;
 
 }

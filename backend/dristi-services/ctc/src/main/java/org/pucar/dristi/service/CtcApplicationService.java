@@ -4,12 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.repository.CtcApplicationRepository;
-import org.pucar.dristi.repository.CtcDocumentRepository;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.web.models.*;
@@ -88,11 +88,16 @@ public class CtcApplicationService {
                     "CTC application not found with ID: " + application.getId());
         }
 
+        // Track if all case bundle nodes are approved or rejected and perform workflow action ISSUE, REJECT
+        if("PENDING_CMO_ESIGN".equalsIgnoreCase(application.getStatus()))
+         updateApplicationStatusBasedOnCaseBundleNodes(application);
+
         // Update audit details
         application.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
         application.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
 
-        workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
+        if(request.getCtcApplication().getWorkflow()!=null)
+         workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
 
         producer.push("update-ctc-application", request);
 
@@ -118,20 +123,6 @@ public class CtcApplicationService {
             log.error("Error enriching ca number: {}", e.toString());
             throw new CustomException("ENRICHMENT_EXCEPTION", "Error while enriching ca number: " + e.getMessage());
         }
-    }
-
-    private void calculateApplicationFee(CtcApplication application) {
-        if (application.getSelectedDocuments() == null || application.getSelectedDocuments().isEmpty()) {
-            return;
-        }
-
-        // Calculate total pages
-        int totalPages = application.getSelectedDocuments().stream()
-                .mapToInt(doc -> doc.getPages() != null ? doc.getPages() : 0)
-                .sum();
-
-        application.setTotalPages(totalPages);
-
     }
 
     public ValidateUserInfo validateUserForCTCApplication(ValidateUserRequest request) {
@@ -376,5 +367,91 @@ public class CtcApplicationService {
         return (givenName != null ? givenName : "") +
                (otherNames != null ? " " + otherNames : "") +
                (familyName != null ? " " + familyName : "");
+    }
+
+    /**
+     * Updates application status based on case bundle node statuses
+     * If all nodes are approved -> ISSUE action
+     * If all nodes are rejected -> REJECT action
+     * If nodes are still pending or mixed -> no action
+     */
+    private void updateApplicationStatusBasedOnCaseBundleNodes(CtcApplication application) {
+        if (application.getCaseBundleNodes() == null || application.getCaseBundleNodes().isEmpty()) {
+            return;
+        }
+
+        boolean allRejected = true;
+        boolean allApproved = true;
+
+        // Check all case bundle nodes and their children
+        for (CaseBundleNode node : application.getCaseBundleNodes()) {
+            NodeStatusResult result = checkNodeStatus(node);
+            if (!result.allRejected) {
+                allRejected = false;
+            }
+            if (!result.allApproved) {
+                allApproved = false;
+            }
+        }
+
+        // Update application status based on node statuses
+        if (allRejected) {
+            WorkflowObject workflowObject = new WorkflowObject();
+            workflowObject.setAction("REJECT");
+            application.setWorkflow(workflowObject);
+        } else if (allApproved) {
+            WorkflowObject workflowObject = new WorkflowObject();
+            workflowObject.setAction("ISSUE");
+            application.setWorkflow(workflowObject);
+        }
+    }
+
+    /**
+     * Recursively checks a case bundle node and its children
+     */
+    private NodeStatusResult checkNodeStatus(CaseBundleNode node) {
+        NodeStatusResult result = new NodeStatusResult();
+        
+        // Check current node status
+        if ("rejected".equalsIgnoreCase(node.getStatus())) {
+            result.allRejected = true;
+            result.allApproved = false;
+        } else if ("accepted".equalsIgnoreCase(node.getStatus())) {
+            result.allRejected = false;
+            result.allApproved = true;
+        } else if ("pending".equalsIgnoreCase(node.getStatus())) {
+            result.allRejected = false;
+            result.allApproved = false;
+        }
+
+        // Check children recursively
+        if (node.getChildren() != null && !node.getChildren().isEmpty()) {
+            boolean allChildrenRejected = true;
+            boolean allChildrenApproved = true;
+            
+            for (CaseBundleNode child : node.getChildren()) {
+                NodeStatusResult childResult = checkNodeStatus(child);
+                if (!childResult.allRejected) {
+                    allChildrenRejected = false;
+                }
+                if (!childResult.allApproved) {
+                    allChildrenApproved = false;
+                }
+            }
+            
+            // Combine current node status with children status
+            result.allRejected = result.allRejected && allChildrenRejected;
+            result.allApproved = result.allApproved && allChildrenApproved;
+        }
+
+        return result;
+    }
+
+    /**
+     * Helper class to hold node status check results
+     */
+    private static class NodeStatusResult {
+        boolean allRejected = false;
+        boolean allApproved = true;
     }
 }

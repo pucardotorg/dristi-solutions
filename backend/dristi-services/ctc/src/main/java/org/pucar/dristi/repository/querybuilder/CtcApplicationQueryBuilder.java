@@ -15,10 +15,10 @@ public class CtcApplicationQueryBuilder {
 
     private static final String BASE_QUERY = """
         SELECT 
-            id, ctc_application_number, tenant_id, case_number, filing_number, court_id,
-            applicant_name, mobile_number, is_party_to_case, party_designation, case_title, case_number,
-            affidavit_document, reason_for_request, selected_documents, total_pages,
-            status, judge_comments, issued_documents, workflow,
+            id, ctc_application_number, tenant_id, case_number, case_title, filing_number, court_id,
+            applicant_name, mobile_number, is_party_to_case, party_designation,
+            affidavit_document, case_bundle_node, total_pages,
+            status, judge_comments, workflow,
             created_by, last_modified_by, created_time, last_modified_time
         FROM dristi_ctc_applications ctc
         """;

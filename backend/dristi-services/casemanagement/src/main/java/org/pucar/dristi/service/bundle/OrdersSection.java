@@ -3,6 +3,8 @@ package org.pucar.dristi.service.bundle;
 import org.pucar.dristi.service.CaseBundleSection;
 import org.pucar.dristi.web.models.BundleData;
 import org.pucar.dristi.web.models.CaseBundleNode;
+import org.pucar.dristi.web.models.CourtCase;
+import org.pucar.dristi.web.models.docpreview.DocPreviewRequest;
 import org.pucar.dristi.web.models.order.Document;
 import org.pucar.dristi.web.models.order.Order;
 import org.springframework.stereotype.Component;
@@ -20,7 +22,7 @@ public class OrdersSection implements CaseBundleSection {
     }
 
     @Override
-    public CaseBundleNode build(BundleData data) {
+    public CaseBundleNode build(BundleData data, DocPreviewRequest request) {
         if (data == null || data.getOrders() == null || data.getOrders().isEmpty()) return null;
 
         List<CaseBundleNode> children = new ArrayList<>();

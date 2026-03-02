@@ -9,50 +9,34 @@ serviceMaps:
       module: CTC
       objectIdJsonPath: $.id
       tenantIdJsonPath: $.tenantId
-      transactionCodeJsonPath: $.applicationNumber
+      transactionCodeJsonPath: $.ctcApplicationNumber
       auditAttributeBasePath: ctcApplication
       queryMaps:
 
-        - query: INSERT INTO dristi_ctc_applications(id, application_number, tenant_id, case_number, cnr_number, court_id, applicant_name, mobile_number, is_party_to_case, party_designation, affidavit_document_id, total_pages, fee_amount, base_fee, page_fee, status, payment_status, signed_document_id, judge_approval_status, judge_comments, created_by, last_modified_by, created_time, last_modified_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        - query: INSERT INTO dristi_ctc_applications(id, ctc_application_number, tenant_id, case_number, case_title, filing_number, court_id, applicant_name, mobile_number, is_party_to_case, party_designation, affidavit_document, case_bundle_nodes, total_pages, status, judge_comments, workflow, created_by, last_modified_by, created_time, last_modified_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
           basePath: ctcApplication
           jsonMaps:
             - jsonPath: $.ctcApplication.id
-            - jsonPath: $.ctcApplication.applicationNumber
+            - jsonPath: $.ctcApplication.ctcApplicationNumber
             - jsonPath: $.ctcApplication.tenantId
             - jsonPath: $.ctcApplication.caseNumber
-            - jsonPath: $.ctcApplication.cnrNumber
+            - jsonPath: $.ctcApplication.caseTitle
+            - jsonPath: $.ctcApplication.filingNumber
             - jsonPath: $.ctcApplication.courtId
             - jsonPath: $.ctcApplication.applicantName
             - jsonPath: $.ctcApplication.mobileNumber
             - jsonPath: $.ctcApplication.isPartyToCase
             - jsonPath: $.ctcApplication.partyDesignation
-            - jsonPath: $.ctcApplication.affidavitDocumentId
+            - jsonPath: $.ctcApplication.affidavitDocument
+            - jsonPath: $.ctcApplication.caseBundleNodes
             - jsonPath: $.ctcApplication.totalPages
-            - jsonPath: $.ctcApplication.feeAmount
-            - jsonPath: $.ctcApplication.baseFee
-            - jsonPath: $.ctcApplication.pageFee
             - jsonPath: $.ctcApplication.status
-            - jsonPath: $.ctcApplication.paymentStatus
-            - jsonPath: $.ctcApplication.signedDocumentId
-            - jsonPath: $.ctcApplication.judgeApprovalStatus
             - jsonPath: $.ctcApplication.judgeComments
+            - jsonPath: $.ctcApplication.workflow
             - jsonPath: $.ctcApplication.auditDetails.createdBy
             - jsonPath: $.ctcApplication.auditDetails.lastModifiedBy
             - jsonPath: $.ctcApplication.auditDetails.createdTime
             - jsonPath: $.ctcApplication.auditDetails.lastModifiedTime
-
-        - query: INSERT INTO dristi_ctc_selected_documents(id, application_id, document_id, document_name, document_category, number_of_copies, pages, created_by, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-          basePath: ctcApplication.selectedDocuments.*
-          jsonMaps:
-            - jsonPath: $.ctcApplication.selectedDocuments.*.id
-            - jsonPath: $.ctcApplication.id
-            - jsonPath: $.ctcApplication.selectedDocuments.*.documentId
-            - jsonPath: $.ctcApplication.selectedDocuments.*.documentName
-            - jsonPath: $.ctcApplication.selectedDocuments.*.documentCategory
-            - jsonPath: $.ctcApplication.selectedDocuments.*.numberOfCopies
-            - jsonPath: $.ctcApplication.selectedDocuments.*.pages
-            - jsonPath: $.ctcApplication.auditDetails.createdBy
-            - jsonPath: $.ctcApplication.auditDetails.createdTime
 
     - version: 1.0
       description: Update CTC application details in tables
@@ -62,63 +46,43 @@ serviceMaps:
       module: CTC
       objectIdJsonPath: $.id
       tenantIdJsonPath: $.tenantId
-      transactionCodeJsonPath: $.applicationNumber
+      transactionCodeJsonPath: $.ctcApplicationNumber
       auditAttributeBasePath: ctcApplication
       queryMaps:
-        - query: UPDATE dristi_ctc_applications SET case_number=?, cnr_number=?, court_id=?, applicant_name=?, mobile_number=?, is_party_to_case=?, party_designation=?, affidavit_document_id=?, total_pages=?, fee_amount=?, base_fee=?, page_fee=?, status=?, payment_status=?, signed_document_id=?, judge_approval_status=?, judge_comments=?, last_modified_by=?, last_modified_time=? WHERE id=?;
+        - query: UPDATE dristi_ctc_applications SET case_number=?, case_title=?, filing_number=?, court_id=?, applicant_name=?, mobile_number=?, is_party_to_case=?, party_designation=?, affidavit_document=?, case_bundle_nodes=?, total_pages=?, status=?, judge_comments=?, workflow=?, last_modified_by=?, last_modified_time=? WHERE id=?;
           basePath: ctcApplication
           jsonMaps:
             - jsonPath: $.ctcApplication.caseNumber
-            - jsonPath: $.ctcApplication.cnrNumber
+            - jsonPath: $.ctcApplication.caseTitle
+            - jsonPath: $.ctcApplication.filingNumber
             - jsonPath: $.ctcApplication.courtId
             - jsonPath: $.ctcApplication.applicantName
             - jsonPath: $.ctcApplication.mobileNumber
             - jsonPath: $.ctcApplication.isPartyToCase
             - jsonPath: $.ctcApplication.partyDesignation
-            - jsonPath: $.ctcApplication.affidavitDocumentId
+            - jsonPath: $.ctcApplication.affidavitDocument
+            - jsonPath: $.ctcApplication.caseBundleNodes
             - jsonPath: $.ctcApplication.totalPages
-            - jsonPath: $.ctcApplication.feeAmount
-            - jsonPath: $.ctcApplication.baseFee
-            - jsonPath: $.ctcApplication.pageFee
             - jsonPath: $.ctcApplication.status
-            - jsonPath: $.ctcApplication.paymentStatus
-            - jsonPath: $.ctcApplication.signedDocumentId
-            - jsonPath: $.ctcApplication.judgeApprovalStatus
             - jsonPath: $.ctcApplication.judgeComments
+            - jsonPath: $.ctcApplication.workflow
             - jsonPath: $.ctcApplication.auditDetails.lastModifiedBy
             - jsonPath: $.ctcApplication.auditDetails.lastModifiedTime
             - jsonPath: $.ctcApplication.id
 
-        - query: DELETE FROM dristi_ctc_selected_documents WHERE application_id = ?;
-          basePath: ctcApplication
-          jsonMaps:
-            - jsonPath: $.ctcApplication.id
-
-        - query: INSERT INTO dristi_ctc_selected_documents(id, application_id, document_id, document_name, document_category, number_of_copies, pages, created_by, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-          basePath: ctcApplication.selectedDocuments.*
-          jsonMaps:
-            - jsonPath: $.ctcApplication.selectedDocuments.*.id
-            - jsonPath: $.ctcApplication.id
-            - jsonPath: $.ctcApplication.selectedDocuments.*.documentId
-            - jsonPath: $.ctcApplication.selectedDocuments.*.documentName
-            - jsonPath: $.ctcApplication.selectedDocuments.*.documentCategory
-            - jsonPath: $.ctcApplication.selectedDocuments.*.numberOfCopies
-            - jsonPath: $.ctcApplication.selectedDocuments.*.pages
-            - jsonPath: $.ctcApplication.auditDetails.lastModifiedBy
-            - jsonPath: $.ctcApplication.auditDetails.lastModifiedTime
-
+        
     - version: 1.0
       description: Update CTC application status (Judge Approval)
       fromTopic: update-ctc-judge-approval
       isTransaction: true
       isAuditEnabled: true
       module: CTC
-      objectIdJsonPath: $.applicationNumbers
+      objectIdJsonPath: $.ctcApplicationNumbers
       tenantIdJsonPath: $.tenantId
-      transactionCodeJsonPath: $.applicationNumbers
+      transactionCodeJsonPath: $.ctcApplicationNumbers
       auditAttributeBasePath: ctcApplication
       queryMaps:
-        - query: UPDATE dristi_ctc_applications SET judge_approval_status=?, judge_comments=?, status=?, last_modified_by=?, last_modified_time=? WHERE application_number=?;
+        - query: UPDATE dristi_ctc_applications SET status=?, judge_comments=?, last_modified_by=?, last_modified_time=? WHERE ctc_application_number=?;
           basePath: ctcApplication
           jsonMaps:
             - jsonPath: $.approvalStatus
@@ -126,7 +90,7 @@ serviceMaps:
             - jsonPath: $.ctcApplication.status
             - jsonPath: $.requestInfo.userInfo.uuid
             - jsonPath: $.requestInfo.actionTime
-            - jsonPath: $.applicationNumbers.*
+            - jsonPath: $.ctcApplicationNumbers.*
 
     - version: 1.0
       description: Issue CTC documents (CMO Issuance)
@@ -134,28 +98,17 @@ serviceMaps:
       isTransaction: true
       isAuditEnabled: true
       module: CTC
-      objectIdJsonPath: $.applicationNumbers
+      objectIdJsonPath: $.ctcApplicationNumbers
       tenantIdJsonPath: $.tenantId
-      transactionCodeJsonPath: $.applicationNumbers
+      transactionCodeJsonPath: $.ctcApplicationNumbers
       auditAttributeBasePath: ctcApplication
       queryMaps:
-        - query: UPDATE dristi_ctc_applications SET status=?, last_modified_by=?, last_modified_time=? WHERE application_number=?;
+        - query: UPDATE dristi_ctc_applications SET status=?, last_modified_by=?, last_modified_time=? WHERE ctc_application_number=?;
           basePath: ctcApplication
           jsonMaps:
             - jsonPath: $.ctcApplication.status
             - jsonPath: $.requestInfo.userInfo.uuid
             - jsonPath: $.requestInfo.actionTime
-            - jsonPath: $.applicationNumbers.*
+            - jsonPath: $.ctcApplicationNumbers.*
 
-        - query: INSERT INTO dristi_ctc_issued_documents(id, application_id, document_id, document_name, issued_filestore_id, issued_date, approval_order_id, created_by, created_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
-          basePath: ctcApplication.issuedDocuments.*
-          jsonMaps:
-            - jsonPath: $.ctcApplication.issuedDocuments.*.id
-            - jsonPath: $.ctcApplication.id
-            - jsonPath: $.ctcApplication.issuedDocuments.*.documentId
-            - jsonPath: $.ctcApplication.issuedDocuments.*.documentName
-            - jsonPath: $.ctcApplication.issuedDocuments.*.issuedFilestoreId
-            - jsonPath: $.ctcApplication.issuedDocuments.*.issuedDate
-            - jsonPath: $.ctcApplication.issuedDocuments.*.approvalOrderId
-            - jsonPath: $.requestInfo.userInfo.uuid
-            - jsonPath: $.requestInfo.actionTime
+        

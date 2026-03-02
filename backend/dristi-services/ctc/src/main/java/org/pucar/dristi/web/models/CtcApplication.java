@@ -61,9 +61,9 @@ public class CtcApplication {
     
     @JsonProperty("affidavitDocument")
     private Document affidavitDocument;
-    
-    @JsonProperty("selectedDocuments")
-    private List<SelectedDocument> selectedDocuments;
+
+    @JsonProperty("caseBundleNodes")
+    private List<CaseBundleNode> caseBundleNodes;
     
     @JsonProperty("totalPages")
     private Integer totalPages;
@@ -73,9 +73,6 @@ public class CtcApplication {
     
     @JsonProperty("judgeComments")
     private String judgeComments;
-    
-    @JsonProperty("issuedDocuments")
-    private List<IssuedDocument> issuedDocuments;
     
     @JsonProperty("workflow")
     private WorkflowObject workflow;

@@ -18,12 +18,14 @@ ServiceMaps:
                 outJsonPath: $.Data.ctcApplicationDetails.id
               - inJsonPath: $.tenantId
                 outJsonPath: $.Data.ctcApplicationDetails.tenantId
-              - inJsonPath: $.applicationNumber
-                outJsonPath: $.Data.ctcApplicationDetails.applicationNumber
+              - inJsonPath: $.ctcApplicationNumber
+                outJsonPath: $.Data.ctcApplicationDetails.ctcApplicationNumber
               - inJsonPath: $.caseNumber
                 outJsonPath: $.Data.ctcApplicationDetails.caseNumber
-              - inJsonPath: $.cnrNumber
-                outJsonPath: $.Data.ctcApplicationDetails.cnrNumber
+              - inJsonPath: $.caseTitle
+                outJsonPath: $.Data.ctcApplicationDetails.caseTitle
+              - inJsonPath: $.filingNumber
+                outJsonPath: $.Data.ctcApplicationDetails.filingNumber
               - inJsonPath: $.courtId
                 outJsonPath: $.Data.ctcApplicationDetails.courtId
               - inJsonPath: $.applicantName
@@ -34,30 +36,16 @@ ServiceMaps:
                 outJsonPath: $.Data.ctcApplicationDetails.isPartyToCase
               - inJsonPath: $.partyDesignation
                 outJsonPath: $.Data.ctcApplicationDetails.partyDesignation
-              - inJsonPath: $.affidavitDocumentId
-                outJsonPath: $.Data.ctcApplicationDetails.affidavitDocumentId
+              - inJsonPath: $.affidavitDocument
+                outJsonPath: $.Data.ctcApplicationDetails.affidavitDocument
+              - inJsonPath: $.caseBundleNode
+                outJsonPath: $.Data.ctcApplicationDetails.caseBundleNodes
               - inJsonPath: $.totalPages
                 outJsonPath: $.Data.ctcApplicationDetails.totalPages
-              - inJsonPath: $.feeAmount
-                outJsonPath: $.Data.ctcApplicationDetails.feeAmount
-              - inJsonPath: $.baseFee
-                outJsonPath: $.Data.ctcApplicationDetails.baseFee
-              - inJsonPath: $.pageFee
-                outJsonPath: $.Data.ctcApplicationDetails.pageFee
               - inJsonPath: $.status
                 outJsonPath: $.Data.ctcApplicationDetails.status
-              - inJsonPath: $.paymentStatus
-                outJsonPath: $.Data.ctcApplicationDetails.paymentStatus
-              - inJsonPath: $.signedDocumentId
-                outJsonPath: $.Data.ctcApplicationDetails.signedDocumentId
-              - inJsonPath: $.judgeApprovalStatus
-                outJsonPath: $.Data.ctcApplicationDetails.judgeApprovalStatus
               - inJsonPath: $.judgeComments
                 outJsonPath: $.Data.ctcApplicationDetails.judgeComments
-              - inJsonPath: $.selectedDocuments
-                outJsonPath: $.Data.ctcApplicationDetails.selectedDocuments
-              - inJsonPath: $.issuedDocuments
-                outJsonPath: $.Data.ctcApplicationDetails.issuedDocuments
               - inJsonPath: $.workflow
                 outJsonPath: $.Data.ctcApplicationDetails.workflow
               - inJsonPath: $.auditDetails.createdBy
@@ -70,7 +58,7 @@ ServiceMaps:
                 outJsonPath: $.Data.ctcApplicationDetails.lastModifiedTime
           externalUriMapping:
             - path: http://egov-workflow-v2.egov:8080/egov-workflow-v2/egov-wf/process/_search
-              queryParam: businessIds=$.applicationNumber,tenantId=$.tenantId,history=true
+              queryParam: businessIds=$.ctcApplicationNumber,tenantId=$.tenantId,history=true
               apiRequest: { "RequestInfo": { "apiId": "","ver": "1.0","ts": 1502890899493,"action": "asd","did": "4354648646","key": "xyz","msgId": "654654","requesterId": "61","authToken": "d9994555-7656-4a67-ab3a-a952a0d4dfc8","userInfo": { "id": 1,"uuid": "1fec8102-0e02-4d0a-b283-cd80d5dab067","type": "EMPLOYEE","tenantId": "pg","roles": [ { "name": "Employee","code": "EMPLOYEE","tenantId": "pg" } ] } } }
               uriResponseMapping:
                 - inJsonPath: $.ProcessInstances
@@ -96,12 +84,14 @@ ServiceMaps:
                 outJsonPath: $.Data.ctcApplicationDetails.id
               - inJsonPath: $.tenantId
                 outJsonPath: $.Data.ctcApplicationDetails.tenantId
-              - inJsonPath: $.applicationNumber
-                outJsonPath: $.Data.ctcApplicationDetails.applicationNumber
+              - inJsonPath: $.ctcApplicationNumber
+                outJsonPath: $.Data.ctcApplicationDetails.ctcApplicationNumber
               - inJsonPath: $.caseNumber
                 outJsonPath: $.Data.ctcApplicationDetails.caseNumber
-              - inJsonPath: $.cnrNumber
-                outJsonPath: $.Data.ctcApplicationDetails.cnrNumber
+              - inJsonPath: $.caseTitle
+                outJsonPath: $.Data.ctcApplicationDetails.caseTitle
+              - inJsonPath: $.filingNumber
+                outJsonPath: $.Data.ctcApplicationDetails.filingNumber
               - inJsonPath: $.courtId
                 outJsonPath: $.Data.ctcApplicationDetails.courtId
               - inJsonPath: $.applicantName
@@ -112,30 +102,16 @@ ServiceMaps:
                 outJsonPath: $.Data.ctcApplicationDetails.isPartyToCase
               - inJsonPath: $.partyDesignation
                 outJsonPath: $.Data.ctcApplicationDetails.partyDesignation
-              - inJsonPath: $.affidavitDocumentId
-                outJsonPath: $.Data.ctcApplicationDetails.affidavitDocumentId
+              - inJsonPath: $.affidavitDocument
+                outJsonPath: $.Data.ctcApplicationDetails.affidavitDocument
+              - inJsonPath: $.caseBundleNode
+                outJsonPath: $.Data.ctcApplicationDetails.caseBundleNodes
               - inJsonPath: $.totalPages
                 outJsonPath: $.Data.ctcApplicationDetails.totalPages
-              - inJsonPath: $.feeAmount
-                outJsonPath: $.Data.ctcApplicationDetails.feeAmount
-              - inJsonPath: $.baseFee
-                outJsonPath: $.Data.ctcApplicationDetails.baseFee
-              - inJsonPath: $.pageFee
-                outJsonPath: $.Data.ctcApplicationDetails.pageFee
               - inJsonPath: $.status
                 outJsonPath: $.Data.ctcApplicationDetails.status
-              - inJsonPath: $.paymentStatus
-                outJsonPath: $.Data.ctcApplicationDetails.paymentStatus
-              - inJsonPath: $.signedDocumentId
-                outJsonPath: $.Data.ctcApplicationDetails.signedDocumentId
-              - inJsonPath: $.judgeApprovalStatus
-                outJsonPath: $.Data.ctcApplicationDetails.judgeApprovalStatus
               - inJsonPath: $.judgeComments
                 outJsonPath: $.Data.ctcApplicationDetails.judgeComments
-              - inJsonPath: $.selectedDocuments
-                outJsonPath: $.Data.ctcApplicationDetails.selectedDocuments
-              - inJsonPath: $.issuedDocuments
-                outJsonPath: $.Data.ctcApplicationDetails.issuedDocuments
               - inJsonPath: $.workflow
                 outJsonPath: $.Data.ctcApplicationDetails.workflow
               - inJsonPath: $.auditDetails.createdBy
@@ -148,7 +124,7 @@ ServiceMaps:
                 outJsonPath: $.Data.ctcApplicationDetails.lastModifiedTime
           externalUriMapping:
             - path: http://egov-workflow-v2.egov:8080/egov-workflow-v2/egov-wf/process/_search
-              queryParam: businessIds=$.applicationNumber,tenantId=$.tenantId,history=true
+              queryParam: businessIds=$.ctcApplicationNumber,tenantId=$.tenantId,history=true
               apiRequest: { "RequestInfo": { "apiId": "","ver": "1.0","ts": 1502890899493,"action": "asd","did": "4354648646","key": "xyz","msgId": "654654","requesterId": "61","authToken": "d9994555-7656-4a67-ab3a-a952a0d4dfc8","userInfo": { "id": 1,"uuid": "1fec8102-0e02-4d0a-b283-cd80d5dab067","type": "EMPLOYEE","tenantId": "pg","roles": [ { "name": "Employee","code": "EMPLOYEE","tenantId": "pg" } ] } } }
               uriResponseMapping:
                 - inJsonPath: $.ProcessInstances
@@ -163,17 +139,17 @@ ServiceMaps:
       indexes:
         - name: ctc-application-index
           type: general
-          id: $.applicationNumber
+          id: $.ctcApplicationNumber
           isBulk: true
           timeStampField: $.requestInfo.actionTime
-          jsonPath: $.applicationNumbers
+          jsonPath: $.ctcApplicationNumbers
           customJsonMapping:
             indexMapping: {"Data":{"ctcApplicationDetails":{}}}
             fieldMapping:
-              - inJsonPath: $.applicationNumbers.*
-                outJsonPath: $.Data.ctcApplicationDetails.applicationNumber
+              - inJsonPath: $.ctcApplicationNumbers.*
+                outJsonPath: $.Data.ctcApplicationDetails.ctcApplicationNumber
               - inJsonPath: $.approvalStatus
-                outJsonPath: $.Data.ctcApplicationDetails.judgeApprovalStatus
+                outJsonPath: $.Data.ctcApplicationDetails.status
               - inJsonPath: $.comments
                 outJsonPath: $.Data.ctcApplicationDetails.judgeComments
               - inJsonPath: $.requestInfo.userInfo.uuid
@@ -186,15 +162,15 @@ ServiceMaps:
       indexes:
         - name: ctc-application-index
           type: general
-          id: $.applicationNumber
+          id: $.ctcApplicationNumber
           isBulk: true
           timeStampField: $.requestInfo.actionTime
-          jsonPath: $.applicationNumbers
+          jsonPath: $.ctcApplicationNumbers
           customJsonMapping:
             indexMapping: {"Data":{"ctcApplicationDetails":{}}}
             fieldMapping:
-              - inJsonPath: $.applicationNumbers.*
-                outJsonPath: $.Data.ctcApplicationDetails.applicationNumber
+              - inJsonPath: $.ctcApplicationNumbers.*
+                outJsonPath: $.Data.ctcApplicationDetails.ctcApplicationNumber
               - inJsonPath: $.ctcApplication.status
                 outJsonPath: $.Data.ctcApplicationDetails.status
               - inJsonPath: $.requestInfo.userInfo.uuid

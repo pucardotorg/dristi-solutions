@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
-import org.pucar.dristi.web.models.CtcApplication;
-import org.pucar.dristi.web.models.Document;
-import org.pucar.dristi.web.models.IssuedDocument;
-import org.pucar.dristi.web.models.SelectedDocument;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -52,11 +49,11 @@ public class CtcApplicationRowMapper implements ResultSetExtractor<List<CtcAppli
                         .isPartyToCase(rs.getBoolean("is_party_to_case"))
                         .partyDesignation(rs.getString("party_designation"))
                         .affidavitDocument(getObjectFromJson(rs.getString("affidavit_document"), new TypeReference<Document>() {}))
-                        .selectedDocuments(getObjectListFromJson(rs.getString("selected_documents"), new TypeReference<List<SelectedDocument>>() {}))
+                        .caseBundleNodes(getObjectListFromJson(rs.getString("case_bundle_nodes"), new TypeReference<List<CaseBundleNode>>() {}))
                         .totalPages(rs.getInt("total_pages"))
                         .status(rs.getString("status"))
                         .judgeComments(rs.getString("judge_comments"))
-                        .issuedDocuments(getObjectListFromJson(rs.getString("issued_documents"), new TypeReference<List<IssuedDocument>>() {}))
+                        .workflow(getObjectFromJson(rs.getString("workflow"), new TypeReference<WorkflowObject>() {}))
                         .auditDetails(AuditDetails.builder()
                                 .createdBy(rs.getString("created_by"))
                                 .lastModifiedBy(rs.getString("last_modified_by"))

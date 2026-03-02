@@ -228,6 +228,13 @@ public class Configuration {
 	@Value("${dristi.evidence.search.endpoint}")
 	private String evidenceServiceSearchEndpoint;
 
+	// CTC Service Config
+	@Value("${dristi.ctc.host}")
+	private String ctcHost;
+
+	@Value("${dristi.ctc.search.endpoint}")
+	private String ctcSearchEndpoint;
+
 	@PostConstruct
 	public void init() {
 		caseAllowedStatusesList = Arrays.asList(caseAllowedStatuses.split(","));

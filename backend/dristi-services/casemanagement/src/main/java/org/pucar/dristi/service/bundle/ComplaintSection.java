@@ -5,6 +5,7 @@ import org.pucar.dristi.service.CaseBundleSection;
 import org.pucar.dristi.web.models.BundleData;
 import org.pucar.dristi.web.models.CaseBundleNode;
 import org.pucar.dristi.web.models.CourtCase;
+import org.pucar.dristi.web.models.docpreview.DocPreviewRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class ComplaintSection implements CaseBundleSection {
     }
 
     @Override
-    public CaseBundleNode build(BundleData data) {
+    public CaseBundleNode build(BundleData data, DocPreviewRequest request) {
         if (data == null) return null;
 
         CourtCase courtCase = data.getCases();

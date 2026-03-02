@@ -3,7 +3,9 @@ package org.pucar.dristi.service.bundle;
 import org.pucar.dristi.service.CaseBundleSection;
 import org.pucar.dristi.web.models.BundleData;
 import org.pucar.dristi.web.models.CaseBundleNode;
+import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.digitalizeddocument.DigitalizedDocument;
+import org.pucar.dristi.web.models.docpreview.DocPreviewRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -18,7 +20,7 @@ public class DigitalizedDocumentsSection implements CaseBundleSection {
     }
 
     @Override
-    public CaseBundleNode build(BundleData data) {
+    public CaseBundleNode build(BundleData data, DocPreviewRequest request) {
         if (data == null || data.getDigitalDocs() == null || data.getDigitalDocs().isEmpty()) return null;
 
         List<CaseBundleNode> children = new ArrayList<>();
