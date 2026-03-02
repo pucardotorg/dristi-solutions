@@ -275,6 +275,9 @@ public class Configuration {
 	@Value("${egov.workflow.process.search.endpoint}")
 	private String workflowProcessSearchEndpoint;
 
+	@Value("${spring.redis.timeout}")
+	private Long redisTimeout;
+
 	@PostConstruct
 	public void init() {
 		hearingBusinessServiceList = Arrays.asList(hearingBusinessServices.split(","));

@@ -1,0 +1,62 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2788",
+    "data": {
+      "id": 2788,
+      "url": "/advocate-office-management/v1/_processCaseMember", // TODO : need to be given access to ADVOCATE_ROLE
+      "code": "2788",
+      "name": "process case member",
+      "displayName": "process case member",
+      "serviceCode": "advocate-office-management",
+      "parentModule": "advocate-office-management"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2787",
+    "data": {
+      "id": 2787,
+      "url": "/advocate-office-management/v1/_checkMemberStatus", // TODO : need to be given access to ADVOCATE_ROLE and ADVOCATE_CLERK_ROLE
+      "code": "2787",
+      "name": "check member status",
+      "displayName": "check member status",
+      "serviceCode": "advocate-office-management",
+      "parentModule": "advocate-office-management"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2786",
+    "data": {
+      "id": 2786,
+      "url": "/advocate-office-management/v1/_updateMemberAccess", // TODO : need to be given access to ADVOCATE_ROLE
+      "code": "2786",
+      "name": "update member access",
+      "displayName": "update member access",
+      "serviceCode": "advocate-office-management",
+      "parentModule": "advocate-office-management"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2785",
+    "data": {
+      "id": 2785,
+      "url": "/advocate-office-management/v1/_searchCaseMember", // TODO : need to be given access to ADVOCATE_ROLE and ADVOCATE_CLERK_ROLE
+      "code": "2785",
+      "name": "search case member",
+      "displayName": "search case member",
+      "serviceCode": "advocate-office-management",
+      "parentModule": "advocate-office-management"
+    },
+    "isActive": true
+  }
+]

@@ -276,7 +276,7 @@ function PendingTaskAccordion({
           return (
             <div key={idx} className="order-task-row">
               <div className="order-task-title">
-                <span>{`${t("PENDING")} - ${t(task?.actionName)}`}</span>
+                <span>{`${t("PENDING")} - ${t(task?.applicationName)} - ${task?.applicationCMPNumber}`}</span>
               </div>
               <div className="order-task-actions">
                 <button

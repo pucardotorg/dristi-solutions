@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, Dropdown } from "@egovernments/digit-ui-components";
 import { Button, LabelFieldPair, Card } from "@egovernments/digit-ui-react-components";
 import { Loader } from "@egovernments/digit-ui-react-components";
@@ -20,7 +20,6 @@ import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } fro
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
-import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const CaseWorkflowAction = {
@@ -58,6 +57,7 @@ const TasksComponent = ({
   pendingSignOrderList,
   tableView = false,
   needRefresh = false,
+  applicationData = [],
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const CourierService = useMemo(() => Digit.ComponentRegistryService.getComponent("CourierService"), []);
@@ -100,7 +100,7 @@ const TasksComponent = ({
     joinCasePaymentModal: false,
     data: {},
   });
-  const { AdvocateData: selectedSeniorAdvocate } = useContext(AdvocateDataContext);
+  const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
 
   const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -664,6 +664,14 @@ const TasksComponent = ({
       const applicationType = data?.fields?.find((field) => field.key === "additionalDetails.applicationType")?.value;
       const bailBondId = data?.fields?.find((field) => field.key === "additionalDetails.bailBondId")?.value;
       const courtId = data?.fields?.find((field) => field.key === "courtId")?.value;
+      let applicationName = "";
+      let applicationCMPNumber = "";
+
+      if (isApplicationCompositeOrder) {
+        const application = applicationData?.applicationList?.find((application) => application?.applicationNumber === referenceId) || {};
+        applicationName = application?.applicationType || "";
+        applicationCMPNumber = application?.applicationCMPNumber || "";
+      }
 
       const updateReferenceId = referenceId?.split("_").pop();
       const defaultObj = {
@@ -754,6 +762,8 @@ const TasksComponent = ({
         isCustomFunction,
         referenceId,
         screenType,
+        applicationName: applicationName || applicationType,
+        applicationCMPNumber: applicationCMPNumber,
       };
     });
 

@@ -7,6 +7,8 @@ import digit.web.models.AddMember;
 import digit.web.models.AddMemberRequest;
 import digit.web.models.LeaveOffice;
 import digit.web.models.LeaveOfficeRequest;
+import digit.web.models.UpdateMemberAccess;
+import digit.web.models.UpdateMemberAccessRequest;
 import digit.web.models.enums.MemberType;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
@@ -115,6 +117,17 @@ public class AdvocateOfficeEnrichment {
         leaveOffice.setIsActive(false);
 
         log.info("Enriched leave office request with id: {}", leaveOffice.getId());
+    }
+
+    public void enrichUpdateMemberAccessRequest(UpdateMemberAccessRequest request, AddMember existingMember) {
+
+        AuditDetails auditDetails = existingMember.getAuditDetails();
+        auditDetails.setLastModifiedTime(System.currentTimeMillis());
+        auditDetails.setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
+
+        request.getUpdateMemberAccess().setAuditDetails(auditDetails);
+
+        log.info("Enriched update member access request for member {} of advocate office : {}", existingMember.getMemberUserUuid(), existingMember.getOfficeAdvocateUserUuid());
     }
 
     private AuditDetails getAuditDetailsForCreate(RequestInfo requestInfo) {
