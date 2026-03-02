@@ -495,8 +495,10 @@ public class InboxServiceV2 {
         searchCriteria.put("actionCategory", criteria.getActionCategory());
         putOrRemove(searchCriteria, "stateSla", criteria.getDate());
 
+        boolean isGroupByFilingNumber = !"Rescheduling Request".equalsIgnoreCase(criteria.getActionCategory());
+
         if (!criteria.getIsOnlyCountRequired()) {
-            PaginatedDataResponse unfiltered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
+            PaginatedDataResponse unfiltered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex(), isGroupByFilingNumber);
             criteria.setTotalCount(unfiltered.getTotalSize());
         }
 
@@ -507,7 +509,7 @@ public class InboxServiceV2 {
         putOrRemove(searchCriteria, "substage", criteria.getSubstage());
 
         // Final filtered search
-        PaginatedDataResponse filtered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
+        PaginatedDataResponse filtered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex(), isGroupByFilingNumber);
         criteria.setCount(filtered.getTotalSize());
 
         if (criteria.getIsOnlyCountRequired()) {
@@ -599,8 +601,8 @@ public class InboxServiceV2 {
         return searchResponse;
     }
 
-    private PaginatedDataResponse getDataFromSimpleSearchGroupByFilingNumber(SearchRequest searchRequest, String index) {
-        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, true);
+    private PaginatedDataResponse getDataFromSimpleSearchGroupByFilingNumber(SearchRequest searchRequest, String index, boolean isGroupByFilingNumber) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, isGroupByFilingNumber);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
             log.info("Query: " + q);
@@ -618,9 +620,14 @@ public class InboxServiceV2 {
 
         int totalSize = 0;
         Map<String, Object> aggregations = (Map<String, Object>) ((Map<String, Object>) result).get("aggregations");
-        Map<String, Object> uniqueFilingNumbers = (Map<String, Object>) aggregations.get("unique_filing_numbers");
-
-        totalSize = ((Number) uniqueFilingNumbers.get("value")).intValue();
+        if (aggregations != null) {
+            Map<String, Object> uniqueFilingNumbers = (Map<String, Object>) aggregations.get("unique_filing_numbers");
+            totalSize = ((Number) uniqueFilingNumbers.get("value")).intValue();
+        } else {
+            // Get total count from hits when aggregations are not present (isGroupByFilingNumber = false)
+            Map<String, Object> hitsTotal = (Map<String, Object>) hits.get("total");
+            totalSize = ((Number) hitsTotal.get("value")).intValue();
+        }
         paginatedDataResponse.setTotalSize(totalSize);
 
         List<Map<String, Object>> nestedHits = (List<Map<String, Object>>) hits.get(HITS);
