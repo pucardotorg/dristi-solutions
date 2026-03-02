@@ -1,0 +1,145 @@
+// TODO : need to update the existing mdms data can be updated through workbench
+{
+  "tenantId": "kl",
+  "schemaCode": "INBOX.InboxQueryConfiguration",
+  "uniqueIdentifier": "pending-tasks-index",
+  "data": {
+    "index": "pending-tasks-index",
+    "module": "Pending Tasks Service",
+    "sortBy": {
+      "path": "Data.createdTime",
+      "defaultOrder": "ASC"
+    },
+    "sourceFilterPathList": [
+      "Data"
+    ],
+    "allowedSearchCriteria": [
+      {
+        "name": "id",
+        "path": "Data.id.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "entityType",
+        "path": "Data.entityType.keyword",
+        "operator": "EQUAL",
+        "isMandatory": false
+      },
+      {
+        "name": "referenceId",
+        "path": "Data.referenceId.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "status",
+        "path": "Data.status.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "assignedTo",
+        "path": "Data.assignedTo.uuid.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "assignedRole",
+        "path": "Data.assignedRole.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "cnrNumber",
+        "path": "Data.cnrNumber.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "filingNumber",
+        "path": "Data.filingNumber.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "isCompleted",
+        "path": "Data.isCompleted",
+        "isMandatory": false
+      },
+      {
+        "name": "stateSla",
+        "path": "Data.stateSla",
+        "operator": "LTE",
+        "isMandatory": false
+      },
+      {
+        "name": "businessServiceSla",
+        "path": "Data.businessServiceSla",
+        "isMandatory": false
+      },
+      {
+        "name": "isDiary",
+        "path": "Data.isDiary",
+        "isMandatory": false
+      },
+      {
+        "name": "screenType",
+        "path": "Data.screenType.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "courtId",
+        "path": "Data.courtId.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "substage",
+        "path": "Data.substage.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "searchableFields",
+        "path": "Data.searchableFields.keyword",
+        "operator": "WILDCARD",
+        "isMandatory": false
+      },
+      {
+        "name": "actionCategory",
+        "path": "Data.actionCategory.keyword",
+        "isMandatory": false
+      },
+      {
+        "name": "expiryDate",
+        "path": "Data.expiryDate",
+        "operator": "LTE",
+        "isMandatory": false
+      },
+      {
+        "name": "referenceEntityType",
+        "path": "Data.referenceEntityType.keyword",
+        "isMandatory": false
+      },
+      // TODO : need to add this line item
+      {
+        "name": "officeAdvocateUuid",
+        "path": "Data.offices.advocateUserUuid.keyword",
+        "nestedPath": "Data.offices",
+        "isMandatory": false
+      },
+      // TODO : need to add this line item
+      {
+        "name": "officeMemberUuid",
+        "path": "Data.offices.officeMembers.keyword",
+        "nestedPath": "Data.offices",
+        "isMandatory": false
+      },
+      // TODO : need to add this line item
+      {
+        "name": "assignedToOrOfficeMember",
+        "path": "Data.assignedTo.uuid.keyword",
+        "orPaths": [
+          {
+            "path": "Data.offices.officeMembers.keyword",
+            "nestedPath": "Data.offices"
+          }
+        ],
+        "isMandatory": false
+      }
+    ]
+  },
+  "isActive": true
+}

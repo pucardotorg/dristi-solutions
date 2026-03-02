@@ -5,6 +5,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { initLibraries } from "@egovernments/digit-ui-libraries";
 import { DigitUI, initCoreComponents } from "@egovernments/digit-ui-module-core";
+import setupRequestInterceptor from "@egovernments/digit-ui-module-core/src/Utils/requestInterceptor";
 import { initOrdersComponents } from "@egovernments/digit-ui-module-orders";
 import { initSubmissionsComponents } from "@egovernments/digit-ui-module-submissions";
 import { initHearingsComponents } from "@egovernments/digit-ui-module-hearings";
@@ -16,6 +17,8 @@ import { initHomeComponents } from "@egovernments/digit-ui-module-home";
 import "dristi-ui-css";
 
 import { UICustomizations } from "./UICustomizations";
+import apiMonitor from "@egovernments/digit-ui-module-core/src/Utils/apiMonitor";
+import ApiMonitorPanel from "@egovernments/digit-ui-module-core/src/Utils/ApiMonitorPanel.js";
 
 var Digit = window.Digit || {};
 
@@ -51,11 +54,17 @@ const initTokens = (stateCode) => {
 };
 
 const initDigitUI = () => {
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const roles = userInfo?.roles;
+  const assignedRoles = roles?.map((role) => role?.code);
+  const hasViewApiMonitorAccess = assignedRoles?.includes("VIEW_API_MONITOR");
   window.contextPath = window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
   window.Digit.Customizations = {
     commonUiConfig: UICustomizations,
   };
   window?.Digit.ComponentRegistryService.setupRegistry({});
+  setupRequestInterceptor();
+  apiMonitor.init();
   initCoreComponents();
   initDRISTIComponents();
   initOrdersComponents();
@@ -65,7 +74,7 @@ const initDigitUI = () => {
   initHomeComponents();
   const moduleReducers = (initData) => ({});
 
-  const stateCode = window?.globalConfigs?.getConfig("STATE_LEVEL_TENANT_ID") || "pb";
+  const stateCode = window?.globalConfigs.getConfig("STATE_LEVEL_TENANT_ID") || "kl";
   initTokens(stateCode);
 
   const container = document.getElementById("root");

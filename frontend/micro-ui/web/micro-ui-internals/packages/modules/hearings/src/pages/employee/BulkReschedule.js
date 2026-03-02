@@ -7,11 +7,12 @@ import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/s
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 import isEqual from "lodash/isEqual";
 import { hearingService } from "../../hooks/services";
-import Axios from "axios";
 import { useHistory } from "react-router-dom";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import BulkRescheduleModal from "../../components/BulkRescheduleModal";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -98,6 +99,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
   const [issignLoader, setSignLoader] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
 
@@ -183,6 +185,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const uploadModalConfig = useMemo(() => {
@@ -194,8 +197,8 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -274,7 +277,11 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       const diaryEntries = newHearingData?.map((hearing) => {
         return {
           courtId: courtId,
-          businessOfDay: `No sitting notified on ${formatDate(hearing?.originalHearingDate)}. Case posted to ${formatDate(hearing?.hearingDate)}`,
+          businessOfDay: `No sitting notified on ${DateUtils.getFormattedDate(
+            hearing?.originalHearingDate,
+            "DD-MM-YYYY",
+            "/"
+          )}. Case posted to ${DateUtils.getFormattedDate(hearing?.hearingDate, "DD-MM-YYYY", "/")}`,
           tenantId: tenantId,
           entryDate: new Date().setHours(0, 0, 0, 0),
           hearingDate: hearing?.startTime,
@@ -477,16 +484,11 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  };
-
   const onSumbitReschedule = async () => {
     try {
       setLoader(true);
 
-      const response = await Axios.post(
+      const response = await axiosInstance.post(
         Urls.hearing.createNotificationPdf,
 
         {
@@ -494,7 +496,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             authToken: accessToken,
             userInfo: userInfo,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
           BulkReschedule: {
             reason: bulkFormData?.reason,
@@ -595,6 +597,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         setSignLoader(false);
         setSignFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setSignLoader(false);
     }
@@ -732,6 +735,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           formData={signFormData}
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
+          fileUploadError={fileUploadError}
         />
       )}
 

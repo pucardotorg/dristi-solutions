@@ -6,7 +6,6 @@ import ErrorBoundary from "../../components/ErrorBoundaries";
 import ErrorComponent from "../../components/ErrorComponent";
 import { AppHome, processLinkData } from "../../components/Home";
 import TopBarSideBar from "../../components/TopBarSideBar";
-import StaticCitizenSideBar from "../../components/TopBarSideBar/SideBar/StaticCitizenSideBar";
 import FAQsSection from "./FAQs/FAQs";
 import CitizenHome from "./Home";
 import LanguageSelection from "./Home/LanguageSelection";
@@ -16,7 +15,6 @@ import HowItWorks from "./HowItWorks/howItWorks";
 import Login from "./Login";
 import Search from "./SearchApp";
 import StaticDynamicCard from "./StaticDynamicComponent/StaticDynamicCard";
-import { useGetAccessToken } from "../../hooks/useGetAccessToken";
 
 const getTenants = (codes, tenants) => {
   return tenants.filter((tenant) => codes.map((item) => item.code).includes(tenant.code));
@@ -104,9 +102,6 @@ const Home = ({
   const { t } = useTranslation();
   const { path } = useRouteMatch();
   const history = useHistory();
-  const handleClickOnWhatsApp = (obj) => {
-    window.open(obj);
-  };
 
   const hideSidebar = sidebarHiddenFor.some((e) => window.location.href.includes(e)) || true;
   const appRoutes = modules.map(({ code, tenants }, index) => {

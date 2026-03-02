@@ -310,8 +310,11 @@ export const UICustomizations = {
                 const channelDetailsEnum = {
                   SMS: "phone",
                   Email: "email",
+                  EMAIL: "email",
                   Post: "address",
+                  EPOST: "address",
                   Police: "address",
+                  POLICE: "address",
                   RPAD: "address",
                 };
                 function mapStatus(status, taskType) {
@@ -327,10 +330,32 @@ export const UICustomizations = {
                   };
                   return mapping[status]?.[taskType] || status; // fallback to original
                 }
-                const channelDetails = taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
+                let chanelDeatils = "";
+                if (data?.taskType === "MISCELLANEOUS_PROCESS") {
+                  const type = taskDetail?.miscellaneuosDetails?.addressee;
+                  switch (type) {
+                    case "POLICE":
+                      const policeDetails = taskDetail?.policeDetails;
+                      chanelDeatils = `${policeDetails?.name}, ${policeDetails?.district}`;
+                      break;
+                    case "OTHER":
+                      const othersDetails = taskDetail?.others;
+                      chanelDeatils = `${othersDetails?.name}`;
+                      break;
+                    default:
+                      chanelDeatils = "-";
+                      break;
+                  }
+                } else {
+                  const data =
+                    taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]] ||
+                    taskDetail?.witnessDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
+                  chanelDeatils = typeof data === "object" ? generateAddress({ ...data }) : data;
+                }
+
                 return {
                   deliveryChannel: taskDetail?.deliveryChannels?.channelName,
-                  channelDetails: typeof channelDetails === "object" ? generateAddress({ ...channelDetails }) : channelDetails,
+                  channelDetails: chanelDeatils,
                   status: mapStatus(data?.status, data?.taskType),
                   remarks: taskDetail?.remarks?.remark,
                   statusChangeDate: taskDetail?.deliveryChannels?.statusChangeDate,
@@ -339,7 +364,11 @@ export const UICustomizations = {
                   feePaidDate: taskDetail?.deliveryChannels?.feePaidDate,
                 };
               });
-            return { list: taskData };
+            if (typeof additionalDetails?.setHasTasks === "function") {
+              additionalDetails.setHasTasks(taskData.length > 0);
+            }
+
+            return { list: taskData || [] };
           },
         },
       };
@@ -362,7 +391,15 @@ export const UICustomizations = {
           return (
             <CustomChip
               text={t(value)}
-              shade={value === "DELIVERED" ? "green" : value === "UNDELIVERED" ? "red" : value === "pending" ? "grey" : "orange"}
+              shade={
+                value === "DELIVERED"
+                  ? "green"
+                  : value === "UNDELIVERED" || value === "PAYMENT_EXPIRED"
+                  ? "red"
+                  : value === "pending" || value === "PAYMENT_PENDING"
+                  ? "grey"
+                  : "orange"
+              }
             />
           );
         // return t(value);
@@ -370,6 +407,8 @@ export const UICustomizations = {
           return formatNoticeDeliveryDate(value) || "N/A";
         case "PROCESS_FEE_PAID_ON":
           return value || "-";
+        case "Delivery Channels":
+          return value === "EPOST" ? t("CS_POST") : t(value);
         default:
           return t("ES_COMMON_NA");
       }

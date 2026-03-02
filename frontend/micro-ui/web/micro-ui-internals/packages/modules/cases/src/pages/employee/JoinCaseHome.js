@@ -20,7 +20,7 @@ import JoinCaseSuccess from "./joinCaseComponent/JoinCaseSuccess";
 import LitigantVerification from "./joinCaseComponent/LitigantVerification";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import POAInfo from "./joinCaseComponent/POAInfo";
-import { cleanString, combineMultipleFiles, removeInvalidNameParts } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { cleanString, combineMultipleFiles, getAuthorizedUuid, removeInvalidNameParts } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/submissionWorkflow";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
@@ -125,6 +125,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const authorizedUuid = getAuthorizedUuid(userInfo?.uuid);
 
   const closeToast = () => {
     setShowErrorToast(false);
@@ -1152,6 +1153,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 filingNumber: caseDetails?.filingNumber,
                 litigant: litigantData,
                 representative: {
+                  advocateFilingStatus: "other",
                   advocateId: advocateData?.id,
                   ...(selectPartyData?.isReplaceAdvocate?.value === "YES" && {
                     isReplacing: true,
@@ -1328,6 +1330,19 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             const taskDetails = taskSearchResponse?.list?.[0]?.taskDetails;
             const ownerName = cleanString(userInfo?.name);
 
+            const documents =
+              taskDetails?.individualDetails?.map((res, index) => {
+                const poaDoc = res?.poaAuthDocument || {};
+                return {
+                  documentType: poaDoc?.documentType,
+                  fileStore: poaDoc?.fileStore,
+                  documentName: poaDoc?.additionalDetails?.documentName,
+                  additionalDetails: {
+                    name: poaDoc?.additionalDetails?.documentName,
+                  },
+                };
+              }) || [];
+
             const applicationReqBody = {
               tenantId,
               application: {
@@ -1366,8 +1381,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   owner: removeInvalidNameParts(ownerName),
                   onBehalOfName: removeInvalidNameParts(ownerName),
                 },
-                documents: [],
+                documents: [...documents],
                 onBehalfOf: [userInfo?.uuid],
+                asUser: authorizedUuid, // Sending uuid of the main advocate in case clerk/jr. adv is creating doc.
                 comment: [],
                 applicationDetails: {
                   taskNumber: taskNumber,
@@ -1375,7 +1391,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 },
                 workflow: {
                   id: "workflow123",
-                  action: SubmissionWorkflowAction.CREATE,
+                  action: SubmissionWorkflowAction.SUBMIT,
                   status: "in_progress",
                   comments: "Workflow comments",
                   documents: [{}],
@@ -1384,39 +1400,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             };
 
             const resApplication = await DRISTIService.createApplication(applicationReqBody, { tenantId });
-            const documents =
-              taskDetails?.individualDetails?.map((res, index) => {
-                const poaDoc = res?.poaAuthDocument || {};
-                return {
-                  documentType: poaDoc?.documentType,
-                  fileStore: poaDoc?.fileStore,
-                  additionalDetails: {
-                    name: poaDoc?.additionalDetails?.documentName,
-                  },
-                };
-              }) || [];
-
-            let evidenceReqBodyList = documents?.map((docs) => {
-              return {
-                artifact: {
-                  artifactType: "DOCUMENTARY",
-                  caseId: caseDetails?.id,
-                  application: resApplication?.application?.applicationNumber,
-                  filingNumber: caseDetails?.filingNumber,
-                  tenantId,
-                  comments: [],
-                  file: docs,
-                  sourceType: selectPartyData?.partyInvolve?.value === "COMPLAINANTS" ? "COMPLAINANT" : "ACCUSED",
-                  sourceID: individualId,
-                  filingType: "APPLICATION",
-                  additionalDetails: {
-                    uuid: userInfo?.uuid,
-                  },
-                },
-              };
-            });
-
-            await Promise.allSettled(evidenceReqBodyList?.map((body) => DRISTIService.createEvidence(body)));
             if (resApplication) {
               await createPendingTask({
                 name: t("ESIGN_THE_SUBMISSION_FOR_POA_CLAIM"),
@@ -1509,6 +1492,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             courtId: caseDetails?.courtId,
             applicationType: "REQUEST_FOR_BAIL",
             onBehalfOf: [uuid],
+            asUser: getAuthorizedUuid(uuid),
           },
         });
 
@@ -1562,7 +1546,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const handleKeyDown = useCallback(
     (event) => {
       if (event.key === "Enter") {
-        if (!isDisabled && step !== 3) onProceed();
+        if (!isDisabled && !(step === 2 || step === 3)) onProceed();
         if (step === 0 && isSearchingCase) searchCase(caseNumber);
       }
     },

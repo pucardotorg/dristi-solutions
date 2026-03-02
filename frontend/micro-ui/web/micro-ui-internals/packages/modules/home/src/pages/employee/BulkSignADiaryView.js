@@ -1,5 +1,5 @@
 import { InboxSearchComposer, SubmitBar, Loader, Button, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
 import { bulkADiarySignConfig } from "../../configs/BulkADiarySignConfig";
@@ -8,9 +8,10 @@ import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/au
 import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
 import { Urls } from "../../hooks";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
-import axios from "axios";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import ADiaryDocumentPdfModal from "./ADiaryDocumentPdfModal";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const buttonStyle = {
   borderRadius: "4px",
@@ -42,12 +43,6 @@ const Heading = ({ label }) => {
   );
 };
 
-const formatDate = (date) => {
-  if (!date) return "";
-  const convertedDate = new Date(date);
-  return convertedDate.toLocaleDateString();
-};
-
 function BulkSignADiaryView() {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const queryStrings = Digit.Hooks.useQueryParams();
@@ -76,6 +71,7 @@ function BulkSignADiaryView() {
   const [showDocumentPdfModal, setShowDocumentPdfModal] = useState({ show: false, rowData: null });
   const [toastMsg, setToastMsg] = useState(null);
   const [reload, setReload] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
@@ -84,9 +80,13 @@ function BulkSignADiaryView() {
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${ADiarypdf}`;
-
+  const today = new Date();
+  const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+  const diaryDateFilter = sessionStorage.getItem("diaryDateFilter");
   const name = "Signature";
   const pageModule = "en";
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const [diaryEntries, setDiaryEntries] = useState([]);
 
@@ -106,8 +106,8 @@ function BulkSignADiaryView() {
             name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -138,12 +138,10 @@ function BulkSignADiaryView() {
       } catch (error) {
         console.error("Error :", error);
       } finally {
-        if (entryDate !== date) {
-          setEntryDate(date);
-        }
+        setEntryDate(date);
       }
     },
-    [tenantId, courtId, entryDate]
+    [tenantId, courtId]
   );
 
   const config = useMemo(() => {
@@ -180,6 +178,7 @@ function BulkSignADiaryView() {
                 ...(courtId && { courtId: courtId }),
                 filingNumber: entry?.additionalDetails?.filingNumber,
                 artifactNumber: entry?.referenceId,
+                asUser: authorizedUuid,
                 tenantId,
               },
               tenantId,
@@ -218,8 +217,27 @@ function BulkSignADiaryView() {
 
     return {
       ...bulkADiarySignConfig,
+      apiDetails: {
+        ...bulkADiarySignConfig?.apiDetails,
+        requestBody: {
+          ...bulkADiarySignConfig.apiDetails.requestBody,
+          criteria: {
+            ...bulkADiarySignConfig.apiDetails.requestBody.criteria,
+            date: diaryDateFilter ? new Date(Number(diaryDateFilter)).toLocaleDateString("en-CA") : todayStr,
+          },
+        },
+      },
       sections: {
         ...bulkADiarySignConfig.sections,
+        search: {
+          ...bulkADiarySignConfig.sections.search,
+          uiConfig: {
+            ...bulkADiarySignConfig.sections.search.uiConfig,
+            defaultValues: {
+              date: diaryDateFilter ? new Date(Number(diaryDateFilter)).toLocaleDateString("en-CA") : todayStr,
+            },
+          },
+        },
         searchResult: {
           ...bulkADiarySignConfig.sections.searchResult,
           uiConfig: {
@@ -242,7 +260,7 @@ function BulkSignADiaryView() {
         setDiaryEntries: setDiaryEntries,
       },
     };
-  }, [isSelectedDataSigned]);
+  }, []);
 
   const MemoInboxSearchComposer = useMemo(() => {
     return (
@@ -255,12 +273,23 @@ function BulkSignADiaryView() {
     );
   }, [config]);
 
+  useEffect(() => {
+    return () => {
+      sessionStorage.removeItem("homeActiveTab");
+    };
+  });
+
+  useEffect(() => {
+    checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
+  }, [checkSignStatus]);
+
   const onCancel = () => {
     sessionStorage.setItem("adiaryStepper", parseInt(stepper) - 1);
     if (parseInt(stepper) === 1) {
       sessionStorage.removeItem("adiarypdf");
       sessionStorage.removeItem("adiaryStepper");
       sessionStorage.removeItem("diaryDate");
+      sessionStorage.removeItem("diaryDateFilter");
     } else if (parseInt(stepper) === 2) {
       setIsSigned(false);
       setSignedDocumentUploadID("");
@@ -309,6 +338,7 @@ function BulkSignADiaryView() {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onUploadSubmit = async () => {
@@ -325,6 +355,7 @@ function BulkSignADiaryView() {
         setLoader(false);
         setFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setLoader(false);
     }
@@ -369,6 +400,7 @@ function BulkSignADiaryView() {
       sessionStorage.removeItem("fileStoreId");
       sessionStorage.removeItem("adiarypdf");
       sessionStorage.removeItem("adiaryStepper");
+      sessionStorage.removeItem("diaryDateFilter");
     } catch (error) {
       console.error("Error :", error);
       setIsSigned(false);
@@ -384,7 +416,7 @@ function BulkSignADiaryView() {
     const uriSignedADiary = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${ADiarypdf}`;
 
     const authToken = localStorage.getItem("token");
-    axios
+    axiosInstance
       .get(uriSignedADiary, {
         headers: {
           "auth-token": `${authToken}`,
@@ -412,10 +444,6 @@ function BulkSignADiaryView() {
         console.error("Error during the API request:", error);
       });
   };
-
-  if (generateAdiaryLoader) {
-    return <Loader />;
-  }
 
   return (
     <React.Fragment>
@@ -471,15 +499,19 @@ function BulkSignADiaryView() {
             formId="modal-action"
             headerBarMainStyle={{ height: "50px" }}
           >
-            <MemoDocViewerWrapper
-              key={ADiarypdf}
-              fileStoreId={ADiarypdf}
-              tenantId={tenantId}
-              docWidth="100%"
-              docHeight="70vh"
-              showDownloadOption={false}
-              documentName={"ADiary"}
-            />
+            {generateAdiaryLoader ? (
+              <Loader />
+            ) : (
+              <MemoDocViewerWrapper
+                key={ADiarypdf}
+                fileStoreId={ADiarypdf}
+                tenantId={tenantId}
+                docWidth="100%"
+                docHeight="70vh"
+                showDownloadOption={false}
+                documentName={"ADiary"}
+              />
+            )}
           </Modal>
         )}
         {stepper === 2 && !openUploadSignatureModal && !isSigned && (
@@ -501,7 +533,7 @@ function BulkSignADiaryView() {
                   additionalElements={[
                     <p key="note">
                       {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
-                      <span style={{ fontWeight: "bold" }}>{`${t("ADIARY")} - ${formatDate(entryDate)}`}</span>
+                      <span style={{ fontWeight: "bold" }}>{`${t("ADIARY")} - ${DateUtils.getFormattedDate(entryDate, "DD-MM-YYYY", "/")}`}</span>
                     </p>,
                   ]}
                   inline
@@ -512,7 +544,10 @@ function BulkSignADiaryView() {
                 <div className="sign-button-wrap">
                   <Button
                     label={t("CS_ESIGN")}
-                    onButtonClick={() => handleEsign(name, pageModule, ADiarypdf, "Signature")} //as sending null throwing error in esign
+                    onButtonClick={() => {
+                      sessionStorage.setItem("homeActiveTab", "CS_HOME_A_DAIRY");
+                      handleEsign(name, pageModule, ADiarypdf, "Signature");
+                    }} //as sending null throwing error in esign
                     className="aadhar-sign-in"
                     labelClassName="aadhar-sign-in"
                   />
@@ -552,6 +587,7 @@ function BulkSignADiaryView() {
             formData={formData}
             onSubmit={onUploadSubmit}
             isDisabled={loader}
+            fileUploadError={fileUploadError}
           />
         )}
 
@@ -572,7 +608,7 @@ function BulkSignADiaryView() {
                 additionalElements={[
                   <p key="note">
                     {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
-                    <span style={{ fontWeight: "bold" }}>{`${t("ADIARY")} - ${formatDate(entryDate)}`}</span>
+                    <span style={{ fontWeight: "bold" }}>{`${t("ADIARY")} - ${DateUtils.getFormattedDate(entryDate, "DD-MM-YYYY", "/")}`}</span>
                   </p>,
                 ]}
                 inline

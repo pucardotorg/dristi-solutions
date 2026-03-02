@@ -49,7 +49,7 @@ export const bulkESignOrderConfig = {
                 masterName: "OrderStatus",
                 moduleName: "Order",
                 select:
-                  "(data) => {return data['Order'].OrderStatus?.filter((item)=>[`PENDING_BULK_E-SIGN`, `DRAFT_IN_PROGRESS`].includes(item.type));}",
+                  "(data) => {return data['Order'].OrderStatus?.filter((item)=>[`PENDING_BULK_E-SIGN`, `DRAFT_IN_PROGRESS`].includes(item.type)).sort((a, b) => a.type.localeCompare(b.type));}",
               },
             },
           },

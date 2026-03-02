@@ -9,13 +9,28 @@ import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
 import ActionEdit from "../components/ActionEdit";
 import ReactTooltip from "react-tooltip";
-import { getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
+import {
+  _getDigitilizationPatiresName,
+  getAssistantAdvocateMembersForPartiesTab,
+  getAuthorizedUuid,
+  getClerkMembersForPartiesTab,
+  getDate,
+  modifiedEvidenceNumber,
+  removeInvalidNameParts,
+} from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
-import BailBondModal from "../../../home/src/pages/employee/BailBondModal";
+
+export const getSelectedAdvocate = () => {
+  try {
+    return JSON.parse(localStorage.getItem("SELECTED_ADVOCATE"));
+  } catch {
+    return null;
+  }
+};
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -53,6 +68,46 @@ const getCaseNumber = (billDetails = {}) => {
   if (isValid(filingNumber)) return filingNumber;
 
   return "";
+};
+
+const normalizeItems = (items = []) => {
+  return items?.map?.((item) => {
+    const obj = {};
+
+    item?.fields?.forEach?.(({ key, value }) => {
+      const cleanedKey = key.replace("digitalizedDocumentDetails.", "");
+
+      const parts = cleanedKey.split(".");
+      let current = obj;
+
+      parts.forEach((part, index) => {
+        const arrayMatch = part.match(/(\w+)\[(\d+)\]/);
+
+        if (arrayMatch) {
+          const prop = arrayMatch[1];
+          const idx = Number(arrayMatch[2]);
+
+          current[prop] = current[prop] || [];
+          current[prop][idx] = current[prop][idx] || {};
+
+          if (index === parts.length - 1) {
+            current[prop][idx] = value;
+          } else {
+            current = current[prop][idx];
+          }
+        } else {
+          if (index === parts.length - 1) {
+            current[part] = value;
+          } else {
+            current[part] = current[part] || {};
+            current = current[part];
+          }
+        }
+      });
+    });
+
+    return obj;
+  });
 };
 
 export const UICustomizations = {
@@ -775,6 +830,7 @@ export const UICustomizations = {
       const tenantId = window?.Digit.ULBService.getStateId();
       const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
       const status = !filterList?.status || filterList?.status === "PUBLISHED" ? "PUBLISHED" : "EMPTY";
+      const userUuid = Digit.UserService.getUser()?.info?.uuid;
       return {
         ...requestCriteria,
         body: {
@@ -783,6 +839,7 @@ export const UICustomizations = {
             ...requestCriteria.body.criteria,
             ...filterList,
             status: userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order") ? status : filterList?.status,
+            asUser: getAuthorizedUuid(userUuid),
           },
           tenantId,
           pagination: {
@@ -796,7 +853,7 @@ export const UICustomizations = {
             // if (requestCriteria.url.split("/").includes("order")) {
             return userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order")
               ? { ...data, list: data.list?.filter((order) => order.status !== "DRAFT_IN_PROGRESS") }
-              : userRoles.includes("JUDGE_ROLE") && requestCriteria.url.split("/").includes("application")
+              : userRoles.includes("EMPLOYEE") && requestCriteria.url.split("/").includes("application")
               ? {
                   ...data,
                   applicationList: data.applicationList?.filter((application) => !["PENDINGESIGN", "PENDINGPAYMENT"].includes(application.status)),
@@ -855,6 +912,9 @@ export const UICustomizations = {
         case "SUBMISSION_ID":
           return value ? value : "-";
         case "CS_ACTIONS":
+          if (column?.jsonPath === "applicationDraftDelete" && row.status !== "DRAFT_IN_PROGRESS") {
+            return null;
+          }
           return (
             <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
           );
@@ -863,76 +923,23 @@ export const UICustomizations = {
       }
     },
     dropDownItems: (row, configs) => {
-      const formatDate = (date) => {
-        const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-      };
-      const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
-      const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
-      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-      const date = new Date(row.startTime);
-      const future = row.startTime > Date.now();
-      const showActions = configs && configs.hasOwnProperty("showMakeSubmission") ? configs.showMakeSubmission : true;
-      if (row.status === "SCHEDULED" && userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")) {
+      if (configs?.jsonPath === "applicationDraftDelete") {
         return [
           {
-            label: "Reschedule hearing",
-            id: "reschedule",
-            action: (history) => {
-              const requestBody = {
-                order: {
-                  createdDate: null,
-                  tenantId: row.tenantId,
-                  // hearingNumber: row?.hearingId,
-                  filingNumber: row.filingNumber[0],
-                  cnrNumber: row.cnrNumbers[0],
-                  statuteSection: {
-                    tenantId: row.tenantId,
-                  },
-                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                  orderCategory: "INTERMEDIATE",
-                  orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                  status: "",
-                  isActive: true,
-                  workflow: {
-                    action: OrderWorkflowAction.SAVE_DRAFT,
-                    comments: "Creating order",
-                    assignes: null,
-                    rating: null,
-                    documents: [{}],
-                  },
-                  documents: [],
-                  additionalDetails: {
-                    formdata: {
-                      orderType: {
-                        type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                        isactive: true,
-                        code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                        name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                      },
-                      originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
-                        date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
-                      }`,
-                    },
-                  },
-                },
-              };
-              ordersService
-                .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
-                .then((res) => {
-                  history.push(
-                    `/${window.contextPath}/employee/orders/generate-order?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
-                    {
-                      caseId: row.caseId,
-                      tab: "Orders",
-                    }
-                  );
-                })
-                .catch((err) => {});
+            label: "CS_COMMON_DELETE",
+            id: "draft_order_delete",
+            hide: false,
+            disabled: false,
+            action: (history, column, row) => {
+              column.clickFunc(row);
             },
           },
+        ];
+      }
+
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      if (row.status === "SCHEDULED" && userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")) {
+        return [
           {
             label: "View transcript",
             id: "view_transcript",
@@ -961,26 +968,6 @@ export const UICustomizations = {
       }
       if (row.status === "SCHEDULED" && userInfo?.type === "CITIZEN") {
         return [
-          {
-            label: "Request for Reschedule hearing",
-            id: "reschedule",
-            hide: !showActions,
-            action: (history) => {
-              history.push(
-                `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=RE_SCHEDULE`
-              );
-            },
-          },
-          {
-            label: "Request for Checkout Request",
-            id: "reschedule",
-            hide: !showActions,
-            action: (history) => {
-              history.push(
-                `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=CHECKOUT_REQUEST`
-              );
-            },
-          },
           {
             label: "View transcript",
             id: "view_transcript",
@@ -1145,6 +1132,8 @@ export const UICustomizations = {
   },
   FilingsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
+      const userUUID = Digit.UserService.getUser()?.info?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUUID);
       const filterList = Object.keys(requestCriteria.state.searchForm)
         .map((key) => {
           if (requestCriteria.state.searchForm[key]?.type) {
@@ -1173,6 +1162,7 @@ export const UICustomizations = {
           criteria: {
             ...requestCriteria.body.criteria,
             ...filterList,
+            asUser: authorizedUuid,
             status: userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order") ? status : filterList?.status,
           },
           tenantId,
@@ -1240,6 +1230,9 @@ export const UICustomizations = {
         case "EVIDENCE_NUMBER":
           return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value, row?.filingNumber);
         case "EVIDENCE_STATUS":
+          if (row?.evidenceMarkedStatus === "DELETED_DRAFT") {
+            return "";
+          }
           return row?.evidenceMarkedStatus && (row?.evidenceMarkedStatus === "COMPLETED" || isEmployee) ? (
             <CustomChip
               text={row?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(row?.evidenceMarkedStatus) || ""}
@@ -1271,7 +1264,7 @@ export const UICustomizations = {
         row?.artifactType !== "WITNESS_DEPOSITION" &&
         !row?.isVoid &&
         !((row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED") && row?.filingType === "DIRECT")
-          ? row?.evidenceMarkedStatus !== null || row.isEvidence
+          ? (row?.evidenceMarkedStatus !== null && row?.evidenceMarkedStatus !== "DELETED_DRAFT") || row.isEvidence
             ? [
                 {
                   label: "VIEW_MARK_AS_EVIDENCE",
@@ -1314,6 +1307,21 @@ export const UICustomizations = {
             ]
           : []),
 
+        ...(userInfo.roles.map((role) => role.code).includes("EMPLOYEE") &&
+        row?.artifactType !== "WITNESS_DEPOSITION" &&
+        !row?.isVoid &&
+        row?.evidenceMarkedStatus &&
+        ["DRAFT", "DRAFT_IN_PROGRESS"].includes(row?.evidenceMarkedStatus)
+          ? [
+              {
+                label: "DELETE_EVIDENCE_DRAFT",
+                id: "delete_evidence_draft",
+                hide: false,
+                disabled: false,
+                action: column.clickFunc,
+              },
+            ]
+          : []),
         {
           label: "DOWNLOAD_FILING",
           id: "download_filing",
@@ -1334,7 +1342,8 @@ export const UICustomizations = {
           select: (data) => {
             const allLitigantAdvocatesMapping = getAdvocates(data.criteria[0].responseList[0]);
             const userInfo = Digit.UserService.getUser()?.info;
-            const editorUuid = userInfo?.uuid;
+            const userUuid = userInfo?.uuid;
+            const editorUuid = getAuthorizedUuid(userUuid);
 
             // Either an advocate who is representing any "complainant" or any "PIP complainant" ->> only these
             // 2 type can edit details of any complainant/accused from actions in parties tab.
@@ -1470,6 +1479,12 @@ export const UICustomizations = {
                 };
               }) || [];
 
+            //List of all the clerks working for senior advocates in the case
+            const advocateOfficeClerks = getClerkMembersForPartiesTab(data);
+
+            //List of all the assistant advocates working for senior advocates in the case
+            const advocateOfficeAssistantAdvocates = getAssistantAdvocateMembersForPartiesTab(data);
+
             const allParties = [
               ...finalLitigantsData,
               ...unjoinedAccused,
@@ -1477,6 +1492,8 @@ export const UICustomizations = {
               ...joinStatusPendingAdvocates,
               ...finalPoaHoldersData,
               ...witnessDetails,
+              ...advocateOfficeClerks,
+              ...advocateOfficeAssistantAdvocates,
             ];
             const paginatedParties = allParties.slice(offset, offset + limit);
             return {
@@ -1499,14 +1516,18 @@ export const UICustomizations = {
         case "PARTY_NAME":
           return removeInvalidNameParts(value) || "";
 
-        case "ASSOCIATED_WITH":
-          const associatedWith =
-            row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType)
+        case "ASSOCIATED_WITH": {
+          let associatedWith =
+            row?.partyType === "ADVOCATE" || ["poa.regular"].includes(row?.partyType)
               ? row?.representingList
               : row?.partyType === "witness"
               ? t(row?.associatedWith)
               : "";
+          if (Array.isArray(row?.associatedWith)) {
+            associatedWith = row.associatedWith.filter(Boolean).join(", ");
+          }
           return associatedWith || "";
+        }
         case "STATUS":
           const caseJoinStatus = ["respondent.primary", "respondent.additional"].includes(row?.partyType)
             ? t("JOINED")
@@ -1531,7 +1552,15 @@ export const UICustomizations = {
           return <span>{formattedDate}</span>;
         case "PARTY_TYPE":
           const partyType = value === "ADVOCATE" ? `${t("ADVOCATE")}` : partyTypes[value] ? t(partyTypes[value]) : t(value);
-          return partyType === "unJoinedAccused" ? "Accused" : partyType === "witness" ? t("WITNESS") : partyType;
+          return partyType === "unJoinedAccused"
+            ? "Accused"
+            : partyType === "witness"
+            ? t("WITNESS")
+            : partyType === "CLERK"
+            ? t("CLERK_PARTY_TYPE")
+            : partyType === "ASSISTANT_ADVOCATE"
+            ? t("ASSISTANT_ADVOCATE_PARTY_TYPE")
+            : partyType;
         case "ACTIONS":
           return row?.isEditable ? (
             <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
@@ -1568,7 +1597,8 @@ export const UICustomizations = {
         : row?.individualId;
       const caseId = row?.caseId;
       const isAdvocate = row?.isAdvocateEditor;
-      const editorUuid = userInfo?.uuid;
+      const userUuid = userInfo?.uuid;
+      const editorUuid = getAuthorizedUuid(userUuid);
 
       return [
         {
@@ -1943,6 +1973,137 @@ export const UICustomizations = {
       }
     },
   },
+  HomeScheduleHearingConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      return {
+        ...requestCriteria,
+        body: {
+          SearchCriteria: {
+            ...requestCriteria.body.SearchCriteria,
+            moduleSearchCriteria: {
+              ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
+              courtId: localStorage.getItem("courtId"),
+            },
+
+            searchScheduleHearing: {
+              isOnlyCountRequired: false,
+              actionCategory: "Schedule Hearing",
+              ...(requestCriteria?.state?.searchForm?.caseSearchText && {
+                searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+              }),
+              ...(requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
+            },
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offset: requestCriteria?.state?.tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const processFields = (fields) => {
+              const result = fields?.reduce((acc, curr) => {
+                const key = curr?.key;
+                if (key.includes("advocateDetails")) {
+                  const subKey = key.replace("advocateDetails.", "");
+                  if (subKey.includes("[")) {
+                    const arrayKey = subKey.replace(/\[.*?\]/g, "");
+                    if (!acc.advocateDetails) acc.advocateDetails = {};
+                    if (!acc.advocateDetails[arrayKey]) acc.advocateDetails[arrayKey] = [];
+                    acc.advocateDetails[arrayKey].push(curr.value);
+                  } else {
+                    if (!acc.advocateDetails) acc.advocateDetails = {};
+                    acc.advocateDetails[subKey] = curr.value;
+                  }
+                } else {
+                  acc[key] = curr.value;
+                }
+                return acc;
+              }, {});
+
+              return {
+                caseTitle: result?.caseTitle,
+                caseNumber: result?.caseNumber,
+                substage: result?.substage,
+                filingNumber: result?.filingNumber,
+                caseId: result?.caseId,
+                advocateDetails: result?.advocateDetails,
+                createdTime: result?.createdTime,
+              };
+            };
+            return {
+              TotalCount: data?.scheduleHearingData?.count,
+              data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
+            };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      const today = new Date();
+      const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const caseId = row?.caseNumber || row?.filingNumber;
+      switch (key) {
+        case "PENDING_CASE_NAME": {
+          return (
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
+                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview&fromHome=true`,
+                state: { homeActiveTab: row?.tab },
+              }}
+            >
+              {value ? value : "-"}
+            </Link>
+          );
+        }
+        case "ADVOCATES":
+          if (value === null || value === undefined || value === "undefined" || value === "null") {
+            return null;
+          }
+          return (
+            <div>
+              <p data-tip data-for={`hearing-list`}>
+                {row?.advocateDetails?.complainant?.length > 0 &&
+                  `${row?.advocateDetails?.complainant?.[0]}(C)${
+                    row?.advocateDetails?.complainant?.length === 2
+                      ? " + 1 Other"
+                      : row?.advocateDetails?.complainant?.length > 2
+                      ? ` + ${row?.advocateDetails?.complainant?.length - 1} others`
+                      : ""
+                  }`}
+              </p>
+              <p data-tip data-for={`hearing-list`}>
+                {row?.advocateDetails?.accused?.length > 0 &&
+                  `${row?.advocateDetails?.accused?.[0]}(A)${
+                    row?.advocateDetails?.accused?.length === 2
+                      ? " + 1 Other"
+                      : row?.advocateDetails?.accused?.length > 2
+                      ? ` + ${row?.advocateDetails?.accused?.length - 1} others`
+                      : ""
+                  }`}
+              </p>
+            </div>
+          );
+        case "STAGE":
+          return t(value);
+        case "CASE_TYPE":
+          return <span>NIA S138</span>;
+        case "CS_CASE_NUMBER_HOME":
+          return caseId;
+        case "CS_DAYS_FILING":
+          const createdAt = new Date(value);
+          const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+          const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+          const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+          return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
+        case "APPLICATION_TYPE":
+          return t(value);
+        default:
+          return value ? value : "-";
+      }
+    },
+  },
   HomePendingConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const currentDateInMs = new Date().setHours(23, 59, 59, 999);
@@ -1971,6 +2132,15 @@ export const UICustomizations = {
               isOnlyCountRequired: activeTab === "REGISTRATION" ? false : true,
               actionCategory: "Register cases",
               ...(activeTab === "REGISTRATION" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
+            searchReschedulingRequestApplications: {
+              date: null,
+              isOnlyCountRequired: activeTab === "RESCHEDULE_REQUEST" ? false : true,
+              actionCategory: "Rescheduling Request",
+              ...(activeTab === "RESCHEDULE_REQUEST" &&
                 requestCriteria?.state?.searchForm?.caseSearchText && {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
@@ -2036,6 +2206,15 @@ export const UICustomizations = {
               date: null,
               isOnlyCountRequired: true,
             },
+            searchNoticeAndSummons: {
+              date: null,
+              isOnlyCountRequired: activeTab === "NOTICE_SUMMONS_MANAGEMENT" ? false : true,
+              actionCategory: "Notice and Summons Management",
+              ...(activeTab === "NOTICE_SUMMONS_MANAGEMENT" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -2052,14 +2231,18 @@ export const UICustomizations = {
             const otherApplicationsCount = data?.otherApplicationsData?.totalCount || 0;
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
+            const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
+            const rescheduleRequestCount = data?.reschedulingRequestData?.totalCount || 0;
 
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
               OFFLINE_PAYMENTS: offlinePaymentsCount,
               SCRUTINISE_CASES: scrutinyCasesCount,
               REGISTRATION: registerCount,
+              RESCHEDULE_REQUEST: rescheduleRequestCount,
               REVIEW_PROCESS: reviwCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
+              NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
               RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
               DELAY_CONDONATION: delayCondonationApplicationCount,
               OTHERS: otherApplicationsCount,
@@ -2078,12 +2261,24 @@ export const UICustomizations = {
                     if (!acc.advocateDetails) acc.advocateDetails = {};
                     acc.advocateDetails[subKey] = curr.value;
                   }
+                } else if (key.startsWith("additionalDetails.uniqueIds")) {
+                  const match = key.match(/additionalDetails\.uniqueIds\[(\d+)\]\.(.+)/);
+                  if (match) {
+                    const index = match[1];
+                    const subKey = match[2];
+                    acc.uniqueIdsList = acc.uniqueIdsList || [];
+                    acc.uniqueIdsList[index] = acc.uniqueIdsList[index] || {};
+                    acc.uniqueIdsList[index][subKey] = curr.value;
+                  }
+                } else if (key === "additionalDetails.orderItemId") {
+                  acc.orderItemId = curr.value;
+                } else if (key === "additionalDetails.partyType") {
+                  acc.partyType = curr.value;
                 } else {
                   acc[key] = curr.value;
                 }
                 return acc;
               }, {});
-
               return {
                 caseTitle: result?.caseTitle,
                 caseNumber: result?.caseNumber,
@@ -2094,12 +2289,24 @@ export const UICustomizations = {
                 createdTime: result?.createdTime,
                 tab: activeTab,
                 applicationType: result?.referenceEntityType,
+                referenceId: result?.referenceId,
+                partyUniqueIds: result?.uniqueIdsList,
+                orderItemId: result?.orderItemId,
+                partyType: result?.partyType,
+                processType: result?.name?.trim()?.split(" ")?.pop(),
+                dateOfApplication: result?.dateOfApplication || "-",
+                nextHearingDate: result?.nextHearingDate || "-",
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
               return {
                 TotalCount: data?.reviewProcessData?.count,
                 data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
+              };
+            } else if (activeTab === "NOTICE_SUMMONS_MANAGEMENT") {
+              return {
+                TotalCount: data?.noticeAndSummonsData?.count,
+                data: data?.noticeAndSummonsData?.data?.map((item) => processFields(item.fields)),
               };
             } else if (activeTab === "BAIL_BOND_STATUS") {
               return {
@@ -2121,6 +2328,11 @@ export const UICustomizations = {
                 TotalCount: data?.otherApplicationsData?.count,
                 data: data?.otherApplicationsData?.data?.map((item) => processFields(item.fields)) || [],
               };
+            } else if (activeTab === "RESCHEDULE_REQUEST") {
+              return {
+                TotalCount: data?.reschedulingRequestData?.count,
+                data: data?.reschedulingRequestData?.data?.map((item) => processFields(item.fields)) || [],
+              };
             } else
               return {
                 TotalCount: data?.registerCasesData?.count,
@@ -2134,6 +2346,27 @@ export const UICustomizations = {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const caseId = row?.caseNumber || row?.filingNumber;
+      const getDaysDiff = (value) => {
+        const createdAt = new Date(value);
+        const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
+
+        const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
+        return Math.ceil(differenceInTime / (1000 * 3600 * 24));
+      };
+      const renderDaysDiff = (value) => {
+        const days = getDaysDiff(value);
+        return (
+          <span
+            style={{
+              color: days > 2 ? "#9E400A" : undefined,
+              fontWeight: days > 2 ? 500 : 400,
+            }}
+          >
+            {days}
+          </span>
+        );
+      };
+
       switch (key) {
         case "PENDING_CASE_NAME": {
           return row?.tab === "REGISTRATION" ? (
@@ -2147,7 +2380,18 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
-          ) : row?.tab === "BAIL_BOND_STATUS" ? (
+          ) : row?.tab === "RESCHEDULE_REQUEST" ? (
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
+                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Submissions&fromHome=true`,
+                state: { homeActiveTab: row?.tab, refApplicationNumber: row?.referenceId },
+              }}
+            >
+              {value ? value : "-"}
+            </Link>
+          ) : ["BAIL_BOND_STATUS", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(row?.tab) ? (
             <OrderName rowData={row} colData={column} value={value} />
           ) : (
             <Link
@@ -2197,11 +2441,9 @@ export const UICustomizations = {
         case "CS_CASE_NUMBER_HOME":
           return caseId;
         case "CS_DAYS_FILING":
-          const createdAt = new Date(value);
-          const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
-          const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
-          const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
-          return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
+          return renderDaysDiff(value);
+        case "CS_DAYS_REGISTRATION":
+          return renderDaysDiff(value);
         case "APPLICATION_TYPE":
           return t(value);
         default:
@@ -2234,6 +2476,11 @@ export const UICustomizations = {
               date: null,
               isOnlyCountRequired: true,
               actionCategory: "Register cases",
+            },
+            searchNoticeAndSummons: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Notice and Summons Management",
             },
             searchBailBonds: {
               date: currentDateInMs,
@@ -2273,6 +2520,11 @@ export const UICustomizations = {
               date: null,
               isOnlyCountRequired: true,
             },
+            searchReschedulingRequestApplications: {
+              date: null,
+              isOnlyCountRequired: true,
+              actionCategory: "Rescheduling Request",
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -2289,14 +2541,18 @@ export const UICustomizations = {
             const otherApplicationsCount = data?.otherApplicationsData?.totalCount || 0;
             const registerUsersCount = data?.registerUsersData?.count || 0;
             const offlinePaymentsCount = data?.offlinePaymentsData?.count || 0;
+            const noticeAndSummonsCount = data?.noticeAndSummonsData?.totalCount || 0;
+            const rescheduleHearingRequestCount = data?.reschedulingRequestData?.totalCount || 0;
 
             additionalDetails?.setCount({
               REGISTER_USERS: registerUsersCount,
               OFFLINE_PAYMENTS: offlinePaymentsCount,
               SCRUTINISE_CASES: scrutinyCasesCount,
               REGISTRATION: registerCount,
+              RESCHEDULE_REQUEST: rescheduleHearingRequestCount,
               REVIEW_PROCESS: reviewCount,
               BAIL_BOND_STATUS: bailBondStatusCount,
+              NOTICE_SUMMONS_MANAGEMENT: noticeAndSummonsCount,
               RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
               DELAY_CONDONATION: delayCondonationApplicationCount,
               OTHERS: otherApplicationsCount,
@@ -2320,7 +2576,6 @@ export const UICustomizations = {
                 }
                 return acc;
               }, {});
-
               return {
                 caseTitle: result?.caseTitle,
                 caseNumber: result?.caseNumber,
@@ -2384,7 +2639,8 @@ export const UICustomizations = {
       const currentDateInMs = new Date().setHours(23, 59, 59, 999);
       const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
       const isCitizen = userRoles?.includes("CITIZEN");
-
+      const userUUID = Digit.UserService.getUser()?.info?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUUID);
       const limit = requestCriteria?.state?.tableForm?.limit || 10;
       const offSet = requestCriteria?.state?.tableForm?.offset || 0;
       const bailId = requestCriteria?.state?.searchForm?.bailId;
@@ -2397,6 +2653,7 @@ export const UICustomizations = {
             ...requestCriteria?.body?.criteria,
             ...(bailId && { bailId }),
             ...(isCitizen ? {} : { status: ["PENDING_REVIEW", "COMPLETED", "VOID"] }),
+            asUser: authorizedUuid,
             fuzzySearch: true,
           },
           pagination: {
@@ -2430,6 +2687,74 @@ export const UICustomizations = {
       }
     },
   },
+
+  DigitalizationConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const courtId = localStorage.getItem("courtId");
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+      const isCitizen = userRoles?.includes("CITIZEN");
+      const userUUID = Digit.UserService.getUser()?.info?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUUID);
+      return {
+        ...requestCriteria,
+        body: {
+          SearchCriteria: {
+            tenantId,
+            moduleName: "Digitalized Document Service",
+            moduleSearchCriteria: {
+              ...(requestCriteria.body.SearchCriteria.moduleSearchCriteria || {}),
+              ...(courtId ? { courtId } : {}),
+              ...(requestCriteria?.state?.searchForm?.type?.code ? { type: requestCriteria.state.searchForm.type.code } : {}),
+              ...(requestCriteria?.state?.searchForm?.documentNumber ? { documentNumber: requestCriteria.state.searchForm.documentNumber } : {}),
+              ...(isCitizen ? { assignedTo: [authorizedUuid] } : {}),
+              ...(!isCitizen ? { assignedRoles: [...userRoles] } : {}),
+            },
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offset: requestCriteria?.state?.tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            const normalized = normalizeItems(data?.data || []);
+            return { documents: normalized, totalCount: data?.totalCount || normalized?.length };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      switch (key) {
+        case "DOCUMENT_TYPE":
+          const newValue = value === "MEDIATION" ? "MEDIATION_FORM" : value;
+          return (
+            <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={newValue} showAsHeading={true} isDigitilization={true} />
+          );
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "COMPLETED" ? "green" : "orange"} />;
+        case "PARTIES":
+          return _getDigitilizationPatiresName(row);
+        case "CS_ACTIONS":
+          if (row?.status !== "DRAFT_IN_PROGRESS") {
+            return null;
+          }
+          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="DigitalizationConfig" />;
+        default:
+          return value ? value : "-";
+      }
+    },
+    dropDownItems: (row, column) => {
+      return [
+        {
+          label: "CS_COMMON_DELETE",
+          id: "draft_ditilization_delete",
+          hide: false,
+          disabled: false,
+          action: column.clickFunc,
+        },
+      ];
+    },
+  },
   patternValidation: (key) => {
     switch (key) {
       case "contact":
@@ -2438,6 +2763,8 @@ export const UICustomizations = {
         return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       case "userName":
         return /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i;
+      case "debtNature":
+        return /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,100}$/i;
       case "address":
         return /^[^\$\"<>?\\\\~`!@$%^()={}\[\]*:;“”‘’]{2,256}$/i;
       case "nonNumericString":
@@ -2454,6 +2781,59 @@ export const UICustomizations = {
         return;
     }
   },
+  assignCasesConfig: {
+    // Ensure caseMappingFilterStatus is sent as a string code (e.g. "UNASSIGNED_CASES"),
+    // not as the full dropdown option object.
+    preProcess: (requestCriteria) => {
+      const tenantId = window?.Digit?.ULBService?.getCurrentTenantId();
+      const searchForm = requestCriteria?.state?.searchForm || {};
+
+      const statusValue = searchForm?.caseMappingFilterStatus;
+      let caseMappingFilterStatus = "ALL_CASES";
+      if (typeof statusValue === "string") {
+        caseMappingFilterStatus = statusValue;
+      } else if (statusValue && typeof statusValue === "object" && statusValue.code) {
+        caseMappingFilterStatus = statusValue.code;
+      }
+
+      const caseSearchText = searchForm?.caseSearchText;
+
+      const existingCriteria = requestCriteria?.body?.criteria || {};
+      const existingPagination = requestCriteria?.body?.pagination || { limit: 100, offSet: 0 };
+
+      return {
+        ...requestCriteria,
+        body: {
+          criteria: {
+            ...existingCriteria,
+            tenantId: tenantId || existingCriteria.tenantId,
+            caseMappingFilterStatus,
+            ...(caseSearchText ? { caseSearchText } : {}),
+          },
+          pagination: existingPagination,
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t) => {
+      switch (key) {
+        case "SELECT":
+          return (
+            <input
+              type="checkbox"
+              className="custom-checkbox"
+              defaultChecked={row?.isActive === true}
+              data-case-id={row?.caseId || ""}
+              data-initial-active={row?.isActive === true ? "true" : "false"}
+              onClick={(e) => e.stopPropagation()}
+              style={{ cursor: "pointer", width: "20px", height: "20px" }}
+            />
+          );
+        default:
+          return value != null ? value : "";
+      }
+    },
+  },
+
   DristiCaseUtils: {
     getAllCaseRepresentativesUUID: (caseData) => {
       let representatives = {};

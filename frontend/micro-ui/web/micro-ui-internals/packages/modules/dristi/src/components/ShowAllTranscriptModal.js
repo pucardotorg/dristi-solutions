@@ -3,14 +3,7 @@ import React, { useEffect } from "react";
 import Modal from "./Modal";
 import { SubmitBar } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
-
-const formatDate = (epochTime) => {
-  const date = new Date(epochTime);
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
+import { DateUtils } from "../Utils";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.heading}</h1>;
@@ -24,12 +17,12 @@ const CloseBtn = (props) => {
   );
 };
 
-const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView = false }) => {
+const ShowAllTranscriptModal = ({ setShowAllTranscript, botdOrderList, judgeView = false }) => {
   const { t } = useTranslation();
 
   return (
     <Modal
-      headerBarMain={<Heading heading={judgeView ? t("HEARING_SUMMARIES") : t("ALL_HEARING_TRANSCRIPT")} />}
+      headerBarMain={<Heading heading={judgeView ? t("BOTD_SUMMARIES") : t("ALL_BOTD_TRANSCRIPT")} />}
       headerBarEnd={<CloseBtn onClick={() => setShowAllTranscript(false)} />}
       actionCancelLabel={null}
       actionCancelOnSubmit={() => {}}
@@ -40,26 +33,26 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView =
       className={"view-hearing-transcript-modal"}
     >
       <div style={{ height: "50vh", overflowY: "auto" }}>
-        {hearingList?.length === 0 ? (
-          <div style={{ marginTop: "20px" }}>
-            {t("NO_HEARING_SUMMARY_AVAILABLE")}
-          </div>
-        ) :
-        hearingList?.map((hearing, index) => (
-          <div key={index} style={{ paddingRight: "20px", marginTop: "15px" }}>
-            <div className="transcript-header" style={{ display: "flex", justifyContent: "space-between" }}>
-              <div style={{ marginLeft: "4px" }}>{`${t(hearing?.hearingType)} Hearing`}</div>
-              <div style={{ marginRight: "8px" }}>{`${formatDate(hearing?.startTime)}`}</div>
-            </div>
-            <div>
-              <TextArea
-                style={{ width: "100%", height: "12vh", border: "solid 1px #3d3c3c", resize: "none" }}
-                value={hearing?.hearingSummary || ""}
-                readOnly
-              />
-            </div>
+        {!botdOrderList?.length ? (
+          <div style={{ marginTop: "20px" }}>{t("NO_BOTD_SUMMARY_AVAILABLE")}</div>
+        ) : (
+          botdOrderList?.map((botdOrder, index) => (
+            <div key={index} style={{ paddingRight: "20px", marginTop: "15px" }}>
+              <div className="transcript-header" style={{ display: "flex", justifyContent: "space-between" }}>
+                <div style={{ marginLeft: "4px" }}>
+                  {botdOrder?.hearingNumber ? `${botdOrder?.hearingType ? t(botdOrder?.hearingType) : ""} ${t("BOTD")}` : t("BOTD")}
+                </div>
+                <div style={{ marginRight: "8px" }}>{`${DateUtils.getFormattedDate(botdOrder?.createdDate)}`}</div>
+              </div>
+              <div>
+                <TextArea
+                  style={{ width: "100%", height: "12vh", border: "solid 1px #3d3c3c", resize: "none" }}
+                  value={botdOrder?.businessOfTheDay || ""}
+                  readOnly
+                />
+              </div>
 
-            {/* {hearing?.attendees && hearing?.attendees?.length > 0 && (
+              {/* {hearing?.attendees && hearing?.attendees?.length > 0 && (
               <div style={{ border: "solid 1px rgb(61, 60, 60)", marginTop: "-5px", padding: "5px" }}>
                 <span>Attendees: </span>
                 <span style={{ whiteSpace: "normal", wordBreak: "normal" }}>
@@ -71,8 +64,9 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView =
                 </span>
               </div>
             )} */}
-          </div>
-        ))}
+            </div>
+          ))
+        )}
       </div>
       <div className="submit-bar-div">
         <SubmitBar

@@ -2,11 +2,11 @@ import CustomCaseInfoDiv from "@egovernments/digit-ui-module-dristi/src/componen
 import { Button, CheckSvg } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
 import { createShorthand } from "../../../utils/joinCaseUtils";
-import { formatDate } from "../../../utils";
 import NameListWithModal from "../../../components/NameListWithModal";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { RightArrow } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { useTranslation } from "react-i18next";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const JoinCaseSuccess = ({
   success,
@@ -22,9 +22,11 @@ const JoinCaseSuccess = ({
   const { t } = useTranslation();
 
   const history = useHistory();
+  const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
 
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {
@@ -60,7 +62,7 @@ const JoinCaseSuccess = ({
         },
         {
           key: "CS_FILING_DATE",
-          value: formatDate(new Date(caseDetails?.filingDate)),
+          value: DateUtils.getFormattedDate(new Date(caseDetails?.filingDate)),
         },
       ];
     }
@@ -127,8 +129,10 @@ const JoinCaseSuccess = ({
               className={"selector-button-border"}
               label={t("BACK_HOME")}
               onButtonClick={() => {
-                closeModal();
-                if (refreshInbox) refreshInbox();
+                triggerSurvey("JOIN_CASE_PAYMENT", () => {
+                  closeModal();
+                  if (refreshInbox) refreshInbox();
+                });
               }}
             />
             <Button
@@ -141,14 +145,16 @@ const JoinCaseSuccess = ({
                     `/${window?.contextPath}/${userInfoType}/submissions/submissions-create?filingNumber=${caseDetails?.filingNumber}&applicationType=REQUEST_FOR_BAIL`
                   );
                 } else {
-                  if (type === "external") {
-                    closeModal();
-                    if (refreshInbox) refreshInbox();
-                    return;
-                  }
-                  history.push(
-                    `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
-                  );
+                  triggerSurvey("JOIN_CASE_PAYMENT", () => {
+                    if (type === "external") {
+                      closeModal();
+                      if (refreshInbox) refreshInbox();
+                      return;
+                    }
+                    history.push(
+                      `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
+                    );
+                  });
                 }
               }}
               isDisabled={isCaseViewDisabled}
@@ -158,6 +164,7 @@ const JoinCaseSuccess = ({
           </div>
         </React.Fragment>
       )}
+      {SurveyUI}
     </div>
   );
 };

@@ -74,12 +74,11 @@ function timeInMillisFromDateAndTime(date, hhmmssms) {
   return startOfDate.getTime() + millis;
 }
 
-const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...props }) => {
+const UpcomingHearings = ({ t, userInfoType, advocateId, individualData, selectedSeniorAdvocate, attendeeIndividualId, ...props }) => {
   const userName = Digit.SessionStorage.get("User");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
-  const roles = userInfo?.roles;
   const [hearingCaseList, setHearingCaseList] = useState([]);
   const [isCaseLoading, setIsCaseLoading] = useState(false);
   const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
@@ -118,28 +117,28 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
       criteria: {
         tenantId,
         fromDate: dateRange.start,
-        attendeeIndividualId: props?.attendeeIndividualId,
+        attendeeIndividualId: attendeeIndividualId,
         toDate: today.getTime(),
         ...(courtId && userType === "employee" && { courtId }),
       },
     };
-  }, [dateRange.start, props?.attendeeIndividualId, tenantId, courtId, userType]);
+  }, [dateRange.start, attendeeIndividualId, tenantId, courtId, userType]);
 
   const reqBodyMonthly = useMemo(
     () => ({
       criteria: {
         tenantId,
         ...dayLeftInOngoingMonthRange,
-        attendeeIndividualId: props?.attendeeIndividualId,
+        attendeeIndividualId: attendeeIndividualId,
         ...(courtId && userType === "employee" && { courtId }),
       },
     }),
-    [dayLeftInOngoingMonthRange, props?.attendeeIndividualId, tenantId, courtId, userType]
+    [dayLeftInOngoingMonthRange, attendeeIndividualId, tenantId, courtId, userType]
   );
 
   const individualId = useMemo(() => {
-    return individualData?.Individual?.[0]?.individualId;
-  }, [individualData]);
+    return selectedSeniorAdvocate?.individualId || individualData?.Individual?.[0]?.individualId;
+  }, [individualData, selectedSeniorAdvocate?.individualId]);
 
   const individualUserType = Digit.UserService.getType();
 
@@ -188,8 +187,8 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
 
   const { data: hearingResponse, isLoading } = Digit.Hooks.hearings.useGetHearings(
     reqBody,
-    { applicationNumber: "", cnrNumber: "", tenantId },
-    `${dateRange.start}-${dateRange.end}`,
+    { applicationNumber: "", cnrNumber: "", tenantId }, // check
+    `${dateRange.start}-${dateRange.end}--${attendeeIndividualId || ""}`,
     Boolean(dateRange.start && dateRange.end && (individualUserType === "citizen" ? individualId : true)),
     false,
     individualUserType === "citizen" && individualId
@@ -306,13 +305,15 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
 
               {hearingCount > 0 && (
                 <div className="time-hearing-type">
-                  <div className="timeText">
-                    {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)} {" -"}
-                  </div>
+                  <div className="timeText">{formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)}</div>
                   <div style={{ display: "flex", gap: "8px" }}>
                     <Link
                       className="hearingType"
-                      to={{ pathname: `/${window.contextPath}/${userType}/hearings`, search: hearingSearchParams.toString(), state: { fromHome: true } }}
+                      to={{
+                        pathname: `/${window.contextPath}/${userType}/hearings`,
+                        search: hearingSearchParams.toString(),
+                        state: { fromHome: true },
+                      }}
                     >
                       {userInfoType === "citizen"
                         ? hearingCaseList

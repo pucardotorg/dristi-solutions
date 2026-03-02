@@ -77,7 +77,7 @@ export const offlinePaymentsConfig = {
                     masterName: "paymentType",
                     moduleName: "payment",
                     select:
-                      "(data) => {return data['payment'].paymentType?.filter((item) => item?.paymentType !== `Warrant Court Fee`).map((item) => {return item?.paymentType;});}",
+                      "(data) => {return data['payment'].paymentType?.filter((item) => item?.paymentType !== `Warrant Court Fee`).map((item) => {return item?.paymentType;}).sort((a, b) => a.localeCompare(b));}",
                   },
                   styles: {
                     maxWidth: "300px",
@@ -225,7 +225,8 @@ export const offlinePaymentsConfig = {
                   mdmsConfig: {
                     masterName: "paymentType",
                     moduleName: "payment",
-                    select: "(data) => {return data['payment'].paymentType?.map((item) => {return item?.paymentType;});}",
+                    select:
+                      "(data) => {return data['payment'].paymentType?.map((item) => {return item?.paymentType;}).sort((a, b) => a.localeCompare(b));}",
                   },
                   styles: {
                     maxWidth: "300px",

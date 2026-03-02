@@ -2,8 +2,9 @@ import React, { useMemo, useState } from "react";
 import { CardLabel, TextInput, CardLabelError } from "@egovernments/digit-ui-react-components";
 import LocationSearch from "./LocationSearch";
 import { ReactComponent as SmallInfoIcon } from "../images/smallInfoIcon.svg";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { sanitizeData } from "../Utils";
 
-import Axios from "axios";
 const getLocation = (places, code) => {
   let location = null;
   location = places?.address_components?.find((place) => {
@@ -23,11 +24,11 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
       ],
     [config?.populators?.inputs]
   );
-  const [coordinateData, setCoordinateData] = useState({ callbackFunc: () => {} });
+  const [coordinateData, setCoordinateData] = useState({ callbackFunc: () => { } });
 
   const getLatLngByPincode = async (pincode) => {
     const key = window?.globalConfigs?.getConfig("GMAPS_API_KEY");
-    const response = await Axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${key}`);
+    const response = await axiosInstance.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${key}`);
     return response;
   };
   function setValue(value, input, autoFill) {
@@ -110,16 +111,21 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
         }, {}),
       });
     } else {
-      if (value.startsWith(" ")) {
+      // Sanitize specific address fields before saving
+      if (input === "state" || input === "district" || input === "city") {
+        value = value.replace(/[^A-Za-z\s]/g, "");
+      } else if (input === "pincode") {
+        value = value.replace(/[^0-9]/g, "");
+      }
+
+      if (typeof value === "string" && value.startsWith(" ")) {
         value = "";
       }
+
       onSelect(config.key, { ...formData[config.key], [input]: value });
     }
   }
-  const checkIfValidated = (currentValue, input) => {
-    const isEmpty = /^\s*$/.test(currentValue);
-    return isEmpty || !currentValue.match(window?.Digit.Utils.getPattern(input.validation.patternType) || input.validation.pattern);
-  };
+
 
   return (
     <div style={config?.populators?.customStyle}>
@@ -152,19 +158,19 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
                         isFirstRender && formData[config.key]
                           ? formData[config.key]["locality"]
                           : (() => {
-                              const plusCode = getLocation(location, "plus_code");
-                              const neighborhood = getLocation(location, "neighborhood");
-                              const sublocality_level_1 = getLocation(location, "sublocality_level_1");
-                              const sublocality_level_2 = getLocation(location, "sublocality_level_2");
-                              return [plusCode, neighborhood, sublocality_level_1, sublocality_level_2]
-                                .reduce((result, current) => {
-                                  if (current) {
-                                    result.push(current);
-                                  }
-                                  return result;
-                                }, [])
-                                .join(", ");
-                            })(),
+                            const plusCode = getLocation(location, "plus_code");
+                            const neighborhood = getLocation(location, "neighborhood");
+                            const sublocality_level_1 = getLocation(location, "sublocality_level_1");
+                            const sublocality_level_2 = getLocation(location, "sublocality_level_2");
+                            return [plusCode, neighborhood, sublocality_level_1, sublocality_level_2]
+                              .reduce((result, current) => {
+                                if (current) {
+                                  result.push(current);
+                                }
+                                return result;
+                              }, [])
+                              .join(", ");
+                          })(),
                       coordinates,
                       buildingName: formData && isFirstRender && formData[config.key] ? formData[config.key]["buildingName"] : "",
                       doorNo: formData && isFirstRender && formData[config.key] ? formData[config.key]["doorNo"] : "",
@@ -197,7 +203,8 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
                     key={input.name}
                     value={formData && formData[config.key] ? formData[config.key][input.name] : undefined}
                     onChange={(e) => {
-                      setValue(e.target.value, input.name, input?.autoFill);
+                      const newValue = sanitizeData(e.target.value);
+                      setValue(newValue, input.name, input?.autoFill);
                     }}
                     disable={input.isDisabled}
                     defaultValue={undefined}

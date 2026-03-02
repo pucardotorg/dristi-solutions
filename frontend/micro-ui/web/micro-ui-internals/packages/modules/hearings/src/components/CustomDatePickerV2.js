@@ -13,6 +13,8 @@ const CustomDatePickerV2 = ({
   disableColor = "#9e9e9e",
   disableBorderColor = "#9e9e9e",
   disableBackgroundColor = "#D9D9D9",
+  styles = { marginBottom: "24px" },
+  isShowHearing = true,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -95,10 +97,11 @@ const CustomDatePickerV2 = ({
   const customDateConfig = {
     showBottomBar: false,
     buttonText: "CS_COMMON_CONFIRM",
+    isShowHearing: isShowHearing,
   };
 
   return (
-    <div style={{ marginBottom: "24px" }} className="custom-date-picker">
+    <div style={styles} className="custom-date-picker">
       <LabelFieldPair
         style={{
           border: config?.disable || disable ? `1px solid ${disableBorderColor}` : "1px solid black",

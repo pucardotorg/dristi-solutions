@@ -14,7 +14,6 @@ DIGIT platform is microservices based API platform enabling quick rebundling of 
 
 # DIGIT UI 
 
-
 This repository contains source code for web implementation of the new Digit UI modules with dependencies and libraries.
 
 Workbench module is used to Manage the master data (MDMS V2 Service) used across the DIGIT Services / Applications

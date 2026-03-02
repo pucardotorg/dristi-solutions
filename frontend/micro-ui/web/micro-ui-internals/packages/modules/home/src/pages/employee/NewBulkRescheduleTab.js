@@ -4,13 +4,14 @@ import { Banner, Button, CardLabel, CloseSvg, Dropdown, LabelFieldPair, Loader, 
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
-import Axios from "axios";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import NewBulkRescheduleTable from "./NewBulkRescheduleTable";
 import { Urls } from "@egovernments/digit-ui-module-hearings/src/hooks/services/Urls";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import _ from "lodash";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -81,6 +82,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     ? JSON.parse(sessionStorage.getItem("bulkNotificationFileStoreId"))
     : null;
 
+  const bulkAllHearingsData = sessionStorage.getItem("bulkAllHearingsData") ? JSON.parse(sessionStorage.getItem("bulkAllHearingsData")) : null;
+
   const [signFormData, setSignFormData] = useState({});
   const [newHearingData, setNewHearingData] = useState(bulkNewHearingData);
   const [notificationNumber, setNotificationNumber] = useState(bulkNotificationNumber);
@@ -89,7 +92,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
   const [issignLoader, setSignLoader] = useState(false);
-  const [allHearings, setAllHearings] = useState([]);
+  const [fileUploadError, setFileUploadError] = useState(null);
+  const [allHearings, setAllHearings] = useState(bulkAllHearingsData || []);
   const [loading, setIsLoader] = useState(false);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
@@ -179,6 +183,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const uploadModalConfig = useMemo(() => {
@@ -190,8 +195,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
             name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -206,8 +211,10 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     sessionStorage.removeItem("bulkNotificationFormData");
     sessionStorage.removeItem("bulkOldHearingData");
     sessionStorage.removeItem("bulkNewHearingData");
+    sessionStorage.removeItem("bulkAllHearingsData");
     sessionStorage.removeItem("bulkNotificationNumber");
     sessionStorage.removeItem("bulkNotificationFileStoreId");
+    sessionStorage.removeItem("homeActiveTab");
     return;
   };
 
@@ -271,7 +278,11 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       const diaryEntries = newHearingData?.map((hearing) => {
         return {
           courtId: courtId,
-          businessOfDay: `No sitting notified on ${formatDate(hearing?.originalHearingDate)}. Case posted to ${formatDate(hearing?.hearingDate)}`,
+          businessOfDay: `No sitting notified on ${DateUtils.getFormattedDate(
+            hearing?.originalHearingDate,
+            "DD-MM-YYYY",
+            "/"
+          )}. Case posted to ${DateUtils.getFormattedDate(hearing?.hearingDate, "DD-MM-YYYY", "/")}`,
           tenantId: tenantId,
           entryDate: new Date().setHours(0, 0, 0, 0),
           hearingDate: hearing?.startTime,
@@ -323,16 +334,11 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     setStepper((prev) => prev - 1);
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  };
-
   const onSumbitReschedule = async () => {
     try {
       setLoader(true);
 
-      const response = await Axios.post(
+      const response = await axiosInstance.post(
         Urls.hearing.createNotificationPdf,
 
         {
@@ -340,7 +346,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
             authToken: accessToken,
             userInfo: userInfo,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+            apiId: "Dristi",
           },
           BulkReschedule: {
             reason: bulkFormData?.reason,
@@ -444,6 +450,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         setSignLoader(false);
         setSignFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setSignLoader(false);
     }
@@ -496,6 +503,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         setIsLoader={setIsLoader}
         handleBulkHearingSearch={handleBulkHearingSearch}
         hasBulkRescheduleAccess={hasBulkRescheduleAccess}
+        bulkAllHearingsData={bulkAllHearingsData}
       />
       {stepper === 1 && (
         <Modal
@@ -597,9 +605,11 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
                     sessionStorage.setItem("bulkNotificationStepper", parseInt(stepper));
                     sessionStorage.setItem("bulkNotificationFormData", JSON.stringify(bulkFormData));
                     sessionStorage.setItem("bulkOldHearingData", JSON.stringify(originalHearingData));
+                    sessionStorage.setItem("bulkAllHearingsData", JSON.stringify(allHearings));
                     sessionStorage.setItem("bulkNewHearingData", JSON.stringify(newHearingData));
                     sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
                     sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
+                    sessionStorage.setItem("homeActiveTab", "CS_HOME_BULK_RESCHEDULE");
                     handleEsign(name, pageModule, notificationFileStoreId, "Signature");
                   }} //as sending null throwing error in esign
                   className="aadhar-sign-in"
@@ -640,6 +650,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           formData={signFormData}
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
+          fileUploadError={fileUploadError}
         />
       )}
       {stepper === 3 && !openUploadSignatureModal && isSigned && (

@@ -52,8 +52,18 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
     setShowModal(false);
   };
 
-  const userRole = userDetails?.info?.roles?.some((role) => role.name === "ADVOCATE_ROLE") ? t("ADVOCATE") : t("LITIGANT");
-  const showDefaultRole = userDetails?.info?.roles.length !== 1 && userRole;
+  const getUserRole = () => {
+    const roles = userDetails?.info?.roles || [];
+    if (roles?.some((role) => role?.code === "ADVOCATE_ROLE")) {
+      return t("ADVOCATE");
+    }
+    if (roles?.some((role) => role?.code === "ADVOCATE_CLERK_ROLE")) {
+      return t("ADVOCATE_CLERK");
+    }
+    return t("LITIGANT");
+  };
+  const userRole = getUserRole();
+  const showDefaultRole = userDetails?.info?.roles?.length !== 1 && userRole;
   return (
     <div className="profile-component">
       <div onClick={toggleModal}>

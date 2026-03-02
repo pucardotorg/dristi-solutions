@@ -25,11 +25,17 @@ function CustomCalendarV2({ config, t, handleSelect, onCalendarConfirm, selected
     [selectedMonth, selectedYear, tenantId, courtId]
   );
 
+  const isHearingCalled = useMemo(() => {
+    if (config?.isShowHearing === undefined || config?.isShowHearing === null) {
+      return true;
+    }
+    return config.isShowHearing;
+  }, [config?.isShowHearing]);
   const { data: hearingResponse } = Digit.Hooks.hearings.useGetHearingsCounts(
     hearingCriteria,
     { applicationNumber: "", cnrNumber: "", tenantId },
     `${currentMonth.getMonth()}-${currentMonth.getFullYear()}`,
-    Boolean(selectedYear && selectedMonth),
+    Boolean(selectedYear && selectedMonth && isHearingCalled),
     false,
     "",
     10 * 1000

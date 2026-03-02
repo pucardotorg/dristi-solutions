@@ -18,6 +18,11 @@ const initialBreadCrumbParamsData = { caseId: "", filingNumber: "" };
 // Create context to share breadcrumb data across components
 export const BreadCrumbsParamsDataContext = createContext({});
 
+// Initialize Globally Selected advocate parameters with empty values
+const initialAdvocateData = {};
+// Create context to share advocate data across components
+export const AdvocateDataContext = createContext({});
+
 const DigitUIWrapper = ({ stateCode, enabledModules, moduleReducers, defaultLanding }) => {
   const { isLoading, data: initData } = Digit.Hooks.useInitStore(stateCode, enabledModules);
 
@@ -78,6 +83,8 @@ export const DigitUI = ({ stateCode, registry, enabledModules, moduleReducers, d
   const [privacy, setPrivacy] = useState(Digit.Utils.getPrivacyObject() || {});
   // State to manage breadcrumb parameters across the application
   const [BreadCrumbsParamsData, setBreadCrumbsParamsData] = useState(initialBreadCrumbParamsData);
+  // State to manage advocate data across the application
+  const [AdvocateData, setAdvocateDataContext] = useState(initialAdvocateData);
 
   const { isLoading: isGetAccessToken } = useGetAccessToken("refresh-token");
 
@@ -146,15 +153,17 @@ export const DigitUI = ({ stateCode, registry, enabledModules, moduleReducers, d
                 },
               }}
             >
-              {/* Provide breadcrumb context to all child components */}
-              <BreadCrumbsParamsDataContext.Provider value={{ BreadCrumbsParamsData, setBreadCrumbsParamsData }}>
-                <DigitUIWrapper
-                  stateCode={stateCode}
-                  enabledModules={enabledModules}
-                  moduleReducers={moduleReducers}
-                  defaultLanding={defaultLanding}
-                />
-              </BreadCrumbsParamsDataContext.Provider>
+              <AdvocateDataContext.Provider value={{ AdvocateData, setAdvocateDataContext }}>
+                {/* Provide breadcrumb context to all child components */}
+                <BreadCrumbsParamsDataContext.Provider value={{ BreadCrumbsParamsData, setBreadCrumbsParamsData }}>
+                  <DigitUIWrapper
+                    stateCode={stateCode}
+                    enabledModules={enabledModules}
+                    moduleReducers={moduleReducers}
+                    defaultLanding={defaultLanding}
+                  />
+                </BreadCrumbsParamsDataContext.Provider>
+              </AdvocateDataContext.Provider>
             </PrivacyProvider.Provider>
           </ComponentProvider.Provider>
         </QueryClientProvider>

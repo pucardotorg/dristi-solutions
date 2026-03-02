@@ -1,0 +1,43 @@
+package org.pucar.dristi.model;
+
+public enum DeliveryStatus {
+
+    NOT_DELIVERED,
+
+    IN_TRANSIT,
+
+    BOOKED,
+
+    REFUSED,
+
+    DELIVERED,
+
+    NOT_UPDATED,
+
+    DELIVERED_TO_REDIRECT_ADDRESS,
+
+    ADDRESS_MOVED,
+
+    ADDRESS_LEFT_WITHOUT_INSTRUCTION,
+
+    INSUFFICIENT_ADDRESS,
+
+    WRONG_ADDRESS,
+
+    NO_SUCH_PERSON_IN_ADDRESS,
+
+    DECEASED,
+
+    DOOR_LOCKED,
+
+    ON_HOLD,
+
+    ADDRESS_MISSING,
+
+    UNCLAIMED,
+
+    MISSENT,
+
+    INTERMEDIATE
+
+}

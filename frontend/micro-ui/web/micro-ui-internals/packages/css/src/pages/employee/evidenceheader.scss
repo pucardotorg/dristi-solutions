@@ -655,3 +655,13 @@
 .evidence-header-wrapper .evidence-hearing-header .evidence-actions .menu-wrap div {
   height: auto;
 }
+
+.witness-editor{
+  .custom-text-area-main-div{
+    .custom-quill-wrapper{
+      .ql-editor {
+        height: 375px !important;
+      }
+    }
+  }
+}

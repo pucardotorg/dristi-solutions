@@ -234,6 +234,10 @@
         {
           "actionCategory": "Delay Condonation",
           "referenceEntityType": "DELAY_CONDONATION"
+        },
+        {
+          "actionCategory": "Reschedule Applications",
+          "referenceEntityType": "RE_SCHEDULE"
         }
       ]
     },

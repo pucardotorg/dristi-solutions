@@ -10,17 +10,16 @@ import SuccessModal from "../../../components/SuccessModal";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { CustomArrowDownIcon, FileDownloadIcon, FlagIcon } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
-import { formatDate } from "../../citizen/FileCase/CaseType";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 
 import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
-import { use } from "react";
-const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
-const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
+import { DateUtils, getCaseEditAllowedAssignees, runComprehensiveSanitizer } from "../../../Utils";
+import isEqual from "lodash/isEqual";
+const judgeId = "JUDGE_ID";
+const benchId = "BENCH_ID";
 
 const downloadButtonStyle = {
   backgroundColor: "white",
@@ -93,6 +92,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
   const [loading, setLoading] = useState(false);
+  const courtId = localStorage.getItem("courtId");
 
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
@@ -101,11 +101,19 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
 
   const checkListLink = window?.globalConfigs?.getConfig("SCRUTINY_CHECK_LIST");
 
+  // Saving formdata in session storage (if page refresh happens, form data is not lost and user is not needed to fill the form from start)
+  const employeeCreateSession = Digit.Hooks.useSessionStorage("NEW_EMPLOYEE_CREATE", {});
+  const [sessionFormData, setSessionFormData, clearSessionFormData] = employeeCreateSession;
+
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
+      runComprehensiveSanitizer({ formData, setValue });
       setFormdata((prev) => {
         return { ...prev, data: formData };
       });
+    }
+    if (!isEqual(sessionFormData?.data, formData)) {
+      setSessionFormData({ data: { ...sessionFormData?.data, ...formData }, caseId: caseId });
     }
   };
 
@@ -159,7 +167,24 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     caseFetchResponse,
     caseDetailsAdmitted,
   ]);
+
+  // Case correction/edition is allowed to all complainant side parties including poa holders, advocates, advocate's associated office members.
+  // but no need to send uuid of office members in assignee payload
+  const allComplainantSideUuids = useMemo(() => {
+    return getCaseEditAllowedAssignees(caseDetails);
+  }, [caseDetails]);
   const filingNumberRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (window.location.pathname.includes("employee/dristi/case")) {
+        return;
+      } else {
+        // clear the stored form data if user moved away from scrutiny page
+        clearSessionFormData();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (caseDetails) {
@@ -186,6 +211,10 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const defaultScrutinyErrors = useMemo(() => {
     return caseDetails?.additionalDetails?.scrutiny || {};
   }, [caseDetails]);
+
+  const defaultvalue = useMemo(() => {
+    return sessionFormData?.data && sessionFormData?.caseId === caseId ? sessionFormData?.data : defaultScrutinyErrors?.data || {};
+  }, [defaultScrutinyErrors, sessionFormData, caseId]);
 
   const isPrevScrutiny = useMemo(() => {
     return Object.keys(defaultScrutinyErrors).length > 0;
@@ -481,9 +510,6 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
       additionalDetails: newAdditionalDetails,
       caseTitle: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
     };
-    const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
-    let assignees = [];
-    assignees.push(caseCreatedByUuid);
 
     return DRISTIService.caseUpdateService(
       {
@@ -493,7 +519,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: assignees, comments: commentSendBack }),
+            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: allComplainantSideUuids, comments: commentSendBack }),
             ...(action === CaseWorkflowAction.VALIDATE && { comments: comment }),
           },
           ...(action === CaseWorkflowAction.VALIDATE && { judgeId, courtId, benchId }),
@@ -689,7 +715,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     },
     {
       key: "SUBMITTED_ON",
-      value: formatDate(new Date(caseDetails?.filingDate)),
+      value: DateUtils.getFormattedDate(new Date(caseDetails?.filingDate)),
     },
   ];
 
@@ -790,11 +816,12 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                 </div>
               )}
               <FormComposerV2
+                key={`${inViewCase}-${isScrutiny}-${caseId}-${sessionFormData}`}
                 label={primaryButtonLabel}
                 config={formConfig}
                 onSubmit={handlePrimaryButtonClick}
                 onSecondayActionClick={handleSecondaryButtonClick}
-                defaultValues={structuredClone(defaultScrutinyErrors?.data)}
+                defaultValues={structuredClone(defaultvalue)}
                 onFormValueChange={onFormValueChange}
                 cardStyle={{ minWidth: "100%" }}
                 isDisabled={isDisabled}

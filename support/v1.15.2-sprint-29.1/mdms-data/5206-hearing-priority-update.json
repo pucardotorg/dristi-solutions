@@ -1,0 +1,44 @@
+[
+  {
+    "id": "970efbac-2f75-4b16-8da5-ddd239eaba83",
+    "tenantId": "kl",
+    "schemaCode": "court.hearings",
+    "uniqueIdentifier": "18",
+    "data": {
+      "id": 18,
+      "hearingName": "To Issue Order",
+      "hearingTime": "1",
+      "hearingType": "TO_ISSUE_ORDER",
+      "unitOfMeasurement": "Minutes",
+      "priority": 5
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1768548964411,
+      "lastModifiedTime": 1768806711395
+    }
+  },
+  {
+    "id": "6cf4627a-2abf-4192-a698-46e86f26c500",
+    "tenantId": "kl",
+    "schemaCode": "court.hearings",
+    "uniqueIdentifier": "1",
+    "data": {
+      "id": 1,
+      "priority": 3,
+      "hearingName": "Judgement",
+      "hearingTime": "3",
+      "hearingType": "JUDGEMENT",
+      "unitOfMeasurement": "Minutes"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+      "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+      "createdTime": 1727421003438,
+      "lastModifiedTime": 1768806694172
+    }
+  }
+]

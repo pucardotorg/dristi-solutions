@@ -556,8 +556,8 @@ export const TabJudgeSearchConfig = {
                 name: "Closed:",
                 key: "sortCaseListByDate",
                 sortBy: "createdtime",
-                ascText: "new first",
-                descText: "old first",
+                ascText: "New First",
+                descText: "Old First",
                 showAdditionalText: true,
                 showIcon: true,
                 icon: "UpDownArrowIcon",
@@ -662,6 +662,7 @@ export const TabJudgeSearchConfig = {
       },
       additionalDetails: {
         sortBy: "sortCaseListByDate",
+        activeTab: "DISPOSED",
       },
     },
     {

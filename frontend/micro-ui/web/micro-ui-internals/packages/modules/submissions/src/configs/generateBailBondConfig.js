@@ -3,7 +3,7 @@ export const bailBondConfig = [
     body: [
       {
         inline: true,
-        label: "LITIGANT_NAME",
+        label: "PETITIONER_NAME",
         isMandatory: true,
         type: "dropdown",
         key: "selectComplainant",
@@ -19,7 +19,7 @@ export const bailBondConfig = [
         },
       },
       {
-        label: "FATHER_NAME",
+        label: "PETITIONER_FATHER_NAME",
         isMandatory: true,
         key: "litigantFatherName",
         type: "text",
@@ -168,6 +168,43 @@ export const bailBondConfig = [
               populators: {
                 inputs: [
                   {
+                    name: "locality",
+                    type: "text",
+                    label: "ADDRESS_LINE_1",
+                    validation: {
+                      errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
+                      // pattern: {
+                      //   masterName: "commonUiConfig",
+                      //   moduleName: "patternValidation",
+                      //   patternType: "address",
+                      // },
+                      maxlength: 256,
+                      minlength: 2,
+                      isRequired: true,
+                    },
+                    isMandatory: true,
+                    isFormatRequired: true,
+                    inputFieldClassName: "user-details-form-style",
+                  },
+                  {
+                    name: "city",
+                    type: "text",
+                    label: "CITY/TOWN",
+                    validation: {
+                      title: "",
+                      errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
+                      // pattern: {
+                      //   masterName: "commonUiConfig",
+                      //   moduleName: "patternValidation",
+                      //   patternType: "name",
+                      // },
+                      isRequired: true,
+                      patternType: "Name",
+                    },
+                    isMandatory: true,
+                    inputFieldClassName: "user-details-form-style",
+                  },
+                  {
                     name: "pincode",
                     type: "text",
                     label: "PINCODE",
@@ -180,24 +217,6 @@ export const bailBondConfig = [
                       minlength: 6,
                       isRequired: true,
                       patternType: "Pincode",
-                    },
-                    isMandatory: true,
-                    inputFieldClassName: "user-details-form-style",
-                  },
-                  {
-                    name: "state",
-                    type: "text",
-                    label: "STATE",
-                    validation: {
-                      title: "",
-                      errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
-                      // pattern: {
-                      //   masterName: "commonUiConfig",
-                      //   moduleName: "patternValidation",
-                      //   patternType: "name",
-                      // },
-                      isRequired: true,
-                      patternType: "Name",
                     },
                     isMandatory: true,
                     inputFieldClassName: "user-details-form-style",
@@ -221,12 +240,12 @@ export const bailBondConfig = [
                     inputFieldClassName: "user-details-form-style",
                   },
                   {
-                    name: "city",
+                    name: "state",
                     type: "text",
-                    label: "CITY/TOWN",
+                    label: "STATE",
                     validation: {
                       title: "",
-                      errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
+                      errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
                       // pattern: {
                       //   masterName: "commonUiConfig",
                       //   moduleName: "patternValidation",
@@ -236,25 +255,6 @@ export const bailBondConfig = [
                       patternType: "Name",
                     },
                     isMandatory: true,
-                    inputFieldClassName: "user-details-form-style",
-                  },
-                  {
-                    name: "locality",
-                    type: "text",
-                    label: "ADDRESS",
-                    validation: {
-                      errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
-                      // pattern: {
-                      //   masterName: "commonUiConfig",
-                      //   moduleName: "patternValidation",
-                      //   patternType: "address",
-                      // },
-                      maxlength: 256,
-                      minlength: 2,
-                      isRequired: true,
-                    },
-                    isMandatory: true,
-                    isFormatRequired: true,
                     inputFieldClassName: "user-details-form-style",
                   },
                 ],
@@ -274,11 +274,11 @@ export const bailBondConfig = [
                     isMandatory: true,
                     documentHeader: "IDENTITY_PROOF",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -299,11 +299,11 @@ export const bailBondConfig = [
                     isMandatory: true,
                     documentHeader: `PROOF_OF_SOLVENCY`,
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",
@@ -325,11 +325,11 @@ export const bailBondConfig = [
                     isOptional: "CS_IS_OPTIONAL",
                     documentHeader: "OTHER_DOCUMENTS_HEADING",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-                    uploadGuidelines: "UPLOAD_DOC_50",
-                    maxFileSize: 50,
-                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    uploadGuidelines: "UPLOAD_DOC_10",
+                    maxFileSize: 10,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                     isMultipleUpload: true,
-                    textAreaStyle: {
+                    labelStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
                       marginBottom: "8px",

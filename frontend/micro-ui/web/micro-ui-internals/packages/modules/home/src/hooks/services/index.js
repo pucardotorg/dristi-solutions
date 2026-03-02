@@ -24,6 +24,10 @@ export const Urls = {
   getWitnessDepositionsToSign: "/evidence/v1/_getArtifactsToSign",
   witnessDepositionUpdate: "/evidence/v1/_update",
   witnessDepositionSearch: "/evidence/v1/_search",
+  updateTemplate: "/template-configuration/v1/update",
+  createTemplate: "/template-configuration/v1/create",
+  searchTemplate: "/template-configuration/v1/search",
+  searchTemplatePdf: "/egov-pdf/template-configuration",
 };
 export const HomeService = {
   InboxSearch: (data, params) =>
@@ -177,6 +181,30 @@ export const HomeService = {
   updateSignedEvidences: (data, params) =>
     Request({
       url: Urls.updateSignedEvidences,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  createTemplate: (data, params) =>
+    Request({
+      url: Urls.createTemplate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateTemplate: (data, params) =>
+    Request({
+      url: Urls.updateTemplate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  searchTemplate: (data, params) =>
+    Request({
+      url: Urls.searchTemplate,
       useCache: false,
       userService: true,
       data,

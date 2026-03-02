@@ -9,6 +9,7 @@ import { Urls } from "../../hooks";
 import { bailBondWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
 import { HomeService } from "../../hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -69,10 +70,14 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const [loader, setLoader] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [bailDocuments, setBailDocuments] = useState([]);
+  const [fileUploadError, setFileUploadError] = useState(null);
   const [bailBondLoader, setBailBondLoader] = useState(false);
   const name = "Signature";
   const pageModule = "en";
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const userUUID = Digit.UserService.getUser()?.info?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUUID);
 
   useEffect(() => {
     const fetchBailBondData = async () => {
@@ -85,6 +90,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
               courtId: courtId,
               bailId: queryStrings.bailId || selectedBailBond?.businessObject?.bailDetails?.bailId || selectedBailBond?.bailId,
               fuzzySearch: false,
+              filingNumber,
+              asUser: authorizedUuid,
             },
             pagination: {
               limit: 10,
@@ -108,7 +115,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       }
     };
     fetchBailBondData();
-  }, [queryStrings.bailId, tenantId, courtId, selectedBailBond?.bailId, selectedBailBond?.businessObject?.bailDetails?.bailId]);
+  }, [queryStrings.bailId, tenantId, courtId, selectedBailBond?.bailId, selectedBailBond?.businessObject?.bailDetails?.bailId, filingNumber]);
 
   const CloseBtn = useCallback((props) => {
     return (
@@ -135,8 +142,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
             name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -156,6 +163,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onUploadSubmit = useCallback(async () => {
@@ -169,6 +177,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         clearBailBondSessionData();
       } catch (error) {
         console.error("error", error);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       } finally {
         setLoader(false);
       }
@@ -252,6 +261,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   };
 
   const handleCancel = useCallback(() => {
+    sessionStorage.removeItem("fileStoreId");
     if (parseInt(stepper) === 0) {
       setShowBulkSignModal(false);
       if (queryStrings?.bailId) {
@@ -287,21 +297,25 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   }, [checkSignStatus, name, formData, uploadModalConfig, setIsSigned]);
 
   const onESignClick = useCallback(() => {
-    try {
-      setLoader(true);
+    if (mockESignEnabled) {
+      setIsSigned(true);
+    } else {
+      try {
+        setLoader(true);
 
-      sessionStorage.setItem("bailBondStepper", stepper);
-      sessionStorage.setItem("bulkBailBondSignSelectedItem", JSON.stringify(effectiveRowData));
-      sessionStorage.setItem("homeActiveTab", "BULK_BAIL_BOND_SIGN");
-      if (bailBondPaginationData?.limit) sessionStorage.setItem("bulkBailBondSignlimit", bailBondPaginationData?.limit);
-      if (bailBondPaginationData?.caseTitle) sessionStorage.setItem("bulkBailBondSignCaseTitle", bailBondPaginationData?.caseTitle);
-      if (bailBondPaginationData?.offset) sessionStorage.setItem("bulkBailBondSignoffset", bailBondPaginationData?.offset);
-      handleEsign(name, pageModule, selectedBailBondFilestoreid, "Magistrate Signature");
-    } catch (error) {
-      console.error("E-sign navigation error:", error);
-      setLoader(false);
-    } finally {
-      setLoader(false);
+        sessionStorage.setItem("bailBondStepper", stepper);
+        sessionStorage.setItem("bulkBailBondSignSelectedItem", JSON.stringify(effectiveRowData));
+        sessionStorage.setItem("homeActiveTab", "BULK_BAIL_BOND_SIGN");
+        if (bailBondPaginationData?.limit) sessionStorage.setItem("bulkBailBondSignlimit", bailBondPaginationData?.limit);
+        if (bailBondPaginationData?.caseTitle) sessionStorage.setItem("bulkBailBondSignCaseTitle", bailBondPaginationData?.caseTitle);
+        if (bailBondPaginationData?.offset) sessionStorage.setItem("bulkBailBondSignoffset", bailBondPaginationData?.offset);
+        handleEsign(name, pageModule, selectedBailBondFilestoreid, "Magistrate Signature");
+      } catch (error) {
+        console.error("E-sign navigation error:", error);
+        setLoader(false);
+      } finally {
+        setLoader(false);
+      }
     }
   }, [stepper, effectiveRowData, bailBondPaginationData, handleEsign, selectedBailBondFilestoreid]);
 
@@ -319,12 +333,13 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         Action: bailBondWorkflowAction.SIGN,
         fileStoreId: newFilestore,
       });
+      setBailBondSignedPdf(newFilestore);
+      sessionStorage.removeItem("fileStoreId");
     } catch (error) {
       console.error("Error :", error);
       setIsSigned(false);
       setBailBondSignedPdf("");
       setFormData({});
-      sessionStorage.removeItem("fileStoreId");
     }
   };
 
@@ -487,6 +502,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           formData={formData}
           onSubmit={onUploadSubmit}
           isDisabled={loader}
+          fileUploadError={fileUploadError}
         />
       )}
       {/* after signing showing signed modal */}

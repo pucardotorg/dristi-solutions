@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { TextInput, LabelFieldPair, SubmitBar } from "@egovernments/digit-ui-react-components";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const NewBulkRescheduleTable = ({
   t,
@@ -16,6 +17,7 @@ const NewBulkRescheduleTable = ({
   loading,
   handleBulkHearingSearch,
   hasBulkRescheduleAccess,
+  bulkAllHearingsData,
 }) => {
   const handleSelectChange = (checked, row) => {
     const rowId = row?.hearingBookingId;
@@ -55,39 +57,36 @@ const NewBulkRescheduleTable = ({
     },
   };
 
-  const formatDate = (date) => {
-    const newDateForm = new Date(date);
-    return (
-      newDateForm.getFullYear() + "-" + String(newDateForm.getMonth() + 1).padStart(2, "0") + "-" + String(newDateForm.getDate()).padStart(2, "0")
-    );
-  };
-
   const handleClear = async () => {
     setBulkFormData(defaultBulkFormData);
     await handleBulkHearingSearch(defaultBulkFormData);
   };
 
   useEffect(() => {
-    handleBulkHearingSearch(bulkFormData);
+    if (!bulkAllHearingsData) handleBulkHearingSearch(bulkFormData);
   }, []);
 
   const handleSearch = async () => {
     await handleBulkHearingSearch(bulkFormData);
   };
 
-  const handleChange = (date, index, key) => {
+  const handleChange = (date, hearingBookingId, key) => {
     const selectedDate = new Date(date);
     const startTime = new Date(selectedDate);
     startTime.setHours(11, 0, 0, 0);
     const endTime = new Date(selectedDate);
     endTime.setHours(17, 0, 0, 0);
-    const updatedTableData = newHearingData?.map((item, i) =>
-      i === index ? { ...item, [key]: selectedDate.getTime(), startTime: startTime.getTime(), endTime: endTime.getTime() } : item
+    const updatedTableData = newHearingData?.map((item) =>
+      item?.hearingBookingId === hearingBookingId
+        ? { ...item, [key]: selectedDate.getTime(), startTime: startTime.getTime(), endTime: endTime.getTime() }
+        : item
     );
     setNewHearingData(updatedTableData);
     setAllHearings((prev) =>
-      prev.map((item, i) =>
-        i === index ? { ...item, [key]: selectedDate.getTime(), startTime: startTime.getTime(), endTime: endTime.getTime() } : item
+      prev.map((item) =>
+        item?.hearingBookingId === hearingBookingId
+          ? { ...item, [key]: selectedDate.getTime(), startTime: startTime.getTime(), endTime: endTime.getTime() }
+          : item
       )
     );
   };
@@ -103,7 +102,7 @@ const NewBulkRescheduleTable = ({
                 className="home-input"
                 key={"fromDate"}
                 type={"date"}
-                value={bulkFormData?.fromDate ? formatDate(bulkFormData?.fromDate) : ""}
+                value={bulkFormData?.fromDate ? DateUtils.getFormattedDate(bulkFormData?.fromDate, "YYYY-MM-DD") : ""}
                 onChange={(e) => {
                   setBulkFormData((prev) => ({ ...prev, fromDate: new Date(e.target.value).setHours(0, 0, 0, 0) }));
                 }}
@@ -118,7 +117,7 @@ const NewBulkRescheduleTable = ({
                 className="home-input"
                 key={"toDate"}
                 type={"date"}
-                value={bulkFormData?.toDate ? formatDate(bulkFormData?.toDate) : ""}
+                value={bulkFormData?.toDate ? DateUtils.getFormattedDate(bulkFormData?.toDate, "YYYY-MM-DD") : ""}
                 onChange={(e) => {
                   setBulkFormData((prev) => ({ ...prev, toDate: new Date(e.target.value).setHours(0, 0, 0, 0) }));
                 }}
@@ -130,7 +129,7 @@ const NewBulkRescheduleTable = ({
           <div className={`case-label-field-pair search-input`}>
             <input
               className="home-input"
-              placeholder="Search Case name or number"
+              placeholder={t("SEARCH_CASE_NAME_OR_NUMBER")}
               style={{ width: "280px" }}
               type="text"
               value={bulkFormData?.searchableFields || ""}
@@ -193,11 +192,12 @@ const NewBulkRescheduleTable = ({
                           t={t}
                           config={config}
                           formData={row}
-                          onDateChange={(date) => handleChange(date, index, config?.key)}
+                          onDateChange={(date) => handleChange(date, row?.hearingBookingId, config?.key)}
                           //   disable={skipScheduling}
                           disableColor="#D6D5D4"
                           disableBorderColor="#D6D5D4"
                           disableBackgroundColor="white"
+                          styles={{ marginBottom: 0 }}
                         />
                       </td>
                     </tr>

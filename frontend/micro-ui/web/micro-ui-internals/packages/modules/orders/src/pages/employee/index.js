@@ -40,6 +40,10 @@ const ProjectBreadCrumb = ({ location }) => {
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   if (isProcessViewer) homePath = `/${window?.contextPath}/${userType}/orders/Summons&Notice`;
+
+  const pathTokeyMap = {
+    "generate-order": "CS_GENERATE_ORDER",
+  };
   const crumbs = useMemo(
     () => [
       {
@@ -60,7 +64,7 @@ const ProjectBreadCrumb = ({ location }) => {
         : []),
       {
         path: `/${window?.contextPath}/${userType}`,
-        content: t(location.pathname.split("/").pop()),
+        content: t(pathTokeyMap[pathname.split("/").pop()] || pathname.split("/").pop()),
         show: true,
       },
     ],
@@ -100,7 +104,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/Summons&Notice`} component={() => <ReviewSummonsNoticeAndWarrant />} />
         <PrivateRoute path={`${path}/payment-screen`} component={() => <PaymentStatus />} />
         <PrivateRoute path={`${path}/payment-modal`} component={() => <PaymentForSummonModal />} />
-        <PrivateRoute path={`${path}/tracking`} component={() => <EpostTrackingPage />} />
+        {/* <PrivateRoute path={`${path}/tracking`} component={() => <EpostTrackingPage />} /> */}
       </AppContainer>
     </Switch>
   );

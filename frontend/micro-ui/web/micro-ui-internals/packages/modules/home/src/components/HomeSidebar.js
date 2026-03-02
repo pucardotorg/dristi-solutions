@@ -19,24 +19,31 @@ const HomeSidebar = ({
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const assignedRoles = useMemo(() => roles?.map((role) => role?.code), [roles]);
   const hasViewTodaysHearingsAccess = useMemo(() => assignedRoles?.includes("VIEW_TODAYS_HEARINGS"), [assignedRoles]);
+  const hasViewScheduleHearingsAccess = useMemo(() => assignedRoles?.includes("VIEW_SCHEDULE_HEARING_HOME"), [assignedRoles]);
   const hasViewBulkRescheduleHearingsAccess = useMemo(() => assignedRoles?.includes("VIEW_BULK_RESCHEDULE_HEARINGS"), [assignedRoles]);
   const hasViewSignOrdersAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_ORDERS"), [assignedRoles]);
   const hasViewSignProcessAccess = useMemo(
     () =>
-      ["VIEW_PROCESS_SUMMONS", "VIEW_PROCESS_WARRANT", "VIEW_PROCESS_NOTICE", "VIEW_PROCESS_PROCLAMATION", "VIEW_PROCESS_ATTACHMENT"].some((role) =>
-        assignedRoles?.includes(role)
-      ),
+      [
+        "VIEW_PROCESS_SUMMONS",
+        "VIEW_PROCESS_WARRANT",
+        "VIEW_PROCESS_NOTICE",
+        "VIEW_PROCESS_PROCLAMATION",
+        "VIEW_PROCESS_ATTACHMENT",
+        "VIEW_PROCESS_MISCELLANEOUS",
+      ].some((role) => assignedRoles?.includes(role)),
     [assignedRoles]
   );
   const hasViewSignBailBondAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_BAIL_BOND"), [assignedRoles]);
   const hasViewSignWitnessDepositionAccess = useMemo(() => assignedRoles?.includes("VIEW_WITNESS_DEPOSITION"), [assignedRoles]);
   const hasViewSignEvidenceAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_EVIDENCE"), [assignedRoles]);
   const hasViewSignADiaryAccess = useMemo(() => assignedRoles?.includes("DIARY_VIEWER"), [assignedRoles]);
+  const hasViewSignFormsAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_FORMS"), [assignedRoles]);
 
   return (
     <div className="home-sidebar">
-      <HomeHeader t={t} userInfo={userInfo} roles={roles} />
-      {(hasViewTodaysHearingsAccess || hasViewBulkRescheduleHearingsAccess) && (
+      <HomeHeader t={t} userInfo={userInfo} roles={roles} activeTab={activeTab} onTabChange={onTabChange} />
+      {(hasViewTodaysHearingsAccess || hasViewBulkRescheduleHearingsAccess || hasViewScheduleHearingsAccess) && (
         <HomeAccordian title={t("HEARINGS_TAB")} defaultOpen>
           {hasViewTodaysHearingsAccess && (
             <SidebarItem
@@ -45,6 +52,14 @@ const HomeSidebar = ({
               // count={hearingCount}
               active={activeTab === "TOTAL_HEARINGS_TAB"}
               onClick={() => onTabChange("TOTAL_HEARINGS_TAB")}
+            />
+          )}
+          {hasViewScheduleHearingsAccess && (
+            <SidebarItem
+              t={t}
+              label={"CS_HOME_SCHEDULE_HEARING"}
+              active={activeTab === "CS_HOME_SCHEDULE_HEARING"}
+              onClick={() => onTabChange("CS_HOME_SCHEDULE_HEARING")}
             />
           )}
           {hasViewBulkRescheduleHearingsAccess && (
@@ -62,16 +77,18 @@ const HomeSidebar = ({
       {Object?.keys(options)?.length > 0 && (
         <HomeAccordian title={t("PENDING_TASKS_TAB")} defaultOpen>
           {!isOptionsLoading &&
-            Object?.keys(options)?.map((key, index) => (
-              <SidebarItem
-                t={t}
-                key={index}
-                label={options[key]?.name}
-                count={pendingTaskCount[key]}
-                active={activeTab === key}
-                onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
-              />
-            ))}
+            Object?.keys(options)?.map((key, index) => {
+              return (
+                <SidebarItem
+                  t={t}
+                  key={index}
+                  label={options[key]?.name}
+                  count={pendingTaskCount[key]}
+                  active={activeTab === key}
+                  onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
+                />
+              );
+            })}
         </HomeAccordian>
       )}
 
@@ -98,6 +115,14 @@ const HomeSidebar = ({
         hasViewSignEvidenceAccess ||
         hasViewSignADiaryAccess) && (
         <HomeAccordian title={t("CS_HOME_SIGN")} defaultOpen>
+          {hasViewSignFormsAccess && (
+            <SidebarItem
+              t={t}
+              label="CS_HOME_SIGN_FORMS"
+              active={activeTab === "CS_HOME_SIGN_FORMS"}
+              onClick={() => onTabChange("CS_HOME_SIGN_FORMS")}
+            />
+          )}
           {hasViewSignOrdersAccess && (
             <SidebarItem
               t={t}

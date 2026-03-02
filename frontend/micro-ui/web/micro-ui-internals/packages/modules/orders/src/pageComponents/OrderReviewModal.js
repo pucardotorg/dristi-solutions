@@ -1,5 +1,4 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
-import Axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { useQuery } from "react-query";
 import Modal from "../../../dristi/src/components/Modal";
@@ -7,6 +6,7 @@ import { Urls } from "../hooks/services/Urls";
 import { Toast, TextInput } from "@egovernments/digit-ui-react-components";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const onDocumentUpload = async (fileData, filename) => {
   try {
@@ -33,6 +33,7 @@ function OrderReviewModal({
   updateOrder,
   setShowBulkModal,
   courtId,
+  saveSignLater,
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
@@ -64,27 +65,30 @@ function OrderReviewModal({
     retry: 3,
     cacheTime: 0,
     queryFn: async () => {
-      return Axios({
-        method: "POST",
-        url: Urls.orders.orderPreviewPdf,
-        params: {
-          tenantId: tenantId,
-          orderId: order?.id,
-          cnrNumber: order?.cnrNumber,
-          qrCode: false,
-          courtId: courtId,
-          orderPreviewKey: "new-order-generic",
-        },
-        data: {
-          RequestInfo: {
-            authToken: accessToken,
-            userInfo: userInfo,
-            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+      return axiosInstance
+        .post(
+          Urls.orders.orderPreviewPdf,
+          {
+            RequestInfo: {
+              authToken: accessToken,
+              userInfo: userInfo,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Dristi",
+            },
           },
-        },
-        responseType: "blob",
-      }).then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
+          {
+            params: {
+              tenantId: tenantId,
+              orderId: order?.id,
+              cnrNumber: order?.cnrNumber,
+              qrCode: false,
+              courtId: courtId,
+              orderPreviewKey: "new-order-generic",
+            },
+            responseType: "blob",
+          }
+        )
+        .then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
@@ -188,8 +192,25 @@ function OrderReviewModal({
     setUpdateLoading(true);
     handleDocumentUpload(async (fileStoreId) => {
       if (fileStoreId) {
+        let hearingNumber = "";
+        const todayDate = new Date().toISOString().split("T")[0];
+
+        if (order?.orderCategory === "INTERMEDIATE" && order?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+          const hearingDate = order?.additionalDetails?.formdata?.newHearingDate;
+          if (hearingDate === todayDate) {
+            hearingNumber = order?.additionalDetails?.refHearingId;
+          }
+        } else {
+          const acceptRescheduleRequest = order?.compositeItems?.find((item) => item?.orderType === "ACCEPT_RESCHEDULING_REQUEST");
+          const hearingDate = acceptRescheduleRequest?.orderSchema?.additionalDetails?.formdata?.newHearingDate;
+
+          if (hearingDate === todayDate) {
+            hearingNumber = acceptRescheduleRequest?.orderSchema?.additionalDetails?.refHearingId;
+          }
+        }
         const updatedOrder = {
           ...order,
+          ...(hearingNumber && { hearingNumber: order?.hearingNumber || hearingNumber, scheduledHearingNumber: null }),
           additionalDetails: {
             ...order.additionalDetails,
             // businessOfTheDay: businessDay,
@@ -217,7 +238,7 @@ function OrderReviewModal({
         headerBarEnd={<CloseBtn onClick={handleReviewGoBack} />}
         actionCancelLabel={showActions && t("BULK_EDIT")}
         actionCustomLabel={showActions && t("ADD_SIGNATURE")}
-        actionSaveLabel={showActions && t("SAVE_FINALISE_AND_SIGN_LATER")}
+        actionSaveLabel={saveSignLater && t("SAVE_FINALISE_AND_SIGN_LATER")}
         isBackButtonDisabled={isLoading || isUpdateLoading}
         isCustomButtonDisabled={isLoading || isUpdateLoading}
         isDisabled={isLoading || isUpdateLoading}

@@ -2,7 +2,7 @@ import React from "react";
 import { FactCheckIcon, FactCrossIcon } from "../icons/svgIndex";
 import ReactTooltip from "react-tooltip";
 
-export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, t, userRoles, isBail = false }) => {
+export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, t, userRoles, isBail = false, isDigitilization = false }) => {
   const getDate = (value) => {
     const date = new Date(value);
     const day = date.getDate().toString().padStart(2, "0");
@@ -34,10 +34,11 @@ export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, 
       comments: rowData?.comments,
       artifactList: rowData,
       isBail: isBail,
+      isDigitilization: isDigitilization,
     },
   ];
 
-  // const message = () => ;
+
 
   return (
     <React.Fragment>

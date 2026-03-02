@@ -1,0 +1,226 @@
+openapi: 3.0.0
+
+info:
+  title: Advocate Registry Service API
+  description: |
+    DIGIT Advocate Registry Service responsible for advocate registration,
+    update and search operations across tenants.
+  version: 1.0.0
+
+servers:
+  - url: /advocateregistry
+    description: Advocate Registry Base Path
+
+tags:
+  - name: Advocate
+    description: APIs for advocate registration lifecycle
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /v1/_create:
+    post:
+      tags: [Advocate]
+      summary: Register a new advocate
+      description: Creates a new advocate registration entry.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+                msgId: 1730970507148|en_IN
+                authToken: <AUTH_TOKEN>
+                userInfo:
+                  uuid: 64220357-defd-4abd-bcc3-e4b278203917
+                  tenantId: kl
+              advocate:
+                tenantId: kl
+                individualId: 9e8d13f2-7d6c-4a8c-b9cb-97c1b8fd6f21
+                barCouncilNumber: KL/2016/1234
+                barCouncilName: Kerala Bar Council
+                yearOfEnrollment: 2016
+                specialization:
+                  - Criminal Law
+                  - Civil Law
+                status: PENDING_VERIFICATION
+      responses:
+        '200':
+          description: Advocate created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateResponse'
+
+  /v1/_update:
+    post:
+      tags: [Advocate]
+      summary: Update advocate details
+      description: Updates an existing advocate record.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+                authToken: <AUTH_TOKEN>
+              advocate:
+                id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
+                tenantId: kl
+                specialization:
+                  - Criminal Law
+                  - Cyber Law
+                status: ACTIVE
+      responses:
+        '200':
+          description: Advocate updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateResponse'
+
+  /v1/_search:
+    post:
+      tags: [Advocate]
+      summary: Search advocates
+      description: Search advocates using filter criteria.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvocateSearchRequest'
+            example:
+              requestInfo:
+                apiId: Rainmaker
+                authToken: <AUTH_TOKEN>
+              criteria:
+                tenantId: kl
+                status: ACTIVE
+              pagination:
+                limit: 10
+                offset: 0
+      responses:
+        '200':
+          description: Advocate list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvocateSearchResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    AdvocateRequest:
+      type: object
+      required: [requestInfo, advocate]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        advocate:
+          $ref: '#/components/schemas/Advocate'
+
+    AdvocateSearchRequest:
+      type: object
+      required: [requestInfo, criteria]
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/AdvocateCriteria'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination'
+
+    AdvocateResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        advocates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Advocate'
+
+    AdvocateSearchResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        advocates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Advocate'
+        totalCount:
+          type: integer
+          example: 57
+
+    Advocate:
+      type: object
+      required: [tenantId, individualId]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+
+        tenantId:
+          type: string
+
+        individualId:
+          type: string
+          format: uuid
+
+        barCouncilNumber:
+          type: string
+
+        barCouncilName:
+          type: string
+
+        yearOfEnrollment:
+          type: integer
+
+        specialization:
+          type: array
+          items:
+            type: string
+
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, PENDING_VERIFICATION, REJECTED]
+
+        additionalDetails:
+          type: object
+
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+
+    AdvocateCriteria:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        individualId:
+          type: string
+          format: uuid
+        barCouncilNumber:
+          type: string
+        status:
+          type: string
+        tenantId:
+          type: string

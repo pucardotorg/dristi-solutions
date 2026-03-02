@@ -5,18 +5,20 @@ import BailEsignModal from "../../components/BailEsignModal";
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useQuery } from "react-query";
-import Axios from "axios";
 import { Urls } from "../../hooks/services/Urls";
 import useOpenApiSearchBailBond from "../../hooks/submissions/useOpenApiSearchBailBond";
 import { submissionService } from "../../hooks/services";
 import { useLocation } from "react-router-dom/cjs/react-router-dom";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { getAllAssociatedPartyUuids } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 
 const BailBondSignaturePage = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { bailbondId } = Digit.Hooks.useQueryParams();
+  const { bailbondId, filingNumber, caseId } = Digit.Hooks.useQueryParams();
   const mobileNumber = location?.state?.mobileNumber;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [viewportWidth, setViewportWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1920);
@@ -50,6 +52,7 @@ const BailBondSignaturePage = () => {
     {
       criteria: {
         bailId: bailbondId,
+        filingNumber: filingNumber,
       },
       tenantId,
     },
@@ -62,14 +65,31 @@ const BailBondSignaturePage = () => {
     return bailBond?.bails?.[0] || bailBondOpenData;
   }, [bailBond, bailBondOpenData]);
 
+  const { data: caseData, refetch: refetchCaseData, isLoading: isCaseLoading } = useSearchCaseService(
+    {
+      criteria: [
+        {
+          filingNumber: filingNumber,
+          caseId: caseId,
+        },
+      ],
+      tenantId,
+    },
+    {},
+    `case-details-${filingNumber}-${caseId}`,
+    filingNumber,
+    Boolean(filingNumber && isUserLoggedIn)
+  );
+
   const isCreator = useMemo(() => {
     if (!isUserLoggedIn) return false;
 
-    const createdByUuid = bailBondDetails?.auditDetails?.createdBy;
+    const bailBondAsUser = bailBondDetails?.asUser;
+    const allowedParties = getAllAssociatedPartyUuids(caseData?.criteria?.[0]?.responseList?.[0], bailBondAsUser);
     const loggedInUserUuid = userInfo?.uuid;
 
-    return Boolean(createdByUuid && loggedInUserUuid && createdByUuid === loggedInUserUuid);
-  }, [isUserLoggedIn, bailBondDetails?.auditDetails?.createdBy, userInfo?.uuid]);
+    return Boolean(loggedInUserUuid && allowedParties?.includes(loggedInUserUuid));
+  }, [isUserLoggedIn, userInfo?.uuid, caseData, bailBondDetails?.asUser]);
 
   const fileStoreId = useMemo(() => {
     return bailBondDetails?.documents?.[0]?.fileStore;
@@ -88,15 +108,15 @@ const BailBondSignaturePage = () => {
     };
 
     if (Array.isArray(bailBondDetails?.sureties)) {
-      bailBondDetails.sureties.forEach((surety, index) => {
+      bailBondDetails.sureties.forEach((surety) => {
         data.push({
           additionalDetails: {
             fullName: surety?.name || "",
-            type: `Surety ${index + 1}`,
+            type: `Surety ${surety?.index}`,
           },
           hasSigned: surety?.hasSigned || false,
           mobileNumber: surety?.phoneNumber,
-          placeHolder: `Surety${index + 1} Signature`,
+          placeHolder: `Surety${surety?.index} Signature`,
         });
       });
     }
@@ -126,16 +146,19 @@ const BailBondSignaturePage = () => {
     retry: 3,
     cacheTime: 0,
     queryFn: async () => {
-      return Axios({
-        method: "POST",
-        url: `${Urls.openApi.FileFetchByFileStore}`,
-        data: {
-          tenantId: "kl",
-          fileStoreId: fileStoreId,
-          moduleName: "DRISTI",
-        },
-        responseType: "blob",
-      }).then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
+      return axiosInstance
+        .post(
+          `${Urls.openApi.FileFetchByFileStore}`,
+          {
+            tenantId: "kl",
+            fileStoreId: fileStoreId,
+            moduleName: "DRISTI",
+          },
+          {
+            responseType: "blob",
+          }
+        )
+        .then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
@@ -267,7 +290,7 @@ const BailBondSignaturePage = () => {
     }
   };
 
-  if (isBailDataLoading || isBailBondLoading) {
+  if (isBailDataLoading || isBailBondLoading || isCaseLoading) {
     return <Loader />;
   }
 

@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from "react";
-import { CardLabelError, TextInput, CustomDropdown, Header, InfoBannerIcon } from "@egovernments/digit-ui-react-components";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { CardLabelError, TextInput, CustomDropdown, Header } from "@egovernments/digit-ui-react-components";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import SelectCustomDragDrop from "./SelectCustomDragDrop";
-import CustomEmailTextInput from "../pages/citizen/registration/CustomEmailTextInput";
 import AddressBailBond from "./AddressBailBond";
+import { sanitizeData } from "../Utils";
 
 const CloseBtn = () => {
   return (
@@ -18,8 +18,39 @@ const CloseBtn = () => {
 
 const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors, control, watch }) => {
   const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{}, {}]);
+  const initialPrefillRef = useRef(formData?.[config?.key] ? JSON.parse(JSON.stringify(formData?.[config?.key])) : []);
   const disable = config?.disable;
   const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
+  useEffect(() => {
+    const incoming = formData?.[config?.key];
+    if (Array.isArray(incoming)) {
+      const hasIncoming = incoming.length > 0;
+      const changed = JSON.stringify(incoming) !== JSON.stringify(formInstances);
+      const hasAnyPrefill = (arr) => {
+        if (!Array.isArray(arr)) return false;
+        return arr.some((inst) => {
+          if (!inst || typeof inst !== "object") return false;
+          const baseKeys = ["name", "fatherName", "mobileNumber", "email"];
+          const hasBase = baseKeys.some((k) => Boolean(inst?.[k]));
+          const hasAddr = inst?.address && Object.keys(inst.address || {}).some((k) => Boolean(inst.address[k]));
+          const hasIdDocs = Array.isArray(inst?.identityProof?.document) && inst.identityProof.document.length > 0;
+          const hasSolvencyDocs = Array.isArray(inst?.proofOfSolvency?.document) && inst.proofOfSolvency.document.length > 0;
+          const hasOtherDocs = Array.isArray(inst?.otherDocuments?.document) && inst.otherDocuments.document.length > 0;
+          return hasBase || hasAddr || hasIdDocs || hasSolvencyDocs || hasOtherDocs;
+        });
+      };
+      if (hasIncoming && changed) {
+        setFormInstances(incoming.map((i) => i || {}));
+      }
+      if (hasIncoming) {
+        const snapshotHasPrefill = hasAnyPrefill(initialPrefillRef.current);
+        const incomingHasPrefill = hasAnyPrefill(incoming);
+        if (!snapshotHasPrefill && incomingHasPrefill) {
+          initialPrefillRef.current = JSON.parse(JSON.stringify(incoming));
+        }
+      }
+    }
+  }, [formData?.[config?.key]]);
 
   const addAnotherForm = () => {
     const newFormInstances = [...formInstances, {}];
@@ -73,9 +104,21 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
     updateFormData(updatedFormInstances);
   }
 
-  const handleChange = (e, input, formIndex) => {
-    let { value } = e.target;
+  const handleChange = (value, input, formIndex) => {
     setValue(value, input.key, input, formIndex);
+  };
+
+  const isInstanceLockedAt = (idx) => {
+    if (!config?.lockPrefilledFields) return false;
+    const prefilled = initialPrefillRef.current?.[idx] || {};
+    if (!prefilled || typeof prefilled !== "object") return false;
+    const baseKeys = ["name", "fatherName", "mobileNumber", "email"];
+    const hasBase = baseKeys.some((k) => Boolean(prefilled?.[k]));
+    const hasAddr = prefilled?.address && Object.keys(prefilled.address || {}).some((k) => Boolean(prefilled.address[k]));
+    const hasIdDocs = Array.isArray(prefilled?.identityProof?.document) && prefilled.identityProof.document.length > 0;
+    const hasSolvencyDocs = Array.isArray(prefilled?.proofOfSolvency?.document) && prefilled.proofOfSolvency.document.length > 0;
+    const hasOtherDocs = Array.isArray(prefilled?.otherDocuments?.document) && prefilled.otherDocuments.document.length > 0;
+    return hasBase || hasAddr || hasIdDocs || hasSolvencyDocs || hasOtherDocs;
   };
 
   return (
@@ -96,7 +139,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
               }}
             >
               <div style={{ fontSize: "20px", fontWeight: 700, color: "#0B0C0C", padding: "12px 22px" }}>{`${t(config?.name)} ${formIndex + 1}`}</div>
-              {formInstances.length > 1 && !disable && (
+              {formInstances.length > 1 && !disable && !isInstanceLockedAt(formIndex) && (
                 <button
                   type="button"
                   style={{ background: "none", border: "none", padding: "12px 22px", cursor: "pointer" }}
@@ -116,6 +159,9 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
             >
               {inputs?.map((input, inputIndex) => {
                 const obj = formInstances?.[formIndex]?.[config?.key] ? formInstances[formIndex]?.[config?.key] : formInstances[formIndex];
+                const instanceLocked = isInstanceLockedAt(formIndex);
+
+
                 return (
                   <React.Fragment key={inputIndex}>
                     {input?.type === "text" && (
@@ -134,7 +180,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                             name={input.name}
                             value={obj?.[input?.name] ? obj?.[input?.name] : ""}
                             onChange={(e) => {
-                              const newValue = e.target.value;
+                              const newValue = sanitizeData(e.target.value);
                               const regex = input?.validation?.pattern;
                               if (input?.key === "email") {
                                 if (newValue) {
@@ -148,12 +194,12 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                                 } else {
                                   clearErrors(`${input?.key}_${formIndex}`);
                                 }
-                                handleChange(e, input, formIndex);
+                                handleChange(newValue, input, formIndex);
                               } else if (!regex || newValue === "" || new RegExp(regex).test(newValue)) {
-                                handleChange(e, input, formIndex);
+                                handleChange(newValue, input, formIndex);
                               }
                             }}
-                            disable={input?.isDisabled}
+                            disable={input?.isDisabled || formIndex < config?.formDisbalityCount || instanceLocked}
                             isRequired={input?.validation?.isRequired}
                             pattern={input?.validation?.pattern}
                             errMsg={input?.validation?.errMsg}
@@ -187,6 +233,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                           errors={errors}
                           setError={setError}
                           clearErrors={clearErrors}
+                          formDisbalityCount={formIndex < config?.formDisbalityCount}
                         />
                       </div>
                     )}
@@ -204,6 +251,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                           clearErrors={clearErrors}
                           control={control}
                           watch={watch}
+                          formDisbalityCount={formIndex < config?.formDisbalityCount}
                         />
                       </div>
                     )}
@@ -239,7 +287,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
       </div>
       {!disable && (
         <button type="button" onClick={addAnotherForm} style={{ background: "none", fontSize: "16px", fontWeight: 700, color: "#007E7E" }}>
-          {formInstances.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER")}`}
+          {formInstances.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER_SURETY")}`}
         </button>
       )}
     </React.Fragment>

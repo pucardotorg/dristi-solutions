@@ -1,9 +1,21 @@
 import { CardLabel, CardLabelError, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
-import { formatAddress } from "../Utils";
+import { formatAddress, sanitizeData } from "../Utils";
 
-
-const AddressBailBond = ({ t, config, onSelect, formData = {}, errors, formState, control, watch, register, setError, clearErrors }) => {
+const AddressBailBond = ({
+  t,
+  config,
+  onSelect,
+  formData = {},
+  errors,
+  formState,
+  control,
+  watch,
+  register,
+  setError,
+  clearErrors,
+  formDisbalityCount,
+}) => {
   const configKey = `${config.key}`;
 
   const { inputs } = useMemo(() => {
@@ -13,9 +25,6 @@ const AddressBailBond = ({ t, config, onSelect, formData = {}, errors, formState
       inputs: finalInputs,
     };
   }, [config.populators.inputs]);
-
-
-
 
   const setValue2 = (value, input) => {
     onSelect(config.key, { ...formData, [input]: value }, { shouldValidate: true });
@@ -53,7 +62,7 @@ const AddressBailBond = ({ t, config, onSelect, formData = {}, errors, formState
                       name={input.name}
                       value={formData?.[input?.name] || ""}
                       onChange={(e) => {
-                        let value = e.target.value;
+                        let value = sanitizeData(e.target.value);
                         if (input?.isFormatRequired) {
                           value = formatAddress(value);
                         }
@@ -62,7 +71,7 @@ const AddressBailBond = ({ t, config, onSelect, formData = {}, errors, formState
                         }
                         setValue2(value, input.name, input?.autoFill);
                       }}
-                      disable={input?.isDisabled}
+                      disable={input?.isDisabled || formDisbalityCount}
                       isRequired={input?.validation?.isRequired}
                       pattern={input?.validation?.pattern}
                       errMsg={input?.validation?.errMsg}

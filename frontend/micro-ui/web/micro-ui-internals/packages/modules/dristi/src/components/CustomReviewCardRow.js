@@ -6,6 +6,8 @@ import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import DOMPurify from "dompurify";
+import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import { getNotUploadedFileName } from "../Utils";
 
 const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
 
@@ -236,7 +238,7 @@ const CustomReviewCardRow = ({
         }
         let title = "";
         if (Array.isArray(value)) {
-          title = value.map((key) => extractValue(data, key)).join(" ");
+          title = value.map((key) => extractValue(data, key)?.trim()).join(" ");
         } else {
           title = extractValue(data, value);
         }
@@ -268,7 +270,7 @@ const CustomReviewCardRow = ({
                       name,
                       dataIndex,
                       Array.isArray(value) ? type : value,
-                      Array.isArray(value) ? [...value, type] : [value, type]
+                      Array.isArray(value) ? [...value, type, ...(badgeType ? [badgeType] : [])] : [value, type]
                     );
                   }}
                   key={dataIndex}
@@ -324,9 +326,7 @@ const CustomReviewCardRow = ({
           const lastName = extractedValues.find((item) => item.lastName)?.lastName || "";
           const designation = extractedValues.find((item) => item.witnessDesignation)?.witnessDesignation || "";
 
-          const parts = [firstName, middleName, lastName]?.filter(Boolean);
-          witnessTitle = parts?.join(" ");
-
+          witnessTitle = getFullName(" ", firstName, middleName, lastName);
           if (designation) {
             witnessTitle += ` - ${designation}`;
           }
@@ -742,22 +742,20 @@ const CustomReviewCardRow = ({
         if (isPrevScrutiny && (!disableScrutiny || enableScrutinyField)) {
           showFlagIcon = prevDataError?.[type]?.FSOError;
         }
-        value?.forEach((val) => {
-          const getFile = extractValue(data, val);
-          if (getFile && getFile?.length > 0) {
-            valuesAvailable.push(val);
-          }
-        });
-        const files = value?.map((value) => extractValue(data, value)) || [];
-        let hasImages = false;
-        files.forEach((file) => {
-          if (file && file?.length > 0) {
-            hasImages = true;
-          }
-        });
-        if (!hasImages) {
-          return null;
-        }
+        const files =
+          value?.map((value) => {
+            valuesAvailable.push(value);
+            const getFile = extractValue(data, value);
+            if (getFile) {
+              return getFile;
+            } else if (value !== "SelectUploadDocWithName") {
+              return {
+                fileName: t(getNotUploadedFileName(value)),
+              };
+            } else {
+              return [];
+            }
+          }) || [];
         return (
           <div className={`image-main ${bgclassname}`}>
             <div className={`image ${!isScrutiny ? "column" : ""}`}>
@@ -793,6 +791,7 @@ const CustomReviewCardRow = ({
                                   displayFilename={data?.fileName}
                                   tenantId={tenantId}
                                   docWidth="250px"
+                                  errorStyleSmallType={true}
                                   showDownloadOption={false}
                                   documentName={data?.fileName || data?.additionalDetails?.fileName}
                                   preview
@@ -826,6 +825,7 @@ const CustomReviewCardRow = ({
                                     displayFilename={data?.fileName}
                                     tenantId={tenantId}
                                     docWidth="250px"
+                                    errorStyleSmallType={true}
                                     showDownloadOption={false}
                                     documentName={data?.fileName}
                                     preview
@@ -837,7 +837,7 @@ const CustomReviewCardRow = ({
                             return null;
                           }
                         })
-                      ) : file ? (
+                      ) : file?.fileStore ? (
                         <div
                           style={{ cursor: "pointer" }}
                           onClick={() => {
@@ -850,10 +850,36 @@ const CustomReviewCardRow = ({
                             displayFilename={file?.fileName}
                             tenantId={tenantId}
                             docWidth="250px"
+                            errorStyleSmallType={true}
                             showDownloadOption={false}
                             documentName={data?.fileName}
                             preview
                           />
+                        </div>
+                      ) : file?.fileName ? (
+                        <div
+                          key={fileIndex}
+                          style={{ display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer" }}
+                          onClick={() => {
+                            handleImageClick(configKey, name, dataIndex, value[fileIndex], file, [value[fileIndex]], dataError);
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              fontSize: "16px",
+                              color: "#888",
+                              height: "238px",
+                              padding: "16px",
+                              boxSizing: "border-box",
+                              marginBottom: "16px",
+                              border: "1px solid #ccc",
+                            }}
+                          >
+                            {t("NOT_UPLOADED")}
+                          </div>
+                          <div style={{ fontSize: "14px", color: "#555" }}>{file?.fileName}</div>
                         </div>
                       ) : null
                     )
@@ -974,7 +1000,7 @@ const CustomReviewCardRow = ({
           <div className={`address-main ${bgclassname}`} style={{ borderBottom: "1px #e8e8e8 solid" }}>
             <div className="address" style={{ position: "relative" }}>
               <div className="address-container" style={{ display: "flex", flexDirection: "column", gap: "1rem", width: "100%" }}>
-                {address.map((item, index) => (
+                {(address?.length ? address : [{}])?.map((item, index) => (
                   <div key={index} className="address-block">
                     <div
                       className="row"
@@ -987,10 +1013,12 @@ const CustomReviewCardRow = ({
                       <div className="label">{t(label)}</div>
                       <div className="value">
                         <p style={{ marginBottom: "8px" }}>{item?.address}</p>
-                        <LocationContent
-                          latitude={item?.coordinates?.latitude || 31.6160638}
-                          longitude={item?.coordinates?.longitude || 74.8978579}
-                        />
+                        {address?.length > 0 && (
+                          <LocationContent
+                            latitude={item?.coordinates?.latitude || 31.6160638}
+                            longitude={item?.coordinates?.longitude || 74.8978579}
+                          />
+                        )}
                       </div>
                     </div>
                     {item?.policeStation && (

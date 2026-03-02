@@ -1,0 +1,104 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseCategory",
+    "mdmsPayload": {
+      "id": "bb533e0a-4cc0-4bee-894c-dc42f5051de2",
+      "tenantId": "kl",
+      "schemaCode": "case.CaseCategory",
+      "uniqueIdentifier": "12",
+      "data": {
+        "id": 12,
+        "category": "ADVANCE_COLLECTION",
+        "isactive": true
+      },
+      "isActive": false
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseCategory",
+    "mdmsPayload":  {
+        "id": "8b724079-9aaa-4d25-a060-2a9d055ff8cf",
+        "tenantId": "kl",
+        "schemaCode": "case.CaseCategory",
+        "uniqueIdentifier": "4",
+        "data": {
+            "id": 4,
+            "category": "REVIEW",
+            "isactive": true
+        },
+        "isActive": false
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseCategory",
+    "mdmsPayload":  {
+        "id": "b964ca45-e828-4285-b187-f78626faa1db",
+        "tenantId": "kl",
+        "schemaCode": "case.CaseCategory",
+        "uniqueIdentifier": "5",
+        "data": {
+            "id": 5,
+            "category": "REFERENCE",
+            "isactive": true
+        },
+        "isActive": false
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseCategory",
+    "mdmsPayload":  {
+        "id": "bcabcb5b-4232-4443-b98c-9096f5da24e7",
+        "tenantId": "kl",
+        "schemaCode": "case.CaseCategory",
+        "uniqueIdentifier": "6",
+        "data": {
+            "id": 6,
+            "category": "V",
+            "isactive": true
+        },
+        "isActive": false
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseCategory",
+    "mdmsPayload": {
+        "id": "ec2f39d0-460f-4e64-9a14-f8c0181aab8d",
+        "tenantId": "kl",
+        "schemaCode": "case.CaseCategory",
+        "uniqueIdentifier": "3",
+        "data": {
+            "id": 3,
+            "category": "SECOND_APPEAL",
+            "isactive": true
+        },
+        "isActive": false
+    }
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "CaseCategory",
+    "mdmsPayload": {
+        "id": "c45ce1c0-23e3-487c-bcee-6a621eedfb8f",
+        "tenantId": "kl",
+        "schemaCode": "case.CaseCategory",
+        "uniqueIdentifier": "1",
+        "data": {
+            "id": 1,
+            "category": "CIVIL",
+            "isactive": true
+        },
+        "isActive": false
+    }
+  }
+]

@@ -58,9 +58,9 @@ const SelectParty = ({
                   name: "document",
                   documentHeader: selectPartyData?.userType?.value === "Litigant" ? "AFFIDAVIT" : "SUPPORING_DOCUMENT_OPTIONAL",
                   type: "DragDropComponent",
-                  uploadGuidelines: "UPLOAD_DOC_50",
-                  maxFileSize: 50,
-                  maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                  uploadGuidelines: "UPLOAD_DOC_10",
+                  maxFileSize: 10,
+                  maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
                   fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                   isMultipleUpload: false,
                   documentHeaderStyle: {

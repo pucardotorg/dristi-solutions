@@ -29,6 +29,7 @@ function OrderSignatureModal({
   setSignedDocumentUploadID,
   orderPdfFileStoreID,
   businessOfDay,
+  setSignedOrderPdfFileName,
   // selectedOrder,
 }) {
   const [isSigned, setIsSigned] = useState(false);
@@ -44,6 +45,7 @@ function OrderSignatureModal({
   const name = "Signature";
   const judgePlaceholder = order?.orderCategory === "COMPOSITE" ? "Fduy44hjb" : "Signature";
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -55,8 +57,8 @@ function OrderSignatureModal({
             // documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -76,12 +78,14 @@ function OrderSignatureModal({
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
         setLoader(true);
+        setSignedOrderPdfFileName(formData?.uploadSignature?.Signature?.[0]?.name);
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
@@ -91,6 +95,7 @@ function OrderSignatureModal({
         setLoader(false);
         setFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setLoader(false);
     }
@@ -183,6 +188,7 @@ function OrderSignatureModal({
       formData={formData}
       onSubmit={onSubmit}
       isDisabled={loader}
+      fileUploadError={fileUploadError}
     />
   );
 }

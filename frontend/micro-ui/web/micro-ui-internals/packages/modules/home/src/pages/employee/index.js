@@ -1,6 +1,5 @@
 import { AppContainer, BreadCrumb, PrivateRoute } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
-import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import HearingsResponse from "./HearingsResponse";
 import InsideHearingMainPage from "./InsideHearingMainPage";
@@ -14,36 +13,13 @@ import PaymentStatus from "../../../../orders/src/components/PaymentStatus";
 import ScheduleNextHearing from "./ScheduleNextHearing";
 import DashboardPage from "./Dashboard";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import ADiaryPage from "./ADiaryPage";
-import BulkESignView from "./BulkESignView";
 import MainHomeScreen from "./MainHomeScreen";
 import GeneratePaymentDemandBreakdown from "../../components/GeneratePaymentDemandBreakdown";
 import BailBondModal from "./BailBondModal";
 import { BailBondSignModal } from "./BailBondSignModal";
 import { WitnessDepositionSignModal } from "./WitnessDepositionSignModal";
-const bredCrumbStyle = { maxWidth: "min-content" };
-
-const ProjectBreadCrumb = ({ location }) => {
-  const userInfo = window?.Digit?.UserService?.getUser()?.info;
-  let userType = "employee";
-  if (userInfo) {
-    userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
-  }
-  const { t } = useTranslation();
-  const crumbs = [
-    {
-      path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
-      content: t("HOME"),
-      show: true,
-    },
-    {
-      path: `/${window?.contextPath}/${userType}`,
-      content: t(location.pathname.split("/").pop()),
-      show: true,
-    },
-  ];
-  return <BreadCrumb crumbs={crumbs} spanStyle={bredCrumbStyle} />;
-};
+import MediationFormSignaturePage from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/MediationFormSignaturePage";
+import DigitalDocumentSignModal from "./DigitalDocumentSignModal";
 
 const App = ({ path, stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -56,6 +32,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
     <React.Fragment></React.Fragment>
   );
   const SBIEpostPayment = Digit.ComponentRegistryService.getComponent("SBIEpostPayment") || <React.Fragment></React.Fragment>;
+  const EpostTrackingPage = Digit.ComponentRegistryService.getComponent("EpostTrackingPage") || <React.Fragment></React.Fragment>;
 
   const history = useHistory();
   const userInfo = Digit?.UserService?.getUser()?.info;
@@ -114,10 +91,9 @@ const App = ({ path, stateCode, userType, tenants }) => {
         />
         <PrivateRoute exact path={`${path}/home-pending-task/home-schedule-hearing`} component={() => <ScheduleHearing />} />
         <PrivateRoute exact path={`${path}/home-pending-task/home-set-next-hearing`} component={() => <ScheduleNextHearing />} />
-        <PrivateRoute exact path={`${path}/home-pending-task`} component={() => <HomeView></HomeView>} />
+        <PrivateRoute exact path={`${path}/home-pending-task`} component={HomeView} />
         <PrivateRoute exact path={`${path}/home-screen`} component={() => <MainHomeScreen></MainHomeScreen>} />
         {/* <PrivateRoute path={`${path}/bulk-esign-order`} component={() => <BulkESignView></BulkESignView>} /> */}
-        {/* <PrivateRoute path={`${path}/dashboard/adiary`} component={() => <ADiaryPage></ADiaryPage>} /> */}
         <PrivateRoute path={`${path}/bail-bond`} component={() => <BailBondModal></BailBondModal>} />
         <PrivateRoute path={`${path}/sign-bail-bond`} component={() => <BailBondSignModal></BailBondSignModal>} />
         <PrivateRoute path={`${path}/sign-witness-deposition`} component={() => <WitnessDepositionSignModal></WitnessDepositionSignModal>} />
@@ -127,6 +103,9 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/sbi-payment-screen`} component={() => <SBIPaymentStatus />} />
         <PrivateRoute path={`${path}/view-hearing`} component={() => <ViewHearing></ViewHearing>} />
         <PrivateRoute path={`${path}/home-popup`} component={() => <HomePopUp></HomePopUp>} />
+        <PrivateRoute exact path={`${path}/epost-home-screen`} component={() => <EpostTrackingPage></EpostTrackingPage>} />
+        <PrivateRoute exact path={`${path}/mediation-form-sign`} component={() => <MediationFormSignaturePage />} />
+        <PrivateRoute exact path={`${path}/digitized-document-sign`} component={() => <DigitalDocumentSignModal />} />
       </AppContainer>
     </Switch>
   );

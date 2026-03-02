@@ -1,10 +1,11 @@
 import { BackButton, HelpOutlineIcon, PrivateRoute, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
+import React, { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import Breadcrumb from "../../components/BreadCrumb";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { useToast } from "../../components/Toast/useToast";
 import ApplicationDetails from "./ApplicationDetails";
 import EFilingPaymentResponse from "./Payment/EFilingPaymentResponse";
@@ -21,6 +22,7 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const { t } = useTranslation();
   const location = useLocation();
   const history = useHistory();
+  const { BreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { toastMessage, toastType, closeToast } = useToast();
   const Inbox = window?.Digit?.ComponentRegistryService?.getComponent("Inbox");
   const hideHomeCrumb = [`${path}/cases`];
@@ -30,6 +32,16 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const isUserLoggedIn = Boolean(token);
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
+  const { caseId: contextCaseId, filingNumber: contextFilingNumber } = BreadCrumbsParamsData || {};
+  const queryForViewCase = useMemo(() => {
+    const caseId = contextCaseId || location?.state?.caseId;
+    const filingNumber = contextFilingNumber || location?.state?.filingNumber;
+    if (caseId && filingNumber) {
+      return `?${new URLSearchParams({ caseId, filingNumber }).toString()}`;
+    }
+    return location?.search || "";
+  }, [contextCaseId, contextFilingNumber, location?.state?.caseId, location?.state?.filingNumber, location?.search]);
+
   const employeeCrumbs = [
     {
       path: `/${window?.contextPath}/employee`,
@@ -40,6 +52,7 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
     {
       path: `${path}/home/view-case`,
       content: t("VIEW_CASE"),
+      query: queryForViewCase,
       show: location.pathname.includes("/view-case"),
       isLast: !location.pathname.includes("/review-litigant-details"),
     },
@@ -133,7 +146,7 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
           <div className={location.pathname.endsWith("employee/dristi/cases") ? "file-case-main" : ""}></div>
           <PrivateRoute exact path={`${path}/cases`} component={Home} />
           <PrivateRoute exact path={`${path}/admission`} component={(props) => <CaseFileAdmission {...props} t={t} path={path} />} />
-          <PrivateRoute exact path={`${path}/home/view-case`} component={(props) => <AdmittedCaseV2 />} />
+          <PrivateRoute exact path={`${path}/home/view-case`} component={AdmittedCaseV2} />
           <PrivateRoute exact path={`${path}/home/view-case/review-litigant-details`} component={(props) => <ReviewLitigantDetails />} />
           <PrivateRoute exact path={`${path}/case`} component={(props) => <ViewCaseFile {...props} t={t} />} />
           <PrivateRoute exact path={`${path}/home/edit-profile`}>

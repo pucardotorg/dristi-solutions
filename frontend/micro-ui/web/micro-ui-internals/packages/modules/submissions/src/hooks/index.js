@@ -5,6 +5,7 @@ import useSearchSubmissionService from "./submissions/useSearchSubmissionService
 import useSearchEvidenceService from "./submissions/useSearchEvidenceService";
 import useSearchBailBondService from "./submissions/useSearchBailBondService";
 import useOpenApiSearchBailBond from "./submissions/useOpenApiSearchBailBond";
+import useSearchDigitalization from "./submissions/useSearchDigitalization";
 
 const submissions = {
   useIndividualView,
@@ -12,6 +13,7 @@ const submissions = {
   useSearchEvidenceService,
   useSearchBailBondService,
   useOpenApiSearchBailBond,
+  useSearchDigitalization,
 };
 
 const Hooks = {

@@ -31,6 +31,7 @@ const WitnessDepositionSignatureModal = ({
   const [formData, setFormData] = useState({});
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const name = "Signature";
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -40,10 +41,10 @@ const WitnessDepositionSignatureModal = ({
           {
             name: name,
             type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
+            uploadGuidelines: "Ensure the file is not blurry and under 5MB.",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
+            fileTypes: ["PDF"],
             isMultipleUpload: false,
           },
         ],
@@ -61,6 +62,7 @@ const WitnessDepositionSignatureModal = ({
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -73,6 +75,7 @@ const WitnessDepositionSignatureModal = ({
         setLoader(false);
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -171,6 +174,7 @@ const WitnessDepositionSignatureModal = ({
           showDownloadText={true}
           fileStoreId={witnessDepositionFileStoreId}
           cancelLabel={"SUBMIT"}
+          fileUploadError={fileUploadError}
         />
       )}
     </React.Fragment>

@@ -41,6 +41,7 @@ const OrderTypeControlItem = ({
           config={{
             ...orderTypeConfig?.populators,
             styles: { ...orderTypeConfig?.populators?.styles, flex: 1 },
+            optionsCustomStyle: { marginTop: "42px" },
           }}
           disable={orderType}
         />
@@ -75,7 +76,7 @@ const OrderTypeControlItem = ({
           }}
           label={t("DELETE_ORDER_ITEM")}
           icon={<CustomDeleteIcon color="#BB2C2F" width="20" height="20" />}
-          isDisabled = {!orderType && !isCompositeItem}
+          isDisabled={!orderType && !isCompositeItem}
         />
       </div>
     </React.Fragment>
