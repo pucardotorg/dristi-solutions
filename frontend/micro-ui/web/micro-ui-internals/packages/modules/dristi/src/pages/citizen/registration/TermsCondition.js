@@ -345,7 +345,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
     };
 
     handleRedirect();
-  }, [params.address, params, history, pathOnRefresh, showSuccess]);
+  }, [params?.address, params, history, pathOnRefresh, showSuccess]);
 
   if (isLoading) {
     return <Loader />;

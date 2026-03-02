@@ -21,6 +21,7 @@ import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/cas
 import { constructFullName, removeInvalidNameParts } from "@egovernments/digit-ui-module-orders/src/utils";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const SECOND = 1000;
 
@@ -47,6 +48,8 @@ const InsideHearingMainPage = () => {
   const userInfo = Digit?.UserService?.getUser?.()?.info;
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
+  const userUUID = Digit.UserService.getUser()?.info?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUUID);
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
@@ -164,6 +167,7 @@ const InsideHearingMainPage = () => {
         filingNumber,
         tenantId,
         ...(caseCourtId && { courtId: caseCourtId }),
+        asUser: authorizedUuid,
       },
       tenantId,
     },

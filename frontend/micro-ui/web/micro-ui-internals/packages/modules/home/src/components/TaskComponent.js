@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, Dropdown } from "@egovernments/digit-ui-components";
 import { Button, LabelFieldPair, Card } from "@egovernments/digit-ui-react-components";
 import { Loader } from "@egovernments/digit-ui-react-components";
@@ -20,7 +20,6 @@ import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } fro
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
-import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const CaseWorkflowAction = {
@@ -101,7 +100,7 @@ const TasksComponent = ({
     joinCasePaymentModal: false,
     data: {},
   });
-  const { AdvocateData: selectedSeniorAdvocate } = useContext(AdvocateDataContext);
+  const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
 
   const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -669,10 +668,9 @@ const TasksComponent = ({
       let applicationCMPNumber = "";
 
       if (isApplicationCompositeOrder) {
-        const application =
-          applicationData?.applicationList?.find((application) => application?.applicationNumber === referenceId) || {};
-          applicationName = application?.applicationType || "";
-          applicationCMPNumber = application?.applicationCMPNumber || "";
+        const application = applicationData?.applicationList?.find((application) => application?.applicationNumber === referenceId) || {};
+        applicationName = application?.applicationType || "";
+        applicationCMPNumber = application?.applicationCMPNumber || "";
       }
 
       const updateReferenceId = referenceId?.split("_").pop();

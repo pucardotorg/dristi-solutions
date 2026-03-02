@@ -139,6 +139,7 @@ const SubmissionDocuments = ({ path }) => {
         filingNumber,
         artifactNumber,
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
