@@ -117,12 +117,6 @@ paths:
 
 components:
 
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
   schemas:
 
     CtcApplicationRequest:
@@ -219,10 +213,10 @@ components:
           type: string
         affidavitDocument:
           $ref: '#/components/schemas/Document'
-        selectedDocuments:
+        caseBundleNodes:
           type: array
           items:
-            $ref: '#/components/schemas/SelectedDocument'
+            $ref: '#/components/schemas/CaseBundleNode'
         totalPages:
           type: integer
           format: int32
@@ -238,14 +232,35 @@ components:
             - REJECTED
         judgeComments:
           type: string
-        issuedDocuments:
-          type: array
-          items:
-            $ref: '#/components/schemas/IssuedDocument'
         workflow:
           $ref: '#/components/schemas/WorkflowObject'
         auditDetails:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+
+    CaseBundleNode:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the case bundle node
+        title:
+          type: string
+          description: Title of the case bundle node
+        fileStoreId:
+          type: string
+          description: File store ID for the document
+        status:
+          type: string
+          enum:
+            - accepted
+            - rejected
+            - pending
+          description: Status of the case bundle node (accepted/rejected/pending)
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseBundleNode'
+          description: Child case bundle nodes (for hierarchical structure)
 
     SelectedDocument:
       type: object
@@ -304,6 +319,7 @@ components:
       properties:
         action:
           type: string
+          description: Workflow action to be performed
           enum:
             - SAVE_DRAFT
             - SUBMIT
@@ -317,18 +333,38 @@ components:
             - ISSUE
         comments:
           type: string
+          description: Comments associated with the workflow action
         assignes:
           type: array
           items:
             type: string
             format: uuid
+          description: List of user UUIDs assigned to this workflow
         documents:
           type: array
           items:
             $ref: '#/components/schemas/Document'
+          description: Documents associated with the workflow
+        uuid:
+          type: string
+          format: uuid
+          description: Unique identifier for the workflow instance
+        tenantId:
+          type: string
+          description: Tenant ID of the workflow
+        businessService:
+          type: string
+          description: Business service name for the workflow
+        moduleName:
+          type: string
+          description: Module name for the workflow
+        notificationBusinessService:
+          type: string
+          description: Notification business service name
         additionalDetails:
           type: object
           additionalProperties: true
+          description: Additional details for the workflow
 
     ValidateUserRequest:
       type: object
