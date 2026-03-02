@@ -4,22 +4,19 @@ package org.pucar.dristi.web.controllers;
 import java.io.IOException;
 import java.util.List;
 
+ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.response.ResponseInfo;
-import org.pucar.dristi.service.CaseBundleIndexBuilderService;
-import org.pucar.dristi.service.CaseBundleService;
-import org.pucar.dristi.service.CaseManagerService;
-import org.pucar.dristi.service.ServiceUrlMapperVCService;
-import org.pucar.dristi.service.ServiceUrlMappingPdfService;
+import org.pucar.dristi.service.*;
+import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.ResponseInfoFactory;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.docpreview.DocPreviewRequest;
+import org.pucar.dristi.web.models.docpreview.DocPreviewResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -32,6 +29,7 @@ import jakarta.validation.Valid;
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-05-17T10:19:47.222225+05:30[Asia/Kolkata]")
 @Controller
 @RequestMapping("")
+@Slf4j
 public class CasemanagerApiController {
 
     private final ObjectMapper objectMapper;
@@ -52,8 +50,11 @@ public class CasemanagerApiController {
 
     private final ResponseInfoFactory responseInfoFactory;
 
+    private final DocPreviewService docPreviewService;
+    private final FileStoreUtil fileStoreUtil;
+
     @Autowired
-    public CasemanagerApiController(CaseBundleService caseBundleService,ObjectMapper objectMapper, HttpServletRequest request, ServiceUrlMappingPdfService serviceUrlMappingPdfService, ServiceUrlMapperVCService serviceUrlMapperVCService, CaseManagerService caseManagerService, CaseBundleIndexBuilderService caseBundleIndexBuilderService, ResponseInfoFactory responseInfoFactory) {
+    public CasemanagerApiController(CaseBundleService caseBundleService, ObjectMapper objectMapper, HttpServletRequest request, ServiceUrlMappingPdfService serviceUrlMappingPdfService, ServiceUrlMapperVCService serviceUrlMapperVCService, CaseManagerService caseManagerService, CaseBundleIndexBuilderService caseBundleIndexBuilderService, ResponseInfoFactory responseInfoFactory, DocPreviewService docPreviewService, FileStoreUtil fileStoreUtil) {
         this.objectMapper = objectMapper;
         this.request = request;
         this.serviceUrlMapperVCService = serviceUrlMapperVCService;
@@ -62,6 +63,8 @@ public class CasemanagerApiController {
         this.caseBundleIndexBuilderService = caseBundleIndexBuilderService;
         this.responseInfoFactory = responseInfoFactory;
         this.caseBundleService = caseBundleService;
+        this.docPreviewService = docPreviewService;
+        this.fileStoreUtil = fileStoreUtil;
     }
 
     @RequestMapping(value = "/casemanager/case/v1/_group", method = RequestMethod.POST)
@@ -179,6 +182,19 @@ public class CasemanagerApiController {
                 .build();
             
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/casemanager/preview/doc")
+    public ResponseEntity<DocPreviewResponse> previewDoc(@Valid @RequestBody DocPreviewRequest request) {
+        try {
+            List<CaseBundleNode> caseBundleNodes = docPreviewService.getBundle(request);
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), false);
+            DocPreviewResponse docPreviewResponse = DocPreviewResponse.builder().responseInfo(responseInfo).caseBundleNodes(caseBundleNodes).build();
+            return ResponseEntity.ok().body(docPreviewResponse);
+        } catch (Exception e) {
+            log.error("Error previewing document for filingNumber: {}, documentLabel: {}", request.getFilingNumber(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

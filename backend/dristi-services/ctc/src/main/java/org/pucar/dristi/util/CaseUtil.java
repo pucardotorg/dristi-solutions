@@ -92,6 +92,7 @@ public class CaseUtil {
 				.requestInfo(RequestInfo.builder().build())
 				.criteria(Collections.singletonList(CaseCriteria.builder()
 						.filingNumber(filingNumber)
+						.courtId(co)
 						.defaultFields(false)
 						.build()))
 				.flow("flow_jac")
@@ -103,64 +104,6 @@ public class CaseUtil {
 			log.error("Error executing case search query", e);
 			throw new CustomException("Error fetching case: ", "ERROR_CASE_SEARCH");
 		}
-	}
-
-	public JsonNode getLitigants(JsonNode caseList) {
-
-		log.info("operation = getLitigants, result = IN_PROGRESS");
-
-		if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
-			log.info("operation = getLitigants, result = SUCCESS");
-			return caseList.get(0).get("litigants");
-		} else {
-			log.error("operation = getLitigants, result = FAILURE");
-			throw new CustomException("DK_RR_CASE_ERR", "case not found");
-		}
-
-	}
-
-	public Set<String> getIndividualIds(JsonNode nodeArray) {
-		log.info("operation = getIndividualIds, result = IN_PROGRESS");
-		Set<String> response = new HashSet<>();
-		if (nodeArray != null && nodeArray.isArray()) {
-			for (JsonNode node : nodeArray) {
-				JsonNode id = node.get("individualId");
-				if (id != null) {
-					response.add(String.valueOf(id.asText()));
-				}
-
-			}
-		}
-		log.info("operation = getIndividualIds, result = SUCCESS");
-		return response;
-	}
-
-	public JsonNode getRepresentatives(JsonNode caseRes) {
-
-		log.info("operation = getRepresentatives, result = IN_PROGRESS");
-
-		if (caseRes != null && caseRes.isArray() && !caseRes.isEmpty()) {
-			log.info("operation = getRepresentatives, result = SUCCESS");
-			return caseRes.get(0).get("representatives");
-		} else {
-			log.error("operation = getRepresentatives, result = FAILURE");
-			throw new CustomException("DK_RR_CASE_ERR", "case not found");
-		}
-	}
-
-	public Set<String> getAdvocateIds(JsonNode nodeArray) {
-		log.info("operation = getAdvocateIds, result = IN_PROGRESS");
-		Set<String> response = new HashSet<>();
-		if (nodeArray != null && nodeArray.isArray()) {
-			for (JsonNode node : nodeArray) {
-				JsonNode id = node.get("advocateId");
-				if (id != null) {
-					response.add(String.valueOf(id.asText()));
-				}
-			}
-		}
-		log.info("operation = getAdvocateIds, result = SUCCESS");
-		return response;
 	}
 
 
