@@ -135,6 +135,7 @@ public class AdvocateOfficeConsumer {
         return response.getCases()
                 .stream()
                 .filter(Objects::nonNull)
+                .filter(caseInfo -> caseInfo.getCaseId() != null)
                 .map(caseInfo -> caseInfo.getCaseId().toString())
                 .collect(Collectors.toList());
     }

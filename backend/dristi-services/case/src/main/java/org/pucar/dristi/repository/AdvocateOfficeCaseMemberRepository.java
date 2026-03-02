@@ -116,7 +116,7 @@ public class AdvocateOfficeCaseMemberRepository {
         } catch (Exception e) {
             log.error("Error getting total count for officeAdvocateUserUuid: {} and memberUserUuid: {}",
                     criteria.getOfficeAdvocateUserUuid(), criteria.getMemberUserUuid(), e);
-            throw new CustomException("SEARCJ_CASE_MEMBER_COUNT_ERR", "Error getting total count for case members");
+            throw new CustomException("SEARCH_CASE_MEMBER_COUNT_ERR", "Error getting total count for case members");
         }
     }
 
