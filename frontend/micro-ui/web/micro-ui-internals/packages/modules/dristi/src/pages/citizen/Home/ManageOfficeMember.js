@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 import { InboxSearchComposer, Loader, Toast } from "@egovernments/digit-ui-react-components";
@@ -15,6 +15,22 @@ const sectionsParentStyle = {
 
 const AccessTypeDropdown = ({ options = [], selected, onChange }) => {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
 
   const handleToggle = () => {
     setOpen((prev) => !prev);
@@ -28,7 +44,7 @@ const AccessTypeDropdown = ({ options = [], selected, onChange }) => {
   };
 
   return (
-    <div className="manage-office-member-access-type">
+    <div className="manage-office-member-access-type" ref={containerRef}>
       <button type="button" className="manage-office-member-access-type__control" onClick={handleToggle}>
         <span className="manage-office-member-access-type__value">{selected?.name || ""}</span>
         <span className="manage-office-member-access-type__arrow" aria-hidden="true">
