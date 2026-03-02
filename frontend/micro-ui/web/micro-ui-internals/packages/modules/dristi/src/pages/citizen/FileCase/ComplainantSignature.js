@@ -945,9 +945,12 @@ const ComplainantSignature = ({ path }) => {
 
   const updateCase = async (state) => {
     updatedOnceRef.current = true;
+    const isTopbarMounted = sessionStorage.getItem("isTopbarMounted");
+    console.log("updatecase1", isTopbarMounted);
+
     sessionStorage.removeItem("isTopbarMounted");
     setLoader(true);
-    console.log("updatecase1");
+    console.log("updatecase11", isTopbarMounted);
     const caseDocList = updateSignedDocInCaseDoc();
     console.log("updatecase12");
     let tempDocList = [...caseDocList];
@@ -1138,6 +1141,13 @@ const ComplainantSignature = ({ path }) => {
       console.log("useeffect1234", updatedOnceRef.current);
     };
   }, [isEsignSuccess, caseDetails, isLoading, isLitigant, userInfo]);
+
+  useEffect(() => {
+    console.log("mounted");
+    return () => {
+      console.log("unmounted");
+    };
+  }, []);
 
   useEffect(() => {
     if (!caseDetails?.filingNumber || isLoading) return;

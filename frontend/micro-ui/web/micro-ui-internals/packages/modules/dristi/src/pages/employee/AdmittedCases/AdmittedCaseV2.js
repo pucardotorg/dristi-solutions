@@ -2215,6 +2215,13 @@ const AdmittedCaseV2 = () => {
     }
   }, [showPopupForJuniorAdvocate, caseDetails, userUuid]);
 
+  useEffect(() => {
+    console.log("mount");
+    return () => {
+      console.log("unmount");
+    };
+  }, []);
+
   const handleDownloadClick = useCallback(() => {
     if (casePdfFileStoreId) {
       downloadPdf(tenantId, casePdfFileStoreId);

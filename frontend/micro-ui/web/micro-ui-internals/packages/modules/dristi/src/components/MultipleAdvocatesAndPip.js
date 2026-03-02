@@ -1,5 +1,5 @@
 import { Loader, UploadIcon } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CustomAddIcon, FileUploadIcon } from "../icons/svgIndex";
 
 import Button from "./Button";
@@ -15,7 +15,6 @@ import { useToast } from "./Toast/useToast";
 import { FSOErrorIcon } from "../icons/svgIndex";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import SearchableDropdown from "./SearchableDropdown";
-import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 function ScrutinyInfoAdvocate({ message, t }) {
   return (
@@ -93,8 +92,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const caseId = urlParams.get("caseId");
   const [isApproved, setIsApproved] = useState(false);
   const toast = useToast();
-  const { AdvocateData } = useContext(AdvocateDataContext);
-  const selectedSeniorAdvocate = AdvocateData;
+  const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
   const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
 
   const [advocateAndPipData, setAdvocateAndPipData] = useState(
@@ -409,11 +407,11 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return false;
   }, [caseDetails, userUuid]);
 
-  const casePrimaryAdvocateUuid = useMemo(() => {
+  const casePrimaryAdvocateId = useMemo(() => {
     const isAdvocateOfficeCreator = caseDetails?.representatives?.find(
       (rep) => rep?.advocateFilingStatus === advocateCaseFilingStatusTypes?.CASE_OWNER
     );
-    return isAdvocateOfficeCreator?.additionalDetails?.uuid;
+    return isAdvocateOfficeCreator?.advocateId;
   }, [caseDetails]);
 
   useEffect(() => {
@@ -683,13 +681,13 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
       if (advocateAndPipData?.boxComplainant?.index !== 0) return true;
       // For all complainants boxes except 1st, deleting is allowed.
       else {
-        if (advocateAndPipData?.multipleAdvocateNameDetails?.[i]?.advocateBarRegNumberWithName?.advocateUuid === casePrimaryAdvocateUuid) {
+        if (advocateAndPipData?.multipleAdvocateNameDetails?.[i]?.advocateBarRegNumberWithName?.advocateId === casePrimaryAdvocateId) {
           return false; // For 1st complainant box, the filing advocate is the primary advocate, so it can not be deleted by anyone.
         }
         return true;
       }
     },
-    [advocateAndPipData, casePrimaryAdvocateUuid]
+    [advocateAndPipData, casePrimaryAdvocateId]
   );
 
   if (isCaseLoading) {
