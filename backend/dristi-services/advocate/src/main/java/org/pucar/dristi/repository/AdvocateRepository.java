@@ -164,6 +164,7 @@ public class AdvocateRepository {
                         " AND split_part(barregistrationnumber, '/', 3) = ? " +
                         ")";
 
+        // Format is already validated before this stage, so normalizedSerialNumber is guaranteed to be an integer
         Boolean exists = jdbcTemplate.queryForObject(query, Boolean.class, tenantId, stateCode, Integer.valueOf(normalizedSerialNumber), year);
         return Boolean.TRUE.equals(exists);
     }

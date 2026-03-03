@@ -205,7 +205,7 @@ public class AdvocateService {
 
     }
     private String getMessageCode(String updatedStatus) {
-        if (updatedStatus.equalsIgnoreCase(ACTIVE)){
+        if (ACTIVE.equalsIgnoreCase(updatedStatus)){
             return ADVOCATE_REGISTERED;
         }
         return null;
@@ -257,6 +257,7 @@ public class AdvocateService {
 
             if(APPROVE.equalsIgnoreCase(action)){
                 String barRegistrationNumber = advocate.getBarRegistrationNumber();
+                // Format was already validated during creation
                 BarRegistrationNumberComponents components = validator.tokenizeBarRegistrationNumber(barRegistrationNumber);
                 validator.validateBarRegistrationNumberUniqueness(advocate.getTenantId(), components, barRegistrationNumber);
             }
