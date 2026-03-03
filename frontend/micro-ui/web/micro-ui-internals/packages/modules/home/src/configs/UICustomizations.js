@@ -638,6 +638,107 @@ export const UICustomizations = {
     },
   },
 
+  bulkIssueCTCConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const criteria = {
+        ...requestCriteria?.body?.criteria,
+        ...requestCriteria?.state?.searchForm,
+        tenantId,
+        ...additionalDetails,
+        pagination: {
+          limit: requestCriteria?.state?.tableForm?.limit,
+          offSet: requestCriteria?.state?.tableForm?.offset,
+        },
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          criteria,
+          tenantId,
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            const dummyData = [
+              {
+                isSelected: false,
+                businessObject: {
+                  documentsRequested: "Cheque",
+                  caseName: "Aarav Sharma Vs. Priya Singh",
+                  caseNumber: "ST/227/2025",
+                  applicationNumber: "CA/227/2025",
+                },
+              },
+              {
+                isSelected: false,
+                businessObject: {
+                  documentsRequested: "Legal Demand Notice 2",
+                  caseName: "Rohan Mehra Vs. Anjali Gupta",
+                  caseNumber: "CMP/228/2025",
+                  applicationNumber: "CA/228/2025",
+                },
+              },
+              {
+                isSelected: false,
+                businessObject: {
+                  documentsRequested: "Vakalatnama",
+                  caseName: "Vikram Rathore Vs. Sunita Patel",
+                  caseNumber: "ST/229/2025",
+                  applicationNumber: "CA/229/2025",
+                },
+              },
+              {
+                isSelected: false,
+                businessObject: {
+                  documentsRequested: "Bank Statement",
+                  caseName: "Sanjay Verma Vs. Kavita Reddy",
+                  caseNumber: "CMP/230/2025",
+                  applicationNumber: "CA/230/2025",
+                },
+              },
+            ];
+            return { ...data, items: dummyData, totalCount: 40 };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
+        case "DOCUMENTS_REQUESTED":
+          return (
+            <span
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+              role="button"
+              tabIndex={0}
+              onClick={() => column?.clickFunc && column.clickFunc({ original: row })}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === " ") && column?.clickFunc) {
+                  e.preventDefault();
+                  column.clickFunc({ original: row });
+                }
+              }}
+            >{`${value}`}</span>
+          );
+        case "CASE_NAME":
+          return <span>{value}</span>;
+        case "CASE_NUMBER":
+          return <span>{value}</span>;
+        case "APPLICATION_NUMBER":
+          return <span>{value}</span>;
+        default:
+          return t("ES_COMMON_NA");
+      }
+    },
+  },
+
   CTCApplicationsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
@@ -1029,9 +1130,8 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
-                  applicationNumber || ""
-                }&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${applicationNumber || ""
+                  }&individualId=${individualId}&type=${usertype}`}
               >
                 {applicationNumber
                   ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)
