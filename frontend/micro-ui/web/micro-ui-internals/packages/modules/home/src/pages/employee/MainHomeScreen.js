@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import HomeSidebar from "../../components/HomeSidebar";
 import HomeHearingsTab from "./HomeHearingsTab";
@@ -58,6 +58,7 @@ const MainHomeScreen = () => {
   const [homeActiveTab] = useState(initialActiveTab);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTab, setActiveTab] = useState(homeActiveTab);
+  const prevActiveTabRef = useRef(activeTab);
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
@@ -142,6 +143,16 @@ const MainHomeScreen = () => {
     }
     // sessionStorage.removeItem("homeActiveTab");
   }, [userType, history, isEpostUser, location]);
+
+  useEffect(() => {
+    const prevActiveTab = prevActiveTabRef.current;
+
+    if (prevActiveTab === "REGISTER_USERS" && activeTab !== "REGISTER_USERS") {
+      window.sessionStorage.removeItem("registerUsersUserType");
+    }
+
+    prevActiveTabRef.current = activeTab;
+  }, [activeTab]);
 
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
