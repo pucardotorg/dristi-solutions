@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -70,7 +71,7 @@ public class EsUtil {
 
     }
 
-    public void updateOpenHearingInCache(List<OpenHearing> openHearings) {
+    public void updateOpenHearingInCache(List<OpenHearing> openHearings, Long hearingDate) {
         try {
             log.info("Updating redis cache for open hearings.");
             if (openHearings == null || openHearings.isEmpty()) {
@@ -78,7 +79,7 @@ public class EsUtil {
                 return;
             }
             String courtId = openHearings.get(0).getCourtId() != null ? openHearings.get(0).getCourtId() : config.getCourtId();
-            String date = dateUtil.getCurrentDate();
+            LocalDate date = dateUtil.getLocalDateFromEpoch(hearingDate);
             String key = CACHE_KEY_PREFIX + courtId + ":" + date;
             cacheService.updateCache(key, openHearings);
             log.info("Updated redis cache for open hearings:: {}", key);

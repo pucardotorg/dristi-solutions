@@ -62,7 +62,7 @@ public class DateUtil {
 
     public String getCurrentDate() {
         LocalDate currentDate = getLocalDateFromEpoch(System.currentTimeMillis());
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         return currentDate.format(formatter);
     }
 }
