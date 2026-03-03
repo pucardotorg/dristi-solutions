@@ -404,10 +404,12 @@ export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValu
 
   if (currentBank !== bankDetails.name) {
     setValue(bankField, bankDetails.name || "");
+    clearErrors(bankField);
   }
 
   if (currentBranch !== bankDetails.branch) {
     setValue(branchField, bankDetails.branch || "");
+    clearErrors(branchField);
   }
 
   return true;
