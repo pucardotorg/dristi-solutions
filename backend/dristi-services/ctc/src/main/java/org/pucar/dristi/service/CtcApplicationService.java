@@ -10,6 +10,7 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.repository.CtcApplicationRepository;
+import org.pucar.dristi.util.EtreasuryUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.web.models.*;
@@ -47,6 +48,9 @@ public class CtcApplicationService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private EtreasuryUtil etreasuryUtil;
 
     public CtcApplication createApplication(CtcApplicationRequest request) {
         CtcApplication application = request.getCtcApplication();
@@ -98,6 +102,13 @@ public class CtcApplicationService {
 
         if(request.getCtcApplication().getWorkflow()!=null)
          workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
+
+        if(request.getCtcApplication().getWorkflow()!=null && (request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("ESIGN")
+                || request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("UPLOAD_SIGNED_COPY"))){
+            //change logic for calculating totalnumber of pages
+            Calculation calculation = Calculation.builder().totalAmount(20+request.getCtcApplication().getTotalPages()*1.5).tenantId(request.getCtcApplication().getTenantId()).build();
+            etreasuryUtil.createDemand(request, application.getCtcApplicationNumber()+"_APPLICATION_FEE", calculation);
+        }
 
         producer.push("update-ctc-application", request);
 

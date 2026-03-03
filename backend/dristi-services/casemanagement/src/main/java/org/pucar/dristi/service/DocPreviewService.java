@@ -150,8 +150,9 @@ public class DocPreviewService {
                         "DELIVERED",
                         "UNDELIVERED",
                         "NOTICE_SENT"))
-                .searchText(courtCase.getCnrNumber())
+                .searchText(resolveSearchText(courtCase))
                 .courtId(courtCase.getCourtId())
+                .tenantId(courtCase.getTenantId())
                 .build();
 
         TaskSearchRequest taskSearchRequest = TaskSearchRequest.builder()
@@ -169,6 +170,12 @@ public class DocPreviewService {
                 .taskManagements(taskManagementUtil.searchTaskManagement(taskSearchRequest))
                 .digitalDocs(digitalizedDocumentUtil.searchDigitalizedDocuments(String.valueOf(courtCase.getId()), courtCase.getCourtId()))
                 .build();
+    }
+
+    private String resolveSearchText(CourtCase courtCase) {
+        if (StringUtils.hasText(courtCase.getCnrNumber())) return courtCase.getCnrNumber();
+        if (StringUtils.hasText(courtCase.getCourtCaseNumber())) return courtCase.getCourtCaseNumber();
+        return courtCase.getFilingNumber();
     }
 
 }

@@ -59,4 +59,5 @@ public class ServiceConstants {
     public static final String CTC_STATUS_REJECTED = "REJECTED";
     public static final String CTC_STATUS_PAYMENT_PENDING = "PAYMENT_PENDING";
     public static final String CTC_STATUS_ISSUED = "ISSUED";
+    public static final String ERROR_WHILE_CREATING_DEMAND_FOR_GENERIC_TASK = "ERROR_WHILE_CREATING_DEMAND_FOR_GENERIC_TASK";
 }

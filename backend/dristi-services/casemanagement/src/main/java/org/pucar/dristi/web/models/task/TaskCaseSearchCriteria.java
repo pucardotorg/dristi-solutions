@@ -43,4 +43,7 @@ public class TaskCaseSearchCriteria {
     @JsonProperty("isPendingCollection")
     private Boolean isPendingCollection;
 
+    @JsonProperty("tenantId")
+    private String tenantId = null;
+
 }

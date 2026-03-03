@@ -28,6 +28,7 @@ public class ComplainantEvidenceSection implements CaseBundleSection {
         List<CaseBundleNode> depositions = data.getEvidences().stream()
                 .filter(Objects::nonNull)
                 .filter(a -> "WITNESS_DEPOSITION".equalsIgnoreCase(a.getArtifactType()))
+                .filter(a -> "COMPLETED".equalsIgnoreCase(a.getStatus()))
                 .filter(a -> "COMPLAINANT".equalsIgnoreCase(BundleSectionUtils.getWitnessOwnerType(a)))
                 .filter(a -> a.getFile() != null && a.getFile().getFileStore() != null)
                 .map(a -> CaseBundleNode.builder()

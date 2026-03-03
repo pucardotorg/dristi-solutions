@@ -85,80 +85,6 @@ public class Configuration {
     @Value("${egov.workflow.processinstance.search.path}")
     private String wfProcessInstanceSearchPath;
 
-
-    //MDMS
-    @Value("${egov.mdms.host}")
-    private String mdmsHost;
-
-    @Value("${egov.mdms.search.endpoint}")
-    private String mdmsEndPoint;
-
-
-    //HRMS
-    @Value("${egov.hrms.host}")
-    private String hrmsHost;
-
-    @Value("${egov.hrms.search.endpoint}")
-    private String hrmsEndPoint;
-
-
-    //URLShortening
-    @Value("${egov.url.shortner.host}")
-    private String urlShortnerHost;
-
-    @Value("${egov.url.shortner.endpoint}")
-    private String urlShortnerEndpoint;
-
-
-    //SMSNotification
-    @Value("${egov.sms.notification.topic}")
-    private String smsNotificationTopic;
-
-    //save order kafka topic
-    @Value("${egov.kafka.order.save.topic}")
-    private String saveOrderKafkaTopic;
-
-    //update order kafka topic
-    @Value("${egov.kafka.order.update.topic}")
-    private String updateOrderKafkaTopic;
-
-    //update order unique id kafka topic
-    @Value("${egov.kafka.order.update.uniqueid.topic}")
-    private String orderUpdateUniqueIdTopic;
-
-    @Value("${egov.workflow.order.business.name}")
-    private String orderBusinessName;
-
-    // Order Workflow/Business Service name
-    @Value("${egov.workflow.order.business.service.name}")
-    private String orderBusinessServiceName;
-
-    @Value("${egov.workflow.order.judgement.business.name}")
-    private String orderJudgementBusinessName;
-
-    // Order Workflow/Business Service name
-    @Value("${egov.workflow.order.judgement.business.service.name}")
-    private String orderJudgementBusinessServiceName;
-
-    //MDMS validation
-    @Value("${mdms.order.type.path}")
-    private String orderTypePath;
-
-    @Value("${mdms.order.category.path}")
-    private String orderCategoryPath;
-
-    @Value("${mdms.order.module.name}")
-    private String orderModule;
-
-    @Value("${egov.mdms.order.nonoverlapping.composite.orders}")
-    private String mdmsNonOverlappingOrders;
-
-    @Value("${egov.mdms.order.nonrepeating.composite.orders}")
-    private String mdmsNonRepeatingCompositeOrders;
-
-    @Value("${egov.mdms.itemtext}")
-    private String mdmsItemText;
-
     // Filestore Config
     @Value("${egov.filestore.host}")
     private String fileStoreHost;
@@ -202,6 +128,16 @@ public class Configuration {
 
     @Value("${egov.advocate.path}")
     private String advocatePath;
+
+    //Etreasury Config
+    @Value("${egov.etreasury.host}")
+    private String etreasuryHost;
+
+    @Value("${egov.etreasury.demand.create.endpoint}")
+    private String etreasuryDemandCreateEndPoint;
+
+    @Value("${egov.etreasury.payment.receipt.endpoint}")
+    private String etreasuryPaymentReceiptEndPoint;
 
     @Value("${egov.tenantId}")
     private String tenantId;

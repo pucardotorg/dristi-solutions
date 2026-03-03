@@ -27,6 +27,7 @@ public class CourtEvidenceSection implements CaseBundleSection {
         List<CaseBundleNode> depositions = data.getEvidences().stream()
                 .filter(Objects::nonNull)
                 .filter(a -> "WITNESS_DEPOSITION".equalsIgnoreCase(a.getArtifactType()))
+                .filter(a -> "COMPLETED".equalsIgnoreCase(a.getStatus()))
                 .filter(a -> {
                     String ownerType = BundleSectionUtils.getWitnessOwnerType(a);
                     return ownerType == null || "-".equals(ownerType);
