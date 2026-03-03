@@ -868,6 +868,10 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       const userType = requestCriteria?.state?.searchForm?.userType;
 
+      if (userType) {
+        window.sessionStorage.setItem("registerUsersUserType", userType);
+      }
+
       // Determine business service based on selected user type
       let businessService = ["user-registration-advocate"];
       let moduleName = "Advocate services";
