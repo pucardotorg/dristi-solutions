@@ -28,7 +28,7 @@ export const assignCasesConfig = ({ member = {}, advocateInfo = {} } = {}) => {
           advocateId,
         },
         pagination: {
-          limit: 100,
+          limit: 10,
           offSet: 0,
         },
       },

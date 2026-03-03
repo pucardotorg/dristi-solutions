@@ -699,9 +699,9 @@ const TasksComponent = ({
       const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
       const isCustomFunction = Boolean(pendingTaskActions?.[status]?.customFunction);
       const dayCount = stateSla
-        ? Math.abs(Math.ceil((Number(stateSla) - todayDate) / dayInMillisecond))
+        ? Math.ceil((Number(stateSla) - todayDate) / dayInMillisecond)
         : dueInSec
-        ? Math.abs(Math.ceil(dueInSec / dayInMillisecond))
+        ? Math.ceil(dueInSec / dayInMillisecond)
         : null;
       let additionalDetails = pendingTaskActions?.[status]?.additionalDetailsKeys?.reduce((result, current) => {
         result[current] = data?.fields?.find((field) => field.key === `additionalDetails.${current}`)?.value;
@@ -725,7 +725,14 @@ const TasksComponent = ({
       const redirectUrl = isCustomFunction
         ? getCustomFunction[pendingTaskActions?.[status]?.customFunction]
         : `/${window?.contextPath}/${userType}${pendingTaskActions?.[status]?.redirectDetails?.url}?${searchParams.toString()}`;
-      const due = dayCount > 1 ? `Due in ${dayCount} Days` : dayCount === 1 || dayCount === 0 ? `Due today` : `No Due Date`;
+      const due =
+        dayCount > 1
+          ? `Due in ${dayCount} Days`
+          : dayCount < -1
+          ? `Overdue by ${Math.abs(dayCount) + 1} Days`
+          : dayCount === 1 || dayCount === 0
+          ? `Due today`
+          : `No Due Date`;
       return {
         actionName: actionName || pendingTaskActions?.[status]?.actionName,
         status,
@@ -740,7 +747,7 @@ const TasksComponent = ({
         createdTime,
         dayCount: dayCount ? dayCount : dayCount === 0 ? 0 : Infinity,
         isCompleted,
-        dueDateColor: due === "Due today" ? "#9E400A" : "",
+        dueDateColor: due === "Due today" || dayCount < -1 ? "#9E400A" : "",
         redirectUrl,
         orderItemId,
         partyType,

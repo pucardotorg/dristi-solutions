@@ -28,10 +28,37 @@ const RegisterUsersHomeTab = ({ tenants }) => {
   if (!hasViewRegisterUserAccess) {
     history.push(homePath);
   }
+
+  const savedUserType = window?.sessionStorage?.getItem("registerUsersUserType");
+
+  const configWithPersistedUserType = useMemo(() => {
+    const baseSearch = registerUserConfig.sections.search;
+    const baseDefaults = baseSearch.uiConfig.defaultValues || {};
+
+    const mergedDefaults = {
+      ...baseDefaults,
+      ...(savedUserType ? { userType: savedUserType } : {}),
+    };
+
+    return {
+      ...registerUserConfig,
+      sections: {
+        ...registerUserConfig.sections,
+        search: {
+          ...baseSearch,
+          uiConfig: {
+            ...baseSearch.uiConfig,
+            defaultValues: mergedDefaults,
+          },
+        },
+      },
+    };
+  }, [savedUserType]);
+
   return (
     <div className={"bulk-esign-order-view register-user-home-tab"}>
       <div className="header">{t("REGISTER_USERS_HOME")}</div>
-      <InboxSearchComposer customStyle={sectionsParentStyle} configs={registerUserConfig}></InboxSearchComposer>
+      <InboxSearchComposer customStyle={sectionsParentStyle} configs={configWithPersistedUserType}></InboxSearchComposer>
     </div>
   );
 };
