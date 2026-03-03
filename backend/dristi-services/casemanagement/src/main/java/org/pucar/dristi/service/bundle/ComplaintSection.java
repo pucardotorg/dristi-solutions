@@ -16,11 +16,11 @@ public class ComplaintSection implements CaseBundleSection {
 
     @Override
     public String getOrder() {
-        return "03";
+        return "01";
     }
 
     @Override
-    public CaseBundleNode build(BundleData data, DocPreviewRequest request) {
+    public CaseBundleNode build(BundleData data) {
         if (data == null) return null;
 
         CourtCase courtCase = data.getCases();

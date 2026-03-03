@@ -31,7 +31,4 @@ public class DocPreviewRequest {
     @JsonProperty("courtId")
     private String courtId;
 
-    @JsonProperty("caseBundleNode")
-    private List<CaseBundleNode> caseBundleNode;
-
 }

@@ -249,6 +249,9 @@ components:
         fileStoreId:
           type: string
           description: File store ID for the document
+        isSelected:
+          type: boolean
+          description: Whether the node is selected
         status:
           type: string
           enum:
@@ -368,7 +371,7 @@ components:
 
     ValidateUserRequest:
       type: object
-      required: [filingNumber, mobileNumber, tenantId, courtId]
+      required: [RequestInfo, filingNumber, mobileNumber, tenantId, courtId]
       properties:
         RequestInfo:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'

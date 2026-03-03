@@ -18,11 +18,11 @@ public class OrdersSection implements CaseBundleSection {
 
     @Override
     public String getOrder() {
-        return "20";
+        return "15";
     }
 
     @Override
-    public CaseBundleNode build(BundleData data, DocPreviewRequest request) {
+    public CaseBundleNode build(BundleData data) {
         if (data == null || data.getOrders() == null || data.getOrders().isEmpty()) return null;
 
         List<CaseBundleNode> children = new ArrayList<>();
@@ -44,7 +44,7 @@ public class OrdersSection implements CaseBundleSection {
 
             if (fileStoreId == null) continue;
 
-            String title = BundleSectionUtils.firstNonBlank(order.getOrderCategory(), order.getOrderType(), order.getOrderNumber(), "ORDER");
+            String title = BundleSectionUtils.firstNonBlank(order.getOrderTitle(), order.getOrderType(), order.getOrderCategory(), order.getOrderNumber(), "ORDER");
 
             children.add(CaseBundleNode.builder()
                     .id("order-" + idx++)
@@ -57,7 +57,7 @@ public class OrdersSection implements CaseBundleSection {
 
         return CaseBundleNode.builder()
                 .id("orders")
-                .title("ORDERS_CASE_PDF")
+                .title("ORDERS")
                 .children(children)
                 .build();
     }

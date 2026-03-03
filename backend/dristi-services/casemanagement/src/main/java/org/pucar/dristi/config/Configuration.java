@@ -168,6 +168,9 @@ public class Configuration {
 	@Value("${dristi.bundle.index}")
 	private String caseBundleIndex;
 
+	@Value("${dristi.preview.index}")
+	private String casePreviewIndex;
+
 	@Value("${dristi.hearing.index}")
 	private String hearingIndex;
 

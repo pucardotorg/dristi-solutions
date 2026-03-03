@@ -2,17 +2,21 @@ package org.pucar.dristi.web.models.task;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.web.models.Pagination;
-import org.pucar.dristi.web.models.TaskCriteria;
+import org.springframework.validation.annotation.Validated;
 
+
+@Validated
+@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-15T11:31:40.281899+05:30[Asia/Kolkata]")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class TaskSearchRequest {
+public class TaskCaseSearchRequest {
+
 
     @JsonProperty("RequestInfo")
     @Valid
@@ -20,9 +24,9 @@ public class TaskSearchRequest {
 
     @JsonProperty("criteria")
     @Valid
-    private TaskCriteria criteria = null;
+    private TaskCaseSearchCriteria criteria = null;
 
     @JsonProperty("pagination")
+    @Valid
     private Pagination pagination = null;
-
 }

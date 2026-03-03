@@ -1,0 +1,484 @@
+openapi: 3.0.0
+
+info:
+  title: Case Management Service API
+  description: >
+    DIGIT Case Management service responsible for case bundles, document previews,
+    and case-related operations.
+  version: 0.2.0
+
+servers:
+  - url: /casemanagement
+    description: Case Management Service Base Path
+
+tags:
+  - name: Case Management
+  - name: Case Bundles
+  - name: Case Grouping
+  - name: Document Preview
+  - name: PDF
+  - name: Credentials
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /casemanager/case/v1/_history:
+    post:
+      tags: [Case Management]
+      summary: Provides the case file or case history given a case identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseRequest'
+      responses:
+        '200':
+          description: Case file retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseFileResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /casemanager/case/v1/_group:
+    post:
+      tags: [Case Grouping]
+      summary: Group cases together
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseGroupRequest'
+      responses:
+        '200':
+          description: Cases grouped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseGroupResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /casemanager/case/v1/_ungroup:
+    post:
+      tags: [Case Grouping]
+      summary: Ungroup cases
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseGroupRequest'
+      responses:
+        '200':
+          description: Cases ungrouped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseGroupResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /casemanager/case/v1/_buildcasebundle:
+    post:
+      tags: [Case Bundles]
+      summary: Build case bundle for a single case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseBundleRequest'
+      responses:
+        '200':
+          description: Case bundle generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseBundleResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /casemanager/case/v1/bulk/_buildcasebundle:
+    post:
+      tags: [Case Bundles]
+      summary: Build case bundles in bulk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseBundleBulkRequest'
+      responses:
+        '200':
+          description: Bulk case bundle build triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseBundleBulkResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /casemanager/case/v1/_rebuildcasebundle:
+    post:
+      tags: [Case Bundles]
+      summary: Rebuild case bundle for a single case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseBundleRequest'
+      responses:
+        '200':
+          description: Case bundle rebuild initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaseBundleCreateIndexResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /casemanager/case/v1/_enrichcasebundlepdfindex:
+    post:
+      tags: [Case Bundles]
+      summary: Enrich case bundle PDF index
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrichCaseBundlePdfIndexRequest'
+      responses:
+        '200':
+          description: Enrichment completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrichCaseBundlePdfIndexResponse'
+        '500':
+          description: Enrichment failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrichCaseBundlePdfIndexResponse'
+
+  /casemanager/preview/doc:
+    post:
+      tags: [Document Preview]
+      summary: Preview document bundle for a case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocPreviewRequest'
+      responses:
+        '200':
+          description: Document preview generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocPreviewResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+        '500':
+          description: Document preview generation failed
+
+  /pdf/v1/_get:
+    post:
+      tags: [PDF]
+      summary: Get PDF for a reference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PdfRequest'
+      responses:
+        '200':
+          description: PDF generated
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /credentials/v1/_generate:
+    post:
+      tags: [Credentials]
+      summary: Generate VC credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VcCredentialRequest'
+      responses:
+        '200':
+          description: VC generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VcCredentialRequest'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    CaseRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        caseId:
+          type: string
+          description: Case identifier
+        filingNumber:
+          type: string
+          description: Filing number of the case
+        caseNumber:
+          type: string
+          description: Case number (e.g. CNR)
+
+    CaseFileResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        caseFiles:
+          type: array
+          items:
+            type: object
+
+    CaseGroup:
+      type: object
+      required: [caseIds]
+      properties:
+        id:
+          type: string
+          description: Autogenerated identifier of the case group
+        caseIds:
+          type: array
+          items:
+            type: string
+
+    CaseGroupRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        caseGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseGroup'
+
+    CaseGroupResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        caseGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseGroup'
+
+    CaseBundleRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        tenantId:
+          type: string
+        caseId:
+          type: string
+
+    CaseBundleResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        fileStoreId:
+          type: string
+
+    CaseBundleBulkRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        tenantId:
+          type: string
+
+    CaseBundleBulkResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        status:
+          type: boolean
+
+    CaseBundleCreateIndexResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        message:
+          type: string
+
+    EnrichCaseBundlePdfIndexRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        filingNumber:
+          type: string
+        tenantId:
+          type: string
+        stateName:
+          type: string
+        isDelayRequired:
+          type: boolean
+
+    EnrichCaseBundlePdfIndexResponse:
+      type: object
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        message:
+          type: string
+        success:
+          type: boolean
+
+    PdfRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        referenceId:
+          type: string
+        referenceCode:
+          type: string
+        tenantId:
+          type: string
+        moduleName:
+          type: string
+
+    VcCredentialRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        fileStoreId:
+          type: string
+        referenceId:
+          type: string
+        referenceCode:
+          type: string
+        tenantId:
+          type: string
+        moduleName:
+          type: string
+
+    DocPreviewRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        filingNumber:
+          type: string
+          description: Filing number of the case
+        ctcApplicationNumber:
+          type: string
+          description: CTC application number (optional)
+        courtId:
+          type: string
+          description: Court ID
+
+    DocPreviewResponse:
+      type: object
+      required: [responseInfo]
+      properties:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        caseBundleNodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseBundleNode'
+
+    CaseBundleNode:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the case bundle node
+        title:
+          type: string
+          description: Title of the case bundle node
+        fileStoreId:
+          type: string
+          description: File store ID for the document
+        isSelected:
+          type: boolean
+          description: Whether the node is selected
+        status:
+          type: string
+          enum:
+            - accepted
+            - rejected
+            - pending
+          description: Status of the case bundle node (accepted/rejected/pending)
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseBundleNode'
+          description: Child case bundle nodes (for hierarchical structure)

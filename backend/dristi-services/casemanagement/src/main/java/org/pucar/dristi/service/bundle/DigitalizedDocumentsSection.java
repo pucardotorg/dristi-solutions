@@ -6,12 +6,11 @@ import org.pucar.dristi.web.models.CaseBundleNode;
 import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.digitalizeddocument.DigitalizedDocument;
 import org.pucar.dristi.web.models.docpreview.DocPreviewRequest;
-import org.springframework.stereotype.Component;
+ 
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
 public class DigitalizedDocumentsSection implements CaseBundleSection {
 
     @Override
@@ -20,7 +19,7 @@ public class DigitalizedDocumentsSection implements CaseBundleSection {
     }
 
     @Override
-    public CaseBundleNode build(BundleData data, DocPreviewRequest request) {
+    public CaseBundleNode build(BundleData data) {
         if (data == null || data.getDigitalDocs() == null || data.getDigitalDocs().isEmpty()) return null;
 
         List<CaseBundleNode> children = new ArrayList<>();

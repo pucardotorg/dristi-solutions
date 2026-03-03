@@ -9,5 +9,5 @@ public interface CaseBundleSection {
 
     String getOrder();
 
-    CaseBundleNode build(BundleData data, DocPreviewRequest request);
+    CaseBundleNode build(BundleData data);
 }

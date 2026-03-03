@@ -16,7 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 
+import java.util.Collections;
 import java.util.List;
+
+import org.pucar.dristi.web.models.OrderPagination;
+import org.pucar.dristi.web.models.Pagination;
 
 import static org.pucar.dristi.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
 import static org.pucar.dristi.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
@@ -43,7 +47,7 @@ public class ApplicationUtil {
     public List<Application> searchApplications(String filingNumber,String courtId) {
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         StringBuilder uri = new StringBuilder(configuration.getApplicationHost()).append(configuration.getApplicationSearchEndPoint());
-        ApplicationSearchRequest applicationSearchRequest = ApplicationSearchRequest.builder().criteria(ApplicationCriteria.builder().filingNumber(filingNumber).courtId(courtId).build()).build();
+        ApplicationSearchRequest applicationSearchRequest = ApplicationSearchRequest.builder().criteria(ApplicationCriteria.builder().filingNumber(filingNumber).status("PENDINGREVIEW").courtId(courtId).build()).build();
         Object response = serviceRequestRepository.fetchResult(uri, applicationSearchRequest);
 
         try {
@@ -58,6 +62,29 @@ public class ApplicationUtil {
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
             throw new CustomException(SEARCHER_SERVICE_EXCEPTION, e.getMessage()); // add log and code
+        }
+    }
+
+    public List<Application> searchAllApplications(String filingNumber, String courtId) {
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        StringBuilder uri = new StringBuilder(configuration.getApplicationHost()).append(configuration.getApplicationSearchEndPoint());
+        ApplicationSearchRequest applicationSearchRequest = ApplicationSearchRequest.builder()
+                .criteria(ApplicationCriteria.builder().filingNumber(filingNumber).courtId(courtId).build())
+                .pagination(Pagination.builder().sortBy("applicationCMPNumber").order(OrderPagination.ASC).limit(100).build())
+                .build();
+        Object response = serviceRequestRepository.fetchResult(uri, applicationSearchRequest);
+
+        try {
+            JsonNode jsonNode = objectMapper.valueToTree(response);
+            ApplicationListResponse applicationSearchResult = objectMapper.readValue(jsonNode.toString(), ApplicationListResponse.class);
+            List<Application> list = applicationSearchResult.getApplicationList();
+            return list != null ? list : Collections.emptyList();
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+            throw new CustomException(SEARCHER_SERVICE_EXCEPTION, e.getMessage());
         }
     }
 }

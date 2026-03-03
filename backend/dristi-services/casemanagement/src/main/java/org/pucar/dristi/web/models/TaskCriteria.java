@@ -1,15 +1,22 @@
-package org.pucar.dristi.web.models.task;
+package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.UUID;
 
+@Validated
+@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-15T11:31:40.281899+05:30[Asia/Kolkata]")
 @Getter
 @Setter
-@Builder
+@Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class TaskCriteria {
 
     @JsonProperty("id")
@@ -41,5 +48,20 @@ public class TaskCriteria {
 
     @JsonProperty("filingNumber")
     private String filingNumber;
+
+    @JsonProperty("taskType")
+    private String taskType;
+
+    @JsonProperty("userUuid")
+    private String userUuid;
+
+    @JsonProperty("partyType")
+    private String partyType = null;
+
+    @JsonProperty("partyName")
+    private String partyName;
+
+    @JsonProperty("partyUniqueId")
+    private String partyUniqueId;
 
 }

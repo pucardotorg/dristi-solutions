@@ -1,46 +1,78 @@
 package org.pucar.dristi.service.bundle;
 
+import org.egov.common.contract.models.Document;
+import org.pucar.dristi.web.models.Artifact;
 import org.pucar.dristi.web.models.digitalizeddocument.DigitalizedDocument;
-import org.pucar.dristi.web.models.order.Document;
 
-import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 public class BundleSectionUtils {
 
     private BundleSectionUtils() {
     }
 
-    public static String safe(String value) {
-        return value == null ? "" : value;
+    @SuppressWarnings("unchecked")
+    public static String extractEvidenceTitle(Artifact a) {
+        String title = null;
+        if (a.getAdditionalDetails() instanceof Map) {
+            Map<String, Object> ad = (Map<String, Object>) a.getAdditionalDetails();
+            Object formdata = ad.get("formdata");
+            if (formdata instanceof Map) {
+                Object dt = ((Map<String, Object>) formdata).get("documentTitle");
+                if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
+            }
+            if (title == null) {
+                Object dt = ad.get("documentTitle");
+                if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
+            }
+            if (title == null) {
+                Object name = ad.get("name");
+                if (name instanceof String && !((String) name).isBlank()) title = (String) name;
+            }
+        }
+        if (title == null && a.getFile() != null) {
+            String docType = a.getFile().getDocumentType();
+            if (docType != null && !docType.isBlank()) title = docType;
+        }
+        if (title == null) title = a.getArtifactType();
+        if (title == null) title = "DOCUMENT";
+        return title;
     }
 
-    public static String firstNonBlank(String... values) {
-        if (values == null) return null;
-        for (String value : values) {
-            if (value != null && !value.isBlank()) return value;
+    @SuppressWarnings("unchecked")
+    public static String extractDepositionTitle(Artifact a) {
+        String title = extractEvidenceTitle(a);
+        return title != null ? title : "WITNESS_DEPOSITION";
+    }
+
+    @SuppressWarnings("unchecked")
+    public static String getWitnessOwnerType(Artifact a) {
+        if (a == null || a.getAdditionalDetails() == null) return null;
+        if (!(a.getAdditionalDetails() instanceof Map)) return null;
+        Map<String, Object> ad = (Map<String, Object>) a.getAdditionalDetails();
+        Object wd = ad.get("witnessDetails");
+        if (wd instanceof Map) {
+            Object ownerType = ((Map<String, Object>) wd).get("ownerType");
+            if (ownerType instanceof String) return (String) ownerType;
         }
         return null;
     }
 
-    public static String findFileStoreId(List<Document> documents, String expectedDocumentType) {
-        if (documents == null || documents.isEmpty() || expectedDocumentType == null) return null;
-        return documents.stream()
-                .filter(Objects::nonNull)
-                .filter(d -> expectedDocumentType.equalsIgnoreCase(d.getDocumentType()))
-                .map(Document::getFileStore)
-                .filter(Objects::nonNull)
-                .findFirst()
-                .orElse(null);
+    public static String firstNonBlank(String... values) {
+        if (values == null) return null;
+        for (String v : values) {
+            if (v != null && !v.isBlank()) return v;
+        }
+        return null;
     }
 
-    public static String findAnyFileStoreId(List<Document> documents) {
+    public static String findAnyFileStoreId(List<org.pucar.dristi.web.models.order.Document> documents) {
         if (documents == null || documents.isEmpty()) return null;
         return documents.stream()
                 .filter(Objects::nonNull)
-                .map(Document::getFileStore)
+                .map(org.pucar.dristi.web.models.order.Document::getFileStore)
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(null);
@@ -56,11 +88,24 @@ public class BundleSectionUtils {
                 .orElse(null);
     }
 
-    public static <T> List<T> sortByCreatedTime(List<T> list, java.util.function.Function<T, Long> createdTimeFn) {
-        if (list == null) return List.of();
-        return list.stream()
+    public static String findFileStoreId(List<Document> documents, String expectedDocumentType) {
+        if (documents == null || documents.isEmpty() || expectedDocumentType == null) return null;
+        return documents.stream()
                 .filter(Objects::nonNull)
-                .sorted(Comparator.comparing(o -> Optional.ofNullable(createdTimeFn.apply(o)).orElse(0L)))
-                .toList();
+                .filter(d -> expectedDocumentType.equalsIgnoreCase(d.getDocumentType()))
+                .map(Document::getFileStore)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public static String findAnyFileStoreIdEg(List<Document> documents) {
+        if (documents == null || documents.isEmpty()) return null;
+        return documents.stream()
+                .filter(Objects::nonNull)
+                .map(Document::getFileStore)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
     }
 }

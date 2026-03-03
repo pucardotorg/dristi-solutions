@@ -7,13 +7,12 @@ import org.pucar.dristi.web.models.CaseBundleNode;
 import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.Task;
 import org.pucar.dristi.web.models.docpreview.DocPreviewRequest;
-import org.springframework.stereotype.Component;
+ 
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@Component
 public class TasksSection implements CaseBundleSection {
 
     @Override
@@ -22,7 +21,7 @@ public class TasksSection implements CaseBundleSection {
     }
 
     @Override
-    public CaseBundleNode build(BundleData data, DocPreviewRequest request) {
+    public CaseBundleNode build(BundleData data) {
         if (data == null || data.getTasks() == null || data.getTasks().isEmpty()) return null;
 
         List<CaseBundleNode> children = new ArrayList<>();

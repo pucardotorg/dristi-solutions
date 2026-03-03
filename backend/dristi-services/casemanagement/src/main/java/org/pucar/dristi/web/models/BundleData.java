@@ -5,6 +5,8 @@ import lombok.Getter;
 import org.pucar.dristi.web.models.digitalizeddocument.DigitalizedDocument;
 import org.pucar.dristi.web.models.digitalizeddocument.Document;
 import org.pucar.dristi.web.models.order.Order;
+import org.pucar.dristi.web.models.task.TaskCase;
+import org.pucar.dristi.web.models.taskManagement.TaskManagement;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,10 @@ public class BundleData {
     private final List<Order> orders;
 
     private final List<Task> tasks;
+
+    private final List<TaskCase> taskCases;
+
+    private final List<TaskManagement> taskManagements;
 
     private final List<DigitalizedDocument> digitalDocs;
 
