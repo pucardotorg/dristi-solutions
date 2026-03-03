@@ -5,7 +5,7 @@ const envVariables = {
   EGOV_LOCALISATION_SEARCH:
     process.env.EGOV_LOCALISATION_SEARCH || "localization/messages/v2/_search",
   EGOV_FILESTORE_SERVICE_HOST:
-    process.env.EGOV_FILESTORE_SERVICE_HOST || "http://egov-filestore:8080",
+    process.env.EGOV_FILESTORE_SERVICE_HOST || "https://dristi-kerala-dev.pucar.org",
   SERVER_PORT: process.env.SERVER_PORT || 8080,
 
   KAFKA_BROKER_HOST: process.env.KAFKA_BROKER_HOST || "localhost:9092",
@@ -39,6 +39,9 @@ const envVariables = {
     process.env.FORMAT_CONFIG_URLS ||
     "https://raw.githubusercontent.com/pucardotorg/kerala-configs/develop/pdf-service/format-config/case.json",
   STATE_LEVEL_TENANT_ID: "in.stateb",
+  SEAL_URL:
+    process.env.SEAL_URL ||
+    "https://oncourts.kerala.gov.in/minio-filestore/v1/files/id?tenantId=kl&fileStoreId=ca308fa2-8a68-4f54-a6f4-2f75a6aff20a",
   DEFAULT_VARIABLE_VALUE:
     process.env.DEFAULT_VARIABLE_VALUE === undefined ||
     process.env.DEFAULT_VARIABLE_VALUE === null

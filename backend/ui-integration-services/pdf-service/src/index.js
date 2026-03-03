@@ -27,6 +27,9 @@ import {
   fileStoreAPICall
 } from "./utils/fileStoreAPICall";
 import {
+  stampPdf
+} from "./utils/stampPdf";
+import {
   directMapping
 } from "./utils/directMapping";
 import {
@@ -427,6 +430,79 @@ app.post(
       res.json({
         ResponseInfo: requestInfo,
         message: "some unknown error while creating: " + error.message,
+      });
+    }
+  })
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /pdf-service/v1/_stampPdf
+// Downloads an existing PDF from filestore, stamps the court seal on the last
+// at the bottom-right corner, uploads the result, and returns the new fileStoreId.
+//
+// Query params:
+//   tenantId (required)  — DIGIT tenant ID
+//
+// Request body:
+//   RequestInfo  (required) — standard DIGIT RequestInfo
+//   fileStoreId  (required) — fileStoreId of the PDF to stamp
+//
+// Response (201):
+//   { ResponseInfo, fileStoreId, message }
+// ─────────────────────────────────────────────────────────────────────────────
+app.post(
+  "/pdf-service/v1/_stampPdf",
+  asyncHandler(async (req, res) => {
+    const requestId = req.requestId;
+    try {
+      const tenantId    = req.query.tenantId;
+      const fileStoreId = get(req.body, "fileStoreId");
+      const requestInfo = get(req.body, "RequestInfo");
+      const headers     = JSON.parse(JSON.stringify(req.headers));
+
+      logger.info("Stamp PDF request received", { requestId, tenantId, fileStoreId });
+
+      // ── Validation ──────────────────────────────────────────────────────────
+      const missing = [];
+      if (!tenantId)    missing.push("tenantId (query param)");
+      if (!fileStoreId) missing.push("fileStoreId (body)");
+      if (!requestInfo) missing.push("RequestInfo (body)");
+
+      if (missing.length > 0) {
+        res.status(400).json({
+          ResponseInfo: requestInfo || null,
+          message: `Missing required fields: ${missing.join(", ")}`
+        });
+        return;
+      }
+
+      // ── Core stamp flow (in stampPdf utility) ────────────────────────────────
+      const startTime = Date.now();
+      const authToken = get(requestInfo, "authToken");
+      const newFileStoreId = await stampPdf(fileStoreId, tenantId, headers, authToken);
+      const duration = Date.now() - startTime;
+
+      logger.info("Stamp PDF completed", {
+        requestId,
+        originalFileStoreId: fileStoreId,
+        newFileStoreId,
+        duration: `${duration}ms`
+      });
+
+      res.status(201).json({
+        ResponseInfo: requestInfo,
+        fileStoreId:  newFileStoreId,
+        message:      "PDF stamped with seal successfully"
+      });
+
+    } catch (error) {
+      logger.error("Stamp PDF failed", {
+        requestId,
+        error: error.message,
+        stack: error.stack
+      });
+      res.status(500).json({
+        message: "Error while stamping PDF: " + error.message
       });
     }
   })
