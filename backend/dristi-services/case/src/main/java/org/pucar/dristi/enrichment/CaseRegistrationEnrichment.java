@@ -253,23 +253,25 @@ public class CaseRegistrationEnrichment {
             }
 
             for (OfficeMember officeMember : officeMembers) {
-                AdvocateOfficeMember member = AdvocateOfficeMember.builder()
-                        .id(UUID.randomUUID().toString())
-                        .tenantId(tenantId)
-                        .caseId(caseId)
-                        .memberId(officeMember.getMemberId().toString())
-                        .memberUserUuid(officeMember.getMemberUserUuid().toString())
-                        .memberType(officeMember.getMemberType())
-                        .memberName(officeMember.getMemberName())
-                        .isActive(isAdvocateActive)
-                        .auditDetails(auditDetails)
-                        .build();
+                if (officeMember.getAddNewCasesAutomatically()) {
+                    AdvocateOfficeMember member = AdvocateOfficeMember.builder()
+                            .id(UUID.randomUUID().toString())
+                            .tenantId(tenantId)
+                            .caseId(caseId)
+                            .memberId(officeMember.getMemberId().toString())
+                            .memberUserUuid(officeMember.getMemberUserUuid().toString())
+                            .memberType(officeMember.getMemberType())
+                            .memberName(officeMember.getMemberName())
+                            .isActive(isAdvocateActive)
+                            .auditDetails(auditDetails)
+                            .build();
 
-                // Separate advocates and clerks based on memberType
-                if (officeMember.getMemberType() == MemberType.ADVOCATE) {
-                    advocates.add(member);
-                } else if (officeMember.getMemberType() == MemberType.ADVOCATE_CLERK) {
-                    clerks.add(member);
+                    // Separate advocates and clerks based on memberType
+                    if (officeMember.getMemberType() == MemberType.ADVOCATE) {
+                        advocates.add(member);
+                    } else if (officeMember.getMemberType() == MemberType.ADVOCATE_CLERK) {
+                        clerks.add(member);
+                    }
                 }
             }
 

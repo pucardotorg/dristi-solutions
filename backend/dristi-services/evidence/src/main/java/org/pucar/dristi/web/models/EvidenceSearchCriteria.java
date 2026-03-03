@@ -49,16 +49,7 @@ public class EvidenceSearchCriteria {
     private String userUuid;
 
     @JsonIgnore
-    private List<String> officeAdvocateUserUuids = new ArrayList<>();
-
-    @JsonIgnore
     private boolean isCitizen = false;
-
-    @JsonIgnore
-    private boolean isAdvocate = false;
-
-    @JsonIgnore
-    private boolean isClerk = false;
 
     @JsonIgnore
     private boolean isCourtEmployee = false;
@@ -174,5 +165,9 @@ public class EvidenceSearchCriteria {
         }
 
         return isActive;
+    }
+
+    public String getAsUser(){
+        return asUser;
     }
 }

@@ -151,6 +151,7 @@ const GenerateBailBondV2 = () => {
       criteria: {
         bailId: bailBondId,
         filingNumber,
+        asUser: authorizedUuid,
       },
       tenantId,
     },
@@ -291,6 +292,7 @@ const GenerateBailBondV2 = () => {
         filingNumber,
         applicationNumber: pendingTaskAdditionalDetails?.refApplicationId,
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,

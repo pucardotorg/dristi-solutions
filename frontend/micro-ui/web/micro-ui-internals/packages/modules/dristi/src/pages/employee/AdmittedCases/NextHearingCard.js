@@ -139,14 +139,6 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
 
     const isHearingToday = now.toDateString() === hearingDate.toDateString();
 
-    const windowStart = new Date(now);
-    windowStart.setHours(10, 30, 0, 0);
-
-    const windowEnd = new Date(now);
-    windowEnd.setHours(17, 0, 0, 0);
-
-    const isWithinWindow = now >= windowStart && now <= windowEnd;
-
     const hearingEndedByStatus = [
       HearingWorkflowState.COMPLETED,
       HearingWorkflowState.ABATED,
@@ -154,7 +146,7 @@ const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
       HearingWorkflowState.OPTOUT,
     ].includes(scheduledHearing?.status);
 
-    return isHearingToday && isWithinWindow && !hearingEndedByStatus;
+    return isHearingToday && !hearingEndedByStatus;
   })();
 
   return (
