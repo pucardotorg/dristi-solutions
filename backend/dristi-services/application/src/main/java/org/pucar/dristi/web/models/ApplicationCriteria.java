@@ -68,13 +68,4 @@ public class ApplicationCriteria {
 
     @JsonProperty("asUser")
     private String asUser = null;
-
-    @JsonIgnore
-    private List<String> officeAdvocateUserUuids = new ArrayList<>();
-
-    @JsonIgnore
-    private boolean isAdvocate = false;
-
-    @JsonIgnore
-    private boolean isClerk = false;
 }

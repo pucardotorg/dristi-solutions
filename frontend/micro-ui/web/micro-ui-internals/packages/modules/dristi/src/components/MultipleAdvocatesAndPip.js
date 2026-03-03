@@ -1,10 +1,9 @@
 import { Loader, UploadIcon } from "@egovernments/digit-ui-react-components";
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import { ReactComponent as CrossIcon } from "../images/cross.svg";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CustomAddIcon, FileUploadIcon } from "../icons/svgIndex";
 
 import Button from "./Button";
-import { getAuthorizedUuid } from "../Utils";
+import { advocateCaseFilingStatusTypes, getAuthorizedUuid } from "../Utils";
 import { userTypeOptions } from "../pages/citizen/registration/config";
 import useSearchCaseService from "../hooks/dristi/useSearchCaseService";
 import { CustomDeleteIcon } from "../icons/svgIndex";
@@ -16,7 +15,6 @@ import { useToast } from "./Toast/useToast";
 import { FSOErrorIcon } from "../icons/svgIndex";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import SearchableDropdown from "./SearchableDropdown";
-import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 function ScrutinyInfoAdvocate({ message, t }) {
   return (
@@ -94,8 +92,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const caseId = urlParams.get("caseId");
   const [isApproved, setIsApproved] = useState(false);
   const toast = useToast();
-  const { AdvocateData } = useContext(AdvocateDataContext);
-  const selectedSeniorAdvocate = AdvocateData;
+  const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
   const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
 
   const [advocateAndPipData, setAdvocateAndPipData] = useState(
@@ -329,13 +326,13 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const { data, isLoading, refetch } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
-        userUuid: selectedAdvocateUuid ? [selectedAdvocateUuid] : [userInfo?.uuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
+        userUuid: selectedAdvocateUuid ? [selectedAdvocateUuid] : [userUuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
       },
     },
     { tenantId, limit: 1000, offset: 0 },
-    `${moduleCode}-${userInfo?.uuid}-${selectedAdvocateUuid || ""}`,
+    `${moduleCode}-${userUuid}-${selectedAdvocateUuid || ""}`,
     "HOME",
-    userInfo?.uuid && isUserLoggedIn
+    userUuid && isUserLoggedIn
   );
 
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
@@ -399,6 +396,23 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     `getindividual-${individualId}`,
     individualId
   );
+
+  const isPrimaryAdvocate = useMemo(() => {
+    const isAdvocateOfficeCreator = caseDetails?.representatives?.find(
+      (rep) => rep?.advocateFilingStatus === advocateCaseFilingStatusTypes?.CASE_OWNER
+    );
+    if (isAdvocateOfficeCreator?.additionalDetails?.uuid === userUuid) {
+      return true;
+    }
+    return false;
+  }, [caseDetails, userUuid]);
+
+  const casePrimaryAdvocateId = useMemo(() => {
+    const isAdvocateOfficeCreator = caseDetails?.representatives?.find(
+      (rep) => rep?.advocateFilingStatus === advocateCaseFilingStatusTypes?.CASE_OWNER
+    );
+    return isAdvocateOfficeCreator?.advocateId;
+  }, [caseDetails]);
 
   useEffect(() => {
     if (
@@ -467,7 +481,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           advData?.length > 0 &&
           advData?.[0]?.advocateBarRegNumberWithName?.individualId &&
           advData?.[0]?.advocateBarRegNumberWithName?.individualId !== individualId &&
-          (userType === "ADVOCATE" ? authorizedUuid === userUuid : true) &&
+          (userType === "ADVOCATE" ? isPrimaryAdvocate : true) &&
           caseDetails?.status === CaseWorkflowState.DRAFT_IN_PROGRESS // Append filing advocate automatically only while  in filing stage, not thereafter (like case reassigned stage)
         ) {
           const firstAdvocate = { advocateBarRegNumberWithName, advocateNameDetails };
@@ -493,6 +507,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     caseDetails?.status,
     authorizedUuid,
     userUuid,
+    isPrimaryAdvocate,
   ]);
 
   const handleInputChange = async (index, field, value) => {
@@ -660,6 +675,20 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         litigants?.find((litigant) => litigant?.individualId === advocateAndPipData?.boxComplainant?.individualId)?.poaHolder
     );
   }, [userType, advocateAndPipData, litigants]);
+
+  const isDeleteAllowed = useCallback(
+    (i) => {
+      if (advocateAndPipData?.boxComplainant?.index !== 0) return true;
+      // For all complainants boxes except 1st, deleting is allowed.
+      else {
+        if (advocateAndPipData?.multipleAdvocateNameDetails?.[i]?.advocateBarRegNumberWithName?.advocateId === casePrimaryAdvocateId) {
+          return false; // For 1st complainant box, the filing advocate is the primary advocate, so it can not be deleted by anyone.
+        }
+        return true;
+      }
+    },
+    [advocateAndPipData, casePrimaryAdvocateId]
+  );
 
   if (isCaseLoading) {
     return <Loader></Loader>;
@@ -833,10 +862,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                       }}
                     >
                       <h1 style={{ fontSize: "18px", fontWeight: "bold" }}>Advocate {index + 1}</h1>
-                      {!(
-                        advocateAndPipData?.boxComplainant?.index === 0 &&
-                        advocateAndPipData?.multipleAdvocateNameDetails?.[index]?.advocateBarRegNumberWithName?.individualId === individualId
-                      ) && (
+                      {isDeleteAllowed(index) && (
                         <span
                           onClick={() => handleDeleteAdvocate(index)}
                           style={{

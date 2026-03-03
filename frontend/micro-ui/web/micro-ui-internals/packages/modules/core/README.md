@@ -1,141 +1,269 @@
+# Core Module
 
+## 📌 Overview
 
-# digit-ui-module-core
+The **Core** module (`@egovernments/digit-ui-module-core`) is the **foundational shell** of the DRISTI micro-frontend application. It bootstraps the entire UI — setting up the Redux store, React Query client, routing infrastructure, authentication, breadcrumb context, and the top-bar/sidebar layout shell. All other modules (dristi, cases, hearings, orders, submissions, home) are loaded *through* this module.
 
-## Install
+**Business Purpose:**
+- Provides the application shell (layout, navigation, top bar, sidebar)
+- Manages authentication (login, logout, OTP, change password)
+- Initializes the Redux store with module-specific reducers
+- Provides shared contexts (breadcrumb data, advocate data, privacy, component registry)
+- Routes between citizen and employee interfaces
 
-```bash
-npm install --save @egovernments/digit-ui-module-core
+**Where it is used:**
+- This is the root module. All other modules render within the layout provided by Core.
+- Entry point of the entire DRISTI frontend application.
+
+---
+
+## 🏗 Architecture
+
+### Entry Point
+- `src/Module.js` — Exports `DigitUI` (root component), `initCoreComponents` (initialization function), and context providers (`BreadCrumbsParamsDataContext`, `AdvocateDataContext`)
+
+### Folder Structure
+```
+src/
+├── Module.js                          # Root component, context providers, store setup
+├── App.js                            # Top-level router (employee/citizen switch)
+├── Utils/
+│   ├── index.js                      # Utility exports
+│   ├── ApiMonitorPanel.js            # API monitoring panel (dev tool)
+│   ├── apiMonitor.js                 # API monitoring logic
+│   ├── axiosInstance.js              # Axios HTTP client instance
+│   └── requestInterceptor.js         # HTTP request interceptor
+├── components/
+│   ├── AppModules.js                 # Dynamic module loader
+│   ├── Background.js                 # Background component
+│   ├── ChangeCity.js                 # City selection component
+│   ├── ChangeLanguage.js             # Language selection component
+│   ├── ErrorBoundaries.js            # Error boundary wrapper
+│   ├── ErrorComponent.js             # Error display component
+│   ├── Header.js                     # Application header
+│   ├── Home.js                       # Home page component
+│   ├── Search/                       # Search components
+│   │   ├── index.js
+│   │   ├── SearchFields.js
+│   │   └── MobileSearchApplication.js
+│   ├── TopBarSideBar/                # Navigation shell
+│   │   ├── index.js
+│   │   ├── TopBar.js
+│   │   ├── TopBarComponent.js
+│   │   ├── ProfileComponent.js
+│   │   └── SideBar/
+│   │       ├── index.js
+│   │       ├── SideBar.js
+│   │       ├── CitizenSideBar.js
+│   │       ├── EmployeeSideBar.js
+│   │       └── StaticCitizenSideBar.js
+│   ├── Dialog/
+│   │   └── LogoutDialog.js
+│   └── utils.js
+├── config/
+│   └── sidebar-menu.js               # Sidebar menu configuration
+├── context/
+│   └── index.js                      # Context exports
+├── hooks/
+│   ├── useGetAccessToken.js           # Token refresh hook
+│   └── useInterval.js                # Interval polling hook
+├── lib/
+│   └── gtag.js                       # Google Analytics tracking
+├── pages/
+│   ├── citizen/                      # Citizen-facing pages
+│   │   ├── index.js                  # Citizen app router
+│   │   ├── Home/
+│   │   │   ├── index.js              # Citizen home page
+│   │   │   ├── LanguageSelection.js
+│   │   │   ├── LocationSelection.js
+│   │   │   ├── UserProfile.js
+│   │   │   └── ImageUpload/
+│   │   ├── Login/
+│   │   │   ├── index.js
+│   │   │   ├── SelectMobileNumber.js
+│   │   │   ├── SelectOtp.js
+│   │   │   ├── SelectName.js
+│   │   │   └── config.js
+│   │   ├── Allservices/
+│   │   ├── FAQs/
+│   │   ├── HowItWorks/
+│   │   └── SearchApp.js
+│   └── employee/                     # Employee-facing pages
+│       ├── index.js                  # Employee app router
+│       ├── Login/                    # Employee login
+│       ├── ChangePassword.js
+│       ├── ForgotPassword.js
+│       └── LanguageSelection.js
+└── redux/
+    ├── store.js                      # Redux store factory
+    └── reducers/                     # Common reducer
 ```
 
-## Limitation
+### Key Design Patterns
+- **Shell architecture:** Core acts as the application shell that dynamically loads module components via `Digit.ComponentRegistryService`
+- **Context Providers:** `BreadCrumbsParamsDataContext` and `AdvocateDataContext` are created here and consumed by child modules
+- **Redux + Thunk:** Centralized store with `redux-thunk` middleware
+- **React Query:** Global `QueryClient` configured with 15-minute stale time and 50-minute cache time, no retry
+- **Session storage abstraction:** Custom storage wrapper with TTL-based expiration
 
-```bash
-This Package is more specific to DIGIT-UI's can be used across mission's
+---
+
+## 🔀 Routing
+
+### Top-Level Routes (`App.js`)
+
+| Route Path | Component | Description |
+|---|---|---|
+| `/{contextPath}/employee` | `EmployeeApp` | Employee application shell |
+| `/{contextPath}/citizen` | `CitizenApp` | Citizen application shell |
+| Default | Redirect to `/{contextPath}/{defaultLanding}` | Default redirect |
+
+### Employee Routes (`pages/employee/index.js`)
+
+| Route Path | Component | Auth |
+|---|---|---|
+| `{path}/user/login` | `EmployeeLogin` | Public |
+| `{path}/user/change-password` | `ChangePassword` | Public |
+| `{path}/user/profile` | `UserProfile` | Private |
+| `{path}/user/error` | `ErrorComponent` | Public |
+| `{path}/user/language-selection` | `LanguageSelection` | Public |
+| `{path}/*` (non-user) | `AppModules` (dynamic) | Authenticated |
+
+### Citizen Routes (`pages/citizen/index.js`)
+
+| Route Path | Component | Auth |
+|---|---|---|
+| `{path}` (exact) | `CitizenHome` | Public |
+| `{path}/select-language` | `LanguageSelection` | Public |
+| `{path}/select-location` | `LocationSelection` | Public |
+| `{path}/login` | `Login` | Public |
+| `{path}/register` | `Login` (registration mode) | Public |
+| `{path}/user/profile` | `UserProfile` | Authenticated |
+| `{path}/all-services` | `AppHome` | Public |
+| `{path}/{moduleCode}` | Dynamic module routes | Module-dependent |
+
+### Route Guards
+- Mobile view restriction: Screens < 900px display a "Switch to desktop" message, except for specific open routes (bail-bond-sign, payment-login, sms-payment, etc.)
+- Employee routes use `PrivateRoute` for authenticated paths
+
+---
+
+## 🧠 State Management
+
+### Redux Store
+- **`redux/store.js`** — Factory function `getStore(defaultStore, moduleReducers)` creates the Redux store
+- Uses `combineReducers` with a `common` reducer and optional module-specific reducers
+- Middleware: `redux-thunk`
+- Redux DevTools Extension integration
+
+### Global State Dependencies
+- `Digit.Hooks.useInitStore(stateCode, enabledModules)` — Initializes module data, tenants, state info
+- `Digit.Hooks.useStore.getInitData()` — Retrieves initialized store data
+
+### Context State
+- `BreadCrumbsParamsDataContext` — Shares `{ caseId, filingNumber }` across modules for breadcrumb navigation
+- `AdvocateDataContext` — Shares selected advocate data across modules
+- `PrivacyProvider` — Manages field-level privacy settings
+- `ComponentProvider` — Provides component registry to child components
+
+---
+
+## 🌐 API Integrations
+
+No dedicated service layer in this module. API interactions are handled through:
+- `Digit.Hooks.useInitStore` — Fetches initial configuration data
+- `Digit.Hooks.useCustomMDMS` — Fetches MDMS data for tenant info and link data
+- `useGetAccessToken` hook — Handles token refresh via `refresh-token`
+- `Digit.UserService` — Authentication state management
+
+---
+
+## 🧩 Key Components
+
+### Container Components
+- **`DigitUI`** — Root application component; sets up QueryClient, Redux Provider, Router, and all context providers
+- **`DigitUIWrapper`** — Handles store initialization and renders `DigitApp`
+- **`DigitApp` (App.js)** — Top-level router switching between citizen and employee apps
+- **`AppModules`** — Dynamically renders registered module components based on enabled modules
+
+### Layout Components
+- **`TopBarSideBar`** — Navigation shell consisting of top bar and sidebar
+- **`TopBar` / `TopBarComponent`** — Application header bar
+- **`SideBar`** — Navigation sidebar (citizen and employee variants)
+- **`ProfileComponent`** — User profile dropdown
+
+### Authentication Components
+- **`EmployeeLogin`** — Employee login page
+- **`Login` (citizen)** — Citizen login with mobile number + OTP
+- **`SelectOtp`** — OTP verification component (globally registered)
+- **`ChangePassword`** — Password change form
+- **`ChangeCity`** / **`ChangeLanguage`** — City and language selectors (globally registered)
+
+---
+
+## 🔄 Data Flow
+
+```
+Application Bootstrap:
+  DigitUI → QueryClientProvider → Redux Provider → Router
+    → DigitUIWrapper
+      → Digit.Hooks.useInitStore(stateCode, enabledModules)
+      → API: MDMS, tenant config, localization
+      → Redux Store initialized
+      → DigitApp renders
+        → Employee/Citizen route matched
+          → TopBarSideBar rendered
+          → AppModules dynamically loads registered modules
 ```
 
-## Usage
+---
 
-After adding the dependency make sure you have this dependency in
+## 🔗 Dependencies
 
-```bash
-frontend/micro-ui/web/package.json
-```
+### Internal Module Dependencies
+- All other modules depend on Core (this module provides the application shell)
+- Core does not depend on other business modules
 
-```json
-"@egovernments/digit-ui-module-core":"^1.5.0",
-```
+### External Library Dependencies
+| Library | Version | Purpose |
+|---|---|---|
+| `react` | 17.0.2 | UI framework |
+| `react-dom` | 17.0.2 | DOM rendering |
+| `react-router-dom` | 5.3.0 | Routing |
+| `react-redux` | 7.2.8 | Redux bindings |
+| `redux` | 4.1.2 | State management |
+| `redux-thunk` | 2.4.1 | Async Redux middleware |
+| `react-query` | 3.6.1 | Async data fetching/caching |
+| `react-i18next` | 11.16.2 | Internationalization |
+| `react-tooltip` | 4.1.2 | Tooltip component |
+| `web-vitals` | ^2.1.4 | Performance monitoring |
+| `@egovernments/digit-ui-react-components` | 1.8.2-beta.11 | Shared UI components |
+| `@egovernments/digit-ui-components` | 0.0.1-beta.28 | Design system components |
 
-then navigate to App.js
+---
 
-```bash
- frontend/micro-ui/web/src/App.js
-```
+## ⚙️ Configuration
 
-```jsx
-/** add this import **/
+- **Mobile view restriction:** Screens < 900px are blocked with a "desktop site" prompt, except for specific open routes (bail-bond, payment, e-sign)
+- **React Query defaults:** `staleTime: 15min`, `cacheTime: 50min`, `retry: false`
+- **Session storage TTL:** Default 86400 seconds (24 hours)
+- **DRISTI module auto-injection:** If `DRISTI` is not in the modules list, it is automatically added with `order: 11`
+- **Sidebar menu:** Configured via `config/sidebar-menu.js`
 
-import { DigitUI } from "@egovernments/digit-ui-module-core";
+---
 
+## 🧪 Testing
 
-/** inside render Function add  the import for the component **/
+- No explicit test files found in the module.
+- **Missing test areas:** Store initialization, context providers, routing logic, authentication flow, mobile view detection.
 
-  ReactDOM.render(<DigitUI stateCode={stateCode} enabledModules={enabledModules} moduleReducers={moduleReducers} />, document.getElementById("root"));
+---
 
-```
+## 🚨 Known Risks / Observations
 
-# Mandatory changes to use following version
-
-```
-from 1.5.38 add the following utility method in micro-ui-internals/packages/libraries/src/utils/index.js
-
-const createFunction = (functionAsString) => {
-  return Function("return " + functionAsString)();
-};
-
-export as createFunction;
-
-similarly update line 76 of react-components/src/molecules/CustomDropdown.js
-
-with  
- .filter((opt) => (opt?.hasOwnProperty("active") ? opt.active : true))
-
-```
- *   Digit.Hooks.Utils.getDefaultLanguage()
-
-```
-from 1.8.0 beta version add the following utility method in micro-ui/web/micro-ui-internals/packages/libraries/src/utils/index.js
-
-const getDefaultLanguage = () => {
-  return  `${getLocaleDefault()}_${getLocaleRegion()}`;
-};
-
-and add its related functions
-
-```
-
-
-### Changelog
-
-```bash
-1.8.1-beta.6 Resolved duplicacy issue in the Sidebar
-1.8.1-beta.5 Fixed Sidebar Path issue
-1.8.1-beta.4 Added a null check for homescreen landing issue
-1.8.1-beta.3 User profile back button fixes for mobile view
-1.8.1-beta.2 User profile Save and change password button fixes for mobile view
-1.8.1-beta.1 Republished after merging with Master due to version issues.
-1.8.0-beta.16 fixed the hardcoded logout message 
-1.8.0-beta.15 fixed the sidebar sort order issue 
-1.8.0-beta.14
-1.8.0-beta.13 
-1.8.0-beta.12
-1.8.0-beta.11 republished due to some version issues
-1.8.0-beta.10 Constants updated for mgramsewa
-1.8.0-beta.9 Updated How It works screen to take header from mdms config and show pdf card only when required
-1.8.0-beta.8 redefine addtional component to render only under employee home page 
-1.8.0-beta.6 added addtional component render for tqm modules
-1.8.0 workbench v1.0
-1.8.0-beta.5 fix for login screen alignments
-1.8.0-beta.4 made the default localisation in globalconfig
-1.8.0-beta workbench base version beta release
-1.7.0 urban 2.9
-1.6.0 urban 2.8
-1.5.43 redirection issue fix incase of no roles in selected city
-1.5.46 added classname for topbar options dropdown.
-1.5.45 aligment issue in edit and logout
-1.5.44 updated login scss and alignment issues
-1.5.42 fixed the mdms call in login component for dynamic updating
-1.5.41 updated the readme content
-1.5.40 Updated the login componenet to handle mdms config, which can be accessed from master - commonUiConfig and module - LoginConfig
-1.5.39 Show the Toast when password changed and need to logout from profile page
-1.5.38 enabled the admin mode for employee login which can be accessed through route employee/user/login?mode=admin and updated to use formcomposerv2
-1.5.37 fixed hiding upload drawer icons.
-1.5.36 fixed after clicking on change password and then try to save profile without changing password showing error.
-1.5.35 fixed user profile email was prefilled when clicking on change password
-1.5.34 fixed module not found redirection issue
-1.5.33 fixed payment not throwing error page for sanitation
-1.5.32 fixed the localisation issue by adding translation to the keys and fixed payment response issue for  sanitation UI
-1.5.31 fixed the allservices screen back button for sanitation UI
-1.5.30 fixed the home routing issue in error screen
-1.5.29 added the readme file
-1.5.28 fixed the route issue for profile screen
-```
-
-### Contributors
-
-[jagankumar-egov] [nipunarora-eGov] [Tulika-eGov] [Ramkrishna-egov] [nabeelmd-eGov] [anil-egov] [vamshikrishnakole-wtt-egov] 
-
-## Documentation
-
-Documentation Site (https://core.digit.org/guides/developer-guide/ui-developer-guide/digit-ui)
-
-## Maintainer
-
-- [jagankumar-egov](https://www.github.com/jagankumar-egov)
-
-
-### Published from DIGIT Frontend 
-DIGIT Frontend Repo (https://github.com/egovernments/Digit-Frontend/tree/develop)
-
-
-![Logo](https://s3.ap-south-1.amazonaws.com/works-dev-asset/mseva-white-logo.png)
+1. **`QueryClient` instantiation in render:** The `QueryClient` is created inside the `DigitUI` component body (not memoized), which could theoretically cause re-creation on re-renders. However, since `DigitUI` is a top-level component that rarely re-renders, practical impact is minimal.
+2. **DRISTI module hardcoded injection:** Lines 36–53 in `Module.js` forcefully add a `DRISTI` module entry if not present — this is a hardcoded assumption.
+3. **`window.Digit` global dependency:** Core heavily relies on and mutates `window.Digit`, creating a global mutable state pattern that is difficult to test and trace.
+4. **Session storage wrapper complexity:** The custom storage abstraction with TTL expiration adds a layer that could silently discard data.
+5. **Web vitals tracking commented out:** Performance tracking code exists but is commented out in `App.js`.
+6. **Footer commented out:** The employee home footer image is commented out.

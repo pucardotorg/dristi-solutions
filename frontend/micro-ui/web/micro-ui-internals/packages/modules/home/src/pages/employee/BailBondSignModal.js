@@ -9,6 +9,7 @@ import { Urls } from "../../hooks";
 import { bailBondWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
 import { HomeService } from "../../hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -75,6 +76,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const pageModule = "en";
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const userUUID = Digit.UserService.getUser()?.info?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUUID);
 
   useEffect(() => {
     const fetchBailBondData = async () => {
@@ -88,6 +91,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
               bailId: queryStrings.bailId || selectedBailBond?.businessObject?.bailDetails?.bailId || selectedBailBond?.bailId,
               fuzzySearch: false,
               filingNumber,
+              asUser: authorizedUuid,
             },
             pagination: {
               limit: 10,
