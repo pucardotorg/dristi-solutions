@@ -141,6 +141,12 @@ const MainHomeScreen = () => {
   }, [userType, history, isEpostUser, location]);
 
   useEffect(() => {
+    if (activeTab !== "REGISTER_USERS") {
+      window.sessionStorage.removeItem("registerUsersUserType");
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
   }, [config]);
 
