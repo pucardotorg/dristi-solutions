@@ -26,7 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
@@ -745,7 +747,8 @@ public class InboxServiceV2 {
         try {
             log.info("Searching in redis cache");
             String courtId = (String) inboxRequest.getInbox().getModuleSearchCriteria().get("courtId");
-            String currentDate = getCurrentDate();
+            Long hearingDate = (Long) inboxRequest.getInbox().getModuleSearchCriteria().get("fromDate");
+            String currentDate = getDate(hearingDate);
             String cacheKey = CACHE_KEY_PREFIX + courtId + ":" + currentDate;
             Object cachedResult = cacheService.getCache(cacheKey);
             if (cachedResult != null) {
@@ -825,9 +828,17 @@ public class InboxServiceV2 {
         return ((Number) valueObj).intValue();
     }
 
-    public String getCurrentDate() {
-        LocalDate currentDate = LocalDate.now();
+    public String getDate(Long hearingDate) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
-        return currentDate.format(formatter);
+        LocalDate date;
+        if (hearingDate != null) {
+            date = Instant.ofEpochMilli(hearingDate)
+                    .atZone(ZoneId.of("Asia/Kolkata"))
+                    .toLocalDate();
+        } else {
+            date = LocalDate.now();
+        }
+
+        return date.format(formatter);
     }
 }
