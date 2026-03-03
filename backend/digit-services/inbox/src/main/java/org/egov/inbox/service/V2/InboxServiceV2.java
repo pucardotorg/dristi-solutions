@@ -760,7 +760,9 @@ public class InboxServiceV2 {
             for (Object cachedInboxItem : cachedList) {
                 if (cachedInboxItem instanceof Map) {
                     Inbox inbox = new Inbox();
-                    inbox.setBusinessObject((Map<String, Object>) cachedInboxItem);
+                    Map<String, Object> businessObject = new HashMap<>();
+                    businessObject.put("hearingDetails", cachedInboxItem);
+                    inbox.setBusinessObject(businessObject);
                     inboxItems.add(inbox);
                 } else {
                     return null;
