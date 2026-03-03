@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -80,7 +81,8 @@ public class EsUtil {
             }
             String courtId = openHearings.get(0).getCourtId() != null ? openHearings.get(0).getCourtId() : config.getCourtId();
             LocalDate date = dateUtil.getLocalDateFromEpoch(hearingDate);
-            String key = CACHE_KEY_PREFIX + courtId + ":" + date;
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
+            String key = CACHE_KEY_PREFIX + courtId + ":" + date.format(formatter);
             cacheService.updateCache(key, openHearings);
             log.info("Updated redis cache for open hearings:: {}", key);
         } catch (Exception e) {
