@@ -1,9 +1,6 @@
 package org.pucar.dristi.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
@@ -52,73 +49,9 @@ public class DocPreviewService {
 
         CourtCase courtCase = caseUtil.getCase(request.getFilingNumber(), request.getCourtId());
 
-        List<CaseBundleNode> cachedNodes = fetchCachedPreviewNodes(courtCase);
-        if (cachedNodes != null) {
-            return cachedNodes;
-        }
-
         BundleData data = loadAllData(courtCase);
 
-        List<CaseBundleNode> nodes = engine.build(data);
-        upsertPreviewIndex(courtCase, nodes);
-        return nodes;
-    }
-
-    private List<CaseBundleNode> fetchCachedPreviewNodes(CourtCase courtCase) {
-        if (courtCase == null || courtCase.getId() == null) return null;
-
-        String caseId = String.valueOf(courtCase.getId());
-        String uri = configuration.getEsHostUrl() + configuration.getCasePreviewIndex() + configuration.getSearchPath();
-        String esRequest = String.format(ES_IDS_QUERY, caseId);
-
-        String response;
-        try {
-            response = esRepository.fetchDocuments(uri, esRequest);
-        } catch (Exception e) {
-            return null;
-        }
-
-        try {
-            JsonNode rootNode = objectMapper.readTree(response);
-            JsonNode hitsNode = rootNode.path("hits").path("hits");
-            if (!hitsNode.isArray() || hitsNode.isEmpty()) return null;
-
-            JsonNode indexJson = hitsNode.get(0).path("_source");
-
-            JsonNode cachedNodesNode = indexJson.get("caseBundleNodes");
-            if (cachedNodesNode == null || cachedNodesNode.isNull() || !cachedNodesNode.isArray()) return null;
-
-            return objectMapper.convertValue(cachedNodesNode, new TypeReference<List<CaseBundleNode>>() {
-            });
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private void upsertPreviewIndex(CourtCase courtCase, List<CaseBundleNode> nodes) {
-        if (courtCase == null || courtCase.getId() == null) return;
-        String caseId = String.valueOf(courtCase.getId());
-
-        try {
-            ObjectNode indexJson = objectMapper.createObjectNode();
-            indexJson.put("tenantId", courtCase.getTenantId());
-            indexJson.put("caseID", caseId);
-            indexJson.put("courtId", courtCase.getCourtId());
-
-            long lastModified = System.currentTimeMillis();
-            if (courtCase.getAuditdetails() != null && courtCase.getAuditdetails().getLastModifiedTime() != null) {
-                lastModified = Math.max(lastModified, courtCase.getAuditdetails().getLastModifiedTime());
-            }
-            indexJson.put("contentLastModified", lastModified);
-
-            indexJson.set("caseBundleNodes", objectMapper.valueToTree(nodes));
-
-            String esDocUrl = configuration.getEsHostUrl() + configuration.getCasePreviewIndex() + "/_doc/" + caseId;
-            String esBody = objectMapper.writeValueAsString(indexJson);
-            esRepository.fetchDocuments(esDocUrl, esBody);
-        } catch (Exception e) {
-            // intentionally ignored, preview should still work even if cache update fails
-        }
+        return engine.build(data);
     }
 
     private BundleData loadAllData(CourtCase courtCase) {

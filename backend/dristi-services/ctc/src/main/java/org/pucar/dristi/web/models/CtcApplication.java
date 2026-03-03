@@ -54,7 +54,7 @@ public class CtcApplication {
     
     @JsonProperty("isPartyToCase")
     @NotNull
-    private Boolean isPartyToCase;
+    private Boolean isPartyToCase = false;
     
     @JsonProperty("partyDesignation")
     private String partyDesignation;

@@ -60,4 +60,24 @@ public class ServiceConstants {
     public static final String CTC_STATUS_PAYMENT_PENDING = "PAYMENT_PENDING";
     public static final String CTC_STATUS_ISSUED = "ISSUED";
     public static final String ERROR_WHILE_CREATING_DEMAND_FOR_GENERIC_TASK = "ERROR_WHILE_CREATING_DEMAND_FOR_GENERIC_TASK";
+
+    public static final String ES_ERRORS_PATH = "$.errors";
+    public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
+    public static final String ES_ISSUE_CTC_DOC_FORMAT =
+            "{\"Data\": {"
+                    + "\"docId\": \"%s\","
+                    + "\"ctcApplicationNumber\": \"%s\","
+                    + "\"createdTime\": %d,"
+                    + "\"lastModifiedTime\": %d,"
+                    + "\"docTitle\": \"%s\","
+                    + "\"status\": \"%s\","
+                    + "\"caseTitle\": \"%s\","
+                    + "\"caseNumber\": \"%s\""
+                    + "}}\n";
+    public static final String ES_UPDATE_BY_QUERY_ISSUED =
+            "{\"query\":{\"term\":{\"Data.id.keyword\":\"%s\"}},"
+                    + "\"script\":{\"source\":\"ctx._source.Data.status='ISSUED';ctx._source.Data.lastModifiedTime=%dL;\","
+                    + "\"lang\":\"painless\"}}";
+    public static final String CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION = "CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION";
+    public static final String CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION = "CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION";
 }

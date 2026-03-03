@@ -101,12 +101,20 @@ public class PaymentUpdateService {
 
         log.info("Updating pending payment status for ctcApplication: {}", ctcApplication);
         WorkflowObject workflow = new WorkflowObject();
-        if(ctcApplication.getIsPartyToCase())
-         workflow.setAction("PAY_PARTY_OF_CASE");
-        else
-         workflow.setAction("PAY_NOT_PARTY_OF_CASE");
+        workflow.setAction("MAKE_PAYMENT");
         ctcApplication.setWorkflow(workflow);
-        workflowService.updateWorkflowStatus(ctcApplication,requestInfo);
+        workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
+
+        if (ctcApplication.getIsPartyToCase()) {
+            workflow.setAction("COMPLETE");
+            ctcApplication.setWorkflow(workflow);
+            workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
+        } else {
+            workflow.setAction("SEND_FOR_APPROVAL");
+            ctcApplication.setWorkflow(workflow);
+            workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
+        }
+
 //        Document document = getPaymentReceipt(requestInfo, ctcApplication);
 //        if (document != null) {
 //            if (ctcApplication.getDocuments() == null) {

@@ -142,6 +142,22 @@ public class Configuration {
     @Value("${egov.tenantId}")
     private String tenantId;
 
+    //Elasticsearch Config
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${egov.bulk.index.path}")
+    private String bulkPath;
+
+    @Value("${ctc.issue.documents.index}")
+    private String issueCtcDocumentsIndex;
+
     // Zone ID
     @Value("${app.zone.id}")
     private String zoneId;

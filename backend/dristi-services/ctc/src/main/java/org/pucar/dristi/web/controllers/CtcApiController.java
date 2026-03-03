@@ -108,23 +108,30 @@ public class CtcApiController {
         }
     }
 
-    @PostMapping("/applications/validate")
-    public ResponseEntity<ValidateUserResponse> validateUser(@Valid @RequestBody ValidateUserRequest request) {
+    @PostMapping("/applications/documents/_issue")
+    public ResponseEntity<IssueCtcDocumentUpdateResponse> markDocumentsAsIssued(@Valid @RequestBody IssueCtcDocumentUpdateRequest request) {
+
+        log.info("Marking documents as issued for CTC application: {}", request.getCtcApplicationNumber());
 
         try {
-            ValidateUserInfo validateUserInfo = ctcApplicationService.validateUserForCTCApplication(request);
+            ctcApplicationService.markDocumentsAsIssued(request.getCtcApplicationNumber());
             ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
 
-            ValidateUserResponse response = ValidateUserResponse.builder()
+            IssueCtcDocumentUpdateResponse response = IssueCtcDocumentUpdateResponse.builder()
                     .responseInfo(responseInfo)
-                    .validateUserInfo(validateUserInfo)
+                    .ctcApplicationNumber(request.getCtcApplicationNumber())
+                    .id(request.getId())
+                    .docId(request.getDocId())
                     .build();
 
             return ResponseEntity.ok(response);
 
-        }  catch (Exception e) {
-            log.error("Unexpected error validating user for CTC application", e);
-            throw new CustomException("VALIDATE_USER_CTC_ERROR", "Error validating user for CTC application: " + e.getMessage());
+        } catch (CustomException e) {
+            log.error("Error marking documents as issued: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error marking documents as issued", e);
+            throw new CustomException("CTC_ISSUE_DOCUMENTS_UPDATE_ERROR", "Error marking documents as issued: " + e.getMessage());
         }
     }
 }

@@ -13,6 +13,7 @@ import org.pucar.dristi.repository.CtcApplicationRepository;
 import org.pucar.dristi.util.EtreasuryUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.IndexerUtils;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.web.models.courtcase.*;
@@ -52,11 +53,15 @@ public class CtcApplicationService {
     @Autowired
     private EtreasuryUtil etreasuryUtil;
 
+    @Autowired
+    private IndexerUtils indexerUtils;
+
     public CtcApplication createApplication(CtcApplicationRequest request) {
         CtcApplication application = request.getCtcApplication();
 
         // Generate application number if not provided
         application.setCtcApplicationNumber(generateApplicationNumber(application.getTenantId(), request.getRequestInfo()));
+        validateAndEnrichUser(request.getRequestInfo(),request.getCtcApplication());
 
         // Set ID and audit details
         application.setId(UUID.randomUUID().toString());
@@ -92,10 +97,6 @@ public class CtcApplicationService {
                     "CTC application not found with ID: " + application.getId());
         }
 
-        // Track if all case bundle nodes are approved or rejected and perform workflow action ISSUE, REJECT
-        if("PENDING_CMO_ESIGN".equalsIgnoreCase(application.getStatus()))
-         updateApplicationStatusBasedOnCaseBundleNodes(application);
-
         // Update audit details
         application.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
         application.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
@@ -105,9 +106,12 @@ public class CtcApplicationService {
 
         if(request.getCtcApplication().getWorkflow()!=null && (request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("ESIGN")
                 || request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("UPLOAD_SIGNED_COPY"))){
-            //change logic for calculating totalnumber of pages
+            //change logic for calculating payment through payment calculator if required
             Calculation calculation = Calculation.builder().totalAmount(20+request.getCtcApplication().getTotalPages()*1.5).tenantId(request.getCtcApplication().getTenantId()).build();
             etreasuryUtil.createDemand(request, application.getCtcApplicationNumber()+"_APPLICATION_FEE", calculation);
+        }
+        if("APPROVED".equalsIgnoreCase(request.getCtcApplication().getStatus())){
+            pushIssueCtcDocumentsToIndex(application);
         }
 
         producer.push("update-ctc-application", request);
@@ -136,13 +140,13 @@ public class CtcApplicationService {
         }
     }
 
-    public ValidateUserInfo validateUserForCTCApplication(ValidateUserRequest request) {
+    public void validateAndEnrichUser(RequestInfo requestInfo, CtcApplication ctcApplication) {
         try {
             // Get CourtCase object for POA holders and advocate offices
-            CourtCase courtCase = caseUtil.getCase(request.getFilingNumber());
+            CourtCase courtCase = caseUtil.getCase(ctcApplication.getFilingNumber());
 
             if (courtCase == null) {
-                throw new CustomException("CASE_NOT_FOUND", "Case not found with filingNumber: " + request.getFilingNumber());
+                throw new CustomException("CASE_NOT_FOUND", "Case not found with filingNumber: " +ctcApplication.getFilingNumber());
             }
 
             String userName = null;
@@ -168,7 +172,7 @@ public class CtcApplicationService {
                             JsonNode complainantVerification = complainantData.has("complainantVerification") ? complainantData.get("complainantVerification") : null;
                             if (complainantVerification != null) {
                                 String mobile = complainantVerification.has("mobileNumber") ? complainantVerification.get("mobileNumber").asText() : null;
-                                if (mobile != null && mobile.equals(request.getMobileNumber())) {
+                                if (mobile != null && mobile.equals(ctcApplication.getMobileNumber())) {
                                     userName = extractName(complainantData, "complainant");
                                     designation = "Complainant";
                                 }
@@ -189,7 +193,7 @@ public class CtcApplicationService {
                                     JsonNode phonenumbers = respondentData.has("phonenumbers") ? respondentData.get("phonenumbers") : null;
                                     if (phonenumbers != null && phonenumbers.has("textfieldValue")) {
                                         String mobile = phonenumbers.get("textfieldValue").asText();
-                                        if (mobile != null && mobile.equals(request.getMobileNumber())) {
+                                        if (mobile != null && mobile.equals(ctcApplication.getMobileNumber())) {
                                             userName = extractName(respondentData, "respondent");
                                             designation = "Accused";
                                             break;
@@ -215,7 +219,7 @@ public class CtcApplicationService {
                                     JsonNode boxComplainant = multipleAdvocates.has("boxComplainant") ? multipleAdvocates.get("boxComplainant") : null;
                                     if (boxComplainant != null) {
                                         String mobile = boxComplainant.has("mobileNumber") ? boxComplainant.get("mobileNumber").asText() : null;
-                                        if (mobile != null && mobile.equals(request.getMobileNumber())) {
+                                        if (mobile != null && mobile.equals(ctcApplication.getMobileNumber())) {
                                             userName = extractName(boxComplainant, "advocate");
                                             designation = "Advocate";
                                         }
@@ -229,7 +233,7 @@ public class CtcApplicationService {
                                                 JsonNode advocateNameData = advocateDetail.get("advocateNameDetails");
                                                 if (advocateNameData != null) {
                                                     String mobile = advocateNameData.has("advocateMobileNumber") ? advocateNameData.get("advocateMobileNumber").asText() : null;
-                                                    if (mobile != null && mobile.equals(request.getMobileNumber())) {
+                                                    if (mobile != null && mobile.equals(ctcApplication.getMobileNumber())) {
                                                         userName = extractName(advocateNameData, "advocate");
                                                         designation = "Advocate";
                                                         break;
@@ -267,10 +271,10 @@ public class CtcApplicationService {
 
                     if (!uuids.isEmpty()) {
                         List<String> uuidList = new ArrayList<>(uuids);
-                        List<Individual> individuals = individualService.getIndividuals(request.getRequestInfo(), uuidList);
+                        List<Individual> individuals = individualService.getIndividuals(requestInfo, uuidList);
 
                         for (Individual ind : individuals) {
-                            if (ind.getMobileNumber() != null && ind.getMobileNumber().equalsIgnoreCase(request.getMobileNumber())) {
+                            if (ind.getMobileNumber() != null && ind.getMobileNumber().equalsIgnoreCase(ctcApplication.getMobileNumber())) {
                                 log.info("Mobile number matched for POA holder UUID: {}", ind.getUserUuid());
 
                                 userName = extractNameFromIndividual(ind);
@@ -313,10 +317,10 @@ public class CtcApplicationService {
 
                     if (!uuids.isEmpty()) {
                         List<String> uuidList = new ArrayList<>(uuids);
-                        List<Individual> individuals = individualService.getIndividuals(request.getRequestInfo(), uuidList);
+                        List<Individual> individuals = individualService.getIndividuals(requestInfo, uuidList);
 
                         for (Individual ind : individuals) {
-                            if (ind.getMobileNumber() != null && ind.getMobileNumber().equalsIgnoreCase(request.getMobileNumber())) {
+                            if (ind.getMobileNumber() != null && ind.getMobileNumber().equalsIgnoreCase(ctcApplication.getMobileNumber())) {
                                 log.info("Mobile number matched for advocate office UUID: {}", ind.getUserUuid());
 
                                 userName = extractNameFromIndividual(ind);
@@ -328,13 +332,11 @@ public class CtcApplicationService {
                 }
             }
 
-            return ValidateUserInfo.builder()
-                    .userName(userName)
-                    .designation(designation)
-                    .mobileNumber(request.getMobileNumber())
-                    .filingNumber(request.getFilingNumber())
-                    .courtId(request.getCourtId())
-                    .build();
+            if(userName!=null){
+                ctcApplication.setApplicantName(userName);
+                ctcApplication.setPartyDesignation(designation);
+                ctcApplication.setIsPartyToCase(true);
+            }
 
         } catch (Exception e) {
             log.error("Error validating user for CTC application: {}", e.toString());
@@ -366,6 +368,56 @@ public class CtcApplicationService {
                (lastName != null ? " " + lastName : "");
     }
     
+    public void markDocumentsAsIssued(String ctcApplicationNumber) {
+        try {
+            indexerUtils.updateIssuedStatus(ctcApplicationNumber);
+            log.info("Marked documents as issued in ES for application: {}", ctcApplicationNumber);
+        } catch (Exception e) {
+            log.error("Error updating isIssued status in ES for application: {}", ctcApplicationNumber, e);
+            throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
+                    "Error updating issued status in ES index: " + e.getMessage());
+        }
+    }
+
+    private void pushIssueCtcDocumentsToIndex(CtcApplication application) {
+        try {
+            List<IssueCtcDocument> documents = new ArrayList<>();
+            Long currentTime = System.currentTimeMillis();
+
+            if (application.getCaseBundleNodes() != null) {
+                for (CaseBundleNode parentNode : application.getCaseBundleNodes()) {
+                    if (parentNode.getChildren() != null) {
+                        for (CaseBundleNode child : parentNode.getChildren()) {
+                            IssueCtcDocument doc = IssueCtcDocument.builder()
+                                    .id(UUID.randomUUID().toString())
+                                    .docId(child.getId())
+                                    .ctcApplicationNumber(application.getCtcApplicationNumber())
+                                    .createdTime(currentTime)
+                                    .lastModifiedTime(currentTime)
+                                    .docTitle(child.getTitle())
+                                    .status("PENDING")
+                                    .caseTitle(application.getCaseTitle())
+                                    .caseNumber(application.getCaseNumber())
+                                    .build();
+                            documents.add(doc);
+                        }
+                    }
+                }
+            }
+
+            if (!documents.isEmpty()) {
+                indexerUtils.pushIssueCtcDocuments(documents);
+                log.info("Pushed {} issue-ctc-documents to ES index for application: {}",
+                        documents.size(), application.getCtcApplicationNumber());
+            }
+        } catch (Exception e) {
+            log.error("Error pushing issue-ctc-documents to ES for application: {}",
+                    application.getCtcApplicationNumber(), e);
+            throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION,
+                    "Error pushing documents to ES index: " + e.getMessage());
+        }
+    }
+
     private String extractNameFromIndividual(Individual individual) {
         if (individual == null || individual.getName() == null) {
             return "";
@@ -378,91 +430,5 @@ public class CtcApplicationService {
         return (givenName != null ? givenName : "") +
                (otherNames != null ? " " + otherNames : "") +
                (familyName != null ? " " + familyName : "");
-    }
-
-    /**
-     * Updates application status based on case bundle node statuses
-     * If all nodes are approved -> ISSUE action
-     * If all nodes are rejected -> REJECT action
-     * If nodes are still pending or mixed -> no action
-     */
-    private void updateApplicationStatusBasedOnCaseBundleNodes(CtcApplication application) {
-        if (application.getCaseBundleNodes() == null || application.getCaseBundleNodes().isEmpty()) {
-            return;
-        }
-
-        boolean allRejected = true;
-        boolean allApproved = true;
-
-        // Check all case bundle nodes and their children
-        for (CaseBundleNode node : application.getCaseBundleNodes()) {
-            NodeStatusResult result = checkNodeStatus(node);
-            if (!result.allRejected) {
-                allRejected = false;
-            }
-            if (!result.allApproved) {
-                allApproved = false;
-            }
-        }
-
-        // Update application status based on node statuses
-        if (allRejected) {
-            WorkflowObject workflowObject = new WorkflowObject();
-            workflowObject.setAction("REJECT");
-            application.setWorkflow(workflowObject);
-        } else if (allApproved) {
-            WorkflowObject workflowObject = new WorkflowObject();
-            workflowObject.setAction("ISSUE");
-            application.setWorkflow(workflowObject);
-        }
-    }
-
-    /**
-     * Recursively checks a case bundle node and its children
-     */
-    private NodeStatusResult checkNodeStatus(CaseBundleNode node) {
-        NodeStatusResult result = new NodeStatusResult();
-        
-        // Check current node status
-        if ("rejected".equalsIgnoreCase(node.getStatus())) {
-            result.allRejected = true;
-            result.allApproved = false;
-        } else if ("accepted".equalsIgnoreCase(node.getStatus())) {
-            result.allRejected = false;
-            result.allApproved = true;
-        } else if ("pending".equalsIgnoreCase(node.getStatus())) {
-            result.allRejected = false;
-            result.allApproved = false;
-        }
-
-        // Check children recursively
-        if (node.getChildren() != null && !node.getChildren().isEmpty()) {
-            boolean allChildrenRejected = true;
-            boolean allChildrenApproved = true;
-            
-            for (CaseBundleNode child : node.getChildren()) {
-                NodeStatusResult childResult = checkNodeStatus(child);
-                if (!childResult.allRejected) {
-                    allChildrenRejected = false;
-                }
-                if (!childResult.allApproved) {
-                    allChildrenApproved = false;
-                }
-            }
-            
-            // Combine current node status with children status
-            result.allRejected = result.allRejected && allChildrenRejected;
-            result.allApproved = result.allApproved && allChildrenApproved;
-        }
-
-        return result;
-    }
-
-    /**
-     * Helper class to hold node status check results
-     */
-    private static class NodeStatusResult {
-        boolean allRejected = false;
-        boolean allApproved = true;
     }
 }
