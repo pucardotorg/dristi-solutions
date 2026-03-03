@@ -3254,14 +3254,12 @@ export const updateCaseDetails = async ({
               ?.filter((detail) => detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal)
               .map((detail) => detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal);
 
-            const allAdvocateSearchData = await Promise.all(
-              DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
-                criteria: barRegistrationNumbersCriteria?.map((barNumber) => ({
-                  barRegistrationNumber: barNumber,
-                })),
-                tenantId,
-              })
-            );
+            const allAdvocateSearchData = await DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
+              criteria: barRegistrationNumbersCriteria?.map((barNumber) => ({
+                barRegistrationNumber: barNumber,
+              })),
+              tenantId,
+            });
             for (let i = 0; i < allAdvocateSearchData?.advocates?.length; i++) {
               const document = vakalatnamaDocumentData?.vakalatnamaFileUpload?.document?.[0];
               const advInFormData = data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.find(
@@ -3546,7 +3544,7 @@ export const updateCaseDetails = async ({
         advocateCount:
           formdata?.[0]?.data?.numberOfAdvocate ||
           caseDetails?.additionalDetails?.advocateDetails?.formdata[0]?.data?.numberOfAdvocate ||
-          caseDetails?.advocateDetailsBlock?.[0]?.advocates?.length ||
+          caseDetails?.AdvocateDetailBlock?.[0]?.advocates?.length ||
           0,
         linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
         workflow: {
@@ -3588,11 +3586,11 @@ export const transformCaseDataForFetching = (caseDetails, keys) => {
       };
     }
 
-    if (key === "advocateDetails" && updatedCaseData?.advocateDetailsBlock?.length > 0) {
+    if (key === "advocateDetails" && updatedCaseData?.AdvocateDetailBlock?.length > 0) {
       updatedCaseData.additionalDetails = { ...(updatedCaseData?.additionalDetails || {}) };
       let isCompleted = true;
 
-      const formdata = updatedCaseData?.advocateDetailsBlock?.map((block) => {
+      const formdata = updatedCaseData?.AdvocateDetailBlock?.map((block) => {
         const {
           complainant = {},
           isComplainantPip = {},
@@ -3775,8 +3773,8 @@ export const transformCaseDataForUpdate = (caseDetails, keys) => {
         });
 
         delete updatedCaseData.additionalDetails.advocateDetails;
-        updatedCaseData.advocateDetailsBlock = advocateDetailsBlock;
-      } else updatedCaseData.advocateDetailsBlock = [];
+        updatedCaseData.AdvocateDetailBlock = advocateDetailsBlock;
+      } else updatedCaseData.AdvocateDetailBlock = [];
     }
   }
 
