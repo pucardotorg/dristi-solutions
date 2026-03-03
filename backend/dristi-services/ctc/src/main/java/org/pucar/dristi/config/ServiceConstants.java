@@ -75,9 +75,14 @@ public class ServiceConstants {
                     + "\"caseNumber\": \"%s\""
                     + "}}\n";
     public static final String ES_UPDATE_BY_QUERY_ISSUED =
-            "{\"query\":{\"term\":{\"Data.id.keyword\":\"%s\"}},"
+            "{\"query\":{\"term\":{\"Data.docId.keyword\":\"%s\"}},"
                     + "\"script\":{\"source\":\"ctx._source.Data.status='ISSUED';ctx._source.Data.lastModifiedTime=%dL;\","
                     + "\"lang\":\"painless\"}}";
+    public static final String ES_COUNT_ISSUED_DOCS =
+            "{\"query\":{\"bool\":{\"must\":["
+                    + "{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}},"
+                    + "{\"term\":{\"Data.status.keyword\":\"ISSUED\"}}"
+                    + "]}}}";
     public static final String CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION = "CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION";
     public static final String CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION = "CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION";
 }

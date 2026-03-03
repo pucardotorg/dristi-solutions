@@ -17,7 +17,7 @@ public class CtcApplicationQueryBuilder {
         SELECT 
             id, ctc_application_number, tenant_id, case_number, case_title, filing_number, court_id,
             applicant_name, mobile_number, is_party_to_case, party_designation,
-            affidavit_document, case_bundle_node, total_pages,
+            affidavit_document, case_bundle_nodes, total_pages,
             status, judge_comments, workflow,
             created_by, last_modified_by, created_time, last_modified_time
         FROM dristi_ctc_applications ctc
@@ -41,6 +41,7 @@ public class CtcApplicationQueryBuilder {
                 firstCriteria = addCriteria(criteria.getTenantId(), query, firstCriteria, "ctc.tenant_id = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
                 firstCriteria = addSearchByCaseNumberAnTitleCriteria(criteria, query, firstCriteria, preparedStmtList, preparedStmtArgList);
                 firstCriteria = addCriteria(criteria.getCtcApplicationNumber(), query, firstCriteria, "ctc.ctc_application_number = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+                firstCriteria = addCriteria(criteria.getFilingNumber(), query, firstCriteria, "ctc.filing_number = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
                 addCriteria(criteria.getStatus(), query, firstCriteria, "ctc.status = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             }
 

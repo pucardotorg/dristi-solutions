@@ -38,7 +38,7 @@ ServiceMaps:
                 outJsonPath: $.Data.ctcApplicationDetails.partyDesignation
               - inJsonPath: $.affidavitDocument
                 outJsonPath: $.Data.ctcApplicationDetails.affidavitDocument
-              - inJsonPath: $.caseBundleNode
+              - inJsonPath: $.caseBundleNodes
                 outJsonPath: $.Data.ctcApplicationDetails.caseBundleNodes
               - inJsonPath: $.totalPages
                 outJsonPath: $.Data.ctcApplicationDetails.totalPages
@@ -104,7 +104,7 @@ ServiceMaps:
                 outJsonPath: $.Data.ctcApplicationDetails.partyDesignation
               - inJsonPath: $.affidavitDocument
                 outJsonPath: $.Data.ctcApplicationDetails.affidavitDocument
-              - inJsonPath: $.caseBundleNode
+              - inJsonPath: $.caseBundleNodes
                 outJsonPath: $.Data.ctcApplicationDetails.caseBundleNodes
               - inJsonPath: $.totalPages
                 outJsonPath: $.Data.ctcApplicationDetails.totalPages

@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.web.models.courtcase.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -85,14 +86,14 @@ public class CaseUtil {
 		}
 	}
 
-	public CourtCase getCase(String filingNumber) {
+	public CourtCase getCase(String filingNumber, String courtId) {
 		StringBuilder uri = new StringBuilder();
 		uri.append(configs.getCaseHost()).append(configs.getCaseSearchPath());
 		CaseSearchRequest request = CaseSearchRequest.builder()
 				.requestInfo(RequestInfo.builder().build())
 				.criteria(Collections.singletonList(CaseCriteria.builder()
 						.filingNumber(filingNumber)
-						.courtId(co)
+						.courtId(courtId)
 						.defaultFields(false)
 						.build()))
 				.flow("flow_jac")

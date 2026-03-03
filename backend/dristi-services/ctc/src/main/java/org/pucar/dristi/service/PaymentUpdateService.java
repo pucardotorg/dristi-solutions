@@ -32,25 +32,25 @@ public class PaymentUpdateService {
     private final CtcApplicationRepository repository;
     private final Producer producer;
     private final Configuration config;
-    private final MdmsUtil mdmsUtil;
     private final ObjectMapper objectMapper;
     private final EtreasuryUtil etreasuryUtil;
     private final CaseUtil caseUtil;
+    private final IndexerUtils indexerUtils;
 
     private ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
-    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, CtcApplicationRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, EtreasuryUtil etreasuryUtil, CaseUtil caseUtil) {
+    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, CtcApplicationRepository repository, Producer producer, Configuration config, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, EtreasuryUtil etreasuryUtil, CaseUtil caseUtil, IndexerUtils indexerUtils) {
         this.workflowService = workflowService;
         this.mapper = mapper;
         this.repository = repository;
         this.producer = producer;
         this.config = config;
-        this.mdmsUtil = mdmsUtil;
         this.objectMapper = objectMapper;
         this.serviceRequestRepository = serviceRequestRepository;
         this.etreasuryUtil = etreasuryUtil;
         this.caseUtil = caseUtil;
+        this.indexerUtils = indexerUtils;
     }
 
     public void process(Map<String, Object> record) {
@@ -106,9 +106,10 @@ public class PaymentUpdateService {
         workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
 
         if (ctcApplication.getIsPartyToCase()) {
-            workflow.setAction("COMPLETE");
+            workflow.setAction("SEND_FOR_ISSUE");
             ctcApplication.setWorkflow(workflow);
             workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
+            indexerUtils.pushIssueCtcDocumentsToIndex(ctcApplication);
         } else {
             workflow.setAction("SEND_FOR_APPROVAL");
             ctcApplication.setWorkflow(workflow);

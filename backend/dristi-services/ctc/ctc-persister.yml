@@ -13,7 +13,7 @@ serviceMaps:
       auditAttributeBasePath: ctcApplication
       queryMaps:
 
-        - query: INSERT INTO dristi_ctc_applications(id, ctc_application_number, tenant_id, case_number, case_title, filing_number, court_id, applicant_name, mobile_number, is_party_to_case, party_designation, affidavit_document, case_bundle_nodes, total_pages, status, judge_comments, workflow, created_by, last_modified_by, created_time, last_modified_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        - query: INSERT INTO dristi_ctc_applications(id, ctc_application_number, tenant_id, case_number, case_title, filing_number, court_id, applicant_name, mobile_number, is_party_to_case, party_designation, affidavit_document, case_bundle_nodes, total_pages, status, judge_comments, workflow, created_by, last_modified_by, created_time, last_modified_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
           basePath: ctcApplication
           jsonMaps:
             - jsonPath: $.ctcApplication.id
@@ -28,11 +28,17 @@ serviceMaps:
             - jsonPath: $.ctcApplication.isPartyToCase
             - jsonPath: $.ctcApplication.partyDesignation
             - jsonPath: $.ctcApplication.affidavitDocument
+              type: JSON
+              dbType: JSONB
             - jsonPath: $.ctcApplication.caseBundleNodes
+              type: JSON
+              dbType: JSONB
             - jsonPath: $.ctcApplication.totalPages
             - jsonPath: $.ctcApplication.status
             - jsonPath: $.ctcApplication.judgeComments
             - jsonPath: $.ctcApplication.workflow
+              type: JSON
+              dbType: JSONB
             - jsonPath: $.ctcApplication.auditDetails.createdBy
             - jsonPath: $.ctcApplication.auditDetails.lastModifiedBy
             - jsonPath: $.ctcApplication.auditDetails.createdTime
@@ -61,11 +67,17 @@ serviceMaps:
             - jsonPath: $.ctcApplication.isPartyToCase
             - jsonPath: $.ctcApplication.partyDesignation
             - jsonPath: $.ctcApplication.affidavitDocument
+              type: JSON
+              dbType: JSONB
             - jsonPath: $.ctcApplication.caseBundleNodes
+              type: JSON
+              dbType: JSONB
             - jsonPath: $.ctcApplication.totalPages
             - jsonPath: $.ctcApplication.status
             - jsonPath: $.ctcApplication.judgeComments
             - jsonPath: $.ctcApplication.workflow
+              type: JSON
+              dbType: JSONB
             - jsonPath: $.ctcApplication.auditDetails.lastModifiedBy
             - jsonPath: $.ctcApplication.auditDetails.lastModifiedTime
             - jsonPath: $.ctcApplication.id

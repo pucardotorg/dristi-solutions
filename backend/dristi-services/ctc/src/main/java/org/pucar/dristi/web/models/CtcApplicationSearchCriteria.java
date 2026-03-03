@@ -19,6 +19,9 @@ public class CtcApplicationSearchCriteria {
     
     @JsonProperty("ctcApplicationNumber")
     private String ctcApplicationNumber;
+
+    @JsonProperty("filingNumber")
+    private String filingNumber;
     
     @JsonProperty("searchByCaseNumberAnTitle")
     private String searchByCaseNumberAnTitle;

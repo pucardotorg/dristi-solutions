@@ -114,7 +114,7 @@ public class CtcApiController {
         log.info("Marking documents as issued for CTC application: {}", request.getCtcApplicationNumber());
 
         try {
-            ctcApplicationService.markDocumentsAsIssued(request.getCtcApplicationNumber());
+            ctcApplicationService.markDocumentsAsIssued(request.getCtcApplicationNumber(), request.getDocId(), request.getCourtId(), request.getFilingNumber(), request.getRequestInfo());
             ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
 
             IssueCtcDocumentUpdateResponse response = IssueCtcDocumentUpdateResponse.builder()

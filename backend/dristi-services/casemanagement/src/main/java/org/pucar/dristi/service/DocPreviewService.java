@@ -39,19 +39,30 @@ public class DocPreviewService {
 
     public List<CaseBundleNode> getBundle(DocPreviewRequest request) {
 
-
+        Boolean isPartyToCase = true;
         if (StringUtils.hasText(request.getCtcApplicationNumber())) {
-            Boolean isPartyToCase = ctcUtil.isPartyToCase(request.getCtcApplicationNumber(), request.getCourtId(), request.getRequestInfo());
-            if (Boolean.FALSE.equals(isPartyToCase)) {
-                return null;
-            }
+            isPartyToCase = ctcUtil.isPartyToCase(request.getCtcApplicationNumber(), request.getCourtId(), request.getRequestInfo());
         }
 
         CourtCase courtCase = caseUtil.getCase(request.getFilingNumber(), request.getCourtId());
 
         BundleData data = loadAllData(courtCase);
+        List<CaseBundleNode> caseBundleNodes =  engine.build(data);
 
-        return engine.build(data);
+        if (Boolean.TRUE.equals(isPartyToCase)) {
+            return caseBundleNodes;
+        }
+
+        stripFileStoreIds(caseBundleNodes);
+        return caseBundleNodes;
+    }
+
+    private void stripFileStoreIds(List<CaseBundleNode> nodes) {
+        if (nodes == null) return;
+        for (CaseBundleNode node : nodes) {
+            node.setFileStoreId(null);
+            stripFileStoreIds(node.getChildren());
+        }
     }
 
     private BundleData loadAllData(CourtCase courtCase) {

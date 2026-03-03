@@ -31,4 +31,12 @@ public class IssueCtcDocumentUpdateRequest {
     @NotBlank
     private String docId;
 
+    @JsonProperty("filingNumber")
+    @NotBlank
+    private String filingNumber;
+
+    @JsonProperty("courtId")
+    @NotBlank
+    private String courtId;
+
 }
