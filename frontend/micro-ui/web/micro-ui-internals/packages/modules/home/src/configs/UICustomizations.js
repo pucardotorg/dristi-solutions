@@ -638,6 +638,103 @@ export const UICustomizations = {
     },
   },
 
+  CTCApplicationsConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const criteria = {
+        ...requestCriteria?.body?.criteria,
+        ...requestCriteria?.state?.searchForm,
+        tenantId,
+        ...additionalDetails,
+        pagination: {
+          limit: requestCriteria?.state?.tableForm?.limit,
+          offSet: requestCriteria?.state?.tableForm?.offset,
+        },
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          criteria,
+          tenantId,
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            const dummyData = [
+              {
+                isSelected: false,
+                businessObject: {
+                  applicationNumber: "CTC/02/2026",
+                  caseNumber: "CMP/1/2026",
+                  petitioner: "iknoor adv",
+                  dateRaised: "2024-11-11",
+                  status: "Review Pending",
+                },
+              },
+              {
+                isSelected: false,
+                businessObject: {
+                  applicationNumber: "CTC/03/2026",
+                  caseNumber: "CMP/2/2026",
+                  petitioner: "iknoor adv",
+                  dateRaised: "2024-11-12",
+                  status: "Review Pending",
+                },
+              },
+            ];
+            return { ...data, items: dummyData, totalCount: dummyData.length };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
+        case "APPLICATION_NUMBER":
+          return (
+            <span
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+              role="button"
+              tabIndex={0}
+              onClick={() => column?.clickFunc && column.clickFunc({ original: row })}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === " ") && column?.clickFunc) {
+                  e.preventDefault();
+                  column.clickFunc({ original: row });
+                }
+              }}
+            >{`${value}`}</span>
+          );
+        case "CASE_NUMBER":
+          return <span>{value || "CMP/1/2026"}</span>;
+        case "PETITIONER":
+          return <span>{value || "iknoor adv"}</span>;
+        case "DATE_RAISED":
+          const date = value ? new Date(value) : new Date("2024-11-11");
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0");
+          const year = date.getFullYear();
+          return <span>{`${day}-${month}-${year}`}</span>;
+        case "STATUS":
+          return (
+            <span
+              style={{ padding: "4px 8px", background: "#FFF0E6", color: "#CC6600", borderRadius: "16px", fontSize: "12px", display: "inline-block" }}
+            >
+              {t(value || "Review Pending")}
+            </span>
+          );
+        default:
+          return t("ES_COMMON_NA");
+      }
+    },
+  },
+
   bulkESignOrderConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();

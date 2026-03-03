@@ -52,6 +52,7 @@ const EvidenceModal = ({
   artifact,
   setShowMakeAsEvidenceModal,
   isApplicationAccepted,
+  handleCTCApplications,
 }) => {
   const [comments, setComments] = useState(documentSubmission[0]?.comments ? documentSubmission[0].comments : artifact?.comments || []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(null);
@@ -244,6 +245,7 @@ const EvidenceModal = ({
         if (documentSubmission?.[0]?.artifactList?.isVoid) return false;
         return true;
       }
+      if (modalType === "CTC_APPLICATIONS") return true;
       return (
         userRoles.includes("SUBMISSION_APPROVER") &&
         [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus)
@@ -274,7 +276,9 @@ const EvidenceModal = ({
 
   const actionSaveLabel = useMemo(() => {
     let label = "";
-    if (modalType === "Submissions") {
+    if (modalType === "CTC_APPLICATIONS") {
+      label = t("ACCEPT");
+    } else if (modalType === "Submissions") {
       if (userType === "employee") {
         const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
         label = applicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" ? t("REVIEW_CHANGES") : t("Approve");
@@ -307,6 +311,9 @@ const EvidenceModal = ({
   }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType, caseData]);
 
   const actionCancelLabel = useMemo(() => {
+    if (modalType === "CTC_APPLICATIONS") {
+      return t("REJECT");
+    }
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
       [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
@@ -986,6 +993,8 @@ const EvidenceModal = ({
         await handleApplicationAction(true, "accept");
       } else if (modalType === "Submissions") {
         await handleApplicationAction(true, "accept");
+      } else if (modalType === "CTC_APPLICATIONS") {
+        await handleCTCApplications(documentSubmission, "accept");
       } else {
         if (modalType === "Documents") {
           setShow(false);
@@ -1029,6 +1038,8 @@ const EvidenceModal = ({
         await handleApplicationAction(true, "reject");
       } else if (modalType === "Submissions") {
         await handleApplicationAction(true, "reject");
+      } else if (modalType === "CTC_APPLICATIONS") {
+        await handleCTCApplications(documentSubmission, "reject");
       }
     } else {
       try {
@@ -1395,7 +1406,8 @@ const EvidenceModal = ({
                     SubmissionWorkflowState.REJECTED,
                     SubmissionWorkflowState.DOC_UPLOAD,
                   ].includes(applicationStatus)) ||
-                  modalType === "Documents") && (
+                  modalType === "Documents" ||
+                  modalType === "CTC_APPLICATIONS") && (
                   <div className="comment-send">
                     <div className="comment-input-wrapper">
                       <div style={{ display: "flex" }}>
