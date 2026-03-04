@@ -98,6 +98,7 @@ const ManageOfficeMember = () => {
   const [addToNewCasesAuto, setAddToNewCasesAuto] = useState(member?.addNewCasesAutomatically !== false ? "Yes" : "No");
   const [selectedCasesCount, setSelectedCasesCount] = useState(0);
   const [casesRefreshKey, setCasesRefreshKey] = useState(0);
+  const [caseSelectionDiff, setCaseSelectionDiff] = useState({ addCaseIds: [], removeCaseIds: [] });
   const [accessType, setAccessType] = useState(member?.accessType || "ALL_CASES");
   const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
   const [isRemovingMember, setIsRemovingMember] = useState(false);
@@ -395,7 +396,8 @@ const ManageOfficeMember = () => {
   };
 
   const handleUpdateAccessClick = () => {
-    const { addCaseIds, removeCaseIds } = getCaseSelectionDiff();
+    const diff = getCaseSelectionDiff();
+    const { addCaseIds, removeCaseIds } = diff;
     if (addCaseIds.length === 0 && removeCaseIds.length === 0) {
       setToast({
         label: t("NO_CASE_SELECTION") || "Please select at least one case to update access.",
@@ -403,11 +405,13 @@ const ManageOfficeMember = () => {
       });
       return;
     }
+    setCaseSelectionDiff(diff);
     setShowUpdateAccessModal(true);
   };
 
   const handleCloseUpdateAccessModal = () => {
     setShowUpdateAccessModal(false);
+    setCaseSelectionDiff({ addCaseIds: [], removeCaseIds: [] });
   };
 
   const handleConfirmUpdateAccess = async () => {
@@ -416,13 +420,14 @@ const ManageOfficeMember = () => {
       return;
     }
 
-    const { addCaseIds, removeCaseIds } = getCaseSelectionDiff();
+    const { addCaseIds, removeCaseIds } = caseSelectionDiff || { addCaseIds: [], removeCaseIds: [] };
     if (addCaseIds.length === 0 && removeCaseIds.length === 0) {
       setToast({
         label: t("NO_CASE_SELECTION") || "Please select at least one case to update access.",
         type: "error",
       });
       setShowUpdateAccessModal(false);
+      setCaseSelectionDiff({ addCaseIds: [], removeCaseIds: [] });
       return;
     }
 
