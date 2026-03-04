@@ -58,10 +58,10 @@
     "case": {
         "service_group": "core-services",
         "db_source_path": "backend/dristi-services/case/src/main/resources/db",
-        "dockerfile_path": "build/maven/Dockerfile.v2",
+        "dockerfile_path": "build/maven-java25/Dockerfile.v2",
         "service_source_path": "backend/dristi-services/case",
         "language": "java",
-        "version": "17"
+        "version": "25"
     },
     "casemanagement": {
         "service_group": "core-services",
