@@ -14,9 +14,6 @@ servers:
 tags:
   - name: CTC Applications
 
-security:
-  - bearerAuth: []
-
 paths:
 
   /ctc/applications/_create:
@@ -90,26 +87,25 @@ paths:
             application/json:
               schema:
                 $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
-
-  /ctc/applications/validate:
+  /ctc/applications/documents/_issue:
     post:
       tags: [CTC Applications]
-      summary: Validate user for CTC application
+      summary: Mark CTC documents as issued
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ValidateUserRequest'
+              $ref: '#/components/schemas/IssueCtcDocumentUpdateRequest'
       responses:
         '200':
-          description: User validated
+          description: Documents marked as issued
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidateUserResponse'
+                $ref: '#/components/schemas/IssueCtcDocumentUpdateResponse'
         '400':
-          description: User validation failed
+          description: Document issue update failed
           content:
             application/json:
               schema:
@@ -167,6 +163,8 @@ components:
         tenantId:
           type: string
         ctcApplicationNumber:
+          type: string
+        filingNumber:
           type: string
         searchByCaseNumberAnTitle:
           type: string
@@ -265,39 +263,33 @@ components:
             $ref: '#/components/schemas/CaseBundleNode'
           description: Child case bundle nodes (for hierarchical structure)
 
-    SelectedDocument:
+    IssueCtcDocumentUpdateRequest:
       type: object
+      required: [RequestInfo, ctcApplicationNumber, id, docId, filingNumber, courtId]
       properties:
-        documentId:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        ctcApplicationNumber:
           type: string
-        fileStore:
+        id:
           type: string
-        documentName:
+        docId:
           type: string
-        documentCategory:
+        filingNumber:
           type: string
-        numberOfCopies:
-          type: integer
-          format: int32
-        pages:
-          type: integer
-          format: int32
+        courtId:
+          type: string
 
-    IssuedDocument:
+    IssueCtcDocumentUpdateResponse:
       type: object
       properties:
-        documentId:
+        responseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        ctcApplicationNumber:
           type: string
-        documentName:
+        id:
           type: string
-        issuedDate:
-          type: integer
-          format: int64
-        approvalOrderId:
-          type: string
-        fileStore:
-          type: string
-        documentCategory:
+        docId:
           type: string
 
     Document:

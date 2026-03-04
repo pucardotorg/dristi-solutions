@@ -18,7 +18,6 @@
               "action": "SAVE_DRAFT",
               "nextState": "DRAFT_IN_PROGRESS",
               "roles": [
-                "SYSTEM",
                 "CITIZEN"
               ]
             }
@@ -36,22 +35,27 @@
               "action": "SAVE_DRAFT",
               "nextState": "DRAFT_IN_PROGRESS",
               "roles": [
-                "SYSTEM",
+                "CITIZEN"
+              ]
+            },
+            {
+              "action": "DELETE",
+              "nextState": "DELETED",
+              "roles": [
                 "CITIZEN"
               ]
             },
             {
               "action": "SUBMIT",
-              "nextState": "PENDING_ESIGN",
+              "nextState": "PENDING_SIGN",
               "roles": [
-                "SYSTEM",
                 "CITIZEN"
               ]
             }
           ]
         },
         {
-          "state": "PENDING_ESIGN",
+          "state": "PENDING_SIGN",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
@@ -62,7 +66,6 @@
               "action": "EDIT",
               "nextState": "DRAFT_IN_PROGRESS",
               "roles": [
-                "SYSTEM",
                 "CITIZEN"
               ]
             },
@@ -70,7 +73,6 @@
               "action": "ESIGN",
               "nextState": "PENDING_PAYMENT",
               "roles": [
-                "SYSTEM",
                 "CITIZEN"
               ]
             },
@@ -78,7 +80,6 @@
               "action": "UPLOAD_SIGNED_COPY",
               "nextState": "PENDING_PAYMENT",
               "roles": [
-                "SYSTEM",
                 "CITIZEN"
               ]
             }
@@ -93,24 +94,41 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "PAY_PARTY_OF_CASE",
-              "nextState": "PENDING_CMO_ESIGN",
+              "action": "MAKE_PAYMENT",
+              "nextState": "PAYMENT_COMPLETE",
               "roles": [
                 "SYSTEM",
-                "CITIZEN"
-              ]
-            }, {
-              "action": "PAY_NOT_PARTY_OF_CASE",
-              "nextState": "PENDING_JUDGE_APPROVAL",
-              "roles": [
-                "SYSTEM",
-                "CITIZEN"
+                "SYSTEM_ADMIN"
               ]
             }
           ]
         },
         {
-          "state": "PENDING_JUDGE_APPROVAL",
+          "state": "PAYMENT_COMPLETE",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SEND_FOR_APPROVAL",
+              "nextState": "PENDING_APPROVAL",
+              "roles": [
+                "EMPLOYEE"
+              ]
+            },
+            {
+              "action": "SEND_FOR_ISSUE",
+              "nextState": "PENDING_ISSUE",
+              "roles": [
+                "SYSTEM"
+              ]
+            }
+          ]
+        },
+        {
+          "state": "PENDING_APPROVAL",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": true,
           "isStartState": false,
@@ -119,7 +137,7 @@
           "actions": [
             {
               "action": "APPROVE",
-              "nextState": "PENDING_CMO_ESIGN",
+              "nextState": "PENDING_ISSUE",
               "roles": [
                 "EMPLOYEE"
               ]
@@ -134,25 +152,49 @@
           ]
         },
         {
-          "state": "PENDING_CMO_ESIGN",
+          "state": "PENDING_ISSUE",
           "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": false,
+          "docUploadRequired": true,
           "isStartState": false,
           "isTerminateState": false,
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "ISSUE",
+              "action": "ISSUE_ALL",
               "nextState": "ISSUED",
               "roles": [
-                "SYSTEM"
+                "EMPLOYEE"
               ]
             },
             {
-              "action": "REJECT",
-              "nextState": "REJECTED",
+              "action": "PARTIAL_ISSUE",
+              "nextState": "PARTIALLY_ISSUED",
               "roles": [
-                "SYSTEM"
+                "EMPLOYEE"
+              ]
+            }
+          ]
+        },
+        {
+          "state": "PARTIALLY_ISSUED",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": true,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "ISSUE_ALL",
+              "nextState": "ISSUED",
+              "roles": [
+                "EMPLOYEE"
+              ]
+            },
+            {
+              "action": "PARTIAL_ISSUE",
+              "nextState": "PARTIALLY_ISSUED",
+              "roles": [
+                "EMPLOYEE"
               ]
             }
           ]
@@ -167,6 +209,14 @@
         },
         {
           "state": "REJECTED",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false
+        },
+        {
+          "state": "DELETED",
           "applicationStatus": "INACTIVE",
           "docUploadRequired": false,
           "isStartState": false,
