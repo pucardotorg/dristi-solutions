@@ -1,6 +1,8 @@
 package org.pucar.dristi.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,9 +54,71 @@ public class FileStoreUtil {
         return fileExists;
     }
 
+    /**
+     * Downloads a file from file store and returns its content as byte array.
+     * @param tenantId tenant id
+     * @param fileStoreId file store id of the file
+     * @return byte array of the file content, or null if download fails
+     */
+    public byte[] fetchFileAsBytes(String tenantId, String fileStoreId) {
+        try {
+            StringBuilder uri = new StringBuilder(configs.getFileStoreHost()).append(configs.getFileStorePath());
+            uri.append("tenantId=").append(tenantId).append("&").append("fileStoreId=").append(fileStoreId);
+            ResponseEntity<byte[]> responseEntity = restTemplate.getForEntity(uri.toString(), byte[].class);
+            if (responseEntity.getStatusCode().equals(HttpStatus.OK) && responseEntity.getBody() != null) {
+                return responseEntity.getBody();
+            }
+            log.error("FileStore returned status {} for fileStoreId: {}", responseEntity.getStatusCode(), fileStoreId);
+        } catch (Exception e) {
+            log.error("Error downloading file from filestore. fileStoreId: {}, tenantId: {}", fileStoreId, tenantId, e);
+        }
+        return null;
+    }
+
+    /**
+     * Counts the number of pages in a PDF file.
+     * @param fileContent byte array of the PDF file
+     * @return number of pages, or 0 if the content is not a valid PDF
+     */
+    public int countPdfPages(byte[] fileContent) {
+        if (fileContent == null || fileContent.length == 0) {
+            return 0;
+        }
+        try (PDDocument document = Loader.loadPDF(fileContent)) {
+            int pages = document.getNumberOfPages();
+            log.info("PDF page count: {}", pages);
+            return pages;
+        } catch (Exception e) {
+            log.error("Error counting PDF pages: {}", e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    /**
+     * Fetches all files by their file store IDs and returns the total page count across all PDFs.
+     * Non-PDF files or files that fail to download are skipped (counted as 0 pages).
+     * @param tenantId tenant id
+     * @param fileStoreIds list of file store ids
+     * @return total page count across all files
+     */
+    public int getTotalPageCount(String tenantId, List<String> fileStoreIds) {
+        if (fileStoreIds == null || fileStoreIds.isEmpty()) {
+            return 0;
+        }
+        int totalPages = 0;
+        for (String fileStoreId : fileStoreIds) {
+            byte[] fileContent = fetchFileAsBytes(tenantId, fileStoreId);
+            int pages = countPdfPages(fileContent);
+            log.info("FileStoreId: {} has {} pages", fileStoreId, pages);
+            totalPages += pages;
+        }
+        log.info("Total page count across {} files: {}", fileStoreIds.size(), totalPages);
+        return totalPages;
+    }
+
     public void deleteFilesByFileStore(List<String> fileStoreIds, String tenantId) {
         if (fileStoreIds == null || fileStoreIds.isEmpty()) {
-            log.warn("No file store IDs provided for deletion");
+            log.error("No file store IDs provided for deletion");
             return;
         }
         String url = configs.getFileStoreHost() + configs.getFileStoreDeleteEndPoint() + "?tenantId=" + tenantId;

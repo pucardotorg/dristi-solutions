@@ -4,12 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.enrichment.CtcApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CtcApplicationRepository;
 import org.pucar.dristi.util.EtreasuryUtil;
+import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.IndexerUtils;
 import org.pucar.dristi.validators.CtcApplicationValidator;
 import org.pucar.dristi.web.models.*;
@@ -36,18 +38,21 @@ public class CtcApplicationService {
 
     private final EtreasuryUtil etreasuryUtil;
 
+    private final FileStoreUtil fileStoreUtil;
+
     private final IndexerUtils indexerUtils;
 
     private final CtcApplicationValidator ctcApplicationValidator;
 
     @Autowired
-    public CtcApplicationService(CtcApplicationRepository ctcApplicationRepository, CtcApplicationEnrichment ctcApplicationEnrichment, WorkflowService workflowService, Configuration config, Producer producer, EtreasuryUtil etreasuryUtil, IndexerUtils indexerUtils, CtcApplicationValidator ctcApplicationValidator) {
+    public CtcApplicationService(CtcApplicationRepository ctcApplicationRepository, CtcApplicationEnrichment ctcApplicationEnrichment, WorkflowService workflowService, Configuration config, Producer producer, EtreasuryUtil etreasuryUtil, FileStoreUtil fileStoreUtil, IndexerUtils indexerUtils, CtcApplicationValidator ctcApplicationValidator) {
         this.ctcApplicationRepository = ctcApplicationRepository;
         this.ctcApplicationEnrichment = ctcApplicationEnrichment;
         this.workflowService = workflowService;
         this.config = config;
         this.producer = producer;
         this.etreasuryUtil = etreasuryUtil;
+        this.fileStoreUtil = fileStoreUtil;
         this.indexerUtils = indexerUtils;
         this.ctcApplicationValidator = ctcApplicationValidator;
     }
@@ -80,6 +85,13 @@ public class CtcApplicationService {
         if (request.getCtcApplication().getWorkflow() != null && (request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("ESIGN")
                 || request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("UPLOAD_SIGNED_COPY"))) {
             //change logic for calculating payment through payment calculator if required
+            if (request.getCtcApplication().getTotalPages() == null) {
+                List<String> acceptedFileStoreIds = getFileStoreIds(request);
+                int totalPages = fileStoreUtil.getTotalPageCount(request.getCtcApplication().getTenantId(), acceptedFileStoreIds);
+                request.getCtcApplication().setTotalPages(totalPages);
+                log.info("Calculated totalPages={} from {} accepted documents for application: {}",
+                        totalPages, acceptedFileStoreIds.size(), request.getCtcApplication().getCtcApplicationNumber());
+            }
             Calculation calculation = Calculation.builder().totalAmount(20 + request.getCtcApplication().getTotalPages() * 1.5).tenantId(request.getCtcApplication().getTenantId()).build();
             etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + "_APPLICATION_FEE", calculation);
         }
@@ -90,6 +102,22 @@ public class CtcApplicationService {
         producer.push(config.getUpdateCtcApplicationTopic(), request);
 
         return application;
+    }
+
+    private List<String> getFileStoreIds(CtcApplicationRequest request) {
+        List<String> acceptedFileStoreIds = new ArrayList<>();
+        if (request.getCtcApplication().getCaseBundleNodes() != null) {
+            for (CaseBundleNode parentNode : request.getCtcApplication().getCaseBundleNodes()) {
+                if (parentNode.getChildren() != null) {
+                    for (CaseBundleNode child : parentNode.getChildren()) {
+                        if ("accepted".equalsIgnoreCase(child.getStatus()) && child.getFileStoreId() != null) {
+                            acceptedFileStoreIds.add(child.getFileStoreId());
+                        }
+                    }
+                }
+            }
+        }
+        return acceptedFileStoreIds;
     }
 
     public List<CtcApplication> searchApplications(CtcApplicationSearchRequest ctcApplicationSearchRequest) {
