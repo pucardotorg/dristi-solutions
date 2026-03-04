@@ -150,8 +150,8 @@ public class AdvocateDetailBlockBuilder {
 
                         PipStatus pipStatus = new PipStatus();
                         pipStatus.setIsEnabled(!pipAffidavit.isEmpty());
-                        pipStatus.setCode(pipAffidavit.isEmpty() ? "NOT_UPLOADED" : "UPLOADED");
-                        pipStatus.setLabel(pipAffidavit.isEmpty() ? "Not uploaded" : "Uploaded");
+                        pipStatus.setCode(pipAffidavit.isEmpty() ? "No" : "Yes");
+                        pipStatus.setLabel(pipAffidavit.isEmpty() ? "No" : "Yes");
 
                         UiFlags uiFlags = UiFlags.builder()
                                 .showAffidavit(!pipAffidavit.isEmpty())
