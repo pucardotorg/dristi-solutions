@@ -161,4 +161,11 @@ public class Configuration {
     // Zone ID
     @Value("${app.zone.id}")
     private String zoneId;
+
+    // topics
+    @Value("${app.kafka.topics.save.ctc.application}")
+    private String saveCtcApplicationTopic;
+
+    @Value("${app.kafka.topics.update.ctc.application}")
+    private String updateCtcApplicationTopic;
 }

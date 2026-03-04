@@ -16,6 +16,20 @@ import java.util.Objects;
 @Component
 public class InitialFilingSection implements CaseBundleSection {
 
+    private static final Map<String, String> CASE_FILE_LABELS = Map.ofEntries(
+            Map.entry("case.authorizationproof.complainant", "COMPLAINANT_AUTHORIZATION_PROOF"),
+            Map.entry("case.authorizationproof.accused", "ACCUSED_AUTHORIZATION_PROOF"),
+            Map.entry("case.cheque", "DISHONORED_CHEQUE"),
+            Map.entry("case.cheque.depositslip", "PROOF_OF_DEPOSIT_OF_CHEQUE"),
+            Map.entry("case.cheque.returnmemo", "CHEQUE_RETURN_MEMO"),
+            Map.entry("case.demandnotice", "LEGAL_DEMAND_NOTICE"),
+            Map.entry("case.demandnotice.proof", "PROOF_OF_DISPATCH_OF_LEGAL_DEMAND_NOTICE"),
+            Map.entry("case.demandnotice.serviceproof", "PROOF_OF_ACKNOWLEDGMENT"),
+            Map.entry("case.replynotice", "PROOF_OF_REPLY"),
+            Map.entry("case.liabilityproof", "PROOF_OF_DEBT_LIABILITY"),
+            Map.entry("case.docs", "OTHERS_DOCUMENT")
+    );
+
     @Override
     public String getOrder() {
         return "03";
@@ -33,6 +47,10 @@ public class InitialFilingSection implements CaseBundleSection {
         Map<String, List<Document>> byType = new LinkedHashMap<>();
         for (Document doc : courtCase.getDocuments()) {
             if (doc == null || doc.getDocumentType() == null || doc.getFileStore() == null) continue;
+            
+            // Only include documents that are defined in CASE_FILE_LABELS
+            if (!isIncludedDocumentType(doc.getDocumentType())) continue;
+            
             byType.computeIfAbsent(doc.getDocumentType(), k -> new ArrayList<>()).add(doc);
         }
 
@@ -41,7 +59,7 @@ public class InitialFilingSection implements CaseBundleSection {
             List<Document> docs = entry.getValue();
             if (docs == null || docs.isEmpty()) continue;
 
-            String label = documentType;
+            String label = getLabelForDocumentType(documentType);
 
             if (docs.size() == 1) {
                 children.add(CaseBundleNode.builder()
@@ -79,5 +97,20 @@ public class InitialFilingSection implements CaseBundleSection {
                 .title("INITIAL_FILINGS")
                 .children(children)
                 .build();
+    }
+
+    private boolean isIncludedDocumentType(String documentType) {
+        if (documentType == null) return false;
+        return CASE_FILE_LABELS.keySet().stream()
+                .anyMatch(key -> key.equalsIgnoreCase(documentType));
+    }
+
+    private String getLabelForDocumentType(String documentType) {
+        if (documentType == null) return documentType;
+        return CASE_FILE_LABELS.entrySet().stream()
+                .filter(entry -> entry.getKey().equalsIgnoreCase(documentType))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(documentType);
     }
 }

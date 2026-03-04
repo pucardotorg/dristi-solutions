@@ -85,4 +85,21 @@ public class ServiceConstants {
                     + "]}}}";
     public static final String CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION = "CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION";
     public static final String CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION = "CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION";
+
+    public static final String MOBILE_PATTERN = "Pattern.compile(\"^[6-9]\\\\d{9}$\")";
+
+    public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
+
+    public static final String POA = "POA";
+
+    public static final String ADVOCATE_NAME = "advocateName";
+
+    public static final String ADVOCATE_UUID = "uuid";
+
+    public static final String ADVOCATE = "Advocate";
+
+    public static final String COMPLAINANT = "Complainant";
+
+    public static final String ACCUSED = "Accused";
+
 }

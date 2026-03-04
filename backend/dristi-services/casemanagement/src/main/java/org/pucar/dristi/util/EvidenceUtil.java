@@ -35,7 +35,7 @@ public class EvidenceUtil {
         this.mapper = mapper;
     }
 
-    public List<Artifact> searchEvidence(String filingNumber, String courtId) {
+    public List<Artifact> searchEvidence(String filingNumber, String courtId, String tenantId) {
 
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getEvidenceServiceHost()).append(configuration.getEvidenceServiceSearchEndpoint());
@@ -43,6 +43,7 @@ public class EvidenceUtil {
                 .filingNumber(filingNumber)
                 .courtId(courtId)
                 .isVoid(false)
+                .tenantId(tenantId)
                 .isHideBailCaseBundle(true)
                 .build();
         EvidenceSearchRequest evidenceSearchRequest = EvidenceSearchRequest.builder()

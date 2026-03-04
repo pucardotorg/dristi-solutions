@@ -124,7 +124,7 @@ public class PaymentUpdateService {
 //            ctcApplication.getDocuments().add(document);
 //        }
         CtcApplicationRequest ctcApplicationRequest = CtcApplicationRequest.builder().requestInfo(requestInfo).ctcApplication(ctcApplication).build();
-        producer.push("update-ctc-application", ctcApplicationRequest);
+        producer.push(config.getUpdateCtcApplicationTopic(), ctcApplicationRequest);
     }
 
 }

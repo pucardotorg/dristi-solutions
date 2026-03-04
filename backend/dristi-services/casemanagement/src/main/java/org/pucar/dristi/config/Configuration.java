@@ -96,19 +96,19 @@ public class Configuration {
 	@Value("${egov.sms.notification.topic}")
 	private String smsNotificationTopic;
 
-	@Value("${dristi.dev.file.search.host}")
+	@Value("${dristi.file.search.host}")
 	private String fileStoreHost;
 
-	@Value("${dristi.dev.file.search.path}")
+	@Value("${dristi.file.search.path}")
 	private String fileStorePath;
 
-	@Value("${dristi.dev.file.delete.path}")
+	@Value("${dristi.file.delete.path}")
 	private String fileStoreDeleteEndPoint;
 
-	@Value("${dristi.dev.order.search.host}")
+	@Value("${dristi.order.search.host}")
 	private String orderSearchHost;
 
-	@Value("${dristi.dev.order.search.url}")
+	@Value("${dristi.order.search.url}")
 	private String orderSearchPath;
 
 	@Value("${egov.pdf.create}")
@@ -123,10 +123,10 @@ public class Configuration {
 	@Value("${egov.credential.url}")
 	private String credentialUrl;
 
-	@Value("${dristi.dev.task.search.host}")
+	@Value("${dristi.task.search.host}")
 	private String taskSearchHost;
 
-	@Value("${dristi.dev.task.search.url}")
+	@Value("${dristi.task.search.url}")
 	private String taskSearchPath;
 
 

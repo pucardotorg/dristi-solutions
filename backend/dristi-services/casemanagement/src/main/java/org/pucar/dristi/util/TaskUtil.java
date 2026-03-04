@@ -84,7 +84,7 @@ public class TaskUtil {
             throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
-            throw new CustomException();
+            throw new CustomException(SEARCHER_SERVICE_EXCEPTION, e.getMessage());
         }
     }
 }

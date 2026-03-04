@@ -3,6 +3,7 @@ package org.pucar.dristi.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.web.models.digitalizeddocument.DigitalizedDocument;
@@ -35,12 +36,15 @@ public class DigitalizedDocumentUtil {
     /**
      * Searches for digitalized documents based on criteria
      */
-    public List<DigitalizedDocument> searchDigitalizedDocuments(String caseId, String courtId) {
+    public List<DigitalizedDocument> searchDigitalizedDocuments(String caseId, String courtId, RequestInfo requestInfo, String tenantId) {
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getDigitalizedDocumentsHost())
            .append(configuration.getDigitalizedDocumentsSearchEndPoint());
 
-        DigitalizedDocumentSearchRequest searchRequest = DigitalizedDocumentSearchRequest.builder().criteria(DigitalizedDocumentSearchCriteria.builder().caseId(caseId).courtId(courtId).status("COMPLETED").build()).build();
+        DigitalizedDocumentSearchRequest searchRequest = DigitalizedDocumentSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(DigitalizedDocumentSearchCriteria.builder().caseId(caseId).courtId(courtId).status("COMPLETED").tenantId(tenantId).build())
+                .build();
         try {
             Object response = restTemplate.postForObject(uri.toString(), searchRequest, Map.class);
             JsonNode jsonNode = objectMapper.readTree(objectMapper.writeValueAsString(response));

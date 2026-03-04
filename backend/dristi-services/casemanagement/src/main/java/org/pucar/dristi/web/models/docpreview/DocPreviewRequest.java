@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models.docpreview;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,15 +21,26 @@ import java.util.List;
 public class DocPreviewRequest {
 
     @JsonProperty("requestInfo")
+    @Valid
+    @NotNull
     private RequestInfo requestInfo;
 
+    @JsonProperty("tenantId")
+    @NotNull
+    private String tenantId;
+
     @JsonProperty("filingNumber")
+    @Valid
+    @NotNull
     private String filingNumber;
 
     @JsonProperty("ctcApplicationNumber")
+    @Valid
+    @NotNull
     private String ctcApplicationNumber;
 
     @JsonProperty("courtId")
+    @NotNull
     private String courtId;
 
 }

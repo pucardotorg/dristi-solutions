@@ -35,16 +35,20 @@ public class CtcApiController {
     @PostMapping("/applications/_create")
     public ResponseEntity<CtcApplicationResponse> createApplication(@Valid @RequestBody CtcApplicationRequest request) {
 
-        log.info("Creating CTC application for case: {}", request.getCtcApplication() != null ? request.getCtcApplication().getCaseNumber() : "unknown");
-
         try {
+
+            log.info("Creating CTC application request : {}", request);
+
             CtcApplication application = ctcApplicationService.createApplication(request);
+
             ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
 
             CtcApplicationResponse response = CtcApplicationResponse.builder()
                     .responseInfo(responseInfo)
                     .ctcApplication(application)
                     .build();
+
+            log.info("Creating CTC application response : {}", response);
 
             return new ResponseEntity<>(response, HttpStatus.CREATED);
 
