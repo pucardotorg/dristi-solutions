@@ -568,7 +568,14 @@ const ManageOfficeMember = () => {
         <button type="button" onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
           {t("GO_BACK") || "Go Back"}
         </button>
-        <button type="button" onClick={handleUpdateAccessClick} className="manage-office-btn manage-office-btn--primary">
+        <button
+          type="button"
+          onClick={handleUpdateAccessClick}
+          className={`manage-office-btn manage-office-btn--primary${
+            accessType === "ALL_CASES" ? " manage-office-btn--disabled" : ""
+          }`}
+          disabled={accessType === "ALL_CASES"}
+        >
           {t("UPDATE_ACCESS") || "Update Access"}
         </button>
       </footer>
