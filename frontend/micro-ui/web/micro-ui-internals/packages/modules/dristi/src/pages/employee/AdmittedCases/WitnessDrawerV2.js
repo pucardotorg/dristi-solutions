@@ -8,7 +8,7 @@ import isEmpty from "lodash/isEmpty";
 import { TextArea } from "@egovernments/digit-ui-components";
 import TranscriptComponent from "../../../../../hearings/src/pages/employee/Transcription";
 import { Urls } from "../../../hooks";
-import { getFilingType } from "../../../Utils";
+import { getAuthorizedUuid, getFilingType } from "../../../Utils";
 import { hearingService } from "../../../../../hearings/src/hooks/services";
 import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
 import { constructFullName, removeInvalidNameParts } from "@egovernments/digit-ui-module-orders/src/utils";
@@ -100,6 +100,8 @@ const WitnessDrawerV2 = ({
   const [showConfirmDeleteDepositionModal, setShowConfirmDeleteDepositionModal] = useState({ show: false, tab: {} });
   const [advocatesData, setAdvocatesData] = useState([]);
   const [respondentsData, setRespondentsData] = useState([]);
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -224,8 +226,8 @@ const WitnessDrawerV2 = ({
                 const newMobileNumber = individualData?.Individual?.[0]?.mobileNumber
                   ? individualData?.Individual?.[0]?.mobileNumber
                   : individualData?.Individual?.[0]?.userDetails?.username
-                  ? individualData?.Individual?.[0]?.userDetails?.username
-                  : "";
+                    ? individualData?.Individual?.[0]?.userDetails?.username
+                    : "";
 
                 if (!mobileNumber || mobileNumber?.length === 0) {
                   mobileNumber = newMobileNumber ? [newMobileNumber] : [];
@@ -272,6 +274,7 @@ const WitnessDrawerV2 = ({
         filingNumber: caseDetails?.filingNumber,
         artifactType: "WITNESS_DEPOSITION",
         tenantId,
+        asUser: authorizedUuid,
         ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
       },
       tenantId,
@@ -565,29 +568,7 @@ const WitnessDrawerV2 = ({
     setSelectedWitnessType({ label: option?.value, value: option?.value });
   };
 
-  const handleAddNewDraft = async () => {
-    const newTab = {
-      artifactNumber: null, // Will be set after saving
-      sourceName: "Deposition", // Default name until saved
-      sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
-      sourceID: selectedWitness?.value,
-      content: "",
-      artifactType: "WITNESS_DEPOSITION",
-      caseId: caseDetails?.id,
-      filingNumber: caseDetails?.filingNumber,
-      tenantId,
-      isNew: true, // Flag to identify unsaved tabs
-    };
 
-    // Add the new tab to the list and set it as active
-    const updatedTabs = [...evidenceList, newTab];
-    setActiveTabs(updatedTabs);
-    setActiveTabIndex(updatedTabs.length - 1);
-    setWitnessDepositionText(""); // Clear the text area for new draft
-    setCurrentArtifactNumber(null);
-    setSelectedWitness({});
-    setSelectedWitnessType({});
-  };
 
   // Handle tab change
   const handleTabChange = async (tab) => {
@@ -860,13 +841,13 @@ const WitnessDrawerV2 = ({
       const documents = Array.isArray(currentEvidence?.file) ? currentEvidence.file : {};
       const documentsFile = fileStoreId
         ? [
-            {
-              fileStore: fileStoreId,
-              documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
-              additionalDetails: { name: `${t("WITNESS_DEPOSITION")} (${selectedWitnessType?.value || ""})` },
-              tenantId,
-            },
-          ]
+          {
+            fileStore: fileStoreId,
+            documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
+            additionalDetails: { name: `${t("WITNESS_DEPOSITION")} (${selectedWitnessType?.value || ""})` },
+            tenantId,
+          },
+        ]
         : null;
 
       const currentParty = allParties?.find((p) => (p?.uuid || p?.uniqueId) === selectedWitness?.value);

@@ -48,6 +48,9 @@ public class Configuration {
     @Value("${bailable.warrant.pdf.template.key}")
     private String bailableWarrantPdfTemplateKey;
 
+    @Value("${witness.warrant.pdf.template.key}")
+    private String witnessWarrantPdfTemplateKey;
+
     @Value("${summons.accused.qr.pdf.template.key}")
     private String summonsAccusedQrPdfTemplateKey;
 
@@ -329,4 +332,7 @@ public class Configuration {
 
     @Value("${dristi.taxhead.master.code}")
     private String ePostTaxHeadMasterCode;
+
+    @Value("${app.zone.id}")
+    private String zoneId;
 }

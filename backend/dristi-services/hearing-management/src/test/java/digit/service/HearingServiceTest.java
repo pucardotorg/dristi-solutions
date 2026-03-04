@@ -1,5 +1,6 @@
 package digit.service;
 
+import digit.config.Configuration;
 import digit.enrichment.HearingsEnrichment;
 import digit.util.HearingUtil;
 import digit.util.SchedulerUtil;
@@ -26,6 +27,7 @@ public class HearingServiceTest {
     private HearingUtil hearingUtil;
     private HearingsEnrichment hearingsEnrichment;
     private SchedulerUtil schedulerUtil;
+    private Configuration config;
 
     private HearingService hearingService;
 
@@ -34,7 +36,9 @@ public class HearingServiceTest {
         hearingUtil = mock(HearingUtil.class);
         hearingsEnrichment = mock(HearingsEnrichment.class);
         schedulerUtil = mock(SchedulerUtil.class);
-        hearingService = new HearingService(hearingUtil, hearingsEnrichment, schedulerUtil);
+        config = mock(Configuration.class);
+        when(config.getZoneId()).thenReturn("Asia/Kolkata");
+        hearingService = new HearingService(hearingUtil, hearingsEnrichment, schedulerUtil, config);
     }
 
     @Test

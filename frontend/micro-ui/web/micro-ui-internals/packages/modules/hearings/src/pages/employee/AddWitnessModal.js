@@ -7,6 +7,7 @@ import isEqual from "lodash/isEqual";
 import { submissionService } from "../../../../submissions/src/hooks/services/index.js";
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow.js";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min.js";
+import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
 import { formatName } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils.js";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
 
@@ -225,7 +226,10 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
           }
         });
       } else {
-        const litigant = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === authorizedUuid)?.representing?.[0];
+        const litigant =
+          caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === authorizedUuid)?.representing?.[0] ||
+          caseDetails?.litigants?.find((litigant) => litigant?.additionalDetails?.uuid === authorizedUuid);
+
         const ownerType = litigant?.partyType?.includes("complainant") ? "COMPLAINANT" : "ACCUSED";
         const newWitnesses = witnessFormList?.map((data) => {
           return {
@@ -519,6 +523,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
     (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index) => {
       // Ensure we have valid form data
       if (!isEqual(formData, witnessFormList?.[index]?.data)) {
+        runComprehensiveSanitizer({ formData, setValue });
         setWitnessFormList((prevData) => prevData?.map((item, i) => (i === index ? { ...item, data: formData } : item)));
         checkNameValidation({ formData, setValue, clearErrors, formState });
         checkDuplicateMobileEmailValidation({

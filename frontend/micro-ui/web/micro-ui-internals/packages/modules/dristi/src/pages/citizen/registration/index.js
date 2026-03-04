@@ -121,9 +121,7 @@ const Registration = ({ stateCode }) => {
       [newConfig]
     )
   );
-  const getFromLocation = (state, searchParams) => {
-    return state?.from || searchParams?.from;
-  };
+
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const { data, isLoading, refetch, isFetching } = Digit.Hooks.dristi.useGetIndividualUser(
     {

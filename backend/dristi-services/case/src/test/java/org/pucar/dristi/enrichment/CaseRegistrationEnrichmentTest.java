@@ -229,6 +229,7 @@ class CaseRegistrationEnrichmentTest {
         workflow.setAction(ADMIT_CASE_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         caseRequest.setCases(courtCase);
+        when(config.getZoneId()).thenReturn("Asia/Kolkata");
         when(idgenUtil.getIdList(any(), any(), any(), any(), any(),any())).thenReturn(Collections.singletonList("12345"));
         caseRegistrationEnrichment.enrichCourtCaseNumber(caseRequest);
 

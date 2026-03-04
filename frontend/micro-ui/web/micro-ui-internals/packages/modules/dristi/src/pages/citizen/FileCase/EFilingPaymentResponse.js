@@ -28,17 +28,9 @@ const mockSubmitModalInfo = {
   showTable: true,
 };
 
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
 
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
+
+
 
 function EFilingPaymentResponse({ t, setShowModal, header, subHeader, submitModalInfo = mockSubmitModalInfo, amount = 2000, path }) {
   const history = useHistory();
@@ -60,15 +52,15 @@ function EFilingPaymentResponse({ t, setShowModal, header, subHeader, submitModa
 
   const bannerProps = isSuccess
     ? {
-        ...commonProps,
-        successful: true,
-        message: t(submitModalInfo?.header),
-      }
+      ...commonProps,
+      successful: true,
+      message: t(submitModalInfo?.header),
+    }
     : {
-        ...commonProps,
-        successful: false,
-        message: t("CS_PAYMENT_FAILED"),
-      };
+      ...commonProps,
+      successful: false,
+      message: t("CS_PAYMENT_FAILED"),
+    };
   const { downloadPdf } = useDownloadCasePdf();
   return (
     <div className=" user-registration">

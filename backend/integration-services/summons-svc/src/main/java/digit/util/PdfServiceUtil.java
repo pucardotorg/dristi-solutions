@@ -95,6 +95,7 @@ public class PdfServiceUtil {
             miscellaneousPdf.setIsCoverLetterRequired(taskDetails.getMiscellaneuosDetails().getIsCoverLetterRequired());
             miscellaneousPdf.setNextHearingDate(taskDetails.getMiscellaneuosDetails().getNextHearingDate());
             miscellaneousPdf.setPartyDetails(taskDetails.getPartyDetails());
+
             OrderCriteria criteria = OrderCriteria.builder()
                     .filingNumber(taskDetails.getMiscellaneuosDetails().getFilingNumber())
                     .orderType("WARRANT")
@@ -105,6 +106,7 @@ public class PdfServiceUtil {
 
             OrderSearchRequest searchRequest = OrderSearchRequest.builder()
                     .criteria(criteria)
+                    .requestInfo(taskRequest.getRequestInfo())
                     .pagination(Pagination.builder().limit(1.0).offSet(0.0).build())
                     .build();
 
@@ -385,7 +387,7 @@ public class PdfServiceUtil {
     private String formatDateFromMillis(long millis) {
         try {
             ZonedDateTime dateTime = Instant.ofEpochMilli(millis)
-                    .atZone(ZoneId.of("Asia/Kolkata"));
+                    .atZone(ZoneId.of(config.getZoneId()));
 
             String day = String.valueOf(dateTime.getDayOfMonth());
 

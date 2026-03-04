@@ -6,6 +6,7 @@ import { Loader } from "@egovernments/digit-ui-components";
 import { ordersService } from "../hooks/services";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
 import { Urls } from "../hooks/services/Urls";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 function ReIssueSummonsModal() {
   const { t } = useTranslation();
   const history = useHistory();
@@ -29,16 +30,6 @@ function ReIssueSummonsModal() {
     Boolean(hearingId && userType)
   );
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
-
-  const formatDate = (date, format) => {
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    if (format === "DD-MM-YYYY") {
-      return `${day}-${month}-${year}`;
-    }
-    return `${year}-${month}-${day}`;
-  };
 
   const handleCloseModal = () => {
     history.goBack();
@@ -88,8 +79,8 @@ function ReIssueSummonsModal() {
               type: orderType,
               name: `ORDER_TYPE_${orderType}`,
             },
-            originalHearingDate: formatDate(new Date(hearingDetails?.startTime)),
-            hearingDate: formatDate(new Date(hearingDetails?.startTime)),
+            originalHearingDate: DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), "YYYY-MM-DD"),
+            hearingDate: DateUtils.getFormattedDate(new Date(hearingDetails?.startTime), "YYYY-MM-DD"),
           },
         },
         // hearingNumber: hearingId,
@@ -159,7 +150,9 @@ function ReIssueSummonsModal() {
       actionSaveLabel={t("RESCHEDULE_HEARING")}
       actionSaveOnSubmit={handleRescheduleHearing}
     >
-      <h2>{`${t("NEXT_HEARING_SCHEDULED_ON")} ${formatDate(new Date(hearingDetails?.startTime))} ${t("DO_YOU_WANT_TO_RESCHEDULE")}`}</h2>
+      <h2>{`${t("NEXT_HEARING_SCHEDULED_ON")} ${DateUtils.getFormattedDate(new Date(hearingDetails?.startTime))} ${t(
+        "DO_YOU_WANT_TO_RESCHEDULE"
+      )}`}</h2>
     </Modal>
   );
 }

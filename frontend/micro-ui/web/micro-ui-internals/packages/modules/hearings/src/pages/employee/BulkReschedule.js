@@ -12,6 +12,7 @@ import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import BulkRescheduleModal from "../../components/BulkRescheduleModal";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -98,6 +99,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
   const [issignLoader, setSignLoader] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
 
@@ -183,6 +185,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const uploadModalConfig = useMemo(() => {
@@ -274,7 +277,11 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       const diaryEntries = newHearingData?.map((hearing) => {
         return {
           courtId: courtId,
-          businessOfDay: `No sitting notified on ${formatDate(hearing?.originalHearingDate)}. Case posted to ${formatDate(hearing?.hearingDate)}`,
+          businessOfDay: `No sitting notified on ${DateUtils.getFormattedDate(
+            hearing?.originalHearingDate,
+            "DD-MM-YYYY",
+            "/"
+          )}. Case posted to ${DateUtils.getFormattedDate(hearing?.hearingDate, "DD-MM-YYYY", "/")}`,
           tenantId: tenantId,
           entryDate: new Date().setHours(0, 0, 0, 0),
           hearingDate: hearing?.startTime,
@@ -477,11 +484,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-  };
-
   const onSumbitReschedule = async () => {
     try {
       setLoader(true);
@@ -595,6 +597,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         setSignLoader(false);
         setSignFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setSignLoader(false);
     }
@@ -732,6 +735,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           formData={signFormData}
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
+          fileUploadError={fileUploadError}
         />
       )}
 

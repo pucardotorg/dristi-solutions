@@ -3,12 +3,11 @@ import { Loader } from "@egovernments/digit-ui-react-components";
 import ApplicationAwaitingPage from "./ApplicationAwaitingPage";
 import TakeUserToRegistration from "./TakeUserToRegistration";
 import { userTypeOptions } from "../registration/config";
-import { CaseInProgressIcon, ClosedCasesIcon, FileCaseIcon, JoinCaseIcon, MyHearingsIcon, PendingActionsIcon } from "../../../icons/svgIndex";
-import Home from "./litigantHome";
 import { useGetAccessToken } from "../../../hooks/useGetAccessToken";
 import { useTranslation } from "react-i18next";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
-function CitizenHome({ tenantId, setHideBack }) {
+function CitizenHome({ tenantId = "kl", setHideBack = () => {} }) {
   const Digit = window?.Digit || {};
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
@@ -18,6 +17,15 @@ function CitizenHome({ tenantId, setHideBack }) {
   const [isFetching, setIsFetching] = useState(true);
   const [isFetchingAdvoacte, setIsFetchingAdvocate] = useState(true);
   const userInfoType = Digit.UserService.getType();
+  const history = useHistory();
+  const { refetchIndividual } = Digit.Hooks.useQueryParams();
+
+  useEffect(() => {
+    if (refetchIndividual === "true" || refetchIndividual === true) {
+      const event = new CustomEvent("refetchIndividualData");
+      window.dispatchEvent(event);
+    }
+  }, [refetchIndividual]);
 
   const { data, isLoading, refetch } = Digit.Hooks.dristi.useGetIndividualUser(
     {
@@ -31,35 +39,31 @@ function CitizenHome({ tenantId, setHideBack }) {
     userInfo?.uuid && isUserLoggedIn
   );
 
-  const cardIcons = [
-    { Icon: <FileCaseIcon />, label: "File a Case", path: "/ui/citizen/dristi/home/file-case" },
-    { Icon: <CaseInProgressIcon />, label: "Case in Progress", path: "/ui/employee/citizen/dristi/case-progress" },
-    { Icon: <MyHearingsIcon />, label: "My hearing", path: "/ui/employee/citzen/dristi/my-hearings" },
-    { Icon: <JoinCaseIcon />, label: "Join a case", path: "/ui/employee/citizen/dristi/join-case" },
-    { Icon: <ClosedCasesIcon />, label: "Closed Cases", path: "/ui/employee/citizen/dristi/closed-cases" },
-    { Icon: <PendingActionsIcon />, label: "Pending Actions", path: "/ui/employee/citizen/dristi/pending-actions" },
-  ];
-
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
   const isLitigantPartialRegistered = useMemo(() => {
     if (userInfoType !== "citizen") return false;
 
     if (!data?.Individual || data?.Individual.length === 0) return false;
 
-    if (data?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
+    if (data?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE" || role?.code === "ADVOCATE_CLERK_ROLE")) return false;
 
     const address = data?.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
   }, [data?.Individual, userInfoType]);
 
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
-  const { data: searchData, isLoading: isSearchLoading, refetch: refetchAdvocateClerk } = Digit.Hooks.dristi.useGetAdvocateClerk(
+  const {
+    data: searchData,
+    isLoading: isSearchLoading,
+    refetch: refetchAdvocateClerk,
+    isFetching: refetchingAdvocateClerk,
+  } = Digit?.Hooks?.dristi?.useGetAdvocateClerk(
     {
       criteria: [{ individualId }],
       tenantId,
     },
     { tenantId },
-    moduleCode,
+    individualId,
     Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
@@ -111,6 +115,14 @@ function CitizenHome({ tenantId, setHideBack }) {
   ]);
 
   const registrationIsDoneApprovalIsPending = individualId && isApprovalPending && !isRejected && !isLitigantPartialRegistered;
+
+  useEffect(() => {
+    if (!data || !searchData) return;
+    if (individualId && !isApprovalPending && !isRejected && !isLitigantPartialRegistered) {
+      history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
+    }
+  }, [individualId, isLitigantPartialRegistered, isRejected, history, isApprovalPending, searchResult, data, searchData]);
+
   useEffect(() => {
     setHideBack(userHasIncompleteRegistration || registrationIsDoneApprovalIsPending);
     return () => {
@@ -127,7 +139,7 @@ function CitizenHome({ tenantId, setHideBack }) {
 
   useGetAccessToken("citizen.refresh-token", individualId && !isApprovalPending && !isRejected);
 
-  if (isLoading || isSearchLoading || isFetching || isFetchingAdvoacte) {
+  if (isLoading || isSearchLoading || refetchingAdvocateClerk || isFetching || isFetchingAdvoacte) {
     return <Loader />;
   }
 
@@ -142,24 +154,6 @@ function CitizenHome({ tenantId, setHideBack }) {
         width: "100%",
       }}
     >
-      {individualId && !isApprovalPending && !isRejected && !isLitigantPartialRegistered && (
-        // cardIcons.map((card, index) => {
-        //   return (
-        //     <CustomCard
-        //       key={index}
-        //       label={card.label}
-        //       Icon={card.Icon}
-        //       style={{ width: "400px", height: "150px" }}
-        //       onClick={() => {
-        //         if (card.label === "File a Case") {
-        //           history.push(card.path);
-        //         }
-        //       }}
-        //     ></CustomCard>
-        //   );
-        // })}
-        <Home />
-      )}
       {registrationIsDoneApprovalIsPending && <ApplicationAwaitingPage individualId={individualId} />}
       {userHasIncompleteRegistration && (
         <TakeUserToRegistration

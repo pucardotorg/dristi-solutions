@@ -1,3 +1,8 @@
+/**
+ * DISABLED: HearingConsumer is not being used anywhere in the code.
+ * This consumer has been disabled to prevent unnecessary Kafka topic consumption.
+ * All hearing processing is now handled through orders instead of direct hearing messages.
+ */
 package com.dristi.njdg_transformer.consumer;
 
 import com.dristi.njdg_transformer.model.hearing.Hearing;
@@ -14,7 +19,7 @@ import org.springframework.stereotype.Component;
 
 import static com.dristi.njdg_transformer.config.ServiceConstants.COMPLETED;
 
-@Component
+//@Component - DISABLED: Consumer not being used anywhere in code
 @Slf4j
 public class HearingConsumer {
 
@@ -26,7 +31,7 @@ public class HearingConsumer {
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(topics = "#{'${kafka.topics.hearing}'.split(',')}", groupId = "transformer-hearing")
+    //@KafkaListener(topics = "#{'${kafka.topics.hearing}'.split(',')}", groupId = "transformer-hearing") - DISABLED
     public void listen(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
         String messageId = extractMessageId(payload);
         log.info("Received hearing message on topic: {} | messageId: {} | partition: {} | offset: {}", 
@@ -69,7 +74,7 @@ public class HearingConsumer {
         }
     }
 
-    @KafkaListener(topics = "#{'${kafka.topics.bulk.reschedule}'.split(',')}", groupId = "transformer-bulk-reschedule")
+    //@KafkaListener(topics = "#{'${kafka.topics.bulk.reschedule}'.split(',')}", groupId = "transformer-bulk-reschedule") - DISABLED
     public void listenBulkReschedule(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
         String messageId = extractMessageId(payload);
         log.info("Received bulk reschedule message on topic: {} | messageId: {} | partition: {} | offset: {}", 

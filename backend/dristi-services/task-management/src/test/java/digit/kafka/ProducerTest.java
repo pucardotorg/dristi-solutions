@@ -1,6 +1,5 @@
 package digit.kafka;
 
-import org.egov.tracer.kafka.CustomKafkaTemplate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,19 +12,19 @@ import static org.mockito.Mockito.*;
 class ProducerTest {
 
     @Mock
-    private CustomKafkaTemplate<String, Object> kafkaTemplate;
+    private KafkaProducerService kafkaProducerService;
 
     @InjectMocks
     private Producer producer;
 
     @Test
-    void push_CallsKafkaTemplateSend() {
+    void push_CallskafkaProducerServiceSend() {
         String topic = "test-topic";
         Object value = "test-message";
 
         producer.push(topic, value);
 
-        verify(kafkaTemplate, times(1)).send(topic, value);
+        verify(kafkaProducerService, times(1)).send(topic, value);
     }
 
     @Test
@@ -35,7 +34,7 @@ class ProducerTest {
 
         producer.push(topic, value);
 
-        verify(kafkaTemplate, times(1)).send(topic, value);
+        verify(kafkaProducerService, times(1)).send(topic, value);
     }
 
     @Test
@@ -44,7 +43,7 @@ class ProducerTest {
 
         producer.push(topic, null);
 
-        verify(kafkaTemplate, times(1)).send(topic, null);
+        verify(kafkaProducerService, times(1)).send(topic, null);
     }
 
     @Test
@@ -53,7 +52,7 @@ class ProducerTest {
         producer.push("topic2", "message2");
         producer.push("topic3", "message3");
 
-        verify(kafkaTemplate, times(3)).send(anyString(), any());
+        verify(kafkaProducerService, times(3)).send(anyString(), any());
     }
 
     // Helper class for testing complex objects

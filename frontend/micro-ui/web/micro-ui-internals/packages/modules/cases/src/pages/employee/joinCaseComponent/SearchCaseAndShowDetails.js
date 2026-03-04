@@ -2,10 +2,10 @@ import { InfoCard } from "@egovernments/digit-ui-components";
 import CustomCaseInfoDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCaseInfoDiv";
 import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
-import { formatDate } from "../../../utils";
 import NameListWithModal from "../../../components/NameListWithModal";
 import { createShorthand } from "../../../utils/joinCaseUtils";
 import { useTranslation } from "react-i18next";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const SearchCaseAndShowDetails = ({
   caseNumber,
@@ -55,7 +55,7 @@ const SearchCaseAndShowDetails = ({
         },
         {
           key: "CS_FILING_DATE",
-          value: formatDate(new Date(caseDetails?.filingDate)),
+          value: DateUtils.getFormattedDate(new Date(caseDetails?.filingDate)),
         },
       ];
     }

@@ -76,4 +76,54 @@ public class AdvocateOfficeApiController {
         return ResponseEntity.accepted().body(response);
     }
 
+    @RequestMapping(value = "/v1/_searchCaseMember", method = RequestMethod.POST)
+    public ResponseEntity<CaseMemberSearchResponse> advocateOfficeV1SearchCaseMemberPost(@Parameter(in = ParameterIn.DEFAULT, description = "Search criteria for case members + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseMemberSearchRequest body) {
+        log.info("Searching case members with criteria: {}", body.getCriteria());
+        CaseMemberSearchResponse caseMemberResponse = advocateOfficeService.searchCaseMembers(body);
+        CaseMemberSearchResponse response = CaseMemberSearchResponse.builder()
+                .cases(caseMemberResponse.getCases())
+                .totalCount(caseMemberResponse.getTotalCount())
+                .pagination(caseMemberResponse.getPagination())
+                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true))
+                .build();
+        log.info("Case member search completed, found {} cases", response.getTotalCount());
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/v1/_updateMemberAccess", method = RequestMethod.POST)
+    public ResponseEntity<UpdateMemberAccessResponse> advocateOfficeV1UpdateMemberAccessPost(@Parameter(in = ParameterIn.DEFAULT, description = "Details for updating member access + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody UpdateMemberAccessRequest body) {
+        log.info("Updating member access: {}", body);
+        UpdateMemberAccess updatedMember = advocateOfficeService.updateMemberAccess(body);
+        UpdateMemberAccessResponse response = UpdateMemberAccessResponse.builder()
+                .updateMemberAccess(updatedMember)
+                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true))
+                .build();
+        log.info("Member access updated successfully: {}", response);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/v1/_checkMemberStatus", method = RequestMethod.POST)
+    public ResponseEntity<CheckMemberStatusResponse> advocateOfficeV1CheckMemberStatusPost(@Parameter(in = ParameterIn.DEFAULT, description = "Details for checking member status + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CheckMemberStatusRequest body) {
+        log.info("Checking member status: {}", body);
+        String status = advocateOfficeService.checkMemberStatus(body);
+        CheckMemberStatusResponse response = CheckMemberStatusResponse.builder()
+                .status(status)
+                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true))
+                .build();
+        log.info("Member status check completed: {}", response);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/v1/_processCaseMember", method = RequestMethod.POST)
+    public ResponseEntity<ProcessCaseMemberResponse> advocateOfficeV1ProcessCaseMemberPost(@Parameter(in = ParameterIn.DEFAULT, description = "Details for processing case member + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody ProcessCaseMemberRequest body) {
+        log.info("Processing case member: {}", body);
+        ProcessCaseMember processCaseMember = advocateOfficeService.processCaseMember(body);
+        ProcessCaseMemberResponse response = ProcessCaseMemberResponse.builder()
+                .processCaseMember(processCaseMember)
+                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true))
+                .build();
+        log.info("Case member processed successfully: {}", response);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
 }

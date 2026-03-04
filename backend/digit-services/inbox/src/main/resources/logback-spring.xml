@@ -1,45 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!-- Load Spring Boot properties -->
     <springProperty scope="context" name="lokiEnabled" source="logging.loki.enabled" defaultValue="false"/>
     <springProperty scope="context" name="lokiUrl" source="logging.loki.url" defaultValue="http://localhost:3100/loki/api/v1/push"/>
+    <springProperty scope="context" name="appName" source="logging.loki.app" defaultValue="unknown-app"/>
     <springProperty scope="context" name="env" source="logging.loki.environment" defaultValue="local"/>
     <springProperty scope="context" name="logLevel" source="logging.level.root" defaultValue="INFO"/>
+
+    <!-- Console Appender (always on) -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSSZ} [%thread] %-5level--- %-60logger{50} -- TENANTID=%X{TENANTID:-null}, CORRELATION_ID=%X{CORRELATION_ID:-null} -- : %msg%n</pattern>
         </encoder>
     </appender>
+
+    <!-- Filter to suppress Loki4j connection errors -->
     <logger name="com.github.loki4j.client.pipeline.AsyncBufferPipeline" level="OFF" additivity="false"/>
     <logger name="com.github.loki4j" level="WARN" additivity="false"/>
+
+    <!-- Conditionally define Loki Appender -->
     <if condition='property("lokiEnabled").equalsIgnoreCase("true")'>
         <then>
+            <!-- LOKI appender for loki4j 1.4.x compatible format -->
             <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
-                <http class="com.github.loki4j.logback.JavaHttpSender">
+                <http class="com.github.loki4j.logback.ApacheHttpSender">
                     <url>${lokiUrl}</url>
                     <connectionTimeoutMs>5000</connectionTimeoutMs>
                     <requestTimeoutMs>3000</requestTimeoutMs>
                 </http>
                 <format>
                     <label>
-                        <pattern>environment=${env},host=${HOSTNAME},logger=%logger</pattern>
+                        <pattern>app=${appName},environment=${env},host=${HOSTNAME},level=%level,logger=%logger</pattern>
                     </label>
                     <message>
-                        <pattern>%d{yyyy-MM-dd HH:mm:ss.SSSZ} [%thread] %-5level--- %-60logger{50} -- TENANTID=%X{TENANTID:-null}, CORRELATION_ID=%X{CORRELATION_ID:-null} -- : %msg%n</pattern>
+                        <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] TENANTID=%X{TENANTID:-null} CORRELATION_ID=%X{CORRELATION_ID:-null} - %msg%n</pattern>
                     </message>
                 </format>
             </appender>
+
+            <!-- Async wrapper for LOKI appender - defined AFTER LOKI -->
             <appender name="LOKI_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
                 <appender-ref ref="LOKI"/>
                 <queueSize>1000</queueSize>
                 <discardingThreshold>0</discardingThreshold>
                 <neverBlock>true</neverBlock>
             </appender>
+
+            <!-- When Loki enabled: Console + Loki Async -->
             <root level="${logLevel}">
                 <appender-ref ref="CONSOLE"/>
                 <appender-ref ref="LOKI_ASYNC"/>
             </root>
         </then>
         <else>
+            <!-- When Loki disabled: Console only -->
             <root level="${logLevel}">
                 <appender-ref ref="CONSOLE"/>
             </root>

@@ -85,13 +85,6 @@ export function isEmptyObject(obj) {
   return true;
 }
 
-export const formatDate = (date) => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
-
 export const getMDMSObj = (mdmsdata = [], codekey, code) => {
   if (!code || !mdmsdata || mdmsdata?.length == 0) {
     return {};
@@ -370,6 +363,95 @@ export const isEmptyValue = (value) => {
   }
 };
 
+export const sanitizeInput = (input) => {
+  if (!input) return "";
+
+  let sanitized = String(input);
+
+  // Remove script blocks completely
+  sanitized = sanitized.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "");
+
+  // Remove iframes
+  sanitized = sanitized.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "");
+
+  // Remove dangerous elements
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+  sanitized = sanitized.replace(/<(object|embed|link|style)\b[^>]*>/gi, "");
+
+  // Remove event handlers
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*(["'])(?:[\s\S]*?)\1/gi, "");
+  sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^\s>]+/gi, "");
+
+  // Remove javascript: protocol
+  sanitized = sanitized.replace(/\bjavascript:/gi, "");
+
+  // Remove ALL HTML tags
+  sanitized = sanitized.replace(/<\/?[a-z][\w:-]*\b[^>]*>/gi, "");
+
+  return sanitized;
+};
+
+export const sanitizeData = (data) => {
+  if (typeof data === "string") {
+    return sanitizeInput(data);
+  }
+  if (Array.isArray(data)) {
+    return data.map(sanitizeInput);
+  }
+  if (typeof data === "object" && data !== null) {
+    return Object.keys(data).reduce((acc, key) => {
+      acc[key] = sanitizeInput(data[key]);
+      return acc;
+    }, {});
+  }
+
+  return data;
+};
+
+const RICH_TEXT_FIELDS = [
+  "reasonForFiling",
+  "reasonForApplication",
+  "comments",
+  "applicationDetails",
+  "reasonForApplicationOfBail",
+  "additionalInformation",
+  "reasonForDelay",
+  "additionalInformation",
+];
+
+export const runComprehensiveSanitizer = ({ formData, setValue, ignoredKeys = [] }) => {
+  if (!formData || typeof formData !== "object") return;
+
+  Object.keys(formData).forEach((key) => {
+    const originalValue = formData[key];
+    if (typeof originalValue === "string") {
+      if (ignoredKeys?.includes(key)) {
+        return;
+      }
+      const sanitizedValue = sanitizeData(originalValue);
+      if (sanitizedValue !== originalValue) {
+        const element = document?.querySelector(`[name="${key}"]`);
+        const start = element?.selectionStart;
+        const end = element?.selectionEnd;
+        setValue(key, sanitizedValue);
+        if (element) {
+          setTimeout(() => {
+            element.setSelectionRange(start, end);
+          }, 0);
+        }
+      }
+    }
+
+    if (typeof originalValue === "object" && originalValue !== null && !RICH_TEXT_FIELDS.includes(key) && !ignoredKeys?.includes(key)) {
+      runComprehensiveSanitizer({
+        formData: originalValue,
+        setValue,
+        ignoredKeys,
+      });
+    }
+  });
+};
+
 export const TaskManagementWorkflowAction = {
   CREATE_UPFRONT_PAYMENT: "CREATE_UPFRONT_PAYMENT",
   UPDATE_UPFRONT_PAYMENT: "UPDATE_UPFRONT_PAYMENT",
@@ -556,6 +638,17 @@ export const getComplainantSideAdvocates = (caseDetails) => {
     });
 };
 
+//all advocates
+export const getAllAdvocates = (caseDetails) => {
+  return caseDetails?.representatives?.map((rep) => {
+    return {
+      name: rep?.additionalDetails?.advocateName,
+      partyUuid: rep?.additionalDetails?.uuid,
+      partyType: "advocate",
+    };
+  });
+};
+
 //advocates and clerk members who are associated with complainants.
 export const getAdvocateOfficeMembers = (caseDetails) => {
   const advocateOfficeMembers =
@@ -578,6 +671,26 @@ export const getAdvocateOfficeMembers = (caseDetails) => {
   return advocateOfficeMembers?.filter(Boolean);
 };
 
+//advocates and clerk members who are associated with current selected advocate in the top dropdown
+export const getSelectedAdvocateOfficeMembers = (caseDetails) => {
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+  const currentAdvocate = caseDetails?.advocateOffices?.find((adv) => adv?.officeAdvocateUserUuid === storedAdvocate?.uuid);
+
+  const memberClerks = (currentAdvocate?.clerks || []).map((clerk) => ({
+    name: clerk?.memberName,
+    partyUuid: clerk?.memberUserUuid,
+    partyType: "memberClerk",
+  }));
+
+  const memberAdvocates = (currentAdvocate?.advocates || []).map((advocate) => ({
+    name: advocate?.memberName,
+    partyUuid: advocate?.memberUserUuid,
+    partyType: "memberAdvocate",
+  }));
+
+  return [...memberClerks, ...memberAdvocates];
+};
+
 export const getCaseEditAllowedAssignees = (caseDetails) => {
   const complainants = getComplainants(caseDetails) || [];
   const poaHolders = getComplainantsSidePoAHolders(caseDetails, complainants) || [];
@@ -593,6 +706,13 @@ export const getAllComplainantSideUuids = (caseDetails) => {
   const advocates = getComplainantSideAdvocates(caseDetails) || [];
   const advvocateOfficeMembers = getAdvocateOfficeMembers(caseDetails) || [];
   const allParties = [...complainants, ...poaHolders, ...advocates, ...advvocateOfficeMembers];
+  return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
+};
+
+export const getAllAdvocatesAndClerksUuids = (caseDetails) => {
+  const advocates = getAllAdvocates(caseDetails) || [];
+  const advocateOfficeMembers = getSelectedAdvocateOfficeMembers(caseDetails) || [];
+  const allParties = [...advocates, ...advocateOfficeMembers];
   return [...new Set(allParties?.map((party) => party?.partyUuid)?.filter(Boolean))];
 };
 
@@ -647,9 +767,9 @@ export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
     return [createdByUuid];
   }
 
-  const ownerAdvocateUuid = isOwnerAdvocate?.additionalDetails?.uuid;
+  const ownerAdvocateId = isOwnerAdvocate?.advocateId;
   //Now we have to check all the advocates and clerks members associated with this advocate and they all can edit the case draft
-  const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateUserUuid === ownerAdvocateUuid);
+  const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateId === ownerAdvocateId);
   if (!matchingOffice) {
     // Fallback
     return [createdByUuid];
@@ -658,7 +778,7 @@ export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
   const clerks = matchingOffice?.clerks || [];
   // Collect all memberUserUuid
   const editableUsers = [
-    ownerAdvocateUuid, // senior advocate himself
+    matchingOffice?.officeAdvocateUserUuid, // senior advocate himself
     ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
     ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
   ];
@@ -668,29 +788,49 @@ export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
 };
 
 export const getLoggedInUserOnBehalfOfUuid = (caseDetails, currentLoggedInUserUuid) => {
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate")); //selected advocate in the top dropdown.
+
   const isAdvocate = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === currentLoggedInUserUuid);
-  // if current user is not a clerk/jr adv then return current user uuid.
-  if (isAdvocate) {
+  // if logged in user is advocate, we have to also check if he exists in same case as direct advocate as well as junior advocate under another senior adocoate.
+  // and check selected advocate in the top dropdown. -> accordingly return value.
+
+  //If logged in user is a junior adv working under a senior in the case.
+  const advocateUuidIfJuniorAdvocateAssistant = caseDetails?.advocateOffices
+    ?.filter((office) => office?.advocates?.find((adv) => adv?.memberUserUuid === currentLoggedInUserUuid))
+    ?.find((office) => office?.officeAdvocateUserUuid === storedAdvocate?.uuid)?.officeAdvocateUserUuid;
+  //If logged in user is a clerk working under a senior in the case.
+  const advocateUuidIfClerkAssistant = caseDetails?.advocateOffices
+    ?.filter((office) => office?.clerks?.find((clerk) => clerk?.memberUserUuid === currentLoggedInUserUuid))
+    ?.find((office) => office?.officeAdvocateUserUuid === storedAdvocate?.uuid)?.officeAdvocateUserUuid;
+
+  if (advocateUuidIfJuniorAdvocateAssistant) {
+    return advocateUuidIfJuniorAdvocateAssistant;
+  } else if (advocateUuidIfClerkAssistant) {
+    return advocateUuidIfClerkAssistant;
+  } else if (isAdvocate) {
+    // if current user is not a clerk/jr adv then return current user uuid.
     return currentLoggedInUserUuid;
-  } else if (!isAdvocate) {
-    //If logged in user is a junior adv working under a senior in the case.
-    const advocateUuidIfJuniorAdvocateAssistant = caseDetails?.advocateOffices?.find((office) =>
-      office?.advocates?.find((adv) => adv?.memberUserUuid === currentLoggedInUserUuid)
-    )?.officeAdvocateUserUuid;
-    //If logged in user is a clerk working under a senior in the case.
-    const advocateUuidIfClerkAssistant = caseDetails?.advocateOffices?.find((office) =>
-      office?.clerks?.find((clerk) => clerk?.memberUserUuid === currentLoggedInUserUuid)
-    )?.officeAdvocateUserUuid;
-
-    if (advocateUuidIfJuniorAdvocateAssistant) {
-      return advocateUuidIfJuniorAdvocateAssistant;
-    } else if (advocateUuidIfClerkAssistant) {
-      return advocateUuidIfClerkAssistant;
-    }
-
-    //if logged in user is POA or litigant.
-    else return currentLoggedInUserUuid;
   }
+
+  //if logged in user is POA or litigant.
+  else return currentLoggedInUserUuid;
+};
+
+export const checkIfJuniorAndDirectAdvocate = (caseDetails, currentLoggedInUserUuid) => {
+  const isAdvocate = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === currentLoggedInUserUuid);
+  // if logged in user is advocate, we have to also check if he exists in same case as direct advocate as well as junior advocate under another senior adocoate.
+  // and check selected advocate in the top dropdown. -> accordingly return value.
+
+  //If logged in user is a junior adv working under a senior in the case.
+  const ifJuniorAdvocate = caseDetails?.advocateOffices?.find((office) =>
+    office?.advocates?.find((adv) => adv?.memberUserUuid === currentLoggedInUserUuid)
+  );
+
+  if (ifJuniorAdvocate && isAdvocate) {
+    return true;
+  }
+
+  return false;
 };
 
 export const getClerkMembersForPartiesTab = (data) => {
@@ -808,11 +948,36 @@ export const getAuthorizedUuid = (currentLoggedInUserUuid) => {
   return currentLoggedInUserUuid;
 };
 
+export const getAllAssociatedPartyUuidsForBailBondPendingTask = (caseDetails, asUser) => {
+  // First check if owner is present in any office
+  const ownerOffice = caseDetails?.advocateOffices?.find((office) => office?.officeAdvocateUserUuid === asUser);
+  const officeAdvocateUuid = ownerOffice?.officeAdvocateUserUuid;
+
+  if (officeAdvocateUuid) {
+    const advocates = ownerOffice?.advocates || [];
+    const clerks = ownerOffice?.clerks || [];
+    // Collect all memberUserUuid
+    const editableUsers = [
+      officeAdvocateUuid,
+      ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
+      ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
+    ];
+
+    // Remove null/undefined + de-duplicate
+    return Array.from(new Set((editableUsers || []).filter(Boolean)));
+  }
+  return [asUser];
+};
+
 export const getAllAssociatedPartyUuids = (caseDetails, ownerUuid) => {
   // First check if owner is present in any office
   const ownerOffice = caseDetails?.advocateOffices?.find((office) => office?.officeAdvocateUserUuid === ownerUuid);
-  if (ownerOffice) {
-    const officeAdvocateUuid = ownerOffice?.officeAdvocateUserUuid;
+  const officeAdvocateUuid = ownerOffice?.officeAdvocateUserUuid;
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+  // if a clerk or jr advocate is working under multiple senior advocate in same case,
+  // then we have to see if the senior advocate selected in the dropdown is the owner of the application.
+
+  if (officeAdvocateUuid && officeAdvocateUuid === storedAdvocate?.uuid) {
     const advocates = ownerOffice?.advocates || [];
     const clerks = ownerOffice?.clerks || [];
     // Collect all memberUserUuid
@@ -826,4 +991,96 @@ export const getAllAssociatedPartyUuids = (caseDetails, ownerUuid) => {
     return Array.from(new Set((editableUsers || []).filter(Boolean)));
   }
   return [ownerUuid];
+};
+
+export const DateUtils = {
+  IST_OFFSET: 5.5 * 60 * 60 * 1000,
+  IST_TIMEZONE: "Asia/Kolkata",
+
+  getFormattedDate: (value, format = "DD-MM-YYYY", separator = "-") => {
+    if (!value) return "";
+
+    const date = value instanceof Date ? value : new Date(value);
+    if (isNaN(date.getTime())) return "";
+    const istDate = new Date(date.toLocaleString("en-US", { timeZone: DateUtils.IST_TIMEZONE }));
+
+    const year = istDate.getFullYear();
+    const month = String(istDate.getMonth() + 1).padStart(2, "0");
+    const day = String(istDate.getDate()).padStart(2, "0");
+
+    if (format !== "DD-MM-YYYY") {
+      return `${year}${separator}${month}${separator}${day}`;
+    }
+    return `${day}${separator}${month}${separator}${year}`;
+  },
+
+  getISTEpoch(year, month, day, hour, minute, second, ms) {
+    const utcDate = Date.UTC(year, month, day, hour, minute, second, ms - DateUtils.IST_OFFSET);
+    return utcDate;
+  },
+
+  getEpochRangeFromDateIST(dateStr) {
+    if (!dateStr) return { start: null, end: null };
+
+    const [year, month, day] = dateStr.split("-").map(Number);
+    const monthIndex = month - 1;
+
+    const start = DateUtils.getISTEpoch(year, monthIndex, day, 0, 0, 0, 0);
+    const end = DateUtils.getISTEpoch(year, monthIndex, day, 23, 59, 59, 999);
+
+    return { start, end };
+  },
+
+  getEpochRangeFromMonthIST(monthStr) {
+    if (!monthStr) return { start: null, end: null };
+    const [year, month] = monthStr.split("-").map(Number);
+    const monthIndex = month - 1;
+    const start = DateUtils.getISTEpoch(year, monthIndex, 1, 0, 0, 0, 0);
+
+    // Gets the number of the last day of the month
+    const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+    const end = DateUtils.getISTEpoch(year, monthIndex, lastDay, 23, 59, 59, 999);
+
+    return { start, end };
+  },
+
+  formatDateWithTime(dateInput, showTime = false) {
+    if (!dateInput) return "-";
+
+    const date = new Date(dateInput);
+
+    if (isNaN(date.getTime())) return "N/A";
+    const dateInIST = new Date(date.getTime() + DateUtils.IST_OFFSET);
+
+    const day = String(dateInIST.getUTCDate()).padStart(2, "0");
+    const month = String(dateInIST.getUTCMonth() + 1).padStart(2, "0");
+    const year = dateInIST.getUTCFullYear();
+    let formattedDate = `${day}-${month}-${year}`;
+    if (showTime) {
+      const hours = String(dateInIST.getUTCHours()).padStart(2, "0");
+      const minutes = String(dateInIST.getUTCMinutes()).padStart(2, "0");
+      const seconds = String(dateInIST.getUTCSeconds()).padStart(2, "0");
+
+      formattedDate += ` ${hours}:${minutes}:${seconds}`;
+    }
+
+    return formattedDate;
+  },
+
+  _toEpoch(dateString) {
+    if (!dateString) return null;
+    const [year, month, day] = dateString.split("-").map(Number);
+    const utcDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    return utcDate.getTime() - istOffset;
+  },
+
+  // Function to format a date object into "20th June 2024"
+  formatDateInMonth(date) {
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const day = formatWithSuffix(date.getDate());
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day} ${month} ${year}`;
+  },
 };

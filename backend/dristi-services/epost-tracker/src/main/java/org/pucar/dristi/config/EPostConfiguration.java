@@ -147,4 +147,7 @@ public class EPostConfiguration {
     @Value("${epost.alt.address.flag}")
     private String epostAltAddressFlag;
 
+    @Value("${app.zone.id}")
+    private String zoneId;
+
 }

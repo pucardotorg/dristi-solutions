@@ -172,7 +172,7 @@ public class DigitalizedDocumentService {
                 String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
-                ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
+                ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(configuration.getZoneId()));
 
                 String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
                 DigitalizedDocumentsCriteria mapped = criteriaMap.get(coordinate.getFileStoreId());

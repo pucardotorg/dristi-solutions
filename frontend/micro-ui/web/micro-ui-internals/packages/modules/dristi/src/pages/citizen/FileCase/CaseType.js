@@ -1,6 +1,6 @@
 import { Loader } from "@egovernments/digit-ui-components";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
 import Button from "../../../components/Button";
 import CustomDetailsCard from "../../../components/CustomDetailsCard";
@@ -12,7 +12,6 @@ import { DRISTIService } from "../../../services";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import { userTypeOptions } from "../registration/config";
 import CustomDetailsDropdownCard from "../../../components/CustomDetailsDropdownCard";
-import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 const customNoteConfig = {
   populators: {
@@ -24,13 +23,6 @@ const customNoteConfig = {
       },
     ],
   },
-};
-
-export const formatDate = (date) => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
 };
 
 const removeYearFromName = (name = "") => name.replace(/,\s*\d{4}$/, "");
@@ -84,8 +76,7 @@ function CaseType({ t }) {
     const isUserLoggedIn = Boolean(token);
     const moduleCode = "DRISTI";
     const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-    const { AdvocateData } = useContext(AdvocateDataContext);
-    const selectedSeniorAdvocate = AdvocateData;
+    const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
     const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
     const roles = userInfo?.roles;
     const { data: individualData, isLoading, refetch, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
@@ -203,10 +194,6 @@ function CaseType({ t }) {
                         tenantId,
                         representing: [],
                         advocateFilingStatus: "caseOwner",
-                        additionalDetails: {
-                          uuid: selectedAdvocateUuid,
-                          advocateName: advocateName,
-                        },
                       },
                     ]
                   : [],

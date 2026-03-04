@@ -33,7 +33,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode } from "../../utils";
-import { combineMultipleFiles, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, DateUtils, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -52,12 +52,12 @@ import {
   uploadDocumentsIfAny,
   restrictedApplicationTypes,
   _getDefaultFormValue,
-  formatDate,
   _getFinalDocumentList,
   replaceUploadedDocsWithFile,
 } from "../../utils/application";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
+const requiredDateFormat = "YYYY-MM-DD";
 
 const SubmissionsCreate = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -277,6 +277,7 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationNumber,
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
@@ -296,6 +297,7 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationType: "DELAY_CONDONATION",
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
@@ -671,7 +673,7 @@ const SubmissionsCreate = ({ path }) => {
           isactive: true,
           name: `APPLICATION_TYPE_${applicationTypeUrl}`,
         },
-        applicationDate: formatDate(new Date()),
+        applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
         ...(selectComplainant !== null ? { selectComplainant } : {}),
         prayer: { text: "" },
       };
@@ -683,7 +685,7 @@ const SubmissionsCreate = ({ path }) => {
             ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
             : undefined;
           const initialSubmissionDate = latestExtensionOrder
-            ? formatDate(
+            ? DateUtils.getFormattedDate(
                 new Date(
                   latestExtensionOrder?.orderCategory === "COMPOSITE"
                     ? latestExtensionOrder?.compositeItems?.find(
@@ -692,7 +694,8 @@ const SubmissionsCreate = ({ path }) => {
                           item?.orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE"
                       )?.orderSchema?.orderDetails?.newSubmissionDate
                     : latestExtensionOrder?.orderDetails?.newSubmissionDate
-                )
+                ),
+                requiredDateFormat
               )
             : isComposite
             ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.submissionDeadline
@@ -708,7 +711,7 @@ const SubmissionsCreate = ({ path }) => {
               name: "APPLICATION_TYPE_EXTENSION_SUBMISSION_DEADLINE",
             },
             refOrderId: orderDetails?.orderNumber,
-            applicationDate: formatDate(new Date()),
+            applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
             documentType: isComposite
               ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentType
               : orderDetails?.additionalDetails?.formdata?.documentType,
@@ -733,7 +736,7 @@ const SubmissionsCreate = ({ path }) => {
               name: "APPLICATION_TYPE_PRODUCTION_DOCUMENTS",
             },
             refOrderId: orderDetails?.orderNumber,
-            applicationDate: formatDate(new Date()),
+            applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
             ...(selectComplainant !== undefined ? { selectComplainant } : {}),
             prayer: { text: "" },
           };
@@ -749,7 +752,7 @@ const SubmissionsCreate = ({ path }) => {
             name: "APPLICATION_TYPE_BAIL_BOND",
           },
           refOrderId: orderDetails?.orderNumber,
-          applicationDate: formatDate(new Date()),
+          applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
           prayer: { text: "" },
         };
       } else if ((isComposite ? compositeSetTermBailItem : orderDetails)?.orderType === orderTypes.SET_BAIL_TERMS) {
@@ -767,7 +770,7 @@ const SubmissionsCreate = ({ path }) => {
             name: "APPLICATION_TYPE_SUBMIT_BAIL_DOCUMENTS",
           },
           refOrderId: orderDetails?.orderNumber,
-          applicationDate: formatDate(new Date()),
+          applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
           ...(selectComplainant !== undefined ? { selectComplainant } : {}),
           prayer: { text: "" },
         };
@@ -777,7 +780,7 @@ const SubmissionsCreate = ({ path }) => {
             code: "APPLICATION",
             name: "APPLICATION",
           },
-          applicationDate: formatDate(new Date()),
+          applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
           prayer: { text: "" },
         };
       }
@@ -796,7 +799,7 @@ const SubmissionsCreate = ({ path }) => {
           name: `APPLICATION_TYPE_${applicationType}`,
           isActive: true,
         },
-        applicationDate: formatDate(new Date()),
+        applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
         ...(applicationType === "REQUEST_FOR_BAIL"
           ? {
               addSurety: { code: "YES", name: "Yes", showSurety: true },
@@ -812,7 +815,7 @@ const SubmissionsCreate = ({ path }) => {
           code: "APPLICATION",
           name: "APPLICATION",
         },
-        applicationDate: formatDate(new Date()),
+        applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
         prayer: { text: "" },
       };
     }
@@ -848,6 +851,7 @@ const SubmissionsCreate = ({ path }) => {
   );
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    runComprehensiveSanitizer({ formData, setValue, ignoredKeys: ["prayer"] });
     if (
       applicationType &&
       ![
@@ -863,13 +867,13 @@ const SubmissionsCreate = ({ path }) => {
       ].includes(applicationType) &&
       !formData?.applicationDate
     ) {
-      setValue("applicationDate", formatDate(new Date()));
+      setValue("applicationDate", DateUtils.getFormattedDate(new Date(), requiredDateFormat));
     }
     // if (applicationType && applicationType === "TRANSFER" && !formData?.requestedCourt) {
     //   setValue("requestedCourt", caseDetails?.courtId ? t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`) : "");
     // }
     if (applicationType && hearingId && ["CHECKOUT_REQUEST", "RE_SCHEDULE"].includes(applicationType) && !formData?.initialHearingDate) {
-      setValue("initialHearingDate", formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime)));
+      setValue("initialHearingDate", DateUtils.getFormattedDate(new Date(hearingsData?.HearingList?.[0]?.startTime), requiredDateFormat));
     }
 
     if (
@@ -938,7 +942,7 @@ const SubmissionsCreate = ({ path }) => {
 
     if (applicationType && ["ADVANCEMENT_OR_ADJOURNMENT_APPLICATION"].includes(applicationType)) {
       if (scheduledHearing && !formData?.initialHearingDate) {
-        setValue("initialHearingDate", formatDate(new Date(scheduledHearing?.startTime)));
+        setValue("initialHearingDate", DateUtils.getFormattedDate(new Date(scheduledHearing?.startTime), requiredDateFormat));
         setValue("initialHearingPurpose", scheduledHearing?.hearingType);
         setValue("refHearingId", scheduledHearing?.hearingId);
       }
@@ -1321,7 +1325,9 @@ const SubmissionsCreate = ({ path }) => {
                 ...filteredFormdata,
                 refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
               },
-              ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
+              ...(orderDetails && {
+                orderDate: DateUtils.getFormattedDate(new Date(orderDetails?.auditDetails?.lastModifiedTime), requiredDateFormat),
+              }),
               ...(isComposite
                 ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName && {
                     documentName: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName,
@@ -1379,7 +1385,9 @@ const SubmissionsCreate = ({ path }) => {
                 ...filteredFormdata,
                 refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
               },
-              ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
+              ...(orderDetails && {
+                orderDate: DateUtils.getFormattedDate(new Date(orderDetails?.auditDetails?.lastModifiedTime), requiredDateFormat),
+              }),
               ...(isComposite
                 ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName && {
                     documentName: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName,
@@ -1988,23 +1996,28 @@ const SubmissionsCreate = ({ path }) => {
       )}
       <div className="citizen create-submission" style={{ width: "50%", ...(!isCitizen && { padding: "0 8px 24px 16px" }) }}>
         <Header styles={{ margin: "25px 0px 0px 25px" }}> {t("CREATE_SUBMISSION")}</Header>
-        <div style={{ minHeight: "550px", overflowY: "auto" }}>
-          <FormComposerV2
-            label={t("REVIEW_SUBMISSION")}
-            className={"submission-create submission-form-filed-style"}
-            secondaryLabel={t("SAVE_AS_DRAFT")}
-            showSecondaryLabel={restrictedApplicationTypes?.includes(applicationType) ? false : orderNumber ? false : true}
-            onSecondayActionClick={handleSaveDraft}
-            config={modifiedFormConfig}
-            defaultValues={defaultFormValue}
-            onFormValueChange={onFormValueChange}
-            onSubmit={handleOpenReview}
-            fieldStyle={fieldStyle}
-            key={formKey + isApplicationFetching}
-            isDisabled={isSubmitDisabled}
-            actionClassName={"bail-action-bar"}
-          />
-        </div>
+        {isCaseDetailsLoading ? (
+          <Loader></Loader>
+        ) : (
+          <div style={{ minHeight: "550px", overflowY: "auto" }}>
+            <FormComposerV2
+              label={t("REVIEW_SUBMISSION")}
+              className={"submission-create submission-form-filed-style"}
+              secondaryLabel={t("SAVE_AS_DRAFT")}
+              showSecondaryLabel={restrictedApplicationTypes?.includes(applicationType) ? false : orderNumber ? false : true}
+              onSecondayActionClick={handleSaveDraft}
+              config={modifiedFormConfig}
+              defaultValues={defaultFormValue}
+              onFormValueChange={onFormValueChange}
+              onSubmit={handleOpenReview}
+              fieldStyle={fieldStyle}
+              key={formKey + isApplicationFetching}
+              isDisabled={isSubmitDisabled}
+              actionClassName={"bail-action-bar"}
+              s
+            />
+          </div>
+        )}
         {showReviewModal && (
           <ReviewSubmissionModal
             t={t}
@@ -2055,7 +2068,7 @@ const SubmissionsCreate = ({ path }) => {
             actionCancelLabel={"DOWNLOAD_SUBMISSION"}
             actionCancelOnSubmit={handleDownloadSubmission}
             applicationNumber={applicationNumber}
-            createdDate={formatDate(new Date(applicationDetails?.createdDate), "DD-MM-YYYY HH")}
+            createdDate={DateUtils.getFormattedDate(new Date(applicationDetails?.createdDate))}
             makePayment={makePaymentLabel}
             paymentStatus={paymentStatus}
             bannerlabel={

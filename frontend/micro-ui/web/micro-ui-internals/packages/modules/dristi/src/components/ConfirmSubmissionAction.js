@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Modal from "./Modal";
 import { CheckBox, CloseSvg, TextArea } from "@egovernments/digit-ui-react-components";
+import { sanitizeData } from "../Utils";
 
 function ConfirmSubmissionAction({
   t,
@@ -76,7 +77,7 @@ function ConfirmSubmissionAction({
             placeholder={t("")}
             name={type === "reject" ? "reasonForRejection" : "reasonForAcceptance"}
             value={reasonOfApplication}
-            onChange={(e) => setReasonOfApplication(e.target.value)}
+            onChange={(e) => setReasonOfApplication(sanitizeData(e.target.value))}
           />
         </div>
       </div>

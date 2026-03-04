@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useHistory } from "react-router-dom";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
 
@@ -18,6 +19,7 @@ const DeleteIcon = () => (
 
 const ManageOffice = () => {
   const { t } = useTranslation();
+  const history = useHistory();
   const tenantId = window?.Digit?.ULBService?.getCurrentTenantId();
   const userInfo = window?.Digit?.UserService?.getUser()?.info;
 
@@ -173,13 +175,6 @@ const ManageOffice = () => {
         const individual = individualResponse?.Individual?.[0];
         // Get userType from searched individual (same as HomeView: individualData.Individual[0].additionalFields.fields)
         const memberUserType = individual?.additionalFields?.fields?.find((obj) => obj?.key === "userType")?.value;
-
-        if (memberUserType === "ADVOCATE") {
-          // TODO: For this Sprint we are not allowing to add Advocate as a member (remove this block later)
-          setSearchError(t("ADDING_ADVOCATE_MEMBER_IS_NOT_ALLOWED"));
-          setSearchResult(null);
-          return;
-        }
 
         // Per userType, use same URL pattern as HomeView: ADVOCATE -> /advocate/v1/_search, else -> /advocate/clerk/v1/_search
         const searchUrl = memberUserType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search";
@@ -446,7 +441,26 @@ const ManageOffice = () => {
                 key={member.id || member.memberId}
                 className={`manage-office-table-row${activeTab === "advocatesWorkingFor" ? " manage-office-table-row--working-for" : ""}`}
               >
-                <span className={activeTab === "advocatesWorkingFor" ? "manage-office-name" : "manage-office-name manage-office-name--clickable"}>
+                <span
+                  className={activeTab === "advocatesWorkingFor" ? "manage-office-name" : "manage-office-name manage-office-name--clickable"}
+                  role={activeTab === "myAdvocatesClerks" ? "button" : undefined}
+                  onClick={
+                    activeTab === "myAdvocatesClerks"
+                      ? () =>
+                          history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office/manage-member`, {
+                            member,
+                            advocateInfo: {
+                              officeAdvocateUserUuid: officeAdvocateUserUuid,
+                              advocateId:
+                                advocateSearchResult?.[0]?.responseList?.[0]?.id ||
+                                advocateSearchResult?.[0]?.id ||
+                                member?.officeAdvocateId ||
+                                member?.advocateId,
+                            },
+                          })
+                      : undefined
+                  }
+                >
                   {activeTab === "advocatesWorkingFor" ? member?.officeAdvocateName || member?.memberName : member?.memberName}
                 </span>
                 <span>{member?.memberMobileNumber || member?.officeAdvocateMobileNumber}</span>
@@ -461,6 +475,27 @@ const ManageOffice = () => {
                   </span>
                 </span>
                 <span className={`manage-office-actions${activeTab === "advocatesWorkingFor" ? " manage-office-actions--compact" : ""}`}>
+                  {activeTab === "myAdvocatesClerks" && (
+                    <button
+                      type="button"
+                      className="manage-office-manage-btn"
+                      onClick={() =>
+                        history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office/manage-member`, {
+                          member,
+                          advocateInfo: {
+                            officeAdvocateUserUuid: officeAdvocateUserUuid,
+                            advocateId:
+                              advocateSearchResult?.[0]?.responseList?.[0]?.id ||
+                              advocateSearchResult?.[0]?.id ||
+                              member?.officeAdvocateId ||
+                              member?.advocateId,
+                          },
+                        })
+                      }
+                    >
+                      {t("MANAGE") || "Manage"}
+                    </button>
+                  )}
                   <button onClick={() => handleDeleteClick(member)} className="manage-office-delete-btn">
                     <DeleteIcon />
                   </button>
@@ -524,7 +559,12 @@ const ManageOffice = () => {
                   <div className="manage-office-search-field">
                     <label className="manage-office-search-field__label">{t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}</label>
                     <div className="manage-office-search-field__control">
-                      <select value={countryCode} onChange={(e) => setCountryCode(e.target.value)} className="manage-office-search-field__country" disabled>
+                      <select
+                        value={countryCode}
+                        onChange={(e) => setCountryCode(e.target.value)}
+                        className="manage-office-search-field__country"
+                        disabled
+                      >
                         <option value="+91">+91</option>
                       </select>
                       <input

@@ -6,8 +6,7 @@ import useGetAvailableDates from "../hooks/hearings/useGetAvailableDates";
 import { useHistory } from "react-router-dom";
 import CustomCalendar from "../../../dristi/src/components/CustomCalendar";
 import { useTranslation } from "react-i18next";
-import { formatDateInMonth } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { formatDate } from "../utils";
+import { DateUtils, formatDateInMonth } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -29,17 +28,7 @@ const CloseBtn = (props) => {
   );
 };
 
-const DateCard = ({ date, isSelected, onClick }) => (
-  <div
-    className="date-card"
-    style={{
-      border: `1px solid ${isSelected ? "#007BFF" : "#DDD"}`,
-    }}
-    onClick={onClick}
-  >
-    {date}
-  </div>
-);
+
 
 const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript, handleConfirmationModal }) => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -138,7 +127,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
               code: "SCHEDULING_NEXT_HEARING",
               name: "ORDER_TYPE_SCHEDULING_NEXT_HEARING",
             },
-            hearingDate: formatDate(new Date(selectedDate)),
+            hearingDate: DateUtils.getFormattedDate(new Date(selectedDate), "YYYY-MM-DD"),
             comments: { text: transcript },
           },
         },

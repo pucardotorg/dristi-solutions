@@ -2,6 +2,7 @@ import { CardLabelError } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { isEmptyObject } from "../Utils";
 import isEqual from "lodash/isEqual";
+import { sanitizeInput } from "../pages/citizen/FileCase/EfilingValidationUtils";
 
 function SelectCustomTextArea({ t, config, formData = {}, onSelect, errors }) {
   const inputs = useMemo(
@@ -57,10 +58,13 @@ function SelectCustomTextArea({ t, config, formData = {}, onSelect, errors }) {
   }
 
   const handleChange = (event, input) => {
-    let newText = event.target.value.trimStart();
+    let newText = event.target.value;
+    // apply regex cleanup from config
     if (typeof config?.populators?.validation?.pattern === "object") {
-      newText = newText.replace(config?.populators?.validation?.pattern, "");
+      newText = newText.replace(config.populators.validation.pattern, "");
     }
+    // sanitize HTML & scripts
+    newText = sanitizeInput(newText);
     setValue(newText, input?.name);
   };
 
