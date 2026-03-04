@@ -1,4 +1,4 @@
-import { InfoCard } from "@egovernments/digit-ui-components";
+import { AlertCard } from "@egovernments/digit-ui-components";
 import { EditPencilIcon } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useMemo } from "react";
 import { FlagIcon } from "../icons/svgIndex";
@@ -599,7 +599,7 @@ const CustomReviewCardRow = ({
         return (
           <div className={`text-main`}>
             <div className="value info-box">
-              <InfoCard
+              <AlertCard
                 variant={"default"}
                 label={t(isScrutiny || isJudge ? data?.[value]?.scrutinyHeader || data?.[value]?.header : data?.[value]?.header)}
                 additionalElements={[
