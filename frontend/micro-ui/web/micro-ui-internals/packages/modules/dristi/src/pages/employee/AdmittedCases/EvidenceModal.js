@@ -259,7 +259,6 @@ const EvidenceModal = ({
       if (allPartiesIncludingMembers?.includes(userInfo?.uuid)) {
         return [SubmissionWorkflowState.DELETED].includes(applicationStatus) ? false : true;
       }
-      debugger;
       if (isLitigent && [...(allAdvocates?.[userInfo?.uuid] || []), userInfo?.uuid]?.includes(createdBy)) {
         return [SubmissionWorkflowState.DELETED].includes(applicationStatus) ? false : true;
       }
