@@ -1,5 +1,6 @@
 package org.pucar.dristi.service;
 
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +17,7 @@ import org.pucar.dristi.web.models.Advocate;
 import org.pucar.dristi.web.models.AdvocateRequest;
 import org.pucar.dristi.web.models.AdvocateSearchCriteria;
 import org.pucar.dristi.web.models.AdvocateSimpleSearchRequest;
+import org.pucar.dristi.web.models.BarRegistrationNumberComponents;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 import static org.pucar.dristi.config.ServiceConstants.ADVOCATE_CREATE_EXCEPTION;
+import static org.pucar.dristi.config.ServiceConstants.APPROVE;
 
  class AdvocateServiceTest {
 
@@ -182,6 +185,34 @@ import static org.pucar.dristi.config.ServiceConstants.ADVOCATE_CREATE_EXCEPTION
         verify(enrichmentUtil).enrichAdvocateApplicationUponUpdate(request);
         verify(workflowService).updateWorkflowStatus(request);
         verify(producer).push("advocateUpdateTopic", request);
+    }
+
+    @Test
+    void testUpdateAdvocateApproveValidatesBarRegistration() {
+        AdvocateRequest request = new AdvocateRequest();
+        Advocate advocate = new Advocate();
+        Workflow workflow = new Workflow();
+        workflow.setAction(APPROVE);
+        advocate.setWorkflow(workflow);
+        advocate.setBarRegistrationNumber("K/1234/2024");
+        advocate.setTenantId("tenant");
+        request.setAdvocate(advocate);
+
+        Advocate existingAdvocate = new Advocate();
+        when(validator.validateApplicationExistence(advocate)).thenReturn(existingAdvocate);
+
+        BarRegistrationNumberComponents components = new BarRegistrationNumberComponents("K", "1234", "2024");
+        when(validator.tokenizeBarRegistrationNumber("K/1234/2024")).thenReturn(components);
+
+        doNothing().when(enrichmentUtil).enrichAdvocateApplicationUponUpdate(request);
+        doNothing().when(workflowService).updateWorkflowStatus(request);
+        when(config.getAdvocateUpdateTopic()).thenReturn("advocateUpdateTopic");
+        doNothing().when(producer).push(anyString(), any());
+
+        advocateService.updateAdvocate(request);
+
+        verify(validator).tokenizeBarRegistrationNumber("K/1234/2024");
+        verify(validator).validateBarRegistrationNumberUniqueness("tenant", components, "K/1234/2024");
     }
 
 
