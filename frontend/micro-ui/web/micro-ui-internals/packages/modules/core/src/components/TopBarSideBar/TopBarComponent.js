@@ -300,7 +300,7 @@ const TopBarComponent = ({
       (!isApprovalPending && !officeMembersData) ||
       seniorAdvocates?.length === 0
     )
-      return null;
+      return;
     const getIndividualidMappings = async () => {
       const seniorAdvocatesUuids = seniorAdvocates?.map((advocate) => advocate?.uuid);
       try {
