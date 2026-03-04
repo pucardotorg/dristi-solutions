@@ -2828,6 +2828,10 @@ export const UICustomizations = {
               style={{ cursor: "pointer", width: "20px", height: "20px" }}
             />
           );
+        case "CASE_NAME": {
+          const rawTitle = (row?.caseTitle || "").toString().trim();
+          return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
+        }
         default:
           return value != null ? value : "";
       }
