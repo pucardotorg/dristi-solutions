@@ -97,6 +97,7 @@ const ManageOfficeMember = () => {
   const [allowCaseCreate, setAllowCaseCreate] = useState(member?.allowCaseCreate !== false ? "Yes" : "No");
   const [addToNewCasesAuto, setAddToNewCasesAuto] = useState(member?.addNewCasesAutomatically !== false ? "Yes" : "No");
   const [selectedCasesCount, setSelectedCasesCount] = useState(0);
+  const [casesRefreshKey, setCasesRefreshKey] = useState(0);
   const [accessType, setAccessType] = useState(member?.accessType || "ALL_CASES");
   const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
   const [isRemovingMember, setIsRemovingMember] = useState(false);
@@ -348,6 +349,7 @@ const ManageOfficeMember = () => {
 
       if (response) {
         setToast({ label: t("UPDATE_ACCESS_SUCCESS") || "Access updated successfully", type: "success" });
+        setCasesRefreshKey((prev) => prev + 1);
       }
     } catch (error) {
       console.error("Error updating member access:", error);
@@ -509,7 +511,12 @@ const ManageOfficeMember = () => {
         <div className="assign-cases-section">
           <h2 className="assign-cases-section-title">{t(assignCasesConfigWithTenant?.label) || "Assign Cases"}</h2>
           <div className={`inbox-search-wrapper manage-office-member-inbox${accessType === "ALL_CASES" ? " assign-cases-disabled" : ""}`}>
-            <InboxSearchComposer customStyle={sectionsParentStyle} configs={assignCasesConfigWithTenant} showTab={false} />
+            <InboxSearchComposer
+              key={casesRefreshKey}
+              customStyle={sectionsParentStyle}
+              configs={assignCasesConfigWithTenant}
+              showTab={false}
+            />
           </div>
         </div>
       </div>
