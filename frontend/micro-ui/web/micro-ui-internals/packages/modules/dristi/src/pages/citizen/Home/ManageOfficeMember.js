@@ -130,8 +130,8 @@ const ManageOfficeMember = () => {
 
   const accessTypeOptions = useMemo(
     () => [
-      { code: "ALL_CASES", name: t("ALL_CASES") || "All Cases" },
       { code: "SPECIFIC_CASES", name: t("SPECIFIC_CASES") || "Specific Cases" },
+      { code: "ALL_CASES", name: t("ALL_CASES") || "All Cases" },
     ],
     [t]
   );
@@ -349,6 +349,17 @@ const ManageOfficeMember = () => {
 
       if (response) {
         setToast({ label: t("UPDATE_ACCESS_SUCCESS") || "Access updated successfully", type: "success" });
+
+        // Ensure future navigations (back/forward) see the updated accessType in location state
+        const currentState = history.location?.state || {};
+        history.replace(history.location?.pathname || window.location.pathname, {
+          ...currentState,
+          member: {
+            ...(currentState.member || member),
+            accessType: finalAccessType,
+          },
+        });
+
         setCasesRefreshKey((prev) => prev + 1);
       }
     } catch (error) {
@@ -359,20 +370,7 @@ const ManageOfficeMember = () => {
     }
   };
 
-  const handleUpdateAccessClick = () => {
-    setShowUpdateAccessModal(true);
-  };
-
-  const handleCloseUpdateAccessModal = () => {
-    setShowUpdateAccessModal(false);
-  };
-
-  const handleConfirmUpdateAccess = async () => {
-    if (!member?.memberId || !effectiveAdvocateInfo?.advocateId) {
-      setToast({ label: t("UPDATE_ACCESS_ERROR") || "Failed to update access. Please try again.", type: "error" });
-      return;
-    }
-
+  const getCaseSelectionDiff = () => {
     const container = document.querySelector(".manage-office-member-inbox");
     const tbody = container ? container.querySelector("tbody") : null;
     const addCaseIds = [];
@@ -391,6 +389,41 @@ const ManageOfficeMember = () => {
           removeCaseIds.push(caseId);
         }
       });
+    }
+
+    return { addCaseIds, removeCaseIds };
+  };
+
+  const handleUpdateAccessClick = () => {
+    const { addCaseIds, removeCaseIds } = getCaseSelectionDiff();
+    if (addCaseIds.length === 0 && removeCaseIds.length === 0) {
+      setToast({
+        label: t("NO_CASE_SELECTION") || "Please select at least one case to update access.",
+        type: "error",
+      });
+      return;
+    }
+    setShowUpdateAccessModal(true);
+  };
+
+  const handleCloseUpdateAccessModal = () => {
+    setShowUpdateAccessModal(false);
+  };
+
+  const handleConfirmUpdateAccess = async () => {
+    if (!member?.memberId || !effectiveAdvocateInfo?.advocateId) {
+      setToast({ label: t("UPDATE_ACCESS_ERROR") || "Failed to update access. Please try again.", type: "error" });
+      return;
+    }
+
+    const { addCaseIds, removeCaseIds } = getCaseSelectionDiff();
+    if (addCaseIds.length === 0 && removeCaseIds.length === 0) {
+      setToast({
+        label: t("NO_CASE_SELECTION") || "Please select at least one case to update access.",
+        type: "error",
+      });
+      setShowUpdateAccessModal(false);
+      return;
     }
 
     const userInfo = window?.Digit?.UserService?.getUser()?.info || {};
@@ -511,12 +544,7 @@ const ManageOfficeMember = () => {
         <div className="assign-cases-section">
           <h2 className="assign-cases-section-title">{t(assignCasesConfigWithTenant?.label) || "Assign Cases"}</h2>
           <div className={`inbox-search-wrapper manage-office-member-inbox${accessType === "ALL_CASES" ? " assign-cases-disabled" : ""}`}>
-            <InboxSearchComposer
-              key={casesRefreshKey}
-              customStyle={sectionsParentStyle}
-              configs={assignCasesConfigWithTenant}
-              showTab={false}
-            />
+            <InboxSearchComposer key={casesRefreshKey} customStyle={sectionsParentStyle} configs={assignCasesConfigWithTenant} showTab={false} />
           </div>
         </div>
       </div>
@@ -571,9 +599,7 @@ const ManageOfficeMember = () => {
         <button
           type="button"
           onClick={handleUpdateAccessClick}
-          className={`manage-office-btn manage-office-btn--primary${
-            accessType === "ALL_CASES" ? " manage-office-btn--disabled" : ""
-          }`}
+          className={`manage-office-btn manage-office-btn--primary${accessType === "ALL_CASES" ? " manage-office-btn--disabled" : ""}`}
           disabled={accessType === "ALL_CASES"}
         >
           {t("UPDATE_ACCESS") || "Update Access"}
