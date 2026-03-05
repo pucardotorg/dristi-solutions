@@ -608,7 +608,8 @@ public class CaseRepositoryV2 {
         preparedStmtListDoc = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();
 
-        representativeQuery = queryBuilder.getRepresentativesSearchQuery(ids, preparedStmtListDoc, preparedStmtArgList);
+    // Use representatives query that LEFT JOINs to dristi_advocate so rowmapper can populate Advocate when available
+    representativeQuery = queryBuilder.getRepresentativesSearchQueryWithAdvocateJoin(ids, preparedStmtListDoc, preparedStmtArgList);
         log.info("Final representative query :: {}", representativeQuery);
         Map<UUID, List<AdvocateMapping>> representativeMap = jdbcTemplate.query(representativeQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representativeRowMapper);
         if (representativeMap != null) {

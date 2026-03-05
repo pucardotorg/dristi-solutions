@@ -755,6 +755,42 @@ public class CaseQueryBuilder {
         }
     }
 
+    /**
+     * Returns representatives query with a LEFT JOIN to dristi_advocate to fetch authoritative advocate columns.
+     * This is used by search flows that need the joined advocate fields populated in the row mapper.
+     */
+    public String getRepresentativesSearchQueryWithAdvocateJoin(List<String> ids, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        try {
+            StringBuilder query = new StringBuilder();
+            // select representative columns
+            query.append(BASE_REPRESENTATIVES_QUERY);
+            // select joined advocate columns with aliases expected by the row mapper
+            query.append(
+                ", da.id as advocate_id, da.tenantid as advocate_tenantid, da.applicationnumber as advocate_applicationnumber, da.status as advocate_status, " +
+                "da.barregistrationnumber as advocate_barregistrationnumber, da.type as advocate_type, da.organisationid as advocate_organisationid, da.individualid as advocate_individualid, da.isactive as advocate_isactive, da.additionaldetails as advocate_additionaldetails"
+            );
+
+            // from representatives with left join to advocates
+            query.append(" ").append(FROM_REPRESENTATIVES_TABLE)
+                 .append(" LEFT JOIN dristi_advocate da ON rep.advocateid = da.id");
+
+            if (!ids.isEmpty()) {
+                query.append(" WHERE rep.case_id IN (")
+                        .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
+                        .append(")")
+                        .append(AND)
+                        .append("rep.isactive = true");
+                preparedStmtList.addAll(ids);
+                ids.forEach(i -> preparedStmtArgList.add(Types.VARCHAR));
+            }
+
+            return query.toString();
+        } catch (Exception e) {
+            log.error("Error while building representatives search query with advocate join :: {}", e.toString());
+            throw new CustomException(REPRESENTATIVES_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative search query with advocate join: " + e.getMessage());
+        }
+    }
+
     public String getPoaHoldersSearchQuery(List<String> ids, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         try {
             StringBuilder query = new StringBuilder(BASE_POA_HOLDER_QUERY);
