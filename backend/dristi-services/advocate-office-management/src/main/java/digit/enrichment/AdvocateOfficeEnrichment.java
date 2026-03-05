@@ -72,6 +72,7 @@ public class AdvocateOfficeEnrichment {
         addMember.setId(UUID.randomUUID());
         addMember.setAuditDetails(getAuditDetailsForCreate(requestInfo));
         addMember.setIsActive(true);
+        addMember.setAdvocateOfficeMobileNumber(requestInfo.getUserInfo().getMobileNumber());
 
         enrichOfficeAdvocateUserUuid(request);
         enrichMemberUserUuid(request);
