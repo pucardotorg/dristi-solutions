@@ -190,9 +190,9 @@ public class OpenApiCaseSummaryQueryBuilder {
         preparedStmtList.add(request.getCourtId());
         preparedStmtArgList.add(Types.VARCHAR);
 
-        query.append(" AND (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?) OR LOWER(cases.cnrNumber) LIKE LOWER(?) OR LOWER(cases.lprnumber) LIKE LOWER(?) OR LOWER(cases.courtcasenumberbackup) LIKE LOWER(?))");
+        query.append(" AND (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?) OR LOWER(cases.cnrNumber) LIKE LOWER(?) OR LOWER(cases.lprnumber) LIKE LOWER(?) OR LOWER(cases.courtcasenumberbackup) LIKE LOWER(?))");
         String searchPattern = "%" + request.getSearchText() + "%";
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 5; i++) {
             preparedStmtList.add(searchPattern);
             preparedStmtArgList.add(Types.VARCHAR);
         }
