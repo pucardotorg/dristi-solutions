@@ -462,6 +462,25 @@ const ManageOfficeMember = () => {
       if (response) {
         setToast({ label: t("UPDATE_ACCESS_SUCCESS") || "Access updated successfully", type: "success" });
         setShowUpdateAccessModal(false);
+
+        // Reset the baseline selection so subsequent updates only consider
+        // changes made after this successful update.
+        setCaseSelectionDiff({ addCaseIds: [], removeCaseIds: [] });
+
+        const container = document.querySelector(".manage-office-member-inbox");
+        if (container) {
+          const tbody = container.querySelector("tbody");
+          if (tbody) {
+            const rowCheckboxes = tbody.querySelectorAll('input[type="checkbox"][data-case-id]');
+            rowCheckboxes.forEach((checkbox) => {
+              const currentlyChecked = checkbox.checked;
+              checkbox.setAttribute("data-initial-active", currentlyChecked ? "true" : "false");
+            });
+          }
+        }
+
+        // Re-sync header checkbox and selected count based on new baseline.
+        syncSelectedCasesCount();
       }
     } catch (error) {
       console.error("Error processing case member:", error);
