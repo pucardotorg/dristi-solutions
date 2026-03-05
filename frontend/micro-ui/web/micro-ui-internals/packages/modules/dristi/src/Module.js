@@ -82,6 +82,7 @@ import SelectBulkDateInputs from "./components/SelectBulkDateInputs";
 import SelectCustomHearingDate from "./components/SelectCustomHearingDate";
 import EditDeleteModal from "./components/EditDeleteModal";
 import InputWithSearch from "./components/InputWithSearch";
+import CustomInboxSearchComposer from "./components/CustomInboxSearchComposer";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -224,6 +225,7 @@ const componentsToRegister = {
   SelectCustomHearingDate,
   EditDeleteModal,
   InputWithSearch,
+  CustomInboxSearchComposer
 };
 
 const overrideHooks = () => {
