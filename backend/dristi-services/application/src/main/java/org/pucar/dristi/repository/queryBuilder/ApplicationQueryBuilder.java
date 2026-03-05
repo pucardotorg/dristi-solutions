@@ -106,7 +106,7 @@ public class ApplicationQueryBuilder {
 
             // TODO : remove this, this is temporary fix (#5016)
             // --------- REQUEST_FOR_BAIL visibility ----------
-            boolean isCitizen = Optional.of(requestInfo)
+            boolean isCitizen = Optional.ofNullable(requestInfo)
                     .map(RequestInfo::getUserInfo)
                     .map(User::getType)
                     .map(CITIZEN_UPPER::equalsIgnoreCase)
