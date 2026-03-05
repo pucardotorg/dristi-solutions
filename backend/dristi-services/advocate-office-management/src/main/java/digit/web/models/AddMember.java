@@ -64,6 +64,9 @@ public class AddMember {
     @JsonProperty("memberMobileNumber")
     private String memberMobileNumber = null;
 
+    @JsonProperty("advocateOfficeMobileNumber")
+    private String advocateOfficeMobileNumber = null;
+
     @JsonProperty("memberEmail")
     private String memberEmail = null;
 
