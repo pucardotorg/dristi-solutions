@@ -270,6 +270,7 @@ public class SummonsService {
                     .filingType(getFilingType(taskRequest.getRequestInfo(), taskRequest.getTask()))
                     .isEvidence(true)
                     .additionalDetails(getAdditionalDetails(taskRequest.getRequestInfo()))
+                    .asUser(taskRequest.getRequestInfo().getUserInfo().getUuid())
                     .build();
 
             EvidenceRequest evidenceRequest = EvidenceRequest.builder()

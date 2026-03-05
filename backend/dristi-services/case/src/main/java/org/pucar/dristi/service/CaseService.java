@@ -2391,6 +2391,8 @@ public class CaseService {
             workflowObject.setAction("TYPE DEPOSITION");
             workflowObject.setDocuments(Collections.singletonList(workflowDocument));
 
+            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, joinCaseLitigant.getIndividualId());
+
             EvidenceRequest evidenceRequest = EvidenceRequest.builder().requestInfo(requestInfo)
                     .artifact(Artifact.builder()
                             .artifactType(artifactType)
@@ -2404,6 +2406,7 @@ public class CaseService {
                             .tenantId(courtCase.getTenantId())
                             .file(document)
                             .workflow(workflowObject)
+                            .asUser(individuals.get(0).getUserUuid())
                             .build()).build();
 
             evidenceUtil.createEvidence(evidenceRequest);
@@ -2422,6 +2425,8 @@ public class CaseService {
             workflowObject.setAction("TYPE DEPOSITION");
             workflowObject.setDocuments(Collections.singletonList(workflowDocument));
 
+            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, representingJoinCase.getIndividualId());
+
             EvidenceRequest evidenceRequest = EvidenceRequest.builder().requestInfo(requestInfo)
                     .artifact(Artifact.builder()
                             .artifactType(VAKALATNAMA_DOC)
@@ -2435,6 +2440,7 @@ public class CaseService {
                             .tenantId(courtCase.getTenantId())
                             .file(document)
                             .workflow(workflowObject)
+                            .asUser(individuals.get(0).getUserUuid())
                             .build()).build();
 
             evidenceUtil.createEvidence(evidenceRequest);
@@ -5663,6 +5669,8 @@ public class CaseService {
         workflowObject.setAction("TYPE DEPOSITION");
         workflowObject.setDocuments(Collections.singletonList(workflowDocument));
 
+        List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, litigantDetails.getIndividualId());
+
         return EvidenceRequest.builder().requestInfo(requestInfo)
                 .artifact(Artifact.builder()
                         .artifactType(VAKALATNAMA_DOC)
@@ -5676,6 +5684,7 @@ public class CaseService {
                         .tenantId(courtCase.getTenantId())
                         .file(document)
                         .workflow(workflowObject)
+                        .asUser(individuals.get(0).getUserUuid())
                         .build()).build();
     }
 
@@ -5695,6 +5704,8 @@ public class CaseService {
                 .build();
         org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
 
+        List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, joinCaseTaskRequest.getReplacementDetails().get(0).getLitigantDetails().getIndividualId());
+
         return EvidenceRequest.builder().requestInfo(requestInfo)
                 .artifact(Artifact.builder()
                         .artifactType(REASON_DOCUMENT)
@@ -5708,6 +5719,7 @@ public class CaseService {
                         .caseId(courtCase.getId().toString())
                         .tenantId(courtCase.getTenantId())
                         .file(document)
+                        .asUser(individuals.get(0).getUserUuid())
                         .build()).build();
     }
 
