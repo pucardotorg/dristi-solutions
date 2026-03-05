@@ -88,18 +88,20 @@ public class OpenapiApiController {
         return new ResponseEntity<>(caseList, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/openapi/v1/{tenantId}/case/search/{searchText}", method = RequestMethod.GET)
+    @RequestMapping(value = "/openapi/v1/{tenantId}/case/search", method = RequestMethod.GET)
     public ResponseEntity<CaseSearchTextResponse> getCasesBySearchText(
             @Pattern(regexp = "^[a-zA-Z]{2}$") @Size(min = 2, max = 2)
             @Parameter(in = ParameterIn.PATH, description = "tenant ID", required = true, schema = @Schema())
             @PathVariable("tenantId") String tenantId,
             @Parameter(in = ParameterIn.PATH, description = "Search text to match against CNR number, case number, filing number, CMP number etc.", required = true, schema = @Schema())
-            @PathVariable("searchText") String searchText,
+            @RequestParam("searchText") String searchText,
+            @NotNull @Parameter(in = ParameterIn.QUERY, description = "Court ID", required = true, schema = @Schema())
+            @RequestParam("courtId") String courtId,
             @Min(1) @Max(100) @Parameter(in = ParameterIn.QUERY, description = "Number of items per page", schema = @Schema(allowableValues = "", defaultValue = "10")) 
             @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
             @Min(0) @Parameter(in = ParameterIn.QUERY, description = "Page number to retrieve (0-based index)", schema = @Schema(allowableValues = "", defaultValue = "0")) 
             @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset) {
-        CaseSearchTextResponse response = openApiService.getCasesBySearchText(tenantId, searchText, limit, offset);
+        CaseSearchTextResponse response = openApiService.getCasesBySearchText(tenantId, searchText, courtId, limit, offset);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

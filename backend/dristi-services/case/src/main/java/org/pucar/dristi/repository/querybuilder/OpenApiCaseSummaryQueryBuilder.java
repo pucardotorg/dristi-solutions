@@ -182,9 +182,12 @@ public class OpenApiCaseSummaryQueryBuilder {
     public String getCaseSearchByTextQuery(CaseSearchTextRequest request, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         StringBuilder query = new StringBuilder(
                 "SELECT cases.cmpnumber, cases.filingnumber, cases.courtcasenumber, cases.cnrNumber " +
-                "FROM dristi_cases cases WHERE cases.tenantId = ?"
+                "FROM dristi_cases cases WHERE cases.tenantId = ? and cases.courtId = ?"
         );
         preparedStmtList.add(request.getTenantId());
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(request.getCourtId());
         preparedStmtArgList.add(Types.VARCHAR);
 
         query.append(" AND (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?) OR LOWER(cases.cnrNumber) LIKE LOWER(?) OR LOWER(cases.lprnumber) LIKE LOWER(?) OR LOWER(cases.courtcasenumberbackup) LIKE LOWER(?))");

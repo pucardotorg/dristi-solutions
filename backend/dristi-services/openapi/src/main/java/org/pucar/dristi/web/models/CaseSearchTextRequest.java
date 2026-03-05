@@ -28,4 +28,10 @@ public class CaseSearchTextRequest {
     @JsonProperty("pagination")
     @Valid
     private Pagination pagination;
+
+    @NotNull
+    @NotEmpty
+    @JsonProperty("courtId")
+    private String courtId;
+
 }

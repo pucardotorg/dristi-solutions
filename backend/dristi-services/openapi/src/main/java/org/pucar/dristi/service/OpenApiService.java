@@ -196,7 +196,7 @@ public class OpenApiService {
         return CaseType.equals(CASE_TYPE_CMP) || CaseType.equals(CASE_TYPE_ST);
     }
 
-    public CaseSearchTextResponse getCasesBySearchText(String tenantId, String searchText, Integer limit, Integer offset) {
+    public CaseSearchTextResponse getCasesBySearchText(String tenantId, String searchText, String courtId, Integer limit, Integer offset) {
         log.info("Fetching cases from Case Service by search text");
         StringBuilder uri = new StringBuilder(configuration.getCaseServiceHost()).append(configuration.getCaseServiceSearchByCaseSearchTextEndpoint());
 
@@ -211,6 +211,7 @@ public class OpenApiService {
         CaseSearchTextRequest request = CaseSearchTextRequest.builder()
                 .tenantId(tenantId)
                 .searchText(searchText)
+                .courtId(courtId)
                 .pagination(pagination)
                 .build();
         Object response = serviceRequestRepository.fetchResult(uri, request);
