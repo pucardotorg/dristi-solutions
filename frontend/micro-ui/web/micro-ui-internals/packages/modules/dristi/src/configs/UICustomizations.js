@@ -2818,15 +2818,19 @@ export const UICustomizations = {
         config: {
           ...requestCriteria?.config,
           select: (data) => {
+            const existingSelect = requestCriteria?.config?.select;
+            const basePayload = typeof existingSelect === "function" ? existingSelect(data) : data;
+
             const paginationTotal =
-              data?.pagination && typeof data.pagination.totalCount === "number"
-                ? data.pagination.totalCount
-                : typeof data?.totalCount === "number"
-                ? data.totalCount
-                : Array.isArray(data?.cases)
-                ? data.cases.length
+              basePayload?.pagination && typeof basePayload.pagination.totalCount === "number"
+                ? basePayload.pagination.totalCount
+                : typeof basePayload?.totalCount === "number"
+                ? basePayload.totalCount
+                : Array.isArray(basePayload?.cases)
+                ? basePayload.cases.length
                 : 0;
-            return { ...data, totalCount: paginationTotal };
+
+            return { ...basePayload, totalCount: paginationTotal };
           },
         },
       };
