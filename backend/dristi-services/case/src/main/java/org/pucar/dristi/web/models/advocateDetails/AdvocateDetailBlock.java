@@ -21,6 +21,8 @@ public class AdvocateDetailBlock {
 
     private List<Advocate> advocates;
 
+    private Integer advocateCount;
+
     private Integer displayIndex;
 
     private Boolean isEnabled;

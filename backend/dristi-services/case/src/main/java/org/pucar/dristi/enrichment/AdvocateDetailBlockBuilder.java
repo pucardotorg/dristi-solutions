@@ -110,64 +110,120 @@ public class AdvocateDetailBlockBuilder {
 
                         Documents docs = Documents.builder().vakalatnama(vakalatnama).pipAffidavit(pipAffidavit).build();
 
+                        // Build advocates list by finding representatives who represent this litigant (match by individualId)
                         List<Advocate> advocates = new ArrayList<>();
-                        if (courtCase.getRepresentatives() != null) {
+                        if (courtCase.getRepresentatives() != null && litigant.getIndividualId() != null) {
                             for (AdvocateMapping rep : courtCase.getRepresentatives()) {
-                                if (rep != null && Boolean.TRUE.equals(rep.getHasSigned())) {
-                                    Advocate adv = Advocate.builder().build();
-                                    try {
-                                        if (rep.getAdditionalDetails() != null) {
-                                            JsonNode repNode = objectMapper.convertValue(rep.getAdditionalDetails(), JsonNode.class);
-                                            if (repNode.has("uuid") && !repNode.get("uuid").isNull()) {
-                                                try { adv.setId(UUID.fromString(repNode.get("uuid").asText())); } catch (Exception ignored) {}
-                                            }
-                                            if (repNode.has("individualId")) adv.setIndividualId(repNode.get("individualId").asText());
-                                            if (repNode.has("advocateType")) adv.setAdvocateType(repNode.get("advocateType").asText());
-                                            if (repNode.has("barRegistrationNumber")) adv.setBarRegistrationNumber(repNode.get("barRegistrationNumber").asText());
-                                            if (repNode.has("applicationNumber")) adv.setApplicationNumber(repNode.get("applicationNumber").asText());
-                                            if (repNode.has("tenantId")) adv.setTenantId(repNode.get("tenantId").asText());
+                                if (rep == null) continue;
+                                boolean representsLitigant = false;
+                                if (rep.getRepresenting() != null) {
+                                    for (Party p : rep.getRepresenting()) {
+                                        if (p != null && p.getIndividualId() != null && p.getIndividualId().equalsIgnoreCase(litigant.getIndividualId())) {
+                                            representsLitigant = true;
+                                            break;
                                         }
-                                    } catch (Exception ignored) { }
-
-                                    if (rep.getDocuments() != null) adv.setDocuments(new ArrayList<>(rep.getDocuments()));
-                                    // If AdvocateMapping has a populated Advocate object (from a DB join), prefer those fields
-                                    try {
-                                        if (rep.getAdvocate() != null) {
-                                            Advocate joined = rep.getAdvocate();
-                                            if (joined.getId() != null) adv.setId(joined.getId());
-                                            if (joined.getTenantId() != null) adv.setTenantId(joined.getTenantId());
-                                            if (joined.getApplicationNumber() != null) adv.setApplicationNumber(joined.getApplicationNumber());
-                                            if (joined.getBarRegistrationNumber() != null) adv.setBarRegistrationNumber(joined.getBarRegistrationNumber());
-                                            if (joined.getIndividualId() != null) adv.setIndividualId(joined.getIndividualId());
-                                            if (joined.getAdvocateType() != null) adv.setAdvocateType(joined.getAdvocateType());
-                                        }
-                                    } catch (Exception ignored) { }
-
-                                    advocates.add(adv);
+                                    }
                                 }
+                                if (!representsLitigant) continue;
+
+                                Advocate adv = Advocate.builder().build();
+
+                                // Prefer joined Advocate (from DB) when available
+                                try {
+                                    if (rep.getAdvocate() != null) {
+                                        Advocate joined = rep.getAdvocate();
+                                        if (joined.getId() != null) adv.setId(joined.getId());
+                                        if (joined.getTenantId() != null) adv.setTenantId(joined.getTenantId());
+                                        if (joined.getApplicationNumber() != null) adv.setApplicationNumber(joined.getApplicationNumber());
+                                        if (joined.getBarRegistrationNumber() != null) adv.setBarRegistrationNumber(joined.getBarRegistrationNumber());
+                                        if (joined.getIndividualId() != null) adv.setIndividualId(joined.getIndividualId());
+                                        if (joined.getAdvocateType() != null) adv.setAdvocateType(joined.getAdvocateType());
+                                        if (joined.getAdvocateUuid() != null) adv.setAdvocateUuid(joined.getAdvocateUuid());
+                                        if (joined.getFirstName() != null) adv.setFirstName(joined.getFirstName());
+                                        if (joined.getMiddleName() != null) adv.setMiddleName(joined.getMiddleName());
+                                        if (joined.getLastName() != null) adv.setLastName(joined.getLastName());
+                                        if (joined.getMobileNumber() != null) adv.setMobileNumber(joined.getMobileNumber());
+                                        if (joined.getDocuments() != null) adv.setDocuments(new ArrayList<>(joined.getDocuments()));
+                                    }
+                                } catch (Exception ignored) { }
+
+                                // Fallback to representative.additionalDetails
+                                try {
+                                    if ((adv.getFirstName() == null || adv.getFirstName().isBlank() || adv.getAdvocateUuid() == null) && rep.getAdditionalDetails() != null) {
+                                        JsonNode repNode = objectMapper.convertValue(rep.getAdditionalDetails(), JsonNode.class);
+                                        if (repNode.has("uuid") && !repNode.get("uuid").isNull() && adv.getId() == null) {
+                                            try { adv.setId(UUID.fromString(repNode.get("uuid").asText())); } catch (Exception ignored) {}
+                                        }
+                                        if (repNode.has("advocateUuid") && !repNode.get("advocateUuid").isNull() && adv.getAdvocateUuid() == null) {
+                                            try { adv.setAdvocateUuid(UUID.fromString(repNode.get("advocateUuid").asText())); } catch (Exception ignored) {}
+                                        }
+                                        if (repNode.has("firstName") && (adv.getFirstName() == null || adv.getFirstName().isBlank())) adv.setFirstName(repNode.get("firstName").asText());
+                                        if (repNode.has("middleName") && (adv.getMiddleName() == null || adv.getMiddleName().isBlank())) adv.setMiddleName(repNode.get("middleName").asText());
+                                        if (repNode.has("lastName") && (adv.getLastName() == null || adv.getLastName().isBlank())) adv.setLastName(repNode.get("lastName").asText());
+                                        if (repNode.has("mobileNumber") && (adv.getMobileNumber() == null || adv.getMobileNumber().isBlank())) adv.setMobileNumber(repNode.get("mobileNumber").asText());
+                                        if (repNode.has("advocateName") && (adv.getFirstName() == null || adv.getFirstName().isBlank())) adv.setFirstName(repNode.get("advocateName").asText());
+                                    }
+                                } catch (Exception ignored) { }
+
+                                // Also try to read name/details from case-level additionalDetails (advocateDetails formdata) as last resort
+                                try {
+                                    if ((adv.getFirstName() == null || adv.getFirstName().isBlank()) && courtCase.getAdditionalDetails() != null) {
+                                        JsonNode root = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+                                        if (root.has("advocateDetails")) {
+                                            JsonNode formdata = root.path("advocateDetails").path("formdata");
+                                            if (formdata.isArray()) {
+                                                for (JsonNode item : formdata) {
+                                                    JsonNode data = item.path("data").path("multipleAdvocatesAndPip");
+                                                    if (data.isObject()) {
+                                                        JsonNode arr = data.path("multipleAdvocateNameDetails");
+                                                        if (arr.isArray()) {
+                                                            for (JsonNode n : arr) {
+                                                                JsonNode nameDetails = n.path("advocateNameDetails");
+                                                                JsonNode bar = n.path("advocateBarRegNumberWithName");
+                                                                if (bar.has("advocateId") && adv.getIndividualId() != null && adv.getIndividualId().equalsIgnoreCase(bar.path("individualId").asText())) {
+                                                                    if (nameDetails.has("firstName")) adv.setFirstName(nameDetails.get("firstName").asText());
+                                                                    if (nameDetails.has("middleName")) adv.setMiddleName(nameDetails.get("middleName").asText());
+                                                                    if (nameDetails.has("lastName")) adv.setLastName(nameDetails.get("lastName").asText());
+                                                                    if (nameDetails.has("advocateMobileNumber")) adv.setMobileNumber(nameDetails.get("advocateMobileNumber").asText());
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (Exception ignored) { }
+
+                                // copy rep documents if any
+                                if (rep.getDocuments() != null) adv.setDocuments(new ArrayList<>(rep.getDocuments()));
+
+                                advocates.add(adv);
                             }
                         }
 
                         PipStatus pipStatus = new PipStatus();
                         pipStatus.setIsEnabled(!pipAffidavit.isEmpty());
-                        pipStatus.setCode(pipAffidavit.isEmpty() ? "NO" : "YES");
-                        pipStatus.setLabel(pipAffidavit.isEmpty() ? "No" : "Yes");
+                        pipStatus.setCode(pipAffidavit.isEmpty() ? "NOT_UPLOADED" : "UPLOADED");
+                        pipStatus.setLabel(pipAffidavit.isEmpty() ? "Not uploaded" : "Uploaded");
 
                         UiFlags uiFlags = UiFlags.builder()
                                 .showAffidavit(!pipAffidavit.isEmpty())
                                 .showVakalatNamaUpload(!vakalatnama.isEmpty())
                                 .build();
 
-                        AdvocateDetailBlock block = AdvocateDetailBlock.builder()
-                                .complainant(complainant)
-                                .documents(docs)
-                                .advocates(advocates)
-                                .isEnabled(true)
-                                .isFormCompleted(!advocates.isEmpty())
-                                .displayIndex(0)
-                                .isComplainantPip(pipStatus)
-                                .uiFlags(uiFlags)
-                                .build();
+
+            AdvocateDetailBlock block = AdvocateDetailBlock.builder()
+                .complainant(complainant)
+                .documents(docs)
+                .advocates(advocates)
+                .advocateCount(advocates != null ? advocates.size() : 0)
+                .isEnabled(true)
+                .isFormCompleted(!advocates.isEmpty())
+                .displayIndex(0)
+                .isComplainantPip(pipStatus)
+                .uiFlags(uiFlags)
+                .build();
 
                         blocks.add(block);
                     }
