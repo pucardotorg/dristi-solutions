@@ -51,6 +51,7 @@ const convertToFormData = (t, obj) => {
             mobileNumber: surety?.mobileNumber,
             address: surety?.address,
             email: surety?.email,
+            index: surety?.index,
             identityProof: {
               document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF" && doc?.isActive === true) || [],
             },
@@ -60,7 +61,7 @@ const convertToFormData = (t, obj) => {
             otherDocuments: {
               document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS" && doc?.isActive === true) || [],
             },
-          }))
+          }))?.sort((a, b) => (a?.index ?? Infinity) - (b?.index ?? Infinity))
         : Array.from({ length: obj?.noOfSureties || 0 }, () => ({})),
   };
 
@@ -151,7 +152,6 @@ const GenerateBailBondV2 = () => {
       criteria: {
         bailId: bailBondId,
         filingNumber,
-        asUser: authorizedUuid,
       },
       tenantId,
     },
@@ -292,7 +292,6 @@ const GenerateBailBondV2 = () => {
         filingNumber,
         applicationNumber: pendingTaskAdditionalDetails?.refApplicationId,
         tenantId,
-        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
