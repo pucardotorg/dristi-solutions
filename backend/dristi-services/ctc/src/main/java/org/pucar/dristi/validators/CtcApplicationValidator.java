@@ -79,10 +79,12 @@ public class CtcApplicationValidator {
             boolean isAdvocate = requestInfo.getUserInfo().getRoles().stream()
                     .anyMatch(role -> role.getCode().equals(ADVOCATE_ROLE));
 
-            CourtCase courtCase = caseUtil.getCase(application.getFilingNumber(), application.getCourtId());
+            CourtCase courtCase = caseUtil.getCase(application.getFilingNumber(), application.getCourtId(), requestInfo);
 
             if (courtCase == null) {
-                throw new CustomException("CASE_NOT_FOUND", "Case not found with filingNumber: " + application.getFilingNumber());
+                application.setPartyDesignation(null);
+                application.setIsPartyToCase(false);
+                return;
             }
 
             UserMatchResult result = findUser(requestInfo, courtCase, isAdvocate);
@@ -103,16 +105,18 @@ public class CtcApplicationValidator {
     private UserMatchResult findUser(RequestInfo requestInfo, CourtCase courtCase, boolean isAdvocate) {
 
         if (isAdvocate) {
-            return firstNonNull(
-                    findUserFromAdvocate(requestInfo, courtCase),
-                    findUserFromPoaHolder(requestInfo, courtCase)
-            );
+                    UserMatchResult result = findUserFromAdvocate(requestInfo, courtCase);
+                    if (result != null) {
+                        return result;
+                    }
+                    return findUserFromPoaHolder(requestInfo, courtCase);
         } else {
             // non advocate
-            return firstNonNull(
-                    findUserFromLitigant(requestInfo, courtCase),
-                    findUserFromPoaHolder(requestInfo, courtCase)
-            );
+                    UserMatchResult result = findUserFromLitigant(requestInfo, courtCase);
+                    if (result != null) {
+                        return result;
+                    }
+                    return findUserFromPoaHolder(requestInfo, courtCase);
         }
     }
 
@@ -173,12 +177,6 @@ public class CtcApplicationValidator {
         if (uuidsNameMapping.containsKey(userUuid)) {
             return new UserMatchResult(uuidsNameMapping.get(userUuid), POA);
         }
-        return null;
-    }
-
-    private UserMatchResult firstNonNull(UserMatchResult... results) {
-        for (UserMatchResult r : results)
-            if (r != null) return r;
         return null;
     }
 

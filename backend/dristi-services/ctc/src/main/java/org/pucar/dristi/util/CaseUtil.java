@@ -86,11 +86,11 @@ public class CaseUtil {
         }
     }
 
-    public CourtCase getCase(String filingNumber, String courtId) {
+    public CourtCase getCase(String filingNumber, String courtId, RequestInfo requestInfo) {
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getCaseHost()).append(configs.getCaseSearchPath());
         CaseSearchRequest request = CaseSearchRequest.builder()
-                .requestInfo(RequestInfo.builder().build())
+                .requestInfo(requestInfo)
                 .criteria(Collections.singletonList(CaseCriteria.builder()
                         .filingNumber(filingNumber)
                         .courtId(courtId)
@@ -99,16 +99,28 @@ public class CaseUtil {
                 .build();
         try {
             Object response = repository.fetchResult(uri, request);
-            return mapper.convertValue(JsonPath.read(response, "COURT_CASE_JSON_PATH"), CourtCase.class);
+            CaseListResponse caseListResponse = mapper.convertValue(response, CaseListResponse.class);
+            return Optional.ofNullable(caseListResponse)
+                    .map(CaseListResponse::getCriteria)
+                    .filter(list -> !list.isEmpty())
+                    .map(list -> list.get(0).getResponseList())
+                    .filter(list -> !list.isEmpty())
+                    .map(list -> list.get(0))
+                    .orElse(null);
         } catch (Exception e) {
             log.error("Error executing case search query", e);
-            throw new CustomException("Error fetching case: ", "ERROR_CASE_SEARCH");
+            throw new CustomException("Error fetching case: ", e.getMessage());
         }
     }
 
     public Map<String, String> extractPoaHolderUuids(CourtCase courtCase) {
 
         Map<String, String> uuidNameMap = new HashMap<>();
+
+        if (courtCase.getPoaHolders() == null || courtCase.getPoaHolders().isEmpty()) {
+            log.info("poa holder is null or empty");
+            return new HashMap<>();
+        }
 
         for (POAHolder poaHolder : courtCase.getPoaHolders()) {
             if (poaHolder.getAdditionalDetails() == null)

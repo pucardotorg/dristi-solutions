@@ -110,7 +110,7 @@ public class CtcApplicationService {
             for (CaseBundleNode parentNode : request.getCtcApplication().getCaseBundleNodes()) {
                 if (parentNode.getChildren() != null) {
                     for (CaseBundleNode child : parentNode.getChildren()) {
-                        if ("accepted".equalsIgnoreCase(child.getStatus()) && child.getFileStoreId() != null) {
+                        if (child.isSelected() && child.getFileStoreId() != null) {
                             acceptedFileStoreIds.add(child.getFileStoreId());
                         }
                     }
@@ -190,6 +190,25 @@ public class CtcApplicationService {
             throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
                     "Error updating issued status in ES index: " + e.getMessage());
         }
+    }
+
+    public ValidateUserInfo validateUser(ValidateUserRequest request) {
+        CtcApplication application = CtcApplication.builder()
+                .filingNumber(request.getFilingNumber())
+                .courtId(request.getCourtId())
+                .mobileNumber(request.getMobileNumber())
+                .build();
+
+        ctcApplicationValidator.validateAndEnrichUser(request.getRequestInfo(), application);
+
+        return ValidateUserInfo.builder()
+                .userName(application.getApplicantName())
+                .designation(application.getPartyDesignation())
+                .mobileNumber(request.getMobileNumber())
+                .filingNumber(request.getFilingNumber())
+                .courtId(request.getCourtId())
+                .isPartyToCase(application.getIsPartyToCase())
+                .build();
     }
 
 }

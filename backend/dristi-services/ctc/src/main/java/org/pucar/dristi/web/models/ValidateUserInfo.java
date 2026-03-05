@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,4 +27,8 @@ public class ValidateUserInfo {
     
     @JsonProperty("courtId")
     private String courtId;
+
+    @JsonProperty("isPartyToCase")
+    @NotNull
+    private Boolean isPartyToCase = false;
 }

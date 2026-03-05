@@ -18,7 +18,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/ctc")
+@RequestMapping("")
 @Validated
 public class CtcApiController {
 
@@ -138,4 +138,30 @@ public class CtcApiController {
             throw new CustomException("CTC_ISSUE_DOCUMENTS_UPDATE_ERROR", "Error marking documents as issued: " + e.getMessage());
         }
     }
+
+    @PostMapping("/applications/_validate")
+    public ResponseEntity<ValidateUserResponse> validateUser(@Valid @RequestBody ValidateUserRequest request) {
+
+        log.info("Validating user for CTC application with filing number: {}", request.getFilingNumber());
+
+        try {
+            ValidateUserInfo validateUserInfo = ctcApplicationService.validateUser(request);
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+
+            ValidateUserResponse response = ValidateUserResponse.builder()
+                    .responseInfo(responseInfo)
+                    .validateUserInfo(validateUserInfo)
+                    .build();
+
+            return ResponseEntity.ok(response);
+
+        } catch (CustomException e) {
+            log.error("Error validating user for CTC application: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error validating user for CTC application", e);
+            throw new CustomException("VALIDATE_USER_CTC_ERROR", "Error validating user for CTC application: " + e.getMessage());
+        }
+    }
+
 }
