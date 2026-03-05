@@ -150,7 +150,7 @@ public class AdvocateDetailBlockBuilder {
 
                         PipStatus pipStatus = new PipStatus();
                         pipStatus.setIsEnabled(!pipAffidavit.isEmpty());
-                        pipStatus.setCode(pipAffidavit.isEmpty() ? "No" : "Yes");
+                        pipStatus.setCode(pipAffidavit.isEmpty() ? "NO" : "YES");
                         pipStatus.setLabel(pipAffidavit.isEmpty() ? "No" : "Yes");
 
                         UiFlags uiFlags = UiFlags.builder()

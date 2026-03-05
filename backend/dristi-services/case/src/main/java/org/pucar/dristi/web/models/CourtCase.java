@@ -194,7 +194,7 @@ public class CourtCase {
     @Builder.Default
     private List<WitnessDetails> witnessDetails = new ArrayList<>();
 
-    @JsonProperty("AdvocateDetailBlock")
+    @JsonProperty("advocateDetailBlock")
     @Valid
     @Builder.Default
     private List<AdvocateDetailBlock> advocateDetailBlock = new ArrayList<>();
