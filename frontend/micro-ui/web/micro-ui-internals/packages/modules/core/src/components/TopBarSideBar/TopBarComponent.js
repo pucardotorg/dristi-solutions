@@ -424,8 +424,12 @@ const TopBarComponent = ({
           <div
             style={{ display: "flex", gap: "16px", cursor: "pointer" }}
             onClick={() => {
-              const pathUnwind = pathname.split("/").slice(0, 3).join("/") + (isUserLoggedIn ? "/home/home-pending-task" : "/dristi");
-              history.push(pathUnwind);
+              if (isUserLoggedIn && pathname.includes("/citizen/dristi/home/registration")) {
+                history.push(`/${window?.contextPath}/citizen/dristi/home`);
+              } else {
+                const pathUnwind = pathname.split("/").slice(0, 3).join("/") + (isUserLoggedIn ? "/home/home-pending-task" : "/dristi");
+                history.push(pathUnwind);
+              }
             }}
           >
             <img

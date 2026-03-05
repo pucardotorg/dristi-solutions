@@ -628,6 +628,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           userUuid: item.phoneNumberVerification.userDetails.uuid,
           userId: item.phoneNumberVerification.userDetails.id,
           mobileNumber: item.phoneNumberVerification.userDetails.mobileNumber,
+          fatherName: item.fatherName,
         }));
 
       if (usersWithUUID.length === 0) {
@@ -636,6 +637,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           individualId: item?.phoneNumberVerification?.individualDetails?.individualId,
           uuid: item?.phoneNumberVerification?.individualDetails?.userUuid,
           fullName: getFullName(" ", item?.firstName, item?.middleName, item?.lastName),
+          fatherName: item?.fatherName,
         }));
       }
 
@@ -661,12 +663,14 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 individualId: matchedUser?.individualDetails?.individualId,
                 uuid: matchedUser?.individualDetails?.userUuid,
                 fullName: getFullName(" ", item?.firstName, item?.middleName, item?.lastName),
+                fatherName: item?.fatherName,
               }
             : {
                 ...item,
                 individualId: item?.phoneNumberVerification?.individualDetails?.individualId,
                 uuid: item?.phoneNumberVerification?.individualDetails?.userUuid,
                 fullName: getFullName(" ", item?.firstName, item?.middleName, item?.lastName),
+                fatherName: item?.fatherName,
               };
         });
 
@@ -689,6 +693,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               respondentFirstName: matchedUser?.firstName,
               respondentMiddleName: matchedUser?.middleName,
               respondentLastName: matchedUser?.lastName,
+              fatherName: matchedUser?.fatherName,
               respondentVerification: {
                 individualDetails: {
                   individualId: matchedUser?.individualId,
@@ -1092,6 +1097,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   additionalDetails: {
                     fullName: user?.fullName,
                     uuid: user?.uuid,
+                    fatherName: user?.fatherName,
                   },
                   tenantId: tenantId,
                   individualId: user?.individualId,

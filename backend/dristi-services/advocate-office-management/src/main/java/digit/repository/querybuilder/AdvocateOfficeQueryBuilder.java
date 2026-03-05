@@ -27,6 +27,7 @@ public class AdvocateOfficeQueryBuilder {
             "member.member_id as member_id, " +
             "member.member_name as member_name, " +
             "member.member_mobile_number as member_mobile_number, " +
+            "member.advocate_office_mobile_number as advocate_office_mobile_number, " +
             "member.member_email as member_email, " +
             "member.access_type as access_type, " +
             "member.allow_case_create as allow_case_create, " +
