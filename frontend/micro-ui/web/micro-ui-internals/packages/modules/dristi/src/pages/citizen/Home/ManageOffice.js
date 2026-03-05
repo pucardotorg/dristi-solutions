@@ -465,8 +465,8 @@ const ManageOffice = () => {
                 </span>
                 <span>
                   {activeTab === "advocatesWorkingFor"
-                    ? member?.officeAdvocateMobileNumber || member?.memberMobileNumber
-                    : member?.memberMobileNumber || member?.officeAdvocateMobileNumber}
+                    ? member?.officeAdvocateMobileNumber || t("N/A") || "N/A"
+                    : member?.memberMobileNumber || t("N/A") || "N/A"}
                 </span>
                 {activeTab !== "advocatesWorkingFor" && (
                   <span>
