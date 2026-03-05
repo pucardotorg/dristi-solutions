@@ -113,6 +113,7 @@
 @import "./components/loaderWithGap.scss";
 
 /* @import "./dristi"; */
+@import "./dristi/components/customInboxComposer.scss";
 @import "./dristi/components/customDragDrop.scss";
 @import "./dristi/components/delayApplication.scss";
 @import "./dristi/components/chequeDetails.scss";
@@ -707,8 +708,7 @@ input[type="number"] {
   }
 }
 
-.applications-list-container {
-}
+.applications-list-container {}
 
 .complaint-summary {
   @media (min-width: 780px) {
@@ -761,6 +761,7 @@ input[type="number"] {
 }
 
 @media (min-width: 780px) {
+
   .citizen-obps-wrapper,
   .selection-card-wrapper,
   .pgr-citizen-wrapper,
@@ -781,6 +782,7 @@ input[type="number"] {
 }
 
 @media only screen and (max-width: 768px) {
+
   /* For mobile phones: */
   .error-boundary {
     height: 75vh;
@@ -950,10 +952,10 @@ input[type="number"] {
   font-weight: 700 !important;
 }
 
-.radio-wrap .radio-btn-wrap input:disabled ~ .radio-btn-checkmark:after {
+.radio-wrap .radio-btn-wrap input:disabled~.radio-btn-checkmark:after {
   background-color: #e6e6e6 !important;
 }
 
-.radio-wrap .radio-btn-wrap input:disabled ~ .radio-btn-checkmark {
+.radio-wrap .radio-btn-wrap input:disabled~.radio-btn-checkmark {
   border-color: #e6e6e6 !important;
 }

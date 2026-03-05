@@ -1,0 +1,119 @@
+.search-form-wrapper {
+    form {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .search-fields-group {
+        display: flex;
+        gap: 16px;
+        align-items: flex-end;
+    }
+
+    .search-field-container {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1 1 200px;
+        min-width: 200px;
+        max-width: 100%;
+
+        label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #0b0c0c;
+            margin-bottom: 0px;
+        }
+
+        /* Force input alignments to stay tight without outer margins */
+        >div,
+        >.header-content {
+            margin: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+    }
+
+    .search-action-btn-group {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        height: 40px;
+
+        /* Force primary buttons to be Teal */
+        .digit-button {
+            background-color: #007E7E !important;
+            border-color: #007E7E !important;
+            color: #ffffff !important;
+            height: 40px !important;
+        }
+
+        .clear-search-text {
+            color: #77787b;
+            /* Neutral teal-ish color or dark grey */
+            cursor: pointer;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+    }
+
+    .custom-action-components-group {
+        margin-left: auto;
+        display: flex;
+        align-items: flex-end;
+        gap: 16px;
+
+        /* Force custom action buttons to be Teal */
+        .digit-button {
+            background-color: #007E7E !important;
+            border-color: #007E7E !important;
+            color: #ffffff !important;
+            height: 40px !important;
+        }
+    }
+}
+
+/* Config based visual variations */
+.custom-both-clear-search {
+    padding: 16px;
+    background: #fff;
+    margin-bottom: 16px;
+    border-radius: 4px;
+}
+
+.custom-table-wrapper {
+    margin-top: 16px;
+    background: #fff;
+
+    /* Target both standard cells and DIGIT UI specific table classes if present */
+    th,
+    td,
+    .custom-table-cell {
+        padding: 16px;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    /* Target the DIGIT native header class just in case */
+    .digit-table-header {
+        padding: 16px;
+        vertical-align: middle;
+    }
+
+    .custom-checkbox-container {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        /* Align with text instead of centering in a wide column */
+
+        .custom-checkbox {
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            accent-color: #007E7E;
+            /* Teal accent for checkboxes if supported natively */
+        }
+    }
+}
