@@ -2288,22 +2288,24 @@ public class CaseService {
 
         List<AdvocateOffice> offices = caseRequestForOffice.getCases().getAdvocateOffices();
 
-        offices.forEach(office -> {
-            int existingIndex = -1;
-            for (int i = 0; i < courtCase.getAdvocateOffices().size(); i++) {
-                AdvocateOffice existing = courtCase.getAdvocateOffices().get(i);
-                if (existing.getOfficeAdvocateUserUuid() != null 
-                        && existing.getOfficeAdvocateUserUuid().equals(office.getOfficeAdvocateUserUuid())) {
-                    existingIndex = i;
-                    break;
+        if (offices != null) {
+            offices.forEach(office -> {
+                int existingIndex = -1;
+                for (int i = 0; i < courtCase.getAdvocateOffices().size(); i++) {
+                    AdvocateOffice existing = courtCase.getAdvocateOffices().get(i);
+                    if (existing.getOfficeAdvocateUserUuid() != null
+                            && existing.getOfficeAdvocateUserUuid().equals(office.getOfficeAdvocateUserUuid())) {
+                        existingIndex = i;
+                        break;
+                    }
                 }
-            }
-            if (existingIndex != -1) {
-                courtCase.getAdvocateOffices().set(existingIndex, office);
-            } else {
-                courtCase.getAdvocateOffices().add(office);
-            }
-        });
+                if (existingIndex != -1) {
+                    courtCase.getAdvocateOffices().set(existingIndex, office);
+                } else {
+                    courtCase.getAdvocateOffices().add(office);
+                }
+            });
+        }
 
         log.info("Pushing join case representative details :: {}", caseObj);
         producer.push(config.getRepresentativeJoinCaseTopic(), caseObj);
