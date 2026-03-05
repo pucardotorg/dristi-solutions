@@ -22,9 +22,9 @@ import java.util.List;
 @Slf4j
 public class FileStoreUtil {
 
-    private Configuration configs;
+    private final Configuration configs;
 
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
     @Autowired
     public FileStoreUtil(RestTemplate restTemplate, Configuration configs) {
@@ -34,29 +34,31 @@ public class FileStoreUtil {
 
     /**
      * Returns whether the file exists or not in the filestore.
+     *
      * @param tenantId
      * @param fileStoreId
      * @return
      */
-    public boolean doesFileExist(String tenantId,  String fileStoreId) {
-    		boolean fileExists = false;
-        try{
+    public boolean doesFileExist(String tenantId, String fileStoreId) {
+        boolean fileExists = false;
+        try {
             StringBuilder uri = new StringBuilder(configs.getFileStoreHost()).append(configs.getFileStorePath());
             uri.append("tenantId=").append(tenantId).append("&").append("fileStoreId=").append(fileStoreId);
-            ResponseEntity<String> responseEntity= restTemplate.getForEntity(uri.toString(), String.class);
+            ResponseEntity<String> responseEntity = restTemplate.getForEntity(uri.toString(), String.class);
             fileExists = responseEntity.getStatusCode().equals(HttpStatus.OK);
-        }catch (Exception e){
-        		log.error("Document {} is not found in the Filestore for tenantId {} ! An exception occurred!", 
-        			  fileStoreId, 
-        			  tenantId, 
-        			  e);
+        } catch (Exception e) {
+            log.error("Document {} is not found in the Filestore for tenantId {} ! An exception occurred!",
+                    fileStoreId,
+                    tenantId,
+                    e);
         }
         return fileExists;
     }
 
     /**
      * Downloads a file from file store and returns its content as byte array.
-     * @param tenantId tenant id
+     *
+     * @param tenantId    tenant id
      * @param fileStoreId file store id of the file
      * @return byte array of the file content, or null if download fails
      */
@@ -76,28 +78,46 @@ public class FileStoreUtil {
     }
 
     /**
-     * Counts the number of pages in a PDF file.
-     * @param fileContent byte array of the PDF file
-     * @return number of pages, or 0 if the content is not a valid PDF
+     * Counts the number of pages in a document.
+     * Supports PDF files (counts pages) and Image files (counts as 1 page).
+     *
+     * @param fileContent byte array of the file
+     * @return number of pages, or 0 if the content is not a valid PDF or Image
      */
-    public int countPdfPages(byte[] fileContent) {
+    public int countPages(byte[] fileContent) {
         if (fileContent == null || fileContent.length == 0) {
             return 0;
         }
+
+        // 1. Try to read as PDF
         try (PDDocument document = Loader.loadPDF(fileContent)) {
             int pages = document.getNumberOfPages();
             log.info("PDF page count: {}", pages);
             return pages;
         } catch (Exception e) {
-            log.error("Error counting PDF pages: {}", e.getMessage(), e);
-            return 0;
+            log.debug("Not a valid PDF, checking if it is an image...");
         }
+
+        // 2. Try to read as Image
+        try (java.io.ByteArrayInputStream inputStream = new java.io.ByteArrayInputStream(fileContent)) {
+            java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(inputStream);
+            if (image != null) {
+                log.info("Image detected, counting as 1 page.");
+                return 1;
+            }
+        } catch (Exception e) {
+            log.error("Not a valid image either.");
+        }
+
+        log.error("File is neither a valid PDF nor a valid image. Returning 0 pages.");
+        return 0;
     }
 
     /**
-     * Fetches all files by their file store IDs and returns the total page count across all PDFs.
-     * Non-PDF files or files that fail to download are skipped (counted as 0 pages).
-     * @param tenantId tenant id
+     * Fetches all files by their file store IDs and returns the total page count across all PDFs and images.
+     * Files that fail to download or are unrecognized are skipped (counted as 0 pages).
+     *
+     * @param tenantId     tenant id
      * @param fileStoreIds list of file store ids
      * @return total page count across all files
      */
@@ -108,7 +128,7 @@ public class FileStoreUtil {
         int totalPages = 0;
         for (String fileStoreId : fileStoreIds) {
             byte[] fileContent = fetchFileAsBytes(tenantId, fileStoreId);
-            int pages = countPdfPages(fileContent);
+            int pages = countPages(fileContent);
             log.info("FileStoreId: {} has {} pages", fileStoreId, pages);
             totalPages += pages;
         }
