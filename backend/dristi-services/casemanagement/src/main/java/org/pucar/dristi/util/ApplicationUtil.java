@@ -69,7 +69,7 @@ public class ApplicationUtil {
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         StringBuilder uri = new StringBuilder(configuration.getApplicationHost()).append(configuration.getApplicationSearchEndPoint());
         ApplicationSearchRequest applicationSearchRequest = ApplicationSearchRequest.builder()
-                .criteria(ApplicationCriteria.builder().filingNumber(filingNumber).courtId(courtId).tenantId(tenantId).build())
+                .criteria(ApplicationCriteria.builder().filingNumber(filingNumber).courtId(courtId).tenantId(tenantId).isHideBailCaseBundle(true).build())
                 .pagination(Pagination.builder().sortBy("applicationCMPNumber").order(OrderPagination.ASC).limit(100).build())
                 .build();
         Object response = serviceRequestRepository.fetchResult(uri, applicationSearchRequest);

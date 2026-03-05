@@ -41,8 +41,8 @@ public class DisposedApplicationsSection implements CaseBundleSection {
         if (children.isEmpty()) return null;
 
         return CaseBundleNode.builder()
-                .id("disposed-application")
-                .title("DISPOSED_APPLICATION")
+                .id("disposed-applications")
+                .title("DISPOSED_APPLICATIONS_PDF")
                 .children(children)
                 .build();
     }

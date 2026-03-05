@@ -19,6 +19,8 @@ public class BundleData {
 
     private final List<Artifact> evidences;
 
+    private final List<Artifact> additionalFilingEvidences;
+
     private final List<Application> applications;
 
     private final List<Order> orders;

@@ -48,4 +48,7 @@ public class ApplicationCriteria {
     @Valid
     private String status = null;
 
+    @JsonProperty("isHideBailCaseBundle")
+    private Boolean isHideBailCaseBundle = null;
+
 }

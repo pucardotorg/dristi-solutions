@@ -78,8 +78,8 @@ public class ProcessesSection implements CaseBundleSection {
         if (children.isEmpty()) return null;
 
         return CaseBundleNode.builder()
-                .id("process")
-                .title("PROCESSES")
+                .id("processes")
+                .title("PROCESSES_CASE_PDF")
                 .children(children)
                 .build();
     }

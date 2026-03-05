@@ -57,7 +57,7 @@ public class OrdersSection implements CaseBundleSection {
 
         return CaseBundleNode.builder()
                 .id("orders")
-                .title("ORDERS")
+                .title("ORDERS_CASE_PDF")
                 .children(children)
                 .build();
     }

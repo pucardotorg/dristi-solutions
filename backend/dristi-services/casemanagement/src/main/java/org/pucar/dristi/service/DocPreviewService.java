@@ -111,6 +111,7 @@ public class DocPreviewService {
         return BundleData.builder()
                 .cases(courtCase)
                 .evidences(evidenceUtil.searchEvidence(filingNumber, courtId, tenantId))
+                .additionalFilingEvidences(evidenceUtil.searchAdditionalFilingEvidence(filingNumber, courtId, tenantId))
                 .applications(applicationUtil.searchAllApplications(filingNumber, courtId, tenantId))
                 .orders(orderUtil.getOrders(courtCase.getFilingNumber(), courtCase.getCourtId()))
                 .tasks(taskUtil.searchTask(taskCriteria, requestInfo))

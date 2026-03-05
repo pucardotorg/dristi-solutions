@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
+import org.pucar.dristi.web.models.OrderPagination;
+import org.pucar.dristi.web.models.Pagination;
 import org.pucar.dristi.web.models.order.Order;
 import org.pucar.dristi.web.models.order.OrderCriteria;
 import org.pucar.dristi.web.models.order.OrderListResponse;
@@ -36,7 +38,10 @@ public class OrderUtil {
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getOrderSearchHost()).append(configuration.getOrderSearchPath());
         Object response;
-        OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder().criteria(OrderCriteria.builder().filingNumber(filingNumber).status("PUBLISHED").courtId(courtId).build()).build();
+        OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder()
+                .criteria(OrderCriteria.builder().filingNumber(filingNumber).status("PUBLISHED").courtId(courtId).build())
+                .pagination(Pagination.builder().sortBy("createdDate").order(OrderPagination.ASC).limit(100).build())
+                .build();
         OrderListResponse orderListResponse;
         try {
             response = serviceRequestRepository.fetchResult(uri, orderSearchRequest);
