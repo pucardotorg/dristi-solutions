@@ -2815,6 +2815,24 @@ export const UICustomizations = {
           },
           pagination: { limit: limit != null ? limit : 10, offSet: offSet != null ? offSet : 0 },
         },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            const existingSelect = requestCriteria?.config?.select;
+            const basePayload = typeof existingSelect === "function" ? existingSelect(data) : data;
+
+            const paginationTotal =
+              basePayload?.pagination && typeof basePayload.pagination.totalCount === "number"
+                ? basePayload.pagination.totalCount
+                : typeof basePayload?.totalCount === "number"
+                ? basePayload.totalCount
+                : Array.isArray(basePayload?.cases)
+                ? basePayload.cases.length
+                : 0;
+
+            return { ...basePayload, totalCount: paginationTotal };
+          },
+        },
       };
     },
     additionalCustomizations: (row, key, column, value, t) => {

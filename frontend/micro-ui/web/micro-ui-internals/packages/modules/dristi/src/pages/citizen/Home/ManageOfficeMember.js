@@ -131,8 +131,8 @@ const ManageOfficeMember = () => {
 
   const accessTypeOptions = useMemo(
     () => [
-      { code: "SPECIFIC_CASES", name: t("SPECIFIC_CASES") || "Specific Cases" },
       { code: "ALL_CASES", name: t("ALL_CASES") || "All Cases" },
+      { code: "SPECIFIC_CASES", name: t("SPECIFIC_CASES") || "Specific Cases" },
     ],
     [t]
   );
