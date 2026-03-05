@@ -394,9 +394,10 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
         ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
     const advocateMobileNumbersArray =
-      caseDetails?.AdvocateDetailBlock?.filter((data) => {
-        return data?.advocates?.length > 0;
-      })
+      caseDetails?.advocateDetailBlock
+        ?.filter((data) => {
+          return data?.advocates?.length > 0;
+        })
         ?.map((data) => {
           return data?.advocates?.filter((adv) => adv?.mobileNumber)?.map((adv) => adv?.mobileNumber);
         })

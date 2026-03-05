@@ -155,9 +155,9 @@ const WitnessDrawerV2 = ({
 
           // First try to get mobile number from local data (your original logic)
           let mobileNumber = null;
-          for (let i = 0; i < caseDetails?.AdvocateDetailBlock?.length; i++) {
-            for (let j = 0; j < caseDetails?.AdvocateDetailBlock?.[i]?.advocates?.length; j++) {
-              const advocateData = caseDetails?.AdvocateDetailBlock?.[i]?.advocates?.[j];
+          for (let i = 0; i < caseDetails?.advocateDetailBlock?.length; i++) {
+            for (let j = 0; j < caseDetails?.advocateDetailBlock?.[i]?.advocates?.length; j++) {
+              const advocateData = caseDetails?.advocateDetailBlock?.[i]?.advocates?.[j];
               if (advocateData?.advocateUuid === rep?.additionalDetails?.uuid) {
                 mobileNumber = advocateData?.mobileNumber;
                 break;

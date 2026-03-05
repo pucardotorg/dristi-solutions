@@ -3199,6 +3199,10 @@ export const updateCaseDetails = async ({
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: pageConfig?.selectDocumentName?.["vakalatnamaFileUpload"],
+                    additionalDetails: {
+                      documentName: uploadedData.filename || document?.documentName,
+                      fileName: pageConfig?.selectDocumentName?.["vakalatnamaFileUpload"],
+                    },
                   };
                   docList.push(doc);
                   complainantDetails.push({
@@ -3227,6 +3231,10 @@ export const updateCaseDetails = async ({
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: pageConfig?.selectDocumentName?.["pipAffidavitFileUpload"],
+                    additionalDetails: {
+                      documentName: uploadedData.filename || document?.documentName,
+                      fileName: pageConfig?.selectDocumentName?.["pipAffidavitFileUpload"],
+                    },
                   };
                   docList.push(doc);
                   complainantDetails.push({
@@ -3295,7 +3303,7 @@ export const updateCaseDetails = async ({
           };
         })
     );
-
+    debugger;
     const updatedAdvocateDetails = [];
     let duplicateAdvocateDetails = advocateDetails.slice();
 
@@ -3352,7 +3360,17 @@ export const updateCaseDetails = async ({
         tenantId,
         caseId: caseDetails?.id,
         advocateId: data?.advocate?.id,
-        documents: [],
+        documents: [
+          {
+            ...data?.advocate?.advocateIdProof?.[0],
+            documentType: documentsTypeMapping["advocateIdProof"],
+            additionalDetails: {
+              name: data?.advocate?.advocateIdProof?.[0]?.name,
+              documentName: advInFormData?.advocateNameDetails?.advocateIdProof?.[0]?.documentName,
+              fileName: advInFormData?.advocateNameDetails?.advocateIdProof?.[0]?.fileName,
+            },
+          },
+        ],
         additionalDetails: {
           advocateName: data?.advocate?.additionalDetails?.username,
           uuid: data?.advocate?.auditDetails?.createdBy,
@@ -3440,13 +3458,6 @@ export const updateCaseDetails = async ({
 
     data.litigants = [...updatedCaseLitigants];
     data.representatives = [...updatedRepresentatives];
-    data.additionalDetails = {
-      ...caseDetails.additionalDetails,
-      advocateDetails: {
-        formdata: newFormData,
-        isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.additionalDetails?.[selected]?.isCompleted : isCompleted,
-      },
-    };
   }
   if (selected === "processCourierService") {
     data.additionalDetails = {
@@ -3541,11 +3552,7 @@ export const updateCaseDetails = async ({
         litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
         ...updatedData,
         documents: updatedTempDocList,
-        advocateCount:
-          formdata?.[0]?.data?.numberOfAdvocate ||
-          caseDetails?.additionalDetails?.advocateDetails?.formdata[0]?.data?.numberOfAdvocate ||
-          caseDetails?.AdvocateDetailBlock?.[0]?.advocates?.length ||
-          0,
+        advocateCount: formdata?.[0]?.data?.numberOfAdvocate || caseDetails?.advocateDetailBlock?.[0]?.advocates?.length || 0,
         linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
         workflow: {
           ...caseDetails?.workflow,
@@ -3586,11 +3593,11 @@ export const transformCaseDataForFetching = (caseDetails, keys) => {
       };
     }
 
-    if (key === "advocateDetails" && updatedCaseData?.AdvocateDetailBlock?.length > 0) {
+    if (key === "advocateDetails" && updatedCaseData?.advocateDetailBlock?.length > 0) {
       updatedCaseData.additionalDetails = { ...(updatedCaseData?.additionalDetails || {}) };
       let isCompleted = true;
 
-      const formdata = updatedCaseData?.AdvocateDetailBlock?.map((block) => {
+      const formdata = updatedCaseData?.advocateDetailBlock?.map((block) => {
         const {
           complainant = {},
           isComplainantPip = {},
@@ -3632,8 +3639,8 @@ export const transformCaseDataForFetching = (caseDetails, keys) => {
         const vakalatnamaDocuments = (documents?.vakalatnama || [])?.map((doc) => ({
           fileStore: doc?.fileStore || "",
           documentType: doc?.documentType || "",
-          fileName: doc?.additionalDetails?.fileName || "VAKALATNAMA",
-          documentName: doc?.additionalDetails?.documentName || "",
+          fileName: doc?.fileName || "VAKALATNAMA",
+          documentName: doc?.documentName || "",
         }));
 
         // Map pip affidavit documents
@@ -3705,76 +3712,9 @@ export const transformCaseDataForUpdate = (caseDetails, keys) => {
     }
 
     if (key === "advocateDetails") {
-      const { formdata = [], isCompleted = false } = caseDetails?.additionalDetails?.advocateDetails || {};
-      if (formdata?.length > 0) {
-        const advocateDetailsBlock = formdata?.map(({ data, isenabled, displayindex, isFormCompleted }) => {
-          const multipleAdvocatesAndPip = data?.multipleAdvocatesAndPip || {};
-
-          // Map multipleAdvocateNameDetails back to advocates array
-          const advocates = (multipleAdvocatesAndPip?.multipleAdvocateNameDetails || []).map((detail) => ({
-            id: detail?.advocateBarRegNumberWithName?.advocateId || "",
-            barRegistrationNumber: detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal || "",
-            individualId: detail?.advocateBarRegNumberWithName?.individualId || "",
-            additionalDetails: {
-              username: detail?.advocateBarRegNumberWithName?.advocateName || "",
-              mobileNumber: detail?.advocateNameDetails?.advocateMobileNumber || "",
-            },
-            auditDetails: {
-              createdBy: detail?.advocateBarRegNumberWithName?.advocateUuid || "",
-            },
-            documents: detail?.advocateNameDetails?.advocateIdProof || [],
-          }));
-
-          // Map vakalatnama documents back
-          const vakalatnama = (multipleAdvocatesAndPip?.vakalatnamaFileUpload?.document || []).map((doc) => ({
-            fileStore: doc?.fileStore || "",
-            documentType: doc?.documentType || "VAKALATNAMA_DOC",
-            additionalDetails: {
-              fileName: doc?.fileName || "VAKALATNAMA",
-              documentName: doc?.documentName || "",
-            },
-          }));
-
-          // Map pip affidavit documents back
-          const pipAffidavit = (multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document || []).map((doc) => ({
-            fileStore: doc?.fileStore || "",
-            documentType: doc?.documentType || "PIP_AFFIDAVIT_DOC",
-            additionalDetails: {
-              fileName: doc?.fileName || "PIP_AFFIDAVIT",
-              documentName: doc?.documentName || "",
-            },
-          }));
-
-          const boxComplainant = multipleAdvocatesAndPip?.boxComplainant || {};
-
-          return {
-            complainant: {
-              index: boxComplainant?.index,
-              individualId: boxComplainant?.individualId || "",
-              firstName: boxComplainant?.firstName || null,
-              middleName: boxComplainant?.middleName || null,
-              lastName: boxComplainant?.lastName || null,
-              mobileNumber: boxComplainant?.mobileNumber || null,
-            },
-            isComplainantPip: multipleAdvocatesAndPip?.isComplainantPip || {},
-            uiFlags: {
-              showAffidavit: multipleAdvocatesAndPip?.showAffidavit,
-              showVakalatNamaUpload: multipleAdvocatesAndPip?.showVakalatNamaUpload,
-            },
-            documents: {
-              vakalatnama,
-              pipAffidavit,
-            },
-            advocates,
-            displayIndex: displayindex || 0,
-            isEnabled: isenabled,
-            isFormCompleted: isFormCompleted || (isCompleted ? true : false),
-          };
-        });
-
+      if (updatedCaseData?.additionalDetails?.advocateDetails) {
         delete updatedCaseData.additionalDetails.advocateDetails;
-        updatedCaseData.AdvocateDetailBlock = advocateDetailsBlock;
-      } else updatedCaseData.AdvocateDetailBlock = [];
+      }
     }
   }
 

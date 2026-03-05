@@ -650,7 +650,7 @@ function CaseFileAdmission({ t, path }) {
         document: form?.data?.inquiryAffidavitFileUpload?.document,
         key: "inquiryAffidavitFileUpload",
       })),
-      ...caseDetails?.AdvocateDetailBlock?.map((data) => ({
+      ...caseDetails?.advocateDetailBlock?.map((data) => ({
         document: data?.documents?.vakalatnama?.length > 0 ? data?.documents?.vakalatnama : data?.documents?.pipAffidavit,
         key: data?.documents?.vakalatnama?.length > 0 ? "vakalatnamaFileUpload" : "pipAffidavitFileUpload",
       })),
