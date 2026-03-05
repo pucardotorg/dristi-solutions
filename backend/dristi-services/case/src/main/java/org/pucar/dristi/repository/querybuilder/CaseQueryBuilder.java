@@ -767,7 +767,7 @@ public class CaseQueryBuilder {
             // select joined advocate columns with aliases expected by the row mapper
             query.append(
                 ", da.id as advocate_id, da.tenantid as advocate_tenantid, da.applicationnumber as advocate_applicationnumber, da.status as advocate_status, " +
-                "da.barregistrationnumber as advocate_barregistrationnumber, da.type as advocate_type, da.organisationid as advocate_organisationid, da.individualid as advocate_individualid, da.isactive as advocate_isactive, da.additionaldetails as advocate_additionaldetails"
+                "da.barregistrationnumber as advocate_barregistrationnumber, da.organisationid as advocate_organisationid, da.individualid as advocate_individualid, da.isactive as advocate_isactive, da.additionaldetails as advocate_additionaldetails"
             );
 
             // from representatives with left join to advocates
