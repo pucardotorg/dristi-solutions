@@ -1,4 +1,4 @@
-import { InfoCard } from "@egovernments/digit-ui-components";
+import { AlertCard } from "@egovernments/digit-ui-components";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { Button, FileIcon, PrintIcon } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
@@ -116,7 +116,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
             gap: "24px",
           }}
         >
-          <InfoCard
+          <AlertCard
             variant={"default"}
             label={t("PLEASE_NOTE")}
             additionalElements={[

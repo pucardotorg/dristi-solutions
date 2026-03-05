@@ -1,4 +1,4 @@
-import { InfoCard } from "@egovernments/digit-ui-components";
+import { AlertCard } from "@egovernments/digit-ui-components";
 import CustomCaseInfoDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCaseInfoDiv";
 import { CardLabel, Dropdown, FormComposerV2, LabelFieldPair, RadioButtons } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useRef } from "react";
@@ -186,7 +186,7 @@ const SelectParty = ({
     <div ref={targetRef} className="select-user-join-case" style={{ width: "712px" }}>
       <CustomCaseInfoDiv t={t} data={caseInfo?.slice(0, 4)} column={4} />
 
-      <InfoCard
+      <AlertCard
         variant={"default"}
         label={t("PLEASE_NOTE")}
         additionalElements={[<p>{t("ACKNOWLEDGE_RECEIPT_OF_SUMMONS")}</p>]}
@@ -419,7 +419,7 @@ const SelectParty = ({
       )}
       {partyInPerson?.value === "YES" && party?.uuid === userInfo?.uuid && (
         <React.Fragment>
-          <InfoCard
+          <AlertCard
             variant={"default"}
             label={t("PLEASE_NOTE")}
             additionalElements={[
@@ -534,7 +534,7 @@ const SelectParty = ({
       {selectPartyData?.userType?.value === "Litigant" &&
         party?.individualId &&
         ((partyInPerson?.value === "NO" && party?.individualId) || (partyInPerson?.value === "YES" && party?.uuid !== userInfo?.uuid)) && (
-          <InfoCard
+          <AlertCard
             variant={"warning"}
             label={t("WARNING")}
             additionalElements={[

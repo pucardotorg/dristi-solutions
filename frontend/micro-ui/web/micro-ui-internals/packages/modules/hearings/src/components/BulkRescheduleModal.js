@@ -1,4 +1,4 @@
-import { InfoCard } from "@egovernments/digit-ui-components";
+import { AlertCard } from "@egovernments/digit-ui-components";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { Button, CloseSvg, FormComposerV2, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
@@ -180,7 +180,7 @@ const BulkRescheduleModal = ({
             )}
 
             {/* {!isBulkRescheduleDisabled && !currentDiaryEntry && bulkHearingsCount !== 0 && (
-          <InfoCard
+          <AlertCard
             variant={"default"}
             label={t("PLEASE_NOTE")}
             additionalElements={{}}
@@ -192,7 +192,7 @@ const BulkRescheduleModal = ({
           />
         )}
         {!isBulkRescheduleDisabled && !currentDiaryEntry && bulkHearingsCount === 0 && (
-          <InfoCard
+          <AlertCard
             variant={"default"}
             label={t("PLEASE_NOTE")}
             additionalElements={{}}

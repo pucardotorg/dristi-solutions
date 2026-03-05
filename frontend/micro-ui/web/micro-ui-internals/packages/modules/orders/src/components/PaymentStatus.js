@@ -2,7 +2,7 @@ import React from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Banner } from "@egovernments/digit-ui-react-components";
-import { Button, InfoCard } from "@egovernments/digit-ui-components";
+import { Button, AlertCard } from "@egovernments/digit-ui-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 
@@ -70,7 +70,7 @@ const PaymentStatus = ({ path }) => {
             />
           </div>
         ) : (
-          <InfoCard
+          <AlertCard
             className="payment-status-info-card"
             headerWrapperClassName="payment-status-info-header"
             populators={{

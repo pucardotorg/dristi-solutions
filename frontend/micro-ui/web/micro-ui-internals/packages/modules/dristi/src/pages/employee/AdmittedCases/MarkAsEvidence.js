@@ -7,7 +7,7 @@ import { MarkAsEvidenceAction } from "../../../Utils/submissionWorkflow";
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { Urls } from "../../../hooks";
 import { useHistory } from "react-router-dom";
-import { InfoCard } from "@egovernments/digit-ui-components";
+import { AlertCard } from "@egovernments/digit-ui-components";
 import { getAuthorizedUuid, sanitizeData } from "../../../Utils";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
@@ -1137,7 +1137,7 @@ const MarkAsEvidence = ({
           className="add-signature-modal"
         >
           <div className="add-signature-main-div">
-            <InfoCard
+            <AlertCard
               variant={"default"}
               label={t("PLEASE_NOTE")}
               additionalElements={[

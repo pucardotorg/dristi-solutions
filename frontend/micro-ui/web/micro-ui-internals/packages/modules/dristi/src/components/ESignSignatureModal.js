@@ -1,4 +1,4 @@
-import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
+import { CloseSvg, AlertCard } from "@egovernments/digit-ui-components";
 import React, { useState, useMemo, useEffect } from "react";
 import Modal from "./Modal";
 import { Button } from "@egovernments/digit-ui-react-components";
@@ -137,7 +137,7 @@ function ESignSignatureModal({
       className={"add-signature-modal"}
     >
       <div className="add-signature-main-div">
-        <InfoCard
+        <AlertCard
           variant={"default"}
           label={t("PLEASE_NOTE")}
           additionalElements={[

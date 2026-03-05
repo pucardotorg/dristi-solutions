@@ -6,7 +6,7 @@ import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.m
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 import { HomeService } from "../../../../../home/src/hooks/services";
 import { Urls } from "../../../hooks";
-import { InfoCard } from "@egovernments/digit-ui-components";
+import { AlertCard } from "@egovernments/digit-ui-components";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -224,7 +224,6 @@ function ScheduleHearing({
     setShowErrorToast(false);
   };
 
-
   const handleClickDate = (label) => {
     if (status === "OPTOUT") {
       const newSelectedChip = selectedChip.includes(label) ? null : label;
@@ -295,8 +294,9 @@ function ScheduleHearing({
           documents: [],
           additionalDetails: {
             formdata: {
-              hearingDate: `${dateArr[2]}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${dateArr[0] < 9 ? `0${dateArr[0]}` : dateArr[0]
-                }`,
+              hearingDate: `${dateArr[2]}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                dateArr[0] < 9 ? `0${dateArr[0]}` : dateArr[0]
+              }`,
               hearingPurpose: data.purpose,
               orderType: {
                 code: "SCHEDULE_OF_HEARING_DATE",
@@ -479,7 +479,7 @@ function ScheduleHearing({
                 headerStyles={{ fontSize: "32px" }}
                 style={{ minWidth: "100%", marginTop: "10px" }}
               ></Banner>
-              <InfoCard
+              <AlertCard
                 className="payment-status-info-card"
                 headerWrapperClassName="payment-status-info-header"
                 populators={{

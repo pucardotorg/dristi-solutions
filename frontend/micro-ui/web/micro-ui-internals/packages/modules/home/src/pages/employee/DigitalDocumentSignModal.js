@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
+import { CloseSvg, AlertCard } from "@egovernments/digit-ui-components";
 import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import { FileDownloadIcon, FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
@@ -569,7 +569,7 @@ export const DigitalDocumentSignModal = ({
         >
           <div className="add-signature-main-div">
             <div className="not-signed">
-              <InfoCard
+              <AlertCard
                 variant={"default"}
                 label={t("PLEASE_NOTE")}
                 additionalElements={[<p key="note">{`${t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")} ${t(effectiveRowData?.type)}`}</p>]}
@@ -630,7 +630,7 @@ export const DigitalDocumentSignModal = ({
           className="add-signature-modal"
         >
           <div className="add-signature-main-div">
-            <InfoCard
+            <AlertCard
               variant={"default"}
               label={t("PLEASE_NOTE")}
               additionalElements={[<p key="note">{`${t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")} ${t(effectiveRowData?.type)}`}</p>]}

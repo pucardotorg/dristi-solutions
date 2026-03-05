@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { InfoCard, Loader } from "@egovernments/digit-ui-components";
+import { AlertCard, Loader } from "@egovernments/digit-ui-components";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
 import DocumentModal from "../../components/DocumentModal";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
@@ -58,7 +58,7 @@ const PaymentForSummonComponent = ({
 
   return (
     <div className="payment-for-summon">
-      <InfoCard
+      <AlertCard
         variant={"warning"}
         label={"Complete in 2 days"}
         additionalElements={[

@@ -1,6 +1,6 @@
 import { Button, CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { InfoCard } from "@egovernments/digit-ui-components";
+import { AlertCard } from "@egovernments/digit-ui-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
@@ -260,7 +260,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     <div className="e-filing-payment">
       <Modal headerBarEnd={<CloseBtn onClick={onCancel} />} formId="modal-action" headerBarMain={<Heading label={t("PENDING_PAYMENT")} />}>
         <div className="payment-wrapper">
-          <InfoCard
+          <AlertCard
             variant={"default"}
             label={t("CS_IMPORTANT_INFORMATION")}
             additionalElements={[
