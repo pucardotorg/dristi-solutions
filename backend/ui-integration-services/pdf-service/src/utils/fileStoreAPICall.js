@@ -5,7 +5,7 @@ import axios, { post } from "axios";
 var FormData = require("form-data");
 import envVariables from "../EnvironmentVariables";
 
-let egovFileHost = envVariables.EGOV_FILESTORE_SERVICE_HOST;
+let egovFileHost = (envVariables.EGOV_FILESTORE_SERVICE_HOST || "").replace(/\/+$/, "");
 let externalHost = envVariables.EGOV_EXTERNAL_HOST;
 
 /**

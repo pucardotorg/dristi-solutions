@@ -4,7 +4,7 @@ import envVariables from "../EnvironmentVariables";
 import { fileStoreAPICall } from "./fileStoreAPICall";
 import logger from "../config/logger";
 
-const egovFileHost = envVariables.EGOV_FILESTORE_SERVICE_HOST;
+const egovFileHost = (envVariables.EGOV_FILESTORE_SERVICE_HOST || "").replace(/\/+$/, "");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Seal configuration (from EnvironmentVariables.js)
