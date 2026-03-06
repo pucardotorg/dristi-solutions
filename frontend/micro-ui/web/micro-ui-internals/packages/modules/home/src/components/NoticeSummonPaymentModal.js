@@ -6,7 +6,7 @@ import usePaymentProcess from "../hooks/usePaymentProcess";
 import { useTranslation } from "react-i18next";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
-import { InfoCard } from "@egovernments/digit-ui-components";
+import { AlertCard } from "@egovernments/digit-ui-components";
 import { PrintIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 
@@ -200,7 +200,7 @@ function NoticeSummonPaymentModal({ suffix, setHideCancelButton, formDataKey, ta
 
   return (
     <div className="task-payment-due-wrapper">
-      <InfoCard
+      <AlertCard
         variant={"default"}
         label={t("CS_IMPORTANT_INFORMATION")}
         additionalElements={[

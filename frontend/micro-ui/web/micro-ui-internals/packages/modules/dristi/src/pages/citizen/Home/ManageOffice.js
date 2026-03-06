@@ -73,7 +73,12 @@ const ManageOffice = () => {
   }, [advocateSearchResult]);
 
   // Fetch office members using the hook
-  const { data: officeMembersData, isLoading: isLoadingMembers, refetch: refetchMembers } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
+  const {
+    data: officeMembersData,
+    isLoading: isLoadingMembers,
+    isFetching: isFetchingMembers,
+    refetch: refetchMembers,
+  } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
     {
       searchCriteria: {
         officeAdvocateUserUuid: officeAdvocateUserUuid,
@@ -114,6 +119,7 @@ const ManageOffice = () => {
   const {
     data: advocatesWorkingForData,
     isLoading: isLoadingAdvocatesWorkingFor,
+    isFetching: isFetchingAdvocatesWorkingFor,
     refetch: refetchAdvocatesWorkingFor,
   } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
     {
@@ -327,12 +333,25 @@ const ManageOffice = () => {
   }, [officeMembers]);
 
   // Data and loading per tab: My Advocates/Clerks vs Advocates I'm working for
-  const displayMembers = useMemo(() => (activeTab === "advocatesWorkingFor" ? advocatesWorkingForMembers : filteredMembers), [
-    activeTab,
-    advocatesWorkingForMembers,
-    filteredMembers,
-  ]);
-  const isLoadingDisplay = activeTab === "advocatesWorkingFor" ? isLoadingAdvocatesWorkingFor : isLoadingMembers;
+  const displayMembers = useMemo(
+    () => (activeTab === "advocatesWorkingFor" ? advocatesWorkingForMembers : filteredMembers),
+    [activeTab, advocatesWorkingForMembers, filteredMembers]
+  );
+
+  // Show loader both on initial load and on refetch when switching tabs
+  const isLoadingDisplay =
+    activeTab === "advocatesWorkingFor"
+      ? isLoadingAdvocatesWorkingFor || isFetchingAdvocatesWorkingFor
+      : isLoadingMembers || isFetchingMembers;
+
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
+    if (tabId === "myAdvocatesClerks" && refetchMembers) {
+      refetchMembers();
+    } else if (tabId === "advocatesWorkingFor" && refetchAdvocatesWorkingFor) {
+      refetchAdvocatesWorkingFor();
+    }
+  };
 
   const handleDeleteClick = (member) => {
     setMemberToRemove(member);
@@ -400,7 +419,7 @@ const ManageOffice = () => {
           {tabs?.map((tab) => (
             <button
               key={tab?.id}
-              onClick={() => setActiveTab(tab?.id)}
+              onClick={() => handleTabClick(tab?.id)}
               className={`manage-office-tab${activeTab === tab?.id ? " manage-office-tab--active" : ""}`}
             >
               {tab?.label}
@@ -463,7 +482,7 @@ const ManageOffice = () => {
                 >
                   {activeTab === "advocatesWorkingFor" ? member?.officeAdvocateName || member?.memberName : member?.memberName}
                 </span>
-                <span>{member?.memberMobileNumber || member?.officeAdvocateMobileNumber}</span>
+                <span>{activeTab === "advocatesWorkingFor" ? member?.advocateOfficeMobileNumber || "-" : member?.memberMobileNumber || "-"}</span>
                 {activeTab !== "advocatesWorkingFor" && (
                   <span>
                     {member?.memberType === "ADVOCATE_CLERK" ? "Clerk" : member?.memberType === "ADVOCATE" ? "Advocate" : member?.memberType}

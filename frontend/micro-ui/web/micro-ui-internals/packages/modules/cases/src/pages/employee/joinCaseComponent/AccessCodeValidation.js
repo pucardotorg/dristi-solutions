@@ -1,4 +1,4 @@
-import { InfoCard } from "@egovernments/digit-ui-components";
+import { AlertCard } from "@egovernments/digit-ui-components";
 import CustomCaseInfoDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCaseInfoDiv";
 import { CardLabel, CardLabelError, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
@@ -38,7 +38,7 @@ const AccessCodeValidation = ({ caseDetails, validationCode, setValidationCode, 
   return (
     <div className="enter-validation-code">
       <CustomCaseInfoDiv t={t} data={caseInfo?.slice(0, 4)} column={4} />
-      <InfoCard
+      <AlertCard
         variant={"default"}
         label={t("PLEASE_NOTE")}
         inline

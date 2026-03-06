@@ -49,6 +49,7 @@ class AdvocateOfficeRowMapperTest {
         when(resultSet.getString("office_advocate_user_uuid")).thenReturn(officeAdvocateUserUuid);
         when(resultSet.getString("office_advocate_name")).thenReturn("Office Advocate");
         when(resultSet.getString("member_user_uuid")).thenReturn(memberUserUuid);
+        when(resultSet.getString("advocate_office_mobile_number")).thenReturn("9999999999");
         when(resultSet.getString("member_email")).thenReturn("test@example.com");
     }
 

@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 import { HomeService, Urls } from "../../hooks/services";
-import { InfoCard } from "@egovernments/digit-ui-components";
+import { AlertCard } from "@egovernments/digit-ui-components";
 
 const hearingTypeOptions = [{}];
 
@@ -367,7 +367,7 @@ function ScheduleNextHearing({
         {shortCaseInfo && <CustomCaseInfoDiv t={t} data={shortCaseInfo} style={{ marginTop: "24px" }} />}
 
         {status === "OPTOUT" && Array.isArray(selectedChip) && selectedChip.length > 0 && (
-          <InfoCard
+          <AlertCard
             className="payment-status-info-card"
             headerWrapperClassName="payment-status-info-header"
             populators={{

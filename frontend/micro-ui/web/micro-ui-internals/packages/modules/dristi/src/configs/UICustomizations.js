@@ -2799,18 +2799,32 @@ export const UICustomizations = {
       const caseSearchText = searchForm?.caseSearchText;
 
       const existingCriteria = requestCriteria?.body?.criteria || {};
+      const tableForm = requestCriteria?.state?.tableForm || {};
       const existingPagination = requestCriteria?.body?.pagination || { limit: 10, offSet: 0 };
+      const limit = tableForm.limit != null ? tableForm.limit : existingPagination.limit;
+      const offSet = tableForm.offset != null ? tableForm.offset : (tableForm.offSet != null ? tableForm.offSet : existingPagination.offSet);
+
+      const finalLimit = limit != null ? limit : 10;
+      const finalOffSet = offSet != null ? offSet : 0;
 
       return {
         ...requestCriteria,
+        changeQueryName: "assignCases_" + finalLimit + "_" + finalOffSet + "_" + caseMappingFilterStatus,
         body: {
+          ...requestCriteria?.body,
           criteria: {
             ...existingCriteria,
             tenantId: tenantId || existingCriteria.tenantId,
             caseMappingFilterStatus,
             ...(caseSearchText ? { caseSearchText } : {}),
           },
-          pagination: existingPagination,
+          pagination: { limit: finalLimit, offSet: finalOffSet },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, totalCount: data?.pagination?.totalCount };
+          },
         },
       };
     },
@@ -2828,6 +2842,10 @@ export const UICustomizations = {
               style={{ cursor: "pointer", width: "20px", height: "20px" }}
             />
           );
+        case "CASE_NAME": {
+          const rawTitle = (row?.caseTitle || "").toString().trim();
+          return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
+        }
         default:
           return value != null ? value : "";
       }
