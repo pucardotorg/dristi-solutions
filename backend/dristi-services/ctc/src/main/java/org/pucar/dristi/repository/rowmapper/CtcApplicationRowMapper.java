@@ -53,7 +53,6 @@ public class CtcApplicationRowMapper implements ResultSetExtractor<List<CtcAppli
                         .totalPages(rs.getInt("total_pages"))
                         .status(rs.getString("status"))
                         .judgeComments(rs.getString("judge_comments"))
-                        .workflow(getObjectFromJson(rs.getString("workflow"), new TypeReference<WorkflowObject>() {}))
                         .auditDetails(AuditDetails.builder()
                                 .createdBy(rs.getString("created_by"))
                                 .lastModifiedBy(rs.getString("last_modified_by"))

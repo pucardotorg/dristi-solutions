@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,18 +16,24 @@ import jakarta.validation.constraints.NotNull;
 public class CtcApplicationSearchCriteria {
     
     @JsonProperty("tenantId")
+    @Valid
+    @NotNull
     private String tenantId;
     
     @JsonProperty("ctcApplicationNumber")
     private String ctcApplicationNumber;
 
     @JsonProperty("filingNumber")
+    @Valid
+    @NotNull
     private String filingNumber;
     
     @JsonProperty("searchByCaseNumberAnTitle")
     private String searchByCaseNumberAnTitle;
     
     @JsonProperty("courtId")
+    @Valid
+    @NotNull
     private String courtId;
     
     @JsonProperty("status")

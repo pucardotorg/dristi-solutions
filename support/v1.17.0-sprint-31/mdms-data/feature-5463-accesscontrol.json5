@@ -1,0 +1,18 @@
+[
+  {
+    "id": "ea2c04cb-9ec9-4ce9-a947-496eff843a22",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2789",
+    "data": {
+      "id": 2789,
+      "url": "/ctc/applications/_validate", // TODO : need to be given access to CITIZEN
+      "code": "2789",
+      "name": "validate ctc application",
+      "displayName": "validate ctc application",
+      "serviceCode": "ctc",
+      "parentModule": "ctc"
+    },
+    "isActive": true
+  }
+]
