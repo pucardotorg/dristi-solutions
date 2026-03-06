@@ -5,12 +5,6 @@ import {
   initCoreComponents,
 } from "@egovernments/digit-ui-module-core";
 import { UICustomizations } from "./Customisations/UICustomizations";
-import { initDRISTIComponents } from "@egovernments/digit-ui-module-dristi";
-import { initOrdersComponents } from "@egovernments/digit-ui-module-orders";
-import { initSubmissionsComponents } from "@egovernments/digit-ui-module-submissions";
-import { initHearingsComponents } from "@egovernments/digit-ui-module-hearings";
-import { initCasesComponents } from "@egovernments/digit-ui-module-cases";
-import { initHomeComponents } from "@egovernments/digit-ui-module-home";
 import setupRequestInterceptor from "@egovernments/digit-ui-module-core/src/Utils/requestInterceptor";
 import apiMonitor from "@egovernments/digit-ui-module-core/src/Utils/apiMonitor";
 import "dristi-ui-css/dist/index.min.css";
@@ -31,16 +25,28 @@ const moduleReducers = (initData) => ({
   initData,
 });
 
-const initDigitUI = () => {
+const initDigitUI = async () => {
   window.Digit.ComponentRegistryService.setupRegistry({});
   setupRequestInterceptor();
   initCoreComponents();
-  initDRISTIComponents();
-  initOrdersComponents();
-  initHearingsComponents();
-  initCasesComponents();
-  initSubmissionsComponents();
-  initHomeComponents();
+
+  // Dynamically import all domain modules in parallel
+  // webpack will create separate chunks for each module
+  const [dristi, orders, hearings, cases, submissions, home] = await Promise.all([
+    import("@egovernments/digit-ui-module-dristi"),
+    import("@egovernments/digit-ui-module-orders"),
+    import("@egovernments/digit-ui-module-hearings"),
+    import("@egovernments/digit-ui-module-cases"),
+    import("@egovernments/digit-ui-module-submissions"),
+    import("@egovernments/digit-ui-module-home"),
+  ]);
+
+  dristi.initDRISTIComponents();
+  orders.initOrdersComponents();
+  hearings.initHearingsComponents();
+  cases.initCasesComponents();
+  submissions.initSubmissionsComponents();
+  home.initHomeComponents();
 
   // Initialize API monitoring after all components are initialized
   apiMonitor.init();

@@ -3,12 +3,6 @@ import ReactDOM from "react-dom";
 import { initLibraries } from "@egovernments/digit-ui-libraries";
 import { DigitUI, initCoreComponents } from "@egovernments/digit-ui-module-core";
 import setupRequestInterceptor from "@egovernments/digit-ui-module-core/src/Utils/requestInterceptor";
-import { initOrdersComponents } from "@egovernments/digit-ui-module-orders";
-import { initSubmissionsComponents } from "@egovernments/digit-ui-module-submissions";
-import { initHearingsComponents } from "@egovernments/digit-ui-module-hearings";
-import { initCasesComponents } from "@egovernments/digit-ui-module-cases";
-import { initDRISTIComponents } from "@egovernments/digit-ui-module-dristi";
-import { initHomeComponents } from "@egovernments/digit-ui-module-home";
 
 // import "@egovernments/dristi-ui-css";
 import "dristi-ui-css";
@@ -50,7 +44,7 @@ const initTokens = (stateCode) => {
   if (employeeTenantId && employeeTenantId.length) window.Digit.SessionStorage.set("Employee.tenantId", employeeTenantId);
 };
 
-const initDigitUI = () => {
+const initDigitUI = async () => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = userInfo?.roles;
   const assignedRoles = roles?.map((role) => role?.code);
@@ -63,12 +57,24 @@ const initDigitUI = () => {
   setupRequestInterceptor();
   apiMonitor.init();
   initCoreComponents();
-  initDRISTIComponents();
-  initOrdersComponents();
-  initHearingsComponents();
-  initCasesComponents();
-  initSubmissionsComponents();
-  initHomeComponents();
+
+  // Dynamically import all domain modules in parallel
+  // webpack will create separate chunks for each module
+  const [dristi, orders, hearings, cases, submissions, home] = await Promise.all([
+    import("@egovernments/digit-ui-module-dristi"),
+    import("@egovernments/digit-ui-module-orders"),
+    import("@egovernments/digit-ui-module-hearings"),
+    import("@egovernments/digit-ui-module-cases"),
+    import("@egovernments/digit-ui-module-submissions"),
+    import("@egovernments/digit-ui-module-home"),
+  ]);
+
+  dristi.initDRISTIComponents();
+  orders.initOrdersComponents();
+  hearings.initHearingsComponents();
+  cases.initCasesComponents();
+  submissions.initSubmissionsComponents();
+  home.initHomeComponents();
   const moduleReducers = (initData) => ({});
 
   const stateCode = window?.globalConfigs.getConfig("STATE_LEVEL_TENANT_ID") || "kl";
