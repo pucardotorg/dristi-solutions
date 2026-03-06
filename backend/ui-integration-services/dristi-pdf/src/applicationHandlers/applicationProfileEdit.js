@@ -252,7 +252,8 @@ async function applicationProfileEdit(
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const reasonForChange =
       application?.additionalDetails?.formdata?.reasonForChange?.text || "";
-    const prayer = application?.additionalDetails?.formdata?.prayer?.text || "";
+    const comments =
+      application?.additionalDetails?.formdata?.comments?.text || "";
 
     const currentCompanyName =
       partyType === "respondent"
@@ -282,7 +283,6 @@ async function applicationProfileEdit(
           partyName: partyName,
           advocateName,
           reasonForEditing: reasonForChange,
-          prayer,
           advocateSignature: "Advocate Signature",
           day: day + ordinalSuffix,
           month: month,
@@ -318,6 +318,7 @@ async function applicationProfileEdit(
           petitionerName: getNameByUuid(application?.createdBy, courtCase),
           complainantList: complainantList,
           accusedList: accusedList,
+          additionalComments: comments,
         },
       ],
     };

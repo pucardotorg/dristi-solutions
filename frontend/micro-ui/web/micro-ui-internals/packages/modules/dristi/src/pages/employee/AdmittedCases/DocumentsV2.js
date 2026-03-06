@@ -120,6 +120,7 @@ const DocumentsV2 = ({
             courtId: courtId,
             filingNumber: filingNo,
             artifactNumber: artifactNum,
+            asUser: authorizedUuid,
             tenantId,
           },
           tenantId,

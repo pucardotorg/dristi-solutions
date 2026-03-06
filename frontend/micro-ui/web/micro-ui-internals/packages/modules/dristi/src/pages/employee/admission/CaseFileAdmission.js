@@ -116,18 +116,6 @@ function CaseFileAdmission({ t, path }) {
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
 
-  // const employeeCrumbs = useMemo(
-  //   () => [
-  //     {
-  //       path: `/${window?.contextPath}/employee/home/home-screen`,
-  //       content: t("ES_COMMON_HOME"),
-  //       show: true,
-  //       isLast: false,
-  //       homeActiveTab: location?.state?.homeActiveTab || null,
-  //     },
-  //   ],
-  //   [location?.state?.homeActiveTab, t]
-  // );
   const { data: caseFetchResponse, isLoading, refetch } = useSearchCaseService(
     {
       criteria: [

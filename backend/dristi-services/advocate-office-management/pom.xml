@@ -77,6 +77,16 @@
             <artifactId>json-smart</artifactId>
             <version>2.5.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <version>3.2.2</version>
+        </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>5.1.2</version>
+        </dependency>
         <!-- Egov dependencies -->
         <dependency>
             <groupId>org.egov.services</groupId>

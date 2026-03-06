@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useHistory } from "react-router-dom";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
 
@@ -18,6 +19,7 @@ const DeleteIcon = () => (
 
 const ManageOffice = () => {
   const { t } = useTranslation();
+  const history = useHistory();
   const tenantId = window?.Digit?.ULBService?.getCurrentTenantId();
   const userInfo = window?.Digit?.UserService?.getUser()?.info;
 
@@ -439,10 +441,29 @@ const ManageOffice = () => {
                 key={member.id || member.memberId}
                 className={`manage-office-table-row${activeTab === "advocatesWorkingFor" ? " manage-office-table-row--working-for" : ""}`}
               >
-                <span className={activeTab === "advocatesWorkingFor" ? "manage-office-name" : "manage-office-name manage-office-name--clickable"}>
+                <span
+                  className={activeTab === "advocatesWorkingFor" ? "manage-office-name" : "manage-office-name manage-office-name--clickable"}
+                  role={activeTab === "myAdvocatesClerks" ? "button" : undefined}
+                  onClick={
+                    activeTab === "myAdvocatesClerks"
+                      ? () =>
+                          history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office/manage-member`, {
+                            member,
+                            advocateInfo: {
+                              officeAdvocateUserUuid: officeAdvocateUserUuid,
+                              advocateId:
+                                advocateSearchResult?.[0]?.responseList?.[0]?.id ||
+                                advocateSearchResult?.[0]?.id ||
+                                member?.officeAdvocateId ||
+                                member?.advocateId,
+                            },
+                          })
+                      : undefined
+                  }
+                >
                   {activeTab === "advocatesWorkingFor" ? member?.officeAdvocateName || member?.memberName : member?.memberName}
                 </span>
-                <span>{member?.memberMobileNumber || member?.officeAdvocateMobileNumber}</span>
+                <span>{activeTab === "advocatesWorkingFor" ? member?.advocateOfficeMobileNumber || "-" : member?.memberMobileNumber || "-"}</span>
                 {activeTab !== "advocatesWorkingFor" && (
                   <span>
                     {member?.memberType === "ADVOCATE_CLERK" ? "Clerk" : member?.memberType === "ADVOCATE" ? "Advocate" : member?.memberType}
@@ -454,6 +475,27 @@ const ManageOffice = () => {
                   </span>
                 </span>
                 <span className={`manage-office-actions${activeTab === "advocatesWorkingFor" ? " manage-office-actions--compact" : ""}`}>
+                  {activeTab === "myAdvocatesClerks" && (
+                    <button
+                      type="button"
+                      className="manage-office-manage-btn"
+                      onClick={() =>
+                        history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office/manage-member`, {
+                          member,
+                          advocateInfo: {
+                            officeAdvocateUserUuid: officeAdvocateUserUuid,
+                            advocateId:
+                              advocateSearchResult?.[0]?.responseList?.[0]?.id ||
+                              advocateSearchResult?.[0]?.id ||
+                              member?.officeAdvocateId ||
+                              member?.advocateId,
+                          },
+                        })
+                      }
+                    >
+                      {t("MANAGE") || "Manage"}
+                    </button>
+                  )}
                   <button onClick={() => handleDeleteClick(member)} className="manage-office-delete-btn">
                     <DeleteIcon />
                   </button>

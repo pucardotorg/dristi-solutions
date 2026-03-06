@@ -23,6 +23,7 @@ import org.pucar.dristi.web.models.bailbond.OpenApiBailSearchRequest;
 import org.pucar.dristi.web.models.bailbond.OpenApiUpdateBailBondRequest;
 import org.pucar.dristi.web.models.esign.ESignParameter;
 import org.pucar.dristi.web.models.esign.ESignResponse;
+import org.pucar.dristi.web.models.filestore.StorageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.constraints.*;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -175,4 +177,20 @@ public class OpenapiApiController {
         return ResponseEntity.ok(response);
 
     }
+
+    @PostMapping(value = "/openapi/v1/file/upload", consumes = "multipart/form-data")
+    public ResponseEntity<StorageResponse> uploadFile(
+            @RequestParam("tenantId") String tenantId,
+            @RequestParam("file") List<MultipartFile> files,
+            @RequestParam("module") String module,
+            @RequestParam(value = "tag", required = false) String tag
+    ) {
+
+        RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
+
+        StorageResponse response = openApiService.uploadFiles(files, tenantId, module, tag, requestInfo);
+
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
 }

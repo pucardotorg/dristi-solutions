@@ -11,7 +11,7 @@ import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/s
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import ADiaryDocumentPdfModal from "./ADiaryDocumentPdfModal";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const buttonStyle = {
   borderRadius: "4px",
@@ -85,6 +85,8 @@ function BulkSignADiaryView() {
   const diaryDateFilter = sessionStorage.getItem("diaryDateFilter");
   const name = "Signature";
   const pageModule = "en";
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const [diaryEntries, setDiaryEntries] = useState([]);
 
@@ -176,6 +178,7 @@ function BulkSignADiaryView() {
                 ...(courtId && { courtId: courtId }),
                 filingNumber: entry?.additionalDetails?.filingNumber,
                 artifactNumber: entry?.referenceId,
+                asUser: authorizedUuid,
                 tenantId,
               },
               tenantId,

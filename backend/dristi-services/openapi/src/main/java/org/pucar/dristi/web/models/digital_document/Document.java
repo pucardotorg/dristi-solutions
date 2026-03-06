@@ -25,6 +25,9 @@ public class Document {
     @Size(max = 64)
     private String id = null;
 
+    @JsonProperty("tenantId")
+    private String tenantId = null;
+
     @JsonProperty("documentType")
     private String documentType = null;
 
