@@ -2799,7 +2799,10 @@ export const UICustomizations = {
       const caseSearchText = searchForm?.caseSearchText;
 
       const existingCriteria = requestCriteria?.body?.criteria || {};
+      const tableForm = requestCriteria?.state?.tableForm || {};
       const existingPagination = requestCriteria?.body?.pagination || { limit: 10, offSet: 0 };
+      const limit = tableForm.limit != null ? tableForm.limit : existingPagination.limit;
+      const offSet = tableForm.offset != null ? tableForm.offset : (tableForm.offSet != null ? tableForm.offSet : existingPagination.offSet);
 
       return {
         ...requestCriteria,
@@ -2810,7 +2813,25 @@ export const UICustomizations = {
             caseMappingFilterStatus,
             ...(caseSearchText ? { caseSearchText } : {}),
           },
-          pagination: existingPagination,
+          pagination: { limit: limit != null ? limit : 10, offSet: offSet != null ? offSet : 0 },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            const existingSelect = requestCriteria?.config?.select;
+            const basePayload = typeof existingSelect === "function" ? existingSelect(data) : data;
+
+            const paginationTotal =
+              basePayload?.pagination && typeof basePayload.pagination.totalCount === "number"
+                ? basePayload.pagination.totalCount
+                : typeof basePayload?.totalCount === "number"
+                ? basePayload.totalCount
+                : Array.isArray(basePayload?.cases)
+                ? basePayload.cases.length
+                : 0;
+
+            return { ...basePayload, totalCount: paginationTotal };
+          },
         },
       };
     },
@@ -2828,6 +2849,10 @@ export const UICustomizations = {
               style={{ cursor: "pointer", width: "20px", height: "20px" }}
             />
           );
+        case "CASE_NAME": {
+          const rawTitle = (row?.caseTitle || "").toString().trim();
+          return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
+        }
         default:
           return value != null ? value : "";
       }
