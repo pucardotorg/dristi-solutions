@@ -509,10 +509,11 @@ const HomeView = () => {
   };
 
   const onRowClick = async (row) => {
-    if (userType === "ADVOCATE") {
-      // inside view case screen, if an advocate is clicked, show a popup to warn if
-      //  he is working as jr and senior advocate both in same case
-      sessionStorage.setItem("showPopupForJuniorAdvocate", true);
+    if (["ADVOCATE", "ADVOCATE_CLERK"]?.includes(userType)) {
+      // when logged in user in advocate/clerk and clicks on a case row form home screen,
+      // inside view case screen show a popup to warn if
+      // he is working as jr and senior advocate both in same case/ acting as jr adv for multiple senior advocates/ working as clerk for multiple senior advocates
+      sessionStorage.setItem("showPopupIfCaseAccessThroughMultipleAdvocates", true);
     }
     if (userInfoType === "citizen" && row?.original?.advocateStatus === "PENDING") {
       return;
