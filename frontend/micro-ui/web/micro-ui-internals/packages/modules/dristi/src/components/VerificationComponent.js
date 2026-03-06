@@ -7,22 +7,6 @@ import Modal from "./Modal";
 import RenderFileCard from "./RenderFileCard";
 import { useToast } from "./Toast/useToast";
 
-const extractValue = (data, key) => {
-  if (!key.includes(".")) {
-    return data[key];
-  }
-  const keyParts = key.split(".");
-  let value = data;
-  keyParts.forEach((part) => {
-    if (value && value.hasOwnProperty(part)) {
-      value = value[part];
-    } else {
-      value = undefined;
-    }
-  });
-  return value;
-};
-
 const CloseBtn = (props) => {
   return (
     <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
@@ -35,14 +19,6 @@ const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
 };
 
-function generateAadhaar() {
-  let aadhaar = "";
-  for (let i = 0; i < 12; i++) {
-    aadhaar += Math.floor(Math.random() * 10);
-  }
-  return aadhaar;
-}
-
 function VerificationComponent({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) {
   const [{ showModal, verificationType, modalData, isAadharVerified }, setState] = useState({
     showModal: false,
@@ -51,9 +27,8 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
     isAadharVerified: false,
   });
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isAdvocateFilingCase = roles?.some((role) => role.code === "ADVOCATE_ROLE");
+  const isAdvocateOrClerkFilingCase = roles?.some((role) => role.code === "ADVOCATE_ROLE" || role.code === "CLERK_ROLE");
   const [isDisabled, setIsDisabled] = useState(false);
-  const toast = useToast();
   const inputs = useMemo(
     () =>
       config?.populators?.inputs || [
@@ -206,7 +181,7 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
                     inline
                     text={
                       isUserVerified
-                        ? isAdvocateFilingCase
+                        ? isAdvocateOrClerkFilingCase
                           ? t("CS_ADVOCATE_VERIFY_COMPLAINANT_ID")
                           : t("CS_ID_VERIFIED_NOTE")
                         : t("CS_AADHAR_VERIFICATION_NOTE")

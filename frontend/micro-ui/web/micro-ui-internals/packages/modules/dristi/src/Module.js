@@ -30,7 +30,6 @@ import VerifyPhoneNumber from "./components/VerifyPhoneNumber";
 import { UICustomizations } from "./configs/UICustomizations";
 import SelectEmptyComponent from "./components/SelectEmptyComponent";
 import ScrutinyInfo from "./components/ScrutinyInfo";
-import AdvocateNameDetails from "./components/AdvocateNameDetails";
 import { CustomizedHooks } from "./hooks";
 import FileCase from "./pages/citizen/FileCase";
 import Login from "./pages/citizen/Login";
@@ -58,7 +57,6 @@ import useBillSearch from "./hooks/dristi/useBillSearch";
 import SelectTranscriptTextArea from "./components/SelectTranscriptTextArea";
 import SelectMultiUpload from "./components/SelectMultiUpload";
 import SupportingDocsComponent from "./components/SupportingDocsComponent";
-import MultipleAdvocateNameDetails from "./components/MultipleAdvocateNameDetails";
 import BoxComplainant from "./components/BoxComplainant";
 import MultipleAdvocatesAndPip from "./components/MultipleAdvocatesAndPip";
 import MultiSelectDropdown from "./components/MultiSelectDropdown";
@@ -71,6 +69,18 @@ import useFetchBill from "./hooks/dristi/useFetchBill";
 import WorkflowTimeline from "./components/WorkflowTimeline";
 import ImageModal from "./components/ImageModal";
 import SelectCustomFormatterTextArea from "./components/SelectCustomFormatterTextArea";
+import CustomCalendarV2 from "./components/CustomCalendarV2";
+import SelectCustomGroupedDropdown from "./components/SelectCustomGroupedDropdown";
+import SuretyComponent from "./components/SuretyComponent";
+import EditSendBackModal from "./components/EditSendBackModal";
+import DownloadButton from "./components/DownloadButton";
+import PencilIconEdit from "./components/PencilIconEdit";
+import ProcessCourierService from "./components/ProcessCourierService";
+import CourierService from "./components/CourierService";
+import CustomText from "./components/CustomText";
+import SelectBulkDateInputs from "./components/SelectBulkDateInputs";
+import SelectCustomHearingDate from "./components/SelectCustomHearingDate";
+import EditDeleteModal from "./components/EditDeleteModal";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -80,25 +90,34 @@ export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const tenantID = tenants?.[0]?.code?.split(".")?.[0];
   const language = Digit.StoreData.getCurrentLanguage();
   const { isLoading } = Digit.Services.useStore({ stateCode, moduleCode, language });
-  const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit]);
+  const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit]); //here
   const hasCitizenRoute = useMemo(() => path?.includes(`/${window?.contextPath}/citizen`), [path]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
+
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
   if (isLoading) {
     return <Loader />;
   }
 
+  // if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
+  //   history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
+  // } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
+  //   history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+  //
+
   if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
   } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+    if (!isEpostUser) history.push(`/${window?.contextPath}/employee/home/home-screen`);
+    else history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   }
 
   Digit.SessionStorage.set("DRISTI_TENANTS", tenants);
   const urlParams = new URLSearchParams(window.location.search);
   const result = urlParams.get("result");
   const fileStoreId = urlParams.get("filestoreId");
-  console.log(result, fileStoreId, "result");
   if (userType === "citizen" && userInfo?.type !== "EMPLOYEE") {
     return (
       <ToastProvider>
@@ -155,7 +174,6 @@ const componentsToRegister = {
   SelectUploadDocWithName,
   SelectEmptyComponent,
   ScrutinyInfo,
-  AdvocateNameDetails,
   CustomRadioInfoComponent,
   Modal,
   CommentComponent,
@@ -172,13 +190,13 @@ const componentsToRegister = {
   DRISTIService,
   CustomChooseDate,
   CustomCalendar,
+  CustomCalendarV2,
   RightArrow,
   useBillSearch,
   useFetchBill,
   SelectTranscriptTextArea,
   SelectMultiUpload,
   SupportingDocsComponent,
-  MultipleAdvocateNameDetails,
   MultipleAdvocatesAndPip,
   BoxComplainant,
   MultiSelectDropdown,
@@ -193,6 +211,17 @@ const componentsToRegister = {
   SearchableDropdown,
   WorkflowTimeline,
   SelectCustomFormatterTextArea,
+  SelectCustomGroupedDropdown,
+  SuretyComponent,
+  EditSendBackModal,
+  DownloadButton,
+  PencilIconEdit,
+  ProcessCourierService,
+  CourierService,
+  CustomText,
+  SelectBulkDateInputs,
+  SelectCustomHearingDate,
+  EditDeleteModal,
 };
 
 const overrideHooks = () => {

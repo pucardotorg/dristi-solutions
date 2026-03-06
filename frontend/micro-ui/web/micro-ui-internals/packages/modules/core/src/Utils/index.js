@@ -1,5 +1,5 @@
-import Axios from "axios";
-Axios.interceptors.response.use(
+import axiosInstance from "./axiosInstance";
+axiosInstance.interceptors.response.use(
   (res) => res,
   (err) => {
     const isEmployee = window.location.pathname.split("/").includes("employee");
@@ -69,7 +69,7 @@ export const Request = async ({
   const ts = new Date().getTime();
   if (method.toUpperCase() === "POST") {
     data.RequestInfo = {
-      apiId: "Rainmaker",
+      apiId: "Dristi",
     };
     if (auth || !!window?.Digit.UserService.getUser()?.access_token) {
       data.RequestInfo = { ...data.RequestInfo, ...requestInfo() };
@@ -124,7 +124,7 @@ export const Request = async ({
     .join("/");
 
   if (multipartFormData) {
-    const multipartFormDataRes = await Axios({
+    const multipartFormDataRes = await axiosInstance({
       method,
       url: _url,
       data: multipartData.data,
@@ -143,8 +143,8 @@ export const Request = async ({
   }
 
   const res = userDownload
-    ? await Axios({ method, url: _url, data, params, headers, responseType: "arraybuffer" })
-    : await Axios({ method, url: _url, data, params, headers });
+    ? await axiosInstance({ method, url: _url, data, params, headers, responseType: "arraybuffer" })
+    : await axiosInstance({ method, url: _url, data, params, headers });
 
   if (userDownload) return res;
 
@@ -183,4 +183,122 @@ export const ServiceRequest = async ({
     return await window[postHookName](resData);
   }
   return resData;
+};
+
+export const userTypeOptions = [
+  {
+    code: "LITIGANT",
+    name: "LITIGANT_TEXT",
+    showBarDetails: false,
+    isVerified: false,
+    role: [
+      "CASE_CREATOR",
+      "CASE_EDITOR",
+      "CASE_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
+      "APPLICATION_CREATOR",
+      "APPLICATION_VIEWER",
+      "HEARING_VIEWER",
+      "ORDER_VIEWER",
+      "SUBMISSION_CREATOR",
+      "SUBMISSION_RESPONDER",
+      "SUBMISSION_DELETE",
+      "TASK_VIEWER",
+      "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
+    ],
+    subText: "LITIGANT_SUB_TEXT",
+  },
+  {
+    code: "ADVOCATE",
+    name: "ADVOCATE_TEXT",
+    showBarDetails: true,
+    isVerified: true,
+    hasBarRegistrationNo: true,
+    role: [
+      "ADVOCATE_ROLE",
+      "CASE_CREATOR",
+      "CASE_EDITOR",
+      "CASE_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
+      "APPLICATION_CREATOR",
+      "APPLICATION_VIEWER",
+      "HEARING_VIEWER",
+      "ORDER_VIEWER",
+      "SUBMISSION_CREATOR",
+      "SUBMISSION_RESPONDER",
+      "SUBMISSION_DELETE",
+      "TASK_VIEWER",
+      "USER_REGISTER",
+      "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
+    ],
+    apiDetails: {
+      serviceName: "/advocate/v1/_create",
+      requestKey: "advocate",
+      AdditionalFields: ["barRegistrationNumber"],
+    },
+    subText: "ADVOCATE_SUB_TEXT",
+  },
+  {
+    code: "ADVOCATE_CLERK",
+    name: "ADVOCATE_CLERK_TEXT",
+    showBarDetails: true,
+    hasStateRegistrationNo: true,
+    isVerified: true,
+    role: [
+      "ADVOCATE_CLERK_ROLE",
+      "CASE_CREATOR",
+      "CASE_EDITOR",
+      "CASE_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
+      "APPLICATION_CREATOR",
+      "APPLICATION_VIEWER",
+      "HEARING_VIEWER",
+      "ORDER_VIEWER",
+      "SUBMISSION_CREATOR",
+      "SUBMISSION_RESPONDER",
+      "SUBMISSION_DELETE",
+      "TASK_VIEWER",
+      "USER_REGISTER",
+      "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
+    ],
+    apiDetails: {
+      serviceName: "/advocate/clerk/v1/_create",
+      requestKey: "clerk",
+      AdditionalFields: ["stateRegnNumber"],
+    },
+
+    subText: "ADVOCATE_CLERK_SUB_TEXT",
+  },
+];
+
+export const extractedSeniorAdvocates = (officeMembersData = {}) => {
+  const members = officeMembersData?.members || [];
+  return members.map((member, index) => {
+    return {
+      advocateName: member?.officeAdvocateName || "",
+      id: member?.officeAdvocateId,
+      value: member?.officeAdvocateId,
+      uuid: member?.officeAdvocateUserUuid,
+    };
+  });
 };

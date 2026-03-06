@@ -1,0 +1,205 @@
+package org.pucar.dristi.repository.rowmapper;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.egov.tracer.model.CustomException;
+import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.NatureOfDisposal;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.stereotype.Component;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+
+@Component
+@Slf4j
+public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary>> {
+
+    private final ObjectMapper objectMapper;
+
+    @Autowired
+    public CaseSummaryRowMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
+    @Override
+    public List<CaseSummary> extractData(ResultSet rs) throws SQLException, DataAccessException {
+
+
+        Map<String, CaseSummary> caseMap = new HashMap<>();
+        Set<String> mappedKey = new HashSet<>();
+
+
+        while (rs.next()) {
+            String caseId = rs.getString("id");
+            CaseSummary caseSummary = caseMap.get(caseId);
+            if (caseSummary == null) {
+                caseSummary = CaseSummary.builder()
+                        .id(caseId)
+                        .tenantId(rs.getString("tenantid"))
+                        .caseTitle(rs.getString("casetitle"))
+                        .filingDate(parseDateToLong(rs.getString("filingdate")))
+                        .statutesAndSections(null)
+                        .stage(rs.getString("stage"))
+                        .subStage(rs.getString("substage"))
+                        .outcome(rs.getString("outcome"))
+                        .natureOfDisposal(getNatureOfDisposal(rs))
+                        .courtId(rs.getString("courtid"))
+                        .registrationDate(parseDateToLong(rs.getString("registrationdate")))
+                        .registrationNumber(rs.getString("cmpnumber"))
+                        .litigants(new ArrayList<>())
+                        .representatives(new ArrayList<>())
+                        .judge(getJudge(rs))
+                        .build();
+
+                caseMap.put(caseId, caseSummary);
+            }
+
+            String statuteId = rs.getString("statute_section_id");
+            if (statuteId != null && !mappedKey.contains(statuteId)) {
+                StatuteSection statuteSection = StatuteSection.builder()
+                        .id(UUID.fromString(rs.getString("statute_section_id")))
+                        .tenantId(rs.getString("statute_section_tenantid"))
+                        .sections(stringToList(rs.getString("statute_section_sections")))
+                        .subsections(stringToList(rs.getString("statute_section_subsections")))
+                        .statute(rs.getString("statute_section_statutes"))
+                        .build();
+
+                StringBuilder existingStatues = caseSummary.getStatutesAndSections() != null ? new StringBuilder(caseSummary.getStatutesAndSections()) : new StringBuilder();
+                String statuteAndSectionsString = getStatuteAndSectionsString(existingStatues, statuteSection.getStatute(), statuteSection.getSections());
+                caseSummary.setStatutesAndSections(statuteAndSectionsString);
+
+                mappedKey.add(statuteId);
+
+            }
+
+            String partyId = rs.getString("litigant_id");
+            if (partyId != null && !mappedKey.contains(partyId)) {
+                PartySummary party = PartySummary.builder()
+                        .partyCategory(rs.getString("litigant_partycategory"))
+                        .partyType(rs.getString("litigant_partytype"))
+                        .individualId(rs.getString("litigant_individualid"))
+                        .individualName(getNameForLitigant(rs))
+                        .organisationId(rs.getString("litigant_organisationid"))
+//                        .isPartyInPerson(rs.getBoolean("isPartyInPerson"))
+                        .build();
+                caseSummary.getLitigants().add(party);
+                mappedKey.add(partyId);
+            }
+
+            String representativeId = rs.getString("representative_id");
+            if (representativeId != null && !mappedKey.contains(representativeId)) {
+                RepresentativeSummary representative = RepresentativeSummary.builder()
+                        .partyId(rs.getString("representative_case_id"))
+//                        .advocateType(rs.getString("advocateType"))
+                        .advocateId(rs.getString("representative_advocateid"))
+                        .build();
+
+                caseSummary.getRepresentatives().add(representative);
+                mappedKey.add(representativeId);
+            }
+        }
+
+        return new ArrayList<>(caseMap.values());
+    }
+
+
+    //todo: this is temporary method once the db schema is updated we need to remove this table
+    private String getNameForLitigant(ResultSet rs) {
+        String additionalDetails;
+        String fullName = null;
+        try {
+            additionalDetails = rs.getString("litigant_additionaldetails");
+
+            if (additionalDetails != null && !additionalDetails.isEmpty()) {
+                JsonNode jsonNode = objectMapper.readTree(additionalDetails);
+                if (jsonNode.has("fullName")) {
+                    fullName = jsonNode.get("fullName").asText();
+                }
+            }
+        } catch (SQLException | JsonProcessingException e) {
+            throw new CustomException("JSON_PROCESSING_EXCEPTION", "Error processing litigant additional details") {
+            };
+        }
+
+        return fullName;
+    }
+
+    private Judge getJudge(ResultSet rs) {
+        return Judge.builder().build();
+    }
+
+    private NatureOfDisposal getNatureOfDisposal(ResultSet rs) throws SQLException {
+        try {
+            String str = rs.getString("natureofdisposal");
+            if (str == null || str.isEmpty()) return null;
+            return NatureOfDisposal.valueOf(str);
+        } catch (SQLException e) {
+            log.error("Error reading natureofdisposal column from ResultSet", e);
+            return null;
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid NatureOfDisposal value in database: {}", rs.getString("natureofdisposal"), e);
+            return null;
+        }
+    }
+
+    public List<String> stringToList(String str) {
+        List<String> list = new ArrayList<>();
+        if (str != null) {
+            StringTokenizer st = new StringTokenizer(str, ",");
+            while (st.hasMoreTokens()) {
+                list.add(st.nextToken());
+            }
+        }
+
+        return list;
+    }
+
+
+    public String getStatuteAndSectionsString(StringBuilder statueAndSections, String statute, List<String> sections) {
+        if (!statueAndSections.isEmpty()) {
+            statueAndSections.append(";");
+        }
+        if (statute != null) statueAndSections.append(statute);
+
+        if (!sections.isEmpty()) {
+            statueAndSections.append(" ");
+            for (int i = 0; i < sections.size(); i++) {
+                statueAndSections.append(sections.get(i));
+                if (i < sections.size() - 1) {
+                    statueAndSections.append(", ");
+                }
+            }
+        }
+
+//        if (!subsections.isEmpty()) {
+//            statuteAndSectionsStringBuilder.append(" ");
+//            for (int i = 0; i < subsections.size(); i++) {
+//                statuteAndSectionsStringBuilder.append(subsections.get(i));
+//                if (i < subsections.size() - 1) {
+//                    statuteAndSectionsStringBuilder.append(", ");
+//                }
+//            }
+//        }
+
+        return statueAndSections.toString();
+    }
+
+    private Long parseDateToLong(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(dateStr);
+        } catch (NumberFormatException e) {
+            log.error("Invalid date format: {}", dateStr);
+            throw new CustomException("INVALID_DATE_FORMAT",
+                    "Date must be a valid timestamp: " + dateStr);
+        }
+    }
+}

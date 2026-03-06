@@ -64,7 +64,7 @@ const CustomRadioCard = ({ t, config, onSelect, formData = {}, errors, label }) 
                     defaultValue={formData && formData[config.key] ? formData[config.key][input.name] : undefined}
                     t={t}
                     errorStyle={errors?.[input.name]}
-                    disabled={isRejected ? true : false}
+                    disabled={input?.disable}
                     isRejected={isRejected}
                   />
 

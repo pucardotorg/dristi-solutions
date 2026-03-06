@@ -1,0 +1,72 @@
+[
+  {
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2755",
+        "data": {
+          "id": 2755,
+          "url": "/evidence/v1/_updateSignedArtifacts",
+          "code": "2755",
+          "name": "Update Signed witness depostion",
+          "enabled": false,
+          "displayName": "Update Signed witness depostion",
+          "serviceCode": "evidence"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2754",
+        "data": {
+          "id": 2754,
+          "url": "/evidence/v1/_getArtifactsToSign",
+          "code": "2754",
+          "name": "Get evidence To Sign",
+          "enabled": false,
+          "displayName": "Get evidence To Sign",
+          "serviceCode": "evidence"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "masterName": "roleactions",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 493,
+          "actionid": 2754,
+          "actioncode": "2754",
+          "tenantid": "kl",
+          "rolecode": "JUDGE_ROLE"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 494,
+          "actionid": 2755,
+          "rolecode": "JUDGE_ROLE",
+          "tenantid": "kl",
+          "actioncode": "2755"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

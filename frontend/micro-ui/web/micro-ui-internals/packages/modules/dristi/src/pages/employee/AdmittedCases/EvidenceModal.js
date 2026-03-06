@@ -1,4 +1,4 @@
-import { CloseSvg, TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -14,14 +14,15 @@ import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Util
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
-import ESignSignatureModal from "../../../components/ESignSignatureModal";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import { cleanString, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../../../Utils";
+import { cleanString, getAllAssociatedPartyUuids, getDate, getOrderActionName, getOrderTypes, setApplicationStatus } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
-import Button from "../../../components/Button";
-import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/pages/employee/GenerateOrders";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
+import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
+import CustomChip from "../../../components/CustomChip";
+import DOMPurify from "dompurify";
+import { getUserInfoFromIndividualId, getUserInfoFromUuids } from "../../../../../submissions/src/utils";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -41,6 +42,8 @@ const EvidenceModal = ({
   setIsDelayApplicationPending,
   currentDiaryEntry,
   artifact,
+  setShowMakeAsEvidenceModal,
+  isApplicationAccepted,
 }) => {
   const [comments, setComments] = useState(documentSubmission[0]?.comments ? documentSubmission[0].comments : artifact?.comments || []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(null);
@@ -49,6 +52,7 @@ const EvidenceModal = ({
   const history = useHistory();
   const filingNumber = useMemo(() => caseData?.filingNumber, [caseData]);
   const cnrNumber = useMemo(() => caseData?.cnrNumber, [caseData]);
+  const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
   const allAdvocates = useMemo(() => getAdvocates(caseData?.case), [caseData]);
   const createdBy = useMemo(() => documentSubmission?.[0]?.details?.auditDetails?.createdBy, [documentSubmission]);
   const applicationStatus = useMemo(() => documentSubmission?.[0]?.status, [documentSubmission]);
@@ -58,23 +62,28 @@ const EvidenceModal = ({
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const userInfo = Digit.UserService.getUser()?.info;
   const user = Digit.UserService.getUser()?.info?.name;
-  const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK"].includes(role?.code)), [userInfo?.roles]);
-  const isCourtRoomManager = useMemo(() => userInfo?.roles?.some((role) => ["COURT_ROOM_MANAGER"].includes(role?.code)), [userInfo?.roles]);
+  const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
+    userInfo?.roles,
+  ]);
   const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
   const [formData, setFormData] = useState({});
   const [showFileIcon, setShowFileIcon] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
-  const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
-  const [isDisabled, setIsDisabled] = useState();
+  const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments({ caseCourtId });
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
   const toast = useToast();
   const urlParams = new URLSearchParams(window.location.search);
   const applicationNumber = urlParams.get("applicationNumber");
   const compositeOrderObj = history.location?.state?.compositeOrderObj;
-
+  const [reasonOfApplication, setReasonOfApplication] = useState("");
+  const [userInfoMap, setUserInfoMap] = useState({
+    senderUser: null,
+    createdByUser: null,
+    onBehalfOfUser: null,
+  });
   const setData = (data) => {
     setFormData(data);
   };
@@ -90,20 +99,106 @@ const EvidenceModal = ({
     return (
       <div className="evidence-title">
         <h1 className="heading-m">{props.label}</h1>
+        {props?.evidenceMarkedStatus && (
+          <CustomChip
+            text={props?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(props?.evidenceMarkedStatus) || ""}
+            shade={props?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+          />
+        )}
+
         {props.showStatus && <h3 className={props.isStatusRed ? "status-false" : "status"}>{props?.status}</h3>}
       </div>
     );
   };
 
   const computeDefaultBOTD = useMemo(() => {
-    return `${documentSubmission?.[0]?.artifactList?.artifactNumber} ${
-      documentSubmission?.[0]?.artifactList?.isEvidence ? "unmarked" : "marked"
-    } as evidence`;
+    return `Document marked as evidence exhibit number ${documentSubmission?.[0]?.artifactList?.artifactNumber}`;
   }, [documentSubmission]);
 
   useEffect(() => {
     setBusinessOfTheDay(computeDefaultBOTD);
   }, [computeDefaultBOTD, setBusinessOfTheDay]);
+
+  useEffect(() => {
+    if (!(documentSubmission?.length > 0) && !artifact) return;
+    if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
+      return; // directly show onwner name in case of employees, no individual api calling.
+    }
+
+    let senderUuid = "";
+    let createdBy = "";
+    let onBehalfOfUuid = "";
+
+    if (documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList) {
+      const { asUser, auditDetails, auditdetails, onBehalfOf } = documentSubmission?.[0]?.applicationList || documentSubmission?.[0]?.artifactList;
+      senderUuid = asUser;
+      createdBy = auditDetails?.createdBy || auditdetails?.createdBy;
+      onBehalfOfUuid = onBehalfOf?.[0];
+    } else if (artifact?.artifactList) {
+      const { asUser, auditDetails } = artifact?.artifactList;
+      senderUuid = asUser;
+      createdBy = auditDetails?.createdBy;
+    }
+
+    const uuids = [...new Set([senderUuid, createdBy, onBehalfOfUuid].filter(Boolean))];
+
+    if (uuids.length === 0) {
+      setUserInfoMap({
+        senderUser: null,
+        createdByUser: null,
+        onBehalfOfUser: null,
+      });
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchUsers = async () => {
+      try {
+        const result = await getUserInfoFromUuids(uuids);
+
+        const lookup = new Map((result || []).map((user) => [user.userUuid, user.name]));
+
+        if (!isMounted) return;
+
+        setUserInfoMap({
+          senderUser: senderUuid
+            ? { uuid: senderUuid, name: lookup.get(senderUuid) }
+            : createdBy
+            ? { uuid: createdBy, name: lookup.get(createdBy) }
+            : null,
+          createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
+          onBehalfOfUser: onBehalfOfUuid ? { uuid: onBehalfOfUuid, name: lookup.get(onBehalfOfUuid) } : null,
+        });
+      } catch (error) {
+        console.error("Failed to fetch user info", error);
+      }
+    };
+
+    fetchUsers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [documentSubmission, artifact]);
+
+  const senderName = useMemo(() => {
+    if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
+      return documentSubmission?.[0]?.artifactList?.owner;
+    }
+    return currentDiaryEntry && artifact
+      ? artifact?.sender
+      : userInfoMap?.onBehalfOfUser?.name
+      ? `${userInfoMap?.senderUser?.name} on Behalf of ${userInfoMap?.onBehalfOfUser?.name}`
+      : userInfoMap?.senderUser?.name;
+  }, [userInfoMap, artifact, currentDiaryEntry, documentSubmission]);
+
+  const createdByName = useMemo(() => {
+    if (documentSubmission?.[0]?.artifactList?.sourceType === "COURT") {
+      return null;
+    }
+    return userInfoMap?.createdByUser?.name;
+  }, [userInfoMap, documentSubmission]);
 
   const documentApplicationType = useMemo(() => documentSubmission?.[0]?.applicationList?.applicationType, [documentSubmission]);
 
@@ -111,9 +206,26 @@ const EvidenceModal = ({
     return documentSubmission?.[0]?.details?.additionalDetails?.respondingParty?.map((party) => party?.uuid?.map((uuid) => uuid))?.flat() || [];
   }, [documentSubmission]);
 
+  const isBail = useMemo(() => {
+    return ["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType);
+  }, [documentSubmission]);
+
+  // No need to show submit, cancel and set term of bail buttons for bail applications
+
   const showSubmit = useMemo(() => {
     if (userType === "employee") {
       if (!isJudge) {
+        if (
+          modalType === "Documents" &&
+          !(
+            documentSubmission?.[0]?.artifactList?.isEvidence ||
+            documentSubmission?.[0]?.artifactList?.isVoid ||
+            documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null
+          )
+        ) {
+          return true;
+        }
+
         return false;
       }
       if (modalType === "Documents") {
@@ -123,12 +235,16 @@ const EvidenceModal = ({
       return (
         userRoles.includes("SUBMISSION_APPROVER") &&
         [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus)
+        // &&
+        // !isBail
       );
     } else {
       if (modalType === "Documents") {
         return false;
       }
-      if (userInfo?.uuid === createdBy) {
+      const asUser = documentSubmission?.[0]?.applicationList?.asUser || documentSubmission?.[0]?.artifactList?.asUser;
+      const allPartiesIncludingMembers = getAllAssociatedPartyUuids(caseData?.case, asUser);
+      if (allPartiesIncludingMembers?.includes(userInfo?.uuid)) {
         return [SubmissionWorkflowState.DELETED].includes(applicationStatus) ? false : true;
       }
       if (isLitigent && [...allAdvocates?.[userInfo?.uuid], userInfo?.uuid]?.includes(createdBy)) {
@@ -142,7 +258,7 @@ const EvidenceModal = ({
       }
       return false;
     }
-  }, [userType, modalType, userRoles, applicationStatus, userInfo?.uuid, createdBy, isLitigent, allAdvocates]);
+  }, [userType, isJudge, modalType, userRoles, applicationStatus, documentSubmission, userInfo?.uuid, createdBy, isLitigent, allAdvocates, caseData]);
 
   const actionSaveLabel = useMemo(() => {
     let label = "";
@@ -151,7 +267,9 @@ const EvidenceModal = ({
         const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
         label = applicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" ? t("REVIEW_CHANGES") : t("Approve");
       } else {
-        if (userInfo?.uuid === createdBy) {
+        const asUser = documentSubmission?.[0]?.applicationList?.asUser || documentSubmission?.[0]?.artifactList?.asUser;
+        const allPartiesIncludingMembers = getAllAssociatedPartyUuids(caseData?.case, asUser);
+        if (allPartiesIncludingMembers?.includes(userInfo?.uuid)) {
           label = t("DOWNLOAD_SUBMISSION");
         } else if (isLitigent && [...allAdvocates?.[userInfo?.uuid], userInfo?.uuid]?.includes(createdBy)) {
           label = t("DOWNLOAD_SUBMISSION");
@@ -163,24 +281,26 @@ const EvidenceModal = ({
         }
       }
     } else {
-      label = !documentSubmission?.[0]?.artifactList?.isEvidence ? t("MARK_AS_EVIDENCE") : t("UNMARK_AS_EVIDENCE");
-    }
-    return label;
-  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
-  const actionCustomLabel = useMemo(() => {
-    let label = "";
-    if (modalType === "Submissions") {
-      if (userType === "employee") {
-        label = t("SET_TERMS_OF_BAIL");
+      if (
+        documentSubmission?.[0]?.artifactList?.isEvidence ||
+        documentSubmission?.[0]?.artifactList?.isVoid ||
+        documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null
+      ) {
+        label = false;
+      } else {
+        label = t("MARK_AS_EVIDENCE");
       }
     }
     return label;
-  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
+  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType, caseData]);
+
   const actionCancelLabel = useMemo(() => {
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
       [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
       modalType === "Submissions"
+      // &&
+      // !isBail
     ) {
       return t("REJECT");
     }
@@ -244,38 +364,6 @@ const EvidenceModal = ({
   const submissionComment = Digit.Hooks.useCustomAPIMutationHook(addSubmissionComment);
   const evidenceComment = Digit.Hooks.useCustomAPIMutationHook(addEvidenceComment);
 
-  // const markAsReadPayload = {
-  //   tenantId: tenantId,
-  //   artifact: {
-  //     tenantId: tenantId,
-  //     caseId: caseId,
-  //     artifactType: "AFFIDAVIT",
-  //     sourceType: "COURT",
-  //     application: documentSubmission[0]?.details.applicationId,
-  //     isActive: true,
-  //     isEvidence: true,
-  //     status: documentSubmission[0]?.status,
-  //     file: documentSubmission.map((doc) => {
-  //       return {
-  //         id: doc?.applicationContent?.id,
-  //         documentType: doc?.applicationContent?.documentType,
-  //         fileStore: doc?.applicationContent?.fileStoreId,
-  //         documentUid: doc?.applicationContent?.documentUid,
-  //         additionalDetails: doc?.applicationContent?.additionalDetails,
-  //       };
-  //     }),
-  //     comments: [],
-  //     auditDetails: documentSubmission[0]?.details.auditDetails,
-  //     workflow: {
-  //       comments: documentSubmission[0]?.applicationList?.workflow.comments,
-  //       documents: [{}],
-  //       id: documentSubmission[0]?.applicationList?.workflow.id,
-  //       status: documentSubmission[0]?.applicationList?.workflow?.status,
-  //       action: "TYPE DEPOSITION",
-  //     },
-  //   },
-  // };
-
   const respondApplicationPayload = {
     ...documentSubmission?.[0]?.applicationList,
     statuteSection: {
@@ -322,18 +410,6 @@ const EvidenceModal = ({
       ...documentSubmission?.[0]?.applicationList?.workflow,
       action: SubmissionWorkflowAction.REJECT,
     },
-  };
-
-  const applicationCommentsPayload = (newComment) => {
-    return {
-      ...documentSubmission[0]?.applicationList,
-      statuteSection: { ...documentSubmission[0]?.applicationList?.statuteSection, tenantId: tenantId },
-      comment: documentSubmission[0]?.applicationList.comment ? [...documentSubmission[0]?.applicationList.comment, newComment] : [newComment],
-      workflow: {
-        ...documentSubmission[0]?.applicationList?.workflow,
-        action: "RESPOND",
-      },
-    };
   };
 
   const onSuccess = async () => {
@@ -535,12 +611,13 @@ const EvidenceModal = ({
         filingNumber,
         artifactNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     artifactNumber,
-    Boolean(artifactNumber)
+    Boolean(artifactNumber && caseCourtId)
   );
 
   const evidenceDetails = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);
@@ -553,12 +630,13 @@ const EvidenceModal = ({
           criteria: {
             tenantId: Digit.ULBService.getCurrentTenantId(),
             filingNumber: filingNumber,
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
         },
         {}
       );
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
-      const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+      const courtId = localStorage.getItem("courtId");
       let evidenceReqBody = {};
       let evidence = {};
       evidenceReqBody = {
@@ -595,61 +673,6 @@ const EvidenceModal = ({
     await handleMarkEvidence();
   };
 
-  const getOrderTypes = (applicationType, type) => {
-    switch (applicationType) {
-      case "RE_SCHEDULE":
-        return type === "reject" ? "REJECTION_RESCHEDULE_REQUEST" : "INITIATING_RESCHEDULING_OF_HEARING_DATE";
-      case "WITHDRAWAL":
-        return type === "reject" ? "WITHDRAWAL_REJECT" : "WITHDRAWAL_ACCEPT";
-      case "TRANSFER":
-        return "CASE_TRANSFER";
-      case "SETTLEMENT":
-        return "SETTLEMENT";
-      case "BAIL_BOND":
-        return "BAIL";
-      case "SURETY":
-        return "BAIL";
-      case "REQUEST_FOR_BAIL":
-      case "SUBMIT_BAIL_DOCUMENTS":
-        return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
-      case "EXTENSION_SUBMISSION_DEADLINE":
-        return "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
-      case "CHECKOUT_REQUEST":
-        return type === "reject" ? "CHECKOUT_REJECT" : "CHECKOUT_ACCEPTANCE";
-      case "DELAY_CONDONATION":
-        return "ACCEPTANCE_REJECTION_DCA";
-      default:
-        return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "APPROVE_VOLUNTARY_SUBMISSIONS";
-    }
-  };
-
-  const getOrderActionName = (applicationType, type) => {
-    switch (applicationType) {
-      case "RE_SCHEDULE":
-        return type === "reject" ? "REJECTION_ORDER_RESCHEDULE_REQUEST" : "ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE";
-      case "WITHDRAWAL":
-        return type === "reject" ? "ORDER_FOR_ACCEPT_WITHDRAWAL" : "ORDER_FOR_REJECT_WITHDRAWAL";
-      case "TRANSFER":
-        return "ORDER_FOR_CASE_TRANSFER";
-      case "SETTLEMENT":
-        return "ORDER_FOR_SETTLEMENT";
-      case "BAIL_BOND":
-        return "ORDER_FOR_BAIL";
-      case "SURETY":
-        return "ORDER_FOR_BAIL";
-      case "EXTENSION_SUBMISSION_DEADLINE":
-        return "ORDER_EXTENSION_SUBMISSION_DEADLINE";
-      case "REQUEST_FOR_BAIL":
-      case "SUBMIT_BAIL_DOCUMENTS":
-        return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
-      case "CHECKOUT_REQUEST":
-        return type === "reject" ? "REJECT_CHECKOUT_REQUEST" : "ACCEPT_CHECKOUT_REQUEST";
-      case "DELAY_CONDONATION":
-        return "ACCEPTANCE_REJECTION_DCA";
-      default:
-        return type === "reject" ? "REJECT_ORDER_VOLUNTARY_SUBMISSIONS" : "APPROVE_ORDER_VOLUNTARY_SUBMISSIONS";
-    }
-  };
   const isMandatoryOrderCreation = useMemo(() => {
     const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
     const type = showConfirmationModal?.type;
@@ -662,6 +685,7 @@ const EvidenceModal = ({
       "SURETY",
       "EXTENSION_SUBMISSION_DEADLINE",
       "CHECKOUT_REQUEST",
+      "ADDING_WITNESSES",
     ];
     if (type === "reject") {
       return false;
@@ -669,22 +693,35 @@ const EvidenceModal = ({
       return acceptedApplicationTypes.includes(applicationType);
     }
   }, [documentSubmission, showConfirmationModal?.type]);
-  const isBail = useMemo(() => {
-    return ["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType);
-  }, [documentSubmission]);
   const showDocument = useMemo(() => {
     return (
       <React.Fragment>
         {modalType !== "Submissions" ? (
           currentDiaryEntry && artifact ? (
             <div className="application-view">
-              <DocViewerWrapper
-                fileStoreId={artifact?.file?.fileStore}
-                tenantId={tenantId}
-                docWidth={"calc(80vw * 62 / 100)"}
-                docHeight={"unset"}
-                showDownloadOption={false}
-              />
+              <React.Fragment>
+                <DocViewerWrapper
+                  key={"selectedFileStoreId"}
+                  tenantId={tenantId}
+                  fileStoreId={artifact?.file?.fileStore}
+                  showDownloadOption={false}
+                  docHeight="100%"
+                  docWidth="100%"
+                  docViewerStyle={{ maxWidth: "100%" }}
+                />
+
+                {artifact?.seal?.fileStore && artifact?.evidenceMarkedStatus === "COMPLETED" && (
+                  <DocViewerWrapper
+                    key={"selectedFileStoreId"}
+                    tenantId={tenantId}
+                    fileStoreId={artifact?.seal?.fileStore}
+                    showDownloadOption={false}
+                    docHeight="100%"
+                    docWidth="100%"
+                    docViewerStyle={{ maxWidth: "100%" }}
+                  />
+                )}
+              </React.Fragment>
             </div>
           ) : (
             documentSubmission?.map((docSubmission, index) => (
@@ -700,6 +737,19 @@ const EvidenceModal = ({
                       showDownloadOption={false}
                       documentName={docSubmission.applicationContent.fileName}
                     />
+                    <React.Fragment>
+                      {docSubmission?.artifactList?.seal?.fileStore && docSubmission?.artifactList?.evidenceMarkedStatus === "COMPLETED" && (
+                        <DocViewerWrapper
+                          key={"selectedFileStoreId"}
+                          tenantId={tenantId}
+                          fileStoreId={docSubmission?.artifactList?.seal?.fileStore}
+                          showDownloadOption={false}
+                          docHeight="100%"
+                          docWidth="100%"
+                          docViewerStyle={{ maxWidth: "100%" }}
+                        />
+                      )}
+                    </React.Fragment>
                   </div>
                 )}
               </React.Fragment>
@@ -716,6 +766,7 @@ const EvidenceModal = ({
                   docWidth={"calc(80vw * 62 / 100)"}
                   showDownloadOption={false}
                   docHeight={"unset"}
+                  errorHeight={"460px"}
                   documentName={docs?.additionalDetails?.name}
                 />
               </div>
@@ -726,54 +777,19 @@ const EvidenceModal = ({
         )}
       </React.Fragment>
     );
-  }, [allCombineDocs, documentSubmission, modalType, tenantId, isLoading, t]);
-
-  const setApplicationStatus = (type, applicationType) => {
-    if (["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(applicationType)) {
-      return type === "SET_TERM_BAIL" ? "SET_TERM_BAIL" : type === "accept" ? "APPROVED" : "REJECTED";
-    }
-    if (["DELAY_CONDONATION"].includes(applicationType)) {
-      return type === "accept" ? "APPROVED" : "REJECTED";
-    }
-    return type === "accept" ? "APPROVED" : "REJECTED";
-  };
-
-  const checkOrderTypeValidation = (a, b) => {
-    let errorObj = { isIncompatible: false, isDuplicate: false };
-    for (let i = 0; i < compositeOrderAllowedTypes?.length; i++) {
-      const currentObj = compositeOrderAllowedTypes?.[i];
-      if (currentObj?.orderTypes?.includes(a)) {
-        if (currentObj?.unAllowedOrderTypes?.includes(b)) {
-          if (a === b) {
-            errorObj.isDuplicate = true;
-          } else {
-            errorObj.isIncompatible = true;
-          }
-          break;
-        }
-      }
-    }
-    return errorObj;
-  };
-
-  const checkOrderValidation = (orderType, compositeOrderObj) => {
-    if (compositeOrderObj?.orderCategory === "INTERMEDIATE") {
-      const orderTypeA = compositeOrderObj?.additionalDetails?.formdata?.orderType?.code;
-      const { isIncompatible, isDuplicate } = checkOrderTypeValidation(orderTypeA, orderType);
-      return isIncompatible || isDuplicate;
-    }
-    return compositeOrderObj?.compositeItems?.some((item) => {
-      if (!item?.isEnabled) return false;
-      const orderTypeA = item?.orderSchema?.additionalDetails?.formdata?.orderType?.code;
-      const { isIncompatible, isDuplicate } = checkOrderTypeValidation(orderTypeA, orderType);
-      return isIncompatible || isDuplicate;
-    });
-  };
+  }, [modalType, currentDiaryEntry, artifact, tenantId, documentSubmission, allCombineDocs, isLoading, t]);
 
   const handleApplicationAction = async (generateOrder, type) => {
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
       const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
+      const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
+      const currentHearingPurpose = documentSubmission?.[0]?.applicationList?.applicationDetails?.initialHearingPurpose || "";
+      const caseNumber =
+        (caseData?.isLPRCase ? caseData?.lprNumber : caseData?.courtCaseNumber) ||
+        caseData?.courtCaseNumber ||
+        caseData?.cmpNumber ||
+        caseData?.filingNumber;
       const formdata = {
         orderType: {
           code: orderType,
@@ -781,6 +797,7 @@ const EvidenceModal = ({
           name: `ORDER_TYPE_${orderType}`,
         },
         refApplicationId: refApplicationId,
+        ...(currentHearingPurpose && { originalHearingPurpose: currentHearingPurpose }),
         applicationStatus: documentSubmission?.[0]?.applicationList?.applicationType
           ? setApplicationStatus(type, documentSubmission[0].applicationList.applicationType)
           : null,
@@ -796,6 +813,7 @@ const EvidenceModal = ({
       const hearingNumber =
         ["INITIATING_RESCHEDULING_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(orderType) &&
         documentSubmission?.[0]?.applicationList?.additionalDetails?.hearingId;
+      const refHearingId = documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.refHearingId;
       const parties = documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
         parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }],
       };
@@ -809,145 +827,10 @@ const EvidenceModal = ({
         ...(hearingNumber && {
           hearingNumber: hearingNumber,
         }),
+        ...(refHearingId && { refHearingId: refHearingId }),
       };
-      const isSameOrder =
-        compositeOrderObj?.orderCategory === "COMPOSITE"
-          ? compositeOrderObj?.compositeItems?.some(
-              (item) => item?.isEnabled && item?.orderSchema?.additionalDetails?.formdata?.refApplicationId === refApplicationId
-            )
-          : compositeOrderObj?.additionalDetails?.formdata?.refApplicationId === refApplicationId;
-      const isNewOrder = isSameOrder || checkOrderValidation(orderType, compositeOrderObj);
 
-      if (generateOrder && compositeOrderObj && compositeOrderObj?.orderTitle && !isNewOrder) {
-        try {
-          let response;
-          if (compositeOrderObj?.orderCategory === "INTERMEDIATE") {
-            const compositeItems = [
-              {
-                orderType: compositeOrderObj?.orderType,
-                orderSchema: {
-                  applicationNumber: compositeOrderObj?.applicationNumber,
-                  orderDetails: compositeOrderObj?.orderDetails,
-                  additionalDetails: {
-                    ...compositeOrderObj?.additionalDetails,
-                    hearingNumber: compositeOrderObj?.hearingNumber,
-                    linkedOrderNumber: compositeOrderObj?.linkedOrderNumber,
-                    applicationNumber: compositeOrderObj?.applicationNumber,
-                  },
-                },
-              },
-              {
-                orderType: orderType,
-                orderSchema: {
-                  additionalDetails: additionalDetails,
-                  ...(parties && { orderDetails: parties }),
-                  ...(hearingNumber && {
-                    hearingNumber: hearingNumber,
-                  }),
-                  ...(linkedOrderNumber && { linkedOrderNumber }),
-                  ...(applicationNumber && {
-                    applicationNumber: applicationNumber,
-                  }),
-                },
-              },
-            ];
-            const payload = {
-              order: {
-                ...compositeOrderObj,
-                additionalDetails: null,
-                orderDetails: null,
-                orderType: null,
-                orderCategory: "COMPOSITE",
-                orderTitle: `${t(compositeOrderObj?.orderType)} and Other Items`,
-                compositeItems,
-                ...(hearingNumber && {
-                  hearingNumber: hearingNumber,
-                }),
-                ...(linkedOrderNumber && { linkedOrderNumber }),
-                workflow: {
-                  action: OrderWorkflowAction.SAVE_DRAFT,
-                  comments: "Creating order",
-                  assignes: null,
-                  rating: null,
-                  documents: [{}],
-                },
-              },
-            };
-            if (compositeOrderObj?.orderNumber) {
-              response = await ordersService.addOrderItem(payload, { tenantId });
-            } else {
-              response = await ordersService.createOrder(payload, { tenantId });
-            }
-          } else {
-            const compositeItems = [
-              ...compositeOrderObj?.compositeItems?.filter((item) => item?.isEnabled && item?.orderType),
-              {
-                orderType: orderType,
-                orderSchema: {
-                  additionalDetails: additionalDetails,
-                  ...(parties && { orderDetails: parties }),
-                  ...(hearingNumber && {
-                    hearingNumber: hearingNumber,
-                  }),
-                  ...(linkedOrderNumber && { linkedOrderNumber }),
-                  ...(applicationNumber && {
-                    applicationNumber: applicationNumber,
-                  }),
-                },
-              },
-            ];
-            const payload = {
-              order: {
-                ...compositeOrderObj,
-                additionalDetails: null,
-                orderDetails: null,
-                orderType: null,
-                compositeItems,
-                workflow: {
-                  action: OrderWorkflowAction.SAVE_DRAFT,
-                  comments: "Creating order",
-                  assignes: null,
-                  rating: null,
-                  documents: [{}],
-                },
-                applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
-                ...(hearingNumber && {
-                  hearingNumber: hearingNumber,
-                }),
-                ...(linkedOrderNumber && { linkedOrderNumber }),
-              },
-            };
-            if (compositeOrderObj?.orderNumber) {
-              response = await ordersService.addOrderItem(payload, { tenantId });
-            } else {
-              response = await ordersService.createOrder(payload, { tenantId });
-            }
-          }
-          DRISTIService.customApiService(Urls.dristi.pendingTask, {
-            pendingTask: {
-              name: `${compositeOrderObj?.orderTitle}`,
-              entityType: "order-default",
-              referenceId: `MANUAL_${response?.order?.orderNumber}`,
-              status: "DRAFT_IN_PROGRESS",
-              assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
-              cnrNumber,
-              filingNumber,
-              caseId,
-              caseTitle: caseData?.title,
-              isCompleted: false,
-              stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
-              additionalDetails: { orderType },
-              tenantId,
-            },
-          });
-          history.replace(
-            `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
-          );
-        } catch (error) {
-          toast.error(t("SOMETHING_WENT_WRONG"));
-        }
-      } else if (generateOrder) {
+      if (generateOrder) {
         const reqbody = {
           order: {
             createdDate: null,
@@ -972,24 +855,36 @@ const EvidenceModal = ({
             },
             documents: [],
             additionalDetails: additionalDetails,
-            ...(parties && { orderDetails: parties }),
-            ...(hearingNumber && {
-              hearingNumber: hearingNumber,
-            }),
+            orderDetails: {
+              ...(parties || {}),
+              applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
+              applicationNumber: refApplicationId,
+              applicationCMPNumber: applicationCMPNumber,
+              caseNumber: caseNumber,
+              ...(orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" ? { action: type === "reject" ? "REJECT" : "APPROVE" } : {}),
+            },
             ...(linkedOrderNumber && { linkedOrderNumber }),
           },
         };
         try {
           const res = await ordersService.createOrder(reqbody, { tenantId });
-          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
+          // const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
+          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType ? type : showConfirmationModal?.type);
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
+            //need to add actioncategory for ORDER_EXTENSION_SUBMISSION_DEADLINE , ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE
             pendingTask: {
+              actionCategory:
+                name === "ORDER_EXTENSION_SUBMISSION_DEADLINE"
+                  ? "View Application"
+                  : name === "ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE"
+                  ? "Schedule Hearing"
+                  : null,
               name: t(name),
               entityType: "order-default",
               referenceId: `MANUAL_${res?.order?.orderNumber}`,
               status: "DRAFT_IN_PROGRESS",
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["PENDING_TASK_ORDER"],
               cnrNumber,
               filingNumber,
               caseId,
@@ -1000,8 +895,14 @@ const EvidenceModal = ({
               tenantId,
             },
           });
-          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
-        } catch (error) {}
+          sessionStorage.setItem("currentOrderType", orderType);
+          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+        } catch (error) {
+          const errorCode = error?.response?.data?.Errors?.[0]?.code;
+          const errorMsg =
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+          toast.error(errorMsg);
+        }
       } else {
         if (showConfirmationModal.type === "reject") {
           await handleRejectApplication();
@@ -1070,9 +971,14 @@ const EvidenceModal = ({
       }
       if (isBail) {
         await handleApplicationAction(true, "accept");
-      } else if (modalType === "Submissions" && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION") {
+      } else if (modalType === "Submissions") {
         await handleApplicationAction(true, "accept");
-      } else modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
+      } else {
+        if (modalType === "Documents") {
+          setShow(false);
+          setShowMakeAsEvidenceModal(true);
+        }
+      }
     } else {
       if (actionSaveLabel === t("ADD_COMMENT")) {
         try {
@@ -1108,9 +1014,9 @@ const EvidenceModal = ({
     if (userType === "employee") {
       if (isBail) {
         await handleApplicationAction(true, "reject");
-      } else if (modalType === "Submissions" && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION") {
+      } else if (modalType === "Submissions") {
         await handleApplicationAction(true, "reject");
-      } else setShowConfirmationModal({ type: "reject" });
+      }
     } else {
       try {
         await handleDeleteApplication();
@@ -1124,25 +1030,6 @@ const EvidenceModal = ({
       await handleApplicationAction(true, "SET_TERM_BAIL");
     } else {
       setShow(false);
-    }
-  };
-
-  const handleUpdateBusinessOfDayEntry = async () => {
-    try {
-      await DRISTIService.aDiaryEntryUpdate(
-        {
-          diaryEntry: {
-            ...currentDiaryEntry,
-            businessOfDay: businessOfTheDay,
-          },
-        },
-        {}
-      ).then(async () => {
-        history.goBack();
-      });
-    } catch (error) {
-      console.error("error: ", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
     }
   };
 
@@ -1201,27 +1088,17 @@ const EvidenceModal = ({
     []
   );
 
-  const onDocumentUpload = async (fileData, filename, tenantId) => {
-    if (fileData?.fileStore) return fileData;
-    const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
-    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
-  };
-
   useEffect(() => {
     if (!(currentDiaryEntry && artifact)) {
       fetchRecursiveData(documentSubmission?.[0]?.applicationList);
     }
   }, [artifact, currentDiaryEntry, documentSubmission, fetchRecursiveData]);
 
-  const customLabelShow = useMemo(() => {
-    return (
-      isJudge &&
-      ["REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType) &&
-      userRoles.includes("SUBMISSION_APPROVER") &&
-      [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
-      modalType === "Submissions"
-    );
-  }, [isJudge, documentSubmission, userRoles, applicationStatus, modalType]);
+  useEffect(() => {
+    if (isApplicationAccepted && documentSubmission?.[0]?.applicationList?.applicationType !== "CORRECTION_IN_COMPLAINANT_DETAILS") {
+      setShowConfirmationModal({ type: isApplicationAccepted?.value ? "accept" : "reject" });
+    }
+  }, [documentSubmission, isApplicationAccepted]);
 
   return (
     <React.Fragment>
@@ -1231,7 +1108,32 @@ const EvidenceModal = ({
         }
         .popup-module.evidence-modal .popup-module-main .selector-button-border h2 {
           color: #BB2C2F !important;
-        }`}
+        }
+        .popup-module.evidence-modal .info-value p {
+          margin-top: 0;
+        }
+        .popup-module.evidence-modal .info-value ul {
+          list-style-type: disc;
+          margin-top: 0;
+        }
+       .popup-module.evidence-modal .info-value ol {
+          list-style-type: decimal;
+          margin-top: 0;
+        }
+        .confirm-submission-checkbox {
+          .checkbox-wrap {
+            .label {
+              margin-left: 32px;
+            }
+          .custom-checkbox {
+              height: 20px;
+              width: 20px;
+            }
+          }
+        }
+      .popup-module.evidence-modal .info-value li {
+        margin: 0;
+      }`}
       </style>
       {!showConfirmationModal && !showSuccessModal && (
         <Modal
@@ -1243,7 +1145,7 @@ const EvidenceModal = ({
           actionCancelLabel={
             documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" || currentDiaryEntry || !isJudge ? false : actionCancelLabel
           } // Not allowing cancel action for court room manager
-          actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
+          // actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
           actionCustomLabelSubmit={actionCustomLabelSubmit}
           formId="modal-action"
@@ -1257,6 +1159,11 @@ const EvidenceModal = ({
                     : "Action Pending"
                   : t(applicationStatus)
               }
+              evidenceMarkedStatus={
+                (modalType === "Documents" && documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus === "COMPLETED") || userType === "employee"
+                  ? documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus
+                  : null
+              }
               showStatus={modalType === "Documents" ? false : true}
               isStatusRed={modalType === "Documents" ? !documentSubmission?.[0]?.artifactList?.isEvidence : applicationStatus}
             />
@@ -1268,15 +1175,50 @@ const EvidenceModal = ({
           textStyle={{
             color: "#fff",
           }}
-          actionCancelTextStyle={
-            customLabelShow
-              ? {
-                  color: "#BB2C2F",
-                }
-              : {}
-          }
+          // actionCancelTextStyle={
+          //   customLabelShow
+          //     ? {
+          //         color: "#BB2C2F",
+          //       }
+          //     : {}
+          // }
         >
-          <div className="evidence-modal-main">
+          {(documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus || documentSubmission?.[0]?.artifactList?.isEvidence) &&
+            userType === "employee" && (
+              <div style={{ margin: "16px 24px" }}>
+                <div className="custom-note-main-div" style={{ padding: "8px 16px", flexDirection: "row", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <CustomErrorTooltip message={t("CS_EVIDENCE_MARKED_INFO_TEXT")} showTooltip={true} />
+                    <div className="custom-note-heading-div">
+                      <h2>{t("CS_PLEASE_COMMON_NOTE")}</h2>
+                    </div>
+                    <div className="custom-note-info-div" style={{ display: "flex", alignItems: "center" }}>
+                      {<p>{t("CS_EVIDENCE_MARKED_INFO_TEXT")}</p>}
+                    </div>
+                  </div>
+                  <div>
+                    <button
+                      className="custom-note-close-button"
+                      style={{ fontWeight: "700", fontSize: "18px", fontStyle: "large", backgroundColor: "transparent", color: "#0F3B8C" }}
+                      onClick={() => {
+                        setShow(false);
+                        setShowMakeAsEvidenceModal(true);
+                      }}
+                    >
+                      {t("VIEW_DETAILS")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          <div
+            className="evidence-modal-main "
+            style={
+              documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus || documentSubmission?.[0]?.artifactList?.isEvidence
+                ? { height: "calc(100% - 140px)" }
+                : {}
+            }
+          >
             <div className={"application-details"}>
               <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", height: "fit-content" }}>
                 {isJudge && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION" && !Boolean(applicationNumber) && (
@@ -1301,7 +1243,7 @@ const EvidenceModal = ({
                     </div>
                   </div>
                 )}
-                <div className="application-info" style={{ display: "flex", flexDirection: "column" }}>
+                <div className="application-info-new" style={{ display: "flex", flexDirection: "column" }}>
                   <div className="info-row">
                     <div className="info-key">
                       <h3>{t("APPLICATION_TYPE")}</h3>
@@ -1339,66 +1281,90 @@ const EvidenceModal = ({
                     </div>
                   )}
 
-                  <div className="info-row">
-                    <div className="info-key">
-                      <h3>{t("SENDER")}</h3>
+                  {senderName && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("SENDER")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>{senderName}</h3>
+                      </div>
                     </div>
-                    <div className="info-value">
-                      <h3>{currentDiaryEntry && artifact ? artifact?.sender : removeInvalidNameParts(documentSubmission[0]?.details?.sender)}</h3>
+                  )}
+                  {/* {createdByName && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("CREATED_BY")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>{createdByName}</h3>
+                      </div>
                     </div>
-                  </div>
-                  <div className="info-row">
-                    <div className="info-key">
-                      <h3>{t("EVIDENCE_ADDITIONAL_DETAILS")}</h3>
+                  )} */}
+                  {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingDate && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("CURRENT_HEARING_DATE")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>
+                          {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingDate
+                            ?.split("-")
+                            ?.reverse()
+                            ?.join("-")}
+                        </h3>
+                      </div>
                     </div>
-                    <div className="info-value">
-                      {/* <h3>{JSON.stringify(documentSubmission[0]?.details.additionalDetails)}</h3> */}
-                      <h3>N/A</h3>
+                  )}
+                  {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.newHearingDates && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("PROPOSED_HEARING_DATE")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>{documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.newHearingDates?.join(", ")}</h3>
+                      </div>
                     </div>
-                  </div>
+                  )}
+                  {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingPurpose && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("PURPOSE_OF_NEXT_HEARING")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>{t(documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingPurpose)}</h3>
+                      </div>
+                    </div>
+                  )}
+                  {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.isAllPartiesAgreed?.code && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("OTHER_PARTIES_CONSENT")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>{t(documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.isAllPartiesAgreed?.code)}</h3>
+                      </div>
+                    </div>
+                  )}
                   {documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling && (
                     <div className="info-row">
                       <div className="info-key">
                         <h3>{t("REASON_FOR_FILING")}</h3>
                       </div>
-                      <div className="info-value">
-                        <h3>{documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling?.text}</h3>
-                      </div>
+                      <div
+                        className="info-value"
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling?.text || ""),
+                        }}
+                      ></div>
                     </div>
                   )}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>{showDocument}</div>
               </div>
-              {modalType === "Documents" && isJudge && (
-                <div>
-                  <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <TextInput
-                      className="field desktop-w-full"
-                      onChange={(e) => {
-                        setBusinessOfTheDay(e.target.value);
-                      }}
-                      disable={isDisabled}
-                      defaultValue={currentDiaryEntry?.businessOfDay || computeDefaultBOTD}
-                      style={{ minWidth: "500px" }}
-                      textInputStyle={{ maxWidth: "100%" }}
-                    />
-                    {currentDiaryEntry && (
-                      <Button
-                        label={t("SAVE")}
-                        variation={"primary"}
-                        style={{ padding: 15, boxShadow: "none" }}
-                        onButtonClick={() => {
-                          handleUpdateBusinessOfDayEntry();
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
-            {(userRoles.includes("SUBMISSION_RESPONDER") || userRoles.includes("JUDGE_ROLE")) && (
-              <div className={`application-comment ${isCourtRoomManager && "disabled"}`}>
+            {(userRoles.includes("SUBMISSION_RESPONDER") || userType === "employee") && (
+              <div className={`application-comment`}>
                 <div className="comment-section">
                   <h1 className="comment-xyzoo">{t("DOC_COMMENTS")}</h1>
                   <div className="comment-main">
@@ -1545,6 +1511,10 @@ const EvidenceModal = ({
           setShow={setShow}
           handleAction={handleApplicationAction}
           disableCheckBox={isMandatoryOrderCreation}
+          setReasonOfApplication={setReasonOfApplication}
+          reasonOfApplication={reasonOfApplication}
+          handleBack={handleBack}
+          applicationType={documentSubmission?.[0]?.applicationList?.applicationType}
         />
       )}
       {showConfirmationModal && !showSuccessModal && modalType === "Documents" && (

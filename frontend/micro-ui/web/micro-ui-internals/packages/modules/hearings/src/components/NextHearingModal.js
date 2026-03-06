@@ -6,8 +6,7 @@ import useGetAvailableDates from "../hooks/hearings/useGetAvailableDates";
 import { useHistory } from "react-router-dom";
 import CustomCalendar from "../../../dristi/src/components/CustomCalendar";
 import { useTranslation } from "react-i18next";
-import { formatDateInMonth } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { formatDate } from "../utils";
+import { DateUtils, formatDateInMonth } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -56,6 +55,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [nextFiveDates, setNextFiveDates] = useState([]);
+  const courtId = localStorage.getItem("courtId");
 
   const history = useHistory();
 
@@ -70,6 +70,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
           criteria: [
             {
               filingNumber: hearing?.filingNumber[0],
+              ...(courtId && userType === "employee" && { courtId }),
             },
           ],
           tenantId,
@@ -104,14 +105,6 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
     return MdmsCourtList?.["common-masters"]?.Court_Rooms.find((court) => court.code === caseDetails?.courtId);
   }, [MdmsCourtList, caseDetails?.courtId]);
 
-  const handleNavigate = (path) => {
-    const contextPath = window?.contextPath || "";
-    history.push(`/${contextPath}${path}`);
-  };
-
-  const closeSetDate = () => {
-    handleNavigate(`/employee/hearings/inside-hearing?hearingId=${hearingId}`);
-  };
   const [error, setError] = useState(null);
   const onGenerateOrder = () => {
     const requestBody = {
@@ -144,7 +137,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
               code: "SCHEDULING_NEXT_HEARING",
               name: "ORDER_TYPE_SCHEDULING_NEXT_HEARING",
             },
-            hearingDate: formatDate(new Date(selectedDate)),
+            hearingDate: DateUtils.getFormattedDate(new Date(selectedDate), "YYYY-MM-DD"),
             comments: { text: transcript },
           },
         },
@@ -154,7 +147,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
       .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
       .then((res) => {
         history.push(
-          `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+          `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })
       .catch((err) => {

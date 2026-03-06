@@ -60,7 +60,7 @@ const SBIPaymentStatus = ({ path }) => {
                 referenceId: receiptData?.hearingId,
                 status: receiptData?.orderType === "SUMMONS" ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
                 assignedTo: [],
-                assignedRole: ["JUDGE_ROLE"],
+                assignedRole: [receiptData?.orderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
                 cnrNumber: receiptData?.filteredTasks?.[0]?.cnrNumber,
                 filingNumber: receiptData?.filingNumber,
                 caseId: receiptData?.caseId,

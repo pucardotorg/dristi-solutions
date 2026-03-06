@@ -1,24 +1,26 @@
 import { useTranslation } from "react-i18next";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef, useContext } from "react";
 import { useHistory } from "react-router-dom";
 import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import { rolesToConfigMapping, userTypeOptions } from "../../configs/HomeConfig";
+import { rolesToConfigMapping, userTypeOptions, getUnifiedEmployeeConfig, getOnRowClickConfig, litigantConfig } from "../../configs/HomeConfig";
 import UpcomingHearings from "../../components/UpComingHearing";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import TasksComponent from "../../components/TaskComponent";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
-import { HomeService, Urls } from "../../hooks/services";
+import { HomeService } from "../../hooks/services";
 import LitigantHomePage from "./LitigantHomePage";
-import { TabLitigantSearchConfig } from "../../configs/LitigantHomeConfig";
 import ReviewCard from "../../components/ReviewCard";
-import { InboxIcon, DocumentIcon } from "../../../homeIcon";
+import { InboxIcon } from "../../../homeIcon";
 import { Link } from "react-router-dom";
 import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
-import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import useSearchCaseListService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseListService";
+import { BreadCrumb } from "@egovernments/digit-ui-react-components";
+import SelectAdvocateModal from "./SelectAdvocateModal";
+import { extractedSeniorAdvocates } from "../../utils";
+import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -33,6 +35,35 @@ const linkStyle = {
   padding: 12,
   borderRadius: "8px",
   display: "inline-block",
+};
+const bredCrumbStyle = { maxWidth: "min-content" };
+
+const ProjectBreadCrumb = ({ location, t }) => {
+  const userInfo = window?.Digit?.UserService?.getUser()?.info;
+  let userType = "employee";
+  if (userInfo) {
+    userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+  }
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  const crumbs = [
+    {
+      path: homePath,
+      content: t("ES_COMMON_HOME"),
+      show: true,
+      isLast: false,
+    },
+    {
+      path: `/${window?.contextPath}/employee/home/home-pending-task`,
+      content: t("OPEN_ALL_CASES"),
+      show: true,
+      isLast: false,
+    },
+  ];
+  return <BreadCrumb crumbs={crumbs} spanStyle={bredCrumbStyle} />;
 };
 
 const HomeView = () => {
@@ -51,21 +82,26 @@ const HomeView = () => {
   const [onRowClickData, setOnRowClickData] = useState({ url: "", params: [] });
   const [taskType, setTaskType] = useState(state?.taskType || {});
   const [caseType, setCaseType] = useState(state?.caseType || {});
-
-  const bulkSignSuccess = history.location?.state?.bulkSignSuccess;
-  const [issueBulkSuccessData, setIssueBulkSuccessData] = useState({
-    show: false,
-    bulkSignOrderListLength: null,
-  });
+  const [showSelectAdvocateModal, setShowSelectAdvocateModal] = useState(false);
+  const initialCountFetchRef = useRef(false);
+  const { AdvocateData } = useContext(AdvocateDataContext);
+  const selectedSeniorAdvocate = AdvocateData;
   const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
+  const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
+  const hasViewSignOrderAccess = useMemo(() => roles?.some((role) => role.code === "VIEW_SIGN_ORDERS"), [roles]);
+  const viewDashBoards = useMemo(() => roles?.some((role) => role?.code === "VIEW_DASHBOARDS"), [roles]); // to show Dashboards, Reports tabs.
+  const viewADiary = useMemo(() => roles?.some((role) => role?.code === "DIARY_VIEWER"), [roles]); // to show A-Diary tab.
+  const hasViewAllCasesAccess = useMemo(() => roles?.some((role) => role?.code === "VIEW_ALL_CASES"), [roles]);
+
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
-  const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
-  const isClerk = roles.some((role) => role.code === "BENCH_CLERK");
-  const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
+  const courtId = localStorage.getItem("courtId");
+  const isLitigant = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
+    userInfo?.roles,
+  ]);
 
   const [config, setConfig] = useState(null);
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
@@ -125,16 +161,22 @@ const HomeView = () => {
           entityType: "Order",
           tenantId: tenantId,
           status: OrderWorkflowState.PENDING_BULK_E_SIGN,
+          ...(courtId && { courtId }),
         },
       },
     },
     { tenantId },
     OrderWorkflowState.PENDING_BULK_E_SIGN,
-    Boolean(isJudge)
+    Boolean(hasViewSignOrderAccess && courtId)
   );
 
   const refreshInbox = () => {
     setCallRefetch(!callRefetch);
+  };
+
+  const refreshInboxAfterSelectedAdvocateChange = () => {
+    setCallRefetch((prev) => !prev);
+    getTotalCountForTab(tabConfigs);
   };
 
   const userTypeDetail = useMemo(() => {
@@ -156,26 +198,91 @@ const HomeView = () => {
   }, [searchResult, userType]);
 
   const advocateId = useMemo(() => {
-    return searchResult?.[0]?.id;
-  }, [searchResult]);
+    return userType === "ADVOCATE" ? searchResult?.[0]?.id : null;
+  }, [searchResult, userType]);
+
+  const advClerkId = useMemo(() => {
+    return userType === "ADVOCATE_CLERK" ? searchResult?.[0]?.id : null;
+  }, [searchResult, userType]);
+
+  const searchCriteria = useMemo(() => {
+    return userType === "ADVOCATE" ? { memberId: advocateId } : userType === "ADVOCATE_CLERK" ? { memberId: advClerkId } : {};
+  }, [advocateId, advClerkId, userType]);
+
+  const { data: officeMembersData, isLoading: isLoadingMembers, refetch: refetchMembers } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
+    {
+      searchCriteria: {
+        ...searchCriteria,
+        tenantId: tenantId,
+      },
+    },
+    { tenantId },
+    searchCriteria,
+    Boolean((advocateId || advClerkId) && tenantId)
+  );
+
+  const seniorAdvocates = useMemo(() => {
+    if (isLoadingMembers) return [];
+    if (userType === "ADVOCATE" && advocateId) {
+      const selfDetails = [{ id: advocateId, value: advocateId, advocateName: userInfo?.name, uuid: userInfo?.uuid }];
+      if (officeMembersData?.members?.length > 0) {
+        const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
+        const totalList = [...selfDetails, ...seniorAdvocatesList];
+        return [...(totalList || [])].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
+      } else return selfDetails;
+    } else if (userType === "ADVOCATE_CLERK" && advClerkId) {
+      if (officeMembersData?.members?.length > 0) {
+        const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
+        return [...(seniorAdvocatesList || [])].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
+      } else return [];
+    }
+    return [];
+  }, [advocateId, advClerkId, officeMembersData, isLoadingMembers, userType, userInfo?.name, userInfo?.uuid]);
+
+  const unAssociatedClerk = useMemo(() => {
+    // seniorAdvocates length zero means the logged in clerk is not associated with any advocate yet.
+    if (userType === "ADVOCATE_CLERK" && seniorAdvocates?.length === 0) {
+      return true;
+    }
+    return false;
+  }, [userType, seniorAdvocates?.length]);
 
   const additionalDetails = useMemo(() => {
+    if (!userInfoType) return null;
+    if (userInfoType === "citizen" && !userType) return null;
+    if ((userType === "ADVOCATE" && !advocateId) || (userType === "ADVOCATE_CLERK" && !advClerkId)) return null;
+    if (((userType === "ADVOCATE" && advocateId) || (userType === "ADVOCATE_CLERK" && advClerkId)) && !selectedSeniorAdvocate?.id) return null;
     return {
-      ...(advocateId
+      ...(advClerkId
         ? {
             searchKey: "filingNumber",
             defaultFields: true,
-            advocateId: advocateId,
+            officeAdvocateId: selectedSeniorAdvocate?.id, // TODO: handle for jr adv and senr adv
+            memberId: advClerkId,
+            ...(courtId && !isScrutiny && { courtId }),
+          }
+        : advocateId
+        ? {
+            searchKey: "filingNumber",
+            defaultFields: true,
+            ...(advocateId === selectedSeniorAdvocate?.id
+              ? { advocateId }
+              : {
+                  officeAdvocateId: selectedSeniorAdvocate?.id,
+                  memberId: advocateId,
+                }),
+            ...(courtId && !isScrutiny && { courtId }),
           }
         : individualId
         ? {
             searchKey: "filingNumber",
             defaultFields: true,
             litigantId: individualId,
+            ...(courtId && !isScrutiny && { courtId }),
           }
-        : {}),
+        : { ...(courtId && !isScrutiny && { courtId }) }),
     };
-  }, [advocateId, individualId]);
+  }, [advocateId, advClerkId, individualId, courtId, isScrutiny, selectedSeniorAdvocate, userType, userInfoType]);
 
   useEffect(() => {
     setDefaultValues(defaultSearchValues);
@@ -183,10 +290,7 @@ const HomeView = () => {
 
   useEffect(() => {
     state && state.taskType && setTaskType(state.taskType);
-    if (bulkSignSuccess) {
-      setIssueBulkSuccessData(bulkSignSuccess);
-    }
-  }, [state, bulkSignSuccess]);
+  }, [state]);
 
   const { isLoading: isOutcomeLoading, data: outcomeTypeData } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -205,15 +309,19 @@ const HomeView = () => {
     if (state?.role && rolesToConfigMapping?.find((item) => item[state.role])) {
       return rolesToConfigMapping?.find((item) => item[state.role]);
     } else {
-      return (
-        rolesToConfigMapping?.find((item) =>
-          item.roles?.reduce((res, curr) => {
-            if (!res) return res;
-            res = roles.some((role) => role.code === curr);
-            return res;
-          }, true)
-        ) || (userInfoType === "citizen" ? TabLitigantSearchConfig : null)
-      );
+      // For employees, use unified config approach
+      if (userInfoType === "employee") {
+        const unifiedConfig = getUnifiedEmployeeConfig(roles);
+        const onRowClickRoute = getOnRowClickConfig(roles);
+
+        return {
+          config: unifiedConfig,
+          onRowClickRoute: onRowClickRoute,
+          isEmployee: true,
+        };
+      } else if (userInfoType === "citizen") {
+        return litigantConfig;
+      } else return null;
     }
   }, [state?.role, roles, userInfoType]);
 
@@ -249,25 +357,63 @@ const HomeView = () => {
     [additionalDetails, outcomeTypeData, tenantId, t]
   );
 
+  useEffect(() => {
+    if (!selectedSeniorAdvocate?.id) return;
+    initialCountFetchRef.current === true && refreshInboxAfterSelectedAdvocateChange();
+  }, [selectedSeniorAdvocate?.id]);
+
   const citizenId = useMemo(() => {
     if (userInfoType === "citizen" && !isSearchLoading) {
       return advocateId ? advocateId : individualId;
     } else return null;
   }, [userInfoType, advocateId, individualId, isSearchLoading]);
 
+  const casefetchCriteriaForCitizen = useMemo(() => {
+    if (!citizenId) return false;
+    if (citizenId) {
+      if (!userType) return false;
+      if (userType === "LITIGANT") {
+        if (individualId) return true;
+        return false;
+      }
+      if ((userType === "ADVOCATE" && !advocateId) || (userType === "ADVOCATE_CLERK" && !advClerkId)) return false;
+      if ((userType === "ADVOCATE" && advocateId) || (userType === "ADVOCATE_CLERK" && advClerkId)) {
+        if (selectedSeniorAdvocate?.id) {
+          return true;
+        }
+      }
+      return false;
+    }
+    return false;
+  }, [citizenId, userType, advocateId, advClerkId, selectedSeniorAdvocate?.id, individualId]);
+
   const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseListService(
     {
       criteria: {
-        ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
-        courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+        ...(citizenId
+          ? advocateId
+            ? advocateId === selectedSeniorAdvocate?.id
+              ? { advocateId }
+              : {
+                  officeAdvocateId: selectedSeniorAdvocate?.id,
+                  memberId: advocateId,
+                }
+            : advClerkId
+            ? {
+                officeAdvocateId: selectedSeniorAdvocate?.id,
+                memberId: advClerkId,
+              }
+            : { litigantId: individualId }
+          : {}),
         pagination: { offSet: 0, limit: 1 },
         tenantId,
       },
+      tenantId,
     },
     {},
-    `dristi-${citizenId}`,
+    `dristi-${casefetchCriteriaForCitizen}`,
     "",
-    Boolean(citizenId),
+    Boolean(casefetchCriteriaForCitizen),
     true,
     6 * 1000
   );
@@ -278,12 +424,13 @@ const HomeView = () => {
   }, [citizenCaseData]);
 
   useEffect(() => {
-    const isAnyLoading = isLoading || isFetching || isSearchLoading || isOutcomeLoading || isCitizenCaseDataLoading;
+    const isAnyLoading = isLoading || isFetching || isSearchLoading || isOutcomeLoading || isCitizenCaseDataLoading || !additionalDetails;
     if (!isAnyLoading && tabConfigs && rowClickData && rolesToConfigMappingData && userInfoType) {
       setOnRowClickData(rowClickData);
       if (tabConfigs && !isEqual(tabConfigs, tabConfig)) {
         setConfig(tabConfigs?.TabSearchConfig?.[0]);
         setTabConfig(tabConfigs);
+        initialCountFetchRef.current = true; //To block duplicate calls for citizen initially on page reload.
         getTotalCountForTab(tabConfigs);
       }
     }
@@ -299,6 +446,8 @@ const HomeView = () => {
     rolesToConfigMappingData,
     isCitizenCaseDataLoading,
     userInfoType,
+    additionalDetails,
+    callRefetch,
   ]);
 
   const onTabChange = (n) => {
@@ -308,8 +457,12 @@ const HomeView = () => {
 
   const handleNavigate = () => {
     const contextPath = window?.contextPath || "";
-    history.push(`/${contextPath}/${userInfoType}/hearings/`);
+    history.push({
+      pathname: `/${contextPath}/${userInfoType}/hearings`,
+      state: { fromHome: true },
+    });
   };
+
   const JoinCaseHome = Digit?.ComponentRegistryService?.getComponent("JoinCaseHome");
 
   const getRedirectUrl = (status, caseId, filingNumber) => {
@@ -329,14 +482,13 @@ const HomeView = () => {
       case "PENDING_RE_E-SIGN":
       case "PENDING_RE_E-SIGN-2":
       case "PENDING_RE_SIGN":
-        return `/${contextPath}/${userType}/dristi/home/file-case/sign-complaint?filingNumber=${filingNumber}`;
+        return `/${contextPath}/${userType}/dristi/home/file-case/sign-complaint?filingNumber=${filingNumber}&caseId=${caseId}`;
       default:
         return `${baseUrl}?${params}&tab=Overview`;
     }
   };
 
   const handleScrutinyAndLock = async (filingNumber) => {
-    const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
     if (isScrutiny) {
       try {
         const response = await DRISTIService.getCaseLockStatus({}, { uniqueId: filingNumber, tenantId: tenantId });
@@ -399,6 +551,7 @@ const HomeView = () => {
         "PENDING_RESPONSE",
         "UNDER_SCRUTINY",
         "CASE_DISMISSED",
+        "RE_PENDING_PAYMENT",
       ];
       if (statusArray.includes(row?.original?.status)) {
         history.push(getRedirectUrl(row?.original?.status, row?.original?.id, row?.original?.filingNumber));
@@ -406,12 +559,12 @@ const HomeView = () => {
     }
   };
 
-  if (isUserLoggedIn && !individualId && userInfoType === "citizen") {
-    history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+  if (userInfoType === "employee" && !hasViewAllCasesAccess) {
+    history.push(`/${window?.contextPath}/employee/home/home-screen`);
   }
 
-  if (isNyayMitra) {
-    history.push(`/${window?.contextPath}/employee`);
+  if (isUserLoggedIn && !individualId && userInfoType === "citizen") {
+    history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
   }
 
   const data = [
@@ -427,7 +580,24 @@ const HomeView = () => {
     // },
   ];
 
-  if (isLoading || isFetching || isSearchLoading || isOrdersLoading || isOutcomeLoading || isCitizenCaseDataLoading) {
+  const canJoinCase = useMemo(() => {
+    // iF user is advocate clerk then do not allow to join case(only for sprint 1st half, in 2nd half it is allowed)
+    if (userType === "ADVOCATE_CLERK") {
+      return false;
+    } else if (userType === "ADVOCATE" && advocateId === selectedSeniorAdvocate?.id) {
+      //TODO: if adv is working as assistant for a senior adv, then not allowed to join case for this sprint
+      return true;
+    } else if (isLitigant) {
+      return true;
+    }
+    return false;
+  }, [userType, advocateId, selectedSeniorAdvocate?.id, isLitigant]);
+
+  // When a clerk has no advocates linked yet, we show the "No Advocates Linked" empty state.
+  // In that scenario, the Home / All Cases breadcrumb should be hidden.
+  const hideBreadcrumbForUnlinkedClerk = individualId && userType === "ADVOCATE_CLERK" && userInfoType === "citizen" && unAssociatedClerk;
+
+  if (isLoading || isFetching || isSearchLoading || isOrdersLoading || isOutcomeLoading || isCitizenCaseDataLoading || isLoadingMembers) {
     return <Loader />;
   }
   const showToast = (type, message, duration = 5000) => {
@@ -436,126 +606,168 @@ const HomeView = () => {
       setToastMsg(null);
     }, duration);
   };
+
+  const handleConfirmAdvocate = (advocate) => {
+    setShowSelectAdvocateModal(false);
+    history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
+  };
+
+  const handleClickFileCase = () => {
+    if (userType === "LITIGANT") {
+      history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
+    } else if (userType === "ADVOCATE") {
+      if (advocateId === selectedSeniorAdvocate?.id) {
+        // No need to show modal if selected adv is the logged in adv itself.
+        history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
+      } else {
+        setShowSelectAdvocateModal(true);
+      }
+    } else if (userType === "ADVOCATE_CLERK") {
+      setShowSelectAdvocateModal(true);
+    }
+  };
+
   return (
-    <div className="home-view-hearing-container">
-      {individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? (
-        <LitigantHomePage isApprovalPending={isApprovalPending} />
-      ) : (
-        <React.Fragment>
-          <div
-            className="left-side"
-            style={{ width: individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? "100vw" : "70vw" }}
-          >
-            <div className="home-header-wrapper">
-              <UpcomingHearings
-                handleNavigate={handleNavigate}
-                individualData={individualData}
-                attendeeIndividualId={individualId}
-                userInfoType={userInfoType}
-                advocateId={advocateId}
-                t={t}
-              />
-              {(isJudge || isClerk) && (
-                <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
-                  {isJudge && (
-                    <React.Fragment>
-                      <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
-                        {t("OPEN_DASHBOARD")}
-                      </Link>
-                      <Link to={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle}>
-                        {t("OPEN_REPORTS")}
-                      </Link>
-                    </React.Fragment>
-                  )}
-                  <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
-                    {t("OPEN_A_DIARY")}
-                  </Link>
-                </div>
-              )}
-              {showReviewSummonsWarrantNotice && <ReviewCard data={data} userInfoType={userInfoType} />}
-            </div>
-            <div className="content-wrapper">
-              <div className="header-class">
-                <div className="header">{t("CS_YOUR_CASE")}</div>
-                {individualId && userType && userInfoType === "citizen" && (
-                  <div className="button-field" style={{ width: "50%" }}>
-                    <React.Fragment>
-                      <JoinCaseHome refreshInbox={refreshInbox} />
-                      <Button
-                        className={"tertiary-button-selector"}
-                        label={t("FILE_A_CASE")}
-                        labelClassName={"tertiary-label-selector"}
-                        onButtonClick={() => {
-                          history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
+    <React.Fragment>
+      {!hideBreadcrumbForUnlinkedClerk && <ProjectBreadCrumb location={window.location} t={t} />}
+      <div className="home-view-hearing-container">
+        {individualId &&
+        userType &&
+        userInfoType === "citizen" &&
+        ((userType === "LITIGANT" && !isCitizenReferredInAnyCase) || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) ? (
+          <LitigantHomePage isApprovalPending={isApprovalPending} unAssociatedClerk={unAssociatedClerk} />
+        ) : (
+          <React.Fragment>
+            <div
+              className="left-side"
+              style={{ width: individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? "100vw" : "70vw" }}
+            >
+              <div className="home-header-wrapper">
+                <UpcomingHearings
+                  handleNavigate={handleNavigate}
+                  individualData={individualData}
+                  attendeeIndividualId={individualId}
+                  userInfoType={userInfoType}
+                  advocateId={advocateId}
+                  t={t}
+                />
+                {(viewDashBoards || viewADiary) && (
+                  <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
+                    {viewDashBoards && (
+                      <React.Fragment>
+                        <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
+                          {t("OPEN_DASHBOARD")}
+                        </Link>
+                        <Link to={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle}>
+                          {t("OPEN_REPORTS")}
+                        </Link>
+                      </React.Fragment>
+                    )}
+                    {viewADiary && (
+                      <span
+                        onClick={() => {
+                          history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "CS_HOME_A_DAIRY" });
                         }}
-                      />
-                    </React.Fragment>
+                        style={{ ...linkStyle, cursor: "pointer" }}
+                      >
+                        {t("OPEN_A_DIARY")}
+                      </span>
+                    )}
                   </div>
                 )}
+                {showReviewSummonsWarrantNotice && <ReviewCard data={data} userInfoType={userInfoType} />}
               </div>
-              <div className="inbox-search-wrapper pucar-home home-view">
-                {config ? (
-                  <InboxSearchComposer
-                    key={`InboxSearchComposer-${callRefetch}`}
-                    configs={{
-                      ...config,
-                      ...{
-                        additionalDetails: {
-                          ...config?.additionalDetails,
-                          ...additionalDetails,
+              <div className="content-wrapper">
+                <div className="header-class">
+                  {selectedSeniorAdvocate?.id ? (
+                    <div className="header">
+                      {selectedSeniorAdvocate?.uuid === userInfo?.uuid
+                        ? `${t("YOUR_CASES")}`
+                        : `Adv. ${t(selectedSeniorAdvocate?.advocateName)}'s Cases`}
+                    </div>
+                  ) : (
+                    <div className="header">{t("CS_YOUR_CASE")}</div>
+                  )}
+
+                  {individualId && userType && userInfoType === "citizen" && (
+                    <div className="button-field" style={{ width: "fit-content" }}>
+                      <React.Fragment>
+                        {canJoinCase && <JoinCaseHome refreshInbox={refreshInbox} />}
+                        <Button
+                          className={"tertiary-button-selector"}
+                          label={t("FILE_A_CASE")}
+                          labelClassName={"tertiary-label-selector"}
+                          onButtonClick={handleClickFileCase}
+                        />
+                      </React.Fragment>
+                    </div>
+                  )}
+                </div>
+                <div className="inbox-search-wrapper pucar-home home-view">
+                  {config && additionalDetails ? (
+                    <InboxSearchComposer
+                      key={`InboxSearchComposer-${callRefetch}-${additionalDetails}`}
+                      configs={{
+                        ...config,
+                        ...{
+                          additionalDetails: {
+                            ...config?.additionalDetails,
+                            ...additionalDetails,
+                          },
                         },
-                      },
-                    }}
-                    defaultValues={defaultValues}
-                    showTab={true}
-                    tabData={tabData}
-                    onTabChange={onTabChange}
-                    additionalConfig={{
-                      resultsTable: {
-                        onClickRow: onRowClick,
-                      },
-                    }}
-                  />
-                ) : (
-                  <Loader />
-                )}
+                      }}
+                      defaultValues={defaultValues}
+                      showTab={true}
+                      tabData={tabData}
+                      onTabChange={onTabChange}
+                      additionalConfig={{
+                        resultsTable: {
+                          onClickRow: onRowClick,
+                        },
+                      }}
+                    />
+                  ) : (
+                    <Loader />
+                  )}
+                </div>
               </div>
             </div>
+          </React.Fragment>
+        )}
+        {((individualId &&
+          userType &&
+          userInfoType === "citizen" &&
+          (isCitizenReferredInAnyCase || (selectedSeniorAdvocate?.id && (userType === "ADVOCATE_CLERK" || userType === "ADVOCATE")))) ||
+          userInfoType === "employee") && (
+          <div className="right-side" style={{ width: "30vw" }}>
+            <TasksComponent
+              taskType={taskType}
+              setTaskType={setTaskType}
+              caseType={caseType}
+              setCaseType={setCaseType}
+              pendingSignOrderList={ordersNotificationData}
+            />
           </div>
-        </React.Fragment>
-      )}
-      {((individualId && userType && userInfoType === "citizen" && isCitizenReferredInAnyCase) || userInfoType === "employee") && (
-        <div className="right-side" style={{ width: "30vw" }}>
-          <TasksComponent
-            taskType={taskType}
-            setTaskType={setTaskType}
-            caseType={caseType}
-            setCaseType={setCaseType}
-            isLitigant={Boolean(individualId && userType && userInfoType === "citizen")}
-            uuid={userInfo?.uuid}
-            userInfoType={userInfoType}
-            pendingSignOrderList={ordersNotificationData}
+        )}
+        {toastMsg && (
+          <Toast
+            error={toastMsg.key === "error"}
+            label={t(toastMsg.action)}
+            onClose={() => setToastMsg(null)}
+            isDleteBtn={true}
+            style={{ maxWidth: "500px" }}
           />
-        </div>
-      )}
-      {issueBulkSuccessData.show && (
-        <OrderIssueBulkSuccesModal
-          t={t}
-          history={history}
-          bulkSignOrderListLength={issueBulkSuccessData.bulkSignOrderListLength}
-          setIssueBulkSuccessData={setIssueBulkSuccessData}
-        />
-      )}
-      {toastMsg && (
-        <Toast
-          error={toastMsg.key === "error"}
-          label={t(toastMsg.action)}
-          onClose={() => setToastMsg(null)}
-          isDleteBtn={true}
-          style={{ maxWidth: "500px" }}
-        />
-      )}
-    </div>
+        )}
+        {showSelectAdvocateModal && (
+          <SelectAdvocateModal
+            t={t}
+            setShowSelectAdvocateModal={setShowSelectAdvocateModal}
+            confirmAdvocate={handleConfirmAdvocate}
+            preSelectedSeniorAdvocate={selectedSeniorAdvocate}
+          />
+        )}
+      </div>
+    </React.Fragment>
   );
 };
 export default HomeView;

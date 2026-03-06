@@ -29,6 +29,9 @@ export const CustomisedHooks = {
 };
 
 export const Urls = {
+  pendingTask: "/analytics/pending_task/v1/create",
   Authenticate: "/user/oauth/token",
   FileFetchById: "/filestore/v1/files/id",
+  bailBondSearch: "/bail-bond/v1/_search",
+  bailBondUpdate: "/bail-bond/v1/_update",
 };

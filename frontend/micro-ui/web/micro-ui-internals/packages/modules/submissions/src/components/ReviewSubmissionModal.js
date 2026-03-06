@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import Axios from "axios";
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import { Toast } from "@egovernments/digit-ui-react-components";
 
 import { Urls } from "../hooks/services/Urls";
 import { useQuery } from "react-query";
-import { convertToDateInputFormat } from "../utils/index";
+import { convertToDateInputFormat, getUserInfoFromUuids } from "../utils/index";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -18,6 +18,48 @@ const CloseBtn = (props) => {
       <CloseSvg />
     </div>
   );
+};
+
+const getStyles = (key) => {
+  const styles = {
+    container: {
+      position: "relative",
+      padding: "16px 24px",
+      background: "#f7f5f3",
+      display: "grid",
+      gridTemplateColumns: "220px 1fr",
+      gap: "10px 24px",
+      alignItems: "baseline",
+    },
+
+    infoRow: {
+      display: "contents",
+    },
+
+    infoKey: {
+      margin: 0,
+      fontFamily: "Roboto",
+      fontSize: "16px",
+      fontWeight: 700,
+      lineHeight: "1.4",
+      color: "#0a0a0a",
+      whiteSpace: "nowrap",
+    },
+
+    infoValue: {
+      margin: 0,
+      fontFamily: "Roboto",
+      fontSize: "16px",
+      fontWeight: 400,
+      lineHeight: "1.4",
+      color: "#3d3c3c",
+      wordBreak: "normal",
+      overflowWrap: "anywhere",
+      textAlign: "left",
+    },
+  };
+
+  return styles[key];
 };
 
 // sort the Documents Based on DocumentOrder
@@ -42,6 +84,9 @@ const SubmissionPreviewSubmissionTypeMap = {
   SUBMIT_BAIL_DOCUMENTS: "application-submit-bail-documents",
   DELAY_CONDONATION: "application-delay-condonation",
   CORRECTION_IN_COMPLAINANT_DETAILS: "application-profile-edit",
+  ADDING_WITNESSES: "application-witness-deposition",
+  APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS: "poa-claim-application",
+  ADVANCEMENT_OR_ADJOURNMENT_APPLICATION: "application-reschedule-hearing",
 };
 
 const onDocumentUpload = async (fileData, filename) => {
@@ -61,10 +106,19 @@ function ReviewSubmissionModal({
   handleBack,
   documents = [],
   setApplicationPdfFileStoreId,
+  courtId,
+  cancelLabel,
+  handleSubmit,
+  handleCancel,
 }) {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showErrorToast, setShowErrorToast] = useState(null);
+  const [userInfoMap, setUserInfoMap] = useState({
+    senderUser: null,
+    createdByUser: null,
+    onBehalfOfUser: null,
+  });
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -88,29 +142,79 @@ function ReviewSubmissionModal({
     ],
     cacheTime: 0,
     queryFn: async () => {
-      return Axios({
-        method: "POST",
-        url: Urls.application.submissionPreviewPdf,
-        params: {
-          tenantId: tenantId,
-          applicationNumber: application?.applicationNumber,
-          cnrNumber: application?.cnrNumber,
-          qrCode: false,
-          applicationType: SubmissionPreviewSubmissionTypeMap[application?.applicationType],
-        },
-        data: {
-          RequestInfo: {
-            authToken: Digit.UserService.getUser().access_token,
-            userInfo: Digit.UserService.getUser()?.info,
-            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-            apiId: "Rainmaker",
+      return axiosInstance
+        .post(
+          Urls.application.submissionPreviewPdf,
+          {
+            RequestInfo: {
+              authToken: Digit.UserService.getUser().access_token,
+              userInfo: Digit.UserService.getUser()?.info,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Dristi",
+            },
           },
-        },
-        responseType: "blob",
-      }).then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
+          {
+            params: {
+              tenantId: tenantId,
+              applicationNumber: application?.applicationNumber,
+              cnrNumber: application?.cnrNumber,
+              qrCode: false,
+              applicationType: SubmissionPreviewSubmissionTypeMap[application?.applicationType],
+              courtId: courtId || application?.courtId,
+              filingNumber: application?.filingNumber,
+            },
+            responseType: "blob",
+          }
+        )
+        .then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
     },
     enabled: !!application?.applicationNumber && !!application?.cnrNumber && !!SubmissionPreviewSubmissionTypeMap[application?.applicationType],
   });
+
+  useEffect(() => {
+    if (!application) return;
+    const { asUser, createdBy, onBehalfOf } = application;
+    const onBehalfOfUuid = onBehalfOf?.[0];
+    const uuids = [...new Set([asUser, createdBy, onBehalfOfUuid].filter(Boolean))];
+
+    if (uuids.length === 0) {
+      setUserInfoMap({
+        senderUser: null,
+        createdByUser: null,
+        onBehalfOfUser: null,
+      });
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchUsers = async () => {
+      try {
+        const result = await getUserInfoFromUuids(uuids); // [{ userUuid, name }]
+
+        // Build lookup map (O(1))
+        const lookup = new Map((result || []).map((user) => [user.userUuid, user.name]));
+
+        if (!isMounted) return;
+
+        setUserInfoMap({
+          senderUser: asUser ? { uuid: asUser, name: lookup.get(asUser) } : null,
+
+          createdByUser: createdBy ? { uuid: createdBy, name: lookup.get(createdBy) } : null,
+
+          onBehalfOfUser: onBehalfOfUuid ? { uuid: onBehalfOfUuid, name: lookup.get(onBehalfOfUuid) } : null,
+        });
+      } catch (error) {
+        console.error("Failed to fetch user info", error);
+      }
+    };
+
+    fetchUsers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [application]);
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
@@ -148,81 +252,87 @@ function ReviewSubmissionModal({
     <Modal
       headerBarMain={<Heading label={t("REVIEW_SUBMISSION_APPLICATION_HEADING")} />}
       headerBarEnd={<CloseBtn onClick={handleBack} />}
-      actionCancelLabel={t("CS_COMMON_BACK")}
-      actionCancelOnSubmit={handleBack}
+      actionCancelLabel={t(cancelLabel)}
+      actionCancelOnSubmit={handleCancel}
       actionSaveLabel={t("ADD_SIGNATURE")}
       isDisabled={isLoading}
-      actionSaveOnSubmit={() => {
-        const pdfFile = new File([applicationPreviewPdf], applicationPreviewFileName, { type: "application/pdf" });
-
-        onDocumentUpload(pdfFile, pdfFile.name)
-          .then((document) => {
-            const fileStoreId = document.file?.files?.[0]?.fileStoreId;
-            if (fileStoreId) {
-              setApplicationPdfFileStoreId(fileStoreId);
-            }
-          })
-          .then(() => {
-            setShowsignatureModal(true);
-            setShowReviewModal(false);
-          })
-          .catch((e) => {
-            setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
-          });
-      }}
+      actionSaveOnSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName })}
       className={"review-submission-appl-modal"}
     >
       <div className="review-submission-appl-body-main">
         <div className="application-details">
-          <div className="application-info" style={{ flexWrap: "wrap" }}>
-            <div className="info-row">
-              <div className="info-key">
-                <h3>{t("APPLICATION_TYPE")}</h3>
-              </div>
-              <div className="info-value">
-                <h3>{t(applicationType)}</h3>
-              </div>
+          <div style={getStyles("container")}>
+            <div style={getStyles("infoRow")}>
+              <h3 style={getStyles("infoKey")}>{t("APPLICATION_TYPE")}</h3>
+              <h3 style={getStyles("infoValue")}>{t(applicationType)}</h3>
             </div>
-            <div className="info-row">
-              <div className="info-key">
-                <h3>{t("SUBMISSION_DATE")}</h3>
-              </div>
-              <div className="info-value">
-                <h3>{convertToDateInputFormat(submissionDate)}</h3>
-              </div>
+
+            <div style={getStyles("infoRow")}>
+              <h3 style={getStyles("infoKey")}>{t("SUBMISSION_DATE")}</h3>
+              <h3 style={getStyles("infoValue")}>{convertToDateInputFormat(submissionDate)}</h3>
             </div>
-            <div className="info-row">
-              <div className="info-key">
-                <h3>{t("SENDER")}</h3>
-              </div>
-              <div className="info-value">
-                <h3>{sender}</h3>
-              </div>
+
+            <div style={getStyles("infoRow")}>
+              <h3 style={getStyles("infoKey")}>{t("SENDER")}</h3>
+              <h3 style={getStyles("infoValue")}>{userInfoMap?.senderUser?.name}</h3>
             </div>
+
             {additionalDetails && (
-              <div className="info-row">
-                <div className="info-key">
-                  <h3>{t("ADDITIONAL_DETAILS")}</h3>
-                </div>
-                <div className="info-value">
-                  <h3>{t(additionalDetails)}</h3>
-                </div>
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("ADDITIONAL_DETAILS")}</h3>
+                <h3 style={getStyles("infoValue")}>{t(additionalDetails)}</h3>
+              </div>
+            )}
+
+            {/* {userInfoMap?.createdByUser?.name && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("CREATED_BY")}</h3>
+                <h3 style={getStyles("infoValue")}>{userInfoMap?.createdByUser?.name || ""}</h3>
+              </div>
+            )} */}
+
+            {application?.additionalDetails?.formdata?.initialHearingDate && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("CURRENT_HEARING_DATE")}</h3>
+                <h3 style={getStyles("infoValue")}>
+                  {application?.additionalDetails?.formdata?.initialHearingDate?.split("-")?.reverse()?.join("-")}
+                </h3>
+              </div>
+            )}
+            {application?.additionalDetails?.formdata?.newHearingDates?.join(", ") && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("PROPOSED_HEARING_DATE")}</h3>
+                <h3 style={getStyles("infoValue")}>{application?.additionalDetails?.formdata?.newHearingDates?.join(", ")}</h3>
+              </div>
+            )}
+            {application?.additionalDetails?.formdata?.initialHearingPurpose && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("PURPOSE_OF_NEXT_HEARING")}</h3>
+                <h3 style={getStyles("infoValue")}>{t(application?.additionalDetails?.formdata?.initialHearingPurpose)}</h3>
+              </div>
+            )}
+            {application?.additionalDetails?.formdata?.isAllPartiesAgreed?.code && (
+              <div style={getStyles("infoRow")}>
+                <h3 style={getStyles("infoKey")}>{t("OTHER_PARTIES_CONSENT")}</h3>
+                <h3 style={getStyles("infoValue")}>{t(application?.additionalDetails?.formdata?.isAllPartiesAgreed?.code)}</h3>
               </div>
             )}
           </div>
+
           <div className="application-view">
             {showDocument}
-            {_getSortedByOrder(documents)?.map((docs) => (
-              <DocViewerWrapper
-                key={docs.fileStore}
-                fileStoreId={docs.fileStore}
-                tenantId={tenantId}
-                docWidth="100%"
-                docHeight="unset"
-                showDownloadOption={false}
-                documentName={docs.fileName}
-              />
-            ))}
+            {applicationPreviewPdf &&
+              _getSortedByOrder(documents)?.map((docs) => (
+                <DocViewerWrapper
+                  key={docs.fileStore}
+                  fileStoreId={docs.fileStore}
+                  tenantId={tenantId}
+                  docWidth="100%"
+                  docHeight="unset"
+                  showDownloadOption={false}
+                  documentName={docs?.fileName || docs?.additionalDetails?.name || docs?.name}
+                />
+              ))}
           </div>
         </div>
       </div>
