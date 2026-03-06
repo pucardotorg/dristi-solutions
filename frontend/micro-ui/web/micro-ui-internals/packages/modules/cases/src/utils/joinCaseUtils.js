@@ -66,8 +66,6 @@ export const selectOtp = async (isUserRegistered, mobileNumber, otp, tenantId, n
   }
 };
 
-
-
 export const registerIndividualWithNameAndMobileNumber = async (data, tenantId) => {
   let Individual = {
     Individual: {
@@ -127,6 +125,7 @@ export const registerIndividualWithNameAndMobileNumber = async (data, tenantId) 
       userUuid: data?.userUuid,
       userId: data?.userId,
       mobileNumber: data?.mobileNumber,
+      fatherName: data?.fatherName,
       isSystemUser: true,
       skills: [],
       additionalFields: {
