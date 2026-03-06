@@ -127,4 +127,6 @@ public class ServiceConstants {
 
     // roles
     public static final String VIEW_RE_SCHEDULE_APPLICATION = "VIEW_RE_SCHEDULE_APPLICATION";
+    public static final String CACHE_KEY_PREFIX = "DRISTI:COURT:";
+
 }

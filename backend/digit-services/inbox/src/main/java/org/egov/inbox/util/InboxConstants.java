@@ -111,4 +111,6 @@ public class InboxConstants {
                     "  \"order\": \"desc\" " +
                     "} }";
 
+    public static final String CACHE_KEY_PREFIX = "DRISTI:COURT:";
+
 }

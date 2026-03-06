@@ -344,4 +344,7 @@ public class Configuration {
     @Value("${task.management.suffix}")
     private String taskManagementSuffix;
 
+
+    @Value("${spring.redis.timeout}")
+    private Long redisTimeout;
 }
