@@ -218,7 +218,7 @@ public class PaymentUpdateService {
 
         Set<String> mobileNumber = new HashSet<>();
 
-        List<Individual> individuals = individualService.getIndividualsBylId(requestInfo, new ArrayList<>(ids));
+        List<Individual> individuals = individualService.getIndividualsByUserUuid(requestInfo, new ArrayList<>(ids));
         for(Individual individual : individuals) {
             if (individual.getMobileNumber() != null) {
                 mobileNumber.add(individual.getMobileNumber());
