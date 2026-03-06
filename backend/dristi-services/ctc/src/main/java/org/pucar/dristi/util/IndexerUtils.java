@@ -68,11 +68,11 @@ public class IndexerUtils {
         );
     }
 
-    public void updateIssuedStatus(String docId) throws Exception {
+    public void updateDocStatus(String docId, String status) throws Exception {
         String indexName = config.getIssueCtcDocumentsIndex();
         String uri = config.getEsHostUrl() + indexName + "/_update_by_query";
         long currentTime = System.currentTimeMillis();
-        String request = String.format(ES_UPDATE_BY_QUERY_ISSUED, docId, currentTime);
+        String request = String.format(ES_UPDATE_BY_QUERY_STATUS, docId, status, currentTime);
         esPostManual(uri, request);
     }
 
@@ -104,9 +104,17 @@ public class IndexerUtils {
     }
 
     public int getIssuedDocCount(String ctcApplicationNumber) throws Exception {
+        return getDocCountByStatus(ctcApplicationNumber, "ISSUED");
+    }
+
+    public int getRejectedDocCount(String ctcApplicationNumber) throws Exception {
+        return getDocCountByStatus(ctcApplicationNumber, "REJECTED");
+    }
+
+    public int getDocCountByStatus(String ctcApplicationNumber, String status) throws Exception {
         String indexName = config.getIssueCtcDocumentsIndex();
         String uri = config.getEsHostUrl() + indexName + "/_count";
-        String request = String.format(ES_COUNT_ISSUED_DOCS, ctcApplicationNumber);
+        String request = String.format(ES_COUNT_DOCS_BY_STATUS, ctcApplicationNumber, status);
 
         final HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON_UTF8);

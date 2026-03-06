@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.response.ResponseInfo;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -16,12 +18,6 @@ public class IssueCtcDocumentUpdateResponse {
     @JsonProperty("responseInfo")
     private ResponseInfo responseInfo;
 
-    @JsonProperty("ctcApplicationNumber")
-    private String ctcApplicationNumber;
-
-    @JsonProperty("id")
-    private String id;
-
-    @JsonProperty("docId")
-    private String docId;
+    @JsonProperty("docs")
+    private List<DocumentActionItem> docs;
 }
