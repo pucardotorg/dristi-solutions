@@ -41,6 +41,10 @@ public class CtcApplication {
     @NotNull
     private String filingNumber;
 
+    @JsonProperty("cnrNumber")
+    @NotNull
+    private String cnrNumber;
+
     @JsonProperty("courtId")
     @NotNull
     private String courtId;

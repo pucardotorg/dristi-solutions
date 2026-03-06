@@ -86,9 +86,7 @@ public class CtcApplicationService {
 
         ctcApplicationEnrichment.enrichOnUpdateCtcApplication(request.getRequestInfo(), application);
 
-        if (request.getCtcApplication().getWorkflow() != null) {
-            workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
-        }
+        workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
 
         if (request.getCtcApplication().getWorkflow() != null && (request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("ESIGN")
                 || request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("UPLOAD_SIGNED_COPY"))) {
