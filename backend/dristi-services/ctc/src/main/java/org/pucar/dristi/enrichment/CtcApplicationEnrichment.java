@@ -10,6 +10,8 @@ import org.pucar.dristi.web.models.CtcApplication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,11 +40,13 @@ public class CtcApplicationEnrichment {
 
     private String generateApplicationNumber(String tenantId, RequestInfo requestInfo) {
         try {
+            String year = getCurrentYearAsString();
+            tenantId = tenantId + year;
             String idName = config.getCaConfig();
             String idFormat = config.getCaFormat();
             List<String> cmpNumberIdList = idgenUtil.getIdList(requestInfo, tenantId, idName, idFormat, 1, false);
 
-            return cmpNumberIdList.get(0);
+            return cmpNumberIdList.get(0) + "/" + year;
         } catch (Exception e) {
             log.error("Error enriching ca number: {}", e.toString());
             throw new CustomException("ENRICHMENT_EXCEPTION", "Error while enriching ca number: " + e.getMessage());
@@ -71,6 +75,12 @@ public class CtcApplicationEnrichment {
             ctcApplication.setAuditDetails(auditDetails);
         }
     }
+
+    private String getCurrentYearAsString() {
+        LocalDate currentDate = LocalDate.now(ZoneId.of(config.getZoneId()));
+        return String.valueOf(currentDate.getYear());
+    }
+
 
     public UUID getRandomUuid() {
         return UUID.randomUUID();

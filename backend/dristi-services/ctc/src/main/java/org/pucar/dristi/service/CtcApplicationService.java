@@ -22,6 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static org.pucar.dristi.config.ServiceConstants.E_SIGN;
+import static org.pucar.dristi.config.ServiceConstants.UPLOAD_SIGNED_COPY;
+
 @Service
 @Slf4j
 public class CtcApplicationService {
@@ -58,6 +61,9 @@ public class CtcApplicationService {
     }
 
     public CtcApplication createApplication(CtcApplicationRequest request) {
+
+        log.info("createApplication method in progress");
+
         CtcApplication application = request.getCtcApplication();
 
         ctcApplicationValidator.validateCreateRequest(request);
@@ -68,22 +74,25 @@ public class CtcApplicationService {
 
         producer.push(config.getSaveCtcApplicationTopic(), request);
 
+        log.info("createApplication method completed");
+
         return application;
     }
 
     public CtcApplication updateApplication(CtcApplicationRequest request) {
+
+        log.info("updateApplication method in progress for id {}", request.getCtcApplication().getId());
+
         CtcApplication application = request.getCtcApplication();
 
         ctcApplicationValidator.validateUpdateRequest(request);
 
         ctcApplicationEnrichment.enrichOnUpdateCtcApplication(request.getRequestInfo(), application);
 
-        if (request.getCtcApplication().getWorkflow() != null) {
-            workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
-        }
+        workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
 
-        if (request.getCtcApplication().getWorkflow() != null && (request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("ESIGN")
-                || request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("UPLOAD_SIGNED_COPY"))) {
+        if (request.getCtcApplication().getWorkflow() != null && (request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase(E_SIGN)
+                || request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase(UPLOAD_SIGNED_COPY))) {
             //change logic for calculating payment through payment calculator if required
             if (request.getCtcApplication().getTotalPages() == null) {
                 List<String> acceptedFileStoreIds = getFileStoreIds(request);
@@ -108,6 +117,8 @@ public class CtcApplicationService {
 
         producer.push(config.getUpdateCtcApplicationTopic(), request);
 
+        log.info("updateApplication method completed for id {}", request.getCtcApplication().getId());
+
         return application;
     }
 
@@ -128,11 +139,24 @@ public class CtcApplicationService {
     }
 
     public List<CtcApplication> searchApplications(CtcApplicationSearchRequest ctcApplicationSearchRequest) {
+        enrichSearchCriteriaForCitizen(ctcApplicationSearchRequest);
         List<CtcApplication> applications = ctcApplicationRepository.getCtcApplication(ctcApplicationSearchRequest);
         if (applications == null) {
             return new ArrayList<>();
         }
         return applications;
+    }
+
+    private void enrichSearchCriteriaForCitizen(CtcApplicationSearchRequest request) {
+        if (request.getRequestInfo() != null && request.getRequestInfo().getUserInfo() != null) {
+            boolean isCitizen = request.getRequestInfo().getUserInfo().getRoles().stream()
+                    .anyMatch(role -> ServiceConstants.CITIZEN_ROLE.equalsIgnoreCase(role.getCode()));
+            
+            if (isCitizen && request.getCriteria() != null) {
+                String userUuid = request.getRequestInfo().getUserInfo().getUuid();
+                request.getCriteria().setCreatedBy(userUuid);
+            }
+        }
     }
 
     public void markDocumentsAsIssued(String ctcApplicationNumber, String docId, String courtId, String filingNumber, RequestInfo requestInfo) {

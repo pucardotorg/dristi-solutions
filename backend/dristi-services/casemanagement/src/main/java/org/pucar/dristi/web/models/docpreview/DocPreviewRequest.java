@@ -20,7 +20,7 @@ import java.util.List;
 @AllArgsConstructor
 public class DocPreviewRequest {
 
-    @JsonProperty("requestInfo")
+    @JsonProperty("RequestInfo")
     @Valid
     @NotNull
     private RequestInfo requestInfo;

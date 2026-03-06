@@ -76,7 +76,7 @@ public class WorkflowService {
         try {
             WorkflowObject workflow = ctcApplication.getWorkflow();
             ProcessInstanceObject processInstance = new ProcessInstanceObject();
-            processInstance.setBusinessId(ctcApplication.getFilingNumber());
+            processInstance.setBusinessId(ctcApplication.getCtcApplicationNumber());
             processInstance.setAction(workflow.getAction());
             processInstance.setModuleName(config.getCtcBusinessName());
             processInstance.setTenantId(ctcApplication.getTenantId());

@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,10 +24,12 @@ public class CtcApplication {
     private String ctcApplicationNumber;
 
     @JsonProperty("tenantId")
+    @Valid
     @NotNull
     private String tenantId;
 
     @JsonProperty("caseNumber")
+    @Valid
     @NotNull
     private String caseNumber;
 
@@ -37,6 +40,10 @@ public class CtcApplication {
     @JsonProperty("filingNumber")
     @NotNull
     private String filingNumber;
+
+    @JsonProperty("cnrNumber")
+    @NotNull
+    private String cnrNumber;
 
     @JsonProperty("courtId")
     @NotNull

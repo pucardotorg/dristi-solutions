@@ -64,7 +64,7 @@ public class CtcApiController {
     @PostMapping("/applications/_update")
     public ResponseEntity<CtcApplicationResponse> updateApplication(@Valid @RequestBody CtcApplicationRequest request) {
 
-        log.info("Updating CTC application: {}", request.getCtcApplication() != null ? request.getCtcApplication().getId() : "unknown");
+        log.info("Updating CTC application request : {}", request);
 
         try {
             CtcApplication application = ctcApplicationService.updateApplication(request);
