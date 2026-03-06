@@ -33,8 +33,10 @@ public class CtcApplicationQueryBuilder {
                 firstCriteria = addCriteria(criteria.getCourtId(), query, firstCriteria, "ctc.court_id = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
                 firstCriteria = addCriteria(criteria.getTenantId(), query, firstCriteria, "ctc.tenant_id = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
                 firstCriteria = addSearchByCaseNumberAnTitleCriteria(criteria, query, firstCriteria, preparedStmtList, preparedStmtArgList);
+                firstCriteria = addSearchTextCriteria(criteria, query, firstCriteria, preparedStmtList, preparedStmtArgList);
                 firstCriteria = addCriteria(criteria.getCtcApplicationNumber(), query, firstCriteria, "ctc.ctc_application_number = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
                 firstCriteria = addCriteria(criteria.getFilingNumber(), query, firstCriteria, "ctc.filing_number = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+                firstCriteria = addCriteria(criteria.getCreatedBy(), query, firstCriteria, "ctc.created_by = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
                 addCriteria(criteria.getStatus(), query, firstCriteria, "ctc.status = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             }
 
@@ -51,6 +53,19 @@ public class CtcApplicationQueryBuilder {
             query.append(" (LOWER(case_number) LIKE LOWER(?) OR LOWER(case_title) LIKE LOWER(?)) ");
             for (int i = 0; i < 2; i++) {
                 preparedStmtList.add("%" + criteria.getSearchByCaseNumberAnTitle() + "%");
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    private boolean addSearchTextCriteria(CtcApplicationSearchCriteria criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (criteria.getSearchText() != null && !criteria.getSearchText().isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(" (LOWER(ctc.case_number) LIKE LOWER(?) OR LOWER(ctc.case_title) LIKE LOWER(?)) ");
+            for (int i = 0; i < 2; i++) {
+                preparedStmtList.add("%" + criteria.getSearchText() + "%");
                 preparedStmtArgList.add(Types.VARCHAR);
             }
             firstCriteria = false;

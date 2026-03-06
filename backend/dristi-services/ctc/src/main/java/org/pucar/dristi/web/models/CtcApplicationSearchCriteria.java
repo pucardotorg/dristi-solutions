@@ -33,7 +33,14 @@ public class CtcApplicationSearchCriteria {
     @JsonProperty("courtId")
     @Valid
     private String courtId;
+
+    @JsonProperty("searchText")
+    @Valid
+    private String searchText;
     
     @JsonProperty("status")
     private String status;
+
+    @JsonProperty("createdBy")
+    private String createdBy;
 }

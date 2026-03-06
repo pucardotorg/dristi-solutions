@@ -39,7 +39,7 @@
     "uniqueIdentifier": "2793",
     "data": {
       "id": 2793,
-      "url": "/casemanager/preview/doc",
+      "url": "/casemanagement/casemanager/preview/doc",
       // TODO : need to be given access to CITIZEN
       "code": "2793",
       "name": "cable bundle preview",
