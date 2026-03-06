@@ -39,6 +39,14 @@
         "language": "java",
         "version": "17"
     },
+    "audit-service" :{
+        "service_group": "core-services",
+        "db_source_path": "backend/digit-services/audit-service/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile.v2",
+        "service_source_path": "backend/digit-services/audit-service",
+        "language": "java",
+        "version": "17"
+    },
     "bail-bond": {
         "service_group": "core-services",
         "db_source_path": "backend/dristi-services/bail-bond/src/main/resources/db",
@@ -87,6 +95,62 @@
         "language": "nodejs",
         "version": "20",
         "sonar_sources": ""
+    },
+    "egov-accesscontrol" :{
+        "service_group": "core-services",
+        "db_source_path": "backend/digit-services/egov-accesscontrol/src/main/resources/db",
+        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "service_source_path": "backend/digit-services/egov-accesscontrol",
+        "language": "java",
+        "version": "8"
+    },
+    "egov-enc-service" :{
+        "service_group": "core-services",
+        "db_source_path": "backend/digit-services/egov-enc-service/src/main/resources/db",
+        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "service_source_path": "backend/digit-services/egov-enc-service",
+        "language": "java",
+        "version": "8"
+    },
+    "egov-location" :{
+        "service_group": "core-services",
+        "db_source_path": "backend/digit-services/egov-location/src/main/resources/db",
+        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "service_source_path": "backend/digit-services/egov-location",
+        "language": "java",
+        "version": "8"
+    },
+    "egov-otp" :{
+        "service_group": "core-services",
+        "db_source_path": "backend/digit-services/egov-otp/src/main/resources/db",
+        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "service_source_path": "backend/digit-services/egov-otp",
+        "language": "java",
+        "version": "8"
+    },
+    "egov-persister" :{
+        "service_group": "core-services",
+        "db_source_path": "",
+        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "service_source_path": "backend/digit-services/egov-persister",
+        "language": "java",
+        "version": "8"
+    },
+    "egov-pg-service" :{
+        "service_group": "core-services",
+        "db_source_path": "backend/digit-services/egov-pg-service/src/main/resources/db",
+        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "service_source_path": "backend/digit-services/egov-pg-service",
+        "language": "java",
+        "version": "8"
+    },
+    "egov-user-event" :{
+        "service_group": "core-services",
+        "db_source_path": "backend/digit-services/egov-user-event/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile.v2",
+        "service_source_path": "backend/digit-services/egov-user-event",
+        "language": "java",
+        "version": "17"
     },
     "epost-tracker": {
         "service_group": "core-services",
@@ -221,6 +285,14 @@
         "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile.v2",
         "service_source_path": "backend/dristi-services/order-management",
+        "language": "java",
+        "version": "17"
+    },
+    "pgr-services" :{
+        "service_group": "core-services",
+        "db_source_path": "backend/digit-services/pgr-services/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile.v2",
+        "service_source_path": "backend/digit-services/pgr-services",
         "language": "java",
         "version": "17"
     },
