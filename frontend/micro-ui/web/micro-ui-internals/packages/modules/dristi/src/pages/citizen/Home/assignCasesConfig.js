@@ -103,6 +103,11 @@ export const assignCasesConfig = ({ member = {}, advocateInfo = {} } = {}) => {
           ],
           enableColumnSort: true,
           resultsJsonPath: "cases",
+          customDefaultPagination: {
+            limit: 10,
+            offset: 0,
+          },
+          manualPagination: true,
         },
         show: true,
       },
