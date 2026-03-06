@@ -61,7 +61,9 @@ const convertToFormData = (t, obj) => {
             otherDocuments: {
               document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS" && doc?.isActive === true) || [],
             },
-          }))?.sort((a, b) => (a && a.index != null ? a.index : Infinity) - (b && b.index != null ? b.index : Infinity))
+          }))?.sort((a, b) => 
+            (a?.index != null ? a.index : Infinity) - 
+            (b?.index != null ? b.index : Infinity))
         : Array.from({ length: obj?.noOfSureties || 0 }, () => ({})),
   };
 
