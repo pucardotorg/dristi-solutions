@@ -1,10 +1,8 @@
 package org.pucar.dristi.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
-import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.enrichment.CtcApplicationEnrichment;
@@ -18,9 +16,8 @@ import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -128,68 +125,113 @@ public class CtcApplicationService {
         return applications;
     }
 
-    public void markDocumentsAsIssued(String ctcApplicationNumber, String docId, String courtId, String filingNumber, RequestInfo requestInfo) {
+    public void markDocumentsAsIssuedOrReject(IssueCtcDocumentUpdateRequest request) {
         try {
-            // 1. Update the document status to ISSUED in ES
-            indexerUtils.updateIssuedStatus(docId);
+            List<DocumentActionItem> docs = request.getDocs();
+            String courtId = request.getCourtId();
+            RequestInfo requestInfo = request.getRequestInfo();
 
-            // 2. Fetch the CTC application from DB
-            CtcApplicationSearchRequest ctcApplicationSearchRequest = CtcApplicationSearchRequest.builder()
-                    .criteria(CtcApplicationSearchCriteria.builder().ctcApplicationNumber(ctcApplicationNumber).filingNumber(filingNumber).courtId(courtId).build())
-                    .build();
-            List<CtcApplication> ctcApplications = ctcApplicationRepository.getCtcApplication(ctcApplicationSearchRequest);
-            if (ctcApplications == null || ctcApplications.isEmpty()) {
-                throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
-                        "CTC application not found: " + ctcApplicationNumber);
+            // 1. Update each document's status in ES based on its action
+            for (DocumentActionItem item : docs) {
+                String status = ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(item.getAction())
+                        ? ServiceConstants.STATUS_ISSUED
+                        : ServiceConstants.STATUS_REJECTED;
+                indexerUtils.updateDocStatus(item.getDocId(), status);
+                log.info("Updated doc {} to status {} for application: {}", item.getDocId(), status, item.getCtcApplicationNumber());
             }
-            CtcApplication ctcApplication = ctcApplications.get(0);
 
-            // 3. Count total accepted children from caseBundleNodes
-            int totalAccepted = 0;
-            if (ctcApplication.getCaseBundleNodes() != null) {
-                for (CaseBundleNode parentNode : ctcApplication.getCaseBundleNodes()) {
-                    if (parentNode.getChildren() != null) {
-                        for (CaseBundleNode child : parentNode.getChildren()) {
-                            if ("accepted".equalsIgnoreCase(child.getStatus())) {
-                                totalAccepted++;
-                            }
+            // 2. Group documents by ctcApplicationNumber
+            Map<String, List<DocumentActionItem>> groupedByApp = docs.stream()
+                    .collect(Collectors.groupingBy(DocumentActionItem::getCtcApplicationNumber));
+
+            // 3. Process each ctcApplicationNumber
+            for (Map.Entry<String, List<DocumentActionItem>> entry : groupedByApp.entrySet()) {
+                String ctcApplicationNumber = entry.getKey();
+                String filingNumber = entry.getValue().get(0).getFilingNumber();
+                processApplicationWorkflow(ctcApplicationNumber, filingNumber, courtId, requestInfo);
+            }
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error processing bulk issue/reject for documents", e);
+            throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
+                    "Error processing bulk issue/reject: " + e.getMessage());
+        }
+    }
+
+    private void processApplicationWorkflow(String ctcApplicationNumber, String filingNumber, String courtId, RequestInfo requestInfo) throws Exception {
+        // Fetch the CTC application from DB
+        CtcApplicationSearchRequest ctcApplicationSearchRequest = CtcApplicationSearchRequest.builder()
+                .criteria(CtcApplicationSearchCriteria.builder()
+                        .ctcApplicationNumber(ctcApplicationNumber)
+                        .filingNumber(filingNumber)
+                        .courtId(courtId)
+                        .build())
+                .build();
+        List<CtcApplication> ctcApplications = ctcApplicationRepository.getCtcApplication(ctcApplicationSearchRequest);
+        if (ctcApplications == null || ctcApplications.isEmpty()) {
+            throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
+                    "CTC application not found: " + ctcApplicationNumber);
+        }
+        CtcApplication ctcApplication = ctcApplications.get(0);
+
+        // Count total accepted children from caseBundleNodes
+        int totalAccepted = countAcceptedDocs(ctcApplication);
+
+        // Query ES for issued and rejected counts
+        int totalIssued = indexerUtils.getIssuedDocCount(ctcApplicationNumber);
+        int totalRejected = indexerUtils.getRejectedDocCount(ctcApplicationNumber);
+        int totalProcessed = totalIssued + totalRejected;
+
+        // Determine workflow action
+        String workflowAction = determineWorkflowAction(totalAccepted, totalIssued, totalRejected, totalProcessed);
+
+        // Update workflow
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction(workflowAction);
+        ctcApplication.setWorkflow(workflow);
+        workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
+
+        // Persist the updated application
+        CtcApplicationRequest ctcApplicationRequest = CtcApplicationRequest.builder()
+                .requestInfo(requestInfo)
+                .ctcApplication(ctcApplication)
+                .build();
+        producer.push(config.getUpdateCtcApplicationTopic(), ctcApplicationRequest);
+
+        log.info("Processed application: {}, issued: {}, rejected: {}, totalAccepted: {}, workflowAction: {}",
+                ctcApplicationNumber, totalIssued, totalRejected, totalAccepted, workflowAction);
+    }
+
+    private int countAcceptedDocs(CtcApplication ctcApplication) {
+        int totalAccepted = 0;
+        if (ctcApplication.getCaseBundleNodes() != null) {
+            for (CaseBundleNode parentNode : ctcApplication.getCaseBundleNodes()) {
+                if (parentNode.getChildren() != null) {
+                    for (CaseBundleNode child : parentNode.getChildren()) {
+                        if ("accepted".equalsIgnoreCase(child.getStatus())) {
+                            totalAccepted++;
                         }
                     }
                 }
             }
-
-            // 4. Query ES for how many docs are now ISSUED (includes the one just updated above)
-            int totalIssued = indexerUtils.getIssuedDocCount(ctcApplicationNumber);
-
-            // 5. Determine workflow action based on issued vs accepted count
-            String workflowAction;
-            if (totalAccepted > 0 && totalIssued >= totalAccepted) {
-                workflowAction = "ISSUE_ALL";
-            } else {
-                workflowAction = "PARTIAL_ISSUE";
-            }
-
-            // 5. Update workflow
-            WorkflowObject workflow = new WorkflowObject();
-            workflow.setAction(workflowAction);
-            ctcApplication.setWorkflow(workflow);
-            workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
-
-            // 6. Persist the updated application
-            CtcApplicationRequest ctcApplicationRequest = CtcApplicationRequest.builder()
-                    .requestInfo(requestInfo)
-                    .ctcApplication(ctcApplication)
-                    .build();
-            producer.push(config.getUpdateCtcApplicationTopic(), ctcApplicationRequest);
-
-            log.info("Marked document {} as issued for application: {}, workflow action: {}", docId, ctcApplicationNumber, workflowAction);
-        } catch (CustomException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("Error updating isIssued status in ES for application: {}", ctcApplicationNumber, e);
-            throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
-                    "Error updating issued status in ES index: " + e.getMessage());
         }
+        return totalAccepted;
+    }
+
+    private String determineWorkflowAction(int totalAccepted, int totalIssued, int totalRejected, int totalProcessed) {
+        if (totalAccepted > 0 && totalProcessed >= totalAccepted) {
+            // All docs have been processed
+            if (totalRejected >= totalAccepted) {
+                return "REJECT_ALL";
+            }
+            return "ISSUE_ALL";
+        }
+        // Partial processing
+        if (totalIssued > 0) {
+            return "ISSUE";
+        }
+        return "REJECT";
     }
 
     public ValidateUserInfo validateUser(ValidateUserRequest request) {

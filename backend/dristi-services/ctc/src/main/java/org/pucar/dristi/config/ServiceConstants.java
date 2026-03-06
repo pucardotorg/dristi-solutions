@@ -74,17 +74,32 @@ public class ServiceConstants {
                     + "\"caseTitle\": \"%s\","
                     + "\"caseNumber\": \"%s\""
                     + "}}\n";
-    public static final String ES_UPDATE_BY_QUERY_ISSUED =
+    public static final String ES_UPDATE_BY_QUERY_STATUS =
             "{\"query\":{\"term\":{\"Data.docId.keyword\":\"%s\"}},"
-                    + "\"script\":{\"source\":\"ctx._source.Data.status='ISSUED';ctx._source.Data.lastModifiedTime=%dL;\","
+                    + "\"script\":{\"source\":\"ctx._source.Data.status='%s';ctx._source.Data.lastModifiedTime=%dL;\","
                     + "\"lang\":\"painless\"}}";
     public static final String ES_COUNT_ISSUED_DOCS =
             "{\"query\":{\"bool\":{\"must\":["
                     + "{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}},"
                     + "{\"term\":{\"Data.status.keyword\":\"ISSUED\"}}"
                     + "]}}}";
+    public static final String ES_COUNT_REJECTED_DOCS =
+            "{\"query\":{\"bool\":{\"must\":["
+                    + "{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}},"
+                    + "{\"term\":{\"Data.status.keyword\":\"REJECTED\"}}"
+                    + "]}}}";
+    public static final String ES_COUNT_DOCS_BY_STATUS =
+            "{\"query\":{\"bool\":{\"must\":["
+                    + "{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}},"
+                    + "{\"term\":{\"Data.status.keyword\":\"%s\"}}"
+                    + "]}}}";
     public static final String CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION = "CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION";
     public static final String CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION = "CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION";
+
+    public static final String ACTION_ISSUE = "ISSUE";
+    public static final String ACTION_REJECT = "REJECT";
+    public static final String STATUS_ISSUED = "ISSUED";
+    public static final String STATUS_REJECTED = "REJECTED";
 
     public static final String MOBILE_PATTERN = "Pattern.compile(\"^[6-9]\\\\d{9}$\")";
 

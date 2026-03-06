@@ -112,30 +112,28 @@ public class CtcApiController {
         }
     }
 
-    @PostMapping("/applications/documents/_issue")
-    public ResponseEntity<IssueCtcDocumentUpdateResponse> markDocumentsAsIssued(@Valid @RequestBody IssueCtcDocumentUpdateRequest request) {
+    @PostMapping("/applications/documents/issue-reject")
+    public ResponseEntity<IssueCtcDocumentUpdateResponse> markDocumentsAsIssuedOrReject(@Valid @RequestBody IssueCtcDocumentUpdateRequest request) {
 
-        log.info("Marking documents as issued for CTC application: {}", request.getCtcApplicationNumber());
+        log.info("Processing bulk issue/reject for {} documents", request.getDocs() != null ? request.getDocs().size() : 0);
 
         try {
-            ctcApplicationService.markDocumentsAsIssued(request.getCtcApplicationNumber(), request.getDocId(), request.getCourtId(), request.getFilingNumber(), request.getRequestInfo());
+            ctcApplicationService.markDocumentsAsIssuedOrReject(request);
             ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
 
             IssueCtcDocumentUpdateResponse response = IssueCtcDocumentUpdateResponse.builder()
                     .responseInfo(responseInfo)
-                    .ctcApplicationNumber(request.getCtcApplicationNumber())
-                    .id(request.getId())
-                    .docId(request.getDocId())
+                    .docs(request.getDocs())
                     .build();
 
             return ResponseEntity.ok(response);
 
         } catch (CustomException e) {
-            log.error("Error marking documents as issued: {}", e.getMessage());
+            log.error("Error processing bulk issue/reject: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("Unexpected error marking documents as issued", e);
-            throw new CustomException("CTC_ISSUE_DOCUMENTS_UPDATE_ERROR", "Error marking documents as issued: " + e.getMessage());
+            log.error("Unexpected error processing bulk issue/reject", e);
+            throw new CustomException("CTC_ISSUE_DOCUMENTS_UPDATE_ERROR", "Error processing bulk issue/reject: " + e.getMessage());
         }
     }
 
