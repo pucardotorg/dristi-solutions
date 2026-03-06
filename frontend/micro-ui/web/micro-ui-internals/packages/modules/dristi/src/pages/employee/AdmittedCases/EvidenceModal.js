@@ -259,7 +259,7 @@ const EvidenceModal = ({
       if (allPartiesIncludingMembers?.includes(userInfo?.uuid)) {
         return [SubmissionWorkflowState.DELETED].includes(applicationStatus) ? false : true;
       }
-      if (isLitigent && [...allAdvocates?.[userInfo?.uuid], userInfo?.uuid]?.includes(createdBy)) {
+      if (isLitigent && [...(allAdvocates?.[userInfo?.uuid] || []), userInfo?.uuid]?.includes(createdBy)) {
         return [SubmissionWorkflowState.DELETED].includes(applicationStatus) ? false : true;
       }
       if (!isLitigent && allAdvocates?.[createdBy]?.includes(userInfo?.uuid)) {
@@ -283,7 +283,7 @@ const EvidenceModal = ({
         const allPartiesIncludingMembers = getAllAssociatedPartyUuids(caseData?.case, asUser);
         if (allPartiesIncludingMembers?.includes(userInfo?.uuid)) {
           label = t("DOWNLOAD_SUBMISSION");
-        } else if (isLitigent && [...allAdvocates?.[userInfo?.uuid], userInfo?.uuid]?.includes(createdBy)) {
+        } else if (isLitigent && [...(allAdvocates?.[userInfo?.uuid] || []), userInfo?.uuid]?.includes(createdBy)) {
           label = t("DOWNLOAD_SUBMISSION");
         } else if (
           (respondingUuids?.includes(userInfo?.uuid) || !documentSubmission?.[0]?.details?.referenceId) &&
