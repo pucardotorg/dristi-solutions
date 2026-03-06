@@ -43,6 +43,7 @@ public class CtcApplicationRowMapper implements ResultSetExtractor<List<CtcAppli
                         .caseNumber(rs.getString("case_number"))
                         .caseTitle(rs.getString("case_title"))
                         .filingNumber(rs.getString("filing_number"))
+                        .cnrNumber(rs.getString("cnr_number"))
                         .courtId(rs.getString("court_id"))
                         .applicantName(rs.getString("applicant_name"))
                         .mobileNumber(rs.getString("mobile_number"))

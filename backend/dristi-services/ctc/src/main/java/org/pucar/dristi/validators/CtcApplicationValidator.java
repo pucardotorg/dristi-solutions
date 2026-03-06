@@ -50,6 +50,9 @@ public class CtcApplicationValidator {
 
     public void validateUpdateRequest(CtcApplicationRequest request) {
         CtcApplication application = request.getCtcApplication();
+        if (application.getCtcApplicationNumber() == null || application.getCtcApplicationNumber().isEmpty()) {
+            throw new CustomException(ServiceConstants.CTC_VALIDATION_EXCEPTION, "CTC Application Number cannot be null or empty");
+        }
         CtcApplicationSearchRequest ctcApplicationSearchRequest = new CtcApplicationSearchRequest();
         ctcApplicationSearchRequest.setCriteria(CtcApplicationSearchCriteria.builder().ctcApplicationNumber(application.getCtcApplicationNumber()).build());
         ctcApplicationSearchRequest.setPagination(Pagination.builder().limit(1.0).offSet(0.0).build());

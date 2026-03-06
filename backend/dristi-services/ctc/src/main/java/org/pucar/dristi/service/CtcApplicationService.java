@@ -55,6 +55,9 @@ public class CtcApplicationService {
     }
 
     public CtcApplication createApplication(CtcApplicationRequest request) {
+
+        log.info("createApplication method in progress");
+
         CtcApplication application = request.getCtcApplication();
 
         ctcApplicationValidator.validateCreateRequest(request);
@@ -65,19 +68,22 @@ public class CtcApplicationService {
 
         producer.push(config.getSaveCtcApplicationTopic(), request);
 
+        log.info("createApplication method completed");
+
         return application;
     }
 
     public CtcApplication updateApplication(CtcApplicationRequest request) {
+
+        log.info("updateApplication method in progress for id {}", request.getCtcApplication().getId());
+
         CtcApplication application = request.getCtcApplication();
 
         ctcApplicationValidator.validateUpdateRequest(request);
 
         ctcApplicationEnrichment.enrichOnUpdateCtcApplication(request.getRequestInfo(), application);
 
-        if (request.getCtcApplication().getWorkflow() != null) {
-            workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
-        }
+        workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
 
         if (request.getCtcApplication().getWorkflow() != null && (request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("ESIGN")
                 || request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("UPLOAD_SIGNED_COPY"))) {
@@ -97,6 +103,8 @@ public class CtcApplicationService {
         }
 
         producer.push(config.getUpdateCtcApplicationTopic(), request);
+
+        log.info("updateApplication method completed for id {}", request.getCtcApplication().getId());
 
         return application;
     }
