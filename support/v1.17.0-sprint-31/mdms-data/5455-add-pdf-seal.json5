@@ -1,0 +1,16 @@
+{
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2791",
+    "data": {
+        "id": 2791,
+        "url": "/pdf-service/v1/_stampPdf",
+        // todo add role action for EMPLOYEE
+        "code": "2791",
+        "name": "Stamp Pdf",
+        "displayName": "Stamp Pdf",
+        "serviceCode": "pdf-service",
+        "parentModule": "pdf-service"
+    },
+    "isActive": true
+}
