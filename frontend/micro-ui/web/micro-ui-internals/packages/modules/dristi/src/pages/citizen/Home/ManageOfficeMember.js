@@ -261,16 +261,21 @@ const ManageOfficeMember = () => {
     runSync();
     const timeoutId = setTimeout(runSync, 100);
 
+    let observerTimer = null;
     const observer = new MutationObserver(() => {
-      injectHeaderCheckbox();
-      attachRowCheckboxHandlers();
-      syncSelectedCasesCount();
+      if (observerTimer) clearTimeout(observerTimer);
+      observerTimer = setTimeout(() => {
+        injectHeaderCheckbox();
+        attachRowCheckboxHandlers();
+        syncSelectedCasesCount();
+      }, 300);
     });
     if (container) {
       observer.observe(container, { childList: true, subtree: true });
     }
     return () => {
       clearTimeout(timeoutId);
+      if (observerTimer) clearTimeout(observerTimer);
       observer.disconnect();
     };
   }, [syncSelectedCasesCount]);
