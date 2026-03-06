@@ -2,6 +2,7 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ElasticSearchRepository;
@@ -14,11 +15,14 @@ import org.pucar.dristi.web.models.taskManagement.TaskSearchRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.pucar.dristi.config.ServiceConstants.ES_IDS_QUERY;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class DocPreviewService {
 
@@ -49,12 +53,29 @@ public class DocPreviewService {
         BundleData data = loadAllData(courtCase, request.getRequestInfo());
         List<CaseBundleNode> caseBundleNodes =  engine.build(data);
 
+        // Store the full caseBundles (with fileStoreIds) in the CTC application
+        if (StringUtils.hasText(request.getCtcApplicationNumber())) {
+            storeCaseBundlesInCtcApplication(request.getCtcApplicationNumber(), caseBundleNodes, request.getRequestInfo());
+        }
+
         if (Boolean.TRUE.equals(isPartyToCase)) {
             return caseBundleNodes;
         }
 
         stripFileStoreIds(caseBundleNodes);
         return caseBundleNodes;
+    }
+
+    private void storeCaseBundlesInCtcApplication(String ctcApplicationNumber, List<CaseBundleNode> caseBundleNodes, RequestInfo requestInfo) {
+        try {
+            Map<String, Object> ctcApplication = new HashMap<>();
+            ctcApplication.put("ctcApplicationNumber", ctcApplicationNumber);
+            ctcApplication.put("caseBundles", caseBundleNodes);
+            ctcUtil.updateCtcApplication(ctcApplication, requestInfo);
+            log.info("Stored caseBundles in CTC application: {}", ctcApplicationNumber);
+        } catch (Exception e) {
+            log.error("Error storing caseBundles in CTC application: {}", ctcApplicationNumber, e);
+        }
     }
 
     private void stripFileStoreIds(List<CaseBundleNode> nodes) {

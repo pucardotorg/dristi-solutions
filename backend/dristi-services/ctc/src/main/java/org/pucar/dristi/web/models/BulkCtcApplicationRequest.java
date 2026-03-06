@@ -2,7 +2,6 @@ package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -17,23 +16,16 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class IssueCtcDocumentUpdateRequest {
+public class BulkCtcApplicationRequest {
 
     @JsonProperty("RequestInfo")
+    @Valid
     @NotNull
     private RequestInfo requestInfo;
 
-    @JsonProperty("courtId")
-    @NotBlank
-    private String courtId;
-
-    @JsonProperty("action")
-    @NotBlank
-    private String action; // ISSUE or REJECT
-
-    @JsonProperty("docs")
-    @NotEmpty
+    @JsonProperty("ctcApplications")
     @Valid
-    private List<DocumentActionItem> docs;
+    @NotEmpty
+    private List<CtcApplication> ctcApplications;
 
 }

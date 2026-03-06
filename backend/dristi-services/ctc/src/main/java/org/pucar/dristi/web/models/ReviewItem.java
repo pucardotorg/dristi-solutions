@@ -11,11 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DocumentActionItem {
-
-    @JsonProperty("docId")
-    @NotBlank
-    private String docId;
+public class ReviewItem {
 
     @JsonProperty("ctcApplicationNumber")
     @NotBlank
@@ -24,4 +20,8 @@ public class DocumentActionItem {
     @JsonProperty("filingNumber")
     @NotBlank
     private String filingNumber;
+
+    @JsonProperty("comments")
+    private String comments;
+
 }

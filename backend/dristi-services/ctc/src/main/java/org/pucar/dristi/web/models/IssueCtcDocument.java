@@ -38,4 +38,16 @@ public class IssueCtcDocument {
 
     @JsonProperty("caseNumber")
     private String caseNumber;
+
+    @JsonProperty("filingNumber")
+    private String filingNumber;
+
+    @JsonProperty("courtId")
+    private String courtId;
+
+    @JsonProperty("fileStoreId")
+    private String fileStoreId;
+
+    @JsonProperty("issuedFileStoreId")
+    private String issuedFileStoreId;
 }

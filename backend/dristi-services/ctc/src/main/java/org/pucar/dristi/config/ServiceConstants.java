@@ -78,21 +78,14 @@ public class ServiceConstants {
             "{\"query\":{\"term\":{\"Data.docId.keyword\":\"%s\"}},"
                     + "\"script\":{\"source\":\"ctx._source.Data.status='%s';ctx._source.Data.lastModifiedTime=%dL;\","
                     + "\"lang\":\"painless\"}}";
-    public static final String ES_COUNT_ISSUED_DOCS =
-            "{\"query\":{\"bool\":{\"must\":["
-                    + "{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}},"
-                    + "{\"term\":{\"Data.status.keyword\":\"ISSUED\"}}"
-                    + "]}}}";
-    public static final String ES_COUNT_REJECTED_DOCS =
-            "{\"query\":{\"bool\":{\"must\":["
-                    + "{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}},"
-                    + "{\"term\":{\"Data.status.keyword\":\"REJECTED\"}}"
-                    + "]}}}";
     public static final String ES_COUNT_DOCS_BY_STATUS =
             "{\"query\":{\"bool\":{\"must\":["
                     + "{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}},"
                     + "{\"term\":{\"Data.status.keyword\":\"%s\"}}"
                     + "]}}}";
+    public static final String ES_SEARCH_DOCS_BY_APPLICATION =
+            "{\"query\":{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}},"
+                    + "\"_source\":[\"Data.status\"],\"size\":1000}";
     public static final String CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION = "CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION";
     public static final String CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION = "CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION";
 
