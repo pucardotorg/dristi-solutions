@@ -58,7 +58,7 @@ const processSureties = (bailData) => {
     suretyParentName: surety?.fatherName || "",
     suretyAddress: formatAddress(surety?.address) || "",
     index: surety?.index,
-  }));
+  }))?.sort((a, b) => (a?.index ?? Infinity) - (b?.index ?? Infinity));
 };
 
 const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
