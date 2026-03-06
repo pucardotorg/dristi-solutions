@@ -92,7 +92,14 @@ public class CtcApplicationService {
                 log.info("Calculated totalPages={} from {} accepted documents for application: {}",
                         totalPages, acceptedFileStoreIds.size(), request.getCtcApplication().getCtcApplicationNumber());
             }
-            Calculation calculation = Calculation.builder().totalAmount(20 + request.getCtcApplication().getTotalPages() * 1.5).tenantId(request.getCtcApplication().getTenantId()).build();
+
+            Double totalAmount = 20 + request.getCtcApplication().getTotalPages() * 1.5;
+
+            Calculation calculation = Calculation.builder()
+                    .totalAmount(totalAmount)
+                    .tenantId(request.getCtcApplication().getTenantId())
+                    .breakDown(getBreakDown(totalAmount))
+                    .build();
             etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + "_APPLICATION_FEE", calculation);
         }
         if ("PENDING_ISSUE".equalsIgnoreCase(request.getCtcApplication().getStatus())) {
@@ -209,6 +216,17 @@ public class CtcApplicationService {
                 .courtId(request.getCourtId())
                 .isPartyToCase(application.getIsPartyToCase())
                 .build();
+    }
+
+    private List<BreakDown> getBreakDown(Double totalAmount) {
+        BreakDown breakDown = new BreakDown();
+        breakDown.setCode(config.getBreakDownCode());
+        breakDown.setType(config.getBreakDownType());
+        breakDown.setAmount(totalAmount);
+
+        List<BreakDown> breakDownList = new ArrayList<>();
+        breakDownList.add(breakDown);
+        return breakDownList;
     }
 
 }
