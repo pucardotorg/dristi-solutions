@@ -1,0 +1,164 @@
+package org.pucar.dristi.config;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.egov.tracer.config.TracerConfiguration;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Import;
+import org.springframework.stereotype.Component;
+
+@Component
+@Import({TracerConfiguration.class})
+@Setter
+@Getter
+public class Configuration {
+
+    // User Config
+    @Value("${egov.idgen.caConfig}")
+    private String caConfig;
+
+    @Value("${egov.idgen.caFormat}")
+    private String caFormat;
+
+    @Value("${egov.workflow.ctc.business.name}")
+    private String ctcBusinessName;
+
+    @Value("${egov.workflow.ctc.business.service.name}")
+    private String ctcBusinessServiceName;
+
+    // User Config
+    @Value("${egov.user.host}")
+    private String userHost;
+
+    @Value("${egov.user.context.path}")
+    private String userContextPath;
+
+    @Value("${egov.user.create.path}")
+    private String userCreateEndpoint;
+
+    @Value("${egov.user.search.path}")
+    private String userSearchEndpoint;
+
+    @Value("${egov.user.update.path}")
+    private String userUpdateEndpoint;
+
+    @Value("${egov.courtId}")
+    private String courtId;
+
+    //Idgen Config
+    @Value("${egov.idgen.host}")
+    private String idGenHost;
+
+    @Value("${egov.idgen.path}")
+    private String idGenPath;
+
+    // Case Config
+    @Value("${egov.case.host}")
+    private String caseHost;
+
+    @Value("${egov.case.path}")
+    private String casePath;
+
+    @Value("${egov.case.search.path}")
+    private String caseSearchPath;
+
+    @Value("${egov.case.list.search.path}")
+    private String caseListSearchPath;
+
+    // Hearing Config
+    @Value("${egov.hearing.host}")
+    private String hearingHost;
+
+    @Value("${egov.hearing.search.path}")
+    private String hearingSearchPath;
+
+    //Workflow Config
+    @Value("${egov.workflow.host}")
+    private String wfHost;
+
+    @Value("${egov.workflow.transition.path}")
+    private String wfTransitionPath;
+
+    @Value("${egov.workflow.businessservice.search.path}")
+    private String wfBusinessServiceSearchPath;
+
+    @Value("${egov.workflow.processinstance.search.path}")
+    private String wfProcessInstanceSearchPath;
+
+    // Filestore Config
+    @Value("${egov.filestore.host}")
+    private String fileStoreHost;
+
+    @Value("${egov.filestore.path}")
+    private String fileStorePath;
+
+    @Value("${egov.file.store.delete.endpoint}")
+    private String fileStoreDeleteEndPoint;
+
+    //Idgen
+    @Value("${egov.idgen.orderConfig}")
+    private String orderConfig;
+
+    @Value("${egov.idgen.orderFormat}")
+    private String orderFormat;
+
+    @Value("${egov.documenttype.path}")
+    private String documentTypePath;
+
+    //Localization
+    @Value("${egov.localization.host}")
+    private String localizationHost;
+
+    @Value("${egov.localization.context.path}")
+    private String localizationContextPath;
+
+    @Value("${egov.localization.search.endpoint}")
+    private String localizationSearchEndpoint;
+
+    //Individual Service
+    @Value("${egov.individual.host}")
+    private String individualHost;
+
+    @Value("${egov.individual.search.path}")
+    private String individualSearchEndpoint;
+
+    //advocate
+    @Value("${egov.advocate.host}")
+    private String advocateHost;
+
+    @Value("${egov.advocate.path}")
+    private String advocatePath;
+
+    //Etreasury Config
+    @Value("${egov.etreasury.host}")
+    private String etreasuryHost;
+
+    @Value("${egov.etreasury.demand.create.endpoint}")
+    private String etreasuryDemandCreateEndPoint;
+
+    @Value("${egov.etreasury.payment.receipt.endpoint}")
+    private String etreasuryPaymentReceiptEndPoint;
+
+    @Value("${egov.tenantId}")
+    private String tenantId;
+
+    //Elasticsearch Config
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${egov.bulk.index.path}")
+    private String bulkPath;
+
+    @Value("${ctc.issue.documents.index}")
+    private String issueCtcDocumentsIndex;
+
+    // Zone ID
+    @Value("${app.zone.id}")
+    private String zoneId;
+}

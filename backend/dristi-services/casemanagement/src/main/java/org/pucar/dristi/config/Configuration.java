@@ -37,6 +37,8 @@ public class Configuration {
 	@Value("${egov.user.update.path}")
 	private String userUpdateEndpoint;
 
+	@Value("${spring.data.redis.timeout}")
+	private Long redisTimeout;
 
 	//Idgen Config
 	@Value("${egov.idgen.host}")
@@ -143,6 +145,13 @@ public class Configuration {
 	@Value("${dristi.case.search.url}")
 	private String caseSearchUrl;
 
+	// Application Config
+	@Value("${dristi.application.host}")
+	private String applicationHost;
+
+	@Value("${dristi.application.search.endpoint}")
+	private String applicationSearchEndPoint;
+
 	//ElasticSearch Config
 	@Value("${egov.infra.indexer.host}")
 	private String esHostUrl;
@@ -158,6 +167,9 @@ public class Configuration {
 
 	@Value("${dristi.bundle.index}")
 	private String caseBundleIndex;
+
+	@Value("${dristi.preview.index}")
+	private String casePreviewIndex;
 
 	@Value("${dristi.hearing.index}")
 	private String hearingIndex;
@@ -197,6 +209,34 @@ public class Configuration {
 	@Value("${case.allowed.status}")
 	private String caseAllowedStatuses;
 	private List<String> caseAllowedStatusesList = new ArrayList<>();
+
+	// Digitalized Documents Config
+	@Value("${dristi.digitalized.documents.host}")
+	private String digitalizedDocumentsHost;
+
+	@Value("${dristi.digitalized.documents.search.endpoint}")
+	private String digitalizedDocumentsSearchEndPoint;
+
+	// Task Management Config
+	@Value("${dristi.taskmanagement.host}")
+	private String taskManagementServiceHost;
+
+	@Value("${dristi.taskmanagement.search.endpoint}")
+	private String taskManagementSearchEndpoint;
+
+	// Evidence Service Config
+	@Value("${dristi.evidence.host}")
+	private String evidenceServiceHost;
+
+	@Value("${dristi.evidence.search.endpoint}")
+	private String evidenceServiceSearchEndpoint;
+
+	// CTC Service Config
+	@Value("${dristi.ctc.host}")
+	private String ctcHost;
+
+	@Value("${dristi.ctc.search.endpoint}")
+	private String ctcSearchEndpoint;
 
 	@PostConstruct
 	public void init() {
