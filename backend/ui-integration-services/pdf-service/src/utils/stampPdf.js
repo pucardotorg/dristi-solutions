@@ -26,53 +26,29 @@ async function downloadPdfFromFilestore(fileStoreId, tenantId, authToken) {
     headers["auth-token"] = authToken;
   }
 
-  try {
-    const response = await axios.get(downloadUrl, {
-      responseType: "arraybuffer",
-      headers,
-    });
+  const response = await axios.get(downloadUrl, {
+    responseType: "arraybuffer",
+    headers,
+  });
 
-    if (!response.data || response.data.byteLength === 0) {
-      throw new Error(`Filestore returned empty content for fileStoreId: ${fileStoreId}`);
-    }
-
-    return Buffer.from(response.data);
-  } catch (err) {
-    const status = err.response ? err.response.status : "N/A";
-    const statusText = err.response ? err.response.statusText : err.message;
-    logger.error("Failed to download PDF from filestore", {
-      downloadUrl,
-      status,
-      statusText,
-      fileStoreId,
-      tenantId,
-    });
-    throw new Error(`Failed to download PDF from filestore (status: ${status}): ${statusText}`);
+  if (!response.data || response.data.byteLength === 0) {
+    throw new Error(`Filestore returned empty content for fileStoreId: ${fileStoreId}`);
   }
+
+  return Buffer.from(response.data);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Download the seal image bytes from the configured seal URL
 // ─────────────────────────────────────────────────────────────────────────────
 async function downloadSealImage() {
-  try {
-    const response = await axios.get(SEAL_URL, {
-      responseType: "arraybuffer",
-    });
-    return {
-      bytes: Buffer.from(response.data),
-      contentType: response.headers["content-type"] || "image/png",
-    };
-  } catch (err) {
-    const status = err.response ? err.response.status : "N/A";
-    const statusText = err.response ? err.response.statusText : err.message;
-    logger.error("Failed to download seal image", {
-      SEAL_URL,
-      status,
-      statusText,
-    });
-    throw new Error(`Failed to download seal image (status: ${status}): ${statusText}`);
-  }
+  const response = await axios.get(SEAL_URL, {
+    responseType: "arraybuffer",
+  });
+  return {
+    bytes: Buffer.from(response.data),
+    contentType: response.headers["content-type"] || "image/png",
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -136,24 +112,18 @@ async function uploadStampedPdf(pdfBuffer, originalFileStoreId, tenantId, header
 // ─────────────────────────────────────────────────────────────────────────────
 export const stampPdf = async function (fileStoreId, tenantId, header, authToken) {
   // 1. Download the original PDF
-  logger.info("Step 1: Downloading PDF from filestore", { fileStoreId, tenantId, egovFileHost });
   const pdfBytes = await downloadPdfFromFilestore(fileStoreId, tenantId, authToken);
-  logger.info("Step 1 complete: PDF downloaded", { fileStoreId, sizeBytes: pdfBytes.length });
+  logger.info("PDF downloaded from filestore", { fileStoreId, sizeBytes: pdfBytes.length });
 
   // 2. Download the seal image
-  logger.info("Step 2: Downloading seal image", { SEAL_URL });
   const { bytes: sealBytes, contentType: sealContentType } = await downloadSealImage();
-  logger.info("Step 2 complete: Seal downloaded", { sizeBytes: sealBytes.length, contentType: sealContentType });
 
   // 3. Embed the seal on the last page
-  logger.info("Step 3: Embedding seal on PDF");
   const stampedPdfBytes = await embedSealOnPdf(pdfBytes, sealBytes, sealContentType);
-  logger.info("Step 3 complete: Seal embedded", { originalSize: pdfBytes.length, stampedSize: stampedPdfBytes.length });
 
   // 4. Upload the stamped PDF to filestore
-  logger.info("Step 4: Uploading stamped PDF");
   const newFileStoreId = await uploadStampedPdf(stampedPdfBytes, fileStoreId, tenantId, header);
-  logger.info("Step 4 complete: Stamped PDF uploaded", { originalFileStoreId: fileStoreId, newFileStoreId });
+  logger.info("Stamped PDF uploaded", { originalFileStoreId: fileStoreId, newFileStoreId });
 
   return newFileStoreId;
 };
