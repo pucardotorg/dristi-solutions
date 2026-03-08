@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
 import org.pucar.dristi.config.Configuration;
@@ -65,10 +66,11 @@ public class ApplicationUtil {
         }
     }
 
-    public List<Application> searchAllApplications(String filingNumber, String courtId, String tenantId) {
+    public List<Application> searchAllApplications(String filingNumber, String courtId, String tenantId, RequestInfo requestInfo) {
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         StringBuilder uri = new StringBuilder(configuration.getApplicationHost()).append(configuration.getApplicationSearchEndPoint());
         ApplicationSearchRequest applicationSearchRequest = ApplicationSearchRequest.builder()
+                .requestInfo(requestInfo)
                 .criteria(ApplicationCriteria.builder().filingNumber(filingNumber).courtId(courtId).tenantId(tenantId).isHideBailCaseBundle(true).build())
                 .pagination(Pagination.builder().sortBy("applicationCMPNumber").order(OrderPagination.ASC).limit(100).build())
                 .build();

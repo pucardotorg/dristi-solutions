@@ -44,7 +44,7 @@ public class PaymentReceiptSection implements CaseBundleSection {
                     .filter(doc -> "PAYMENT_RECEIPT".equalsIgnoreCase(doc.getDocumentType()))
                     .filter(doc -> doc.getFileStore() != null)
                     .sorted(Comparator.comparing(
-                            doc -> extractConsumerCode(doc),
+                            this::extractConsumerCode,
                             Comparator.nullsLast(String::compareTo)))
                     .toList();
 
