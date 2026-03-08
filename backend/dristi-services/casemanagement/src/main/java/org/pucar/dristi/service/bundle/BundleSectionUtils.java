@@ -16,6 +16,8 @@ public class BundleSectionUtils {
     @SuppressWarnings("unchecked")
     public static String extractEvidenceTitle(Artifact a) {
         String title = null;
+
+        // 1. artifact.additionalDetails.formdata.documentTitle
         if (a.getAdditionalDetails() instanceof Map) {
             Map<String, Object> ad = (Map<String, Object>) a.getAdditionalDetails();
             Object formdata = ad.get("formdata");
@@ -23,21 +25,25 @@ public class BundleSectionUtils {
                 Object dt = ((Map<String, Object>) formdata).get("documentTitle");
                 if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
             }
-            if (title == null) {
-                Object dt = ad.get("documentTitle");
-                if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
-            }
-            if (title == null) {
-                Object name = ad.get("name");
-                if (name instanceof String && !((String) name).isBlank()) title = (String) name;
-            }
         }
-        if (title == null && a.getFile() != null) {
-            String docType = a.getFile().getDocumentType();
-            if (docType != null && !docType.isBlank()) title = docType;
+
+        // 2. artifact.file.additionalDetails.documentTitle
+        if (title == null && a.getFile() != null && a.getFile().getAdditionalDetails() instanceof Map) {
+            Map<String, Object> fileAd = (Map<String, Object>) a.getFile().getAdditionalDetails();
+            Object dt = fileAd.get("documentTitle");
+            if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
         }
+
+        // 3. artifact.file.additionalDetails.documentType
+        if (title == null && a.getFile() != null && a.getFile().getAdditionalDetails() instanceof Map) {
+            Map<String, Object> fileAd = (Map<String, Object>) a.getFile().getAdditionalDetails();
+            Object dt = fileAd.get("documentType");
+            if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
+        }
+
+        // 4. artifact.artifactType
         if (title == null) title = a.getArtifactType();
-        if (title == null) title = "DOCUMENT";
+
         return title;
     }
 
