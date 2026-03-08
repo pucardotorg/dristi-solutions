@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Document;
 import org.pucar.dristi.web.models.order.WorkflowObject;
 import org.springframework.validation.annotation.Validated;
 
@@ -71,4 +72,7 @@ public class TaskManagement {
     @JsonProperty("workflow")
     @Valid
     private WorkflowObject workflow;
+
+    @JsonProperty("documents")
+    private List<Document> documents;
 }
