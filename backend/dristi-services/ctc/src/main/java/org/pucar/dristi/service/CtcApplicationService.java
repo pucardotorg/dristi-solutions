@@ -21,8 +21,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.pucar.dristi.config.ServiceConstants.E_SIGN;
-import static org.pucar.dristi.config.ServiceConstants.UPLOAD_SIGNED_COPY;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Service
 @Slf4j
@@ -116,9 +115,9 @@ public class CtcApplicationService {
                     .tenantId(request.getCtcApplication().getTenantId())
                     .breakDown(getBreakDown(totalAmount))
                     .build();
-            etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + "_CTC_APPLICATION_FEE", calculation);
+            etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + CTC_APPLICATION_FEE, calculation);
         }
-        if ("PENDING_ISSUE".equalsIgnoreCase(request.getCtcApplication().getStatus())) {
+        if (PENDING_ISSUE.equalsIgnoreCase(request.getCtcApplication().getStatus())) {
             indexerUtils.pushIssueCtcDocumentsToIndex(application);
         }
 

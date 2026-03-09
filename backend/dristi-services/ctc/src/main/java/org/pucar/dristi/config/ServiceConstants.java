@@ -116,4 +116,8 @@ public class ServiceConstants {
 
     public static final String UPLOAD_SIGNED_COPY = "UPLOAD_SIGNED_COPY";
 
+    public static final String CTC_APPLICATION_FEE  = "_CTC_APPLICATION_FEE";
+
+    public static final String PENDING_ISSUE = "PENDING_ISSUE";
+
 }
