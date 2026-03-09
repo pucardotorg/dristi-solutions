@@ -437,18 +437,19 @@ app.post(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /pdf-service/v1/_stampPdf
-// Downloads an existing PDF from filestore, stamps the court seal on the last
-// at the bottom-right corner, uploads the result, and returns the new fileStoreId.
+// Downloads existing PDFs from filestore, stamps the court seal on the last
+// page at the bottom-right corner, uploads the results, and returns the new
+// fileStoreIds.
 //
 // Query params:
 //   tenantId (required)  — DIGIT tenant ID
 //
 // Request body:
 //   RequestInfo  (required) — standard DIGIT RequestInfo
-//   fileStoreId  (required) — fileStoreId of the PDF to stamp
+//   files        (required) — array of { uniqueId, fileStoreId }
 //
 // Response (201):
-//   { ResponseInfo, fileStoreId, message }
+//   { ResponseInfo, files: [{ uniqueId, fileStoreId }], message }
 // ─────────────────────────────────────────────────────────────────────────────
 app.post(
   "/pdf-service/v1/_stampPdf",
@@ -456,17 +457,19 @@ app.post(
     const requestId = req.requestId;
     try {
       const tenantId    = req.query.tenantId;
-      const fileStoreId = get(req.body, "fileStoreId");
+      const files       = get(req.body, "files");
       const requestInfo = get(req.body, "RequestInfo");
       const headers     = JSON.parse(JSON.stringify(req.headers));
 
-      logger.info("Stamp PDF request received", { requestId, tenantId, fileStoreId });
+      logger.info("Stamp PDF request received", { requestId, tenantId, fileCount: files ? files.length : 0 });
 
       // ── Validation ──────────────────────────────────────────────────────────
       const missing = [];
       if (!tenantId)    missing.push("tenantId (query param)");
-      if (!fileStoreId) missing.push("fileStoreId (body)");
       if (!requestInfo) missing.push("RequestInfo (body)");
+      if (!files || !Array.isArray(files) || files.length === 0) {
+        missing.push("files (body) — must be a non-empty array of { uniqueId, fileStoreId }");
+      }
 
       if (missing.length > 0) {
         res.status(400).json({
@@ -476,23 +479,62 @@ app.post(
         return;
       }
 
-      // ── Core stamp flow (in stampPdf utility) ────────────────────────────────
+      // Validate each item in the array
+      for (let i = 0; i < files.length; i++) {
+        if (!files[i].uniqueId || !files[i].fileStoreId) {
+          res.status(400).json({
+            ResponseInfo: requestInfo,
+            message: `files[${i}] is missing required field(s): uniqueId and fileStoreId are both required`
+          });
+          return;
+        }
+      }
+
+      // ── Process all files in parallel ─────────────────────────────────────
       const startTime = Date.now();
       const authToken = get(requestInfo, "authToken");
-      const newFileStoreId = await stampPdf(fileStoreId, tenantId, headers, authToken);
-      const duration = Date.now() - startTime;
 
-      logger.info("Stamp PDF completed", {
+      const results = await Promise.allSettled(
+        files.map(async (file) => {
+          const newFileStoreId = await stampPdf(file.fileStoreId, tenantId, headers, authToken);
+          return { uniqueId: file.uniqueId, fileStoreId: newFileStoreId };
+        })
+      );
+
+      // Build response array
+      const responseFiles = results.map((result, index) => {
+        if (result.status === "fulfilled") {
+          return result.value;
+        } else {
+          logger.error("Stamp PDF failed for file", {
+            requestId,
+            uniqueId: files[index].uniqueId,
+            originalFileStoreId: files[index].fileStoreId,
+            error: result.reason.message,
+          });
+          return {
+            uniqueId: files[index].uniqueId,
+            fileStoreId: null,
+            error: result.reason.message,
+          };
+        }
+      });
+
+      const duration = Date.now() - startTime;
+      const successCount = responseFiles.filter(f => f.fileStoreId !== null).length;
+
+      logger.info("Stamp PDF batch completed", {
         requestId,
-        originalFileStoreId: fileStoreId,
-        newFileStoreId,
+        total: files.length,
+        success: successCount,
+        failed: files.length - successCount,
         duration: `${duration}ms`
       });
 
       res.status(201).json({
         ResponseInfo: requestInfo,
-        fileStoreId:  newFileStoreId,
-        message:      "PDF stamped with seal successfully"
+        files: responseFiles,
+        message: `${successCount}/${files.length} PDFs stamped with seal successfully`
       });
 
     } catch (error) {
