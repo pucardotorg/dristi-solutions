@@ -97,9 +97,11 @@ public class EvidenceQueryBuilder {
 
             // TODO : remove this, this is temporary fix (#5016)
             // --------- REQUEST_FOR_BAIL evidence visibility ----------
-            applyRequestForBailEvidenceVisibility(
-                    query, firstCriteria, asUser,
-                    preparedStmtList, preparedStmtArgList);
+            if(criteria.getIsCitizen()){
+                applyRequestForBailEvidenceVisibility(
+                        query, firstCriteria, asUser,
+                        preparedStmtList, preparedStmtArgList);
+            }
 
             return query.toString();
         } catch (Exception e) {
@@ -114,7 +116,7 @@ public class EvidenceQueryBuilder {
 
         if (searchCriteria.getOwner() == null && asUser != null) {
             queryBuilder.append(" AND ( ");
-            queryBuilder.append(addUserCriteria(asUser, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
+            queryBuilder.append(addAsUserCriteriaForCitizen(asUser, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
             queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
             queryBuilder.append(" )) ");
         }
@@ -127,29 +129,11 @@ public class EvidenceQueryBuilder {
     }
 
     public String getEmployeeQuery(List<String> statusList, EvidenceSearchCriteria searchCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        StringBuilder queryBuilder = new StringBuilder();
-        String asUser = searchCriteria.getAsUser();
 
-        if(searchCriteria.isCourtEmployeeCanSign()){
-            if (searchCriteria.getOwner() == null && asUser != null) {
-                queryBuilder.append(" AND ( ");
-                queryBuilder.append(addUserCriteria(asUser, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
-                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
-                queryBuilder.append(" )) ");
-            }
-
-            else if(searchCriteria.getOwner() != null && !searchCriteria.getOwner().toString().equals(asUser)) {
-                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
-            }
-        }
-        else{
-            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
-        }
-
-        return queryBuilder.toString();
+        return getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria);
     }
 
-    private String addUserCriteria(String asUser, String filingNumber, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    private String addAsUserCriteriaForCitizen(String asUser, String filingNumber, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" art.asUser = ? ");
         preparedStmtList.add(asUser);
