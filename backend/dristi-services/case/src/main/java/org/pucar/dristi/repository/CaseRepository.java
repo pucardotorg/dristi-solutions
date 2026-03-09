@@ -164,10 +164,12 @@ public class CaseRepository {
                     continue;
                 }
 
+                String officeAdvocateUserUuid = officeRows.get(0).getOfficeAdvocateUserUuid();
+
                 AdvocateOffice office = officeMap.computeIfAbsent(advocateId, k -> AdvocateOffice.builder()
                         .officeAdvocateId(advocateId)
-                        .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(rep))
-                        .officeAdvocateUserUuid(extractAdvocateUuidFromAdditionalDetails(rep))
+                        .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(rep)) // need to change
+                        .officeAdvocateUserUuid(officeAdvocateUserUuid)
                         .build());
 
                 // Separate advocates and clerks based on memberType
