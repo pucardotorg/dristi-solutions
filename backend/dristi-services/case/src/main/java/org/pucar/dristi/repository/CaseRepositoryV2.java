@@ -782,10 +782,11 @@ public class CaseRepositoryV2 {
                 continue;
             }
 
+            String officeAdvocateUserUuid = officeRows.get(0).getOfficeAdvocateUserUuid();
+
             AdvocateOffice office = officeMap.computeIfAbsent(advocateId, k -> AdvocateOffice.builder()
                     .officeAdvocateId(advocateId)
-                    .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(rep))
-                    .officeAdvocateUserUuid(extractAdvocateUuidFromAdditionalDetails(rep))
+                    .officeAdvocateUserUuid(officeAdvocateUserUuid)
                     .build());
 
             // Separate advocates and clerks based on memberType
@@ -824,24 +825,6 @@ public class CaseRepositoryV2 {
         }
 
         courtCase.setAdvocateOffices(new ArrayList<>(officeMap.values()));
-    }
-
-    private String extractAdvocateUuidFromAdditionalDetails(AdvocateMapping representative) {
-        JsonNode node = objectMapper.convertValue(representative, JsonNode.class);
-        JsonNode uuidNode = node.path("additionalDetails").path("uuid");
-        if (uuidNode.isMissingNode() || uuidNode.isNull()) {
-            return null;
-        }
-        return uuidNode.asText();
-    }
-
-    private String extractAdvocateNameFromAdditionalDetails(AdvocateMapping representative) {
-        JsonNode node = objectMapper.convertValue(representative, JsonNode.class);
-        JsonNode nameNode = node.path("additionalDetails").path("advocateName");
-        if (nameNode.isMissingNode() || nameNode.isNull()) {
-            return null;
-        }
-        return nameNode.asText();
     }
 
     public String getCaseIdFromFilingNumber(String filingNumber) {
