@@ -131,8 +131,8 @@ const ManageOfficeMember = () => {
 
   const accessTypeOptions = useMemo(
     () => [
-      { code: "SPECIFIC_CASES", name: t("SPECIFIC_CASES") || "Specific Cases" },
       { code: "ALL_CASES", name: t("ALL_CASES") || "All Cases" },
+      { code: "SPECIFIC_CASES", name: t("SPECIFIC_CASES") || "Specific Cases" },
     ],
     [t]
   );
@@ -261,16 +261,21 @@ const ManageOfficeMember = () => {
     runSync();
     const timeoutId = setTimeout(runSync, 100);
 
+    let observerTimer = null;
     const observer = new MutationObserver(() => {
-      injectHeaderCheckbox();
-      attachRowCheckboxHandlers();
-      syncSelectedCasesCount();
+      if (observerTimer) clearTimeout(observerTimer);
+      observerTimer = setTimeout(() => {
+        injectHeaderCheckbox();
+        attachRowCheckboxHandlers();
+        syncSelectedCasesCount();
+      }, 300);
     });
     if (container) {
       observer.observe(container, { childList: true, subtree: true });
     }
     return () => {
       clearTimeout(timeoutId);
+      if (observerTimer) clearTimeout(observerTimer);
       observer.disconnect();
     };
   }, [syncSelectedCasesCount]);
@@ -462,6 +467,25 @@ const ManageOfficeMember = () => {
       if (response) {
         setToast({ label: t("UPDATE_ACCESS_SUCCESS") || "Access updated successfully", type: "success" });
         setShowUpdateAccessModal(false);
+
+        // Reset the baseline selection so subsequent updates only consider
+        // changes made after this successful update.
+        setCaseSelectionDiff({ addCaseIds: [], removeCaseIds: [] });
+
+        const container = document.querySelector(".manage-office-member-inbox");
+        if (container) {
+          const tbody = container.querySelector("tbody");
+          if (tbody) {
+            const rowCheckboxes = tbody.querySelectorAll('input[type="checkbox"][data-case-id]');
+            rowCheckboxes.forEach((checkbox) => {
+              const currentlyChecked = checkbox.checked;
+              checkbox.setAttribute("data-initial-active", currentlyChecked ? "true" : "false");
+            });
+          }
+        }
+
+        // Re-sync header checkbox and selected count based on new baseline.
+        syncSelectedCasesCount();
       }
     } catch (error) {
       console.error("Error processing case member:", error);
@@ -489,51 +513,46 @@ const ManageOfficeMember = () => {
         <h1 className="manage-office-member-title">{t("MANAGE_OFFICE_MEMBER") || "Manage Office Member"}</h1>
 
         <div className="manage-office-member-content-row">
-          <div className="manage-office-member-details">
-            <div className="manage-office-member-detail-item">
-              <span className="manage-office-member-detail-label">{t("CS_NAME") || "Name"}</span>
-              <span className="manage-office-member-detail-value">{memberName}</span>
-            </div>
-            <div className="manage-office-member-detail-item">
-              <span className="manage-office-member-detail-label">{t("DESIGNATION") || "Designation"}</span>
-              <span className="manage-office-member-detail-value">{designation}</span>
-            </div>
-            <div className="manage-office-member-detail-item">
-              <span className="manage-office-member-detail-label">{t("MOBILE_NUMBER") || "Mobile number"}</span>
-              <span className="manage-office-member-detail-value">{mobileNumber}</span>
-            </div>
-            <div className="manage-office-member-detail-item">
-              <span className="manage-office-member-detail-label">{t("ACCESS_TYPE") || "Access Type"}</span>
-              <AccessTypeDropdown options={accessTypeOptions} selected={selectedAccessTypeOption} onChange={handleAccessTypeChange} />
-            </div>
+          <div className="manage-office-member-field">
+            <span className="manage-office-member-field__label">{t("CS_NAME") || "Name"}</span>
+            <span className="manage-office-member-field__value">{memberName}</span>
           </div>
-
-          <div className="manage-office-member-options">
-            <div className="manage-office-member-option">
-              <label className="manage-office-member-option-label">{t("ALLOW_MEMBER_TO_FILE_NEW_CASES") || "Allow member to file new cases?"}</label>
-              <select value={allowCaseCreate} onChange={(e) => setAllowCaseCreate(e.target.value)} className="manage-office-member-select" disabled>
-                <option value="Yes">{t("YES") || "Yes"}</option>
-                <option value="No">{t("NO") || "No"}</option>
-              </select>
-            </div>
-            <div className="manage-office-member-option">
-              <label className="manage-office-member-option-label">
-                {t("ADD_MEMBER_TO_NEW_CASES_AUTO") || "Add member to new cases automatically?"}
-              </label>
-              <select
-                value={addToNewCasesAuto}
-                onChange={(e) => setAddToNewCasesAuto(e.target.value)}
-                className="manage-office-member-select"
-                disabled
-              >
-                <option value="Yes">{t("YES") || "Yes"}</option>
-                <option value="No">{t("NO") || "No"}</option>
-              </select>
-            </div>
-            <button type="button" onClick={handleRemoveMemberClick} className="manage-office-member-remove-btn">
-              {t("REMOVE_MEMBER") || "Remove Member"}
-            </button>
+          <div className="manage-office-member-field">
+            <span className="manage-office-member-field__label">{t("DESIGNATION") || "Designation"}</span>
+            <span className="manage-office-member-field__value">{designation}</span>
           </div>
+          <div className="manage-office-member-field">
+            <span className="manage-office-member-field__label">{t("MOBILE_NUMBER") || "Mobile number"}</span>
+            <span className="manage-office-member-field__value">{mobileNumber}</span>
+          </div>
+          <div className="manage-office-member-field">
+            <span className="manage-office-member-field__label">{t("ACCESS_TYPE") || "Access Type"}</span>
+            <AccessTypeDropdown options={accessTypeOptions} selected={selectedAccessTypeOption} onChange={handleAccessTypeChange} />
+          </div>
+          <div className="manage-office-member-field manage-office-member-field--wide">
+            <span className="manage-office-member-field__label">{t("ALLOW_MEMBER_TO_FILE_NEW_CASES") || "Allow member to file new cases?"}</span>
+            <select value={allowCaseCreate} onChange={(e) => setAllowCaseCreate(e.target.value)} className="manage-office-member-select" disabled>
+              <option value="Yes">{t("YES") || "Yes"}</option>
+              <option value="No">{t("NO") || "No"}</option>
+            </select>
+          </div>
+          <div className="manage-office-member-field manage-office-member-field--wide">
+            <span className="manage-office-member-field__label">
+              {t("ADD_MEMBER_TO_NEW_CASES_AUTO") || "Add member to new cases automatically?"}
+            </span>
+            <select
+              value={addToNewCasesAuto}
+              onChange={(e) => setAddToNewCasesAuto(e.target.value)}
+              className="manage-office-member-select"
+              disabled
+            >
+              <option value="Yes">{t("YES") || "Yes"}</option>
+              <option value="No">{t("NO") || "No"}</option>
+            </select>
+          </div>
+          <button type="button" onClick={handleRemoveMemberClick} className="manage-office-member-remove-btn">
+            {t("REMOVE_MEMBER") || "Remove Member"}
+          </button>
         </div>
 
         <div className="manage-office-member-info-banner">
