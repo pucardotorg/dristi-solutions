@@ -225,12 +225,11 @@ public class CtcApplicationService {
 
                 // 4. Determine workflow action from current ES doc status counts
                 Map<String, Integer> statusCounts = indexerUtils.getDocStatusCounts(ctcApplicationNumber);
-                int totalDocs = statusCounts.values().stream().mapToInt(Integer::intValue).sum();
                 int totalIssued = statusCounts.getOrDefault(ServiceConstants.STATUS_ISSUED, 0);
                 int totalRejected = statusCounts.getOrDefault(ServiceConstants.STATUS_REJECTED, 0);
                 int totalPending = statusCounts.getOrDefault("PENDING", 0);
 
-                String workflowAction = determineWorkflowAction(totalDocs, totalIssued, totalRejected, totalPending);
+                String workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued, totalRejected, totalPending);
 
                 if (workflowAction != null) {
                     WorkflowObject workflow = new WorkflowObject();
@@ -338,35 +337,33 @@ public class CtcApplicationService {
         return map;
     }
 
-    private String determineWorkflowAction(int totalDocs, int totalIssued, int totalRejected, int totalPending) {
-        // CMO not approved any document → Pending (no workflow transition)
+    private String determineWorkflowAction(String currentStatus, int totalIssued, int totalRejected, int totalPending) {
         if (totalIssued == 0 && totalRejected == 0) {
             return null;
         }
 
-        // CMO accepted all documents → Issued
-        if (totalPending == 0 && totalRejected == 0 && totalIssued > 0) {
-            return "ISSUE_ALL";
+        if (PENDING_ISSUE.equalsIgnoreCase(currentStatus)) {
+            // At least one issued → move to PARTIALLY_ISSUED
+            if (totalIssued > 0) {
+                return WF_ACTION_ISSUE;
+            }
+            // All rejected, none pending → REJECT_ALL (terminal)
+            if (totalRejected > 0 && totalPending == 0) {
+                return WF_ACTION_REJECT_ALL;
+            }
+            // Some rejected, still pending → REJECT (stay in PENDING_ISSUE)
+            if (totalRejected > 0 && totalPending > 0) {
+                return WF_ACTION_REJECT;
+            }
         }
 
-        // CMO rejected all docs → Rejected by CMO
-        if (totalPending == 0 && totalIssued == 0 && totalRejected > 0) {
-            return "REJECT_ALL";
-        }
-
-        // All docs processed (mix of issued/rejected, none pending) → Issued
-        if (totalPending == 0 && totalIssued > 0 && totalRejected > 0) {
-            return "ISSUE_ALL";
-        }
-
-        // CMO partially accepted documents (some issued, some still pending) → Partially Issued
-        if (totalIssued > 0 && totalPending > 0) {
-            return "ISSUE";
-        }
-
-        // Few documents rejected, few no action (some rejected, some still pending) → Partially Rejected
-        if (totalRejected > 0 && totalPending > 0) {
-            return "REJECT";
+        if (PARTIALLY_ISSUED.equalsIgnoreCase(currentStatus)) {
+            // All docs processed → ISSUE_ALL (terminal)
+            if (totalPending == 0) {
+                return WF_ACTION_ISSUE_ALL;
+            }
+            // Still pending docs → ISSUE (stay in PARTIALLY_ISSUED)
+            return WF_ACTION_ISSUE;
         }
 
         return null;

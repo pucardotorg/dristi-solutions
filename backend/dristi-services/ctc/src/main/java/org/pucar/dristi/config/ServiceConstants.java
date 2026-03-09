@@ -138,5 +138,11 @@ public class ServiceConstants {
     public static final String CTC_APPLICATION_FEE  = "_CTC_APPLICATION_FEE";
 
     public static final String PENDING_ISSUE = "PENDING_ISSUE";
+    public static final String PARTIALLY_ISSUED = "PARTIALLY_ISSUED";
+
+    public static final String WF_ACTION_ISSUE = "ISSUE";
+    public static final String WF_ACTION_ISSUE_ALL = "ISSUE_ALL";
+    public static final String WF_ACTION_REJECT = "REJECT";
+    public static final String WF_ACTION_REJECT_ALL = "REJECT_ALL";
 
 }
