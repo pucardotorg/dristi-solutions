@@ -68,6 +68,9 @@ public class CtcApplication {
     @JsonProperty("affidavitDocument")
     private Document affidavitDocument;
 
+    @JsonProperty("documents")
+    private List<Document> documents;
+
     @JsonProperty("selectedCaseBundle")
     private List<SelectedCaseBundleNode> selectedCaseBundle = new ArrayList<>();
 
