@@ -2,6 +2,7 @@ package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.web.models.Artifact;
@@ -36,7 +37,7 @@ public class EvidenceUtil {
         this.mapper = mapper;
     }
 
-    public List<Artifact> searchEvidence(String filingNumber, String courtId, String tenantId) {
+    public List<Artifact> searchEvidence(String filingNumber, String courtId, String tenantId, RequestInfo requestInfo) {
 
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getEvidenceServiceHost()).append(configuration.getEvidenceServiceSearchEndpoint());
@@ -48,6 +49,7 @@ public class EvidenceUtil {
                 .isHideBailCaseBundle(true)
                 .build();
         EvidenceSearchRequest evidenceSearchRequest = EvidenceSearchRequest.builder()
+                .requestInfo(requestInfo)
                 .criteria(criteria)
                 .pagination(Pagination.builder().sortBy("createdTime").order(OrderPagination.ASC).limit(100).build())
                 .build();
@@ -71,16 +73,16 @@ public class EvidenceUtil {
      * Makes two calls: filingType=DIRECT and filingType=APPLICATION, both with evidenceStatus=false,
      * matching the UI's data fetching for this section.
      */
-    public List<Artifact> searchAdditionalFilingEvidence(String filingNumber, String courtId, String tenantId) {
-        List<Artifact> direct = searchEvidenceByFilingType(filingNumber, courtId, tenantId, "DIRECT");
-        List<Artifact> application = searchEvidenceByFilingType(filingNumber, courtId, tenantId, "APPLICATION");
+    public List<Artifact> searchAdditionalFilingEvidence(String filingNumber, String courtId, String tenantId, RequestInfo requestInfo) {
+        List<Artifact> direct = searchEvidenceByFilingType(filingNumber, courtId, tenantId, "DIRECT", requestInfo);
+        List<Artifact> application = searchEvidenceByFilingType(filingNumber, courtId, tenantId, "APPLICATION", requestInfo);
 
         List<Artifact> combined = new ArrayList<>(direct);
         combined.addAll(application);
         return combined;
     }
 
-    private List<Artifact> searchEvidenceByFilingType(String filingNumber, String courtId, String tenantId, String filingType) {
+    private List<Artifact> searchEvidenceByFilingType(String filingNumber, String courtId, String tenantId, String filingType, RequestInfo requestInfo) {
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getEvidenceServiceHost()).append(configuration.getEvidenceServiceSearchEndpoint());
         EvidenceSearchCriteria criteria = EvidenceSearchCriteria.builder()
@@ -94,6 +96,7 @@ public class EvidenceUtil {
                 .build();
         EvidenceSearchRequest evidenceSearchRequest = EvidenceSearchRequest.builder()
                 .criteria(criteria)
+                .requestInfo(requestInfo)
                 .pagination(Pagination.builder().sortBy("createdTime").order(OrderPagination.ASC).limit(100).build())
                 .build();
 

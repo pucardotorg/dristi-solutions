@@ -25,7 +25,6 @@ public class CtcApplicationSearchCriteria {
 
     @JsonProperty("filingNumber")
     @Valid
-    @NotNull
     private String filingNumber;
     
     @JsonProperty("searchByCaseNumberAnTitle")
@@ -33,9 +32,15 @@ public class CtcApplicationSearchCriteria {
     
     @JsonProperty("courtId")
     @Valid
-    @NotNull
     private String courtId;
+
+    @JsonProperty("searchText")
+    @Valid
+    private String searchText;
     
     @JsonProperty("status")
     private String status;
+
+    @JsonProperty("createdBy")
+    private String createdBy;
 }

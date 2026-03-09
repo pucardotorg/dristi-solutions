@@ -2,6 +2,7 @@ package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
@@ -34,11 +35,12 @@ public class OrderUtil {
         this.serviceRequestRepository = serviceRequestRepository;
     }
 
-    public List<Order> getOrders(String filingNumber, String courtId) {
+    public List<Order> getOrders(String filingNumber, String courtId, RequestInfo requestInfo) {
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getOrderSearchHost()).append(configuration.getOrderSearchPath());
         Object response;
         OrderSearchRequest orderSearchRequest = OrderSearchRequest.builder()
+                .requestInfo(requestInfo)
                 .criteria(OrderCriteria.builder().filingNumber(filingNumber).status("PUBLISHED").courtId(courtId).build())
                 .pagination(Pagination.builder().sortBy("createdDate").order(OrderPagination.ASC).limit(100).build())
                 .build();

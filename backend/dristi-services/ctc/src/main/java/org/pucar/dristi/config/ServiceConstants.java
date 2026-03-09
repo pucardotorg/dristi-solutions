@@ -98,6 +98,8 @@ public class ServiceConstants {
 
     public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
 
+    public static final String CITIZEN_ROLE = "CITIZEN";
+
     public static final String POA = "POA";
 
     public static final String ADVOCATE_NAME = "advocateName";
@@ -109,5 +111,9 @@ public class ServiceConstants {
     public static final String COMPLAINANT = "Complainant";
 
     public static final String ACCUSED = "Accused";
+
+    public static final String E_SIGN = "ESIGN";
+
+    public static final String UPLOAD_SIGNED_COPY = "UPLOAD_SIGNED_COPY";
 
 }

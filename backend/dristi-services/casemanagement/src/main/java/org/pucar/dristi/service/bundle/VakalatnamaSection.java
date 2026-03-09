@@ -75,9 +75,9 @@ public class VakalatnamaSection implements CaseBundleSection {
             String id = "vakalatnama-" + index;
             String title;
             if (record.isPip) {
-                title = "PIP " + pipIdx++;
+                title = "PIP_AFFIDAVIT_HEADING " + pipIdx++;
             } else {
-                title = "VAKALATNAMA " + vakIdx++;
+                title = "VAKALATNAMA_HEADING " + vakIdx++;
             }
             children.add(CaseBundleNode.builder()
                     .id(id)

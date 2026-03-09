@@ -1,7 +1,5 @@
 package org.pucar.dristi.service.bundle;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.egov.common.contract.models.Document;
 import org.pucar.dristi.service.CaseBundleSection;
@@ -20,8 +18,6 @@ import java.util.Objects;
 @Component
 @RequiredArgsConstructor
 public class PaymentReceiptSection implements CaseBundleSection {
-
-    private final ObjectMapper objectMapper;
 
     @Override
     public String getOrder() {
@@ -44,7 +40,7 @@ public class PaymentReceiptSection implements CaseBundleSection {
                     .filter(doc -> "PAYMENT_RECEIPT".equalsIgnoreCase(doc.getDocumentType()))
                     .filter(doc -> doc.getFileStore() != null)
                     .sorted(Comparator.comparing(
-                            doc -> extractConsumerCode(doc),
+                            this::extractConsumerCode,
                             Comparator.nullsLast(String::compareTo)))
                     .toList();
 
@@ -74,7 +70,7 @@ public class PaymentReceiptSection implements CaseBundleSection {
             }
         }
 
-        // 3. Task management receipts (from TaskManagement.additionalDetails.documents)
+        // 3. Task management receipts (from TaskManagement.documents)
         if (data.getTaskManagements() != null) {
             int tmIdx = 0;
             for (TaskManagement tm : data.getTaskManagements()) {
@@ -110,19 +106,13 @@ public class PaymentReceiptSection implements CaseBundleSection {
     }
 
     private String extractReceipt(TaskManagement tm) {
-        if (tm == null || tm.getAdditionalDetails() == null) return null;
-        JsonNode node = objectMapper.valueToTree(tm.getAdditionalDetails());
-        JsonNode documentsNode = node.get("documents");
-        if (documentsNode == null || !documentsNode.isArray()) return null;
-
-        for (JsonNode doc : documentsNode) {
-            if (doc == null || doc.isNull()) continue;
-            String documentType = doc.path("documentType").asText(null);
-            if (!"PAYMENT_RECEIPT".equalsIgnoreCase(documentType)) continue;
-            String fileStore = doc.path("fileStore").asText(null);
-            if (fileStore != null && !fileStore.isBlank()) return fileStore;
-        }
-
-        return null;
+        if (tm == null || tm.getDocuments() == null) return null;
+        return tm.getDocuments().stream()
+                .filter(Objects::nonNull)
+                .filter(d -> "PAYMENT_RECEIPT".equalsIgnoreCase(d.getDocumentType()))
+                .map(Document::getFileStore)
+                .filter(fs -> fs != null && !fs.isBlank())
+                .findFirst()
+                .orElse(null);
     }
 }

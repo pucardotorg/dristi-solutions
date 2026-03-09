@@ -138,4 +138,10 @@ public class Configuration {
 
     @Value("${app.kafka.topics.update.ctc.application}")
     private String updateCtcApplicationTopic;
+
+    @Value("${break.down.code}")
+    private String breakDownCode;
+
+    @Value("${break.down.type}")
+    private String breakDownType;
 }

@@ -21,6 +21,9 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.pucar.dristi.config.ServiceConstants.E_SIGN;
+import static org.pucar.dristi.config.ServiceConstants.UPLOAD_SIGNED_COPY;
+
 @Service
 @Slf4j
 public class CtcApplicationService {
@@ -95,8 +98,8 @@ public class CtcApplicationService {
 
         workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
 
-        if (request.getCtcApplication().getWorkflow() != null && (request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("ESIGN")
-                || request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("UPLOAD_SIGNED_COPY"))) {
+        if (request.getCtcApplication().getWorkflow() != null && (request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase(E_SIGN)
+                || request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase(UPLOAD_SIGNED_COPY))) {
             //change logic for calculating payment through payment calculator if required
             if (request.getCtcApplication().getTotalPages() == null) {
                 List<String> acceptedFileStoreIds = getFileStoreIds(request);
@@ -105,8 +108,15 @@ public class CtcApplicationService {
                 log.info("Calculated totalPages={} from {} accepted documents for application: {}",
                         totalPages, acceptedFileStoreIds.size(), request.getCtcApplication().getCtcApplicationNumber());
             }
-            Calculation calculation = Calculation.builder().totalAmount(20 + request.getCtcApplication().getTotalPages() * 1.5).tenantId(request.getCtcApplication().getTenantId()).build();
-            etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + "_APPLICATION_FEE", calculation);
+
+            Double totalAmount = 20 + request.getCtcApplication().getTotalPages() * 1.5;
+
+            Calculation calculation = Calculation.builder()
+                    .totalAmount(totalAmount)
+                    .tenantId(request.getCtcApplication().getTenantId())
+                    .breakDown(getBreakDown(totalAmount))
+                    .build();
+            etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + "_CTC_APPLICATION_FEE", calculation);
         }
         if ("PENDING_ISSUE".equalsIgnoreCase(request.getCtcApplication().getStatus())) {
             indexerUtils.pushIssueCtcDocumentsToIndex(application);
@@ -150,6 +160,7 @@ public class CtcApplicationService {
             }
         }
 
+        enrichSearchCriteriaForCitizen(ctcApplicationSearchRequest);
         List<CtcApplication> applications = ctcApplicationRepository.getCtcApplication(ctcApplicationSearchRequest);
         if (applications == null) {
             return new ArrayList<>();
@@ -169,8 +180,19 @@ public class CtcApplicationService {
     private CtcApplication stripCaseBundles(CtcApplication application) {
         application.setCaseBundles(null);
         return application;
-    }
 
+          private void enrichSearchCriteriaForCitizen(CtcApplicationSearchRequest request) {
+        if (request.getRequestInfo() != null && request.getRequestInfo().getUserInfo() != null) {
+            boolean isCitizen = request.getRequestInfo().getUserInfo().getRoles().stream()
+                    .anyMatch(role -> ServiceConstants.CITIZEN_ROLE.equalsIgnoreCase(role.getCode()));
+            
+            if (isCitizen && request.getCriteria() != null) {
+                String userUuid = request.getRequestInfo().getUserInfo().getUuid();
+                request.getCriteria().setCreatedBy(userUuid);
+            }
+        }
+    }
+      
     public void markDocumentsAsIssuedOrReject(IssueCtcDocumentUpdateRequest request) {
         try {
             List<DocumentActionItem> docs = request.getDocs();
@@ -445,6 +467,15 @@ public class CtcApplicationService {
             log.error("Error reading CTC application from Redis cache: {}", e.getMessage());
             return null;
         }
+    private List<BreakDown> getBreakDown(Double totalAmount) {
+        BreakDown breakDown = new BreakDown();
+        breakDown.setCode(config.getBreakDownCode());
+        breakDown.setType(config.getBreakDownType());
+        breakDown.setAmount(totalAmount);
+
+        List<BreakDown> breakDownList = new ArrayList<>();
+        breakDownList.add(breakDown);
+        return breakDownList;
     }
 
 }
