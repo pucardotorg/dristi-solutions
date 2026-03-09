@@ -3,6 +3,7 @@ package com.egov.icops_integrationkerala.util;
 import com.egov.icops_integrationkerala.config.IcopsConfiguration;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,7 +56,7 @@ class FileStorageUtilTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals(org.apache.commons.codec.binary.Base64.encodeBase64String(fileContent.getBytes()), result);
+        assertEquals(Base64.encodeBase64String(fileContent.getBytes()), result);
     }
 
     @Test
