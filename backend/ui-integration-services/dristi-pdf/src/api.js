@@ -658,7 +658,8 @@ async function search_templateConfiguration(
 async function search_ctc_applications(
   tenantId,
   requestinfo,
-  criteria
+  criteria,
+  pagination
 ) {
   try {
     return await axios({
@@ -671,6 +672,7 @@ async function search_ctc_applications(
         RequestInfo: requestinfo,
         criteria,
         tenantId,
+        pagination
       },
     });
   } catch (error) {

@@ -9,18 +9,17 @@ const {
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
-const { getComplaintAndAccusedList, getNameByUuid } = require("../applicationHandlers/getCaseDetails");
+const { getComplaintAndAccusedList } = require("../applicationHandlers/getCaseDetails"); // getnamebyuuid
 const { cleanName } = require("../applicationHandlers/cleanName");
 
 async function ctcApplications(
   req,
   res,
   qrCode,
-  application,
   courtCaseJudgeDetails
 ) {
 
-  const { RequestInfo, criteria, pagination } = req.body || {};
+  const { RequestInfo, criteria, pagination={} } = req.body || {};
     
   const tenantId = req.query.tenantId;
   const entityId = req.query.entityId;
@@ -33,18 +32,10 @@ async function ctcApplications(
       400
     );
   }
-  if(!criteria.id && !criteria.applicationNumber){
-    return renderError(
-      res,
-      "Either id or applicationNumber inside SearchCriteria is mandatory to generate the PDF",
-      400
-    );
-  }
-  const { cnrNumber, courtId, applicationNumber } = criteria;
+  const { cnrNumber, courtId, ctcApplicationNumber,filingNumber } = criteria;
   const missingFields = [];
   if (!tenantId) missingFields.push("tenantId");
-  if(!cnrNumber ) missingFields.push("cnrNumber");
-  if(!applicationNumber) missingFields.push("applicationNumber");
+  if(!ctcApplicationNumber) missingFields.push("ctcApplicationNumber");
   if (RequestInfo === undefined) missingFields.push("requestInfo");
   if (qrCode === "true" && (!entityId || !code))
     missingFields.push("entityId and code");
@@ -83,7 +74,7 @@ async function ctcApplications(
         ),
       "Failed to query CTC applications service"
     );
-
+    
     const resCTC = resCtcApplications?.data?.ctcApplications?.[0] ||{};
     const courtCase = resCase?.data?.criteria?.[0]?.responseList?.[0];
 
@@ -130,8 +121,8 @@ async function ctcApplications(
       courtCase || {}
     );
     let advocateName = "";
-    const advocateIndividualId =
-      application?.applicationDetails?.advocateIndividualId;
+    const advocateIndividualId = "";
+      // application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
       const resAdvocate = await handleApiCall(
         () => search_advocate(tenantId, advocateIndividualId, RequestInfo),
@@ -145,8 +136,8 @@ async function ctcApplications(
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
     let applicationTitle = "Application for Certified True Copies";
-    const onBehalfOfuuid = application?.onBehalfOf?.[0];
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const onBehalfOfuuid = ""; // application?.onBehalfOf?.[0];
+    const partyName = ""; //application?.additionalDetails?.onBehalOfName || "";
     const onBehalfOfLitigent = courtCase?.litigants?.find(
       (item) => item.additionalDetails.uuid === onBehalfOfuuid
     );
@@ -158,10 +149,10 @@ async function ctcApplications(
       partyType = "Accused";
     }
 
-    const requestedDocumentList = resCTC?.requestedDocumentList || [];
+    const requestedDocumentList = []; // resCTC?.requestedDocumentList || [];
     const noRepresentingParty = resCTC?.noRepresentingParty || false;
-    const courtName = mdmsCourtRoom;
-    const applicantName = getNameByUuid(application?.createdBy, courtCase);
+    const courtName = mdmsCourtRoom?.name;
+    const applicantName = "" ; //getNameByUuid(application?.createdBy, courtCase);
     const applicationDate = resCTC?.applicationDate || "";
     const isMagistrateApproved = resCTC?.isMagistrateApproved || false;
     const applicationApprovalDate = resCTC?.applicationApprovalDate || "";
@@ -170,11 +161,10 @@ async function ctcApplications(
     const sealOfCourt = resCTC?.sealOfCourt || "";
     const cmoName = resCTC?.cmoName || "";
     
-
     const data = {
       Data: [
         {
-          courtComplex: mdmsCourtRoom,
+          courtComplex: mdmsCourtRoom?.name,
           caseNumber: caseNumber,
           caseName: courtCase.caseTitle,
           date: formattedToday,
@@ -184,13 +174,13 @@ async function ctcApplications(
           applicationTitle: applicationTitle,
           partyName: partyName,
           partyType: partyType,
-          requestedDocumentList: requestedDocumentList, // TODO : make it appropriate array and compare with other list
+          requestedDocumentList: [], //requestedDocumentList, // TODO : make it appropriate array and compare with other list
           noRepresentingParty: noRepresentingParty,
           applicantSignature: "Applicant Signature", // TODO : Inform and verify backend
 
           courtName: courtName,
           applicantName: applicantName,
-          applicationNumber: applicationNumber,
+          applicationNumber: ctcApplicationNumber,
           applicationDate: applicationDate, // TODO : format all the dates correctly
           requestedDocuments: requestedDocumentList,
           isMagistrateApproved: isMagistrateApproved,
