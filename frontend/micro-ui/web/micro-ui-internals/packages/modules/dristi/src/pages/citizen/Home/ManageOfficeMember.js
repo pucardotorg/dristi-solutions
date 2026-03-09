@@ -525,7 +525,7 @@ const ManageOfficeMember = () => {
             <span className="manage-office-member-field__label">{t("MOBILE_NUMBER") || "Mobile number"}</span>
             <span className="manage-office-member-field__value">{mobileNumber}</span>
           </div>
-          <div className="manage-office-member-field">
+          <div className="manage-office-member-field manage-office-member-field--wide">
             <span className="manage-office-member-field__label">{t("ACCESS_TYPE") || "Access Type"}</span>
             <AccessTypeDropdown options={accessTypeOptions} selected={selectedAccessTypeOption} onChange={handleAccessTypeChange} />
           </div>
