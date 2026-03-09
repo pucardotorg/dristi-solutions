@@ -83,24 +83,6 @@ public class CaseRepository {
         this.objectMapper = objectMapper;
     }
 
-    private String extractAdvocateUuidFromAdditionalDetails(AdvocateMapping representative) {
-        JsonNode node = objectMapper.convertValue(representative, JsonNode.class);
-        JsonNode uuidNode = node.path("additionalDetails").path("uuid");
-        if (uuidNode.isMissingNode() || uuidNode.isNull()) {
-            return null;
-        }
-        return uuidNode.asText();
-    }
-
-    private String extractAdvocateNameFromAdditionalDetails(AdvocateMapping representative) {
-        JsonNode node = objectMapper.convertValue(representative, JsonNode.class);
-        JsonNode nameNode = node.path("additionalDetails").path("advocateName");
-        if (nameNode.isMissingNode() || nameNode.isNull()) {
-            return null;
-        }
-        return nameNode.asText();
-    }
-
     private void setAdvocateOffices(CaseCriteria caseCriteria, List<String> ids) {
         if (caseCriteria.getResponseList() == null || caseCriteria.getResponseList().isEmpty()) {
             return;
@@ -164,10 +146,11 @@ public class CaseRepository {
                     continue;
                 }
 
+                String officeAdvocateUserUuid = officeRows.get(0).getOfficeAdvocateUserUuid();
+
                 AdvocateOffice office = officeMap.computeIfAbsent(advocateId, k -> AdvocateOffice.builder()
                         .officeAdvocateId(advocateId)
-                        .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(rep))
-                        .officeAdvocateUserUuid(extractAdvocateUuidFromAdditionalDetails(rep))
+                        .officeAdvocateUserUuid(officeAdvocateUserUuid)
                         .build());
 
                 // Separate advocates and clerks based on memberType
