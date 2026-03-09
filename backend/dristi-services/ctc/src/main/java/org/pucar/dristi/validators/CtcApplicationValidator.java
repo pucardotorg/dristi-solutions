@@ -72,6 +72,10 @@ public class CtcApplicationValidator {
             if (!java.util.Objects.equals(existingIsParty, requestIsParty)) {
                 request.getCtcApplication().setIsPartyToCase(existingIsParty);
             }
+
+            if (existingApplication.get(0).getCaseBundles() != null && !existingApplication.get(0).getCaseBundles().isEmpty()) {
+                request.getCtcApplication().setCaseBundles(existingApplication.get(0).getCaseBundles());
+            }
         }
     }
 

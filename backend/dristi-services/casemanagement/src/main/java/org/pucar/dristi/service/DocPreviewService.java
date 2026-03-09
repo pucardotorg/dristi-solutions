@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ElasticSearchRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
@@ -38,6 +39,7 @@ public class DocPreviewService {
     private final TaskManagementUtil taskManagementUtil;
     private final OrderUtil orderUtil;
     private final CtcUtil ctcUtil;
+    private final Producer producer;
 
     private final CaseBundleEngine engine;
 
@@ -68,13 +70,15 @@ public class DocPreviewService {
 
     private void storeCaseBundlesInCtcApplication(String ctcApplicationNumber, List<CaseBundleNode> caseBundleNodes, RequestInfo requestInfo) {
         try {
-            Map<String, Object> ctcApplication = new HashMap<>();
-            ctcApplication.put("ctcApplicationNumber", ctcApplicationNumber);
-            ctcApplication.put("caseBundles", caseBundleNodes);
-            ctcUtil.updateCtcApplication(ctcApplication, requestInfo);
-            log.info("Stored caseBundles in CTC application: {}", ctcApplicationNumber);
+            Map<String, Object> message = new HashMap<>();
+            message.put("ctcApplicationNumber", ctcApplicationNumber);
+            message.put("caseBundles", caseBundleNodes);
+            message.put("lastModifiedBy", requestInfo.getUserInfo().getUuid());
+            message.put("lastModifiedTime", System.currentTimeMillis());
+            producer.push(configuration.getUpdateCaseBundlesTopic(), message);
+            log.info("Pushed caseBundles update to Kafka for CTC application: {}", ctcApplicationNumber);
         } catch (Exception e) {
-            log.error("Error storing caseBundles in CTC application: {}", ctcApplicationNumber, e);
+            log.error("Error pushing caseBundles update to Kafka for CTC application: {}", ctcApplicationNumber, e);
         }
     }
 

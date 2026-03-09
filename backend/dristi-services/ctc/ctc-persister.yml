@@ -123,4 +123,23 @@ serviceMaps:
             - jsonPath: $.requestInfo.actionTime
             - jsonPath: $.ctcApplicationNumbers.*
 
-        
+    - version: 1.0
+      description: Update caseBundles in CTC application
+      fromTopic: update-ctc-casebundles
+      isTransaction: true
+      isAuditEnabled: true
+      module: CTC
+      objectIdJsonPath: $.ctcApplicationNumber
+      tenantIdJsonPath: $.tenantId
+      transactionCodeJsonPath: $.ctcApplicationNumber
+      queryMaps:
+        - query: UPDATE dristi_ctc_applications SET case_bundles=?, last_modified_by=?, last_modified_time=? WHERE ctc_application_number=?;
+          basePath: $
+          jsonMaps:
+            - jsonPath: $.caseBundles
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.lastModifiedBy
+            - jsonPath: $.lastModifiedTime
+            - jsonPath: $.ctcApplicationNumber
+
