@@ -3,19 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
-
-const DeleteIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M2.5 5H4.16667H17.5" stroke="#D4351C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <path
-      d="M6.66667 5V3.33333C6.66667 2.89131 6.84226 2.46738 7.15482 2.15482C7.46738 1.84226 7.89131 1.66667 8.33333 1.66667H11.6667C12.1087 1.66667 12.5326 1.84226 12.8452 2.15482C13.1577 2.46738 13.3333 2.89131 13.3333 3.33333V5M15.8333 5V16.6667C15.8333 17.1087 15.6577 17.5326 15.3452 17.8452C15.0326 18.1577 14.6087 18.3333 14.1667 18.3333H5.83333C5.39131 18.3333 4.96738 18.1577 4.65482 17.8452C4.34226 17.5326 4.16667 17.1087 4.16667 16.6667V5H15.8333Z"
-      stroke="#D4351C"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
+import { ManageOfficeDeleteIcon } from "../../../icons/svgIndex";
 
 const ManageOffice = () => {
   const { t } = useTranslation();
@@ -73,7 +61,12 @@ const ManageOffice = () => {
   }, [advocateSearchResult]);
 
   // Fetch office members using the hook
-  const { data: officeMembersData, isLoading: isLoadingMembers, refetch: refetchMembers } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
+  const {
+    data: officeMembersData,
+    isLoading: isLoadingMembers,
+    isFetching: isFetchingMembers,
+    refetch: refetchMembers,
+  } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
     {
       searchCriteria: {
         officeAdvocateUserUuid: officeAdvocateUserUuid,
@@ -114,6 +107,7 @@ const ManageOffice = () => {
   const {
     data: advocatesWorkingForData,
     isLoading: isLoadingAdvocatesWorkingFor,
+    isFetching: isFetchingAdvocatesWorkingFor,
     refetch: refetchAdvocatesWorkingFor,
   } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
     {
@@ -327,12 +321,25 @@ const ManageOffice = () => {
   }, [officeMembers]);
 
   // Data and loading per tab: My Advocates/Clerks vs Advocates I'm working for
-  const displayMembers = useMemo(() => (activeTab === "advocatesWorkingFor" ? advocatesWorkingForMembers : filteredMembers), [
-    activeTab,
-    advocatesWorkingForMembers,
-    filteredMembers,
-  ]);
-  const isLoadingDisplay = activeTab === "advocatesWorkingFor" ? isLoadingAdvocatesWorkingFor : isLoadingMembers;
+  const displayMembers = useMemo(
+    () => (activeTab === "advocatesWorkingFor" ? advocatesWorkingForMembers : filteredMembers),
+    [activeTab, advocatesWorkingForMembers, filteredMembers]
+  );
+
+  // Show loader both on initial load and on refetch when switching tabs
+  const isLoadingDisplay =
+    activeTab === "advocatesWorkingFor"
+      ? isLoadingAdvocatesWorkingFor || isFetchingAdvocatesWorkingFor
+      : isLoadingMembers || isFetchingMembers;
+
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
+    if (tabId === "myAdvocatesClerks" && refetchMembers) {
+      refetchMembers();
+    } else if (tabId === "advocatesWorkingFor" && refetchAdvocatesWorkingFor) {
+      refetchAdvocatesWorkingFor();
+    }
+  };
 
   const handleDeleteClick = (member) => {
     setMemberToRemove(member);
@@ -400,7 +407,7 @@ const ManageOffice = () => {
           {tabs?.map((tab) => (
             <button
               key={tab?.id}
-              onClick={() => setActiveTab(tab?.id)}
+              onClick={() => handleTabClick(tab?.id)}
               className={`manage-office-tab${activeTab === tab?.id ? " manage-office-tab--active" : ""}`}
             >
               {tab?.label}
@@ -426,7 +433,7 @@ const ManageOffice = () => {
             <Loader />
           </div>
         ) : displayMembers?.length > 0 ? (
-          <div>
+          <div className="manage-office-table-wrapper">
             {/* Table Header: 4 columns for Advocates I'm working for, 5 for My Advocates/Clerks */}
             <div className={`manage-office-table-header${activeTab === "advocatesWorkingFor" ? " manage-office-table-header--working-for" : ""}`}>
               <span>{activeTab === "advocatesWorkingFor" ? t("ADVOCATE") || "Advocate" : t("NAME") || "Name"}</span>
@@ -497,7 +504,7 @@ const ManageOffice = () => {
                     </button>
                   )}
                   <button onClick={() => handleDeleteClick(member)} className="manage-office-delete-btn">
-                    <DeleteIcon />
+                    <ManageOfficeDeleteIcon />
                   </button>
                 </span>
               </div>

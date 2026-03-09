@@ -2804,16 +2804,27 @@ export const UICustomizations = {
       const limit = tableForm.limit != null ? tableForm.limit : existingPagination.limit;
       const offSet = tableForm.offset != null ? tableForm.offset : (tableForm.offSet != null ? tableForm.offSet : existingPagination.offSet);
 
+      const finalLimit = limit != null ? limit : 10;
+      const finalOffSet = offSet != null ? offSet : 0;
+
       return {
         ...requestCriteria,
+        changeQueryName: "assignCases_" + finalLimit + "_" + finalOffSet + "_" + caseMappingFilterStatus,
         body: {
+          ...requestCriteria?.body,
           criteria: {
             ...existingCriteria,
             tenantId: tenantId || existingCriteria.tenantId,
             caseMappingFilterStatus,
             ...(caseSearchText ? { caseSearchText } : {}),
           },
-          pagination: { limit: limit != null ? limit : 10, offSet: offSet != null ? offSet : 0 },
+          pagination: { limit: finalLimit, offSet: finalOffSet },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, totalCount: data?.pagination?.totalCount };
+          },
         },
       };
     },
