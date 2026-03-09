@@ -2804,33 +2804,26 @@ export const UICustomizations = {
       const limit = tableForm.limit != null ? tableForm.limit : existingPagination.limit;
       const offSet = tableForm.offset != null ? tableForm.offset : (tableForm.offSet != null ? tableForm.offSet : existingPagination.offSet);
 
+      const finalLimit = limit != null ? limit : 10;
+      const finalOffSet = offSet != null ? offSet : 0;
+
       return {
         ...requestCriteria,
+        changeQueryName: "assignCases_" + finalLimit + "_" + finalOffSet + "_" + caseMappingFilterStatus,
         body: {
+          ...requestCriteria?.body,
           criteria: {
             ...existingCriteria,
             tenantId: tenantId || existingCriteria.tenantId,
             caseMappingFilterStatus,
             ...(caseSearchText ? { caseSearchText } : {}),
           },
-          pagination: { limit: limit != null ? limit : 10, offSet: offSet != null ? offSet : 0 },
+          pagination: { limit: finalLimit, offSet: finalOffSet },
         },
         config: {
           ...requestCriteria?.config,
           select: (data) => {
-            const existingSelect = requestCriteria?.config?.select;
-            const basePayload = typeof existingSelect === "function" ? existingSelect(data) : data;
-
-            const paginationTotal =
-              basePayload?.pagination && typeof basePayload.pagination.totalCount === "number"
-                ? basePayload.pagination.totalCount
-                : typeof basePayload?.totalCount === "number"
-                ? basePayload.totalCount
-                : Array.isArray(basePayload?.cases)
-                ? basePayload.cases.length
-                : 0;
-
-            return { ...basePayload, totalCount: paginationTotal };
+            return { ...data, totalCount: data?.pagination?.totalCount };
           },
         },
       };
