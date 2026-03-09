@@ -67,8 +67,11 @@ public class CtcApplication {
     @JsonProperty("affidavitDocument")
     private Document affidavitDocument;
 
-    @JsonProperty("caseBundleNodes")
-    private List<CaseBundleNode> caseBundleNodes;
+    @JsonProperty("selectedCaseBundle")
+    private List<SelectedCaseBundleNode> selectedCaseBundle;
+
+    @JsonProperty("caseBundles")
+    private List<CaseBundleNode> caseBundles;
 
     @JsonProperty("totalPages")
     private Integer totalPages;

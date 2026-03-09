@@ -74,6 +74,22 @@ public class CtcUtil {
         }
     }
 
+    public void updateCtcApplication(Map<String, Object> ctcApplication, RequestInfo requestInfo) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(configs.getCtcHost()).append(configs.getCtcUpdateEndpoint());
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("RequestInfo", requestInfo != null ? requestInfo : RequestInfo.builder().build());
+        request.put("ctcApplication", ctcApplication);
+
+        try {
+            repository.fetchResult(uri, request);
+            log.info("Successfully updated CTC application");
+        } catch (Exception e) {
+            log.error("Error updating CTC application", e);
+        }
+    }
+
     private String deriveTenantIdFromCourtId(String courtId) {
         if (!StringUtils.hasText(courtId) || courtId.length() < 2) {
             return null;

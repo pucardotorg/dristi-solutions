@@ -1,6 +1,5 @@
 package org.pucar.dristi.web.models;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,12 +11,10 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CaseBundleNode {
+public class SelectedCaseBundleNode {
 
     private String id;
     private String title;
     private String fileStoreId;
-    private String issuedFileStoreId;
-    private String status;//accepted rejected pending
-    private List<CaseBundleNode> children;
+    private List<SelectedCaseBundleNode> children;
 }

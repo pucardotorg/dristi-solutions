@@ -13,11 +13,11 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class IssueCtcDocumentUpdateResponse {
+public class BulkCtcApplicationResponse {
 
-    @JsonProperty("responseInfo")
+    @JsonProperty("ResponseInfo")
     private ResponseInfo responseInfo;
 
-    @JsonProperty("docs")
-    private List<DocumentActionItem> docs;
+    @JsonProperty("ctcApplications")
+    private List<CtcApplication> ctcApplications;
 }

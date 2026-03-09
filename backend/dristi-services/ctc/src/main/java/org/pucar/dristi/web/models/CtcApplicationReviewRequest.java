@@ -17,9 +17,10 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class IssueCtcDocumentUpdateRequest {
+public class CtcApplicationReviewRequest {
 
     @JsonProperty("RequestInfo")
+    @Valid
     @NotNull
     private RequestInfo requestInfo;
 
@@ -29,11 +30,11 @@ public class IssueCtcDocumentUpdateRequest {
 
     @JsonProperty("action")
     @NotBlank
-    private String action; // ISSUE or REJECT
+    private String action; // APPROVE or REJECT
 
-    @JsonProperty("docs")
-    @NotEmpty
+    @JsonProperty("applications")
     @Valid
-    private List<DocumentActionItem> docs;
+    @NotEmpty
+    private List<ReviewItem> applications;
 
 }

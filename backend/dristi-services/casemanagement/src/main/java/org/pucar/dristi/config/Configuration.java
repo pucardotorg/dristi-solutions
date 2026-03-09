@@ -238,6 +238,9 @@ public class Configuration {
 	@Value("${dristi.ctc.search.endpoint}")
 	private String ctcSearchEndpoint;
 
+	@Value("${dristi.ctc.update.endpoint}")
+	private String ctcUpdateEndpoint;
+
 	@PostConstruct
 	public void init() {
 		caseAllowedStatusesList = Arrays.asList(caseAllowedStatuses.split(","));
