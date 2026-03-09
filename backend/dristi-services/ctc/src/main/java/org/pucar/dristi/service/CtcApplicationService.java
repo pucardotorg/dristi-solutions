@@ -109,7 +109,7 @@ public class CtcApplicationService {
                     .tenantId(request.getCtcApplication().getTenantId())
                     .breakDown(getBreakDown(totalAmount))
                     .build();
-            etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + "_APPLICATION_FEE", calculation);
+            etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + "_CTC_APPLICATION_FEE", calculation);
         }
         if ("PENDING_ISSUE".equalsIgnoreCase(request.getCtcApplication().getStatus())) {
             indexerUtils.pushIssueCtcDocumentsToIndex(application);
