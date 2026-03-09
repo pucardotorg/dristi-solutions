@@ -50,6 +50,7 @@ public class CtcApplicationRowMapper implements ResultSetExtractor<List<CtcAppli
                         .isPartyToCase(rs.getBoolean("is_party_to_case"))
                         .partyDesignation(rs.getString("party_designation"))
                         .affidavitDocument(getObjectFromJson(rs.getString("affidavit_document"), new TypeReference<Document>() {}))
+                        .documents(getObjectListFromJson(rs.getString("documents"), new TypeReference<List<Document>>() {}))
                         .selectedCaseBundle(getObjectListFromJson(rs.getString("selected_case_bundle"), new TypeReference<List<SelectedCaseBundleNode>>() {}))
                         .caseBundles(getObjectListFromJson(rs.getString("case_bundles"), new TypeReference<List<CaseBundleNode>>() {}))
                         .totalPages(rs.getInt("total_pages"))
