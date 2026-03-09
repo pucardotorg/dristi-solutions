@@ -12,7 +12,7 @@ const { formatDate } = require("../applicationHandlers/formatDate");
 
 const extractPermanentAddress = (individualData) => {
   const permanentAddress = individualData?.address?.find(
-    (addr) => addr.type === "PERMANENT"
+    (addr) => addr.type === "PERMANENT",
   );
 
   if (!permanentAddress) {
@@ -53,14 +53,18 @@ const processSureties = (bailData) => {
     return formattedAddress;
   };
 
-  return sureties?.map((surety) => ({
-    suretyName: surety?.name || "",
-    suretyParentName: surety?.fatherName || "",
-    suretyAddress: formatAddress(surety?.address) || "",
-    index: surety?.index,
-  }))?.sort((a, b) =>  
-    (a?.index != null ? a.index : Infinity) - 
-    (b?.index != null ? b.index : Infinity));
+  return sureties
+    ?.map((surety) => ({
+      suretyName: surety?.name || "",
+      suretyParentName: surety?.fatherName || "",
+      suretyAddress: formatAddress(surety?.address) || "",
+      index: surety?.index,
+    }))
+    ?.sort(
+      (a, b) =>
+        (a?.index != null ? a.index : Infinity) -
+        (b?.index != null ? b.index : Infinity),
+    );
 };
 
 const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
@@ -71,6 +75,7 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
   const code = req.query.code;
   const requestInfo = req.body.RequestInfo;
   const filingNumber = req.query.filingNumber;
+  const asUser = req.query.asUser;
 
   const missingFields = [];
   if (!cnrNumber) missingFields.push("cnrNumber");
@@ -84,7 +89,7 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
     return renderError(
       res,
       `${missingFields.join(", ")} are mandatory to generate the PDF`,
-      400
+      400,
     );
   }
 
@@ -101,7 +106,7 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
   try {
     const resCase = await handleApiCall(
       () => search_case(cnrNumber, tenantId, requestInfo, req.query.courtId),
-      "Failed to query case service"
+      "Failed to query case service",
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
     if (!courtCase) {
@@ -109,8 +114,15 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
     }
 
     const resBailBond = await handleApiCall(
-      () => search_bailBond(tenantId, bailBondId, requestInfo, filingNumber),
-      "Failed to query bailBond service"
+      () =>
+        search_bailBond(
+          tenantId,
+          bailBondId,
+          requestInfo,
+          filingNumber,
+          asUser,
+        ),
+      "Failed to query bailBond service",
     );
 
     const bailBond = resBailBond?.data?.bails?.[0];
@@ -120,7 +132,7 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
 
     const resIndividual = await handleApiCall(
       () => search_individual_uuid(tenantId, bailBond.litigantId, requestInfo),
-      "Failed to query individual service using id"
+      "Failed to query individual service using id",
     );
     const individual = resIndividual?.data?.Individual[0];
     if (!individual) {
@@ -137,9 +149,9 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
             tenantId,
             code,
             entityId,
-            requestInfo
+            requestInfo,
           ),
-        "Failed to query sunbirdrc credential service"
+        "Failed to query sunbirdrc credential service",
       );
       const $ = cheerio.load(resCredential.data);
       const imgTag = $("img");
@@ -147,7 +159,7 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
         return renderError(
           res,
           "No img tag found in the sunbirdrc response",
-          500
+          500,
         );
       }
       base64Url = imgTag.attr("src");
@@ -200,7 +212,7 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
       qrCode === "true" ? config.pdf.bail_bond_qr : config.pdf.bail_bond;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
-      "Failed to generate PDF of Generic Application"
+      "Failed to generate PDF of Generic Application",
     );
     const filename = `${pdfKey}_${new Date().getTime()}`;
     res.writeHead(200, {
