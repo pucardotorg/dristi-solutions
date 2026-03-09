@@ -47,7 +47,7 @@ public class EsignApiControllerTest {
         ResponseEntity<HttpHeaders> responseEntity = interceptorApiController.redirectHandler(result, filestoreId, redirectionType);
 
         HttpHeaders expectedHeaders = new HttpHeaders();
-        expectedHeaders.setLocation(URI.create(redirectUrl + "/" + redirectionType + "/dristi?result=" + result + "&filestoreId=" + filestoreId));
+        expectedHeaders.setLocation(URI.create(redirectUrl + "/ui/" + redirectionType + "/dristi?result=" + result + "&filestoreId=" + filestoreId));
 
         assertEquals(HttpStatus.TEMPORARY_REDIRECT, responseEntity.getStatusCode());
         assertEquals(expectedHeaders.getLocation(), responseEntity.getHeaders().getLocation());
