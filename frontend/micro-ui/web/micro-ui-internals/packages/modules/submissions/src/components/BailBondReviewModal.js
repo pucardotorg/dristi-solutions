@@ -43,6 +43,7 @@ const BailBondReviewModal = ({
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
 
   const { data: { file: bailBondPreviewPdf, fileName: bailBondPreviewFileName } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["bailBondPreviewPdf", tenantId, bailBondDetails?.bailId, bailBondDetails?.cnrNumber, bailBondPreviewSubmissionTypeMap["BAIL_BOND"]],
@@ -68,7 +69,7 @@ const BailBondReviewModal = ({
               bailBondPdfType: bailBondPreviewSubmissionTypeMap["BAIL_BOND"], // need to change
               courtId: courtId,
               filingNumber: bailBondDetails?.filingNumber,
-              asUser: authorizedUuid,
+              ...(userInfoType === "citizen" && { asUser: authorizedUuid }),
             },
             responseType: "blob",
           }
