@@ -35,7 +35,7 @@ export const assignCasesConfig = ({ member = {}, advocateInfo = {} } = {}) => {
       masterName: "commonUiConfig",
       moduleName: "assignCasesConfig",
       minParametersForSearchForm: 1,
-      tableFormJsonPath: "requestParam",
+      tableFormJsonPath: "requestBody.pagination",
       filterFormJsonPath: "requestBody.criteria",
       searchFormJsonPath: "requestBody.criteria",
     },
@@ -94,6 +94,7 @@ export const assignCasesConfig = ({ member = {}, advocateInfo = {} } = {}) => {
             {
               label: "CASE_NAME",
               jsonPath: "caseTitle",
+              additionalCustomization: true,
             },
             {
               label: "CASE_NUMBER",
@@ -102,6 +103,11 @@ export const assignCasesConfig = ({ member = {}, advocateInfo = {} } = {}) => {
           ],
           enableColumnSort: true,
           resultsJsonPath: "cases",
+          customDefaultPagination: {
+            limit: 10,
+            offset: 0,
+          },
+          manualPagination: true,
         },
         show: true,
       },
