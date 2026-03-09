@@ -21,7 +21,7 @@ import org.springframework.kafka.annotation.*;
 import org.springframework.util.*;
 import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.*;
+import jakarta.annotation.*;
 
 @SpringBootApplication
 @Import(TracerConfiguration.class)

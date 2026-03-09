@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import java.util.Collections;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -30,9 +30,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
 * API tests for BankDetailsApiController
 */
-@ExtendWith(SpringExtension.class)
 @WebMvcTest(BankDetailsApiController.class)
 @Import(TestConfiguration.class)
+@AutoConfigureMockMvc(addFilters = false)
 class BankDetailsApiControllerTest {
 
     @Autowired

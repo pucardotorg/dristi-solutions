@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHost;
-import org.apache.tomcat.util.codec.binary.Base64;
+import java.util.Base64;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -26,14 +26,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static java.util.Objects.isNull;
-import static javax.servlet.http.HttpServletRequest.BASIC_AUTH;
+import static jakarta.servlet.http.HttpServletRequest.BASIC_AUTH;
 import static org.apache.commons.codec.CharEncoding.US_ASCII;
 import static org.egov.inbox.util.DSSConstants.*;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -323,9 +323,10 @@ public class ElasticSearchService {
     }
 
     private String getBase64Value(String userName, String password) {
-        String authString = String.format("%s:%s", userName, password);
-        byte[] encodedAuthString = Base64.encodeBase64(authString.getBytes(Charset.forName(US_ASCII)));
-        return String.format(BASIC_AUTH, new String(encodedAuthString));
+        String authString = userName + ":" + password;
+        String encodedAuthString = Base64.getEncoder()
+                .encodeToString(authString.getBytes(Charset.forName(US_ASCII)));
+        return "Basic " + encodedAuthString;
     }
 
     /**

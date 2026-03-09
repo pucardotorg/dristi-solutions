@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.2.2</version>
+    <version>3.5.11</version>
   </parent>
   <groupId>org.egov</groupId>
   <artifactId>egov-hrms</artifactId>
@@ -15,11 +15,10 @@
   <properties>
     <log4j2.version>2.17.1</log4j2.version>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <java.version>17</java.version>
+    <java.version>25</java.version>
     <joda-time-version>2.9.6</joda-time-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.version>3.3.9</maven.version>
-    <lombok.version>1.18.22</lombok.version>
+    <lombok.version>1.18.38</lombok.version>
     <commons-lang-version>2.6</commons-lang-version>
   </properties>
   <dependencies>
@@ -109,6 +108,18 @@
   </repositories>
   <build>
     <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+                <annotationProcessorPaths>
+                    <path>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok</artifactId>
+                    </path>
+                </annotationProcessorPaths>
+            </configuration>
+        </plugin>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
