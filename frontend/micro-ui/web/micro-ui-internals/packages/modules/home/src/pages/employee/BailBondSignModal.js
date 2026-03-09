@@ -78,6 +78,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const userUUID = Digit.UserService.getUser()?.info?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUUID);
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
 
   useEffect(() => {
     const fetchBailBondData = async () => {
@@ -91,7 +92,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
               bailId: queryStrings.bailId || selectedBailBond?.businessObject?.bailDetails?.bailId || selectedBailBond?.bailId,
               fuzzySearch: false,
               filingNumber,
-              asUser: authorizedUuid,
+              ...(userInfoType === "citizen" && { asUser: authorizedUuid }),
             },
             pagination: {
               limit: 10,
