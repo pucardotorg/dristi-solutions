@@ -2,13 +2,16 @@ package org.pucar.dristi.repository.queryBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.web.models.ApplicationCriteria;
+import org.pucar.dristi.web.models.ApplicationSearchRequest;
 import org.pucar.dristi.web.models.Pagination;
 import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -103,9 +106,16 @@ public class ApplicationQueryBuilder {
 
             // TODO : remove this, this is temporary fix (#5016)
             // --------- REQUEST_FOR_BAIL visibility ----------
-            applyRequestForBailVisibility(
-                    query, firstCriteria, asUser, applicationCriteria.getOnBehalfOf(),
-                    preparedStmtList, preparedStmtArgList);
+            boolean isCitizen = Optional.ofNullable(requestInfo)
+                    .map(RequestInfo::getUserInfo)
+                    .map(User::getType)
+                    .map(CITIZEN_UPPER::equalsIgnoreCase)
+                    .orElse(false);
+            if(isCitizen){
+                applyRequestForBailVisibility(
+                        query, firstCriteria, asUser, applicationCriteria.getOnBehalfOf(),
+                        preparedStmtList, preparedStmtArgList);
+            }
 
             return query.toString();
 

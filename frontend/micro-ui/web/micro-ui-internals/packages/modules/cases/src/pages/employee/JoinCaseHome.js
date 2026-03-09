@@ -1522,8 +1522,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           if (representedPersonUuids?.length > 0) {
             const applicationChecks = await Promise.all(representedPersonUuids.map((uuid) => searchApplications(uuid)));
 
-            const hasExistingApplication = applicationChecks.some((exists) => exists);
-            isBondRequired = !hasExistingApplication;
+            const allApplicationsExist = applicationChecks.every((exists) => exists);
+            isBondRequired = !allApplicationsExist;
           }
         } else if (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES") {
           const litigantUuid = individual?.userUuid;

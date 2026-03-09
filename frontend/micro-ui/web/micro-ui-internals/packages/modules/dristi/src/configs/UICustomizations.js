@@ -831,6 +831,10 @@ export const UICustomizations = {
       const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
       const status = !filterList?.status || filterList?.status === "PUBLISHED" ? "PUBLISHED" : "EMPTY";
       const userUuid = Digit.UserService.getUser()?.info?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUuid);
+      const userInfo = Digit.UserService.getUser()?.info;
+      const userInfoType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+
       return {
         ...requestCriteria,
         body: {
@@ -839,7 +843,7 @@ export const UICustomizations = {
             ...requestCriteria.body.criteria,
             ...filterList,
             status: userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order") ? status : filterList?.status,
-            asUser: getAuthorizedUuid(userUuid),
+            ...(userInfoType === "citizen" && { asUser: authorizedUuid }),
           },
           tenantId,
           pagination: {
@@ -1155,6 +1159,8 @@ export const UICustomizations = {
       const tenantId = window?.Digit.ULBService.getStateId();
       const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
       const status = !filterList?.status || filterList?.status === "PUBLISHED" ? "PUBLISHED" : "EMPTY";
+      const userInfo = Digit.UserService.getUser()?.info;
+      const userInfoType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
       return {
         ...requestCriteria,
         body: {
@@ -1162,7 +1168,7 @@ export const UICustomizations = {
           criteria: {
             ...requestCriteria.body.criteria,
             ...filterList,
-            asUser: authorizedUuid,
+            ...(userInfoType === "citizen" && { asUser: authorizedUuid }),
             status: userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order") ? status : filterList?.status,
           },
           tenantId,
@@ -2644,6 +2650,9 @@ export const UICustomizations = {
       const limit = requestCriteria?.state?.tableForm?.limit || 10;
       const offSet = requestCriteria?.state?.tableForm?.offset || 0;
       const bailId = requestCriteria?.state?.searchForm?.bailId;
+      const userInfo = Digit.UserService.getUser()?.info;
+      const userInfoType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+
       return {
         ...requestCriteria,
         body: {
@@ -2653,7 +2662,7 @@ export const UICustomizations = {
             ...requestCriteria?.body?.criteria,
             ...(bailId && { bailId }),
             ...(isCitizen ? {} : { status: ["PENDING_REVIEW", "COMPLETED", "VOID"] }),
-            asUser: authorizedUuid,
+            ...(userInfoType === "citizen" && { asUser: authorizedUuid }),
             fuzzySearch: true,
           },
           pagination: {
@@ -2802,7 +2811,7 @@ export const UICustomizations = {
       const tableForm = requestCriteria?.state?.tableForm || {};
       const existingPagination = requestCriteria?.body?.pagination || { limit: 10, offSet: 0 };
       const limit = tableForm.limit != null ? tableForm.limit : existingPagination.limit;
-      const offSet = tableForm.offset != null ? tableForm.offset : (tableForm.offSet != null ? tableForm.offSet : existingPagination.offSet);
+      const offSet = tableForm.offset != null ? tableForm.offset : tableForm.offSet != null ? tableForm.offSet : existingPagination.offSet;
 
       const finalLimit = limit != null ? limit : 10;
       const finalOffSet = offSet != null ? offSet : 0;
