@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { useQuery } from "react-query";
 import { Urls } from "../hooks/services/Urls";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -39,6 +40,10 @@ const BailBondReviewModal = ({
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showErrorToast, setShowErrorToast] = useState(null);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
 
   const { data: { file: bailBondPreviewPdf, fileName: bailBondPreviewFileName } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["bailBondPreviewPdf", tenantId, bailBondDetails?.bailId, bailBondDetails?.cnrNumber, bailBondPreviewSubmissionTypeMap["BAIL_BOND"]],
@@ -64,6 +69,7 @@ const BailBondReviewModal = ({
               bailBondPdfType: bailBondPreviewSubmissionTypeMap["BAIL_BOND"], // need to change
               courtId: courtId,
               filingNumber: bailBondDetails?.filingNumber,
+              ...(userInfoType === "citizen" && { asUser: authorizedUuid }),
             },
             responseType: "blob",
           }
