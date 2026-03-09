@@ -226,8 +226,8 @@ const WitnessDrawerV2 = ({
                 const newMobileNumber = individualData?.Individual?.[0]?.mobileNumber
                   ? individualData?.Individual?.[0]?.mobileNumber
                   : individualData?.Individual?.[0]?.userDetails?.username
-                    ? individualData?.Individual?.[0]?.userDetails?.username
-                    : "";
+                  ? individualData?.Individual?.[0]?.userDetails?.username
+                  : "";
 
                 if (!mobileNumber || mobileNumber?.length === 0) {
                   mobileNumber = newMobileNumber ? [newMobileNumber] : [];
@@ -568,8 +568,6 @@ const WitnessDrawerV2 = ({
     setSelectedWitnessType({ label: option?.value, value: option?.value });
   };
 
-
-
   // Handle tab change
   const handleTabChange = async (tab) => {
     const currentArtifact = activeTabs?.find((t) => t?.artifactNumber === currentArtifactNumber);
@@ -702,7 +700,7 @@ const WitnessDrawerV2 = ({
             sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
             tag: selectedWitnessType?.value,
             sourceID: selectedWitness?.value,
-            asUser: selectedWitness?.value, // This field is added as part of advocate office management feature requirement.
+            asUser: authorizedUuid, // This field is added as part of advocate office management feature requirement.
             sourceName: party?.sourceName,
             filingType: filingType,
             description: formatDepositionText(witnessDepositionText),
@@ -841,13 +839,13 @@ const WitnessDrawerV2 = ({
       const documents = Array.isArray(currentEvidence?.file) ? currentEvidence.file : {};
       const documentsFile = fileStoreId
         ? [
-          {
-            fileStore: fileStoreId,
-            documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
-            additionalDetails: { name: `${t("WITNESS_DEPOSITION")} (${selectedWitnessType?.value || ""})` },
-            tenantId,
-          },
-        ]
+            {
+              fileStore: fileStoreId,
+              documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
+              additionalDetails: { name: `${t("WITNESS_DEPOSITION")} (${selectedWitnessType?.value || ""})` },
+              tenantId,
+            },
+          ]
         : null;
 
       const currentParty = allParties?.find((p) => (p?.uuid || p?.uniqueId) === selectedWitness?.value);
@@ -1103,7 +1101,7 @@ const WitnessDrawerV2 = ({
             sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
             tag: selectedWitnessType?.value,
             sourceID: selectedWitness?.value,
-            asUser: selectedWitness?.value, // This field is added as part of advocate office management feature requirement.
+            asUser: authorizedUuid, // This field is added as part of advocate office management feature requirement.
             sourceName: party?.sourceName,
             filingType: filingType,
             description: formatDepositionText(witnessDepositionText),
