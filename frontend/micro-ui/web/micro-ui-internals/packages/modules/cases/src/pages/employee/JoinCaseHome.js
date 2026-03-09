@@ -1499,6 +1499,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             applicationType: "REQUEST_FOR_BAIL",
             onBehalfOf: [uuid],
             asUser: getAuthorizedUuid(uuid),
+            validationCode: validationCode,
           },
         });
 
@@ -1508,7 +1509,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         return false;
       }
     },
-    [caseDetails?.courtId, caseDetails?.filingNumber, tenantId]
+    [caseDetails?.courtId, caseDetails?.filingNumber, tenantId, validationCode]
   );
 
   useEffect(() => {
