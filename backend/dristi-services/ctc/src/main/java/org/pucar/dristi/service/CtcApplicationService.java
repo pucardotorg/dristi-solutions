@@ -137,19 +137,6 @@ public class CtcApplicationService {
         return acceptedFileStoreIds;
     }
 
-    public List<CtcApplication> bulkUpdateApplications(BulkCtcApplicationRequest request) {
-        List<CtcApplication> updatedApplications = new ArrayList<>();
-        for (CtcApplication application : request.getCtcApplications()) {
-            CtcApplicationRequest singleRequest = CtcApplicationRequest.builder()
-                    .requestInfo(request.getRequestInfo())
-                    .ctcApplication(application)
-                    .build();
-            CtcApplication updated = updateApplication(singleRequest);
-            updatedApplications.add(updated);
-        }
-        return updatedApplications;
-    }
-
     public List<CtcApplication> searchApplications(CtcApplicationSearchRequest ctcApplicationSearchRequest) {
         String ctcApplicationNumber = ctcApplicationSearchRequest.getCriteria() != null
                 ? ctcApplicationSearchRequest.getCriteria().getCtcApplicationNumber() : null;

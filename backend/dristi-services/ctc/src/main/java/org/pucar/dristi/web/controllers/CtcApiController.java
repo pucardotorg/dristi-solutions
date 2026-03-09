@@ -86,31 +86,6 @@ public class CtcApiController {
         }
     }
 
-    @PostMapping("/applications/_bulkUpdate")
-    public ResponseEntity<BulkCtcApplicationResponse> bulkUpdateApplications(@Valid @RequestBody BulkCtcApplicationRequest request) {
-
-        log.info("Bulk updating {} CTC applications", request.getCtcApplications() != null ? request.getCtcApplications().size() : 0);
-
-        try {
-            List<CtcApplication> applications = ctcApplicationService.bulkUpdateApplications(request);
-            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
-
-            BulkCtcApplicationResponse response = BulkCtcApplicationResponse.builder()
-                    .responseInfo(responseInfo)
-                    .ctcApplications(applications)
-                    .build();
-
-            return ResponseEntity.ok(response);
-
-        } catch (CustomException e) {
-            log.error("Error bulk updating CTC applications: {}", e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.error("Unexpected error bulk updating CTC applications", e);
-            throw new CustomException("CTC_BULK_UPDATE_ERROR", "Error bulk updating CTC applications: " + e.getMessage());
-        }
-    }
-
     @PostMapping("/applications/_search")
     public ResponseEntity<CtcApplicationSearchResponse> searchApplications(@Valid @RequestBody CtcApplicationSearchRequest request ) {
 
