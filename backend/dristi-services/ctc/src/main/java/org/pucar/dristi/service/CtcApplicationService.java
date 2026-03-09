@@ -180,19 +180,20 @@ public class CtcApplicationService {
     private CtcApplication stripCaseBundles(CtcApplication application) {
         application.setCaseBundles(null);
         return application;
+    }
 
-          private void enrichSearchCriteriaForCitizen(CtcApplicationSearchRequest request) {
+    private void enrichSearchCriteriaForCitizen(CtcApplicationSearchRequest request) {
         if (request.getRequestInfo() != null && request.getRequestInfo().getUserInfo() != null) {
             boolean isCitizen = request.getRequestInfo().getUserInfo().getRoles().stream()
                     .anyMatch(role -> ServiceConstants.CITIZEN_ROLE.equalsIgnoreCase(role.getCode()));
-            
+
             if (isCitizen && request.getCriteria() != null) {
                 String userUuid = request.getRequestInfo().getUserInfo().getUuid();
                 request.getCriteria().setCreatedBy(userUuid);
             }
         }
     }
-      
+
     public void markDocumentsAsIssuedOrReject(IssueCtcDocumentUpdateRequest request) {
         try {
             List<DocumentActionItem> docs = request.getDocs();
@@ -467,6 +468,8 @@ public class CtcApplicationService {
             log.error("Error reading CTC application from Redis cache: {}", e.getMessage());
             return null;
         }
+    }
+
     private List<BreakDown> getBreakDown(Double totalAmount) {
         BreakDown breakDown = new BreakDown();
         breakDown.setCode(config.getBreakDownCode());
@@ -477,5 +480,4 @@ public class CtcApplicationService {
         breakDownList.add(breakDown);
         return breakDownList;
     }
-
 }
