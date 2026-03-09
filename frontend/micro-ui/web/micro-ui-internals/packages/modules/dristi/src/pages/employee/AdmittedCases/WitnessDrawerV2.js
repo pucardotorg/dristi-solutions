@@ -700,7 +700,7 @@ const WitnessDrawerV2 = ({
             sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
             tag: selectedWitnessType?.value,
             sourceID: selectedWitness?.value,
-            asUser: authorizedUuid, // This field is added as part of advocate office management feature requirement.
+            asUser: selectedWitness?.value, // This field is added as part of advocate office management feature requirement.
             sourceName: party?.sourceName,
             filingType: filingType,
             description: formatDepositionText(witnessDepositionText),
@@ -1101,7 +1101,7 @@ const WitnessDrawerV2 = ({
             sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
             tag: selectedWitnessType?.value,
             sourceID: selectedWitness?.value,
-            asUser: authorizedUuid, // This field is added as part of advocate office management feature requirement.
+            asUser: selectedWitness?.value, // This field is added as part of advocate office management feature requirement.
             sourceName: party?.sourceName,
             filingType: filingType,
             description: formatDepositionText(witnessDepositionText),
