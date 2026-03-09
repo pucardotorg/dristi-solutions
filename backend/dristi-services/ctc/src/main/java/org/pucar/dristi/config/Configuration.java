@@ -144,4 +144,7 @@ public class Configuration {
 
     @Value("${break.down.type}")
     private String breakDownType;
+
+    @Value("${ctc.application.tracker.index}")
+    private String ctcApplicationTrackerIndex;
 }

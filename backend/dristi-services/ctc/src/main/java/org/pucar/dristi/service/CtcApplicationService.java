@@ -119,6 +119,7 @@ public class CtcApplicationService {
         }
         if (PENDING_ISSUE.equalsIgnoreCase(request.getCtcApplication().getStatus())) {
             indexerUtils.pushIssueCtcDocumentsToIndex(application);
+            indexerUtils.deactivateTracker(application.getCtcApplicationNumber());
         }
 
         producer.push(config.getUpdateCtcApplicationTopic(), request);

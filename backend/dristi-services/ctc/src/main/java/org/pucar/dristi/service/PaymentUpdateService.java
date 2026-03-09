@@ -20,8 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -115,6 +117,27 @@ public class PaymentUpdateService {
             ctcApplication.setWorkflow(workflow);
             workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
         }
+
+        // Push tracker data to ctc-application-tracker index
+        List<String> searchableFields = new ArrayList<>();
+        if (ctcApplication.getCaseTitle() != null) searchableFields.add(ctcApplication.getCaseTitle());
+        if (ctcApplication.getCaseNumber() != null) searchableFields.add(ctcApplication.getCaseNumber());
+
+        CtcApplicationTracker tracker = CtcApplicationTracker.builder()
+                .id(UUID.randomUUID().toString())
+                .tenantId(ctcApplication.getTenantId())
+                .courtId(ctcApplication.getCourtId())
+                .filingNumber(ctcApplication.getFilingNumber())
+                .ctcApplicationNumber(ctcApplication.getCtcApplicationNumber())
+                .status(ctcApplication.getStatus())
+                .dateRaised(System.currentTimeMillis())
+                .applicantName(ctcApplication.getApplicantName())
+                .caseTitle(ctcApplication.getCaseTitle())
+                .caseNumber(ctcApplication.getCaseNumber())
+                .isActive(true)
+                .searchableFields(searchableFields)
+                .build();
+        indexerUtils.pushCtcApplicationTracker(tracker);
 
 //        Document document = getPaymentReceipt(requestInfo, ctcApplication);
 //        if (document != null) {

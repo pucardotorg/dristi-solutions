@@ -6,6 +6,7 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.web.models.CtcApplication;
+import org.pucar.dristi.web.models.CtcApplicationTracker;
 import org.pucar.dristi.web.models.IssueCtcDocument;
 import org.pucar.dristi.web.models.SelectedCaseBundleNode;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -141,6 +142,56 @@ public class IndexerUtils {
             statusCounts.merge(status, 1, Integer::sum);
         }
         return statusCounts;
+    }
+
+    public void deactivateTracker(String ctcApplicationNumber) {
+        try {
+            String indexName = config.getCtcApplicationTrackerIndex();
+            String uri = config.getEsHostUrl() + indexName + "/_update_by_query";
+            String request = String.format(ServiceConstants.ES_DEACTIVATE_TRACKER_BY_APPLICATION, ctcApplicationNumber);
+            esPostManual(uri, request);
+            log.info("Deactivated tracker for application: {}", ctcApplicationNumber);
+        } catch (Exception e) {
+            log.error("Error deactivating tracker for application: {}", ctcApplicationNumber, e);
+            throw new CustomException(ServiceConstants.CTC_APPLICATION_TRACKER_INDEX_EXCEPTION,
+                    "Error deactivating tracker in ES index: " + e.getMessage());
+        }
+    }
+
+    public void pushCtcApplicationTracker(CtcApplicationTracker tracker) {
+        try {
+            String indexName = config.getCtcApplicationTrackerIndex();
+            String searchableFieldsJson = tracker.getSearchableFields() != null
+                    ? "[" + tracker.getSearchableFields().stream()
+                        .map(s -> "\"" + s + "\"")
+                        .collect(Collectors.joining(",")) + "]"
+                    : "[]";
+
+            String payload = String.format(
+                    ES_INDEX_HEADER_FORMAT + ServiceConstants.ES_CTC_APPLICATION_TRACKER_FORMAT,
+                    indexName,
+                    tracker.getId(),
+                    tracker.getTenantId(),
+                    tracker.getCourtId(),
+                    tracker.getFilingNumber(),
+                    tracker.getCtcApplicationNumber(),
+                    tracker.getStatus(),
+                    tracker.getDateRaised(),
+                    tracker.getApplicantName(),
+                    tracker.getCaseTitle(),
+                    tracker.getCaseNumber(),
+                    tracker.getIsActive(),
+                    searchableFieldsJson
+            );
+
+            String uri = config.getEsHostUrl() + config.getBulkPath();
+            esPostManual(uri, payload);
+            log.info("Pushed ctc-application-tracker to ES for application: {}", tracker.getCtcApplicationNumber());
+        } catch (Exception e) {
+            log.error("Error pushing ctc-application-tracker to ES for application: {}", tracker.getCtcApplicationNumber(), e);
+            throw new CustomException(ServiceConstants.CTC_APPLICATION_TRACKER_INDEX_EXCEPTION,
+                    "Error pushing tracker to ES index: " + e.getMessage());
+        }
     }
 
     public void pushIssueCtcDocumentsToIndex(CtcApplication application) {
