@@ -85,4 +85,6 @@ public class ServiceConstants {
 	public static final String NOTIFICATION_MODULE_CODE = "notification";
 	public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
 	public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+
+	public static final String APPROVE = "APPROVE";
 }
