@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -68,10 +69,10 @@ public class CtcApplication {
     private Document affidavitDocument;
 
     @JsonProperty("selectedCaseBundle")
-    private List<SelectedCaseBundleNode> selectedCaseBundle;
+    private List<SelectedCaseBundleNode> selectedCaseBundle = new ArrayList<>();
 
     @JsonProperty("caseBundles")
-    private List<CaseBundleNode> caseBundles;
+    private List<CaseBundleNode> caseBundles = new ArrayList<>();
 
     @JsonProperty("totalPages")
     private Integer totalPages;
