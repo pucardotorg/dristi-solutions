@@ -125,7 +125,7 @@ public class Configuration {
     @Value("${ctc.issue.documents.index}")
     private String issueCtcDocumentsIndex;
 
-    @Value("${spring.data.redis.timeout}")
+    @Value("${spring.redis.timeout}")
     private Long redisTimeout;
 
     // Zone ID
