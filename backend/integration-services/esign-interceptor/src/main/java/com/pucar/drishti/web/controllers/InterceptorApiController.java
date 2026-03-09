@@ -39,7 +39,7 @@ public class InterceptorApiController {
         // Construct the final redirect URL
         String redirectUri = "";
         if (redirectionType.equalsIgnoreCase("employee") || redirectionType.equalsIgnoreCase("citizen")) {
-            redirectUri = configs.getRedirectUrl() + "/" + redirectionType + "/dristi";
+            redirectUri = configs.getRedirectUrl() + "/ui/" + redirectionType + "/dristi";
         } else if (redirectionType.equalsIgnoreCase("lp")) {
             redirectUri = configs.getRedirectUrl() + configs.getLandingPageRedirectUrl();
         } else {
