@@ -33,7 +33,6 @@
     "isActive": true
   },
   {
-    "id": "90c526fe-9216-4bec-9004-40759de06567",
     "tenantId": "kl",
     "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
     "uniqueIdentifier": "2793",
@@ -50,7 +49,6 @@
     "isActive": true
   },
   {
-    "id": "a5963e8d-b7c9-4f44-b60f-ac77bcf765d1",
     "tenantId": "kl",
     "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
     "uniqueIdentifier": "2792",
@@ -66,9 +64,7 @@
     },
     "isActive": true
   },
-
   {
-    "id": "0b506ca7-287f-4804-953f-bc04e3944bca",
     "tenantId": "kl",
     "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
     "uniqueIdentifier": "2796",
@@ -82,16 +78,9 @@
       "serviceCode": "ctc",
       "parentModule": "ctc"
     },
-    "isActive": true,
-    "auditDetails": {
-      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
-      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
-      "createdTime": 1773133994834,
-      "lastModifiedTime": 1773133994834
-    }
+    "isActive": true
   },
   {
-    "id": "026d7ad8-fee1-435c-9497-01a990c4faa5",
     "tenantId": "kl",
     "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
     "uniqueIdentifier": "2797",
@@ -105,13 +94,22 @@
       "serviceCode": "ctc",
       "parentModule": "ctc"
     },
-    "isActive": true,
-    "auditDetails": {
-      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
-      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
-      "createdTime": 1773134103916,
-      "lastModifiedTime": 1773134103916
-    }
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2798",
+    "data": {
+      "id": 2798,
+      "url": "/egov-pdf/ctc-certification",
+      // TODO : need to give access to EMPLOYEE
+      "code": "2798",
+      "name": "ctc certification",
+      "displayName": "ctc certification",
+      "serviceCode": "dristi-pdf",
+      "parentModule": "dristi-pdf"
+    },
+    "isActive": true
   }
-
 ]
