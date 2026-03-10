@@ -178,14 +178,14 @@
               "action": "ISSUE_ALL",
               "nextState": "ISSUED",
               "roles": [
-                "EMPLOYEE"
+                "CTC_DOCUMENT_APPROVER"
               ]
             },
             {
               "action": "ISSUE",
               "nextState": "PARTIALLY_ISSUED",
               "roles": [
-                "EMPLOYEE"
+                "CTC_DOCUMENT_APPROVER"
               ]
             }
           ]
