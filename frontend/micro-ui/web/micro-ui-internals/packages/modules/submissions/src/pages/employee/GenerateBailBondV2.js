@@ -51,6 +51,7 @@ const convertToFormData = (t, obj) => {
             mobileNumber: surety?.mobileNumber,
             address: surety?.address,
             email: surety?.email,
+            index: surety?.index,
             identityProof: {
               document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF" && doc?.isActive === true) || [],
             },
@@ -60,7 +61,9 @@ const convertToFormData = (t, obj) => {
             otherDocuments: {
               document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS" && doc?.isActive === true) || [],
             },
-          }))
+          }))?.sort((a, b) => 
+            (Boolean(a?.index) ? a.index : Infinity) -
+            (Boolean(b?.index) ? b.index : Infinity))
         : Array.from({ length: obj?.noOfSureties || 0 }, () => ({})),
   };
 
