@@ -140,7 +140,7 @@ class IndexerUtilsTest {
 
         String body = (String) captor.getValue().getBody();
         // Verify query searches by Data.id.keyword and Data.ctcApplicationNumber.keyword
-        assertTrue(body.contains("Data.id.keyword"));
+        assertTrue(body.contains("Data.docId.keyword"));
         assertTrue(body.contains("uuid-1"));
         assertTrue(body.contains("Data.ctcApplicationNumber.keyword"));
         assertTrue(body.contains("CA-001"));
