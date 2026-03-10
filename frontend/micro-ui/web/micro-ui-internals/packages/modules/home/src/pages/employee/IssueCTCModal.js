@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
+import { downloadPdfFromBlob } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const Heading = (props) => {
   return (
@@ -18,10 +19,13 @@ const CloseBtn = (props) => {
   );
 };
 
-const HeaderBarEnd = ({ t, setShowModal }) => {
+const HeaderBarEnd = ({ t, setShowModal, handleDownload }) => {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "10px", paddingRight: "20px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "#007E7E", fontWeight: "700" }}>
+      <div
+        style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "#007E7E", fontWeight: "700" }}
+        onClick={handleDownload}
+      >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path
             fill-rule="evenodd"
@@ -43,10 +47,19 @@ const IssueCTCModal = ({ rowData, setShowModal, handleIssue }) => {
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
 
+  const handleDownload = () => {
+    const documentBlob = rowData?.businessObject?.downloadedDocument;
+    const fileName = rowData?.businessObject?.fileName || rowData?.businessObject?.documentTitle || "CTC_Document.pdf";
+    if (documentBlob) {
+      downloadPdfFromBlob(documentBlob, fileName);
+    }
+  };
+
+
   return (
     <Modal
       headerBarMain={<Heading label={t("DOCUMENT_REVIEW")} />}
-      headerBarEnd={<HeaderBarEnd t={t} setShowModal={setShowModal} />}
+      headerBarEnd={<HeaderBarEnd t={t} setShowModal={setShowModal} handleDownload={handleDownload} />}
       actionCancelLabel={t("BACK")}
       actionCancelOnSubmit={() => setShowModal(false)}
       actionSaveLabel={t("ISSUE")}
@@ -95,15 +108,15 @@ const IssueCTCModal = ({ rowData, setShowModal, handleIssue }) => {
           className="application-view"
           style={{ minHeight: "350px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}
         >
-          {DocViewerWrapper && true ? (
+          {DocViewerWrapper && rowData?.businessObject?.downloadedDocument ? (
             <DocViewerWrapper
-              key={"858a1224-1f47-450c-856f-09617bac6abf"}
-              fileStoreId={"858a1224-1f47-450c-856f-09617bac6abf"}
+              key={rowData?.businessObject?.ctcApplicationNumber}
+              selectedDocs={[rowData.businessObject.downloadedDocument]}
               tenantId={tenantId}
               docWidth="100%"
               docHeight="400px"
               showDownloadOption={false}
-              documentName={rowData?.businessObject?.documentsRequested}
+              displayFilename={rowData?.businessObject?.fileName || rowData?.businessObject?.documentTitle}
             />
           ) : (
             <div style={{ color: "#505A5F", textAlign: "center", padding: "40px", border: "1px solid #d6d5d4", width: "100%", height: "100%" }}>

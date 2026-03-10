@@ -1,9 +1,13 @@
-import { InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, SubmitBar, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { bulkIssueCTCConfig } from "../../configs/BulkIssueCTCConfig";
 import IssueCTCModal from "./IssueCTCModal";
+import AddSignatureCTCModal from "../../components/AddSignatureCTCModal";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { HomeService } from "../../hooks/services";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -23,6 +27,9 @@ const BulkIssueCTC = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedRowData, setSelectedRowData] = useState(null);
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [signedDocumentUploadId, setSignedDocumentUploadID] = useState("");
+  const [showErrorToast, setShowErrorToast] = useState(null);
 
   const handleUpdateApplication = (applicationData, checked) => {
     setBulkIssueList((prev) => {
@@ -31,27 +38,91 @@ const BulkIssueCTC = () => {
       }
 
       const updated = prev?.map((item) => {
-        if (item?.businessObject?.applicationNumber !== applicationData?.businessObject?.applicationNumber) return item;
+        if (item?.businessObject?.ctcApplicationNumber !== applicationData?.businessObject?.ctcApplicationNumber) return item;
         return {
           ...item,
           isSelected: checked,
         };
       });
 
-      const hasMatch = prev.some((item) => item?.businessObject?.applicationNumber === applicationData?.businessObject?.applicationNumber);
+      const hasMatch = prev.some((item) => item?.businessObject?.ctcApplicationNumber === applicationData?.businessObject?.ctcApplicationNumber);
       if (!hasMatch) {
         updated.push({ ...applicationData, isSelected: checked });
       }
 
-      return updated.filter(
-        (item) => item.isSelected || item?.businessObject?.applicationNumber === applicationData?.businessObject?.applicationNumber
-      );
+      return updated.filter((item) => item.isSelected);
     });
   };
 
-  const handleRowClick = (rowData) => {
-    setSelectedRowData(rowData?.original);
-    setShowModal(true);
+  const handleRowClick = async (rowData) => {
+    try {
+      setIsLoading(true);
+      const row = rowData?.original;
+
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const accessToken = window.localStorage.getItem("token");
+      const courtId = window.localStorage.getItem("courtId") || "KLKM52";
+
+      // Call the PDF generation API
+      const response = await axiosInstance.post(
+        `/egov-pdf/ctc-certification?tenantId=${tenantId}&qrCode=false&courtId=${courtId}`,
+        {
+          RequestInfo: {
+            authToken: accessToken,
+            userInfo: userInfo,
+            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+            apiId: "Dristi",
+          },
+          criteria: {
+            tenantId: tenantId,
+            courtId: courtId,
+            filingNumber: row?.businessObject?.filingNumber,
+            ctcApplicationNumber: row?.businessObject?.ctcApplicationNumber,
+          },
+        },
+        { responseType: "blob" }
+      );
+
+      // Extract filename from the content-disposition header if available, otherwise fallback
+      const contentDisposition = response.headers["content-disposition"];
+      let fileName = "CTC_Document.pdf";
+      if (contentDisposition && contentDisposition.indexOf("filename=") !== -1) {
+        fileName = contentDisposition.split("filename=")[1].replace(/["']/g, "");
+      }
+
+      // Find the original document fileStoreId from the application
+      const originalFileStoreId = row?.affidavitDocument?.fileStore || row?.documents?.[0]?.fileStore || row?.businessObject?.fileStoreId;
+
+      let combinedBlob = response.data;
+      if (originalFileStoreId) {
+        try {
+          // Combine original document first, then the CTC PDF
+          const combinedFiles = await combineMultipleFiles([{ fileStore: originalFileStoreId }, response.data], fileName, "CTC_COMBINED");
+          if (combinedFiles && combinedFiles.length > 0) {
+            combinedBlob = combinedFiles[0];
+          }
+        } catch (combineError) {
+          console.error("Failed to combine files, falling back to CTC PDF only:", combineError);
+          throw combineError;
+        }
+      }
+
+      // Attach the combined blob and filename to the selected row data so IssueCTCModal can use it
+      setSelectedRowData({
+        ...row,
+        businessObject: {
+          ...row?.businessObject,
+          downloadedDocument: combinedBlob,
+          fileName: fileName,
+        },
+      });
+      setShowModal(true);
+    } catch (error) {
+      console.error("Failed to generate CTC PDF:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const config = useMemo(() => {
@@ -215,46 +286,161 @@ const BulkIssueCTC = () => {
   }, [config]);
 
   const handleBulkIssue = () => {
+    // todo: new api will be given
   };
+
+  const handleIssueDocuments = async () => {
+    try {
+      setIsLoading(true);
+      let localStorageID = sessionStorage.getItem("fileStoreId");
+      const docsDetails = {
+        docId: selectedRowData?.businessObject?.docId || "",
+        ctcApplicationNumber: selectedRowData?.businessObject?.ctcApplicationNumber || "",
+        filingNumber: selectedRowData?.businessObject?.filingNumber || "",
+        documents: [
+          {
+            documentType: "ISSUED_DOCUMENT",
+            fileStore: localStorageID || signedDocumentUploadId,
+          },
+        ],
+      };
+      const payload = {
+        courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId") || "KLKM52",
+        action: "ISSUE",
+        docs: [docsDetails],
+      };
+
+      await HomeService.updateCTCDocs(payload, { tenantId });
+      sessionStorage.removeItem("fileStoreId");
+      setShowSignatureModal(false);
+      setSelectedRowData(null);
+      showToast({ isError: false, message: "DOCUMENT_ISSUED_SUCCESSFULLY" });
+
+      // Optionally trigger search refetch here if configured
+      if (document.querySelector(".search-button-wrapper button")) {
+        document.querySelector(".search-button-wrapper button").click();
+      }
+    } catch (error) {
+      console.error("error while updating", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
+
+  const showToast = ({ isError, message }) => {
+    setShowErrorToast({ label: t(message), error: isError });
+  };
+
+  useEffect(() => {
+    const isSignSuccess = sessionStorage.getItem("esignProcess");
+    const savedOrderPdf = sessionStorage.getItem("orderPDF");
+    const signedState = JSON.parse(sessionStorage.getItem("ctcSignState"));
+    if (isSignSuccess && signedState) {
+      setShowSignatureModal(true);
+      setSignedDocumentUploadID(savedOrderPdf);
+      setSelectedRowData(signedState);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showSignatureModal) {
+      const cleanupTimer = setTimeout(() => {
+        sessionStorage.removeItem("esignProcess");
+        sessionStorage.removeItem("orderPDF");
+        sessionStorage.removeItem("ctcSignState");
+      }, 2000);
+
+      return () => clearTimeout(cleanupTimer);
+    }
+  }, [showSignatureModal]);
 
   return (
     <React.Fragment>
-      {isLoading ? (
-        <Loader />
-      ) : (
-        <React.Fragment>
-          <div className={"bulk-esign-order-view select"}>
-            <div className="header" style={{ marginBottom: "20px", fontSize: "2rem", fontWeight: "700" }}>{t("Issue Certified True Copy")}</div>
-            <div className="review-process-page inbox-search-wrapper">
-              {" "}
-              <InboxSearchComposer
-                key={`update_key`}
-                customStyle={sectionsParentStyle}
-                configs={config}
-                onFormValueChange={onFormValueChange}
-              ></InboxSearchComposer>{" "}
-            </div>
-          </div>
-          <div className="bulk-submit-bar" style={{ display: "flex", justifyContent: "flex-end" }}>
-            <SubmitBar
-              label={t("Issue selected documents")}
-              submit="submit"
-              disabled={!bulkIssueList || bulkIssueList?.length === 0 || bulkIssueList?.every((item) => !item?.isSelected)}
-              onSubmit={handleBulkIssue}
-            />
-          </div>
-        </React.Fragment>
+      {isLoading && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "100001",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
       )}
+      <React.Fragment>
+        <div className={"bulk-esign-order-view select"}>
+          <div className="header" style={{ marginBottom: "20px", fontSize: "2rem", fontWeight: "700" }}>
+            {t("Issue Certified True Copy")}
+          </div>
+          <div className="review-process-page inbox-search-wrapper">
+            {" "}
+            <InboxSearchComposer
+              key={`update_key`}
+              customStyle={sectionsParentStyle}
+              configs={config}
+              onFormValueChange={onFormValueChange}
+            ></InboxSearchComposer>{" "}
+          </div>
+        </div>
+        <div className="bulk-submit-bar" style={{ display: "flex", justifyContent: "flex-end" }}>
+          <SubmitBar
+            label={t("Issue selected documents")}
+            submit="submit"
+            disabled={!bulkIssueList || bulkIssueList?.length === 0 || bulkIssueList?.every((item) => !item?.isSelected)}
+            onSubmit={handleBulkIssue}
+          />
+        </div>
+      </React.Fragment>
       {showModal && (
         <IssueCTCModal
           rowData={selectedRowData}
           setShowModal={setShowModal}
           handleIssue={(rowData) => {
-            // Add issue logic here for the 'Issue' button inside the modal
-            console.log("Issuing specific item: ", rowData);
+            setShowModal(false);
+            setShowSignatureModal(true);
           }}
         />
       )}
+      {showSignatureModal && (
+        <AddSignatureCTCModal
+          t={t}
+          documentBlob={selectedRowData?.businessObject?.downloadedDocument}
+          documentName={selectedRowData?.businessObject?.fileName}
+          setSignedDocumentUploadID={setSignedDocumentUploadID}
+          handleGoBackSignatureModal={() => {
+            setShowSignatureModal(false);
+            setShowModal(true);
+            sessionStorage.removeItem("ctcSignState");
+            sessionStorage.removeItem("fileStoreId");
+          }}
+          saveOnsubmitLabel={"CS_ISSUE"}
+          handleIssue={handleIssueDocuments}
+          selectedRowData={selectedRowData}
+        />
+      )}
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
   );
 };

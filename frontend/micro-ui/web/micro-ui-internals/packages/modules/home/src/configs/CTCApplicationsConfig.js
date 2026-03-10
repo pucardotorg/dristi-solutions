@@ -6,22 +6,31 @@ const defaultSearchValues = {
 export const CTCApplicationsConfig = {
   type: "search",
   apiDetails: {
-    serviceName: "/task/v1/table/search",
+    serviceName: "/inbox/v2/index/_search",
     requestParam: {
       tenantId: Digit.ULBService.getCurrentTenantId(),
-      limit: 10,
-      offset: 0,
     },
     requestBody: {
-      apiOperation: "SEARCH",
-      criteria: {},
+      inbox: {
+        processSearchCriteria: {
+          businessService: ["ctc-default"],
+          moduleName: "CTC Service",
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+        },
+        moduleSearchCriteria: {
+          tenantId: Digit.ULBService.getCurrentTenantId(),
+        },
+        tenantId: Digit.ULBService.getCurrentTenantId(),
+        limit: 10,
+        offset: 0,
+      },
     },
     minParametersForSearchForm: 0,
     masterName: "commonUiConfig",
     moduleName: "CTCApplicationsConfig",
-    searchFormJsonPath: "requestBody.criteria",
-    filterFormJsonPath: "requestBody.criteria",
-    tableFormJsonPath: "requestParam",
+    searchFormJsonPath: "requestBody.inbox.moduleSearchCriteria",
+    filterFormJsonPath: "requestBody.inbox.moduleSearchCriteria",
+    tableFormJsonPath: "requestBody.inbox",
   },
   sections: {
     search: {
@@ -61,7 +70,7 @@ export const CTCApplicationsConfig = {
           },
           {
             label: "APPLICATION_NUMBER",
-            jsonPath: "businessObject.applicationNumber",
+            jsonPath: "businessObject.ctcApplicationNumber",
             additionalCustomization: true,
           },
           {
@@ -71,7 +80,7 @@ export const CTCApplicationsConfig = {
           },
           {
             label: "PETITIONER",
-            jsonPath: "businessObject.petitioner",
+            jsonPath: "businessObject.applicantName",
             additionalCustomization: true,
           },
           {

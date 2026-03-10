@@ -1,8 +1,10 @@
-import { InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, SubmitBar, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { CTCApplicationsConfig } from "../../configs/CTCApplicationsConfig";
+import { HomeService } from "../../hooks/services";
+import RejectCTCApplicationReasonModal from "../../components/RejectCTCApplicationReasonModal";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -20,10 +22,15 @@ const CTCApplications = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [bulkIssueList, setBulkIssueList] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [selectedRowData, setSelectedRowData] = useState(null);
+  const [selectedRowApplicationData, setShowSelectedApplicationData] = useState({});
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const EvidenceModal = window?.Digit?.ComponentRegistryService?.getComponent("EvidenceModal");
   const [updateCounter, setUpdateCounter] = useState(0);
+  const courtId = localStorage.getItem("courtId");
+  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [pendingRejectData, setPendingRejectData] = useState(null);
 
   const handleUpdateApplication = (applicationData, checked) => {
     setBulkIssueList((prev) => {
@@ -32,27 +39,39 @@ const CTCApplications = () => {
       }
 
       const updated = prev?.map((item) => {
-        if (item?.businessObject?.applicationNumber !== applicationData?.businessObject?.applicationNumber) return item;
+        if (item?.businessObject?.ctcApplicationNumber !== applicationData?.businessObject?.ctcApplicationNumber) return item;
         return {
           ...item,
           isSelected: checked,
         };
       });
 
-      const hasMatch = prev.some((item) => item?.businessObject?.applicationNumber === applicationData?.businessObject?.applicationNumber);
+      const hasMatch = prev.some((item) => item?.businessObject?.ctcApplicationNumber === applicationData?.businessObject?.ctcApplicationNumber);
       if (!hasMatch) {
         updated.push({ ...applicationData, isSelected: checked });
       }
 
-      return updated.filter(
-        (item) => item.isSelected || item?.businessObject?.applicationNumber === applicationData?.businessObject?.applicationNumber
-      );
+      return updated.filter((item) => item?.isSelected);
     });
   };
 
-  const handleRowClick = (rowData) => {
-    setSelectedRowData(rowData?.original);
-    setShowModal(true);
+  const handleRowClick = async (rowData) => {
+    try {
+      setIsLoading(true);
+      const applicationNumber = rowData?.original?.businessObject?.ctcApplicationNumber;
+      const data = await HomeService.searchCTCApplication({
+        criteria: { tenantId, ctcApplicationNumber: applicationNumber },
+        pagination: {},
+      });
+      const application = data?.ctcApplications?.[0] || null;
+      setShowSelectedApplicationData(application);
+      setShowModal(true);
+    } catch (error) {
+      console.error("handleRowClick error:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const config = useMemo(() => {
@@ -217,55 +236,228 @@ const CTCApplications = () => {
     };
   }, [config]);
 
-  const handleCTCApplications = (data, type) => {
-    // based on type we will accept or reject applications
+  const handleCTCApplications = async (data, type) => {
+    if (type === "reject") {
+      // Close the EvidenceModal and open the reason modal
+      setPendingRejectData(data);
+      setRejectReason("");
+      setShowModal(false);
+      setShowRejectModal(true);
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const applicationData = data?.[0]?.applicationList || data?.[0]?.businessObject;
+      const payload = {
+        courtId: courtId,
+        action: "APPROVE",
+        tenantId: tenantId,
+        applications: [
+          {
+            ctcApplicationNumber: applicationData?.ctcApplicationNumber,
+            filingNumber: applicationData?.filingNumber,
+            comments: "",
+          },
+        ],
+      };
+      await HomeService.updateBulkCTCApplications(payload);
+      setShowModal(false);
+      setUpdateCounter((prev) => prev + 1);
+      setShowErrorToast({ label: t("CTC_APPLICATION_ACCEPTED"), error: false });
+    } catch (error) {
+      console.error("handleCTCApplications error:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleBulkAccept = () => {
+  const handleConfirmReject = async (reason) => {
+    try {
+      setIsLoading(true);
+      const applicationData = pendingRejectData?.[0]?.applicationList || pendingRejectData?.[0]?.businessObject;
+      const payload = {
+        courtId: courtId,
+        action: "REJECT",
+        tenantId: tenantId,
+        applications: [
+          {
+            ctcApplicationNumber: applicationData?.ctcApplicationNumber,
+            filingNumber: applicationData?.filingNumber,
+            comments: reason,
+          },
+        ],
+      };
+      await HomeService.updateBulkCTCApplications(payload);
+      setShowRejectModal(false);
+      setShowModal(false);
+      setPendingRejectData(null);
+      setRejectReason("");
+      setUpdateCounter((prev) => prev + 1);
+      setShowErrorToast({ label: t("CTC_APPLICATION_REJECTED"), error: false });
+    } catch (error) {
+      console.error("handleConfirmReject error:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBulkAccept = async () => {
     // you have bulk list and then do the things
+    try {
+      setIsLoading(true);
+      const bulkUpdate = bulkIssueList?.map((data) => {
+        return {
+          ctcApplicationNumber: data?.businessObject?.ctcApplicationNumber,
+          filingNumber: data?.businessObject?.filingNumber,
+          comments: "",
+        };
+      });
+      const payload = {
+        courtId: courtId,
+        action: "APPROVE",
+        tenantId: tenantId,
+        applications: bulkUpdate,
+      };
+      await HomeService.updateBulkCTCApplications(payload);
+      setUpdateCounter((prev) => prev + 1);
+    } catch (error) {
+      console.error(error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  console.log(bulkIssueList, "klkl");
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
+  const showToast = ({ isError, message }) => {
+    setShowErrorToast({ label: t(message), error: isError });
+  };
+
+  const documentSubmission = useMemo(() => {
+    if (!selectedRowApplicationData) return [];
+    const app = selectedRowApplicationData;
+
+    // Pick the best fileStore for preview:
+    // prefer affidavitDocument, then first document in documents[]
+    const primaryFileStore =
+      app?.affidavitDocument?.fileStore ||
+      app?.documents?.[0]?.fileStore ||
+      null;
+
+    const primaryDocType =
+      app?.affidavitDocument?.documentType ||
+      app?.documents?.[0]?.documentType ||
+      "CTC Document";
+
+    return [
+      {
+        // applicationList drives handleCTCApplications (Accept/Reject API call)
+        applicationList: {
+          ctcApplicationNumber: app?.ctcApplicationNumber,
+          filingNumber: app?.filingNumber,
+          applicationType: "CTC",
+        },
+        // details drives the left meta panel in EvidenceModal
+        details: {
+          applicationType: app?.caseTitle || app?.ctcApplicationNumber || "CTC Application",
+          applicationSentOn: app?.auditDetails?.createdTime
+            ? new Date(app.auditDetails.createdTime).toLocaleDateString("en-IN")
+            : "",
+        },
+        // applicationContent drives the DocViewerWrapper document preview
+        applicationContent: primaryFileStore
+          ? {
+            fileStoreId: primaryFileStore,
+            tenantId: app?.tenantId || tenantId,
+            fileName: primaryDocType,
+          }
+          : null,
+      },
+    ];
+  }, [selectedRowApplicationData, tenantId]);
 
   return (
     <React.Fragment>
-      {isLoading ? (
-        <Loader />
-      ) : (
-        <React.Fragment>
-          <div className={"bulk-esign-order-view select"}>
-            <div className="header">{t("Applications")}</div>
-            <div className="review-process-page inbox-search-wrapper">
-              {" "}
-              <InboxSearchComposer
-                key={`update_key_${updateCounter}`}
-                customStyle={sectionsParentStyle}
-                configs={config}
-                onFormValueChange={onFormValueChange}
-              ></InboxSearchComposer>{" "}
-            </div>
-          </div>
-          <div className="bulk-submit-bar">
-            <SubmitBar
-              label={t("Accept Applications")}
-              submit="submit"
-              disabled={!bulkIssueList || bulkIssueList?.length === 0 || bulkIssueList?.every((item) => !item?.isSelected)}
-              onSubmit={handleBulkAccept}
-            />
-          </div>
-        </React.Fragment>
+      {isLoading && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "100001",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
       )}
+      <React.Fragment>
+        <div className={"bulk-esign-order-view select"}>
+          <div className="header">{t("Applications")}</div>
+          <div className="review-process-page inbox-search-wrapper">
+            {" "}
+            <InboxSearchComposer
+              key={`update_key_${updateCounter}`}
+              customStyle={sectionsParentStyle}
+              configs={config}
+              onFormValueChange={onFormValueChange}
+            ></InboxSearchComposer>{" "}
+          </div>
+        </div>
+        <div className="bulk-submit-bar">
+          <SubmitBar
+            label={t("Accept Applications")}
+            submit="submit"
+            disabled={!bulkIssueList || bulkIssueList?.length === 0 || bulkIssueList?.every((item) => !item?.isSelected)}
+            onSubmit={handleBulkAccept}
+          />
+        </div>
+      </React.Fragment>
       {showModal && (
         <EvidenceModal
-          documentSubmission={[]} // prepare the data for evidenceModal
+          documentSubmission={documentSubmission}
           setShow={setShowModal}
           userRoles={userRoles}
           modalType={"CTC_APPLICATIONS"}
           setUpdateCounter={setUpdateCounter}
+          showToast={showToast}
           handleCTCApplications={handleCTCApplications}
-          // add based on usage
         />
       )}
+      {showRejectModal && (
+        <RejectCTCApplicationReasonModal
+          t={t}
+          onGoBack={() => {
+            setShowRejectModal(false);
+            setRejectReason("");
+            setShowModal(true); // reopen EvidenceModal
+          }}
+          onReject={handleConfirmReject}
+          reason={rejectReason}
+          setReason={setRejectReason}
+          isDisabled={isLoading}
+        />
+      )}
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
   );
 };

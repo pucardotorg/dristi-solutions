@@ -641,66 +641,42 @@ export const UICustomizations = {
   bulkIssueCTCConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
-      const criteria = {
-        ...requestCriteria?.body?.criteria,
-        ...requestCriteria?.state?.searchForm,
+      const searchForm = requestCriteria?.state?.searchForm || {};
+      const tableForm = requestCriteria?.state?.tableForm || {};
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+
+      const moduleSearchCriteria = {
         tenantId,
-        ...additionalDetails,
-        pagination: {
-          limit: requestCriteria?.state?.tableForm?.limit,
-          offSet: requestCriteria?.state?.tableForm?.offset,
-        },
+        ...(searchForm?.searchQuery && { searchableFields: searchForm.searchQuery }),
+        ...(searchForm?.date && {
+          fromDate: new Date(searchForm.date + "T00:00:00").getTime(),
+          toDate: new Date(searchForm.date + "T23:59:59.999").getTime(),
+        }),
+        ...(searchForm?.documentType?.code && searchForm.documentType.code !== "ALL" && { documentType: searchForm.documentType.code }),
+        ...(courtId && { courtId }),
       };
 
       return {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          criteria,
-          tenantId,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            processSearchCriteria: {
+              businessService: ["ctc-default"],
+              moduleName: "CTC Issue Doc",
+              tenantId,
+            },
+            moduleSearchCriteria,
+            tenantId,
+            limit: tableForm?.limit || 10,
+            offset: tableForm?.offset || 0,
+          },
         },
         config: {
           ...requestCriteria?.config,
           select: (data) => {
-            const dummyData = [
-              {
-                isSelected: false,
-                businessObject: {
-                  documentsRequested: "Cheque",
-                  caseName: "Aarav Sharma Vs. Priya Singh",
-                  caseNumber: "ST/227/2025",
-                  applicationNumber: "CA/227/2025",
-                },
-              },
-              {
-                isSelected: false,
-                businessObject: {
-                  documentsRequested: "Legal Demand Notice 2",
-                  caseName: "Rohan Mehra Vs. Anjali Gupta",
-                  caseNumber: "CMP/228/2025",
-                  applicationNumber: "CA/228/2025",
-                },
-              },
-              {
-                isSelected: false,
-                businessObject: {
-                  documentsRequested: "Vakalatnama",
-                  caseName: "Vikram Rathore Vs. Sunita Patel",
-                  caseNumber: "ST/229/2025",
-                  applicationNumber: "CA/229/2025",
-                },
-              },
-              {
-                isSelected: false,
-                businessObject: {
-                  documentsRequested: "Bank Statement",
-                  caseName: "Sanjay Verma Vs. Kavita Reddy",
-                  caseNumber: "CMP/230/2025",
-                  applicationNumber: "CA/230/2025",
-                },
-              },
-            ];
-            return { ...data, items: dummyData, totalCount: 40 };
+            return { ...data, items: data?.items || [], totalCount: data?.totalCount || 0 };
           },
         },
       };
@@ -742,54 +718,42 @@ export const UICustomizations = {
   CTCApplicationsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
-      const criteria = {
-        ...requestCriteria?.body?.criteria,
-        ...requestCriteria?.state?.searchForm,
+      const searchForm = requestCriteria?.state?.searchForm || {};
+      const tableForm = requestCriteria?.state?.tableForm || {};
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+
+      const moduleSearchCriteria = {
         tenantId,
-        ...additionalDetails,
-        pagination: {
-          limit: requestCriteria?.state?.tableForm?.limit,
-          offSet: requestCriteria?.state?.tableForm?.offset,
-        },
+        ...(searchForm?.caseSearchText && { searchableFields: searchForm.caseSearchText }),
+        ...(courtId && { courtId }),
       };
 
       return {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          criteria,
-          tenantId,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            processSearchCriteria: {
+              businessService: ["ctc-default"],
+              moduleName: "CTC Service",
+              tenantId,
+            },
+            moduleSearchCriteria,
+            tenantId,
+            limit: tableForm?.limit || 10,
+            offset: tableForm?.offset || 0,
+          },
         },
         config: {
           ...requestCriteria?.config,
           select: (data) => {
-            const dummyData = [
-              {
-                isSelected: false,
-                businessObject: {
-                  applicationNumber: "CTC/02/2026",
-                  caseNumber: "CMP/1/2026",
-                  petitioner: "iknoor adv",
-                  dateRaised: "2024-11-11",
-                  status: "Review Pending",
-                },
-              },
-              {
-                isSelected: false,
-                businessObject: {
-                  applicationNumber: "CTC/03/2026",
-                  caseNumber: "CMP/2/2026",
-                  petitioner: "iknoor adv",
-                  dateRaised: "2024-11-12",
-                  status: "Review Pending",
-                },
-              },
-            ];
-            return { ...data, items: dummyData, totalCount: dummyData.length };
+            return { ...data, items: data?.items || [], totalCount: data?.totalCount || 0 };
           },
         },
       };
     },
+
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       switch (key) {
         case "SELECT":

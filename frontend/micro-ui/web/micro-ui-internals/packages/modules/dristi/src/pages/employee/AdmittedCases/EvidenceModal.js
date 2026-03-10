@@ -623,6 +623,18 @@ const EvidenceModal = ({
     counterUpdate();
   };
 
+  const submitCommentCTCApplication = async (newComment) => {
+    await evidenceComment.mutate({
+      url: Urls.dristi.addCTCComment,
+      params: {},
+      body: { ctcComments: newComment },
+      config: {
+        enable: true,
+      },
+    });
+    counterUpdate();
+  };
+
   const artifactNumber = documentSubmission?.[0]?.artifactList?.artifactNumber;
   const { data: evidenceData, isloading: isEvidenceLoading, refetch: evidenceRefetch } = useSearchEvidenceService(
     {
@@ -963,6 +975,8 @@ const EvidenceModal = ({
     if (modalType === "Submissions") {
       await submitCommentApplication(newComment);
       setShowFileIcon(false);
+    } else if (modalType === "CTC_APPLICATIONS") {
+      await submitCommentCTCApplication(newComment);
     } else {
       await submitCommentEvidence(newComment);
     }
@@ -1448,6 +1462,32 @@ const EvidenceModal = ({
                                         },
                                       ],
                                       applicationNumber: documentSubmission?.[0]?.applicationList?.applicationNumber,
+                                    }
+                                  : modalType === "CTC_APPLICATIONS"
+                                  ? {
+                                      tenantId,
+                                      comment: [
+                                        {
+                                          tenantId,
+                                          comment: currentComment,
+                                          individualId: "",
+                                          commentDocumentId: "",
+                                          commentDocumentName: "",
+                                          artifactId: documentSubmission?.[0]?.artifactList?.id,
+                                          additionalDetails: {
+                                            author: user,
+                                            timestamp: new Date(Date.now()).toLocaleDateString("en-in", {
+                                              year: "2-digit",
+                                              month: "short",
+                                              day: "2-digit",
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                              hour12: true,
+                                            }),
+                                          },
+                                        },
+                                      ],
+                                      ctcApplicationNumber: documentSubmission?.[0]?.applicationList?.applicationNumber,
                                     }
                                   : {
                                       tenantId,
