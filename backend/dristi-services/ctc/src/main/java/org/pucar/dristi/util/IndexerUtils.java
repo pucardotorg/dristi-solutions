@@ -1,14 +1,12 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
-import org.pucar.dristi.web.models.CtcApplication;
-import org.pucar.dristi.web.models.CtcApplicationTracker;
-import org.pucar.dristi.web.models.IssueCtcDocument;
-import org.pucar.dristi.web.models.SelectedCaseBundleNode;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -28,11 +26,13 @@ public class IndexerUtils {
 
     private final RestTemplate restTemplate;
     private final Configuration config;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.config = config;
+        this.objectMapper = objectMapper;
     }
 
     public void pushIssueCtcDocuments(List<IssueCtcDocument> documents) throws Exception {
@@ -70,11 +70,12 @@ public class IndexerUtils {
         );
     }
 
-    public void updateDocStatus(String docId, String status) throws Exception {
+    public void updateDocStatus(String docId, String status, List<Document> documents) throws Exception {
         String indexName = config.getIssueCtcDocumentsIndex();
         String uri = config.getEsHostUrl() + indexName + "/_update_by_query";
         long currentTime = System.currentTimeMillis();
-        String request = String.format(ES_UPDATE_BY_QUERY_STATUS, docId, status, currentTime);
+        String documentsJson = documents != null ? objectMapper.writeValueAsString(documents) : "[]";
+        String request = String.format(ES_UPDATE_BY_QUERY_STATUS, docId, status, currentTime, documentsJson);
         esPostManual(uri, request);
     }
 

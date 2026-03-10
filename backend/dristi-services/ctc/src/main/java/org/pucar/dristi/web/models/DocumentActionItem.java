@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -24,4 +26,7 @@ public class DocumentActionItem {
     @JsonProperty("filingNumber")
     @NotBlank
     private String filingNumber;
+
+    @JsonProperty("documents")
+    private List<Document> documents;
 }

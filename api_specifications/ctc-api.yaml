@@ -423,6 +423,11 @@ components:
         filingNumber:
           type: string
           description: Filing number mapped to the CTC application
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+          description: Documents associated with this action item
 
     Document:
       type: object

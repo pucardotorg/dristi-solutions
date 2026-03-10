@@ -80,8 +80,9 @@ public class ServiceConstants {
                     + "}}\n";
     public static final String ES_UPDATE_BY_QUERY_STATUS =
             "{\"query\":{\"term\":{\"Data.docId.keyword\":\"%s\"}},"
-                    + "\"script\":{\"source\":\"ctx._source.Data.status='%s';ctx._source.Data.lastModifiedTime=%dL;\","
-                    + "\"lang\":\"painless\"}}";
+                    + "\"script\":{\"source\":\"ctx._source.Data.status=params.status;ctx._source.Data.lastModifiedTime=params.time;ctx._source.Data.documents=params.documents;\","
+                    + "\"lang\":\"painless\","
+                    + "\"params\":{\"status\":\"%s\",\"time\":%d,\"documents\":%s}}}";
     public static final String ES_COUNT_DOCS_BY_STATUS =
             "{\"query\":{\"bool\":{\"must\":["
                     + "{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}},"
