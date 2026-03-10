@@ -479,7 +479,10 @@ public class TaskCreationService {
                                 .channelCode(channel != null ? channel.getChannelCode() : null)
                                 .fees(channel != null ? channel.getFees() : null)
                                 .feePaidDate(channel != null ? channel.getFeePaidDate() : null)
-                                .isPendingCollection(channel != null && RPAD.equalsIgnoreCase(channel.getChannelCode()))
+                                .isPendingCollection(channel != null &&
+                                        RPAD.equalsIgnoreCase(channel.getChannelCode()) &&
+                                        channel.getFeePaidDate() != null
+                                )
                                 .build())
                         .build());
             }
