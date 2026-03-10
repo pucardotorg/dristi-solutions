@@ -57,7 +57,7 @@
     "data": {
       "id": 2792,
       "url": "/ctc/applications/_search",
-      // TODO : need to be given access to CITIZEN
+      // TODO : need to be given access to CITIZEN, EMPLOYEE
       "code": "2792",
       "name": "search ctc applications",
       "displayName": "search ctc applications",
