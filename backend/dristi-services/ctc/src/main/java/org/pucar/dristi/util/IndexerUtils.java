@@ -71,12 +71,12 @@ public class IndexerUtils {
         );
     }
 
-    public void updateDocStatus(String id, String ctcApplicationNumber, String status, List<Document> documents) throws Exception {
+    public void updateDocStatus(String docId, String ctcApplicationNumber, String status, List<Document> documents) throws Exception {
         String indexName = config.getIssueCtcDocumentsIndex();
         String uri = config.getEsHostUrl() + indexName + "/_update_by_query";
         long currentTime = System.currentTimeMillis();
         String documentsJson = documents != null ? objectMapper.writeValueAsString(documents) : "[]";
-        String request = String.format(ES_UPDATE_BY_QUERY_STATUS, id, ctcApplicationNumber, status, currentTime, documentsJson);
+        String request = String.format(ES_UPDATE_BY_QUERY_STATUS, docId, ctcApplicationNumber, status, currentTime, documentsJson);
         esPostManual(uri, request);
     }
 
