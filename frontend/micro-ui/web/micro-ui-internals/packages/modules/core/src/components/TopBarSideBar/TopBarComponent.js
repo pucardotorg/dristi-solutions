@@ -466,7 +466,7 @@ const TopBarComponent = ({
 
         <div className="RightMostTopBarOptions">
           {/* Manage Office button & Advocate profile dropdown - only visible for advocates / clerks */}
-          {(isAdvocate || isAdvocateClerk) && (
+          {(isAdvocate || (isAdvocateClerk && advocateDropdownOptions?.length > 0)) && (
             <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
               <AdvocateProfileDropdown
                 t={t}
