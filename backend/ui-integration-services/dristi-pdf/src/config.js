@@ -319,7 +319,13 @@ module.exports = {
       "application-certified-true-copies",
     application_certified_true_copies_qr:
       process.env.APPLICATION_CERTIFIED_TRUE_COPIES_QR ||
-      "application-certified-true-copies-qr"
+      "application-certified-true-copies-qr",
+    application_ctc_certification: 
+      process.env.APPLICATION_CTC_CERTIFICATION || 
+      "application-ctc-certification",
+    application_ctc_certification_qr: 
+      process.env.APPLICATION_CTC_CERTIFICATION_QR || 
+      "application-ctc-certification-qr"
   },
 
   app: {
@@ -350,7 +356,7 @@ module.exports = {
       process.env.DRISTI_TASK_MANAGEMENT_HOST || "http://localhost:8087",
     digitisation:
       process.env.DRISTI_DIGITALIZED_DOCUMENTS_HOST || "http://localhost:8333",
-    ctcApplications: process.env.DRISTI_CTC_APPLICATIONS_HOST || "http://localhost:8098", // TODO: check if required ?
+    ctcApplications: process.env.DRISTI_CTC_APPLICATIONS_HOST || "http://localhost:8098", 
   },
 
   paths: {
