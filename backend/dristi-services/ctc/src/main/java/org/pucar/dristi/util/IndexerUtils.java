@@ -204,9 +204,17 @@ public class IndexerUtils {
             List<IssueCtcDocument> documents = new ArrayList<>();
             Long currentTime = System.currentTimeMillis();
 
+            // Build fileStoreId lookup from caseBundles (for when selectedCaseBundle has null fileStoreId)
+            Map<String, String> fileStoreIdMap = new HashMap<>();
+            if (application.getCaseBundles() != null) {
+                for (CaseBundleNode bundleNode : application.getCaseBundles()) {
+                    buildFileStoreIdMap(bundleNode, fileStoreIdMap);
+                }
+            }
+
             if (application.getSelectedCaseBundle() != null) {
                 for (SelectedCaseBundleNode node : application.getSelectedCaseBundle()) {
-                    collectDocuments(node, application, currentTime, documents);
+                    collectDocuments(node, application, currentTime, documents, fileStoreIdMap);
                 }
             }
 
@@ -223,11 +231,29 @@ public class IndexerUtils {
         }
     }
 
+    private void buildFileStoreIdMap(CaseBundleNode node, Map<String, String> fileStoreIdMap) {
+        if (node == null) return;
+        if (node.getId() != null && node.getFileStoreId() != null) {
+            fileStoreIdMap.put(node.getId(), node.getFileStoreId());
+        }
+        if (node.getChildren() != null) {
+            for (CaseBundleNode child : node.getChildren()) {
+                buildFileStoreIdMap(child, fileStoreIdMap);
+            }
+        }
+    }
+
     private void collectDocuments(SelectedCaseBundleNode node, CtcApplication application,
-                                  Long currentTime, List<IssueCtcDocument> documents) {
+                                  Long currentTime, List<IssueCtcDocument> documents,
+                                  Map<String, String> fileStoreIdMap) {
         if (node == null) return;
 
-        if (node.getFileStoreId() != null) {
+        // Use fileStoreId from selectedCaseBundle, fallback to caseBundles lookup
+        String fileStoreId = node.getFileStoreId() != null
+                ? node.getFileStoreId()
+                : fileStoreIdMap.get(node.getId());
+
+        if (fileStoreId != null) {
             IssueCtcDocument doc = IssueCtcDocument.builder()
                     .id(UUID.randomUUID().toString())
                     .docId(node.getId())
@@ -241,14 +267,14 @@ public class IndexerUtils {
                     .filingNumber(application.getFilingNumber())
                     .courtId(application.getCourtId())
                     .tenantId(application.getTenantId())
-                    .fileStoreId(node.getFileStoreId())
+                    .fileStoreId(fileStoreId)
                     .build();
             documents.add(doc);
         }
 
         if (node.getChildren() != null) {
             for (SelectedCaseBundleNode child : node.getChildren()) {
-                collectDocuments(child, application, currentTime, documents);
+                collectDocuments(child, application, currentTime, documents, fileStoreIdMap);
             }
         }
     }
