@@ -7,7 +7,6 @@ import org.egov.tracer.model.CustomException;
 import org.egov.web.notification.mail.config.ApplicationConfiguration;
 import org.egov.web.notification.mail.config.EmailProperties;
 import org.egov.web.notification.mail.consumer.contract.Email;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.SimpleMailMessage;
