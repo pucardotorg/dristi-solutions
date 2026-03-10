@@ -65,5 +65,53 @@
       "parentModule": "ctc"
     },
     "isActive": true
+  },
+
+  {
+    "id": "0b506ca7-287f-4804-953f-bc04e3944bca",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2796",
+    "data": {
+      "id": 2796,
+      "url": "/ctc/applications/documents/issue-reject",
+      "code": "2796",
+      "name": "issue reject doc",
+      "enabled": false,
+      "displayName": "issue reject doc",
+      "serviceCode": "ctc",
+      "parentModule": "ctc"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1773133994834,
+      "lastModifiedTime": 1773133994834
+    }
+  },
+  {
+    "id": "026d7ad8-fee1-435c-9497-01a990c4faa5",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2797",
+    "data": {
+      "id": 2797,
+      "url": "/ctc/applications/_review",
+      "code": "2797",
+      "name": "Approve reject ctc application",
+      "enabled": false,
+      "displayName": "Approve reject ctc application",
+      "serviceCode": "ctc",
+      "parentModule": "ctc"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1773134103916,
+      "lastModifiedTime": 1773134103916
+    }
   }
+
 ]
