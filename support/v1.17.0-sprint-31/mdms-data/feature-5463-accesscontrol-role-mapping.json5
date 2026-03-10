@@ -1,0 +1,44 @@
+[
+  {
+    "id": "be20b48e-437d-452e-a2bb-6ce0f646bfe2",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "568",
+    "data": {
+      "id": 568,
+      "actionid": 2796,
+      "rolecode": "CTC_DOCUMENT_APPROVER",
+      "tenantid": "kl",
+      "actioncode": "2796"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1773134173039,
+      "lastModifiedTime": 1773134173039
+    }
+  },
+
+  {
+    "id": "067a694f-592b-496a-bfe9-fd14ae1b4405",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "569",
+    "data": {
+      "id": 569,
+      "actionid": 2797,
+      "rolecode": "CTC_APPLICATION_APPROVER",
+      "tenantid": "kl",
+      "actioncode": "2797"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1773134196980,
+      "lastModifiedTime": 1773134196980
+    }
+  }
+
+]

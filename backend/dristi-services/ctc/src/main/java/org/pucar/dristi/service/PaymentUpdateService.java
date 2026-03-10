@@ -20,8 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -91,7 +93,9 @@ public class PaymentUpdateService {
             throw new CustomException("INVALID RECEIPT", "No applications found for the consumerCode " + consumerCode);
 
         Role role = Role.builder().code("SYSTEM_ADMIN").tenantId(tenantId).build();
+        Role role2 = Role.builder().code("SYSTEM").tenantId(tenantId).build();
         requestInfo.getUserInfo().getRoles().add(role);
+        requestInfo.getUserInfo().getRoles().add(role2);
 
         CtcApplication ctcApplication = ctcApplications.get(0);
         AuditDetails auditDetails = ctcApplication.getAuditDetails();
@@ -101,30 +105,41 @@ public class PaymentUpdateService {
 
         log.info("Updating pending payment status for ctcApplication: {}", ctcApplication);
         WorkflowObject workflow = new WorkflowObject();
-        workflow.setAction("MAKE_PAYMENT");
-        ctcApplication.setWorkflow(workflow);
-        workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
 
         if (ctcApplication.getIsPartyToCase()) {
-            workflow.setAction("SEND_FOR_ISSUE");
+            workflow.setAction("MAKE_PAYMENT_FOR_SEND_FOR_ISSUE");
             ctcApplication.setWorkflow(workflow);
             workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
             indexerUtils.pushIssueCtcDocumentsToIndex(ctcApplication);
         } else {
-            workflow.setAction("SEND_FOR_APPROVAL");
+            workflow.setAction("MAKE_PAYMENT_FOR_SEND_FOR_APPROVAL");
             ctcApplication.setWorkflow(workflow);
             workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
+
+            // Push tracker data to ctc-application-tracker index
+            List<String> searchableFields = new ArrayList<>();
+            if (ctcApplication.getCaseTitle() != null) searchableFields.add(ctcApplication.getCaseTitle());
+            if (ctcApplication.getCaseNumber() != null) searchableFields.add(ctcApplication.getCaseNumber());
+
+            CtcApplicationTracker tracker = CtcApplicationTracker.builder()
+                    .id(UUID.randomUUID().toString())
+                    .tenantId(ctcApplication.getTenantId())
+                    .courtId(ctcApplication.getCourtId())
+                    .filingNumber(ctcApplication.getFilingNumber())
+                    .ctcApplicationNumber(ctcApplication.getCtcApplicationNumber())
+                    .status(ctcApplication.getStatus())
+                    .dateRaised(System.currentTimeMillis())
+                    .applicantName(ctcApplication.getApplicantName())
+                    .caseTitle(ctcApplication.getCaseTitle())
+                    .caseNumber(ctcApplication.getCaseNumber())
+                    .isActive(true)
+                    .searchableFields(searchableFields)
+                    .build();
+            indexerUtils.pushCtcApplicationTracker(tracker);
         }
 
-//        Document document = getPaymentReceipt(requestInfo, ctcApplication);
-//        if (document != null) {
-//            if (ctcApplication.getDocuments() == null) {
-//                ctcApplication.setDocuments(new ArrayList<>());
-//            }
-//            ctcApplication.getDocuments().add(document);
-//        }
         CtcApplicationRequest ctcApplicationRequest = CtcApplicationRequest.builder().requestInfo(requestInfo).ctcApplication(ctcApplication).build();
-        producer.push("update-ctc-application", ctcApplicationRequest);
+        producer.push(config.getUpdateCtcApplicationTopic(), ctcApplicationRequest);
     }
 
 }

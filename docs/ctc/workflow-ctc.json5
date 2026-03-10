@@ -139,14 +139,14 @@
               "action": "APPROVE",
               "nextState": "PENDING_ISSUE",
               "roles": [
-                "EMPLOYEE"
+                "CTC_APPLICATION_APPROVER"
               ]
             },
             {
               "action": "REJECT",
               "nextState": "REJECTED",
               "roles": [
-                "EMPLOYEE"
+                "CTC_APPLICATION_APPROVER"
               ]
             }
           ]
@@ -160,17 +160,24 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "ISSUE_ALL",
-              "nextState": "ISSUED",
+              "action": "ISSUE",
+              "nextState": "PARTIALLY_ISSUED",
               "roles": [
-                "EMPLOYEE"
+                "CTC_DOCUMENT_APPROVER"
               ]
             },
             {
-              "action": "PARTIAL_ISSUE",
-              "nextState": "PARTIALLY_ISSUED",
+              "action": "REJECT",
+              "nextState": "PENDING_ISSUE",
               "roles": [
-                "EMPLOYEE"
+                "CTC_DOCUMENT_APPROVER"
+              ]
+            },
+            {
+              "action": "REJECT_ALL",
+              "nextState": "REJECTED_ALL",
+              "roles": [
+                "CTC_DOCUMENT_APPROVER"
               ]
             }
           ]
@@ -191,7 +198,7 @@
               ]
             },
             {
-              "action": "PARTIAL_ISSUE",
+              "action": "ISSUE",
               "nextState": "PARTIALLY_ISSUED",
               "roles": [
                 "EMPLOYEE"
@@ -217,6 +224,14 @@
         },
         {
           "state": "DELETED",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false
+        },
+        {
+          "state": "REJECTED_ALL",
           "applicationStatus": "INACTIVE",
           "docUploadRequired": false,
           "isStartState": false,

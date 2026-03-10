@@ -4,7 +4,7 @@ info:
   title: CTC Service API
   description: >
     DIGIT Certified/Certified True Copy (CTC) service responsible for creating,
-    updating, searching and validating users for CTC applications.
+    updating, searching, reviewing and validating users for CTC applications.
   version: 1.0.0
 
 servers:
@@ -16,7 +16,7 @@ tags:
 
 paths:
 
-  /ctc/applications/_create:
+  /applications/_create:
     post:
       tags: [CTC Applications]
       summary: Create CTC application
@@ -40,7 +40,7 @@ paths:
               schema:
                 $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
 
-  /ctc/applications/_update:
+  /applications/_update:
     post:
       tags: [CTC Applications]
       summary: Update CTC application
@@ -64,7 +64,7 @@ paths:
               schema:
                 $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
 
-  /ctc/applications/_search:
+  /applications/_search:
     post:
       tags: [CTC Applications]
       summary: Search CTC applications
@@ -87,10 +87,35 @@ paths:
             application/json:
               schema:
                 $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
-  /ctc/applications/documents/_issue:
+
+  /applications/_review:
     post:
       tags: [CTC Applications]
-      summary: Mark CTC documents as issued
+      summary: Bulk review (approve/reject) CTC applications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CtcApplicationReviewRequest'
+      responses:
+        '200':
+          description: CTC applications reviewed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CtcApplicationSearchResponse'
+        '400':
+          description: CTC application review failed
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /applications/documents/issue-reject:
+    post:
+      tags: [CTC Applications]
+      summary: Bulk issue or reject CTC documents
       requestBody:
         required: true
         content:
@@ -99,13 +124,37 @@ paths:
               $ref: '#/components/schemas/IssueCtcDocumentUpdateRequest'
       responses:
         '200':
-          description: Documents marked as issued
+          description: Documents processed successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/IssueCtcDocumentUpdateResponse'
         '400':
-          description: Document issue update failed
+          description: Document issue/reject update failed
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /applications/_validate:
+    post:
+      tags: [CTC Applications]
+      summary: Validate user for CTC application
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateUserRequest'
+      responses:
+        '200':
+          description: User validated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateUserResponse'
+        '400':
+          description: User validation failed
           content:
             application/json:
               schema:
@@ -156,6 +205,40 @@ components:
           type: number
           format: double
 
+    CtcApplicationReviewRequest:
+      type: object
+      required: [RequestInfo, courtId, action, applications]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        courtId:
+          type: string
+          description: Court ID for the review
+        action:
+          type: string
+          description: Review action to perform
+          enum:
+            - APPROVE
+            - REJECT
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewItem'
+
+    ReviewItem:
+      type: object
+      required: [ctcApplicationNumber, filingNumber]
+      properties:
+        ctcApplicationNumber:
+          type: string
+          description: CTC application number to review
+        filingNumber:
+          type: string
+          description: Filing number of the application
+        comments:
+          type: string
+          description: Optional comments for the review
+
     CtcApplicationSearchCriteria:
       type: object
       required: [tenantId]
@@ -170,7 +253,11 @@ components:
           type: string
         courtId:
           type: string
+        searchText:
+          type: string
         status:
+          type: string
+        createdBy:
           type: string
 
     CtcApplication:
@@ -180,6 +267,7 @@ components:
         - caseNumber
         - caseTitle
         - filingNumber
+        - cnrNumber
         - courtId
         - applicantName
         - mobileNumber
@@ -199,6 +287,8 @@ components:
           type: string
         filingNumber:
           type: string
+        cnrNumber:
+          type: string
         courtId:
           type: string
         applicantName:
@@ -211,7 +301,15 @@ components:
           type: string
         affidavitDocument:
           $ref: '#/components/schemas/Document'
-        caseBundleNodes:
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        selectedCaseBundle:
+          type: array
+          items:
+            $ref: '#/components/schemas/SelectedCaseBundleNode'
+        caseBundles:
           type: array
           items:
             $ref: '#/components/schemas/CaseBundleNode'
@@ -225,6 +323,8 @@ components:
             - PENDING_ESIGN
             - PENDING_PAYMENT
             - PENDING_JUDGE_APPROVAL
+            - PENDING_ISSUE
+            - PARTIALLY_ISSUED
             - PENDING_CMO_ESIGN
             - ISSUED
             - REJECTED
@@ -234,6 +334,24 @@ components:
           $ref: '#/components/schemas/WorkflowObject'
         auditDetails:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+
+    SelectedCaseBundleNode:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the selected case bundle node
+        title:
+          type: string
+          description: Title of the selected case bundle node
+        fileStoreId:
+          type: string
+          description: File store ID for the document
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/SelectedCaseBundleNode'
+          description: Child nodes (for hierarchical structure)
 
     CaseBundleNode:
       type: object
@@ -247,16 +365,16 @@ components:
         fileStoreId:
           type: string
           description: File store ID for the document
-        isSelected:
-          type: boolean
-          description: Whether the node is selected
+        issuedFileStoreId:
+          type: string
+          description: File store ID for the issued document
         status:
           type: string
           enum:
             - accepted
             - rejected
             - pending
-          description: Status of the case bundle node (accepted/rejected/pending)
+          description: Status of the case bundle node
         children:
           type: array
           items:
@@ -265,32 +383,51 @@ components:
 
     IssueCtcDocumentUpdateRequest:
       type: object
-      required: [RequestInfo, ctcApplicationNumber, id, docId, filingNumber, courtId]
+      required: [RequestInfo, courtId, action, docs]
       properties:
         RequestInfo:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
-        ctcApplicationNumber:
-          type: string
-        id:
-          type: string
-        docId:
-          type: string
-        filingNumber:
-          type: string
         courtId:
           type: string
+        action:
+          type: string
+          description: Action to perform on all documents
+          enum:
+            - ISSUE
+            - REJECT
+        docs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentActionItem'
 
     IssueCtcDocumentUpdateResponse:
       type: object
       properties:
         responseInfo:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
-        ctcApplicationNumber:
-          type: string
-        id:
-          type: string
+        docs:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentActionItem'
+
+    DocumentActionItem:
+      type: object
+      required: [docId, ctcApplicationNumber, filingNumber]
+      properties:
         docId:
           type: string
+          description: Document ID to issue or reject
+        ctcApplicationNumber:
+          type: string
+          description: CTC application number this document belongs to
+        filingNumber:
+          type: string
+          description: Filing number mapped to the CTC application
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+          description: Documents associated with this action item
 
     Document:
       type: object
@@ -325,7 +462,12 @@ components:
             - PAY_NOT_PARTY_OF_CASE
             - APPROVE
             - REJECT
+            - REJECT_ALL
             - ISSUE
+            - ISSUE_ALL
+            - SEND_FOR_ISSUE
+            - SEND_FOR_APPROVAL
+            - MAKE_PAYMENT
         comments:
           type: string
           description: Comments associated with the workflow action
@@ -397,6 +539,8 @@ components:
           type: string
         courtId:
           type: string
+        isPartyToCase:
+          type: boolean
 
     Pagination:
       type: object

@@ -2,19 +2,10 @@ package org.pucar.dristi.service.bundle;
 
 import org.egov.common.contract.models.Document;
 import org.pucar.dristi.service.CaseBundleSection;
-import org.pucar.dristi.web.models.BundleData;
-import org.pucar.dristi.web.models.CaseBundleNode;
-import org.pucar.dristi.web.models.CourtCase;
-import org.pucar.dristi.web.models.Party;
-import org.pucar.dristi.web.models.AdvocateMapping;
+import org.pucar.dristi.web.models.*;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 public class VakalatnamaSection implements CaseBundleSection {
@@ -30,63 +21,128 @@ public class VakalatnamaSection implements CaseBundleSection {
         if (data == null || data.getCases() == null) return null;
         CourtCase courtCase = data.getCases();
 
-        List<CaseBundleNode> children = new ArrayList<>();
+        if (courtCase.getLitigants() == null) return null;
 
-        Set<UUID> representedLitigantIds = new HashSet<>();
-        if (courtCase.getRepresentatives() != null) {
-            for (AdvocateMapping rep : courtCase.getRepresentatives()) {
-                if (rep == null || !Boolean.TRUE.equals(rep.getIsActive())) continue;
-                if (rep.getRepresenting() != null) {
-                    for (Party p : rep.getRepresenting()) {
-                        if (p != null && p.getId() != null) {
-                            representedLitigantIds.add(p.getId());
-                        }
+        // Collect fileStore records with isPip flag and dateOfAddition
+        List<FileStoreRecord> fileStoreRecords = new ArrayList<>();
+        Set<String> addedFileStoreIds = new HashSet<>();
+
+        for (Party litigant : courtCase.getLitigants()) {
+            if (litigant == null || !Boolean.TRUE.equals(litigant.getIsActive())) continue;
+
+            // Find representatives for this litigant (matched via individualId)
+            List<AdvocateMapping> matchingReps = findRepresentativesForLitigant(
+                    courtCase.getRepresentatives(), litigant.getIndividualId());
+
+            if (matchingReps.isEmpty()) {
+                // No representative → PIP (party-in-person) using litigant's own document
+                String fileStoreId = getFirstFileStoreId(litigant.getDocuments());
+                if (fileStoreId != null && addedFileStoreIds.add(fileStoreId)) {
+                    long dateOfAddition = litigant.getAuditDetails() != null
+                            ? litigant.getAuditDetails().getCreatedTime() : 0L;
+                    fileStoreRecords.add(new FileStoreRecord(fileStoreId, true, dateOfAddition));
+                }
+            } else {
+                // Has representative(s) → VAKALATNAMA using the nested party's document
+                for (AdvocateMapping rep : matchingReps) {
+                    if (rep == null || !Boolean.TRUE.equals(rep.getIsActive())) continue;
+
+                    // Find the nested party in rep.representing that matches this litigant
+                    Party updatedLitigant = findMatchingPartyInRepresenting(
+                            rep.getRepresenting(), litigant.getIndividualId());
+                    if (updatedLitigant == null) continue;
+
+                    String fileStoreId = getFirstFileStoreId(updatedLitigant.getDocuments());
+                    if (fileStoreId != null && addedFileStoreIds.add(fileStoreId)) {
+                        long dateOfAddition = rep.getAuditDetails() != null
+                                ? rep.getAuditDetails().getCreatedTime() : 0L;
+                        fileStoreRecords.add(new FileStoreRecord(fileStoreId, false, dateOfAddition));
                     }
                 }
             }
         }
 
-        int pipIdx = 1;
-        if (courtCase.getLitigants() != null) {
-            for (Party p : courtCase.getLitigants()) {
-                if (p == null || !Boolean.TRUE.equals(p.getIsActive())) continue;
-                if (representedLitigantIds.contains(p.getId())) continue;
-                if (p.getDocuments() == null) continue;
-                for (Document doc : p.getDocuments()) {
-                    if (doc == null || doc.getFileStore() == null) continue;
-                    children.add(CaseBundleNode.builder()
-                            .id("pip-" + pipIdx)
-                            .title("PIP " + pipIdx)
-                            .fileStoreId(doc.getFileStore())
-                            .build());
-                    pipIdx++;
-                }
-            }
-        }
+        // Sort by dateOfAddition (ascending) before assigning numbers
+        fileStoreRecords.sort(Comparator.comparingLong(r -> r.dateOfAddition));
 
+        // Build children with separate PIP and VAKALATNAMA counters
+        List<CaseBundleNode> children = new ArrayList<>();
+        int pipIdx = 1;
         int vakIdx = 1;
-        if (courtCase.getRepresentatives() != null) {
-            for (AdvocateMapping rep : courtCase.getRepresentatives()) {
-                if (rep == null || !Boolean.TRUE.equals(rep.getIsActive())) continue;
-                if (rep.getDocuments() == null) continue;
-                for (Document doc : rep.getDocuments()) {
-                    if (doc == null || doc.getFileStore() == null) continue;
-                    children.add(CaseBundleNode.builder()
-                            .id("vakalat-" + vakIdx)
-                            .title("VAKALATNAMA " + vakIdx)
-                            .fileStoreId(doc.getFileStore())
-                            .build());
-                    vakIdx++;
-                }
+        int index = 0;
+
+        for (FileStoreRecord record : fileStoreRecords) {
+            String id = "vakalatnama-" + index;
+            String title;
+            if (record.isPip) {
+                title = "PIP_AFFIDAVIT_HEADING " + pipIdx++;
+            } else {
+                title = "VAKALATNAMA_HEADING " + vakIdx++;
             }
+            children.add(CaseBundleNode.builder()
+                    .id(id)
+                    .title(title)
+                    .fileStoreId(record.fileStoreId)
+                    .build());
+            index++;
         }
 
         if (children.isEmpty()) return null;
 
         return CaseBundleNode.builder()
                 .id("vakalatnama")
-                .title("VAKALATNAMA")
+                .title("VAKALATS")
                 .children(children)
                 .build();
     }
+
+    /**
+     * Finds all active representatives whose representing list contains a party
+     * with the given individualId.
+     */
+    private List<AdvocateMapping> findRepresentativesForLitigant(
+            List<AdvocateMapping> representatives, String individualId) {
+        List<AdvocateMapping> result = new ArrayList<>();
+        if (representatives == null || individualId == null) return result;
+        for (AdvocateMapping rep : representatives) {
+            if (rep == null || rep.getRepresenting() == null) continue;
+            for (Party p : rep.getRepresenting()) {
+                if (p != null && individualId.equals(p.getIndividualId())) {
+                    result.add(rep);
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Finds the party within a representing list that matches the given individualId.
+     */
+    private Party findMatchingPartyInRepresenting(List<Party> representing, String individualId) {
+        if (representing == null || individualId == null) return null;
+        for (Party p : representing) {
+            if (p != null && individualId.equals(p.getIndividualId())) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the fileStore from the first document in the list, or null.
+     */
+    private String getFirstFileStoreId(List<Document> documents) {
+        if (documents == null || documents.isEmpty()) return null;
+        Document first = documents.get(0);
+        return first != null ? first.getFileStore() : null;
+    }
+
+    /**
+         * Internal record to hold a fileStoreId with its isPip flag and dateOfAddition
+         * before sorting and numbering.
+         */
+        private record FileStoreRecord(String fileStoreId, boolean isPip, long dateOfAddition) {
+    }
 }
+

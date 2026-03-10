@@ -17,7 +17,7 @@ public class CaseBundleNode {
     private String id;
     private String title;
     private String fileStoreId;
-    private boolean isSelected;
+    private String issuedFileStoreId;
     private String status;//accepted rejected pending
     private List<CaseBundleNode> children;
 }

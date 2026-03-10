@@ -5,11 +5,13 @@ import org.pucar.dristi.service.CaseBundleSection;
 import org.pucar.dristi.web.models.Application;
 import org.pucar.dristi.web.models.BundleData;
 import org.pucar.dristi.web.models.CaseBundleNode;
+import org.pucar.dristi.web.models.Comment;
 import org.pucar.dristi.web.models.order.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -41,8 +43,8 @@ public class DisposedApplicationsSection implements CaseBundleSection {
         if (children.isEmpty()) return null;
 
         return CaseBundleNode.builder()
-                .id("disposed-application")
-                .title("DISPOSED_APPLICATION")
+                .id("disposed-applications")
+                .title("DISPOSED_APPLICATIONS_PDF")
                 .children(children)
                 .build();
     }
@@ -68,6 +70,42 @@ public class DisposedApplicationsSection implements CaseBundleSection {
             }
         }
 
+        // Add objections from comments
+        if (app.getComment() != null && !app.getComment().isEmpty()) {
+            List<CaseBundleNode> objectionNodes = new ArrayList<>();
+            int objIndex = 0;
+            for (Comment comment : app.getComment()) {
+                if (comment == null || comment.getAdditionalDetails() == null) continue;
+                
+                String commentDocumentId = null;
+                if (comment.getAdditionalDetails() instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> additionalDetails = (Map<String, Object>) comment.getAdditionalDetails();
+                    Object docId = additionalDetails.get("commentDocumentId");
+                    if (docId != null) {
+                        commentDocumentId = docId.toString();
+                    }
+                }
+                
+                if (commentDocumentId != null) {
+                    objectionNodes.add(CaseBundleNode.builder()
+                            .id(app.getApplicationNumber() + "-objection-" + objIndex)
+                            .title("OBJECTION_APPLICATION " + (objIndex + 1))
+                            .fileStoreId(commentDocumentId)
+                            .build());
+                    objIndex++;
+                }
+            }
+            
+            if (!objectionNodes.isEmpty()) {
+                subChildren.add(CaseBundleNode.builder()
+                        .id(app.getApplicationNumber() + "-objections")
+                        .title("OBJECTION_APPLICATION_HEADING")
+                        .children(objectionNodes)
+                        .build());
+            }
+        }
+
         String appNumber = app.getApplicationNumber();
         if (appNumber != null) {
             List<CaseBundleNode> orderNodes = allOrders.stream()
@@ -80,7 +118,7 @@ public class DisposedApplicationsSection implements CaseBundleSection {
             if (!orderNodes.isEmpty()) {
                 subChildren.add(CaseBundleNode.builder()
                         .id(appNumber + "-orders")
-                        .title("RELATED_ORDERS_HEADING")
+                        .title("ORDERS_APPLICATION_HEADING")
                         .children(orderNodes)
                         .build());
             }

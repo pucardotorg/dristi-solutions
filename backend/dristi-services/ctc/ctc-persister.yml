@@ -13,7 +13,7 @@ serviceMaps:
       auditAttributeBasePath: ctcApplication
       queryMaps:
 
-        - query: INSERT INTO dristi_ctc_applications(id, ctc_application_number, tenant_id, case_number, case_title, filing_number, court_id, applicant_name, mobile_number, is_party_to_case, party_designation, affidavit_document, case_bundle_nodes, total_pages, status, judge_comments, workflow, created_by, last_modified_by, created_time, last_modified_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        - query: INSERT INTO dristi_ctc_applications(id, ctc_application_number, tenant_id, case_number, case_title, filing_number, court_id, applicant_name, mobile_number, is_party_to_case, party_designation, affidavit_document, selected_case_bundle, case_bundles, total_pages, status, judge_comments, created_by, last_modified_by, created_time, last_modified_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
           basePath: ctcApplication
           jsonMaps:
             - jsonPath: $.ctcApplication.id
@@ -30,15 +30,15 @@ serviceMaps:
             - jsonPath: $.ctcApplication.affidavitDocument
               type: JSON
               dbType: JSONB
-            - jsonPath: $.ctcApplication.caseBundleNodes
+            - jsonPath: $.ctcApplication.selectedCaseBundle
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.ctcApplication.caseBundles
               type: JSON
               dbType: JSONB
             - jsonPath: $.ctcApplication.totalPages
             - jsonPath: $.ctcApplication.status
             - jsonPath: $.ctcApplication.judgeComments
-            - jsonPath: $.ctcApplication.workflow
-              type: JSON
-              dbType: JSONB
             - jsonPath: $.ctcApplication.auditDetails.createdBy
             - jsonPath: $.ctcApplication.auditDetails.lastModifiedBy
             - jsonPath: $.ctcApplication.auditDetails.createdTime
@@ -55,7 +55,7 @@ serviceMaps:
       transactionCodeJsonPath: $.ctcApplicationNumber
       auditAttributeBasePath: ctcApplication
       queryMaps:
-        - query: UPDATE dristi_ctc_applications SET case_number=?, case_title=?, filing_number=?, court_id=?, applicant_name=?, mobile_number=?, is_party_to_case=?, party_designation=?, affidavit_document=?, case_bundle_nodes=?, total_pages=?, status=?, judge_comments=?, workflow=?, last_modified_by=?, last_modified_time=? WHERE id=?;
+        - query: UPDATE dristi_ctc_applications SET case_number=?, case_title=?, filing_number=?, court_id=?, applicant_name=?, mobile_number=?, is_party_to_case=?, party_designation=?, affidavit_document=?, selected_case_bundle=?, case_bundles=?, total_pages=?, status=?, judge_comments=?, last_modified_by=?, last_modified_time=? WHERE id=?;
           basePath: ctcApplication
           jsonMaps:
             - jsonPath: $.ctcApplication.caseNumber
@@ -69,15 +69,15 @@ serviceMaps:
             - jsonPath: $.ctcApplication.affidavitDocument
               type: JSON
               dbType: JSONB
-            - jsonPath: $.ctcApplication.caseBundleNodes
+            - jsonPath: $.ctcApplication.selectedCaseBundle
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.ctcApplication.caseBundles
               type: JSON
               dbType: JSONB
             - jsonPath: $.ctcApplication.totalPages
             - jsonPath: $.ctcApplication.status
             - jsonPath: $.ctcApplication.judgeComments
-            - jsonPath: $.ctcApplication.workflow
-              type: JSON
-              dbType: JSONB
             - jsonPath: $.ctcApplication.auditDetails.lastModifiedBy
             - jsonPath: $.ctcApplication.auditDetails.lastModifiedTime
             - jsonPath: $.ctcApplication.id
@@ -123,4 +123,23 @@ serviceMaps:
             - jsonPath: $.requestInfo.actionTime
             - jsonPath: $.ctcApplicationNumbers.*
 
-        
+    - version: 1.0
+      description: Update caseBundles in CTC application
+      fromTopic: update-ctc-casebundles
+      isTransaction: true
+      isAuditEnabled: true
+      module: CTC
+      objectIdJsonPath: $.ctcApplicationNumber
+      tenantIdJsonPath: $.tenantId
+      transactionCodeJsonPath: $.ctcApplicationNumber
+      queryMaps:
+        - query: UPDATE dristi_ctc_applications SET case_bundles=?, last_modified_by=?, last_modified_time=? WHERE ctc_application_number=?;
+          basePath: $
+          jsonMaps:
+            - jsonPath: $.caseBundles
+              type: JSON
+              dbType: JSONB
+            - jsonPath: $.lastModifiedBy
+            - jsonPath: $.lastModifiedTime
+            - jsonPath: $.ctcApplicationNumber
+

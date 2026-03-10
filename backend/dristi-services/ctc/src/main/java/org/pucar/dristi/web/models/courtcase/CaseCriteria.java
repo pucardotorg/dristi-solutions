@@ -42,6 +42,9 @@ public class CaseCriteria {
     @JsonProperty("courtCaseNumber")
     private String courtCaseNumber = null;
 
+    @JsonProperty("caseSearchText")
+    private String caseSearchText = null;
+
     @JsonProperty("filingFromDate")
     @Valid
     private Long filingFromDate = null;
@@ -80,9 +83,21 @@ public class CaseCriteria {
     @Valid
     private List<String> status = null;
 
+    @JsonProperty("poaHolderIndividualId")
+    @Valid
+    private String poaHolderIndividualId = null;
+
+    @JsonProperty("responseList")
+    @Valid
+    private List<CourtCase> responseList = null;
+
+
     @JsonProperty("pagination")
 
     @Valid
     private Pagination pagination = null;
+
+    @JsonProperty("isClerk")
+    private Boolean isClerk = null;
 
 }

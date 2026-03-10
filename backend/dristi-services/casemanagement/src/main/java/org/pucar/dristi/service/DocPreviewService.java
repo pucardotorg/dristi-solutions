@@ -2,8 +2,10 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ElasticSearchRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
@@ -14,11 +16,14 @@ import org.pucar.dristi.web.models.taskManagement.TaskSearchRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.pucar.dristi.config.ServiceConstants.ES_IDS_QUERY;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class DocPreviewService {
 
@@ -34,20 +39,26 @@ public class DocPreviewService {
     private final TaskManagementUtil taskManagementUtil;
     private final OrderUtil orderUtil;
     private final CtcUtil ctcUtil;
+    private final Producer producer;
 
     private final CaseBundleEngine engine;
 
     public List<CaseBundleNode> getBundle(DocPreviewRequest request) {
 
-        Boolean isPartyToCase = true;
+        Boolean isPartyToCase = false;
         if (StringUtils.hasText(request.getCtcApplicationNumber())) {
             isPartyToCase = ctcUtil.isPartyToCase(request.getCtcApplicationNumber(), request.getCourtId(), request.getRequestInfo());
         }
 
-        CourtCase courtCase = caseUtil.getCase(request.getFilingNumber(), request.getCourtId());
+        CourtCase courtCase = caseUtil.getCase(request.getFilingNumber(), request.getCourtId(), request.getTenantId());
 
-        BundleData data = loadAllData(courtCase);
+        BundleData data = loadAllData(courtCase, request.getRequestInfo());
         List<CaseBundleNode> caseBundleNodes =  engine.build(data);
+
+        // Store the full caseBundles (with fileStoreIds) in the CTC application
+        if (StringUtils.hasText(request.getCtcApplicationNumber())) {
+            storeCaseBundlesInCtcApplication(request.getCtcApplicationNumber(), caseBundleNodes, request.getRequestInfo());
+        }
 
         if (Boolean.TRUE.equals(isPartyToCase)) {
             return caseBundleNodes;
@@ -55,6 +66,20 @@ public class DocPreviewService {
 
         stripFileStoreIds(caseBundleNodes);
         return caseBundleNodes;
+    }
+
+    private void storeCaseBundlesInCtcApplication(String ctcApplicationNumber, List<CaseBundleNode> caseBundleNodes, RequestInfo requestInfo) {
+        try {
+            Map<String, Object> message = new HashMap<>();
+            message.put("ctcApplicationNumber", ctcApplicationNumber);
+            message.put("caseBundles", caseBundleNodes);
+            message.put("lastModifiedBy", requestInfo.getUserInfo().getUuid());
+            message.put("lastModifiedTime", System.currentTimeMillis());
+            producer.push(configuration.getUpdateCaseBundlesTopic(), message);
+            log.info("Pushed caseBundles update to Kafka for CTC application: {}", ctcApplicationNumber);
+        } catch (Exception e) {
+            log.error("Error pushing caseBundles update to Kafka for CTC application: {}", ctcApplicationNumber, e);
+        }
     }
 
     private void stripFileStoreIds(List<CaseBundleNode> nodes) {
@@ -65,15 +90,18 @@ public class DocPreviewService {
         }
     }
 
-    private BundleData loadAllData(CourtCase courtCase) {
+    private BundleData loadAllData(CourtCase courtCase, RequestInfo requestInfo) {
 
-        RequestInfo requestInfo = RequestInfo.builder().build();
+        String tenantId = courtCase.getTenantId();
+        String courtId = courtCase.getCourtId();
+        String filingNumber = courtCase.getFilingNumber();
+
         TaskCriteria taskCriteria = TaskCriteria.builder()
                 .status("COMPLETED")
                 .taskType("GENERIC")
-                .tenantId(courtCase.getTenantId())
-                .courtId(courtCase.getCourtId())
-                .filingNumber(courtCase.getFilingNumber())
+                .tenantId(tenantId)
+                .courtId(courtId)
+                .filingNumber(filingNumber)
                 .build();
 
         TaskCaseSearchCriteria taskCaseSearchCriteria = TaskCaseSearchCriteria.builder()
@@ -95,24 +123,26 @@ public class DocPreviewService {
                         "UNDELIVERED",
                         "NOTICE_SENT"))
                 .searchText(resolveSearchText(courtCase))
-                .courtId(courtCase.getCourtId())
-                .tenantId(courtCase.getTenantId())
+                .courtId(courtId)
+                .tenantId(tenantId)
                 .build();
 
         TaskSearchRequest taskSearchRequest = TaskSearchRequest.builder()
-                .criteria(TaskSearchCriteria.builder().status("COMPLETED").filingNumber(courtCase.getFilingNumber()).tenantId(courtCase.getTenantId()).build())
+                .requestInfo(requestInfo)
+                .criteria(TaskSearchCriteria.builder().status("COMPLETED").filingNumber(courtCase.getFilingNumber()).tenantId(tenantId).build())
                 .pagination(Pagination.builder().order(OrderPagination.ASC).limit(100).sortBy("last_modified_time").build())
                 .build();
 
         return BundleData.builder()
                 .cases(courtCase)
-                .evidences(evidenceUtil.searchEvidence(courtCase.getFilingNumber(), courtCase.getCourtId()))
-                .applications(applicationUtil.searchAllApplications(courtCase.getFilingNumber(), courtCase.getCourtId()))
-                .orders(orderUtil.getOrders(courtCase.getFilingNumber(), courtCase.getCourtId()))
+                .evidences(evidenceUtil.searchEvidence(filingNumber, courtId, tenantId, requestInfo))
+                .additionalFilingEvidences(evidenceUtil.searchAdditionalFilingEvidence(filingNumber, courtId, tenantId, requestInfo))
+                .applications(applicationUtil.searchAllApplications(filingNumber, courtId, tenantId, requestInfo))
+                .orders(orderUtil.getOrders(courtCase.getFilingNumber(), courtCase.getCourtId(), requestInfo))
                 .tasks(taskUtil.searchTask(taskCriteria, requestInfo))
                 .taskCases(taskUtil.searchTaskTable(taskCaseSearchCriteria, requestInfo))
                 .taskManagements(taskManagementUtil.searchTaskManagement(taskSearchRequest))
-                .digitalDocs(digitalizedDocumentUtil.searchDigitalizedDocuments(String.valueOf(courtCase.getId()), courtCase.getCourtId()))
+                .digitalDocs(digitalizedDocumentUtil.searchDigitalizedDocuments(String.valueOf(courtCase.getId()), courtCase.getCourtId() ,requestInfo, tenantId))
                 .build();
     }
 

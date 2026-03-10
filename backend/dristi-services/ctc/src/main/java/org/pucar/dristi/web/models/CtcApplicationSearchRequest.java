@@ -2,6 +2,7 @@ package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,17 +17,20 @@ import org.springframework.validation.annotation.Validated;
 @NoArgsConstructor
 @Builder
 public class CtcApplicationSearchRequest {
-    @JsonProperty("RequestInfo")
 
+    @JsonProperty("RequestInfo")
     @Valid
+    @NotNull
     private RequestInfo requestInfo = null;
 
     @JsonProperty("criteria")
-
+    @Valid
+    @NotNull
     private CtcApplicationSearchCriteria criteria = null;
 
     @JsonProperty("pagination")
     @Valid
+    @NotNull
     private Pagination pagination = null;
 
 

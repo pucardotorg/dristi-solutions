@@ -1,448 +1,506 @@
 package org.pucar.dristi.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
+import org.pucar.dristi.enrichment.CtcApplicationEnrichment;
+import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CtcApplicationRepository;
 import org.pucar.dristi.util.EtreasuryUtil;
-import org.pucar.dristi.util.IdgenUtil;
-import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.IndexerUtils;
+import org.pucar.dristi.validators.CtcApplicationValidator;
 import org.pucar.dristi.web.models.*;
-import org.pucar.dristi.kafka.Producer;
-import org.pucar.dristi.web.models.courtcase.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Service
 @Slf4j
 public class CtcApplicationService {
 
-    @Autowired
-    private CtcApplicationRepository ctcApplicationRepository;
+    private final CtcApplicationRepository ctcApplicationRepository;
+
+    private final CtcApplicationEnrichment ctcApplicationEnrichment;
+
+    private final WorkflowService workflowService;
+
+    private final Configuration config;
+
+    private final Producer producer;
+
+    private final EtreasuryUtil etreasuryUtil;
+
+    private final FileStoreUtil fileStoreUtil;
+
+    private final IndexerUtils indexerUtils;
+
+    private final CtcApplicationValidator ctcApplicationValidator;
+
+    private final CacheService cacheService;
+
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    private IdgenUtil idgenUtil;
-
-    @Autowired
-    private CaseUtil caseUtil;
-
-    @Autowired
-    private IndividualService individualService;
-
-    @Autowired
-    private WorkflowService workflowService;
-
-    @Autowired
-    private Configuration config;
-
-    @Autowired
-    private Producer producer;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private EtreasuryUtil etreasuryUtil;
-
-    @Autowired
-    private IndexerUtils indexerUtils;
+    public CtcApplicationService(CtcApplicationRepository ctcApplicationRepository, CtcApplicationEnrichment ctcApplicationEnrichment, WorkflowService workflowService, Configuration config, Producer producer, EtreasuryUtil etreasuryUtil, FileStoreUtil fileStoreUtil, IndexerUtils indexerUtils, CtcApplicationValidator ctcApplicationValidator, CacheService cacheService, ObjectMapper objectMapper) {
+        this.ctcApplicationRepository = ctcApplicationRepository;
+        this.ctcApplicationEnrichment = ctcApplicationEnrichment;
+        this.workflowService = workflowService;
+        this.config = config;
+        this.producer = producer;
+        this.etreasuryUtil = etreasuryUtil;
+        this.fileStoreUtil = fileStoreUtil;
+        this.indexerUtils = indexerUtils;
+        this.ctcApplicationValidator = ctcApplicationValidator;
+        this.cacheService = cacheService;
+        this.objectMapper = objectMapper;
+    }
 
     public CtcApplication createApplication(CtcApplicationRequest request) {
+
+        log.info("createApplication method in progress");
+
         CtcApplication application = request.getCtcApplication();
 
-        // Generate application number if not provided
-        application.setCtcApplicationNumber(generateApplicationNumber(application.getTenantId(), request.getRequestInfo()));
-        validateAndEnrichUser(request.getRequestInfo(),request.getCtcApplication());
+        ctcApplicationValidator.validateCreateRequest(request);
 
-        // Set ID and audit details
-        application.setId(UUID.randomUUID().toString());
-        long currentTime = System.currentTimeMillis();
+        ctcApplicationEnrichment.enrichOnCreateCtcApplication(request.getRequestInfo(), application);
 
-        if (application.getAuditDetails() == null) {
-            application.setAuditDetails(AuditDetails.builder()
-                    .createdBy(request.getRequestInfo().getUserInfo().getUuid())
-                    .lastModifiedBy(request.getRequestInfo().getUserInfo().getUuid())
-                    .createdTime(currentTime)
-                    .lastModifiedTime(currentTime)
-                    .build());
-        }
         workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
 
-        producer.push("save-ctc-application", request);
+        filterInactiveDocuments(application);
 
-        return application;
+        producer.push(config.getSaveCtcApplicationTopic(), request);
+
+        saveInRedisCache(application);
+
+        log.info("createApplication method completed");
+
+        return stripCaseBundles(application);
     }
 
     public CtcApplication updateApplication(CtcApplicationRequest request) {
+
+        log.info("updateApplication method in progress for id {}", request.getCtcApplication().getId());
+
         CtcApplication application = request.getCtcApplication();
 
-        CtcApplicationSearchRequest ctcApplicationSearchRequest = new CtcApplicationSearchRequest();
-        ctcApplicationSearchRequest.setCriteria(CtcApplicationSearchCriteria.builder().ctcApplicationNumber(application.getCtcApplicationNumber()).build());
-        ctcApplicationSearchRequest.setPagination(Pagination.builder().limit(1.0).offSet(0.0).build());
-        ctcApplicationSearchRequest.setRequestInfo(request.getRequestInfo());
+        ctcApplicationValidator.validateUpdateRequest(request);
 
-        // Check if application exists
-        List<CtcApplication> existingApplication = ctcApplicationRepository.getCtcApplication(ctcApplicationSearchRequest);
-        if (existingApplication == null || existingApplication.isEmpty()) {
-            throw new CustomException(ServiceConstants.CTC_APPLICATION_UPDATE_EXCEPTION,
-                    "CTC application not found with ID: " + application.getId());
-        }
+        ctcApplicationEnrichment.enrichOnUpdateCtcApplication(request.getRequestInfo(), application);
 
-        // Update audit details
-        application.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
-        application.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+        workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
 
-        if(request.getCtcApplication().getWorkflow()!=null)
-         workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
-
-        if(request.getCtcApplication().getWorkflow()!=null && (request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("ESIGN")
-                || request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase("UPLOAD_SIGNED_COPY"))){
+        if (request.getCtcApplication().getWorkflow() != null && (request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase(E_SIGN)
+                || request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase(UPLOAD_SIGNED_COPY))) {
             //change logic for calculating payment through payment calculator if required
-            Calculation calculation = Calculation.builder().totalAmount(20+request.getCtcApplication().getTotalPages()*1.5).tenantId(request.getCtcApplication().getTenantId()).build();
-            etreasuryUtil.createDemand(request, application.getCtcApplicationNumber()+"_APPLICATION_FEE", calculation);
+            if (request.getCtcApplication().getTotalPages() == null) {
+                List<String> acceptedFileStoreIds = getFileStoreIds(request);
+                int totalPages = fileStoreUtil.getTotalPageCount(request.getCtcApplication().getTenantId(), acceptedFileStoreIds);
+                request.getCtcApplication().setTotalPages(totalPages);
+                log.info("Calculated totalPages={} from {} accepted documents for application: {}",
+                        totalPages, acceptedFileStoreIds.size(), request.getCtcApplication().getCtcApplicationNumber());
+            }
+
+            Double totalAmount = 20 + request.getCtcApplication().getTotalPages() * 1.5;
+
+            Calculation calculation = Calculation.builder()
+                    .totalAmount(totalAmount)
+                    .tenantId(request.getCtcApplication().getTenantId())
+                    .breakDown(getBreakDown(totalAmount))
+                    .build();
+            etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + CTC_APPLICATION_FEE, calculation);
         }
-        if("PENDING_ISSUE".equalsIgnoreCase(request.getCtcApplication().getStatus())){
+        if (PENDING_ISSUE.equalsIgnoreCase(request.getCtcApplication().getStatus())) {
             indexerUtils.pushIssueCtcDocumentsToIndex(application);
+            indexerUtils.deactivateTracker(application.getCtcApplicationNumber());
         }
 
-        producer.push("update-ctc-application", request);
+        filterInactiveDocuments(application);
 
-        return application;
+        producer.push(config.getUpdateCtcApplicationTopic(), request);
+
+        saveInRedisCache(application);
+
+        log.info("updateApplication method completed for id {}", request.getCtcApplication().getId());
+
+        return stripCaseBundles(application);
+    }
+
+    private List<String> getFileStoreIds(CtcApplicationRequest request) {
+        List<String> acceptedFileStoreIds = new ArrayList<>();
+        if (request.getCtcApplication().getSelectedCaseBundle() != null) {
+            for (SelectedCaseBundleNode parentNode : request.getCtcApplication().getSelectedCaseBundle()) {
+                if (parentNode.getChildren() != null) {
+                    for (SelectedCaseBundleNode child : parentNode.getChildren()) {
+                        if (child.getFileStoreId() != null) {
+                            acceptedFileStoreIds.add(child.getFileStoreId());
+                        }
+                    }
+                }
+            }
+        }
+        return acceptedFileStoreIds;
     }
 
     public List<CtcApplication> searchApplications(CtcApplicationSearchRequest ctcApplicationSearchRequest) {
+        String ctcApplicationNumber = ctcApplicationSearchRequest.getCriteria() != null
+                ? ctcApplicationSearchRequest.getCriteria().getCtcApplicationNumber() : null;
+
+        // Try Redis first if searching by ctcApplicationNumber
+        if (ctcApplicationNumber != null) {
+            CtcApplication cached = searchRedisCache(ctcApplicationNumber);
+            if (cached != null) {
+                log.info("CTC application found in Redis cache for ctcApplicationNumber: {}", ctcApplicationNumber);
+                return Collections.singletonList(cached);
+            }
+        }
+
+        enrichSearchCriteriaForCitizen(ctcApplicationSearchRequest);
         List<CtcApplication> applications = ctcApplicationRepository.getCtcApplication(ctcApplicationSearchRequest);
         if (applications == null) {
             return new ArrayList<>();
         }
+
+        // Save results in Redis
+        for (CtcApplication app : applications) {
+            if (app.getCtcApplicationNumber() != null) {
+                saveInRedisCache(app);
+            }
+        }
+
+        applications.forEach(this::stripCaseBundles);
         return applications;
     }
 
-    private String generateApplicationNumber(String tenantId, RequestInfo requestInfo) {
-        try {
-            String idName = config.getCaConfig();
-            String idFormat = config.getCaFormat();
-            List<String> cmpNumberIdList = idgenUtil.getIdList(requestInfo, tenantId, idName, idFormat, 1, false);
+    private CtcApplication stripCaseBundles(CtcApplication application) {
+        application.setCaseBundles(null);
+        return application;
+    }
 
-            return cmpNumberIdList.get(0);
+    private void enrichSearchCriteriaForCitizen(CtcApplicationSearchRequest request) {
+        if (request.getRequestInfo() != null && request.getRequestInfo().getUserInfo() != null) {
+            boolean isCitizen = request.getRequestInfo().getUserInfo().getRoles().stream()
+                    .anyMatch(role -> ServiceConstants.CITIZEN_ROLE.equalsIgnoreCase(role.getCode()));
+
+            if (isCitizen && request.getCriteria() != null) {
+                String userUuid = request.getRequestInfo().getUserInfo().getUuid();
+                request.getCriteria().setCreatedBy(userUuid);
+            }
+        }
+    }
+
+    public void markDocumentsAsIssuedOrReject(IssueCtcDocumentUpdateRequest request) {
+        try {
+            List<DocumentActionItem> docs = request.getDocs();
+            String courtId = request.getCourtId();
+            String action = request.getAction();
+            RequestInfo requestInfo = request.getRequestInfo();
+
+            // Determine status based on request-level action
+            String docStatus = ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(action)
+                    ? ServiceConstants.STATUS_ISSUED
+                    : ServiceConstants.STATUS_REJECTED;
+
+            // Process each document sequentially
+            for (DocumentActionItem item : docs) {
+                String ctcApplicationNumber = item.getCtcApplicationNumber();
+                String docId = item.getDocId();
+
+                // 1. Update this document's status and documents in ES
+                indexerUtils.updateDocStatus(docId, ctcApplicationNumber, docStatus, item.getDocuments());
+                log.info("Updated doc {} to status {} for application: {}", docId, docStatus, ctcApplicationNumber);
+
+                // 2. Fetch fresh CTC application (re-fetch each time since previous iteration may have updated it)
+                CtcApplication ctcApplication = fetchCtcApplication(ctcApplicationNumber, item.getFilingNumber(), courtId);
+
+                // 3. If ISSUE: enrich the matching selectedCaseBundle child's fileStoreId from caseBundles
+                if (ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(action)) {
+                    enrichFileStoreIdFromCaseBundles(ctcApplication, docId);
+                }
+
+                // 4. Determine workflow action from current ES doc status counts
+                Map<String, Integer> statusCounts = indexerUtils.getDocStatusCounts(ctcApplicationNumber);
+                int totalIssued = statusCounts.getOrDefault(ServiceConstants.STATUS_ISSUED, 0);
+                int totalRejected = statusCounts.getOrDefault(ServiceConstants.STATUS_REJECTED, 0);
+                int totalPending = statusCounts.getOrDefault("PENDING", 0);
+
+                String workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued, totalRejected, totalPending);
+
+                if (workflowAction != null) {
+                    WorkflowObject workflow = new WorkflowObject();
+                    workflow.setAction(workflowAction);
+                    ctcApplication.setWorkflow(workflow);
+                }
+
+                // 5. Call updateApplication to persist changes
+                CtcApplicationRequest updateRequest = CtcApplicationRequest.builder()
+                        .requestInfo(requestInfo)
+                        .ctcApplication(ctcApplication)
+                        .build();
+                updateApplication(updateRequest);
+
+                log.info("Processed doc {} for application: {}, workflowAction: {}", docId, ctcApplicationNumber, workflowAction);
+            }
+        } catch (CustomException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Error enriching ca number: {}", e.toString());
-            throw new CustomException("ENRICHMENT_EXCEPTION", "Error while enriching ca number: " + e.getMessage());
+            log.error("Error processing bulk issue/reject for documents", e);
+            throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
+                    "Error processing bulk issue/reject: " + e.getMessage());
         }
     }
 
-    public void validateAndEnrichUser(RequestInfo requestInfo, CtcApplication ctcApplication) {
-        try {
-            // Get CourtCase object for POA holders and advocate offices
-            CourtCase courtCase = caseUtil.getCase(ctcApplication.getFilingNumber(),ctcApplication.getCourtId());
-
-            if (courtCase == null) {
-                throw new CustomException("CASE_NOT_FOUND", "Case not found with filingNumber: " +ctcApplication.getFilingNumber());
+    private CtcApplication fetchCtcApplication(String ctcApplicationNumber, String filingNumber, String courtId) {
+        // Try Redis first
+        if (ctcApplicationNumber != null) {
+            CtcApplication cached = searchRedisCache(ctcApplicationNumber);
+            if (cached != null) {
+                log.info("CTC application found in Redis cache for ctcApplicationNumber: {}", ctcApplicationNumber);
+                return cached;
             }
+        }
 
-            String userName = null;
-            String designation = null;
+        // Fallback to DB
+        CtcApplicationSearchRequest searchRequest = CtcApplicationSearchRequest.builder()
+                .criteria(CtcApplicationSearchCriteria.builder()
+                        .ctcApplicationNumber(ctcApplicationNumber)
+                        .filingNumber(filingNumber)
+                        .courtId(courtId)
+                        .build())
+                .build();
+        List<CtcApplication> ctcApplications = ctcApplicationRepository.getCtcApplication(searchRequest);
+        if (ctcApplications == null || ctcApplications.isEmpty()) {
+            throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
+                    "CTC application not found: " + ctcApplicationNumber);
+        }
+        return ctcApplications.get(0);
+    }
 
-            JsonNode additionalDetails = null;
+    private void enrichFileStoreIdFromCaseBundles(CtcApplication ctcApplication, String docId) {
+        // Build id -> fileStoreId map from caseBundles for O(1) lookup
+        Map<String, String> bundleFileStoreMap = buildBundleFileStoreMap(ctcApplication.getCaseBundles());
+        String fileStoreId = bundleFileStoreMap.get(docId);
 
-            if (courtCase.getAdditionalDetails() != null) {
-                additionalDetails = objectMapper.convertValue(
-                        courtCase.getAdditionalDetails(),
-                        JsonNode.class
-                );
-            }
-            
-            if (additionalDetails != null) {
-                // Check complainant details
-                JsonNode complainantDetails = additionalDetails.has("complainantDetails") ? additionalDetails.get("complainantDetails") : null;
-                if (complainantDetails != null && complainantDetails.has("formdata")) {
-                    JsonNode formData = complainantDetails.get("formdata");
-                    if (formData.isArray() && !formData.isEmpty()) {
-                        JsonNode complainantData = formData.get(0).get("data");
-                        if (complainantData != null) {
-                            JsonNode complainantVerification = complainantData.has("complainantVerification") ? complainantData.get("complainantVerification") : null;
-                            if (complainantVerification != null) {
-                                String mobile = complainantVerification.has("mobileNumber") ? complainantVerification.get("mobileNumber").asText() : null;
-                                if (mobile != null && mobile.equals(ctcApplication.getMobileNumber())) {
-                                    userName = extractName(complainantData, "complainant");
-                                    designation = "Complainant";
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // Check respondent details if not found in complainant
-                if (userName == null) {
-                    JsonNode respondentDetails = additionalDetails.has("respondentDetails") ? additionalDetails.get("respondentDetails") : null;
-                    if (respondentDetails != null && respondentDetails.has("formdata")) {
-                        JsonNode formData = respondentDetails.get("formdata");
-                        if (formData.isArray()) {
-                            for (JsonNode respondentForm : formData) {
-                                JsonNode respondentData = respondentForm.get("data");
-                                if (respondentData != null) {
-                                    JsonNode phonenumbers = respondentData.has("phonenumbers") ? respondentData.get("phonenumbers") : null;
-                                    if (phonenumbers != null && phonenumbers.has("textfieldValue")) {
-                                        String mobile = phonenumbers.get("textfieldValue").asText();
-                                        if (mobile != null && mobile.equals(ctcApplication.getMobileNumber())) {
-                                            userName = extractName(respondentData, "respondent");
-                                            designation = "Accused";
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // Check advocate details if not found yet
-                if (userName == null) {
-                    JsonNode advocateDetails = additionalDetails.has("advocateDetails") ? additionalDetails.get("advocateDetails") : null;
-                    if (advocateDetails != null && advocateDetails.has("formdata")) {
-                        JsonNode formData = advocateDetails.get("formdata");
-                        if (formData.isArray() && !formData.isEmpty()) {
-                            JsonNode advocateData = formData.get(0).get("data");
-                            if (advocateData != null) {
-                                JsonNode multipleAdvocates = advocateData.has("multipleAdvocatesAndPip") ? advocateData.get("multipleAdvocatesAndPip") : null;
-                                if (multipleAdvocates != null) {
-                                    // Check boxComplainant (complainant's advocate)
-                                    JsonNode boxComplainant = multipleAdvocates.has("boxComplainant") ? multipleAdvocates.get("boxComplainant") : null;
-                                    if (boxComplainant != null) {
-                                        String mobile = boxComplainant.has("mobileNumber") ? boxComplainant.get("mobileNumber").asText() : null;
-                                        if (mobile != null && mobile.equals(ctcApplication.getMobileNumber())) {
-                                            userName = extractName(boxComplainant, "advocate");
-                                            designation = "Advocate";
-                                        }
-                                    }
-                                    
-                                    // Check multiple advocate name details
-                                    if (userName == null && multipleAdvocates.has("multipleAdvocateNameDetails")) {
-                                        JsonNode advocateNameDetails = multipleAdvocates.get("multipleAdvocateNameDetails");
-                                        if (advocateNameDetails.isArray()) {
-                                            for (JsonNode advocateDetail : advocateNameDetails) {
-                                                JsonNode advocateNameData = advocateDetail.get("advocateNameDetails");
-                                                if (advocateNameData != null) {
-                                                    String mobile = advocateNameData.has("advocateMobileNumber") ? advocateNameData.get("advocateMobileNumber").asText() : null;
-                                                    if (mobile != null && mobile.equals(ctcApplication.getMobileNumber())) {
-                                                        userName = extractName(advocateNameData, "advocate");
-                                                        designation = "Advocate";
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+        if (fileStoreId == null) {
+            log.warn("No fileStoreId found in caseBundles for docId: {} in application: {}", docId, ctcApplication.getCtcApplicationNumber());
+            return;
+        }
 
-                // Check POA holders if not found yet
-                if(userName == null){
-                    List<String> uuids = new ArrayList<>();
-                    if (courtCase.getPoaHolders() != null && !courtCase.getPoaHolders().isEmpty()) {
-                        for (POAHolder poaHolder : courtCase.getPoaHolders()) {
-                            if (poaHolder.getAdditionalDetails() != null) {
-                                try {
-                                    JsonNode additionalDetailsNode = objectMapper.valueToTree(poaHolder.getAdditionalDetails());
-                                    if (additionalDetailsNode.has("uuid") && additionalDetailsNode.get("uuid") != null) {
-                                        String uuid = additionalDetailsNode.get("uuid").asText();
-                                        if (!uuid.isEmpty()) {
-                                            uuids.add(uuid);
-                                        }
-                                    }
-                                } catch (Exception e) {
-                                    log.warn("Failed to extract UUID from POA holder additional details: {}", e.getMessage());
-                                }
-                            }
-                        }
-                    }
+        // Build id -> SelectedCaseBundleNode map from selectedCaseBundle for O(1) update
+        Map<String, SelectedCaseBundleNode> selectedNodeMap = buildSelectedNodeMap(ctcApplication.getSelectedCaseBundle());
+        SelectedCaseBundleNode targetNode = selectedNodeMap.get(docId);
 
-                    if (!uuids.isEmpty()) {
-                        List<String> uuidList = new ArrayList<>(uuids);
-                        List<Individual> individuals = individualService.getIndividuals(requestInfo, uuidList);
-
-                        for (Individual ind : individuals) {
-                            if (ind.getMobileNumber() != null && ind.getMobileNumber().equalsIgnoreCase(ctcApplication.getMobileNumber())) {
-                                log.info("Mobile number matched for POA holder UUID: {}", ind.getUserUuid());
-
-                                userName = extractNameFromIndividual(ind);
-                                designation = "POA";
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                // Check advocate offices if not found yet
-                if(userName == null){
-                    List<String> uuids = new ArrayList<>();
-                    if (courtCase.getAdvocateOffices() != null && !courtCase.getAdvocateOffices().isEmpty()) {
-                        for (AdvocateOffice advocateOffice : courtCase.getAdvocateOffices()) {
-                            // Add office advocate UUID if present
-                            if (advocateOffice.getOfficeAdvocateUserUuid() != null && !advocateOffice.getOfficeAdvocateUserUuid().isEmpty()) {
-                                uuids.add(advocateOffice.getOfficeAdvocateUserUuid());
-                            }
-
-                            // Add advocate member UUIDs
-                            if (advocateOffice.getAdvocates() != null && !advocateOffice.getAdvocates().isEmpty()) {
-                                for (AdvocateOfficeMember advocate : advocateOffice.getAdvocates()) {
-                                    if (advocate.getMemberUserUuid() != null && !advocate.getMemberUserUuid().isEmpty()) {
-                                        uuids.add(advocate.getMemberUserUuid());
-                                    }
-                                }
-                            }
-
-                            // Add clerk member UUIDs
-                            if (advocateOffice.getClerks() != null && !advocateOffice.getClerks().isEmpty()) {
-                                for (AdvocateOfficeMember clerk : advocateOffice.getClerks()) {
-                                    if (clerk.getMemberUserUuid() != null && !clerk.getMemberUserUuid().isEmpty()) {
-                                        uuids.add(clerk.getMemberUserUuid());
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (!uuids.isEmpty()) {
-                        List<String> uuidList = new ArrayList<>(uuids);
-                        List<Individual> individuals = individualService.getIndividuals(requestInfo, uuidList);
-
-                        for (Individual ind : individuals) {
-                            if (ind.getMobileNumber() != null && ind.getMobileNumber().equalsIgnoreCase(ctcApplication.getMobileNumber())) {
-                                log.info("Mobile number matched for advocate office UUID: {}", ind.getUserUuid());
-
-                                userName = extractNameFromIndividual(ind);
-                                designation = "advocate";
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if(userName!=null){
-                ctcApplication.setApplicantName(userName);
-                ctcApplication.setPartyDesignation(designation);
-                ctcApplication.setIsPartyToCase(true);
-            }
-
-        } catch (Exception e) {
-            log.error("Error validating user for CTC application: {}", e.toString());
-            throw new CustomException("VALIDATE_USER_ERROR", "Error validating user: " + e.getMessage());
+        if (targetNode != null) {
+            targetNode.setFileStoreId(fileStoreId);
+            log.info("Enriched fileStoreId for doc {} in application {}", docId, ctcApplication.getCtcApplicationNumber());
         }
     }
-    
-    private String extractName(JsonNode data, String type) {
-        String firstName = null;
-        String middleName = null;
-        String lastName = null;
-        
-        if (type.equals("complainant")) {
-            firstName = data.has("complainantFirstName") ? data.get("complainantFirstName").asText() : null;
-            middleName = data.has("complainantMiddleName") ? data.get("complainantMiddleName").asText() : null;
-            lastName = data.has("complainantLastName") ? data.get("complainantLastName").asText() : null;
-        } else if (type.equals("respondent")) {
-            firstName = data.has("respondentFirstName") ? data.get("respondentFirstName").asText() : null;
-            middleName = data.has("respondentMiddleName") ? data.get("respondentMiddleName").asText() : null;
-            lastName = data.has("respondentLastName") ? data.get("respondentLastName").asText() : null;
-        } else if (type.equals("advocate")) {
-            firstName = data.has("firstName") ? data.get("firstName").asText() : null;
-            middleName = data.has("middleName") ? data.get("middleName").asText() : null;
-            lastName = data.has("lastName") ? data.get("lastName").asText() : null;
-        }
-        
-        return (firstName != null ? firstName : "") +
-               (middleName != null ? " " + middleName : "") +
-               (lastName != null ? " " + lastName : "");
-    }
-    
-    public void markDocumentsAsIssued(String ctcApplicationNumber, String docId, String courtId, String filingNumber, RequestInfo requestInfo) {
-        try {
-            // 1. Update the document status to ISSUED in ES
-            indexerUtils.updateIssuedStatus(docId);
 
-            // 2. Fetch the CTC application from DB
-            CtcApplicationSearchRequest ctcApplicationSearchRequest = CtcApplicationSearchRequest.builder()
-                    .criteria(CtcApplicationSearchCriteria.builder().ctcApplicationNumber(ctcApplicationNumber).filingNumber(filingNumber).courtId(courtId).build())
+    private Map<String, String> buildBundleFileStoreMap(List<CaseBundleNode> caseBundles) {
+        Map<String, String> map = new HashMap<>();
+        if (caseBundles == null) return map;
+        for (CaseBundleNode parentNode : caseBundles) {
+            if (parentNode.getId() != null && parentNode.getFileStoreId() != null) {
+                map.put(parentNode.getId(), parentNode.getFileStoreId());
+            }
+            if (parentNode.getChildren() != null) {
+                for (CaseBundleNode child : parentNode.getChildren()) {
+                    if (child.getId() != null && child.getFileStoreId() != null) {
+                        map.put(child.getId(), child.getFileStoreId());
+                    }
+                }
+            }
+        }
+        return map;
+    }
+
+    private Map<String, SelectedCaseBundleNode> buildSelectedNodeMap(List<SelectedCaseBundleNode> selectedCaseBundle) {
+        Map<String, SelectedCaseBundleNode> map = new HashMap<>();
+        if (selectedCaseBundle == null) return map;
+        for (SelectedCaseBundleNode parentNode : selectedCaseBundle) {
+            if (parentNode.getId() != null) {
+                map.put(parentNode.getId(), parentNode);
+            }
+            if (parentNode.getChildren() != null) {
+                for (SelectedCaseBundleNode child : parentNode.getChildren()) {
+                    if (child.getId() != null) {
+                        map.put(child.getId(), child);
+                    }
+                }
+            }
+        }
+        return map;
+    }
+
+    private String determineWorkflowAction(String currentStatus, int totalIssued, int totalRejected, int totalPending) {
+        if (totalIssued == 0 && totalRejected == 0) {
+            return null;
+        }
+
+        if (PENDING_ISSUE.equalsIgnoreCase(currentStatus)) {
+            // At least one issued → move to PARTIALLY_ISSUED
+            if (totalIssued > 0) {
+                return WF_ACTION_ISSUE;
+            }
+            // All rejected, none pending → REJECT_ALL (terminal)
+            if (totalRejected > 0 && totalPending == 0) {
+                return WF_ACTION_REJECT_ALL;
+            }
+            // Some rejected, still pending → REJECT (stay in PENDING_ISSUE)
+            if (totalRejected > 0 && totalPending > 0) {
+                return WF_ACTION_REJECT;
+            }
+        }
+
+        if (PARTIALLY_ISSUED.equalsIgnoreCase(currentStatus)) {
+            // All docs processed → ISSUE_ALL (terminal)
+            if (totalPending == 0) {
+                return WF_ACTION_ISSUE_ALL;
+            }
+            // Still pending docs → ISSUE (stay in PARTIALLY_ISSUED)
+            return WF_ACTION_ISSUE;
+        }
+
+        return null;
+    }
+
+    public List<CtcApplication> reviewApplications(CtcApplicationReviewRequest request) {
+        String action = request.getAction();
+        String courtId = request.getCourtId();
+        RequestInfo requestInfo = request.getRequestInfo();
+        List<CtcApplication> updatedApplications = new ArrayList<>();
+
+        for (ReviewItem item : request.getApplications()) {
+            log.info("Reviewing CTC application: {}, action: {}", item.getCtcApplicationNumber(), action);
+
+            // Fetch the CTC application from DB
+            CtcApplicationSearchRequest searchRequest = CtcApplicationSearchRequest.builder()
+                    .criteria(CtcApplicationSearchCriteria.builder()
+                            .ctcApplicationNumber(item.getCtcApplicationNumber())
+                            .filingNumber(item.getFilingNumber())
+                            .courtId(courtId)
+                            .build())
                     .build();
-            List<CtcApplication> ctcApplications = ctcApplicationRepository.getCtcApplication(ctcApplicationSearchRequest);
+            List<CtcApplication> ctcApplications = ctcApplicationRepository.getCtcApplication(searchRequest);
             if (ctcApplications == null || ctcApplications.isEmpty()) {
-                throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
-                        "CTC application not found: " + ctcApplicationNumber);
+                throw new CustomException("CTC_REVIEW_APPLICATION_ERROR",
+                        "CTC application not found: " + item.getCtcApplicationNumber());
             }
             CtcApplication ctcApplication = ctcApplications.get(0);
 
-            // 3. Count total accepted children from caseBundleNodes
-            int totalAccepted = 0;
-            if (ctcApplication.getCaseBundleNodes() != null) {
-                for (CaseBundleNode parentNode : ctcApplication.getCaseBundleNodes()) {
-                    if (parentNode.getChildren() != null) {
-                        for (CaseBundleNode child : parentNode.getChildren()) {
-                            if ("accepted".equalsIgnoreCase(child.getStatus())) {
-                                totalAccepted++;
-                            }
-                        }
-                    }
-                }
-            }
+            // Enrich with review fields
+            ctcApplication.setJudgeComments(item.getComments());
 
-            // 4. Query ES for how many docs are now ISSUED (includes the one just updated above)
-            int totalIssued = indexerUtils.getIssuedDocCount(ctcApplicationNumber);
+            // Enrich audit details
+            ctcApplicationEnrichment.enrichOnUpdateCtcApplication(requestInfo, ctcApplication);
 
-            // 5. Determine workflow action based on issued vs accepted count
-            String workflowAction;
-            if (totalAccepted > 0 && totalIssued >= totalAccepted) {
-                workflowAction = "ISSUE_ALL";
-            } else {
-                workflowAction = "PARTIAL_ISSUE";
-            }
-
-            // 5. Update workflow
+            // Set workflow action
             WorkflowObject workflow = new WorkflowObject();
-            workflow.setAction(workflowAction);
+            workflow.setAction(action);
             ctcApplication.setWorkflow(workflow);
             workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
 
-            // 6. Persist the updated application
+            // Persist the updated application
             CtcApplicationRequest ctcApplicationRequest = CtcApplicationRequest.builder()
                     .requestInfo(requestInfo)
                     .ctcApplication(ctcApplication)
                     .build();
-            producer.push("update-ctc-application", ctcApplicationRequest);
+            producer.push(config.getUpdateCtcApplicationTopic(), ctcApplicationRequest);
 
-            log.info("Marked document {} as issued for application: {}, workflow action: {}", docId, ctcApplicationNumber, workflowAction);
-        } catch (CustomException e) {
-            throw e;
+            log.info("Reviewed CTC application: {}, action: {}", item.getCtcApplicationNumber(), action);
+            updatedApplications.add(ctcApplication);
+        }
+
+        return updatedApplications;
+    }
+
+    public ValidateUserInfo validateUser(ValidateUserRequest request) {
+        CtcApplication application = CtcApplication.builder()
+                .filingNumber(request.getFilingNumber())
+                .courtId(request.getCourtId())
+                .mobileNumber(request.getMobileNumber())
+                .build();
+
+        ctcApplicationValidator.validateAndEnrichUser(request.getRequestInfo(), application);
+
+        return ValidateUserInfo.builder()
+                .userName(application.getApplicantName())
+                .designation(application.getPartyDesignation())
+                .mobileNumber(request.getMobileNumber())
+                .filingNumber(request.getFilingNumber())
+                .courtId(request.getCourtId())
+                .isPartyToCase(application.getIsPartyToCase())
+                .build();
+    }
+
+    private String getRedisKey(String ctcApplicationNumber) {
+        return "ctc:" + ctcApplicationNumber;
+    }
+
+    private CtcApplication filterInactiveDocuments(CtcApplication application) {
+        if (application == null) {
+            return null;
+        }
+
+        // Filter affidavitDocument - set to null if inactive
+        if (application.getAffidavitDocument() != null && 
+            Boolean.FALSE.equals(application.getAffidavitDocument().getIsActive())) {
+            application.setAffidavitDocument(null);
+        }
+
+        // Filter documents list - keep only active documents
+        if (application.getDocuments() != null) {
+            List<Document> activeDocuments = application.getDocuments().stream()
+                    .filter(doc -> doc != null && !Boolean.FALSE.equals(doc.getIsActive()))
+                    .collect(Collectors.toList());
+            application.setDocuments(activeDocuments);
+        }
+
+        return application;
+    }
+
+    private void saveInRedisCache(CtcApplication application) {
+        try {
+            if (application.getCtcApplicationNumber() != null) {
+                cacheService.save(getRedisKey(application.getCtcApplicationNumber()), application);
+                log.info("Saved CTC application in Redis cache: {}", application.getCtcApplicationNumber());
+            }
         } catch (Exception e) {
-            log.error("Error updating isIssued status in ES for application: {}", ctcApplicationNumber, e);
-            throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
-                    "Error updating issued status in ES index: " + e.getMessage());
+            log.error("Error saving CTC application to Redis cache: {}", e.getMessage());
         }
     }
 
-    private String extractNameFromIndividual(Individual individual) {
-        if (individual == null || individual.getName() == null) {
-            return "";
+    private CtcApplication searchRedisCache(String ctcApplicationNumber) {
+        try {
+            Object value = cacheService.findById(getRedisKey(ctcApplicationNumber));
+            if (value != null) {
+                String json = objectMapper.writeValueAsString(value);
+                return objectMapper.readValue(json, CtcApplication.class);
+            }
+            return null;
+        } catch (JsonProcessingException e) {
+            log.error("Error reading CTC application from Redis cache: {}", e.getMessage());
+            return null;
         }
-        
-        String givenName = individual.getName().getGivenName();
-        String otherNames = individual.getName().getOtherNames();
-        String familyName = individual.getName().getFamilyName();
-        
-        return (givenName != null ? givenName : "") +
-               (otherNames != null ? " " + otherNames : "") +
-               (familyName != null ? " " + familyName : "");
+    }
+
+    private List<BreakDown> getBreakDown(Double totalAmount) {
+        BreakDown breakDown = new BreakDown();
+        breakDown.setCode(config.getBreakDownCode());
+        breakDown.setType(config.getBreakDownType());
+        breakDown.setAmount(totalAmount);
+
+        List<BreakDown> breakDownList = new ArrayList<>();
+        breakDownList.add(breakDown);
+        return breakDownList;
     }
 }

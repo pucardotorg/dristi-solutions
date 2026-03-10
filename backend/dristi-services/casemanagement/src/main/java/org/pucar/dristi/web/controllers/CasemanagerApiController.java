@@ -187,15 +187,10 @@ public class CasemanagerApiController {
 
     @PostMapping("/casemanager/preview/doc")
     public ResponseEntity<DocPreviewResponse> previewDoc(@Valid @RequestBody DocPreviewRequest request) {
-        try {
-            List<CaseBundleNode> caseBundleNodes = docPreviewService.getBundle(request);
-            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), false);
-            DocPreviewResponse docPreviewResponse = DocPreviewResponse.builder().responseInfo(responseInfo).caseBundleNodes(caseBundleNodes).build();
-            return ResponseEntity.ok().body(docPreviewResponse);
-        } catch (Exception e) {
-            log.error("Error previewing document for filingNumber:: {}", request.getFilingNumber(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        List<CaseBundleNode> caseBundleNodes = docPreviewService.getBundle(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), false);
+        DocPreviewResponse docPreviewResponse = DocPreviewResponse.builder().responseInfo(responseInfo).caseBundleNodes(caseBundleNodes).build();
+        return ResponseEntity.ok().body(docPreviewResponse);
     }
 
 }

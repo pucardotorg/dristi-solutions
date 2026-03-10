@@ -1,13 +1,12 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
-import org.pucar.dristi.web.models.CaseBundleNode;
-import org.pucar.dristi.web.models.CtcApplication;
-import org.pucar.dristi.web.models.IssueCtcDocument;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -16,10 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -30,11 +26,13 @@ public class IndexerUtils {
 
     private final RestTemplate restTemplate;
     private final Configuration config;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.config = config;
+        this.objectMapper = objectMapper;
     }
 
     public void pushIssueCtcDocuments(List<IssueCtcDocument> documents) throws Exception {
@@ -57,6 +55,7 @@ public class IndexerUtils {
                 ES_INDEX_HEADER_FORMAT + ES_ISSUE_CTC_DOC_FORMAT,
                 indexName,
                 doc.getId(),
+                doc.getId(),
                 doc.getDocId(),
                 doc.getCtcApplicationNumber(),
                 doc.getCreatedTime(),
@@ -64,15 +63,20 @@ public class IndexerUtils {
                 doc.getDocTitle(),
                 doc.getStatus(),
                 doc.getCaseTitle(),
-                doc.getCaseNumber()
+                doc.getCaseNumber(),
+                doc.getFilingNumber(),
+                doc.getCourtId(),
+                doc.getTenantId(),
+                doc.getFileStoreId()
         );
     }
 
-    public void updateIssuedStatus(String docId) throws Exception {
+    public void updateDocStatus(String docId, String ctcApplicationNumber, String status, List<Document> documents) throws Exception {
         String indexName = config.getIssueCtcDocumentsIndex();
         String uri = config.getEsHostUrl() + indexName + "/_update_by_query";
         long currentTime = System.currentTimeMillis();
-        String request = String.format(ES_UPDATE_BY_QUERY_ISSUED, docId, currentTime);
+        String documentsJson = documents != null ? objectMapper.writeValueAsString(documents) : "[]";
+        String request = String.format(ES_UPDATE_BY_QUERY_STATUS, docId, ctcApplicationNumber, status, currentTime, documentsJson);
         esPostManual(uri, request);
     }
 
@@ -103,10 +107,10 @@ public class IndexerUtils {
         return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
     }
 
-    public int getIssuedDocCount(String ctcApplicationNumber) throws Exception {
+    public Map<String, Integer> getDocStatusCounts(String ctcApplicationNumber) throws Exception {
         String indexName = config.getIssueCtcDocumentsIndex();
-        String uri = config.getEsHostUrl() + indexName + "/_count";
-        String request = String.format(ES_COUNT_ISSUED_DOCS, ctcApplicationNumber);
+        String uri = config.getEsHostUrl() + indexName + "/_search";
+        String request = String.format(ES_SEARCH_DOCS_BY_APPLICATION, ctcApplicationNumber);
 
         final HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
@@ -114,7 +118,64 @@ public class IndexerUtils {
         final HttpEntity<String> entity = new HttpEntity<>(request, headers);
 
         String response = restTemplate.postForObject(uri, entity, String.class);
-        return JsonPath.read(response, "$.count");
+        List<Map<String, Object>> hits = JsonPath.read(response, "$.hits.hits[*]._source.Data");
+
+        Map<String, Integer> statusCounts = new HashMap<>();
+        for (Map<String, Object> hit : hits) {
+            String status = (String) hit.get("status");
+            statusCounts.merge(status, 1, Integer::sum);
+        }
+        return statusCounts;
+    }
+
+    public void deactivateTracker(String ctcApplicationNumber) {
+        try {
+            String indexName = config.getCtcApplicationTrackerIndex();
+            String uri = config.getEsHostUrl() + indexName + "/_update_by_query";
+            String request = String.format(ServiceConstants.ES_DEACTIVATE_TRACKER_BY_APPLICATION, ctcApplicationNumber);
+            esPostManual(uri, request);
+            log.info("Deactivated tracker for application: {}", ctcApplicationNumber);
+        } catch (Exception e) {
+            log.error("Error deactivating tracker for application: {}", ctcApplicationNumber, e);
+            throw new CustomException(ServiceConstants.CTC_APPLICATION_TRACKER_INDEX_EXCEPTION,
+                    "Error deactivating tracker in ES index: " + e.getMessage());
+        }
+    }
+
+    public void pushCtcApplicationTracker(CtcApplicationTracker tracker) {
+        try {
+            String indexName = config.getCtcApplicationTrackerIndex();
+            String searchableFieldsJson = tracker.getSearchableFields() != null
+                    ? "[" + tracker.getSearchableFields().stream()
+                        .map(s -> "\"" + s + "\"")
+                        .collect(Collectors.joining(",")) + "]"
+                    : "[]";
+
+            String payload = String.format(
+                    ES_INDEX_HEADER_FORMAT + ServiceConstants.ES_CTC_APPLICATION_TRACKER_FORMAT,
+                    indexName,
+                    tracker.getId(),
+                    tracker.getTenantId(),
+                    tracker.getCourtId(),
+                    tracker.getFilingNumber(),
+                    tracker.getCtcApplicationNumber(),
+                    tracker.getStatus(),
+                    tracker.getDateRaised(),
+                    tracker.getApplicantName(),
+                    tracker.getCaseTitle(),
+                    tracker.getCaseNumber(),
+                    tracker.getIsActive(),
+                    searchableFieldsJson
+            );
+
+            String uri = config.getEsHostUrl() + config.getBulkPath();
+            esPostManual(uri, payload);
+            log.info("Pushed ctc-application-tracker to ES for application: {}", tracker.getCtcApplicationNumber());
+        } catch (Exception e) {
+            log.error("Error pushing ctc-application-tracker to ES for application: {}", tracker.getCtcApplicationNumber(), e);
+            throw new CustomException(ServiceConstants.CTC_APPLICATION_TRACKER_INDEX_EXCEPTION,
+                    "Error pushing tracker to ES index: " + e.getMessage());
+        }
     }
 
     public void pushIssueCtcDocumentsToIndex(CtcApplication application) {
@@ -122,24 +183,17 @@ public class IndexerUtils {
             List<IssueCtcDocument> documents = new ArrayList<>();
             Long currentTime = System.currentTimeMillis();
 
-            if (application.getCaseBundleNodes() != null) {
-                for (CaseBundleNode parentNode : application.getCaseBundleNodes()) {
-                    if (parentNode.getChildren() != null) {
-                        for (CaseBundleNode child : parentNode.getChildren()) {
-                            IssueCtcDocument doc = IssueCtcDocument.builder()
-                                    .id(UUID.randomUUID().toString())
-                                    .docId(child.getId())
-                                    .ctcApplicationNumber(application.getCtcApplicationNumber())
-                                    .createdTime(currentTime)
-                                    .lastModifiedTime(currentTime)
-                                    .docTitle(child.getTitle())
-                                    .status("PENDING")
-                                    .caseTitle(application.getCaseTitle())
-                                    .caseNumber(application.getCaseNumber())
-                                    .build();
-                            documents.add(doc);
-                        }
-                    }
+            // Build fileStoreId lookup from caseBundles (for when selectedCaseBundle has null fileStoreId)
+            Map<String, String> fileStoreIdMap = new HashMap<>();
+            if (application.getCaseBundles() != null) {
+                for (CaseBundleNode bundleNode : application.getCaseBundles()) {
+                    buildFileStoreIdMap(bundleNode, fileStoreIdMap);
+                }
+            }
+
+            if (application.getSelectedCaseBundle() != null) {
+                for (SelectedCaseBundleNode node : application.getSelectedCaseBundle()) {
+                    collectDocuments(node, application, currentTime, documents, fileStoreIdMap);
                 }
             }
 
@@ -153,6 +207,54 @@ public class IndexerUtils {
                     application.getCtcApplicationNumber(), e);
             throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION,
                     "Error pushing documents to ES index: " + e.getMessage());
+        }
+    }
+
+    private void buildFileStoreIdMap(CaseBundleNode node, Map<String, String> fileStoreIdMap) {
+        if (node == null) return;
+        if (node.getId() != null && node.getFileStoreId() != null) {
+            fileStoreIdMap.put(node.getId(), node.getFileStoreId());
+        }
+        if (node.getChildren() != null) {
+            for (CaseBundleNode child : node.getChildren()) {
+                buildFileStoreIdMap(child, fileStoreIdMap);
+            }
+        }
+    }
+
+    private void collectDocuments(SelectedCaseBundleNode node, CtcApplication application,
+                                  Long currentTime, List<IssueCtcDocument> documents,
+                                  Map<String, String> fileStoreIdMap) {
+        if (node == null) return;
+
+        // Use fileStoreId from selectedCaseBundle, fallback to caseBundles lookup
+        String fileStoreId = node.getFileStoreId() != null
+                ? node.getFileStoreId()
+                : fileStoreIdMap.get(node.getId());
+
+        if (fileStoreId != null) {
+            IssueCtcDocument doc = IssueCtcDocument.builder()
+                    .id(UUID.randomUUID().toString())
+                    .docId(node.getId())
+                    .ctcApplicationNumber(application.getCtcApplicationNumber())
+                    .createdTime(currentTime)
+                    .lastModifiedTime(currentTime)
+                    .docTitle(node.getTitle())
+                    .status("PENDING")
+                    .caseTitle(application.getCaseTitle())
+                    .caseNumber(application.getCaseNumber())
+                    .filingNumber(application.getFilingNumber())
+                    .courtId(application.getCourtId())
+                    .tenantId(application.getTenantId())
+                    .fileStoreId(fileStoreId)
+                    .build();
+            documents.add(doc);
+        }
+
+        if (node.getChildren() != null) {
+            for (SelectedCaseBundleNode child : node.getChildren()) {
+                collectDocuments(child, application, currentTime, documents, fileStoreIdMap);
+            }
         }
     }
 

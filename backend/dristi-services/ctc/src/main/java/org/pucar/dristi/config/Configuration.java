@@ -26,22 +26,6 @@ public class Configuration {
     @Value("${egov.workflow.ctc.business.service.name}")
     private String ctcBusinessServiceName;
 
-    // User Config
-    @Value("${egov.user.host}")
-    private String userHost;
-
-    @Value("${egov.user.context.path}")
-    private String userContextPath;
-
-    @Value("${egov.user.create.path}")
-    private String userCreateEndpoint;
-
-    @Value("${egov.user.search.path}")
-    private String userSearchEndpoint;
-
-    @Value("${egov.user.update.path}")
-    private String userUpdateEndpoint;
-
     @Value("${egov.courtId}")
     private String courtId;
 
@@ -95,16 +79,6 @@ public class Configuration {
     @Value("${egov.file.store.delete.endpoint}")
     private String fileStoreDeleteEndPoint;
 
-    //Idgen
-    @Value("${egov.idgen.orderConfig}")
-    private String orderConfig;
-
-    @Value("${egov.idgen.orderFormat}")
-    private String orderFormat;
-
-    @Value("${egov.documenttype.path}")
-    private String documentTypePath;
-
     //Localization
     @Value("${egov.localization.host}")
     private String localizationHost;
@@ -121,13 +95,6 @@ public class Configuration {
 
     @Value("${egov.individual.search.path}")
     private String individualSearchEndpoint;
-
-    //advocate
-    @Value("${egov.advocate.host}")
-    private String advocateHost;
-
-    @Value("${egov.advocate.path}")
-    private String advocatePath;
 
     //Etreasury Config
     @Value("${egov.etreasury.host}")
@@ -158,7 +125,26 @@ public class Configuration {
     @Value("${ctc.issue.documents.index}")
     private String issueCtcDocumentsIndex;
 
+    @Value("${spring.redis.timeout}")
+    private Long redisTimeout;
+
     // Zone ID
     @Value("${app.zone.id}")
     private String zoneId;
+
+    // topics
+    @Value("${app.kafka.topics.save.ctc.application}")
+    private String saveCtcApplicationTopic;
+
+    @Value("${app.kafka.topics.update.ctc.application}")
+    private String updateCtcApplicationTopic;
+
+    @Value("${break.down.code}")
+    private String breakDownCode;
+
+    @Value("${break.down.type}")
+    private String breakDownType;
+
+    @Value("${ctc.application.tracker.index}")
+    private String ctcApplicationTrackerIndex;
 }

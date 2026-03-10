@@ -18,7 +18,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/ctc")
+@RequestMapping("")
 @Validated
 public class CtcApiController {
 
@@ -35,16 +35,20 @@ public class CtcApiController {
     @PostMapping("/applications/_create")
     public ResponseEntity<CtcApplicationResponse> createApplication(@Valid @RequestBody CtcApplicationRequest request) {
 
-        log.info("Creating CTC application for case: {}", request.getCtcApplication() != null ? request.getCtcApplication().getCaseNumber() : "unknown");
-
         try {
+
+            log.info("Creating CTC application request : {}", request);
+
             CtcApplication application = ctcApplicationService.createApplication(request);
+
             ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
 
             CtcApplicationResponse response = CtcApplicationResponse.builder()
                     .responseInfo(responseInfo)
                     .ctcApplication(application)
                     .build();
+
+            log.info("Creating CTC application response : {}", response);
 
             return new ResponseEntity<>(response, HttpStatus.CREATED);
 
@@ -60,7 +64,7 @@ public class CtcApiController {
     @PostMapping("/applications/_update")
     public ResponseEntity<CtcApplicationResponse> updateApplication(@Valid @RequestBody CtcApplicationRequest request) {
 
-        log.info("Updating CTC application: {}", request.getCtcApplication() != null ? request.getCtcApplication().getId() : "unknown");
+        log.info("Updating CTC application request : {}", request);
 
         try {
             CtcApplication application = ctcApplicationService.updateApplication(request);
@@ -108,30 +112,79 @@ public class CtcApiController {
         }
     }
 
-    @PostMapping("/applications/documents/_issue")
-    public ResponseEntity<IssueCtcDocumentUpdateResponse> markDocumentsAsIssued(@Valid @RequestBody IssueCtcDocumentUpdateRequest request) {
+    @PostMapping("/applications/_review")
+    public ResponseEntity<CtcApplicationSearchResponse> reviewApplications(@Valid @RequestBody CtcApplicationReviewRequest request) {
 
-        log.info("Marking documents as issued for CTC application: {}", request.getCtcApplicationNumber());
+        log.info("Reviewing {} CTC applications, action: {}", request.getApplications() != null ? request.getApplications().size() : 0, request.getAction());
 
         try {
-            ctcApplicationService.markDocumentsAsIssued(request.getCtcApplicationNumber(), request.getDocId(), request.getCourtId(), request.getFilingNumber(), request.getRequestInfo());
+            List<CtcApplication> applications = ctcApplicationService.reviewApplications(request);
             ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
 
-            IssueCtcDocumentUpdateResponse response = IssueCtcDocumentUpdateResponse.builder()
+            CtcApplicationSearchResponse response = CtcApplicationSearchResponse.builder()
                     .responseInfo(responseInfo)
-                    .ctcApplicationNumber(request.getCtcApplicationNumber())
-                    .id(request.getId())
-                    .docId(request.getDocId())
+                    .ctcApplications(applications)
                     .build();
 
             return ResponseEntity.ok(response);
 
         } catch (CustomException e) {
-            log.error("Error marking documents as issued: {}", e.getMessage());
+            log.error("Error reviewing CTC applications: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("Unexpected error marking documents as issued", e);
-            throw new CustomException("CTC_ISSUE_DOCUMENTS_UPDATE_ERROR", "Error marking documents as issued: " + e.getMessage());
+            log.error("Unexpected error reviewing CTC applications", e);
+            throw new CustomException("CTC_REVIEW_ERROR", "Error reviewing CTC applications: " + e.getMessage());
         }
     }
+
+    @PostMapping("/applications/documents/issue-reject")
+    public ResponseEntity<IssueCtcDocumentUpdateResponse> markDocumentsAsIssuedOrReject(@Valid @RequestBody IssueCtcDocumentUpdateRequest request) {
+
+        log.info("Processing bulk issue/reject for {} documents", request.getDocs() != null ? request.getDocs().size() : 0);
+
+        try {
+            ctcApplicationService.markDocumentsAsIssuedOrReject(request);
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+
+            IssueCtcDocumentUpdateResponse response = IssueCtcDocumentUpdateResponse.builder()
+                    .responseInfo(responseInfo)
+                    .docs(request.getDocs())
+                    .build();
+
+            return ResponseEntity.ok(response);
+
+        } catch (CustomException e) {
+            log.error("Error processing bulk issue/reject: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error processing bulk issue/reject", e);
+            throw new CustomException("CTC_ISSUE_DOCUMENTS_UPDATE_ERROR", "Error processing bulk issue/reject: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/applications/_validate")
+    public ResponseEntity<ValidateUserResponse> validateUser(@Valid @RequestBody ValidateUserRequest request) {
+
+        log.info("Validating user for CTC application with filing number: {}", request.getFilingNumber());
+
+        try {
+            ValidateUserInfo validateUserInfo = ctcApplicationService.validateUser(request);
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+
+            ValidateUserResponse response = ValidateUserResponse.builder()
+                    .responseInfo(responseInfo)
+                    .validateUserInfo(validateUserInfo)
+                    .build();
+
+            return ResponseEntity.ok(response);
+
+        } catch (CustomException e) {
+            log.error("Error validating user for CTC application: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error validating user for CTC application", e);
+            throw new CustomException("VALIDATE_USER_CTC_ERROR", "Error validating user for CTC application: " + e.getMessage());
+        }
+    }
+
 }
