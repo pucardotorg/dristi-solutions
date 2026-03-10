@@ -62,7 +62,11 @@ public class IndexerUtils {
                 doc.getDocTitle(),
                 doc.getStatus(),
                 doc.getCaseTitle(),
-                doc.getCaseNumber()
+                doc.getCaseNumber(),
+                doc.getFilingNumber(),
+                doc.getCourtId(),
+                doc.getTenantId(),
+                doc.getFileStoreId()
         );
     }
 
@@ -215,6 +219,7 @@ public class IndexerUtils {
                                     .caseNumber(application.getCaseNumber())
                                     .filingNumber(application.getFilingNumber())
                                     .courtId(application.getCourtId())
+                                    .tenantId(application.getTenantId())
                                     .fileStoreId(child.getFileStoreId())
                                     .build();
                             documents.add(doc);

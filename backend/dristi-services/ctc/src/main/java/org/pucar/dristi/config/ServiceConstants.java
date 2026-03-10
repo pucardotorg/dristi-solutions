@@ -72,7 +72,11 @@ public class ServiceConstants {
                     + "\"docTitle\": \"%s\","
                     + "\"status\": \"%s\","
                     + "\"caseTitle\": \"%s\","
-                    + "\"caseNumber\": \"%s\""
+                    + "\"caseNumber\": \"%s\","
+                    + "\"filingNumber\": \"%s\","
+                    + "\"courtId\": \"%s\","
+                    + "\"tenantId\": \"%s\","
+                    + "\"fileStoreId\": \"%s\""
                     + "}}\n";
     public static final String ES_UPDATE_BY_QUERY_STATUS =
             "{\"query\":{\"term\":{\"Data.docId.keyword\":\"%s\"}},"

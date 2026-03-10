@@ -45,6 +45,9 @@ public class IssueCtcDocument {
     @JsonProperty("courtId")
     private String courtId;
 
+    @JsonProperty("tenantId")
+    private String tenantId;
+
     @JsonProperty("fileStoreId")
     private String fileStoreId;
 
