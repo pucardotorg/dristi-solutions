@@ -117,11 +117,12 @@ function CitizenHome({ tenantId = "kl", setHideBack = () => {} }) {
   const registrationIsDoneApprovalIsPending = individualId && isApprovalPending && !isRejected && !isLitigantPartialRegistered;
 
   useEffect(() => {
-    if (!data || !searchData) return;
+    if (!data) return;
+    if (userType !== "LITIGANT" && !searchData) return;
     if (individualId && !isApprovalPending && !isRejected && !isLitigantPartialRegistered) {
       history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
     }
-  }, [individualId, isLitigantPartialRegistered, isRejected, history, isApprovalPending, searchResult, data, searchData]);
+  }, [individualId, isLitigantPartialRegistered, isRejected, history, isApprovalPending, searchResult, data, searchData, userType]);
 
   useEffect(() => {
     setHideBack(userHasIncompleteRegistration || registrationIsDoneApprovalIsPending);

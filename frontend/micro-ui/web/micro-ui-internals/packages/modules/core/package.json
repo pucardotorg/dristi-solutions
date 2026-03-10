@@ -1,6 +1,6 @@
 {
   "name": "@egovernments/digit-ui-module-core",
-  "version": "1.8.1-beta.6",
+  "version": "0.0.1",
   "license": "MIT",
   "main": "dist/index.js",
   "module": "dist/index.modern.js",
@@ -18,8 +18,8 @@
     "react-dom": ">=18"
   },
   "dependencies": {
-    "@egovernments/digit-ui-react-components": "1.8.2-beta.11",
-    "@egovernments/digit-ui-components": "0.0.1-beta.28",
+    "@egovernments/digit-ui-react-components": "1.9.0",
+    "@egovernments/digit-ui-components": "0.0.2-beta.1",
     "react-i18next": "11.16.2",
     "react-query": "3.6.1",
     "react-redux": "7.2.8",
