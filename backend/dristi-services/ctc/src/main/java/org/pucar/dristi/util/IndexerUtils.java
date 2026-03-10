@@ -106,28 +106,6 @@ public class IndexerUtils {
         return "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
     }
 
-    public int getIssuedDocCount(String ctcApplicationNumber) throws Exception {
-        return getDocCountByStatus(ctcApplicationNumber, "ISSUED");
-    }
-
-    public int getRejectedDocCount(String ctcApplicationNumber) throws Exception {
-        return getDocCountByStatus(ctcApplicationNumber, "REJECTED");
-    }
-
-    public int getDocCountByStatus(String ctcApplicationNumber, String status) throws Exception {
-        String indexName = config.getIssueCtcDocumentsIndex();
-        String uri = config.getEsHostUrl() + indexName + "/_count";
-        String request = String.format(ES_COUNT_DOCS_BY_STATUS, ctcApplicationNumber, status);
-
-        final HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
-        headers.add("Authorization", getESEncodedCredentials());
-        final HttpEntity<String> entity = new HttpEntity<>(request, headers);
-
-        String response = restTemplate.postForObject(uri, entity, String.class);
-        return JsonPath.read(response, "$.count");
-    }
-
     public Map<String, Integer> getDocStatusCounts(String ctcApplicationNumber) throws Exception {
         String indexName = config.getIssueCtcDocumentsIndex();
         String uri = config.getEsHostUrl() + indexName + "/_search";
