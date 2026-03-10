@@ -93,7 +93,9 @@ public class PaymentUpdateService {
             throw new CustomException("INVALID RECEIPT", "No applications found for the consumerCode " + consumerCode);
 
         Role role = Role.builder().code("SYSTEM_ADMIN").tenantId(tenantId).build();
+        Role role2 = Role.builder().code("SYSTEM").tenantId(tenantId).build();
         requestInfo.getUserInfo().getRoles().add(role);
+        requestInfo.getUserInfo().getRoles().add(role2);
 
         CtcApplication ctcApplication = ctcApplications.get(0);
         AuditDetails auditDetails = ctcApplication.getAuditDetails();
@@ -103,17 +105,14 @@ public class PaymentUpdateService {
 
         log.info("Updating pending payment status for ctcApplication: {}", ctcApplication);
         WorkflowObject workflow = new WorkflowObject();
-        workflow.setAction("MAKE_PAYMENT");
-        ctcApplication.setWorkflow(workflow);
-        workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
 
         if (ctcApplication.getIsPartyToCase()) {
-            workflow.setAction("SEND_FOR_ISSUE");
+            workflow.setAction("MAKE_PAYMENT_FOR_SEND_FOR_ISSUE");
             ctcApplication.setWorkflow(workflow);
             workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
             indexerUtils.pushIssueCtcDocumentsToIndex(ctcApplication);
         } else {
-            workflow.setAction("SEND_FOR_APPROVAL");
+            workflow.setAction("MAKE_PAYMENT_FOR_SEND_FOR_APPROVAL");
             ctcApplication.setWorkflow(workflow);
             workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
 
