@@ -76,6 +76,8 @@ public class CtcApplicationService {
 
         workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
 
+        filterInactiveDocuments(application);
+
         producer.push(config.getSaveCtcApplicationTopic(), request);
 
         saveInRedisCache(application);
@@ -121,6 +123,8 @@ public class CtcApplicationService {
             indexerUtils.pushIssueCtcDocumentsToIndex(application);
             indexerUtils.deactivateTracker(application.getCtcApplicationNumber());
         }
+
+        filterInactiveDocuments(application);
 
         producer.push(config.getUpdateCtcApplicationTopic(), request);
 
@@ -440,6 +444,28 @@ public class CtcApplicationService {
 
     private String getRedisKey(String ctcApplicationNumber) {
         return "ctc:" + ctcApplicationNumber;
+    }
+
+    private CtcApplication filterInactiveDocuments(CtcApplication application) {
+        if (application == null) {
+            return null;
+        }
+
+        // Filter affidavitDocument - set to null if inactive
+        if (application.getAffidavitDocument() != null && 
+            Boolean.FALSE.equals(application.getAffidavitDocument().getIsActive())) {
+            application.setAffidavitDocument(null);
+        }
+
+        // Filter documents list - keep only active documents
+        if (application.getDocuments() != null) {
+            List<Document> activeDocuments = application.getDocuments().stream()
+                    .filter(doc -> doc != null && !Boolean.FALSE.equals(doc.getIsActive()))
+                    .collect(Collectors.toList());
+            application.setDocuments(activeDocuments);
+        }
+
+        return application;
     }
 
     private void saveInRedisCache(CtcApplication application) {

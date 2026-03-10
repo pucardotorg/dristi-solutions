@@ -94,8 +94,16 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "MAKE_PAYMENT",
-              "nextState": "PAYMENT_COMPLETE",
+              "action": "MAKE_PAYMENT_FOR_SEND_FOR_APPROVAL",
+              "nextState": "PENDING_APPROVAL",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "MAKE_PAYMENT_FOR_SEND_FOR_ISSUE",
+              "nextState": "PENDING_ISSUE",
               "roles": [
                 "SYSTEM",
                 "SYSTEM_ADMIN"
@@ -104,33 +112,9 @@
           ]
         },
         {
-          "state": "PAYMENT_COMPLETE",
-          "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "SEND_FOR_APPROVAL",
-              "nextState": "PENDING_APPROVAL",
-              "roles": [
-                "EMPLOYEE"
-              ]
-            },
-            {
-              "action": "SEND_FOR_ISSUE",
-              "nextState": "PENDING_ISSUE",
-              "roles": [
-                "SYSTEM"
-              ]
-            }
-          ]
-        },
-        {
           "state": "PENDING_APPROVAL",
           "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": true,
+          "docUploadRequired": false,
           "isStartState": false,
           "isTerminateState": false,
           "isStateUpdatable": true,
@@ -154,7 +138,7 @@
         {
           "state": "PENDING_ISSUE",
           "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": true,
+          "docUploadRequired": false,
           "isStartState": false,
           "isTerminateState": false,
           "isStateUpdatable": true,
@@ -185,7 +169,7 @@
         {
           "state": "PARTIALLY_ISSUED",
           "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": true,
+          "docUploadRequired": false,
           "isStartState": false,
           "isTerminateState": false,
           "isStateUpdatable": true,

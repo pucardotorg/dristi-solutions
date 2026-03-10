@@ -7,6 +7,7 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.CtcApplication;
+import org.pucar.dristi.web.models.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,11 +32,33 @@ public class CtcApplicationEnrichment {
     public void enrichOnCreateCtcApplication(RequestInfo requestInfo, CtcApplication ctcApplication) {
         ctcApplication.setCtcApplicationNumber(generateApplicationNumber(ctcApplication.getTenantId(), requestInfo));
         enrichAuditDetailsOnCreate(requestInfo, ctcApplication);
+        enrichDocuments(ctcApplication);
         ctcApplication.setId(getRandomUuid().toString());
+    }
+
+    public void enrichDocuments(CtcApplication application){
+        List<Document> documents = application.getDocuments();
+
+        if(documents != null){
+            documents.stream()
+                    .filter(document -> document.getId() == null)
+                    .forEach(document -> {
+                        document.setId(String.valueOf(getRandomUuid()));
+                        document.setDocumentUid(document.getId());
+                    });
+        }
+
+        if (application.getAffidavitDocument() != null) {
+            application.getAffidavitDocument().setId(String.valueOf(getRandomUuid()));
+            application.getAffidavitDocument().setDocumentUid(application.getAffidavitDocument().getId());
+        }
+
+        application.setDocuments(documents);
     }
 
     public void enrichOnUpdateCtcApplication(RequestInfo requestInfo, CtcApplication ctcApplication) {
         enrichAuditDetailsOnUpdate(requestInfo, ctcApplication);
+        enrichDocuments(ctcApplication);
     }
 
     private String generateApplicationNumber(String tenantId, RequestInfo requestInfo) {
