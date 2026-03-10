@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Banner } from "@egovernments/digit-ui-react-components";
-import { Button, AlertCard } from "@egovernments/digit-ui-components";
+import { Button, InfoCard } from "@egovernments/digit-ui-components";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { paymentType } from "../utils/paymentType";
@@ -139,7 +139,7 @@ const SBIPaymentStatus = ({ path }) => {
             />
           </div>
         ) : (
-          <AlertCard
+          <InfoCard
             className="payment-status-info-card"
             headerWrapperClassName="payment-status-info-header"
             populators={{

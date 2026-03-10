@@ -1,4 +1,4 @@
-import { AlertCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import CustomCaseInfoDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCaseInfoDiv";
 import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
@@ -112,7 +112,7 @@ const SearchCaseAndShowDetails = ({
         </LabelFieldPair>
       )}
       {errors?.caseNumber && (
-        <AlertCard
+        <InfoCard
           variant={"default"}
           label={t("INVALID_CASE_FILING_NUMBER")}
           additionalElements={

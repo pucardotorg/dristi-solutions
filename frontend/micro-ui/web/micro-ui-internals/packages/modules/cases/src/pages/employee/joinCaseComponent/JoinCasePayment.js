@@ -1,4 +1,4 @@
-import { AlertCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -55,7 +55,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
       className="join-case-payment payment-due-wrapper"
       style={{ maxHeight: "550px", display: "flex", flexDirection: "column", margin: "13px 0px 0px", padding: "16px 24px" }}
     >
-      <AlertCard
+      <InfoCard
         variant={"default"}
         label={t("CS_COMMON_NOTE")}
         style={{ backgroundColor: "#ECF3FD", marginBottom: "8px" }}
@@ -118,7 +118,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
           ))}
       </div>
       <div>
-        <AlertCard
+        <InfoCard
           variant={"default"}
           label={t("CS_COMMON_NOTE")}
           style={{ backgroundColor: "#ECF3FD" }}

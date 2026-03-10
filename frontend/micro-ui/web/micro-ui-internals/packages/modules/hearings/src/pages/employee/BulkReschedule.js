@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Banner, Button, CloseSvg, FormComposerV2, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
-import { AlertCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import { Urls } from "../../hooks/services/Urls";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
@@ -669,7 +669,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         >
           <div className="add-signature-main-div">
             <div className="not-signed">
-              <AlertCard
+              <InfoCard
                 variant={"default"}
                 label={t("PLEASE_NOTE")}
                 additionalElements={[
@@ -753,7 +753,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             <Loader />
           ) : (
             <div className="add-signature-main-div">
-              <AlertCard
+              <InfoCard
                 variant={"default"}
                 label={t("PLEASE_NOTE")}
                 additionalElements={[

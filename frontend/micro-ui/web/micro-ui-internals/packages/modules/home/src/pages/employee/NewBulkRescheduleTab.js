@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Banner, Button, CardLabel, CloseSvg, Dropdown, LabelFieldPair, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import { AlertCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
@@ -583,7 +583,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         >
           <div className="add-signature-main-div">
             <div className="not-signed">
-              <AlertCard
+              <InfoCard
                 variant={"default"}
                 label={t("PLEASE_NOTE")}
                 additionalElements={[
@@ -667,7 +667,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
             <Loader />
           ) : (
             <div className="add-signature-main-div">
-              <AlertCard
+              <InfoCard
                 variant={"default"}
                 label={t("PLEASE_NOTE")}
                 additionalElements={[

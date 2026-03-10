@@ -1,4 +1,4 @@
-import { AlertCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import { CardLabel, CloseSvg, FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useMemo, useState } from "react";
 import { idProofVerificationConfig } from "../configs/component";
@@ -177,7 +177,7 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
                 )}
 
                 {isUserVerified && currentValue && (
-                  <AlertCard
+                  <InfoCard
                     variant={isUserVerified ? "success" : "default"}
                     label={isUserVerified ? t("CS_AADHAR_VERIFIED") : t("CS_COMMON_NOTE")}
                     additionalElements={{}}

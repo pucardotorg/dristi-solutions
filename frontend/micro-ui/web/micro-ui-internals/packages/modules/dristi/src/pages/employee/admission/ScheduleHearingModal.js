@@ -6,7 +6,7 @@ import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.m
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 import { HomeService } from "../../../../../home/src/hooks/services";
 import { Urls } from "../../../hooks";
-import { AlertCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -479,7 +479,7 @@ function ScheduleHearing({
                 headerStyles={{ fontSize: "32px" }}
                 style={{ minWidth: "100%", marginTop: "10px" }}
               ></Banner>
-              <AlertCard
+              <InfoCard
                 className="payment-status-info-card"
                 headerWrapperClassName="payment-status-info-header"
                 populators={{

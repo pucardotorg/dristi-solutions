@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CloseSvg, AlertCard } from "@egovernments/digit-ui-components";
+import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
 import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import { FileDownloadIcon, FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
@@ -456,7 +456,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         >
           <div className="add-signature-main-div">
             <div className="not-signed">
-              <AlertCard
+              <InfoCard
                 variant={"default"}
                 label={t("PLEASE_NOTE")}
                 additionalElements={[<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_BAIL_BOND")}</p>]}
@@ -518,7 +518,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           className="add-signature-modal"
         >
           <div className="add-signature-main-div">
-            <AlertCard
+            <InfoCard
               variant={"default"}
               label={t("PLEASE_NOTE")}
               additionalElements={[<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_BAIL_BOND")}</p>]}

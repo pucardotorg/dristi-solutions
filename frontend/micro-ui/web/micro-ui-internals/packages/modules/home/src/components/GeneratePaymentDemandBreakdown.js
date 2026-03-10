@@ -1,6 +1,6 @@
 import { CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
@@ -331,7 +331,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
                     ))}
                 </div>
                 <div>
-                  <AlertCard
+                  <InfoCard
                     variant={"default"}
                     label={t("CS_PAYMENT_NOTE")}
                     style={{ backgroundColor: "#ECF3FD" }}

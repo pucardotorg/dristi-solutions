@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { bulkADiarySignConfig } from "../../configs/BulkADiarySignConfig";
 import { HomeService } from "../../hooks/services";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
-import { CloseSvg, AlertCard } from "@egovernments/digit-ui-components";
+import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
 import { Urls } from "../../hooks";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
@@ -527,7 +527,7 @@ function BulkSignADiaryView() {
           >
             <div className="add-signature-main-div">
               <div className="not-signed">
-                <AlertCard
+                <InfoCard
                   variant={"default"}
                   label={t("PLEASE_NOTE")}
                   additionalElements={[
@@ -602,7 +602,7 @@ function BulkSignADiaryView() {
             className="add-signature-modal"
           >
             <div className="add-signature-main-div">
-              <AlertCard
+              <InfoCard
                 variant={"default"}
                 label={t("PLEASE_NOTE")}
                 additionalElements={[

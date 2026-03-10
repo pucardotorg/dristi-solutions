@@ -1,7 +1,7 @@
 import { Banner, CardLabel, CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import Button from "../../../components/Button";
-import { AlertCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
@@ -316,7 +316,7 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
         {showPaymentModal && (
           <Modal headerBarEnd={<CloseBtn onClick={onCancel} />} formId="modal-action" headerBarMain={<Heading label={t("PENDING_PAYMENT")} />}>
             <div className="payment-wrapper">
-              <AlertCard
+              <InfoCard
                 variant={"default"}
                 label={t("CS_IMPORTANT_INFORMATION")}
                 additionalElements={[

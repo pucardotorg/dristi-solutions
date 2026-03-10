@@ -1,6 +1,6 @@
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import React, { useEffect, useState } from "react";
-import { Button, CloseSvg, AlertCard } from "@egovernments/digit-ui-components";
+import { Button, CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
 import useESignOpenApi from "../hooks/submissions/useESignOpenApi";
 
 const Heading = (props) => {
@@ -64,7 +64,7 @@ const BailEsignModal = ({
       className={"submission-add-signature-modal responsive-signature-modal"}
     >
       <div style={{ paddingTop: "10px" }}>
-        <AlertCard
+        <InfoCard
           variant={"default"}
           label={t("PLEASE_NOTE")}
           additionalElements={[<p>{customizedNote ? t(customizedNote) : t("BAIL_BOND_WITNESS_POPUP_NOTES")}</p>]}
