@@ -216,7 +216,7 @@ public class CtcApplicationService {
                 String docId = item.getDocId();
 
                 // 1. Update this document's status and documents in ES
-                indexerUtils.updateDocStatus(docId, docStatus, item.getDocuments());
+                indexerUtils.updateDocStatus(docId, ctcApplicationNumber, docStatus, item.getDocuments());
                 log.info("Updated doc {} to status {} for application: {}", docId, docStatus, ctcApplicationNumber);
 
                 // 2. Fetch fresh CTC application (re-fetch each time since previous iteration may have updated it)

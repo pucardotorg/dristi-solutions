@@ -78,6 +78,7 @@ class IndexerUtilsTest {
 
         assertTrue(payload.contains("\"_index\":\"issue-ctc-documents\""));
         assertTrue(payload.contains("\"_id\":\"uuid-1\""));
+        assertTrue(payload.contains("\"id\": \"uuid-1\""));
         assertTrue(payload.contains("\"docId\": \"doc-1\""));
         assertTrue(payload.contains("\"ctcApplicationNumber\": \"CA-001\""));
         assertTrue(payload.contains("\"createdTime\": 1000"));
@@ -124,12 +125,12 @@ class IndexerUtilsTest {
     // ---- updateDocStatus tests ----
 
     @Test
-    void updateDocStatus_shouldPostUpdateByQuery() throws Exception {
+    void updateDocStatus_shouldPostUpdateByQueryWithIdAndApplicationNumber() throws Exception {
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn("{\"updated\":1}");
 
         List<Document> docs = List.of(Document.builder().id("d1").fileStore("fs1").build());
-        indexerUtils.updateDocStatus("doc-1", "ISSUED", docs);
+        indexerUtils.updateDocStatus("uuid-1", "CA-001", "ISSUED", docs);
 
         ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).postForObject(
@@ -138,7 +139,11 @@ class IndexerUtilsTest {
                 eq(String.class));
 
         String body = (String) captor.getValue().getBody();
-        assertTrue(body.contains("doc-1"));
+        // Verify query searches by Data.id.keyword and Data.ctcApplicationNumber.keyword
+        assertTrue(body.contains("Data.id.keyword"));
+        assertTrue(body.contains("uuid-1"));
+        assertTrue(body.contains("Data.ctcApplicationNumber.keyword"));
+        assertTrue(body.contains("CA-001"));
         assertTrue(body.contains("ISSUED"));
         assertTrue(body.contains("fs1"));
     }
@@ -148,7 +153,7 @@ class IndexerUtilsTest {
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn("{\"updated\":1}");
 
-        indexerUtils.updateDocStatus("doc-1", "REJECTED", null);
+        indexerUtils.updateDocStatus("uuid-1", "CA-001", "REJECTED", null);
 
         ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).postForObject(anyString(), captor.capture(), eq(String.class));

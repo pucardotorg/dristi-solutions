@@ -41,6 +41,7 @@ public class ServiceConstants {
     public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
     public static final String ES_ISSUE_CTC_DOC_FORMAT =
             "{\"Data\": {"
+                    + "\"id\": \"%s\","
                     + "\"docId\": \"%s\","
                     + "\"ctcApplicationNumber\": \"%s\","
                     + "\"createdTime\": %d,"
@@ -55,7 +56,7 @@ public class ServiceConstants {
                     + "\"fileStoreId\": \"%s\""
                     + "}}\n";
     public static final String ES_UPDATE_BY_QUERY_STATUS =
-            "{\"query\":{\"term\":{\"Data.docId.keyword\":\"%s\"}},"
+            "{\"query\":{\"bool\":{\"must\":[{\"term\":{\"Data.id.keyword\":\"%s\"}},{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}}]}},"
                     + "\"script\":{\"source\":\"ctx._source.Data.status=params.status;ctx._source.Data.lastModifiedTime=params.time;ctx._source.Data.documents=params.documents;\","
                     + "\"lang\":\"painless\","
                     + "\"params\":{\"status\":\"%s\",\"time\":%d,\"documents\":%s}}}";

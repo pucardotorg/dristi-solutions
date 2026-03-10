@@ -281,7 +281,7 @@ class CtcApplicationServiceTest {
 
         ctcApplicationService.markDocumentsAsIssuedOrReject(request);
 
-        verify(indexerUtils).updateDocStatus(eq("doc-1"), eq("ISSUED"), isNull());
+        verify(indexerUtils).updateDocStatus(eq("doc-1"), eq("CA-001"), eq("ISSUED"), isNull());
         verify(indexerUtils).getDocStatusCounts("CA-001");
     }
 
@@ -302,7 +302,7 @@ class CtcApplicationServiceTest {
 
         ctcApplicationService.markDocumentsAsIssuedOrReject(request);
 
-        verify(indexerUtils).updateDocStatus(eq("doc-1"), eq("REJECTED"), isNull());
+        verify(indexerUtils).updateDocStatus(eq("doc-1"), eq("CA-001"), eq("REJECTED"), isNull());
     }
 
     @Test
