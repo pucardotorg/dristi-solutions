@@ -205,27 +205,8 @@ public class IndexerUtils {
             Long currentTime = System.currentTimeMillis();
 
             if (application.getSelectedCaseBundle() != null) {
-                for (SelectedCaseBundleNode parentNode : application.getSelectedCaseBundle()) {
-                    if (parentNode.getChildren() != null) {
-                        for (SelectedCaseBundleNode child : parentNode.getChildren()) {
-                            IssueCtcDocument doc = IssueCtcDocument.builder()
-                                    .id(UUID.randomUUID().toString())
-                                    .docId(child.getId())
-                                    .ctcApplicationNumber(application.getCtcApplicationNumber())
-                                    .createdTime(currentTime)
-                                    .lastModifiedTime(currentTime)
-                                    .docTitle(child.getTitle())
-                                    .status("PENDING")
-                                    .caseTitle(application.getCaseTitle())
-                                    .caseNumber(application.getCaseNumber())
-                                    .filingNumber(application.getFilingNumber())
-                                    .courtId(application.getCourtId())
-                                    .tenantId(application.getTenantId())
-                                    .fileStoreId(child.getFileStoreId())
-                                    .build();
-                            documents.add(doc);
-                        }
-                    }
+                for (SelectedCaseBundleNode node : application.getSelectedCaseBundle()) {
+                    collectDocuments(node, application, currentTime, documents);
                 }
             }
 
@@ -239,6 +220,36 @@ public class IndexerUtils {
                     application.getCtcApplicationNumber(), e);
             throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION,
                     "Error pushing documents to ES index: " + e.getMessage());
+        }
+    }
+
+    private void collectDocuments(SelectedCaseBundleNode node, CtcApplication application,
+                                  Long currentTime, List<IssueCtcDocument> documents) {
+        if (node == null) return;
+
+        if (node.getFileStoreId() != null) {
+            IssueCtcDocument doc = IssueCtcDocument.builder()
+                    .id(UUID.randomUUID().toString())
+                    .docId(node.getId())
+                    .ctcApplicationNumber(application.getCtcApplicationNumber())
+                    .createdTime(currentTime)
+                    .lastModifiedTime(currentTime)
+                    .docTitle(node.getTitle())
+                    .status("PENDING")
+                    .caseTitle(application.getCaseTitle())
+                    .caseNumber(application.getCaseNumber())
+                    .filingNumber(application.getFilingNumber())
+                    .courtId(application.getCourtId())
+                    .tenantId(application.getTenantId())
+                    .fileStoreId(node.getFileStoreId())
+                    .build();
+            documents.add(doc);
+        }
+
+        if (node.getChildren() != null) {
+            for (SelectedCaseBundleNode child : node.getChildren()) {
+                collectDocuments(child, application, currentTime, documents);
+            }
         }
     }
 
