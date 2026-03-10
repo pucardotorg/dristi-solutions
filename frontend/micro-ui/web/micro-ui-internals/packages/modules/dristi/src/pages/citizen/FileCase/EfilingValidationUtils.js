@@ -3303,7 +3303,7 @@ export const updateCaseDetails = async ({
           };
         })
     );
-    debugger;
+
     const updatedAdvocateDetails = [];
     let duplicateAdvocateDetails = advocateDetails.slice();
 
@@ -3366,8 +3366,8 @@ export const updateCaseDetails = async ({
             documentType: documentsTypeMapping["advocateIdProof"],
             additionalDetails: {
               name: data?.advocate?.advocateIdProof?.[0]?.name,
-              documentName: advInFormData?.advocateNameDetails?.advocateIdProof?.[0]?.documentName,
-              fileName: advInFormData?.advocateNameDetails?.advocateIdProof?.[0]?.fileName,
+              documentName: data?.advocate?.advocateIdProof?.[0]?.documentName,
+              fileName: data?.advocate?.advocateIdProof?.[0]?.fileName,
             },
           },
         ],
