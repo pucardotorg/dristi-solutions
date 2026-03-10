@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
-import org.jetbrains.annotations.Nullable;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;

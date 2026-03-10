@@ -763,13 +763,13 @@ export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
   }
   const advocateOffices = caseDetails?.advocateOffices || [];
   // If Senior advocate created the case directly (no office mapping)
-  if (advocateOffices.length === 0) {
+  if (advocateOffices?.length === 0) {
     return [createdByUuid];
   }
 
   const ownerAdvocateId = isOwnerAdvocate?.advocateId;
   //Now we have to check all the advocates and clerks members associated with this advocate and they all can edit the case draft
-  const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateId === ownerAdvocateId);
+  const matchingOffice = advocateOffices?.find((office) => office?.officeAdvocateId === ownerAdvocateId);
   if (!matchingOffice) {
     // Fallback
     return [createdByUuid];
@@ -816,21 +816,31 @@ export const getLoggedInUserOnBehalfOfUuid = (caseDetails, currentLoggedInUserUu
   else return currentLoggedInUserUuid;
 };
 
-export const checkIfJuniorAndDirectAdvocate = (caseDetails, currentLoggedInUserUuid) => {
+export const checkIfCaseAccessThroughMultipleAdvocates = (caseDetails, currentLoggedInUserUuid) => {
+  let isAccessThroughMultipleAdvocates = false;
   const isAdvocate = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === currentLoggedInUserUuid);
-  // if logged in user is advocate, we have to also check if he exists in same case as direct advocate as well as junior advocate under another senior adocoate.
-  // and check selected advocate in the top dropdown. -> accordingly return value.
 
-  //If logged in user is a junior adv working under a senior in the case.
-  const ifJuniorAdvocate = caseDetails?.advocateOffices?.find((office) =>
+  //If logged in user is a junior adv working under one/multiple seniors in the case.
+  const ifJuniorAdvocate = caseDetails?.advocateOffices?.filter((office) =>
     office?.advocates?.find((adv) => adv?.memberUserUuid === currentLoggedInUserUuid)
   );
 
-  if (ifJuniorAdvocate && isAdvocate) {
-    return true;
+  // if logged in user is advocate, we have to also check if he exists in same case as direct advocate as well as junior advocate under another senior adocoate.
+  // or if he is junior advocate in same case under multiple advocates.
+  if ((ifJuniorAdvocate?.length > 0 && isAdvocate) || ifJuniorAdvocate?.length > 1) {
+    isAccessThroughMultipleAdvocates = true;
   }
 
-  return false;
+  const ifClerk = caseDetails?.advocateOffices?.filter((office) =>
+    office?.clerks?.find((clerk) => clerk?.memberUserUuid === currentLoggedInUserUuid)
+  );
+
+  // if clerk is working under multiple advocates in same case.
+  if (ifClerk?.length > 1) {
+    isAccessThroughMultipleAdvocates = true;
+  }
+
+  return isAccessThroughMultipleAdvocates;
 };
 
 export const getClerkMembersForPartiesTab = (data) => {

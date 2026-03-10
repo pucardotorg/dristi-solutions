@@ -1,7 +1,6 @@
 package com.dristi.njdg_transformer.repository.querybuilder;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import java.sql.Types;

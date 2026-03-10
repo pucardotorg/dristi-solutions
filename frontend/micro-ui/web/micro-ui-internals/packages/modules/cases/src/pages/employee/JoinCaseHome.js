@@ -1499,6 +1499,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             applicationType: "REQUEST_FOR_BAIL",
             onBehalfOf: [uuid],
             asUser: getAuthorizedUuid(uuid),
+            validationCode: validationCode,
           },
         });
 
@@ -1508,7 +1509,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         return false;
       }
     },
-    [caseDetails?.courtId, caseDetails?.filingNumber, tenantId]
+    [caseDetails?.courtId, caseDetails?.filingNumber, tenantId, validationCode]
   );
 
   useEffect(() => {
@@ -1522,8 +1523,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           if (representedPersonUuids?.length > 0) {
             const applicationChecks = await Promise.all(representedPersonUuids.map((uuid) => searchApplications(uuid)));
 
-            const hasExistingApplication = applicationChecks.some((exists) => exists);
-            isBondRequired = !hasExistingApplication;
+            const allApplicationsExist = applicationChecks.every((exists) => exists);
+            isBondRequired = !allApplicationsExist;
           }
         } else if (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES") {
           const litigantUuid = individual?.userUuid;

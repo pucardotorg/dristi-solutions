@@ -223,6 +223,16 @@ const WitnessDepositionSignaturePage = () => {
     }
   };
 
+  const showEsignButton = useMemo(() => {
+    if (witnessDepositionDetails?.status === "PENDING_E-SIGN") {
+      if (isUserLoggedIn) {
+        if (authorizedUuid === userUuid) return true;
+        return false;
+      }
+      return true;
+    } else return false;
+  }, [authorizedUuid, isUserLoggedIn, userUuid, witnessDepositionDetails?.status]);
+
   if (isWitnessDepositionOpenLoading || isWitnessDepositionLoading || isLoading) {
     return <Loader />;
   }
@@ -283,7 +293,7 @@ const WitnessDepositionSignaturePage = () => {
               className="back-button"
             />
           }
-          {witnessDepositionDetails?.status === "PENDING_E-SIGN" && (
+          {showEsignButton && (
             <SubmitBar
               label={
                 <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.AdvocateRepository;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.web.models.Advocate;
@@ -34,6 +35,9 @@ import static org.mockito.Mockito.*;
     @Mock
     private AdvocateRepository repository;
 
+    @Mock
+    private Configuration configuration;
+
     private AdvocateRequest advocateRequest;
     private RequestInfo requestInfo;
 
@@ -50,11 +54,62 @@ import static org.mockito.Mockito.*;
         Advocate advocate = new Advocate();
         advocate.setIndividualId("validIndividualId");
         advocate.setTenantId("validTenantId");
+        advocate.setBarRegistrationNumber("K/123456/2024");
         advocateRequest.setAdvocate(advocate);
 
         when(individualService.searchIndividual(requestInfo, "validIndividualId", new HashMap<>())).thenReturn(true);
+        when(configuration.getBarRegistrationNumberFormat()).thenReturn("^K/(?!0+/)(\\d{1,6})/\\d{4}$");
 
         assertDoesNotThrow(() -> validator.validateAdvocateRegistration(advocateRequest));
+    }
+
+    @Test
+    void shouldNotThrowException_whenBarRegistrationNumberIsValid() {
+        // Given
+        String regex = "^K/(?!0+/)(\\d{1,6})/\\d{4}$";
+        String validNumber = "K/1234/2025";
+
+        when(configuration.getBarRegistrationNumberFormat()).thenReturn(regex);
+
+        // Then
+        assertDoesNotThrow(() ->
+                validator.validateBarRegistrationNumberFormat(validNumber)
+        );
+    }
+
+    @Test
+    void validateBarRegistrationNumberFormat_InvalidFormat_ThrowsCustomException() {
+        String invalidNumber = "K/123/20";
+
+        when(configuration.getBarRegistrationNumberFormat()).thenReturn("^K/(?!0+/)(\\d{1,6})/\\d{4}$");
+
+        assertThrows(CustomException.class, () -> validator.validateBarRegistrationNumberFormat(invalidNumber));
+    }
+
+    @Test
+    void validateBarRegistrationNumber_NullOrEmpty_ThrowsCustomException() {
+        Advocate advocate = new Advocate();
+        advocate.setTenantId("tenant");
+
+        advocate.setBarRegistrationNumber(null);
+        advocateRequest.setAdvocate(advocate);
+        assertThrows(CustomException.class, () -> validator.validateBarRegistrationNumber(advocateRequest));
+
+        advocate.setBarRegistrationNumber("");
+        assertThrows(CustomException.class, () -> validator.validateBarRegistrationNumber(advocateRequest));
+    }
+
+    @Test
+    void validateBarRegistrationNumber_Duplicate_ThrowsCustomException() {
+        Advocate advocate = new Advocate();
+        advocate.setTenantId("kl");
+        advocate.setBarRegistrationNumber("K/1234/2025");
+        advocateRequest.setAdvocate(advocate);
+
+        when(configuration.getBarRegistrationNumberFormat()).thenReturn("^K/(?!0+/)(\\d{1,6})/\\d{4}$");
+        when(repository.isBarRegistrationNumberActive(eq("kl"), anyString(), anyString(), anyString())).thenReturn(true);
+
+        assertThrows(CustomException.class, () -> validator.validateBarRegistrationNumber(advocateRequest));
     }
 
     @Test
