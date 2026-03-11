@@ -91,6 +91,7 @@ public class ServiceConstants {
     public static final String ACTION_REJECT = "REJECT";
     public static final String STATUS_ISSUED = "ISSUED";
     public static final String STATUS_REJECTED = "REJECTED";
+    public static final String STATUS_PENDING = "PENDING";
 
     public static final String MOBILE_PATTERN = "Pattern.compile(\"^[6-9]\\\\d{9}$\")";
 
