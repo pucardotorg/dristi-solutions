@@ -3274,13 +3274,14 @@ export const updateCaseDetails = async ({
                 (detail) =>
                   detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal === allAdvocateSearchData?.advocates?.[i]?.barRegistrationNumber
               );
+              debugger;
               advocateDetails.push({
                 advocate: {
                   ...allAdvocateSearchData?.advocates?.[i]?.responseList?.[0],
-                  firstName: advInFormData?.firstName,
-                  middleName: advInFormData?.middleName,
-                  lastName: advInFormData?.lastName,
-                  mobileNumber: advInFormData?.advocateMobileNumber,
+                  firstName: advInFormData?.advocateNameDetails?.firstName,
+                  middleName: advInFormData?.advocateNameDetails?.middleName,
+                  lastName: advInFormData?.advocateNameDetails?.lastName,
+                  mobileNumber: advInFormData?.advocateNameDetails?.advocateMobileNumber,
                 },
                 complainant: {
                   individualId: data?.data?.multipleAdvocatesAndPip?.boxComplainant?.individualId,
