@@ -366,6 +366,7 @@ const BulkIssueCTC = () => {
         courtId: courtId,
         placeholder: "Signature",
         tenantId: tenantId,
+        docTitle: formatLabel(row?.businessObject?.docTitle),
       }));
 
       const getDocsResponse = await HomeService._getDocsForCTCApplication(
