@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
-import { ManageOfficeDeleteIcon } from "../../../icons/svgIndex";
+import { ManageOfficeDeleteIcon, ManageOfficeCloseIcon } from "../../../icons/svgIndex";
 
 const ManageOffice = () => {
   const { t } = useTranslation();
@@ -538,7 +538,7 @@ const ManageOffice = () => {
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">{t("ADD_MEMBER") || "Add Member"}</h2>
               <button onClick={handleCloseModal} className="manage-office-modal__close">
-                ×
+                <ManageOfficeCloseIcon />
               </button>
             </div>
 
@@ -627,7 +627,7 @@ const ManageOffice = () => {
                 {activeTab === "advocatesWorkingFor" ? t("LEAVE_OFFICE") || "Leave Office" : t("REMOVE_MEMBER") || "Remove Member"}
               </h2>
               <button onClick={handleCloseRemoveModal} className="manage-office-modal__close">
-                ×
+                <ManageOfficeCloseIcon />
               </button>
             </div>
 
