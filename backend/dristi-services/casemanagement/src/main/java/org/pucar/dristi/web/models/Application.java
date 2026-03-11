@@ -92,8 +92,7 @@ public class Application {
 	private String status = null;
 
 	@JsonProperty("comment")
-
-	private String comment = null;
+	private List<Comment> comment = new ArrayList<>();
 
 	@JsonProperty("isActive")
 	@NotNull

@@ -239,6 +239,20 @@ public class CaseApiController {
         return new ResponseEntity<>(caseSummaryResponse, HttpStatus.OK);
     }
 
+    @PostMapping(value = "/v1/search/caseSearchText")
+    public ResponseEntity<CaseSearchTextResponse> caseV1SearchByText(@Parameter(in = ParameterIn.DEFAULT, description = "Search cases by text matching against CNR, case number, filing number, CMP number etc.", required = true, schema = @Schema()) @Valid @RequestBody CaseSearchTextRequest body) {
+        log.info("api=/v1/search/caseSearchText, result=IN_PROGRESS");
+        List<CaseSearchTextItem> cases = caseService.searchCasesByText(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(RequestInfo.builder().build(), true);
+        CaseSearchTextResponse response = CaseSearchTextResponse.builder()
+                .cases(cases)
+                .responseInfo(responseInfo)
+                .pagination(body.getPagination())
+                .build();
+        log.info("api=/v1/search/caseSearchText, result=SUCCESS");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @PostMapping(value = "/v2/profilerequest/process")
     public ResponseEntity<CaseResponse> updateProfileRequest(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the profile update + RequestInfo meta data", required = true, schema = @Schema()) @Valid @RequestBody ProcessProfileRequest request) {
         CourtCase courtCase = caseService.processProfileRequest(request);

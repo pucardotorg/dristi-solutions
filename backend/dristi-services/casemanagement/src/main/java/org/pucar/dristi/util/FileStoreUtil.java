@@ -14,12 +14,11 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
-
 @Component
 @Slf4j
 public class FileStoreUtil {
-    private Configuration configs;
-    private RestTemplate restTemplate;
+    private final Configuration configs;
+    private final RestTemplate restTemplate;
     @Autowired
     public FileStoreUtil(RestTemplate restTemplate, Configuration configs) {
         this.restTemplate = restTemplate;
