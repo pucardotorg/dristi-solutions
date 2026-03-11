@@ -14,6 +14,16 @@ import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
+export const formatLabel = (text) => {
+  if (!text) return "";
+
+  return text
+    ?.toLowerCase()
+    ?.split("_")
+    ?.map((word) => word?.charAt(0)?.toUpperCase() + word?.slice(1))
+    ?.join(" ");
+};
+
 const handleTaskDetails = (taskDetails) => {
   try {
     // Check if taskDetails is a string
@@ -654,7 +664,7 @@ export const UICustomizations = {
         }),
         ...(searchForm?.documentType?.code && searchForm.documentType.code !== "ALL" && { documentType: searchForm.documentType.code }),
         ...(courtId && { courtId }),
-        status: "PENDING"
+        status: "PENDING",
       };
 
       return {
@@ -702,7 +712,7 @@ export const UICustomizations = {
                   column.clickFunc({ original: row });
                 }
               }}
-            >{`${value}`}</span>
+            >{`${formatLabel(value)}`}</span>
           );
         case "CASE_NAME":
           return <span>{value}</span>;
@@ -727,7 +737,7 @@ export const UICustomizations = {
         tenantId,
         ...(searchForm?.caseSearchText && { searchableFields: searchForm.caseSearchText }),
         ...(courtId && { courtId }),
-        status: "PENDING_APPROVAL"
+        status: "PENDING_APPROVAL",
       };
 
       return {
@@ -1100,8 +1110,9 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${applicationNumber || ""
-                  }&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
+                  applicationNumber || ""
+                }&individualId=${individualId}&type=${usertype}`}
               >
                 {applicationNumber
                   ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)
