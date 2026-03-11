@@ -82,6 +82,7 @@ public class ServiceConstants {
             "{\"query\":{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}},"
                     + "\"script\":{\"source\":\"ctx._source.Data.status=params.status;"
                     + "ctx._source.Data.dateOfApplicationApproval=params.dateOfApplicationApproval;\","
+                    + "\"lang\":\"painless\","
                     + "\"params\":{\"status\":\"%s\",\"dateOfApplicationApproval\":%d}}}";
     public static final String CTC_APPLICATION_TRACKER_INDEX_EXCEPTION = "CTC_APPLICATION_TRACKER_INDEX_EXCEPTION";
     public static final String CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION = "CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION";
