@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import org.springframework.core.io.Resource;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.ZoneId;
@@ -95,7 +96,7 @@ public class CtcApplicationService {
 
         producer.push(config.getSaveCtcApplicationTopic(), request);
 
-        saveInRedisCache(application);
+        cacheService.saveInRedisCache(application);
 
         log.info("createApplication method completed");
 
@@ -139,7 +140,7 @@ public class CtcApplicationService {
 
         producer.push(config.getUpdateCtcApplicationTopic(), request);
 
-        saveInRedisCache(application);
+        cacheService.saveInRedisCache(application);
 
         log.info("updateApplication method completed for id {}", request.getCtcApplication().getId());
 
@@ -168,7 +169,7 @@ public class CtcApplicationService {
 
         // Try Redis first if searching by ctcApplicationNumber
         if (ctcApplicationNumber != null) {
-            CtcApplication cached = searchRedisCache(ctcApplicationNumber);
+            CtcApplication cached = cacheService.searchRedisCache(ctcApplicationNumber);
             if (cached != null) {
                 log.info("CTC application found in Redis cache for ctcApplicationNumber: {}", ctcApplicationNumber);
                 return Collections.singletonList(cached);
@@ -184,7 +185,7 @@ public class CtcApplicationService {
         // Save results in Redis
         for (CtcApplication app : applications) {
             if (app.getCtcApplicationNumber() != null) {
-                saveInRedisCache(app);
+                cacheService.saveInRedisCache(app);
             }
         }
 
@@ -221,62 +222,99 @@ public class CtcApplicationService {
                     ? ServiceConstants.STATUS_ISSUED
                     : ServiceConstants.STATUS_REJECTED;
 
+            Map<String, Map<String, Integer>> ctcApplicationNumberToDocActionItems = new HashMap<>();
+            docs.forEach(doc -> {
+                String ctcApplicationNumber = doc.getCtcApplicationNumber();
+
+                if (!ctcApplicationNumberToDocActionItems.containsKey(ctcApplicationNumber)) {
+                    // 4. Determine current ES doc status counts
+                    Map<String, Integer> statusCounts = null;
+                    try {
+                        statusCounts = indexerUtils.getDocStatusCounts(ctcApplicationNumber);
+
+                    } catch (Exception e) {
+                        log.error("Error getting doc status counts for ctcApplicationNumber: {}", ctcApplicationNumber, e);
+                        throw new CustomException("EXCEPTION_OCCURED_WHILE_GETTING_COUNT", e.getMessage());
+                    }
+                    ctcApplicationNumberToDocActionItems.put(
+                            doc.getCtcApplicationNumber(),
+                            statusCounts != null ? statusCounts : new HashMap<>()
+                    );
+                }
+            });
+
             // Process each document sequentially
             for (DocumentActionItem item : docs) {
-                String ctcApplicationNumber = item.getCtcApplicationNumber();
-                String docId = item.getDocId();
-                Document document = item.getDocuments().get(0);
+                try {
+                    String ctcApplicationNumber = item.getCtcApplicationNumber();
+                    String docId = item.getDocId();
 
-                // 1. Update this document's status and documents in ES
-                indexerUtils.updateDocStatus(docId, ctcApplicationNumber, docStatus, item.getDocuments());
-                log.info("Updated doc {} to status {} for application: {}", docId, docStatus, ctcApplicationNumber);
+                    Document document = null;
+                    if (!CollectionUtils.isEmpty(item.getDocuments())) {
+                        document = item.getDocuments().get(0);
+                    }
 
-                // 2. Fetch fresh CTC application (re-fetch each time since previous iteration may have updated it)
-                CtcApplication ctcApplication = fetchCtcApplication(ctcApplicationNumber, item.getFilingNumber(), courtId);
+                    // 2. Fetch fresh CTC application (re-fetch each time since previous iteration may have updated it)
+                    CtcApplication ctcApplication = fetchCtcApplication(ctcApplicationNumber, item.getFilingNumber(), courtId);
 
-                // 3. If ISSUE: enrich the matching selectedCaseBundle child's fileStoreId from caseBundles
-                if (ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(action)) {
-                    enrichFileStoreIdFromCaseBundles(ctcApplication, docId, document,requestInfo);
-                }else{
-                    enrichStatusInCaseBundles(ctcApplication, docId, document,requestInfo);
+                    // 3. If ISSUE: enrich the matching selectedCaseBundle child's fileStoreId
+                    if (ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(action)) {
+                        enrichFileStoreIdFromCaseBundles(ctcApplication, docId, document);
+                    } else {
+                        enrichStatusInCaseBundles(ctcApplication, docId);
+                    }
+
+                    Integer totalIssued = ctcApplicationNumberToDocActionItems.get(ctcApplicationNumber).getOrDefault(STATUS_ISSUED, 0);
+                    Integer totalRejected = ctcApplicationNumberToDocActionItems.get(ctcApplicationNumber).getOrDefault(STATUS_REJECTED, 0);
+                    Integer totalPending = ctcApplicationNumberToDocActionItems.get(ctcApplicationNumber).getOrDefault(STATUS_PENDING, 0);
+
+                    String workflowAction = null;
+                    if (ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(action)) {
+                        workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued + 1, totalRejected, totalPending);
+                    } else {
+                        workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued, totalRejected + 1, totalPending);
+                    }
+
+                    if (workflowAction != null) {
+                        WorkflowObject workflow = new WorkflowObject();
+                        workflow.setAction(workflowAction);
+                        ctcApplication.setWorkflow(workflow);
+                    }
+
+                    // 5. Call updateApplication to persist changes
+                    CtcApplicationRequest updateRequest = CtcApplicationRequest.builder()
+                            .requestInfo(requestInfo)
+                            .ctcApplication(ctcApplication)
+                            .build();
+                    updateApplication(updateRequest);
+
+                    Map<String, Integer> statusCounts = ctcApplicationNumberToDocActionItems.get(ctcApplicationNumber);
+                    if (ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(action)) {
+                        statusCounts.put(STATUS_ISSUED, totalIssued + 1);
+                    } else {
+                        statusCounts.put(STATUS_REJECTED, totalRejected + 1);
+                    }
+                    // 1. Update this document's status and documents in ES
+                    indexerUtils.updateDocStatus(docId, ctcApplicationNumber, docStatus, item.getDocuments());
+
+                    log.info("Processed doc {} for application: {}, workflowAction: {}", docId, ctcApplicationNumber, workflowAction);
+                } catch (Exception e) {
+                    log.error("Error processing issue/reject for document {}", item);
                 }
-
-                // 4. Determine workflow action from current ES doc status counts
-                Map<String, Integer> statusCounts = indexerUtils.getDocStatusCounts(ctcApplicationNumber);
-                int totalIssued = statusCounts.getOrDefault(ServiceConstants.STATUS_ISSUED, 0);
-                int totalRejected = statusCounts.getOrDefault(ServiceConstants.STATUS_REJECTED, 0);
-                int totalPending = statusCounts.getOrDefault("PENDING", 0);
-
-                String workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued, totalRejected, totalPending);
-
-                if (workflowAction != null) {
-                    WorkflowObject workflow = new WorkflowObject();
-                    workflow.setAction(workflowAction);
-                    ctcApplication.setWorkflow(workflow);
-                }
-
-                // 5. Call updateApplication to persist changes
-                CtcApplicationRequest updateRequest = CtcApplicationRequest.builder()
-                        .requestInfo(requestInfo)
-                        .ctcApplication(ctcApplication)
-                        .build();
-                updateApplication(updateRequest);
-
-                log.info("Processed doc {} for application: {}, workflowAction: {}", docId, ctcApplicationNumber, workflowAction);
             }
-        } catch (CustomException e) {
+        }  catch (CustomException e) {
             throw e;
-        } catch (Exception e) {
+        }catch (Exception e) {
             log.error("Error processing bulk issue/reject for documents", e);
             throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
                     "Error processing bulk issue/reject: " + e.getMessage());
         }
     }
 
-    private CtcApplication fetchCtcApplication(String ctcApplicationNumber, String filingNumber, String courtId) {
+    public CtcApplication fetchCtcApplication(String ctcApplicationNumber, String filingNumber, String courtId) {
         // Try Redis first
         if (ctcApplicationNumber != null) {
-            CtcApplication cached = searchRedisCache(ctcApplicationNumber);
+            CtcApplication cached = cacheService.searchRedisCache(ctcApplicationNumber);
             if (cached != null) {
                 log.info("CTC application found in Redis cache for ctcApplicationNumber: {}", ctcApplicationNumber);
                 return cached;
@@ -296,11 +334,11 @@ public class CtcApplicationService {
             throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
                     "CTC application not found: " + ctcApplicationNumber);
         }
-        saveInRedisCache(ctcApplications.get(0));
+        cacheService.saveInRedisCache(ctcApplications.get(0));
         return ctcApplications.get(0);
     }
 
-    private void enrichFileStoreIdFromCaseBundles(CtcApplication ctcApplication, String docId, Document document,RequestInfo requestInfo) {
+    private void enrichFileStoreIdFromCaseBundles(CtcApplication ctcApplication, String docId, Document document) {
 
         // Build id -> CaseBundleNode map from selectedCaseBundle for O(1) update
         Map<String, CaseBundleNode> selectedNodeMap = buildSelectedNodeMap(ctcApplication.getSelectedCaseBundle());
@@ -313,7 +351,7 @@ public class CtcApplicationService {
         }
     }
 
-    private void enrichStatusInCaseBundles(CtcApplication ctcApplication, String docId, Document document,RequestInfo requestInfo) {
+    private void enrichStatusInCaseBundles(CtcApplication ctcApplication, String docId) {
 
         // Build id -> CaseBundleNode map from selectedCaseBundle for O(1) update
         Map<String, CaseBundleNode> selectedNodeMap = buildSelectedNodeMap(ctcApplication.getSelectedCaseBundle());
@@ -472,10 +510,6 @@ public class CtcApplicationService {
                 .build();
     }
 
-    private String getRedisKey(String ctcApplicationNumber) {
-        return "ctc:" + ctcApplicationNumber;
-    }
-
     private CtcApplication filterInactiveDocuments(CtcApplication application) {
         if (application == null) {
             return null;
@@ -498,31 +532,6 @@ public class CtcApplicationService {
         return application;
     }
 
-    private void saveInRedisCache(CtcApplication application) {
-        try {
-            if (application.getCtcApplicationNumber() != null) {
-                cacheService.save(getRedisKey(application.getCtcApplicationNumber()), application);
-                log.info("Saved CTC application in Redis cache: {}", application.getCtcApplicationNumber());
-            }
-        } catch (Exception e) {
-            log.error("Error saving CTC application to Redis cache: {}", e.getMessage());
-        }
-    }
-
-    private CtcApplication searchRedisCache(String ctcApplicationNumber) {
-        try {
-            Object value = cacheService.findById(getRedisKey(ctcApplicationNumber));
-            if (value != null) {
-                String json = objectMapper.writeValueAsString(value);
-                return objectMapper.readValue(json, CtcApplication.class);
-            }
-            return null;
-        } catch (JsonProcessingException e) {
-            log.error("Error reading CTC application from Redis cache: {}", e.getMessage());
-            return null;
-        }
-    }
-
     private List<BreakDown> getBreakDown(Double totalAmount) {
         BreakDown breakDown = new BreakDown();
         breakDown.setCode(config.getBreakDownCode());
@@ -540,17 +549,17 @@ public class CtcApplicationService {
         List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
         Map<String, DocsToSignCriteria> criteriaMap = new HashMap<>();
 
-        Map<String , String> ctcApplicationNumberToSealedTemplateFileStoreId = new HashMap<>();
+        Map<String, String> ctcApplicationNumberToSealedTemplateFileStoreId = new HashMap<>();
         request.getCriteria().forEach(criterion -> {
             ctcApplicationNumberToSealedTemplateFileStoreId.put(criterion.getCtcApplicationNumber(), null);
         });
 
         request.getCriteria().forEach(criterion -> {
 
-            String sealedTemplateFileStoreId =null;
-            if(ctcApplicationNumberToSealedTemplateFileStoreId.get(criterion.getCtcApplicationNumber())!=null){
+            String sealedTemplateFileStoreId = null;
+            if (ctcApplicationNumberToSealedTemplateFileStoreId.get(criterion.getCtcApplicationNumber()) != null) {
                 sealedTemplateFileStoreId = ctcApplicationNumberToSealedTemplateFileStoreId.get(criterion.getCtcApplicationNumber());
-            }else {
+            } else {
                 CtcApplication ctcApplication = fetchCtcApplication(criterion.getCtcApplicationNumber(), criterion.getFilingNumber(), criterion.getCourtId());
                 sealedTemplateFileStoreId = egovPdfUtil.getSealedTemplateFileStoreId(request.getRequestInfo(), ctcApplication);
                 ctcApplicationNumberToSealedTemplateFileStoreId.put(criterion.getCtcApplicationNumber(), sealedTemplateFileStoreId);
@@ -615,51 +624,57 @@ public class CtcApplicationService {
 
     public void updateDocsWithSignedCopy(UpdateSignedDocsRequest request) {
         log.info("Updating docs with signed copies, count: {}", request.getSignedDocs().size());
+        try {
 
-        RequestInfo requestInfo = request.getRequestInfo();
-        for (SignedDoc signedDoc : request.getSignedDocs()) {
-            String docId = signedDoc.getDocId();
-            String signedDocData = signedDoc.getSignedDocData();
-            Boolean isSigned = signedDoc.getSigned();
-            String tenantId = signedDoc.getTenantId();
-            String ctcApplicationNumber = signedDoc.getCtcApplicationNumber();
-            String filingNumber = signedDoc.getFilingNumber();
-            String courtId = signedDoc.getCourtId();
+            RequestInfo requestInfo = request.getRequestInfo();
+            List<DocumentActionItem> docs = new ArrayList<>();
 
-            if (Boolean.TRUE.equals(isSigned)) {
-                try {
-                    MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedDocData, CTC_DOC_PDF_NAME);
-                    String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+            for (SignedDoc signedDoc : request.getSignedDocs()) {
+                String docId = signedDoc.getDocId();
+                String signedDocData = signedDoc.getSignedDocData();
+                Boolean isSigned = signedDoc.getSigned();
+                String tenantId = signedDoc.getTenantId();
+                String ctcApplicationNumber = signedDoc.getCtcApplicationNumber();
+                String filingNumber = signedDoc.getFilingNumber();
 
-                    Document document = Document.builder()
-                            .documentType(SIGNED)
-                            .fileStore(fileStoreId)
-                            .isActive(true)
-                            .additionalDetails(Map.of(NAME, CTC_DOC_PDF_NAME))
-                            .build();
+                if (Boolean.TRUE.equals(isSigned)) {
+                    try {
+                        MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedDocData, CTC_DOC_PDF_NAME);
+                        String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
-                    IssueCtcDocumentUpdateRequest issueCtcDocumentUpdateRequest = IssueCtcDocumentUpdateRequest.builder()
-                            .requestInfo(requestInfo)
-                            .action("ISSUE")
-                            .courtId(courtId)
-                            .docs(List.of(DocumentActionItem.builder()
-                                            .docId(docId)
-                                            .documents(List.of(document))
-                                            .ctcApplicationNumber(ctcApplicationNumber)
-                                            .filingNumber(filingNumber)
-                                    .build()))
-                            .build();
+                        Document document = Document.builder()
+                                .documentType(SIGNED)
+                                .fileStore(fileStoreId)
+                                .isActive(true)
+                                .additionalDetails(Map.of(NAME, CTC_DOC_PDF_NAME))
+                                .build();
 
-                    markDocumentsAsIssuedOrReject(issueCtcDocumentUpdateRequest);
+                        docs.add(DocumentActionItem.builder()
+                                        .docId(docId)
+                                        .documents(List.of(document))
+                                        .ctcApplicationNumber(ctcApplicationNumber)
+                                        .filingNumber(filingNumber)
+                                        .build());
 
-                    log.info("Updated CTC application {} with signed doc", ctcApplicationNumber);
-                } catch (CustomException e) {
-                    throw e;
-                } catch (Exception e) {
-                    log.error("Error while updating CTC doc, ctcApplicationNumber: {}", ctcApplicationNumber, e);
-                    throw new CustomException(CTC_BULK_SIGN_EXCEPTION, "Error while updating CTC doc: " + e.getMessage());
+                    }  catch (Exception e) {
+                        log.error("Error while updating CTC docId {}, ctcApplicationNumber: {}", docId,ctcApplicationNumber);
+                    }
                 }
             }
+
+            IssueCtcDocumentUpdateRequest issueCtcDocumentUpdateRequest = IssueCtcDocumentUpdateRequest.builder()
+                    .requestInfo(requestInfo)
+                    .action("ISSUE")
+                    .courtId(request.getCourtId())
+                    .docs(docs)
+                    .build();
+            markDocumentsAsIssuedOrReject(issueCtcDocumentUpdateRequest);
+            log.info("Issued CTC applications with signed doc");
+
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CustomException(CTC_BULK_SIGN_EXCEPTION, "Error while processing CTC doc: " + e.getMessage());
         }
     }
 

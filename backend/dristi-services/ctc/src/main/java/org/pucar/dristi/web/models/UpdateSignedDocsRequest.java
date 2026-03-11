@@ -20,6 +20,9 @@ public class UpdateSignedDocsRequest {
     @Valid
     private RequestInfo requestInfo;
 
+    @JsonProperty("courtId")
+    private String courtId;
+
     @JsonProperty("signedDocs")
     @Valid
     private List<SignedDoc> signedDocs;

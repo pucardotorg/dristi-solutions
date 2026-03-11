@@ -356,7 +356,7 @@ components:
         selectedCaseBundle:
           type: array
           items:
-            $ref: '#/components/schemas/SelectedCaseBundleNode'
+            $ref: '#/components/schemas/CaseBundleNode'
         caseBundles:
           type: array
           items:
@@ -382,24 +382,6 @@ components:
           $ref: '#/components/schemas/WorkflowObject'
         auditDetails:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
-
-    SelectedCaseBundleNode:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Unique identifier of the selected case bundle node
-        title:
-          type: string
-          description: Title of the selected case bundle node
-        fileStoreId:
-          type: string
-          description: File store ID for the document
-        children:
-          type: array
-          items:
-            $ref: '#/components/schemas/SelectedCaseBundleNode'
-          description: Child nodes (for hierarchical structure)
 
     CaseBundleNode:
       type: object
@@ -626,6 +608,8 @@ components:
         ctcApplicationNumber:
           type: string
         filingNumber:
+          type: string
+        courtId:
           type: string
         request:
           type: string
