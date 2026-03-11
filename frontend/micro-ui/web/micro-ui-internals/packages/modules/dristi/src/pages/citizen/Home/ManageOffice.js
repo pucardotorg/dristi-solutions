@@ -545,19 +545,19 @@ const ManageOffice = () => {
               <React.Fragment>
                 {searchResult ? (
                   <div className="manage-office-search-card">
-                    <div className="manage-office-search-card__col">
+                    <div className="manage-office-search-card__row">
                       <p className="manage-office-search-card__label">{t("NAME") || "Name"}</p>
                       <p className="manage-office-search-card__value">{searchResult?.name}</p>
                     </div>
-                    <div className="manage-office-search-card__col">
+                    <div className="manage-office-search-card__row">
                       <p className="manage-office-search-card__label">{t("DESIGNATION") || "Designation"}</p>
                       <p className="manage-office-search-card__value">{searchResult?.designation}</p>
                     </div>
-                    <div className="manage-office-search-card__col">
+                    <div className="manage-office-search-card__row">
                       <p className="manage-office-search-card__label">{t("MOBILE_NUMBER") || "Mobile number"}</p>
                       <p className="manage-office-search-card__value">{searchResult?.mobileNumber}</p>
                     </div>
-                    <div className="manage-office-search-card__col">
+                    <div className="manage-office-search-card__row">
                       <p className="manage-office-search-card__label">{t("EMAIL") || "Email"}</p>
                       <p className="manage-office-search-card__value">{searchResult?.email}</p>
                     </div>
