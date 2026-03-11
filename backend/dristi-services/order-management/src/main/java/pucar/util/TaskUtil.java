@@ -3,6 +3,7 @@ package pucar.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
@@ -119,6 +120,14 @@ public class TaskUtil {
         if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel) || courtCase.getIsLPRCase() ||
                 isCourtWitness(order.getOrderType(), objectMapper.convertValue(taskDetails, JsonNode.class))) {
             workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
+            // There is no pending collection when payment is not made
+            ObjectNode taskDetailsNode = (ObjectNode) taskDetails;
+            ObjectNode deliveryChannels = (ObjectNode) taskDetailsNode.get("deliveryChannels");
+            if (deliveryChannels == null) {
+                deliveryChannels = objectMapper.createObjectNode();
+                taskDetailsNode.set("deliveryChannels", deliveryChannels);
+            }
+            deliveryChannels.put("isPendingCollection", false);
         }
         else {
             workflowObject.setAction("CREATE");
