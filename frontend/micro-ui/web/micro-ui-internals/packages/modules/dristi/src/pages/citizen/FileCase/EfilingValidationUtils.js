@@ -391,8 +391,6 @@ export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValu
     bankDetails = await fetchBankDetails(ifsc);
 
     if (!bankDetails) {
-      cache.current[ifsc] = "FAILED";
-      // setError(configKey, { msg: "CS_INVALID_IFSC" });
       return false;
     }
 
@@ -411,10 +409,6 @@ export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValu
     setValue(branchField, bankDetails.branch || "");
     clearErrors(branchField);
   }
-  const prefix = bankField.replace("BankName", "");
-
-  setValue(`${prefix}BankReadOnly`, true);
-  setValue(`${prefix}BranchReadOnly`, true);
 
   return true;
 };
