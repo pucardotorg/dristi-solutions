@@ -551,11 +551,7 @@ public class CtcApplicationService {
             if(ctcApplicationNumberToSealedTemplateFileStoreId.get(criterion.getCtcApplicationNumber())!=null){
                 sealedTemplateFileStoreId = ctcApplicationNumberToSealedTemplateFileStoreId.get(criterion.getCtcApplicationNumber());
             }else {
-                CtcApplication ctcApplication = searchRedisCache(criterion.getCtcApplicationNumber());
-                if (ctcApplication == null) {
-                    ctcApplication = fetchCtcApplicationByNumber(criterion.getCtcApplicationNumber());
-                    saveInRedisCache(ctcApplication);
-                }
+                CtcApplication ctcApplication = fetchCtcApplication(criterion.getCtcApplicationNumber(), criterion.getFilingNumber(), criterion.getCourtId());
                 sealedTemplateFileStoreId = egovPdfUtil.getSealedTemplateFileStoreId(request.getRequestInfo(), ctcApplication);
                 ctcApplicationNumberToSealedTemplateFileStoreId.put(criterion.getCtcApplicationNumber(), sealedTemplateFileStoreId);
             }
