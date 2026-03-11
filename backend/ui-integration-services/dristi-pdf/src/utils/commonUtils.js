@@ -7,19 +7,19 @@ async function getCourtAndJudgeDetails(
   tenantId,
   employeeType,
   courtId,
-  requestInfo,
+  requestInfo
 ) {
   const resHrms = await handleApiCall(
     res,
     () => search_hrms(tenantId, employeeType, courtId, requestInfo),
-    "Failed to query HRMS service",
+    "Failed to query HRMS service"
   );
 
   const resMdms = await handleApiCall(
     res,
     () =>
       search_mdms(courtId, "common-masters.Court_Rooms", tenantId, requestInfo),
-    "Failed to query MDMS service for court room",
+    "Failed to query MDMS service for court room"
   );
   const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
   if (!mdmsCourtRoom) {
@@ -32,8 +32,8 @@ async function getCourtAndJudgeDetails(
         mdmsCourtRoom.establishment === courtEstablishment &&
         courtroom === courtId &&
         fromDate <= Date.now() &&
-        (toDate === null || toDate > Date.now()),
-    ),
+        (toDate === null || toDate > Date.now())
+    )
   );
 
   if (!employee) {
@@ -41,7 +41,7 @@ async function getCourtAndJudgeDetails(
   }
 
   const assignment = employee.assignments.find(
-    (assignment) => assignment.courtroom === courtId,
+    (assignment) => assignment.courtroom === courtId
   );
 
   const responseMdms = await handleApiCall(
@@ -51,9 +51,9 @@ async function getCourtAndJudgeDetails(
         assignment.designation,
         "common-masters.Designation",
         tenantId,
-        requestInfo,
+        requestInfo
       ),
-    "Failed to query MDMS service for Designation",
+    "Failed to query MDMS service for Designation"
   );
   const mdmsDesignation = responseMdms?.data?.mdms[0]?.data;
   if (!mdmsCourtRoom) {
@@ -94,7 +94,7 @@ function getSelectedTitles(data, messagesMap) {
         const translatedTitle = messagesMap[item.title] || item.title;
         if (parentTitle) {
           const translatedParent = messagesMap[parentTitle] || parentTitle;
-          titles.push(`${translatedParent} ${translatedTitle}`);
+          titles.push(`${translatedTitle} - ${translatedParent}`);
         } else {
           titles.push(translatedTitle);
         }
