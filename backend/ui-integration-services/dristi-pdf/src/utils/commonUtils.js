@@ -7,19 +7,19 @@ async function getCourtAndJudgeDetails(
   tenantId,
   employeeType,
   courtId,
-  requestInfo
+  requestInfo,
 ) {
   const resHrms = await handleApiCall(
     res,
     () => search_hrms(tenantId, employeeType, courtId, requestInfo),
-    "Failed to query HRMS service"
+    "Failed to query HRMS service",
   );
 
   const resMdms = await handleApiCall(
     res,
     () =>
       search_mdms(courtId, "common-masters.Court_Rooms", tenantId, requestInfo),
-    "Failed to query MDMS service for court room"
+    "Failed to query MDMS service for court room",
   );
   const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
   if (!mdmsCourtRoom) {
@@ -32,8 +32,8 @@ async function getCourtAndJudgeDetails(
         mdmsCourtRoom.establishment === courtEstablishment &&
         courtroom === courtId &&
         fromDate <= Date.now() &&
-        (toDate === null || toDate > Date.now())
-    )
+        (toDate === null || toDate > Date.now()),
+    ),
   );
 
   if (!employee) {
@@ -41,7 +41,7 @@ async function getCourtAndJudgeDetails(
   }
 
   const assignment = employee.assignments.find(
-    (assignment) => assignment.courtroom === courtId
+    (assignment) => assignment.courtroom === courtId,
   );
 
   const responseMdms = await handleApiCall(
@@ -51,9 +51,9 @@ async function getCourtAndJudgeDetails(
         assignment.designation,
         "common-masters.Designation",
         tenantId,
-        requestInfo
+        requestInfo,
       ),
-    "Failed to query MDMS service for Designation"
+    "Failed to query MDMS service for Designation",
   );
   const mdmsDesignation = responseMdms?.data?.mdms[0]?.data;
   if (!mdmsCourtRoom) {
@@ -81,6 +81,24 @@ async function getCourtAndJudgeDetails(
   };
 }
 
+function getSelectedTitles(data, messagesMap) {
+  const titles = [];
+
+  const traverse = (items) => {
+    items?.forEach((item) => {
+      if (item.title) {
+        titles.push(messagesMap[item.title]);
+      }
+      if (item.children) {
+        traverse(item.children);
+      }
+    });
+  };
+
+  traverse(data);
+  return titles;
+}
+
 function getPartyType(witnessType) {
   if (witnessType?.includes("PW")) {
     return "Prosecution";
@@ -94,4 +112,5 @@ function getPartyType(witnessType) {
 module.exports = {
   getCourtAndJudgeDetails,
   getPartyType,
+  getSelectedTitles,
 };

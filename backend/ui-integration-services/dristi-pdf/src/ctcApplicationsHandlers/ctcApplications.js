@@ -2,16 +2,16 @@ const config = require("../config");
 const {
   create_pdf,
   search_ctc_applications,
-  search_advocate,
   search_case_v2,
+  search_message,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const {
   getComplaintAndAccusedList,
 } = require("../applicationHandlers/getCaseDetails"); // getnamebyuuid
-const { cleanName } = require("../applicationHandlers/cleanName");
 const { handleApiCall } = require("../utils/handleApiCall");
+const { getSelectedTitles } = require("../utils/commonUtils");
 
 async function ctcApplications(req, res, courtCaseJudgeDetails) {
   const { RequestInfo, criteria, pagination = {} } = req.body || {};
@@ -48,10 +48,12 @@ async function ctcApplications(req, res, courtCaseJudgeDetails) {
           [
             {
               filingNumber,
+              flow: "flow_jac",
             },
           ],
           tenantId,
           RequestInfo,
+          true,
         ),
       "Failed to query case service",
     );
@@ -62,7 +64,27 @@ async function ctcApplications(req, res, courtCaseJudgeDetails) {
       "Failed to query CTC applications service",
     );
 
-    const resCTC = resCtcApplications?.data?.ctcApplications?.[0] || {};
+    const ctcApplication = resCtcApplications?.data?.ctcApplications?.[0] || {};
+
+    const resMessage = await handleApiCall(
+      res,
+      () =>
+        search_message(
+          tenantId,
+          "rainmaker-case,rainmaker-orders,rainmaker-submissions,rainmaker-home,rainmaker-common",
+          "en_IN",
+          RequestInfo,
+        ),
+      "Failed to query Localized messages",
+    );
+    const messages = resMessage?.data?.messages || [];
+    const messagesMap =
+      messages?.length > 0
+        ? Object.fromEntries(
+            messages.map(({ code, message }) => [code, message]),
+          )
+        : {};
+
     const courtCase = resCase?.data?.criteria?.[0]?.responseList?.[0];
 
     if (!courtCase) {
@@ -78,80 +100,27 @@ async function ctcApplications(req, res, courtCaseJudgeDetails) {
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
 
-    const caseNumber = criteria?.caseNumber || "";
     const { complainantList, accusedList } = getComplaintAndAccusedList(
       courtCase || {},
     );
-    let advocateName = "";
-    const advocateIndividualId = "";
-    // application?.applicationDetails?.advocateIndividualId;
-    if (advocateIndividualId) {
-      const resAdvocate = await handleApiCall(
-        res,
-        () => search_advocate(tenantId, advocateIndividualId, RequestInfo),
-        "Failed to query Advocate Details",
-      );
-      const advocateData = resAdvocate?.data?.advocates?.[0];
-      const advocateDetails = advocateData?.responseList?.find(
-        (item) => item.isActive === true,
-      );
-      advocateName =
-        cleanName(advocateDetails?.additionalDetails?.username) || "";
-    }
-    let applicationTitle = "Application for Certified True Copies";
-    const onBehalfOfuuid = ""; // application?.onBehalfOf?.[0];
-    const partyName = ""; //application?.additionalDetails?.onBehalOfName || "";
-    const onBehalfOfLitigent = courtCase?.litigants?.find(
-      (item) => item.additionalDetails.uuid === onBehalfOfuuid,
+
+    const selectedDocumentList = getSelectedTitles(
+      ctcApplication?.selectedCaseBundle,
+      messagesMap,
     );
-    let partyType = "COURT";
-    if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("complainant")) {
-      partyType = "Complainant";
-    }
-    if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("respondent")) {
-      partyType = "Accused";
-    }
-
-    const requestedDocumentList = []; // resCTC?.requestedDocumentList || [];
-    const noRepresentingParty = resCTC?.noRepresentingParty || false;
-    const courtName = mdmsCourtRoom?.name;
-    const applicantName = ""; //getNameByUuid(application?.createdBy, courtCase);
-    const applicationDate = resCTC?.applicationDate || "";
-    const isMagistrateApproved = resCTC?.isMagistrateApproved || false;
-    const applicationApprovalDate = resCTC?.applicationApprovalDate || "";
-    const issuanceDate = resCTC?.issuanceDate || "";
-    const judgeSignature = courtCaseJudgeDetails?.judgeDetails?.judgeSignature;
-    const sealOfCourt = resCTC?.sealOfCourt || "";
-    const cmoName = resCTC?.cmoName || "";
-
     const data = {
       Data: [
         {
           courtComplex: mdmsCourtRoom?.name,
-          caseNumber: caseNumber,
+          caseNumber: courtCase?.stNumber || courtCase?.cmpNumber || "",
           caseName: courtCase.caseTitle,
           date: formattedToday,
           complainantList: complainantList,
           accusedList: accusedList,
-          advocateName: advocateName,
-          applicationTitle: applicationTitle,
-          partyName: partyName,
-          partyType: partyType,
-          requestedDocumentList: [], //requestedDocumentList, // TODO : make it appropriate array and compare with other list
-          noRepresentingParty: noRepresentingParty,
-          applicantSignature: "Applicant Signature", // TODO : Inform and verify backend
-
-          courtName: courtName,
-          applicantName: applicantName,
-          applicationNumber: ctcApplicationNumber,
-          applicationDate: applicationDate, // TODO : format all the dates correctly
-          requestedDocuments: requestedDocumentList,
-          isMagistrateApproved: isMagistrateApproved,
-          applicationApprovalDate: applicationApprovalDate,
-          issuanceDate: issuanceDate,
-          judgeSignature: judgeSignature, // TODO : confirm by backend
-          sealOfCourt: sealOfCourt,
-          cmoName: cmoName,
+          selectedDocumentList,
+          isPartyToCase: ctcApplication?.isPartyToCase,
+          applicantName: ctcApplication?.applicantName || "",
+          designation: ctcApplication?.partyDesignation || "",
         },
       ],
     };

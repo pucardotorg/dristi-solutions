@@ -308,7 +308,7 @@ module.exports = {
     application_reschedule_hearing_qr:
       process.env.APPLICATION_RESCHEDULE_HEARING_QR ||
       "application-reschedule-hearing-qr",
-    template_configuration_miscellaneous_process:                   
+    template_configuration_miscellaneous_process:
       process.env.TEMPLATE_CONFIGURATION_MISCELLANEOUS_PROCESS ||
       "template-miscellaneous-process",
     template_configuration_miscellaneous_process_qr:
@@ -320,12 +320,12 @@ module.exports = {
     application_certified_true_copies_qr:
       process.env.APPLICATION_CERTIFIED_TRUE_COPIES_QR ||
       "application-certified-true-copies-qr",
-    application_ctc_certification: 
-      process.env.APPLICATION_CTC_CERTIFICATION || 
+    application_ctc_certification:
+      process.env.APPLICATION_CTC_CERTIFICATION ||
       "application-ctc-certification",
-    application_ctc_certification_qr: 
-      process.env.APPLICATION_CTC_CERTIFICATION_QR || 
-      "application-ctc-certification-qr"
+    application_ctc_certification_qr:
+      process.env.APPLICATION_CTC_CERTIFICATION_QR ||
+      "application-ctc-certification-qr",
   },
 
   app: {
@@ -356,7 +356,8 @@ module.exports = {
       process.env.DRISTI_TASK_MANAGEMENT_HOST || "http://localhost:8087",
     digitisation:
       process.env.DRISTI_DIGITALIZED_DOCUMENTS_HOST || "http://localhost:8333",
-    ctcApplications: process.env.DRISTI_CTC_APPLICATIONS_HOST || "http://localhost:8098", 
+    ctcApplications:
+      process.env.DRISTI_CTC_APPLICATIONS_HOST || "http://localhost:8098",
   },
 
   paths: {
