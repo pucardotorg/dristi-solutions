@@ -386,7 +386,12 @@ const ManageOffice = () => {
       if (response) {
         refetchMembers();
         if (isLeavingOfficeTab && refetchAdvocatesWorkingFor) refetchAdvocatesWorkingFor();
-        setToast({ label: t("MEMBER_REMOVED_SUCCESS") || "Member removed successfully", type: "success" });
+        setToast({
+          label: isLeavingOfficeTab
+            ? t("LEFT_OFFICE_SUCCESSFULLY") || "Left office successfully"
+            : t("MEMBER_REMOVED_SUCCESS") || "Member removed successfully",
+          type: "success",
+        });
       }
     } catch (error) {
       console.error("Error removing member:", error);
@@ -618,7 +623,9 @@ const ManageOffice = () => {
         <div className="manage-office-modal-overlay" onClick={handleCloseRemoveModal}>
           <div className="manage-office-modal" onClick={(e) => e.stopPropagation()}>
             <div className="manage-office-modal__header">
-              <h2 className="manage-office-modal__title">{t("REMOVE_MEMBER") || "Remove Member"}</h2>
+              <h2 className="manage-office-modal__title">
+                {activeTab === "advocatesWorkingFor" ? t("LEAVE_OFFICE") || "Leave Office" : t("REMOVE_MEMBER") || "Remove Member"}
+              </h2>
               <button onClick={handleCloseRemoveModal} className="manage-office-modal__close">
                 ×
               </button>
@@ -641,7 +648,7 @@ const ManageOffice = () => {
                     {t("CANCEL") || "Cancel"}
                   </button>
                   <button onClick={handleConfirmRemoveMember} className="manage-office-btn manage-office-btn--danger">
-                    {t("REMOVE_MEMBER") || "Remove Member"}
+                    {activeTab === "advocatesWorkingFor" ? t("LEAVE_OFFICE") || "Leave Office" : t("REMOVE_MEMBER") || "Remove Member"}
                   </button>
                 </div>
               </React.Fragment>
