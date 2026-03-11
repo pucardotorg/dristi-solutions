@@ -128,11 +128,13 @@ public class IndexerUtils {
         return statusCounts;
     }
 
-    public void updateTrackerStatus(String ctcApplicationNumber, String status) {
+    public void updateTrackerStatus(String ctcApplicationNumber, String status, Long date) {
         try {
             String indexName = config.getCtcApplicationTrackerIndex();
             String uri = config.getEsHostUrl() + indexName + "/_update_by_query";
-            String request = String.format(ServiceConstants.ES_UPDATE_TRACKER_STATUS_BY_APPLICATION, ctcApplicationNumber, status);
+            String request;
+            request = String.format(ServiceConstants.ES_UPDATE_TRACKER_STATUS_BY_APPLICATION, ctcApplicationNumber, status, date);
+
             esPostManual(uri, request);
             log.info("Updated tracker status for application: {} to status: {}", ctcApplicationNumber, status);
         } catch (Exception e) {
@@ -147,8 +149,8 @@ public class IndexerUtils {
             String indexName = config.getCtcApplicationTrackerIndex();
             String searchableFieldsJson = tracker.getSearchableFields() != null
                     ? "[" + tracker.getSearchableFields().stream()
-                        .map(s -> "\"" + s + "\"")
-                        .collect(Collectors.joining(",")) + "]"
+                    .map(s -> "\"" + s + "\"")
+                    .collect(Collectors.joining(",")) + "]"
                     : "[]";
 
             String payload = String.format(

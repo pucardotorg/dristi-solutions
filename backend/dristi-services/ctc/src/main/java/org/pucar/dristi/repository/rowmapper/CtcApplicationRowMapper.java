@@ -55,6 +55,7 @@ public class CtcApplicationRowMapper implements ResultSetExtractor<List<CtcAppli
                         .caseBundles(getObjectListFromJson(rs.getString("case_bundles"), new TypeReference<List<CaseBundleNode>>() {}))
                         .totalPages(rs.getInt("total_pages"))
                         .status(rs.getString("status"))
+                        .dateOfApplicationApproval(rs.getLong("date_of_application_approval"))
                         .judgeComments(rs.getString("judge_comments"))
                         .auditDetails(AuditDetails.builder()
                                 .createdBy(rs.getString("created_by"))

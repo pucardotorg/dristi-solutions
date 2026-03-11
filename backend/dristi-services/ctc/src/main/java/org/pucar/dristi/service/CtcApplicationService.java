@@ -465,13 +465,14 @@ public class CtcApplicationService {
             workflow.setAction(action);
             ctcApplication.setWorkflow(workflow);
             workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
-
+            Long date = System.currentTimeMillis();
             if (PENDING_ISSUE.equalsIgnoreCase(ctcApplication.getStatus())) {
                 indexerUtils.pushIssueCtcDocumentsToIndex(ctcApplication);
-                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "APPROVED");
+                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "APPROVED",date);
+                ctcApplication.setDateOfApplicationApproval(date);
             }
             if ("REJECTED".equalsIgnoreCase(ctcApplication.getStatus())) {
-                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "REJECTED");
+                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "REJECTED",null);
                 ctcApplication.getSelectedCaseBundle().forEach(node -> {
                     node.setStatus("REJECTED");
                 });
