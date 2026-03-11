@@ -119,10 +119,6 @@ public class CtcApplicationService {
                     .build();
             etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + CTC_APPLICATION_FEE, calculation);
         }
-        if (PENDING_ISSUE.equalsIgnoreCase(request.getCtcApplication().getStatus())) {
-            indexerUtils.pushIssueCtcDocumentsToIndex(application);
-            indexerUtils.deactivateTracker(application.getCtcApplicationNumber());
-        }
 
         filterInactiveDocuments(application);
 
@@ -408,6 +404,14 @@ public class CtcApplicationService {
             workflow.setAction(action);
             ctcApplication.setWorkflow(workflow);
             workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
+
+            if (PENDING_ISSUE.equalsIgnoreCase(ctcApplication.getStatus())) {
+                indexerUtils.pushIssueCtcDocumentsToIndex(ctcApplication);
+                indexerUtils.deactivateTracker(ctcApplication.getCtcApplicationNumber());
+            }
+            if ("REJECTED".equalsIgnoreCase(ctcApplication.getStatus())) {
+                indexerUtils.deactivateTracker(ctcApplication.getCtcApplicationNumber());
+            }
 
             // Persist the updated application
             CtcApplicationRequest ctcApplicationRequest = CtcApplicationRequest.builder()
