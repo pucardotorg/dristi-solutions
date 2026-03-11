@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, Fragment, useCallback } from "react";
+import React, { useEffect, useMemo, useRef, useState, Fragment, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import {
   BreakLine,
@@ -88,6 +88,11 @@ export const FormComposerV2 = (props) => {
   const formData = watch();
   const selectedFormCategory = props?.currentFormCategory;
   const [showErrorToast, setShowErrorToast] = useState(false);
+
+  // Ref for custom components to register their validate functions.
+  // Components rendered via case "component" can register a validator
+  // so FormComposerV2 can call it during form submission.
+  const componentValidatorsRef = useRef({});
   const [customToast, setCustomToast] = useState(false);
 
   //clear all errors if user has changed the form category.
@@ -120,7 +125,35 @@ export const FormComposerV2 = (props) => {
   // Expose form methods via formRef so parent can trigger validation programmatically
   useEffect(() => {
     if (props.formRef) {
-      props.formRef.current = { trigger, getValues, setValue, formState, errors, setError, clearErrors, reset, handleSubmit };
+      props.formRef.current = {
+        trigger,
+        getValues,
+        setValue,
+        formState,
+        errors,
+        setError,
+        clearErrors,
+        reset,
+        handleSubmit,
+        /**
+         * Validates both RHF fields (via handleSubmit) and custom component validators.
+         * Returns true only if everything passes. Used by parent's validateAllForms.
+         */
+        validateWithComponents: async () => {
+          let isRhfValid = false;
+          await handleSubmit(
+            () => {
+              isRhfValid = true;
+            },
+            () => {
+              isRhfValid = false;
+            }
+          )();
+          const componentResults = Object.values(componentValidatorsRef.current).map((fn) => fn());
+          const allComponentsValid = componentResults.every((r) => r === true);
+          return isRhfValid && allComponentsValid;
+        },
+      };
     }
   });
 
@@ -153,6 +186,11 @@ export const FormComposerV2 = (props) => {
         isCurrentFormValid = false;
       }
     )();
+
+    // Run custom component validators (synchronous — no timing issues)
+    const componentResults = Object.values(componentValidatorsRef.current).map((fn) => fn());
+    const allComponentsValid = componentResults.every((r) => r === true);
+    if (!allComponentsValid) isCurrentFormValid = false;
 
     // Validate all sibling forms if the callback is provided
     let areAllFormsValid = isCurrentFormValid;
@@ -457,6 +495,7 @@ export const FormComposerV2 = (props) => {
                 getValues={getValues}
                 watch={watch}
                 unregister={unregister}
+                componentValidators={componentValidatorsRef}
               />
             )}
             name={config.key}

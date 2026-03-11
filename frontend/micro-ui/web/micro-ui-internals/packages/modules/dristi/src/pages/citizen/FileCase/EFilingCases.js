@@ -35,7 +35,6 @@ import {
   debtLiabilityValidation,
   delayApplicationValidation,
   demandNoticeFileValidation,
-  getAdvocatesAndPipRemainingFields,
   getAllAssignees,
   getComplainantName,
   getProcessCourierRemainingFields,
@@ -2207,20 +2206,13 @@ function EFilingCases({ path }) {
     const indices = Object.keys(refs);
     if (indices.length === 0) return true;
 
-    // Use handleSubmit (not trigger) on each form so formState.isSubmitted is set to true.
-    // This enables RHF's reValidateMode:'onChange', allowing errors to auto-clear
-    // when the user corrects a field value after a failed validation.
+    // Use validateWithComponents on each form — this runs both RHF validation
+    // (via handleSubmit, which sets formState.isSubmitted=true for reValidateMode:'onChange')
+    // AND custom component validators registered via componentValidatorsRef.
     const results = await Promise.all(
       indices
-        .filter((idx) => refs[idx]?.current?.handleSubmit && formdata?.[idx]?.isenabled)
-        .map((idx) => {
-          return new Promise((resolve) => {
-            refs[idx].current.handleSubmit(
-              () => resolve(true),
-              () => resolve(false)
-            )();
-          });
-        })
+        .filter((idx) => refs[idx]?.current?.validateWithComponents && formdata?.[idx]?.isenabled)
+        .map((idx) => refs[idx].current.validateWithComponents())
     );
     return results.every((isValid) => isValid === true);
   }, [formdata]);
@@ -2381,13 +2373,8 @@ function EFilingCases({ path }) {
     ) {
       return;
     }
-    if (selected === "advocateDetails") {
-      const advocatesAndPipErrors = getAdvocatesAndPipRemainingFields(formdata, t);
-      if (advocatesAndPipErrors?.length > 0) {
-        setShowErrorDataModal({ page: "advocateDetails", show: true, errorData: advocatesAndPipErrors });
-        return;
-      }
-    }
+    // advocateDetails validation is now handled internally by MultipleAdvocatesAndPip
+    // via componentValidators registered in FormComposerV2.
     if (
       selected === "processCourierService" &&
       !(scrutinyObj && Object?.keys(scrutinyObj)?.length > 0) &&

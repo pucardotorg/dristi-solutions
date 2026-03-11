@@ -80,7 +80,7 @@ const DragDropJSX = ({ t, currentValue, error }) => {
   );
 };
 
-function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setError, clearErrors }) {
+function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setError, clearErrors, formState, componentValidators }) {
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const moduleCode = "DRISTI";
@@ -120,6 +120,93 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           pipAffidavitFileUpload: null,
         }
   );
+
+  // Internal validation errors for individual field highlighting
+  const [validationErrors, setValidationErrors] = useState({});
+
+  // Computes validation errors from current data.
+  // Returns an object with boolean flags for each error type.
+  const computeValidationErrors = useCallback((data) => {
+    const errs = {
+      advocateInfoMissing: false,
+      vakalatnamaMissing: false,
+      affidavitMissing: false,
+      numberOfAdvocatesMissing: false,
+      advocateCountDiffer: false,
+    };
+
+    if (!data?.boxComplainant?.individualId) return errs;
+
+    const { isComplainantPip, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload, numberOfAdvocates } = data;
+
+    if (isComplainantPip?.code === "NO") {
+      if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails.length === 0)) {
+        errs.advocateInfoMissing = true;
+      } else if (
+        Array.isArray(multipleAdvocateNameDetails) &&
+        multipleAdvocateNameDetails.length > 0 &&
+        multipleAdvocateNameDetails.some((adv) => !adv?.advocateBarRegNumberWithName?.advocateId)
+      ) {
+        errs.advocateInfoMissing = true;
+      }
+      if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
+        errs.vakalatnamaMissing = true;
+      }
+      if (!numberOfAdvocates) {
+        errs.numberOfAdvocatesMissing = true;
+      }
+      if (numberOfAdvocates && multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
+        errs.advocateCountDiffer = true;
+      }
+    }
+
+    if (isComplainantPip?.code === "YES") {
+      if (!pipAffidavitFileUpload || pipAffidavitFileUpload?.document?.length === 0) {
+        errs.affidavitMissing = true;
+      }
+    }
+
+    return errs;
+  }, []);
+
+  // Register component validator so FormComposerV2 can call it during submission.
+  // This runs synchronously and returns true (valid) or false (invalid).
+  useEffect(() => {
+    const validators = componentValidators?.current;
+    if (validators) {
+      validators[config.key] = () => {
+        const errs = computeValidationErrors(advocateAndPipData);
+        setValidationErrors(errs);
+        const hasErrors = Object.values(errs).some((v) => v);
+        if (hasErrors) {
+          setError(config.key, { type: "custom", message: "ADVOCATE_VALIDATION_ERROR" });
+          return false;
+        }
+        clearErrors(config.key);
+        return true;
+      };
+    }
+    return () => {
+      if (validators?.[config.key]) {
+        delete validators[config.key];
+      }
+    };
+  }, [advocateAndPipData, componentValidators, config.key, computeValidationErrors, setError, clearErrors]);
+
+  // Auto-revalidate on data change after first submit attempt.
+  // This clears errors as soon as the user fixes a field, and re-shows them if they break something.
+  useEffect(() => {
+    if (formState?.submitCount > 0) {
+      const errs = computeValidationErrors(advocateAndPipData);
+      setValidationErrors(errs);
+      const hasErrors = Object.values(errs).some((v) => v);
+      if (hasErrors) {
+        setError(config.key, { type: "custom", message: "ADVOCATE_VALIDATION_ERROR" });
+      } else {
+        clearErrors(config.key);
+      }
+    }
+  }, [advocateAndPipData, formState?.submitCount, computeValidationErrors, setError, clearErrors, config.key]);
 
   useEffect(() => {
     if (formData?.multipleAdvocatesAndPip && !isEqual(advocateAndPipData, formData?.multipleAdvocatesAndPip)) {
@@ -831,10 +918,12 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                 style={{
                   padding: "10px",
                   fontSize: "16px",
-                  border: "1px solid #3D3C3C",
+                  border: validationErrors.numberOfAdvocatesMissing || validationErrors.advocateCountDiffer ? "1px solid red" : "1px solid #3D3C3C",
                   borderRadius: "0px",
                 }}
               />
+              {validationErrors.numberOfAdvocatesMissing && <span className="alert-error">{t("NUMBER_OF_ADVOCATES_MISSING")}</span>}
+              {validationErrors.advocateCountDiffer && <span className="alert-error">{t("ADVOCATE_COUNT_DIFFER")}</span>}
             </div>
           </div>
           <div
@@ -879,14 +968,25 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
 
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "left", gap: "0px" }}>
                       <h1 style={{ fontSize: "14px" }}> {t("BAR_REGISTRATON")}</h1>
-                      <SearchableDropdown
-                        t={t}
-                        isCaseReAssigned={isCaseReAssigned}
-                        selectedAdvocatesList={advocateAndPipData?.multipleAdvocateNameDetails}
-                        value={data?.advocateBarRegNumberWithName}
-                        onChange={(value) => handleInputChange(index, "advocateBarRegNumberWithName", value)}
-                        disabled={data?.advocateBarRegNumberWithName?.individualId === individualId}
-                      />
+                      <div
+                        style={
+                          validationErrors.advocateInfoMissing && !data?.advocateBarRegNumberWithName?.advocateId
+                            ? { border: "1px solid red", borderRadius: "4px" }
+                            : {}
+                        }
+                      >
+                        <SearchableDropdown
+                          t={t}
+                          isCaseReAssigned={isCaseReAssigned}
+                          selectedAdvocatesList={advocateAndPipData?.multipleAdvocateNameDetails}
+                          value={data?.advocateBarRegNumberWithName}
+                          onChange={(value) => handleInputChange(index, "advocateBarRegNumberWithName", value)}
+                          disabled={data?.advocateBarRegNumberWithName?.individualId === individualId}
+                        />
+                      </div>
+                      {validationErrors.advocateInfoMissing && !data?.advocateBarRegNumberWithName?.advocateId && (
+                        <span className="alert-error">{t("ADVOCATE_INFORMATION_MISSING")}</span>
+                      )}
 
                       {data?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal &&
                         inputs.map((input, i) => {
@@ -983,6 +1083,13 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
               : input?.fileKey === "pipAffidavitFileUpload"
               ? isCaseReAssigned?.pipAffidavitFileUploadMessage
               : "";
+          // Compute per-file-input validation error for red border highlighting
+          const fileValidationError =
+            input?.fileKey === "vakalatnamaFileUpload" && validationErrors.vakalatnamaMissing
+              ? { message: "VAKALATNAMA_DOCUMENT_MISSING" }
+              : input?.fileKey === "pipAffidavitFileUpload" && validationErrors.affidavitMissing
+              ? { message: "AFFIDAVIT_DOCUMENT_MISSING" }
+              : null;
           return (
             <div style={{ pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty(input?.fileKey) ? "auto" : "none") : "auto" }}>
               {showDocument && (
@@ -1031,13 +1138,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                           ? [...input?.fileTypes, "JPG"]
                           : input?.fileTypes
                       }
-                      children={
-                        <DragDropJSX
-                          t={t}
-                          currentValue={currentValue}
-                          error={errors?.[config.key]} //check- TODO: handleError
-                        />
-                      }
+                      children={<DragDropJSX t={t} currentValue={currentValue} error={fileValidationError || errors?.[config.key]} />}
                       key={input?.fileKey}
                       onTypeError={() => {
                         toast.error(t("CS_INVALID_FILE_TYPE"));
