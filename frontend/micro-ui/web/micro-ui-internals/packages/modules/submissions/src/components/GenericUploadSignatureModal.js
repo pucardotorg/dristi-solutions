@@ -111,8 +111,9 @@ const GenericUploadSignatureModal = ({
         customActionClassName={"selector-button-border"}
         className={"bail-signature-modal"}
       >
-        <div style={{ padding: "10px" }}>
-          <p style={{ marginBottom: "24px", color: "#0A0A0A" }}>{t(infoText)}</p>
+        <div style={{ padding: "0px 10px" }}>
+          <p style={{ color: "#0A0A0A" }}>{t("YOU_CAN_CHOOSE_SIGN_MODE")}</p>
+          <p style={{ color: "#0A0A0A" }}>{t(infoText)}</p>
         </div>
       </Modal>
 
