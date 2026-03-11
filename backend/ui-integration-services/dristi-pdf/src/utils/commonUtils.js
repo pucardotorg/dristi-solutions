@@ -84,18 +84,25 @@ async function getCourtAndJudgeDetails(
 function getSelectedTitles(data, messagesMap) {
   const titles = [];
 
-  const traverse = (items) => {
+  const traverse = (items, parentTitle) => {
     items?.forEach((item) => {
-      if (item.title) {
-        titles.push(messagesMap[item.title]);
-      }
-      if (item.children) {
-        traverse(item.children);
+      if (item.children?.length) {
+        // Non-leaf: recurse, passing this node's title as the parent
+        traverse(item.children, item.title);
+      } else if (item.title) {
+        // Leaf node: combine parent title (if any) with this title
+        const translatedTitle = messagesMap[item.title] || item.title;
+        if (parentTitle) {
+          const translatedParent = messagesMap[parentTitle] || parentTitle;
+          titles.push(`${translatedParent} ${translatedTitle}`);
+        } else {
+          titles.push(translatedTitle);
+        }
       }
     });
   };
 
-  traverse(data);
+  traverse(data, null);
   return titles;
 }
 
