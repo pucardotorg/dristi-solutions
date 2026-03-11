@@ -96,7 +96,7 @@ public class CtcApplicationService {
 
         producer.push(config.getSaveCtcApplicationTopic(), request);
 
-        saveInRedisCache(application);
+        cacheService.saveInRedisCache(application);
 
         log.info("createApplication method completed");
 
@@ -140,7 +140,7 @@ public class CtcApplicationService {
 
         producer.push(config.getUpdateCtcApplicationTopic(), request);
 
-        saveInRedisCache(application);
+        cacheService.saveInRedisCache(application);
 
         log.info("updateApplication method completed for id {}", request.getCtcApplication().getId());
 
@@ -169,7 +169,7 @@ public class CtcApplicationService {
 
         // Try Redis first if searching by ctcApplicationNumber
         if (ctcApplicationNumber != null) {
-            CtcApplication cached = searchRedisCache(ctcApplicationNumber);
+            CtcApplication cached = cacheService.searchRedisCache(ctcApplicationNumber);
             if (cached != null) {
                 log.info("CTC application found in Redis cache for ctcApplicationNumber: {}", ctcApplicationNumber);
                 return Collections.singletonList(cached);
@@ -185,7 +185,7 @@ public class CtcApplicationService {
         // Save results in Redis
         for (CtcApplication app : applications) {
             if (app.getCtcApplicationNumber() != null) {
-                saveInRedisCache(app);
+                cacheService.saveInRedisCache(app);
             }
         }
 
@@ -298,17 +298,19 @@ public class CtcApplicationService {
 
                 log.info("Processed doc {} for application: {}, workflowAction: {}", docId, ctcApplicationNumber, workflowAction);
             }
-        } catch (Exception e) {
+        }  catch (CustomException e) {
+            throw e;
+        }catch (Exception e) {
             log.error("Error processing bulk issue/reject for documents", e);
             throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
                     "Error processing bulk issue/reject: " + e.getMessage());
         }
     }
 
-    private CtcApplication fetchCtcApplication(String ctcApplicationNumber, String filingNumber, String courtId) {
+    public CtcApplication fetchCtcApplication(String ctcApplicationNumber, String filingNumber, String courtId) {
         // Try Redis first
         if (ctcApplicationNumber != null) {
-            CtcApplication cached = searchRedisCache(ctcApplicationNumber);
+            CtcApplication cached = cacheService.searchRedisCache(ctcApplicationNumber);
             if (cached != null) {
                 log.info("CTC application found in Redis cache for ctcApplicationNumber: {}", ctcApplicationNumber);
                 return cached;
@@ -328,7 +330,7 @@ public class CtcApplicationService {
             throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
                     "CTC application not found: " + ctcApplicationNumber);
         }
-        saveInRedisCache(ctcApplications.get(0));
+        cacheService.saveInRedisCache(ctcApplications.get(0));
         return ctcApplications.get(0);
     }
 
@@ -504,10 +506,6 @@ public class CtcApplicationService {
                 .build();
     }
 
-    private String getRedisKey(String ctcApplicationNumber) {
-        return "ctc:" + ctcApplicationNumber;
-    }
-
     private CtcApplication filterInactiveDocuments(CtcApplication application) {
         if (application == null) {
             return null;
@@ -528,31 +526,6 @@ public class CtcApplicationService {
         }
 
         return application;
-    }
-
-    private void saveInRedisCache(CtcApplication application) {
-        try {
-            if (application.getCtcApplicationNumber() != null) {
-                cacheService.save(getRedisKey(application.getCtcApplicationNumber()), application);
-                log.info("Saved CTC application in Redis cache: {}", application.getCtcApplicationNumber());
-            }
-        } catch (Exception e) {
-            log.error("Error saving CTC application to Redis cache: {}", e.getMessage());
-        }
-    }
-
-    private CtcApplication searchRedisCache(String ctcApplicationNumber) {
-        try {
-            Object value = cacheService.findById(getRedisKey(ctcApplicationNumber));
-            if (value != null) {
-                String json = objectMapper.writeValueAsString(value);
-                return objectMapper.readValue(json, CtcApplication.class);
-            }
-            return null;
-        } catch (JsonProcessingException e) {
-            log.error("Error reading CTC application from Redis cache: {}", e.getMessage());
-            return null;
-        }
     }
 
     private List<BreakDown> getBreakDown(Double totalAmount) {

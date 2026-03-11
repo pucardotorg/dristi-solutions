@@ -11,6 +11,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CtcApplicationRepository;
 import org.pucar.dristi.repository.ServiceRequestRepository;
@@ -38,11 +39,12 @@ public class PaymentUpdateService {
     private final EtreasuryUtil etreasuryUtil;
     private final CaseUtil caseUtil;
     private final IndexerUtils indexerUtils;
+    private final CacheService cacheService;
 
     private ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
-    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, CtcApplicationRepository repository, Producer producer, Configuration config, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, EtreasuryUtil etreasuryUtil, CaseUtil caseUtil, IndexerUtils indexerUtils) {
+    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, CtcApplicationRepository repository, Producer producer, Configuration config, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, EtreasuryUtil etreasuryUtil, CaseUtil caseUtil, IndexerUtils indexerUtils, CacheService cacheService) {
         this.workflowService = workflowService;
         this.mapper = mapper;
         this.repository = repository;
@@ -53,6 +55,7 @@ public class PaymentUpdateService {
         this.etreasuryUtil = etreasuryUtil;
         this.caseUtil = caseUtil;
         this.indexerUtils = indexerUtils;
+        this.cacheService = cacheService;
     }
 
     public void process(Map<String, Object> record) {
@@ -83,21 +86,34 @@ public class PaymentUpdateService {
         String consumerCode = bill.getConsumerCode();
         String[] consumerCodeSplitArray = consumerCode.split("_", 2);
         String ctcApplicationNumber = consumerCodeSplitArray[0];
+        CtcApplication ctcApplication = null;
 
-        CtcApplicationSearchCriteria criteria = CtcApplicationSearchCriteria.builder()
-                .ctcApplicationNumber(ctcApplicationNumber)
-                .build();
-        List<CtcApplication> ctcApplications = repository.getCtcApplication(CtcApplicationSearchRequest.builder().criteria(criteria).build());
-
-        if (CollectionUtils.isEmpty(ctcApplications))
-            throw new CustomException("INVALID RECEIPT", "No applications found for the consumerCode " + consumerCode);
+        if (ctcApplicationNumber != null) {
+            CtcApplication cached = cacheService.searchRedisCache(ctcApplicationNumber);
+            if (cached != null) {
+                log.info("CTC application found in Redis cache for ctcApplicationNumber: {}", ctcApplicationNumber);
+                ctcApplication = cached;
+            }else{
+                CtcApplicationSearchRequest searchRequest = CtcApplicationSearchRequest.builder()
+                        .criteria(CtcApplicationSearchCriteria.builder()
+                                .ctcApplicationNumber(ctcApplicationNumber)
+                                .build())
+                        .build();
+                List<CtcApplication> ctcApplications = repository.getCtcApplication(searchRequest);
+                if (ctcApplications == null || ctcApplications.isEmpty()) {
+                    throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
+                            "CTC application not found: " + ctcApplicationNumber);
+                }
+                ctcApplication = ctcApplications.get(0);
+                cacheService.saveInRedisCache(ctcApplications.get(0));
+            }
+        }
 
         Role role = Role.builder().code("SYSTEM_ADMIN").tenantId(tenantId).build();
         Role role2 = Role.builder().code("SYSTEM").tenantId(tenantId).build();
         requestInfo.getUserInfo().getRoles().add(role);
         requestInfo.getUserInfo().getRoles().add(role2);
 
-        CtcApplication ctcApplication = ctcApplications.get(0);
         AuditDetails auditDetails = ctcApplication.getAuditDetails();
         auditDetails.setLastModifiedBy(paymentDetail.getAuditDetails().getLastModifiedBy());
         auditDetails.setLastModifiedTime(paymentDetail.getAuditDetails().getLastModifiedTime());
@@ -139,6 +155,8 @@ public class PaymentUpdateService {
 
         CtcApplicationRequest ctcApplicationRequest = CtcApplicationRequest.builder().requestInfo(requestInfo).ctcApplication(ctcApplication).build();
         producer.push(config.getUpdateCtcApplicationTopic(), ctcApplicationRequest);
+
+        cacheService.saveInRedisCache(ctcApplication);
     }
 
 }
