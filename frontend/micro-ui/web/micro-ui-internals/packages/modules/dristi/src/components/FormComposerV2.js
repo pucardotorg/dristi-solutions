@@ -801,7 +801,15 @@ export const FormComposerV2 = (props) => {
     return styles;
   };
 
-  const isDisabled = props.isDisabled || false;
+  // When allFormRefs is provided, check errors across ALL form instances
+  // to determine if the submit button should be disabled.
+  const hasMultiFormErrors = props.allFormRefs
+    ? Object.keys(props.allFormRefs.current || {}).some((idx) => {
+        const ref = props.allFormRefs.current[idx];
+        return ref?.current?.formState?.errors && Object.keys(ref.current.formState.errors).length > 0;
+      })
+    : false;
+  const isDisabled = props.isDisabled || hasMultiFormErrors;
   const checkKeyDown = (e) => {
     const keyCode = e.keyCode ? e.keyCode : e.key ? e.key : e.which;
     if (keyCode === 13) {

@@ -2004,13 +2004,11 @@ function EFilingCases({ path }) {
     setFormDataValue.current = setValue;
     clearFormDataErrors.current = clearErrors;
 
-    // Check errors across ALL form instances (not just the current one)
-    // so the submit button stays disabled if any sibling form has errors.
-    const anyFormHasErrors = Object.keys(formRefsMap.current).some((idx) => {
-      const ref = formRefsMap.current[idx];
-      return ref?.current?.formState?.errors && Object.keys(ref.current.formState.errors).length > 0;
-    });
-    setIsSubmitDisabled(anyFormHasErrors);
+    if (Object.keys(formState?.errors).length) {
+      setIsSubmitDisabled(true);
+    } else {
+      setIsSubmitDisabled(false);
+    }
   };
 
   const handleAccordionClick = (index) => {
@@ -3431,6 +3429,7 @@ function EFilingCases({ path }) {
                     submitIcon={<RightArrow />}
                     formRef={formRefsMap.current[index] || (formRefsMap.current[index] = { current: null })}
                     validateAllForms={validateAllForms}
+                    allFormRefs={formRefsMap}
                   />
                 </div>
               ) : null;
