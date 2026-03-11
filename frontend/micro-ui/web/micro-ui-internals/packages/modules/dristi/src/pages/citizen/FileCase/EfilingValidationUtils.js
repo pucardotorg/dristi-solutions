@@ -411,6 +411,10 @@ export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValu
     setValue(branchField, bankDetails.branch || "");
     clearErrors(branchField);
   }
+  const prefix = bankField.replace("BankName", "");
+
+  setValue(`${prefix}BankReadOnly`, true);
+  setValue(`${prefix}BranchReadOnly`, true);
 
   return true;
 };
