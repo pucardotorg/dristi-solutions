@@ -62,13 +62,7 @@ export const bulkIssueCTCConfig = {
             populators: {
               name: "documentType",
               optionsKey: "name",
-              options: [
-                { code: "ALL", name: "All Documents" },
-                { code: "CHEQUE", name: "Cheque" },
-                { code: "NOTICE", name: "Legal Demand Notice" },
-                { code: "VAKALATNAMA", name: "Vakalatnama" },
-                { code: "BANK_STATEMENT", name: "Bank Statement" },
-              ],
+              options: [],
               error: "BR_PATTERN_ERR_MSG",
               style: { maxWidth: "250px" },
             },

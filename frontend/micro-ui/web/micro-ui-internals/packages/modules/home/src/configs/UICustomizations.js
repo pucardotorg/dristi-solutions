@@ -789,11 +789,11 @@ export const UICustomizations = {
             >{`${value}`}</span>
           );
         case "CASE_NUMBER":
-          return <span>{value || "CMP/1/2026"}</span>;
+          return <span>{value || ""}</span>;
         case "PETITIONER":
-          return <span>{value || "iknoor adv"}</span>;
+          return <span>{value || ""}</span>;
         case "DATE_RAISED":
-          const date = value ? new Date(value) : new Date("2024-11-11");
+          const date = value ? new Date(value) : new Date();
           const day = date.getDate().toString().padStart(2, "0");
           const month = (date.getMonth() + 1).toString().padStart(2, "0");
           const year = date.getFullYear();
@@ -803,7 +803,7 @@ export const UICustomizations = {
             <span
               style={{ padding: "4px 8px", background: "#FFF0E6", color: "#CC6600", borderRadius: "16px", fontSize: "12px", display: "inline-block" }}
             >
-              {t(value || "Review Pending")}
+              {t(value || "")}
             </span>
           );
         default:

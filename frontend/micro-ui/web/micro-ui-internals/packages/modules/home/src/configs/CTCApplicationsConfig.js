@@ -51,7 +51,6 @@ export const CTCApplicationsConfig = {
               error: "BR_PATTERN_ERR_MSG",
               style: { maxWidth: "300px", minWidth: "250px", width: "100%" },
               validation: {
-                pattern: {},
                 minlength: 2,
               },
             },

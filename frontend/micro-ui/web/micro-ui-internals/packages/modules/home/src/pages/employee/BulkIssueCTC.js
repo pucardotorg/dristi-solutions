@@ -39,6 +39,7 @@ const BulkIssueCTC = () => {
   const [signedDocumentUploadId, setSignedDocumentUploadID] = useState("");
   const [showErrorToast, setShowErrorToast] = useState(null);
   const courtId = localStorage.getItem("courtId");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleUpdateApplication = (applicationData, checked) => {
     setBulkIssueList((prev) => {
@@ -358,12 +359,15 @@ const BulkIssueCTC = () => {
         filingNumber: row?.businessObject?.filingNumber || "",
         courtId: courtId,
         placeholder: "Signature",
-        tenantId: tenantId
+        tenantId: tenantId,
       }));
 
-      const getDocsResponse = await HomeService._getDocsForCTCApplication({
-        criteria: criteriaList
-      }, { tenantId });
+      const getDocsResponse = await HomeService._getDocsForCTCApplication(
+        {
+          criteria: criteriaList,
+        },
+        { tenantId }
+      );
 
       const requestList = getDocsResponse?.docList || [];
 
@@ -373,23 +377,23 @@ const BulkIssueCTC = () => {
 
       const signedResponses = await fetchResponseFromXmlRequest(requestList);
 
-      if (signedResponses.length === 0 || signedResponses.every(res => !res.signed)) {
+      if (signedResponses.length === 0 || signedResponses.every((res) => !res.signed)) {
         setShowErrorToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
         setIsLoading(false);
         return;
       }
 
-      const updateResponse = await HomeService.updateSignedDocCTCApplication({
-        signedDocs: signedResponses
-      }, { tenantId });
+      const updateResponse = await HomeService.updateSignedDocCTCApplication(
+        {
+          signedDocs: signedResponses,
+        },
+        { tenantId }
+      );
 
       if (updateResponse?.ResponseInfo?.status === "SUCCESSFUL" || updateResponse?.ResponseInfo?.status === "successful") {
         showToast({ isError: false, message: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY" });
       }
-
-      if (document.querySelector(".search-button-wrapper button")) {
-        document.querySelector(".search-button-wrapper button").click();
-      }
+      setRefreshKey((prev) => prev + 1);
     } catch (e) {
       console.error("Failed to perform bulk sign", e?.message || e);
       setShowErrorToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
@@ -417,7 +421,7 @@ const BulkIssueCTC = () => {
         courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId") || "KLKM52",
         action: "ISSUE",
         docs: [docsDetails],
-        status: "PENDING"
+        status: "PENDING",
       };
 
       await HomeService.updateCTCDocs(payload, { tenantId });
@@ -426,10 +430,7 @@ const BulkIssueCTC = () => {
       setSelectedRowData(null);
       showToast({ isError: false, message: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY" });
 
-      // Optionally trigger search refetch here if configured
-      if (document.querySelector(".search-button-wrapper button")) {
-        document.querySelector(".search-button-wrapper button").click();
-      }
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error("error while updating", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -507,7 +508,7 @@ const BulkIssueCTC = () => {
           <div className="review-process-page inbox-search-wrapper">
             {" "}
             <InboxSearchComposer
-              key={`update_key`}
+              key={`update_key_${refreshKey}`}
               customStyle={sectionsParentStyle}
               configs={config}
               onFormValueChange={onFormValueChange}

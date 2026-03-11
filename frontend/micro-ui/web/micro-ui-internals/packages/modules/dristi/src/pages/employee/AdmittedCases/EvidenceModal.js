@@ -52,7 +52,7 @@ const EvidenceModal = ({
   artifact,
   setShowMakeAsEvidenceModal,
   isApplicationAccepted,
-  handleCTCApplications,
+  handleCTCApplications = () => {},
 }) => {
   const [comments, setComments] = useState(documentSubmission[0]?.comments ? documentSubmission[0].comments : artifact?.comments || []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(null);
