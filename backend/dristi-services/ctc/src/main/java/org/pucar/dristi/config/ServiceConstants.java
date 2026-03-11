@@ -124,4 +124,42 @@ public class ServiceConstants {
     public static final String WF_ACTION_REJECT = "REJECT";
     public static final String WF_ACTION_REJECT_ALL = "REJECT_ALL";
 
+    // ESign constants
+    public static final String ESIGN_SERVICE_EXCEPTION = "ESIGN_SERVICE_EXCEPTION";
+    public static final String FILE_STORE_UTILITY_EXCEPTION = "FILE_STORE_UTILITY_EXCEPTION";
+    public static final String COORDINATES_ERROR = "COORDINATES_ERROR";
+    public static final String CTC_SIGN_ERROR = "CTC_SIGN_ERROR";
+    public static final String CTC_BULK_SIGN_EXCEPTION = "CTC_BULK_SIGN_EXCEPTION";
+    public static final String XML_CREATE_ERROR = "XML_CREATE_ERROR";
+    public static final String XML_CREATE_ERROR_MESSAGE = "error while creating XML";
+    public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
+    public static final String SIGNED = "SIGNED";
+    public static final String CTC_DOC_PDF_NAME = "CtcDocument.pdf";
+
+    // XML request constants
+    public static final String COMMAND = "command";
+    public static final String PKI_NETWORK_SIGN = "pkiNetworkSign";
+    public static final String TIME_STAMP = "ts";
+    public static final String TXN = "txn";
+    public static final String NAME = "name";
+    public static final String VALUE = "value";
+    public static final String TYPE = "type";
+    public static final String PDF = "pdf";
+    public static final String ATTRIBUTE = "attribute";
+    public static final String FILE = "file";
+    public static final String CERTIFICATE = "certificate";
+    public static final String PAGE = "page";
+    public static final String CO_ORDINATES = "cood";
+    public static final String SIZE = "size";
+    public static final String DATE_FORMAT = "dateformat";
+    public static final String ESIGN_DATE_FORMAT = "dd-MMM-yyyy";
+    public static final String DATA = "data";
+
+    public static final String SIGN = "SIGN";
+    public static final String INVALID_INPUT = "INVALID_INPUT";
+
+    // Filestore constants
+    public static final String FILE_STORE_SERVICE_EXCEPTION_CODE = "FILE_STORE_SERVICE_EXCEPTION_CODE";
+    public static final String FILE_STORE_SERVICE_EXCEPTION_MESSAGE = "Error occurred while accessing file store";
+
 }

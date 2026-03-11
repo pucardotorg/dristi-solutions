@@ -16,12 +16,13 @@ import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.enrichment.CtcApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CtcApplicationRepository;
-import org.pucar.dristi.util.EtreasuryUtil;
-import org.pucar.dristi.util.FileStoreUtil;
-import org.pucar.dristi.util.IndexerUtils;
+import org.pucar.dristi.util.*;
+import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
 import org.pucar.dristi.validators.CtcApplicationValidator;
 import org.pucar.dristi.web.models.*;
 
+import java.io.IOException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,7 +43,12 @@ class CtcApplicationServiceTest {
     @Mock private CtcApplicationValidator validator;
     @Mock private CacheService cacheService;
     @Spy  private ObjectMapper objectMapper = new ObjectMapper();
+    @Mock private ESignUtil eSignUtil;
+    @Mock private CipherUtil cipherUtil;
+    @Mock private XmlRequestGenerator xmlRequestGenerator;
+    @Mock private EgovPdfUtil egovPdfUtil;
 
+    @Spy
     @InjectMocks
     private CtcApplicationService ctcApplicationService;
 
@@ -263,8 +269,10 @@ class CtcApplicationServiceTest {
 
     @Test
     void markDocumentsAsIssuedOrReject_shouldUpdateDocStatusAndWorkflow() throws Exception {
+        Document doc = Document.builder().fileStore("fs-signed-1").documentType("SIGNED").isActive(true).build();
         DocumentActionItem item = DocumentActionItem.builder()
-                .docId("doc-1").ctcApplicationNumber("CA-001").filingNumber("FIL-001").build();
+                .docId("doc-1").ctcApplicationNumber("CA-001").filingNumber("FIL-001")
+                .documents(List.of(doc)).build();
 
         IssueCtcDocumentUpdateRequest request = IssueCtcDocumentUpdateRequest.builder()
                 .requestInfo(requestInfo).courtId("KLKM52").action("ISSUE")
@@ -279,14 +287,16 @@ class CtcApplicationServiceTest {
 
         ctcApplicationService.markDocumentsAsIssuedOrReject(request);
 
-        verify(indexerUtils).updateDocStatus(eq("doc-1"), eq("CA-001"), eq("ISSUED"), isNull());
+        verify(indexerUtils).updateDocStatus(eq("doc-1"), eq("CA-001"), eq("ISSUED"), eq(List.of(doc)));
         verify(indexerUtils).getDocStatusCounts("CA-001");
     }
 
     @Test
     void markDocumentsAsIssuedOrReject_shouldSetRejectStatusForRejectAction() throws Exception {
+        Document doc = Document.builder().fileStore("fs-1").documentType("ORIGINAL").isActive(true).build();
         DocumentActionItem item = DocumentActionItem.builder()
-                .docId("doc-1").ctcApplicationNumber("CA-001").filingNumber("FIL-001").build();
+                .docId("doc-1").ctcApplicationNumber("CA-001").filingNumber("FIL-001")
+                .documents(List.of(doc)).build();
 
         IssueCtcDocumentUpdateRequest request = IssueCtcDocumentUpdateRequest.builder()
                 .requestInfo(requestInfo).courtId("KLKM52").action("REJECT")
@@ -300,13 +310,15 @@ class CtcApplicationServiceTest {
 
         ctcApplicationService.markDocumentsAsIssuedOrReject(request);
 
-        verify(indexerUtils).updateDocStatus(eq("doc-1"), eq("CA-001"), eq("REJECTED"), isNull());
+        verify(indexerUtils).updateDocStatus(eq("doc-1"), eq("CA-001"), eq("REJECTED"), eq(List.of(doc)));
     }
 
     @Test
     void markDocumentsAsIssuedOrReject_shouldThrowWhenApplicationNotFound() {
+        Document doc = Document.builder().fileStore("fs-1").build();
         DocumentActionItem item = DocumentActionItem.builder()
-                .docId("doc-1").ctcApplicationNumber("CA-MISSING").filingNumber("FIL-001").build();
+                .docId("doc-1").ctcApplicationNumber("CA-MISSING").filingNumber("FIL-001")
+                .documents(List.of(doc)).build();
 
         IssueCtcDocumentUpdateRequest request = IssueCtcDocumentUpdateRequest.builder()
                 .requestInfo(requestInfo).courtId("KLKM52").action("ISSUE")
@@ -385,8 +397,10 @@ class CtcApplicationServiceTest {
 
     @Test
     void markDocuments_shouldIssueWhenPendingIssueAndHasIssuedDocs() throws Exception {
+        Document doc = Document.builder().fileStore("fs-signed-1").documentType("SIGNED").isActive(true).build();
         DocumentActionItem item = DocumentActionItem.builder()
-                .docId("doc-1").ctcApplicationNumber("CA-001").filingNumber("FIL-001").build();
+                .docId("doc-1").ctcApplicationNumber("CA-001").filingNumber("FIL-001")
+                .documents(List.of(doc)).build();
         IssueCtcDocumentUpdateRequest request = IssueCtcDocumentUpdateRequest.builder()
                 .requestInfo(requestInfo).courtId("KLKM52").action("ISSUE")
                 .docs(List.of(item)).build();
@@ -405,8 +419,10 @@ class CtcApplicationServiceTest {
 
     @Test
     void markDocuments_shouldRejectAllWhenAllRejectedNonePending() throws Exception {
+        Document doc = Document.builder().fileStore("fs-1").build();
         DocumentActionItem item = DocumentActionItem.builder()
-                .docId("doc-1").ctcApplicationNumber("CA-001").filingNumber("FIL-001").build();
+                .docId("doc-1").ctcApplicationNumber("CA-001").filingNumber("FIL-001")
+                .documents(List.of(doc)).build();
         IssueCtcDocumentUpdateRequest request = IssueCtcDocumentUpdateRequest.builder()
                 .requestInfo(requestInfo).courtId("KLKM52").action("REJECT")
                 .docs(List.of(item)).build();
@@ -424,8 +440,10 @@ class CtcApplicationServiceTest {
 
     @Test
     void markDocuments_shouldIssueAllWhenPartiallyIssuedAndNoPending() throws Exception {
+        Document doc = Document.builder().fileStore("fs-signed-1").documentType("SIGNED").isActive(true).build();
         DocumentActionItem item = DocumentActionItem.builder()
-                .docId("doc-1").ctcApplicationNumber("CA-001").filingNumber("FIL-001").build();
+                .docId("doc-1").ctcApplicationNumber("CA-001").filingNumber("FIL-001")
+                .documents(List.of(doc)).build();
         IssueCtcDocumentUpdateRequest request = IssueCtcDocumentUpdateRequest.builder()
                 .requestInfo(requestInfo).courtId("KLKM52").action("ISSUE")
                 .docs(List.of(item)).build();
@@ -439,5 +457,156 @@ class CtcApplicationServiceTest {
         ArgumentCaptor<CtcApplicationRequest> captor = ArgumentCaptor.forClass(CtcApplicationRequest.class);
         verify(producer).push(eq("update-ctc"), captor.capture());
         assertEquals("ISSUE_ALL", captor.getValue().getCtcApplication().getWorkflow().getAction());
+    }
+
+    // ---- createDocsToSignRequest tests ----
+
+//    @Test
+//    void createDocsToSignRequest_shouldReturnDocsToSign() throws IOException {
+//        DocsToSignCriteria criterion = DocsToSignCriteria.builder()
+//                .fileStoreId("fs-original-1").tenantId("kl").docId("doc-1")
+//                .ctcApplicationNumber("CA-001").filingNumber("FIL-001")
+//                .placeholder("SIGN_HERE").build();
+//
+//        DocsToSignRequest request = DocsToSignRequest.builder()
+//                .requestInfo(requestInfo)
+//                .criteria(List.of(criterion)).build();
+//
+//        // Mock fetchCtcApplication for seal generation
+//        when(cacheService.findById("ctc:CA-001")).thenReturn(application);
+//        when(egovPdfUtil.getSealedTemplateFileStoreId(requestInfo, application)).thenReturn("fs-sealed-1");
+//        when(fileStoreUtil.mergeFiles("fs-sealed-1", "fs-original-1", "kl")).thenReturn("fs-merged-1");
+//
+//        Coordinate coordinate = Coordinate.builder()
+//                .fileStoreId("fs-merged-1").tenantId("kl")
+//                .x(100.0f).y(200.0f).pageNumber(1).build();
+//        when(eSignUtil.getCoordinateForSign(any(CoordinateRequest.class))).thenReturn(List.of(coordinate));
+//
+//        Resource mockResource = mock(Resource.class);
+//        when(fileStoreUtil.fetchFileStoreObjectById("fs-merged-1", "kl")).thenReturn(mockResource);
+//        when(cipherUtil.encodePdfToBase64(mockResource)).thenReturn("base64data");
+//        when(config.getZoneId()).thenReturn("Asia/Kolkata");
+//        when(config.getEsignSignatureWidth()).thenReturn(250);
+//        when(config.getEsignSignatureHeight()).thenReturn(50);
+//        when(xmlRequestGenerator.createXML(eq("request"), anyMap())).thenReturn("<xml>signRequest</xml>");
+//
+//        List<DocToSign> result = ctcApplicationService.createDocsToSignRequest(request);
+//
+//        assertEquals(1, result.size());
+//        assertEquals("doc-1", result.get(0).getDocId());
+//        assertEquals("CA-001", result.get(0).getCtcApplicationNumber());
+//        assertEquals("FIL-001", result.get(0).getFilingNumber());
+//        assertEquals("<xml>signRequest</xml>", result.get(0).getRequest());
+//
+//        verify(egovPdfUtil).getSealedTemplateFileStoreId(requestInfo, application);
+//        verify(fileStoreUtil).mergeFiles("fs-sealed-1", "fs-original-1", "kl");
+//        verify(eSignUtil).getCoordinateForSign(any(CoordinateRequest.class));
+//    }
+
+    @Test
+    void createDocsToSignRequest_shouldFetchFromDbWhenCacheMiss() throws IOException {
+        DocsToSignCriteria criterion = DocsToSignCriteria.builder()
+                .fileStoreId("fs-1").tenantId("kl").docId("doc-1")
+                .ctcApplicationNumber("CA-001").filingNumber("FIL-001")
+                .placeholder("SIGN_HERE").build();
+
+        DocsToSignRequest request = DocsToSignRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(List.of(criterion)).build();
+
+        when(cacheService.findById("ctc:CA-001")).thenReturn(null);
+        when(repository.getCtcApplication(any())).thenReturn(List.of(application));
+        when(egovPdfUtil.getSealedTemplateFileStoreId(requestInfo, application)).thenReturn("fs-sealed-1");
+        when(fileStoreUtil.mergeFiles(anyString(), anyString(), anyString())).thenReturn("fs-merged-1");
+
+        Coordinate coordinate = Coordinate.builder()
+                .fileStoreId("fs-merged-1").tenantId("kl")
+                .x(50.0f).y(100.0f).pageNumber(1).build();
+        when(eSignUtil.getCoordinateForSign(any(CoordinateRequest.class))).thenReturn(List.of(coordinate));
+
+        Resource mockResource = mock(Resource.class);
+        when(fileStoreUtil.fetchFileStoreObjectById("fs-merged-1", "kl")).thenReturn(mockResource);
+        when(cipherUtil.encodePdfToBase64(mockResource)).thenReturn("base64data");
+        when(config.getZoneId()).thenReturn("Asia/Kolkata");
+        when(config.getEsignSignatureWidth()).thenReturn(250);
+        when(config.getEsignSignatureHeight()).thenReturn(50);
+        when(xmlRequestGenerator.createXML(eq("request"), anyMap())).thenReturn("<xml/>");
+
+        List<DocToSign> result = ctcApplicationService.createDocsToSignRequest(request);
+
+        assertEquals(1, result.size());
+        verify(repository).getCtcApplication(any());
+    }
+
+    // ---- updateDocsWithSignedCopy tests ----
+
+    @Test
+    void updateDocsWithSignedCopy_shouldDecodeStoreAndIssue() throws Exception {
+        SignedDoc signedDoc = SignedDoc.builder()
+                .docId("doc-1").signedDocData("base64SignedData").signed(true)
+                .tenantId("kl").ctcApplicationNumber("CA-001")
+                .filingNumber("FIL-001").courtId("KLKM52").build();
+
+        UpdateSignedDocsRequest request = UpdateSignedDocsRequest.builder()
+                .requestInfo(requestInfo)
+                .signedDocs(List.of(signedDoc)).build();
+
+        MultipartFile mockFile = mock(MultipartFile.class);
+        when(cipherUtil.decodeBase64ToPdf(eq("base64SignedData"), anyString())).thenReturn(mockFile);
+        when(fileStoreUtil.storeFileInFileStore(mockFile, "kl")).thenReturn("fs-signed-new");
+
+        // Stub markDocumentsAsIssuedOrReject to avoid deep dependency chain
+        doNothing().when(ctcApplicationService).markDocumentsAsIssuedOrReject(any(IssueCtcDocumentUpdateRequest.class));
+
+        ctcApplicationService.updateDocsWithSignedCopy(request);
+
+        verify(cipherUtil).decodeBase64ToPdf(eq("base64SignedData"), anyString());
+        verify(fileStoreUtil).storeFileInFileStore(mockFile, "kl");
+
+        ArgumentCaptor<IssueCtcDocumentUpdateRequest> captor = ArgumentCaptor.forClass(IssueCtcDocumentUpdateRequest.class);
+        verify(ctcApplicationService).markDocumentsAsIssuedOrReject(captor.capture());
+
+        IssueCtcDocumentUpdateRequest capturedRequest = captor.getValue();
+        assertEquals("ISSUE", capturedRequest.getAction());
+        assertEquals("KLKM52", capturedRequest.getCourtId());
+        assertEquals(1, capturedRequest.getDocs().size());
+        assertEquals("doc-1", capturedRequest.getDocs().get(0).getDocId());
+        assertEquals("CA-001", capturedRequest.getDocs().get(0).getCtcApplicationNumber());
+        assertEquals("FIL-001", capturedRequest.getDocs().get(0).getFilingNumber());
+        assertEquals("fs-signed-new", capturedRequest.getDocs().get(0).getDocuments().get(0).getFileStore());
+    }
+
+    @Test
+    void updateDocsWithSignedCopy_shouldSkipUnsignedDocs() {
+        SignedDoc unsignedDoc = SignedDoc.builder()
+                .docId("doc-1").signed(false)
+                .tenantId("kl").ctcApplicationNumber("CA-001")
+                .filingNumber("FIL-001").courtId("KLKM52").build();
+
+        UpdateSignedDocsRequest request = UpdateSignedDocsRequest.builder()
+                .requestInfo(requestInfo)
+                .signedDocs(List.of(unsignedDoc)).build();
+
+        ctcApplicationService.updateDocsWithSignedCopy(request);
+
+        verifyNoInteractions(cipherUtil);
+        verifyNoInteractions(fileStoreUtil);
+    }
+
+    @Test
+    void updateDocsWithSignedCopy_shouldThrowOnDecodeError() throws IOException {
+        SignedDoc signedDoc = SignedDoc.builder()
+                .docId("doc-1").signedDocData("badData").signed(true)
+                .tenantId("kl").ctcApplicationNumber("CA-001")
+                .filingNumber("FIL-001").courtId("KLKM52").build();
+
+        UpdateSignedDocsRequest request = UpdateSignedDocsRequest.builder()
+                .requestInfo(requestInfo)
+                .signedDocs(List.of(signedDoc)).build();
+
+        when(cipherUtil.decodeBase64ToPdf(eq("badData"), anyString()))
+                .thenThrow(new RuntimeException("decode error"));
+
+        assertThrows(CustomException.class, () -> ctcApplicationService.updateDocsWithSignedCopy(request));
     }
 }

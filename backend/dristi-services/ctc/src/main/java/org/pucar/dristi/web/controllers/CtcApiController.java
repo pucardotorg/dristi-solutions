@@ -187,4 +187,53 @@ public class CtcApiController {
         }
     }
 
+    @PostMapping("/applications/documents/_getDocsToSign")
+    public ResponseEntity<DocsToSignResponse> getDocsToSign(@Valid @RequestBody DocsToSignRequest request) {
+
+        log.info("Getting docs to sign, criteria count: {}", request.getCriteria() != null ? request.getCriteria().size() : 0);
+
+        try {
+            List<DocToSign> docList = ctcApplicationService.createDocsToSignRequest(request);
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+
+            DocsToSignResponse response = DocsToSignResponse.builder()
+                    .responseInfo(responseInfo)
+                    .docList(docList)
+                    .build();
+
+            return ResponseEntity.ok(response);
+
+        } catch (CustomException e) {
+            log.error("Error getting docs to sign: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error getting docs to sign", e);
+            throw new CustomException("CTC_GET_DOCS_TO_SIGN_ERROR", "Error getting docs to sign: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/applications/documents/_updateSignedDocs")
+    public ResponseEntity<UpdateSignedDocsResponse> updateSignedDocs(@Valid @RequestBody UpdateSignedDocsRequest request) {
+
+        log.info("Updating signed docs, count: {}", request.getSignedDocs() != null ? request.getSignedDocs().size() : 0);
+
+        try {
+            ctcApplicationService.updateDocsWithSignedCopy(request);
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+
+            UpdateSignedDocsResponse response = UpdateSignedDocsResponse.builder()
+                    .responseInfo(responseInfo)
+                    .build();
+
+            return ResponseEntity.ok(response);
+
+        } catch (CustomException e) {
+            log.error("Error updating signed docs: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error updating signed docs", e);
+            throw new CustomException("CTC_UPDATE_SIGNED_DOCS_ERROR", "Error updating signed docs: " + e.getMessage());
+        }
+    }
+
 }

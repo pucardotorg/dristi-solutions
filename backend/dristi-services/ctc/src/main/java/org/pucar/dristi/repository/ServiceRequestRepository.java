@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.ServiceCallException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.core.io.Resource;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -44,4 +45,17 @@ public class ServiceRequestRepository {
 
         return response;
     }
-}
+
+    public Resource fetchResultGetForResource(StringBuilder uri) {
+        try {
+            return restTemplate.getForObject(uri.toString(), Resource.class);
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+            throw new RuntimeException(e);
+        }
+    }
+
+}

@@ -147,4 +147,38 @@ public class Configuration {
 
     @Value("${ctc.application.tracker.index}")
     private String ctcApplicationTrackerIndex;
+
+    // ESign Config
+    @Value("${egov.esign.host}")
+    private String esignHost;
+
+    @Value("${egov.esign.location.endpoint}")
+    private String esignLocationEndPoint;
+
+    @Value("${dristi.esign.signature.width:250}")
+    private int esignSignatureWidth;
+
+    @Value("${dristi.esign.signature.height:50}")
+    private int esignSignatureHeight;
+
+    @Value("${file.max.size:10485760}")
+    private long maxFileSize;
+
+    @Value("${allowed.content.types:application/pdf}")
+    private String[] allowedContentTypes;
+
+    // Filestore additional endpoints
+    @Value("${egov.filestore.search.endpoint}")
+    private String fileStoreSearchEndpoint;
+
+    @Value("${egov.filestore.save.endpoint}")
+    private String fileStoreSaveEndPoint;
+
+    // Egov PDF Config
+    @Value("${egov.dristi.pdf.host}")
+    private String egovPdfHost;
+
+    @Value("${egov.dristi.pdf.ctc}")
+    private String egovPdfCtcEndpoint;
+
 }

@@ -12,6 +12,7 @@ import java.util.TimeZone;
 import jakarta.annotation.PostConstruct;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.tika.Tika;
 import org.egov.tracer.config.TracerConfiguration;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -49,5 +50,10 @@ public class MainConfiguration {
         scheduler.setThreadNamePrefix("MyScheduler-");
         scheduler.initialize();
         return scheduler;
+    }
+
+    @Bean
+    public Tika tika() {
+        return new Tika();
     }
 }

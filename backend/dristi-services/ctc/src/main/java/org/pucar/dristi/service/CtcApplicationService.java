@@ -10,14 +10,17 @@ import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.enrichment.CtcApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CtcApplicationRepository;
-import org.pucar.dristi.util.EtreasuryUtil;
-import org.pucar.dristi.util.FileStoreUtil;
-import org.pucar.dristi.util.IndexerUtils;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.CtcApplicationValidator;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,8 +52,16 @@ public class CtcApplicationService {
 
     private final ObjectMapper objectMapper;
 
+    private final ESignUtil eSignUtil;
+
+    private final CipherUtil cipherUtil;
+
+    private final XmlRequestGenerator xmlRequestGenerator;
+
+    private final EgovPdfUtil egovPdfUtil;
+
     @Autowired
-    public CtcApplicationService(CtcApplicationRepository ctcApplicationRepository, CtcApplicationEnrichment ctcApplicationEnrichment, WorkflowService workflowService, Configuration config, Producer producer, EtreasuryUtil etreasuryUtil, FileStoreUtil fileStoreUtil, IndexerUtils indexerUtils, CtcApplicationValidator ctcApplicationValidator, CacheService cacheService, ObjectMapper objectMapper) {
+    public CtcApplicationService(CtcApplicationRepository ctcApplicationRepository, CtcApplicationEnrichment ctcApplicationEnrichment, WorkflowService workflowService, Configuration config, Producer producer, EtreasuryUtil etreasuryUtil, FileStoreUtil fileStoreUtil, IndexerUtils indexerUtils, CtcApplicationValidator ctcApplicationValidator, CacheService cacheService, ObjectMapper objectMapper, ESignUtil eSignUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator, EgovPdfUtil egovPdfUtil) {
         this.ctcApplicationRepository = ctcApplicationRepository;
         this.ctcApplicationEnrichment = ctcApplicationEnrichment;
         this.workflowService = workflowService;
@@ -62,6 +73,10 @@ public class CtcApplicationService {
         this.ctcApplicationValidator = ctcApplicationValidator;
         this.cacheService = cacheService;
         this.objectMapper = objectMapper;
+        this.eSignUtil = eSignUtil;
+        this.cipherUtil = cipherUtil;
+        this.xmlRequestGenerator = xmlRequestGenerator;
+        this.egovPdfUtil = egovPdfUtil;
     }
 
     public CtcApplication createApplication(CtcApplicationRequest request) {
@@ -210,6 +225,7 @@ public class CtcApplicationService {
             for (DocumentActionItem item : docs) {
                 String ctcApplicationNumber = item.getCtcApplicationNumber();
                 String docId = item.getDocId();
+                Document document = item.getDocuments().get(0);
 
                 // 1. Update this document's status and documents in ES
                 indexerUtils.updateDocStatus(docId, ctcApplicationNumber, docStatus, item.getDocuments());
@@ -220,7 +236,7 @@ public class CtcApplicationService {
 
                 // 3. If ISSUE: enrich the matching selectedCaseBundle child's fileStoreId from caseBundles
                 if (ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(action)) {
-                    enrichFileStoreIdFromCaseBundles(ctcApplication, docId);
+                    enrichFileStoreIdFromCaseBundles(ctcApplication, docId, document,requestInfo);
                 }
 
                 // 4. Determine workflow action from current ES doc status counts
@@ -281,22 +297,14 @@ public class CtcApplicationService {
         return ctcApplications.get(0);
     }
 
-    private void enrichFileStoreIdFromCaseBundles(CtcApplication ctcApplication, String docId) {
-        // Build id -> fileStoreId map from caseBundles for O(1) lookup
-        Map<String, String> bundleFileStoreMap = buildBundleFileStoreMap(ctcApplication.getCaseBundles());
-        String fileStoreId = bundleFileStoreMap.get(docId);
-
-        if (fileStoreId == null) {
-            log.warn("No fileStoreId found in caseBundles for docId: {} in application: {}", docId, ctcApplication.getCtcApplicationNumber());
-            return;
-        }
+    private void enrichFileStoreIdFromCaseBundles(CtcApplication ctcApplication, String docId, Document document,RequestInfo requestInfo) {
 
         // Build id -> SelectedCaseBundleNode map from selectedCaseBundle for O(1) update
         Map<String, SelectedCaseBundleNode> selectedNodeMap = buildSelectedNodeMap(ctcApplication.getSelectedCaseBundle());
         SelectedCaseBundleNode targetNode = selectedNodeMap.get(docId);
 
         if (targetNode != null) {
-            targetNode.setFileStoreId(fileStoreId);
+            targetNode.setFileStoreId(document.getFileStore());
             log.info("Enriched fileStoreId for doc {} in application {}", docId, ctcApplication.getCtcApplicationNumber());
         }
     }
@@ -456,8 +464,8 @@ public class CtcApplicationService {
         }
 
         // Filter affidavitDocument - set to null if inactive
-        if (application.getAffidavitDocument() != null && 
-            Boolean.FALSE.equals(application.getAffidavitDocument().getIsActive())) {
+        if (application.getAffidavitDocument() != null &&
+                Boolean.FALSE.equals(application.getAffidavitDocument().getIsActive())) {
             application.setAffidavitDocument(null);
         }
 
@@ -506,5 +514,188 @@ public class CtcApplicationService {
         List<BreakDown> breakDownList = new ArrayList<>();
         breakDownList.add(breakDown);
         return breakDownList;
+    }
+
+    public List<DocToSign> createDocsToSignRequest(DocsToSignRequest request) {
+        log.info("Creating docs to sign request, criteria count: {}", request.getCriteria().size());
+
+        List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
+        Map<String, DocsToSignCriteria> criteriaMap = new HashMap<>();
+
+        request.getCriteria().forEach(criterion -> {
+
+            CtcApplication ctcApplication = searchRedisCache(criterion.getCtcApplicationNumber());
+            if (ctcApplication == null) {
+                ctcApplication = fetchCtcApplicationByNumber(criterion.getCtcApplicationNumber());
+            }
+
+            String sealedTemplateFileStoreId = egovPdfUtil.getSealedTemplateFileStoreId(request.getRequestInfo(), ctcApplication);
+            log.info("sealedTemplateFileStoreId for docId {} in application {}", criterion.getDocId(), ctcApplication.getCtcApplicationNumber());
+
+            String mergedFileStoreId = fileStoreUtil.mergeFiles(sealedTemplateFileStoreId, criterion.getFileStoreId(), ctcApplication.getTenantId());
+
+            log.info("mergedFileStoreId {}", mergedFileStoreId);
+
+            CoordinateCriteria cc = new CoordinateCriteria();
+            cc.setFileStoreId(mergedFileStoreId);
+            cc.setPlaceholder(criterion.getPlaceholder());
+            cc.setTenantId(criterion.getTenantId());
+            coordinateCriteria.add(cc);
+            criteriaMap.put(mergedFileStoreId, criterion);
+        });
+
+        CoordinateRequest coordinateRequest = CoordinateRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .criteria(coordinateCriteria).build();
+        List<Coordinate> coordinates = eSignUtil.getCoordinateForSign(coordinateRequest);
+
+        if (coordinates.isEmpty() || coordinates.size() != request.getCriteria().size()) {
+            throw new CustomException(COORDINATES_ERROR, "Error in co-ordinates");
+        }
+
+        List<DocToSign> docsToSign = new ArrayList<>();
+        for (Coordinate coordinate : coordinates) {
+            Resource resource;
+            try {
+                resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
+            } catch (Exception e) {
+                throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, "Something went wrong while fetching file for signing");
+            }
+            try {
+                String base64Document = cipherUtil.encodePdfToBase64(resource);
+                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                String txnId = UUID.randomUUID().toString();
+                String pageNo = String.valueOf(coordinate.getPageNumber());
+                ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(config.getZoneId()));
+
+                String xmlRequest = generateSignRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                String docId = criteriaMap.get(coordinate.getFileStoreId()).getDocId();
+                String ctcApplicationNumber = criteriaMap.get(coordinate.getFileStoreId()).getCtcApplicationNumber();
+                String filingNumber = criteriaMap.get(coordinate.getFileStoreId()).getFilingNumber();
+
+                DocToSign docToSign = DocToSign.builder()
+                        .docId(docId)
+                        .ctcApplicationNumber(ctcApplicationNumber)
+                        .filingNumber(filingNumber)
+                        .request(xmlRequest)
+                        .build();
+                docsToSign.add(docToSign);
+            } catch (Exception e) {
+                throw new CustomException(CTC_SIGN_ERROR, "Something went wrong while preparing sign request");
+            }
+        }
+        log.info("Created docs to sign request successfully, count: {}", docsToSign.size());
+        return docsToSign;
+    }
+
+    public void updateDocsWithSignedCopy(UpdateSignedDocsRequest request) {
+        log.info("Updating docs with signed copies, count: {}", request.getSignedDocs().size());
+
+        RequestInfo requestInfo = request.getRequestInfo();
+        for (SignedDoc signedDoc : request.getSignedDocs()) {
+            String docId = signedDoc.getDocId();
+            String signedDocData = signedDoc.getSignedDocData();
+            Boolean isSigned = signedDoc.getSigned();
+            String tenantId = signedDoc.getTenantId();
+            String ctcApplicationNumber = signedDoc.getCtcApplicationNumber();
+            String filingNumber = signedDoc.getFilingNumber();
+            String courtId = signedDoc.getCourtId();
+
+            if (Boolean.TRUE.equals(isSigned)) {
+                try {
+                    MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedDocData, CTC_DOC_PDF_NAME);
+                    String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+
+                    Document document = Document.builder()
+                            .documentType(SIGNED)
+                            .fileStore(fileStoreId)
+                            .isActive(true)
+                            .additionalDetails(Map.of(NAME, CTC_DOC_PDF_NAME))
+                            .build();
+
+                    IssueCtcDocumentUpdateRequest issueCtcDocumentUpdateRequest = IssueCtcDocumentUpdateRequest.builder()
+                            .requestInfo(requestInfo)
+                            .action("ISSUE")
+                            .courtId(courtId)
+                            .docs(List.of(DocumentActionItem.builder()
+                                            .docId(docId)
+                                            .documents(List.of(document))
+                                            .ctcApplicationNumber(ctcApplicationNumber)
+                                            .filingNumber(filingNumber)
+                                    .build()))
+                            .build();
+
+                    markDocumentsAsIssuedOrReject(issueCtcDocumentUpdateRequest);
+
+                    log.info("Updated CTC application {} with signed doc", ctcApplicationNumber);
+                } catch (CustomException e) {
+                    throw e;
+                } catch (Exception e) {
+                    log.error("Error while updating CTC doc, ctcApplicationNumber: {}", ctcApplicationNumber, e);
+                    throw new CustomException(CTC_BULK_SIGN_EXCEPTION, "Error while updating CTC doc: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    private CtcApplication fetchCtcApplicationByNumber(String ctcApplicationNumber) {
+        CtcApplicationSearchCriteria criteria = CtcApplicationSearchCriteria.builder()
+                .ctcApplicationNumber(ctcApplicationNumber)
+                .build();
+        Pagination pagination = Pagination.builder().limit(1d).offSet(0d).build();
+        CtcApplicationSearchRequest searchRequest = CtcApplicationSearchRequest.builder()
+                .criteria(criteria)
+                .pagination(pagination)
+                .build();
+        List<CtcApplication> results = ctcApplicationRepository.getCtcApplication(searchRequest);
+        if (results.isEmpty()) {
+            throw new CustomException("CTC_APPLICATION_NOT_FOUND", "No CTC application found for: " + ctcApplicationNumber);
+        }
+        return results.get(0);
+    }
+
+    private String generateSignRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+        log.info("Generating sign request, txnId: {}, coordination: {}, pageNumber: {}", txnId, coordination, pageNumber);
+        Map<String, Object> requestData = new LinkedHashMap<>();
+
+        requestData.put(COMMAND, PKI_NETWORK_SIGN);
+        requestData.put(TIME_STAMP, timeStamp);
+        requestData.put(TXN, txnId);
+
+        List<Map<String, Object>> certificateAttributes = new ArrayList<>();
+        certificateAttributes.add(createAttribute("CN", ""));
+        certificateAttributes.add(createAttribute("O", ""));
+        certificateAttributes.add(createAttribute("OU", ""));
+        certificateAttributes.add(createAttribute("T", ""));
+        certificateAttributes.add(createAttribute("E", ""));
+        certificateAttributes.add(createAttribute("SN", ""));
+        certificateAttributes.add(createAttribute("CA", ""));
+        certificateAttributes.add(createAttribute("TC", "SG"));
+        certificateAttributes.add(createAttribute("AP", "1"));
+        requestData.put(CERTIFICATE, certificateAttributes);
+
+        Map<String, Object> file = new LinkedHashMap<>();
+        file.put(ATTRIBUTE, Map.of(NAME, TYPE, VALUE, PDF));
+        requestData.put(FILE, file);
+
+        Map<String, Object> pdf = new LinkedHashMap<>();
+        pdf.put(PAGE, pageNumber);
+        pdf.put(CO_ORDINATES, coordination);
+        pdf.put(SIZE, config.getEsignSignatureWidth() + "," + config.getEsignSignatureHeight());
+        pdf.put(DATE_FORMAT, ESIGN_DATE_FORMAT);
+        requestData.put(PDF, pdf);
+
+        requestData.put(DATA, base64Doc);
+
+        return xmlRequestGenerator.createXML("request", requestData);
+    }
+
+    private Map<String, Object> createAttribute(String name, String value) {
+        Map<String, Object> attribute = new LinkedHashMap<>();
+        Map<String, String> attrData = new LinkedHashMap<>();
+        attrData.put(NAME, name);
+        attrData.put(VALUE, value);
+        attribute.put(ATTRIBUTE, attrData);
+        return attribute;
     }
 }
