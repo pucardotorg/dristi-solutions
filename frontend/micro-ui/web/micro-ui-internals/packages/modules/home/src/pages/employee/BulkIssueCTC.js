@@ -9,6 +9,7 @@ import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosIns
 import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { HomeService } from "../../hooks/services";
 import qs from "qs";
+import { formatLabel } from "../../configs/UICustomizations";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -88,6 +89,11 @@ const BulkIssueCTC = () => {
             courtId: courtId,
             filingNumber: row?.businessObject?.filingNumber,
             ctcApplicationNumber: row?.businessObject?.ctcApplicationNumber,
+            caseNumber: row?.businessObject?.caseNumber,
+            nameOfApplicant: row?.businessObject?.nameOfApplicant,
+            dateOfApplication: row?.businessObject?.dateOfApplication,
+            dateOfApplicationApproval: row?.businessObject?.dateOfApplicationApproval || null,
+            requestedDocName: formatLabel(row?.businessObject?.docTitle),
           },
         },
         { responseType: "blob" }
@@ -412,7 +418,7 @@ const BulkIssueCTC = () => {
         filingNumber: selectedRowData?.businessObject?.filingNumber || "",
         documents: [
           {
-            documentType: "ISSUED_DOCUMENT",
+            documentType: "SIGNED_CTC_APPLICATION",
             fileStore: localStorageID || signedDocumentUploadId,
           },
         ],
