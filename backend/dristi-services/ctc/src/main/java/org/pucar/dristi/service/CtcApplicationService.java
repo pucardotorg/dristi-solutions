@@ -237,6 +237,8 @@ public class CtcApplicationService {
                 // 3. If ISSUE: enrich the matching selectedCaseBundle child's fileStoreId from caseBundles
                 if (ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(action)) {
                     enrichFileStoreIdFromCaseBundles(ctcApplication, docId, document,requestInfo);
+                }else{
+                    enrichStatusInCaseBundles(ctcApplication, docId, document,requestInfo);
                 }
 
                 // 4. Determine workflow action from current ES doc status counts
@@ -308,6 +310,17 @@ public class CtcApplicationService {
             targetNode.setIssuedFileStoreId(document.getFileStore());
             targetNode.setStatus("ACCEPTED");
             log.info("Enriched fileStoreId for doc {} in application {}", docId, ctcApplication.getCtcApplicationNumber());
+        }
+    }
+
+    private void enrichStatusInCaseBundles(CtcApplication ctcApplication, String docId, Document document,RequestInfo requestInfo) {
+
+        // Build id -> CaseBundleNode map from selectedCaseBundle for O(1) update
+        Map<String, CaseBundleNode> selectedNodeMap = buildSelectedNodeMap(ctcApplication.getSelectedCaseBundle());
+        CaseBundleNode targetNode = selectedNodeMap.get(docId);
+
+        if (targetNode != null) {
+            targetNode.setStatus("REJECTED");
         }
     }
 
