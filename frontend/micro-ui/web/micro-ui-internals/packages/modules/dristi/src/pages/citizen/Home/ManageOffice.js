@@ -548,49 +548,51 @@ const ManageOffice = () => {
               </div>
             ) : (
               <React.Fragment>
-                {searchResult ? (
-                  <div className="manage-office-search-card">
-                    <div className="manage-office-search-card__row">
-                      <p className="manage-office-search-card__label">{t("NAME") || "Name"}</p>
-                      <p className="manage-office-search-card__value">{searchResult?.name}</p>
+                <div className="manage-office-modal__body">
+                  {searchResult ? (
+                    <div className="manage-office-search-card">
+                      <div className="manage-office-search-card__row">
+                        <p className="manage-office-search-card__label">{t("NAME") || "Name"}</p>
+                        <p className="manage-office-search-card__value">{searchResult?.name}</p>
+                      </div>
+                      <div className="manage-office-search-card__row">
+                        <p className="manage-office-search-card__label">{t("DESIGNATION") || "Designation"}</p>
+                        <p className="manage-office-search-card__value">{searchResult?.designation}</p>
+                      </div>
+                      <div className="manage-office-search-card__row">
+                        <p className="manage-office-search-card__label">{t("MOBILE_NUMBER") || "Mobile number"}</p>
+                        <p className="manage-office-search-card__value">{searchResult?.mobileNumber}</p>
+                      </div>
+                      <div className="manage-office-search-card__row">
+                        <p className="manage-office-search-card__label">{t("EMAIL") || "Email"}</p>
+                        <p className="manage-office-search-card__value">{searchResult?.email}</p>
+                      </div>
                     </div>
-                    <div className="manage-office-search-card__row">
-                      <p className="manage-office-search-card__label">{t("DESIGNATION") || "Designation"}</p>
-                      <p className="manage-office-search-card__value">{searchResult?.designation}</p>
+                  ) : (
+                    <div className="manage-office-search-field">
+                      <label className="manage-office-search-field__label">{t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}</label>
+                      <div className="manage-office-search-field__control">
+                        <select
+                          value={countryCode}
+                          onChange={(e) => setCountryCode(e.target.value)}
+                          className="manage-office-search-field__country"
+                          disabled
+                        >
+                          <option value="+91">+91</option>
+                        </select>
+                        <input
+                          type="tel"
+                          value={mobileNumber}
+                          onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))}
+                          placeholder={t("ENTER_HERE") || "Enter here"}
+                          maxLength={10}
+                          className="manage-office-search-field__input"
+                        />
+                      </div>
+                      {searchError && <div className="manage-office-search-field__error">{searchError}</div>}
                     </div>
-                    <div className="manage-office-search-card__row">
-                      <p className="manage-office-search-card__label">{t("MOBILE_NUMBER") || "Mobile number"}</p>
-                      <p className="manage-office-search-card__value">{searchResult?.mobileNumber}</p>
-                    </div>
-                    <div className="manage-office-search-card__row">
-                      <p className="manage-office-search-card__label">{t("EMAIL") || "Email"}</p>
-                      <p className="manage-office-search-card__value">{searchResult?.email}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="manage-office-search-field">
-                    <label className="manage-office-search-field__label">{t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}</label>
-                    <div className="manage-office-search-field__control">
-                      <select
-                        value={countryCode}
-                        onChange={(e) => setCountryCode(e.target.value)}
-                        className="manage-office-search-field__country"
-                        disabled
-                      >
-                        <option value="+91">+91</option>
-                      </select>
-                      <input
-                        type="tel"
-                        value={mobileNumber}
-                        onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))}
-                        placeholder={t("ENTER_HERE") || "Enter here"}
-                        maxLength={10}
-                        className="manage-office-search-field__input"
-                      />
-                    </div>
-                    {searchError && <div className="manage-office-search-field__error">{searchError}</div>}
-                  </div>
-                )}
+                  )}
+                </div>
 
                 <div className="manage-office-modal__footer">
                   <button onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
@@ -642,7 +644,6 @@ const ManageOffice = () => {
                     ? t("CONFIRM_LEAVE_ADVOCATE_OFFICE") || "Are you sure you want to leave this advocate's office?"
                     : t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?"}
                 </p>
-
                 <div className="manage-office-modal__footer">
                   <button onClick={handleCloseRemoveModal} className="manage-office-btn manage-office-btn--secondary">
                     {t("CANCEL") || "Cancel"}
