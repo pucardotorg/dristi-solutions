@@ -663,22 +663,6 @@ public class CtcApplicationService {
         }
     }
 
-    private CtcApplication fetchCtcApplicationByNumber(String ctcApplicationNumber) {
-        CtcApplicationSearchCriteria criteria = CtcApplicationSearchCriteria.builder()
-                .ctcApplicationNumber(ctcApplicationNumber)
-                .build();
-        Pagination pagination = Pagination.builder().limit(1d).offSet(0d).build();
-        CtcApplicationSearchRequest searchRequest = CtcApplicationSearchRequest.builder()
-                .criteria(criteria)
-                .pagination(pagination)
-                .build();
-        List<CtcApplication> results = ctcApplicationRepository.getCtcApplication(searchRequest);
-        if (results.isEmpty()) {
-            throw new CustomException("CTC_APPLICATION_NOT_FOUND", "No CTC application found for: " + ctcApplicationNumber);
-        }
-        return results.get(0);
-    }
-
     private String generateSignRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
         log.info("Generating sign request, txnId: {}, coordination: {}, pageNumber: {}", txnId, coordination, pageNumber);
         Map<String, Object> requestData = new LinkedHashMap<>();
