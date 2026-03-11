@@ -10,7 +10,10 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
-const { getNameByUuid, getComplaintAndAccusedList } = require("./getCaseDetails");
+const {
+  getNameByUuid,
+  getComplaintAndAccusedList,
+} = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -31,7 +34,7 @@ const applicationCaseTransfer = async (
   res,
   qrCode,
   application,
-  courtCaseJudgeDetails
+  courtCaseJudgeDetails,
 ) => {
   const cnrNumber = req.query.cnrNumber;
   const applicationNumber = req.query.applicationNumber;
@@ -52,7 +55,7 @@ const applicationCaseTransfer = async (
     return renderError(
       res,
       `${missingFields.join(", ")} are mandatory to generate the PDF`,
-      400
+      400,
     );
   }
 
@@ -69,7 +72,7 @@ const applicationCaseTransfer = async (
   try {
     const resCase = await handleApiCall(
       () => search_case(cnrNumber, tenantId, requestInfo, application?.courtId),
-      "Failed to query case service"
+      "Failed to query case service",
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
     if (!courtCase) {
@@ -85,11 +88,11 @@ const applicationCaseTransfer = async (
     if (advocateIndividualId) {
       const resAdvocate = await handleApiCall(
         () => search_advocate(tenantId, advocateIndividualId, requestInfo),
-        "Failed to query Advocate Details"
+        "Failed to query Advocate Details",
       );
       const advocateData = resAdvocate?.data?.advocates?.[0];
       const advocateDetails = advocateData?.responseList?.find(
-        (item) => item.isActive === true
+        (item) => item.isActive === true,
       );
       barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
@@ -98,7 +101,7 @@ const applicationCaseTransfer = async (
 
     const partyName = application?.additionalDetails?.onBehalOfName || "";
     const additionalComments = htmlToFormattedText(
-      application?.applicationDetails?.additionalComments || ""
+      application?.applicationDetails?.additionalComments || "",
     );
     const grounds =
       application?.applicationDetails?.groundsForSeekingTransfer || "";
@@ -112,9 +115,9 @@ const applicationCaseTransfer = async (
             tenantId,
             code,
             entityId,
-            requestInfo
+            requestInfo,
           ),
-        "Failed to query sunbirdrc credential service"
+        "Failed to query sunbirdrc credential service",
       );
       const $ = cheerio.load(resCredential.data);
       const imgTag = $("img");
@@ -122,7 +125,7 @@ const applicationCaseTransfer = async (
         return renderError(
           res,
           "No img tag found in the sunbirdrc response",
-          500
+          500,
         );
       }
       base64Url = imgTag.attr("src");
@@ -166,12 +169,12 @@ const applicationCaseTransfer = async (
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const { complainantList, accusedList } = getComplaintAndAccusedList(
-      courtCase || {}
+      courtCase || {},
     );
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
     const onBehalfOfLitigent = courtCase?.litigants?.find(
-      (item) => item.additionalDetails.uuid === onBehalfOfuuid
+      (item) => item.additionalDetails.uuid === onBehalfOfuuid,
     );
     let partyType = "COURT";
     if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("complainant")) {
@@ -201,7 +204,7 @@ const applicationCaseTransfer = async (
           advocateName,
           barRegistrationNumber,
           qrCodeUrl: base64Url,
-          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          petitionerName: getNameByUuid(application?.asUser, courtCase),
           complainantList: complainantList,
           accusedList: accusedList,
           partyType: partyType,
@@ -216,7 +219,7 @@ const applicationCaseTransfer = async (
         : config.pdf.application_case_transfer;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
-      "Failed to generate PDF of Application for Case Transfer"
+      "Failed to generate PDF of Application for Case Transfer",
     );
 
     const filename = `${pdfKey}_${new Date().getTime()}`;
@@ -237,7 +240,7 @@ const applicationCaseTransfer = async (
       res,
       "Failed to query details of APPLICATION FOR EXTENSION OF SUBMISSION DEADLINE",
       500,
-      ex
+      ex,
     );
   }
 };
