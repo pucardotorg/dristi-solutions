@@ -113,6 +113,22 @@ public class PersistRepository {
                     continue;
                 }
 
+                else if (type.equals(TypeEnum.UUID)) {
+                    try {
+                        value = JsonPath.read(jsonObj, jsonPath);
+                        if (value != null && !value.toString().trim().isEmpty()) {
+                            row.add(value.toString());
+                        } else {
+                            UUID uuid7 = UUID.randomUUID();
+                            row.add(uuid7.toString());
+                        }
+                    } catch (Exception e) {
+                        UUID uuid7 = UUID.randomUUID();
+                        row.add(uuid7.toString());
+                    }
+                    continue;
+                }
+
                 else if ((type.equals(TypeEnum.ARRAY)) && dbType.equals(TypeEnum.STRING)) {
                     List<Object> list1 = JsonPath.read(jsonObj, jsonPath);
                     if (CollectionUtils.isEmpty(list1)) {
