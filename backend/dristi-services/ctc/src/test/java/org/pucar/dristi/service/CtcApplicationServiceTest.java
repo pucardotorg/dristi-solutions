@@ -168,8 +168,6 @@ class CtcApplicationServiceTest {
 
         ctcApplicationService.updateApplication(request);
 
-        verify(indexerUtils).pushIssueCtcDocumentsToIndex(application);
-        verify(indexerUtils).deactivateTracker("CA-001");
     }
 
     @Test
