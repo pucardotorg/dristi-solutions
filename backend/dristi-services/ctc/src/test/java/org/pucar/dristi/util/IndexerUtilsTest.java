@@ -134,7 +134,7 @@ class IndexerUtilsTest {
 
         ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).postForObject(
-                eq("http://localhost:9200/issue-ctc-documents/_update_by_query"),
+                eq("http://localhost:9200/issue-ctc-documents/_update_by_query?refresh=true"),
                 captor.capture(),
                 eq(String.class));
 

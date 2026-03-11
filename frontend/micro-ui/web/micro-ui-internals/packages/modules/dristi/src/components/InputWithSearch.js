@@ -56,7 +56,14 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
       ifsc,
       bankField: `${prefix}BankName`,
       branchField: `${prefix}BranchName`,
-      setValue: (field, value) => onSelect(field, value, { shouldValidate: false }),
+      setValue: (field, value) => {
+        if (field.includes("ReadOnly")) {
+          const flagName = field.replace(prefix, "");
+          onSelect(config.key, { ...formData?.[config.key], [flagName]: value }, { shouldValidate: false });
+        } else {
+          onSelect(field, value, { shouldValidate: false });
+        }
+      },
       getValues: (field) => formData?.[field],
       setError,
       clearErrors,
@@ -67,6 +74,7 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
     } else {
       clearErrors(config.key);
       clearErrors(input.name);
+      onSelect(config.key, { ...formData?.[config.key], BankReadOnly: true, BranchReadOnly: true });
     }
   };
   return inputs.map((input) => {

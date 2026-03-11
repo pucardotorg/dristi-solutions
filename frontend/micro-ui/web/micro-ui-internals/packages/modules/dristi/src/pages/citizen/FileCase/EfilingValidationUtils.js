@@ -391,8 +391,6 @@ export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValu
     bankDetails = await fetchBankDetails(ifsc);
 
     if (!bankDetails) {
-      cache.current[ifsc] = "FAILED";
-      // setError(configKey, { msg: "CS_INVALID_IFSC" });
       return false;
     }
 
