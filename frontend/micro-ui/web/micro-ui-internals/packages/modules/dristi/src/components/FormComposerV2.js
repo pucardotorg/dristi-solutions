@@ -117,6 +117,13 @@ export const FormComposerV2 = (props) => {
     props.getFormAccessors && props.getFormAccessors({ setValue, getValues });
   }, []);
 
+  // Expose form methods via formRef so parent can trigger validation programmatically
+  useEffect(() => {
+    if (props.formRef) {
+      props.formRef.current = { trigger, getValues, setValue, formState, errors, setError, clearErrors, reset, handleSubmit };
+    }
+  });
+
   useEffect(() => {
     setCustomToast(props?.customToast);
   }, [props?.customToast]);
@@ -124,6 +131,45 @@ export const FormComposerV2 = (props) => {
   function onSubmit(data) {
     props.onSubmit(data, setValue);
   }
+
+  /**
+   * Custom form submit handler that supports multi-form validation.
+   * When validateAllForms prop is provided, it triggers validation on ALL
+   * sibling form instances (via parent-provided callback) in addition to
+   * validating the current form. Only calls props.onSubmit if every form is valid.
+   */
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+
+    // Use handleSubmit (not trigger) so that formState.isSubmitted is set to true.
+    // This activates RHF's reValidateMode:'onChange', allowing errors to auto-clear
+    // when the user corrects a field value.
+    let isCurrentFormValid = false;
+    await handleSubmit(
+      () => {
+        isCurrentFormValid = true;
+      },
+      () => {
+        isCurrentFormValid = false;
+      }
+    )();
+
+    // Validate all sibling forms if the callback is provided
+    let areAllFormsValid = isCurrentFormValid;
+    if (props.validateAllForms) {
+      const siblingsValid = await props.validateAllForms();
+      areAllFormsValid = areAllFormsValid && siblingsValid;
+    }
+
+    if (!areAllFormsValid) {
+      setShowErrorToast(true);
+      return;
+    }
+
+    // All forms valid — proceed with submission
+    const data = getValues();
+    onSubmit(data);
+  };
 
   function onSecondayActionClick(data) {
     props.onSecondayActionClick();
@@ -462,11 +508,7 @@ export const FormComposerV2 = (props) => {
             defaultValue={formData?.[populators.name]}
             rules={{ required: populators?.isMandatory, ...populators.validation }}
             render={(props) => {
-              return (
-                <div style={{ display: "grid", gridAutoFlow: "row" }}>
-                  object
-                </div>
-              );
+              return <div style={{ display: "grid", gridAutoFlow: "row" }}>object</div>;
             }}
           />
         );
@@ -478,11 +520,7 @@ export const FormComposerV2 = (props) => {
             defaultValue={formData?.[populators.name]}
             rules={{ required: populators?.isMandatory, ...populators.validation }}
             render={(props) => {
-              return (
-                <div style={{ display: "grid", gridAutoFlow: "row" }}>
-                  array
-                </div>
-              );
+              return <div style={{ display: "grid", gridAutoFlow: "row" }}>array</div>;
             }}
           />
         );
@@ -738,9 +776,7 @@ export const FormComposerV2 = (props) => {
                   )}
                   <div style={field.withoutLabel ? { width: "100%", ...props?.fieldStyle } : { ...props?.fieldStyle }} className="field">
                     {fieldSelector(field.type, field.populators, field.isMandatory, field?.disable, field?.component, field, sectionFormCategory)}
-                    {field?.description && (
-                      <CardText style={{ fontSize: "14px", marginTop: "-24px" }}>{t(field?.description)}</CardText>
-                    )}
+                    {field?.description && <CardText style={{ fontSize: "14px", marginTop: "-24px" }}>{t(field?.description)}</CardText>}
                   </div>
                 </LabelFieldPair>
               )}
@@ -832,7 +868,12 @@ export const FormComposerV2 = (props) => {
   const fieldId = Digit?.Utils?.getFieldIdName?.(props?.formId || props?.className || "form") || "NA";
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} onKeyDown={(e) => checkKeyDown(e)} id={fieldId} className={props.className}>
+    <form
+      onSubmit={props.validateAllForms ? handleFormSubmit : handleSubmit(onSubmit)}
+      onKeyDown={(e) => checkKeyDown(e)}
+      id={fieldId}
+      className={props.className}
+    >
       {props?.headerLabel && <Header className="digit-form-composer-header">{t(props.headerLabel)}</Header>}
 
       {props?.showMultipleCardsWithoutNavs ? (
@@ -862,10 +903,7 @@ export const FormComposerV2 = (props) => {
           {props?.showMultipleCardsInNavs ? (
             props?.config?.map((section, index, array) => {
               return section.navLink ? (
-                <Card
-                  style={section.navLink !== activeLink ? getCardStyles(false) : getCardStyles()}
-                  noCardStyle={props.noCardStyle}
-                >
+                <Card style={section.navLink !== activeLink ? getCardStyles(false) : getCardStyles()} noCardStyle={props.noCardStyle}>
                   {renderFormFields(props, section, index, array, section?.sectionFormCategory)}
                 </Card>
               ) : null;
@@ -887,13 +925,7 @@ export const FormComposerV2 = (props) => {
       )}
       {!props.submitInForm && props.label && (
         <ActionBar className={props.actionClassName}>
-          <SubmitBar
-            id={`${fieldId}-primary`}
-            label={t(props.label)}
-            submit="submit"
-            disabled={isDisabled}
-            submitIcon={props?.submitIcon}
-          />
+          <SubmitBar id={`${fieldId}-primary`} label={t(props.label)} submit="submit" disabled={isDisabled} submitIcon={props?.submitIcon} />
           {props.secondaryLabel && props.showSecondaryLabel && (
             <Button
               id={`${fieldId}-secondary`}
@@ -904,18 +936,11 @@ export const FormComposerV2 = (props) => {
             />
           )}
           {props.onSkip && props.showSkip && (
-            <LinkButton
-              id={`${fieldId}-skip`}
-              style={props?.skipStyle}
-              label={props?.skiplabel || t(`CS_SKIP_CONTINUE`)}
-              onClick={props.onSkip}
-            />
+            <LinkButton id={`${fieldId}-skip`} style={props?.skipStyle} label={props?.skiplabel || t(`CS_SKIP_CONTINUE`)} onClick={props.onSkip} />
           )}
         </ActionBar>
       )}
-      {showErrorToast && (
-        <Toast type={"error"} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />
-      )}
+      {showErrorToast && <Toast type={"error"} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
       {customToast && <Toast type={customToast?.type} label={t(customToast?.label)} isDleteBtn={true} onClose={closeToast} />}
     </form>
   );
