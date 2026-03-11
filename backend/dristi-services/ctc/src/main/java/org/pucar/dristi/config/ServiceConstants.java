@@ -76,13 +76,13 @@ public class ServiceConstants {
                     + "\"applicantName\": \"%s\","
                     + "\"caseTitle\": \"%s\","
                     + "\"caseNumber\": \"%s\","
-                    + "\"isActive\": %b,"
                     + "\"searchableFields\": %s"
                     + "}}\n";
-    public static final String ES_DEACTIVATE_TRACKER_BY_APPLICATION =
+    public static final String ES_UPDATE_TRACKER_STATUS_BY_APPLICATION =
             "{\"query\":{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}},"
-                    + "\"script\":{\"source\":\"ctx._source.Data.isActive=false;\","
-                    + "\"lang\":\"painless\"}}";
+                    + "\"script\":{\"source\":\"ctx._source.Data.status=params.status;\","
+                    + "\"lang\":\"painless\","
+                    + "\"params\":{\"status\":\"%s\"}}}";
     public static final String CTC_APPLICATION_TRACKER_INDEX_EXCEPTION = "CTC_APPLICATION_TRACKER_INDEX_EXCEPTION";
     public static final String CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION = "CTC_ISSUE_DOCUMENTS_INDEX_EXCEPTION";
     public static final String CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION = "CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION";

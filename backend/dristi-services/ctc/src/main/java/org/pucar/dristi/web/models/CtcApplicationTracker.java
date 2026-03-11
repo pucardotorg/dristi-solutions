@@ -44,9 +44,6 @@ public class CtcApplicationTracker {
     @JsonProperty("caseNumber")
     private String caseNumber;
 
-    @JsonProperty("isActive")
-    private Boolean isActive;
-
     @JsonProperty("searchableFields")
     private List<String> searchableFields;
 }

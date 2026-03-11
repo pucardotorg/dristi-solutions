@@ -128,17 +128,17 @@ public class IndexerUtils {
         return statusCounts;
     }
 
-    public void deactivateTracker(String ctcApplicationNumber) {
+    public void updateTrackerStatus(String ctcApplicationNumber, String status) {
         try {
             String indexName = config.getCtcApplicationTrackerIndex();
             String uri = config.getEsHostUrl() + indexName + "/_update_by_query";
-            String request = String.format(ServiceConstants.ES_DEACTIVATE_TRACKER_BY_APPLICATION, ctcApplicationNumber);
+            String request = String.format(ServiceConstants.ES_UPDATE_TRACKER_STATUS_BY_APPLICATION, ctcApplicationNumber, status);
             esPostManual(uri, request);
-            log.info("Deactivated tracker for application: {}", ctcApplicationNumber);
+            log.info("Updated tracker status for application: {} to status: {}", ctcApplicationNumber, status);
         } catch (Exception e) {
-            log.error("Error deactivating tracker for application: {}", ctcApplicationNumber, e);
+            log.error("Error updating tracker status for application: {}", ctcApplicationNumber, e);
             throw new CustomException(ServiceConstants.CTC_APPLICATION_TRACKER_INDEX_EXCEPTION,
-                    "Error deactivating tracker in ES index: " + e.getMessage());
+                    "Error updating tracker status in ES index: " + e.getMessage());
         }
     }
 
@@ -164,7 +164,6 @@ public class IndexerUtils {
                     tracker.getApplicantName(),
                     tracker.getCaseTitle(),
                     tracker.getCaseNumber(),
-                    tracker.getIsActive(),
                     searchableFieldsJson
             );
 

@@ -415,10 +415,10 @@ public class CtcApplicationService {
 
             if (PENDING_ISSUE.equalsIgnoreCase(ctcApplication.getStatus())) {
                 indexerUtils.pushIssueCtcDocumentsToIndex(ctcApplication);
-                indexerUtils.deactivateTracker(ctcApplication.getCtcApplicationNumber());
+                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "APPROVED");
             }
             if ("REJECTED".equalsIgnoreCase(ctcApplication.getStatus())) {
-                indexerUtils.deactivateTracker(ctcApplication.getCtcApplicationNumber());
+                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "REJECTED");
             }
 
             // Persist the updated application

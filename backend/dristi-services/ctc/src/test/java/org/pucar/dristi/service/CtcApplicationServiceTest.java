@@ -185,7 +185,7 @@ class CtcApplicationServiceTest {
         ctcApplicationService.updateApplication(request);
 
         verify(indexerUtils, never()).pushIssueCtcDocumentsToIndex(any());
-        verify(indexerUtils, never()).deactivateTracker(anyString());
+        verify(indexerUtils, never()).updateTrackerStatus(anyString(), anyString());
     }
 
     // ---- searchApplications tests ----

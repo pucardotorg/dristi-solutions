@@ -132,7 +132,6 @@ public class PaymentUpdateService {
                     .applicantName(ctcApplication.getApplicantName())
                     .caseTitle(ctcApplication.getCaseTitle())
                     .caseNumber(ctcApplication.getCaseNumber())
-                    .isActive(true)
                     .searchableFields(searchableFields)
                     .build();
             indexerUtils.pushCtcApplicationTracker(tracker);

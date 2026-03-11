@@ -81,8 +81,8 @@
           "isMandatory": false
         },
         {
-          "name": "isActive",
-          "path": "Data.isActive",
+          "name": "status",
+          "path": "Data.status.keyword",
           "isMandatory": false
         }
       ]

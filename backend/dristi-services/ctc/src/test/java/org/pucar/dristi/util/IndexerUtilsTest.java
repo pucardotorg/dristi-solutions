@@ -182,14 +182,14 @@ class IndexerUtilsTest {
         assertNull(counts.get("REJECTED"));
     }
 
-    // ---- deactivateTracker tests ----
+    // ---- updateTrackerStatus tests ----
 
     @Test
-    void deactivateTracker_shouldPostUpdateByQuery() throws Exception {
+    void updateTrackerStatus_shouldPostUpdateByQuery() throws Exception {
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn("{\"updated\":1}");
 
-        indexerUtils.deactivateTracker("CA-001");
+        indexerUtils.updateTrackerStatus("CA-001", "APPROVED");
 
         verify(restTemplate).postForObject(
                 eq("http://localhost:9200/ctc-application-tracker/_update_by_query"),
@@ -198,11 +198,11 @@ class IndexerUtilsTest {
     }
 
     @Test
-    void deactivateTracker_shouldThrowCustomExceptionOnError() {
+    void updateTrackerStatus_shouldThrowCustomExceptionOnError() {
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new RuntimeException("ES down"));
 
-        assertThrows(CustomException.class, () -> indexerUtils.deactivateTracker("CA-001"));
+        assertThrows(CustomException.class, () -> indexerUtils.updateTrackerStatus("CA-001", "REJECTED"));
     }
 
     // ---- pushCtcApplicationTracker tests ----
@@ -214,7 +214,7 @@ class IndexerUtilsTest {
                 .filingNumber("FIL-1").ctcApplicationNumber("CA-001")
                 .status("PENDING_JUDGE_APPROVAL").dateRaised(1000L)
                 .applicantName("John").caseTitle("State vs John")
-                .caseNumber("CC/1/2025").isActive(true)
+                .caseNumber("CC/1/2025")
                 .searchableFields(List.of("State vs John", "CC/1/2025"))
                 .build();
 
@@ -228,7 +228,6 @@ class IndexerUtilsTest {
 
         String body = (String) captor.getValue().getBody();
         assertTrue(body.contains("\"ctcApplicationNumber\": \"CA-001\""));
-        assertTrue(body.contains("\"isActive\": true"));
         assertTrue(body.contains("\"State vs John\""));
     }
 
@@ -239,7 +238,7 @@ class IndexerUtilsTest {
                 .filingNumber("FIL-1").ctcApplicationNumber("CA-001")
                 .status("PENDING").dateRaised(1000L)
                 .applicantName("John").caseTitle("Title")
-                .caseNumber("CC/1").isActive(true)
+                .caseNumber("CC/1")
                 .searchableFields(null)
                 .build();
 
@@ -261,7 +260,7 @@ class IndexerUtilsTest {
                 .id("t1").tenantId("kl").courtId("C1").filingNumber("F1")
                 .ctcApplicationNumber("CA-001").status("S").dateRaised(1L)
                 .applicantName("A").caseTitle("T").caseNumber("N")
-                .isActive(true).searchableFields(List.of())
+                .searchableFields(List.of())
                 .build();
 
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))

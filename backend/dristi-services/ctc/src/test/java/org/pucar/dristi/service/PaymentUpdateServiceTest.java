@@ -162,7 +162,6 @@ class PaymentUpdateServiceTest {
         assertEquals("FIL-001", tracker.getFilingNumber());
         assertEquals("CA-001", tracker.getCtcApplicationNumber());
         assertEquals("John", tracker.getApplicantName());
-        assertTrue(tracker.getIsActive());
         assertEquals(2, tracker.getSearchableFields().size());
         assertTrue(tracker.getSearchableFields().contains("State vs John"));
         assertTrue(tracker.getSearchableFields().contains("CC/123/2025"));
