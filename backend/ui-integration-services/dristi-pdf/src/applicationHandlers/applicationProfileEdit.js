@@ -33,13 +33,13 @@ const getOldData = (caseDetails, partyType, uniqueId) => {
     return caseDetails?.additionalDetails?.complainantDetails?.formdata?.find(
       (item) =>
         item?.data?.complainantVerification?.individualDetails?.individualId ===
-        uniqueId
+        uniqueId,
     );
   } else if (partyType === "respondent") {
     return caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
       (item) =>
         item?.data?.respondentVerification?.individualDetails?.individualId ===
-          uniqueId || item?.uniqueId === uniqueId
+          uniqueId || item?.uniqueId === uniqueId,
     );
   }
 };
@@ -55,7 +55,7 @@ const showAddress = (data) => {
     const { pincode, city, district, locality, state } = address;
 
     const parts = [locality, city, district, state, pincode].filter(
-      (part) => part !== null && part !== undefined && part.trim?.() !== ""
+      (part) => part !== null && part !== undefined && part.trim?.() !== "",
     );
 
     return { address: parts.join(", ") };
@@ -82,7 +82,7 @@ async function applicationProfileEdit(
   res,
   qrCode,
   application,
-  courtCaseJudgeDetails
+  courtCaseJudgeDetails,
 ) {
   const cnrNumber = req.query.cnrNumber;
   const applicationNumber = req.query.applicationNumber;
@@ -103,7 +103,7 @@ async function applicationProfileEdit(
     return renderError(
       res,
       `${missingFields.join(", ")} are mandatory to generate the PDF`,
-      400
+      400,
     );
   }
 
@@ -120,7 +120,7 @@ async function applicationProfileEdit(
   try {
     const resCase = await handleApiCall(
       () => search_case(cnrNumber, tenantId, requestInfo, application?.courtId),
-      "Failed to query case service"
+      "Failed to query case service",
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
     if (!courtCase) {
@@ -136,11 +136,11 @@ async function applicationProfileEdit(
     if (advocateIndividualId) {
       const resAdvocate = await handleApiCall(
         () => search_advocate(tenantId, advocateIndividualId, requestInfo),
-        "Failed to query Advocate Details"
+        "Failed to query Advocate Details",
       );
       const advocateData = resAdvocate?.data?.advocates?.[0];
       const advocateDetails = advocateData?.responseList?.find(
-        (item) => item.isActive === true
+        (item) => item.isActive === true,
       );
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
@@ -155,9 +155,9 @@ async function applicationProfileEdit(
             tenantId,
             code,
             entityId,
-            requestInfo
+            requestInfo,
           ),
-        "Failed to query sunbirdrc credential service"
+        "Failed to query sunbirdrc credential service",
       );
       const $ = cheerio.load(resCredential.data);
       const imgTag = $("img");
@@ -165,7 +165,7 @@ async function applicationProfileEdit(
         return renderError(
           res,
           "No img tag found in the sunbirdrc response",
-          500
+          500,
         );
       }
       base64Url = imgTag.attr("src");
@@ -208,7 +208,7 @@ async function applicationProfileEdit(
     const partyReferenceId =
       application?.additionalDetails?.pendingTaskRefId || "";
     const profileRequest = courtCase?.additionalDetails?.profileRequests?.find(
-      (req) => req?.pendingTaskRefId === partyReferenceId
+      (req) => req?.pendingTaskRefId === partyReferenceId,
     );
     const partyType = profileRequest?.litigantDetails?.partyType || "";
     const uniqueId = profileRequest?.litigantDetails?.uniqueId || "";
@@ -221,12 +221,12 @@ async function applicationProfileEdit(
       partyType === "respondent"
         ? getFullName(
             oldData?.data?.respondentFirstName,
-            oldData?.data?.respondentLastName
+            oldData?.data?.respondentLastName,
           )
         : getFullName(
             oldData?.data?.firstName,
             oldData?.data?.middleName,
-            oldData?.data?.lastName
+            oldData?.data?.lastName,
           );
 
     const newPartyName =
@@ -235,7 +235,7 @@ async function applicationProfileEdit(
         : getFullName(
             newData?.firstName,
             newData?.middleName,
-            newData?.lastName
+            newData?.lastName,
           );
 
     const currentDetailsLitigantType =
@@ -265,7 +265,7 @@ async function applicationProfileEdit(
         : oldData?.data?.complainantTypeOfEntity?.name;
 
     const { complainantList, accusedList } = getComplaintAndAccusedList(
-      courtCase || {}
+      courtCase || {},
     );
 
     const data = {
@@ -293,10 +293,10 @@ async function applicationProfileEdit(
           currentAge:
             oldData?.data?.respondentAge || oldData?.data?.complainantAge || "",
           currentMobileNumber: getCommaSeparatedValues(
-            oldData?.data?.phonenumbers?.mobileNumber
+            oldData?.data?.phonenumbers?.mobileNumber,
           ),
           currentEmailId: getCommaSeparatedValues(
-            oldData?.data?.emails?.emailId
+            oldData?.data?.emails?.emailId,
           ),
           currentPermanentAddress:
             showAddress(oldData?.data?.addressDetails) || [],
@@ -308,14 +308,14 @@ async function applicationProfileEdit(
           newName: newPartyName,
           newAge: newData?.respondentAge || newData?.complainantAge || "",
           newMobileNumber: getCommaSeparatedValues(
-            newData?.phonenumbers?.mobileNumber
+            newData?.phonenumbers?.mobileNumber,
           ),
           newEmailId: getCommaSeparatedValues(newData?.emails?.emailId),
           newPermanentAddress: showAddress(newData?.addressDetails) || [],
           newResedentialAddress:
             showAddress(newData?.currentAddressDetails) || [],
           applicationTitle: "APPLICATION FOR EDITING LITIGANT DETAILS",
-          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          petitionerName: getNameByUuid(application?.asUser, courtCase),
           complainantList: complainantList,
           accusedList: accusedList,
           additionalComments: comments,
@@ -329,7 +329,7 @@ async function applicationProfileEdit(
         : config.pdf.application_profile_edit;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
-      "Failed to generate PDF of Generic Application"
+      "Failed to generate PDF of Generic Application",
     );
     const filename = `${pdfKey}_${new Date().getTime()}`;
     res.writeHead(200, {
@@ -349,7 +349,7 @@ async function applicationProfileEdit(
       res,
       "Failed to query details of Generic Application",
       500,
-      ex
+      ex,
     );
   }
 }

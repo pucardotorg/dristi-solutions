@@ -157,4 +157,8 @@ public class Configuration {
 
 	@Value("${egov.localization.search.endpoint}")
 	private String localizationSearchEndpoint;
+
+	// Bar registration number format
+	@Value("${dristi.bar.registration.number.format}")
+	private String barRegistrationNumberFormat;
 }
