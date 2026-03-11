@@ -283,7 +283,7 @@ class IndexerUtilsTest {
     @Test
     void pushIssueCtcDocumentsToIndex_shouldIndexLeafNodesWithFileStoreId() throws Exception {
         // Root node with fileStoreId directly
-        SelectedCaseBundleNode rootWithFile = SelectedCaseBundleNode.builder()
+        CaseBundleNode rootWithFile = CaseBundleNode.builder()
                 .id("complaint").title("COMPLAINT_PDF")
                 .fileStoreId("fs-complaint").children(null).build();
 
@@ -305,13 +305,13 @@ class IndexerUtilsTest {
     @Test
     void pushIssueCtcDocumentsToIndex_shouldTraverseDeeplyNestedNodes() throws Exception {
         // 4-level deep: root -> app -> orders -> order (with fileStoreId)
-        SelectedCaseBundleNode order = SelectedCaseBundleNode.builder()
+        CaseBundleNode order = CaseBundleNode.builder()
                 .id("order-1").title("Order").fileStoreId("fs-order").children(null).build();
-        SelectedCaseBundleNode orders = SelectedCaseBundleNode.builder()
+        CaseBundleNode orders = CaseBundleNode.builder()
                 .id("app-orders").title("Orders").fileStoreId(null).children(List.of(order)).build();
-        SelectedCaseBundleNode app = SelectedCaseBundleNode.builder()
+        CaseBundleNode app = CaseBundleNode.builder()
                 .id("app-1").title("App").fileStoreId(null).children(List.of(orders)).build();
-        SelectedCaseBundleNode root = SelectedCaseBundleNode.builder()
+        CaseBundleNode root = CaseBundleNode.builder()
                 .id("disposed").title("Disposed").fileStoreId(null).children(List.of(app)).build();
 
         application.setSelectedCaseBundle(List.of(root));
@@ -332,7 +332,7 @@ class IndexerUtilsTest {
     @Test
     void pushIssueCtcDocumentsToIndex_shouldFallbackToCaseBundlesForFileStoreId() throws Exception {
         // selectedCaseBundle node with null fileStoreId
-        SelectedCaseBundleNode selectedNode = SelectedCaseBundleNode.builder()
+        CaseBundleNode selectedNode = CaseBundleNode.builder()
                 .id("doc-1").title("Doc").fileStoreId(null).children(null).build();
 
         // caseBundles has the fileStoreId for same id
@@ -356,7 +356,7 @@ class IndexerUtilsTest {
 
     @Test
     void pushIssueCtcDocumentsToIndex_shouldPreferSelectedCaseBundleFileStoreId() throws Exception {
-        SelectedCaseBundleNode selectedNode = SelectedCaseBundleNode.builder()
+        CaseBundleNode selectedNode = CaseBundleNode.builder()
                 .id("doc-1").title("Doc").fileStoreId("fs-from-selected").children(null).build();
 
         CaseBundleNode bundleNode = CaseBundleNode.builder()
@@ -380,7 +380,7 @@ class IndexerUtilsTest {
 
     @Test
     void pushIssueCtcDocumentsToIndex_shouldSkipNodesWithNoFileStoreAnywhere() {
-        SelectedCaseBundleNode selectedNode = SelectedCaseBundleNode.builder()
+        CaseBundleNode selectedNode = CaseBundleNode.builder()
                 .id("doc-1").title("Doc").fileStoreId(null).children(null).build();
 
         application.setSelectedCaseBundle(List.of(selectedNode));
@@ -394,12 +394,12 @@ class IndexerUtilsTest {
     @Test
     void pushIssueCtcDocumentsToIndex_shouldCollectMultipleDocsFromMixedTree() throws Exception {
         // Flat node with fileStoreId
-        SelectedCaseBundleNode leaf1 = SelectedCaseBundleNode.builder()
+        CaseBundleNode leaf1 = CaseBundleNode.builder()
                 .id("leaf-1").title("Leaf1").fileStoreId("fs-1").children(null).build();
         // Nested: parent -> child with fileStoreId
-        SelectedCaseBundleNode child = SelectedCaseBundleNode.builder()
+        CaseBundleNode child = CaseBundleNode.builder()
                 .id("child-1").title("Child1").fileStoreId("fs-2").children(null).build();
-        SelectedCaseBundleNode parent = SelectedCaseBundleNode.builder()
+        CaseBundleNode parent = CaseBundleNode.builder()
                 .id("parent-1").title("Parent1").fileStoreId(null).children(List.of(child)).build();
 
         application.setSelectedCaseBundle(List.of(leaf1, parent));
@@ -419,7 +419,7 @@ class IndexerUtilsTest {
 
     @Test
     void pushIssueCtcDocumentsToIndex_shouldThrowCustomExceptionOnError() {
-        SelectedCaseBundleNode node = SelectedCaseBundleNode.builder()
+        CaseBundleNode node = CaseBundleNode.builder()
                 .id("doc-1").title("Doc").fileStoreId("fs-1").children(null).build();
         application.setSelectedCaseBundle(List.of(node));
 

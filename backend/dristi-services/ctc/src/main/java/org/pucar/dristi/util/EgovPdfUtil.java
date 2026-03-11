@@ -36,6 +36,7 @@ public class EgovPdfUtil {
         String courtId = ctcApplication.getCourtId();
         String filingNumber = ctcApplication.getFilingNumber();
         String ctcApplicationNumber = ctcApplication.getCtcApplicationNumber();
+        Long dateOfApplication = ctcApplication.getAuditDetails().getCreatedTime();
 
         log.info("Calling egov-pdf ctc-certification for ctcApplicationNumber: {}, filingNumber: {}", ctcApplicationNumber, filingNumber);
 
@@ -52,6 +53,7 @@ public class EgovPdfUtil {
             criteria.put("courtId", courtId);
             criteria.put("filingNumber", filingNumber);
             criteria.put("ctcApplicationNumber", ctcApplicationNumber);
+            criteria.put("dateOfApplication", dateOfApplication);
 
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("RequestInfo", requestInfo);

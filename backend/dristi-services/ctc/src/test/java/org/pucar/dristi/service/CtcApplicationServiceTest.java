@@ -128,8 +128,8 @@ class CtcApplicationServiceTest {
         application.setWorkflow(workflow);
         application.setTotalPages(null);
         application.setSelectedCaseBundle(List.of(
-                SelectedCaseBundleNode.builder().id("root").children(List.of(
-                        SelectedCaseBundleNode.builder().id("c1").fileStoreId("fs-1").build()
+                CaseBundleNode.builder().id("root").children(List.of(
+                        CaseBundleNode.builder().id("c1").fileStoreId("fs-1").build()
                 )).build()
         ));
 

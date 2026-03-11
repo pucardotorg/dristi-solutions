@@ -149,9 +149,9 @@ public class CtcApplicationService {
     private List<String> getFileStoreIds(CtcApplicationRequest request) {
         List<String> acceptedFileStoreIds = new ArrayList<>();
         if (request.getCtcApplication().getSelectedCaseBundle() != null) {
-            for (SelectedCaseBundleNode parentNode : request.getCtcApplication().getSelectedCaseBundle()) {
+            for (CaseBundleNode parentNode : request.getCtcApplication().getSelectedCaseBundle()) {
                 if (parentNode.getChildren() != null) {
-                    for (SelectedCaseBundleNode child : parentNode.getChildren()) {
+                    for (CaseBundleNode child : parentNode.getChildren()) {
                         if (child.getFileStoreId() != null) {
                             acceptedFileStoreIds.add(child.getFileStoreId());
                         }
@@ -294,17 +294,18 @@ public class CtcApplicationService {
             throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
                     "CTC application not found: " + ctcApplicationNumber);
         }
+        saveInRedisCache(ctcApplications.get(0));
         return ctcApplications.get(0);
     }
 
     private void enrichFileStoreIdFromCaseBundles(CtcApplication ctcApplication, String docId, Document document,RequestInfo requestInfo) {
 
-        // Build id -> SelectedCaseBundleNode map from selectedCaseBundle for O(1) update
-        Map<String, SelectedCaseBundleNode> selectedNodeMap = buildSelectedNodeMap(ctcApplication.getSelectedCaseBundle());
-        SelectedCaseBundleNode targetNode = selectedNodeMap.get(docId);
+        // Build id -> CaseBundleNode map from selectedCaseBundle for O(1) update
+        Map<String, CaseBundleNode> selectedNodeMap = buildSelectedNodeMap(ctcApplication.getSelectedCaseBundle());
+        CaseBundleNode targetNode = selectedNodeMap.get(docId);
 
         if (targetNode != null) {
-            targetNode.setFileStoreId(document.getFileStore());
+            targetNode.setIssuedFileStoreId(document.getFileStore());
             log.info("Enriched fileStoreId for doc {} in application {}", docId, ctcApplication.getCtcApplicationNumber());
         }
     }
@@ -327,15 +328,15 @@ public class CtcApplicationService {
         return map;
     }
 
-    private Map<String, SelectedCaseBundleNode> buildSelectedNodeMap(List<SelectedCaseBundleNode> selectedCaseBundle) {
-        Map<String, SelectedCaseBundleNode> map = new HashMap<>();
+    private Map<String, CaseBundleNode> buildSelectedNodeMap(List<CaseBundleNode> selectedCaseBundle) {
+        Map<String, CaseBundleNode> map = new HashMap<>();
         if (selectedCaseBundle == null) return map;
-        for (SelectedCaseBundleNode parentNode : selectedCaseBundle) {
+        for (CaseBundleNode parentNode : selectedCaseBundle) {
             if (parentNode.getId() != null) {
                 map.put(parentNode.getId(), parentNode);
             }
             if (parentNode.getChildren() != null) {
-                for (SelectedCaseBundleNode child : parentNode.getChildren()) {
+                for (CaseBundleNode child : parentNode.getChildren()) {
                     if (child.getId() != null) {
                         map.put(child.getId(), child);
                     }
@@ -522,17 +523,28 @@ public class CtcApplicationService {
         List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
         Map<String, DocsToSignCriteria> criteriaMap = new HashMap<>();
 
+        Map<String , String> ctcApplicationNumberToSealedTemplateFileStoreId = new HashMap<>();
+        request.getCriteria().forEach(criterion -> {
+            ctcApplicationNumberToSealedTemplateFileStoreId.put(criterion.getCtcApplicationNumber(), null);
+        });
+
         request.getCriteria().forEach(criterion -> {
 
-            CtcApplication ctcApplication = searchRedisCache(criterion.getCtcApplicationNumber());
-            if (ctcApplication == null) {
-                ctcApplication = fetchCtcApplicationByNumber(criterion.getCtcApplicationNumber());
+            String sealedTemplateFileStoreId =null;
+            if(ctcApplicationNumberToSealedTemplateFileStoreId.get(criterion.getCtcApplicationNumber())!=null){
+                sealedTemplateFileStoreId = ctcApplicationNumberToSealedTemplateFileStoreId.get(criterion.getCtcApplicationNumber());
+            }else {
+                CtcApplication ctcApplication = searchRedisCache(criterion.getCtcApplicationNumber());
+                if (ctcApplication == null) {
+                    ctcApplication = fetchCtcApplicationByNumber(criterion.getCtcApplicationNumber());
+                    saveInRedisCache(ctcApplication);
+                }
+                sealedTemplateFileStoreId = egovPdfUtil.getSealedTemplateFileStoreId(request.getRequestInfo(), ctcApplication);
+                ctcApplicationNumberToSealedTemplateFileStoreId.put(criterion.getCtcApplicationNumber(), sealedTemplateFileStoreId);
             }
+            log.info("sealedTemplateFileStoreId for docId {} in application {}", criterion.getDocId(), criterion.getCtcApplicationNumber());
 
-            String sealedTemplateFileStoreId = egovPdfUtil.getSealedTemplateFileStoreId(request.getRequestInfo(), ctcApplication);
-            log.info("sealedTemplateFileStoreId for docId {} in application {}", criterion.getDocId(), ctcApplication.getCtcApplicationNumber());
-
-            String mergedFileStoreId = fileStoreUtil.mergeFiles(sealedTemplateFileStoreId, criterion.getFileStoreId(), ctcApplication.getTenantId());
+            String mergedFileStoreId = fileStoreUtil.mergeFiles(sealedTemplateFileStoreId, criterion.getFileStoreId(), criterion.getTenantId());
 
             log.info("mergedFileStoreId {}", mergedFileStoreId);
 

@@ -26,6 +26,9 @@ public class DocsToSignCriteria {
     @JsonProperty("filingNumber")
     private String filingNumber;
 
+    @JsonProperty("courtId")
+    private String courtId;
+
     @JsonProperty("placeholder")
     private String placeholder;
 

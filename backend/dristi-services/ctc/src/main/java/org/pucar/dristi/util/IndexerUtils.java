@@ -191,7 +191,7 @@ public class IndexerUtils {
             }
 
             if (application.getSelectedCaseBundle() != null) {
-                for (SelectedCaseBundleNode node : application.getSelectedCaseBundle()) {
+                for (CaseBundleNode node : application.getSelectedCaseBundle()) {
                     collectDocuments(node, application, currentTime, documents, fileStoreIdMap);
                 }
             }
@@ -221,7 +221,7 @@ public class IndexerUtils {
         }
     }
 
-    private void collectDocuments(SelectedCaseBundleNode node, CtcApplication application,
+    private void collectDocuments(CaseBundleNode node, CtcApplication application,
                                   Long currentTime, List<IssueCtcDocument> documents,
                                   Map<String, String> fileStoreIdMap) {
         if (node == null) return;
@@ -251,7 +251,7 @@ public class IndexerUtils {
         }
 
         if (node.getChildren() != null) {
-            for (SelectedCaseBundleNode child : node.getChildren()) {
+            for (CaseBundleNode child : node.getChildren()) {
                 collectDocuments(child, application, currentTime, documents, fileStoreIdMap);
             }
         }

@@ -72,7 +72,7 @@ public class CtcApplication {
     private List<Document> documents;
 
     @JsonProperty("selectedCaseBundle")
-    private List<SelectedCaseBundleNode> selectedCaseBundle = new ArrayList<>();
+    private List<CaseBundleNode> selectedCaseBundle = new ArrayList<>();
 
     @JsonProperty("caseBundles")
     private List<CaseBundleNode> caseBundles = new ArrayList<>();
