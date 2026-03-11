@@ -31,7 +31,9 @@ export const Urls = {
   FileFetchById: "/filestore/v1/files/id",
   bulkAcceptCTCApplication: "/ctc/applications/_review",
   searchCTCApplication: "/ctc/applications/_search",
-  issueDocument: "/ctc/applications/documents/issue-reject"
+  issueDocument: "/ctc/applications/documents/issue-reject",
+  _getDocForSignCTCApplication: "/ctc/applications/documents/_getDocsToSign",
+  updateSignDocsForCTCApplication: "/ctc/applications/documents/_updateSignedDocs",
 };
 export const HomeService = {
   InboxSearch: (data, params) =>
@@ -222,7 +224,7 @@ export const HomeService = {
       data,
       params,
     }),
-  searchCTCApplication: (data, params) => 
+  searchCTCApplication: (data, params) =>
     Request({
       url: Urls.searchCTCApplication,
       useCache: false,
@@ -230,12 +232,28 @@ export const HomeService = {
       data,
       params,
     }),
-    updateCTCDocs: (data, params) =>
-      Request({
-        url: Urls.issueDocument,
-        useCache: false,
-        userService: true,
-        data,
-        params,
-      }),
+  updateCTCDocs: (data, params) =>
+    Request({
+      url: Urls.issueDocument,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  _getDocsForCTCApplication: (data, params) =>
+    Request({
+      url: Urls._getDocForSignCTCApplication,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedDocCTCApplication: (data, params) =>
+    Request({
+      url: Urls.updateSignDocsForCTCApplication,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
 };

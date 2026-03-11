@@ -654,6 +654,7 @@ export const UICustomizations = {
         }),
         ...(searchForm?.documentType?.code && searchForm.documentType.code !== "ALL" && { documentType: searchForm.documentType.code }),
         ...(courtId && { courtId }),
+        status: "PENDING"
       };
 
       return {
@@ -726,6 +727,7 @@ export const UICustomizations = {
         tenantId,
         ...(searchForm?.caseSearchText && { searchableFields: searchForm.caseSearchText }),
         ...(courtId && { courtId }),
+        status: "PENDING_APPROVAL"
       };
 
       return {

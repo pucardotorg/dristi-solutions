@@ -8,6 +8,14 @@ import AddSignatureCTCModal from "../../components/AddSignatureCTCModal";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { HomeService } from "../../hooks/services";
+import qs from "qs";
+
+const parseXml = (xmlString, tagName) => {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+  const element = xmlDoc.getElementsByTagName(tagName)[0];
+  return element ? element.textContent.trim() : null;
+};
 
 const sectionsParentStyle = {
   height: "50%",
@@ -285,8 +293,109 @@ const BulkIssueCTC = () => {
     };
   }, [config]);
 
-  const handleBulkIssue = () => {
-    // todo: new api will be given
+  const fetchResponseFromXmlRequest = async (docRequestList) => {
+    const responses = [];
+    const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
+
+    const requests = docRequestList?.map(async (docRequest) => {
+      try {
+        const formData = qs.stringify({ response: docRequest?.request });
+        const response = await axiosInstance.post(bulkSignUrl, formData, {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+          },
+        });
+
+        const data = response?.data;
+        const status = parseXml(data, "status");
+
+        if (status !== "failed") {
+          responses.push({
+            docId: docRequest?.docId,
+            signedDocData: parseXml(data, "data"),
+            signed: true,
+            tenantId: tenantId,
+            ctcApplicationNumber: docRequest?.ctcApplicationNumber,
+            filingNumber: docRequest?.filingNumber,
+            courtId: docRequest?.courtId || window.localStorage.getItem("courtId"),
+            errorMsg: null,
+          });
+        } else {
+          responses.push({
+            docId: docRequest?.docId,
+            signedDocData: parseXml(data, "data"),
+            signed: false,
+            tenantId: tenantId,
+            ctcApplicationNumber: docRequest?.ctcApplicationNumber,
+            filingNumber: docRequest?.filingNumber,
+            courtId: docRequest?.courtId || window.localStorage.getItem("courtId"),
+            errorMsg: parseXml(data, "error"),
+          });
+        }
+      } catch (error) {
+        console.error(`Error fetching document ${docRequest?.docId}:`, error?.message);
+      }
+    });
+
+    await Promise.allSettled(requests);
+    return responses;
+  };
+
+  const handleBulkIssue = async () => {
+    const selectedDocuments = bulkIssueList?.filter((data) => data?.isSelected);
+    if (!selectedDocuments || selectedDocuments.length === 0) {
+      setShowErrorToast({ label: t("PLEASE_SELECT_AT_LEAST_ONE_RECORD"), error: true });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const criteriaList = selectedDocuments?.map((row) => ({
+        fileStoreId: row?.businessObject?.fileStoreId || row?.affidavitDocument?.fileStore || row?.documents?.[0]?.fileStore || "",
+        docId: row?.businessObject?.docId || "",
+        ctcApplicationNumber: row?.businessObject?.ctcApplicationNumber || "",
+        filingNumber: row?.businessObject?.filingNumber || "",
+        placeholder: "Signature",
+        tenantId: tenantId
+      }));
+
+      const getDocsResponse = await HomeService._getDocsForCTCApplication({
+        criteria: criteriaList
+      }, { tenantId });
+
+      const requestList = getDocsResponse?.docList || [];
+
+      if (!requestList || requestList.length === 0) {
+        throw new Error(t("NO_XML_REQUESTS_RECEIVED"));
+      }
+
+      const signedResponses = await fetchResponseFromXmlRequest(requestList);
+
+      if (signedResponses.length === 0 || signedResponses.every(res => !res.signed)) {
+        setShowErrorToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
+        setIsLoading(false);
+        return;
+      }
+
+      const updateResponse = await HomeService.updateSignedDocCTCApplication({
+        signedDocs: signedResponses
+      }, { tenantId });
+
+      if (updateResponse?.ResponseInfo?.status === "SUCCESSFUL" || updateResponse?.ResponseInfo?.status === "successful") {
+        showToast({ isError: false, message: "DOCUMENT_ISSUED_SUCCESSFULLY" });
+      } else {
+        showToast({ isError: false, message: "DOCUMENT_ISSUED_SUCCESSFULLY" });
+      }
+
+      if (document.querySelector(".search-button-wrapper button")) {
+        document.querySelector(".search-button-wrapper button").click();
+      }
+    } catch (e) {
+      console.error("Failed to perform bulk sign", e?.message || e);
+      setShowErrorToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleIssueDocuments = async () => {
@@ -308,6 +417,7 @@ const BulkIssueCTC = () => {
         courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId") || "KLKM52",
         action: "ISSUE",
         docs: [docsDetails],
+        status: "PENDING"
       };
 
       await HomeService.updateCTCDocs(payload, { tenantId });
