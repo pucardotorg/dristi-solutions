@@ -53,4 +53,13 @@ public class IssueCtcDocument {
 
     @JsonProperty("issuedFileStoreId")
     private String issuedFileStoreId;
+
+    @JsonProperty("nameOfApplicant")
+    private String nameOfApplicant;
+
+    @JsonProperty("dateOfApplication")
+    private Long dateOfApplication;
+
+    @JsonProperty("dateOfApplicationApproval")
+    private Long dateOfApplicationApproval;
 }
