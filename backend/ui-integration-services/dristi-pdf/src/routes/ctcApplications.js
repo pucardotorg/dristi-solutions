@@ -8,7 +8,7 @@ const ctcApplications = require("../ctcApplicationsHandlers/ctcApplications");
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
   logger.error(
-    `${errorMessage}: ${errorObject ? errorObject.stack || errorObject : ""}`
+    `${errorMessage}: ${errorObject ? errorObject.stack || errorObject : ""}`,
   );
   res.status(errorCode).send({ errorMessage });
 }
@@ -16,46 +16,29 @@ function renderError(res, errorMessage, errorCode, errorObject) {
 router.post(
   "",
   asyncMiddleware(async function (req, res, next) {
-    const {
-      qrCode: qrCodeRaw,
-      tenantId,
-      courtId
-    } = req.query || {};
+    const { criteria } = req.body || {};
+    const { tenantId, courtId } = criteria;
 
-    let qrCode = qrCodeRaw;
     const requestInfo = req.body?.RequestInfo;
     const courtCaseJudgeDetails = await getCourtAndJudgeDetails(
       res,
       tenantId,
       "Judge",
       courtId,
-      requestInfo
+      requestInfo,
     );
-    // Set qrCode to false if it is undefined, null, or empty
-    if (!qrCode) {
-      qrCode = "false";
-    } else {
-      // Convert qrCode to lowercase
-      qrCode = qrCode.toString().toLowerCase();
-    }
-
 
     try {
-      await ctcApplications(
-        req,
-        res,
-        qrCode,
-        courtCaseJudgeDetails
-      );
+      await ctcApplications(req, res, courtCaseJudgeDetails);
     } catch (error) {
       renderError(
         res,
         "An error occurred while processing the request",
         500,
-        error
+        error,
       );
     }
-  })
+  }),
 );
 
 module.exports = router;
