@@ -112,6 +112,8 @@ export const chequeDetailsFormConfig = [
         populators: {
           name: "payeeBankName",
           error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
+          disable: "{{payeeIfscField.BankReadOnly}}",
+          isDependent: true,
         },
         isMandatory: true,
       },
@@ -125,6 +127,8 @@ export const chequeDetailsFormConfig = [
         populators: {
           name: "payeeBranchName",
           error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
+          disable: "{{payeeIfscField.BranchReadOnly}}",
+          isDependent: true,
         },
         isMandatory: true,
       },
@@ -206,6 +210,8 @@ export const chequeDetailsFormConfig = [
         populators: {
           name: "payerBankName",
           error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
+          disable: "{{payerIfscField.BankReadOnly}}",
+          isDependent: true,
         },
         isMandatory: true,
       },
@@ -219,6 +225,8 @@ export const chequeDetailsFormConfig = [
         populators: {
           name: "payerBranchName",
           error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
+          disable: "{{payerIfscField.BranchReadOnly}}",
+          isDependent: true,
         },
         isMandatory: true,
       },
