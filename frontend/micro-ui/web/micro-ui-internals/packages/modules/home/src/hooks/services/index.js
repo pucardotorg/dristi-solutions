@@ -28,6 +28,12 @@ export const Urls = {
   createTemplate: "/template-configuration/v1/create",
   searchTemplate: "/template-configuration/v1/search",
   searchTemplatePdf: "/egov-pdf/template-configuration",
+  FileFetchById: "/filestore/v1/files/id",
+  bulkAcceptCTCApplication: "/ctc/applications/_review",
+  searchCTCApplication: "/ctc/applications/_search",
+  issueDocument: "/ctc/applications/documents/issue-reject",
+  _getDocForSignCTCApplication: "/ctc/applications/documents/_getDocsToSign",
+  updateSignDocsForCTCApplication: "/ctc/applications/documents/_updateSignedDocs",
 };
 export const HomeService = {
   InboxSearch: (data, params) =>
@@ -205,6 +211,46 @@ export const HomeService = {
   searchTemplate: (data, params) =>
     Request({
       url: Urls.searchTemplate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateBulkCTCApplications: (data, params) =>
+    Request({
+      url: Urls.bulkAcceptCTCApplication,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  searchCTCApplication: (data, params) =>
+    Request({
+      url: Urls.searchCTCApplication,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateCTCDocs: (data, params) =>
+    Request({
+      url: Urls.issueDocument,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  _getDocsForCTCApplication: (data, params) =>
+    Request({
+      url: Urls._getDocForSignCTCApplication,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedDocCTCApplication: (data, params) =>
+    Request({
+      url: Urls.updateSignDocsForCTCApplication,
       useCache: false,
       userService: true,
       data,
