@@ -3,19 +3,20 @@ package org.egov.user.web.adapters.errors;
 import org.egov.common.contract.response.ErrorField;
 import org.egov.common.contract.response.ErrorResponse;
 import org.egov.user.domain.model.User;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+// FIX: Replacement for JUnit 4 Assertions
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class) // Replacement for @RunWith(MockitoJUnitRunner.class)
 public class UserRequestErrorAdapterTest {
 
     @Mock
@@ -23,7 +24,7 @@ public class UserRequestErrorAdapterTest {
 
     private UserRequestErrorAdapter errorAdapter;
 
-    @Before
+    @BeforeEach // Replacement for @Before
     public void before() {
         errorAdapter = new UserRequestErrorAdapter();
     }
@@ -106,5 +107,4 @@ public class UserRequestErrorAdapterTest {
         final List<ErrorField> errorFields = errorResponse.getError().getFields();
         assertEquals(0, errorFields.size());
     }
-
 }

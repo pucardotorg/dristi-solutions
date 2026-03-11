@@ -1,7 +1,7 @@
 package org.egov.user.web.controller;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -15,9 +15,9 @@ import org.egov.user.TestConfiguration;
 import org.egov.user.domain.model.NonLoggedInUserUpdatePasswordRequest;
 import org.egov.user.domain.service.UserService;
 import org.egov.user.security.CustomAuthenticationKeyGenerator;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -26,11 +26,11 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-@Ignore("Requires MDMS service configuration")
-@RunWith(SpringRunner.class)
+@Disabled("Requires MDMS service configuration")
+@ExtendWith(SpringExtension.class)
 @WebMvcTest(PasswordController.class)
 @Import(TestConfiguration.class)
 public class PasswordControllerTest {
@@ -49,7 +49,7 @@ public class PasswordControllerTest {
 
     @MockBean
     private CustomAuthenticationKeyGenerator authenticationKeyGenerator;
-    
+
     @MockBean
     private MultiStateInstanceUtil multiStateInstanceUtil;
 
@@ -62,30 +62,21 @@ public class PasswordControllerTest {
     @WithMockUser
     public void test_should_update_password_for_logged_in_user() throws Exception {
         mockMvc.perform(post("/password/_update")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(resources.getFileContents("loggedInUserUpdatePasswordRequest.json")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(resources.getFileContents("loggedInUserUpdatePasswordRequest.json")))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(resources.getFileContents("updatePasswordResponse.json")));
-
-//		final LoggedInUserUpdatePasswordRequest expectedRequest = LoggedInUserUpdatePasswordRequest.builder()
-//				.existingPassword("oldPassword")
-//				.newPassword("newPassword")
-//				.userName("greenfish424")
-//				.tenantId("foo")
-//				.build();
-//
-//		verify(userService).updatePasswordForLoggedInUser(expectedRequest);
     }
 
     @Test
     @WithMockUser
     public void test_should_update_password_for_non_logged_in_user() throws Exception {
         mockMvc.perform(post("/password/nologin/_update")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(resources.getFileContents("nonLoggedInUserUpdatePasswordRequest.json")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(resources.getFileContents("nonLoggedInUserUpdatePasswordRequest.json")))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(resources.getFileContents("updatePasswordResponse.json")));
 
         final NonLoggedInUserUpdatePasswordRequest expectedRequest = NonLoggedInUserUpdatePasswordRequest.builder()
@@ -97,5 +88,4 @@ public class PasswordControllerTest {
 
         verify(userService).updatePasswordForNonLoggedInUser(eq(expectedRequest), any(RequestInfo.class));
     }
-
 }
