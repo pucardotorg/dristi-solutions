@@ -346,6 +346,17 @@ const ManageOffice = () => {
     setShowRemoveMemberModal(true);
   };
 
+  const formatMobileForDisplay = (rawNumber) => {
+    if (!rawNumber) return "-";
+    const digits = String(rawNumber).replace(/\D/g, "");
+    if (!digits) return "-";
+    const last10 = digits.slice(-10);
+    if (last10.length !== 10) return rawNumber;
+    const first5 = last10.slice(0, 5);
+    const last5 = last10.slice(5);
+    return `+91 ${first5} ${last5}`;
+  };
+
   const handleCloseRemoveModal = () => {
     setShowRemoveMemberModal(false);
     setMemberToRemove(null);
@@ -475,7 +486,11 @@ const ManageOffice = () => {
                 >
                   {activeTab === "advocatesWorkingFor" ? member?.officeAdvocateName || member?.memberName : member?.memberName}
                 </span>
-                <span>{activeTab === "advocatesWorkingFor" ? member?.advocateOfficeMobileNumber || "-" : member?.memberMobileNumber || "-"}</span>
+                <span>
+                  {activeTab === "advocatesWorkingFor"
+                    ? formatMobileForDisplay(member?.advocateOfficeMobileNumber)
+                    : formatMobileForDisplay(member?.memberMobileNumber)}
+                </span>
                 {activeTab !== "advocatesWorkingFor" && (
                   <span>
                     {member?.memberType === "ADVOCATE_CLERK" ? "Clerk" : member?.memberType === "ADVOCATE" ? "Advocate" : member?.memberType}
