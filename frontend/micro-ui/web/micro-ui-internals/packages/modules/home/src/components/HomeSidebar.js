@@ -39,6 +39,7 @@ const HomeSidebar = ({
   const hasViewSignEvidenceAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_EVIDENCE"), [assignedRoles]);
   const hasViewSignADiaryAccess = useMemo(() => assignedRoles?.includes("DIARY_VIEWER"), [assignedRoles]);
   const hasViewSignFormsAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_FORMS"), [assignedRoles]);
+  const hasIssueCTCAccess = useMemo(() => assignedRoles?.includes("ISSUE_CERTIFIED_TRUE_COPY"), [assignedRoles]);
 
   return (
     <div className="home-sidebar">
@@ -113,7 +114,8 @@ const HomeSidebar = ({
         hasViewSignBailBondAccess ||
         hasViewSignWitnessDepositionAccess ||
         hasViewSignEvidenceAccess ||
-        hasViewSignADiaryAccess) && (
+        hasViewSignADiaryAccess ||
+        hasIssueCTCAccess) && (
         <HomeAccordian title={t("CS_HOME_SIGN")} defaultOpen>
           {hasViewSignFormsAccess && (
             <SidebarItem
@@ -195,6 +197,14 @@ const HomeSidebar = ({
           )}
           {hasViewSignADiaryAccess && (
             <SidebarItem t={t} label="CS_HOME_A_DAIRY" active={activeTab === "CS_HOME_A_DAIRY"} onClick={() => onTabChange("CS_HOME_A_DAIRY")} />
+          )}
+          {hasIssueCTCAccess && (
+            <SidebarItem
+              t={t}
+              label="CS_HOME_ISSUE_CTC_COPY"
+              active={activeTab === "CS_HOME_ISSUE_CTC_COPY"}
+              onClick={() => onTabChange("CS_HOME_ISSUE_CTC_COPY")}
+            />
           )}
         </HomeAccordian>
       )}

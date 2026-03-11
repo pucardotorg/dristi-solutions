@@ -1003,6 +1003,17 @@ export const getAllAssociatedPartyUuids = (caseDetails, ownerUuid) => {
   return [ownerUuid];
 };
 
+export const downloadPdfFromBlob = (blob, fileName) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", fileName || "document.pdf");
+  document.body.appendChild(link);
+  link.click();
+  link.parentNode.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
 export const DateUtils = {
   IST_OFFSET: 5.5 * 60 * 60 * 1000,
   IST_TIMEZONE: "Asia/Kolkata",

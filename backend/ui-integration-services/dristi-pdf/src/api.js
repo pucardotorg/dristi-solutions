@@ -657,6 +657,37 @@ async function search_templateConfiguration(
   }
 }
 
+async function search_ctc_applications(
+  tenantId,
+  requestinfo,
+  criteria,
+  pagination,
+) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(
+        config.host.ctcApplications,
+        config.paths.ctc_applications_search,
+      ),
+      data: {
+        RequestInfo: requestinfo,
+        criteria,
+        tenantId,
+        pagination,
+      },
+    });
+  } catch (error) {
+    logger.error(
+      `Status: ${error.response?.status}`,
+      `Data: ${error.response?.data}`,
+      `Message: ${error.message}`,
+      `Error in ${config.paths.ctc_applications_search}: ${error.message}`,
+    );
+    throw error;
+  }
+}
+
 module.exports = {
   pool,
   create_pdf,
@@ -690,4 +721,5 @@ module.exports = {
   search_task_mangement,
   search_digitalizedDocuments,
   search_templateConfiguration,
+  search_ctc_applications,
 };
