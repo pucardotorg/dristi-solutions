@@ -69,6 +69,7 @@ const IssueCTCModal = ({ rowData, setShowModal, handleIssue }) => {
         setShowModal(false);
       }}
       className={"ctc-review-modal"}
+      popupStyles={{ borderRadius: "4px" }}
     >
       <div
         className="review-submission-appl-body-main"
@@ -105,16 +106,15 @@ const IssueCTCModal = ({ rowData, setShowModal, handleIssue }) => {
 
         {/* Document Preview Area */}
         <div
-          className="application-view"
-          style={{ minHeight: "350px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}
+          style={{ overflowY: "scroll" }}
         >
           {DocViewerWrapper && rowData?.businessObject?.downloadedDocument ? (
             <DocViewerWrapper
               key={rowData?.businessObject?.ctcApplicationNumber}
               selectedDocs={[rowData.businessObject.downloadedDocument]}
               tenantId={tenantId}
-              docWidth="100%"
-              docHeight="400px"
+              docWidth={"100%"}
+              docHeight={"100%"}
               showDownloadOption={false}
               displayFilename={rowData?.businessObject?.fileName || rowData?.businessObject?.documentTitle}
             />

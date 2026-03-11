@@ -1189,7 +1189,7 @@ const EvidenceModal = ({
           formId="modal-action"
           headerBarMain={
             <Heading
-              label={t("DOCUMENT_SUBMISSION")}
+              label={modalType === "CTC_APPLICATIONS" ? t("REVIEW_APPLICATION") : t("DOCUMENT_SUBMISSION")}
               status={
                 modalType === "Documents"
                   ? documentSubmission?.[0]?.artifactList?.isEvidence

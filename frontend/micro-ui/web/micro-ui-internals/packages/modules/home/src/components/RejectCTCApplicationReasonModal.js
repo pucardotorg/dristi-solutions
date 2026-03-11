@@ -30,12 +30,12 @@ function RejectCTCApplicationReasonModal({ t, onGoBack, onReject, reason, setRea
       actionSaveOnSubmit={() => onReject(reason)}
       isDisabled={!reason?.trim() || isDisabled}
       popupStyles={{ borderRadius: "4px" }}
-      style={{ backgroundColor: "#BB2C2F" }}
+      style={{ backgroundColor: "#DC2626", border: "none" }}
     >
       <div style={{ padding: "10px 0px" }}>
         <h3 style={{ margin: "10px 0px 6px 0px" }}>
           {t("REASON_FOR_REJECTION")}
-          <span style={{ color: "#BB2C2F", marginLeft: "2px" }}>*</span>
+          <span style={{ color: "#DC2626", marginLeft: "2px" }}>*</span>
         </h3>
         <TextArea
           style={{ marginTop: "0px", height: "120px" }}

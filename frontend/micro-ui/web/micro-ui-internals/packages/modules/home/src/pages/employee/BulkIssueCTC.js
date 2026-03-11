@@ -38,6 +38,7 @@ const BulkIssueCTC = () => {
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [signedDocumentUploadId, setSignedDocumentUploadID] = useState("");
   const [showErrorToast, setShowErrorToast] = useState(null);
+  const courtId = localStorage.getItem("courtId");
 
   const handleUpdateApplication = (applicationData, checked) => {
     setBulkIssueList((prev) => {
@@ -317,7 +318,7 @@ const BulkIssueCTC = () => {
             tenantId: tenantId,
             ctcApplicationNumber: docRequest?.ctcApplicationNumber,
             filingNumber: docRequest?.filingNumber,
-            courtId: docRequest?.courtId || window.localStorage.getItem("courtId"),
+            courtId: docRequest?.courtId || courtId,
             errorMsg: null,
           });
         } else {
@@ -328,7 +329,7 @@ const BulkIssueCTC = () => {
             tenantId: tenantId,
             ctcApplicationNumber: docRequest?.ctcApplicationNumber,
             filingNumber: docRequest?.filingNumber,
-            courtId: docRequest?.courtId || window.localStorage.getItem("courtId"),
+            courtId: docRequest?.courtId || courtId,
             errorMsg: parseXml(data, "error"),
           });
         }
@@ -355,6 +356,7 @@ const BulkIssueCTC = () => {
         docId: row?.businessObject?.docId || "",
         ctcApplicationNumber: row?.businessObject?.ctcApplicationNumber || "",
         filingNumber: row?.businessObject?.filingNumber || "",
+        courtId: courtId,
         placeholder: "Signature",
         tenantId: tenantId
       }));
@@ -382,9 +384,7 @@ const BulkIssueCTC = () => {
       }, { tenantId });
 
       if (updateResponse?.ResponseInfo?.status === "SUCCESSFUL" || updateResponse?.ResponseInfo?.status === "successful") {
-        showToast({ isError: false, message: "DOCUMENT_ISSUED_SUCCESSFULLY" });
-      } else {
-        showToast({ isError: false, message: "DOCUMENT_ISSUED_SUCCESSFULLY" });
+        showToast({ isError: false, message: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY" });
       }
 
       if (document.querySelector(".search-button-wrapper button")) {
@@ -424,7 +424,7 @@ const BulkIssueCTC = () => {
       sessionStorage.removeItem("fileStoreId");
       setShowSignatureModal(false);
       setSelectedRowData(null);
-      showToast({ isError: false, message: "DOCUMENT_ISSUED_SUCCESSFULLY" });
+      showToast({ isError: false, message: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY" });
 
       // Optionally trigger search refetch here if configured
       if (document.querySelector(".search-button-wrapper button")) {
