@@ -44,7 +44,8 @@ public class AdvocateDetailBlockBuilder {
                 int idx = 0;
                 for (Party litigant : courtCase.getLitigants()) {
                     if (litigant == null) continue;
-                    if (litigant.getPartyType() != null && litigant.getPartyType().equalsIgnoreCase("complainant.primary")) {
+                    // Build a block for every complainant (primary or additional)
+                    if (litigant.getPartyType() != null && litigant.getPartyType().toLowerCase().startsWith("complainant")) {
                         Complainant complainant = Complainant.builder()
                                 .index(idx++)
                                 .individualId(litigant.getIndividualId())
