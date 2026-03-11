@@ -3274,7 +3274,7 @@ export const updateCaseDetails = async ({
                 (detail) =>
                   detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal === allAdvocateSearchData?.advocates?.[i]?.barRegistrationNumber
               );
-              debugger;
+
               advocateDetails.push({
                 advocate: {
                   ...allAdvocateSearchData?.advocates?.[i]?.responseList?.[0],
