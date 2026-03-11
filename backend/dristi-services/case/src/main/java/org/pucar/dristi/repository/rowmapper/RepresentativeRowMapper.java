@@ -108,36 +108,6 @@ public class RepresentativeRowMapper implements ResultSetExtractor<Map<UUID, Lis
                     } catch (Exception ignored) {}
 
                     advocateMapping.setAdvocate(advocate);
-                } else {
-                    // No joined advocate row; try to build Advocate from representative.additionalDetails
-                    try {
-                        if (advocateMapping.getAdditionalDetails() != null) {
-                            com.fasterxml.jackson.databind.JsonNode repNode = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), com.fasterxml.jackson.databind.JsonNode.class);
-                            Advocate advocate = Advocate.builder().build();
-
-                            // Prefer explicit advocateUuid; fall back to legacy uuid
-                            if (repNode.has("advocateUuid") && !repNode.get("advocateUuid").isNull()) {
-                                try { advocate.setAdvocateUuid(UUID.fromString(repNode.get("advocateUuid").asText())); } catch (Exception ignored) {}
-                            }
-                            if (advocate.getAdvocateUuid() == null && repNode.has("uuid") && !repNode.get("uuid").isNull()) {
-                                try { advocate.setAdvocateUuid(UUID.fromString(repNode.get("uuid").asText())); } catch (Exception ignored) {}
-                            }
-
-                            if (repNode.has("firstName")) advocate.setFirstName(repNode.get("firstName").asText());
-                            if (repNode.has("middleName")) advocate.setMiddleName(repNode.get("middleName").asText());
-                            if (repNode.has("lastName")) advocate.setLastName(repNode.get("lastName").asText());
-                            if (repNode.has("mobileNumber")) advocate.setMobileNumber(repNode.get("mobileNumber").asText());
-
-                            // Only set if we actually populated something meaningful
-                            if (advocate.getAdvocateUuid() != null
-                                    || advocate.getFirstName() != null
-                                    || advocate.getMiddleName() != null
-                                    || advocate.getLastName() != null
-                                    || advocate.getMobileNumber() != null) {
-                                advocateMapping.setAdvocate(advocate);
-                            }
-                        }
-                    } catch (Exception ignored) { }
                 }
 
                 if (advocateMap.containsKey(uuid)) {
