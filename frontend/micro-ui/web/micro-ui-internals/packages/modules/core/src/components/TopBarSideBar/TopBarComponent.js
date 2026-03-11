@@ -77,7 +77,11 @@ const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelec
     [onSelect, selected?.id]
   );
 
-  const buttonLabel = selected?.advocateName ? `Adv. ${t(selected.advocateName)}'s Profile` : t("SELECT_ADVOCATE");
+  const MAX_NAME_LENGTH = 18;
+  const fullName = selected?.advocateName ? t(selected.advocateName) : "";
+  const truncatedName =
+    fullName && fullName.length > MAX_NAME_LENGTH ? `${fullName.slice(0, MAX_NAME_LENGTH).trimEnd()}...` : fullName;
+  const buttonLabel = selected?.advocateName ? `Adv. ${truncatedName}'s Profile` : t("SELECT_ADVOCATE");
 
   return (
     <div className="advocate-profile-dropdown" ref={wrapperRef}>
@@ -466,7 +470,7 @@ const TopBarComponent = ({
 
         <div className="RightMostTopBarOptions">
           {/* Manage Office button & Advocate profile dropdown - only visible for advocates / clerks */}
-          {(isAdvocate || isAdvocateClerk) && (
+          {(isAdvocate || (isAdvocateClerk && advocateDropdownOptions?.length > 0)) && (
             <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
               <AdvocateProfileDropdown
                 t={t}

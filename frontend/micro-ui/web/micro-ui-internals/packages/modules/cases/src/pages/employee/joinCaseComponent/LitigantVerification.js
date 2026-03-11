@@ -181,13 +181,17 @@ const LitigantVerification = ({
       const hasRequiredVakalatnamaDocs = litigant?.noOfAdvocates > 0 && litigant?.vakalatnama?.document?.length > 0;
 
       return (
+        litigant?.fatherName &&
         litigant?.phoneNumberVerification?.isUserVerified === true &&
         (isNewVakalatnama ? hasRequiredVakalatnamaDocs : litigant?.isVakalatnamaNew?.code === "NO")
       );
     });
 
     const isValidWithPOA = litigants?.every(
-      (litigant) => litigant?.phoneNumberVerification?.isUserVerified === true && litigant?.poaAuthorizationDocument?.poaDocument?.length > 0
+      (litigant) =>
+        litigant?.fatherName &&
+        litigant?.phoneNumberVerification?.isUserVerified === true &&
+        litigant?.poaAuthorizationDocument?.poaDocument?.length > 0
     );
 
     const shouldDisable = !poa ? !isValidWithoutPOA : !isValidWithPOA;
