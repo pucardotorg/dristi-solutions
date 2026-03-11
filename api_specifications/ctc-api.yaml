@@ -160,6 +160,54 @@ paths:
               schema:
                 $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
 
+  /applications/documents/_getDocsToSign:
+    post:
+      tags: [CTC Applications]
+      summary: Prepare merged CTC documents for eSign flow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocsToSignRequest'
+      responses:
+        '200':
+          description: Documents prepared for signing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocsToSignResponse'
+        '400':
+          description: Failed to prepare documents for signing
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /applications/documents/_updateSignedDocs:
+    post:
+      tags: [CTC Applications]
+      summary: Upload signed copies and mark documents as issued
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSignedDocsRequest'
+      responses:
+        '200':
+          description: Signed documents processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateSignedDocsResponse'
+        '400':
+          description: Failed to update signed documents
+          content:
+            application/json:
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
 components:
 
   schemas:
@@ -525,6 +573,102 @@ components:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
         validateUserInfo:
           $ref: '#/components/schemas/ValidateUserInfo'
+
+    DocsToSignRequest:
+      type: object
+      required: [RequestInfo, criteria]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocsToSignCriteria'
+
+    DocsToSignCriteria:
+      type: object
+      required: [fileStoreId, docId, ctcApplicationNumber, filingNumber, placeholder, tenantId]
+      properties:
+        fileStoreId:
+          type: string
+          description: Original file store id of the document to be sealed and signed
+        docId:
+          type: string
+          description: Document identifier in CTC issue flow
+        ctcApplicationNumber:
+          type: string
+          description: CTC application number for the document
+        filingNumber:
+          type: string
+          description: Filing number mapped to the application
+        placeholder:
+          type: string
+          description: Placeholder text used by eSign coordinate service
+        tenantId:
+          type: string
+          description: Tenant id of the document
+
+    DocsToSignResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        docList:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocToSign'
+
+    DocToSign:
+      type: object
+      properties:
+        docId:
+          type: string
+        ctcApplicationNumber:
+          type: string
+        filingNumber:
+          type: string
+        request:
+          type: string
+          description: Generated XML request payload for eSign
+
+    UpdateSignedDocsRequest:
+      type: object
+      required: [RequestInfo, signedDocs]
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        signedDocs:
+          type: array
+          items:
+            $ref: '#/components/schemas/SignedDoc'
+
+    SignedDoc:
+      type: object
+      required: [docId, signedDocData, signed]
+      properties:
+        docId:
+          type: string
+        signedDocData:
+          type: string
+          description: Base64 encoded signed PDF data
+        signed:
+          type: boolean
+        tenantId:
+          type: string
+        ctcApplicationNumber:
+          type: string
+        filingNumber:
+          type: string
+        courtId:
+          type: string
+        errorMsg:
+          type: string
+
+    UpdateSignedDocsResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
 
     ValidateUserInfo:
       type: object

@@ -1,12 +1,11 @@
 [
+
   {
     "id": "d378dd98-830a-4eb4-96f0-7aff04a0db1c",
     "tenantId": "kl",
     "schemaCode": "INBOX.InboxQueryConfiguration",
     "uniqueIdentifier": "issue-ctc-documents",
     "data": {
-      "index": "issue-ctc-documents",
-      "module": "CTC Issue Doc",
       "sortBy": {
         "path": "Data.lastModifiedTime",
         "defaultOrder": "DESC"
@@ -30,17 +29,25 @@
           "name": "courtId",
           "path": "Data.courtId.keyword",
           "isMandatory": false
+        },
+        {
+          "name": "status",
+          "path": "Data.status.keyword",
+          "isMandatory": false
         }
-      ]
+      ],
+      "index": "issue-ctc-documents",
+      "module": "CTC Issue Doc"
     },
     "isActive": true,
     "auditDetails": {
       "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
       "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
       "createdTime": 1773122801047,
-      "lastModifiedTime": 1773122801047
+      "lastModifiedTime": 1773194144580
     }
   },
+
   {
     "id": "3cf0b0a4-aed2-415b-8a24-d61fb05a248b",
     "tenantId": "kl",
