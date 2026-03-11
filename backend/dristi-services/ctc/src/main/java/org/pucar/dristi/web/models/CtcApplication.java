@@ -83,6 +83,9 @@ public class CtcApplication {
     @JsonProperty("status")
     private String status;
 
+    @JsonProperty("dateOfApplicationApproval")
+    private Long dateOfApplicationApproval;
+
     @JsonProperty("judgeComments")
     private String judgeComments;
 

@@ -189,7 +189,7 @@ class IndexerUtilsTest {
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn("{\"updated\":1}");
 
-        indexerUtils.updateTrackerStatus("CA-001", "APPROVED");
+        indexerUtils.updateTrackerStatus("CA-001", "APPROVED",null);
 
         verify(restTemplate).postForObject(
                 eq("http://localhost:9200/ctc-application-tracker/_update_by_query"),
@@ -202,7 +202,7 @@ class IndexerUtilsTest {
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new RuntimeException("ES down"));
 
-        assertThrows(CustomException.class, () -> indexerUtils.updateTrackerStatus("CA-001", "REJECTED"));
+        assertThrows(CustomException.class, () -> indexerUtils.updateTrackerStatus("CA-001", "REJECTED",null));
     }
 
     // ---- pushCtcApplicationTracker tests ----

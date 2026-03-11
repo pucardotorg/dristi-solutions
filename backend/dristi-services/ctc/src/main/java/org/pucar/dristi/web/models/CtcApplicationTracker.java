@@ -32,6 +32,9 @@ public class CtcApplicationTracker {
     @JsonProperty("status")
     private String status;
 
+    @JsonProperty("dateOfApplicationApproval")
+    private Long dateOfApplicationApproval;
+
     @JsonProperty("dateRaised")
     private Long dateRaised;
 
