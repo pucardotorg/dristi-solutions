@@ -67,7 +67,10 @@ public class IndexerUtils {
                 doc.getFilingNumber(),
                 doc.getCourtId(),
                 doc.getTenantId(),
-                doc.getFileStoreId()
+                doc.getFileStoreId(),
+                doc.getNameOfApplicant(),
+                doc.getDateOfApplication(),
+                doc.getDateOfApplicationApproval()
         );
     }
 
@@ -248,6 +251,9 @@ public class IndexerUtils {
                     .courtId(application.getCourtId())
                     .tenantId(application.getTenantId())
                     .fileStoreId(fileStoreId)
+                    .nameOfApplicant(application.getApplicantName())
+                    .dateOfApplication(application.getAuditDetails().getCreatedTime())
+                    .dateOfApplicationApproval(application.getDateOfApplicationApproval())
                     .build();
             documents.add(doc);
         }
