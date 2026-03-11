@@ -306,6 +306,7 @@ public class CtcApplicationService {
 
         if (targetNode != null) {
             targetNode.setIssuedFileStoreId(document.getFileStore());
+            targetNode.setStatus("ACCEPTED");
             log.info("Enriched fileStoreId for doc {} in application {}", docId, ctcApplication.getCtcApplicationNumber());
         }
     }
@@ -420,6 +421,9 @@ public class CtcApplicationService {
             }
             if ("REJECTED".equalsIgnoreCase(ctcApplication.getStatus())) {
                 indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "REJECTED");
+                ctcApplication.getSelectedCaseBundle().forEach(node -> {
+                    node.setStatus("REJECTED");
+                });
             }
 
             // Persist the updated application
