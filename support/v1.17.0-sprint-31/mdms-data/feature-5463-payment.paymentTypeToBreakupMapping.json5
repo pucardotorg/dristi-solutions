@@ -5,8 +5,12 @@
   "data": {
     "breakUpList": [
       {
-        "breakUpCode": "CTC_APPLICATION_FEE",
-        "breakUpName": "Ctc Application Fee"
+        "breakUpCode": "APPLICATION_FEE",
+        "breakUpName": "Application Fees"
+      },
+      {
+        "breakUpCode": "COPYING_FEE",
+        "breakUpName": "Copying Fees"
       }
     ],
     "paymentType": "30"

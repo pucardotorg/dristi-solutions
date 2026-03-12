@@ -181,7 +181,7 @@ public class OpenApiCaseSummaryQueryBuilder {
 
     public String getCaseSearchByTextQuery(CaseSearchTextRequest request, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         StringBuilder query = new StringBuilder(
-                "SELECT cases.cmpnumber, cases.filingnumber, cases.courtcasenumber, cases.cnrNumber " +
+                "SELECT cases.cmpnumber, cases.filingnumber, cases.courtcasenumber, cases.cnrNumber , cases.caseTitle " +
                 "FROM dristi_cases cases WHERE cases.tenantId = ? and cases.courtId = ?"
         );
         preparedStmtList.add(request.getTenantId());
