@@ -26,6 +26,8 @@ import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
 import TemplateOrConfigurationPage from "./TemplateOrConfigurationPage";
+import CTCApplications from "./CTCApplications";
+import BulkIssueCTC from "./BulkIssueCTC";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -110,6 +112,7 @@ const MainHomeScreen = () => {
   const hasCaseReviewerAccess = useMemo(() => assignedRoles?.includes("CASE_REVIEWER"), [assignedRoles]);
   const hasViewProcessManagementAccess = useMemo(() => assignedRoles?.includes("VIEW_PROCESS_MANAGEMENT"), [assignedRoles]);
   const hasViewReschedulingRequestAccess = useMemo(() => assignedRoles?.includes("VIEW_RESCHEDULING_REQUESTS"), [assignedRoles]);
+  const hasViewCTCApplicationAccess = useMemo(() => assignedRoles?.includes("CERTIFIED_TRUE_COPY_APPLICATION"), [assignedRoles]);
 
   const today = new Date();
 
@@ -883,6 +886,9 @@ const MainHomeScreen = () => {
   if (hasViewCollectOfflinePaymentsAccess) {
     options.OFFLINE_PAYMENTS = { name: "HOME_OFFLINE_PAYMENTS" };
   }
+  if (hasViewCTCApplicationAccess) {
+    options.CTC_APPLICATIONS = { name: "HOME_CTC_APPLICATIONS" };
+  }
 
   // VIEW_APPLICATION: {
   //   name: "View Applications",
@@ -1245,6 +1251,14 @@ const MainHomeScreen = () => {
         ) : activeTab === "CS_HOME_SIGN_FORMS" ? (
           <div className="home-bulk-sign">
             <BulkSignDigitalizationView />
+          </div>
+        ) : activeTab === "CTC_APPLICATIONS" ? (
+          <div className="home-bulk-sign">
+            <CTCApplications />
+          </div>
+        ) : activeTab === "CS_HOME_ISSUE_CTC_COPY" ? (
+          <div className="home-bulk-sign">
+            <BulkIssueCTC />
           </div>
         ) : (
           <div className={`bulk-esign-order-view`}>

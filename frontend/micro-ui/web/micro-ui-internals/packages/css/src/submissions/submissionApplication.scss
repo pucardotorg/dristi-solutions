@@ -549,7 +549,8 @@
 
 .bail-signature-modal {
   width: 638px;
-  height: 230px;
+  min-height: 230px;
+  height: auto;
   border-radius: 4px;
 
   .popup-module-main {

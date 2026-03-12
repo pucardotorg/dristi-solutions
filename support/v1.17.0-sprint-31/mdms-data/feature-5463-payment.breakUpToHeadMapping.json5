@@ -1,0 +1,15 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "payment.breakUpToHeadMapping",
+  "uniqueIdentifier": "CTC_APPLICATION_FEE",
+  "data": {
+    "headCodes": [
+      {
+        "headId": "00027",
+        "percentage": 100
+      }
+    ],
+    "breakUpCode": "CTC_APPLICATION_FEE"
+  },
+  "isActive": true
+}

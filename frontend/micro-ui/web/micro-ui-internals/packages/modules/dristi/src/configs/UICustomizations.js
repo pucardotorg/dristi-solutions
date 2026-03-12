@@ -1545,6 +1545,8 @@ export const UICustomizations = {
             ? t(row?.status)
             : ["poa.regular"].includes(row?.partyType)
             ? t("JOINED")
+            : row?.status
+            ? t(row.status)
             : "";
 
           return caseJoinStatus ? <span style={{ backgroundColor: "#E8E8E8", padding: "6px", borderRadius: "14px" }}>{caseJoinStatus}</span> : null;

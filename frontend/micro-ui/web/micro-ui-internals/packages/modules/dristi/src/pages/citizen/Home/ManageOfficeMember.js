@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 import { InboxSearchComposer, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import { InfoCircleIcon, AdvocateProfileChevronIcon } from "../../../icons/svgIndex";
+import { InfoCircleIcon, AdvocateProfileChevronIcon, ManageOfficeCloseIcon } from "../../../icons/svgIndex";
 import { assignCasesConfig } from "./assignCasesConfig";
 
 const sectionsParentStyle = {
@@ -646,7 +646,7 @@ const ManageOfficeMember = () => {
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">{t("REMOVE_MEMBER") || "Remove Member"}</h2>
               <button onClick={handleCloseRemoveModal} className="manage-office-modal__close">
-                ×
+                <ManageOfficeCloseIcon />
               </button>
             </div>
 
@@ -681,7 +681,7 @@ const ManageOfficeMember = () => {
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">{t("SAVE_CHANGES") || "Save Changes"}</h2>
               <button onClick={handleCloseUpdateAccessModal} className="manage-office-modal__close">
-                ×
+                <ManageOfficeCloseIcon />
               </button>
             </div>
 
