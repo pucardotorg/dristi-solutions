@@ -3280,6 +3280,7 @@ export const updateCaseDetails = async ({
                   middleName: advInFormData?.advocateNameDetails?.middleName,
                   lastName: advInFormData?.advocateNameDetails?.lastName,
                   mobileNumber: advInFormData?.advocateNameDetails?.advocateMobileNumber,
+                  advocateIdProof: advInFormData?.advocateNameDetails?.advocateIdProof,
                 },
                 complainant: {
                   individualId: data?.data?.multipleAdvocatesAndPip?.boxComplainant?.individualId,
@@ -3359,17 +3360,19 @@ export const updateCaseDetails = async ({
         tenantId,
         caseId: caseDetails?.id,
         advocateId: data?.advocate?.id,
-        documents: [
-          {
-            ...data?.advocate?.advocateIdProof?.[0],
-            documentType: documentsTypeMapping["advocateIdProof"],
-            additionalDetails: {
-              name: data?.advocate?.advocateIdProof?.[0]?.name,
-              documentName: data?.advocate?.advocateIdProof?.[0]?.documentName,
-              fileName: data?.advocate?.advocateIdProof?.[0]?.fileName,
+        ...(data?.advocate?.advocateIdProof?.length > 0 && {
+          documents: [
+            {
+              ...data?.advocate?.advocateIdProof?.[0],
+              documentType: documentsTypeMapping["advocateIdProof"],
+              additionalDetails: {
+                name: data?.advocate?.advocateIdProof?.[0]?.name,
+                documentName: data?.advocate?.advocateIdProof?.[0]?.documentName,
+                fileName: data?.advocate?.advocateIdProof?.[0]?.fileName,
+              },
             },
-          },
-        ],
+          ],
+        }),
         additionalDetails: {
           advocateName: data?.advocate?.additionalDetails?.username,
           uuid: data?.advocate?.auditDetails?.createdBy,
@@ -3401,10 +3404,14 @@ export const updateCaseDetails = async ({
           //then we just take that object (because it contains id for that representing) and put it in place of newer one.
           newRepresenting.forEach((obj) => {
             const objFound = existingRepresenting.find((o) => o.individualId === obj.individualId);
+
             if (objFound) {
-              updateRepresenting.push(objFound);
-            }
-            if (!objFound) {
+              updateRepresenting.push({
+                ...objFound,
+                ...obj,
+                documents: obj.documents || objFound.documents,
+              });
+            } else {
               updateRepresenting.push(obj);
             }
           });
@@ -3422,6 +3429,32 @@ export const updateCaseDetails = async ({
         }
         if (!isEqual(existingRep.additionalDetails, rep.additionalDetails)) {
           existingRep.additionalDetails = rep.additionalDetails;
+        }
+        if (!isEqual(existingRep.documents, rep.documents)) {
+          const existingDocs = structuredClone(existingRep.documents || []);
+          const newDocs = structuredClone(rep.documents || []);
+
+          const updatedDocs = [];
+
+          newDocs.forEach((doc) => {
+            const found = existingDocs.find((d) => d.documentUid === doc.documentUid);
+
+            if (found) {
+              updatedDocs.push({ ...found, ...doc });
+            } else {
+              updatedDocs.push(doc);
+            }
+          });
+
+          // mark removed docs inactive
+          existingDocs.forEach((doc) => {
+            const exists = updatedDocs.find((d) => d.documentUid === doc.documentUid);
+            if (!exists) {
+              updatedDocs.push({ ...doc, isActive: false });
+            }
+          });
+
+          existingRep.documents = updatedDocs;
         }
         return existingRep;
       }
@@ -3457,6 +3490,15 @@ export const updateCaseDetails = async ({
 
     data.litigants = [...updatedCaseLitigants];
     data.representatives = [...updatedRepresentatives];
+    if (isSaveDraftEnabled) {
+      data.additionalDetails = {
+        ...caseDetails.additionalDetails,
+        advocateDetails: {
+          formdata: newFormData,
+          isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.additionalDetails?.[selected]?.isCompleted : isCompleted,
+        },
+      };
+    }
   }
   if (selected === "processCourierService") {
     data.additionalDetails = {
