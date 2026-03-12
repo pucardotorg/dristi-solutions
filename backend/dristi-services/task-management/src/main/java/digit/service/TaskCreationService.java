@@ -140,7 +140,7 @@ public class TaskCreationService {
                             .build());
                     createdTasks++;
                     log.info("Successfully created task {} of {} for {} party", createdTasks, taskDetailsList.size(), partyType);
-                    createPendingTaskForRPAD(taskResponse.getTask(), requestInfo);
+                    createPendingTaskForRPAD(taskResponse.getTask(), requestInfo, order);
                 } catch (Exception e) {
                     log.error("Error creating task {} for {} party: {}", createdTasks + 1, partyType, e.getMessage(), e);
                     // Continue with next task
@@ -392,6 +392,39 @@ public class TaskCreationService {
             }
         }
         return null;
+    }
+
+    private List<String> getPartyListForSummonsOrder(Order order){
+        List<String> partyTypeList = new ArrayList<>();
+        List<Object> parties = jsonUtil.getNestedValue(
+                order.getAdditionalDetails(),
+                Arrays.asList("formdata", "SummonsOrder", "party"),
+                List.class
+        );
+
+        if (parties != null) {
+            for (Object obj : parties) {
+                if (obj instanceof Map<?, ?> partyMap) {
+                    Object dataObj = partyMap.get("data");
+                    if (dataObj instanceof Map<?, ?> dataMap) {
+                        if(dataMap.get("ownerType") != null){
+                            // ACCUSED, COMPLAINANT, - (Court Witness)
+                            String ownerType = String.valueOf(dataMap.get("ownerType"));
+                            if(ACCUSED.equalsIgnoreCase(ownerType)){
+                                partyTypeList.add("respondent");
+                            }
+                            else if(COMPLAINANT.equalsIgnoreCase(ownerType)){
+                                partyTypeList.add("complainant");
+                            }
+                            else{
+                                partyTypeList.add(ownerType);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return partyTypeList;
     }
 
     private String extractNoticeTypeFromCompositeItems(Order order, String itemId) {
@@ -1001,16 +1034,16 @@ public class TaskCreationService {
         }
     }
 
-    public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {
+    public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo, Order order) {
         if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
                 || task.getTaskType().equalsIgnoreCase(NOTICE) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT)) && (isRPADdeliveryChannel(task))) {
             log.info("Creating pending task for envelope submission");
-            createPendingTaskForEnvelope(task, requestInfo);
+            createPendingTaskForEnvelope(task, requestInfo, order);
             log.info("Successfully created pending task for envelope submission");
         }
     }
 
-    private void createPendingTaskForEnvelope(Task task, RequestInfo requestInfo) {
+    private void createPendingTaskForEnvelope(Task task, RequestInfo requestInfo, Order order) {
 
         try {
             TaskRequest taskRequest = TaskRequest.builder()
@@ -1028,22 +1061,36 @@ public class TaskCreationService {
             Map<String, List<String>> advocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
             Map<String, List<POAHolder>> poaMapping = caseUtil.getLitigantPoaMapping(courtCase);
 
-            List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, "complainant");
-            List<String> assigneeUUIDs = collectAssigneeUUIDs(complainants, advocateMapping, poaMapping);
+            List<String> partyList = new ArrayList<>();
+            if(NOTICE.equalsIgnoreCase(order.getOrderType())){
+                partyList = Collections.singletonList("complainant");
+            }
+            else if(SUMMONS.equalsIgnoreCase(order.getOrderType())){
+                partyList = getPartyListForSummonsOrder(order);
+            }
 
-            List<User> uniqueAssignees = assigneeUUIDs.stream()
-                    .distinct()
-                    .map(uuid -> User.builder().uuid(uuid).build())
-                    .collect(Collectors.toList());
+            for(String party: partyList){
+                if(COURT_WITNESS.equalsIgnoreCase(party)){
+                    // Pending task need not be created
+                    continue;
+                }
+                List<Party> parties = caseUtil.getRespondentOrComplainant(courtCase, party);
+                List<String> assigneeUUIDs = collectAssigneeUUIDs(parties, advocateMapping, poaMapping);
 
-            PendingTask pendingTask = buildPendingTask(task, courtCase, uniqueAssignees);
-            pendingTaskUtil.createPendingTask(
-                    PendingTaskRequest.builder()
-                            .requestInfo(requestInfo)
-                            .pendingTask(pendingTask)
-                            .build()
-            );
-            callNotificationServiceForRPADSubmission(requestInfo, courtCase, assigneeUUIDs);
+                List<User> uniqueAssignees = assigneeUUIDs.stream()
+                        .distinct()
+                        .map(uuid -> User.builder().uuid(uuid).build())
+                        .collect(Collectors.toList());
+
+                PendingTask pendingTask = buildPendingTask(task, courtCase, uniqueAssignees);
+                pendingTaskUtil.createPendingTask(
+                        PendingTaskRequest.builder()
+                                .requestInfo(requestInfo)
+                                .pendingTask(pendingTask)
+                                .build()
+                );
+                callNotificationServiceForRPADSubmission(requestInfo, courtCase, assigneeUUIDs);
+            }
         } catch (Exception e) {
             log.error("Error while creating pending task for envelope submission", e);
             throw new CustomException("CREATE_PENDING_TASK_ERROR", "Error while creating pending task for envelope submission");

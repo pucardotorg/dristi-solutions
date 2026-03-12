@@ -50,6 +50,8 @@ public class ServiceConstants {
 
     public static final String WITNESS ="WITNESS";
     public static final String ACCUSED = "ACCUSED";
+    public static final String COMPLAINANT = "COMPLAINANT";
+    public static final String COURT_WITNESS = "-";
     public static final String INDIVIDUAL = "INDIVIDUAL";
     public static final String COMPLAINANT_PRIMARY = "complainant.primary";
     public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
