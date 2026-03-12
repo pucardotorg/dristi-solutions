@@ -302,9 +302,9 @@ public class CtcApplicationService {
                     log.error("Error processing issue/reject for document {}", item);
                 }
             }
-        }  catch (CustomException e) {
+        } catch (CustomException e) {
             throw e;
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error processing bulk issue/reject for documents", e);
             throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
                     "Error processing bulk issue/reject: " + e.getMessage());
@@ -468,11 +468,11 @@ public class CtcApplicationService {
             Long date = System.currentTimeMillis();
             if (PENDING_ISSUE.equalsIgnoreCase(ctcApplication.getStatus())) {
                 indexerUtils.pushIssueCtcDocumentsToIndex(ctcApplication);
-                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "APPROVED",date);
+                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "APPROVED", date);
                 ctcApplication.setDateOfApplicationApproval(date);
             }
             if ("REJECTED".equalsIgnoreCase(ctcApplication.getStatus())) {
-                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "REJECTED",null);
+                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "REJECTED", null);
                 ctcApplication.getSelectedCaseBundle().forEach(node -> {
                     node.setStatus("REJECTED");
                 });
@@ -550,21 +550,11 @@ public class CtcApplicationService {
         List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
         Map<String, DocsToSignCriteria> criteriaMap = new HashMap<>();
 
-        Map<String, String> ctcApplicationNumberToSealedTemplateFileStoreId = new HashMap<>();
-        request.getCriteria().forEach(criterion -> {
-            ctcApplicationNumberToSealedTemplateFileStoreId.put(criterion.getCtcApplicationNumber(), null);
-        });
-
         request.getCriteria().forEach(criterion -> {
 
             String sealedTemplateFileStoreId = null;
-            if (ctcApplicationNumberToSealedTemplateFileStoreId.get(criterion.getCtcApplicationNumber()) != null) {
-                sealedTemplateFileStoreId = ctcApplicationNumberToSealedTemplateFileStoreId.get(criterion.getCtcApplicationNumber());
-            } else {
-                CtcApplication ctcApplication = fetchCtcApplication(criterion.getCtcApplicationNumber(), criterion.getFilingNumber(), criterion.getCourtId());
-                sealedTemplateFileStoreId = egovPdfUtil.getSealedTemplateFileStoreId(request.getRequestInfo(), ctcApplication);
-                ctcApplicationNumberToSealedTemplateFileStoreId.put(criterion.getCtcApplicationNumber(), sealedTemplateFileStoreId);
-            }
+            CtcApplication ctcApplication = fetchCtcApplication(criterion.getCtcApplicationNumber(), criterion.getFilingNumber(), criterion.getCourtId());
+            sealedTemplateFileStoreId = egovPdfUtil.getSealedTemplateFileStoreId(request.getRequestInfo(), ctcApplication, criterion.getDocTitle());
             log.info("sealedTemplateFileStoreId for docId {} in application {}", criterion.getDocId(), criterion.getCtcApplicationNumber());
 
             String mergedFileStoreId = fileStoreUtil.mergeFiles(sealedTemplateFileStoreId, criterion.getFileStoreId(), criterion.getTenantId());
@@ -651,14 +641,14 @@ public class CtcApplicationService {
                                 .build();
 
                         docs.add(DocumentActionItem.builder()
-                                        .docId(docId)
-                                        .documents(List.of(document))
-                                        .ctcApplicationNumber(ctcApplicationNumber)
-                                        .filingNumber(filingNumber)
-                                        .build());
+                                .docId(docId)
+                                .documents(List.of(document))
+                                .ctcApplicationNumber(ctcApplicationNumber)
+                                .filingNumber(filingNumber)
+                                .build());
 
-                    }  catch (Exception e) {
-                        log.error("Error while updating CTC docId {}, ctcApplicationNumber: {}", docId,ctcApplicationNumber);
+                    } catch (Exception e) {
+                        log.error("Error while updating CTC docId {}, ctcApplicationNumber: {}", docId, ctcApplicationNumber);
                     }
                 }
             }

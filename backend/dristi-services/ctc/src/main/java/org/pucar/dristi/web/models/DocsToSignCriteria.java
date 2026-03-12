@@ -20,6 +20,9 @@ public class DocsToSignCriteria {
     @JsonProperty("docId")
     private String docId;
 
+    @JsonProperty("docTitle")
+    private String docTitle;
+
     @JsonProperty("ctcApplicationNumber")
     private String ctcApplicationNumber;
 
