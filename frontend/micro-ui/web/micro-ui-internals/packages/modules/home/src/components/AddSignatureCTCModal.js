@@ -114,7 +114,7 @@ const AddSignatureCTCModal = ({
         } else {
           sessionStorage.setItem("ctcSignState", JSON.stringify(selectedRowData));
           sessionStorage.setItem("docPdf", uploadedFileStoreId);
-          handleEsign(name, pageModule, uploadedFileStoreId, "Signature");
+          handleEsign(name, pageModule, uploadedFileStoreId, "Certification Signature");
         }
       } catch (error) {
         console.error("Failed to upload document for e-sign", error);

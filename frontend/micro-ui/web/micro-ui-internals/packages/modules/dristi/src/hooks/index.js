@@ -79,7 +79,6 @@ export const Urls = {
     submissionsUpdate: "/application/v1/update",
     addSubmissionComment: "/application/v1/addcomment",
     addEvidenceComment: "/evidence/v1/addcomment",
-    addCTCComment: "/ctc/v1/addcomment",
     pendingTask: "/analytics/pending_task/v1/create",
     getPendingTaskFields: "/inbox/v2/_getFields",
     applicationCreate: "/application/v1/create",
