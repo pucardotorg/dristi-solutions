@@ -170,11 +170,17 @@
       margin: 0px;
       padding: 16px;
       .selector-button-primary {
-        background-color: #ffffff;
+        background-color: #007e7e !important;
         border: 1px #007e7e solid !important;
-        background-color: #007e7e;
         h2 {
-          color: white;
+          color: #ffffff !important;
+        }
+      }
+      .selector-button-border {
+        background-color: #ffffff;
+        border: 1px #bb2c2f solid !important;
+        h2 {
+          color: #bb2c2f !important;
         }
       }
     }
