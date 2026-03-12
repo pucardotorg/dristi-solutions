@@ -399,6 +399,7 @@ public class CaseService {
                 }
                 if (courtCase != null) {
                     log.info("CourtCase found in Redis cache for caseId: {}", criteria.getCaseId());
+                    caseRepository.refreshRepresentativeData(courtCase);
                     criteria.setResponseList(Collections.singletonList(courtCase));
                     caseCriteriaInRedis.add(criteria);
                 } else {

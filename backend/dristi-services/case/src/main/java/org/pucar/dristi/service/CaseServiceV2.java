@@ -65,6 +65,8 @@ public class CaseServiceV2 {
                 if(courtCase!=null) {
                     log.info("CourtCase found in Redis cache for caseId: {}", criteria.getCaseId());
 
+                    caseRepository.refreshRepresentativeData(courtCase);
+
                     validateIfUserPartOfCase(caseSearchRequests, courtCase);
                     return encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
                 } else {
