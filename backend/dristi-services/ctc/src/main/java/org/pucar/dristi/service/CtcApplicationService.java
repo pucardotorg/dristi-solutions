@@ -123,7 +123,7 @@ public class CtcApplicationService {
                     totalPages, acceptedFileStoreIds.size(), request.getCtcApplication().getCtcApplicationNumber());
 
             Double applicationFees = config.getApplicationFees();
-            Double copyingFees = request.getCtcApplication().getTotalPages() * 1.5;
+            Double copyingFees = Math.ceil(request.getCtcApplication().getTotalPages() * 1.5);
             Double totalAmount = applicationFees + copyingFees;
 
             Calculation calculation = Calculation.builder()
