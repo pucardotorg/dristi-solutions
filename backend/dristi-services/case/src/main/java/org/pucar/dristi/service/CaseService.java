@@ -531,7 +531,7 @@ public class CaseService {
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
             //todo: enhance for files delete
-            removeInactiveDocuments(documentToDelete);
+            removeInactiveDocuments(documentToDelete, caseRequest.getCases().getTenantId());
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
             //to prevent from double encryption
@@ -810,16 +810,45 @@ public class CaseService {
         }
     }
 
-    private void removeInactiveDocuments(List<Document> documentsToDelete) {
-        List<String> fileStoreIds = new ArrayList<>();
-        for (Document document : documentsToDelete) {
-            if (!document.getIsActive()) {
-                fileStoreIds.add(document.getFileStore());
-            }
+    private void removeInactiveDocuments(List<Document> documentsToDelete, String tenantId) {
+        if (documentsToDelete == null || documentsToDelete.isEmpty()) {
+            return;
         }
+
+        if (tenantId == null || tenantId.isBlank()) {
+            log.warn("Skipping file deletion because tenantId is null/blank for documents: {}",
+                    documentsToDelete.stream()
+                            .map(Document::getFileStore)
+                            .filter(Objects::nonNull)
+                            .toList());
+            return;
+        }
+
+        List<String> fileStoreIds = documentsToDelete.stream()
+                .filter(Objects::nonNull)
+                .filter(document -> Boolean.FALSE.equals(document.getIsActive()))
+                .map(Document::getFileStore)
+                .filter(Objects::nonNull)
+                .filter(fileStoreId -> !fileStoreId.isBlank())
+                .distinct()
+                .filter(fileStoreId -> {
+                    try {
+                        boolean exists = fileStoreUtil.doesFileExist(tenantId, fileStoreId);
+                        if (!exists) {
+                            log.warn("Skipping filestore delete for missing fileStoreId={} tenantId={}", fileStoreId, tenantId);
+                        }
+                        return exists;
+                    } catch (Exception e) {
+                        log.warn("Skipping filestore delete for fileStoreId={} tenantId={} due to existence check failure: {}",
+                                fileStoreId, tenantId, e.getMessage());
+                        return false;
+                    }
+                })
+                .toList();
+
         if (!fileStoreIds.isEmpty()) {
-            fileStoreUtil.deleteFilesByFileStore(fileStoreIds, config.getTenantId());
-            log.info("Deleted files for case with ids: {}", fileStoreIds);
+            fileStoreUtil.deleteFilesByFileStore(fileStoreIds, tenantId);
+            log.info("Deleted files for case with ids: {} tenantId={}", fileStoreIds, tenantId);
         }
     }
 

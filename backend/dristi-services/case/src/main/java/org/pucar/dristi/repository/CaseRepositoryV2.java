@@ -202,6 +202,31 @@ public class CaseRepositoryV2 {
         }
     }
 
+    public void refreshRepresentativeData(CourtCase courtCase) {
+        if (courtCase == null || courtCase.getId() == null) {
+            return;
+        }
+
+        List<String> ids = Collections.singletonList(String.valueOf(courtCase.getId()));
+        List<String> idsRepresentative = new ArrayList<>();
+        List<String> idsRepresenting = new ArrayList<>();
+        List<Object> preparedStmtListDoc = new ArrayList<>();
+
+        setRepresentatives(courtCase, ids);
+        setAdvocateOffices(courtCase, ids);
+        extractRepresentativeIds(courtCase, idsRepresentative);
+
+        if (!idsRepresentative.isEmpty()) {
+            setRepresenting(courtCase, idsRepresentative, preparedStmtListDoc);
+            extractRepresentingIds(courtCase, idsRepresenting);
+            setRepresentativeDocuments(courtCase, idsRepresentative);
+        }
+
+        if (!idsRepresenting.isEmpty()) {
+            setRepresentingDocuments(courtCase, idsRepresenting);
+        }
+    }
+
     private void enrichCaseSummary(CaseSummarySearch caseSummarySearch) {
         List<String> ids = Collections.singletonList(String.valueOf(caseSummarySearch.getId()));
         List<String> idsLitigant = new ArrayList<>();
