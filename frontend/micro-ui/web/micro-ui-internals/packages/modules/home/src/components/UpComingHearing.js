@@ -198,7 +198,7 @@ const UpcomingHearings = ({ t, userInfoType, advocateId, individualData, selecte
     reqBodyMonthly,
     { applicationNumber: "", cnrNumber: "", tenantId },
     `monthly-${dateRange.start}-${dateRange.end}`,
-    Boolean(dateRange.start && dateRange.end && (individualUserType === "citizen" ? individualId && advocateId : false)), // monthly hearing count is calculated for advocate screen only.
+    Boolean(dateRange.start && dateRange.end && individualId),
     false,
     individualUserType === "citizen" && individualId
   );
@@ -329,7 +329,7 @@ const UpcomingHearings = ({ t, userInfoType, advocateId, individualData, selecte
             <Button className={"view-hearing-button"} label={t("VIEW_HEARINGS")} variation={"primary"} onClick={props.handleNavigate} />
           </React.Fragment>
         </div>
-        {ongoingMonthHearingCount > 0 && userInfoType === "citizen" && advocateId && (
+        {ongoingMonthHearingCount > 0 && userInfoType === "citizen" && (
           <div className="ongoing-month-hearing">
             <p>
               {t("YOU_HAVE_TEXT")} <span>{`${ongoingMonthHearingCount} ${t("UPCOMING_HEARINGS_TEXT")}`}</span> {t("THIS_MONTH_TEXT")}

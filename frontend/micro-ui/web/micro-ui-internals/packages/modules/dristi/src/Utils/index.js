@@ -857,6 +857,7 @@ export const getClerkMembersForPartiesTab = (data) => {
         partyType: "CLERK",
         isEditable: false,
         status: "JOINED",
+        auditDetails: { createdTime: clerk.auditDetails?.lastModifiedTime },
       }));
 
       return memberClerks;
@@ -875,6 +876,7 @@ export const getClerkMembersForPartiesTab = (data) => {
             partyType: clerk.partyType,
             isEditable: clerk.isEditable,
             status: clerk.status,
+            auditDetails: clerk.auditDetails,
           });
         } else {
           const existing = map.get(clerk.partyUuid);
@@ -898,14 +900,15 @@ export const getAssistantAdvocateMembersForPartiesTab = (data) => {
     advocateOffices?.flatMap((rep) => {
       const officeAdvocateUuid = rep?.officeAdvocateUserUuid;
       const officeAdvocateName = rep?.officeAdvocateName;
-      const memberAdvocates = (rep?.advocates || []).map((clerk) => ({
-        name: clerk?.memberName,
-        partyUuid: clerk?.memberUserUuid,
+      const memberAdvocates = (rep?.advocates || []).map((assistantAdvocate) => ({
+        name: assistantAdvocate?.memberName,
+        partyUuid: assistantAdvocate?.memberUserUuid,
         officeAdvocateUuid: officeAdvocateUuid,
         officeAdvocateName: officeAdvocateName,
         partyType: "ASSISTANT_ADVOCATE",
         isEditable: false,
         status: "JOINED",
+        auditDetails: { createdTime: assistantAdvocate?.auditDetails?.lastModifiedTime },
       }));
 
       return memberAdvocates;
@@ -924,6 +927,7 @@ export const getAssistantAdvocateMembersForPartiesTab = (data) => {
             partyType: assistantAdvocate.partyType,
             isEditable: assistantAdvocate.isEditable,
             status: assistantAdvocate.status,
+            auditDetails: assistantAdvocate.auditDetails,
           });
         } else {
           const existing = map.get(assistantAdvocate.partyUuid);

@@ -53,7 +53,10 @@ public class ServiceConstants {
                     + "\"filingNumber\": \"%s\","
                     + "\"courtId\": \"%s\","
                     + "\"tenantId\": \"%s\","
-                    + "\"fileStoreId\": \"%s\""
+                    + "\"fileStoreId\": \"%s\","
+                    + "\"nameOfApplicant\": \"%s\","
+                    + "\"dateOfApplication\": %d,"
+                    + "\"dateOfApplicationApproval\": %d"
                     + "}}\n";
     public static final String ES_UPDATE_BY_QUERY_STATUS =
             "{\"query\":{\"bool\":{\"must\":[{\"term\":{\"Data.docId.keyword\":\"%s\"}},{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}}]}},"
