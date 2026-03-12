@@ -31,10 +31,12 @@ public class EgovPdfUtil {
         this.objectMapper = objectMapper;
     }
 
-    public String getSealedTemplateFileStoreId(RequestInfo requestInfo, CtcApplication ctcApplication) {
+    public String getSealedTemplateFileStoreId(RequestInfo requestInfo, CtcApplication ctcApplication, String docTitle) {
         String tenantId = ctcApplication.getTenantId();
         String courtId = ctcApplication.getCourtId();
         String filingNumber = ctcApplication.getFilingNumber();
+        String caseNumber = ctcApplication.getCaseNumber();
+        String applicantName = ctcApplication.getApplicantName();
         String ctcApplicationNumber = ctcApplication.getCtcApplicationNumber();
         Long dateOfApplication = ctcApplication.getAuditDetails().getCreatedTime();
         Long dateOfApplicationApproval = ctcApplication.getDateOfApplicationApproval();
@@ -50,12 +52,12 @@ public class EgovPdfUtil {
                     .append("&courtId=").append(courtId);
 
             Map<String, Object> criteria = new LinkedHashMap<>();
-            criteria.put("tenantId", tenantId);
-            criteria.put("courtId", courtId);
-            criteria.put("filingNumber", filingNumber);
             criteria.put("ctcApplicationNumber", ctcApplicationNumber);
             criteria.put("dateOfApplication", dateOfApplication);
             criteria.put("dateOfApplicationApproval", dateOfApplicationApproval);
+            criteria.put("caseNumber", caseNumber);
+            criteria.put("nameOfApplicant", applicantName);
+            criteria.put("requestedDocName", docTitle);
 
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("RequestInfo", requestInfo);
