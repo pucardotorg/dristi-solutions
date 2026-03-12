@@ -267,7 +267,7 @@ public class Configuration {
 	private String taskManagementSearchEndpoint;
 
 	// CTC application config
-	@Value("${dristi.ctc-application.host}")
+	@Value("${dristi.ctc.host}")
 	private String ctcApplicationServiceHost;
 
 	@Value("${dristi.ctc-application.search.endpoint}")

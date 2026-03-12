@@ -122,12 +122,14 @@ public class CtcApplicationService {
             log.info("Calculated totalPages={} from {} accepted documents for application: {}",
                     totalPages, acceptedFileStoreIds.size(), request.getCtcApplication().getCtcApplicationNumber());
 
-            Double totalAmount = 20 + request.getCtcApplication().getTotalPages() * 1.5;
+            Double applicationFees = config.getApplicationFees();
+            Double copyingFees = request.getCtcApplication().getTotalPages() * 1.5;
+            Double totalAmount = applicationFees + copyingFees;
 
             Calculation calculation = Calculation.builder()
                     .totalAmount(totalAmount)
                     .tenantId(request.getCtcApplication().getTenantId())
-                    .breakDown(getBreakDown(totalAmount))
+                    .breakDown(getBreakDown(applicationFees, copyingFees))
                     .build();
             etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + CTC_APPLICATION_FEE, calculation);
         }
@@ -574,14 +576,20 @@ public class CtcApplicationService {
         return application;
     }
 
-    private List<BreakDown> getBreakDown(Double totalAmount) {
-        BreakDown breakDown = new BreakDown();
-        breakDown.setCode(config.getBreakDownCode());
-        breakDown.setType(config.getBreakDownType());
-        breakDown.setAmount(totalAmount);
+    private List<BreakDown> getBreakDown(Double applicationFees, Double copyingFees) {
+        BreakDown applicationFeeBreakDown = new BreakDown();
+        applicationFeeBreakDown.setCode(APPLICATION_FEE);
+        applicationFeeBreakDown.setType(APPLICATION_FEE_BREAKDOWN_TYPE);
+        applicationFeeBreakDown.setAmount(applicationFees);
+
+        BreakDown copyingFeeBreakDown = new BreakDown();
+        copyingFeeBreakDown.setCode(COPYING_FEE);
+        copyingFeeBreakDown.setType(COPYING_FEE_BREAKDOWN_TYPE);
+        copyingFeeBreakDown.setAmount(copyingFees);
 
         List<BreakDown> breakDownList = new ArrayList<>();
-        breakDownList.add(breakDown);
+        breakDownList.add(applicationFeeBreakDown);
+        breakDownList.add(copyingFeeBreakDown);
         return breakDownList;
     }
 

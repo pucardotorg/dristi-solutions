@@ -167,4 +167,12 @@ public class ServiceConstants {
     public static final String FILE_STORE_SERVICE_EXCEPTION_CODE = "FILE_STORE_SERVICE_EXCEPTION_CODE";
     public static final String FILE_STORE_SERVICE_EXCEPTION_MESSAGE = "Error occurred while accessing file store";
 
+    public static final String APPLICATION_FEE = "APPLICATION_FEE";
+
+    public static final String COPYING_FEE = "COPYING_FEE";
+
+    public static final String APPLICATION_FEE_BREAKDOWN_TYPE = "Application Fees";
+
+    public static final String COPYING_FEE_BREAKDOWN_TYPE = "Copying Fees";
+
 }
