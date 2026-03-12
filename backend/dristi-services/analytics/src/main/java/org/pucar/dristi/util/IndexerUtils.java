@@ -20,6 +20,7 @@ import org.pucar.dristi.service.SmsNotificationService;
 import org.pucar.dristi.service.UserService;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.casemodels.CaseAdvocateOffice;
+import org.pucar.dristi.web.models.taskManagement.Pagination;
 import org.pucar.dristi.web.models.taskManagement.TaskManagement;
 import org.pucar.dristi.web.models.taskManagement.TaskSearchCriteria;
 import org.pucar.dristi.web.models.taskManagement.TaskSearchRequest;
@@ -1047,6 +1048,7 @@ public class IndexerUtils {
         org.pucar.dristi.web.models.ctcApplication.CtcApplicationSearchRequest searchRequest = org.pucar.dristi.web.models.ctcApplication.CtcApplicationSearchRequest
                 .builder()
                 .requestInfo(requestInfo)
+                .pagination(Pagination.builder().limit(1.0).offSet(0.0).build())
                 .criteria(searchCriteria)
                 .build();
         List<org.pucar.dristi.web.models.ctcApplication.CtcApplication> ctcApplicationList = ctcApplicationUtil
