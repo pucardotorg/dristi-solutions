@@ -101,4 +101,70 @@ class AdvocateDetailBlockBuilderTest {
         assertEquals(1, secondBlock.getDocuments().getVakalatnama().size());
         assertEquals("uid-2", secondBlock.getDocuments().getVakalatnama().get(0).getDocumentUid());
     }
+
+    @Test
+    void shouldDeduplicateVakalatnamaWhenTwoAdvocatesRepresentSameComplainant() {
+        Party complainant = Party.builder()
+                .id(UUID.randomUUID())
+                .caseId("case-1")
+                .individualId("IND-1")
+                .partyType("complainant.primary")
+                .isActive(true)
+                .additionalDetails(Map.of("firstName", "Baburao", "fullName", "Baburao"))
+                .build();
+
+        Document sharedVakalatnama = Document.builder()
+                .id("doc-1")
+                .documentType(VAKALATNAMA_DOC)
+                .fileStore("store-1")
+                .documentUid("uid-1")
+                .build();
+
+        Party representedByAdvocateOne = Party.builder()
+                .id(UUID.randomUUID())
+                .individualId("IND-1")
+                .partyType("complainant.primary")
+                .isActive(true)
+                .documents(List.of(sharedVakalatnama))
+                .build();
+
+        Party representedByAdvocateTwo = Party.builder()
+                .id(UUID.randomUUID())
+                .individualId("IND-1")
+                .partyType("complainant.primary")
+                .isActive(true)
+                .documents(List.of(sharedVakalatnama))
+                .build();
+
+        AdvocateMapping representativeOne = AdvocateMapping.builder()
+                .id(UUID.randomUUID().toString())
+                .caseId("case-1")
+                .isActive(true)
+                .representing(List.of(representedByAdvocateOne))
+                .build();
+
+        AdvocateMapping representativeTwo = AdvocateMapping.builder()
+                .id(UUID.randomUUID().toString())
+                .caseId("case-1")
+                .isActive(true)
+                .representing(List.of(representedByAdvocateTwo))
+                .build();
+
+        CourtCase courtCase = CourtCase.builder()
+                .id(UUID.randomUUID())
+                .tenantId("kl")
+                .litigants(List.of(complainant))
+                .representatives(List.of(representativeOne, representativeTwo))
+                .documents(List.of(sharedVakalatnama))
+                .build();
+
+        builder.buildAndSet(courtCase);
+
+        List<AdvocateDetailBlock> blocks = courtCase.getAdvocateDetailBlock();
+        assertNotNull(blocks);
+        assertEquals(1, blocks.size());
+        assertEquals(1, blocks.get(0).getDocuments().getVakalatnama().size());
+        assertEquals("uid-1", blocks.get(0).getDocuments().getVakalatnama().get(0).getDocumentUid());
+        assertEquals(2, blocks.get(0).getAdvocates().size());
+    }
 }

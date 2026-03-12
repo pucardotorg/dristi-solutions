@@ -9,7 +9,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -242,7 +244,7 @@ public class AdvocateDetailBlockBuilder {
             return Collections.emptyList();
         }
 
-        List<Document> vakalatnama = new ArrayList<>();
+        Map<String, Document> vakalatnamaByKey = new LinkedHashMap<>();
         String litigantIndividualId = litigant.getIndividualId();
 
         if (courtCase.getRepresentatives() != null && litigantIndividualId != null) {
@@ -258,16 +260,19 @@ public class AdvocateDetailBlockBuilder {
                         .filter(Objects::nonNull)
                         .flatMap(List::stream)
                         .filter(this::isVakalatnamaDocument)
-                        .forEach(vakalatnama::add);
+                        .forEach(document -> vakalatnamaByKey.putIfAbsent(getDocumentIdentity(document), document));
             }
         }
 
-        if (!vakalatnama.isEmpty()) {
-            return vakalatnama;
+        if (!vakalatnamaByKey.isEmpty()) {
+            return new ArrayList<>(vakalatnamaByKey.values());
         }
 
         return Optional.ofNullable(litigant.getDocuments()).orElse(Collections.emptyList()).stream()
                 .filter(this::isVakalatnamaDocument)
+                .collect(Collectors.toMap(this::getDocumentIdentity, document -> document, (existing, duplicate) -> existing, LinkedHashMap::new))
+                .values()
+                .stream()
                 .collect(Collectors.toList());
     }
 
@@ -275,5 +280,21 @@ public class AdvocateDetailBlockBuilder {
         return document != null
                 && document.getDocumentType() != null
                 && document.getDocumentType().equalsIgnoreCase(VAKALATNAMA_DOC);
+    }
+
+    private String getDocumentIdentity(Document document) {
+        if (document == null) {
+            return UUID.randomUUID().toString();
+        }
+        if (document.getDocumentUid() != null && !document.getDocumentUid().isBlank()) {
+            return document.getDocumentUid();
+        }
+        if (document.getId() != null && !document.getId().isBlank()) {
+            return document.getId();
+        }
+        if (document.getFileStore() != null && !document.getFileStore().isBlank()) {
+            return document.getFileStore();
+        }
+        return document.getDocumentType() + ":" + Objects.toString(document.getDocumentName(), "") + ":" + Objects.toString(document.getFileName(), "");
     }
 }
