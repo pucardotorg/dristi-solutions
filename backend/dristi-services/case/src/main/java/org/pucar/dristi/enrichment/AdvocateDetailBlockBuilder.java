@@ -2,14 +2,16 @@ package org.pucar.dristi.enrichment;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.advocateDetails.*;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -90,9 +92,7 @@ public class AdvocateDetailBlockBuilder {
                             if (nameBuilder.length() > 0) complainant.setFullName(nameBuilder.toString());
                         }
 
-                        List<Document> vakalatnama = caseDocuments.stream()
-                                .filter(d -> d != null && d.getDocumentType() != null && d.getDocumentType().equalsIgnoreCase("VAKALATNAMA_DOC"))
-                                .collect(Collectors.toList());
+                        List<Document> vakalatnama = getVakalatnamaDocumentsForLitigant(courtCase, litigant);
 
                         List<Document> pipAffidavit = caseDocuments.stream()
                                 .filter(d -> {
@@ -235,5 +235,45 @@ public class AdvocateDetailBlockBuilder {
         } catch (Exception e) {
             log.error("Error while building AdvocateDetailBlock: {}", e.toString());
         }
+    }
+
+    private List<Document> getVakalatnamaDocumentsForLitigant(CourtCase courtCase, Party litigant) {
+        if (litigant == null) {
+            return Collections.emptyList();
+        }
+
+        List<Document> vakalatnama = new ArrayList<>();
+        String litigantIndividualId = litigant.getIndividualId();
+
+        if (courtCase.getRepresentatives() != null && litigantIndividualId != null) {
+            for (AdvocateMapping rep : courtCase.getRepresentatives()) {
+                if (rep == null || rep.getRepresenting() == null) {
+                    continue;
+                }
+
+                rep.getRepresenting().stream()
+                        .filter(Objects::nonNull)
+                        .filter(party -> party.getIndividualId() != null && party.getIndividualId().equalsIgnoreCase(litigantIndividualId))
+                        .map(Party::getDocuments)
+                        .filter(Objects::nonNull)
+                        .flatMap(List::stream)
+                        .filter(this::isVakalatnamaDocument)
+                        .forEach(vakalatnama::add);
+            }
+        }
+
+        if (!vakalatnama.isEmpty()) {
+            return vakalatnama;
+        }
+
+        return Optional.ofNullable(litigant.getDocuments()).orElse(Collections.emptyList()).stream()
+                .filter(this::isVakalatnamaDocument)
+                .collect(Collectors.toList());
+    }
+
+    private boolean isVakalatnamaDocument(Document document) {
+        return document != null
+                && document.getDocumentType() != null
+                && document.getDocumentType().equalsIgnoreCase(VAKALATNAMA_DOC);
     }
 }
