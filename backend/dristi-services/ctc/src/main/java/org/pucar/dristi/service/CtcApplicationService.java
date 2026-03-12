@@ -672,6 +672,7 @@ public class CtcApplicationService {
                     .build();
             producer.push(config.getUpdateCtcDocumentsTopic(), updateRequest);
             log.info("Updated ctcApplication {} with sealed and merged documents", ctcApplication.getCtcApplicationNumber());
+            cacheService.saveInRedisCache(ctcApplication);
 
             CoordinateCriteria cc = new CoordinateCriteria();
             cc.setFileStoreId(mergedFileStoreId);
