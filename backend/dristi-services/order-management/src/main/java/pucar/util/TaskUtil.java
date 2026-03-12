@@ -108,7 +108,7 @@ public class TaskUtil {
     }
 
 
-    public TaskRequest createTaskRequestForSummonWarrantAndNotice(RequestInfo requestInfo, Order order, Object taskDetails, CourtCase courtCase, String channel) {
+    public TaskRequest createTaskRequest(RequestInfo requestInfo, Order order, Object taskDetails, CourtCase courtCase, String channel) {
         String itemId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
 
         Map<String, Object> additionalDetails = new HashMap<>();
