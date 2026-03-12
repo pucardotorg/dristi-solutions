@@ -259,12 +259,13 @@
 /* Advocate profile dropdown (top bar) - custom component */
 .advocate-profile-dropdown {
   position: relative;
-  width: 18.75rem; /* 300px */
+  min-width: 18.75rem; /* 300px base width */
+  width: auto; /* grow with content */
   max-width: 100%;
 }
 
 .advocate-profile-dropdown__button {
-  width: 100%;
+  width: 100%; /* fill container; container grows with label */
   height: 40px;
   padding: 0 16px;
   border-radius: 4px;
