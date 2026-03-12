@@ -1,6 +1,5 @@
 package org.pucar.dristi.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -14,9 +13,8 @@ import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.CtcApplicationValidator;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -118,13 +116,11 @@ public class CtcApplicationService {
         if (request.getCtcApplication().getWorkflow() != null && (request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase(E_SIGN)
                 || request.getCtcApplication().getWorkflow().getAction().equalsIgnoreCase(UPLOAD_SIGNED_COPY))) {
             //change logic for calculating payment through payment calculator if required
-            if (request.getCtcApplication().getTotalPages() == null) {
-                List<String> acceptedFileStoreIds = getFileStoreIds(request);
-                int totalPages = fileStoreUtil.getTotalPageCount(request.getCtcApplication().getTenantId(), acceptedFileStoreIds);
-                request.getCtcApplication().setTotalPages(totalPages);
-                log.info("Calculated totalPages={} from {} accepted documents for application: {}",
-                        totalPages, acceptedFileStoreIds.size(), request.getCtcApplication().getCtcApplicationNumber());
-            }
+            List<String> acceptedFileStoreIds = getFileStoreIds(request);
+            int totalPages = fileStoreUtil.getTotalPageCount(request.getCtcApplication().getTenantId(), acceptedFileStoreIds);
+            request.getCtcApplication().setTotalPages(totalPages);
+            log.info("Calculated totalPages={} from {} accepted documents for application: {}",
+                    totalPages, acceptedFileStoreIds.size(), request.getCtcApplication().getCtcApplicationNumber());
 
             Double totalAmount = 20 + request.getCtcApplication().getTotalPages() * 1.5;
 
@@ -149,18 +145,63 @@ public class CtcApplicationService {
 
     private List<String> getFileStoreIds(CtcApplicationRequest request) {
         List<String> acceptedFileStoreIds = new ArrayList<>();
-        if (request.getCtcApplication().getSelectedCaseBundle() != null) {
-            for (CaseBundleNode parentNode : request.getCtcApplication().getSelectedCaseBundle()) {
-                if (parentNode.getChildren() != null) {
-                    for (CaseBundleNode child : parentNode.getChildren()) {
-                        if (child.getFileStoreId() != null) {
-                            acceptedFileStoreIds.add(child.getFileStoreId());
-                        }
-                    }
+        CtcApplication application = request.getCtcApplication();
+
+        if (application.getSelectedCaseBundle() == null) {
+            return acceptedFileStoreIds;
+        }
+
+        if (Boolean.TRUE.equals(application.getIsPartyToCase())) {
+            // Party to case: fileStoreIds are directly available in selectedCaseBundle
+            for (CaseBundleNode node : application.getSelectedCaseBundle()) {
+                collectFileStoreIds(node, acceptedFileStoreIds, null);
+            }
+        } else {
+            // Not party to case: build lookup map from caseBundles for fallback (similar to collectDocuments in IndexerUtils)
+            Map<String, String> fileStoreIdMap = new HashMap<>();
+            if (application.getCaseBundles() != null) {
+                for (CaseBundleNode bundleNode : application.getCaseBundles()) {
+                    buildFileStoreIdMap(bundleNode, fileStoreIdMap);
                 }
             }
+            for (CaseBundleNode node : application.getSelectedCaseBundle()) {
+                collectFileStoreIds(node, acceptedFileStoreIds, fileStoreIdMap);
+            }
         }
+
         return acceptedFileStoreIds;
+    }
+
+    private void collectFileStoreIds(CaseBundleNode node, List<String> fileStoreIds, Map<String, String> fileStoreIdMap) {
+        if (node == null) return;
+
+        // Use fileStoreId from selectedCaseBundle, fallback to caseBundles lookup if map is provided
+        String fileStoreId = node.getFileStoreId();
+        if (fileStoreId == null && fileStoreIdMap != null) {
+            fileStoreId = fileStoreIdMap.get(node.getId());
+        }
+
+        if (fileStoreId != null) {
+            fileStoreIds.add(fileStoreId);
+        }
+
+        if (node.getChildren() != null) {
+            for (CaseBundleNode child : node.getChildren()) {
+                collectFileStoreIds(child, fileStoreIds, fileStoreIdMap);
+            }
+        }
+    }
+
+    private void buildFileStoreIdMap(CaseBundleNode node, Map<String, String> fileStoreIdMap) {
+        if (node == null) return;
+        if (node.getId() != null && node.getFileStoreId() != null) {
+            fileStoreIdMap.put(node.getId(), node.getFileStoreId());
+        }
+        if (node.getChildren() != null) {
+            for (CaseBundleNode child : node.getChildren()) {
+                buildFileStoreIdMap(child, fileStoreIdMap);
+            }
+        }
     }
 
     public List<CtcApplication> searchApplications(CtcApplicationSearchRequest ctcApplicationSearchRequest) {
@@ -302,9 +343,9 @@ public class CtcApplicationService {
                     log.error("Error processing issue/reject for document {}", item);
                 }
             }
-        }  catch (CustomException e) {
+        } catch (CustomException e) {
             throw e;
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error processing bulk issue/reject for documents", e);
             throw new CustomException(ServiceConstants.CTC_ISSUE_DOCUMENTS_UPDATE_EXCEPTION,
                     "Error processing bulk issue/reject: " + e.getMessage());
@@ -468,11 +509,11 @@ public class CtcApplicationService {
             Long date = System.currentTimeMillis();
             if (PENDING_ISSUE.equalsIgnoreCase(ctcApplication.getStatus())) {
                 indexerUtils.pushIssueCtcDocumentsToIndex(ctcApplication);
-                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "APPROVED",date);
+                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "APPROVED", date);
                 ctcApplication.setDateOfApplicationApproval(date);
             }
             if ("REJECTED".equalsIgnoreCase(ctcApplication.getStatus())) {
-                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "REJECTED",null);
+                indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "REJECTED", null);
                 ctcApplication.getSelectedCaseBundle().forEach(node -> {
                     node.setStatus("REJECTED");
                 });
@@ -651,14 +692,14 @@ public class CtcApplicationService {
                                 .build();
 
                         docs.add(DocumentActionItem.builder()
-                                        .docId(docId)
-                                        .documents(List.of(document))
-                                        .ctcApplicationNumber(ctcApplicationNumber)
-                                        .filingNumber(filingNumber)
-                                        .build());
+                                .docId(docId)
+                                .documents(List.of(document))
+                                .ctcApplicationNumber(ctcApplicationNumber)
+                                .filingNumber(filingNumber)
+                                .build());
 
-                    }  catch (Exception e) {
-                        log.error("Error while updating CTC docId {}, ctcApplicationNumber: {}", docId,ctcApplicationNumber);
+                    } catch (Exception e) {
+                        log.error("Error while updating CTC docId {}, ctcApplicationNumber: {}", docId, ctcApplicationNumber);
                     }
                 }
             }
