@@ -77,7 +77,7 @@ async function ctcApplications(req, res, qrCode, courtCaseJudgeDetails) {
           ) : "",
           issuanceDate: formattedToday,
           cmoName: RequestInfo?.userInfo?.name || "",
-          judgeSignature: "Signature",
+          judgeSignature: "Certification Signature",
         },
       ],
     };

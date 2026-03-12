@@ -508,9 +508,9 @@ public class CtcApplicationService {
             workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
             Long date = System.currentTimeMillis();
             if (PENDING_ISSUE.equalsIgnoreCase(ctcApplication.getStatus())) {
+                ctcApplication.setDateOfApplicationApproval(date);
                 indexerUtils.pushIssueCtcDocumentsToIndex(ctcApplication);
                 indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "APPROVED", date);
-                ctcApplication.setDateOfApplicationApproval(date);
             }
             if ("REJECTED".equalsIgnoreCase(ctcApplication.getStatus())) {
                 indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "REJECTED", null);
@@ -591,21 +591,11 @@ public class CtcApplicationService {
         List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
         Map<String, DocsToSignCriteria> criteriaMap = new HashMap<>();
 
-        Map<String, String> ctcApplicationNumberToSealedTemplateFileStoreId = new HashMap<>();
-        request.getCriteria().forEach(criterion -> {
-            ctcApplicationNumberToSealedTemplateFileStoreId.put(criterion.getCtcApplicationNumber(), null);
-        });
-
         request.getCriteria().forEach(criterion -> {
 
             String sealedTemplateFileStoreId = null;
-            if (ctcApplicationNumberToSealedTemplateFileStoreId.get(criterion.getCtcApplicationNumber()) != null) {
-                sealedTemplateFileStoreId = ctcApplicationNumberToSealedTemplateFileStoreId.get(criterion.getCtcApplicationNumber());
-            } else {
-                CtcApplication ctcApplication = fetchCtcApplication(criterion.getCtcApplicationNumber(), criterion.getFilingNumber(), criterion.getCourtId());
-                sealedTemplateFileStoreId = egovPdfUtil.getSealedTemplateFileStoreId(request.getRequestInfo(), ctcApplication);
-                ctcApplicationNumberToSealedTemplateFileStoreId.put(criterion.getCtcApplicationNumber(), sealedTemplateFileStoreId);
-            }
+            CtcApplication ctcApplication = fetchCtcApplication(criterion.getCtcApplicationNumber(), criterion.getFilingNumber(), criterion.getCourtId());
+            sealedTemplateFileStoreId = egovPdfUtil.getSealedTemplateFileStoreId(request.getRequestInfo(), ctcApplication, criterion.getDocTitle());
             log.info("sealedTemplateFileStoreId for docId {} in application {}", criterion.getDocId(), criterion.getCtcApplicationNumber());
 
             String mergedFileStoreId = fileStoreUtil.mergeFiles(sealedTemplateFileStoreId, criterion.getFileStoreId(), criterion.getTenantId());

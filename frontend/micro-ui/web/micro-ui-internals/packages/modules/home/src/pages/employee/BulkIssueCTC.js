@@ -364,7 +364,7 @@ const BulkIssueCTC = () => {
         ctcApplicationNumber: row?.businessObject?.ctcApplicationNumber || "",
         filingNumber: row?.businessObject?.filingNumber || "",
         courtId: courtId,
-        placeholder: "Signature",
+        placeholder: "Certification Signature",
         tenantId: tenantId,
         docTitle: formatLabel(row?.businessObject?.docTitle),
       }));
@@ -409,33 +409,35 @@ const BulkIssueCTC = () => {
     }
   };
 
-  const handleIssueDocuments = async () => {
+  const handleCTCDocumentAction = async ({ action, documents = [], successMessage, closeRejectModal = false }) => {
     try {
       setIsLoading(true);
-      let localStorageID = sessionStorage.getItem("fileStoreId");
+
       const docsDetails = {
         docId: selectedRowData?.businessObject?.docId || "",
         ctcApplicationNumber: selectedRowData?.businessObject?.ctcApplicationNumber || "",
         filingNumber: selectedRowData?.businessObject?.filingNumber || "",
-        documents: [
-          {
-            documentType: "SIGNED_CTC_APPLICATION",
-            fileStore: localStorageID || signedDocumentUploadId,
-          },
-        ],
+        documents,
       };
+
       const payload = {
         courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId") || "KLKM52",
-        action: "ISSUE",
+        action,
         docs: [docsDetails],
         status: "PENDING",
       };
 
       await HomeService.updateCTCDocs(payload, { tenantId });
+
       sessionStorage.removeItem("fileStoreId");
       setShowSignatureModal(false);
       setSelectedRowData(null);
-      showToast({ isError: false, message: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY" });
+
+      if (closeRejectModal) {
+        setShowModal(false);
+      }
+
+      showToast({ isError: false, message: successMessage });
 
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
@@ -444,6 +446,30 @@ const BulkIssueCTC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleIssueDocuments = async () => {
+    const localStorageID = sessionStorage.getItem("fileStoreId");
+
+    await handleCTCDocumentAction({
+      action: "ISSUE",
+      documents: [
+        {
+          documentType: "SIGNED_CTC_APPLICATION",
+          fileStore: localStorageID || signedDocumentUploadId,
+        },
+      ],
+      successMessage: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY",
+    });
+  };
+
+  const handleRejectDocument = async () => {
+    await handleCTCDocumentAction({
+      action: "REJECT",
+      documents: [],
+      successMessage: "CTC_DOCUMENT_REJECT_SUCCESSFULLY",
+      closeRejectModal: true,
+    });
   };
 
   const closeToast = () => {
@@ -539,6 +565,7 @@ const BulkIssueCTC = () => {
             setShowModal(false);
             setShowSignatureModal(true);
           }}
+          handleCancelSubmit={handleRejectDocument}
         />
       )}
       {showSignatureModal && (
