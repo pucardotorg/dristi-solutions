@@ -5,7 +5,7 @@ import org.egov.access.domain.criteria.ValidateActionCriteria;
 import org.egov.access.web.contract.role.RoleContract;
 import org.egov.common.contract.request.RequestInfo;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.stream.Collectors;
 
 @Getter

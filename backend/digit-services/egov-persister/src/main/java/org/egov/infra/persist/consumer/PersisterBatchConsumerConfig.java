@@ -25,7 +25,7 @@ import org.springframework.kafka.listener.*;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -95,7 +95,7 @@ public class PersisterBatchConsumerConfig {
         factory.setConcurrency(3);
         factory.getContainerProperties().setPollTimeout(30000);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.BATCH);
-        factory.setBatchErrorHandler(new SeekToCurrentBatchErrorHandler());
+    factory.setCommonErrorHandler(stoppingErrorHandler);
 
 
         // BATCH PROPERTY

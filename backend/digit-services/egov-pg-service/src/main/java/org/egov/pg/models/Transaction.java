@@ -7,11 +7,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.*;
 import org.egov.pg.constants.TransactionAdditionalFields;
 import org.egov.pg.web.models.User;
-import org.hibernate.validator.constraints.SafeHtml;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Map;
 
@@ -27,8 +26,7 @@ import java.util.Map;
 @ToString
 public class Transaction {
 
-    @SafeHtml
-    @JsonProperty("tenantId")
+        @JsonProperty("tenantId")
     @NotNull
     @Size(min = 2, max = 50)
     private String tenantId;
@@ -36,8 +34,7 @@ public class Transaction {
     /**
      * Transaction Amount, preferably rounded off to two decimal places
      */
-    @SafeHtml
-    @JsonProperty("txnAmount")
+        @JsonProperty("txnAmount")
     @NotNull
     @Size(min = 1)
     private String txnAmount;
@@ -45,8 +42,7 @@ public class Transaction {
     /**
      * Unique bill ID associated with the transaction
      */
-    @SafeHtml
-    @JsonProperty("billId")
+        @JsonProperty("billId")
     @NotNull
     @Size(min = 1)
     private String billId;
@@ -55,16 +51,14 @@ public class Transaction {
     /**
      * Backward compatibility
      */
-    @SafeHtml
-    @JsonProperty("module")
+        @JsonProperty("module")
     @Size(min = 1)
     private String module;
 
     /**
      * Backward compatibility
      */
-    @SafeHtml
-    @JsonProperty("consumerCode")
+        @JsonProperty("consumerCode")
     @NotNull
     @Size(min = 1, max = 128)
     private String consumerCode;
@@ -83,8 +77,7 @@ public class Transaction {
      * Brief description for which the payment is being made
      * ex, Property Tax Payment for FY-YYYY
      */
-    @SafeHtml
-    @JsonProperty("productInfo")
+        @JsonProperty("productInfo")
     @NotNull
     @Size(min = 1, max = 512)
     private String productInfo;
@@ -93,8 +86,7 @@ public class Transaction {
      * Gateway to be used to perform this transaction
      * Should be among the list of valid & active gateways returned by API
      */
-    @SafeHtml
-    @JsonProperty("gateway")
+        @JsonProperty("gateway")
     @NotNull
     @Size(min = 2)
     private String gateway;

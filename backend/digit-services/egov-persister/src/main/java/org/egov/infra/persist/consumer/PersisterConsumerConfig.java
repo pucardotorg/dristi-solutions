@@ -22,7 +22,7 @@ import org.springframework.kafka.listener.KafkaMessageListenerContainer;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -83,7 +83,7 @@ public class PersisterConsumerConfig {
         factory.getContainerProperties();
         factory.setConcurrency(3);
         factory.getContainerProperties().setPollTimeout(30000);
-        factory.setErrorHandler(kafkaConsumerErrorHandler);
+    factory.setCommonErrorHandler(stoppingErrorHandler);
 
         log.info("Custom KafkaListenerContainerFactory built...");
         return factory;

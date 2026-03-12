@@ -2,7 +2,7 @@ package org.egov.access.web.contract.validateaction;
 
 import lombok.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @Getter
 @Builder

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import org.egov.domain.model.TokenRequest;
 import org.egov.domain.model.TokenSearchCriteria;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @Getter
 @AllArgsConstructor

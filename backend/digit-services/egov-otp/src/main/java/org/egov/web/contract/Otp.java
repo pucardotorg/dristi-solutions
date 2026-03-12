@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import org.egov.domain.model.Token;
 
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Size;
 
 @Getter
 @AllArgsConstructor

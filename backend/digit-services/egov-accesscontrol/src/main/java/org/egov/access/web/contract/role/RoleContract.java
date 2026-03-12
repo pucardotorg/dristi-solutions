@@ -3,7 +3,7 @@ package org.egov.access.web.contract.role;
 import lombok.*;
 import org.egov.access.domain.model.Role;
 
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
 
