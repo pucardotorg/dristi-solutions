@@ -81,6 +81,7 @@ const MainHomeScreen = () => {
     RESCHEDULE_APPLICATIONS: 0,
     DELAY_CONDONATION: 0,
     OTHERS: 0,
+    CTC_APPLICATIONS: 0,
   });
   const [stepper, setStepper] = useState(0);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -112,7 +113,7 @@ const MainHomeScreen = () => {
   const hasCaseReviewerAccess = useMemo(() => assignedRoles?.includes("CASE_REVIEWER"), [assignedRoles]);
   const hasViewProcessManagementAccess = useMemo(() => assignedRoles?.includes("VIEW_PROCESS_MANAGEMENT"), [assignedRoles]);
   const hasViewReschedulingRequestAccess = useMemo(() => assignedRoles?.includes("VIEW_RESCHEDULING_REQUESTS"), [assignedRoles]);
-  const hasViewCTCApplicationAccess = useMemo(() => assignedRoles?.includes("CERTIFIED_TRUE_COPY_APPLICATION"), [assignedRoles]);
+  const hasViewCTCApplicationAccess = useMemo(() => assignedRoles?.includes("CTC_APPLICATION_APPROVER"), [assignedRoles]);
 
   const today = new Date();
 
@@ -361,7 +362,32 @@ const MainHomeScreen = () => {
           },
         },
       };
+
+      const ctcApplicationPayload = {
+        inbox: {
+          processSearchCriteria: {
+            businessService: ["ctc-default"],
+            moduleName: "CTC Service",
+            tenantId: tenantId,
+          },
+          moduleSearchCriteria: {
+            tenantId: tenantId,
+            courtId: localStorage.getItem("courtId"),
+            status: "PENDING_APPROVAL",
+          },
+          tenantId: tenantId,
+          limit: 10,
+          offset: 0,
+        },
+      };
+
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
+      let resCtCApplication = {};
+
+      if (hasViewCTCApplicationAccess) {
+        resCtCApplication = await HomeService.InboxSearch(ctcApplicationPayload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+      }
+
       const reviwCount = res?.reviewProcessData?.totalCount || 0;
       const registerCount = res?.registerCasesData?.totalCount || 0;
       const bailBondStatusCount = res?.bailBondData?.totalCount || 0;
@@ -373,6 +399,7 @@ const MainHomeScreen = () => {
       const offlinePaymentsCount = res?.offlinePaymentsData?.count || 0;
       const noticeAndSummonsCount = res?.noticeAndSummonsData?.count || 0;
       const rescheduleHearingRequestCount = res?.reschedulingRequestData?.totalCount || 0;
+      const CTCApplications = resCtCApplication?.totalCount || 0;
 
       setPendingTaskCount({
         REGISTER_USERS: registerUsersCount,
@@ -386,6 +413,7 @@ const MainHomeScreen = () => {
         RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
         DELAY_CONDONATION: delayCondonationApplicationCount,
         OTHERS: otherApplicationsCount,
+        CTC_APPLICATIONS: CTCApplications,
       });
     } catch (err) {
       showToast("error", t("ISSUE_IN_FETCHING"), 5000);
