@@ -286,14 +286,14 @@ public class AdvocateDetailBlockBuilder {
         if (document == null) {
             return UUID.randomUUID().toString();
         }
+        if (document.getFileStore() != null && !document.getFileStore().isBlank()) {
+            return "filestore:" + document.getFileStore();
+        }
         if (document.getDocumentUid() != null && !document.getDocumentUid().isBlank()) {
-            return document.getDocumentUid();
+            return "documentUid:" + document.getDocumentUid();
         }
         if (document.getId() != null && !document.getId().isBlank()) {
-            return document.getId();
-        }
-        if (document.getFileStore() != null && !document.getFileStore().isBlank()) {
-            return document.getFileStore();
+            return "id:" + document.getId();
         }
         return document.getDocumentType() + ":" + Objects.toString(document.getDocumentName(), "") + ":" + Objects.toString(document.getFileName(), "");
     }
