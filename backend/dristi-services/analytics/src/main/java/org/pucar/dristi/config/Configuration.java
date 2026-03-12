@@ -188,7 +188,11 @@ public class Configuration {
 	private String bailBondBusinessServices;
 	private List<String> bailBondBusinessServiceList;
 
-	//Localization
+	@Value("${egov.ctc.application.business.services}")
+	private String ctcApplicationBusinessServices;
+	private List<String> ctcApplicationBusinessServiceList;
+
+	// Localization
 	@Value("${egov.localization.host}")
 	private String localizationHost;
 
@@ -262,6 +266,13 @@ public class Configuration {
 	@Value("${dristi.task-management.search.endpoint}")
 	private String taskManagementSearchEndpoint;
 
+	// CTC application config
+	@Value("${dristi.ctc-application.host}")
+	private String ctcApplicationServiceHost;
+
+	@Value("${dristi.ctc-application.search.endpoint}")
+	private String ctcApplicationSearchEndpoint;
+
 	// Workflow Service config
 	@Value("${egov.workflow.host}")
 	private String workflowHost;
@@ -284,12 +295,13 @@ public class Configuration {
 		caseBusinessServiceList = Arrays.asList(caseBusinessServices.split(","));
 		evidenceBusinessServiceList = Arrays.asList(evidenceBusinessServices.split(","));
 		taskBusinessServiceList = Arrays.asList(taskBusinessServices.split(","));
-        taskManagementBusinessServiceList = Arrays.asList(taskManagementBusinessServices.split(","));
+		taskManagementBusinessServiceList = Arrays.asList(taskManagementBusinessServices.split(","));
 		digitalizedDocumentsBusinessServiceList = Arrays.asList(digitalizedDocumentsBusinessServices.split(","));
 		applicationBusinessServiceList = Arrays.asList(applicationBusinessServices.split(","));
 		orderBusinessServiceList = Arrays.asList(orderBusinessServices.split(","));
 		aDiaryBusinessServiceList = Arrays.asList(aDiaryBusinessServices.split(","));
 		bailBondBusinessServiceList = Arrays.asList(bailBondBusinessServices.split(","));
+		ctcApplicationBusinessServiceList = Arrays.asList(ctcApplicationBusinessServices.split(","));
 	}
 
 	@Value("${app.zone.id}")

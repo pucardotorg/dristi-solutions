@@ -81,11 +81,18 @@ public class IndexerUtils {
 
     private final TaskManagementUtil taskManagementUtil;
 
+    private final CtcApplicationUtil ctcApplicationUtil;
+
     private final WorkflowUtil workflowUtil;
 
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, UserService userService, JsonUtil jsonUtil, TaskManagementUtil taskManagementUtil, WorkflowUtil workflowUtil) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil,
+            TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig,
+            CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService,
+            IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, UserService userService,
+            JsonUtil jsonUtil, TaskManagementUtil taskManagementUtil, CtcApplicationUtil ctcApplicationUtil,
+            WorkflowUtil workflowUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.caseUtil = caseUtil;
@@ -102,6 +109,7 @@ public class IndexerUtils {
         this.userService = userService;
         this.jsonUtil = jsonUtil;
         this.taskManagementUtil = taskManagementUtil;
+        this.ctcApplicationUtil = ctcApplicationUtil;
         this.workflowUtil = workflowUtil;
     }
 
@@ -912,6 +920,8 @@ public class IndexerUtils {
                 return processTaskManagementEntity(request, referenceId);
             else if (config.getDigitalizedDocumentsBusinessServiceList().contains(entityType))
                 return processDigitalizedDocumentsEntity(request, referenceId);
+            else if (config.getCtcApplicationBusinessServiceList().contains(entityType))
+                return processCtcApplicationEntity(request, referenceId);
             else {
                 log.error("Unexpected entityType: {}", entityType);
                 return new HashMap<>();
@@ -1006,6 +1016,47 @@ public class IndexerUtils {
         Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
         Object taskObject = taskUtil.getTask(request, config.getStateLevelTenantId(), referenceId, null, null);
         String filingNumber = JsonPath.read(taskObject.toString(), FILING_NUMBER_PATH);
+
+        Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+        String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+        String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
+
+        caseDetails.put("cnrNumber", cnrNumber);
+        caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("caseId", caseId);
+        caseDetails.put("caseTitle", caseTitle);
+
+        return caseDetails;
+    }
+
+    private Map<String, String> processCtcApplicationEntity(JSONObject request, String referenceId)
+            throws InterruptedException {
+        Map<String, String> caseDetails = new HashMap<>();
+        Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
+
+        org.pucar.dristi.web.models.ctcApplication.CtcApplicationSearchCriteria searchCriteria = org.pucar.dristi.web.models.ctcApplication.CtcApplicationSearchCriteria
+                .builder()
+                .tenantId(config.getStateLevelTenantId())
+                .ctcApplicationNumber(referenceId)
+                .build();
+
+        RequestInfo requestInfo = mapper.convertValue(request.get("RequestInfo"), RequestInfo.class);
+
+        org.pucar.dristi.web.models.ctcApplication.CtcApplicationSearchRequest searchRequest = org.pucar.dristi.web.models.ctcApplication.CtcApplicationSearchRequest
+                .builder()
+                .requestInfo(requestInfo)
+                .criteria(searchCriteria)
+                .build();
+        List<org.pucar.dristi.web.models.ctcApplication.CtcApplication> ctcApplicationList = ctcApplicationUtil
+                .searchCtcApplication(searchRequest);
+        if (ctcApplicationList.isEmpty()) {
+            log.error("CTC application not found for reference id: " + referenceId);
+            return caseDetails;
+        }
+        org.pucar.dristi.web.models.ctcApplication.CtcApplication ctcApplication = ctcApplicationList.get(0);
+        String filingNumber = ctcApplication.getFilingNumber();
 
         Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
 
