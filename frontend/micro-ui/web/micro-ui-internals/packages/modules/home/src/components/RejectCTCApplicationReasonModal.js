@@ -13,18 +13,18 @@ const CloseBtn = (props) => {
 
 const Heading = (props) => {
   return (
-    <div className="evidence-title">
-      <h1 className="heading-m">{props.label}</h1>
-    </div>
+    <h1 className="heading-m" style={{ padding: 0, marginBottom: "8px" }}>
+      {props.label}
+    </h1>
   );
 };
 
 function RejectCTCApplicationReasonModal({ t, onGoBack, onReject, reason, setReason, isDisabled }) {
   return (
     <Modal
-      headerBarMain={<Heading label={t("ARE_YOU_SURE")} />}
+      headerBarMain={<Heading label={t("REASON_FOR_REJECTION")} />}
       headerBarEnd={<CloseBtn onClick={onGoBack} />}
-      actionCancelLabel={t("GO_BACK")}
+      actionCancelLabel={t("CANCEL")}
       actionCancelOnSubmit={onGoBack}
       actionSaveLabel={t("REJECT")}
       actionSaveOnSubmit={() => onReject(reason)}
@@ -33,10 +33,6 @@ function RejectCTCApplicationReasonModal({ t, onGoBack, onReject, reason, setRea
       style={{ backgroundColor: "#DC2626", border: "none" }}
     >
       <div style={{ padding: "10px 0px" }}>
-        <h3 style={{ margin: "10px 0px 6px 0px" }}>
-          {t("REASON_FOR_REJECTION")}
-          <span style={{ color: "#DC2626", marginLeft: "2px" }}>*</span>
-        </h3>
         <TextArea
           style={{ marginTop: "0px", height: "120px" }}
           placeholder={t("DESCRIPTION")}
