@@ -549,7 +549,8 @@
 
 .bail-signature-modal {
   width: 638px;
-  height: 230px;
+  min-height: 230px;
+  height: auto;
   border-radius: 4px;
 
   .popup-module-main {
@@ -596,6 +597,49 @@
           transform: translateY(-50%);
           width: 20px;
           height: 20px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .bail-signature-modal {
+    width: 92vw !important;
+    height: auto !important;
+    max-height: fit-content !important;
+
+    .popup-module-main {
+      height: auto !important;
+      max-height: fit-content !important;
+
+      .popup-module-action-bar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px;
+
+        button:nth-child(2) {
+          margin-left: 0;
+        }
+
+        button,
+        .selector-button-border,
+        .selector-button-primary,
+        .bail-cancel-className {
+          width: 100% !important;
+          justify-content: center;
+        }
+
+        .bail-cancel-className {
+          order: 3;
+        }
+
+        .selector-button-border {
+          order: 1;
+        }
+
+        button:last-child {
+          order: 2;
         }
       }
     }

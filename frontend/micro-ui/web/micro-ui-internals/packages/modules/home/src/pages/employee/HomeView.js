@@ -509,6 +509,12 @@ const HomeView = () => {
   };
 
   const onRowClick = async (row) => {
+    if (["ADVOCATE", "ADVOCATE_CLERK"]?.includes(userType)) {
+      // when logged in user in advocate/clerk and clicks on a case row form home screen,
+      // inside view case screen show a popup to warn if
+      // he is working as jr and senior advocate both in same case/ acting as jr adv for multiple senior advocates/ working as clerk for multiple senior advocates
+      sessionStorage.setItem("showPopupIfCaseAccessThroughMultipleAdvocates", true);
+    }
     if (userInfoType === "citizen" && row?.original?.advocateStatus === "PENDING") {
       return;
     }
@@ -589,6 +595,13 @@ const HomeView = () => {
     return false;
   }, [userType, advocateId, selectedSeniorAdvocate?.id, isLitigant]);
 
+  const canFileCase = useMemo(() => {
+    if (userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") {
+      return selectedSeniorAdvocate?.allowCaseCreate;
+    }
+    return true;
+  }, [userType, selectedSeniorAdvocate?.allowCaseCreate]);
+
   const isRejected = useMemo(() => {
     return (
       userType !== "LITIGANT" &&
@@ -598,7 +611,6 @@ const HomeView = () => {
       searchResult?.[0]?.status === "INACTIVE"
     );
   }, [searchResult, userType]);
-
 
   useEffect(() => {
     if (!individualData || !searchResult || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) return;
@@ -677,9 +689,10 @@ const HomeView = () => {
                 <UpcomingHearings
                   handleNavigate={handleNavigate}
                   individualData={individualData}
-                  attendeeIndividualId={individualId}
+                  attendeeIndividualId={selectedSeniorAdvocate?.individualId}
                   userInfoType={userInfoType}
-                  advocateId={advocateId}
+                  advocateId={selectedSeniorAdvocate?.id}
+                  selectedSeniorAdvocate={selectedSeniorAdvocate}
                   t={t}
                 />
                 {(viewDashBoards || viewADiary) && (
@@ -724,12 +737,14 @@ const HomeView = () => {
                     <div className="button-field" style={{ width: "fit-content" }}>
                       <React.Fragment>
                         {canJoinCase && <JoinCaseHome refreshInbox={refreshInbox} />}
-                        <Button
-                          className={"tertiary-button-selector"}
-                          label={t("FILE_A_CASE")}
-                          labelClassName={"tertiary-label-selector"}
-                          onButtonClick={handleClickFileCase}
-                        />
+                        {canFileCase && (
+                          <Button
+                            className={"tertiary-button-selector"}
+                            label={t("FILE_A_CASE")}
+                            labelClassName={"tertiary-label-selector"}
+                            onButtonClick={handleClickFileCase}
+                          />
+                        )}
                       </React.Fragment>
                     </div>
                   )}

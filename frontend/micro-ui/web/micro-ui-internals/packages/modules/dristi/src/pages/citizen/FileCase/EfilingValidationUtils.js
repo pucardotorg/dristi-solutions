@@ -267,12 +267,14 @@ export const runGenericTextSanitizer = ({ formData, setValue }) => {
 
 export const checkIfscValidation = ({ formData, setValue, selected }) => {
   if (selected === "chequeDetails") {
-    const formDataCopy = structuredClone(formData);
-    for (const key in formDataCopy) {
+    const chequeData = structuredClone(formData?.chequeDetails || {});
+
+    for (const key in chequeData) {
       switch (key) {
-        case "ifsc":
-          if (Object.hasOwnProperty.call(formDataCopy, key)) {
-            const oldValue = formDataCopy[key];
+        case "payeeIfsc":
+        case "payerIfsc":
+          if (Object.hasOwnProperty.call(chequeData, key)) {
+            const oldValue = chequeData[key];
             let value = oldValue;
 
             if (typeof value === "string") {
@@ -297,7 +299,7 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
                 const element = document.querySelector(`[name="${key}"]`);
                 const start = element?.selectionStart;
                 const end = element?.selectionEnd;
-                setValue(key, updatedValue);
+                setValue(`chequeDetails.${key}`, updatedValue);
                 setTimeout(() => {
                   element?.setSelectionRange(start, end);
                 }, 0);
@@ -305,6 +307,15 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
             }
           }
           break;
+        default:
+          break;
+      }
+    }
+
+    const formDataCopy = structuredClone(formData);
+
+    for (const key in formDataCopy) {
+      switch (key) {
         case "chequeAmount":
           if (Object.hasOwnProperty.call(formDataCopy, key)) {
             const oldValue = formDataCopy[key];
@@ -351,6 +362,55 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
       }
     }
   }
+};
+
+export const fetchBankDetails = async (ifsc) => {
+  try {
+    const criteria = [{ ifsc }];
+    const resp = await DRISTIService.fetchBankDetails({ criteria }, {});
+    return resp?.bankDetails?.[0] || null;
+  } catch (e) {
+    console.warn("IFSC lookup failed");
+    return null;
+  }
+};
+
+export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValue, getValues, setError, clearErrors, cache }) => {
+  if (!cache?.current) {
+    console.error("Cache not initialized properly");
+    return false;
+  }
+  if (!ifsc || ifsc.length !== 11) {
+    return false;
+  }
+
+  let bankDetails = cache.current[ifsc];
+
+  // fetching details only if not cached
+  if (!bankDetails) {
+    bankDetails = await fetchBankDetails(ifsc);
+
+    if (!bankDetails) {
+      return false;
+    }
+
+    cache.current[ifsc] = bankDetails;
+  }
+
+  const currentBank = getValues(bankField);
+  const currentBranch = getValues(branchField);
+
+  if (currentBank !== bankDetails.name) {
+    setValue(bankField, bankDetails.name || "");
+    clearErrors(bankField);
+  }
+
+  if (currentBranch !== bankDetails.branch) {
+    setValue(branchField, bankDetails.branch || "");
+    clearErrors(branchField);
+  }
+
+  return true;
 };
 
 export const checkNameValidation = ({ formData, setValue, selected, reset, index, formdata, clearErrors, formState }) => {
@@ -975,8 +1035,6 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
   return allErrorData;
 };
 
-
-
 export const complainantValidation = ({
   formData,
   t,
@@ -1068,8 +1126,8 @@ export const signatureValidation = ({ formData, selected, setShowErrorToast, set
                 ++index;
                 return result;
               }, true) &&
-              formData[curr] &&
-              Object.keys(formData[curr])?.length > 0
+                formData[curr] &&
+                Object.keys(formData[curr])?.length > 0
             );
             index = 0;
             return res;
@@ -1162,9 +1220,9 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
           return data?.name !== "typeOfAddress"
             ? false
             : isEmpty ||
-            !formData?.poaAddressDetails?.[data?.name]?.match(
-              window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
-            );
+                !formData?.poaAddressDetails?.[data?.name]?.match(
+                  window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
+                );
         }))
   ) {
     setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
@@ -1281,14 +1339,14 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
       ? documentData?.fileStore
       : documentData?.file?.files?.[0]?.fileStoreId
     : isComplainant
-      ? data?.complainantId?.complainantId
-      : data?.poaComplainantId?.poaComplainantId;
+    ? data?.complainantId?.complainantId
+    : data?.poaComplainantId?.poaComplainantId;
   const identifierIdDetails = documentData
     ? {
-      fileStoreId: identifierId,
-      filename: documentData?.filename,
-      documentType: documentData?.fileType,
-    }
+        fileStoreId: identifierId,
+        filename: documentData?.filename,
+        documentType: documentData?.fileType,
+      }
     : {};
   const identifierType = documentData
     ? isComplainant
@@ -1415,10 +1473,10 @@ export const updateIndividualUser = async ({ data, documentData, tenantId, indiv
     : data?.complainantId?.complainantId;
   const identifierIdDetails = documentData
     ? {
-      fileStoreId: identifierId,
-      filename: documentData?.filename,
-      documentType: documentData?.fileType,
-    }
+        fileStoreId: identifierId,
+        filename: documentData?.filename,
+        documentType: documentData?.fileType,
+      }
     : {};
   const identifierType = documentData ? data?.complainantId?.complainantId?.selectIdTypeType?.type : "AADHAR";
   let Individual = {
@@ -1659,7 +1717,7 @@ export const updateCaseDetails = async ({
   action = "SAVE_DRAFT",
   isSaveDraftEnabled = false,
   isCaseSignedState = false,
-  setErrorCaseDetails = () => { },
+  setErrorCaseDetails = () => {},
   multiUploadList,
   scrutinyObj,
   caseComplaintDocument,
@@ -1931,13 +1989,13 @@ export const updateCaseDetails = async ({
                         isCurrAddrSame:
                           addressArray?.length > 1
                             ? {
-                              code: "NO",
-                              name: "NO",
-                            }
+                                code: "NO",
+                                name: "NO",
+                              }
                             : {
-                              code: "YES",
-                              name: "YES",
-                            },
+                                code: "YES",
+                                name: "YES",
+                              },
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
@@ -1963,13 +2021,13 @@ export const updateCaseDetails = async ({
                         isCurrAddrSame:
                           addressArray?.length > 1
                             ? {
-                              code: "NO",
-                              name: "NO",
-                            }
+                                code: "NO",
+                                name: "NO",
+                              }
                             : {
-                              code: "YES",
-                              name: "YES",
-                            },
+                                code: "YES",
+                                name: "YES",
+                              },
                       },
                     },
                     userDetails: null,
@@ -2042,13 +2100,13 @@ export const updateCaseDetails = async ({
                         isCurrAddrSame:
                           addressArray?.length > 1
                             ? {
-                              code: "NO",
-                              name: "NO",
-                            }
+                                code: "NO",
+                                name: "NO",
+                              }
                             : {
-                              code: "YES",
-                              name: "YES",
-                            },
+                                code: "YES",
+                                name: "YES",
+                              },
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
@@ -2074,13 +2132,13 @@ export const updateCaseDetails = async ({
                         isCurrAddrSame:
                           addressArray?.length > 1
                             ? {
-                              code: "NO",
-                              name: "NO",
-                            }
+                                code: "NO",
+                                name: "NO",
+                              }
                             : {
-                              code: "YES",
-                              name: "YES",
-                            },
+                                code: "YES",
+                                name: "YES",
+                              },
                       },
                     },
                     userDetails: null,
@@ -2545,11 +2603,11 @@ export const updateCaseDetails = async ({
       const existingLit = caseDetails?.poaHolders?.find((poa) => poa?.individualId === poaHolder?.individualId);
       return existingLit
         ? {
-          ...poaHolder,
-          id: existingLit?.id,
-          auditDetails: existingLit?.auditDetails,
-          hasSigned: existingLit?.hasSigned || false,
-        }
+            ...poaHolder,
+            id: existingLit?.id,
+            auditDetails: existingLit?.auditDetails,
+            hasSigned: existingLit?.hasSigned || false,
+          }
         : poaHolder;
     });
 
@@ -2751,7 +2809,7 @@ export const updateCaseDetails = async ({
             data?.data?.depositDate &&
             data?.data?.issuanceDate &&
             new Date(data?.data?.issuanceDate).setMonth(new Date(data?.data?.issuanceDate).getMonth() + 3) >
-            new Date(data?.data?.depositDate).getTime()
+              new Date(data?.data?.depositDate).getTime()
           ) {
             infoBoxData.data.splice(0, 0, "CS_SIX_MONTH_BEFORE_DEPOSIT_TEXT");
           }
@@ -3601,18 +3659,18 @@ export const createOrUpdateTask = async ({
 
   const taskManagementPayload = existingTask
     ? {
-      ...existingTask,
-      partyDetails,
-      workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.UPDATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.UPDATE },
-    }
+        ...existingTask,
+        partyDetails,
+        workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.UPDATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.UPDATE },
+      }
     : {
-      filingNumber,
-      tenantId,
-      taskType: type,
-      partyDetails,
-      partyType: "RESPONDENT",
-      workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.CREATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.CREATE },
-    };
+        filingNumber,
+        tenantId,
+        taskType: type,
+        partyDetails,
+        partyType: "RESPONDENT",
+        workflow: { action: isUpfrontPayment ? TaskManagementWorkflowAction.CREATE_UPFRONT_PAYMENT : TaskManagementWorkflowAction.CREATE },
+      };
 
   const serviceMethod = existingTask ? DRISTIService.updateTaskManagementService : DRISTIService.createTaskManagementService;
 

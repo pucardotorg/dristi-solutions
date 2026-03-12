@@ -79,6 +79,7 @@ export const Urls = {
     submissionsUpdate: "/application/v1/update",
     addSubmissionComment: "/application/v1/addcomment",
     addEvidenceComment: "/evidence/v1/addcomment",
+    addCTCComment: "/ctc/v1/addcomment",
     pendingTask: "/analytics/pending_task/v1/create",
     getPendingTaskFields: "/inbox/v2/_getFields",
     applicationCreate: "/application/v1/create",
@@ -116,7 +117,9 @@ export const Urls = {
     // Advocate Office Management
     addOfficeMember: "/advocate-office-management/v1/_addMember",
     searchOfficeMember: "/advocate-office-management/v1/_searchMember",
+    searchCaseMember: "/advocate-office-management/v1/_searchCaseMember",
     leaveOffice: "/advocate-office-management/v1/_leaveOffice",
+    bankDetails: "/bank-details/v1/_search",
   },
   case: {
     addWitness: "/case/v1/add/witness",

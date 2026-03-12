@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { CustomArrowDownIcon, CustomArrowUpIcon } from "../../../icons/svgIndex";
 import DocViewerWrapper from "../docViewerWrapper";
-import { _getDigitilizationPatiresName, caseFileLabels, modifiedEvidenceNumber, TaskManagementWorkflowState } from "../../../Utils";
+import {
+  _getDigitilizationPatiresName,
+  caseFileLabels,
+  getAuthorizedUuid,
+  modifiedEvidenceNumber,
+  TaskManagementWorkflowState,
+} from "../../../Utils";
 import { useTranslation } from "react-i18next";
 import { useQueries } from "react-query";
 import { DRISTIService } from "../../../services";
@@ -52,6 +58,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [counter, setCounter] = useState(0);
   const { t } = useTranslation();
   const [toastMsg, setToastMsg] = useState(null);
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const courtId = caseDetails?.courtId;
   useEffect(() => {
@@ -213,6 +221,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         isVoid: false,
         tenantId,
         isHideBailCaseBundle: true,
+        asUser: authorizedUuid,
       },
       pagination: {
         sortBy: "createdTime",
@@ -239,6 +248,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         isVoid: false,
         tenantId,
         isHideBailCaseBundle: true,
+        asUser: authorizedUuid,
       },
       pagination: {
         sortBy: "createdTime",
@@ -261,6 +271,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         filingNumber: filingNumber,
         tenantId,
         isHideBailCaseBundle: true,
+        asUser: authorizedUuid,
       },
       pagination: {
         sortBy: "createdTime",
@@ -333,6 +344,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         isVoid: false,
         tenantId,
         isHideBailCaseBundle: true,
+        asUser: authorizedUuid,
       },
       pagination: {
         sortBy: "publishedDate",
@@ -359,6 +371,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         isVoid: false,
         tenantId,
         isHideBailCaseBundle: true,
+        asUser: authorizedUuid,
       },
       pagination: {
         sortBy: "publishedDate",
@@ -385,6 +398,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         isVoid: false,
         tenantId,
         isHideBailCaseBundle: true,
+        asUser: authorizedUuid,
       },
       pagination: {
         sortBy: "publishedDate",
@@ -406,6 +420,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         status: ["COMPLETED"],
         isVoid: false,
         tenantId,
+        asUser: authorizedUuid,
       },
       pagination: {
         sortBy: "createdDate",

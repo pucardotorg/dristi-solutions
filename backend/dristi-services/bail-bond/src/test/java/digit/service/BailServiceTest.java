@@ -109,6 +109,7 @@ class BailServiceTest {
     void whenSearchBail_noCriteria_thenNoEncryptionOnCriteria() {
         BailSearchRequest searchReq = new BailSearchRequest();
         searchReq.setRequestInfo(RequestInfo.builder().userInfo(User.builder().type("system").build()).build());
+        searchReq.setCriteria(new BailSearchCriteria());
         List<Bail> retList = List.of(mock(Bail.class));
         when(bailRepository.getBails(any())).thenReturn(retList);
         when(encryptionDecryptionUtil.decryptObject(any(), any(), eq(Bail.class), any())).thenReturn(retList.get(0));

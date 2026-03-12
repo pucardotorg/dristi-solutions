@@ -26,7 +26,15 @@ import { Urls } from "../../../hooks";
 import { getFormattedName } from "@egovernments/digit-ui-module-hearings/src/utils";
 import { admitCaseSubmitConfig, scheduleCaseAdmissionConfig, selectParticipantConfig } from "../../citizen/FileCase/Config/admissionActionConfig";
 import Modal from "../../../components/Modal";
-import { DateUtils, getAllAssociatedPartyUuids, getAuthorizedUuid, getDate, removeInvalidNameParts } from "../../../Utils";
+import {
+  checkIfCaseAccessThroughMultipleAdvocates,
+  DateUtils,
+  getAllAdvocatesAndClerksUuids,
+  getAllAssociatedPartyUuids,
+  getAuthorizedUuid,
+  getDate,
+  removeInvalidNameParts,
+} from "../../../Utils";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import VoidSubmissionBody from "./VoidSubmissionBody";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
@@ -205,6 +213,7 @@ const AdmittedCaseV2 = () => {
   );
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isEmployee = useMemo(() => userType === "employee", [userType]);
+  const isAdvocateOrClerk = useMemo(() => userRoles?.includes("ADVOCATE_ROLE") || userRoles?.includes("ADVOCATE_CLERK_ROLE"), [userRoles]);
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
   const [isShow, setIsShow] = useState(false);
@@ -227,7 +236,8 @@ const AdmittedCaseV2 = () => {
   const { data: hearingTypeOptions } = useSortedMDMSData("Hearing", "HearingType", "type", t);
   const { data: orderTypeOptions } = useSortedMDMSData("Order", "OrderType", "type", t);
   const { data: applicationTypeOptions, isLoading } = useSortedMDMSData("Application", "ApplicationType", "type", t);
-  const bailBondPendingtaskSearchRef = useRef(null);
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+  const [showPopupForClerkOrAdvocate, setShowPopupForClerkOrAdvocate] = useState({ show: false, message: "" });
 
   const hasHearingEditAccess = useMemo(() => roles?.some((role) => role?.code === "HEARING_APPROVER"), [roles]);
   const reqEvidenceUpdate = {
@@ -561,6 +571,7 @@ const AdmittedCaseV2 = () => {
       criteria: {
         filingNumber,
         tenantId,
+        asUser: authorizedUuid,
       },
       tenantId,
       ...(caseCourtId && { courtId: caseCourtId }),
@@ -1553,6 +1564,7 @@ const AdmittedCaseV2 = () => {
             filingNumber: filingNumber,
             artifactNumber: artifactNumber,
             tenantId: tenantId,
+            asUser: authorizedUuid,
             ...(caseCourtId && { courtId: caseCourtId }),
           },
           tenantId,
@@ -1685,7 +1697,7 @@ const AdmittedCaseV2 = () => {
         });
       }
     }
-  }, [applicationData, applicationNumber, location?.state?.refApplicationNumber]);  
+  }, [applicationData, applicationNumber, location?.state?.refApplicationNumber]);
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
@@ -2193,6 +2205,26 @@ const AdmittedCaseV2 = () => {
       handleDownloadPDF();
     }
   }, [showDownloadCasePdfModal, handleDownloadPDF]);
+
+  useEffect(() => {
+    if (!caseDetails) return;
+    // if the same advocate is working as a senior advocate himself as well as junior advocate under another advocate in the same case- > show a warning popup.
+    const isJuniorAndDirectAdvocate = checkIfCaseAccessThroughMultipleAdvocates(caseDetails, userUuid);
+    const shouldShowPopup = sessionStorage.getItem("showPopupIfCaseAccessThroughMultipleAdvocates");
+    if (isJuniorAndDirectAdvocate && !showPopupForClerkOrAdvocate?.show && shouldShowPopup) {
+      const message = `${t("YOU_HAVE_CASE_ACCESS_THROUGH_MULTIPLE_ADVOCATES")} ${
+        storedAdvocate?.uuid === userUuid ? t("yourself.") : `Advocate ${storedAdvocate?.advocateName}'s office.`
+      }`;
+      setShowPopupForClerkOrAdvocate({ show: true, message: message });
+    }
+  }, [showPopupForClerkOrAdvocate, caseDetails, userUuid, storedAdvocate, t]);
+
+  useEffect(() => {
+    console.log("mount");
+    return () => {
+      console.log("unmount");
+    };
+  }, []);
 
   const handleDownloadClick = useCallback(() => {
     if (casePdfFileStoreId) {
@@ -3322,6 +3354,42 @@ const AdmittedCaseV2 = () => {
     );
   }, [caseRelatedData, filingNumber, currentHearingId, caseDetails, isCitizen, isBailBondTaskExists, ordersData, hearingDetails]);
 
+  const popupForJuniorAdvocate = useMemo(() => {
+    return (
+      <Modal
+        headerBarMain={<Heading label={t("JUNIOR_ADVOCATE_WARNING_HEADER")} />}
+        headerBarEnd={
+          <CloseBtn
+            onClick={() => {
+              sessionStorage.removeItem("showPopupIfCaseAccessThroughMultipleAdvocates");
+              setShowPopupForClerkOrAdvocate({ show: false, message: "" });
+            }}
+          />
+        }
+        actionSaveLabel={t("ADVOCATE_CONFIRM_OK")}
+        children={<div style={{ margin: "25px 0px" }}>{showPopupForClerkOrAdvocate?.message || ""}</div>}
+        actionSaveOnSubmit={() => {
+          sessionStorage.removeItem("showPopupIfCaseAccessThroughMultipleAdvocates");
+          setShowPopupForClerkOrAdvocate({ show: false, message: "" });
+        }}
+      ></Modal>
+    );
+  }, [t, showPopupForClerkOrAdvocate]);
+
+  const isMemberPartOfCase = useMemo(() => {
+    if (!caseDetails?.filingNumber) return null;
+    if (!isAdvocateOrClerk) return true;
+
+    const advocatesAndClerksUuids = getAllAdvocatesAndClerksUuids(caseDetails);
+    return !!advocatesAndClerksUuids?.includes(userUuid);
+  }, [caseDetails, isAdvocateOrClerk, userUuid]);
+
+  useEffect(() => {
+    if (isMemberPartOfCase === false) {
+      history.push(homePath);
+    }
+  }, [isMemberPartOfCase, history, homePath]);
+
   if (isEpostUser) {
     history.push(homePath);
   }
@@ -3820,6 +3888,7 @@ const AdmittedCaseV2 = () => {
           submissionList={submissionsViewList.list}
           openEvidenceModal={submissionsViewList.func}
           filingNumber={filingNumber}
+          asUser={getAuthorizedUuid(userInfo?.uuid)}
         />
       )}
       {toast && toastDetails && (
@@ -3858,6 +3927,7 @@ const AdmittedCaseV2 = () => {
           isDelayApplicationRejected={isDelayApplicationRejected}
         ></AdmissionActionModal>
       )}
+      {showPopupForClerkOrAdvocate?.show && popupForJuniorAdvocate}
       {showDismissCaseConfirmation && (
         <Modal
           headerBarMain={<Heading label={t("DISMISS_CASE_CONFIRMATION")} />}

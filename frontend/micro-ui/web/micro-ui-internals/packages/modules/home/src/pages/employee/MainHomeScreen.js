@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import HomeSidebar from "../../components/HomeSidebar";
 import HomeHearingsTab from "./HomeHearingsTab";
@@ -26,6 +26,8 @@ import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
 import TemplateOrConfigurationPage from "./TemplateOrConfigurationPage";
+import CTCApplications from "./CTCApplications";
+import BulkIssueCTC from "./BulkIssueCTC";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -56,6 +58,7 @@ const MainHomeScreen = () => {
   const [homeActiveTab] = useState(initialActiveTab);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTab, setActiveTab] = useState(homeActiveTab);
+  const prevActiveTabRef = useRef(activeTab);
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
@@ -109,6 +112,7 @@ const MainHomeScreen = () => {
   const hasCaseReviewerAccess = useMemo(() => assignedRoles?.includes("CASE_REVIEWER"), [assignedRoles]);
   const hasViewProcessManagementAccess = useMemo(() => assignedRoles?.includes("VIEW_PROCESS_MANAGEMENT"), [assignedRoles]);
   const hasViewReschedulingRequestAccess = useMemo(() => assignedRoles?.includes("VIEW_RESCHEDULING_REQUESTS"), [assignedRoles]);
+  const hasViewCTCApplicationAccess = useMemo(() => assignedRoles?.includes("CERTIFIED_TRUE_COPY_APPLICATION"), [assignedRoles]);
 
   const today = new Date();
 
@@ -139,6 +143,16 @@ const MainHomeScreen = () => {
     }
     // sessionStorage.removeItem("homeActiveTab");
   }, [userType, history, isEpostUser, location]);
+
+  useEffect(() => {
+    const prevActiveTab = prevActiveTabRef.current;
+
+    if (prevActiveTab === "REGISTER_USERS" && activeTab !== "REGISTER_USERS") {
+      window.sessionStorage.removeItem("registerUsersUserType");
+    }
+
+    prevActiveTabRef.current = activeTab;
+  }, [activeTab]);
 
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
@@ -872,6 +886,9 @@ const MainHomeScreen = () => {
   if (hasViewCollectOfflinePaymentsAccess) {
     options.OFFLINE_PAYMENTS = { name: "HOME_OFFLINE_PAYMENTS" };
   }
+  if (hasViewCTCApplicationAccess) {
+    options.CTC_APPLICATIONS = { name: "HOME_CTC_APPLICATIONS" };
+  }
 
   // VIEW_APPLICATION: {
   //   name: "View Applications",
@@ -1234,6 +1251,14 @@ const MainHomeScreen = () => {
         ) : activeTab === "CS_HOME_SIGN_FORMS" ? (
           <div className="home-bulk-sign">
             <BulkSignDigitalizationView />
+          </div>
+        ) : activeTab === "CTC_APPLICATIONS" ? (
+          <div className="home-bulk-sign">
+            <CTCApplications />
+          </div>
+        ) : activeTab === "CS_HOME_ISSUE_CTC_COPY" ? (
+          <div className="home-bulk-sign">
+            <BulkIssueCTC />
           </div>
         ) : (
           <div className={`bulk-esign-order-view`}>

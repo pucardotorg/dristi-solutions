@@ -54,11 +54,12 @@ public class CaseRepository {
     private final PoaDocumentRowMapper poaDocumentRowMapper;
     private final PoaRowMapper poaRowMapper;
     private final AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper;
+    private final CaseSearchTextRowMapper caseSearchTextRowMapper;
     private final ObjectMapper objectMapper;
 
 
     @Autowired
-    public CaseRepository(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, CaseSummaryQueryBuilder caseSummaryQueryBuilder, CaseSummaryRowMapper caseSummaryRowMapper, OpenApiCaseSummaryQueryBuilder openApiCaseSummaryQueryBuilder, OpenApiCaseSummaryRowMapper openApiCaseSummaryRowMapper, OpenApiCaseListRowMapper openApiCaseListRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper, AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper, ObjectMapper objectMapper) {
+    public CaseRepository(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, CaseSummaryQueryBuilder caseSummaryQueryBuilder, CaseSummaryRowMapper caseSummaryRowMapper, OpenApiCaseSummaryQueryBuilder openApiCaseSummaryQueryBuilder, OpenApiCaseSummaryRowMapper openApiCaseSummaryRowMapper, OpenApiCaseListRowMapper openApiCaseListRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper, AdvocateOfficeCaseMemberRowMapper advocateOfficeCaseMemberRowMapper, CaseSearchTextRowMapper caseSearchTextRowMapper, ObjectMapper objectMapper) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
@@ -80,25 +81,8 @@ public class CaseRepository {
         this.poaDocumentRowMapper = poaDocumentRowMapper;
         this.poaRowMapper = poaRowMapper;
         this.advocateOfficeCaseMemberRowMapper = advocateOfficeCaseMemberRowMapper;
+        this.caseSearchTextRowMapper = caseSearchTextRowMapper;
         this.objectMapper = objectMapper;
-    }
-
-    private String extractAdvocateUuidFromAdditionalDetails(AdvocateMapping representative) {
-        JsonNode node = objectMapper.convertValue(representative, JsonNode.class);
-        JsonNode uuidNode = node.path("additionalDetails").path("uuid");
-        if (uuidNode.isMissingNode() || uuidNode.isNull()) {
-            return null;
-        }
-        return uuidNode.asText();
-    }
-
-    private String extractAdvocateNameFromAdditionalDetails(AdvocateMapping representative) {
-        JsonNode node = objectMapper.convertValue(representative, JsonNode.class);
-        JsonNode nameNode = node.path("additionalDetails").path("advocateName");
-        if (nameNode.isMissingNode() || nameNode.isNull()) {
-            return null;
-        }
-        return nameNode.asText();
     }
 
     private void setAdvocateOffices(CaseCriteria caseCriteria, List<String> ids) {
@@ -164,10 +148,11 @@ public class CaseRepository {
                     continue;
                 }
 
+                String officeAdvocateUserUuid = officeRows.get(0).getOfficeAdvocateUserUuid();
+
                 AdvocateOffice office = officeMap.computeIfAbsent(advocateId, k -> AdvocateOffice.builder()
                         .officeAdvocateId(advocateId)
-                        .officeAdvocateName(extractAdvocateNameFromAdditionalDetails(rep))
-                        .officeAdvocateUserUuid(extractAdvocateUuidFromAdditionalDetails(rep))
+                        .officeAdvocateUserUuid(officeAdvocateUserUuid)
                         .build());
 
                 // Separate advocates and clerks based on memberType
@@ -759,6 +744,36 @@ public class CaseRepository {
 
         } catch (Exception e) {
             throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Error occurred while retrieving data from the database");
+        }
+    }
+
+    public List<CaseSearchTextItem> searchCasesByText(CaseSearchTextRequest request) {
+        try {
+            List<Object> preparedStmtList = new ArrayList<>();
+            List<Integer> preparedStmtArgList = new ArrayList<>();
+
+            String query = openApiCaseSummaryQueryBuilder.getCaseSearchByTextQuery(request, preparedStmtList, preparedStmtArgList);
+            log.info("Final case search by text query :: {}", query);
+
+            if (request.getPagination() != null) {
+                Integer totalRecords = getTotalCount(query, preparedStmtList);
+                request.getPagination().setTotalCount(Double.valueOf(totalRecords));
+                query = openApiCaseSummaryQueryBuilder.addPaginationQuery(query, preparedStmtList, request.getPagination(), preparedStmtArgList);
+            }
+
+            if (preparedStmtList.size() != preparedStmtArgList.size()) {
+                log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
+                throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Arg and ArgType size mismatch");
+            }
+
+            return jdbcTemplate.query(query, preparedStmtList.toArray(),
+                    preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),
+                    caseSearchTextRowMapper);
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error while searching cases by text :: {}", e.toString());
+            throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Error occurred while searching cases by text");
         }
     }
 }

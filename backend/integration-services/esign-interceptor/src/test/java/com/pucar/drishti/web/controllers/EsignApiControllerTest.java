@@ -39,15 +39,15 @@ public class EsignApiControllerTest {
     public void testRedirectHandler() {
         String result = "someResult";
         String filestoreId = "someFilestoreId";
-        String userType = "employee";
-        String redirectUrl = "http://example.com/";
+        String redirectionType = "employee";
+        String redirectUrl = "http://example.com";
 
         when(configuration.getRedirectUrl()).thenReturn(redirectUrl);
 
-        ResponseEntity<HttpHeaders> responseEntity = interceptorApiController.redirectHandler(result, filestoreId, userType);
+        ResponseEntity<HttpHeaders> responseEntity = interceptorApiController.redirectHandler(result, filestoreId, redirectionType);
 
         HttpHeaders expectedHeaders = new HttpHeaders();
-        expectedHeaders.setLocation(URI.create(redirectUrl + userType + "/dristi?result=" + result + "&filestoreId=" + filestoreId));
+        expectedHeaders.setLocation(URI.create(redirectUrl + "/ui/" + redirectionType + "/dristi?result=" + result + "&filestoreId=" + filestoreId));
 
         assertEquals(HttpStatus.TEMPORARY_REDIRECT, responseEntity.getStatusCode());
         assertEquals(expectedHeaders.getLocation(), responseEntity.getHeaders().getLocation());
@@ -69,7 +69,7 @@ public class EsignApiControllerTest {
         assertEquals("redirect:/v1/redirect", modelAndView.getViewName());
         assertEquals("success", modelAndView.getModel().get("result"));
         assertEquals(filestoreId, modelAndView.getModel().get("filestoreId"));
-        assertEquals("employee", modelAndView.getModel().get("userType"));
+        assertEquals("employee", modelAndView.getModel().get("redirectionType"));
     }
 
     @Test
@@ -86,7 +86,7 @@ public class EsignApiControllerTest {
         assertEquals("redirect:/v1/redirect", modelAndView.getViewName());
         assertEquals("error", modelAndView.getModel().get("result"));
         assertEquals("", modelAndView.getModel().get("filestoreId"));
-        assertEquals("employee", modelAndView.getModel().get("userType"));
+        assertEquals("employee", modelAndView.getModel().get("redirectionType"));
     }
 
 }

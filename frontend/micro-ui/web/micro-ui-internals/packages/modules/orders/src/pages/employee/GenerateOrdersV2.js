@@ -458,21 +458,9 @@ const GenerateOrdersV2 = () => {
             ?.map((poa) => poa?.additionalDetails?.uuid)
             ?.filter(Boolean);
         })();
+        const asUser = newApplicationDetails?.asUser; // this main advocate's uuid in case clerk/jr adv create on senior's behalf otherwise creator's uuid
 
-        const advocateUuids = (() => {
-          const reps = caseDetails?.representatives || [];
-          if (!targetIndividualId) {
-            return reps.map((rep) => rep?.additionalDetails?.uuid).filter(Boolean);
-          }
-          return reps
-            ?.filter((rep) => rep?.representing?.some?.((r) => r?.individualId === targetIndividualId))
-            ?.map((rep) => rep?.additionalDetails?.uuid)
-            ?.filter(Boolean);
-        })();
-
-        const assignedTo = Array.from(new Set([targetUserUuid, ...(poaUuids || []), ...(advocateUuids || [])].filter(Boolean))).map((uuid) => ({
-          uuid,
-        }));
+        const assignedTo = Array.from(new Set([targetUserUuid, ...(poaUuids || []), asUser].filter(Boolean))).map((uuid) => ({ uuid }));
 
         const bailTypeCode = typeof bailType === "string" ? bailType.toUpperCase() : (bailType?.code || bailType?.type || "").toUpperCase();
         const bailTypeObj = bailTypeCode ? { code: bailTypeCode, type: bailTypeCode } : null;
@@ -4654,6 +4642,7 @@ const GenerateOrdersV2 = () => {
               hideFilters={true}
               isApplicationCompositeOrder={true}
               compositeOrderObj={currentOrder}
+              applicationData={applicationData}
             />
             {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <React.Fragment>

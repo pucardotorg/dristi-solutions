@@ -12,7 +12,7 @@ axios.interceptors.response.use(
   (error) => {
     const { handleApiError } = require("./utils/errorHandler");
     return handleApiError(error, "API Request Interceptor");
-  }
+  },
 );
 
 const pool = new Pool({
@@ -59,7 +59,7 @@ async function search_table_task(tenantId, requestinfo, criteria, pagination) {
     });
   } catch (error) {
     logger.error(
-      `Error in ${config.paths.task_table_search}: ${error.message}`
+      `Error in ${config.paths.task_table_search}: ${error.message}`,
     );
     throw error;
   }
@@ -105,7 +105,7 @@ async function search_case(cnrNumber, tenantId, requestinfo, courtId) {
   }
 }
 
-async function search_case_v2(criteria, tenantId, requestinfo) {
+async function search_case_v2(criteria, tenantId, requestinfo, flow) {
   return await axios({
     method: "post",
     url: URL.resolve(config.host.case, config.paths.case_search),
@@ -113,6 +113,7 @@ async function search_case_v2(criteria, tenantId, requestinfo) {
       RequestInfo: requestinfo,
       tenantId: tenantId,
       criteria,
+      ...(flow && { flow: "flow_jac" }),
     },
   });
 }
@@ -125,7 +126,7 @@ async function search_order(
   isOrderNumber = false,
   filingNumber,
   status,
-  orderType
+  orderType,
 ) {
   return await axios({
     method: "post",
@@ -197,7 +198,7 @@ async function search_mdms(
   uniqueIdentifier,
   schemaCode,
   tenantID,
-  requestInfo
+  requestInfo,
 ) {
   return await axios({
     method: "post",
@@ -301,7 +302,7 @@ async function search_application(
   applicationId,
   requestinfo,
   courtId,
-  filingNumber
+  filingNumber,
 ) {
   return await axios({
     method: "post",
@@ -323,7 +324,7 @@ async function search_application_v2(
   tenantId,
   requestinfo,
   criteria,
-  pagination
+  pagination,
 ) {
   return await axios({
     method: "post",
@@ -341,13 +342,13 @@ async function search_sunbirdrc_credential_service(
   tenantId,
   code,
   uuid,
-  requestinfo
+  requestinfo,
 ) {
   return await axios({
     method: "post",
     url: URL.resolve(
       config.host.sunbirdrc_credential_service,
-      config.paths.sunbirdrc_credential_service_search
+      config.paths.sunbirdrc_credential_service_search,
     ),
     data: {
       RequestInfo: requestinfo,
@@ -387,7 +388,7 @@ async function create_pdf_v2(tenantId, key, data, requestinfo) {
 async function search_pdf(tenantId, fileStoreId, requestInfo) {
   const apiUrl = URL.resolve(
     config.host.filestore,
-    config.paths.filestore_create + "/url"
+    config.paths.filestore_create + "/url",
   );
   const response = await axios.get(apiUrl, {
     headers: {
@@ -407,7 +408,7 @@ async function search_pdf(tenantId, fileStoreId, requestInfo) {
 async function search_pdf_v2(tenantId, fileStoreId, requestInfo) {
   const apiUrl = URL.resolve(
     config.host.filestore,
-    config.paths.filestore_search_id
+    config.paths.filestore_search_id,
   );
   const response = await axios.get(apiUrl, {
     headers: {
@@ -473,7 +474,7 @@ async function create_file_v2({
   // Prepare URL for the request
   const apiUrl = URL.resolve(
     config.host.filestore,
-    config.paths.filestore_create
+    config.paths.filestore_create,
   );
   const response = await axios.post(apiUrl, form, {
     headers: {
@@ -536,7 +537,8 @@ async function search_bailBond(
   tenantId,
   bailBondId,
   requestinfo,
-  filingNumber
+  filingNumber,
+  asUser,
 ) {
   return await axios({
     method: "post",
@@ -548,6 +550,7 @@ async function search_bailBond(
         tenantId: tenantId,
         bailId: bailBondId,
         filingNumber: filingNumber,
+        asUser: asUser,
       },
     },
   });
@@ -575,14 +578,14 @@ async function search_task_mangement(
   tenantId,
   requestinfo,
   criteria,
-  pagination
+  pagination,
 ) {
   try {
     return await axios({
       method: "post",
       url: URL.resolve(
         config.host.taskMangement,
-        config.paths.task_management_search
+        config.paths.task_management_search,
       ),
       data: {
         RequestInfo: requestinfo,
@@ -593,7 +596,7 @@ async function search_task_mangement(
     });
   } catch (error) {
     logger.error(
-      `Error in ${config.paths.task_management_search}: ${error.message}`
+      `Error in ${config.paths.task_management_search}: ${error.message}`,
     );
     throw error;
   }
@@ -603,14 +606,14 @@ async function search_digitalizedDocuments(
   tenantId,
   requestinfo,
   criteria,
-  pagination
+  pagination,
 ) {
   try {
     return await axios({
       method: "post",
       url: URL.resolve(
         config.host.digitisation,
-        config.paths.digitalized_documents_search
+        config.paths.digitalized_documents_search,
       ),
       data: {
         RequestInfo: requestinfo,
@@ -621,7 +624,7 @@ async function search_digitalizedDocuments(
     });
   } catch (error) {
     logger.error(
-      `Error in ${config.paths.digitalized_documents_search}: ${error.message}`
+      `Error in ${config.paths.digitalized_documents_search}: ${error.message}`,
     );
     throw error;
   }
@@ -631,14 +634,14 @@ async function search_templateConfiguration(
   tenantId,
   requestinfo,
   criteria,
-  pagination
+  pagination,
 ) {
   try {
     return await axios({
       method: "post",
       url: URL.resolve(
         config.host.templateConfiguration,
-        config.paths.template_configuration_search
+        config.paths.template_configuration_search,
       ),
       data: {
         RequestInfo: requestinfo,
@@ -649,7 +652,38 @@ async function search_templateConfiguration(
     });
   } catch (error) {
     logger.error(
-      `Error in ${config.paths.template_configuration_search}: ${error.message}`
+      `Error in ${config.paths.template_configuration_search}: ${error.message}`,
+    );
+    throw error;
+  }
+}
+
+async function search_ctc_applications(
+  tenantId,
+  requestinfo,
+  criteria,
+  pagination,
+) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(
+        config.host.ctcApplications,
+        config.paths.ctc_applications_search,
+      ),
+      data: {
+        RequestInfo: requestinfo,
+        criteria,
+        tenantId,
+        pagination,
+      },
+    });
+  } catch (error) {
+    logger.error(
+      `Status: ${error.response?.status}`,
+      `Data: ${error.response?.data}`,
+      `Message: ${error.message}`,
+      `Error in ${config.paths.ctc_applications_search}: ${error.message}`,
     );
     throw error;
   }
@@ -688,4 +722,5 @@ module.exports = {
   search_task_mangement,
   search_digitalizedDocuments,
   search_templateConfiguration,
+  search_ctc_applications,
 };

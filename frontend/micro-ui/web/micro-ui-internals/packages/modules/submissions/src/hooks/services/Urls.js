@@ -29,6 +29,7 @@ export const Urls = {
     updateWitnessDeposition: "/openapi/v1/witness_deposition/update",
     digitizedDocumentSearch: "/openapi/v1/digitalized_document/search",
     updateDigitizedDocument: "/openapi/v1/digitalized_document/update",
+    fileUpload: "/openapi/v1/file/upload",
   },
   pendingTask: "/analytics/pending_task/v1/create",
   getPendingTaskFields: "/inbox/v2/_getFields",

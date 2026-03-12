@@ -1,0 +1,15 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "payment.paymentTypeToBreakupMapping",
+  "uniqueIdentifier": "30",
+  "data": {
+    "breakUpList": [
+      {
+        "breakUpCode": "CTC_APPLICATION_FEE",
+        "breakUpName": "Ctc Application Fee"
+      }
+    ],
+    "paymentType": "30"
+  },
+  "isActive": true
+}

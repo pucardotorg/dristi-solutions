@@ -6,6 +6,8 @@ import ProfileComponent from "./ProfileComponent";
 import { AdvocateDataContext } from "../../Module";
 import { extractedSeniorAdvocates, userTypeOptions } from "../../Utils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { getUserInfoFromUuids } from "../../../../submissions/src/utils";
+import isEqual from "lodash/isEqual";
 
 const AdvocateProfileUserIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -75,7 +77,11 @@ const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelec
     [onSelect, selected?.id]
   );
 
-  const buttonLabel = selected?.advocateName ? `Adv. ${t(selected.advocateName)}'s Profile` : t("SELECT_ADVOCATE");
+  const MAX_NAME_LENGTH = 18;
+  const fullName = selected?.advocateName ? t(selected.advocateName) : "";
+  const truncatedName =
+    fullName && fullName.length > MAX_NAME_LENGTH ? `${fullName.slice(0, MAX_NAME_LENGTH).trimEnd()}...` : fullName;
+  const buttonLabel = selected?.advocateName ? `Adv. ${truncatedName}'s Profile` : t("SELECT_ADVOCATE");
 
   return (
     <div className="advocate-profile-dropdown" ref={wrapperRef}>
@@ -132,6 +138,8 @@ const TopBarComponent = ({
   const [individualDataLoading, setIndividualDataLoading] = useState(false);
   const [refetchedSearchData, setRefetchedSearchData] = useState(false);
   const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+  const [seniorAdvocatesIndividualIdMapping, setSeniorAdvocatesIndividualIdMapping] = useState([]);
+  const [isIndividuaIdMappingsLoading, setIsIndividuaIdMappingsLoading] = useState(false);
 
   const isAdvocate = useMemo(() => {
     return userDetails?.info?.roles?.some((role) => role?.code === "ADVOCATE_ROLE");
@@ -273,7 +281,7 @@ const TopBarComponent = ({
   const seniorAdvocates = useMemo(() => {
     if (isLoadingMembers) return [];
     if (userType === "ADVOCATE" && advocateId) {
-      const selfDetails = [{ id: advocateId, value: advocateId, advocateName: userInfo?.name, uuid: userInfo?.uuid }];
+      const selfDetails = [{ id: advocateId, value: advocateId, advocateName: userInfo?.name, uuid: userInfo?.uuid, allowCaseCreate: true }];
       if (officeMembersData?.members?.length > 0) {
         const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
         const totalList = [...selfDetails, ...seniorAdvocatesList];
@@ -288,10 +296,50 @@ const TopBarComponent = ({
     return [];
   }, [advocateId, advClerkId, officeMembersData, isLoadingMembers, userType, userInfo?.name, userInfo?.uuid]);
 
+  useEffect(() => {
+    if (
+      !(refetchedSearchData || searchData) ||
+      isSearchLoading ||
+      !(individualData || individualDataa) ||
+      (!isApprovalPending && !officeMembersData) ||
+      seniorAdvocates?.length === 0
+    )
+      return null;
+    const getIndividualidMappings = async () => {
+      const seniorAdvocatesUuids = seniorAdvocates?.map((advocate) => advocate?.uuid);
+      try {
+        setIsIndividuaIdMappingsLoading(true);
+        const res = await getUserInfoFromUuids(seniorAdvocatesUuids);
+        if (res?.length > 0 && !isEqual(res, seniorAdvocatesIndividualIdMapping)) {
+          setSeniorAdvocatesIndividualIdMapping(res);
+        }
+      } catch (error) {
+        console.log("error while fetching individual details of advocates", error);
+      } finally {
+        setIsIndividuaIdMappingsLoading(false);
+      }
+    };
+    getIndividualidMappings();
+  }, [
+    seniorAdvocates,
+    refetchedSearchData,
+    searchData,
+    isSearchLoading,
+    individualData,
+    individualDataa,
+    isApprovalPending,
+    officeMembersData,
+    seniorAdvocatesIndividualIdMapping,
+  ]);
+
   const changeAdvocateSelection = (advocate) => {
     if (advocate && advocate?.id !== AdvocateData?.id) {
       setSelectedAdvocate({ ...advocate });
-      setAdvocateDataContext({ ...advocate });
+      const individualId = seniorAdvocatesIndividualIdMapping?.find((o) => o?.userUuid === advocate?.uuid)?.individualId;
+      setAdvocateDataContext({
+        ...advocate,
+        individualId,
+      });
       sessionStorage.setItem("selectedAdvocate", JSON.stringify({ ...advocate }));
     }
   };
@@ -334,10 +382,12 @@ const TopBarComponent = ({
   useEffect(() => {
     if (!resolvedAdvocate?.id) return;
     if (resolvedAdvocate.id === selectedAdvocate?.id) return;
+    if (seniorAdvocatesIndividualIdMapping?.length === 0 || isIndividuaIdMappingsLoading) return;
     const eSignPath = `/${window?.contextPath}/citizen/dristi/home/file-case/sign-complaint`;
     if (resolvedAdvocate?.id !== storedAdvocate?.id || !AdvocateData?.id) {
       setSelectedAdvocate(resolvedAdvocate);
-      setAdvocateDataContext(resolvedAdvocate);
+      const individualId = seniorAdvocatesIndividualIdMapping?.find((o) => o?.userUuid === resolvedAdvocate?.uuid)?.individualId;
+      setAdvocateDataContext({ ...resolvedAdvocate, individualId });
       sessionStorage.setItem("selectedAdvocate", JSON.stringify(resolvedAdvocate));
       if (pathname === eSignPath) {
         sessionStorage.setItem("isTopbarMounted", true);
@@ -357,6 +407,8 @@ const TopBarComponent = ({
     storedAdvocate,
     AdvocateData,
     pathname,
+    seniorAdvocatesIndividualIdMapping,
+    isIndividuaIdMappingsLoading,
   ]);
 
   const disableAdvocateChange = useMemo(() => {
@@ -367,6 +419,14 @@ const TopBarComponent = ({
 
   const hasMembers = Array.isArray(seniorAdvocates) && seniorAdvocates?.length > 0;
 
+  const advocateDropdownOptions = useMemo(() => {
+    if (isSearchLoading || isApprovalPending || individualDataLoading || isIndividuaIdMappingsLoading) return [];
+    else if (isUserLoggedIn && !isSearchLoading && !isApprovalPending && hasMembers && !individualDataLoading) {
+      return seniorAdvocates;
+    }
+    return [];
+  }, [hasMembers, individualDataLoading, isApprovalPending, isIndividuaIdMappingsLoading, isSearchLoading, isUserLoggedIn, seniorAdvocates]);
+
   return (
     <div className="navbar" style={{ zIndex: "999" }}>
       <div className="center-container back-wrapper">
@@ -376,8 +436,18 @@ const TopBarComponent = ({
           <div
             style={{ display: "flex", gap: "16px", cursor: "pointer" }}
             onClick={() => {
-              const pathUnwind = pathname.split("/").slice(0, 3).join("/") + (isUserLoggedIn ? "/home/home-pending-task" : "/dristi");
-              history.push(pathUnwind);
+              if (isUserLoggedIn && pathname.includes("/citizen/dristi/home/registration")) {
+                history.push(`/${window?.contextPath}/citizen/dristi/home`);
+              } else {
+                const pathUnwind = pathname.split("/").slice(0, 3).join("/") + (isUserLoggedIn ? "/home/home-pending-task" : "/dristi");
+                if (advocateId || advClerkId) {
+                  refetchMembers().then(() => {
+                    history.push(pathUnwind);
+                  });
+                } else {
+                  history.push(pathUnwind);
+                }
+              }
             }}
           >
             <img
@@ -400,46 +470,39 @@ const TopBarComponent = ({
 
         <div className="RightMostTopBarOptions">
           {/* Manage Office button & Advocate profile dropdown - only visible for advocates / clerks */}
-          {isSearchLoading || isApprovalPending || individualDataLoading
-            ? null
-            : isUserLoggedIn &&
-              !isSearchLoading &&
-              !isApprovalPending &&
-              hasMembers &&
-              !individualDataLoading &&
-              (isAdvocate || isAdvocateClerk) && (
-                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
-                  <AdvocateProfileDropdown
-                    t={t}
-                    options={seniorAdvocates}
-                    selected={selectedAdvocate}
-                    onSelect={changeAdvocateSelection}
-                    disabled={disableAdvocateChange}
-                  />
-                  {isAdvocate && (
-                    <button
-                      className="manage-office-btn"
-                      onClick={handleManageOfficeClick}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "8px 16px",
-                        backgroundColor: "white",
-                        border: "1px solid #007E7E",
-                        borderRadius: "4px",
-                        color: "#007E7E",
-                        fontSize: "14px",
-                        fontWeight: "500",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <ManageOfficeIcon />
-                      <span>{t ? t("MANAGE_OFFICE") : "Manage Office"}</span>
-                    </button>
-                  )}
-                </div>
+          {(isAdvocate || (isAdvocateClerk && advocateDropdownOptions?.length > 0)) && (
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
+              <AdvocateProfileDropdown
+                t={t}
+                options={advocateDropdownOptions}
+                selected={selectedAdvocate}
+                onSelect={changeAdvocateSelection}
+                disabled={disableAdvocateChange}
+              />
+              {isAdvocate && (
+                <button
+                  className="manage-office-btn"
+                  onClick={handleManageOfficeClick}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "8px 16px",
+                    backgroundColor: "white",
+                    border: "1px solid #007E7E",
+                    borderRadius: "4px",
+                    color: "#007E7E",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                  }}
+                >
+                  <ManageOfficeIcon />
+                  <span>{t ? t("MANAGE_OFFICE") : "Manage Office"}</span>
+                </button>
               )}
+            </div>
+          )}
           {!hideChangeLangOnSomeUrlsWhenNotLoggedIn && !isUserLoggedIn ? changeLanguage : null}
           {!hideNotificationIconOnSomeUrlsWhenNotLoggedIn ? (
             <div className="EventNotificationWrapper" onClick={onNotificationIconClick}>
