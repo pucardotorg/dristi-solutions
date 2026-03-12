@@ -369,7 +369,7 @@ function CaseType({ t }) {
           statuteData?.Statute?.filter((s) => s.isActive).map((s) => {
             return {
               ...s,
-              label: removeYearFromName(s?.name),
+              label: s?.name,
             };
           }) || [],
       },

@@ -1,0 +1,98 @@
+[
+
+  {
+    "id": "d378dd98-830a-4eb4-96f0-7aff04a0db1c",
+    "tenantId": "kl",
+    "schemaCode": "INBOX.InboxQueryConfiguration",
+    "uniqueIdentifier": "issue-ctc-documents",
+    "data": {
+      "sortBy": {
+        "path": "Data.lastModifiedTime",
+        "defaultOrder": "DESC"
+      },
+      "sourceFilterPathList": [
+        "Data"
+      ],
+      "allowedSearchCriteria": [
+        {
+          "name": "searchableFields",
+          "path": "Data.searchableFields",
+          "operator": "WILDCARD",
+          "isMandatory": false
+        },
+        {
+          "name": "tenantId",
+          "path": "Data.tenantId.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "courtId",
+          "path": "Data.courtId.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "status",
+          "path": "Data.status.keyword",
+          "isMandatory": false
+        }
+      ],
+      "index": "issue-ctc-documents",
+      "module": "CTC Issue Doc"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1773122801047,
+      "lastModifiedTime": 1773194144580
+    }
+  },
+
+  {
+    "id": "3cf0b0a4-aed2-415b-8a24-d61fb05a248b",
+    "tenantId": "kl",
+    "schemaCode": "INBOX.InboxQueryConfiguration",
+    "uniqueIdentifier": "ctc-application-tracker-index",
+    "data": {
+      "index": "ctc-application-tracker-index",
+      "module": "CTC Service",
+      "sortBy": {
+        "path": "Data.dateRaised",
+        "defaultOrder": "DESC"
+      },
+      "sourceFilterPathList": [
+        "Data"
+      ],
+      "allowedSearchCriteria": [
+        {
+          "name": "searchableFields",
+          "path": "Data.searchableFields",
+          "operator": "WILDCARD",
+          "isMandatory": false
+        },
+        {
+          "name": "tenantId",
+          "path": "Data.tenantId.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "courtId",
+          "path": "Data.courtId.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "status",
+          "path": "Data.status.keyword",
+          "isMandatory": false
+        }
+      ]
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1773072837913,
+      "lastModifiedTime": 1773122344820
+    }
+  }
+]

@@ -77,7 +77,11 @@ const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelec
     [onSelect, selected?.id]
   );
 
-  const buttonLabel = selected?.advocateName ? `Adv. ${t(selected.advocateName)}'s Profile` : t("SELECT_ADVOCATE");
+  const MAX_NAME_LENGTH = 18;
+  const fullName = selected?.advocateName ? t(selected.advocateName) : "";
+  const truncatedName =
+    fullName && fullName.length > MAX_NAME_LENGTH ? `${fullName.slice(0, MAX_NAME_LENGTH).trimEnd()}...` : fullName;
+  const buttonLabel = selected?.advocateName ? `Adv. ${truncatedName}'s Profile` : t("SELECT_ADVOCATE");
 
   return (
     <div className="advocate-profile-dropdown" ref={wrapperRef}>
@@ -415,6 +419,14 @@ const TopBarComponent = ({
 
   const hasMembers = Array.isArray(seniorAdvocates) && seniorAdvocates?.length > 0;
 
+  const advocateDropdownOptions = useMemo(() => {
+    if (isSearchLoading || isApprovalPending || individualDataLoading || isIndividuaIdMappingsLoading) return [];
+    else if (isUserLoggedIn && !isSearchLoading && !isApprovalPending && hasMembers && !individualDataLoading) {
+      return seniorAdvocates;
+    }
+    return [];
+  }, [hasMembers, individualDataLoading, isApprovalPending, isIndividuaIdMappingsLoading, isSearchLoading, isUserLoggedIn, seniorAdvocates]);
+
   return (
     <div className="navbar" style={{ zIndex: "999" }}>
       <div className="center-container back-wrapper">
@@ -428,7 +440,13 @@ const TopBarComponent = ({
                 history.push(`/${window?.contextPath}/citizen/dristi/home`);
               } else {
                 const pathUnwind = pathname.split("/").slice(0, 3).join("/") + (isUserLoggedIn ? "/home/home-pending-task" : "/dristi");
-                history.push(pathUnwind);
+                if (advocateId || advClerkId) {
+                  refetchMembers().then(() => {
+                    history.push(pathUnwind);
+                  });
+                } else {
+                  history.push(pathUnwind);
+                }
               }
             }}
           >
@@ -452,46 +470,39 @@ const TopBarComponent = ({
 
         <div className="RightMostTopBarOptions">
           {/* Manage Office button & Advocate profile dropdown - only visible for advocates / clerks */}
-          {isSearchLoading || isApprovalPending || individualDataLoading || isIndividuaIdMappingsLoading
-            ? null
-            : isUserLoggedIn &&
-              !isSearchLoading &&
-              !isApprovalPending &&
-              hasMembers &&
-              !individualDataLoading &&
-              (isAdvocate || isAdvocateClerk) && (
-                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
-                  <AdvocateProfileDropdown
-                    t={t}
-                    options={seniorAdvocates}
-                    selected={selectedAdvocate}
-                    onSelect={changeAdvocateSelection}
-                    disabled={disableAdvocateChange}
-                  />
-                  {isAdvocate && (
-                    <button
-                      className="manage-office-btn"
-                      onClick={handleManageOfficeClick}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "8px 16px",
-                        backgroundColor: "white",
-                        border: "1px solid #007E7E",
-                        borderRadius: "4px",
-                        color: "#007E7E",
-                        fontSize: "14px",
-                        fontWeight: "500",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <ManageOfficeIcon />
-                      <span>{t ? t("MANAGE_OFFICE") : "Manage Office"}</span>
-                    </button>
-                  )}
-                </div>
+          {(isAdvocate || (isAdvocateClerk && advocateDropdownOptions?.length > 0)) && (
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
+              <AdvocateProfileDropdown
+                t={t}
+                options={advocateDropdownOptions}
+                selected={selectedAdvocate}
+                onSelect={changeAdvocateSelection}
+                disabled={disableAdvocateChange}
+              />
+              {isAdvocate && (
+                <button
+                  className="manage-office-btn"
+                  onClick={handleManageOfficeClick}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "8px 16px",
+                    backgroundColor: "white",
+                    border: "1px solid #007E7E",
+                    borderRadius: "4px",
+                    color: "#007E7E",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                  }}
+                >
+                  <ManageOfficeIcon />
+                  <span>{t ? t("MANAGE_OFFICE") : "Manage Office"}</span>
+                </button>
               )}
+            </div>
+          )}
           {!hideChangeLangOnSomeUrlsWhenNotLoggedIn && !isUserLoggedIn ? changeLanguage : null}
           {!hideNotificationIconOnSomeUrlsWhenNotLoggedIn ? (
             <div className="EventNotificationWrapper" onClick={onNotificationIconClick}>

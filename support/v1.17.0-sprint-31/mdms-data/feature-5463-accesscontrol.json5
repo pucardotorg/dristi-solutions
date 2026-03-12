@@ -1,0 +1,161 @@
+[
+  {
+    "id": "ea2c04cb-9ec9-4ce9-a947-496eff843a22",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2789",
+    "data": {
+      "id": 2789,
+      "url": "/ctc/applications/_validate",
+      // TODO : need to be given access to CITIZEN
+      "code": "2789",
+      "name": "validate ctc application",
+      "displayName": "validate ctc application",
+      "serviceCode": "ctc",
+      "parentModule": "ctc"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2790",
+    "data": {
+      "id": 2790,
+      "url": "/ctc/applications/_create",
+      // TODO : need to be given access to CITIZEN
+      "code": "2790",
+      "name": "create ctc applications",
+      "displayName": "create ctc applications",
+      "serviceCode": "ctc",
+      "parentModule": "ctc"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2793",
+    "data": {
+      "id": 2793,
+      "url": "/casemanagement/casemanager/preview/doc",
+      // TODO : need to be given access to CITIZEN
+      "code": "2793",
+      "name": "cable bundle preview",
+      "displayName": "cable bundle preview",
+      "serviceCode": "casemanagement",
+      "parentModule": "casemanagement"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2792",
+    "data": {
+      "id": 2792,
+      "url": "/ctc/applications/_search",
+      // TODO : need to be given access to CITIZEN, EMPLOYEE
+      "code": "2792",
+      "name": "search ctc applications",
+      "displayName": "search ctc applications",
+      "serviceCode": "ctc",
+      "parentModule": "ctc"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2796",
+    "data": {
+      "id": 2796,
+      "url": "/ctc/applications/documents/issue-reject",
+      "code": "2796",
+      "name": "issue reject doc",
+      "enabled": false,
+      "displayName": "issue reject doc",
+      "serviceCode": "ctc",
+      "parentModule": "ctc"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2797",
+    "data": {
+      "id": 2797,
+      "url": "/ctc/applications/_review",
+      "code": "2797",
+      "name": "Approve reject ctc application",
+      "enabled": false,
+      "displayName": "Approve reject ctc application",
+      "serviceCode": "ctc",
+      "parentModule": "ctc"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2798",
+    "data": {
+      "id": 2798,
+      "url": "/egov-pdf/ctc-certification",
+      // TODO : need to give access to EMPLOYEE
+      "code": "2798",
+      "name": "ctc certification",
+      "displayName": "ctc certification",
+      "serviceCode": "dristi-pdf",
+      "parentModule": "dristi-pdf"
+    },
+    "isActive": true
+  },
+
+  {
+    "id": "c7284b99-33d3-4c46-9160-1a88e6f499f9",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2799",
+    "data": {
+      "id": 2799,
+      "url": "/ctc/applications/documents/_getDocsToSign",
+      "code": "2799",
+      "name": "CTC get doc sign",
+      "displayName": "CTC get doc sign",
+      "serviceCode": "ctc",
+      "parentModule": "ctc"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1773202620394,
+      "lastModifiedTime": 1773202704693
+    }
+  },
+  {
+    "id": "961c2916-ea86-44cd-b153-0a9431ce48d3",
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2800",
+    "data": {
+      "id": 2800,
+      "url": "/ctc/applications/documents/_updateSignedDocs",
+      "code": "2800",
+      "name": "CTC update doc sign",
+      "displayName": "CTC update doc sign",
+      "serviceCode": "ctc",
+      "parentModule": "ctc"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+      "createdTime": 1773202660997,
+      "lastModifiedTime": 1773202688460
+    }
+  }
+
+]
