@@ -175,4 +175,8 @@ public class ServiceConstants {
 
     public static final String COPYING_FEE_BREAKDOWN_TYPE = "Copying Fees";
 
+        public static final String ONLINE = "ONLINE";
+
+        public static final String PAYMENT_RECEIPT = "PAYMENT_RECEIPT";
+
 }

@@ -49,14 +49,25 @@ public class CtcApplicationRowMapper implements ResultSetExtractor<List<CtcAppli
                         .mobileNumber(rs.getString("mobile_number"))
                         .isPartyToCase(rs.getBoolean("is_party_to_case"))
                         .partyDesignation(rs.getString("party_designation"))
-                        .affidavitDocument(getObjectFromJson(rs.getString("affidavit_document"), new TypeReference<Document>() {}))
-                        .documents(getObjectListFromJson(rs.getString("documents"), new TypeReference<List<Document>>() {}))
-                        .selectedCaseBundle(getObjectListFromJson(rs.getString("selected_case_bundle"), new TypeReference<List<CaseBundleNode>>() {}))
-                        .caseBundles(getObjectListFromJson(rs.getString("case_bundles"), new TypeReference<List<CaseBundleNode>>() {}))
+                        .affidavitDocument(
+                                getObjectFromJson(rs.getString("affidavit_document"), new TypeReference<Document>() {
+                                }))
+                        .documents(
+                                getObjectListFromJson(rs.getString("documents"), new TypeReference<List<Document>>() {
+                                }))
+                        .selectedCaseBundle(getObjectListFromJson(rs.getString("selected_case_bundle"),
+                                new TypeReference<List<CaseBundleNode>>() {
+                                }))
+                        .caseBundles(getObjectListFromJson(rs.getString("case_bundles"),
+                                new TypeReference<List<CaseBundleNode>>() {
+                                }))
                         .totalPages(rs.getInt("total_pages"))
                         .status(rs.getString("status"))
                         .dateOfApplicationApproval(rs.getLong("date_of_application_approval"))
                         .judgeComments(rs.getString("judge_comments"))
+                        .paymentReceipt(
+                                getObjectFromJson(rs.getString("payment_receipt"), new TypeReference<Document>() {
+                                }))
                         .auditDetails(AuditDetails.builder()
                                 .createdBy(rs.getString("created_by"))
                                 .lastModifiedBy(rs.getString("last_modified_by"))
