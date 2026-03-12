@@ -34,6 +34,25 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
     let newValue = e.target.value;
     if (input.name.includes("Ifsc")) {
       newValue = formatIFSC(newValue);
+
+      const prefix = input.name.replace("Ifsc", "");
+
+      const updatedValue = {
+        ...formData?.[config.key],
+        [input.name]: newValue,
+        BankReadOnly: false,
+        BranchReadOnly: false,
+      };
+
+      onSelect(config.key, updatedValue, { shouldValidate: false });
+      onSelect(`${prefix}BankName`, "", { shouldValidate: false });
+      onSelect(`${prefix}BranchName`, "", { shouldValidate: false });
+
+      clearErrors(`${prefix}BankName`);
+      clearErrors(`${prefix}BranchName`);
+      clearErrors(config.key);
+
+      return;
     }
     setValue(newValue, input.name);
   };
