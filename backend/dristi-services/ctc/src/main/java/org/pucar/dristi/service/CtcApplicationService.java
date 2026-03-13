@@ -408,37 +408,43 @@ public class CtcApplicationService {
     private Map<String, String> buildBundleFileStoreMap(List<CaseBundleNode> caseBundles) {
         Map<String, String> map = new HashMap<>();
         if (caseBundles == null) return map;
-        for (CaseBundleNode parentNode : caseBundles) {
-            if (parentNode.getId() != null && parentNode.getFileStoreId() != null) {
-                map.put(parentNode.getId(), parentNode.getFileStoreId());
-            }
-            if (parentNode.getChildren() != null) {
-                for (CaseBundleNode child : parentNode.getChildren()) {
-                    if (child.getId() != null && child.getFileStoreId() != null) {
-                        map.put(child.getId(), child.getFileStoreId());
-                    }
-                }
-            }
+        for (CaseBundleNode node : caseBundles) {
+            addFileStoreToMap(node, map);
         }
         return map;
+    }
+
+    private void addFileStoreToMap(CaseBundleNode node, Map<String, String> map) {
+        if (node == null) return;
+        if (node.getId() != null && node.getFileStoreId() != null) {
+            map.put(node.getId(), node.getFileStoreId());
+        }
+        if (node.getChildren() != null) {
+            for (CaseBundleNode child : node.getChildren()) {
+                addFileStoreToMap(child, map);
+            }
+        }
     }
 
     private Map<String, CaseBundleNode> buildSelectedNodeMap(List<CaseBundleNode> selectedCaseBundle) {
         Map<String, CaseBundleNode> map = new HashMap<>();
         if (selectedCaseBundle == null) return map;
-        for (CaseBundleNode parentNode : selectedCaseBundle) {
-            if (parentNode.getId() != null) {
-                map.put(parentNode.getId(), parentNode);
-            }
-            if (parentNode.getChildren() != null) {
-                for (CaseBundleNode child : parentNode.getChildren()) {
-                    if (child.getId() != null) {
-                        map.put(child.getId(), child);
-                    }
-                }
-            }
+        for (CaseBundleNode node : selectedCaseBundle) {
+            addNodeToMap(node, map);
         }
         return map;
+    }
+
+    private void addNodeToMap(CaseBundleNode node, Map<String, CaseBundleNode> map) {
+        if (node == null) return;
+        if (node.getId() != null) {
+            map.put(node.getId(), node);
+        }
+        if (node.getChildren() != null) {
+            for (CaseBundleNode child : node.getChildren()) {
+                addNodeToMap(child, map);
+            }
+        }
     }
 
     private String determineWorkflowAction(String currentStatus, int totalIssued, int totalRejected, int totalPending, String action) {
