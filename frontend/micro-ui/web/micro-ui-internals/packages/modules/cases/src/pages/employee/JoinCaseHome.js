@@ -772,41 +772,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           }));
         }
 
-        const isResponseSubmitted = caseDetails?.litigants?.find((litigant) => litigant?.individualId === party?.individualId)?.isResponseSubmitted;
-
-        if ("PENDING_RESPONSE" === caseDetails?.status && !party?.isComplainant && !isResponseSubmitted) {
-          const poaHolders = (caseDetails?.poaHolders || [])
-            ?.filter((poa) => poa?.representingLitigants?.some((represent) => represent?.individualId === individual?.individualId))
-            ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
-
-          try {
-            await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-              pendingTask: {
-                name: `${t("PENDING_RESPONSE_FOR")} ${party?.fullName}`,
-                entityType: "case-default",
-                referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${individual?.individualId}`,
-                status: "PENDING_RESPONSE",
-                assignedTo: [{ uuid: individual?.userUuid }, ...(poaHolders?.length > 0 ? poaHolders : [])],
-                assignedRole: ["CASE_RESPONDER"],
-                cnrNumber: caseDetails?.cnrNumber,
-                filingNumber: caseDetails?.filingNumber,
-                caseId: caseDetails?.id,
-                caseTitle: caseDetails?.caseTitle,
-                isCompleted: false,
-                stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                additionalDetails: {
-                  individualId: individual?.individualId,
-                  caseId: caseDetails?.id,
-                  litigants: [individual?.individualId],
-                },
-                tenantId,
-                courtId: caseDetails?.courtId,
-              },
-            });
-          } catch (err) {
-            console.error("err :>> ", err);
-          }
-        }
         setShowConfirmModal(false);
         setMessageHeader(t("YOU_ARE_NOW_PARTY_IN_PERSON"));
         setSuccess(true);
@@ -818,25 +783,16 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     setIsApiCalled(false);
     setIsPipApiCalled(false);
   }, [
-    caseDetails?.caseTitle,
-    caseDetails?.cnrNumber,
-    caseDetails?.courtId,
     caseDetails?.filingNumber,
-    caseDetails?.id,
     caseDetails?.litigants,
-    caseDetails?.poaHolders,
     caseDetails?.representatives,
-    caseDetails?.status,
     individual?.individualId,
-    individual?.userUuid,
-    party?.fullName,
     party?.individualId,
     party.isComplainant,
     selectPartyData?.affidavit?.affidavitData?.document,
     step,
     t,
     tenantId,
-    todayDate,
     validationCode,
   ]);
 
@@ -978,32 +934,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                     }
                   }),
                 }));
-
-                if ("PENDING_RESPONSE" === caseDetails?.status && !party?.isComplainant) {
-                  try {
-                    await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                      pendingTask: {
-                        name: `${t("PENDING_RESPONSE_FOR")} ${getFullName(" ", givenName, otherNames, familyName)}`,
-                        entityType: "case-default",
-                        referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${individual?.individualId}`,
-                        status: "PENDING_RESPONSE",
-                        assignedTo: [{ uuid: individual?.userUuid }],
-                        assignedRole: ["CASE_RESPONDER"],
-                        cnrNumber: caseDetails?.cnrNumber,
-                        filingNumber: caseDetails?.filingNumber,
-                        caseId: caseDetails?.id,
-                        caseTitle: caseDetails?.caseTitle,
-                        isCompleted: false,
-                        stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                        additionalDetails: { individualId: individual?.individualId, caseId: caseDetails?.id, litigants: [individual?.individualId] },
-                        tenantId,
-                        courtId: caseDetails?.courtId,
-                      },
-                    });
-                  } catch (err) {
-                    console.error("err :>> ", err);
-                  }
-                }
                 setStep(step + 3);
                 setSuccess(true);
               } else {
@@ -1217,56 +1147,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                     }),
                     respondentAdvocateList: [...successScreenData?.respondentAdvocateList, getFullName(" ", givenName, otherNames, familyName)],
                   }));
-                }
-
-                // create/update pending task for submit response
-                if ("PENDING_RESPONSE" === caseDetails?.status && documentUploadResult?.[0]?.isRespondent) {
-                  const pendingResponseTaskCreate = updatedParty
-                    ?.filter((user) => {
-                      const litigant = caseDetails?.litigants?.find((litigant) => litigant?.individualId === user?.individualId);
-                      if (!litigant) return true;
-
-                      if (!litigant?.isResponseRequired) return false;
-
-                      return !litigant?.documents?.some((document) => document?.additionalDetails?.fileType === "respondent-response");
-                    })
-                    ?.map((user) => {
-                      const { isFound, representatives } = searchLitigantInRepresentives(caseDetails?.representatives, user?.individualId);
-
-                      const poaHolders = (caseDetails?.poaHolders || [])
-                        ?.filter((poa) => poa?.representingLitigants?.some((represent) => represent?.individualId === user?.individualId))
-                        ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
-
-                      return DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                        pendingTask: {
-                          name: `${t("PENDING_RESPONSE_FOR")} ${user?.fullName}`,
-                          entityType: "case-default",
-                          referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${user?.individualId}`,
-                          status: "PENDING_RESPONSE",
-                          assignedTo: [
-                            { uuid: user?.uuid },
-                            ...(isFound ? representatives?.map((representative) => ({ uuid: representative?.additionalDetails?.uuid })) : []),
-                            { uuid: individual?.userUuid },
-                            ...(poaHolders?.length > 0 ? poaHolders : []),
-                          ],
-                          assignedRole: ["CASE_RESPONDER"],
-                          cnrNumber: caseDetails?.cnrNumber,
-                          filingNumber: caseDetails?.filingNumber,
-                          caseId: caseDetails?.id,
-                          caseTitle: caseDetails?.caseTitle,
-                          isCompleted: false,
-                          stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                          additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id, litigants: [user?.individualId] },
-                          tenantId,
-                          courtId: caseDetails?.courtId,
-                        },
-                      });
-                    });
-                  try {
-                    await Promise.all(pendingResponseTaskCreate);
-                  } catch (err) {
-                    console.error("err :>> ", err);
-                  }
                 }
               }
               if (res?.paymentTaskNumber) {
