@@ -167,6 +167,12 @@ const ManageOffice = () => {
 
       if (individualResponse?.Individual && individualResponse?.Individual?.length > 0) {
         const individual = individualResponse?.Individual?.[0];
+        // Validation: prevent adding self as a member
+        if (individual?.userUuid && individual?.userUuid === officeAdvocateUserUuid) {
+          setSearchError(t("YOU_CANNOT_ADD_YOURSELF") || "You cannot add yourself");
+          setSearchResult(null);
+          return;
+        }
         // Get userType from searched individual (same as HomeView: individualData.Individual[0].additionalFields.fields)
         const memberUserType = individual?.additionalFields?.fields?.find((obj) => obj?.key === "userType")?.value;
 
