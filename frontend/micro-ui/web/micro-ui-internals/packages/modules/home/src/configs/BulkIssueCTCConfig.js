@@ -1,6 +1,5 @@
 const defaultSearchValues = {
-  date: "",
-  documentType: "",
+  documentName: "",
   searchQuery: "",
 };
 
@@ -44,31 +43,22 @@ export const bulkIssueCTCConfig = {
         defaultValues: defaultSearchValues,
         fields: [
           {
-            label: "Date",
-            type: "date",
+            label: "SEARCH_DOCUMENT_NAME",
+            type: "text",
             isMandatory: false,
             disable: false,
             populators: {
-              name: "date",
+              name: "documentName",
               error: "BR_PATTERN_ERR_MSG",
-              style: { maxWidth: "200px" },
+              style: { maxWidth: "350px", minWidth: "250px", width: "100%" },
+              validation: {
+                pattern: {},
+                minlength: 2,
+              },
             },
           },
           {
-            label: "Documents",
-            type: "dropdown",
-            isMandatory: false,
-            disable: false,
-            populators: {
-              name: "documentType",
-              optionsKey: "name",
-              options: [],
-              error: "BR_PATTERN_ERR_MSG",
-              style: { maxWidth: "250px" },
-            },
-          },
-          {
-            label: "Search Case Name",
+            label: "SEARCH_CASE_NAME",
             type: "text",
             isMandatory: false,
             disable: false,

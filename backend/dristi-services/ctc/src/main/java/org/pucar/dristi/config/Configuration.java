@@ -181,4 +181,7 @@ public class Configuration {
     @Value("${egov.dristi.pdf.ctc}")
     private String egovPdfCtcEndpoint;
 
+    @Value("${application.fees}")
+    private Double applicationFees;
+
 }

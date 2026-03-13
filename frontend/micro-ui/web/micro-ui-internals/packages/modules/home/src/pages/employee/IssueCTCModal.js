@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
-import { downloadPdfFromBlob } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, downloadPdfFromBlob } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const Heading = (props) => {
   return (
@@ -41,7 +41,7 @@ const HeaderBarEnd = ({ t, setShowModal, handleDownload }) => {
   );
 };
 
-const IssueCTCModal = ({ rowData, setShowModal, handleIssue }) => {
+const IssueCTCModal = ({ rowData, setShowModal, handleIssue, handleCancelSubmit }) => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
@@ -55,13 +55,12 @@ const IssueCTCModal = ({ rowData, setShowModal, handleIssue }) => {
     }
   };
 
-
   return (
     <Modal
       headerBarMain={<Heading label={t("DOCUMENT_REVIEW")} />}
       headerBarEnd={<HeaderBarEnd t={t} setShowModal={setShowModal} handleDownload={handleDownload} />}
-      actionCancelLabel={t("BACK")}
-      actionCancelOnSubmit={() => setShowModal(false)}
+      actionCancelLabel={t("REJECT")}
+      actionCancelOnSubmit={handleCancelSubmit}
       actionSaveLabel={t("ISSUE")}
       isDisabled={false}
       actionSaveOnSubmit={() => {
@@ -86,28 +85,30 @@ const IssueCTCModal = ({ rowData, setShowModal, handleIssue }) => {
         <div style={{ background: "#f7f5f3", padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "50% 50%", gap: "16px" }}>
             <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#0a0a0a" }}>{t("APPLICATION_NUMBER")}</h3>
-            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 400, color: "#3d3c3c" }}>
-              {rowData?.businessObject?.applicationNumber || "CA/2/2026"}
-            </h3>
+            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 400, color: "#3d3c3c" }}>{rowData?.businessObject?.ctcApplicationNumber || ""}</h3>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "50% 50%", gap: "16px" }}>
             <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#0a0a0a" }}>{t("APPLICATION_SUBMISSION_DATE")}</h3>
-            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 400, color: "#3d3c3c" }}>{rowData?.businessObject?.dateRaised || "1-12-2025"}</h3>
+            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 400, color: "#3d3c3c" }}>
+              {DateUtils.getFormattedDate(rowData?.businessObject?.dateOfApplication) || ""}
+            </h3>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "50% 50%", gap: "16px" }}>
             <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#0a0a0a" }}>{t("APPLICATION_FILER")}</h3>
-            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 400, color: "#3d3c3c" }}>{rowData?.businessObject?.petitioner || "Harsh"}</h3>
+            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 400, color: "#3d3c3c" }}>{rowData?.businessObject?.nameOfApplicant || ""}</h3>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "50% 50%", gap: "16px" }}>
-            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#0a0a0a" }}>{t("APPLICATION_APPROVAL_DATE")}</h3>
-            <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 400, color: "#3d3c3c" }}>{"1-12-2025"}</h3>
-          </div>
+          {rowData?.businessObject?.dateOfApplicationApproval && (
+            <div style={{ display: "grid", gridTemplateColumns: "50% 50%", gap: "16px" }}>
+              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#0a0a0a" }}>{t("APPLICATION_APPROVAL_DATE")}</h3>
+              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 400, color: "#3d3c3c" }}>
+                {DateUtils.getFormattedDate(rowData?.businessObject?.dateOfApplicationApproval)}
+              </h3>
+            </div>
+          )}
         </div>
 
         {/* Document Preview Area */}
-        <div
-          style={{ overflowY: "scroll" }}
-        >
+        <div style={{ overflowY: "scroll" }}>
           {DocViewerWrapper && rowData?.businessObject?.downloadedDocument ? (
             <DocViewerWrapper
               key={rowData?.businessObject?.ctcApplicationNumber}
