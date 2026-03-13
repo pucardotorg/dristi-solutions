@@ -313,9 +313,9 @@ public class CtcApplicationService {
 
                     String workflowAction = null;
                     if (ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(action)) {
-                        workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued + 1, totalRejected, totalPending);
+                        workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued + 1, totalRejected, totalPending - 1, action);
                     } else {
-                        workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued, totalRejected + 1, totalPending);
+                        workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued, totalRejected + 1, totalPending - 1, action);
                     }
 
                     if (workflowAction != null) {
@@ -441,33 +441,36 @@ public class CtcApplicationService {
         return map;
     }
 
-    private String determineWorkflowAction(String currentStatus, int totalIssued, int totalRejected, int totalPending) {
+    private String determineWorkflowAction(String currentStatus, int totalIssued, int totalRejected, int totalPending, String action) {
         if (totalIssued == 0 && totalRejected == 0) {
             return null;
         }
 
+        boolean allProcessed = totalPending == 0;
+        boolean isIssueAction = ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(action);
+        boolean noRejections = totalRejected == 0;
+
         if (PENDING_ISSUE.equalsIgnoreCase(currentStatus)) {
-            // At least one issued → move to PARTIALLY_ISSUED
-            if (totalIssued > 0) {
-                return WF_ACTION_ISSUE;
+
+            if (!allProcessed) {
+                return action;
             }
-            // All rejected, none pending → REJECT_ALL (terminal)
-            if (totalRejected > 0 && totalPending == 0) {
-                return WF_ACTION_REJECT_ALL;
+
+            // All documents processed
+            if (isIssueAction) {
+                return noRejections ? WF_ACTION_ISSUE_ALL : action;
             }
-            // Some rejected, still pending → REJECT (stay in PENDING_ISSUE)
-            if (totalRejected > 0 && totalPending > 0) {
-                return WF_ACTION_REJECT;
-            }
+
+            return WF_ACTION_REJECT_ALL;
         }
 
         if (PARTIALLY_ISSUED.equalsIgnoreCase(currentStatus)) {
-            // All docs processed → ISSUE_ALL (terminal)
-            if (totalPending == 0) {
+
+            if (allProcessed && isIssueAction && noRejections) {
                 return WF_ACTION_ISSUE_ALL;
             }
-            // Still pending docs → ISSUE (stay in PARTIALLY_ISSUED)
-            return WF_ACTION_ISSUE;
+
+            return action;
         }
 
         return null;
