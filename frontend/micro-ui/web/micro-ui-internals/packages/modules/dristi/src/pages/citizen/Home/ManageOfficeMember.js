@@ -340,7 +340,7 @@ const ManageOfficeMember = () => {
     }
   };
 
-  const callUpdateMemberAccess = async (overrideAccessType) => {
+  const callUpdateMemberAccess = async (overrideAccessType, overrideAllowCaseCreate, overrideAddToNewCasesAuto) => {
     if (!member?.memberId || !effectiveAdvocateInfo?.advocateId) {
       setToast({ label: t("UPDATE_ACCESS_ERROR") || "Failed to update access. Please try again.", type: "error" });
       return;
@@ -348,8 +348,13 @@ const ManageOfficeMember = () => {
 
     setIsUpdatingAccess(true);
     try {
-      const allowCaseCreateFlag = allowCaseCreate === "Yes";
-      const addNewCasesAutomaticallyFlag = addToNewCasesAuto === "Yes";
+      const effectiveAllowCaseCreate =
+        typeof overrideAllowCaseCreate === "undefined" ? allowCaseCreate : overrideAllowCaseCreate;
+      const effectiveAddToNewCasesAuto =
+        typeof overrideAddToNewCasesAuto === "undefined" ? addToNewCasesAuto : overrideAddToNewCasesAuto;
+
+      const allowCaseCreateFlag = effectiveAllowCaseCreate === "Yes";
+      const addNewCasesAutomaticallyFlag = effectiveAddToNewCasesAuto === "Yes";
       const finalAccessType = overrideAccessType || accessType || member?.accessType || "ALL_CASES";
 
       const body = {
@@ -525,14 +530,16 @@ const ManageOfficeMember = () => {
     await callUpdateMemberAccess(newType);
   };
 
-  const handleAllowCaseCreateChange = (option) => {
+  const handleAllowCaseCreateChange = async (option) => {
     const value = option?.code === "No" ? "No" : "Yes";
     setAllowCaseCreate(value);
+    await callUpdateMemberAccess(undefined, value, undefined);
   };
 
-  const handleAddToNewCasesAutoChange = (option) => {
+  const handleAddToNewCasesAutoChange = async (option) => {
     const value = option?.code === "No" ? "No" : "Yes";
     setAddToNewCasesAuto(value);
+    await callUpdateMemberAccess(undefined, undefined, value);
   };
 
   return (
