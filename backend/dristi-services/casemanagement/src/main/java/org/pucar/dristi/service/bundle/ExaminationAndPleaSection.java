@@ -78,7 +78,7 @@ public class ExaminationAndPleaSection implements CaseBundleSection {
 
         return CaseBundleNode.builder()
                 .id("examination-plea")
-                .title("EXAMINATION_AND_PLEA")
+                .title("EXAMINATION_OF_ACCUSED")
                 .children(result)
                 .build();
     }
