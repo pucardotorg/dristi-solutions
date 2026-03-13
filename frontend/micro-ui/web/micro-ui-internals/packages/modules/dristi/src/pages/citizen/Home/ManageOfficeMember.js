@@ -531,7 +531,7 @@ const ManageOfficeMember = () => {
           </div>
           <div className="manage-office-member-field manage-office-member-field--wide">
             <span className="manage-office-member-field__label">{t("ALLOW_MEMBER_TO_FILE_NEW_CASES") || "Allow member to file new cases?"}</span>
-            <select value={allowCaseCreate} onChange={(e) => setAllowCaseCreate(e.target.value)} className="manage-office-member-select" disabled>
+            <select value={allowCaseCreate} onChange={(e) => setAllowCaseCreate(e.target.value)} className="manage-office-member-select">
               <option value="Yes">{t("YES") || "Yes"}</option>
               <option value="No">{t("NO") || "No"}</option>
             </select>
@@ -544,7 +544,6 @@ const ManageOfficeMember = () => {
               value={addToNewCasesAuto}
               onChange={(e) => setAddToNewCasesAuto(e.target.value)}
               className="manage-office-member-select"
-              disabled
             >
               <option value="Yes">{t("YES") || "Yes"}</option>
               <option value="No">{t("NO") || "No"}</option>
