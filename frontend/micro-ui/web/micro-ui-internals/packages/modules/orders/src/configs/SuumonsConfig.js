@@ -208,8 +208,8 @@ export const SummonsTabsConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "ISSUE_DATE",
-                jsonPath: "createdDate",
+                label: "PAYMENT_MADE",
+                jsonPath: "taskDetails.deliveryChannels.feePaidDate",
                 additionalCustomization: true,
               },
               {

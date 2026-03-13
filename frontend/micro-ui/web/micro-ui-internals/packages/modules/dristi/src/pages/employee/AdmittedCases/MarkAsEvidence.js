@@ -8,7 +8,7 @@ import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { Urls } from "../../../hooks";
 import { useHistory } from "react-router-dom";
 import { InfoCard } from "@egovernments/digit-ui-components";
-import { sanitizeData } from "../../../Utils";
+import { getAuthorizedUuid, sanitizeData } from "../../../Utils";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
@@ -163,7 +163,8 @@ const MarkAsEvidence = ({
   const [evidenceTag, setEvidenceTag] = useState({ tagLabel: "", value: "" });
   const [taggedEvidenceNumber, setTaggedEvidenceNumber] = useState("");
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
-
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const isFormValid = useMemo(() => {
     return witnessTag !== null && evidenceNumber?.trim().length > 0;
   }, [witnessTag, evidenceNumber]);
@@ -384,6 +385,7 @@ const MarkAsEvidence = ({
             courtId: courtId,
             filingNumber: filingNumber,
             artifactNumber: artifactNumber,
+            asUser: authorizedUuid,
             tenantId,
           },
 

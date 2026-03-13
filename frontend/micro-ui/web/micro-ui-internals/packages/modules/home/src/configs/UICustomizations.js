@@ -14,6 +14,16 @@ import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
+export const formatLabel = (text) => {
+  if (!text) return "";
+
+  return text
+    ?.toLowerCase()
+    ?.split("_")
+    ?.map((word) => word?.charAt(0)?.toUpperCase() + word?.slice(1))
+    ?.join(" ");
+};
+
 const handleTaskDetails = (taskDetails) => {
   try {
     // Check if taskDetails is a string
@@ -44,8 +54,6 @@ const handleTaskDetails = (taskDetails) => {
     return null;
   }
 };
-
-
 
 export const UICustomizations = {
   EpostTrackingUiConfig: {
@@ -632,6 +640,168 @@ export const UICustomizations = {
           return taskDetails?.deliveryChannels?.statusChangeDate || "-";
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
+        case "PAYMENT_MADE":
+          return taskDetails?.deliveryChannels?.feePaidDate || "-";
+        default:
+          return t("ES_COMMON_NA");
+      }
+    },
+  },
+
+  bulkIssueCTCConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const searchForm = requestCriteria?.state?.searchForm || {};
+      const tableForm = requestCriteria?.state?.tableForm || {};
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+
+      const moduleSearchCriteria = {
+        tenantId,
+        ...(searchForm?.searchQuery && { searchableFields: searchForm.searchQuery }),
+        ...(searchForm?.documentName && { docTitle: searchForm.documentName }),
+        ...(courtId && { courtId }),
+        status: "PENDING",
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            processSearchCriteria: {
+              businessService: ["ctc-default"],
+              moduleName: "CTC Issue Doc",
+              tenantId,
+            },
+            moduleSearchCriteria,
+            tenantId,
+            limit: tableForm?.limit || 10,
+            offset: tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, items: data?.items || [], totalCount: data?.totalCount || 0 };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
+        case "DOCUMENTS_REQUESTED":
+          return (
+            <span
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+              role="button"
+              tabIndex={0}
+              onClick={() => column?.clickFunc && column.clickFunc({ original: row })}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === " ") && column?.clickFunc) {
+                  e.preventDefault();
+                  column.clickFunc({ original: row });
+                }
+              }}
+            >{`${formatLabel(value)}`}</span>
+          );
+        case "CASE_NAME":
+          return <span>{value}</span>;
+        case "CASE_NUMBER":
+          return <span>{value}</span>;
+        case "APPLICATION_NUMBER":
+          return <span>{value}</span>;
+        default:
+          return t("ES_COMMON_NA");
+      }
+    },
+  },
+
+  CTCApplicationsConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const searchForm = requestCriteria?.state?.searchForm || {};
+      const tableForm = requestCriteria?.state?.tableForm || {};
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+
+      const moduleSearchCriteria = {
+        tenantId,
+        ...(searchForm?.caseSearchText && { searchableFields: searchForm.caseSearchText }),
+        ...(courtId && { courtId }),
+        status: "PENDING_APPROVAL",
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            processSearchCriteria: {
+              businessService: ["ctc-default"],
+              moduleName: "CTC Service",
+              tenantId,
+            },
+            moduleSearchCriteria,
+            tenantId,
+            limit: tableForm?.limit || 10,
+            offset: tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, items: data?.items || [], totalCount: data?.totalCount || 0 };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
+        case "APPLICATION_NUMBER":
+          return (
+            <span
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+              role="button"
+              tabIndex={0}
+              onClick={() => column?.clickFunc && column.clickFunc({ original: row })}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === " ") && column?.clickFunc) {
+                  e.preventDefault();
+                  column.clickFunc({ original: row });
+                }
+              }}
+            >{`${value}`}</span>
+          );
+        case "CASE_NUMBER":
+          return <span>{value || ""}</span>;
+        case "PETITIONER":
+          return <span>{value || ""}</span>;
+        case "DATE_RAISED":
+          const date = value ? new Date(value) : new Date();
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0");
+          const year = date.getFullYear();
+          return <span>{`${day}-${month}-${year}`}</span>;
+        case "STATUS":
+          return (
+            <span
+              style={{ padding: "4px 8px", background: "#FFF0E6", color: "#CC6600", borderRadius: "16px", fontSize: "12px", display: "inline-block" }}
+            >
+              {t(value || "")}
+            </span>
+          );
         default:
           return t("ES_COMMON_NA");
       }
@@ -868,6 +1038,10 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       const userType = requestCriteria?.state?.searchForm?.userType;
 
+      if (userType) {
+        window.sessionStorage.setItem("registerUsersUserType", userType);
+      }
+
       // Determine business service based on selected user type
       let businessService = ["user-registration-advocate"];
       let moduleName = "Advocate services";
@@ -932,8 +1106,9 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${applicationNumber || ""
-                  }&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
+                  applicationNumber || ""
+                }&individualId=${individualId}&type=${usertype}`}
               >
                 {applicationNumber
                   ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)

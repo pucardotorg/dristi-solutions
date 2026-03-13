@@ -81,7 +81,7 @@ public class AdvocateOfficeUtil {
                 .build();
 
         List<OfficeMember> members = searchMembers(requestInfo, criteria);
-        return !members.isEmpty();
+        return !members.isEmpty() && members.get(0).getAllowCaseCreate();
     }
 
     /**

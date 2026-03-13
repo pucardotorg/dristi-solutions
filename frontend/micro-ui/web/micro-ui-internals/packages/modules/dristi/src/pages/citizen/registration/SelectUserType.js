@@ -344,7 +344,7 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
     };
 
     handleRedirect();
-  }, [params.address, params, history, pathOnRefresh, showUsename, Digit.ULBService]);
+  }, [params?.address, params, history, pathOnRefresh, showUsename, Digit.ULBService]);
 
   return (
     <div className="select-user">

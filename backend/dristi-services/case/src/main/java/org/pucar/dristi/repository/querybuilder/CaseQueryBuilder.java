@@ -216,6 +216,7 @@ public class CaseQueryBuilder {
                                 " FROM dristi_advocate_office_case_member aocm" +
                                 " WHERE aocm.office_advocate_id = ?" +
                                 " AND aocm.member_user_uuid = ?" +
+                                " AND aocm.case_id = cases.id" +
                                 " AND aocm.is_active = true))" +
                                 " AND (cases.status NOT IN ('DELETED_DRAFT'))"
                         );
@@ -228,6 +229,7 @@ public class CaseQueryBuilder {
                 query.append("(EXISTS (SELECT 1 FROM dristi_advocate_office_case_member aocm " +
                            "WHERE aocm.office_advocate_id = ? " +
                            "AND aocm.member_user_uuid = ? " +
+                           "AND aocm.case_id = cases.id " +
                            "AND aocm.is_active = true) " +
                            "AND cases.id IN (" +
                                 " SELECT dcr.case_id" +
@@ -941,6 +943,19 @@ public class CaseQueryBuilder {
             query.append(" (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?) or LOWER(cases.casetitle) LIKE LOWER(?) OR LOWER(cases.lprnumber) LIKE LOWER(?)  OR LOWER(cases.courtcasenumberbackup) LIKE LOWER(?))");
             for (int i = 0; i < 6; i++) {
                 preparedStmtList.add("%" + criteria.getCaseSearchText() + "%");
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    private boolean addCaseSearchByCnrAndCaseNumberCriteria(CaseSummaryListCriteria criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (criteria.getSearchByCnrAndCaseNumber() != null && !criteria.getSearchByCnrAndCaseNumber().isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(" (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?) or LOWER(cases.cnrNumber) LIKE LOWER(?) OR LOWER(cases.lprnumber) LIKE LOWER(?)  OR LOWER(cases.courtcasenumberbackup) LIKE LOWER(?))");
+            for (int i = 0; i < 6; i++) {
+                preparedStmtList.add("%" + criteria.getSearchByCnrAndCaseNumber() + "%");
                 preparedStmtArgList.add(Types.VARCHAR);
             }
             firstCriteria = false;

@@ -299,6 +299,7 @@ export const extractedSeniorAdvocates = (officeMembersData = {}) => {
       id: member?.officeAdvocateId,
       value: member?.officeAdvocateId,
       uuid: member?.officeAdvocateUserUuid,
+      allowCaseCreate: member?.allowCaseCreate, // This enables the clerk/jr. adv to create the case on behalf of senior advocate(show/hide file case button)
     };
   });
 };

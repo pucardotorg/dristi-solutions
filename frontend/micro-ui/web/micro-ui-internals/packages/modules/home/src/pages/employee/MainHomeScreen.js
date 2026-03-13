@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import HomeSidebar from "../../components/HomeSidebar";
 import HomeHearingsTab from "./HomeHearingsTab";
@@ -26,6 +26,8 @@ import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
 import TemplateOrConfigurationPage from "./TemplateOrConfigurationPage";
+import CTCApplications from "./CTCApplications";
+import BulkIssueCTC from "./BulkIssueCTC";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -56,6 +58,7 @@ const MainHomeScreen = () => {
   const [homeActiveTab] = useState(initialActiveTab);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTab, setActiveTab] = useState(homeActiveTab);
+  const prevActiveTabRef = useRef(activeTab);
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
@@ -78,6 +81,7 @@ const MainHomeScreen = () => {
     RESCHEDULE_APPLICATIONS: 0,
     DELAY_CONDONATION: 0,
     OTHERS: 0,
+    CTC_APPLICATIONS: 0,
   });
   const [stepper, setStepper] = useState(0);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -109,6 +113,7 @@ const MainHomeScreen = () => {
   const hasCaseReviewerAccess = useMemo(() => assignedRoles?.includes("CASE_REVIEWER"), [assignedRoles]);
   const hasViewProcessManagementAccess = useMemo(() => assignedRoles?.includes("VIEW_PROCESS_MANAGEMENT"), [assignedRoles]);
   const hasViewReschedulingRequestAccess = useMemo(() => assignedRoles?.includes("VIEW_RESCHEDULING_REQUESTS"), [assignedRoles]);
+  const hasViewCTCApplicationAccess = useMemo(() => assignedRoles?.includes("CTC_APPLICATION_APPROVER"), [assignedRoles]);
 
   const today = new Date();
 
@@ -139,6 +144,16 @@ const MainHomeScreen = () => {
     }
     // sessionStorage.removeItem("homeActiveTab");
   }, [userType, history, isEpostUser, location]);
+
+  useEffect(() => {
+    const prevActiveTab = prevActiveTabRef.current;
+
+    if (prevActiveTab === "REGISTER_USERS" && activeTab !== "REGISTER_USERS") {
+      window.sessionStorage.removeItem("registerUsersUserType");
+    }
+
+    prevActiveTabRef.current = activeTab;
+  }, [activeTab]);
 
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
@@ -347,7 +362,32 @@ const MainHomeScreen = () => {
           },
         },
       };
+
+      const ctcApplicationPayload = {
+        inbox: {
+          processSearchCriteria: {
+            businessService: ["ctc-default"],
+            moduleName: "CTC Service",
+            tenantId: tenantId,
+          },
+          moduleSearchCriteria: {
+            tenantId: tenantId,
+            courtId: localStorage.getItem("courtId"),
+            status: "PENDING_APPROVAL",
+          },
+          tenantId: tenantId,
+          limit: 10,
+          offset: 0,
+        },
+      };
+
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
+      let resCtCApplication = {};
+
+      if (hasViewCTCApplicationAccess) {
+        resCtCApplication = await HomeService.InboxSearch(ctcApplicationPayload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+      }
+
       const reviwCount = res?.reviewProcessData?.totalCount || 0;
       const registerCount = res?.registerCasesData?.totalCount || 0;
       const bailBondStatusCount = res?.bailBondData?.totalCount || 0;
@@ -359,6 +399,7 @@ const MainHomeScreen = () => {
       const offlinePaymentsCount = res?.offlinePaymentsData?.count || 0;
       const noticeAndSummonsCount = res?.noticeAndSummonsData?.count || 0;
       const rescheduleHearingRequestCount = res?.reschedulingRequestData?.totalCount || 0;
+      const CTCApplications = resCtCApplication?.totalCount || 0;
 
       setPendingTaskCount({
         REGISTER_USERS: registerUsersCount,
@@ -372,6 +413,7 @@ const MainHomeScreen = () => {
         RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
         DELAY_CONDONATION: delayCondonationApplicationCount,
         OTHERS: otherApplicationsCount,
+        CTC_APPLICATIONS: CTCApplications,
       });
     } catch (err) {
       showToast("error", t("ISSUE_IN_FETCHING"), 5000);
@@ -872,6 +914,9 @@ const MainHomeScreen = () => {
   if (hasViewCollectOfflinePaymentsAccess) {
     options.OFFLINE_PAYMENTS = { name: "HOME_OFFLINE_PAYMENTS" };
   }
+  if (hasViewCTCApplicationAccess) {
+    options.CTC_APPLICATIONS = { name: "HOME_CTC_APPLICATIONS" };
+  }
 
   // VIEW_APPLICATION: {
   //   name: "View Applications",
@@ -1234,6 +1279,14 @@ const MainHomeScreen = () => {
         ) : activeTab === "CS_HOME_SIGN_FORMS" ? (
           <div className="home-bulk-sign">
             <BulkSignDigitalizationView />
+          </div>
+        ) : activeTab === "CTC_APPLICATIONS" ? (
+          <div className="home-bulk-sign">
+            <CTCApplications />
+          </div>
+        ) : activeTab === "CS_HOME_ISSUE_CTC_COPY" ? (
+          <div className="home-bulk-sign">
+            <BulkIssueCTC />
           </div>
         ) : (
           <div className={`bulk-esign-order-view`}>

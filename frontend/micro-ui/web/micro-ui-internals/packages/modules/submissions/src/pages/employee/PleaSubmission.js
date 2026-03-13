@@ -18,8 +18,7 @@ import {
 } from "../../utils/digitilization";
 import { submissionService } from "../../hooks/services";
 import PreviewPdfModal from "../../components/PreviewPdfModal";
-import GenericUploadSignatureModal from "../../components/GenericUploadSignatureModal";
-import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
+
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
 import GenericNumberInputModal from "../../components/GenericNumberInputModal";
 import { getFormattedName } from "../../utils";
@@ -68,11 +67,7 @@ const PleaSubmission = () => {
   const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
   const [defaultFormValueData, setDefaultFormValueData] = useState({});
   const [previewPleaModal, setPreviewPleModal] = useState(false);
-  const [showSignatureModal, setShowsignatureModal] = useState(false);
   const [pleaFileStoreId, setPleaFileStoreId] = useState("");
-  const [pleUploadLoader, setPleaUploadLoader] = useState(false);
-  const { downloadPdf } = useDownloadCasePdf();
-  const [showUploadSignature, setShowUploadSignature] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showPleaEsign, setShowPleaEsign] = useState(false);
   const [pleaSignatureURL, setPleaSignatureURL] = useState("");
@@ -258,34 +253,19 @@ const PleaSubmission = () => {
         setPreviewPleModal(true);
       }
     } catch (error) {
-      console.error("Error while updating bail bond:", error);
+      console.error("Error while updating plea:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setLoader(false);
     }
   };
 
-  const handleSubmitSignature = async (fileStoreId) => {
+
+
+  const handleProceedToMobileNumber = async () => {
     try {
       setLoader(true);
-      const payload = _getUpdatePleaPayload(t, pleaResponseDetails, formdata, tenantId, pleaWorkflowActions.UPLOAD, fileStoreId, null);
-      const res = await submissionService.updateDigitalization(payload, tenantId);
-      setShowsignatureModal(false);
-      setShowUploadSignature(false);
-      setShowSuccessModal(true);
-    } catch (error) {
-      console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
-    } finally {
-      setLoader(false);
-    }
-  };
-
-  const handleEsgin = async () => {
-    // TODO : extract current selected plea number and setPleaNumber
-
-    try {
-      setLoader(true);
+      setPreviewPleModal(false);
       const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
         (respondent) => respondent?.uniqueId === formdata?.accusedDetails?.uniqueId
       );
@@ -304,28 +284,18 @@ const PleaSubmission = () => {
       else if(respondentData?.data?.phonenumbers?.mobileNumber?.[0]){
         setPleaMobileNumber(respondentData?.data?.phonenumbers?.mobileNumber?.[0]);
       }
-      setShowsignatureModal(false);
       setShowAddPleaMobileNumber(true);
     } catch (error) {
-      console.error("Error while updating bail bond:", error);
+      console.error("Error while updating plea:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setLoader(false);
     }
   };
 
-  const handleCloseSignatureModal = () => {
-    setShowsignatureModal(false);
-    setPreviewPleModal(true);
-  };
-
-  const handleDownload = () => {
-    downloadPdf(tenantId, pleaFileStoreId);
-  };
-
   const handleCloseMobileModal = () => {
     setShowAddPleaMobileNumber(false);
-    setShowsignatureModal(true);
+    setPreviewPleModal(true);
   };
 
   const handlePleaMobileSubmit = async () => {
@@ -343,7 +313,7 @@ const PleaSubmission = () => {
         pleaResponseDetails,
         formdata,
         tenantId,
-        pleaWorkflowActions.ESIGN,
+        pleaWorkflowActions.SUBMIT,
         pleaFileStoreId,
         pleaMobileNumber,
         partyUUID
@@ -353,7 +323,7 @@ const PleaSubmission = () => {
       setShowAddPleaMobileNumber(false);
       setShowPleaEsign(true);
     } catch (error) {
-      console.error("Error while updating bail bond:", error);
+      console.error("Error while updating plea:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setLoader(false);
@@ -441,7 +411,7 @@ const PleaSubmission = () => {
             t={t}
             header={"REVIEW_PLEA_SUBMISSION"}
             cancelLabel={"CS_COMMON_BACK"}
-            saveLabel={"PROCEED_TO_SIGN"}
+            saveLabel={"CS_PROCEED"}
             handleBack={() => {
               setPreviewPleModal(false);
               if (showModal) {
@@ -452,25 +422,11 @@ const PleaSubmission = () => {
             }}
             setPreviewModal={setPreviewPleModal}
             pdfConfig={_getPdfConfig(pleaResponseDetails, caseDetails, courtId, tenantId)}
-            setShowsignatureModal={setShowsignatureModal}
+            setShowsignatureModal={handleProceedToMobileNumber}
             setFileStoreId={setPleaFileStoreId}
           />
         )}
-        {showSignatureModal && (
-          <GenericUploadSignatureModal
-            t={t}
-            handleCloseSignatureModal={handleCloseSignatureModal}
-            handleDownload={handleDownload}
-            handleESign={handleEsgin}
-            setShowUploadSignature={setShowUploadSignature}
-            showUploadSignature={showUploadSignature}
-            handleSubmit={handleSubmitSignature}
-            setLoader={setPleaUploadLoader}
-            loader={pleUploadLoader}
-            fileStoreId={pleaFileStoreId}
-            infoText={"PLEA_SIGN_INFO"}
-          />
-        )}
+
         {showAddPleaMobileNumber && (
           <GenericNumberInputModal
             t={t}

@@ -10,6 +10,10 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { getStringAddressDetails } = require("../utils/addressUtils");
+const {
+  getNameByUuid,
+  getComplaintAndAccusedList,
+} = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -30,7 +34,7 @@ const applicationWitnessDeposition = async (
   res,
   qrCode,
   application,
-  courtCaseJudgeDetails
+  courtCaseJudgeDetails,
 ) => {
   const cnrNumber = req.query.cnrNumber;
   const applicationNumber = req.query.applicationNumber;
@@ -51,7 +55,7 @@ const applicationWitnessDeposition = async (
     return renderError(
       res,
       `${missingFields.join(", ")} are mandatory to generate the PDF`,
-      400
+      400,
     );
   }
 
@@ -68,7 +72,7 @@ const applicationWitnessDeposition = async (
   try {
     const resCase = await handleApiCall(
       () => search_case(cnrNumber, tenantId, requestInfo, application?.courtId),
-      "Failed to query case service"
+      "Failed to query case service",
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
     if (!courtCase) {
@@ -78,20 +82,18 @@ const applicationWitnessDeposition = async (
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
-    let barRegistrationNumber = "";
     let advocateName = "";
     const advocateIndividualId =
       application?.additionalDetails?.advocateIndividualId;
     if (advocateIndividualId) {
       const resAdvocate = await handleApiCall(
         () => search_advocate(tenantId, advocateIndividualId, requestInfo),
-        "Failed to query Advocate Details"
+        "Failed to query Advocate Details",
       );
       const advocateData = resAdvocate?.data?.advocates?.[0];
       const advocateDetails = advocateData?.responseList?.find(
-        (item) => item.isActive === true
+        (item) => item.isActive === true,
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
@@ -119,7 +121,7 @@ const applicationWitnessDeposition = async (
           witnessAdditionalComments:
             witness?.data?.witnessAdditionalDetails?.text || "",
         };
-      }
+      },
     );
 
     // Handle QR code if enabled
@@ -131,9 +133,9 @@ const applicationWitnessDeposition = async (
             tenantId,
             code,
             entityId,
-            requestInfo
+            requestInfo,
           ),
-        "Failed to query sunbirdrc credential service"
+        "Failed to query sunbirdrc credential service",
       );
       const $ = cheerio.load(resCredential.data);
       const imgTag = $("img");
@@ -141,7 +143,7 @@ const applicationWitnessDeposition = async (
         return renderError(
           res,
           "No img tag found in the sunbirdrc response",
-          500
+          500,
         );
       }
       base64Url = imgTag.attr("src");
@@ -172,6 +174,11 @@ const applicationWitnessDeposition = async (
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+
+    const { complainantList, accusedList } = getComplaintAndAccusedList(
+      courtCase || {},
+    );
+
     const data = {
       Data: [
         {
@@ -188,8 +195,10 @@ const applicationWitnessDeposition = async (
           month: month,
           year: year,
           advocateSignature: "Advocate Signature",
-          barRegistrationNumber,
           qrCodeUrl: base64Url,
+          petitionerName: getNameByUuid(application?.asUser, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
         },
       ],
     };
@@ -199,7 +208,7 @@ const applicationWitnessDeposition = async (
         : config.pdf.application_witness_deposition;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
-      "Failed to generate PDF of Application Bail Bond"
+      "Failed to generate PDF of Application Bail Bond",
     );
 
     const filename = `${pdfKey}_${new Date().getTime()}`;
@@ -220,7 +229,7 @@ const applicationWitnessDeposition = async (
       res,
       "Failed to create PDF for Application for Bail",
       500,
-      ex
+      ex,
     );
   }
 };
