@@ -318,4 +318,7 @@ public class Configuration {
 
     @Value("${spring.redis.timeout}")
     private Long redisTimeout;
+
+    @Value("${spring.redis.enabled}")
+    private Boolean redisEnabled;
 }

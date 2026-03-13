@@ -74,6 +74,10 @@ public class EsUtil {
 
     public void updateOpenHearingInCache(List<OpenHearing> openHearings, Long hearingDate) {
         try {
+            if(!config.getRedisEnabled()) {
+                log.info("Redis is disabled. Skipping cache update for open hearings.");
+                return;
+            }
             log.info("Updating redis cache for open hearings.");
             if (openHearings == null || openHearings.isEmpty()) {
                 log.info("No open hearings to update in cache.");

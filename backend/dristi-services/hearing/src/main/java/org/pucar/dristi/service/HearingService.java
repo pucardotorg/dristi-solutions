@@ -236,6 +236,11 @@ public class HearingService {
     }
 
     private void updateStatusInCache(OpenHearing openHearing) {
+        if (!config.getRedisEnabled()) {
+            log.info("Redis is disabled. Skipping cache update for open hearing: {}", openHearing.getHearingNumber());
+            return;
+        }
+
         String courtId = openHearing.getCourtId();
         String date = dateUtil.getCurrentDate();
         String key  = CACHE_KEY_PREFIX + courtId + ":" + date;
