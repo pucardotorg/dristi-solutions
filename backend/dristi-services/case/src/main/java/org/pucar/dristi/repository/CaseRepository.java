@@ -149,9 +149,11 @@ public class CaseRepository {
                 }
 
                 String officeAdvocateUserUuid = officeRows.get(0).getOfficeAdvocateUserUuid();
+                String officeAdvocateName = officeRows.get(0).getOfficeAdvocateName();
 
                 AdvocateOffice office = officeMap.computeIfAbsent(advocateId, k -> AdvocateOffice.builder()
                         .officeAdvocateId(advocateId)
+                        .officeAdvocateName(officeAdvocateName)
                         .officeAdvocateUserUuid(officeAdvocateUserUuid)
                         .build());
 
