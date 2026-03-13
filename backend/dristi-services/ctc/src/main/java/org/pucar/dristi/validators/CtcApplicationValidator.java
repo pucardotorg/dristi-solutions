@@ -14,8 +14,10 @@ import org.pucar.dristi.web.models.courtcase.CourtCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -78,8 +80,27 @@ public class CtcApplicationValidator {
             }
 
             if(existingApplication.get(0).getAffidavitDocument() != null && existingApplication.get(0).getAffidavitDocument().getFileStore() != null
-            && !existingApplication.get(0).getAffidavitDocument().getFileStore().equals(application.getAffidavitDocument().getFileStore())) {
+            && (application.getAffidavitDocument() == null || !existingApplication.get(0).getAffidavitDocument().getFileStore().equals(application.getAffidavitDocument().getFileStore()))) {
                 inactiveFileStoreIds.add(existingApplication.get(0).getAffidavitDocument().getFileStore());
+            }
+
+            Set<String> requestedDocumentFileStores = new HashSet<>();
+            if (application.getDocuments() != null) {
+                for (Document document : application.getDocuments()) {
+                    if (document != null && document.getFileStore() != null) {
+                        requestedDocumentFileStores.add(document.getFileStore());
+                    }
+                }
+            }
+
+            if (existingApplication.get(0).getDocuments() != null) {
+                for (Document existingDocument : existingApplication.get(0).getDocuments()) {
+                    if (existingDocument != null
+                            && existingDocument.getFileStore() != null
+                            && !requestedDocumentFileStores.contains(existingDocument.getFileStore())) {
+                        inactiveFileStoreIds.add(existingDocument.getFileStore());
+                    }
+                }
             }
 
         }
