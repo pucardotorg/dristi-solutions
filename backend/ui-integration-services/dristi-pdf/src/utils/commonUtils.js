@@ -81,6 +81,31 @@ async function getCourtAndJudgeDetails(
   };
 }
 
+function getSelectedTitles(data, messagesMap) {
+  const titles = [];
+
+  const traverse = (items, parentTitle) => {
+    items?.forEach((item) => {
+      if (item.children?.length) {
+        // Non-leaf: recurse, passing this node's title as the parent
+        traverse(item.children, item.title);
+      } else if (item.title) {
+        // Leaf node: combine parent title (if any) with this title
+        const translatedTitle = messagesMap[item.title] || item.title;
+        if (parentTitle) {
+          const translatedParent = messagesMap[parentTitle] || parentTitle;
+          titles.push(`${translatedTitle} - ${translatedParent}`);
+        } else {
+          titles.push(translatedTitle);
+        }
+      }
+    });
+  };
+
+  traverse(data, null);
+  return titles;
+}
+
 function getPartyType(witnessType) {
   if (witnessType?.includes("PW")) {
     return "Prosecution";
@@ -94,4 +119,5 @@ function getPartyType(witnessType) {
 module.exports = {
   getCourtAndJudgeDetails,
   getPartyType,
+  getSelectedTitles,
 };
