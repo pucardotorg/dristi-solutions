@@ -192,7 +192,7 @@ const applicationCaseTransfer = async (
           caseNumber: caseNumber,
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
-          originalCourt: mdmsCourtRoom.name,
+          originalCourt: mdmsCourtRoom.courtName,
           newCourt: selectRequestedCourt,
           date: formattedToday,
           partyName: partyName,
