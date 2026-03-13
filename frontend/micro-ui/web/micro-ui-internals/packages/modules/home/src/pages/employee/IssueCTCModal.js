@@ -97,14 +97,14 @@ const IssueCTCModal = ({ rowData, setShowModal, handleIssue, handleCancelSubmit 
             <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#0a0a0a" }}>{t("APPLICATION_FILER")}</h3>
             <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 400, color: "#3d3c3c" }}>{rowData?.businessObject?.nameOfApplicant || ""}</h3>
           </div>
-          {rowData?.businessObject?.dateOfApplicationApproval && (
+          {rowData?.businessObject?.dateOfApplicationApproval && rowData?.businessObject?.dateOfApplicationApproval !== 0 ? (
             <div style={{ display: "grid", gridTemplateColumns: "50% 50%", gap: "16px" }}>
               <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#0a0a0a" }}>{t("APPLICATION_APPROVAL_DATE")}</h3>
               <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 400, color: "#3d3c3c" }}>
                 {DateUtils.getFormattedDate(rowData?.businessObject?.dateOfApplicationApproval)}
               </h3>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Document Preview Area */}
