@@ -237,6 +237,12 @@ const ManageOffice = () => {
         if (isAlreadyMember) {
           setSearchError(t("MEMBER_ALREADY_EXISTS") || "This mobile number is already added as a member.");
           setSearchResult(null);
+        } else if (!clerkData && !advocateData) {
+          // Validation: only Advocates or Clerks can be added as members
+          setSearchError(
+            t("ONLY_ADVOCATE_OR_CLERK_ALLOWED") || "Only an Advocate or a Clerk can be added as a member."
+          );
+          setSearchResult(null);
         } else {
           setSearchResult({
             name: name,
