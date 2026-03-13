@@ -119,12 +119,12 @@ public class PersistRepository {
                         if (value != null && !value.toString().trim().isEmpty()) {
                             row.add(value.toString());
                         } else {
-                            UUID uuid7 = UUID.randomUUID();
-                            row.add(uuid7.toString());
+                            UUID uuid = UUID.randomUUID();
+                            row.add(uuid.toString());
                         }
                     } catch (Exception e) {
                         UUID uuid7 = UUID.randomUUID();
-                        row.add(uuid7.toString());
+                        row.add(uuid.toString());
                     }
                     continue;
                 }
