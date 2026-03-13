@@ -117,14 +117,10 @@ public class PersistRepository {
                     try {
                         value = JsonPath.read(jsonObj, jsonPath);
                         if (value != null && !value.toString().trim().isEmpty()) {
-                            row.add(value.toString());
-                        } else {
-                            UUID uuid7 = UUID.randomUUID();
-                            row.add(uuid7.toString());
+                            UUID uuid = UUID.fromString(value.toString());
+                            row.add(uuid);
                         }
                     } catch (Exception e) {
-                        UUID uuid7 = UUID.randomUUID();
-                        row.add(uuid7.toString());
                     }
                     continue;
                 }
