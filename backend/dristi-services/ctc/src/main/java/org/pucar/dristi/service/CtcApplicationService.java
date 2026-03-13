@@ -90,8 +90,6 @@ public class CtcApplicationService {
 
         workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
 
-        filterAndDeleteInactiveDocuments(application);
-
         producer.push(config.getSaveCtcApplicationTopic(), request);
 
         cacheService.saveInRedisCache(application);
@@ -107,7 +105,8 @@ public class CtcApplicationService {
 
         CtcApplication application = request.getCtcApplication();
 
-        ctcApplicationValidator.validateUpdateRequest(request);
+        List<String> inactiveFileStoreIds = new ArrayList<>();
+        ctcApplicationValidator.validateUpdateRequest(request,inactiveFileStoreIds);
 
         ctcApplicationEnrichment.enrichOnUpdateCtcApplication(request.getRequestInfo(), application);
 
@@ -132,7 +131,7 @@ public class CtcApplicationService {
             etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + CTC_APPLICATION_FEE, calculation);
         }
 
-        filterAndDeleteInactiveDocuments(application);
+        filterAndDeleteInactiveDocuments(application,inactiveFileStoreIds);
 
         producer.push(config.getUpdateCtcApplicationTopic(), request);
 
@@ -552,26 +551,13 @@ public class CtcApplicationService {
                 .build();
     }
 
-    private CtcApplication filterAndDeleteInactiveDocuments(CtcApplication application) {
+    private CtcApplication filterAndDeleteInactiveDocuments(CtcApplication application, List<String> inactiveFileStoreIds) {
 
         if (application == null) {
             return null;
         }
 
-        List<String> inactiveFileStoreIds = new ArrayList<>();
-
-        // Handle affidavit document
-        if (application.getAffidavitDocument() != null &&
-                Boolean.FALSE.equals(application.getAffidavitDocument().getIsActive())) {
-
-            if (application.getAffidavitDocument().getFileStore() != null) {
-                inactiveFileStoreIds.add(application.getAffidavitDocument().getFileStore());
-            }
-
-            application.setAffidavitDocument(null);
-        }
-
-        List<String> finalStatus = Arrays.asList("REJECT_ALL", "ISSUED");
+        List<String> finalStatus = Arrays.asList("REJECT_ALL", "ISSUED","PARTIALLY_ISSUED");
 
         if (application.getDocuments() != null) {
 

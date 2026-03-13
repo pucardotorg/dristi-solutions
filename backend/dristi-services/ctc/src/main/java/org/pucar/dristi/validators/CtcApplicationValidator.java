@@ -48,7 +48,7 @@ public class CtcApplicationValidator {
 
     }
 
-    public void validateUpdateRequest(CtcApplicationRequest request) {
+    public void validateUpdateRequest(CtcApplicationRequest request, List<String> inactiveFileStoreIds) {
         CtcApplication application = request.getCtcApplication();
         if (application.getCtcApplicationNumber() == null || application.getCtcApplicationNumber().isEmpty()) {
             throw new CustomException(ServiceConstants.CTC_VALIDATION_EXCEPTION, "CTC Application Number cannot be null or empty");
@@ -76,6 +76,12 @@ public class CtcApplicationValidator {
             if (existingApplication.get(0).getCaseBundles() != null && !existingApplication.get(0).getCaseBundles().isEmpty()) {
                 request.getCtcApplication().setCaseBundles(existingApplication.get(0).getCaseBundles());
             }
+
+            if(existingApplication.get(0).getAffidavitDocument() != null && existingApplication.get(0).getAffidavitDocument().getFileStore() != null
+            && !existingApplication.get(0).getAffidavitDocument().getFileStore().equals(application.getAffidavitDocument().getFileStore())) {
+                inactiveFileStoreIds.add(existingApplication.get(0).getAffidavitDocument().getFileStore());
+            }
+
         }
     }
 
