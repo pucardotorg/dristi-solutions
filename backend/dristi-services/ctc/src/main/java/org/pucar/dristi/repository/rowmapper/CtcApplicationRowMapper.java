@@ -36,6 +36,11 @@ public class CtcApplicationRowMapper implements ResultSetExtractor<List<CtcAppli
             String id = rs.getString("id");
             CtcApplication ctcApplication = ctcApplicationMap.get(id);
             if (ctcApplication == null) {
+                Long dateOfApplicationApproval = rs.getLong("date_of_application_approval");
+                if (rs.wasNull()) {
+                    dateOfApplicationApproval = null;
+                }
+
                 ctcApplication = CtcApplication.builder()
                         .id(id)
                         .ctcApplicationNumber(rs.getString("ctc_application_number"))
@@ -63,7 +68,7 @@ public class CtcApplicationRowMapper implements ResultSetExtractor<List<CtcAppli
                                 }))
                         .totalPages(rs.getInt("total_pages"))
                         .status(rs.getString("status"))
-                        .dateOfApplicationApproval(rs.getLong("date_of_application_approval"))
+                        .dateOfApplicationApproval(dateOfApplicationApproval)
                         .judgeComments(rs.getString("judge_comments"))
                         .paymentReceipt(
                                 getObjectFromJson(rs.getString("payment_receipt"), new TypeReference<Document>() {

@@ -7,7 +7,7 @@
     "uniqueIdentifier": "issue-ctc-documents",
     "data": {
       "sortBy": {
-        "path": "Data.lastModifiedTime",
+        "path": "Data.createdTime",
         "defaultOrder": "DESC"
       },
       "sourceFilterPathList": [
@@ -33,6 +33,12 @@
         {
           "name": "status",
           "path": "Data.status.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "docTitle",
+          "path": "Data.docTitle.keyword",
+          "operator": "WILDCARD",
           "isMandatory": false
         }
       ],
