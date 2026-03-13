@@ -744,6 +744,11 @@ public class InboxServiceV2 {
 
     @Nullable
     private List<Inbox> searchInRedisCache(InboxRequest inboxRequest) {
+        if (!config.getRedisEnabled()) {
+            log.info("Redis cache is disabled, skipping cache search");
+            return null;
+        }
+        
         try {
             log.info("Searching in redis cache");
             String courtId = (String) inboxRequest.getInbox().getModuleSearchCriteria().get("courtId");
