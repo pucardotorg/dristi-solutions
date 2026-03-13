@@ -90,8 +90,6 @@ public class CtcApplicationService {
 
         workflowService.updateWorkflowStatus(request.getCtcApplication(), request.getRequestInfo());
 
-        filterInactiveDocuments(application);
-
         producer.push(config.getSaveCtcApplicationTopic(), request);
 
         cacheService.saveInRedisCache(application);
@@ -107,7 +105,8 @@ public class CtcApplicationService {
 
         CtcApplication application = request.getCtcApplication();
 
-        ctcApplicationValidator.validateUpdateRequest(request);
+        List<String> inactiveFileStoreIds = new ArrayList<>();
+        ctcApplicationValidator.validateUpdateRequest(request,inactiveFileStoreIds);
 
         ctcApplicationEnrichment.enrichOnUpdateCtcApplication(request.getRequestInfo(), application);
 
@@ -134,7 +133,7 @@ public class CtcApplicationService {
             etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + CTC_APPLICATION_FEE, calculation);
         }
 
-        filterInactiveDocuments(application);
+        filterAndDeleteInactiveDocuments(application,inactiveFileStoreIds);
 
         producer.push(config.getUpdateCtcApplicationTopic(), request);
 
@@ -563,23 +562,47 @@ public class CtcApplicationService {
                 .build();
     }
 
-    private CtcApplication filterInactiveDocuments(CtcApplication application) {
+    private CtcApplication filterAndDeleteInactiveDocuments(CtcApplication application, List<String> inactiveFileStoreIds) {
+
         if (application == null) {
             return null;
         }
 
-        // Filter affidavitDocument - set to null if inactive
-        if (application.getAffidavitDocument() != null &&
-                Boolean.FALSE.equals(application.getAffidavitDocument().getIsActive())) {
-            application.setAffidavitDocument(null);
+        List<String> finalStatus = Arrays.asList("REJECT_ALL", "ISSUED","PARTIALLY_ISSUED");
+
+        if (application.getDocuments() != null) {
+
+            List<Document> filteredDocs = application.getDocuments().stream()
+                    .filter(Objects::nonNull)
+                    .filter(doc -> {
+
+                        // Remove inactive documents
+                        if (Boolean.FALSE.equals(doc.getIsActive())) {
+                            if (doc.getFileStore() != null) {
+                                inactiveFileStoreIds.add(doc.getFileStore());
+                            }
+                            return false;
+                        }
+
+                        // Remove MERGED_FILE when application is final
+                        if (finalStatus.contains(application.getStatus()) && ("merged_file".equals(doc.getDocumentType()) || "sealed_file".equals(doc.getDocumentType()))) {
+
+                            if (doc.getFileStore() != null) {
+                                inactiveFileStoreIds.add(doc.getFileStore());
+                            }
+                            return false;
+                        }
+
+                        return true;
+                    })
+                    .collect(Collectors.toList());
+
+            application.setDocuments(filteredDocs);
         }
 
-        // Filter documents list - keep only active documents
-        if (application.getDocuments() != null) {
-            List<Document> activeDocuments = application.getDocuments().stream()
-                    .filter(doc -> doc != null && !Boolean.FALSE.equals(doc.getIsActive()))
-                    .collect(Collectors.toList());
-            application.setDocuments(activeDocuments);
+        if (!inactiveFileStoreIds.isEmpty()) {
+            fileStoreUtil.deleteFilesByFileStore(inactiveFileStoreIds, application.getTenantId());
+            log.info("Deleted files from file store: {}", inactiveFileStoreIds);
         }
 
         return application;
@@ -618,6 +641,40 @@ public class CtcApplicationService {
             String mergedFileStoreId = fileStoreUtil.mergeFiles(sealedTemplateFileStoreId, criterion.getFileStoreId(), criterion.getTenantId());
 
             log.info("mergedFileStoreId {}", mergedFileStoreId);
+
+            // Create documents for sealed template and merged file
+            List<Document> documents = ctcApplication.getDocuments();
+            if (documents == null) {
+                documents = new ArrayList<>();
+                ctcApplication.setDocuments(documents);
+            }
+
+            // Add sealed template document
+            Document sealedDocument = Document.builder()
+                    .documentType("sealed_file")
+                    .fileStore(sealedTemplateFileStoreId)
+                    .documentUid(UUID.randomUUID().toString())
+                    .isActive(true)
+                    .build();
+            documents.add(sealedDocument);
+
+            // Add merged file document
+            Document mergedDocument = Document.builder()
+                    .documentType("merged_file")
+                    .fileStore(mergedFileStoreId)
+                    .documentUid(UUID.randomUUID().toString())
+                    .isActive(true)
+                    .build();
+            documents.add(mergedDocument);
+
+            // Update ctcApplication in database with new documents
+            CtcApplicationRequest updateRequest = CtcApplicationRequest.builder()
+                    .requestInfo(request.getRequestInfo())
+                    .ctcApplication(ctcApplication)
+                    .build();
+            producer.push(config.getUpdateCtcDocumentsTopic(), updateRequest);
+            log.info("Updated ctcApplication {} with sealed and merged documents", ctcApplication.getCtcApplicationNumber());
+            cacheService.saveInRedisCache(ctcApplication);
 
             CoordinateCriteria cc = new CoordinateCriteria();
             cc.setFileStoreId(mergedFileStoreId);
