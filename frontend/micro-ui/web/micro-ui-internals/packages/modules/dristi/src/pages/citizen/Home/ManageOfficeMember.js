@@ -137,10 +137,28 @@ const ManageOfficeMember = () => {
     [t]
   );
 
+  const yesNoOptions = useMemo(
+    () => [
+      { code: "Yes", name: t("YES") || "Yes" },
+      { code: "No", name: t("NO") || "No" },
+    ],
+    [t]
+  );
+
   const selectedAccessTypeOption = useMemo(() => accessTypeOptions.find((opt) => opt.code === accessType) || accessTypeOptions[0], [
     accessTypeOptions,
     accessType,
   ]);
+
+  const selectedAllowCaseCreateOption = useMemo(
+    () => yesNoOptions.find((opt) => opt.code === allowCaseCreate) || yesNoOptions[0],
+    [yesNoOptions, allowCaseCreate]
+  );
+
+  const selectedAddToNewCasesOption = useMemo(
+    () => yesNoOptions.find((opt) => opt.code === addToNewCasesAuto) || yesNoOptions[0],
+    [yesNoOptions, addToNewCasesAuto]
+  );
 
   const syncSelectedCasesCount = React.useCallback(() => {
     const container = document.querySelector(".manage-office-member-inbox");
@@ -507,6 +525,16 @@ const ManageOfficeMember = () => {
     await callUpdateMemberAccess(newType);
   };
 
+  const handleAllowCaseCreateChange = (option) => {
+    const value = option?.code === "No" ? "No" : "Yes";
+    setAllowCaseCreate(value);
+  };
+
+  const handleAddToNewCasesAutoChange = (option) => {
+    const value = option?.code === "No" ? "No" : "Yes";
+    setAddToNewCasesAuto(value);
+  };
+
   return (
     <div className="manage-office-member-page">
       <div className="manage-office-member-scrollable">
@@ -531,23 +559,21 @@ const ManageOfficeMember = () => {
           </div>
           <div className="manage-office-member-field manage-office-member-field--wide">
             <span className="manage-office-member-field__label">{t("ALLOW_MEMBER_TO_FILE_NEW_CASES") || "Allow member to file new cases?"}</span>
-            <select value={allowCaseCreate} onChange={(e) => setAllowCaseCreate(e.target.value)} className="manage-office-member-select">
-              <option value="Yes">{t("YES") || "Yes"}</option>
-              <option value="No">{t("NO") || "No"}</option>
-            </select>
+            <AccessTypeDropdown
+              options={yesNoOptions}
+              selected={selectedAllowCaseCreateOption}
+              onChange={handleAllowCaseCreateChange}
+            />
           </div>
           <div className="manage-office-member-field manage-office-member-field--wide">
             <span className="manage-office-member-field__label">
               {t("ADD_MEMBER_TO_NEW_CASES_AUTO") || "Add member to new cases automatically?"}
             </span>
-            <select
-              value={addToNewCasesAuto}
-              onChange={(e) => setAddToNewCasesAuto(e.target.value)}
-              className="manage-office-member-select"
-            >
-              <option value="Yes">{t("YES") || "Yes"}</option>
-              <option value="No">{t("NO") || "No"}</option>
-            </select>
+            <AccessTypeDropdown
+              options={yesNoOptions}
+              selected={selectedAddToNewCasesOption}
+              onChange={handleAddToNewCasesAutoChange}
+            />
           </div>
           <button type="button" onClick={handleRemoveMemberClick} className="manage-office-member-remove-btn">
             {t("REMOVE_MEMBER") || "Remove Member"}
