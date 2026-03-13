@@ -1,6 +1,6 @@
 package org.pucar.dristi.service;
 
-
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.models.coremodels.Bill;
 import digit.models.coremodels.PaymentDetail;
@@ -19,12 +19,14 @@ import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.pucar.dristi.config.ServiceConstants.ONLINE;
 
 @Slf4j
 @Service
@@ -44,7 +46,10 @@ public class PaymentUpdateService {
     private ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
-    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, CtcApplicationRepository repository, Producer producer, Configuration config, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, EtreasuryUtil etreasuryUtil, CaseUtil caseUtil, IndexerUtils indexerUtils, CacheService cacheService) {
+    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper,
+            CtcApplicationRepository repository, Producer producer, Configuration config, ObjectMapper objectMapper,
+            ServiceRequestRepository serviceRequestRepository, EtreasuryUtil etreasuryUtil, CaseUtil caseUtil,
+            IndexerUtils indexerUtils, CacheService cacheService) {
         this.workflowService = workflowService;
         this.mapper = mapper;
         this.repository = repository;
@@ -70,7 +75,8 @@ public class PaymentUpdateService {
 
             for (PaymentDetail paymentDetail : paymentDetails) {
                 if (paymentDetail.getBusinessService().equals(config.getCtcBusinessServiceName())) {
-                    updateWorkflowForCTCPayment(requestInfo, tenantId, paymentDetail);
+                    updateWorkflowForCTCPayment(requestInfo, tenantId, paymentDetail,
+                            paymentRequest.getPayment().getPaymentMode());
                 }
             }
         } catch (Exception e) {
@@ -79,7 +85,8 @@ public class PaymentUpdateService {
 
     }
 
-    private void updateWorkflowForCTCPayment(RequestInfo requestInfo, String tenantId, PaymentDetail paymentDetail) {
+    private void updateWorkflowForCTCPayment(RequestInfo requestInfo, String tenantId, PaymentDetail paymentDetail,
+            String paymentMode) {
 
         Bill bill = paymentDetail.getBill();
 
@@ -93,7 +100,7 @@ public class PaymentUpdateService {
             if (cached != null) {
                 log.info("CTC application found in Redis cache for ctcApplicationNumber: {}", ctcApplicationNumber);
                 ctcApplication = cached;
-            }else{
+            } else {
                 CtcApplicationSearchRequest searchRequest = CtcApplicationSearchRequest.builder()
                         .criteria(CtcApplicationSearchCriteria.builder()
                                 .ctcApplicationNumber(ctcApplicationNumber)
@@ -153,10 +160,47 @@ public class PaymentUpdateService {
             indexerUtils.pushCtcApplicationTracker(tracker);
         }
 
-        CtcApplicationRequest ctcApplicationRequest = CtcApplicationRequest.builder().requestInfo(requestInfo).ctcApplication(ctcApplication).build();
+        Document paymentReceipt = null;
+        try {
+            if (ONLINE.equalsIgnoreCase(paymentMode)) {
+                paymentReceipt = getPaymentReceipt(requestInfo, paymentDetail.getBillId(), consumerCode);
+            }
+            if (paymentReceipt != null) {
+                ctcApplication.setPaymentReceipt(paymentReceipt);
+            }
+        } catch (Exception e) {
+            log.error("Error while generating payment receipt: {}", e.getMessage());
+        }
+
+        CtcApplicationRequest ctcApplicationRequest = CtcApplicationRequest.builder().requestInfo(requestInfo)
+                .ctcApplication(ctcApplication).build();
         producer.push(config.getUpdateCtcApplicationTopic(), ctcApplicationRequest);
 
         cacheService.saveInRedisCache(ctcApplication);
+    }
+
+    private Document getPaymentReceipt(RequestInfo requestInfo, String billId, String consumerCode) {
+        try {
+            log.info("Fetching payment receipt for billId: {}", billId);
+            JsonNode paymentReceipt = etreasuryUtil.getPaymentReceipt(requestInfo, billId);
+            Document document = Document.builder()
+                    .fileStore(paymentReceipt.get("Document").get("fileStore").textValue())
+                    .documentType(ServiceConstants.PAYMENT_RECEIPT)
+                    .additionalDetails(getAdditionalDetails(consumerCode))
+                    .build();
+            document.setId(String.valueOf(UUID.randomUUID()));
+            document.setDocumentUid(document.getId());
+            return document;
+        } catch (Exception e) {
+            log.error("Error fetching payment receipt: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private Object getAdditionalDetails(String consumerCode) {
+        Map<String, Object> additionalDetails = new HashMap<>();
+        additionalDetails.put("consumerCode", consumerCode);
+        return additionalDetails;
     }
 
 }

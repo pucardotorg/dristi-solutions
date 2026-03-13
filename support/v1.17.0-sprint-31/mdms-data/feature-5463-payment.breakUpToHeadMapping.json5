@@ -1,7 +1,7 @@
 {
   "tenantId": "kl",
   "schemaCode": "payment.breakUpToHeadMapping",
-  "uniqueIdentifier": "CTC_APPLICATION_FEE",
+  "uniqueIdentifier": "COPYING_FEE",
   "data": {
     "headCodes": [
       {
@@ -9,7 +9,7 @@
         "percentage": 100
       }
     ],
-    "breakUpCode": "CTC_APPLICATION_FEE"
+    "breakUpCode": "COPYING_FEE"
   },
   "isActive": true
 }

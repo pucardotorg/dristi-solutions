@@ -5,6 +5,7 @@ import { useHistory } from "react-router-dom";
 import { CTCApplicationsConfig } from "../../configs/CTCApplicationsConfig";
 import { HomeService } from "../../hooks/services";
 import RejectCTCApplicationReasonModal from "../../components/RejectCTCApplicationReasonModal";
+import GenericPreviewModal from "@egovernments/digit-ui-module-dristi/src/components/GenericPreviewModal";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -24,7 +25,6 @@ const CTCApplications = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedRowApplicationData, setShowSelectedApplicationData] = useState({});
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
-  const EvidenceModal = window?.Digit?.ComponentRegistryService?.getComponent("EvidenceModal");
   const [updateCounter, setUpdateCounter] = useState(0);
   const courtId = localStorage.getItem("courtId");
   const [showErrorToast, setShowErrorToast] = useState(null);
@@ -247,7 +247,7 @@ const CTCApplications = () => {
     }
     try {
       setIsLoading(true);
-      const applicationData = data?.[0]?.applicationList || data?.[0]?.businessObject;
+      const applicationData = data || data?.businessObject;
       const payload = {
         courtId: courtId,
         action: "APPROVE",
@@ -275,7 +275,7 @@ const CTCApplications = () => {
   const handleConfirmReject = async (reason) => {
     try {
       setIsLoading(true);
-      const applicationData = pendingRejectData?.[0]?.applicationList || pendingRejectData?.[0]?.businessObject;
+      const applicationData = pendingRejectData|| pendingRejectData?.businessObject;
       const payload = {
         courtId: courtId,
         action: "REJECT",
@@ -346,48 +346,32 @@ const CTCApplications = () => {
     setShowErrorToast({ label: t(message), error: isError });
   };
 
-  const documentSubmission = useMemo(() => {
+  const previewConfig = useMemo(() => {
     if (!selectedRowApplicationData) return [];
     const app = selectedRowApplicationData;
-
-    // Pick the best fileStore for preview:
-    // prefer affidavitDocument, then first document in documents[]
-    const primaryFileStore =
-      app?.affidavitDocument?.fileStore ||
-      app?.documents?.[0]?.fileStore ||
-      null;
-
-    const primaryDocType =
-      app?.affidavitDocument?.documentType ||
-      app?.documents?.[0]?.documentType ||
-      "CTC Document";
+    const applicationType = t("APPLICATION_FOR_CERTIFIED_TRUE_COPY");
+    const submissionDate = app?.auditDetails?.createdTime
+      ? new Date(app.auditDetails.createdTime).toLocaleDateString("en-IN").replace(/\//g, "-")
+      : "";
+    const applicantName = app?.applicantName || "NA";
 
     return [
-      {
-        // applicationList drives handleCTCApplications (Accept/Reject API call)
-        applicationList: {
-          ctcApplicationNumber: app?.ctcApplicationNumber,
-          filingNumber: app?.filingNumber,
-          applicationType: "CTC",
-        },
-        // details drives the left meta panel in EvidenceModal
-        details: {
-          applicationType: app?.caseTitle || app?.ctcApplicationNumber || "CTC Application",
-          applicationSentOn: app?.auditDetails?.createdTime
-            ? new Date(app.auditDetails.createdTime).toLocaleDateString("en-IN")
-            : "",
-        },
-        // applicationContent drives the DocViewerWrapper document preview
-        applicationContent: primaryFileStore
-          ? {
-            fileStoreId: primaryFileStore,
-            tenantId: app?.tenantId || tenantId,
-            fileName: primaryDocType,
-          }
-          : null,
-      },
+      { key: t("APPLICATION_TYPE"), value: applicationType },
+      { key: t("SUBMISSION_DATE"), value: submissionDate },
+      { key: t("APPLICATION_FILER"), value: applicantName },
     ];
-  }, [selectedRowApplicationData, tenantId]);
+  }, [selectedRowApplicationData, t]);
+
+  const documentsForPreview = useMemo(() => {
+    if (!selectedRowApplicationData) return [];
+    const app = selectedRowApplicationData;
+    const selectedDoc = app?.documents?.find?.((doc) => doc?.documentType === "SIGNED_CTC_APPLICATION");
+    const primaryFileStore = selectedDoc?.fileStore || app?.documents?.[0]?.fileStore || null;
+
+    const primaryDocType = selectedDoc?.documentType || app?.documents?.[0]?.documentType || "CTC Document";
+
+    return primaryFileStore ? [{ fileStore: primaryFileStore, name: t(primaryDocType) }] : [];
+  }, [selectedRowApplicationData, t]);
 
   return (
     <React.Fragment>
@@ -433,14 +417,18 @@ const CTCApplications = () => {
         </div>
       </React.Fragment>
       {showModal && (
-        <EvidenceModal
-          documentSubmission={documentSubmission}
-          setShow={setShowModal}
-          userRoles={userRoles}
-          modalType={"CTC_APPLICATIONS"}
-          setUpdateCounter={setUpdateCounter}
-          showToast={showToast}
-          handleCTCApplications={handleCTCApplications}
+        <GenericPreviewModal
+          t={t}
+          header={"REVIEW_APPLICATION"}
+          config={previewConfig}
+          documents={documentsForPreview}
+          handleBack={() => setShowModal(false)}
+          saveLabel={"ACCEPT"}
+          cancelLabel={"REJECT"}
+          onSubmit={() => handleCTCApplications(selectedRowApplicationData, "accept")}
+          onCancel={() => handleCTCApplications(selectedRowApplicationData, "reject")}
+          showCustomChip={true}
+          customChipText={selectedRowApplicationData?.status}
         />
       )}
       {showRejectModal && (

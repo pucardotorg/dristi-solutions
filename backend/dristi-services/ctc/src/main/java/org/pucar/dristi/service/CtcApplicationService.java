@@ -121,12 +121,14 @@ public class CtcApplicationService {
             log.info("Calculated totalPages={} from {} accepted documents for application: {}",
                     totalPages, acceptedFileStoreIds.size(), request.getCtcApplication().getCtcApplicationNumber());
 
-            Double totalAmount = 20 + request.getCtcApplication().getTotalPages() * 1.5;
+            Double applicationFees = config.getApplicationFees();
+            Double copyingFees = Math.ceil(request.getCtcApplication().getTotalPages() * 1.5);
+            Double totalAmount = applicationFees + copyingFees;
 
             Calculation calculation = Calculation.builder()
                     .totalAmount(totalAmount)
                     .tenantId(request.getCtcApplication().getTenantId())
-                    .breakDown(getBreakDown(totalAmount))
+                    .breakDown(getBreakDown(applicationFees, copyingFees))
                     .build();
             etreasuryUtil.createDemand(request, application.getCtcApplicationNumber() + CTC_APPLICATION_FEE, calculation);
         }
@@ -310,9 +312,9 @@ public class CtcApplicationService {
 
                     String workflowAction = null;
                     if (ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(action)) {
-                        workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued + 1, totalRejected, totalPending);
+                        workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued + 1, totalRejected, totalPending - 1, action);
                     } else {
-                        workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued, totalRejected + 1, totalPending);
+                        workflowAction = determineWorkflowAction(ctcApplication.getStatus(), totalIssued, totalRejected + 1, totalPending - 1, action);
                     }
 
                     if (workflowAction != null) {
@@ -405,66 +407,75 @@ public class CtcApplicationService {
     private Map<String, String> buildBundleFileStoreMap(List<CaseBundleNode> caseBundles) {
         Map<String, String> map = new HashMap<>();
         if (caseBundles == null) return map;
-        for (CaseBundleNode parentNode : caseBundles) {
-            if (parentNode.getId() != null && parentNode.getFileStoreId() != null) {
-                map.put(parentNode.getId(), parentNode.getFileStoreId());
-            }
-            if (parentNode.getChildren() != null) {
-                for (CaseBundleNode child : parentNode.getChildren()) {
-                    if (child.getId() != null && child.getFileStoreId() != null) {
-                        map.put(child.getId(), child.getFileStoreId());
-                    }
-                }
-            }
+        for (CaseBundleNode node : caseBundles) {
+            addFileStoreToMap(node, map);
         }
         return map;
+    }
+
+    private void addFileStoreToMap(CaseBundleNode node, Map<String, String> map) {
+        if (node == null) return;
+        if (node.getId() != null && node.getFileStoreId() != null) {
+            map.put(node.getId(), node.getFileStoreId());
+        }
+        if (node.getChildren() != null) {
+            for (CaseBundleNode child : node.getChildren()) {
+                addFileStoreToMap(child, map);
+            }
+        }
     }
 
     private Map<String, CaseBundleNode> buildSelectedNodeMap(List<CaseBundleNode> selectedCaseBundle) {
         Map<String, CaseBundleNode> map = new HashMap<>();
         if (selectedCaseBundle == null) return map;
-        for (CaseBundleNode parentNode : selectedCaseBundle) {
-            if (parentNode.getId() != null) {
-                map.put(parentNode.getId(), parentNode);
-            }
-            if (parentNode.getChildren() != null) {
-                for (CaseBundleNode child : parentNode.getChildren()) {
-                    if (child.getId() != null) {
-                        map.put(child.getId(), child);
-                    }
-                }
-            }
+        for (CaseBundleNode node : selectedCaseBundle) {
+            addNodeToMap(node, map);
         }
         return map;
     }
 
-    private String determineWorkflowAction(String currentStatus, int totalIssued, int totalRejected, int totalPending) {
+    private void addNodeToMap(CaseBundleNode node, Map<String, CaseBundleNode> map) {
+        if (node == null) return;
+        if (node.getId() != null) {
+            map.put(node.getId(), node);
+        }
+        if (node.getChildren() != null) {
+            for (CaseBundleNode child : node.getChildren()) {
+                addNodeToMap(child, map);
+            }
+        }
+    }
+
+    private String determineWorkflowAction(String currentStatus, int totalIssued, int totalRejected, int totalPending, String action) {
         if (totalIssued == 0 && totalRejected == 0) {
             return null;
         }
 
+        boolean allProcessed = totalPending == 0;
+        boolean isIssueAction = ServiceConstants.ACTION_ISSUE.equalsIgnoreCase(action);
+        boolean noRejections = totalRejected == 0;
+
         if (PENDING_ISSUE.equalsIgnoreCase(currentStatus)) {
-            // At least one issued → move to PARTIALLY_ISSUED
-            if (totalIssued > 0) {
-                return WF_ACTION_ISSUE;
+
+            if (!allProcessed) {
+                return action;
             }
-            // All rejected, none pending → REJECT_ALL (terminal)
-            if (totalRejected > 0 && totalPending == 0) {
-                return WF_ACTION_REJECT_ALL;
+
+            // All documents processed
+            if (isIssueAction) {
+                return noRejections ? WF_ACTION_ISSUE_ALL : action;
             }
-            // Some rejected, still pending → REJECT (stay in PENDING_ISSUE)
-            if (totalRejected > 0 && totalPending > 0) {
-                return WF_ACTION_REJECT;
-            }
+
+            return WF_ACTION_REJECT_ALL;
         }
 
         if (PARTIALLY_ISSUED.equalsIgnoreCase(currentStatus)) {
-            // All docs processed → ISSUE_ALL (terminal)
-            if (totalPending == 0) {
+
+            if (allProcessed && isIssueAction && noRejections) {
                 return WF_ACTION_ISSUE_ALL;
             }
-            // Still pending docs → ISSUE (stay in PARTIALLY_ISSUED)
-            return WF_ACTION_ISSUE;
+
+            return action;
         }
 
         return null;
@@ -507,9 +518,9 @@ public class CtcApplicationService {
             workflowService.updateWorkflowStatus(ctcApplication, requestInfo);
             Long date = System.currentTimeMillis();
             if (PENDING_ISSUE.equalsIgnoreCase(ctcApplication.getStatus())) {
+                ctcApplication.setDateOfApplicationApproval(date);
                 indexerUtils.pushIssueCtcDocumentsToIndex(ctcApplication);
                 indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "APPROVED", date);
-                ctcApplication.setDateOfApplicationApproval(date);
             }
             if ("REJECTED".equalsIgnoreCase(ctcApplication.getStatus())) {
                 indexerUtils.updateTrackerStatus(ctcApplication.getCtcApplicationNumber(), "REJECTED", null);
@@ -597,15 +608,20 @@ public class CtcApplicationService {
         return application;
     }
 
+    private List<BreakDown> getBreakDown(Double applicationFees, Double copyingFees) {
+        BreakDown applicationFeeBreakDown = new BreakDown();
+        applicationFeeBreakDown.setCode(APPLICATION_FEE);
+        applicationFeeBreakDown.setType(APPLICATION_FEE_BREAKDOWN_TYPE);
+        applicationFeeBreakDown.setAmount(applicationFees);
 
-    private List<BreakDown> getBreakDown(Double totalAmount) {
-        BreakDown breakDown = new BreakDown();
-        breakDown.setCode(config.getBreakDownCode());
-        breakDown.setType(config.getBreakDownType());
-        breakDown.setAmount(totalAmount);
+        BreakDown copyingFeeBreakDown = new BreakDown();
+        copyingFeeBreakDown.setCode(COPYING_FEE);
+        copyingFeeBreakDown.setType(COPYING_FEE_BREAKDOWN_TYPE);
+        copyingFeeBreakDown.setAmount(copyingFees);
 
         List<BreakDown> breakDownList = new ArrayList<>();
-        breakDownList.add(breakDown);
+        breakDownList.add(applicationFeeBreakDown);
+        breakDownList.add(copyingFeeBreakDown);
         return breakDownList;
     }
 
