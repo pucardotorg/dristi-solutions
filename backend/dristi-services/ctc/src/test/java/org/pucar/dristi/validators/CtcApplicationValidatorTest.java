@@ -94,7 +94,7 @@ class CtcApplicationValidatorTest {
         CtcApplicationRequest request = CtcApplicationRequest.builder()
                 .requestInfo(requestInfo).ctcApplication(application).build();
 
-        assertThrows(CustomException.class, () -> validator.validateUpdateRequest(request));
+        assertThrows(CustomException.class, () -> validator.validateUpdateRequest(request,new ArrayList<>()));
     }
 
     @Test
@@ -103,7 +103,7 @@ class CtcApplicationValidatorTest {
         CtcApplicationRequest request = CtcApplicationRequest.builder()
                 .requestInfo(requestInfo).ctcApplication(application).build();
 
-        assertThrows(CustomException.class, () -> validator.validateUpdateRequest(request));
+        assertThrows(CustomException.class, () -> validator.validateUpdateRequest(request,new ArrayList<>()));
     }
 
     @Test
@@ -113,7 +113,7 @@ class CtcApplicationValidatorTest {
         CtcApplicationRequest request = CtcApplicationRequest.builder()
                 .requestInfo(requestInfo).ctcApplication(application).build();
 
-        assertThrows(CustomException.class, () -> validator.validateUpdateRequest(request));
+        assertThrows(CustomException.class, () -> validator.validateUpdateRequest(request,new ArrayList<>()));
     }
 
     @Test
@@ -128,7 +128,7 @@ class CtcApplicationValidatorTest {
         CtcApplicationRequest request = CtcApplicationRequest.builder()
                 .requestInfo(requestInfo).ctcApplication(application).build();
 
-        validator.validateUpdateRequest(request);
+        validator.validateUpdateRequest(request,new ArrayList<>());
 
         assertTrue(application.getIsPartyToCase()); // should be preserved from existing
         assertNotNull(application.getCaseBundles());
