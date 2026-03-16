@@ -505,7 +505,11 @@ const ManageOffice = () => {
                 </span>
                 {activeTab !== "advocatesWorkingFor" && (
                   <span>
-                    {member?.memberType === "ADVOCATE_CLERK" ? "Clerk" : member?.memberType === "ADVOCATE" ? "Advocate" : member?.memberType}
+                    {member?.memberType === "ADVOCATE_CLERK"
+                    ? ((l) => l.charAt(0).toUpperCase() + l.slice(1).toLowerCase())(t("CLERK") || "Clerk")
+                    : member?.memberType === "ADVOCATE"
+                    ? t("ASSISTANT_ADVOCATE") || "Assistant Advocate"
+                    : member?.memberType}
                   </span>
                 )}
                 <span>
@@ -595,7 +599,13 @@ const ManageOffice = () => {
                       </div>
                       <div className="manage-office-search-card__row">
                         <p className="manage-office-search-card__label">{t("DESIGNATION") || "Designation"}</p>
-                        <p className="manage-office-search-card__value">{searchResult?.designation}</p>
+                        <p className="manage-office-search-card__value">
+                          {searchResult?.designation === "Clerk"
+                            ? ((l) => l.charAt(0).toUpperCase() + l.slice(1).toLowerCase())(t("CLERK") || "Clerk")
+                            : searchResult?.designation === "Advocate"
+                            ? t("ASSISTANT_ADVOCATE") || "Assistant Advocate"
+                            : searchResult?.designation}
+                        </p>
                       </div>
                       <div className="manage-office-search-card__row">
                         <p className="manage-office-search-card__label">{t("MOBILE_NUMBER") || "Mobile number"}</p>

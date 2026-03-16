@@ -120,11 +120,12 @@ const ManageOfficeMember = () => {
   }, [toast]);
 
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER") || "—";
+  const clerkLabel = (t("CLERK") || "Clerk").charAt(0).toUpperCase() + (t("CLERK") || "Clerk").slice(1).toLowerCase();
   const designation =
     member?.memberType === "ADVOCATE_CLERK"
-      ? t("CLERK") || "Clerk"
+      ? clerkLabel
       : member?.memberType === "ADVOCATE"
-      ? t("ADVOCATE") || "Advocate"
+      ? t("ASSISTANT_ADVOCATE") || "Assistant Advocate"
       : member?.memberType || "—";
   const mobileNumber = member?.memberMobileNumber
     ? `+91 ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(0, 5)} ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(5)}`

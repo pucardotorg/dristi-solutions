@@ -78,7 +78,8 @@ const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelec
   );
 
   const fullName = selected?.advocateName ? t(selected.advocateName) : "";
-  const buttonLabel = selected?.advocateName ? `Adv. ${fullName}'s Profile` : t("SELECT_ADVOCATE");
+  const profilePrefix = t("ASSISTANT_ADVOCATE_ABBREV") || "Asst. Adv.";
+  const buttonLabel = selected?.advocateName ? `${profilePrefix} ${fullName}'s Profile` : t("SELECT_ADVOCATE");
 
   return (
     <div className="advocate-profile-dropdown" ref={wrapperRef}>
