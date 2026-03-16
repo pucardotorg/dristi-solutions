@@ -648,7 +648,7 @@ const ManageOffice = () => {
                         !mobileNumber || mobileNumber?.length < 10 ? " manage-office-btn--disabled" : ""
                       }`}
                     >
-                      {t("SEARCH") || "Search"}
+                      {t("PROCEED") || "Proceed"}
                     </button>
                   )}
                 </div>
