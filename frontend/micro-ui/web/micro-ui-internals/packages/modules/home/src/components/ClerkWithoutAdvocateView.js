@@ -34,7 +34,7 @@ const ClerkWithoutAdvocateView = () => {
           fontFamily: "Roboto, sans-serif",
         }}
       >
-        {t("NO_ADVOCATES_LINKED") || "No Advocates Linked"}
+        {t("NO_ADVOCATES_LINKED") || "Not part of any advocate's office"}
       </h2>
       <p
         style={{
