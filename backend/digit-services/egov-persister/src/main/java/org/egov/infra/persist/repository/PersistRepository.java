@@ -111,8 +111,12 @@ public class PersistRepository {
                         if (value != null && !value.toString().trim().isEmpty()) {
                             UUID uuid = UUID.fromString(value.toString());
                             row.add(uuid);
+                        } else {
+                            row.add(null);
                         }
                     } catch (Exception e) {
+                        log.error("Error while parsing UUID from path: {}", jsonPath, e);
+                        row.add(null);
                     }
                     continue;
                 }
