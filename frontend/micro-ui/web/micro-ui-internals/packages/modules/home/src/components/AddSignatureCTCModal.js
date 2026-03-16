@@ -40,7 +40,7 @@ const AddSignatureCTCModal = ({
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const name = "Signature";
   const [fileUploadError, setFileUploadError] = useState(null);
-  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? false : false;
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -96,7 +96,7 @@ const AddSignatureCTCModal = ({
 
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
-  }, [checkSignStatus]);
+  }, []);
 
   const handleClickEsign = async () => {
     if (documentBlob) {
@@ -106,16 +106,22 @@ const AddSignatureCTCModal = ({
         const uploadedFileId = await uploadDocuments([file], tenantId);
         const uploadedFileStoreId = uploadedFileId?.[0]?.fileStoreId;
 
-        if (mockESignEnabled) {
-          setIsSigned(true);
-          if (setSignedDocumentUploadID) {
-            setSignedDocumentUploadID(uploadedFileStoreId);
-          }
-        } else {
+        // if (mockESignEnabled) {
+        //   setIsSigned(true);
+        //   if (setSignedDocumentUploadID) {
+        //     setSignedDocumentUploadID(uploadedFileStoreId);
+        //   }
+        // } else {
+        //   sessionStorage.setItem("homeActiveTab", "CS_HOME_ISSUE_CTC_COPY");
+        //   sessionStorage.setItem("ctcSignState", JSON.stringify(selectedRowData));
+        //   sessionStorage.setItem("docPdf", uploadedFileStoreId);
+        //   handleEsign(name, pageModule, uploadedFileStoreId, "Certification Signature");
+        // }
+
+        sessionStorage.setItem("homeActiveTab", "CS_HOME_ISSUE_CTC_COPY");
           sessionStorage.setItem("ctcSignState", JSON.stringify(selectedRowData));
           sessionStorage.setItem("docPdf", uploadedFileStoreId);
           handleEsign(name, pageModule, uploadedFileStoreId, "Certification Signature");
-        }
       } catch (error) {
         console.error("Failed to upload document for e-sign", error);
         setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");

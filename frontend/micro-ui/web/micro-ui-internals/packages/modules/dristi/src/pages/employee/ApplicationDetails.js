@@ -353,7 +353,7 @@ const ApplicationDetails = ({ location, match }) => {
             />
 
             <DocumentDetailCard cardData={personalData} />
-            {type === "advocate" && (userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") && (
+            {(userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") && (
               <DocumentDetailCard onClick={() => handleImageModalOpen(fileStoreId, fileName)} cardData={barDetails} />
             )}
           </div>
