@@ -48,20 +48,27 @@ const BulkIssueCTC = () => {
         return [{ ...applicationData, isSelected: checked }];
       }
 
+      const isMatch = (item) => {
+        return (
+          item?.businessObject?.ctcApplicationNumber === applicationData?.businessObject?.ctcApplicationNumber &&
+          item?.businessObject?.docId === applicationData?.businessObject?.docId
+        );
+      };
+
       const updated = prev?.map((item) => {
-        if (item?.businessObject?.ctcApplicationNumber !== applicationData?.businessObject?.ctcApplicationNumber) return item;
+        if (!isMatch(item)) return item;
         return {
           ...item,
           isSelected: checked,
         };
       });
 
-      const hasMatch = prev.some((item) => item?.businessObject?.ctcApplicationNumber === applicationData?.businessObject?.ctcApplicationNumber);
+      const hasMatch = prev.some(isMatch);
       if (!hasMatch) {
         updated.push({ ...applicationData, isSelected: checked });
       }
 
-      return updated.filter((item) => item.isSelected);
+      return updated.filter((item) => item?.isSelected);
     });
   };
 
@@ -498,11 +505,6 @@ const BulkIssueCTC = () => {
       setSignedDocumentUploadID(savedOrderPdf);
       setSelectedRowData(signedState);
 
-      // sessionStorage.removeItem("esignProcess");
-      // sessionStorage.removeItem("docPdf");
-      // sessionStorage.removeItem("ctcSignState");
-      // sessionStorage.removeItem("homeActiveTab");
-
       const cleanupTimer = setTimeout(() => {
         sessionStorage.removeItem("esignProcess");
         sessionStorage.removeItem("docPdf");
@@ -513,11 +515,6 @@ const BulkIssueCTC = () => {
       return () => clearTimeout(cleanupTimer);
     }
   }, []);
-
-  // useEffect(() => {
-  //   if (showSignatureModal) {
-  //   }
-  // }, [showSignatureModal]);
 
   return (
     <React.Fragment>
