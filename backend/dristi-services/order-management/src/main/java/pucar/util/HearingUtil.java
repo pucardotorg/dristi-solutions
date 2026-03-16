@@ -21,6 +21,7 @@ import pucar.web.models.courtCase.AdvocateMapping;
 import pucar.web.models.courtCase.CaseCriteria;
 import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
+import pucar.web.models.courtCase.POAHolder;
 import pucar.web.models.courtCase.Party;
 import pucar.web.models.hearing.*;
 import pucar.web.models.inbox.InboxRequest;
@@ -199,6 +200,24 @@ public class HearingUtil {
                         .individualId(individualId)
                         .name(fullName)
                         .type(resolvedType)
+                        .wasPresent(false)
+                        .build());
+            }
+        }
+
+        // add poa holders from case if not already present
+        List<POAHolder> poaHolders = courtCase.getPoaHolders() == null ? Collections.emptyList() : courtCase.getPoaHolders();
+        for (POAHolder poaHolder : poaHolders) {
+            String individualId = poaHolder.getIndividualId();
+
+            boolean alreadyPresent = mergedAttendees.stream()
+                    .anyMatch(attendee -> individualId != null && individualId.equalsIgnoreCase(attendee.getIndividualId()));
+
+            if (!alreadyPresent) {
+                mergedAttendees.add(Attendee.builder()
+                        .individualId(individualId)
+                        .name(poaHolder.getName())
+                        .type("poaHolder")
                         .wasPresent(false)
                         .build());
             }
