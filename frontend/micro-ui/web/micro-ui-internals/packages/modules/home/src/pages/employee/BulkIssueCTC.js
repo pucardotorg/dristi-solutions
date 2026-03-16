@@ -491,26 +491,33 @@ const BulkIssueCTC = () => {
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
-    const savedOrderPdf = sessionStorage.getItem("orderPDF");
+    const savedOrderPdf = sessionStorage.getItem("docPdf");
     const signedState = JSON.parse(sessionStorage.getItem("ctcSignState"));
     if (isSignSuccess && signedState) {
       setShowSignatureModal(true);
       setSignedDocumentUploadID(savedOrderPdf);
       setSelectedRowData(signedState);
-    }
-  }, []);
 
-  useEffect(() => {
-    if (showSignatureModal) {
+      // sessionStorage.removeItem("esignProcess");
+      // sessionStorage.removeItem("docPdf");
+      // sessionStorage.removeItem("ctcSignState");
+      // sessionStorage.removeItem("homeActiveTab");
+
       const cleanupTimer = setTimeout(() => {
         sessionStorage.removeItem("esignProcess");
-        sessionStorage.removeItem("orderPDF");
+        sessionStorage.removeItem("docPdf");
         sessionStorage.removeItem("ctcSignState");
+        sessionStorage.removeItem("homeActiveTab");
       }, 2000);
 
       return () => clearTimeout(cleanupTimer);
     }
-  }, [showSignatureModal]);
+  }, []);
+
+  // useEffect(() => {
+  //   if (showSignatureModal) {
+  //   }
+  // }, [showSignatureModal]);
 
   return (
     <React.Fragment>
@@ -574,11 +581,16 @@ const BulkIssueCTC = () => {
           documentBlob={selectedRowData?.businessObject?.downloadedDocument}
           documentName={selectedRowData?.businessObject?.fileName}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
-          handleGoBackSignatureModal={() => {
-            setShowSignatureModal(false);
-            setShowModal(true);
+          handleGoBackSignatureModal={async () => {
             sessionStorage.removeItem("ctcSignState");
             sessionStorage.removeItem("fileStoreId");
+            if (!(selectedRowData?.businessObject?.downloadedDocument instanceof Blob)) {
+              await handleRowClick(selectedRowData);
+              setShowSignatureModal(false);
+            } else {
+              setShowSignatureModal(false);
+              setShowModal(true);
+            }
           }}
           saveOnsubmitLabel={"CS_ISSUE"}
           handleIssue={handleIssueDocuments}
