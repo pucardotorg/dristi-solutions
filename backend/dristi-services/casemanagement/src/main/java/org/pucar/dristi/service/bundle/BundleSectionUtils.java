@@ -52,16 +52,6 @@ public class BundleSectionUtils {
             }
         }
 
-        // 4. artifact.file.additionalDetails.name
-        if (title == null && a.getFile() != null && a.getFile().getAdditionalDetails() instanceof Map) {
-            Map<String, Object> fileAd = (Map<String, Object>) a.getFile().getAdditionalDetails();
-            Object name = fileAd.get("name");
-            if (name instanceof String && !((String) name).isBlank()) {
-                title = (String) name;
-                return title;
-            }
-        }
-
         // 4. artifact.artifactType
         if (title == null) title = a.getArtifactType();
 
@@ -71,6 +61,14 @@ public class BundleSectionUtils {
     @SuppressWarnings("unchecked")
     public static String extractDepositionTitle(Artifact a) {
         String title = extractEvidenceTitle(a);
+        if (title == null && a.getFile() != null && a.getFile().getAdditionalDetails() instanceof Map) {
+            Map<String, Object> fileAd = (Map<String, Object>) a.getFile().getAdditionalDetails();
+            Object name = fileAd.get("name");
+            if (name instanceof String && !((String) name).isBlank()) {
+                title = (String) name;
+                return title;
+            }
+        }
         return title != null ? title : "WITNESS_DEPOSITION";
     }
 
