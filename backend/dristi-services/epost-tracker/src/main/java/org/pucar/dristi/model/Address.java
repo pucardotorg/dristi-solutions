@@ -31,11 +31,11 @@ public class Address {
     @Override
     public String toString() {
         return String.join(", ",
-                state != null ? state : "",
+                locality != null ? locality : "",
                 city != null ? city : "",
                 district != null ? district : "",
-                pinCode != null ? pinCode : "",
-                locality != null ? locality : ""
+                state != null ? state : "",
+                pinCode != null ? pinCode : ""
         );
     }
 
