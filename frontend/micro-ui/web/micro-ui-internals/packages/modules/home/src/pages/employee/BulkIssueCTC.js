@@ -516,7 +516,6 @@ const BulkIssueCTC = () => {
     }
   }, []);
 
-
   return (
     <React.Fragment>
       {isLoading && (
@@ -580,13 +579,14 @@ const BulkIssueCTC = () => {
           documentName={selectedRowData?.businessObject?.fileName}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
           handleGoBackSignatureModal={async () => {
-            debugger;
-            setShowSignatureModal(false);
-            setShowModal(true);
             sessionStorage.removeItem("ctcSignState");
             sessionStorage.removeItem("fileStoreId");
             if (!(selectedRowData?.businessObject?.downloadedDocument instanceof Blob)) {
               await handleRowClick(selectedRowData);
+              setShowSignatureModal(false);
+            } else {
+              setShowSignatureModal(false);
+              setShowModal(true);
             }
           }}
           saveOnsubmitLabel={"CS_ISSUE"}
