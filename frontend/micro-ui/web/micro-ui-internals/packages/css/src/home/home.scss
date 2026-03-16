@@ -272,8 +272,8 @@
   border: 1px solid #007e7e;
   background-color: #f9fafb; /* surface/primary */
   color: #007e7e;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 1rem; /* 16px */
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1302,8 +1302,8 @@
   height: 2.5rem; /* 40px */
   border-radius: 0.25rem; /* 4px */
   font-family: "Roboto", sans-serif;
-  font-weight: 700;
   font-size: 1rem; /* 16px */
+  font-weight: 700;
   line-height: 1.1875rem; /* 19px */
   text-align: center;
   border: 1px solid transparent;
