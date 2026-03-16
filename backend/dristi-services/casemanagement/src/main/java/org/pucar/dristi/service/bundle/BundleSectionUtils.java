@@ -25,7 +25,10 @@ public class BundleSectionUtils {
             Object formdata = ad.get("formdata");
             if (formdata instanceof Map) {
                 Object dt = ((Map<String, Object>) formdata).get("documentTitle");
-                if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
+                if (dt instanceof String && !((String) dt).isBlank()) {
+                    title = (String) dt;
+                    return title;
+                }
             }
         }
 
@@ -33,21 +36,30 @@ public class BundleSectionUtils {
         if (title == null && a.getFile() != null && a.getFile().getAdditionalDetails() instanceof Map) {
             Map<String, Object> fileAd = (Map<String, Object>) a.getFile().getAdditionalDetails();
             Object dt = fileAd.get("documentTitle");
-            if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
+            if (dt instanceof String && !((String) dt).isBlank()) {
+                title = (String) dt;
+                return title;
+            }
         }
 
         // 3. artifact.file.additionalDetails.documentType
         if (title == null && a.getFile() != null && a.getFile().getAdditionalDetails() instanceof Map) {
             Map<String, Object> fileAd = (Map<String, Object>) a.getFile().getAdditionalDetails();
             Object dt = fileAd.get("documentType");
-            if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
+            if (dt instanceof String && !((String) dt).isBlank()) {
+                title = (String) dt;
+                return title;
+            }
         }
 
         // 4. artifact.file.additionalDetails.name
         if (title == null && a.getFile() != null && a.getFile().getAdditionalDetails() instanceof Map) {
             Map<String, Object> fileAd = (Map<String, Object>) a.getFile().getAdditionalDetails();
             Object name = fileAd.get("name");
-            if (name instanceof String && !((String) name).isBlank()) title = (String) name;
+            if (name instanceof String && !((String) name).isBlank()) {
+                title = (String) name;
+                return title;
+            }
         }
 
         // 4. artifact.artifactType
