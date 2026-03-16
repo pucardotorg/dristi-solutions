@@ -40,8 +40,9 @@
 package org.egov.pg.models;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.hibernate.validator.constraints.Length;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -57,7 +58,7 @@ public class AccountCodePurposeContract extends AuditableContract {
     private Long id;
 
     @NotNull
-    @Length(max = 256, min = 3)
+    @Size(max = 256, min = 3)
     private String name;
 
     public AccountCodePurposeContract(final String id) {

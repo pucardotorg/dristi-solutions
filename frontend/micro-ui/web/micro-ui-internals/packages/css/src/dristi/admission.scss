@@ -625,3 +625,24 @@
   }
 }
 }
+
+.popup-module.generic-preview-modal{
+  .popup-module-main {
+    .popup-module-action-bar {
+      .selector-button-border {
+        background-color: #ffffff;
+        border: 1px #BB2C2F solid !important;
+        h2 {
+          color: #BB2C2F !important;
+        }
+      }
+      .selector-button-primary {
+        background-color: #007e7e !important;
+        border: 1px #007e7e solid !important;
+        h2 {
+          color: #ffffff !important;
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +52,14 @@ class IndexerUtilsTest {
                 .filingNumber("FIL-001")
                 .caseTitle("State vs John")
                 .caseNumber("CC/123/2025")
+                .applicantName("John")
+                .auditDetails(AuditDetails.builder()
+                        .createdBy("user-1")
+                        .createdTime(5000L)
+                        .lastModifiedBy("user-1")
+                        .lastModifiedTime(5000L)
+                        .build())
+                .dateOfApplicationApproval(6000L)
                 .build();
     }
 
@@ -72,6 +81,9 @@ class IndexerUtilsTest {
                 .courtId("KLKM52")
                 .tenantId("kl")
                 .fileStoreId("fs-1")
+                .nameOfApplicant("John")
+                .dateOfApplication(3000L)
+                .dateOfApplicationApproval(4000L)
                 .build();
 
         String payload = indexerUtils.buildPayload(doc);
@@ -112,6 +124,7 @@ class IndexerUtilsTest {
                 .createdTime(1000L).lastModifiedTime(2000L).docTitle("Title")
                 .status("PENDING").caseTitle("Case").caseNumber("CC/1/2025")
                 .filingNumber("FIL-1").courtId("KLKM52").tenantId("kl").fileStoreId("fs-1")
+                .nameOfApplicant("John").dateOfApplication(3000L).dateOfApplicationApproval(4000L)
                 .build();
 
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
@@ -119,7 +132,7 @@ class IndexerUtilsTest {
 
         indexerUtils.pushIssueCtcDocuments(List.of(doc));
 
-        verify(restTemplate).postForObject(eq("http://localhost:9200/_bulk"), any(HttpEntity.class), eq(String.class));
+        verify(restTemplate).postForObject(eq("http://localhost:9200/_bulk?refresh=true"), any(HttpEntity.class), eq(String.class));
     }
 
     // ---- updateDocStatus tests ----
@@ -139,7 +152,6 @@ class IndexerUtilsTest {
                 eq(String.class));
 
         String body = (String) captor.getValue().getBody();
-        // Verify query searches by Data.id.keyword and Data.ctcApplicationNumber.keyword
         assertTrue(body.contains("Data.docId.keyword"));
         assertTrue(body.contains("uuid-1"));
         assertTrue(body.contains("Data.ctcApplicationNumber.keyword"));
@@ -189,10 +201,10 @@ class IndexerUtilsTest {
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn("{\"updated\":1}");
 
-        indexerUtils.updateTrackerStatus("CA-001", "APPROVED",null);
+        indexerUtils.updateTrackerStatus("CA-001", "APPROVED", null);
 
         verify(restTemplate).postForObject(
-                eq("http://localhost:9200/ctc-application-tracker/_update_by_query"),
+                eq("http://localhost:9200/ctc-application-tracker/_update_by_query?refresh=true"),
                 any(HttpEntity.class),
                 eq(String.class));
     }
@@ -202,7 +214,7 @@ class IndexerUtilsTest {
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new RuntimeException("ES down"));
 
-        assertThrows(CustomException.class, () -> indexerUtils.updateTrackerStatus("CA-001", "REJECTED",null));
+        assertThrows(CustomException.class, () -> indexerUtils.updateTrackerStatus("CA-001", "REJECTED", null));
     }
 
     // ---- pushCtcApplicationTracker tests ----
@@ -224,7 +236,7 @@ class IndexerUtilsTest {
         indexerUtils.pushCtcApplicationTracker(tracker);
 
         ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
-        verify(restTemplate).postForObject(eq("http://localhost:9200/_bulk"), captor.capture(), eq(String.class));
+        verify(restTemplate).postForObject(eq("http://localhost:9200/_bulk?refresh=true"), captor.capture(), eq(String.class));
 
         String body = (String) captor.getValue().getBody();
         assertTrue(body.contains("\"ctcApplicationNumber\": \"CA-001\""));
@@ -282,7 +294,6 @@ class IndexerUtilsTest {
 
     @Test
     void pushIssueCtcDocumentsToIndex_shouldIndexLeafNodesWithFileStoreId() throws Exception {
-        // Root node with fileStoreId directly
         CaseBundleNode rootWithFile = CaseBundleNode.builder()
                 .id("complaint").title("COMPLAINT_PDF")
                 .fileStoreId("fs-complaint").children(null).build();
@@ -304,7 +315,6 @@ class IndexerUtilsTest {
 
     @Test
     void pushIssueCtcDocumentsToIndex_shouldTraverseDeeplyNestedNodes() throws Exception {
-        // 4-level deep: root -> app -> orders -> order (with fileStoreId)
         CaseBundleNode order = CaseBundleNode.builder()
                 .id("order-1").title("Order").fileStoreId("fs-order").children(null).build();
         CaseBundleNode orders = CaseBundleNode.builder()
@@ -331,11 +341,9 @@ class IndexerUtilsTest {
 
     @Test
     void pushIssueCtcDocumentsToIndex_shouldFallbackToCaseBundlesForFileStoreId() throws Exception {
-        // selectedCaseBundle node with null fileStoreId
         CaseBundleNode selectedNode = CaseBundleNode.builder()
                 .id("doc-1").title("Doc").fileStoreId(null).children(null).build();
 
-        // caseBundles has the fileStoreId for same id
         CaseBundleNode bundleNode = CaseBundleNode.builder()
                 .id("doc-1").title("Doc").fileStoreId("fs-from-bundle").children(null).build();
 
@@ -393,10 +401,8 @@ class IndexerUtilsTest {
 
     @Test
     void pushIssueCtcDocumentsToIndex_shouldCollectMultipleDocsFromMixedTree() throws Exception {
-        // Flat node with fileStoreId
         CaseBundleNode leaf1 = CaseBundleNode.builder()
                 .id("leaf-1").title("Leaf1").fileStoreId("fs-1").children(null).build();
-        // Nested: parent -> child with fileStoreId
         CaseBundleNode child = CaseBundleNode.builder()
                 .id("child-1").title("Child1").fileStoreId("fs-2").children(null).build();
         CaseBundleNode parent = CaseBundleNode.builder()
@@ -429,13 +435,46 @@ class IndexerUtilsTest {
         assertThrows(CustomException.class, () -> indexerUtils.pushIssueCtcDocumentsToIndex(application));
     }
 
+    // ---- esPostManual tests ----
+
+    @Test
+    void esPostManual_shouldThrowExceptionWhenBulkResponseHasErrors() {
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
+                .thenReturn("{\"errors\":true}");
+
+        assertThrows(Exception.class, () -> indexerUtils.esPostManual("http://localhost:9200/_bulk", "payload"));
+    }
+
+    @Test
+    void esPostManual_shouldNotThrowWhenBulkResponseHasNoErrors() {
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
+                .thenReturn("{\"errors\":false}");
+
+        assertDoesNotThrow(() -> indexerUtils.esPostManual("http://localhost:9200/_bulk", "payload"));
+    }
+
+    @Test
+    void esPostManual_shouldNotCheckErrorsForNonBulkUri() {
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
+                .thenReturn("{\"updated\":1}");
+
+        assertDoesNotThrow(() -> indexerUtils.esPostManual("http://localhost:9200/index/_update_by_query", "payload"));
+    }
+
+    @Test
+    void esPostManual_shouldRethrowRestTemplateException() {
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new RuntimeException("connection refused"));
+
+        assertThrows(RuntimeException.class, () -> indexerUtils.esPostManual("http://localhost:9200/_bulk", "payload"));
+    }
+
     // ---- getESEncodedCredentials test ----
 
     @Test
     void getESEncodedCredentials_shouldReturnBase64Encoded() {
         String creds = indexerUtils.getESEncodedCredentials();
         assertTrue(creds.startsWith("Basic "));
-        // "elastic:changeme" base64 = "ZWxhc3RpYzpjaGFuZ2VtZQ=="
         assertEquals("Basic ZWxhc3RpYzpjaGFuZ2VtZQ==", creds);
     }
 }

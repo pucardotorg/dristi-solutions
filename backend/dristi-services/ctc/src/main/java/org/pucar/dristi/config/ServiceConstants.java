@@ -53,7 +53,10 @@ public class ServiceConstants {
                     + "\"filingNumber\": \"%s\","
                     + "\"courtId\": \"%s\","
                     + "\"tenantId\": \"%s\","
-                    + "\"fileStoreId\": \"%s\""
+                    + "\"fileStoreId\": \"%s\","
+                    + "\"nameOfApplicant\": \"%s\","
+                    + "\"dateOfApplication\": %d,"
+                    + "\"dateOfApplicationApproval\": %d"
                     + "}}\n";
     public static final String ES_UPDATE_BY_QUERY_STATUS =
             "{\"query\":{\"bool\":{\"must\":[{\"term\":{\"Data.docId.keyword\":\"%s\"}},{\"term\":{\"Data.ctcApplicationNumber.keyword\":\"%s\"}}]}},"
@@ -163,5 +166,17 @@ public class ServiceConstants {
     // Filestore constants
     public static final String FILE_STORE_SERVICE_EXCEPTION_CODE = "FILE_STORE_SERVICE_EXCEPTION_CODE";
     public static final String FILE_STORE_SERVICE_EXCEPTION_MESSAGE = "Error occurred while accessing file store";
+
+    public static final String APPLICATION_FEE = "APPLICATION_FEE";
+
+    public static final String COPYING_FEE = "COPYING_FEE";
+
+    public static final String APPLICATION_FEE_BREAKDOWN_TYPE = "Application Fees";
+
+    public static final String COPYING_FEE_BREAKDOWN_TYPE = "Copying Fees";
+
+        public static final String ONLINE = "ONLINE";
+
+        public static final String PAYMENT_RECEIPT = "PAYMENT_RECEIPT";
 
 }

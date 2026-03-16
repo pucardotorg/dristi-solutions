@@ -62,7 +62,7 @@ async function ctcApplications(req, res, qrCode, courtCaseJudgeDetails) {
       Data: [
         {
           caseNumber: caseNumber,
-          courtName: mdmsCourtRoom.name,
+          courtName: mdmsCourtRoom.courtName,
           applicantName: nameOfApplicant || "",
           applicationNumber: ctcApplicationNumber || "",
           applicationDate: dateOfApplication ? formatDate(
@@ -77,7 +77,7 @@ async function ctcApplications(req, res, qrCode, courtCaseJudgeDetails) {
           ) : "",
           issuanceDate: formattedToday,
           cmoName: RequestInfo?.userInfo?.name || "",
-          judgeSignature: "Signature",
+          judgeSignature: "Certification Signature",
         },
       ],
     };

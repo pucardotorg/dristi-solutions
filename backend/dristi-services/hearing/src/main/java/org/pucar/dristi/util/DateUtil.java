@@ -59,4 +59,11 @@ public class DateUtil {
         return getEPochFromLocalDate(localDate);
 
     }
+
+
+    public String getCurrentDate() {
+        LocalDate currentDate = getLocalDateFromEpoch(System.currentTimeMillis());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
+        return currentDate.format(formatter);
+    }
 }

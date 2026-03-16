@@ -163,6 +163,13 @@
               "roles": [
                 "CTC_DOCUMENT_APPROVER"
               ]
+            },
+            {
+              "action": "ISSUE_ALL",
+              "nextState": "ISSUED",
+              "roles": [
+                "CTC_DOCUMENT_APPROVER"
+              ]
             }
           ]
         },

@@ -39,7 +39,7 @@ const HomeSidebar = ({
   const hasViewSignEvidenceAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_EVIDENCE"), [assignedRoles]);
   const hasViewSignADiaryAccess = useMemo(() => assignedRoles?.includes("DIARY_VIEWER"), [assignedRoles]);
   const hasViewSignFormsAccess = useMemo(() => assignedRoles?.includes("VIEW_SIGN_FORMS"), [assignedRoles]);
-  const hasIssueCTCAccess = useMemo(() => assignedRoles?.includes("ISSUE_CERTIFIED_TRUE_COPY"), [assignedRoles]);
+  const hasIssueCTCAccess = useMemo(() => assignedRoles?.includes("CTC_DOCUMENT_APPROVER"), [assignedRoles]);
 
   return (
     <div className="home-sidebar">
