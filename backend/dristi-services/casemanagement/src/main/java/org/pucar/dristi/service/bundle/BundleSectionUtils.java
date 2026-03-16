@@ -15,6 +15,8 @@ public class BundleSectionUtils {
 
     @SuppressWarnings("unchecked")
     public static String extractEvidenceTitle(Artifact a) {
+        if (a == null) return null;
+
         String title = null;
 
         // 1. artifact.additionalDetails.formdata.documentTitle
@@ -39,6 +41,13 @@ public class BundleSectionUtils {
             Map<String, Object> fileAd = (Map<String, Object>) a.getFile().getAdditionalDetails();
             Object dt = fileAd.get("documentType");
             if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
+        }
+
+        // 4. artifact.file.additionalDetails.name
+        if (title == null && a.getFile() != null && a.getFile().getAdditionalDetails() instanceof Map) {
+            Map<String, Object> fileAd = (Map<String, Object>) a.getFile().getAdditionalDetails();
+            Object name = fileAd.get("name");
+            if (name instanceof String && !((String) name).isBlank()) title = (String) name;
         }
 
         // 4. artifact.artifactType
