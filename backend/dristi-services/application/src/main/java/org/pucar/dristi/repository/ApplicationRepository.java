@@ -59,17 +59,6 @@ public class ApplicationRepository {
 
             // TODO : remove this, this is temporary fix (#5016)
             String asUser = applicationSearchRequest.getCriteria().getAsUser();
-            boolean isCitizen = Optional.of(applicationSearchRequest)
-                    .map(ApplicationSearchRequest::getRequestInfo)
-                    .map(RequestInfo::getUserInfo)
-                    .map(User::getType)
-                    .map(CITIZEN_UPPER::equalsIgnoreCase)
-                    .orElse(false);
-            // asUser is only used for citizens
-            if(!isCitizen){
-                asUser = null;
-            }
-
             String applicationQuery = queryBuilder.getApplicationSearchQuery(applicationSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList, asUser, applicationSearchRequest.getRequestInfo());
             applicationQuery = queryBuilder.addOrderByQuery(applicationQuery, applicationSearchRequest.getPagination());
             log.info("Final application search query: {}", applicationQuery);

@@ -1,12 +1,13 @@
 import CustomCaseInfoDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCaseInfoDiv";
 import { Button, CheckSvg } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createShorthand } from "../../../utils/joinCaseUtils";
 import NameListWithModal from "../../../components/NameListWithModal";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { RightArrow } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { useTranslation } from "react-i18next";
-import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 
 const JoinCaseSuccess = ({
   success,
@@ -17,7 +18,10 @@ const JoinCaseSuccess = ({
   refreshInbox,
   successScreenData,
   isCaseViewDisabled,
-  isBailBondRequired,
+  selectPartyData,
+  party,
+  partyInPerson,
+  individual,
 }) => {
   const { t } = useTranslation();
 
@@ -27,6 +31,7 @@ const JoinCaseSuccess = ({
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const { triggerSurvey, SurveyUI } = Digit.Hooks.dristi.useSurveyManager({ tenantId: tenantId });
+  const [bailBondRequired, setBailBondRequired] = useState(false);
 
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {
@@ -68,6 +73,67 @@ const JoinCaseSuccess = ({
     }
     return [];
   }, [caseDetails]);
+
+  const searchApplications = useCallback(
+    async (uuid) => {
+      try {
+        const response = await DRISTIService.searchSubmissions({
+          criteria: {
+            filingNumber: caseDetails?.filingNumber,
+            tenantId,
+            courtId: caseDetails?.courtId,
+            applicationType: "REQUEST_FOR_BAIL",
+            onBehalfOf: [uuid],
+            asUser: getAuthorizedUuid(uuid),
+          },
+        });
+
+        return response?.applicationList?.length > 0;
+      } catch (error) {
+        console.error("Error searching applications:", error);
+        return false;
+      }
+    },
+    [caseDetails?.courtId, caseDetails?.filingNumber, tenantId]
+  );
+
+  useEffect(() => {
+    const checkBailBondRequirement = async () => {
+      try {
+        let isBondRequired = true;
+
+        if (selectPartyData?.userType?.value === "Advocate" && selectPartyData?.isReplaceAdvocate?.value === "NO") {
+          const representedPersonUuids = party?.map((item) => item?.uuid).filter(Boolean);
+
+          if (representedPersonUuids?.length > 0) {
+            const applicationChecks = await Promise.all(representedPersonUuids.map((uuid) => searchApplications(uuid)));
+
+            const allApplicationsExist = applicationChecks.every((exists) => exists);
+            isBondRequired = !allApplicationsExist;
+          }
+        } else if (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES") {
+          const litigantUuid = individual?.userUuid;
+          if (litigantUuid) {
+            const hasExistingApplication = await searchApplications(litigantUuid);
+            isBondRequired = !hasExistingApplication;
+          }
+        }
+
+        setBailBondRequired(isBondRequired);
+      } catch (error) {
+        console.error("Error in checkBailBondRequirement:", error);
+        setBailBondRequired(true);
+      }
+    };
+
+    // Only run the check if we have the necessary data
+    if (
+      (selectPartyData?.userType?.value === "Advocate" && selectPartyData?.isReplaceAdvocate?.value === "NO" && party?.length > 0) ||
+      (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES" && individual?.userUuid)
+    ) {
+      checkBailBondRequirement();
+    }
+  }, [selectPartyData, party, individual, partyInPerson, searchApplications]);
 
   return (
     <div className="join-a-case-success">
@@ -137,9 +203,9 @@ const JoinCaseSuccess = ({
             />
             <Button
               className={"selector-button-primary"}
-              label={isBailBondRequired ? t("FILE_BAIL_APPLICATION") : t("VIEW_CASE_FILE")}
+              label={bailBondRequired ? t("FILE_BAIL_APPLICATION") : t("VIEW_CASE_FILE")}
               onButtonClick={() => {
-                if (isBailBondRequired) {
+                if (bailBondRequired) {
                   // TODO : can add for lititgants and respondents like litigant=${}&&litigantIndId=${}`;
                   history.push(
                     `/${window?.contextPath}/${userInfoType}/submissions/submissions-create?filingNumber=${caseDetails?.filingNumber}&applicationType=REQUEST_FOR_BAIL`

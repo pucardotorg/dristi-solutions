@@ -78,6 +78,8 @@ public class TreasuryPaymentData {
 
     private double petitionFee;
 
+    private double copyingFee;
+
     private double totalAmount;
 
     private List<FeeBreakDown> feeBreakDown;

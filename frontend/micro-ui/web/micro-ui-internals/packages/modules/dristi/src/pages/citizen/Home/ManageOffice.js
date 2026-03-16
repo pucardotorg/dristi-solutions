@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
-import { ManageOfficeDeleteIcon } from "../../../icons/svgIndex";
+import { ManageOfficeDeleteIcon, ManageOfficeCloseIcon } from "../../../icons/svgIndex";
 
 const ManageOffice = () => {
   const { t } = useTranslation();
@@ -167,6 +167,12 @@ const ManageOffice = () => {
 
       if (individualResponse?.Individual && individualResponse?.Individual?.length > 0) {
         const individual = individualResponse?.Individual?.[0];
+        // Validation: prevent adding self as a member
+        if (individual?.userUuid && individual?.userUuid === officeAdvocateUserUuid) {
+          setSearchError(t("YOU_CANNOT_ADD_YOURSELF") || "You cannot add yourself");
+          setSearchResult(null);
+          return;
+        }
         // Get userType from searched individual (same as HomeView: individualData.Individual[0].additionalFields.fields)
         const memberUserType = individual?.additionalFields?.fields?.find((obj) => obj?.key === "userType")?.value;
 
@@ -230,6 +236,12 @@ const ManageOffice = () => {
         });
         if (isAlreadyMember) {
           setSearchError(t("MEMBER_ALREADY_EXISTS") || "This mobile number is already added as a member.");
+          setSearchResult(null);
+        } else if (!clerkData && !advocateData) {
+          // Validation: only Advocates or Clerks can be added as members
+          setSearchError(
+            t("ONLY_ADVOCATE_OR_CLERK_ALLOWED") || "Only an Advocate or a Clerk can be added as a member."
+          );
           setSearchResult(null);
         } else {
           setSearchResult({
@@ -346,6 +358,17 @@ const ManageOffice = () => {
     setShowRemoveMemberModal(true);
   };
 
+  const formatMobileForDisplay = (rawNumber) => {
+    if (!rawNumber) return "-";
+    const digits = String(rawNumber).replace(/\D/g, "");
+    if (!digits) return "-";
+    const last10 = digits.slice(-10);
+    if (last10.length !== 10) return rawNumber;
+    const first5 = last10.slice(0, 5);
+    const last5 = last10.slice(5);
+    return `+91 ${first5} ${last5}`;
+  };
+
   const handleCloseRemoveModal = () => {
     setShowRemoveMemberModal(false);
     setMemberToRemove(null);
@@ -386,7 +409,12 @@ const ManageOffice = () => {
       if (response) {
         refetchMembers();
         if (isLeavingOfficeTab && refetchAdvocatesWorkingFor) refetchAdvocatesWorkingFor();
-        setToast({ label: t("MEMBER_REMOVED_SUCCESS") || "Member removed successfully", type: "success" });
+        setToast({
+          label: isLeavingOfficeTab
+            ? t("LEFT_OFFICE_SUCCESSFULLY") || "Left office successfully"
+            : t("MEMBER_REMOVED_SUCCESS") || "Member removed successfully",
+          type: "success",
+        });
       }
     } catch (error) {
       console.error("Error removing member:", error);
@@ -470,7 +498,11 @@ const ManageOffice = () => {
                 >
                   {activeTab === "advocatesWorkingFor" ? member?.officeAdvocateName || member?.memberName : member?.memberName}
                 </span>
-                <span>{activeTab === "advocatesWorkingFor" ? member?.advocateOfficeMobileNumber || "-" : member?.memberMobileNumber || "-"}</span>
+                <span>
+                  {activeTab === "advocatesWorkingFor"
+                    ? formatMobileForDisplay(member?.advocateOfficeMobileNumber)
+                    : formatMobileForDisplay(member?.memberMobileNumber)}
+                </span>
                 {activeTab !== "advocatesWorkingFor" && (
                   <span>
                     {member?.memberType === "ADVOCATE_CLERK" ? "Clerk" : member?.memberType === "ADVOCATE" ? "Advocate" : member?.memberType}
@@ -533,7 +565,7 @@ const ManageOffice = () => {
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">{t("ADD_MEMBER") || "Add Member"}</h2>
               <button onClick={handleCloseModal} className="manage-office-modal__close">
-                ×
+                <ManageOfficeCloseIcon />
               </button>
             </div>
 
@@ -543,49 +575,51 @@ const ManageOffice = () => {
               </div>
             ) : (
               <React.Fragment>
-                {searchResult ? (
-                  <div className="manage-office-search-card">
-                    <div className="manage-office-search-card__col">
-                      <p className="manage-office-search-card__label">{t("NAME") || "Name"}</p>
-                      <p className="manage-office-search-card__value">{searchResult?.name}</p>
+                <div className="manage-office-modal__body">
+                  {searchResult ? (
+                    <div className="manage-office-search-card">
+                      <div className="manage-office-search-card__row">
+                        <p className="manage-office-search-card__label">{t("NAME") || "Name"}</p>
+                        <p className="manage-office-search-card__value">{searchResult?.name}</p>
+                      </div>
+                      <div className="manage-office-search-card__row">
+                        <p className="manage-office-search-card__label">{t("DESIGNATION") || "Designation"}</p>
+                        <p className="manage-office-search-card__value">{searchResult?.designation}</p>
+                      </div>
+                      <div className="manage-office-search-card__row">
+                        <p className="manage-office-search-card__label">{t("MOBILE_NUMBER") || "Mobile number"}</p>
+                        <p className="manage-office-search-card__value">{searchResult?.mobileNumber}</p>
+                      </div>
+                      <div className="manage-office-search-card__row">
+                        <p className="manage-office-search-card__label">{t("EMAIL") || "Email"}</p>
+                        <p className="manage-office-search-card__value">{searchResult?.email}</p>
+                      </div>
                     </div>
-                    <div className="manage-office-search-card__col">
-                      <p className="manage-office-search-card__label">{t("DESIGNATION") || "Designation"}</p>
-                      <p className="manage-office-search-card__value">{searchResult?.designation}</p>
+                  ) : (
+                    <div className="manage-office-search-field">
+                      <label className="manage-office-search-field__label">{t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}</label>
+                      <div className="manage-office-search-field__control">
+                        <select
+                          value={countryCode}
+                          onChange={(e) => setCountryCode(e.target.value)}
+                          className="manage-office-search-field__country"
+                          disabled
+                        >
+                          <option value="+91">+91</option>
+                        </select>
+                        <input
+                          type="tel"
+                          value={mobileNumber}
+                          onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))}
+                          placeholder={t("ENTER_HERE") || "Enter here"}
+                          maxLength={10}
+                          className="manage-office-search-field__input"
+                        />
+                      </div>
+                      {searchError && <div className="manage-office-search-field__error">{searchError}</div>}
                     </div>
-                    <div className="manage-office-search-card__col">
-                      <p className="manage-office-search-card__label">{t("MOBILE_NUMBER") || "Mobile number"}</p>
-                      <p className="manage-office-search-card__value">{searchResult?.mobileNumber}</p>
-                    </div>
-                    <div className="manage-office-search-card__col">
-                      <p className="manage-office-search-card__label">{t("EMAIL") || "Email"}</p>
-                      <p className="manage-office-search-card__value">{searchResult?.email}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="manage-office-search-field">
-                    <label className="manage-office-search-field__label">{t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}</label>
-                    <div className="manage-office-search-field__control">
-                      <select
-                        value={countryCode}
-                        onChange={(e) => setCountryCode(e.target.value)}
-                        className="manage-office-search-field__country"
-                        disabled
-                      >
-                        <option value="+91">+91</option>
-                      </select>
-                      <input
-                        type="tel"
-                        value={mobileNumber}
-                        onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))}
-                        placeholder={t("ENTER_HERE") || "Enter here"}
-                        maxLength={10}
-                        className="manage-office-search-field__input"
-                      />
-                    </div>
-                    {searchError && <div className="manage-office-search-field__error">{searchError}</div>}
-                  </div>
-                )}
+                  )}
+                </div>
 
                 <div className="manage-office-modal__footer">
                   <button onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
@@ -618,9 +652,11 @@ const ManageOffice = () => {
         <div className="manage-office-modal-overlay" onClick={handleCloseRemoveModal}>
           <div className="manage-office-modal" onClick={(e) => e.stopPropagation()}>
             <div className="manage-office-modal__header">
-              <h2 className="manage-office-modal__title">{t("REMOVE_MEMBER") || "Remove Member"}</h2>
+              <h2 className="manage-office-modal__title">
+                {activeTab === "advocatesWorkingFor" ? t("LEAVE_OFFICE") || "Leave Office" : t("REMOVE_MEMBER") || "Remove Member"}
+              </h2>
               <button onClick={handleCloseRemoveModal} className="manage-office-modal__close">
-                ×
+                <ManageOfficeCloseIcon />
               </button>
             </div>
 
@@ -635,13 +671,12 @@ const ManageOffice = () => {
                     ? t("CONFIRM_LEAVE_ADVOCATE_OFFICE") || "Are you sure you want to leave this advocate's office?"
                     : t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?"}
                 </p>
-
                 <div className="manage-office-modal__footer">
                   <button onClick={handleCloseRemoveModal} className="manage-office-btn manage-office-btn--secondary">
                     {t("CANCEL") || "Cancel"}
                   </button>
                   <button onClick={handleConfirmRemoveMember} className="manage-office-btn manage-office-btn--danger">
-                    {t("REMOVE_MEMBER") || "Remove Member"}
+                    {activeTab === "advocatesWorkingFor" ? t("LEAVE_OFFICE") || "Leave Office" : t("REMOVE_MEMBER") || "Remove Member"}
                   </button>
                 </div>
               </React.Fragment>
