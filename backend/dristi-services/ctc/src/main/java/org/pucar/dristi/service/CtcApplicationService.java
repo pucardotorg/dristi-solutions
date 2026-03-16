@@ -490,20 +490,7 @@ public class CtcApplicationService {
         for (ReviewItem item : request.getApplications()) {
             log.info("Reviewing CTC application: {}, action: {}", item.getCtcApplicationNumber(), action);
 
-            // Fetch the CTC application from DB
-            CtcApplicationSearchRequest searchRequest = CtcApplicationSearchRequest.builder()
-                    .criteria(CtcApplicationSearchCriteria.builder()
-                            .ctcApplicationNumber(item.getCtcApplicationNumber())
-                            .filingNumber(item.getFilingNumber())
-                            .courtId(courtId)
-                            .build())
-                    .build();
-            List<CtcApplication> ctcApplications = ctcApplicationRepository.getCtcApplication(searchRequest);
-            if (ctcApplications == null || ctcApplications.isEmpty()) {
-                throw new CustomException("CTC_REVIEW_APPLICATION_ERROR",
-                        "CTC application not found: " + item.getCtcApplicationNumber());
-            }
-            CtcApplication ctcApplication = ctcApplications.get(0);
+            CtcApplication ctcApplication =fetchCtcApplication(item.getCtcApplicationNumber(), item.getFilingNumber(),courtId);
 
             // Enrich with review fields
             ctcApplication.setJudgeComments(item.getComments());
@@ -535,6 +522,7 @@ public class CtcApplicationService {
                     .ctcApplication(ctcApplication)
                     .build();
             producer.push(config.getUpdateCtcApplicationTopic(), ctcApplicationRequest);
+            cacheService.saveInRedisCache(ctcApplication);
 
             log.info("Reviewed CTC application: {}, action: {}", item.getCtcApplicationNumber(), action);
             updatedApplications.add(ctcApplication);
