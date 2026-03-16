@@ -10,8 +10,8 @@ import lombok.*;
 @Builder
 public class Address {
 
-    @JsonProperty("locality")
-    private String locality;
+    @JsonProperty("state")
+    private String state;
 
     @JsonProperty("city")
     private String city;
@@ -19,11 +19,12 @@ public class Address {
     @JsonProperty("district")
     private String district;
 
-    @JsonProperty("state")
-    private String state;
-
     @JsonProperty("pincode")
     private String pinCode;
+
+    @JsonProperty("locality")
+    private String locality;
+
 
     @JsonProperty("coordinate")
     private Coordinate coordinate;
@@ -34,11 +35,11 @@ public class Address {
     @Override
     public String toString() {
         return String.join(", ",
-                state != null ? state : "",
+                locality != null ? locality : "",
                 city != null ? city : "",
                 district != null ? district : "",
-                pinCode != null ? pinCode : "",
-                locality != null ? locality : ""
+                state != null ? state : "",
+                pinCode != null ? pinCode : ""
         );
     }
 
