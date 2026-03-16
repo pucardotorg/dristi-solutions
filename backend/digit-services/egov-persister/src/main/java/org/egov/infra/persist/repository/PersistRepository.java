@@ -104,6 +104,18 @@ public class PersistRepository {
                     continue;
 
                 }
+                
+                else if (type.equals(TypeEnum.UUID)) {
+                    try {
+                        value = JsonPath.read(jsonObj, jsonPath);
+                        if (value != null && !value.toString().trim().isEmpty()) {
+                            UUID uuid = UUID.fromString(value.toString());
+                            row.add(uuid);
+                        }
+                    } catch (Exception e) {
+                    }
+                    continue;
+                }
 
                 else if (type.equals(TypeEnum.CURRENTDATE)) {
                     if (dbType.equals(TypeEnum.DATE))
