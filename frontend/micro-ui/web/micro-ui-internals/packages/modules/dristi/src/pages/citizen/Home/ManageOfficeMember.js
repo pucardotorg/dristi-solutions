@@ -13,7 +13,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-const AccessTypeDropdown = ({ options = [], selected, onChange }) => {
+const AccessTypeDropdown = ({ options = [], selected, onChange, disabled = false }) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -33,6 +33,7 @@ const AccessTypeDropdown = ({ options = [], selected, onChange }) => {
   }, [open]);
 
   const handleToggle = () => {
+    if (disabled) return;
     setOpen((prev) => !prev);
   };
 
@@ -45,7 +46,12 @@ const AccessTypeDropdown = ({ options = [], selected, onChange }) => {
 
   return (
     <div className="manage-office-member-access-type" ref={containerRef}>
-      <button type="button" className="manage-office-member-access-type__control" onClick={handleToggle}>
+      <button
+        type="button"
+        className={`manage-office-member-access-type__control${disabled ? " manage-office-member-access-type__control--disabled" : ""}`}
+        onClick={handleToggle}
+        disabled={disabled}
+      >
         <span className="manage-office-member-access-type__value">{selected?.name || ""}</span>
         <span className="manage-office-member-access-type__arrow" aria-hidden="true">
           <AdvocateProfileChevronIcon />
@@ -159,6 +165,13 @@ const ManageOfficeMember = () => {
     () => yesNoOptions.find((opt) => opt.code === addToNewCasesAuto) || yesNoOptions[0],
     [yesNoOptions, addToNewCasesAuto]
   );
+
+  // When access type is "All Cases", always keep "Add member to new cases" enabled and set to "Yes"
+  useEffect(() => {
+    if (accessType === "ALL_CASES" && addToNewCasesAuto !== "Yes") {
+      setAddToNewCasesAuto("Yes");
+    }
+  }, [accessType, addToNewCasesAuto]);
 
   const syncSelectedCasesCount = React.useCallback(() => {
     const container = document.querySelector(".manage-office-member-inbox");
@@ -528,8 +541,14 @@ const ManageOfficeMember = () => {
 
   const handleAccessTypeChange = async (option) => {
     const newType = option?.code || "ALL_CASES";
+    const enforcedAddToNewCases = newType === "ALL_CASES" ? "Yes" : addToNewCasesAuto;
+
     setAccessType(newType);
-    await callUpdateMemberAccess(newType);
+    if (newType === "ALL_CASES") {
+      setAddToNewCasesAuto("Yes");
+    }
+
+    await callUpdateMemberAccess(newType, undefined, enforcedAddToNewCases);
   };
 
   const handleAllowCaseCreateChange = async (option) => {
@@ -543,6 +562,9 @@ const ManageOfficeMember = () => {
   };
 
   const handleAddToNewCasesAutoChange = async (option) => {
+    if (accessType === "ALL_CASES") {
+      return;
+    }
     const prev = addToNewCasesAuto;
     const value = option?.code === "No" ? "No" : "Yes";
     setAddToNewCasesAuto(value);
@@ -590,6 +612,7 @@ const ManageOfficeMember = () => {
               options={yesNoOptions}
               selected={selectedAddToNewCasesOption}
               onChange={handleAddToNewCasesAutoChange}
+              disabled={accessType === "ALL_CASES"}
             />
           </div>
           <button type="button" onClick={handleRemoveMemberClick} className="manage-office-member-remove-btn">
