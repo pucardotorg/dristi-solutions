@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
-import { ManageOfficeDeleteIcon, ManageOfficeCloseIcon } from "../../../icons/svgIndex";
+import { ManageOfficeDeleteIcon, ManageOfficeCloseIcon, ManageOfficeLeaveIcon } from "../../../icons/svgIndex";
 
 const ManageOffice = () => {
   const { t } = useTranslation();
@@ -535,9 +535,20 @@ const ManageOffice = () => {
                       {t("MANAGE") || "Manage"}
                     </button>
                   )}
-                  <button onClick={() => handleDeleteClick(member)} className="manage-office-delete-btn">
-                    <ManageOfficeDeleteIcon />
-                  </button>
+                  {activeTab === "advocatesWorkingFor" ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteClick(member)}
+                      className="manage-office-leave-icon-btn"
+                      aria-label={t("LEAVE_OFFICE") || "Leave Office"}
+                    >
+                      <ManageOfficeLeaveIcon />
+                    </button>
+                  ) : (
+                    <button onClick={() => handleDeleteClick(member)} className="manage-office-delete-btn">
+                      <ManageOfficeDeleteIcon />
+                    </button>
+                  )}
                 </span>
               </div>
             ))}
