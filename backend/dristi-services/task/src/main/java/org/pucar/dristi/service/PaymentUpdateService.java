@@ -523,7 +523,7 @@ public class PaymentUpdateService {
             String type = "complainant";
             if(task.getOrderId() != null){
                 Order order = orderUtil.getOrderByOrderId(requestInfo, String.valueOf(task.getOrderId()));
-                if(INTERMEDIATE.equals(order.getOrderType())){
+                if(INTERMEDIATE.equals(order.getOrderCategory())){
                     if(isWarrantForAccusedWitness(order))
                         type = "respondent";
                 }
