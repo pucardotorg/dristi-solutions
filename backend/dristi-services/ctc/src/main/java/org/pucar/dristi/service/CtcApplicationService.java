@@ -626,7 +626,7 @@ public class CtcApplicationService {
             sealedTemplateFileStoreId = egovPdfUtil.getSealedTemplateFileStoreId(request.getRequestInfo(), ctcApplication, criterion.getDocTitle());
             log.info("sealedTemplateFileStoreId for docId {} in application {}", criterion.getDocId(), criterion.getCtcApplicationNumber());
 
-            String mergedFileStoreId = fileStoreUtil.mergeFiles(sealedTemplateFileStoreId, criterion.getFileStoreId(), criterion.getTenantId());
+            String mergedFileStoreId = fileStoreUtil.mergeFiles(criterion.getFileStoreId(), sealedTemplateFileStoreId, criterion.getTenantId());
 
             log.info("mergedFileStoreId {}", mergedFileStoreId);
 
