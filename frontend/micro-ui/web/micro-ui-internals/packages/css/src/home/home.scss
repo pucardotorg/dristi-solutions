@@ -548,8 +548,8 @@
   font-family: "Roboto", sans-serif;
   font-style: normal;
   font-weight: 400;
-  font-size: 0.875rem;
-  line-height: 1rem;
+  font-size: 1rem; /* 16px for data cells */
+  line-height: 1.25rem;
   color: #3d3c3c;
 
   align-self: stretch;
@@ -596,7 +596,7 @@
 
   font-family: "Roboto", sans-serif;
   font-weight: 500;
-  font-size: 0.75rem;
+  font-size: 1rem;
   line-height: 0.875rem;
   text-align: center;
   color: #241c17;
