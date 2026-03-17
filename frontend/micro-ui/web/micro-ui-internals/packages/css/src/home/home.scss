@@ -1019,6 +1019,7 @@
 }
 
 .assign-cases-section {
+  margin-top: 0.5rem;
 
   .assign-cases-section-title {
     font-family: Roboto, sans-serif;
@@ -1027,7 +1028,7 @@
     font-size: 2rem; /* 32px */
     line-height: 2.375rem; /* 38px */
     color: #231f20;
-    margin: 0;
+    margin: 0 0 0.25rem 0;
   }
 
   .assign-cases-controls {
@@ -1054,10 +1055,12 @@
 .manage-office-member-inbox {
   margin-top: 0;
 
-  /* Remove extra top padding between search bar and table for Manage Office Member */
+  /* Tighten space around assignment filters */
   .inbox-search-component-wrapper {
+    .sections-parent {
+      grid-gap: 0 !important;
+    }
     .sections-parent.search {
-      gap: 0 !important;
 
       .search-wrapper {
         padding-top: 0 !important;
@@ -1083,6 +1086,7 @@
         box-shadow: none;
         background-color: transparent;
         padding: 0;
+        min-height: 5rem !important;
       }
     }
   }

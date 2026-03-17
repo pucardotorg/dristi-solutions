@@ -10,7 +10,7 @@ const sectionsParentStyle = {
   display: "flex",
   flexDirection: "column",
   gridTemplateColumns: "20% 1fr",
-  gap: "1rem",
+  gap: "0.5rem",
 };
 
 const AccessTypeDropdown = ({ options = [], selected, onChange, disabled = false }) => {
