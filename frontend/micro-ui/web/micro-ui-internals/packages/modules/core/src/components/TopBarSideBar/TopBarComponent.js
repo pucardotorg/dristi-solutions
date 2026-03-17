@@ -483,8 +483,6 @@ const TopBarComponent = ({
                     border: "1px solid #007E7E",
                     borderRadius: "4px",
                     color: "#007E7E",
-                    fontSize: "14px",
-                    fontWeight: "500",
                     cursor: "pointer",
                   }}
                 >
