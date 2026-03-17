@@ -576,7 +576,10 @@ const ManageOffice = () => {
 
       {showAddMemberModal && (
         <div className="manage-office-modal-overlay" onClick={handleCloseModal}>
-          <div className={`manage-office-modal ${searchResult ? "manage-office-modal--wide" : ""}`} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={`manage-office-modal ${searchResult ? "manage-office-modal--compact" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">{t("ADD_MEMBER") || "Add Member"}</h2>
               <button onClick={handleCloseModal} className="manage-office-modal__close">
