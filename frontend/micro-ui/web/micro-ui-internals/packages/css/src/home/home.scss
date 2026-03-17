@@ -259,8 +259,8 @@
 /* Advocate profile dropdown (top bar) - custom component */
 .advocate-profile-dropdown {
   position: relative;
-  min-width: 18.75rem; /* 300px base width */
-  width: auto; /* grow with content */
+  min-width: auto; /* shrink to content for short names */
+  width: auto; /* grow with content when name is long */
   max-width: 100%;
 }
 
