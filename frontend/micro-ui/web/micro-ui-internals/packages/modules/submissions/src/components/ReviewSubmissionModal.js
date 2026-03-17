@@ -256,9 +256,9 @@ function ReviewSubmissionModal({
       actionCancelOnSubmit={handleCancel}
       actionCustomLabel={authorizedUuid != userUuid ? t("UPLOAD_SIGNED_COPY") : null}
       actionCustomLabelSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName, isUpload: true })}
-      actionSaveLabel={authorizedUuid === userUuid ? t("ADD_SIGNATURE") : t("SEND_FOR_ESIGN")}
+      actionSaveLabel={authorizedUuid === userUuid ? t("ADD_SIGNATURE") : application?.status === "DRAFT_IN_PROGRESS" ? t("SEND_FOR_ESIGN") : null}
       isDisabled={isLoading}
-      actionSaveOnSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName})}
+      actionSaveOnSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName })}
       className={"review-submission-appl-modal"}
     >
       <div className="review-submission-appl-body-main">
