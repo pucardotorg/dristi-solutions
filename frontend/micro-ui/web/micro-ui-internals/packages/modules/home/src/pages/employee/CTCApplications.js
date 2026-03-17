@@ -321,6 +321,7 @@ const CTCApplications = () => {
         applications: bulkUpdate,
       };
       await HomeService.updateBulkCTCApplications(payload);
+      setShowErrorToast({ label: t("BULK_ACCEPT_DONE"), error: false });
       setUpdateCounter((prev) => prev + 1);
     } catch (error) {
       console.error(error);
@@ -365,10 +366,10 @@ const CTCApplications = () => {
   const documentsForPreview = useMemo(() => {
     if (!selectedRowApplicationData) return [];
     const app = selectedRowApplicationData;
+    const selectedDoc = app?.documents?.find?.((doc) => doc?.documentType === "SIGNED_CTC_APPLICATION");
+    const primaryFileStore = selectedDoc?.fileStore || app?.documents?.[0]?.fileStore || null;
 
-    const primaryFileStore = app?.affidavitDocument?.fileStore || app?.documents?.[0]?.fileStore || null;
-
-    const primaryDocType = app?.affidavitDocument?.documentName || app?.documents?.[0]?.documentType || "CTC Document";
+    const primaryDocType = selectedDoc?.documentType || app?.documents?.[0]?.documentType || "CTC Document";
 
     return primaryFileStore ? [{ fileStore: primaryFileStore, name: t(primaryDocType) }] : [];
   }, [selectedRowApplicationData, t]);

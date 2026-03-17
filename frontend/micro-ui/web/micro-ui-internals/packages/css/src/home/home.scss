@@ -839,6 +839,15 @@
   margin: 0;
 }
 
+.manage-office-member-access-type__control--disabled {
+  background-color: #e5e7eb;
+  border-color: #cbd5e1;
+  color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.7;
+}
+
 .manage-office-member-access-type__control:focus {
   outline: none;
 }

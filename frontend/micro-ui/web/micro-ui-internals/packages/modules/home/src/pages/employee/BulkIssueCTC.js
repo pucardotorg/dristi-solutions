@@ -48,20 +48,27 @@ const BulkIssueCTC = () => {
         return [{ ...applicationData, isSelected: checked }];
       }
 
+      const isMatch = (item) => {
+        return (
+          item?.businessObject?.ctcApplicationNumber === applicationData?.businessObject?.ctcApplicationNumber &&
+          item?.businessObject?.docId === applicationData?.businessObject?.docId
+        );
+      };
+
       const updated = prev?.map((item) => {
-        if (item?.businessObject?.ctcApplicationNumber !== applicationData?.businessObject?.ctcApplicationNumber) return item;
+        if (!isMatch(item)) return item;
         return {
           ...item,
           isSelected: checked,
         };
       });
 
-      const hasMatch = prev.some((item) => item?.businessObject?.ctcApplicationNumber === applicationData?.businessObject?.ctcApplicationNumber);
+      const hasMatch = prev.some(isMatch);
       if (!hasMatch) {
         updated.push({ ...applicationData, isSelected: checked });
       }
 
-      return updated.filter((item) => item.isSelected);
+      return updated.filter((item) => item?.isSelected);
     });
   };
 
@@ -491,26 +498,23 @@ const BulkIssueCTC = () => {
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
-    const savedOrderPdf = sessionStorage.getItem("orderPDF");
+    const savedOrderPdf = sessionStorage.getItem("docPdf");
     const signedState = JSON.parse(sessionStorage.getItem("ctcSignState"));
     if (isSignSuccess && signedState) {
       setShowSignatureModal(true);
       setSignedDocumentUploadID(savedOrderPdf);
       setSelectedRowData(signedState);
-    }
-  }, []);
 
-  useEffect(() => {
-    if (showSignatureModal) {
       const cleanupTimer = setTimeout(() => {
         sessionStorage.removeItem("esignProcess");
-        sessionStorage.removeItem("orderPDF");
+        sessionStorage.removeItem("docPdf");
         sessionStorage.removeItem("ctcSignState");
+        sessionStorage.removeItem("homeActiveTab");
       }, 2000);
 
       return () => clearTimeout(cleanupTimer);
     }
-  }, [showSignatureModal]);
+  }, []);
 
   return (
     <React.Fragment>
@@ -574,11 +578,16 @@ const BulkIssueCTC = () => {
           documentBlob={selectedRowData?.businessObject?.downloadedDocument}
           documentName={selectedRowData?.businessObject?.fileName}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
-          handleGoBackSignatureModal={() => {
-            setShowSignatureModal(false);
-            setShowModal(true);
+          handleGoBackSignatureModal={async () => {
             sessionStorage.removeItem("ctcSignState");
             sessionStorage.removeItem("fileStoreId");
+            if (!(selectedRowData?.businessObject?.downloadedDocument instanceof Blob)) {
+              await handleRowClick(selectedRowData);
+              setShowSignatureModal(false);
+            } else {
+              setShowSignatureModal(false);
+              setShowModal(true);
+            }
           }}
           saveOnsubmitLabel={"CS_ISSUE"}
           handleIssue={handleIssueDocuments}

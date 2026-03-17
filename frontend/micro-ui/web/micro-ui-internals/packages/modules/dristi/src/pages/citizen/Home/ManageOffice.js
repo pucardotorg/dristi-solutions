@@ -167,6 +167,12 @@ const ManageOffice = () => {
 
       if (individualResponse?.Individual && individualResponse?.Individual?.length > 0) {
         const individual = individualResponse?.Individual?.[0];
+        // Validation: prevent adding self as a member
+        if (individual?.userUuid && individual?.userUuid === officeAdvocateUserUuid) {
+          setSearchError(t("YOU_CANNOT_ADD_YOURSELF") || "You cannot add yourself");
+          setSearchResult(null);
+          return;
+        }
         // Get userType from searched individual (same as HomeView: individualData.Individual[0].additionalFields.fields)
         const memberUserType = individual?.additionalFields?.fields?.find((obj) => obj?.key === "userType")?.value;
 
@@ -230,6 +236,12 @@ const ManageOffice = () => {
         });
         if (isAlreadyMember) {
           setSearchError(t("MEMBER_ALREADY_EXISTS") || "This mobile number is already added as a member.");
+          setSearchResult(null);
+        } else if (!clerkData && !advocateData) {
+          // Validation: only Advocates or Clerks can be added as members
+          setSearchError(
+            t("ONLY_ADVOCATE_OR_CLERK_ALLOWED") || "Only an Advocate or a Clerk can be added as a member."
+          );
           setSearchResult(null);
         } else {
           setSearchResult({

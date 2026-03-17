@@ -96,7 +96,7 @@ const AddSignatureCTCModal = ({
 
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
-  }, [checkSignStatus]);
+  }, []);
 
   const handleClickEsign = async () => {
     if (documentBlob) {
@@ -112,6 +112,7 @@ const AddSignatureCTCModal = ({
             setSignedDocumentUploadID(uploadedFileStoreId);
           }
         } else {
+          sessionStorage.setItem("homeActiveTab", "CS_HOME_ISSUE_CTC_COPY");
           sessionStorage.setItem("ctcSignState", JSON.stringify(selectedRowData));
           sessionStorage.setItem("docPdf", uploadedFileStoreId);
           handleEsign(name, pageModule, uploadedFileStoreId, "Certification Signature");
