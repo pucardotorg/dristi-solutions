@@ -10,7 +10,7 @@ const sectionsParentStyle = {
   display: "flex",
   flexDirection: "column",
   gridTemplateColumns: "20% 1fr",
-  gap: "1rem",
+  gap: "0.5rem",
 };
 
 const AccessTypeDropdown = ({ options = [], selected, onChange, disabled = false }) => {
@@ -120,11 +120,12 @@ const ManageOfficeMember = () => {
   }, [toast]);
 
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER") || "—";
+  const clerkLabel = t("CLERK") || "Clerk";
   const designation =
     member?.memberType === "ADVOCATE_CLERK"
-      ? t("CLERK") || "Clerk"
+      ? clerkLabel
       : member?.memberType === "ADVOCATE"
-      ? t("ADVOCATE") || "Advocate"
+      ? t("ASSISTANT_ADVOCATE") || "Assistant Advocate"
       : member?.memberType || "—";
   const mobileNumber = member?.memberMobileNumber
     ? `+91 ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(0, 5)} ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(5)}`
@@ -596,6 +597,8 @@ const ManageOfficeMember = () => {
             <span className="manage-office-member-field__label">{t("ACCESS_TYPE") || "Access Type"}</span>
             <AccessTypeDropdown options={accessTypeOptions} selected={selectedAccessTypeOption} onChange={handleAccessTypeChange} />
           </div>
+          {/* Hiding per requirement: allow member to file new cases & add member to new cases automatically */}
+          {/*
           <div className="manage-office-member-field manage-office-member-field--wide">
             <span className="manage-office-member-field__label">{t("ALLOW_MEMBER_TO_FILE_NEW_CASES") || "Allow member to file new cases?"}</span>
             <AccessTypeDropdown
@@ -615,6 +618,7 @@ const ManageOfficeMember = () => {
               disabled={accessType === "ALL_CASES"}
             />
           </div>
+          */}
           <button type="button" onClick={handleRemoveMemberClick} className="manage-office-member-remove-btn">
             {t("REMOVE_MEMBER") || "Remove Member"}
           </button>
