@@ -2,6 +2,7 @@ package digit.util;
 
 import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
+import digit.service.CacheService;
 import digit.web.models.OpenHearing;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,11 +27,15 @@ public class EsUtil {
 
     private final RestTemplate restTemplate;
     private final Configuration config;
+    private final CacheService cacheService;
+    private final DateUtil dateUtil;
 
     @Autowired
-    public EsUtil(RestTemplate restTemplate, Configuration config) {
+    public EsUtil(RestTemplate restTemplate, Configuration config, CacheService cacheService, DateUtil dateUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
+        this.cacheService = cacheService;
+        this.dateUtil = dateUtil;
     }
 
 
@@ -63,6 +70,28 @@ public class EsUtil {
         }
 
 
+    }
+
+    public void updateOpenHearingInCache(List<OpenHearing> openHearings, Long hearingDate) {
+        try {
+            if(!config.getRedisEnabled()) {
+                log.info("Redis is disabled. Skipping cache update for open hearings.");
+                return;
+            }
+            log.info("Updating redis cache for open hearings.");
+            if (openHearings == null || openHearings.isEmpty()) {
+                log.info("No open hearings to update in cache.");
+                return;
+            }
+            String courtId = openHearings.get(0).getCourtId() != null ? openHearings.get(0).getCourtId() : config.getCourtId();
+            LocalDate date = dateUtil.getLocalDateFromEpoch(hearingDate);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
+            String key = CACHE_KEY_PREFIX + courtId + ":" + date.format(formatter);
+            cacheService.updateCache(key, openHearings);
+            log.info("Updated redis cache for open hearings:: {}", key);
+        } catch (Exception e) {
+            log.error("Error while updating redis cache for open hearings:: {}", e.getMessage());
+        }
     }
 
 

@@ -285,6 +285,9 @@ const EvidenceModal = ({
           label = t("DOWNLOAD_SUBMISSION");
         } else if (isLitigent && [...(allAdvocates?.[userInfo?.uuid] || []), userInfo?.uuid]?.includes(createdBy)) {
           label = t("DOWNLOAD_SUBMISSION");
+        } else if (!isLitigent) {
+          // For All advocates and clerks, show the download submisison button.
+          label = t("DOWNLOAD_SUBMISSION");
         } else if (
           (respondingUuids?.includes(userInfo?.uuid) || !documentSubmission?.[0]?.details?.referenceId) &&
           [SubmissionWorkflowState.PENDINGRESPONSE, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus)

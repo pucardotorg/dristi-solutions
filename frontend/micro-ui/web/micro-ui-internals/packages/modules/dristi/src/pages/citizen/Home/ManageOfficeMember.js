@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 import { InboxSearchComposer, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import { InfoCircleIcon, AdvocateProfileChevronIcon } from "../../../icons/svgIndex";
+import { InfoCircleIcon, AdvocateProfileChevronIcon, ManageOfficeCloseIcon } from "../../../icons/svgIndex";
 import { assignCasesConfig } from "./assignCasesConfig";
 
 const sectionsParentStyle = {
@@ -13,7 +13,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-const AccessTypeDropdown = ({ options = [], selected, onChange }) => {
+const AccessTypeDropdown = ({ options = [], selected, onChange, disabled = false }) => {
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -33,6 +33,7 @@ const AccessTypeDropdown = ({ options = [], selected, onChange }) => {
   }, [open]);
 
   const handleToggle = () => {
+    if (disabled) return;
     setOpen((prev) => !prev);
   };
 
@@ -45,7 +46,12 @@ const AccessTypeDropdown = ({ options = [], selected, onChange }) => {
 
   return (
     <div className="manage-office-member-access-type" ref={containerRef}>
-      <button type="button" className="manage-office-member-access-type__control" onClick={handleToggle}>
+      <button
+        type="button"
+        className={`manage-office-member-access-type__control${disabled ? " manage-office-member-access-type__control--disabled" : ""}`}
+        onClick={handleToggle}
+        disabled={disabled}
+      >
         <span className="manage-office-member-access-type__value">{selected?.name || ""}</span>
         <span className="manage-office-member-access-type__arrow" aria-hidden="true">
           <AdvocateProfileChevronIcon />
@@ -137,10 +143,35 @@ const ManageOfficeMember = () => {
     [t]
   );
 
+  const yesNoOptions = useMemo(
+    () => [
+      { code: "Yes", name: t("YES") || "Yes" },
+      { code: "No", name: t("NO") || "No" },
+    ],
+    [t]
+  );
+
   const selectedAccessTypeOption = useMemo(() => accessTypeOptions.find((opt) => opt.code === accessType) || accessTypeOptions[0], [
     accessTypeOptions,
     accessType,
   ]);
+
+  const selectedAllowCaseCreateOption = useMemo(
+    () => yesNoOptions.find((opt) => opt.code === allowCaseCreate) || yesNoOptions[0],
+    [yesNoOptions, allowCaseCreate]
+  );
+
+  const selectedAddToNewCasesOption = useMemo(
+    () => yesNoOptions.find((opt) => opt.code === addToNewCasesAuto) || yesNoOptions[0],
+    [yesNoOptions, addToNewCasesAuto]
+  );
+
+  // When access type is "All Cases", always keep "Add member to new cases" enabled and set to "Yes"
+  useEffect(() => {
+    if (accessType === "ALL_CASES" && addToNewCasesAuto !== "Yes") {
+      setAddToNewCasesAuto("Yes");
+    }
+  }, [accessType, addToNewCasesAuto]);
 
   const syncSelectedCasesCount = React.useCallback(() => {
     const container = document.querySelector(".manage-office-member-inbox");
@@ -322,16 +353,21 @@ const ManageOfficeMember = () => {
     }
   };
 
-  const callUpdateMemberAccess = async (overrideAccessType) => {
+  const callUpdateMemberAccess = async (overrideAccessType, overrideAllowCaseCreate, overrideAddToNewCasesAuto) => {
     if (!member?.memberId || !effectiveAdvocateInfo?.advocateId) {
       setToast({ label: t("UPDATE_ACCESS_ERROR") || "Failed to update access. Please try again.", type: "error" });
-      return;
+      return false;
     }
 
     setIsUpdatingAccess(true);
     try {
-      const allowCaseCreateFlag = allowCaseCreate === "Yes";
-      const addNewCasesAutomaticallyFlag = addToNewCasesAuto === "Yes";
+      const effectiveAllowCaseCreate =
+        typeof overrideAllowCaseCreate === "undefined" ? allowCaseCreate : overrideAllowCaseCreate;
+      const effectiveAddToNewCasesAuto =
+        typeof overrideAddToNewCasesAuto === "undefined" ? addToNewCasesAuto : overrideAddToNewCasesAuto;
+
+      const allowCaseCreateFlag = effectiveAllowCaseCreate === "Yes";
+      const addNewCasesAutomaticallyFlag = effectiveAddToNewCasesAuto === "Yes";
       const finalAccessType = overrideAccessType || accessType || member?.accessType || "ALL_CASES";
 
       const body = {
@@ -367,10 +403,12 @@ const ManageOfficeMember = () => {
         });
 
         setCasesRefreshKey((prev) => prev + 1);
+        return true;
       }
     } catch (error) {
       console.error("Error updating member access:", error);
       setToast({ label: t("UPDATE_ACCESS_ERROR") || "Failed to update access. Please try again.", type: "error" });
+      return false;
     } finally {
       setIsUpdatingAccess(false);
     }
@@ -503,8 +541,37 @@ const ManageOfficeMember = () => {
 
   const handleAccessTypeChange = async (option) => {
     const newType = option?.code || "ALL_CASES";
+    const enforcedAddToNewCases = newType === "ALL_CASES" ? "Yes" : addToNewCasesAuto;
+
     setAccessType(newType);
-    await callUpdateMemberAccess(newType);
+    if (newType === "ALL_CASES") {
+      setAddToNewCasesAuto("Yes");
+    }
+
+    await callUpdateMemberAccess(newType, undefined, enforcedAddToNewCases);
+  };
+
+  const handleAllowCaseCreateChange = async (option) => {
+    const prev = allowCaseCreate;
+    const value = option?.code === "No" ? "No" : "Yes";
+    setAllowCaseCreate(value);
+    const success = await callUpdateMemberAccess(undefined, value, undefined);
+    if (!success) {
+      setAllowCaseCreate(prev);
+    }
+  };
+
+  const handleAddToNewCasesAutoChange = async (option) => {
+    if (accessType === "ALL_CASES") {
+      return;
+    }
+    const prev = addToNewCasesAuto;
+    const value = option?.code === "No" ? "No" : "Yes";
+    setAddToNewCasesAuto(value);
+    const success = await callUpdateMemberAccess(undefined, undefined, value);
+    if (!success) {
+      setAddToNewCasesAuto(prev);
+    }
   };
 
   return (
@@ -531,24 +598,22 @@ const ManageOfficeMember = () => {
           </div>
           <div className="manage-office-member-field manage-office-member-field--wide">
             <span className="manage-office-member-field__label">{t("ALLOW_MEMBER_TO_FILE_NEW_CASES") || "Allow member to file new cases?"}</span>
-            <select value={allowCaseCreate} onChange={(e) => setAllowCaseCreate(e.target.value)} className="manage-office-member-select" disabled>
-              <option value="Yes">{t("YES") || "Yes"}</option>
-              <option value="No">{t("NO") || "No"}</option>
-            </select>
+            <AccessTypeDropdown
+              options={yesNoOptions}
+              selected={selectedAllowCaseCreateOption}
+              onChange={handleAllowCaseCreateChange}
+            />
           </div>
           <div className="manage-office-member-field manage-office-member-field--wide">
             <span className="manage-office-member-field__label">
               {t("ADD_MEMBER_TO_NEW_CASES_AUTO") || "Add member to new cases automatically?"}
             </span>
-            <select
-              value={addToNewCasesAuto}
-              onChange={(e) => setAddToNewCasesAuto(e.target.value)}
-              className="manage-office-member-select"
-              disabled
-            >
-              <option value="Yes">{t("YES") || "Yes"}</option>
-              <option value="No">{t("NO") || "No"}</option>
-            </select>
+            <AccessTypeDropdown
+              options={yesNoOptions}
+              selected={selectedAddToNewCasesOption}
+              onChange={handleAddToNewCasesAutoChange}
+              disabled={accessType === "ALL_CASES"}
+            />
           </div>
           <button type="button" onClick={handleRemoveMemberClick} className="manage-office-member-remove-btn">
             {t("REMOVE_MEMBER") || "Remove Member"}
@@ -646,7 +711,7 @@ const ManageOfficeMember = () => {
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">{t("REMOVE_MEMBER") || "Remove Member"}</h2>
               <button onClick={handleCloseRemoveModal} className="manage-office-modal__close">
-                ×
+                <ManageOfficeCloseIcon />
               </button>
             </div>
 
@@ -681,7 +746,7 @@ const ManageOfficeMember = () => {
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">{t("SAVE_CHANGES") || "Save Changes"}</h2>
               <button onClick={handleCloseUpdateAccessModal} className="manage-office-modal__close">
-                ×
+                <ManageOfficeCloseIcon />
               </button>
             </div>
 

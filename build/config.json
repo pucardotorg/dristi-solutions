@@ -79,6 +79,14 @@
         "language": "java",
         "version": "17"
     },
+    "ctc": {
+        "service_group": "core-services",
+        "db_source_path": "backend/dristi-services/ctc/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile.v2",
+        "service_source_path": "backend/dristi-services/ctc",
+        "language": "java",
+        "version": "17"
+    },
     "digitalized-documents": {
         "service_group": "core-services",
         "db_source_path": "backend/dristi-services/digitalized-documents/src/main/resources/db",
@@ -99,50 +107,50 @@
     "egov-accesscontrol" :{
         "service_group": "core-services",
         "db_source_path": "backend/digit-services/egov-accesscontrol/src/main/resources/db",
-        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/digit-services/egov-accesscontrol",
         "language": "java",
-        "version": "8"
+        "version": "17"
     },
     "egov-enc-service" :{
         "service_group": "core-services",
         "db_source_path": "backend/digit-services/egov-enc-service/src/main/resources/db",
-        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/digit-services/egov-enc-service",
         "language": "java",
-        "version": "8"
+        "version": "17"
     },
     "egov-location" :{
         "service_group": "core-services",
         "db_source_path": "backend/digit-services/egov-location/src/main/resources/db",
-        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/digit-services/egov-location",
         "language": "java",
-        "version": "8"
+        "version": "17"
     },
     "egov-otp" :{
         "service_group": "core-services",
         "db_source_path": "backend/digit-services/egov-otp/src/main/resources/db",
-        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/digit-services/egov-otp",
         "language": "java",
-        "version": "8"
+        "version": "17"
     },
     "egov-persister" :{
         "service_group": "core-services",
         "db_source_path": "",
-        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/digit-services/egov-persister",
         "language": "java",
-        "version": "8"
+        "version": "17"
     },
     "egov-pg-service" :{
         "service_group": "core-services",
         "db_source_path": "backend/digit-services/egov-pg-service/src/main/resources/db",
-        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "dockerfile_path": "build/maven/Dockerfile",
         "service_source_path": "backend/digit-services/egov-pg-service",
         "language": "java",
-        "version": "8"
+        "version": "17"
     },
     "egov-user-event" :{
         "service_group": "core-services",
@@ -234,7 +242,7 @@
     },
     "njdg-transformer": {
         "service_group": "core-services",
-        "db_source_path": "backend/integration-services/njdg-transformer/src/main/resources/db",
+        "db_source_path": "",
         "dockerfile_path": "build/maven/Dockerfile.v2",
         "service_source_path": "backend/integration-services/njdg-transformer",
         "language": "java",
@@ -342,6 +350,14 @@
         "db_source_path": "backend/dristi-services/task/src/main/resources/db",
         "dockerfile_path": "build/maven/Dockerfile.v2",
         "service_source_path": "backend/dristi-services/task",
+        "language": "java",
+        "version": "17"
+    },
+    "task-management": {
+        "service_group": "core-services",
+        "db_source_path": "backend/dristi-services/task-management/src/main/resources/db",
+        "dockerfile_path": "build/maven/Dockerfile.v2",
+        "service_source_path": "backend/dristi-services/task-management",
         "language": "java",
         "version": "17"
     },

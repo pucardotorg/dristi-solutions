@@ -77,7 +77,8 @@ const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelec
     [onSelect, selected?.id]
   );
 
-  const buttonLabel = selected?.advocateName ? `Adv. ${t(selected.advocateName)}'s Profile` : t("SELECT_ADVOCATE");
+  const fullName = selected?.advocateName ? t(selected.advocateName) : "";
+  const buttonLabel = selected?.advocateName ? `Adv. ${fullName}'s Profile` : t("SELECT_ADVOCATE");
 
   return (
     <div className="advocate-profile-dropdown" ref={wrapperRef}>
@@ -126,7 +127,6 @@ const TopBarComponent = ({
   const history = useHistory();
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
-  const [selectedAdvocate, setSelectedAdvocate] = useState(null);
   const { AdvocateData, setAdvocateDataContext } = useContext(AdvocateDataContext);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -213,7 +213,7 @@ const TopBarComponent = ({
     return () => {
       window.removeEventListener("refetchIndividualData", handleRefetchEvent);
     };
-  }, [tenantId, userInfo?.uuid]);
+  }, [tenantId, userInfo?.uuid, isUserLoggedIn]);
 
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId || individualDataa?.Individual?.[0]?.individualId, [
     individualData?.Individual,
@@ -330,7 +330,6 @@ const TopBarComponent = ({
 
   const changeAdvocateSelection = (advocate) => {
     if (advocate && advocate?.id !== AdvocateData?.id) {
-      setSelectedAdvocate({ ...advocate });
       const individualId = seniorAdvocatesIndividualIdMapping?.find((o) => o?.userUuid === advocate?.uuid)?.individualId;
       setAdvocateDataContext({
         ...advocate,
@@ -347,7 +346,6 @@ const TopBarComponent = ({
     if (storedAdvocate?.id) {
       if (seniorAdvocates?.length === 0) {
         sessionStorage.removeItem("selectedAdvocate");
-        setSelectedAdvocate(null);
         setAdvocateDataContext(null);
         return null;
       }
@@ -377,11 +375,9 @@ const TopBarComponent = ({
 
   useEffect(() => {
     if (!resolvedAdvocate?.id) return;
-    if (resolvedAdvocate.id === selectedAdvocate?.id) return;
     if (seniorAdvocatesIndividualIdMapping?.length === 0 || isIndividuaIdMappingsLoading) return;
     const eSignPath = `/${window?.contextPath}/citizen/dristi/home/file-case/sign-complaint`;
     if (resolvedAdvocate?.id !== storedAdvocate?.id || !AdvocateData?.id) {
-      setSelectedAdvocate(resolvedAdvocate);
       const individualId = seniorAdvocatesIndividualIdMapping?.find((o) => o?.userUuid === resolvedAdvocate?.uuid)?.individualId;
       setAdvocateDataContext({ ...resolvedAdvocate, individualId });
       sessionStorage.setItem("selectedAdvocate", JSON.stringify(resolvedAdvocate));
@@ -392,7 +388,6 @@ const TopBarComponent = ({
   }, [
     seniorAdvocates,
     advocateId,
-    selectedAdvocate?.id,
     setAdvocateDataContext,
     resolvedAdvocate,
     searchData,
@@ -466,12 +461,12 @@ const TopBarComponent = ({
 
         <div className="RightMostTopBarOptions">
           {/* Manage Office button & Advocate profile dropdown - only visible for advocates / clerks */}
-          {(isAdvocate || isAdvocateClerk) && (
+          {(isAdvocate || (isAdvocateClerk && advocateDropdownOptions?.length > 0)) && (
             <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
               <AdvocateProfileDropdown
                 t={t}
                 options={advocateDropdownOptions}
-                selected={selectedAdvocate}
+                selected={resolvedAdvocate}
                 onSelect={changeAdvocateSelection}
                 disabled={disableAdvocateChange}
               />

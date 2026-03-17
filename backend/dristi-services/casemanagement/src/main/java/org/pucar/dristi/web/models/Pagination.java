@@ -41,6 +41,6 @@ public class Pagination {
 
     @JsonProperty("order")
 
-    private Order order = null;
+    private OrderPagination order = null;
 
 }
