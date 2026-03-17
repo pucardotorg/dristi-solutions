@@ -517,11 +517,13 @@
 .manage-office-table-header > span:last-child {
   flex-grow: 0;
   min-width: 14.5rem;
+  justify-content: center; /* center align Actions header text on both tabs */
 }
 
 .manage-office-table-header--working-for > span:last-child {
   flex-grow: 0;
   min-width: 14.5rem;
+  justify-content: center;
 }
 
 /* ── Table data row ── */
@@ -611,6 +613,7 @@
 
 .manage-office-actions--compact {
   gap: 0.625rem;
+  justify-content: center; /* center the leave icon under Actions header */
 }
 
 .manage-office-manage-btn {
