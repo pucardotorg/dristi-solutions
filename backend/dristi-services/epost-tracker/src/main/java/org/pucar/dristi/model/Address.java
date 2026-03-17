@@ -30,13 +30,9 @@ public class Address {
 
     @Override
     public String toString() {
-        return String.join(", ",
-                locality != null ? locality : "",
-                city != null ? city : "",
-                district != null ? district : "",
-                state != null ? state : "",
-                pinCode != null ? pinCode : ""
-        );
+        return java.util.stream.Stream.of(locality, city, district, state, pinCode)
+                .filter(value -> value != null && !value.isBlank())
+                .collect(java.util.stream.Collectors.joining(", "));
     }
 
 }
