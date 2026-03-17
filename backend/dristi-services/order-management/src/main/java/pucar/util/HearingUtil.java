@@ -234,7 +234,7 @@ public class HearingUtil {
         // check if this individual id exists in mergedAttendees
         // if yes then update name
         // else add in last this entry
-        List<Attendee> assingee = new ArrayList<>(mergedAttendees);
+        List<Attendee> assignee = new ArrayList<>(mergedAttendees);
         for (Map.Entry<String, String> entry : advocate.entrySet()) {
             String individualId = entry.getKey();
             int index = -1;
@@ -252,17 +252,17 @@ public class HearingUtil {
                 String modifiedName = addValueToBrackets(name, "Advocate");
                 attendee.setName(modifiedName);
 
-                assingee.set(index, attendee);
+                assignee.set(index, attendee);
 
             } else {
-                assingee.add(Attendee.builder()
+                assignee.add(Attendee.builder()
                         .individualId(entry.getKey())
                         .name(entry.getValue())
                         .type("Advocate")
                         .build());
             }
         }
-        return assingee;
+        return assignee;
     }
 
 
