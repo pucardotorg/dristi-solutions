@@ -549,7 +549,12 @@ const ManageOffice = () => {
                       <ManageOfficeLeaveIcon />
                     </button>
                   ) : (
-                    <button onClick={() => handleDeleteClick(member)} className="manage-office-delete-btn">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteClick(member)}
+                      className="manage-office-delete-btn"
+                      aria-label={t("REMOVE_FROM_OFFICE") || "Remove from office"}
+                    >
                       <ManageOfficeDeleteIcon />
                     </button>
                   )}
