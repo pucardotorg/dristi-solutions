@@ -99,6 +99,7 @@ export const assignCasesConfig = ({ member = {}, advocateInfo = {} } = {}) => {
             {
               label: "CASE_NUMBER",
               jsonPath: "filingNumber",
+              additionalCustomization: true,
             },
           ],
           enableColumnSort: true,
