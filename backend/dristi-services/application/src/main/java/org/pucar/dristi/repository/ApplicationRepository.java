@@ -94,7 +94,7 @@ public class ApplicationRepository {
 
             String filingNumber = applicationSearchRequest.getCriteria().getFilingNumber();
             List<UUID> onBehalfOf = applicationSearchRequest.getCriteria().getOnBehalfOf();
-            if((isAdvocate || isClerk) && onBehalfOf != null && asUser != null && filingNumber != null) {
+            if((isAdvocate || isClerk) && onBehalfOf != null && !onBehalfOf.isEmpty() && asUser != null && filingNumber != null) {
 
                 CourtCase courtCase = fetchCourtCase(filingNumber, requestInfo);
 
