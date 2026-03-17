@@ -7,8 +7,8 @@
     "uniqueIdentifier": "issue-ctc-documents",
     "data": {
       "sortBy": {
-        "path": "Data.createdTime",
-        "defaultOrder": "DESC"
+        "path": "Data.dateOfApplication",
+        "defaultOrder": "ASC"
       },
       "sourceFilterPathList": [
         "Data"
