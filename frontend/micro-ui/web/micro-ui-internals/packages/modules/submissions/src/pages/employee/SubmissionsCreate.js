@@ -1754,10 +1754,20 @@ const SubmissionsCreate = ({ path }) => {
       if (!fileStoreId) {
         throw new Error("FileStoreId not generated");
       }
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const userUuid = userInfo?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUuid);
+
+      const isSendForEsign = authorizedUuid !== userUuid;
+
       if (fileStoreId) {
         setApplicationPdfFileStoreId(fileStoreId);
       }
-      setShowsignatureModal(true);
+      if (!isSendForEsign) {
+        setShowsignatureModal(true);
+      } else {
+        setShowErrorToast({ label: t("SUCCESFULLY_SENT_FOR_ESIGN"), error: false });
+      }
       setShowReviewModal(false);
     } catch (error) {
       console.error("Error while submitting the application:", error);
