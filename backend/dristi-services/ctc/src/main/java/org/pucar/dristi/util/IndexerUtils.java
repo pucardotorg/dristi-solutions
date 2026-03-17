@@ -51,6 +51,10 @@ public class IndexerUtils {
 
     public String buildPayload(IssueCtcDocument doc) {
         String indexName = config.getIssueCtcDocumentsIndex();
+        String docName = Optional.ofNullable(doc.getDocTitle())
+                .map(s -> s.replace("_", " "))
+                .orElse(null);
+
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_ISSUE_CTC_DOC_FORMAT,
                 indexName,
@@ -60,7 +64,7 @@ public class IndexerUtils {
                 doc.getCtcApplicationNumber(),
                 doc.getCreatedTime(),
                 doc.getLastModifiedTime(),
-                doc.getDocTitle(),
+                docName,
                 doc.getStatus(),
                 doc.getCaseTitle(),
                 doc.getCaseNumber(),
