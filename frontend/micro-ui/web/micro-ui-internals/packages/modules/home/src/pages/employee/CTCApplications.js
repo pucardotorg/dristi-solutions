@@ -321,6 +321,7 @@ const CTCApplications = () => {
         applications: bulkUpdate,
       };
       await HomeService.updateBulkCTCApplications(payload);
+      setShowErrorToast({ label: t("BULK_ACCEPT_DONE"), error: false });
       setUpdateCounter((prev) => prev + 1);
     } catch (error) {
       console.error(error);
