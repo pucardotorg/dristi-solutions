@@ -1,6 +1,6 @@
 const defaultSearchValues = {
   documentName: "",
-  searchQuery: "",
+  caseTitle: "",
 };
 
 export const bulkIssueCTCConfig = {
@@ -63,7 +63,7 @@ export const bulkIssueCTCConfig = {
             isMandatory: false,
             disable: false,
             populators: {
-              name: "searchQuery",
+              name: "caseTitle",
               error: "BR_PATTERN_ERR_MSG",
               style: { maxWidth: "350px", minWidth: "250px", width: "100%" },
               validation: {
