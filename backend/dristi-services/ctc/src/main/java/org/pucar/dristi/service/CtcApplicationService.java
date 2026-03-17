@@ -336,6 +336,8 @@ public class CtcApplicationService {
                     } else {
                         statusCounts.put(STATUS_REJECTED, totalRejected + 1);
                     }
+                    statusCounts.put(STATUS_PENDING, totalPending - 1);
+
                     // 1. Update this document's status and documents in ES
                     indexerUtils.updateDocStatus(docId, ctcApplicationNumber, docStatus, item.getDocuments());
 
