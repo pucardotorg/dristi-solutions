@@ -64,7 +64,7 @@
       "module": "CTC Service",
       "sortBy": {
         "path": "Data.dateRaised",
-        "defaultOrder": "DESC"
+        "defaultOrder": "ASC"
       },
       "sourceFilterPathList": [
         "Data"
