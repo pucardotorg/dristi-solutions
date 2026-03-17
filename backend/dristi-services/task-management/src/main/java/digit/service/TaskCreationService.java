@@ -1115,14 +1115,17 @@ public class TaskCreationService {
                 partyList = Collections.singletonList("complainant");
             }
             else if(SUMMONS.equalsIgnoreCase(order.getOrderType())){
-                partyList = getPartyListForSummonsOrder(order);
-            }
-            else if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())){
-                List<Order> orderList = getItemListFormCompositeItem(order);
-                for(Order orderItem: orderList){
-                    if(SUMMONS.equalsIgnoreCase(orderItem.getOrderType())){
-                        partyList.addAll(getPartyListForSummonsOrder(orderItem));
+
+                if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())){
+                    List<Order> orderList = getItemListFormCompositeItem(order);
+                    for(Order orderItem: orderList){
+                        if(SUMMONS.equalsIgnoreCase(orderItem.getOrderType())){
+                            partyList.addAll(getPartyListForSummonsOrder(orderItem));
+                        }
                     }
+                }
+                else{
+                    partyList = getPartyListForSummonsOrder(order);
                 }
             }
 
