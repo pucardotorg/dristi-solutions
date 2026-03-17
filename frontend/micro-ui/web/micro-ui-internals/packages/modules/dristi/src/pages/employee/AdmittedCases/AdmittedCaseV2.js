@@ -134,7 +134,7 @@ const AdmittedCaseV2 = () => {
   const urlParams = new URLSearchParams(location.search);
   const { hearingId, taskOrderType, artifactNumber, fromHome, openExaminationModal, examinationDocNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
-  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userInfo = useMemo(() => JSON.parse(window.localStorage.getItem("user-info")), []);
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -328,7 +328,7 @@ const AdmittedCaseV2 = () => {
     }
   }, []);
 
-  const homeNextHearingFilter = JSON.parse(localStorage.getItem("Digit.homeNextHearingFilter"));
+  const homeNextHearingFilter = useMemo(() => JSON.parse(localStorage.getItem("Digit.homeNextHearingFilter")), []);
 
   useEffect(() => {
     const fetchInboxForNextHearingData = async () => {
@@ -689,14 +689,14 @@ const AdmittedCaseV2 = () => {
     setSubmissionsViewModal(true);
   };
 
-  const handleTakeAction = () => {
+  const handleTakeAction = useCallback(() => {
     setShowMenu(!showMenu);
     setShowOtherMenu(false);
 
     if (showCitizenMenu) {
       setShowCitizenMenu(false);
     }
-  };
+  }, [showMenu, showCitizenMenu]);
 
   const showToast = useCallback((details, duration = 5000) => {
     setToast(true);
@@ -782,8 +782,8 @@ const AdmittedCaseV2 = () => {
     [caseCourtId, caseDetails?.caseCategory, caseDetails?.filingDate, caseDetails?.filingNumber, t]
   );
 
-  const configList = useMemo(() => {
-    const docSetFunc = (docObj) => {
+  const docSetFunc = useCallback(
+    (docObj) => {
       // This is redundant for document tab, used only for submissions tab
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
       const status = docObj?.[0]?.applicationList?.status;
@@ -827,9 +827,12 @@ const AdmittedCaseV2 = () => {
         setDocumentSubmission(docObj);
         setShow(true);
       }
-    };
+    },
+    [caseDetails, filingNumber, history, isCitizen, userUuid, setDocumentSubmission, setShow]
+  );
 
-    const orderSetFunc = async (order) => {
+  const orderSetFunc = useCallback(
+    async (order) => {
       if (order?.businessObject?.orderNotification?.entityType === "Notification") {
         const notificationResponse = await Digit.HearingService.searchNotification({
           criteria: {
@@ -874,9 +877,23 @@ const AdmittedCaseV2 = () => {
           }
         }
       }
-    };
+    },
+    [
+      caseCourtId,
+      filingNumber,
+      history,
+      isCitizen,
+      ordersService,
+      tenantId,
+      setCurrentOrder,
+      setCurrentNotification,
+      setShowNotificationModal,
+      setShowOrderReviewModal,
+    ]
+  );
 
-    const orderDeleteFunc = async (history, column, row, item) => {
+  const orderDeleteFunc = useCallback(
+    async (history, column, row, item) => {
       try {
         const orderResponse = await ordersService.searchOrder(
           {
@@ -898,18 +915,27 @@ const AdmittedCaseV2 = () => {
           message: t("SOMETHING_WENT_WRONG"),
         });
       }
-    };
+    },
+    [caseCourtId, filingNumber, ordersService, showToast, t, tenantId, setDeleteOrder]
+  );
 
-    const handleApplicationDeleteFunc = async (row) => {
+  const handleApplicationDeleteFunc = useCallback(
+    async (row) => {
       setDeleteApplication(row);
-    };
+    },
+    [setDeleteApplication]
+  );
 
-    const takeActionFunc = (hearingData) => {
+  const takeActionFunc = useCallback(
+    (hearingData) => {
       setCurrentHearing(hearingData);
       setShowHearingTranscriptModal(true);
-    };
+    },
+    [setCurrentHearing, setShowHearingTranscriptModal]
+  );
 
-    const handleFilingAction = async (history, column, row, item) => {
+  const handleFilingAction = useCallback(
+    async (history, column, row, item) => {
       const docObj = [
         {
           itemType: item.id,
@@ -945,8 +971,11 @@ const AdmittedCaseV2 = () => {
       } else if ("download_filing" === item.id) {
         downloadPdf(tenantId, row?.file?.fileStore);
       }
-    };
+    },
+    [downloadPdf, tenantId, setSelectedRow, setSelectedItem, setShowConfirmationModal, setDocumentSubmission, setVoidReason, setShowVoidModal]
+  );
 
+  const configList = useMemo(() => {
     const activeTabConfig = TabSearchconfigNew?.TabSearchconfig.find((tabConfig) => tabConfig.label === activeTab);
     if (!activeTabConfig) return [];
 
@@ -1316,6 +1345,13 @@ const AdmittedCaseV2 = () => {
     orderTypeOptions,
     applicationTypeOptions,
     hearingTypeOptions,
+    docSetFunc,
+    orderSetFunc,
+    orderDeleteFunc,
+    handleApplicationDeleteFunc,
+    takeActionFunc,
+    handleFilingAction,
+    showMakeSubmission,
   ]);
 
   const handleEvidenceAction = async () => {
