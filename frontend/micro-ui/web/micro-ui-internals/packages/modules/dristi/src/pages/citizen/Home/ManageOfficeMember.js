@@ -120,7 +120,7 @@ const ManageOfficeMember = () => {
   }, [toast]);
 
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER") || "—";
-  const clerkLabel = (t("CLERK") || "Clerk").charAt(0).toUpperCase() + (t("CLERK") || "Clerk").slice(1).toLowerCase();
+  const clerkLabel = t("CLERK") || "Clerk";
   const designation =
     member?.memberType === "ADVOCATE_CLERK"
       ? clerkLabel
