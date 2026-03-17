@@ -30,6 +30,12 @@ public class CaseMemberInfo {
     @JsonProperty("courtCaseNumber")
     private String courtCaseNumber = null;
 
+    @JsonProperty("lprNumber")
+    private String lprNumber = null;
+
+    @JsonProperty("isLPRCase")
+    private Boolean isLPRCase;
+
     @JsonProperty("caseTitle")
     private String caseTitle = null;
 

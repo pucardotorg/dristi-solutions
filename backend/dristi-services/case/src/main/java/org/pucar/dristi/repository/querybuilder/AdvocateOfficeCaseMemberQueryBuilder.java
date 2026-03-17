@@ -13,7 +13,7 @@ import java.util.Map;
 public class AdvocateOfficeCaseMemberQueryBuilder {
 
     private static final String BASE_QUERY =
-            "SELECT DISTINCT r.case_id, c.filingnumber, c.cmpnumber, " +
+            "SELECT DISTINCT r.case_id, c.filingnumber, c.cmpnumber, c.lprnumber, c.islprcase, " +
                     "c.courtcasenumber, c.casetitle, " +
                     "COALESCE(m.is_active, false) as is_active, " +
                     "COALESCE(m.created_by, r.createdby) as created_by " +
@@ -87,10 +87,11 @@ public class AdvocateOfficeCaseMemberQueryBuilder {
                     .append("LOWER(c.courtcasenumber) LIKE LOWER(?) OR ")
                     .append("LOWER(c.filingnumber) LIKE LOWER(?) OR ")
                     .append("LOWER(c.cmpnumber) LIKE LOWER(?) OR ")
-                    .append("LOWER(c.casetitle) LIKE LOWER(?)")
+                    .append("LOWER(c.casetitle) LIKE LOWER(?) OR ")
+                    .append("LOWER(c.lprnumber) LIKE LOWER(?)")
                     .append(") ");
 
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 5; i++) {
                 preparedStmtList.add(likePattern);
                 preparedStmtArgList.add(Types.VARCHAR);
             }
