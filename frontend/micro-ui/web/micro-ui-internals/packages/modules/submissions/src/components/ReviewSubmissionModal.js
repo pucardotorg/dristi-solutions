@@ -255,7 +255,7 @@ function ReviewSubmissionModal({
       actionCancelLabel={t(cancelLabel)}
       actionCancelOnSubmit={handleCancel}
       actionCustomLabel={authorizedUuid != userUuid ? t("UPLOAD_SIGNED_COPY") : null}
-      actionCustomLabelSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName })}
+      actionCustomLabelSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName, isUpload: true })}
       actionSaveLabel={authorizedUuid === userUuid ? t("ADD_SIGNATURE") : t("SEND_FOR_ESIGN")}
       isDisabled={isLoading}
       actionSaveOnSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName})}
