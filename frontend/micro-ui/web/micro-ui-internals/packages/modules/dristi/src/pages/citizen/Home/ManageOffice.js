@@ -643,7 +643,7 @@ const ManageOffice = () => {
                   </button>
                   {searchResult ? (
                     <button onClick={handleConfirmAddMember} className="manage-office-btn manage-office-btn--primary">
-                      {t("CONTINUE") || "Continue"}
+                      {t("PROVIDE_CASE_ACCESS")} &nbsp;→
                     </button>
                   ) : (
                     <button
@@ -653,7 +653,7 @@ const ManageOffice = () => {
                         !mobileNumber || mobileNumber?.length < 10 ? " manage-office-btn--disabled" : ""
                       }`}
                     >
-                      {t("PROCEED") || "Proceed"}
+                      {t("SEARCH")}
                     </button>
                   )}
                 </div>

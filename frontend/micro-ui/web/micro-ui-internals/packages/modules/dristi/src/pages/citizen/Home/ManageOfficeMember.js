@@ -48,6 +48,7 @@ const ManageOfficeMember = () => {
   const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
   const [isRemovingMember, setIsRemovingMember] = useState(false);
   const [showUpdateAccessModal, setShowUpdateAccessModal] = useState(false);
+  const [showAddMemberConfirmModal, setShowAddMemberConfirmModal] = useState(false);
   const [isUpdatingAccess, setIsUpdatingAccess] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -312,7 +313,7 @@ const ManageOfficeMember = () => {
     }
 
     if (isNewMember) {
-      setTimeout(() => handleConfirmUpdateAccess(currentDiff), 0);
+      setShowAddMemberConfirmModal(true);
     } else {
       setShowUpdateAccessModal(true);
     }
@@ -320,6 +321,11 @@ const ManageOfficeMember = () => {
 
   const handleCloseUpdateAccessModal = () => {
     setShowUpdateAccessModal(false);
+    setCaseSelectionDiff({ addCaseIds: [], removeCaseIds: [] });
+  };
+
+  const handleCloseAddMemberConfirmModal = () => {
+    setShowAddMemberConfirmModal(false);
     setCaseSelectionDiff({ addCaseIds: [], removeCaseIds: [] });
   };
 
@@ -395,8 +401,9 @@ const ManageOfficeMember = () => {
         await window?.Digit?.DRISTIService?.customApiService("/advocate-office-management/v1/_processCaseMember", body, { tenantId });
       }
 
-      setToast({ label: isNewMember ? t("MEMBER_ADDED_SUCCESS") || "Member added successfully" : t("UPDATE_ACCESS_SUCCESS") || "Access updated successfully", type: "success" });
+      setToast({ label: isNewMember ? t("MEMBER_ADDED_SUCCESSFULLY") || "Member Added Successfully" : t("UPDATE_ACCESS_SUCCESS") || "Access updated successfully", type: "success" });
       setShowUpdateAccessModal(false);
+      setShowAddMemberConfirmModal(false);
       
       setCaseSelectionDiff({ addCaseIds: [], removeCaseIds: [] });
       const container = document.querySelector(".manage-office-member-inbox");
@@ -455,50 +462,55 @@ const ManageOfficeMember = () => {
           flex-direction: row;
           align-items: center;
           gap: 24px;
-          padding: 16px 24px;
+          padding: 24px;
           background: #F7F5F3;
-          border-radius: 8px;
+          border-radius: 4px;
           margin-bottom: 24px;
         }
         .manage-case-access-label {
-          font-family: "Roboto", sans-serif;
+          font-family: "Inter", sans-serif;
           font-weight: 400;
           font-size: 16px;
-          color: #505A5F;
+          line-height: 1.5em;
+          color: #334155;
         }
         .manage-case-access-radio-group {
           display: flex;
           align-items: center;
           gap: 24px;
+          padding: 5px 0;
         }
         .manage-case-access-radio {
           display: flex;
           align-items: center;
           gap: 8px;
           cursor: pointer;
-          font-family: "Roboto", sans-serif;
-          font-weight: 500;
-          font-size: 16px;
-          color: #505A5F;
+          font-family: "Inter", sans-serif;
+          font-weight: 400;
+          font-size: 14px;
+          line-height: 1.43em;
+          color: #334155;
         }
         .manage-case-access-radio input[type="radio"] {
           appearance: none;
+          -webkit-appearance: none;
           background-color: #fff;
           margin: 0;
           font: inherit;
           color: #007E7E;
-          width: 20px;
-          height: 20px;
-          border: 2px solid #505A5F;
+          width: 16px;
+          height: 16px;
+          border: 1px solid #CBD5E1;
           border-radius: 50%;
           display: grid;
           place-content: center;
           cursor: pointer;
+          flex-shrink: 0;
         }
         .manage-case-access-radio input[type="radio"]::before {
           content: "";
-          width: 10px;
-          height: 10px;
+          width: 8px;
+          height: 8px;
           border-radius: 50%;
           transform: scale(0);
           transition: 120ms transform ease-in-out;
@@ -506,13 +518,13 @@ const ManageOfficeMember = () => {
           background-color: #007E7E;
         }
         .manage-case-access-radio input[type="radio"]:checked {
-          border: 2px solid #007E7E;
+          border: 1px solid #007E7E;
         }
         .manage-case-access-radio input[type="radio"]:checked::before {
           transform: scale(1);
         }
         .manage-case-access-info-banner {
-          margin-bottom: 24px;
+          margin-bottom: 16px;
         }
         .assign-cases-subtitle {
           font-family: "Roboto", sans-serif;
@@ -761,6 +773,41 @@ const ManageOfficeMember = () => {
                   </button>
                   <button onClick={() => handleConfirmUpdateAccess()} className="manage-office-btn manage-office-btn--primary">
                     {t("UPDATE_ACCESS") || "Update Access"}
+                  </button>
+                </div>
+              </React.Fragment>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Add Member Confirmation Modal */}
+      {showAddMemberConfirmModal && (
+        <div className="manage-office-modal-overlay" onClick={handleCloseAddMemberConfirmModal}>
+          <div className="manage-office-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="manage-office-modal__header">
+              <h2 className="manage-office-modal__title">{t("ADD_MEMBER") || "Add Member"}</h2>
+              <button onClick={handleCloseAddMemberConfirmModal} className="manage-office-modal__close">
+                <ManageOfficeCloseIcon />
+              </button>
+            </div>
+
+            {isUpdatingAccess ? (
+              <div className="manage-office-modal-loader">
+                <Loader />
+              </div>
+            ) : (
+              <React.Fragment>
+                <p className="manage-office-remove-text">
+                  {t("CONFIRM_ADD_MEMBER_MESSAGE") || "Are you sure you want to add this member to your office?"}
+                </p>
+
+                <div className="manage-office-modal__footer">
+                  <button onClick={handleCloseAddMemberConfirmModal} className="manage-office-btn manage-office-btn--secondary">
+                    {t("GO_BACK") || "Go Back"}
+                  </button>
+                  <button onClick={() => handleConfirmUpdateAccess()} className="manage-office-btn manage-office-btn--primary">
+                    {t("CONFIRM") || "Confirm"}
                   </button>
                 </div>
               </React.Fragment>
