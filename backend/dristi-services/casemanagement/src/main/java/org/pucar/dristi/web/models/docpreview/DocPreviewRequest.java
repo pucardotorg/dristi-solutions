@@ -36,7 +36,6 @@ public class DocPreviewRequest {
 
     @JsonProperty("ctcApplicationNumber")
     @Valid
-    @NotNull
     private String ctcApplicationNumber;
 
     @JsonProperty("courtId")
