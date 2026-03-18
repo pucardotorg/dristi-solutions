@@ -26,8 +26,14 @@ public class CaseMemberInfo {
     @JsonProperty("courtCaseNumber")
     private String courtCaseNumber;
 
+    @JsonProperty("lprNumber")
+    private String lprNumber = null;
+
     @JsonProperty("caseTitle")
     private String caseTitle;
+
+    @JsonProperty("isLPRCase")
+    private Boolean isLPRCase;
 
     @JsonProperty("isActive")
     private Boolean isActive;
