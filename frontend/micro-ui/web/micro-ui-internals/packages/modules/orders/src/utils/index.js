@@ -47,7 +47,6 @@ export const updateCustomConfigs = () => {
 export default {};
 
 
-
 export const convertToDateInputFormat = (dateInput) => {
   if (!dateInput) {
     return "";

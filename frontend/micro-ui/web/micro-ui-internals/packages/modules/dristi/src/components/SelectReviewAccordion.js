@@ -418,7 +418,6 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
   };
 
 
-
   useEffect(() => {
     if (
       "litigentDetails" in formData &&

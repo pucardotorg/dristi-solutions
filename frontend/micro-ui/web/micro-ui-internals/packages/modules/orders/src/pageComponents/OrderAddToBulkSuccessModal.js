@@ -5,7 +5,6 @@ import CustomCopyTextDiv from "../../../dristi/src/components/CustomCopyTextDiv"
 import { Banner, CardLabel, CloseSvg } from "@egovernments/digit-ui-react-components";
 
 
-
 function OrderAddToBulkSuccessModal({ order, t, handleDownloadOrders, handleCloseSuccessModal }) {
   const orderModalInfo = {
     header: "CS_ORDER_ADDED_TO_BULK_SIGN_LIST",

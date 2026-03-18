@@ -224,7 +224,6 @@ function ScheduleHearing({
     setShowErrorToast(false);
   };
 
-
   const handleClickDate = (label) => {
     if (status === "OPTOUT") {
       const newSelectedChip = selectedChip.includes(label) ? null : label;

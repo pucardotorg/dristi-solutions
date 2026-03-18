@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { CardSubHeader } from "@egovernments/digit-ui-react-components";
 import { CopyIcon } from "../icons/svgIndex";
 
-
 function fallbackCopyTextToClipboard(text) {
   const textArea = document.createElement("textarea");
   textArea.value = text;

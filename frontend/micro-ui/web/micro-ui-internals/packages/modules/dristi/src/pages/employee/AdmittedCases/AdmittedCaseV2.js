@@ -2149,7 +2149,6 @@ const AdmittedCaseV2 = () => {
     Boolean(filingNumber && !historyOrderData && caseCourtId),
     0
   );
-
   const ordersData = useMemo(() => historyOrderData || apiOrdersData, [historyOrderData, apiOrdersData]);
 
   const onTabChange = useCallback(

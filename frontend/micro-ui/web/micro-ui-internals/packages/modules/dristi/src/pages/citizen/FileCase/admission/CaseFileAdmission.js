@@ -85,7 +85,6 @@ function CaseFileAdmission({ t }) {
     setShowErrorToast(false);
   };
 
-
   // {
   //   modalInfo.type === "Schedule" && modalInfo.page === 0 && <Modal1 modalData={modalData} setModalData={setModalData} />;
   // }

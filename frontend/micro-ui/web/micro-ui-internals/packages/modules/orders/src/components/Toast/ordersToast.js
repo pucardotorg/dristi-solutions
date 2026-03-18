@@ -28,4 +28,3 @@ export function ToastProvider({ children }) {
   return <ToastContext.Provider value={{ message, setMessage, type, setType }}>{children}</ToastContext.Provider>;
 }
 
-
