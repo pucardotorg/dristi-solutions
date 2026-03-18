@@ -51,7 +51,7 @@ public class DocPreviewService {
             isPartyToCase = true;
         }
 
-        CourtCase courtCase = caseUtil.getCase(request.getFilingNumber(), request.getCourtId(), request.getTenantId(), request.getIsCaseFileView());
+        CourtCase courtCase = caseUtil.getCase(request.getFilingNumber(), request.getCourtId(), request.getTenantId(), request.getIsCaseFileView(), request.getRequestInfo());
 
         BundleData data = loadAllData(courtCase, request.getRequestInfo());
         List<CaseBundleNode> caseBundleNodes =  engine.build(data);

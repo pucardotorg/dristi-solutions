@@ -35,11 +35,11 @@ public class CaseUtil {
         this.repository = repository;
     }
 
-    public CourtCase getCase(String filingNumber, String courtId, String tenantId, Boolean isCaseFileView) {
+    public CourtCase getCase(String filingNumber, String courtId, String tenantId, Boolean isCaseFileView, RequestInfo requestInfo) {
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getCaseHost()).append(configs.getCaseSearchUrl());
         CaseSearchRequest request = CaseSearchRequest.builder()
-                .requestInfo(RequestInfo.builder().build())
+                .requestInfo(requestInfo)
                 .tenantId(tenantId)
                 .criteria(Collections.singletonList(CaseCriteria.builder()
                         .filingNumber(filingNumber)
