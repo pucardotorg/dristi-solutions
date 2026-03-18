@@ -35,7 +35,7 @@ public class CaseUtil {
         this.repository = repository;
     }
 
-    public CourtCase getCase(String filingNumber, String courtId, String tenantId) {
+    public CourtCase getCase(String filingNumber, String courtId, String tenantId, Boolean isCaseFileView) {
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getCaseHost()).append(configs.getCaseSearchUrl());
         CaseSearchRequest request = CaseSearchRequest.builder()
@@ -46,8 +46,11 @@ public class CaseUtil {
                         .courtId(courtId)
                         .defaultFields(false)
                         .build()))
-                .flow("flow_jac")
                 .build();
+
+        if (Boolean.FALSE.equals(isCaseFileView)) {
+            request.setFlow("flow_jac");
+        }
         try {
             Object response = repository.fetchResult(uri, request);
             return mapper.convertValue(JsonPath.read(response, COURT_CASE_JSON_PATH), CourtCase.class);
