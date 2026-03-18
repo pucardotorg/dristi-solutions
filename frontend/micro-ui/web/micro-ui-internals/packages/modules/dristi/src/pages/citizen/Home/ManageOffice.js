@@ -271,61 +271,48 @@ const ManageOffice = () => {
       return;
     }
 
-    setIsAddingMember(true);
-    try {
-      // Map designation to memberType
-      const memberTypeMap = {
-        Clerk: "ADVOCATE_CLERK",
-        Advocate: "ADVOCATE",
-        Individual: "INDIVIDUAL",
-      };
-      // Get memberId from responseList: id from clerk/advocate search (same as senior's API spec)
-      const memberId =
-        searchResult?.designation === "Clerk"
-          ? searchResult?.clerkData?.id
-          : searchResult?.designation === "Advocate"
-          ? searchResult?.advocateData?.id
-          : null;
+    // Map designation to memberType
+    const memberTypeMap = {
+      Clerk: "ADVOCATE_CLERK",
+      Advocate: "ADVOCATE",
+      Individual: "INDIVIDUAL",
+    };
+    // Get memberId from responseList: id from clerk/advocate search (same as senior's API spec)
+    const memberId =
+      searchResult?.designation === "Clerk"
+        ? searchResult?.clerkData?.id
+        : searchResult?.designation === "Advocate"
+        ? searchResult?.advocateData?.id
+        : null;
 
-      if (!memberId) {
-        setToast({ label: t("MEMBER_ID_NOT_FOUND") || "Member ID not found. Please try again.", type: "error" });
-        setIsAddingMember(false);
-        return;
-      }
-
-      const officeAdvocateId = advocateSearchResult?.[0]?.responseList?.[0]?.id || advocateSearchResult?.[0]?.id;
-      const response = await window?.Digit?.DRISTIService?.addOfficeMember(
-        {
-          addMember: {
-            tenantId: tenantId,
-            officeAdvocateId: officeAdvocateId,
-            officeAdvocateName: officeAdvocateName,
-            memberType: memberTypeMap[searchResult?.designation] || "ADVOCATE_CLERK",
-            memberId: memberId,
-            memberName: searchResult?.name,
-            memberMobileNumber: mobileNumber,
-            accessType: "ALL_CASES",
-            allowCaseCreate: true,
-            addNewCasesAutomatically: true,
-          },
-        },
-        { tenantId }
-      );
-
-      if (response) {
-        // Refetch members to get updated list from API
-        refetchMembers();
-        setToast({ label: t("MEMBER_ADDED_SUCCESS") || "Member added successfully", type: "success" });
-      }
-    } catch (error) {
-      console.error("Error adding member:", error);
-      setToast({ label: t("MEMBER_ADD_ERROR") || "Failed to add member. Please try again.", type: "error" });
-    } finally {
-      setIsAddingMember(false);
-      setShowAddMemberModal(false);
-      setSearchResult(null);
-      setMobileNumber("");
+    if (!memberId) {
+      setToast({ label: t("MEMBER_ID_NOT_FOUND") || "Member ID not found. Please try again.", type: "error" });
+      return;
     }
+
+    const officeAdvocateId = advocateSearchResult?.[0]?.responseList?.[0]?.id || advocateSearchResult?.[0]?.id;
+
+    setShowAddMemberModal(false);
+    history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office/manage-member`, {
+      member: {
+        memberName: searchResult?.name,
+        memberType: memberTypeMap[searchResult?.designation] || "ADVOCATE_CLERK",
+        memberMobileNumber: mobileNumber,
+        memberEmail: searchResult?.email,
+        memberId: memberId,
+        memberUserUuid: searchResult?.individualId,
+        officeAdvocateId: officeAdvocateId,
+        officeAdvocateName: officeAdvocateName,
+        accessType: "ALL_CASES",
+        allowCaseCreate: true,
+        addNewCasesAutomatically: true,
+      },
+      advocateInfo: {
+        officeAdvocateUserUuid: officeAdvocateUserUuid,
+        advocateId: officeAdvocateId,
+      },
+      isNewMember: true,
+    });
   };
 
   const filteredMembers = useMemo(() => {
@@ -656,7 +643,7 @@ const ManageOffice = () => {
                   </button>
                   {searchResult ? (
                     <button onClick={handleConfirmAddMember} className="manage-office-btn manage-office-btn--primary">
-                      {t("ADD_MEMBER") || "Add Member"}
+                      {t("PROVIDE_CASE_ACCESS")} &nbsp;→
                     </button>
                   ) : (
                     <button
@@ -666,7 +653,7 @@ const ManageOffice = () => {
                         !mobileNumber || mobileNumber?.length < 10 ? " manage-office-btn--disabled" : ""
                       }`}
                     >
-                      {t("PROCEED") || "Proceed"}
+                      {t("SEARCH")}
                     </button>
                   )}
                 </div>
