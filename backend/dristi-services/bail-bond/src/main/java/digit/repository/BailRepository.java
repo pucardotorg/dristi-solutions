@@ -56,7 +56,7 @@ public class BailRepository {
             if (paginatedIds.isEmpty()) return Collections.emptyList();
 
             if(bailSearchRequest.getPagination() !=  null) {
-                Integer totalRecords = getTotalCountBail(bailSearchRequest.getCriteria());
+                Integer totalRecords = getTotalCountBail(bailSearchRequest.getRequestInfo(), bailSearchRequest.getCriteria());
                 log.info("Total count without pagination :: {}", totalRecords);
                 bailSearchRequest.getPagination().setTotalCount(Double.valueOf(totalRecords));
             }
@@ -86,7 +86,7 @@ public class BailRepository {
         List<Integer> argTypeList = new ArrayList<>();
 
         String query = queryBuilder.getPaginatedBailIdsQuery(
-                request.getCriteria(), request.getPagination(), stmtList, argTypeList);
+                request.getRequestInfo(), request.getCriteria(), request.getPagination(), stmtList, argTypeList);
 
         log.info("Paginated Bail ID query: {}", query);
         return jdbcTemplate.query(query, stmtList.toArray(),
@@ -95,11 +95,11 @@ public class BailRepository {
     }
 
 
-    public Integer getTotalCountBail(BailSearchCriteria criteria) {
+    public Integer getTotalCountBail(RequestInfo requestInfo, BailSearchCriteria criteria) {
         List<Object> stmtList = new ArrayList<>();
         List<Integer> argTypeList = new ArrayList<>();
 
-        String countQuery = queryBuilder.getTotalCountQuery(criteria, stmtList, argTypeList);
+        String countQuery = queryBuilder.getTotalCountQuery(requestInfo, criteria, stmtList, argTypeList);
         log.info("Final count query :: {}", countQuery);
 
         return jdbcTemplate.queryForObject(
