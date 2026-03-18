@@ -75,6 +75,7 @@ const HomeView = () => {
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
+  const refetchMemberData = state?.refectMemberData || "";
 
   const [tabData, setTabData] = useState(null);
   const [callRefetch, setCallRefetch] = useState(false);
@@ -217,7 +218,7 @@ const HomeView = () => {
       },
     },
     { tenantId },
-    searchCriteria,
+    `${JSON.stringify(searchCriteria)} + ${refetchMemberData}`,
     Boolean((advocateId || advClerkId) && tenantId)
   );
 
@@ -678,7 +679,7 @@ const HomeView = () => {
         userType &&
         userInfoType === "citizen" &&
         ((userType === "LITIGANT" && !isCitizenReferredInAnyCase) || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) ? (
-          <LitigantHomePage isApprovalPending={isApprovalPending} unAssociatedClerk={unAssociatedClerk} />
+          <LitigantHomePage isApprovalPending={isApprovalPending} unAssociatedClerk={unAssociatedClerk} isRejected={isRejected} />
         ) : (
           <React.Fragment>
             <div

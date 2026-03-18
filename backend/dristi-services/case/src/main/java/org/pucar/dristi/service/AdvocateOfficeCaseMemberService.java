@@ -11,6 +11,7 @@ import org.pucar.dristi.web.models.AdvocateOfficeMember;
 import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.Pagination;
 import org.pucar.dristi.web.models.advocateofficemember.*;
+import org.pucar.dristi.web.models.enums.AccessType;
 import org.pucar.dristi.web.models.enums.MemberType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -49,81 +50,87 @@ public class AdvocateOfficeCaseMemberService {
                     request.getAddMember().getOfficeAdvocateId(),
                     request.getAddMember().getMemberId());
 
-            cacheService.save(request.getAddMember().getOfficeAdvocateUserUuid() + "-" + request.getAddMember().getMemberUserUuid(), IN_PROGRESS);
+            if (request.getAddMember().getAccessType().equals(AccessType.ALL_CASES)) {
 
-            String advocateId = request.getAddMember().getOfficeAdvocateId().toString();
 
-            List<String> caseIds = repository.getCaseIdsByAdvocateId(advocateId);
+                cacheService.save(request.getAddMember().getOfficeAdvocateUserUuid() + "-" + request.getAddMember().getMemberUserUuid(), IN_PROGRESS);
 
-            if (caseIds.isEmpty()) {
-                log.info("No cases found for advocateId: {}. Skipping member addition.", advocateId);
-                return;
-            }
+                String advocateId = request.getAddMember().getOfficeAdvocateId().toString();
 
-            log.info("Found {} cases for advocateId: {}", caseIds.size(), advocateId);
+                List<String> caseIds = repository.getCaseIdsByAdvocateId(advocateId);
 
-            // Process cases in batches to optimize memory usage and enable streaming
-            int batchSize = configuration.getBatchSize();
-            int totalCases = caseIds.size();
-            int batchCount = (int) Math.ceil((double) totalCases / batchSize);
-            
-            log.info("Processing {} cases in {} batches of max size {}", totalCases, batchCount, batchSize);
+                if (caseIds.isEmpty()) {
+                    log.info("No cases found for advocateId: {}. Skipping member addition.", advocateId);
+                    return;
+                }
 
-            List<AdvocateOfficeCaseMember> currentBatch = new ArrayList<>();
-            int publishedBatchCount = 0;
+                log.info("Found {} cases for advocateId: {}", caseIds.size(), advocateId);
 
-            for (int i = 0; i < totalCases; i++) {
-                String caseId = caseIds.get(i);
-                
-                // Create member for this case
-                AdvocateOfficeCaseMember member = AdvocateOfficeCaseMember.builder()
-                        .id(UUID.randomUUID())
-                        .tenantId(request.getAddMember().getTenantId())
-                        .officeAdvocateId(request.getAddMember().getOfficeAdvocateId())
-                        .officeAdvocateName(request.getAddMember().getOfficeAdvocateName())
-                        .officeAdvocateUserUuid(request.getAddMember().getOfficeAdvocateUserUuid().toString())
-                        .caseId(UUID.fromString(caseId))
-                        .memberId(request.getAddMember().getMemberId())
-                        .memberUserUuid(request.getAddMember().getMemberUserUuid().toString())
-                        .memberType(request.getAddMember().getMemberType())
-                        .memberName(request.getAddMember().getMemberName())
-                        .isActive(request.getAddMember().getIsActive() != null ? request.getAddMember().getIsActive() : true)
-                        .auditDetails(createAuditDetails(request))
-                        .build();
+                // Process cases in batches to optimize memory usage and enable streaming
+                int batchSize = configuration.getBatchSize();
+                int totalCases = caseIds.size();
+                int batchCount = (int) Math.ceil((double) totalCases / batchSize);
 
-                currentBatch.add(member);
+                log.info("Processing {} cases in {} batches of max size {}", totalCases, batchCount, batchSize);
 
-                // Process batch when it reaches the configured size OR it's the last case
-                boolean isBatchFull = currentBatch.size() >= batchSize;
-                boolean isLastCase = i == totalCases - 1;
+                List<AdvocateOfficeCaseMember> currentBatch = new ArrayList<>();
+                int publishedBatchCount = 0;
 
-                if (isBatchFull || isLastCase) {
-                    publishedBatchCount++;
-                    
-                    AdvocateOfficeCaseMemberRequest batchRequest = AdvocateOfficeCaseMemberRequest.builder()
-                            .requestInfo(request.getRequestInfo())
-                            .members(new ArrayList<>(currentBatch))
+                for (int i = 0; i < totalCases; i++) {
+                    String caseId = caseIds.get(i);
+
+                    // Create member for this case
+                    AdvocateOfficeCaseMember member = AdvocateOfficeCaseMember.builder()
+                            .id(UUID.randomUUID())
+                            .tenantId(request.getAddMember().getTenantId())
+                            .officeAdvocateId(request.getAddMember().getOfficeAdvocateId())
+                            .officeAdvocateName(request.getAddMember().getOfficeAdvocateName())
+                            .officeAdvocateUserUuid(request.getAddMember().getOfficeAdvocateUserUuid().toString())
+                            .caseId(UUID.fromString(caseId))
+                            .memberId(request.getAddMember().getMemberId())
+                            .memberUserUuid(request.getAddMember().getMemberUserUuid().toString())
+                            .memberType(request.getAddMember().getMemberType())
+                            .memberName(request.getAddMember().getMemberName())
+                            .isActive(request.getAddMember().getIsActive() != null ? request.getAddMember().getIsActive() : true)
+                            .auditDetails(createAuditDetails(request))
                             .build();
 
-                    // Update Redis cache for this batch
-                    updateRedisCacheForAddMember(batchRequest);
+                    currentBatch.add(member);
 
-                    // Push to save topic for persistence
-                    producer.push(configuration.getAdvocateOfficeCaseMemberSaveTopic(), batchRequest);
-                    log.info("Successfully published batch {}/{} with {} members to save topic",
-                            publishedBatchCount, batchCount, currentBatch.size());
+                    // Process batch when it reaches the configured size OR it's the last case
+                    boolean isBatchFull = currentBatch.size() >= batchSize;
+                    boolean isLastCase = i == totalCases - 1;
 
-                    // Push to analytics topic only for the LAST batch to trigger processing
-                    // This avoids: 1) RecordTooLargeException (message size limit)
-                    //              2) Repetitive processing (analytics fetches ALL cases anyway)
-                    if (isLastCase) {
-                        producer.push(configuration.getAdvocateOfficeCaseMemberAnalyticsTopic(), batchRequest);
-                        log.info("Successfully published last batch to analytics topic to trigger processing for advocate");
+                    if (isBatchFull || isLastCase) {
+                        publishedBatchCount++;
+
+                        AdvocateOfficeCaseMemberRequest batchRequest = AdvocateOfficeCaseMemberRequest.builder()
+                                .requestInfo(request.getRequestInfo())
+                                .members(new ArrayList<>(currentBatch))
+                                .build();
+
+                        // Update Redis cache for this batch
+                        updateRedisCacheForAddMember(batchRequest);
+
+                        // Push to save topic for persistence
+                        producer.push(configuration.getAdvocateOfficeCaseMemberSaveTopic(), batchRequest);
+                        log.info("Successfully published batch {}/{} with {} members to save topic",
+                                publishedBatchCount, batchCount, currentBatch.size());
+
+                        // Push to analytics topic only for the LAST batch to trigger processing
+                        // This avoids: 1) RecordTooLargeException (message size limit)
+                        //              2) Repetitive processing (analytics fetches ALL cases anyway)
+                        if (isLastCase) {
+                            producer.push(configuration.getAdvocateOfficeCaseMemberAnalyticsTopic(), batchRequest);
+                            log.info("Successfully published last batch to analytics topic to trigger processing for advocate");
+                        }
+
+                        // Clear batch for next iteration
+                        currentBatch.clear();
                     }
-
-                    // Clear batch for next iteration
-                    currentBatch.clear();
                 }
+            } else {
+                log.info("skipping adding cases access type : {}", request.getAddMember().getAccessType());
             }
 
         } catch (Exception e) {
