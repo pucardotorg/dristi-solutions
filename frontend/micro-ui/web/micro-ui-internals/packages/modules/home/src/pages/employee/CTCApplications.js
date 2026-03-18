@@ -15,7 +15,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-const CTCApplications = () => {
+const CTCApplications = ({ setCount }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getStateId();
@@ -79,6 +79,11 @@ const CTCApplications = () => {
       ...CTCApplicationsConfig,
       apiDetails: {
         ...CTCApplicationsConfig.apiDetails,
+      },
+      additionalDetails: {
+        setCount: (ch) => {
+          if (setCount) setCount(ch);
+        },
       },
       sections: {
         ...CTCApplicationsConfig.sections,
@@ -371,7 +376,15 @@ const CTCApplications = () => {
 
     const primaryDocType = selectedDoc?.documentType || app?.documents?.[0]?.documentType || "CTC Document";
 
-    return primaryFileStore ? [{ fileStore: primaryFileStore, name: t(primaryDocType) }] : [];
+    const affidavitfileStoreId = app?.affidavitDocument?.fileStore || null;
+    const affidavitName = app?.affidavitDocument?.documentType || "Affadavit";
+
+    return primaryFileStore
+      ? [
+        { fileStore: primaryFileStore, name: t(primaryDocType) },
+        { fileStore: affidavitfileStoreId, name: t(affidavitName) },
+      ]
+      : [];
   }, [selectedRowApplicationData, t]);
 
   return (
