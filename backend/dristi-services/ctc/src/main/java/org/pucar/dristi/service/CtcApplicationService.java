@@ -336,6 +336,8 @@ public class CtcApplicationService {
                     } else {
                         statusCounts.put(STATUS_REJECTED, totalRejected + 1);
                     }
+                    statusCounts.put(STATUS_PENDING, totalPending - 1);
+
                     // 1. Update this document's status and documents in ES
                     indexerUtils.updateDocStatus(docId, ctcApplicationNumber, docStatus, item.getDocuments());
 
@@ -626,7 +628,7 @@ public class CtcApplicationService {
             sealedTemplateFileStoreId = egovPdfUtil.getSealedTemplateFileStoreId(request.getRequestInfo(), ctcApplication, criterion.getDocTitle());
             log.info("sealedTemplateFileStoreId for docId {} in application {}", criterion.getDocId(), criterion.getCtcApplicationNumber());
 
-            String mergedFileStoreId = fileStoreUtil.mergeFiles(sealedTemplateFileStoreId, criterion.getFileStoreId(), criterion.getTenantId());
+            String mergedFileStoreId = fileStoreUtil.mergeFiles(criterion.getFileStoreId(), sealedTemplateFileStoreId, criterion.getTenantId());
 
             log.info("mergedFileStoreId {}", mergedFileStoreId);
 

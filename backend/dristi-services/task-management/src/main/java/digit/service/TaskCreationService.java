@@ -123,7 +123,7 @@ public class TaskCreationService {
             TaskDetails baseTaskDetails = buildSummonAndNoticeDetails(order, courtCase, partyType, taskManagement.getOrderItemId());
 
             log.info("Building task details list for {} party", partyType);
-            List<TaskDetails> taskDetailsList = buildTaskDetailsList(partyDetails, caseDetails, baseTaskDetails, complainantDetails);
+            List<TaskDetails> taskDetailsList = buildTaskDetailsList(partyDetails, caseDetails, baseTaskDetails, complainantDetails, courtCase);
             
             log.info("Building base task template");
             Task taskTemplate = buildBaseTask(taskManagement, order, courtCase, additionalDetails);
@@ -520,7 +520,7 @@ public class TaskCreationService {
 
     }
 
-    private List<TaskDetails> buildTaskDetailsList(PartyDetails party, CaseDetails caseDetails, TaskDetails baseTaskDetails, ComplainantDetails complainantDetails) {
+    private List<TaskDetails> buildTaskDetailsList(PartyDetails party, CaseDetails caseDetails, TaskDetails baseTaskDetails, ComplainantDetails complainantDetails, CourtCase courtCase) {
         List<TaskDetails> result = new ArrayList<>();
 
         if (party == null || party.getAddresses() == null || party.getAddresses().isEmpty()) {
@@ -561,7 +561,11 @@ public class TaskCreationService {
                                 .channelCode(channel != null ? channel.getChannelCode() : null)
                                 .fees(channel != null ? channel.getFees() : null)
                                 .feePaidDate(channel != null ? channel.getFeePaidDate() : null)
-                                .isPendingCollection(channel != null && RPAD.equalsIgnoreCase(channel.getChannelCode()))
+                                .isPendingCollection(channel != null &&
+                                        RPAD.equalsIgnoreCase(channel.getChannelCode()) &&
+                                        channel.getFeePaidDate() != null &&
+                                        !Boolean.TRUE.equals(courtCase.getIsLPRCase())
+                                )
                                 .build())
                         .build());
             }

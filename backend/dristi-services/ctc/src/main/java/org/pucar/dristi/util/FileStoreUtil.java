@@ -3,6 +3,11 @@ package org.pucar.dristi.util;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.egov.tracer.model.CustomException;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
@@ -16,6 +21,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -201,35 +209,86 @@ public class FileStoreUtil {
     }
 
     public String mergeFiles(String fileStoreId1, String fileStoreId2, String tenantId) {
+
         log.info("Merging files: {} and {} for tenant: {}", fileStoreId1, fileStoreId2, tenantId);
 
         byte[] file1Bytes = fetchFileAsBytes(tenantId, fileStoreId1);
         byte[] file2Bytes = fetchFileAsBytes(tenantId, fileStoreId2);
 
         if (file1Bytes == null || file2Bytes == null) {
-            throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, "Failed to download one or both files for merging");
+            throw new CustomException(FILE_STORE_UTILITY_EXCEPTION,
+                    "Failed to download one or both files for merging");
         }
 
-        try (PDDocument doc1 = Loader.loadPDF(file1Bytes);
-             PDDocument doc2 = Loader.loadPDF(file2Bytes)) {
+        try (PDDocument doc1 = loadDocument(file1Bytes);
+             PDDocument doc2 = loadDocument(file2Bytes);
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
 
-            for (int i = 0; i < doc2.getNumberOfPages(); i++) {
-                doc1.addPage(doc2.getPage(i));
+            for (PDPage page : doc2.getPages()) {
+                doc1.importPage(page);
             }
 
-            ByteArrayOutputStream mergedOutput = new ByteArrayOutputStream();
-            doc1.save(mergedOutput);
-            byte[] mergedBytes = mergedOutput.toByteArray();
+            doc1.save(output);
 
-            ByteArrayMultipartFile mergedFile = new ByteArrayMultipartFile("MergedCtcDocument.pdf", mergedBytes);
+            byte[] mergedBytes = output.toByteArray();
+
+            ByteArrayMultipartFile mergedFile =
+                    new ByteArrayMultipartFile("MergedCtcDocument.pdf", mergedBytes);
+
             String mergedFileStoreId = storeFileInFileStore(mergedFile, tenantId);
 
             log.info("Merged PDF uploaded to filestore, fileStoreId: {}", mergedFileStoreId);
+
             return mergedFileStoreId;
 
         } catch (IOException e) {
-            log.error("Error merging PDF files", e);
-            throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, "Error merging PDF files: " + e.getMessage());
+            log.error("Error merging files", e);
+            throw new CustomException(FILE_STORE_UTILITY_EXCEPTION,
+                    "Error merging files: " + e.getMessage());
         }
     }
+
+
+    private PDDocument convertImageToPdf(byte[] imageBytes) throws IOException {
+
+        BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
+
+        if (image == null) {
+            throw new IOException("Unsupported image format");
+        }
+
+        PDDocument document = new PDDocument();
+
+        PDPage page = new PDPage(new PDRectangle(image.getWidth(), image.getHeight()));
+        document.addPage(page);
+
+        PDImageXObject pdImage = LosslessFactory.createFromImage(document, image);
+
+        try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+            contentStream.drawImage(pdImage, 0, 0);
+        }
+
+        return document;
+    }
+    private PDDocument loadDocument(byte[] fileBytes) throws IOException {
+
+        if (isPdf(fileBytes)) {
+            return Loader.loadPDF(fileBytes);
+        }
+
+        log.info("File is not PDF. Converting image to PDF");
+
+        return convertImageToPdf(fileBytes);
+    }
+
+    private boolean isPdf(byte[] file) {
+
+        return file.length > 4 &&
+                file[0] == '%' &&
+                file[1] == 'P' &&
+                file[2] == 'D' &&
+                file[3] == 'F';
+    }
+
+
 }
