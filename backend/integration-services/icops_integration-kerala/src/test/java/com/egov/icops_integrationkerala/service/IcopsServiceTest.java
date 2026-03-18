@@ -53,6 +53,9 @@ class IcopsServiceTest {
     @Mock
     private IcopsConfiguration config;
 
+    @Mock
+    private com.egov.icops_integrationkerala.repository.IcopsRepository icopsRepository;
+
     @InjectMocks
     private IcopsService icopsService;
 
