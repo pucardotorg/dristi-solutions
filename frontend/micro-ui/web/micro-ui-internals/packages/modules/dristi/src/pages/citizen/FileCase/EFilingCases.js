@@ -625,11 +625,13 @@ function EFilingCases({ path }) {
   }, [caseDetails]);
 
   const caseDraftEditAllowedParties = useMemo(() => {
+    if (!caseDetails?.filingNumber) return null;
     const createdByUuid = caseDetails?.auditDetails?.createdBy;
     return findCaseDraftEditAllowedParties(caseDetails, createdByUuid);
   }, [caseDetails]);
 
   useEffect(() => {
+    if (!caseDetails?.filingNumber || !caseDraftEditAllowedParties) return;
     if (caseDetails?.status === "DRAFT_IN_PROGRESS") {
       const loggedInUserUuid = userInfo?.uuid;
       const isEditingAllowedToUser = caseDraftEditAllowedParties?.includes(loggedInUserUuid);
@@ -1581,11 +1583,19 @@ function EFilingCases({ path }) {
                     return {};
                   }
                 }
+                const isFieldDisabled =
+                  disableConfigFields.some((field) => field === body?.populators?.name) ||
+                  disableDelayCondonationType ||
+                  (typeof body?.populators?.disable === "string" && body?.populators?.disable.includes("{{")
+                    ? Boolean(extractValue(data, body?.populators?.disable.replace(/{{|}}/g, "")))
+                    : false);
+
                 return {
                   ...body,
-                  disable: disableConfigFields.some((field) => field === body?.populators?.name) || disableDelayCondonationType,
+                  disable: isFieldDisabled,
                   populators: {
                     ...body?.populators,
+                    disable: isFieldDisabled,
                     validation: {
                       ...body?.populators?.validation,
                       ...validationUpdate,
@@ -1593,9 +1603,16 @@ function EFilingCases({ path }) {
                   },
                 };
               }
+
+              const isFieldDisabled =
+                disableConfigFields.some((field) => field === body?.name) ||
+                (typeof body?.disable === "string" && body?.disable.includes("{{")
+                  ? Boolean(extractValue(data, body?.disable.replace(/{{|}}/g, "")))
+                  : false);
+
               return {
                 ...body,
-                disable: disableConfigFields.some((field) => field === body?.name),
+                disable: isFieldDisabled,
               };
             }),
           };
@@ -1858,16 +1875,6 @@ function EFilingCases({ path }) {
   const handleAddForm = () => {
     setFormdata([...formdata, { isenabled: true, data: {}, displayindex: activeForms }]);
   };
-
-  // const handleDeleteForm = (index) => {
-  //   const newArray = formdata.map((item, i) => ({
-  //     ...item,
-  //     isenabled: index === i ? false : item.isenabled,
-  //     displayindex: i < index ? item.displayindex : i === index ? -Infinity : item.displayindex - 1,
-  //   }));
-  //   setConfirmDeleteModal(true);
-  //   setFormdata(newArray);
-  // };
 
   const handleSkip = () => {
     setShowConfirmOptionalModal(false);

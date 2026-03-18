@@ -11,6 +11,10 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { extractOrderNumber } = require("../utils/extractOrderNumber");
+const {
+  getNameByUuid,
+  getComplaintAndAccusedList,
+} = require("./getCaseDetails");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -31,7 +35,7 @@ async function applicationSubmissionExtension(
   res,
   qrCode,
   application,
-  courtCaseJudgeDetails
+  courtCaseJudgeDetails,
 ) {
   const cnrNumber = req.query.cnrNumber;
   const applicationNumber = req.query.applicationNumber;
@@ -52,7 +56,7 @@ async function applicationSubmissionExtension(
     return renderError(
       res,
       `${missingFields.join(", ")} are mandatory to generate the PDF`,
-      400
+      400,
     );
   }
 
@@ -70,7 +74,7 @@ async function applicationSubmissionExtension(
     // Search for case details
     const resCase = await handleApiCall(
       () => search_case(cnrNumber, tenantId, requestInfo, application?.courtId),
-      "Failed to query case service"
+      "Failed to query case service",
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
     if (!courtCase) {
@@ -78,10 +82,9 @@ async function applicationSubmissionExtension(
     }
 
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
     const refOrderNumber = extractOrderNumber(
-      application?.additionalDetails?.formdata?.refOrderId
+      application?.additionalDetails?.formdata?.refOrderId,
     );
 
     const resOrder = await handleApiCall(
@@ -91,9 +94,9 @@ async function applicationSubmissionExtension(
           refOrderNumber,
           requestInfo,
           application?.courtId,
-          true
+          true,
         ),
-      "Failed to query order service"
+      "Failed to query order service",
     );
 
     let order = resOrder?.data?.list[0];
@@ -103,7 +106,7 @@ async function applicationSubmissionExtension(
 
     if (order.orderCategory === "COMPOSITE") {
       const itemDetails = order.compositeItems?.find(
-        (item) => item.orderType === "MANDATORY_SUBMISSIONS_RESPONSES"
+        (item) => item.orderType === "MANDATORY_SUBMISSIONS_RESPONSES",
       );
       order = {
         ...order,
@@ -116,20 +119,18 @@ async function applicationSubmissionExtension(
     const documentSubmissionName = order?.orderDetails?.documentName || "";
     const documentId = order?.orderDetails?.documentType?.value | "";
 
-    let barRegistrationNumber = "";
     let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
       const resAdvocate = await handleApiCall(
         () => search_advocate(tenantId, advocateIndividualId, requestInfo),
-        "Failed to query Advocate Details"
+        "Failed to query Advocate Details",
       );
       const advocateData = resAdvocate?.data?.advocates?.[0];
       const advocateDetails = advocateData?.responseList?.find(
-        (item) => item.isActive === true
+        (item) => item.isActive === true,
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
@@ -149,9 +150,9 @@ async function applicationSubmissionExtension(
             tenantId,
             code,
             entityId,
-            requestInfo
+            requestInfo,
           ),
-        "Failed to query sunbirdrc credential service"
+        "Failed to query sunbirdrc credential service",
       );
       const $ = cheerio.load(resCredential.data);
       const imgTag = $("img");
@@ -159,7 +160,7 @@ async function applicationSubmissionExtension(
         return renderError(
           res,
           "No img tag found in the sunbirdrc response",
-          500
+          500,
         );
       }
       base64Url = imgTag.attr("src");
@@ -204,21 +205,24 @@ async function applicationSubmissionExtension(
       ?.originalSubmissionDate
       ? formatDate(
           new Date(application?.applicationDetails?.originalSubmissionDate),
-          "DD-MM-YYYY"
+          "DD-MM-YYYY",
         )
       : "";
     const requestedExtensionDate = application?.applicationDetails
       ?.requestedExtensionDate
       ? formatDate(
           new Date(application?.applicationDetails?.requestedExtensionDate),
-          "DD-MM-YYYY"
+          "DD-MM-YYYY",
         )
       : "";
     const benefitOfExtension = application?.benefitOfExtension;
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
-    const prayer = application?.applicationDetails?.prayer;
+
+    const { complainantList, accusedList } = getComplaintAndAccusedList(
+      courtCase || {},
+    );
 
     const data = {
       Data: [
@@ -228,9 +232,6 @@ async function applicationSubmissionExtension(
           caseNumber: caseNumber,
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
-          judgeName: judgeDetails.name,
-          courtDesignation: judgeDetails.designation,
-          addressOfTheCourt: mdmsCourtRoom.state,
           date: currentDate,
           partyName: partyName,
           advocateName: advocateName,
@@ -242,11 +243,13 @@ async function applicationSubmissionExtension(
           day: day + ordinalSuffix,
           month: month,
           year: year,
-          prayer,
           additionalComments: benefitOfExtension || additionalComments,
           advocateSignature: "Advocate Signature",
-          barRegistrationNumber,
           qrCodeUrl: base64Url,
+          applicationTitle: "APPLICATION FOR EXTENSION OF SUBMISSION DEADLINE",
+          petitionerName: getNameByUuid(application?.asUser, courtCase),
+          complainantList: complainantList,
+          accusedList: accusedList,
         },
       ],
     };
@@ -258,7 +261,7 @@ async function applicationSubmissionExtension(
         : config.pdf.application_submission_extension;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
-      "Failed to generate PDF of APPLICATION FOR EXTENSION OF SUBMISSION DEADLINE"
+      "Failed to generate PDF of APPLICATION FOR EXTENSION OF SUBMISSION DEADLINE",
     );
     const filename = `${pdfKey}_${new Date().getTime()}`;
     res.writeHead(200, {
@@ -278,7 +281,7 @@ async function applicationSubmissionExtension(
       res,
       "Failed to generate pdf of APPLICATION FOR EXTENSION OF SUBMISSION DEADLINE",
       500,
-      ex
+      ex,
     );
   }
 }

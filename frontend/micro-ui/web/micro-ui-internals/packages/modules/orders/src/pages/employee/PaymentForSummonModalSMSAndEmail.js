@@ -52,22 +52,6 @@ const PaymentForSummonComponent = ({
   const CustomErrorTooltip = window?.Digit?.ComponentRegistryService?.getComponent("CustomErrorTooltip");
   const [selectedOption, setSelectedOption] = useState({});
 
-  const getDateWithMonthName = (orderDate) => {
-    let today = new Date();
-
-    today.setDate(today.getDate() - 15);
-
-    // Array of month names
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-    let dd = String(today.getDate()).padStart(2, "0");
-    let mm = monthNames[today.getMonth()];
-    let yyyy = today.getFullYear();
-
-    let formattedDate = `${dd} ${mm} ${yyyy}`;
-
-    return formattedDate; // Output: formatted date 15 days ago with month name
-  };
 
   return (
     <div className="payment-for-summon">
@@ -196,10 +180,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       isCaseAdmitted
         ? submitModalInfo
         : {
-            ...submitModalInfo,
-            header: "CS_HEADER_FOR_NOTICE_POST",
-            subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
-          },
+          ...submitModalInfo,
+          header: "CS_HEADER_FOR_NOTICE_POST",
+          subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
+        },
     [isCaseAdmitted]
   );
 

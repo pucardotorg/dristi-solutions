@@ -21,6 +21,8 @@ import pucar.web.models.courtCase.AdvocateMapping;
 import pucar.web.models.courtCase.CaseCriteria;
 import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
+import pucar.web.models.courtCase.POAHolder;
+import pucar.web.models.courtCase.Party;
 import pucar.web.models.hearing.*;
 import pucar.web.models.inbox.InboxRequest;
 import pucar.web.models.inbox.OpenHearing;
@@ -176,6 +178,51 @@ public class HearingUtil {
 
         List<Attendee> litigantAndPOAHolders = getAttendeesFromAdditionalDetails(order, getAttendees);
 
+        List<Attendee> mergedAttendees = new ArrayList<>(litigantAndPOAHolders);
+
+        // add litigants from case if not already present
+        List<Party> litigants = courtCase.getLitigants() == null ? Collections.emptyList() : courtCase.getLitigants();
+        for (Party party : litigants) {
+            String individualId = party.getIndividualId();
+
+            boolean alreadyPresent = mergedAttendees.stream()
+                    .anyMatch(attendee -> individualId != null && individualId.equalsIgnoreCase(attendee.getIndividualId()));
+
+            if (!alreadyPresent) {
+                String partyType = party.getPartyType();
+                String lowerPartyType = partyType == null ? "" : partyType.toLowerCase();
+                String resolvedType = lowerPartyType.contains("complainant") ? "complainant" :
+                        (lowerPartyType.contains("respondent") ? "respondent" : partyType);
+
+                String fullName = jsonUtil.getNestedValue(party.getAdditionalDetails(), List.of("fullName"), String.class);
+
+                mergedAttendees.add(Attendee.builder()
+                        .individualId(individualId)
+                        .name(fullName)
+                        .type(resolvedType)
+                        .wasPresent(false)
+                        .build());
+            }
+        }
+
+        // add poa holders from case if not already present
+        List<POAHolder> poaHolders = courtCase.getPoaHolders() == null ? Collections.emptyList() : courtCase.getPoaHolders();
+        for (POAHolder poaHolder : poaHolders) {
+            String individualId = poaHolder.getIndividualId();
+
+            boolean alreadyPresent = mergedAttendees.stream()
+                    .anyMatch(attendee -> individualId != null && individualId.equalsIgnoreCase(attendee.getIndividualId()));
+
+            if (!alreadyPresent) {
+                mergedAttendees.add(Attendee.builder()
+                        .individualId(individualId)
+                        .name(poaHolder.getName())
+                        .type("poaHolder")
+                        .wasPresent(false)
+                        .build());
+            }
+        }
+
         List<String> advocateIds = courtCase.getRepresentatives() == null ?
                 Collections.emptyList() :
                 courtCase.getRepresentatives().stream()
@@ -184,16 +231,16 @@ public class HearingUtil {
 
         Map<String, String> advocate = advocateUtil.getAdvocate(requestInfo, advocateIds);
 
-        // check if this individual id exist in litigantAndPoaHolders map
+        // check if this individual id exists in mergedAttendees
         // if yes then update name
         // else add in last this entry
-        List<Attendee> assingee = new ArrayList<>(litigantAndPOAHolders);
+        List<Attendee> assignee = new ArrayList<>(mergedAttendees);
         for (Map.Entry<String, String> entry : advocate.entrySet()) {
             String individualId = entry.getKey();
             int index = -1;
             Attendee attendee = null;
-            for (int i = 0; i < litigantAndPOAHolders.size(); i++) {
-                attendee = litigantAndPOAHolders.get(i);
+            for (int i = 0; i < mergedAttendees.size(); i++) {
+                attendee = mergedAttendees.get(i);
                 if (individualId.equalsIgnoreCase(attendee.getIndividualId())) {
                     index = i;
                     break;
@@ -205,17 +252,17 @@ public class HearingUtil {
                 String modifiedName = addValueToBrackets(name, "Advocate");
                 attendee.setName(modifiedName);
 
-                assingee.set(index, attendee);
+                assignee.set(index, attendee);
 
             } else {
-                assingee.add(Attendee.builder()
+                assignee.add(Attendee.builder()
                         .individualId(entry.getKey())
                         .name(entry.getValue())
                         .type("Advocate")
                         .build());
             }
         }
-        return assingee;
+        return assignee;
     }
 
 

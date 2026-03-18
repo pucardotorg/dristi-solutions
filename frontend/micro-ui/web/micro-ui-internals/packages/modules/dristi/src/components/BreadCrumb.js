@@ -3,9 +3,6 @@ import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 
 const Breadcrumb = (props) => {
-  function isLastCrumb(index) {
-    return index === props.crumbs.length - 1;
-  }
 
   return (
     <ol className={`bread-crumb ${props?.className ? props?.className : ""}`} style={props?.breadcrumbStyle}>

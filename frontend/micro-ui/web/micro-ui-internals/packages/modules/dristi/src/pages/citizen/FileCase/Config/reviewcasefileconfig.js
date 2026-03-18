@@ -311,6 +311,11 @@ export const reviewCaseFileFormConfig = [
                   value: "payeeBranchName",
                 },
                 {
+                  type: "text",
+                  label: "CS_PAYEE_IFSC_CODE",
+                  value: "payeeIfscField.payeeIfsc",
+                },
+                {
                   type: "date",
                   label: "CS_DATE_OF_ISSUANCE",
                   value: "issuanceDate",
@@ -334,8 +339,8 @@ export const reviewCaseFileFormConfig = [
                 },
                 {
                   type: "text",
-                  label: "CS_IFSC_CODE",
-                  value: "ifsc",
+                  label: "CS_PAYER_IFSC_CODE",
+                  value: "payerIfscField.payerIfsc",
                 },
                 {
                   type: "amount",
@@ -600,6 +605,11 @@ export const reviewCaseFileFormConfig = [
                 //   label: "CS_CASE_SETTLEMENT_CONDITION_SUBHEADER",
                 //   value: "caseSettlementCondition.text",
                 // },
+                {
+                  type: "formattedText",
+                  label: "CS_SYNOPSIS_HEADER",
+                  value: "synopsis.text",
+                },
                 {
                   type: "formattedText",
                   label: "CS_MEMORANDUM_OF_COMPLAINT_HEADER",

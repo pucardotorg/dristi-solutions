@@ -121,7 +121,7 @@ const LitigantVerification = ({
   };
 
   const shouldUpdateState = (selectedParty, formData) => {
-    const commonFields = ["firstName", "middleName", "lastName"];
+    const commonFields = ["firstName", "middleName", "lastName", "fatherName"];
 
     const hasBasicInfoChanged = commonFields?.some((field) => selectedParty[field] !== formData[field]);
 
@@ -156,7 +156,7 @@ const LitigantVerification = ({
   };
 
   const shouldUpdateStatePOA = (selectedParty, formData) => {
-    const commonFields = ["firstName", "middleName", "lastName"];
+    const commonFields = ["firstName", "middleName", "lastName", "fatherName"];
 
     const hasBasicInfoChanged = commonFields.some((field) => selectedParty[field] !== formData[field]);
 
@@ -181,13 +181,17 @@ const LitigantVerification = ({
       const hasRequiredVakalatnamaDocs = litigant?.noOfAdvocates > 0 && litigant?.vakalatnama?.document?.length > 0;
 
       return (
+        litigant?.fatherName &&
         litigant?.phoneNumberVerification?.isUserVerified === true &&
         (isNewVakalatnama ? hasRequiredVakalatnamaDocs : litigant?.isVakalatnamaNew?.code === "NO")
       );
     });
 
     const isValidWithPOA = litigants?.every(
-      (litigant) => litigant?.phoneNumberVerification?.isUserVerified === true && litigant?.poaAuthorizationDocument?.poaDocument?.length > 0
+      (litigant) =>
+        litigant?.fatherName &&
+        litigant?.phoneNumberVerification?.isUserVerified === true &&
+        litigant?.poaAuthorizationDocument?.poaDocument?.length > 0
     );
 
     const shouldDisable = !poa ? !isValidWithoutPOA : !isValidWithPOA;
@@ -202,10 +206,10 @@ const LitigantVerification = ({
   };
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors) => {
-    if (formData?.firstName || formData?.middleName || formData?.lastName) {
+    if (formData?.firstName || formData?.middleName || formData?.lastName || formData?.fatherName) {
       const formDataCopy = structuredClone(formData);
       for (const key in formDataCopy) {
-        if (["firstName", "middleName", "lastName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+        if (["firstName", "middleName", "lastName", "fatherName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
           const oldValue = formDataCopy[key];
           let value = oldValue;
           if (typeof value === "string") {

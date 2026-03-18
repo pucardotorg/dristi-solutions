@@ -12,6 +12,7 @@ const {
   getCourtAndJudgeDetails,
 } = require("../utils/commonUtils");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const { formatDate } = require("../applicationHandlers/formatDate");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -186,6 +187,7 @@ const witnessDeposition = async (req, res, qrCode) => {
           qrCodeUrl: base64Url,
           designation:
             witnessEvidence.additionalDetails.witnessDetails.designation,
+          date: formatDate(currentDate, "DD-MM-YYYY"),
         },
       ],
     };

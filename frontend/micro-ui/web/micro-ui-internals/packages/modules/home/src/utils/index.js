@@ -68,7 +68,6 @@ export const updateCustomConfigs = () => {
   // setupLibraries("Utils", "parsingUtils", { ...window?.Digit?.Utils?.parsingUtils, ...parsingUtils });
 };
 
-
 export const getFormattedDate = (epochTime) => {
   const date = new Date(epochTime);
   const formattedDate = date.toLocaleDateString("en-GB", {

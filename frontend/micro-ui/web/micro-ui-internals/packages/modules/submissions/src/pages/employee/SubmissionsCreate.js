@@ -277,6 +277,7 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationNumber,
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
@@ -296,6 +297,7 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationType: "DELAY_CONDONATION",
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
@@ -1713,7 +1715,7 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
-  const handleReviewModalSubmit = async ({ applicationPreviewPdf, applicationPreviewFileName }) => {
+  const handleReviewModalSubmit = async ({ applicationPreviewPdf, applicationPreviewFileName, isUpload = false }) => {
     try {
       if (applicationDetails?.status === SubmissionWorkflowState.DRAFT_IN_PROGRESS) {
         const res = await updateSubmission(SubmissionWorkflowAction.SUBMIT);
@@ -1751,10 +1753,29 @@ const SubmissionsCreate = ({ path }) => {
       if (!fileStoreId) {
         throw new Error("FileStoreId not generated");
       }
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const userUuid = userInfo?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUuid);
+
+      const isSendForEsign = authorizedUuid !== userUuid;
+
       if (fileStoreId) {
         setApplicationPdfFileStoreId(fileStoreId);
       }
-      setShowsignatureModal(true);
+
+      if (isUpload) {
+        setShowsignatureModal(true);
+      } else {
+        if (!isSendForEsign) {
+          setShowsignatureModal(true);
+        } else {
+          setShowErrorToast({ label: t("SUCCESFULLY_SENT_FOR_ESIGN"), error: false });
+          history.replace(
+            `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+          );
+        }
+      }
+
       setShowReviewModal(false);
     } catch (error) {
       console.error("Error while submitting the application:", error);

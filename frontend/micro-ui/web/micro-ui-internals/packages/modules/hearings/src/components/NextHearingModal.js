@@ -28,17 +28,6 @@ const CloseBtn = (props) => {
   );
 };
 
-const DateCard = ({ date, isSelected, onClick }) => (
-  <div
-    className="date-card"
-    style={{
-      border: `1px solid ${isSelected ? "#007BFF" : "#DDD"}`,
-    }}
-    onClick={onClick}
-  >
-    {date}
-  </div>
-);
 
 const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript, handleConfirmationModal }) => {
   const [selectedDate, setSelectedDate] = useState(null);

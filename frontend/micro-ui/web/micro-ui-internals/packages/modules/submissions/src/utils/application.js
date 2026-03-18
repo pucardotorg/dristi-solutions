@@ -126,7 +126,7 @@ export const replaceUploadedDocsWithFile = async (t, formData, tenantId) => {
     const hasFileTypeDoc = formData?.supportingDocuments?.uploadedDocs?.some((doc) => doc instanceof File || (doc.file && doc.file instanceof File));
     if (hasFileTypeDoc) {
       try {
-        let combinedDocName =`${t("SUPPORTING_DOCS")}`;
+        let combinedDocName = `${t("SUPPORTING_DOCS")}`;
         let combinedDocumentFile;
         if (Array.isArray(formData?.supportingDocuments?.uploadedDocs) && formData?.supportingDocuments?.uploadedDocs?.length > 1) {
           combinedDocumentFile = await combineMultipleFiles(formData.supportingDocuments.uploadedDocs);

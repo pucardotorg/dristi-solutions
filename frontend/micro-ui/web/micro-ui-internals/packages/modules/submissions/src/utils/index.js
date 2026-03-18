@@ -52,10 +52,6 @@ export const getTaxPeriodByBusinessService = (taxPeriod = [], businessService) =
   return taxPeriod?.find((data) => data?.service === businessService) || {};
 };
 
-export const getCourtFeeAmountByPaymentType = (courtFeeAmount = [], paymentCode) => {
-  return courtFeeAmount?.find((data) => data?.paymentCode === paymentCode)?.amount || "";
-};
-
 export const convertToDateInputFormat = (dateInput) => {
   let date;
 
@@ -165,6 +161,7 @@ export const getUserInfoFromUuids = async (uuidList) => {
       return {
         userUuid: user?.userUuid,
         name: userName,
+        individualId: user?.individualId,
       };
     });
     return userData;

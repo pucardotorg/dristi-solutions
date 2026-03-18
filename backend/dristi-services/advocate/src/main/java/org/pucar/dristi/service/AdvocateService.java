@@ -2,6 +2,7 @@ package org.pucar.dristi.service;
 
 
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
@@ -18,6 +19,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -203,7 +205,7 @@ public class AdvocateService {
 
     }
     private String getMessageCode(String updatedStatus) {
-        if (updatedStatus.equalsIgnoreCase(ACTIVE)){
+        if (ACTIVE.equalsIgnoreCase(updatedStatus)){
             return ADVOCATE_REGISTERED;
         }
         return null;
@@ -247,7 +249,19 @@ public class AdvocateService {
 
     private Advocate validateExistingApplication(Advocate advocate) {
         try {
-            return validator.validateApplicationExistence(advocate);
+            Advocate existingAdvocate = validator.validateApplicationExistence(advocate);
+
+            String action = Optional.ofNullable(advocate.getWorkflow())
+                    .map(Workflow::getAction)
+                    .orElse(null);
+
+            if(APPROVE.equalsIgnoreCase(action)){
+                String barRegistrationNumber = advocate.getBarRegistrationNumber();
+                // Format was already validated during creation
+                BarRegistrationNumberComponents components = validator.tokenizeBarRegistrationNumber(barRegistrationNumber);
+                validator.validateBarRegistrationNumberUniqueness(advocate.getTenantId(), components, barRegistrationNumber);
+            }
+            return existingAdvocate;
         } catch (Exception e) {
             log.error("Error validating existing application :: {}", e.toString());
             throw new CustomException(VALIDATION_EXCEPTION, "Error validating existing application: " + e.getMessage());

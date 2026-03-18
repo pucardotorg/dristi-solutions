@@ -628,6 +628,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           userUuid: item.phoneNumberVerification.userDetails.uuid,
           userId: item.phoneNumberVerification.userDetails.id,
           mobileNumber: item.phoneNumberVerification.userDetails.mobileNumber,
+          fatherName: item.fatherName,
         }));
 
       if (usersWithUUID.length === 0) {
@@ -636,6 +637,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           individualId: item?.phoneNumberVerification?.individualDetails?.individualId,
           uuid: item?.phoneNumberVerification?.individualDetails?.userUuid,
           fullName: getFullName(" ", item?.firstName, item?.middleName, item?.lastName),
+          fatherName: item?.fatherName,
         }));
       }
 
@@ -661,12 +663,14 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 individualId: matchedUser?.individualDetails?.individualId,
                 uuid: matchedUser?.individualDetails?.userUuid,
                 fullName: getFullName(" ", item?.firstName, item?.middleName, item?.lastName),
+                fatherName: item?.fatherName,
               }
             : {
                 ...item,
                 individualId: item?.phoneNumberVerification?.individualDetails?.individualId,
                 uuid: item?.phoneNumberVerification?.individualDetails?.userUuid,
                 fullName: getFullName(" ", item?.firstName, item?.middleName, item?.lastName),
+                fatherName: item?.fatherName,
               };
         });
 
@@ -689,6 +693,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               respondentFirstName: matchedUser?.firstName,
               respondentMiddleName: matchedUser?.middleName,
               respondentLastName: matchedUser?.lastName,
+              fatherName: matchedUser?.fatherName,
               respondentVerification: {
                 individualDetails: {
                   individualId: matchedUser?.individualId,
@@ -767,41 +772,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           }));
         }
 
-        const isResponseSubmitted = caseDetails?.litigants?.find((litigant) => litigant?.individualId === party?.individualId)?.isResponseSubmitted;
-
-        if ("PENDING_RESPONSE" === caseDetails?.status && !party?.isComplainant && !isResponseSubmitted) {
-          const poaHolders = (caseDetails?.poaHolders || [])
-            ?.filter((poa) => poa?.representingLitigants?.some((represent) => represent?.individualId === individual?.individualId))
-            ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
-
-          try {
-            await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-              pendingTask: {
-                name: `${t("PENDING_RESPONSE_FOR")} ${party?.fullName}`,
-                entityType: "case-default",
-                referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${individual?.individualId}`,
-                status: "PENDING_RESPONSE",
-                assignedTo: [{ uuid: individual?.userUuid }, ...(poaHolders?.length > 0 ? poaHolders : [])],
-                assignedRole: ["CASE_RESPONDER"],
-                cnrNumber: caseDetails?.cnrNumber,
-                filingNumber: caseDetails?.filingNumber,
-                caseId: caseDetails?.id,
-                caseTitle: caseDetails?.caseTitle,
-                isCompleted: false,
-                stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                additionalDetails: {
-                  individualId: individual?.individualId,
-                  caseId: caseDetails?.id,
-                  litigants: [individual?.individualId],
-                },
-                tenantId,
-                courtId: caseDetails?.courtId,
-              },
-            });
-          } catch (err) {
-            console.error("err :>> ", err);
-          }
-        }
         setShowConfirmModal(false);
         setMessageHeader(t("YOU_ARE_NOW_PARTY_IN_PERSON"));
         setSuccess(true);
@@ -813,25 +783,16 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     setIsApiCalled(false);
     setIsPipApiCalled(false);
   }, [
-    caseDetails?.caseTitle,
-    caseDetails?.cnrNumber,
-    caseDetails?.courtId,
     caseDetails?.filingNumber,
-    caseDetails?.id,
     caseDetails?.litigants,
-    caseDetails?.poaHolders,
     caseDetails?.representatives,
-    caseDetails?.status,
     individual?.individualId,
-    individual?.userUuid,
-    party?.fullName,
     party?.individualId,
     party.isComplainant,
     selectPartyData?.affidavit?.affidavitData?.document,
     step,
     t,
     tenantId,
-    todayDate,
     validationCode,
   ]);
 
@@ -973,32 +934,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                     }
                   }),
                 }));
-
-                if ("PENDING_RESPONSE" === caseDetails?.status && !party?.isComplainant) {
-                  try {
-                    await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                      pendingTask: {
-                        name: `${t("PENDING_RESPONSE_FOR")} ${getFullName(" ", givenName, otherNames, familyName)}`,
-                        entityType: "case-default",
-                        referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${individual?.individualId}`,
-                        status: "PENDING_RESPONSE",
-                        assignedTo: [{ uuid: individual?.userUuid }],
-                        assignedRole: ["CASE_RESPONDER"],
-                        cnrNumber: caseDetails?.cnrNumber,
-                        filingNumber: caseDetails?.filingNumber,
-                        caseId: caseDetails?.id,
-                        caseTitle: caseDetails?.caseTitle,
-                        isCompleted: false,
-                        stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                        additionalDetails: { individualId: individual?.individualId, caseId: caseDetails?.id, litigants: [individual?.individualId] },
-                        tenantId,
-                        courtId: caseDetails?.courtId,
-                      },
-                    });
-                  } catch (err) {
-                    console.error("err :>> ", err);
-                  }
-                }
                 setStep(step + 3);
                 setSuccess(true);
               } else {
@@ -1092,6 +1027,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   additionalDetails: {
                     fullName: user?.fullName,
                     uuid: user?.uuid,
+                    fatherName: user?.fatherName,
                   },
                   tenantId: tenantId,
                   individualId: user?.individualId,
@@ -1211,56 +1147,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                     }),
                     respondentAdvocateList: [...successScreenData?.respondentAdvocateList, getFullName(" ", givenName, otherNames, familyName)],
                   }));
-                }
-
-                // create/update pending task for submit response
-                if ("PENDING_RESPONSE" === caseDetails?.status && documentUploadResult?.[0]?.isRespondent) {
-                  const pendingResponseTaskCreate = updatedParty
-                    ?.filter((user) => {
-                      const litigant = caseDetails?.litigants?.find((litigant) => litigant?.individualId === user?.individualId);
-                      if (!litigant) return true;
-
-                      if (!litigant?.isResponseRequired) return false;
-
-                      return !litigant?.documents?.some((document) => document?.additionalDetails?.fileType === "respondent-response");
-                    })
-                    ?.map((user) => {
-                      const { isFound, representatives } = searchLitigantInRepresentives(caseDetails?.representatives, user?.individualId);
-
-                      const poaHolders = (caseDetails?.poaHolders || [])
-                        ?.filter((poa) => poa?.representingLitigants?.some((represent) => represent?.individualId === user?.individualId))
-                        ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
-
-                      return DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                        pendingTask: {
-                          name: `${t("PENDING_RESPONSE_FOR")} ${user?.fullName}`,
-                          entityType: "case-default",
-                          referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${user?.individualId}`,
-                          status: "PENDING_RESPONSE",
-                          assignedTo: [
-                            { uuid: user?.uuid },
-                            ...(isFound ? representatives?.map((representative) => ({ uuid: representative?.additionalDetails?.uuid })) : []),
-                            { uuid: individual?.userUuid },
-                            ...(poaHolders?.length > 0 ? poaHolders : []),
-                          ],
-                          assignedRole: ["CASE_RESPONDER"],
-                          cnrNumber: caseDetails?.cnrNumber,
-                          filingNumber: caseDetails?.filingNumber,
-                          caseId: caseDetails?.id,
-                          caseTitle: caseDetails?.caseTitle,
-                          isCompleted: false,
-                          stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                          additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id, litigants: [user?.individualId] },
-                          tenantId,
-                          courtId: caseDetails?.courtId,
-                        },
-                      });
-                    });
-                  try {
-                    await Promise.all(pendingResponseTaskCreate);
-                  } catch (err) {
-                    console.error("err :>> ", err);
-                  }
                 }
               }
               if (res?.paymentTaskNumber) {
@@ -1482,66 +1368,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     ]
   );
 
-  const searchApplications = useCallback(
-    async (uuid) => {
-      try {
-        const response = await DRISTIService.searchSubmissions({
-          criteria: {
-            filingNumber: caseDetails?.filingNumber,
-            tenantId,
-            courtId: caseDetails?.courtId,
-            applicationType: "REQUEST_FOR_BAIL",
-            onBehalfOf: [uuid],
-          },
-        });
-
-        return response?.applicationList?.length > 0;
-      } catch (error) {
-        console.error("Error searching applications:", error);
-        return false;
-      }
-    },
-    [caseDetails?.courtId, caseDetails?.filingNumber, tenantId]
-  );
-
-  useEffect(() => {
-    const checkBailBondRequirement = async () => {
-      try {
-        let isBondRequired = true;
-
-        if (selectPartyData?.userType?.value === "Advocate" && selectPartyData?.isReplaceAdvocate?.value === "NO") {
-          const representedPersonUuids = party?.map((item) => item?.uuid).filter(Boolean);
-
-          if (representedPersonUuids?.length > 0) {
-            const applicationChecks = await Promise.all(representedPersonUuids.map((uuid) => searchApplications(uuid)));
-
-            const hasExistingApplication = applicationChecks.some((exists) => exists);
-            isBondRequired = !hasExistingApplication;
-          }
-        } else if (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES") {
-          const litigantUuid = individual?.userUuid;
-          if (litigantUuid) {
-            const hasExistingApplication = await searchApplications(litigantUuid);
-            isBondRequired = !hasExistingApplication;
-          }
-        }
-
-        setBailBondRequired(isBondRequired);
-      } catch (error) {
-        console.error("Error in checkBailBondRequirement:", error);
-        setBailBondRequired(true);
-      }
-    };
-
-    // Only run the check if we have the necessary data
-    if (
-      (selectPartyData?.userType?.value === "Advocate" && selectPartyData?.isReplaceAdvocate?.value === "NO" && party?.length > 0) ||
-      (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES" && individual?.userUuid)
-    ) {
-      checkBailBondRequirement();
-    }
-  }, [selectPartyData, party, individual, partyInPerson, searchApplications]);
-
   const handleKeyDown = useCallback(
     (event) => {
       if (event.key === "Enter") {
@@ -1655,6 +1481,10 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           isCaseViewDisabled={selectPartyData?.isReplaceAdvocate?.value === "YES" && !isAdvocateJoined}
           type={type}
           isBailBondRequired={bailBondRequired}
+          selectPartyData={selectPartyData}
+          party={party}
+          partyInPerson={partyInPerson}
+          individual={individual}
         />
       ),
     },

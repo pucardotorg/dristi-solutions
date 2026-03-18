@@ -15,7 +15,15 @@ import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import { cleanString, getAllAssociatedPartyUuids, getDate, getOrderActionName, getOrderTypes, setApplicationStatus } from "../../../Utils";
+import {
+  cleanString,
+  getAllAssociatedPartyUuids,
+  getAuthorizedUuid,
+  getDate,
+  getOrderActionName,
+  getOrderTypes,
+  setApplicationStatus,
+} from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
@@ -84,6 +92,8 @@ const EvidenceModal = ({
     createdByUser: null,
     onBehalfOfUser: null,
   });
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const setData = (data) => {
     setFormData(data);
   };
@@ -134,6 +144,8 @@ const EvidenceModal = ({
       senderUuid = asUser;
       createdBy = auditDetails?.createdBy || auditdetails?.createdBy;
       onBehalfOfUuid = onBehalfOf?.[0];
+      // For e-filing documents, createdBy will be of judge's uuid but anyways it will not return any data on
+      // individual search and only sender name will be shown for efiling documents.
     } else if (artifact?.artifactList) {
       const { asUser, auditDetails } = artifact?.artifactList;
       senderUuid = asUser;
@@ -247,7 +259,7 @@ const EvidenceModal = ({
       if (allPartiesIncludingMembers?.includes(userInfo?.uuid)) {
         return [SubmissionWorkflowState.DELETED].includes(applicationStatus) ? false : true;
       }
-      if (isLitigent && [...allAdvocates?.[userInfo?.uuid], userInfo?.uuid]?.includes(createdBy)) {
+      if (isLitigent && [...(allAdvocates?.[userInfo?.uuid] || []), userInfo?.uuid]?.includes(createdBy)) {
         return [SubmissionWorkflowState.DELETED].includes(applicationStatus) ? false : true;
       }
       if (!isLitigent && allAdvocates?.[createdBy]?.includes(userInfo?.uuid)) {
@@ -271,7 +283,10 @@ const EvidenceModal = ({
         const allPartiesIncludingMembers = getAllAssociatedPartyUuids(caseData?.case, asUser);
         if (allPartiesIncludingMembers?.includes(userInfo?.uuid)) {
           label = t("DOWNLOAD_SUBMISSION");
-        } else if (isLitigent && [...allAdvocates?.[userInfo?.uuid], userInfo?.uuid]?.includes(createdBy)) {
+        } else if (isLitigent && [...(allAdvocates?.[userInfo?.uuid] || []), userInfo?.uuid]?.includes(createdBy)) {
+          label = t("DOWNLOAD_SUBMISSION");
+        } else if (!isLitigent) {
+          // For All advocates and clerks, show the download submisison button.
           label = t("DOWNLOAD_SUBMISSION");
         } else if (
           (respondingUuids?.includes(userInfo?.uuid) || !documentSubmission?.[0]?.details?.referenceId) &&
@@ -611,6 +626,7 @@ const EvidenceModal = ({
         filingNumber,
         artifactNumber,
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
@@ -1291,7 +1307,7 @@ const EvidenceModal = ({
                       </div>
                     </div>
                   )}
-                  {/* {createdByName && (
+                  {createdByName && (
                     <div className="info-row">
                       <div className="info-key">
                         <h3>{t("CREATED_BY")}</h3>
@@ -1300,7 +1316,7 @@ const EvidenceModal = ({
                         <h3>{createdByName}</h3>
                       </div>
                     </div>
-                  )} */}
+                  )}
                   {documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.initialHearingDate && (
                     <div className="info-row">
                       <div className="info-key">

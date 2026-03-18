@@ -101,6 +101,7 @@ class NJDGCaseTransformerImplTest {
         when(numberExtractor.extractFilingNumber(anyString())).thenReturn(1);
         when(properties.getStateCode()).thenReturn(32);
         when(properties.getCicriType()).thenReturn('1');
+        when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
         when(hearingRepository.getHearingDetailsByCino(anyString())).thenReturn(Collections.emptyList());
         when(orderUtil.getOrders(any())).thenReturn(new OrderListResponse());
 
@@ -122,6 +123,7 @@ class NJDGCaseTransformerImplTest {
         when(numberExtractor.extractFilingNumber(anyString())).thenReturn(1);
         when(properties.getStateCode()).thenReturn(32);
         when(properties.getCicriType()).thenReturn('1');
+        when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
         when(properties.getCourtNumber()).thenReturn(1);
         when(hearingRepository.getHearingDetailsByCino(anyString())).thenReturn(Collections.emptyList());
         when(orderUtil.getOrders(any())).thenReturn(new OrderListResponse());
@@ -146,6 +148,7 @@ class NJDGCaseTransformerImplTest {
         when(numberExtractor.extractFilingNumber(anyString())).thenReturn(1);
         when(properties.getStateCode()).thenReturn(32);
         when(properties.getCicriType()).thenReturn('1');
+        when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
         when(hearingRepository.getHearingDetailsByCino(anyString())).thenReturn(Collections.emptyList());
         when(orderUtil.getOrders(any())).thenReturn(new OrderListResponse());
 
@@ -171,6 +174,7 @@ class NJDGCaseTransformerImplTest {
         when(numberExtractor.extractFilingNumber(anyString())).thenReturn(1);
         when(properties.getStateCode()).thenReturn(32);
         when(properties.getCicriType()).thenReturn('1');
+        when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
         when(hearingRepository.getHearingDetailsByCino(anyString())).thenReturn(Collections.singletonList(hearingDetail));
         when(orderUtil.getOrders(any())).thenReturn(new OrderListResponse());
 
@@ -194,6 +198,7 @@ class NJDGCaseTransformerImplTest {
         when(numberExtractor.extractFilingNumber(anyString())).thenReturn(1);
         when(properties.getStateCode()).thenReturn(32);
         when(properties.getCicriType()).thenReturn('1');
+        when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
         when(hearingRepository.getHearingDetailsByCino(anyString())).thenReturn(Collections.emptyList());
         when(orderUtil.getOrders(any())).thenReturn(new OrderListResponse());
 
@@ -205,7 +210,7 @@ class NJDGCaseTransformerImplTest {
 
     @Test
     void testTransform_Exception() {
-        when(caseRepository.getJudge(any(LocalDate.class))).thenThrow(new RuntimeException("Database error"));
+        lenient().when(caseRepository.getJudge(any(LocalDate.class))).thenThrow(new RuntimeException("Database error"));
 
         assertThrows(RuntimeException.class, () -> njdgCaseTransformer.transform(courtCase, requestInfo));
     }
@@ -272,6 +277,7 @@ class NJDGCaseTransformerImplTest {
         when(numberExtractor.extractFilingNumber(anyString())).thenReturn(1);
         when(properties.getStateCode()).thenReturn(32);
         when(properties.getCicriType()).thenReturn('1');
+        when(properties.getApplicationZoneId()).thenReturn("Asia/Kolkata");
         when(hearingRepository.getHearingDetailsByCino(anyString())).thenReturn(Collections.emptyList());
         when(orderUtil.getOrders(any())).thenReturn(new OrderListResponse());
 
