@@ -2857,6 +2857,12 @@ export const UICustomizations = {
           const rawTitle = (row?.caseTitle || "").toString().trim();
           return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
         }
+        case "CASE_NUMBER": {
+          const caseNumber = row?.isLPRCase
+            ? row?.lprNumber
+            : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
+          return caseNumber || "";
+        }
         default:
           return value != null ? value : "";
       }

@@ -89,6 +89,9 @@ public class CtcApplication {
     @JsonProperty("judgeComments")
     private String judgeComments;
 
+    @JsonProperty("paymentReceipt")
+    private Document paymentReceipt;
+
     @JsonProperty("workflow")
     private WorkflowObject workflow;
 

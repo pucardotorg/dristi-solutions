@@ -176,11 +176,12 @@ const ViewPaymentDetails = ({ location, match }) => {
     const fetchCalculation = async () => {
       setIsLoading(true);
       if (
-        consumerCode &&
-        ((demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
-          demandBill?.additionalDetails?.chequeDetails?.totalAmount !== "0" &&
-          paymentType?.toLowerCase()?.includes("case")) ||
-          (paymentType?.toLowerCase()?.includes("task") && businessService === "task-management-payment"))
+        (consumerCode &&
+          ((demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
+            demandBill?.additionalDetails?.chequeDetails?.totalAmount !== "0" &&
+            paymentType?.toLowerCase()?.includes("case")) ||
+            (paymentType?.toLowerCase()?.includes("task") && businessService === "task-management-payment"))) ||
+        (paymentType?.toLowerCase()?.includes("ctc") && businessService === "ctc-default")
       ) {
         try {
           const response = await DRISTIService.getTreasuryPaymentBreakup(

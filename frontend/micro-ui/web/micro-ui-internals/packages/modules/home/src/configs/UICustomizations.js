@@ -657,12 +657,8 @@ export const UICustomizations = {
 
       const moduleSearchCriteria = {
         tenantId,
-        ...(searchForm?.searchQuery && { searchableFields: searchForm.searchQuery }),
-        ...(searchForm?.date && {
-          fromDate: new Date(searchForm.date + "T00:00:00").getTime(),
-          toDate: new Date(searchForm.date + "T23:59:59.999").getTime(),
-        }),
-        ...(searchForm?.documentType?.code && searchForm.documentType.code !== "ALL" && { documentType: searchForm.documentType.code }),
+        ...(searchForm?.caseTitle && { caseTitle: searchForm.caseTitle }),
+        ...(searchForm?.documentName && { docTitle: searchForm.documentName }),
         ...(courtId && { courtId }),
         status: "PENDING",
       };

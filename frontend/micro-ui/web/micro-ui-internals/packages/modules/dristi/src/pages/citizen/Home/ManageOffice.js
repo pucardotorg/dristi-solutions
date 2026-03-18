@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
-import { ManageOfficeDeleteIcon, ManageOfficeCloseIcon } from "../../../icons/svgIndex";
+import { ManageOfficeDeleteIcon, ManageOfficeCloseIcon, ManageOfficeLeaveIcon } from "../../../icons/svgIndex";
 
 const ManageOffice = () => {
   const { t } = useTranslation();
@@ -167,6 +167,12 @@ const ManageOffice = () => {
 
       if (individualResponse?.Individual && individualResponse?.Individual?.length > 0) {
         const individual = individualResponse?.Individual?.[0];
+        // Validation: prevent adding self as a member
+        if (individual?.userUuid && individual?.userUuid === officeAdvocateUserUuid) {
+          setSearchError(t("YOU_CANNOT_ADD_YOURSELF") || "You cannot add yourself");
+          setSearchResult(null);
+          return;
+        }
         // Get userType from searched individual (same as HomeView: individualData.Individual[0].additionalFields.fields)
         const memberUserType = individual?.additionalFields?.fields?.find((obj) => obj?.key === "userType")?.value;
 
@@ -230,6 +236,12 @@ const ManageOffice = () => {
         });
         if (isAlreadyMember) {
           setSearchError(t("MEMBER_ALREADY_EXISTS") || "This mobile number is already added as a member.");
+          setSearchResult(null);
+        } else if (!clerkData && !advocateData) {
+          // Validation: only Advocates or Clerks can be added as members
+          setSearchError(
+            t("ONLY_ADVOCATE_OR_CLERK_ALLOWED") || "Only an Advocate or a Clerk can be added as a member."
+          );
           setSearchResult(null);
         } else {
           setSearchResult({
@@ -493,7 +505,11 @@ const ManageOffice = () => {
                 </span>
                 {activeTab !== "advocatesWorkingFor" && (
                   <span>
-                    {member?.memberType === "ADVOCATE_CLERK" ? "Clerk" : member?.memberType === "ADVOCATE" ? "Advocate" : member?.memberType}
+                    {member?.memberType === "ADVOCATE_CLERK"
+                    ? ((l) => l.charAt(0).toUpperCase() + l.slice(1).toLowerCase())(t("CLERK") || "Clerk")
+                    : member?.memberType === "ADVOCATE"
+                    ? t("ASSISTANT_ADVOCATE") || "Assistant Advocate"
+                    : member?.memberType}
                   </span>
                 )}
                 <span>
@@ -523,9 +539,25 @@ const ManageOffice = () => {
                       {t("MANAGE") || "Manage"}
                     </button>
                   )}
-                  <button onClick={() => handleDeleteClick(member)} className="manage-office-delete-btn">
-                    <ManageOfficeDeleteIcon />
-                  </button>
+                  {activeTab === "advocatesWorkingFor" ? (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteClick(member)}
+                      className="manage-office-leave-icon-btn"
+                      aria-label={t("LEAVE_OFFICE") || "Leave Office"}
+                    >
+                      <ManageOfficeLeaveIcon />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteClick(member)}
+                      className="manage-office-delete-btn"
+                      aria-label={t("REMOVE_FROM_OFFICE") || "Remove from office"}
+                    >
+                      <ManageOfficeDeleteIcon />
+                    </button>
+                  )}
                 </span>
               </div>
             ))}
@@ -549,7 +581,10 @@ const ManageOffice = () => {
 
       {showAddMemberModal && (
         <div className="manage-office-modal-overlay" onClick={handleCloseModal}>
-          <div className={`manage-office-modal ${searchResult ? "manage-office-modal--wide" : ""}`} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={`manage-office-modal ${searchResult ? "manage-office-modal--compact" : ""}`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">{t("ADD_MEMBER") || "Add Member"}</h2>
               <button onClick={handleCloseModal} className="manage-office-modal__close">
@@ -572,7 +607,13 @@ const ManageOffice = () => {
                       </div>
                       <div className="manage-office-search-card__row">
                         <p className="manage-office-search-card__label">{t("DESIGNATION") || "Designation"}</p>
-                        <p className="manage-office-search-card__value">{searchResult?.designation}</p>
+                        <p className="manage-office-search-card__value">
+                          {searchResult?.designation === "Clerk"
+                            ? ((l) => l.charAt(0).toUpperCase() + l.slice(1).toLowerCase())(t("CLERK") || "Clerk")
+                            : searchResult?.designation === "Advocate"
+                            ? t("ASSISTANT_ADVOCATE") || "Assistant Advocate"
+                            : searchResult?.designation}
+                        </p>
                       </div>
                       <div className="manage-office-search-card__row">
                         <p className="manage-office-search-card__label">{t("MOBILE_NUMBER") || "Mobile number"}</p>
@@ -625,7 +666,7 @@ const ManageOffice = () => {
                         !mobileNumber || mobileNumber?.length < 10 ? " manage-office-btn--disabled" : ""
                       }`}
                     >
-                      {t("SEARCH") || "Search"}
+                      {t("PROCEED") || "Proceed"}
                     </button>
                   )}
                 </div>

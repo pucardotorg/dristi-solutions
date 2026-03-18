@@ -139,6 +139,9 @@ public class Configuration {
     @Value("${app.kafka.topics.update.ctc.application}")
     private String updateCtcApplicationTopic;
 
+    @Value("${app.kafka.topics.update.ctc.documents}")
+    private String updateCtcDocumentsTopic;
+
     @Value("${break.down.code}")
     private String breakDownCode;
 
@@ -180,5 +183,8 @@ public class Configuration {
 
     @Value("${egov.dristi.pdf.ctc}")
     private String egovPdfCtcEndpoint;
+
+    @Value("${application.fees}")
+    private Double applicationFees;
 
 }

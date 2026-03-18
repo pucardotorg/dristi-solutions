@@ -118,7 +118,8 @@ export const modifiedEvidenceNumber = (value, filingNumber = null) => {
 };
 export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
   const processedPaymentType = paymentType?.toLowerCase()?.includes("application");
-  return processedPaymentType ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;
+  const isCTC = paymentType?.toLowerCase()?.includes("ctc");
+  return processedPaymentType && !isCTC ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;
 };
 
 export const getTaskType = (businessService) => {

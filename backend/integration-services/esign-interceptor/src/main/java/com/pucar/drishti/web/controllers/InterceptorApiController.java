@@ -40,7 +40,7 @@ public class InterceptorApiController {
         String redirectUri = "";
         if (redirectionType.equalsIgnoreCase("employee") || redirectionType.equalsIgnoreCase("citizen")) {
             redirectUri = configs.getRedirectUrl() + "/ui/" + redirectionType + "/dristi";
-        } else if (redirectionType.equalsIgnoreCase("lp")) {
+        } else if (redirectionType.equalsIgnoreCase("landing")) {
             redirectUri = configs.getRedirectUrl() + configs.getLandingPageRedirectUrl();
         } else {
             throw new RuntimeException("Invalid redirectionType: " + redirectionType);
@@ -87,7 +87,7 @@ public class InterceptorApiController {
         } else if (pageModule.equals("ci")) {
             redirectionType = "citizen";
         } else if (pageModule.equals("lp")) {
-            redirectionType = "";
+            redirectionType = "landing";
         } else {
             throw new RuntimeException("Invalid pageModule: " + pageModule);
         }

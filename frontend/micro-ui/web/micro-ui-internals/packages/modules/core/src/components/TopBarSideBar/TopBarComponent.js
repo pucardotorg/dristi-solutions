@@ -77,10 +77,8 @@ const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelec
     [onSelect, selected?.id]
   );
 
-  const MAX_NAME_LENGTH = 18;
   const fullName = selected?.advocateName ? t(selected.advocateName) : "";
-  const truncatedName = fullName && fullName.length > MAX_NAME_LENGTH ? `${fullName.slice(0, MAX_NAME_LENGTH).trimEnd()}...` : fullName;
-  const buttonLabel = selected?.advocateName ? `Adv. ${truncatedName}'s Profile` : t("SELECT_ADVOCATE");
+  const buttonLabel = selected?.advocateName ? `Adv. ${fullName}'s Profile` : t("SELECT_ADVOCATE");
 
   return (
     <div className="advocate-profile-dropdown" ref={wrapperRef}>
@@ -435,7 +433,7 @@ const TopBarComponent = ({
                 const pathUnwind = pathname.split("/").slice(0, 3).join("/") + (isUserLoggedIn ? "/home/home-pending-task" : "/dristi");
                 if (advocateId || advClerkId) {
                   refetchMembers().then(() => {
-                    history.push(pathUnwind);
+                    history.push(pathUnwind, { refectMemberData: Date.now() });
                   });
                 } else {
                   history.push(pathUnwind);
@@ -485,8 +483,6 @@ const TopBarComponent = ({
                     border: "1px solid #007E7E",
                     borderRadius: "4px",
                     color: "#007E7E",
-                    fontSize: "14px",
-                    fontWeight: "500",
                     cursor: "pointer",
                   }}
                 >
