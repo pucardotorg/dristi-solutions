@@ -3,7 +3,7 @@ package org.egov.user.web.adapters.errors;
 import org.egov.common.contract.response.Error;
 import org.egov.common.contract.response.ErrorField;
 import org.egov.common.contract.response.ErrorResponse;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 

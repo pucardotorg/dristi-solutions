@@ -1,12 +1,13 @@
 package org.egov.user.web.controller;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -19,6 +20,7 @@ import java.util.TimeZone;
 import org.apache.commons.io.IOUtils;
 import org.egov.common.utils.MultiStateInstanceUtil;
 import org.egov.encryption.masking.MaskingService;
+import org.egov.user.Resources;
 import org.egov.user.TestConfiguration;
 import org.egov.user.domain.exception.DuplicateUserNameException;
 import org.egov.user.domain.exception.OtpValidationPendingException;
@@ -32,9 +34,9 @@ import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.domain.service.TokenService;
 import org.egov.user.domain.service.UserService;
 import org.egov.user.security.CustomAuthenticationKeyGenerator;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -42,11 +44,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-@Ignore("Requires MDMS service configuration")
-@RunWith(SpringRunner.class)
+@Disabled("Requires MDMS service configuration")
+@ExtendWith(SpringExtension.class)
 @WebMvcTest(UserController.class)
 @Import(TestConfiguration.class)
 public class UserRequestControllerTest {
@@ -56,7 +58,7 @@ public class UserRequestControllerTest {
 
     @MockBean
     private PasswordEncoder passwordEncoder;
-    
+
     @MockBean
     private MultiStateInstanceUtil multiStateInstanceUtil;
 
@@ -72,25 +74,7 @@ public class UserRequestControllerTest {
     @MockBean
     private MaskingService maskingService;
 
-/*
-    @Test
-    @WithMockUser
-    public void testShouldThrowErrorWhileRegisteringWithInvalidCitizen() throws Exception {
-        InvalidUserCreateException exception = new InvalidUserCreateException(org.egov.user.domain.model.User.builder().build());
-        when(userService.createCitizen(any(org.egov.user.domain.model.User.class))).thenThrow(exception);
-
-        String fileContents = getFileContents("createCitizenUnsuccessfulRequest.json");
-        mockMvc.perform(post("/citizen/_create/")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(fileContents)
-        )
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_UTF8))
-                .andExpect(content().json(getFileContents("createCitizenUnsuccessfulResponse.json")));
-    }
-*/
-
-    @Ignore
+    @Disabled
     @Test
     @WithMockUser
     public void testShouldThrowErrorWhileRegisteringCitizenWithPendingOtpValidation() throws Exception {
@@ -99,12 +83,63 @@ public class UserRequestControllerTest {
 
         String fileContents = getFileContents("createValidatedCitizenSuccessRequest.json");
         mockMvc.perform(post("/citizen/_create")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(fileContents)
-        )
+            .contentType(MediaType.APPLICATION_JSON)
+                        .content(fileContents)
+                )
                 .andExpect(status().isBadRequest())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(getFileContents("createCitizenOtpFailureResponse.json")));
+    }
+
+    @Test
+    @WithMockUser
+    public void testShouldUpdateACitizen() throws Exception {
+        when(userService.updateWithoutOtpValidation(any(org.egov.user.domain.model.User.class), any())).thenReturn(buildUser());
+
+        String fileContents = getFileContents("updateValidatedCitizenSuccessRequest.json");
+        mockMvc.perform(post("/users/_updatenovalidate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(fileContents)
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("updateValidatedCitizenSuccessResponse.json")));
+    }
+
+    @Test
+    @WithMockUser
+    @Disabled
+    public void testShouldThrowErrorWhileUpdatingWithDuplicateCitizen() throws Exception {
+        DuplicateUserNameException exception = new DuplicateUserNameException(UserSearchCriteria.builder().userName
+                ("test").build());
+        when(userService.updateWithoutOtpValidation(any(org.egov.user.domain.model.User.class), any())).thenThrow(exception);
+
+        String fileContents = getFileContents("updateCitizenUnsuccessfulRequest.json");
+        mockMvc.perform(post("/users/1/_updatenovalidate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(fileContents)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("updateCitizenUnsuccessfulResponse.json")));
+    }
+
+    @Test
+    @WithMockUser
+    @Disabled
+    public void testShouldThrowErrorWhileUpdatingWithInvalidCitizen() throws Exception {
+        UserNotFoundException exception = new UserNotFoundException(UserSearchCriteria.builder().userName
+                ("test").build());
+        when(userService.updateWithoutOtpValidation(any(org.egov.user.domain.model.User.class), any())).thenThrow(exception);
+
+        String fileContents = getFileContents("updateCitizenUnsuccessfulRequest.json");
+        mockMvc.perform(post("/users/1/_updatenovalidate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(fileContents)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("updateInvalidCitizenUnsuccessfulResponse.json")));
     }
 
     private Date toDate(LocalDateTime localDateTime) {
@@ -155,60 +190,9 @@ public class UserRequestControllerTest {
 
     private String getFileContents(String fileName) {
         try {
-            return IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream(fileName), "UTF-8");
+            return IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream(fileName), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Test
-    @WithMockUser
-    public void testShouldUpdateACitizen() throws Exception {
-        when(userService.updateWithoutOtpValidation(any(org.egov.user.domain.model.User.class), any())).thenReturn(buildUser());
-
-        String fileContents = getFileContents("updateValidatedCitizenSuccessRequest.json");
-        mockMvc.perform(post("/users/_updatenovalidate")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(fileContents)
-        )
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_UTF8))
-                .andExpect(content().json(getFileContents("updateValidatedCitizenSuccessResponse.json")));
-    }
-
-    @Test
-    @WithMockUser
-    @Ignore
-    public void testShouldThrowErrorWhileUpdatingWithDuplicateCitizen() throws Exception {
-        DuplicateUserNameException exception = new DuplicateUserNameException(UserSearchCriteria.builder().userName
-                ("test").build());
-        when(userService.updateWithoutOtpValidation(any(org.egov.user.domain.model.User.class), any())).thenThrow(exception);
-
-        String fileContents = getFileContents("updateCitizenUnsuccessfulRequest.json");
-        mockMvc.perform(post("/users/1/_updatenovalidate")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(fileContents)
-        )
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_UTF8))
-                .andExpect(content().json(getFileContents("updateCitizenUnsuccessfulResponse.json")));
-    }
-
-    @Test
-    @WithMockUser
-    @Ignore
-    public void testShouldThrowErrorWhileUpdatingWithInvalidCitizen() throws Exception {
-        UserNotFoundException exception = new UserNotFoundException(UserSearchCriteria.builder().userName
-                ("test").build());
-        when(userService.updateWithoutOtpValidation(any(org.egov.user.domain.model.User.class), any())).thenThrow(exception);
-
-        String fileContents = getFileContents("updateCitizenUnsuccessfulRequest.json");
-        mockMvc.perform(post("/users/1/_updatenovalidate")
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .content(fileContents)
-        )
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_UTF8))
-                .andExpect(content().json(getFileContents("updateInvalidCitizenUnsuccessfulResponse.json")));
     }
 }

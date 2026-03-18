@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.SafeHtml;
 
 import jakarta.validation.constraints.NotNull;
 import java.util.Set;
@@ -17,8 +16,7 @@ import java.util.Set;
 @Builder
 public class RequestSearchCriteria {
 
-    @SafeHtml
-    @JsonProperty("tenantId")
+        @JsonProperty("tenantId")
     private String tenantId;
 
     @JsonProperty("tenantIds")
@@ -30,12 +28,10 @@ public class RequestSearchCriteria {
     @JsonProperty("applicationStatus")
     private Set<String> applicationStatus;
 
-    @SafeHtml
-    @JsonProperty("mobileNumber")
+        @JsonProperty("mobileNumber")
     private String mobileNumber;
 
-    @SafeHtml
-    @JsonProperty("serviceRequestId")
+        @JsonProperty("serviceRequestId")
     private String serviceRequestId;
 
     @JsonProperty("sortBy")
@@ -86,8 +82,7 @@ public class RequestSearchCriteria {
         serviceRequestId
     }
 
-    @SafeHtml
-    @JsonProperty("accountId")
+        @JsonProperty("accountId")
     private String accountId;
 
     public boolean isEmpty(){

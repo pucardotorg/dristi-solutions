@@ -8,16 +8,15 @@ import org.egov.user.domain.model.Address;
 import org.egov.user.domain.model.Role;
 import org.egov.user.domain.model.User;
 import org.egov.user.domain.model.enums.*;
-import org.hibernate.validator.constraints.Email;
-import org.hibernate.validator.constraints.SafeHtml;
-
+import jakarta.validation.constraints.Email;
+import org.egov.user.web.contract.validator.SafeHtml;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 @Setter
 @Getter

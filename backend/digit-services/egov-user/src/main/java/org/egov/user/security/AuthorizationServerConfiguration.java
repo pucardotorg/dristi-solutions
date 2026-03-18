@@ -14,7 +14,7 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
-import redis.clients.jedis.JedisShardInfo;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 
 import static org.egov.user.config.UserServiceConstants.USER_CLIENT_ID;
 
@@ -62,8 +62,9 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     }
 
     @Bean
-    public JedisConnectionFactory connectionFactory() throws Exception {
-        return new JedisConnectionFactory(new JedisShardInfo(host));
+    public JedisConnectionFactory connectionFactory() {
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host);
+        return new JedisConnectionFactory(config);
     }
 
     @Bean

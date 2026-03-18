@@ -92,7 +92,7 @@ public class IndexerUtils {
             log.debug("Record being indexed/updated: {}", request);
 
             final HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
+            headers.setContentType(MediaType.APPLICATION_JSON);
             headers.add("Authorization", getESEncodedCredentials());
             final HttpEntity<String> entity = new HttpEntity<>(request, headers);
 
@@ -120,7 +120,7 @@ public class IndexerUtils {
         String request = String.format(ES_SEARCH_DOCS_BY_APPLICATION, ctcApplicationNumber);
 
         final HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
+    headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("Authorization", getESEncodedCredentials());
         final HttpEntity<String> entity = new HttpEntity<>(request, headers);
 

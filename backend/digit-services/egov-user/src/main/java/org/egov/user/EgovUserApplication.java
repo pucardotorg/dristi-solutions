@@ -1,11 +1,10 @@
 package org.egov.user;
 
-
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.egov.common.utils.MultiStateInstanceUtil;
 import org.egov.encryption.config.EncryptionConfiguration;
@@ -17,6 +16,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -25,20 +25,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.JedisShardInfo;
 
 @SpringBootApplication
 @Slf4j
 @Import({MultiStateInstanceUtil.class, TracerConfiguration.class, EncryptionConfiguration.class})
 public class EgovUserApplication {
-
 
     private static final String DATE_FORMAT = "dd-MM-yyyy HH:mm:ss";
 
@@ -51,19 +49,17 @@ public class EgovUserApplication {
     @Autowired
     private CustomAuthenticationKeyGenerator customAuthenticationKeyGenerator;
 
-
     @PostConstruct
     public void initialize() {
         TimeZone.setDefault(TimeZone.getTimeZone(timeZone));
     }
 
     @Bean
-    public WebMvcConfigurerAdapter webMvcConfigurerAdapter() {
-        return new WebMvcConfigurerAdapter() {
-
+    public WebMvcConfigurer webMvcConfigurer() {
+        return new WebMvcConfigurer() {
             @Override
             public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
-                configurer.defaultContentType(MediaType.APPLICATION_JSON_UTF8);
+                configurer.defaultContentType(MediaType.APPLICATION_JSON);
             }
         };
     }
@@ -82,7 +78,6 @@ public class EgovUserApplication {
 
     @Bean
     public ObjectMapper objectMapper() {
-
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setTimeZone(TimeZone.getTimeZone(timeZone));
         return objectMapper;
@@ -102,11 +97,12 @@ public class EgovUserApplication {
 
     @Bean
     public JedisConnectionFactory connectionFactory() {
-        return new JedisConnectionFactory(new JedisShardInfo(host));
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
+        config.setHostName(host);
+        return new JedisConnectionFactory(config);
     }
 
     public static void main(String[] args) {
         SpringApplication.run(EgovUserApplication.class, args);
     }
-
 }

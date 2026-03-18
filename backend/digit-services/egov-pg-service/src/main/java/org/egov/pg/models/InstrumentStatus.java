@@ -40,10 +40,10 @@
 
 package org.egov.pg.models;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 @NoArgsConstructor
 @AllArgsConstructor

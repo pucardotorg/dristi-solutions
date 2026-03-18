@@ -4,20 +4,24 @@ import org.egov.common.contract.response.Error;
 import org.egov.common.contract.response.ErrorField;
 import org.egov.common.contract.response.ErrorResponse;
 import org.egov.user.domain.model.NonLoggedInUserUpdatePasswordRequest;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith; // ADDED
+import org.mockito.junit.jupiter.MockitoExtension; // ADDED
 
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+// FIX: Updated to JUnit 5 Assertions
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class) // Replacement for MockitoRunner
 public class InvalidNonLoggedInUserUpdatePasswordRequestErrorHandlerTest {
 
     private InvalidNonLoggedInUserUpdatePasswordRequestErrorHandler errorHandler;
 
-    @Before
+    @BeforeEach // Replacement for @Before
     public void before() {
         errorHandler = new InvalidNonLoggedInUserUpdatePasswordRequestErrorHandler();
     }

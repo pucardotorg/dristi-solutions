@@ -4,11 +4,11 @@
 //import org.egov.user.domain.model.OtpValidationRequest;
 //import org.egov.user.web.contract.Otp;
 //import org.egov.user.web.contract.OtpValidateRequest;
-//import org.junit.Before;
-//import org.junit.Ignore;
-//import org.junit.Test;
-//import org.junit.runner.RunWith;
-//import org.mockito.runners.MockitoJUnitRunner;
+//import org.junit.jupiter.api.BeforeEach;
+//import org.junit.jupiter.api.Disabled;
+//import org.junit.jupiter.api.Test;
+//import org.junit.jupiter.api.extension.ExtendWith;
+//import org.mockito.junit.jupiter.MockitoExtension;
 //import org.springframework.http.HttpMethod;
 //import org.springframework.http.MediaType;
 //import org.springframework.test.web.client.MockRestServiceServer;

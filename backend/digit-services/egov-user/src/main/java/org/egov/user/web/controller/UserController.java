@@ -35,7 +35,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import static org.egov.tracer.http.HttpUtils.isInterServiceCall;
 import static org.springframework.util.CollectionUtils.isEmpty;

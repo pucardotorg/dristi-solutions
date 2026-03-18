@@ -65,7 +65,7 @@ public class TransactionsApiControllerTest {
         when(gatewayService.getActiveGateways()).thenReturn(Collections.singleton("PAYTM"));
 
         mockMvc.perform(post("/gateway/v1/_search").contentType(MediaType
-                .APPLICATION_JSON_UTF8))
+                .APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
 
@@ -92,7 +92,7 @@ public class TransactionsApiControllerTest {
         when(transactionService.initiateTransaction(any(TransactionRequest.class))).thenReturn(transaction);
 
         mockMvc.perform(post("/transaction/v1/_create").contentType(MediaType
-                .APPLICATION_JSON_UTF8).content(mapper.writeValueAsString(transactionRequest)))
+                .APPLICATION_JSON).content(mapper.writeValueAsString(transactionRequest)))
                 .andExpect(status().isOk());
     }
 
@@ -110,7 +110,7 @@ public class TransactionsApiControllerTest {
         when(transactionService.initiateTransaction(any(TransactionRequest.class))).thenReturn(transaction);
 
         mockMvc.perform(post("/transaction/v1/_create").contentType(MediaType
-                .APPLICATION_JSON_UTF8))
+                .APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
 
@@ -121,7 +121,7 @@ public class TransactionsApiControllerTest {
 
         mockMvc.perform(post("/transaction/v1/_search").param("txnId", "PT_001").contentType
                 (MediaType
-                        .APPLICATION_JSON_UTF8).content(mapper.writeValueAsString(requestInfo)))
+                        .APPLICATION_JSON).content(mapper.writeValueAsString(requestInfo)))
                 .andExpect(status().isOk());
     }
 
@@ -131,7 +131,7 @@ public class TransactionsApiControllerTest {
                 (new Transaction()));
 
         mockMvc.perform(post("/transaction/v1/_search").contentType(MediaType
-                .APPLICATION_JSON_UTF8))
+                .APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
 
@@ -142,7 +142,7 @@ public class TransactionsApiControllerTest {
                         (Collections.emptyList());
 
         mockMvc.perform(post("/transaction/v1/_update").contentType(MediaType
-                .APPLICATION_JSON_UTF8).content(mapper.writeValueAsString(requestInfo)))
+                .APPLICATION_JSON).content(mapper.writeValueAsString(requestInfo)))
                 .andExpect(status().isOk());
     }
 

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.mockito.Mockito;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,10 @@ class StoppingErrorHandlerTest {
     void testHandle() {
         doNothing().when(this.kafkaListenerEndpointRegistry).stop();
         Exception thrownException = new Exception("An error occurred");
-        this.stoppingErrorHandler.handle(thrownException, new ConsumerRecord<>("Topic", 1, 1L, "Key", "Value"));
+        this.stoppingErrorHandler.handleOne(thrownException,
+                new ConsumerRecord<>("Topic", 1, 1L, "Key", "Value"),
+                Mockito.mock(org.apache.kafka.clients.consumer.Consumer.class),
+                Mockito.mock(org.springframework.kafka.listener.MessageListenerContainer.class));
         verify(this.kafkaListenerEndpointRegistry).stop();
     }
 }

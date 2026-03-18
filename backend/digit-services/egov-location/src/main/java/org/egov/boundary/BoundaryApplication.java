@@ -10,13 +10,13 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.lang.NonNull;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
-
-import jakarta.annotation.PostConstruct;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import jakarta.annotation.PostConstruct;
 import java.util.TimeZone;
 
 @SpringBootApplication
@@ -44,12 +44,12 @@ public class BoundaryApplication extends SpringBootServletInitializer {
 
 
 	@Bean
-	public WebMvcConfigurer webMvcConfigurer() {
+	public WebMvcConfigurer webMvcConfigurerAdapter() {
 		return new WebMvcConfigurer() {
 
 			@Override
-			public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
-				configurer.defaultContentType(MediaType.APPLICATION_JSON_UTF8);
+			public void configureContentNegotiation(@NonNull ContentNegotiationConfigurer configurer) {
+				configurer.defaultContentType(MediaType.APPLICATION_JSON);
 			}
 
 		};
