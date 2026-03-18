@@ -210,6 +210,8 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+                    task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -223,6 +225,8 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+                    task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -236,6 +240,8 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+                    task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);

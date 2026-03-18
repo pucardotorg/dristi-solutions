@@ -75,6 +75,7 @@ const HomeView = () => {
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
+  const refetchMemberData = state?.refectMemberData || "";
 
   const [tabData, setTabData] = useState(null);
   const [callRefetch, setCallRefetch] = useState(false);
@@ -217,7 +218,7 @@ const HomeView = () => {
       },
     },
     { tenantId },
-    searchCriteria,
+    `${JSON.stringify(searchCriteria)} + ${refetchMemberData}`,
     Boolean((advocateId || advClerkId) && tenantId)
   );
 
@@ -509,10 +510,11 @@ const HomeView = () => {
   };
 
   const onRowClick = async (row) => {
-    if (userType === "ADVOCATE") {
-      // inside view case screen, if an advocate is clicked, show a popup to warn if
-      //  he is working as jr and senior advocate both in same case
-      sessionStorage.setItem("showPopupForJuniorAdvocate", true);
+    if (["ADVOCATE", "ADVOCATE_CLERK"]?.includes(userType)) {
+      // when logged in user in advocate/clerk and clicks on a case row form home screen,
+      // inside view case screen show a popup to warn if
+      // he is working as jr and senior advocate both in same case/ acting as jr adv for multiple senior advocates/ working as clerk for multiple senior advocates
+      sessionStorage.setItem("showPopupIfCaseAccessThroughMultipleAdvocates", true);
     }
     if (userInfoType === "citizen" && row?.original?.advocateStatus === "PENDING") {
       return;
@@ -677,7 +679,7 @@ const HomeView = () => {
         userType &&
         userInfoType === "citizen" &&
         ((userType === "LITIGANT" && !isCitizenReferredInAnyCase) || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) ? (
-          <LitigantHomePage isApprovalPending={isApprovalPending} unAssociatedClerk={unAssociatedClerk} />
+          <LitigantHomePage isApprovalPending={isApprovalPending} unAssociatedClerk={unAssociatedClerk} isRejected={isRejected} />
         ) : (
           <React.Fragment>
             <div

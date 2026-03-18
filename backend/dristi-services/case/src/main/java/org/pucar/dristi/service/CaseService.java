@@ -4160,6 +4160,11 @@ public class CaseService {
 
     }
 
+    public List<CaseSearchTextItem> searchCasesByText(@Valid CaseSearchTextRequest request) {
+
+        return caseRepository.searchCasesByText(request);
+    }
+
     private void smsForNewWitnessAddition(CourtCase courtCase, AddWitnessRequest addWitnessRequest) {
         try {
             RequestInfo requestInfo = addWitnessRequest.getRequestInfo();

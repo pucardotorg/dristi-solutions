@@ -57,6 +57,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
   const [cnrNumber, setCnrNumber] = useState("");
   const userUUID = Digit.UserService.getUser()?.info?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUUID);
+  const userInfoType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
 
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
@@ -92,7 +93,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
             // courtId: courtId,
             filingNumber: filingNumber,
             fuzzySearch: true,
-            asUser: authorizedUuid,
+            ...(userInfoType === "citizen" && { asUser: authorizedUuid }),
           },
           pagination: {
             limit: 100,

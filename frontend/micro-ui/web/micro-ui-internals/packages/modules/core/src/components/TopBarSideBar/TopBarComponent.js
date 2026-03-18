@@ -77,7 +77,8 @@ const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelec
     [onSelect, selected?.id]
   );
 
-  const buttonLabel = selected?.advocateName ? `Adv. ${t(selected.advocateName)}'s Profile` : t("SELECT_ADVOCATE");
+  const fullName = selected?.advocateName ? t(selected.advocateName) : "";
+  const buttonLabel = selected?.advocateName ? `Adv. ${fullName}'s Profile` : t("SELECT_ADVOCATE");
 
   return (
     <div className="advocate-profile-dropdown" ref={wrapperRef}>
@@ -126,7 +127,6 @@ const TopBarComponent = ({
   const history = useHistory();
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
-  const [selectedAdvocate, setSelectedAdvocate] = useState(null);
   const { AdvocateData, setAdvocateDataContext } = useContext(AdvocateDataContext);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -213,7 +213,7 @@ const TopBarComponent = ({
     return () => {
       window.removeEventListener("refetchIndividualData", handleRefetchEvent);
     };
-  }, [tenantId, userInfo?.uuid]);
+  }, [tenantId, userInfo?.uuid, isUserLoggedIn]);
 
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId || individualDataa?.Individual?.[0]?.individualId, [
     individualData?.Individual,
@@ -330,7 +330,6 @@ const TopBarComponent = ({
 
   const changeAdvocateSelection = (advocate) => {
     if (advocate && advocate?.id !== AdvocateData?.id) {
-      setSelectedAdvocate({ ...advocate });
       const individualId = seniorAdvocatesIndividualIdMapping?.find((o) => o?.userUuid === advocate?.uuid)?.individualId;
       setAdvocateDataContext({
         ...advocate,
@@ -347,7 +346,6 @@ const TopBarComponent = ({
     if (storedAdvocate?.id) {
       if (seniorAdvocates?.length === 0) {
         sessionStorage.removeItem("selectedAdvocate");
-        setSelectedAdvocate(null);
         setAdvocateDataContext(null);
         return null;
       }
@@ -377,11 +375,9 @@ const TopBarComponent = ({
 
   useEffect(() => {
     if (!resolvedAdvocate?.id) return;
-    if (resolvedAdvocate.id === selectedAdvocate?.id) return;
     if (seniorAdvocatesIndividualIdMapping?.length === 0 || isIndividuaIdMappingsLoading) return;
     const eSignPath = `/${window?.contextPath}/citizen/dristi/home/file-case/sign-complaint`;
     if (resolvedAdvocate?.id !== storedAdvocate?.id || !AdvocateData?.id) {
-      setSelectedAdvocate(resolvedAdvocate);
       const individualId = seniorAdvocatesIndividualIdMapping?.find((o) => o?.userUuid === resolvedAdvocate?.uuid)?.individualId;
       setAdvocateDataContext({ ...resolvedAdvocate, individualId });
       sessionStorage.setItem("selectedAdvocate", JSON.stringify(resolvedAdvocate));
@@ -392,7 +388,6 @@ const TopBarComponent = ({
   }, [
     seniorAdvocates,
     advocateId,
-    selectedAdvocate?.id,
     setAdvocateDataContext,
     resolvedAdvocate,
     searchData,
@@ -415,6 +410,14 @@ const TopBarComponent = ({
 
   const hasMembers = Array.isArray(seniorAdvocates) && seniorAdvocates?.length > 0;
 
+  const advocateDropdownOptions = useMemo(() => {
+    if (isSearchLoading || isApprovalPending || individualDataLoading || isIndividuaIdMappingsLoading) return [];
+    else if (isUserLoggedIn && !isSearchLoading && !isApprovalPending && hasMembers && !individualDataLoading) {
+      return seniorAdvocates;
+    }
+    return [];
+  }, [hasMembers, individualDataLoading, isApprovalPending, isIndividuaIdMappingsLoading, isSearchLoading, isUserLoggedIn, seniorAdvocates]);
+
   return (
     <div className="navbar" style={{ zIndex: "999" }}>
       <div className="center-container back-wrapper">
@@ -428,7 +431,13 @@ const TopBarComponent = ({
                 history.push(`/${window?.contextPath}/citizen/dristi/home`);
               } else {
                 const pathUnwind = pathname.split("/").slice(0, 3).join("/") + (isUserLoggedIn ? "/home/home-pending-task" : "/dristi");
-                history.push(pathUnwind);
+                if (advocateId || advClerkId) {
+                  refetchMembers().then(() => {
+                    history.push(pathUnwind, { refectMemberData: Date.now() });
+                  });
+                } else {
+                  history.push(pathUnwind);
+                }
               }
             }}
           >
@@ -452,46 +461,37 @@ const TopBarComponent = ({
 
         <div className="RightMostTopBarOptions">
           {/* Manage Office button & Advocate profile dropdown - only visible for advocates / clerks */}
-          {isSearchLoading || isApprovalPending || individualDataLoading || isIndividuaIdMappingsLoading
-            ? null
-            : isUserLoggedIn &&
-              !isSearchLoading &&
-              !isApprovalPending &&
-              hasMembers &&
-              !individualDataLoading &&
-              (isAdvocate || isAdvocateClerk) && (
-                <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
-                  <AdvocateProfileDropdown
-                    t={t}
-                    options={seniorAdvocates}
-                    selected={selectedAdvocate}
-                    onSelect={changeAdvocateSelection}
-                    disabled={disableAdvocateChange}
-                  />
-                  {isAdvocate && (
-                    <button
-                      className="manage-office-btn"
-                      onClick={handleManageOfficeClick}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "8px 16px",
-                        backgroundColor: "white",
-                        border: "1px solid #007E7E",
-                        borderRadius: "4px",
-                        color: "#007E7E",
-                        fontSize: "14px",
-                        fontWeight: "500",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <ManageOfficeIcon />
-                      <span>{t ? t("MANAGE_OFFICE") : "Manage Office"}</span>
-                    </button>
-                  )}
-                </div>
+          {(isAdvocate || (isAdvocateClerk && advocateDropdownOptions?.length > 0)) && (
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
+              <AdvocateProfileDropdown
+                t={t}
+                options={advocateDropdownOptions}
+                selected={resolvedAdvocate}
+                onSelect={changeAdvocateSelection}
+                disabled={disableAdvocateChange}
+              />
+              {isAdvocate && (
+                <button
+                  className="manage-office-btn"
+                  onClick={handleManageOfficeClick}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "8px 16px",
+                    backgroundColor: "white",
+                    border: "1px solid #007E7E",
+                    borderRadius: "4px",
+                    color: "#007E7E",
+                    cursor: "pointer",
+                  }}
+                >
+                  <ManageOfficeIcon />
+                  <span>{t ? t("MANAGE_OFFICE") : "Manage Office"}</span>
+                </button>
               )}
+            </div>
+          )}
           {!hideChangeLangOnSomeUrlsWhenNotLoggedIn && !isUserLoggedIn ? changeLanguage : null}
           {!hideNotificationIconOnSomeUrlsWhenNotLoggedIn ? (
             <div className="EventNotificationWrapper" onClick={onNotificationIconClick}>

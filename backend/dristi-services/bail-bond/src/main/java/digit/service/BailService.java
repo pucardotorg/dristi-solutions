@@ -533,12 +533,11 @@ public class BailService {
             }
             case "citizen" -> {
                 bailSearchRequest.getCriteria().setUserUuid(userUuid);
+                if(bailSearchRequest.getCriteria().getAsUser() == null){
+                    bailSearchRequest.getCriteria().setAsUser(userUuid);
+                }
             }
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
-        }
-
-        if(bailSearchRequest.getCriteria().getAsUser() == null){
-            bailSearchRequest.getCriteria().setAsUser(userUuid);
         }
     }
 

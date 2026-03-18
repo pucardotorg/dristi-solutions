@@ -1,14 +1,18 @@
 package org.pucar.dristi.repository;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.queryBuilder.ApplicationQueryBuilder;
 import org.pucar.dristi.repository.rowMapper.ApplicationRowMapper;
 import org.pucar.dristi.repository.rowMapper.DocumentRowMapper;
+import org.pucar.dristi.service.IndividualService;
+import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +20,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -29,6 +34,9 @@ public class ApplicationRepository {
     private final CaseUtil caseUtil;
     private final Configuration config;
     private final ObjectMapper mapper;
+    private final ObjectMapper objectMapper;
+    private final IndividualService individualService;
+    private final AdvocateUtil advocateUtil;
 
     @Autowired
     public ApplicationRepository(
@@ -38,7 +46,7 @@ public class ApplicationRepository {
             DocumentRowMapper documentRowMapper,
             CaseUtil caseUtil,
             Configuration config,
-            ObjectMapper mapper) {
+            ObjectMapper mapper, ObjectMapper objectMapper, IndividualService individualService, AdvocateUtil advocateUtil) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
@@ -46,6 +54,9 @@ public class ApplicationRepository {
         this.caseUtil = caseUtil;
         this.config = config;
         this.mapper = mapper;
+        this.objectMapper = objectMapper;
+        this.individualService = individualService;
+        this.advocateUtil = advocateUtil;
     }
 
     public List<Application> getApplications(ApplicationSearchRequest applicationSearchRequest) {
@@ -59,15 +70,45 @@ public class ApplicationRepository {
 
             // TODO : remove this, this is temporary fix (#5016)
             String asUser = applicationSearchRequest.getCriteria().getAsUser();
-            boolean isCitizen = Optional.of(applicationSearchRequest)
-                    .map(ApplicationSearchRequest::getRequestInfo)
+
+            RequestInfo requestInfo = applicationSearchRequest.getRequestInfo();
+            String userUuid = Optional.ofNullable(requestInfo)
                     .map(RequestInfo::getUserInfo)
-                    .map(User::getType)
-                    .map(CITIZEN_UPPER::equalsIgnoreCase)
-                    .orElse(false);
-            // asUser is only used for citizens
-            if(!isCitizen){
-                asUser = null;
+                    .map(User::getUuid)
+                    .orElse(null);
+
+            boolean isAdvocate = Optional.ofNullable(requestInfo)
+                    .map(RequestInfo::getUserInfo)
+                    .map(User::getRoles).stream().flatMap(Collection::stream)
+                    .map(Role::getCode)
+                    .filter(Objects::nonNull)
+                    .anyMatch(ADVOCATE_ROLE::equalsIgnoreCase);
+
+            boolean isClerk = Optional.ofNullable(requestInfo)
+                    .map(RequestInfo::getUserInfo)
+                    .map(User::getRoles).stream().flatMap(Collection::stream)
+                    .map(Role::getCode)
+                    .filter(Objects::nonNull)
+                    .anyMatch(ADVOCATE_CLERK_ROLE::equalsIgnoreCase);
+
+
+            String filingNumber = applicationSearchRequest.getCriteria().getFilingNumber();
+            List<UUID> onBehalfOf = applicationSearchRequest.getCriteria().getOnBehalfOf();
+            if((isAdvocate || isClerk) && onBehalfOf != null && !onBehalfOf.isEmpty() && asUser != null && filingNumber != null) {
+
+                CourtCase courtCase = fetchCourtCase(filingNumber, requestInfo);
+
+                if(!asUser.equals(userUuid)){
+                    validateOfficeAdvocateMapping(asUser, userUuid, courtCase);
+                }
+
+                validateAdvocateLitigantMapping(
+                        onBehalfOf,
+                        asUser,
+                        courtCase,
+                        requestInfo,
+                        config.getStateLevelTenantId()
+                );
             }
 
             String applicationQuery = queryBuilder.getApplicationSearchQuery(applicationSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList, asUser, applicationSearchRequest.getRequestInfo());
@@ -123,6 +164,126 @@ public class ApplicationRepository {
             log.error("Error while fetching application list {}", e.getMessage());
             throw new CustomException(APPLICATION_SEARCH_ERR,"Error while fetching application list: "+e.getMessage());
         }
+    }
+
+    private void validateOfficeAdvocateMapping(String officeAdvocateUserUuid, String memberUserUuid, CourtCase courtCase){
+
+        boolean isOfficeMappingValid = Optional.ofNullable(courtCase.getAdvocateOffices())
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(office -> officeAdvocateUserUuid.equals(office.getOfficeAdvocateUserUuid()))
+                .anyMatch(office -> {
+                    Stream<AdvocateOfficeMember> membersStream = Stream.concat(
+                            Optional.ofNullable(office.getAdvocates()).orElse(Collections.emptyList()).stream(),
+                            Optional.ofNullable(office.getClerks()).orElse(Collections.emptyList()).stream()
+                    );
+                    return membersStream
+                            .anyMatch(member -> memberUserUuid.equals(member.getMemberUserUuid()));
+                });
+
+        if (!isOfficeMappingValid) {
+            throw new CustomException(VALIDATION_ERR,
+                    String.format("%s is not a member of %s's office in case %s",
+                            memberUserUuid, officeAdvocateUserUuid, courtCase.getFilingNumber()));
+        }
+    }
+
+    // todo change implementation to use uuid directly from AdvocateMapping/Party after additional details changes
+    private void validateAdvocateLitigantMapping(List<UUID> onBehalfOf, String asUser, CourtCase courtCase, RequestInfo requestInfo, String tenantId){
+        String advocateId = getAdvocateIdFromUserUuid(asUser, requestInfo, tenantId);
+
+        List<String> representingUserUuids = Optional.ofNullable(courtCase.getRepresentatives())
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(rep -> advocateId.equals(rep.getAdvocateId()))
+                .map(rep -> getRepresentingUserUuidsForRepresentative(rep, requestInfo))
+                .flatMap(List::stream)
+                .toList();
+
+        boolean isAdvocateRepresentingLitigants = onBehalfOf.stream()
+                .allMatch(uuid -> representingUserUuids.contains(uuid.toString()));
+
+        if (!isAdvocateRepresentingLitigants) {
+            throw new CustomException(VALIDATION_ERR,
+                    String.format("asUser advocate %s does not represent all the onBehalfOf litigants", asUser));
+        }
+    }
+
+    private CourtCase fetchCourtCase(String filingNumber, RequestInfo requestInfo) {
+        CaseCriteria criteria = CaseCriteria.builder()
+                .filingNumber(filingNumber)
+                .defaultFields(false)
+                .build();
+
+        CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(Collections.singletonList(criteria))
+                .build();
+
+        JsonNode caseResponse = caseUtil.searchCaseDetails(caseSearchRequest);
+        if (caseResponse == null) {
+            throw new CustomException(VALIDATION_ERR, "Case details not found for filing number " + filingNumber);
+        }
+
+        CourtCase courtCase = objectMapper.convertValue(caseResponse, CourtCase.class);
+        List<AdvocateMapping> representatives = Optional.ofNullable(courtCase.getRepresentatives())
+                .orElse(Collections.emptyList());
+
+        if (representatives.isEmpty()) {
+            throw new CustomException(VALIDATION_ERR, "No representatives found for filing number " + filingNumber);
+        }
+        return courtCase;
+    }
+
+    private String getAdvocateIdFromUserUuid(String asUser, RequestInfo requestInfo, String tenantId) {
+
+        List<Individual> advocateIndividuals = individualService.getIndividualsByUserUuid(requestInfo, Collections.singletonList(asUser));
+        if (advocateIndividuals == null || advocateIndividuals.isEmpty()) {
+            throw new CustomException(VALIDATION_ERR, "Advocate user not found for asUser " + asUser);
+        }
+
+        String individualId = advocateIndividuals.get(0).getIndividualId();
+        if (individualId == null) {
+            throw new CustomException(VALIDATION_ERR, "Individual id missing for asUser " + asUser);
+        }
+
+        JsonNode advocateNode = advocateUtil.searchAdvocateByIndividualId(requestInfo, tenantId, individualId);
+        if (advocateNode == null) {
+            throw new CustomException(VALIDATION_ERR, "Advocate not found for individual id " + individualId);
+        }
+
+        String advocateId = advocateNode.path("id").asText(null);
+        if (advocateId == null || advocateId.isEmpty()) {
+            throw new CustomException(VALIDATION_ERR, "Advocate id missing for individual id " + individualId);
+        }
+
+        return advocateId;
+    }
+
+    private List<String> getRepresentingUserUuidsForRepresentative(AdvocateMapping representative, RequestInfo requestInfo) {
+        List<Party> representing = Optional.ofNullable(representative.getRepresenting()).orElse(Collections.emptyList());
+        if (representing.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> litigantUserUuids = new ArrayList<>();
+        for (Party party : representing) {
+            String litigantIndividualId = party.getIndividualId();
+            if (litigantIndividualId == null) {
+                continue;
+            }
+
+            List<Individual> litigantIndividuals = individualService.getIndividualsByIndividualId(requestInfo, litigantIndividualId);
+            if (litigantIndividuals == null || litigantIndividuals.isEmpty()) {
+                continue;
+            }
+
+            String litigantUserUuid = litigantIndividuals.get(0).getUserUuid();
+            if (litigantUserUuid != null) {
+                litigantUserUuids.add(litigantUserUuid);
+            }
+        }
+        return litigantUserUuids;
     }
 
     // TODO : remove this, this is temporary fix (#5016)

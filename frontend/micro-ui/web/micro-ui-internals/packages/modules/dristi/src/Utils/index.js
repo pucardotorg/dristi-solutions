@@ -118,7 +118,8 @@ export const modifiedEvidenceNumber = (value, filingNumber = null) => {
 };
 export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
   const processedPaymentType = paymentType?.toLowerCase()?.includes("application");
-  return processedPaymentType ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;
+  const isCTC = paymentType?.toLowerCase()?.includes("ctc");
+  return processedPaymentType && !isCTC ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;
 };
 
 export const getTaskType = (businessService) => {
@@ -763,13 +764,13 @@ export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
   }
   const advocateOffices = caseDetails?.advocateOffices || [];
   // If Senior advocate created the case directly (no office mapping)
-  if (advocateOffices.length === 0) {
+  if (advocateOffices?.length === 0) {
     return [createdByUuid];
   }
 
   const ownerAdvocateId = isOwnerAdvocate?.advocateId;
   //Now we have to check all the advocates and clerks members associated with this advocate and they all can edit the case draft
-  const matchingOffice = advocateOffices.find((office) => office?.officeAdvocateId === ownerAdvocateId);
+  const matchingOffice = advocateOffices?.find((office) => office?.officeAdvocateId === ownerAdvocateId);
   if (!matchingOffice) {
     // Fallback
     return [createdByUuid];
@@ -816,21 +817,31 @@ export const getLoggedInUserOnBehalfOfUuid = (caseDetails, currentLoggedInUserUu
   else return currentLoggedInUserUuid;
 };
 
-export const checkIfJuniorAndDirectAdvocate = (caseDetails, currentLoggedInUserUuid) => {
+export const checkIfCaseAccessThroughMultipleAdvocates = (caseDetails, currentLoggedInUserUuid) => {
+  let isAccessThroughMultipleAdvocates = false;
   const isAdvocate = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === currentLoggedInUserUuid);
-  // if logged in user is advocate, we have to also check if he exists in same case as direct advocate as well as junior advocate under another senior adocoate.
-  // and check selected advocate in the top dropdown. -> accordingly return value.
 
-  //If logged in user is a junior adv working under a senior in the case.
-  const ifJuniorAdvocate = caseDetails?.advocateOffices?.find((office) =>
+  //If logged in user is a junior adv working under one/multiple seniors in the case.
+  const ifJuniorAdvocate = caseDetails?.advocateOffices?.filter((office) =>
     office?.advocates?.find((adv) => adv?.memberUserUuid === currentLoggedInUserUuid)
   );
 
-  if (ifJuniorAdvocate && isAdvocate) {
-    return true;
+  // if logged in user is advocate, we have to also check if he exists in same case as direct advocate as well as junior advocate under another senior adocoate.
+  // or if he is junior advocate in same case under multiple advocates.
+  if ((ifJuniorAdvocate?.length > 0 && isAdvocate) || ifJuniorAdvocate?.length > 1) {
+    isAccessThroughMultipleAdvocates = true;
   }
 
-  return false;
+  const ifClerk = caseDetails?.advocateOffices?.filter((office) =>
+    office?.clerks?.find((clerk) => clerk?.memberUserUuid === currentLoggedInUserUuid)
+  );
+
+  // if clerk is working under multiple advocates in same case.
+  if (ifClerk?.length > 1) {
+    isAccessThroughMultipleAdvocates = true;
+  }
+
+  return isAccessThroughMultipleAdvocates;
 };
 
 export const getClerkMembersForPartiesTab = (data) => {
@@ -847,6 +858,7 @@ export const getClerkMembersForPartiesTab = (data) => {
         partyType: "CLERK",
         isEditable: false,
         status: "JOINED",
+        auditDetails: { createdTime: clerk.auditDetails?.lastModifiedTime },
       }));
 
       return memberClerks;
@@ -865,6 +877,7 @@ export const getClerkMembersForPartiesTab = (data) => {
             partyType: clerk.partyType,
             isEditable: clerk.isEditable,
             status: clerk.status,
+            auditDetails: clerk.auditDetails,
           });
         } else {
           const existing = map.get(clerk.partyUuid);
@@ -888,14 +901,15 @@ export const getAssistantAdvocateMembersForPartiesTab = (data) => {
     advocateOffices?.flatMap((rep) => {
       const officeAdvocateUuid = rep?.officeAdvocateUserUuid;
       const officeAdvocateName = rep?.officeAdvocateName;
-      const memberAdvocates = (rep?.advocates || []).map((clerk) => ({
-        name: clerk?.memberName,
-        partyUuid: clerk?.memberUserUuid,
+      const memberAdvocates = (rep?.advocates || []).map((assistantAdvocate) => ({
+        name: assistantAdvocate?.memberName,
+        partyUuid: assistantAdvocate?.memberUserUuid,
         officeAdvocateUuid: officeAdvocateUuid,
         officeAdvocateName: officeAdvocateName,
         partyType: "ASSISTANT_ADVOCATE",
         isEditable: false,
         status: "JOINED",
+        auditDetails: { createdTime: assistantAdvocate?.auditDetails?.lastModifiedTime },
       }));
 
       return memberAdvocates;
@@ -914,6 +928,7 @@ export const getAssistantAdvocateMembersForPartiesTab = (data) => {
             partyType: assistantAdvocate.partyType,
             isEditable: assistantAdvocate.isEditable,
             status: assistantAdvocate.status,
+            auditDetails: assistantAdvocate.auditDetails,
           });
         } else {
           const existing = map.get(assistantAdvocate.partyUuid);
@@ -991,6 +1006,17 @@ export const getAllAssociatedPartyUuids = (caseDetails, ownerUuid) => {
     return Array.from(new Set((editableUsers || []).filter(Boolean)));
   }
   return [ownerUuid];
+};
+
+export const downloadPdfFromBlob = (blob, fileName) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", fileName || "document.pdf");
+  document.body.appendChild(link);
+  link.click();
+  link.parentNode.removeChild(link);
+  window.URL.revokeObjectURL(url);
 };
 
 export const DateUtils = {

@@ -3,7 +3,7 @@ export const chequeDetailsFormConfig = [
     body: [
       {
         type: "text",
-        label: "CS_DISHONOURED_CHEQUE_SIGNATORY_NAME",
+        label: "CS_SIGNATORY_NAME_BRACKETS",
         populators: {
           name: "chequeSignatoryName",
           error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
@@ -19,8 +19,6 @@ export const chequeDetailsFormConfig = [
           },
         },
         isMandatory: true,
-        tooltipValue: "CS_DISHONOURED_CHEQUE_SIGNATORY_NAME_INFO",
-        labelChildren: "OutlinedInfoIcon",
       },
     ],
   },
@@ -55,7 +53,7 @@ export const chequeDetailsFormConfig = [
     body: [
       {
         type: "text",
-        label: "CS_NAME_ON_CHEQUE",
+        label: "CS_PAYEE_NAME_BRACKETS",
         populators: {
           name: "name",
           error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
@@ -71,8 +69,6 @@ export const chequeDetailsFormConfig = [
           },
         },
         isMandatory: true,
-        tooltipValue: "CS_NAME_ON_CHEQUE_INFO",
-        labelChildren: "OutlinedInfoIcon",
       },
     ],
   },
@@ -87,7 +83,7 @@ export const chequeDetailsFormConfig = [
           inputs: [
             {
               name: "payeeIfsc",
-              label: "CS_PAYEE_IFSC_CODE",
+              label: "CS_PAYEE_IFSC_CODE_BRACKETS",
               validation: {
                 pattern: {
                   masterName: "commonUiConfig",
@@ -102,7 +98,6 @@ export const chequeDetailsFormConfig = [
                 fontSize: "12px",
                 width: "70%",
               },
-              infoTooltipMessage: "PAYEE_IFSC_CODE_SUGGESTION",
             },
           ],
         },
@@ -113,14 +108,14 @@ export const chequeDetailsFormConfig = [
     body: [
       {
         type: "text",
-        label: "CS_PAYEE_BANK_NAME",
+        label: "CS_PAYEE_BANK_NAME_BRACKETS",
         populators: {
           name: "payeeBankName",
           error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
+          disable: "{{payeeIfscField.BankReadOnly}}",
+          isDependent: true,
         },
         isMandatory: true,
-        tooltipValue: "CS_PAYEE_BANK_NAME_INFO",
-        labelChildren: "OutlinedInfoIcon",
       },
     ],
   },
@@ -128,14 +123,14 @@ export const chequeDetailsFormConfig = [
     body: [
       {
         type: "text",
-        label: "CS_PAYEE_BRANCH_NAME",
+        label: "CS_PAYEE_BRANCH_NAME_BRACKETS",
         populators: {
           name: "payeeBranchName",
           error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
+          disable: "{{payeeIfscField.BranchReadOnly}}",
+          isDependent: true,
         },
         isMandatory: true,
-        tooltipValue: "CS_PAYEE_BRANCH_NAME_INFO",
-        labelChildren: "OutlinedInfoIcon",
       },
     ],
   },
@@ -172,8 +167,6 @@ export const chequeDetailsFormConfig = [
           },
         },
         isMandatory: true,
-        tooltipValue: "CS_DATE_OF_ISSUANCE_INFO",
-        labelChildren: "OutlinedInfoIcon",
       },
     ],
   },
@@ -188,7 +181,7 @@ export const chequeDetailsFormConfig = [
           inputs: [
             {
               name: "payerIfsc",
-              label: "CS_PAYER_IFSC_CODE",
+              label: "CS_PAYER_IFSC_CODE_BRACKETS",
               validation: {
                 pattern: {
                   masterName: "commonUiConfig",
@@ -203,7 +196,6 @@ export const chequeDetailsFormConfig = [
                 fontSize: "12px",
                 width: "70%",
               },
-              infoTooltipMessage: "PAYER_IFSC_CODE_SUGGESTION",
             },
           ],
         },
@@ -214,14 +206,14 @@ export const chequeDetailsFormConfig = [
     body: [
       {
         type: "text",
-        label: "CS_PAYER_BANK_NAME",
+        label: "CS_PAYER_BANK_NAME_BRACKETS",
         populators: {
           name: "payerBankName",
           error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
+          disable: "{{payerIfscField.BankReadOnly}}",
+          isDependent: true,
         },
         isMandatory: true,
-        tooltipValue: "CS_PAYER_BANK_NAME_INFO",
-        labelChildren: "OutlinedInfoIcon",
       },
     ],
   },
@@ -229,14 +221,14 @@ export const chequeDetailsFormConfig = [
     body: [
       {
         type: "text",
-        label: "CS_PAYER_BRANCH_NAME",
+        label: "CS_PAYER_BRANCH_NAME_BRACKETS",
         populators: {
           name: "payerBranchName",
           error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
+          disable: "{{payerIfscField.BranchReadOnly}}",
+          isDependent: true,
         },
         isMandatory: true,
-        tooltipValue: "CS_PAYER_BRANCH_NAME_INFO",
-        labelChildren: "OutlinedInfoIcon",
       },
     ],
   },
@@ -309,7 +301,6 @@ export const chequeDetailsFormConfig = [
           },
         },
         isMandatory: true,
-        labelChildren: "OutlinedInfoIcon",
       },
     ],
   },
@@ -332,7 +323,6 @@ export const chequeDetailsFormConfig = [
               documentHeader: "CS_PROOF_DEPOSIT_CHEQUE",
               isMultipleUpload: true,
               uploadGuidelines: "UPLOAD_DOC_10",
-              infoTooltipMessage: "CS_PROOF_DEPOSIT_CHEQUE",
               maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             },
           ],
@@ -382,7 +372,6 @@ export const chequeDetailsFormConfig = [
               documentHeader: "CS_CHEQUE_RETURN_MEMO",
               isMultipleUpload: true,
               uploadGuidelines: "UPLOAD_DOC_10",
-              infoTooltipMessage: "CS_CHEQUE_RETURN_MEMO",
               maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             },
           ],

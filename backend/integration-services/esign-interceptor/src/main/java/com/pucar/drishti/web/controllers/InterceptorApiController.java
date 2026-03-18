@@ -32,18 +32,25 @@ public class InterceptorApiController {
 
 
     @GetMapping("/v1/redirect")
-    public ResponseEntity<HttpHeaders> redirectHandler(@RequestParam("result") String result, @RequestParam("filestoreId") String filestoreId, @RequestParam("userType") String userType) {
-        log.info("api=/v1/redirect, result = IN_PROGRESS result = {}, filestoreId = {}, userType = {}", result, filestoreId, userType);
+    public ResponseEntity<HttpHeaders> redirectHandler(@RequestParam("result") String result, @RequestParam("filestoreId") String filestoreId, @RequestParam("redirectionType") String redirectionType) {
+        log.info("api=/v1/redirect, result = IN_PROGRESS result = {}, filestoreId = {}, userType = {}", result, filestoreId, redirectionType);
         log.info("redirecting through get method");
 
         // Construct the final redirect URL
-        String redirectUri = configs.getRedirectUrl() + userType + "/dristi";
+        String redirectUri = "";
+        if (redirectionType.equalsIgnoreCase("employee") || redirectionType.equalsIgnoreCase("citizen")) {
+            redirectUri = configs.getRedirectUrl() + "/ui/" + redirectionType + "/dristi";
+        } else if (redirectionType.equalsIgnoreCase("landing")) {
+            redirectUri = configs.getRedirectUrl() + configs.getLandingPageRedirectUrl();
+        } else {
+            throw new RuntimeException("Invalid redirectionType: " + redirectionType);
+        }
         redirectUri += "?result=" + result + "&filestoreId=" + filestoreId;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(URI.create(redirectUri));
         log.info("redirectUri {}", redirectUri);
-        log.info("api=/v1/redirect, result = SUCCESS result = {}, filestoreId = {}, userType = {}", result, filestoreId, userType);
+        log.info("api=/v1/redirect, result = SUCCESS result = {}, filestoreId = {}, userType = {}", result, filestoreId, redirectionType);
         return new ResponseEntity<>(headers, HttpStatus.TEMPORARY_REDIRECT);
     }
 
@@ -74,11 +81,13 @@ public class InterceptorApiController {
 
         log.info("generating uri to redirect");
 
-        String userType;
+        String redirectionType;
         if (pageModule.equals("en")) {
-            userType = "employee";
+            redirectionType = "employee";
         } else if (pageModule.equals("ci")) {
-            userType = "citizen";
+            redirectionType = "citizen";
+        } else if (pageModule.equals("lp")) {
+            redirectionType = "landing";
         } else {
             throw new RuntimeException("Invalid pageModule: " + pageModule);
         }
@@ -87,7 +96,7 @@ public class InterceptorApiController {
         ModelAndView modelAndView = new ModelAndView("redirect:/v1/redirect");
         modelAndView.addObject("result", result);
         modelAndView.addObject("filestoreId", filestoreId);
-        modelAndView.addObject("userType", userType);
+        modelAndView.addObject("redirectionType", redirectionType);
         log.info("api=/v1/_intercept, result = SUCCESS eSignResponse = {}, espTxnID = {}", response, espId);
         return modelAndView;
 

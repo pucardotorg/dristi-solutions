@@ -99,10 +99,15 @@ export const assignCasesConfig = ({ member = {}, advocateInfo = {} } = {}) => {
             {
               label: "CASE_NUMBER",
               jsonPath: "filingNumber",
+              additionalCustomization: true,
             },
           ],
           enableColumnSort: true,
           resultsJsonPath: "cases",
+          customDefaultPagination: {
+            limit: 10,
+            offset: 0,
+          },
           manualPagination: true,
         },
         show: true,
