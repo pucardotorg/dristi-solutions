@@ -15,8 +15,8 @@
       ],
       "allowedSearchCriteria": [
         {
-          "name": "caseTitle",
-          "path": "Data.caseTitle.keyword",
+          "name": "searchableFields",
+          "path": "Data.searchableFields.keyword",
           "operator": "WILDCARD",
           "isMandatory": false
         },
