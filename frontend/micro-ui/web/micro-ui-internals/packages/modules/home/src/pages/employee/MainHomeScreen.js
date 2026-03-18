@@ -1162,9 +1162,9 @@ const MainHomeScreen = () => {
         fetchHearingCount();
       } else {
         fetchPendingTaskCounts();
-        fetchCTCApplicationCount();
       }
     }
+    fetchCTCApplicationCount();
     setActiveTab(label || title);
     setActiveTabTitle(title);
     sessionStorage.removeItem("diaryDateFilter");
@@ -1306,7 +1306,7 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "CTC_APPLICATIONS" ? (
           <div className="home-bulk-sign">
-            <CTCApplications setCount={setCtcApplicationCount} />
+            <CTCApplications refetch={fetchCTCApplicationCount} />
           </div>
         ) : activeTab === "CS_HOME_ISSUE_CTC_COPY" ? (
           <div className="home-bulk-sign">
