@@ -298,6 +298,7 @@ const ManageOffice = () => {
         memberName: searchResult?.name,
         memberType: memberTypeMap[searchResult?.designation] || "ADVOCATE_CLERK",
         memberMobileNumber: mobileNumber,
+        memberEmail: searchResult?.email,
         memberId: memberId,
         memberUserUuid: searchResult?.individualId,
         officeAdvocateId: officeAdvocateId,

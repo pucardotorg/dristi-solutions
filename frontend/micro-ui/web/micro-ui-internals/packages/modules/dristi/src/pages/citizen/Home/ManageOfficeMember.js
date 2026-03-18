@@ -13,69 +13,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-const AccessTypeDropdown = ({ options = [], selected, onChange, disabled = false }) => {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef(null);
 
-  useEffect(() => {
-    if (!open) return;
-
-    const handleClickOutside = (event) => {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [open]);
-
-  const handleToggle = () => {
-    if (disabled) return;
-    setOpen((prev) => !prev);
-  };
-
-  const handleSelect = (option) => {
-    if (onChange) {
-      onChange(option);
-    }
-    setOpen(false);
-  };
-
-  return (
-    <div className="manage-office-member-access-type" ref={containerRef}>
-      <button
-        type="button"
-        className={`manage-office-member-access-type__control${disabled ? " manage-office-member-access-type__control--disabled" : ""}`}
-        onClick={handleToggle}
-        disabled={disabled}
-      >
-        <span className="manage-office-member-access-type__value">{selected?.name || ""}</span>
-        <span className="manage-office-member-access-type__arrow" aria-hidden="true">
-          <AdvocateProfileChevronIcon />
-        </span>
-      </button>
-      {open && (
-        <div className="manage-office-member-access-type__menu">
-          {options.map((option) => (
-            <button
-              key={option.code}
-              type="button"
-              className={`manage-office-member-access-type__option${
-                option.code === selected?.code ? " manage-office-member-access-type__option--selected" : ""
-              }`}
-              onClick={() => handleSelect(option)}
-            >
-              {option.name}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const ManageOfficeMember = () => {
   const { t } = useTranslation();
@@ -130,19 +68,12 @@ const ManageOfficeMember = () => {
   const mobileNumber = member?.memberMobileNumber
     ? `+91 ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(0, 5)} ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(5)}`
     : "—";
+  const emailId = member?.memberEmail || "—";
 
   const assignCasesConfigWithTenant = useMemo(() => assignCasesConfig({ member, advocateInfo: effectiveAdvocateInfo }), [
     member,
     effectiveAdvocateInfo,
   ]);
-
-  const accessTypeOptions = useMemo(
-    () => [
-      { code: "ALL_CASES", name: t("ALL_CASES") || "All Cases" },
-      { code: "SPECIFIC_CASES", name: t("SPECIFIC_CASES") || "Specific Cases" },
-    ],
-    [t]
-  );
 
   const yesNoOptions = useMemo(
     () => [
@@ -151,11 +82,6 @@ const ManageOfficeMember = () => {
     ],
     [t]
   );
-
-  const selectedAccessTypeOption = useMemo(() => accessTypeOptions.find((opt) => opt.code === accessType) || accessTypeOptions[0], [
-    accessTypeOptions,
-    accessType,
-  ]);
 
   const selectedAllowCaseCreateOption = useMemo(
     () => yesNoOptions.find((opt) => opt.code === allowCaseCreate) || yesNoOptions[0],
@@ -522,6 +448,80 @@ const ManageOfficeMember = () => {
 
   return (
     <div className="manage-office-member-page">
+      <style>{`
+        .manage-case-access-radio-container {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 24px;
+          padding: 16px 24px;
+          background: #F7F5F3;
+          border-radius: 8px;
+          margin-bottom: 24px;
+        }
+        .manage-case-access-label {
+          font-family: "Roboto", sans-serif;
+          font-weight: 400;
+          font-size: 16px;
+          color: #505A5F;
+        }
+        .manage-case-access-radio-group {
+          display: flex;
+          align-items: center;
+          gap: 24px;
+        }
+        .manage-case-access-radio {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          font-family: "Roboto", sans-serif;
+          font-weight: 500;
+          font-size: 16px;
+          color: #505A5F;
+        }
+        .manage-case-access-radio input[type="radio"] {
+          appearance: none;
+          background-color: #fff;
+          margin: 0;
+          font: inherit;
+          color: #007E7E;
+          width: 20px;
+          height: 20px;
+          border: 2px solid #505A5F;
+          border-radius: 50%;
+          display: grid;
+          place-content: center;
+          cursor: pointer;
+        }
+        .manage-case-access-radio input[type="radio"]::before {
+          content: "";
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          transform: scale(0);
+          transition: 120ms transform ease-in-out;
+          box-shadow: inset 1em 1em #007E7E;
+          background-color: #007E7E;
+        }
+        .manage-case-access-radio input[type="radio"]:checked {
+          border: 2px solid #007E7E;
+        }
+        .manage-case-access-radio input[type="radio"]:checked::before {
+          transform: scale(1);
+        }
+        .manage-case-access-info-banner {
+          margin-bottom: 24px;
+        }
+        .assign-cases-subtitle {
+          font-family: "Roboto", sans-serif;
+          font-weight: 700;
+          font-size: 24px;
+          color: #231f20;
+          margin-top: 12px;
+          margin-bottom: 16px;
+        }
+      `}</style>
       <div className="manage-office-member-scrollable">
         <h1 className="manage-office-member-title">{t("MANAGE_OFFICE_MEMBER") || "Manage Office Member"}</h1>
 
@@ -538,9 +538,9 @@ const ManageOfficeMember = () => {
             <span className="manage-office-member-field__label">{t("MOBILE_NUMBER") || "Mobile number"}</span>
             <span className="manage-office-member-field__value">{mobileNumber}</span>
           </div>
-          <div className="manage-office-member-field manage-office-member-field--wide">
-            <span className="manage-office-member-field__label">{t("ACCESS_TYPE") || "Access Type"}</span>
-            <AccessTypeDropdown options={accessTypeOptions} selected={selectedAccessTypeOption} onChange={handleAccessTypeChange} />
+          <div className="manage-office-member-field">
+            <span className="manage-office-member-field__label">{t("EMAIL") || "Email"}</span>
+            <span className="manage-office-member-field__value">{emailId}</span>
           </div>
           
           {!isNewMember && (
@@ -562,7 +562,8 @@ const ManageOfficeMember = () => {
                 justifyContent: "center",
                 height: "40px",
                 width: "fit-content",
-                marginTop: "24px"
+                marginLeft: "auto",
+                alignSelf: "center"
               }}
             >
               {t("REMOVE_MEMBER") || "Remove Member"}
@@ -581,9 +582,51 @@ const ManageOfficeMember = () => {
         </div>
 
         <div className="assign-cases-section">
-          <h2 className="assign-cases-section-title">{t(assignCasesConfigWithTenant?.label) || "Assign Cases"}</h2>
+          <h2 className="assign-cases-section-title">{t("MANAGE_CASE_ACCESS") || "Manage Case Access"}</h2>
+          
+          <div className="manage-case-access-radio-container">
+            <span className="manage-case-access-label">{t("CASE_ACCESS_TYPE") || "Case Access Type"}</span>
+            <div className="manage-case-access-radio-group">
+              <label className="manage-case-access-radio">
+                <input 
+                  type="radio" 
+                  name="accessType" 
+                  value="ALL_CASES"
+                  checked={accessType === "ALL_CASES"}
+                  onChange={() => handleAccessTypeChange({code: "ALL_CASES"})}
+                />
+                <span className="radio-label">{t("ALL_CASES") || "All Cases"}</span>
+              </label>
+              <label className="manage-case-access-radio">
+                <input 
+                  type="radio" 
+                  name="accessType" 
+                  value="SPECIFIC_CASES"
+                  checked={accessType === "SPECIFIC_CASES"}
+                  onChange={() => handleAccessTypeChange({code: "SPECIFIC_CASES"})}
+                />
+                <span className="radio-label">{t("SPECIFIC_CASES") || "Specific Cases"}</span>
+              </label>
+            </div>
+          </div>
+
+          {accessType === "ALL_CASES" && (
+            <div className="manage-office-member-info-banner manage-case-access-info-banner">
+              <span className="manage-office-member-info-icon" aria-hidden>
+                <InfoCircleIcon />
+              </span>
+              <span>
+                {t("MANAGE_CASE_ACCESS_INFO") ||
+                  "This will give access to all cases including any cases filed in the future."}
+              </span>
+            </div>
+          )}
+
           {accessType === "SPECIFIC_CASES" && (
             <div className={`inbox-search-wrapper manage-office-member-inbox`}>
+              <h3 className="assign-cases-subtitle">
+                {t(assignCasesConfigWithTenant?.label) || "Assign Cases"}
+              </h3>
               <InboxSearchComposer key={casesRefreshKey} customStyle={sectionsParentStyle} configs={assignCasesConfigWithTenant} showTab={false} />
             </div>
           )}
