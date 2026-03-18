@@ -27,7 +27,6 @@ const AdvocateMain = () => {
   const history = useHistory();
 
 
-
   return (
     <div>
       <Header >{t(indConfigs?.label)}</Header>

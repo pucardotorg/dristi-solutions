@@ -66,7 +66,6 @@
 //   let c = "NIA S";
 
 
-
 //   return isMobileView ? (
 //     <Modal
 //       popupStyles={{

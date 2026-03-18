@@ -10,7 +10,6 @@ import { getFilingType } from "../../../Utils";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { DRISTIService } from "../../../services";
 import isEqual from "lodash/isEqual";
-
 import WitnessDepositionESignLockModal from "./WitnessDepositionESignLockModal";
 import AddWitnessMobileNumberModal from "./AddWitnessMobileNumberModal";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
@@ -19,19 +18,6 @@ import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearc
 import SelectCustomFormatterTextArea from "../../../components/SelectCustomFormatterTextArea";
 import { MultiSelectDropdownNew } from "../../../components/MultiSelectDropdownNew";
 import PreviewPdfModal from "../../../../../submissions/src/components/PreviewPdfModal";
-
-const defaultExaminationQuestionOptions = [
-  { code: "Q1", title: "whereabouts", label: "Where were you on the night of the incident?" },
-  { code: "Q2", title: "silence", label: "Are you sure you want to stay silent?" },
-  { code: "Q3", title: "threat", label: "Did anyone threaten you to stay silent?" },
-];
-
-const formatAddress = (addr) => {
-  if (!addr) return "";
-  const { locality = "", city = "", district = "", state = "", pincode = "" } = addr;
-  return `${locality}, ${city}, ${district}, ${state}, ${pincode}`.trim();
-};
-
 
 
 export const _getPdfConfigForExamination = (documentNumber, caseDetails, courtId, tenantId) => {

@@ -451,7 +451,6 @@ const PaymentForSummonModal = ({ path }) => {
       }
     };
 
-
     return {
       "e-post": [
         {

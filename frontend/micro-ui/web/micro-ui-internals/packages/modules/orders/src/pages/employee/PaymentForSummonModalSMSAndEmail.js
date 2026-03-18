@@ -53,7 +53,6 @@ const PaymentForSummonComponent = ({
   const [selectedOption, setSelectedOption] = useState({});
 
 
-
   return (
     <div className="payment-for-summon">
       <p style={{ marginTop: "0px", marginBottom: "0px" }}>

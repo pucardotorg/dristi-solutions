@@ -81,7 +81,6 @@ async function applicationGeneric(
     }
 
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-
     let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;

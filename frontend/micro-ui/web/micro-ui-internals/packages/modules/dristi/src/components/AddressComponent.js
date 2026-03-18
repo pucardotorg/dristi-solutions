@@ -126,7 +126,6 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
     }
   }
 
-
   return (
     <div style={config?.populators?.customStyle}>
       {inputs

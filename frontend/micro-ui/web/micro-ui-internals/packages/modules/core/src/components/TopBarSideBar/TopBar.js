@@ -76,7 +76,6 @@ const TopBar = ({
   }
 
 
-
   if (CITIZEN) {
     return (
       <TopBarComponent
