@@ -15,7 +15,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-const CTCApplications = ({ setCount }) => {
+const CTCApplications = ({ refetch }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getStateId();
@@ -81,8 +81,8 @@ const CTCApplications = ({ setCount }) => {
         ...CTCApplicationsConfig.apiDetails,
       },
       additionalDetails: {
-        setCount: (ch) => {
-          if (setCount) setCount(ch);
+        setCount: () => {
+          if (refetch) refetch();
         },
       },
       sections: {
