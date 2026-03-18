@@ -72,7 +72,7 @@
       "allowedSearchCriteria": [
         {
           "name": "searchableFields",
-          "path": "Data.searchableFields",
+          "path": "Data.searchableFields.keyword",
           "operator": "WILDCARD",
           "isMandatory": false
         },
