@@ -2391,7 +2391,10 @@ public class CaseService {
             workflowObject.setAction("TYPE DEPOSITION");
             workflowObject.setDocuments(Collections.singletonList(workflowDocument));
 
-            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, joinCaseLitigant.getIndividualId());
+            String userUuid = Optional.of(requestInfo)
+                    .map(RequestInfo::getUserInfo)
+                    .map(User::getUuid)
+                    .orElse(null);
 
             EvidenceRequest evidenceRequest = EvidenceRequest.builder().requestInfo(requestInfo)
                     .artifact(Artifact.builder()
@@ -2406,7 +2409,7 @@ public class CaseService {
                             .tenantId(courtCase.getTenantId())
                             .file(document)
                             .workflow(workflowObject)
-                            .asUser(individuals.get(0).getUserUuid())
+                            .asUser(userUuid)
                             .build()).build();
 
             evidenceUtil.createEvidence(evidenceRequest);
@@ -2425,7 +2428,10 @@ public class CaseService {
             workflowObject.setAction("TYPE DEPOSITION");
             workflowObject.setDocuments(Collections.singletonList(workflowDocument));
 
-            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, representingJoinCase.getIndividualId());
+            String userUuid = Optional.of(requestInfo)
+                    .map(RequestInfo::getUserInfo)
+                    .map(User::getUuid)
+                    .orElse(null);
 
             EvidenceRequest evidenceRequest = EvidenceRequest.builder().requestInfo(requestInfo)
                     .artifact(Artifact.builder()
@@ -2440,7 +2446,7 @@ public class CaseService {
                             .tenantId(courtCase.getTenantId())
                             .file(document)
                             .workflow(workflowObject)
-                            .asUser(individuals.get(0).getUserUuid())
+                            .asUser(userUuid)
                             .build()).build();
 
             evidenceUtil.createEvidence(evidenceRequest);
@@ -5674,7 +5680,10 @@ public class CaseService {
         workflowObject.setAction("TYPE DEPOSITION");
         workflowObject.setDocuments(Collections.singletonList(workflowDocument));
 
-        List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, litigantDetails.getIndividualId());
+        String userUuid = Optional.of(requestInfo)
+                .map(RequestInfo::getUserInfo)
+                .map(User::getUuid)
+                .orElse(null);
 
         return EvidenceRequest.builder().requestInfo(requestInfo)
                 .artifact(Artifact.builder()
@@ -5689,7 +5698,7 @@ public class CaseService {
                         .tenantId(courtCase.getTenantId())
                         .file(document)
                         .workflow(workflowObject)
-                        .asUser(individuals.get(0).getUserUuid())
+                        .asUser(userUuid)
                         .build()).build();
     }
 
@@ -5709,7 +5718,10 @@ public class CaseService {
                 .build();
         org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
 
-        List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, joinCaseTaskRequest.getReplacementDetails().get(0).getLitigantDetails().getIndividualId());
+        String userUuid = Optional.of(requestInfo)
+                .map(RequestInfo::getUserInfo)
+                .map(User::getUuid)
+                .orElse(null);
 
         return EvidenceRequest.builder().requestInfo(requestInfo)
                 .artifact(Artifact.builder()
@@ -5724,7 +5736,7 @@ public class CaseService {
                         .caseId(courtCase.getId().toString())
                         .tenantId(courtCase.getTenantId())
                         .file(document)
-                        .asUser(individuals.get(0).getUserUuid())
+                        .asUser(userUuid)
                         .build()).build();
     }
 
