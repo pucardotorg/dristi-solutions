@@ -144,7 +144,7 @@ const AdmittedCaseV2 = () => {
   const applicationNumber = urlParams.get("applicationNumber");
   const userRoles = useMemo(() => roles.map((role) => role.code), [roles]);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
-  const [showWitnessModal, setShowWitnessModal] = useState(false);
+  const [showWitnessModal, setShowWitnessModal] = useState({ show: false, artifactNumber: null });
   const [showExaminationModal, setShowExaminationModal] = useState(openExaminationModal || false);
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
@@ -194,7 +194,6 @@ const AdmittedCaseV2 = () => {
   const [bailBondLoading, setBailBondLoading] = useState(false);
   const [showAddWitnessModal, setShowAddWitnessModal] = useState(false);
   const [showWitnessDepositionDoc, setShowWitnessDepositionDoc] = useState({ docObj: null, show: false });
-  const [editWitnessDepositionArtifact, setEditWitnessDepositionArtifact] = useState(null);
   const [examinationDocumentNumber, setExaminationDocumentNumber] = useState(examinationDocNumber || null);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
@@ -2513,7 +2512,7 @@ const AdmittedCaseV2 = () => {
       } else if (option.value === "END_HEARING") {
         setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true });
       } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
-        setShowWitnessModal(true);
+        setShowWitnessModal({ show: true, artifactNumber: null });
       } else if (option.value === "RECORD_EXAMINATION_OF_ACCUSED") {
         setShowExaminationModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
@@ -3347,7 +3346,6 @@ const AdmittedCaseV2 = () => {
         counter={documentCounter}
         // handleFilingAction={handleFilingAction}
         setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
-        setEditWitnessDepositionArtifact={setEditWitnessDepositionArtifact}
         setExaminationDocumentNumber={setExaminationDocumentNumber}
         setShowWitnessModal={setShowWitnessModal}
         setShowExaminationModal={setShowExaminationModal}
@@ -3858,8 +3856,6 @@ const AdmittedCaseV2 = () => {
           setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
           showWitnessModal={showWitnessModal}
           setShowWitnessModal={setShowWitnessModal}
-          setEditWitnessDepositionArtifact={setEditWitnessDepositionArtifact}
-          editWitnessDepositionArtifact={editWitnessDepositionArtifact}
         />
       )}
       {show && (
@@ -4179,15 +4175,15 @@ const AdmittedCaseV2 = () => {
           setShowBailBondModal={setShowBailBondModal}
         />
       )}
-      {showWitnessModal && (
+      {showWitnessModal?.show && (
         <WitnessDrawerV2
-          isOpen={showWitnessModal}
+          isOpen={showWitnessModal?.show}
           onClose={() => {
-            setShowWitnessModal(false);
-            setEditWitnessDepositionArtifact(null);
+            setShowWitnessModal({ show: false, artifactNumber: null });
             refetchHearing();
             refetchCaseData();
             onTabChange(0, {}, "Documents");
+            setDocumentCounter((prev) => prev + 1);
           }}
           onSubmit={(action) => {
             if (action === "end-hearing") {
@@ -4195,13 +4191,13 @@ const AdmittedCaseV2 = () => {
             } else if (action === "view-cause-list") {
               // Handle view cause list action
             }
-            setShowWitnessModal(false);
+            setShowWitnessModal({ show: false, artifactNumber: null });
           }}
           attendees={currentActiveHearing?.attendees}
           hearing={currentActiveHearing}
           hearingId={currentInProgressHearingId}
           tenantId={tenantId}
-          artifactNumber={editWitnessDepositionArtifact}
+          artifactNumber={showWitnessModal?.artifactNumber}
           caseId={caseId}
           courtId={courtId}
         />
