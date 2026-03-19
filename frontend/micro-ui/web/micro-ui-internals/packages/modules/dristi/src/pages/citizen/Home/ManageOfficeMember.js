@@ -59,13 +59,13 @@ const ManageOfficeMember = () => {
     return () => clearTimeout(timer);
   }, [toast]);
 
-  const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER") || "—";
-  const clerkLabel = t("CLERK") || "Clerk";
+  const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER");
+  const clerkLabel = t("CLERK");
   const designation =
     member?.memberType === "ADVOCATE_CLERK"
       ? clerkLabel
       : member?.memberType === "ADVOCATE"
-      ? t("ASSISTANT_ADVOCATE") || "Assistant Advocate"
+      ? t("ASSISTANT_ADVOCATE")
       : member?.memberType || "—";
   const mobileNumber = member?.memberMobileNumber
     ? `+91 ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(0, 5)} ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(5)}`
@@ -79,8 +79,8 @@ const ManageOfficeMember = () => {
 
   const yesNoOptions = useMemo(
     () => [
-      { code: "Yes", name: t("YES") || "Yes" },
-      { code: "No", name: t("NO") || "No" },
+      { code: "Yes", name: t("YES") },
+      { code: "No", name: t("NO") },
     ],
     [t]
   );
@@ -249,7 +249,7 @@ const ManageOfficeMember = () => {
 
   const handleConfirmRemoveMember = async () => {
     if (!member?.id) {
-      setToast({ label: t("REMOVE_MEMBER_ERROR") || "Failed to remove member. Please try again.", type: "error" });
+      setToast({ label: t("REMOVE_MEMBER_ERROR"), type: "error" });
       return;
     }
     setIsRemovingMember(true);
@@ -265,13 +265,13 @@ const ManageOfficeMember = () => {
       };
       const response = await window?.Digit?.DRISTIService?.leaveOffice({ leaveOffice: leavePayload }, { tenantId });
       if (response) {
-        setToast({ label: t("MEMBER_REMOVED_SUCCESS") || "Member removed successfully", type: "success" });
+        setToast({ label: t("MEMBER_REMOVED_SUCCESS"), type: "success" });
         setShowRemoveMemberModal(false);
         handleGoBack();
       }
     } catch (error) {
       console.error("Error removing member:", error);
-      setToast({ label: t("REMOVE_MEMBER_ERROR") || "Failed to remove member. Please try again.", type: "error" });
+      setToast({ label: t("REMOVE_MEMBER_ERROR"), type: "error" });
     } finally {
       setIsRemovingMember(false);
     }
@@ -331,7 +331,7 @@ const ManageOfficeMember = () => {
 
   const handleConfirmUpdateAccess = async (directDiff) => {
     if (!member?.memberId || !effectiveAdvocateInfo?.advocateId) {
-      setToast({ label: t("UPDATE_ACCESS_ERROR") || "Failed to update access. Please try again.", type: "error" });
+      setToast({ label: t("UPDATE_ACCESS_ERROR"), type: "error" });
       return;
     }
 
@@ -342,6 +342,7 @@ const ManageOfficeMember = () => {
     const officeAdvocateName = member?.officeAdvocateName || userInfo?.name || "";
 
     setIsUpdatingAccess(true);
+    let newMemberId = null;
     try {
       if (isNewMember) {
         const response = await window?.Digit?.DRISTIService?.addOfficeMember(
@@ -364,6 +365,33 @@ const ManageOfficeMember = () => {
         if (!response) {
           throw new Error("Add member failed");
         }
+        
+        newMemberId = response?.addMember?.id || response?.officeMembers?.[0]?.id || response?.members?.[0]?.id || response?.officeMember?.id || null;
+        
+        // Fallback search to find the ID if not cleanly available in standard DIGIT response wrapper keys
+        if (!newMemberId) {
+          try {
+            const searchRes = await window?.Digit?.DRISTIService?.searchOfficeMember(
+              {
+                searchCriteria: {
+                  tenantId,
+                  officeAdvocateId: effectiveAdvocateInfo?.advocateId,
+                  memberId: member?.memberId,
+                }
+              },
+              { tenantId }
+            );
+            if (searchRes?.officeMembers?.length > 0) {
+              const createdMemberRow = searchRes.officeMembers.find(m => m.memberId === member?.memberId && m.isActive !== false);
+              if (createdMemberRow) {
+                newMemberId = createdMemberRow.id;
+              }
+            }
+          } catch (e) {
+            console.error("Failed to fetch new member id after creation:", e);
+          }
+        }
+
       } else {
         const response = await window?.Digit?.DRISTIService?.customApiService("/advocate-office-management/v1/_updateMemberAccess", {
           updateMemberAccess: {
@@ -401,7 +429,7 @@ const ManageOfficeMember = () => {
         await window?.Digit?.DRISTIService?.customApiService("/advocate-office-management/v1/_processCaseMember", body, { tenantId });
       }
 
-      setToast({ label: isNewMember ? t("MEMBER_ADDED_SUCCESSFULLY") || "Member Added Successfully" : t("UPDATE_ACCESS_SUCCESS") || "Access updated successfully", type: "success" });
+      setToast({ label: isNewMember ? t("MEMBER_ADDED_SUCCESSFULLY") : t("UPDATE_ACCESS_SUCCESS"), type: "success" });
       setShowUpdateAccessModal(false);
       setShowAddMemberConfirmModal(false);
       
@@ -423,6 +451,10 @@ const ManageOfficeMember = () => {
         ...(currentState.member || member),
         accessType: accessType,
       };
+
+      if (isNewMember && newMemberId) {
+        newMemberData.id = newMemberId;
+      }
       
       // If we just added a new member, the memberId wasn't previously available to the table.
       // The API addOfficeMember response theoretically returns the ID, but the component relies on 
@@ -438,7 +470,7 @@ const ManageOfficeMember = () => {
       });
     } catch (error) {
       console.error("Error saving member access logic:", error);
-      setToast({ label: isNewMember ? t("MEMBER_ADD_ERROR") || "Failed to add member. Please try again." : t("UPDATE_ACCESS_ERROR") || "Failed to update access. Please try again.", type: "error" });
+      setToast({ label: isNewMember ? t("MEMBER_ADD_ERROR") : t("UPDATE_ACCESS_ERROR"), type: "error" });
     } finally {
       setIsUpdatingAccess(false);
     }
@@ -536,23 +568,23 @@ const ManageOfficeMember = () => {
         }
       `}</style>
       <div className="manage-office-member-scrollable">
-        <h1 className="manage-office-member-title">{t("MANAGE_OFFICE_MEMBER") || "Manage Office Member"}</h1>
+        <h1 className="manage-office-member-title">{t("MANAGE_OFFICE_MEMBER")}</h1>
 
         <div className="manage-office-member-content-row">
           <div className="manage-office-member-field">
-            <span className="manage-office-member-field__label">{t("CS_NAME") || "Name"}</span>
+            <span className="manage-office-member-field__label">{t("CS_NAME")}</span>
             <span className="manage-office-member-field__value">{memberName}</span>
           </div>
           <div className="manage-office-member-field">
-            <span className="manage-office-member-field__label">{t("DESIGNATION") || "Designation"}</span>
+            <span className="manage-office-member-field__label">{t("DESIGNATION")}</span>
             <span className="manage-office-member-field__value">{designation}</span>
           </div>
           <div className="manage-office-member-field">
-            <span className="manage-office-member-field__label">{t("MOBILE_NUMBER") || "Mobile number"}</span>
+            <span className="manage-office-member-field__label">{t("MOBILE_NUMBER")}</span>
             <span className="manage-office-member-field__value">{mobileNumber}</span>
           </div>
           <div className="manage-office-member-field">
-            <span className="manage-office-member-field__label">{t("EMAIL") || "Email"}</span>
+            <span className="manage-office-member-field__label">{t("EMAIL")}</span>
             <span className="manage-office-member-field__value">{emailId}</span>
           </div>
           
@@ -579,7 +611,7 @@ const ManageOfficeMember = () => {
                 alignSelf: "center"
               }}
             >
-              {t("REMOVE_MEMBER") || "Remove Member"}
+              {t("REMOVE_MEMBER")}
             </button>
           )}
         </div>
@@ -589,16 +621,15 @@ const ManageOfficeMember = () => {
             <InfoCircleIcon />
           </span>
           <span>
-            {t("MANAGE_OFFICE_MEMBER_ACCESS_INFO") ||
-              "The member will have complete access to all documents and details in the cases assigned to them. Please keep in mind the privacy and security of case data before sharing access."}
+            {t("MANAGE_OFFICE_MEMBER_ACCESS_INFO")}
           </span>
         </div>
 
         <div className="assign-cases-section">
-          <h2 className="assign-cases-section-title">{t("MANAGE_CASE_ACCESS") || "Manage Case Access"}</h2>
+          <h2 className="assign-cases-section-title">{t("MANAGE_CASE_ACCESS")}</h2>
           
           <div className="manage-case-access-radio-container">
-            <span className="manage-case-access-label">{t("CASE_ACCESS_TYPE") || "Case Access Type"}</span>
+            <span className="manage-case-access-label">{t("CASE_ACCESS_TYPE")}</span>
             <div className="manage-case-access-radio-group">
               <label className="manage-case-access-radio">
                 <input 
@@ -608,7 +639,7 @@ const ManageOfficeMember = () => {
                   checked={accessType === "ALL_CASES"}
                   onChange={() => handleAccessTypeChange({code: "ALL_CASES"})}
                 />
-                <span className="radio-label">{t("ALL_CASES") || "All Cases"}</span>
+                <span className="radio-label">{t("ALL_CASES")}</span>
               </label>
               <label className="manage-case-access-radio">
                 <input 
@@ -618,7 +649,7 @@ const ManageOfficeMember = () => {
                   checked={accessType === "SPECIFIC_CASES"}
                   onChange={() => handleAccessTypeChange({code: "SPECIFIC_CASES"})}
                 />
-                <span className="radio-label">{t("SPECIFIC_CASES") || "Specific Cases"}</span>
+                <span className="radio-label">{t("SPECIFIC_CASES")}</span>
               </label>
             </div>
           </div>
@@ -629,8 +660,7 @@ const ManageOfficeMember = () => {
                 <InfoCircleIcon />
               </span>
               <span>
-                {t("MANAGE_CASE_ACCESS_INFO") ||
-                  "This will give access to all cases including any cases filed in the future."}
+                {t("MANAGE_CASE_ACCESS_INFO")}
               </span>
             </div>
           )}
@@ -638,7 +668,7 @@ const ManageOfficeMember = () => {
           {accessType === "SPECIFIC_CASES" && (
             <div className={`inbox-search-wrapper manage-office-member-inbox`}>
               <h3 className="assign-cases-subtitle">
-                {t(assignCasesConfigWithTenant?.label) || "Assign Cases"}
+                {t(assignCasesConfigWithTenant?.label)}
               </h3>
               <InboxSearchComposer key={casesRefreshKey} customStyle={sectionsParentStyle} configs={assignCasesConfigWithTenant} showTab={false} />
             </div>
@@ -685,20 +715,20 @@ const ManageOfficeMember = () => {
                 <circle cx="12" cy="7.5" r="1" fill="#1D7AEA" />
               </svg>
               <span style={{ whiteSpace: "nowrap" }}>
-                {selectedCasesCount} {selectedCasesCount === 1 ? t("CASE_SELECTED") || "case selected" : t("CASES_SELECTED") || "cases selected"}
+                {selectedCasesCount} {selectedCasesCount === 1 ? t("CASE_SELECTED") : t("CASES_SELECTED")}
               </span>
             </div>
           )}
         </div>
         <button type="button" onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
-          {t("GO_BACK") || "Go Back"}
+          {t("GO_BACK")}
         </button>
         <button
           type="button"
           onClick={handleUpdateAccessClick}
           className={`manage-office-btn manage-office-btn--primary`}
         >
-          {isNewMember ? (t("ADD_MEMBER") || "Add Member") : (t("UPDATE_ACCESS") || "Update Access")}
+          {isNewMember ? (t("ADD_MEMBER")) : (t("UPDATE_ACCESS"))}
         </button>
       </footer>
 
@@ -716,7 +746,7 @@ const ManageOfficeMember = () => {
         <div className="manage-office-modal-overlay" onClick={handleCloseRemoveModal}>
           <div className="manage-office-modal" onClick={(e) => e.stopPropagation()}>
             <div className="manage-office-modal__header">
-              <h2 className="manage-office-modal__title">{t("REMOVE_MEMBER") || "Remove Member"}</h2>
+              <h2 className="manage-office-modal__title">{t("REMOVE_MEMBER")}</h2>
               <button onClick={handleCloseRemoveModal} className="manage-office-modal__close">
                 <ManageOfficeCloseIcon />
               </button>
@@ -729,15 +759,15 @@ const ManageOfficeMember = () => {
             ) : (
               <React.Fragment>
                 <p className="manage-office-remove-text">
-                  {t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?"}
+                  {t("CONFIRM_REMOVE_MEMBER_MESSAGE")}
                 </p>
 
                 <div className="manage-office-modal__footer">
                   <button onClick={handleCloseRemoveModal} className="manage-office-btn manage-office-btn--secondary">
-                    {t("CANCEL") || "Cancel"}
+                    {t("CANCEL")}
                   </button>
                   <button onClick={handleConfirmRemoveMember} className="manage-office-btn manage-office-btn--danger">
-                    {t("REMOVE_MEMBER") || "Remove Member"}
+                    {t("REMOVE_MEMBER")}
                   </button>
                 </div>
               </React.Fragment>
@@ -751,7 +781,7 @@ const ManageOfficeMember = () => {
         <div className="manage-office-modal-overlay" onClick={handleCloseUpdateAccessModal}>
           <div className="manage-office-modal" onClick={(e) => e.stopPropagation()}>
             <div className="manage-office-modal__header">
-              <h2 className="manage-office-modal__title">{t("SAVE_CHANGES") || "Save Changes"}</h2>
+              <h2 className="manage-office-modal__title">{t("SAVE_CHANGES")}</h2>
               <button onClick={handleCloseUpdateAccessModal} className="manage-office-modal__close">
                 <ManageOfficeCloseIcon />
               </button>
@@ -764,15 +794,15 @@ const ManageOfficeMember = () => {
             ) : (
               <React.Fragment>
                 <p className="manage-office-remove-text">
-                  {t("UPDATE_ACCESS_CONFIRM_MESSAGE") || "The Advocate clerk’s access to cases will be modified as per changes."}
+                  {t("UPDATE_ACCESS_CONFIRM_MESSAGE")}
                 </p>
 
                 <div className="manage-office-modal__footer">
                   <button onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
-                    {t("GO_BACK") || "Go Back"}
+                    {t("GO_BACK")}
                   </button>
                   <button onClick={() => handleConfirmUpdateAccess()} className="manage-office-btn manage-office-btn--primary">
-                    {t("UPDATE_ACCESS") || "Update Access"}
+                    {t("UPDATE_ACCESS")}
                   </button>
                 </div>
               </React.Fragment>
@@ -786,7 +816,7 @@ const ManageOfficeMember = () => {
         <div className="manage-office-modal-overlay" onClick={handleCloseAddMemberConfirmModal}>
           <div className="manage-office-modal" onClick={(e) => e.stopPropagation()}>
             <div className="manage-office-modal__header">
-              <h2 className="manage-office-modal__title">{t("ADD_MEMBER") || "Add Member"}</h2>
+              <h2 className="manage-office-modal__title">{t("ADD_MEMBER")}</h2>
               <button onClick={handleCloseAddMemberConfirmModal} className="manage-office-modal__close">
                 <ManageOfficeCloseIcon />
               </button>
@@ -799,15 +829,15 @@ const ManageOfficeMember = () => {
             ) : (
               <React.Fragment>
                 <p className="manage-office-remove-text">
-                  {t("CONFIRM_ADD_MEMBER_MESSAGE") || "Are you sure you want to add this member to your office?"}
+                  {t("CONFIRM_ADD_MEMBER_MESSAGE")}
                 </p>
 
                 <div className="manage-office-modal__footer">
                   <button onClick={handleCloseAddMemberConfirmModal} className="manage-office-btn manage-office-btn--secondary">
-                    {t("GO_BACK") || "Go Back"}
+                    {t("GO_BACK")}
                   </button>
                   <button onClick={() => handleConfirmUpdateAccess()} className="manage-office-btn manage-office-btn--primary">
-                    {t("CONFIRM") || "Confirm"}
+                    {t("CONFIRM")}
                   </button>
                 </div>
               </React.Fragment>
