@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.repository.CtcApplicationRepository;
 import org.pucar.dristi.util.CaseUtil;
@@ -28,12 +29,14 @@ public class CtcApplicationValidator {
     private final CaseUtil caseUtil;
     private final ObjectMapper objectMapper;
     private final CtcApplicationRepository ctcApplicationRepository;
+    private final Configuration configuration;
 
     @Autowired
-    public CtcApplicationValidator(CaseUtil caseUtil, ObjectMapper objectMapper, CtcApplicationRepository ctcApplicationRepository) {
+    public CtcApplicationValidator(CaseUtil caseUtil, ObjectMapper objectMapper, CtcApplicationRepository ctcApplicationRepository, Configuration configuration) {
         this.caseUtil = caseUtil;
         this.objectMapper = objectMapper;
         this.ctcApplicationRepository = ctcApplicationRepository;
+        this.configuration = configuration;
     }
 
     public void validateCreateRequest(CtcApplicationRequest request) {
@@ -116,7 +119,7 @@ public class CtcApplicationValidator {
             CourtCase courtCase = caseUtil.getCase(application.getFilingNumber(), application.getCourtId(), requestInfo);
 
             if (courtCase == null) {
-                application.setPartyDesignation(null);
+                application.setPartyDesignation(configuration.getOutsiderDesignation());
                 application.setIsPartyToCase(false);
                 return;
             }
