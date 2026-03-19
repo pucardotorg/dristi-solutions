@@ -9,7 +9,6 @@ import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosIns
 import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { HomeService } from "../../hooks/services";
 import qs from "qs";
-import { formatLabel } from "../../configs/UICustomizations";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -100,7 +99,7 @@ const BulkIssueCTC = () => {
             nameOfApplicant: row?.businessObject?.nameOfApplicant,
             dateOfApplication: row?.businessObject?.dateOfApplication,
             dateOfApplicationApproval: row?.businessObject?.dateOfApplicationApproval || null,
-            requestedDocName: formatLabel(row?.businessObject?.docTitle),
+            requestedDocName: t(row?.businessObject?.docTitle),
           },
         },
         { responseType: "blob" }
@@ -373,7 +372,7 @@ const BulkIssueCTC = () => {
         courtId: courtId,
         placeholder: "Certification Signature",
         tenantId: tenantId,
-        docTitle: formatLabel(row?.businessObject?.docTitle),
+        docTitle: t(row?.businessObject?.docTitle),
       }));
 
       const getDocsResponse = await HomeService._getDocsForCTCApplication(
