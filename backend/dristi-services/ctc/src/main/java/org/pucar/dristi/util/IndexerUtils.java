@@ -59,6 +59,12 @@ public class IndexerUtils {
         if (doc.getCaseTitle() != null) searchableFields.add(doc.getCaseTitle());
         if (doc.getCaseNumber() != null) searchableFields.add(doc.getCaseNumber());
 
+        String searchableFieldsJson = searchableFields.isEmpty()
+                ? "[]"
+                : "[" + searchableFields.stream()
+                .map(s -> "\"" + s + "\"")
+                .collect(Collectors.joining(",")) + "]";
+
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_ISSUE_CTC_DOC_FORMAT,
                 indexName,
@@ -79,7 +85,7 @@ public class IndexerUtils {
                 doc.getNameOfApplicant(),
                 doc.getDateOfApplication(),
                 doc.getDateOfApplicationApproval(),
-                searchableFields
+                searchableFieldsJson
         );
     }
 
