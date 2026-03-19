@@ -566,7 +566,6 @@ const DocumentsV2 = ({
   }, [newTabSearchConfig?.TabSearchconfig, caseDetails?.filingNumber]);
 
 
-
   useEffect(() => {
     if (showErrorToast) {
       const timer = setTimeout(() => {

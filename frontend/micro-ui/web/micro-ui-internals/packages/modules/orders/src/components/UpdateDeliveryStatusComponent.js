@@ -5,7 +5,6 @@ import { convertToDateInputFormat } from "../utils/index";
 import { sanitizeData } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 
-
 const UpdateDeliveryStatusComponent = ({
   t,
   infos,

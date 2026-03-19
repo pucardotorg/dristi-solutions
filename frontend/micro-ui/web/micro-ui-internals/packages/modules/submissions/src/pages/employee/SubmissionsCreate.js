@@ -875,7 +875,6 @@ const SubmissionsCreate = ({ path }) => {
     if (applicationType && hearingId && ["CHECKOUT_REQUEST", "RE_SCHEDULE"].includes(applicationType) && !formData?.initialHearingDate) {
       setValue("initialHearingDate", DateUtils.getFormattedDate(new Date(hearingsData?.HearingList?.[0]?.startTime), requiredDateFormat));
     }
-
     if (
       applicationType &&
       ["CHECKOUT_REQUEST", "RE_SCHEDULE"].includes(applicationType) &&

@@ -18,7 +18,6 @@ const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournH
   const history = useHistory();
 
 
-
   const onSubmit = (data) => {
     setStepper(stepper + 1);
     setDisable(true);

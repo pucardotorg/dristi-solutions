@@ -30,7 +30,6 @@ const mockSubmitModalInfo = {
 };
 
 
-
 function EFilingPaymentResponse({ setShowModal, header, subHeader, submitModalInfo = mockSubmitModalInfo, amount = 2000, path }) {
   const history = useHistory();
   const location = useLocation();

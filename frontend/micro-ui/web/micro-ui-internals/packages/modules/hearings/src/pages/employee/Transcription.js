@@ -27,7 +27,6 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
   }, []);
 
 
-
   const createRoom = () => {
     if (websocket && websocket.readyState === WebSocket.OPEN) {
       const message = {

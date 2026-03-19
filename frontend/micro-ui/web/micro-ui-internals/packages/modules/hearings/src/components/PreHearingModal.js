@@ -126,7 +126,6 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   };
 
 
-
   const closeFunc = () => {
     setPurposeModalOpen(false);
     setPurposeModalData({});

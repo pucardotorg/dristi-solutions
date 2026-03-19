@@ -28,7 +28,6 @@ const ViewHearing = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
 
-
   const dropdownItems = [
     { label: 'View Case', path: '/employee/hearings/view-case' },
     { label: 'Reschedule hearing', path: '/employee/hearings/reschedule-hearing' },

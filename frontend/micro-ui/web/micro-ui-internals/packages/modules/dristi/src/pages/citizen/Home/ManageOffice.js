@@ -123,8 +123,8 @@ const ManageOffice = () => {
   const advocatesWorkingForMembers = useMemo(() => advocatesWorkingForData?.members || [], [advocatesWorkingForData]);
 
   const tabs = [
-    { id: "myAdvocatesClerks", label: t("MY_ADVOCATES_CLERKS") || "My Advocates/Clerks" },
-    { id: "advocatesWorkingFor", label: t("ADVOCATES_WORKING_FOR") || "Advocates I'm working for" },
+    { id: "myAdvocatesClerks", label: t("MY_ADVOCATES_CLERKS") },
+    { id: "advocatesWorkingFor", label: t("ADVOCATES_WORKING_FOR") },
   ];
 
   const handleAddNewMember = () => {
@@ -169,7 +169,7 @@ const ManageOffice = () => {
         const individual = individualResponse?.Individual?.[0];
         // Validation: prevent adding self as a member
         if (individual?.userUuid && individual?.userUuid === officeAdvocateUserUuid) {
-          setSearchError(t("YOU_CANNOT_ADD_YOURSELF") || "You cannot add yourself");
+          setSearchError(t("YOU_CANNOT_ADD_YOURSELF"));
           setSearchResult(null);
           return;
         }
@@ -235,12 +235,12 @@ const ManageOffice = () => {
           );
         });
         if (isAlreadyMember) {
-          setSearchError(t("MEMBER_ALREADY_EXISTS") || "This mobile number is already added as a member.");
+          setSearchError(t("MEMBER_ALREADY_EXISTS"));
           setSearchResult(null);
         } else if (!clerkData && !advocateData) {
           // Validation: only Advocates or Clerks can be added as members
           setSearchError(
-            t("ONLY_ADVOCATE_OR_CLERK_ALLOWED") || "Only an Advocate or a Clerk can be added as a member."
+            t("ONLY_ADVOCATE_OR_CLERK_ALLOWED")
           );
           setSearchResult(null);
         } else {
@@ -248,18 +248,18 @@ const ManageOffice = () => {
             name: name,
             designation: firstRecord ? designation : "Individual",
             mobileNumber: `${countryCode} ${mobileNumber?.slice(0, 5)} ${mobileNumber?.slice(5)}`,
-            email: individual?.email || "N/A",
+            email: individual?.email || "-",
             individualId: individual?.userUuid,
             clerkData: clerkData,
             advocateData: advocateData,
           });
         }
       } else {
-        setSearchError(t("NO_MEMBER_FOUND") || "No member found with this mobile number");
+        setSearchError(t("NO_MEMBER_FOUND"));
       }
     } catch (error) {
       console.error("Error searching for member:", error);
-      setSearchError(t("SEARCH_ERROR") || "Error searching for member. Please try again.");
+      setSearchError(t("SEARCH_ERROR"));
     } finally {
       setIsSearching(false);
     }
@@ -267,65 +267,52 @@ const ManageOffice = () => {
 
   const handleConfirmAddMember = async () => {
     if (!searchResult || !officeAdvocateUserUuid) {
-      setToast({ label: t("ADVOCATE_ID_NOT_FOUND") || "Advocate ID not found. Please try again.", type: "error" });
+      setToast({ label: t("ADVOCATE_ID_NOT_FOUND"), type: "error" });
       return;
     }
 
-    setIsAddingMember(true);
-    try {
-      // Map designation to memberType
-      const memberTypeMap = {
-        Clerk: "ADVOCATE_CLERK",
-        Advocate: "ADVOCATE",
-        Individual: "INDIVIDUAL",
-      };
-      // Get memberId from responseList: id from clerk/advocate search (same as senior's API spec)
-      const memberId =
-        searchResult?.designation === "Clerk"
-          ? searchResult?.clerkData?.id
-          : searchResult?.designation === "Advocate"
-          ? searchResult?.advocateData?.id
-          : null;
+    // Map designation to memberType
+    const memberTypeMap = {
+      Clerk: "ADVOCATE_CLERK",
+      Advocate: "ADVOCATE",
+      Individual: "INDIVIDUAL",
+    };
+    // Get memberId from responseList: id from clerk/advocate search (same as senior's API spec)
+    const memberId =
+      searchResult?.designation === "Clerk"
+        ? searchResult?.clerkData?.id
+        : searchResult?.designation === "Advocate"
+        ? searchResult?.advocateData?.id
+        : null;
 
-      if (!memberId) {
-        setToast({ label: t("MEMBER_ID_NOT_FOUND") || "Member ID not found. Please try again.", type: "error" });
-        setIsAddingMember(false);
-        return;
-      }
-
-      const officeAdvocateId = advocateSearchResult?.[0]?.responseList?.[0]?.id || advocateSearchResult?.[0]?.id;
-      const response = await window?.Digit?.DRISTIService?.addOfficeMember(
-        {
-          addMember: {
-            tenantId: tenantId,
-            officeAdvocateId: officeAdvocateId,
-            officeAdvocateName: officeAdvocateName,
-            memberType: memberTypeMap[searchResult?.designation] || "ADVOCATE_CLERK",
-            memberId: memberId,
-            memberName: searchResult?.name,
-            memberMobileNumber: mobileNumber,
-            accessType: "ALL_CASES",
-            allowCaseCreate: true,
-            addNewCasesAutomatically: true,
-          },
-        },
-        { tenantId }
-      );
-
-      if (response) {
-        // Refetch members to get updated list from API
-        refetchMembers();
-        setToast({ label: t("MEMBER_ADDED_SUCCESS") || "Member added successfully", type: "success" });
-      }
-    } catch (error) {
-      console.error("Error adding member:", error);
-      setToast({ label: t("MEMBER_ADD_ERROR") || "Failed to add member. Please try again.", type: "error" });
-    } finally {
-      setIsAddingMember(false);
-      setShowAddMemberModal(false);
-      setSearchResult(null);
-      setMobileNumber("");
+    if (!memberId) {
+      setToast({ label: t("MEMBER_ID_NOT_FOUND"), type: "error" });
+      return;
     }
+
+    const officeAdvocateId = advocateSearchResult?.[0]?.responseList?.[0]?.id || advocateSearchResult?.[0]?.id;
+
+    setShowAddMemberModal(false);
+    history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office/manage-member`, {
+      member: {
+        memberName: searchResult?.name,
+        memberType: memberTypeMap[searchResult?.designation] || "ADVOCATE_CLERK",
+        memberMobileNumber: mobileNumber,
+        memberEmail: searchResult?.email,
+        memberId: memberId,
+        memberUserUuid: searchResult?.individualId,
+        officeAdvocateId: officeAdvocateId,
+        officeAdvocateName: officeAdvocateName,
+        accessType: "ALL_CASES",
+        allowCaseCreate: true,
+        addNewCasesAutomatically: true,
+      },
+      advocateInfo: {
+        officeAdvocateUserUuid: officeAdvocateUserUuid,
+        advocateId: officeAdvocateId,
+      },
+      isNewMember: true,
+    });
   };
 
   const filteredMembers = useMemo(() => {
@@ -376,7 +363,7 @@ const ManageOffice = () => {
 
   const handleConfirmRemoveMember = async () => {
     if (!memberToRemove || !officeAdvocateUserUuid) {
-      setToast({ label: t("REMOVE_MEMBER_ERROR") || "Failed to remove member. Please try again.", type: "error" });
+      setToast({ label: t("REMOVE_MEMBER_ERROR"), type: "error" });
       return;
     }
     const isLeavingOfficeTab = activeTab === "advocatesWorkingFor";
@@ -411,14 +398,14 @@ const ManageOffice = () => {
         if (isLeavingOfficeTab && refetchAdvocatesWorkingFor) refetchAdvocatesWorkingFor();
         setToast({
           label: isLeavingOfficeTab
-            ? t("LEFT_OFFICE_SUCCESSFULLY") || "Left office successfully"
-            : t("MEMBER_REMOVED_SUCCESS") || "Member removed successfully",
+            ? t("LEFT_OFFICE_SUCCESSFULLY")
+            : t("MEMBER_REMOVED_SUCCESS"),
           type: "success",
         });
       }
     } catch (error) {
       console.error("Error removing member:", error);
-      setToast({ label: t("REMOVE_MEMBER_ERROR") || "Failed to remove member. Please try again.", type: "error" });
+      setToast({ label: t("REMOVE_MEMBER_ERROR"), type: "error" });
     } finally {
       setIsRemovingMember(false);
       setShowRemoveMemberModal(false);
@@ -428,7 +415,7 @@ const ManageOffice = () => {
 
   return (
     <div className="manage-office-page">
-      <h1 className="manage-office-title">{t("MANAGE_OFFICE") || "Manage Office"}</h1>
+      <h1 className="manage-office-title">{t("MANAGE_OFFICE")}</h1>
 
       <div className="manage-office-tabs-wrapper">
         <div className="manage-office-tabs">
@@ -450,7 +437,7 @@ const ManageOffice = () => {
           <div className="manage-office-toprow">
             <button onClick={handleAddNewMember} className="manage-office-add-member-btn">
               <span className="manage-office-add-member-btn__icon">+</span>
-              {t("ADD_NEW_MEMBER") || "Add New Member"}
+              {t("ADD_NEW_MEMBER")}
             </button>
           </div>
         )}
@@ -464,11 +451,11 @@ const ManageOffice = () => {
           <div className="manage-office-table-wrapper">
             {/* Table Header: 4 columns for Advocates I'm working for, 5 for My Advocates/Clerks */}
             <div className={`manage-office-table-header${activeTab === "advocatesWorkingFor" ? " manage-office-table-header--working-for" : ""}`}>
-              <span>{activeTab === "advocatesWorkingFor" ? t("ADVOCATE") || "Advocate" : t("NAME") || "Name"}</span>
-              <span>{t("MOBILE_NUMBER") || "Mobile Number"}</span>
-              {activeTab !== "advocatesWorkingFor" && <span>{t("DESIGNATION") || "Designation"}</span>}
-              <span>{t("ACCESS_TYPE") || "Access Type"}</span>
-              <span>{t("ACTION") || "Action"}</span>
+              <span>{activeTab === "advocatesWorkingFor" ? t("ADVOCATE") : t("NAME")}</span>
+              <span>{t("MOBILE_NUMBER")}</span>
+              {activeTab !== "advocatesWorkingFor" && <span>{t("DESIGNATION")}</span>}
+              <span>{t("ACCESS_TYPE")}</span>
+              <span>{t("ACTION")}</span>
             </div>
             {/* Table Rows */}
             {displayMembers?.map((member) => (
@@ -506,15 +493,15 @@ const ManageOffice = () => {
                 {activeTab !== "advocatesWorkingFor" && (
                   <span>
                     {member?.memberType === "ADVOCATE_CLERK"
-                    ? ((l) => l.charAt(0).toUpperCase() + l.slice(1).toLowerCase())(t("CLERK") || "Clerk")
+                    ? ((l) => l.charAt(0).toUpperCase() + l.slice(1).toLowerCase())(t("CLERK"))
                     : member?.memberType === "ADVOCATE"
-                    ? t("ASSISTANT_ADVOCATE") || "Assistant Advocate"
+                    ? t("ASSISTANT_ADVOCATE")
                     : member?.memberType}
                   </span>
                 )}
                 <span>
                   <span className="manage-office-access-pill">
-                    {member?.accessType === "ALL_CASES" ? t("ALL_CASES") || "All Cases" : t("SPECIFIC_CASES") || "Specific Cases"}
+                    {member?.accessType === "ALL_CASES" ? t("ALL_CASES") : t("SPECIFIC_CASES")}
                   </span>
                 </span>
                 <span className={`manage-office-actions${activeTab === "advocatesWorkingFor" ? " manage-office-actions--compact" : ""}`}>
@@ -536,7 +523,7 @@ const ManageOffice = () => {
                         })
                       }
                     >
-                      {t("MANAGE") || "Manage"}
+                      {t("MANAGE")}
                     </button>
                   )}
                   {activeTab === "advocatesWorkingFor" ? (
@@ -544,7 +531,7 @@ const ManageOffice = () => {
                       type="button"
                       onClick={() => handleDeleteClick(member)}
                       className="manage-office-leave-icon-btn"
-                      aria-label={t("LEAVE_OFFICE") || "Leave Office"}
+                      aria-label={t("LEAVE_OFFICE")}
                     >
                       <ManageOfficeLeaveIcon />
                     </button>
@@ -553,7 +540,7 @@ const ManageOffice = () => {
                       type="button"
                       onClick={() => handleDeleteClick(member)}
                       className="manage-office-delete-btn"
-                      aria-label={t("REMOVE_FROM_OFFICE") || "Remove from office"}
+                      aria-label={t("REMOVE_FROM_OFFICE")}
                     >
                       <ManageOfficeDeleteIcon />
                     </button>
@@ -566,13 +553,13 @@ const ManageOffice = () => {
           <div className="manage-office-empty">
             {activeTab === "advocatesWorkingFor" ? (
               <React.Fragment>
-                <p className="manage-office-empty__title">{t("NO_DATA_TO_DISPLAY") || "No data to display."}</p>
-                <p className="manage-office-empty__title">{t("NOT_WORKING_FOR_ANY_ADVOCATES") || "You are not working for any advocates."}</p>
+                <p className="manage-office-empty__title">{t("NO_DATA_TO_DISPLAY")}</p>
+                <p className="manage-office-empty__title">{t("NOT_WORKING_FOR_ANY_ADVOCATES")}</p>
               </React.Fragment>
             ) : (
               <React.Fragment>
-                <p className="manage-office-empty__title">{t("NO_DATA_TO_DISPLAY") || "No data to display."}</p>
-                <p className="manage-office-empty__subtitle">{t("PLEASE_ADD_MEMBER") || "Please add member"}</p>
+                <p className="manage-office-empty__title">{t("NO_DATA_TO_DISPLAY")}</p>
+                <p className="manage-office-empty__subtitle">{t("PLEASE_ADD_MEMBER")}</p>
               </React.Fragment>
             )}
           </div>
@@ -586,7 +573,7 @@ const ManageOffice = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="manage-office-modal__header">
-              <h2 className="manage-office-modal__title">{t("ADD_MEMBER") || "Add Member"}</h2>
+              <h2 className="manage-office-modal__title">{t("ADD_MEMBER")}</h2>
               <button onClick={handleCloseModal} className="manage-office-modal__close">
                 <ManageOfficeCloseIcon />
               </button>
@@ -602,31 +589,31 @@ const ManageOffice = () => {
                   {searchResult ? (
                     <div className="manage-office-search-card">
                       <div className="manage-office-search-card__row">
-                        <p className="manage-office-search-card__label">{t("NAME") || "Name"}</p>
+                        <p className="manage-office-search-card__label">{t("NAME")}</p>
                         <p className="manage-office-search-card__value">{searchResult?.name}</p>
                       </div>
                       <div className="manage-office-search-card__row">
-                        <p className="manage-office-search-card__label">{t("DESIGNATION") || "Designation"}</p>
+                        <p className="manage-office-search-card__label">{t("DESIGNATION")}</p>
                         <p className="manage-office-search-card__value">
                           {searchResult?.designation === "Clerk"
-                            ? ((l) => l.charAt(0).toUpperCase() + l.slice(1).toLowerCase())(t("CLERK") || "Clerk")
+                            ? ((l) => l.charAt(0).toUpperCase() + l.slice(1).toLowerCase())(t("CLERK"))
                             : searchResult?.designation === "Advocate"
-                            ? t("ASSISTANT_ADVOCATE") || "Assistant Advocate"
+                            ? t("ASSISTANT_ADVOCATE")
                             : searchResult?.designation}
                         </p>
                       </div>
                       <div className="manage-office-search-card__row">
-                        <p className="manage-office-search-card__label">{t("MOBILE_NUMBER") || "Mobile number"}</p>
+                        <p className="manage-office-search-card__label">{t("MOBILE_NUMBER")}</p>
                         <p className="manage-office-search-card__value">{searchResult?.mobileNumber}</p>
                       </div>
                       <div className="manage-office-search-card__row">
-                        <p className="manage-office-search-card__label">{t("EMAIL") || "Email"}</p>
+                        <p className="manage-office-search-card__label">{t("EMAIL")}</p>
                         <p className="manage-office-search-card__value">{searchResult?.email}</p>
                       </div>
                     </div>
                   ) : (
                     <div className="manage-office-search-field">
-                      <label className="manage-office-search-field__label">{t("MOBILE_NUMBER_OF_MEMBER") || "Mobile Number of Member"}</label>
+                      <label className="manage-office-search-field__label">{t("MOBILE_NUMBER_OF_MEMBER")}</label>
                       <div className="manage-office-search-field__control">
                         <select
                           value={countryCode}
@@ -640,7 +627,7 @@ const ManageOffice = () => {
                           type="tel"
                           value={mobileNumber}
                           onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ""))}
-                          placeholder={t("ENTER_HERE") || "Enter here"}
+                          placeholder={t("ENTER_HERE")}
                           maxLength={10}
                           className="manage-office-search-field__input"
                         />
@@ -652,11 +639,11 @@ const ManageOffice = () => {
 
                 <div className="manage-office-modal__footer">
                   <button onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
-                    {t("GO_BACK") || "Go Back"}
+                    {t("GO_BACK")}
                   </button>
                   {searchResult ? (
                     <button onClick={handleConfirmAddMember} className="manage-office-btn manage-office-btn--primary">
-                      {t("ADD_MEMBER") || "Add Member"}
+                      {t("PROVIDE_CASE_ACCESS")} &nbsp;→
                     </button>
                   ) : (
                     <button
@@ -666,7 +653,7 @@ const ManageOffice = () => {
                         !mobileNumber || mobileNumber?.length < 10 ? " manage-office-btn--disabled" : ""
                       }`}
                     >
-                      {t("PROCEED") || "Proceed"}
+                      {t("SEARCH")}
                     </button>
                   )}
                 </div>
@@ -682,7 +669,7 @@ const ManageOffice = () => {
           <div className="manage-office-modal" onClick={(e) => e.stopPropagation()}>
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">
-                {activeTab === "advocatesWorkingFor" ? t("LEAVE_OFFICE") || "Leave Office" : t("REMOVE_MEMBER") || "Remove Member"}
+                {activeTab === "advocatesWorkingFor" ? t("LEAVE_OFFICE") : t("REMOVE_MEMBER")}
               </h2>
               <button onClick={handleCloseRemoveModal} className="manage-office-modal__close">
                 <ManageOfficeCloseIcon />
@@ -697,15 +684,15 @@ const ManageOffice = () => {
               <React.Fragment>
                 <p className="manage-office-remove-text">
                   {activeTab === "advocatesWorkingFor"
-                    ? t("CONFIRM_LEAVE_ADVOCATE_OFFICE") || "Are you sure you want to leave this advocate's office?"
-                    : t("CONFIRM_REMOVE_MEMBER_MESSAGE") || "Are you sure you want to remove this member from your office?"}
+                    ? t("CONFIRM_LEAVE_ADVOCATE_OFFICE")
+                    : t("CONFIRM_REMOVE_MEMBER_MESSAGE")}
                 </p>
                 <div className="manage-office-modal__footer">
                   <button onClick={handleCloseRemoveModal} className="manage-office-btn manage-office-btn--secondary">
-                    {t("CANCEL") || "Cancel"}
+                    {t("CANCEL")}
                   </button>
                   <button onClick={handleConfirmRemoveMember} className="manage-office-btn manage-office-btn--danger">
-                    {activeTab === "advocatesWorkingFor" ? t("LEAVE_OFFICE") || "Leave Office" : t("REMOVE_MEMBER") || "Remove Member"}
+                    {activeTab === "advocatesWorkingFor" ? t("LEAVE_OFFICE") : t("REMOVE_MEMBER")}
                   </button>
                 </div>
               </React.Fragment>
