@@ -278,10 +278,10 @@ public class IndexerUtils {
                     && !excludedParentTitles.contains(prevNode.getTitle())) {
 
                 String translatedParent = localizeTitle(prevNode.getTitle(), getMessagesMap());
-                docTitle = node.getTitle() + " - " + translatedParent;
+                docTitle = translatedTitle + " - " + translatedParent;
 
             } else {
-                docTitle = node.getTitle();
+                docTitle = translatedTitle;
             }
         }
 
