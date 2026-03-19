@@ -55,6 +55,16 @@ public class IndexerUtils {
                 .map(s -> s.replace("_", " "))
                 .orElse(null);
 
+        List<String> searchableFields = new ArrayList<>();
+        if (doc.getCaseTitle() != null) searchableFields.add(doc.getCaseTitle());
+        if (doc.getCaseNumber() != null) searchableFields.add(doc.getCaseNumber());
+
+        String searchableFieldsJson = searchableFields.isEmpty()
+                ? "[]"
+                : "[" + searchableFields.stream()
+                .map(s -> "\"" + s + "\"")
+                .collect(Collectors.joining(",")) + "]";
+
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_ISSUE_CTC_DOC_FORMAT,
                 indexName,
@@ -74,7 +84,8 @@ public class IndexerUtils {
                 doc.getFileStoreId(),
                 doc.getNameOfApplicant(),
                 doc.getDateOfApplication(),
-                doc.getDateOfApplicationApproval()
+                doc.getDateOfApplicationApproval(),
+                searchableFieldsJson
         );
     }
 

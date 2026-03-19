@@ -65,6 +65,7 @@ const MainHomeScreen = () => {
   const [scrutinyConfig, setScrutinyConfig] = useState(structuredClone(scrutinyPendingTaskConfig[0]));
   const [tabData, setTabData] = useState(null);
   const [scrutinyDueCount, setScrutinyDueCount] = useState(0);
+  const [ctcApplicationCount, setCtcApplicationCount] = useState(0);
 
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
   const [pendingTaskCount, setPendingTaskCount] = useState({
@@ -280,6 +281,34 @@ const MainHomeScreen = () => {
     }
   };
 
+  const fetchCTCApplicationCount = async () => {
+    try {
+      if (!hasViewCTCApplicationAccess) return;
+      const ctcApplicationPayload = {
+        inbox: {
+          processSearchCriteria: {
+            businessService: ["ctc-default"],
+            moduleName: "CTC Service",
+            tenantId: tenantId,
+          },
+          moduleSearchCriteria: {
+            tenantId: tenantId,
+            courtId: localStorage.getItem("courtId"),
+            status: "PENDING_APPROVAL",
+          },
+          tenantId: tenantId,
+          limit: 10,
+          offset: 0,
+        },
+      };
+
+      const resCtCApplication = await HomeService.InboxSearch(ctcApplicationPayload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+      setCtcApplicationCount(resCtCApplication?.totalCount || 0);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const fetchPendingTaskCounts = async () => {
     const { toDate } = getTodayRange();
     try {
@@ -363,30 +392,7 @@ const MainHomeScreen = () => {
         },
       };
 
-      const ctcApplicationPayload = {
-        inbox: {
-          processSearchCriteria: {
-            businessService: ["ctc-default"],
-            moduleName: "CTC Service",
-            tenantId: tenantId,
-          },
-          moduleSearchCriteria: {
-            tenantId: tenantId,
-            courtId: localStorage.getItem("courtId"),
-            status: "PENDING_APPROVAL",
-          },
-          tenantId: tenantId,
-          limit: 10,
-          offset: 0,
-        },
-      };
-
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
-      let resCtCApplication = {};
-
-      if (hasViewCTCApplicationAccess) {
-        resCtCApplication = await HomeService.InboxSearch(ctcApplicationPayload, { tenantId: Digit.ULBService.getCurrentTenantId() });
-      }
 
       const reviwCount = res?.reviewProcessData?.totalCount || 0;
       const registerCount = res?.registerCasesData?.totalCount || 0;
@@ -399,7 +405,6 @@ const MainHomeScreen = () => {
       const offlinePaymentsCount = res?.offlinePaymentsData?.count || 0;
       const noticeAndSummonsCount = res?.noticeAndSummonsData?.count || 0;
       const rescheduleHearingRequestCount = res?.reschedulingRequestData?.totalCount || 0;
-      const CTCApplications = resCtCApplication?.totalCount || 0;
 
       setPendingTaskCount({
         REGISTER_USERS: registerUsersCount,
@@ -413,7 +418,6 @@ const MainHomeScreen = () => {
         RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
         DELAY_CONDONATION: delayCondonationApplicationCount,
         OTHERS: otherApplicationsCount,
-        CTC_APPLICATIONS: CTCApplications,
       });
     } catch (err) {
       showToast("error", t("ISSUE_IN_FETCHING"), 5000);
@@ -887,6 +891,12 @@ const MainHomeScreen = () => {
 
   useEffect(() => {
     if (userType === "employee") {
+      fetchCTCApplicationCount();
+    }
+  }, [userType, hasViewCTCApplicationAccess]);
+
+  useEffect(() => {
+    if (userType === "employee") {
       fetchPendingTaskCounts();
       fetchHearingCount(filters, activeTab);
     }
@@ -1154,6 +1164,7 @@ const MainHomeScreen = () => {
         fetchPendingTaskCounts();
       }
     }
+    fetchCTCApplicationCount();
     setActiveTab(label || title);
     setActiveTabTitle(title);
     sessionStorage.removeItem("diaryDateFilter");
@@ -1228,7 +1239,7 @@ const MainHomeScreen = () => {
           isOptionsLoading={false}
           applicationOptions={applicationOptions}
           hearingCount={hearingCount}
-          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount }}
+          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount, CTC_APPLICATIONS: ctcApplicationCount }}
           showToast={showToast}
         />
         {activeTab === "TEMPLATE_OR_CONFIGURATION" ? (
@@ -1295,7 +1306,7 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "CTC_APPLICATIONS" ? (
           <div className="home-bulk-sign">
-            <CTCApplications />
+            <CTCApplications refetch={fetchCTCApplicationCount} />
           </div>
         ) : activeTab === "CS_HOME_ISSUE_CTC_COPY" ? (
           <div className="home-bulk-sign">
