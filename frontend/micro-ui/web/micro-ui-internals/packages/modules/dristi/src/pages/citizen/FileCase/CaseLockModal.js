@@ -21,17 +21,6 @@ const caseSubmissionWarningText = {
   color: "#3D3C3C",
 };
 
-const caseLockModalStyle = {
-  border: "1px solid #007E7E",
-  backgroundColor: "white",
-  fontFamily: "Roboto",
-  fontSize: "16px",
-  fontWeight: 700,
-  lineHeight: "18.75px",
-  textAlign: "center",
-  width: "190px",
-};
-
 const Heading = (props) => {
   return (
     <h1 className="heading-m" style={{ marginLeft: "47px" }}>
@@ -53,7 +42,6 @@ function CaseLockModal({
   path,
   setShowCaseLockingModal,
   setShowConfirmCaseDetailsModal,
-  isAdvocateFilingCase,
   onSubmit,
   createPendingTask,
   setPrevSelected,
@@ -64,11 +52,15 @@ function CaseLockModal({
   const [submitConfirmed, setSubmitConfirmed] = useState(false);
   const history = useHistory();
   const toast = useToast();
-  const userInfo = Digit?.UserService?.getUser()?.info;
-  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+  const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
 
   const filingNumber = useMemo(() => {
     return caseDetails?.filingNumber;
+  }, [caseDetails]);
+
+  const caseId = useMemo(() => {
+    return caseDetails?.id;
   }, [caseDetails]);
 
   const litigants = useMemo(() => {
@@ -90,13 +82,6 @@ function CaseLockModal({
     setShowCaseLockingModal(false);
 
     const isCaseReassigned = state === CaseWorkflowState.CASE_REASSIGNED;
-
-    // uncomment if confirm caseDetails modal needed and don't want to call update case api
-    // if (isAdvocateFilingCase && !isCaseReassigned) {
-    //   setShowConfirmCaseDetailsModal(true);
-    //   return;
-    // }
-
     const actionType = isCaseReassigned ? "EDIT_CASE" : "SUBMIT_CASE";
 
     const result = await onSubmit(actionType, true);
@@ -118,11 +103,7 @@ function CaseLockModal({
         }
       });
       await Promise.all(promises);
-      if (isAdvocateFilingCase) {
-        history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
-      } else {
-        history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}`);
-      }
+      history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}&caseId=${caseId}`);
     } catch (error) {
       console.error("An error occurred:", error);
       toast.error(t("SOMETHING_WENT_WRONG"));
@@ -132,7 +113,7 @@ function CaseLockModal({
   const handleCancelOnSubmit = async () => {
     setShowCaseLockingModal(false);
 
-    if (isAdvocateFilingCase) {
+    if (selectedAdvocateUuid) {
       const assignees = Array.isArray(caseDetails?.representatives)
         ? caseDetails?.representatives?.map((advocate) => ({
             uuid: advocate?.additionalDetails?.uuid,
@@ -154,7 +135,7 @@ function CaseLockModal({
           status: taskStatus,
           assignees: [...assignees],
         });
-        history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}`);
+        history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}&caseId=${caseId}`);
       } catch (error) {
         console.error("An error occurred:", error);
         toast.error(t("SOMETHING_WENT_WRONG"));
@@ -172,24 +153,24 @@ function CaseLockModal({
           }}
         />
       }
-      actionSaveLabel={isAdvocateFilingCase ? t("CS_ESIGN") : t("CONFIRM_AND_SIGN")}
+      actionSaveLabel={selectedAdvocateUuid ? t("CS_ESIGN") : t("CONFIRM_AND_SIGN")}
       actionSaveOnSubmit={handleSaveOnSubmit}
-      actionCancelLabel={isAdvocateFilingCase ? t("UPLOAD_SIGNED_COPY") : t("DOWNLOAD_CS_BACK")}
+      actionCancelLabel={selectedAdvocateUuid ? t("UPLOAD_SIGNED_COPY") : t("DOWNLOAD_CS_BACK")}
       actionCancelOnSubmit={handleCancelOnSubmit}
       formId="modal-action"
-      headerBarMain={<Heading label={isAdvocateFilingCase ? t("SUBMIT_CASE_CONFIRMATION") : t("CONFIRM_CASE_DETAILS")} />}
+      headerBarMain={<Heading label={selectedAdvocateUuid ? t("SUBMIT_CASE_CONFIRMATION") : t("CONFIRM_CASE_DETAILS")} />}
       popmoduleClassName={"case-lock-confirm-modal"}
       style={{ width: "50%", height: "40px" }}
       // textStyle={{ margin: "0px", color: "" }}
       // popupStyles={{ maxWidth: "60%" }}
       popUpStyleMain={{ zIndex: "1000" }}
       isDisabled={!submitConfirmed}
-      isBackButtonDisabled={!submitConfirmed && isAdvocateFilingCase}
+      isBackButtonDisabled={!submitConfirmed && selectedAdvocateUuid}
       actionCancelStyle={{ width: "50%", height: "40px" }}
     >
       <div className="case-locking-main-div" style={caseLockingMainDiv}>
         <div>
-          {isAdvocateFilingCase ? (
+          {selectedAdvocateUuid ? (
             <React.Fragment>
               <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "10px 0px" }}>
                 {t("CONFIRM_HOW_COMPLAINT_WILL_BE_SIGNED")}

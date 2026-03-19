@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_dristi_template_configuration_process_title ON dristi_template_configuration(process_title);

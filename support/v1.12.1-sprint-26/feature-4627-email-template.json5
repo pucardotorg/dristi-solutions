@@ -1,0 +1,12 @@
+// TODO : can be added through workbench
+{
+  "tenantId": "kl",
+  "schemaCode": "mail-template.email-template",
+  "uniqueIdentifier": "POSTAL_HUB_MONTHLY_REPORT",
+  "data": {
+    "code": "POSTAL_HUB_MONTHLY_REPORT",
+    "name": "postal hub monthly report",
+    "value": "<!DOCTYPE html><html><head></head><body><p>{{header}}</p><p>{{message}}</p><p>{{footer}}</p></body></html>"
+  },
+  "isActive": true
+}

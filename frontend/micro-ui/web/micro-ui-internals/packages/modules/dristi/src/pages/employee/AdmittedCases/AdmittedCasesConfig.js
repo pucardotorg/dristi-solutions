@@ -19,8 +19,7 @@ const defaultOrderSearchValues = {
   type: "",
 };
 
-//config for tab search sceeen
-export const TabSearchconfig = {
+export const TabSearchconfigNew = {
   tenantId: "mz",
   moduleName: "commonCampaignUiConfig",
   showTab: true,
@@ -28,6 +27,11 @@ export const TabSearchconfig = {
     {
       label: "Overview",
       displayLabel: "OVERVIEW_TAB",
+      type: "search",
+    },
+    {
+      label: "caseFileOverview",
+      displayLabel: "CASE_FILE_OVERVIEW_TAB",
       type: "search",
     },
     {
@@ -74,11 +78,7 @@ export const TabSearchconfig = {
                 populators: {
                   name: "hearingType",
                   optionsKey: "type",
-                  mdmsConfig: {
-                    masterName: "HearingType",
-                    moduleName: "Hearing",
-                    // localePrefix: "SUBMISSION_TYPE",
-                  },
+                  options: [],
                 },
               },
               // {
@@ -208,11 +208,7 @@ export const TabSearchconfig = {
                 populators: {
                   name: "type",
                   optionsKey: "type",
-                  mdmsConfig: {
-                    masterName: "OrderType",
-                    moduleName: "Order",
-                    // localePrefix: "SUBMISSION_TYPE",
-                  },
+                  options: [],
                 },
               },
               {
@@ -227,6 +223,14 @@ export const TabSearchconfig = {
                     masterName: "OrderStatus",
                     moduleName: "Order",
                     // localePrefix: "SUBMISSION_TYPE",
+                    select: `(data) => {
+                      return data['Order'].OrderStatus
+                      ?.filter(item => !['ABATED', 'PENDINGSTAMPING'].includes(item.code))
+                        ?.map((item) => {
+                          return item;
+                        })
+                        .sort((a, b) => (a.type || "").localeCompare(b.type || ""));
+                    }`,
                   },
                 },
               },
@@ -277,6 +281,11 @@ export const TabSearchconfig = {
               {
                 label: "DATE_ISSUED",
                 jsonPath: "businessObject.orderNotification.date",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_ACTIONS",
+                jsonPath: "businessObject.orderNotification",
                 additionalCustomization: true,
               },
             ],
@@ -331,11 +340,7 @@ export const TabSearchconfig = {
                 populators: {
                   name: "applicationType",
                   optionsKey: "type",
-                  mdmsConfig: {
-                    masterName: "ApplicationType",
-                    moduleName: "Application",
-                    // localePrefix: "SUBMISSION_TYPE",
-                  },
+                  options: [],
                 },
               },
               // {
@@ -365,6 +370,13 @@ export const TabSearchconfig = {
                     masterName: "ApplicationStatus",
                     moduleName: "Application",
                     // localePrefix: "SUBMISSION_TYPE",
+                    select: `(data) => {
+                      return data['Application'].ApplicationStatus
+                        ?.map((item) => {
+                          return item;
+                        })
+                        .sort((a, b) => (a.type || "").localeCompare(b.type || ""));
+                    }`,
                   },
                 },
               },
@@ -418,6 +430,11 @@ export const TabSearchconfig = {
               {
                 label: "DOCUMENT_TEXT",
                 jsonPath: "documents",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_ACTIONS",
+                jsonPath: "applicationDraftDelete",
                 additionalCustomization: true,
               },
             ],

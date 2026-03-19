@@ -1,0 +1,72 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "546",
+    "data": {
+      "id": 546,
+      "actionid": 2778,
+      // TODO : need to add to role action mapping to this api : /advocate-office-management/v1/_addMember
+      "rolecode": "ADVOCATE_ROLE",
+      "tenantid": "kl",
+      "actioncode": "2778"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "548",
+    "data": {
+      "id": 548,
+      "actionid": 2779,
+      // TODO : need to add to role action mapping to this api : /advocate-office-management/v1/_leaveOffice
+      "rolecode": "ADVOCATE_CLERK_ROLE",
+      "tenantid": "kl",
+      "actioncode": "2779"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "547",
+    "data": {
+      "id": 547,
+      "actionid": 2779,
+      // TODO : need to add to role action mapping to this api : /advocate-office-management/v1/_leaveOffice
+      "rolecode": "ADVOCATE_ROLE",
+      "tenantid": "kl",
+      "actioncode": "2779"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "550",
+    "data": {
+      "id": 550,
+      "actionid": 2780,
+      // TODO : need to add to role action mapping to this api : /advocate-office-management/v1/_searchMember
+      "rolecode": "ADVOCATE_ROLE",
+      "tenantid": "kl",
+      "actioncode": "2780"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+    "uniqueIdentifier": "549",
+    "data": {
+      "id": 549,
+      "actionid": 2780,
+      // TODO : need to add to role action mapping to this api : /advocate-office-management/v1/_searchMember
+      "rolecode": "ADVOCATE_CLERK_ROLE",
+      "tenantid": "kl",
+      "actioncode": "2780"
+    },
+    "isActive": true
+  }
+]

@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { LabelFieldPair, CardLabel, TextInput, CardLabelError, RadioButtons } from "@egovernments/digit-ui-react-components";
 import LocationSearch, { defaultCoordinates } from "./LocationSearch";
-import Axios from "axios";
-import { formatAddress } from "../Utils";
+import { formatAddress, sanitizeData } from "../Utils";
+import SelectCustomNote from "./SelectCustomNote";
+import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 
 const getLocation = (places, code) => {
   let location = null;
@@ -96,7 +97,7 @@ const LocationComponent = ({
 
   const getLatLngByPincode = async (pincode) => {
     const key = window?.globalConfigs?.getConfig("GMAPS_API_KEY");
-    const response = await Axios.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${key}`);
+    const response = await axiosInstance.get(`https://maps.googleapis.com/maps/api/geocode/json?address=${pincode}&key=${key}`);
     return response;
   };
 
@@ -222,6 +223,15 @@ const LocationComponent = ({
                     }}
                     disabled={disable}
                   />
+                ) : input?.type === "InfoComponent" ? (
+                  <SelectCustomNote
+                    t={t}
+                    config={{
+                      populators: {
+                        inputs: [input],
+                      },
+                    }}
+                  />
                 ) : (
                   <TextInput
                     className="field desktop-w-full"
@@ -231,7 +241,7 @@ const LocationComponent = ({
                       if (input?.isFormatRequired) {
                         value = formatAddress(value);
                       }
-                      setValue(value, input.name, input?.autoFill);
+                      setValue(sanitizeData(value), input.name, input?.autoFill);
                     }}
                     disable={input.isDisabled || disable}
                     defaultValue={undefined}

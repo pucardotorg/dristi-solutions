@@ -1,0 +1,319 @@
+openapi: 3.0.0
+info:
+  title: Digitalized Documents
+  description: |
+    API specifications for Digitalized Documents in the Dristi system.
+    This API enables creation, update and search of digitalized documents produced during case proceedings.
+  version: "0.1.0"
+  contact:
+    name: Dristi Solutions Team
+    email: support@dristisolutions.org
+
+servers:
+  - url: ""
+    description: Digitalized Documents API Server
+
+tags:
+  - name: DigitalizedDocuments
+    description: APIs to create, update and search digitalized documents.
+
+paths:
+  /digitalized-documents/v1/_create:
+    post:
+      tags:
+        - DigitalizedDocuments
+      summary: Create a new digitalized document
+      description: |
+        API to create a new digitalized document record in the system.
+      requestBody:
+        description: Details for the new digitalized document + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/DigitalizedDocumentRequest'
+        required: true
+      responses:
+        '201':
+          description: Digitalized document created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/DigitalizedDocumentResponse'
+        '400':
+          description: Creation failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: digitalizedDocumentRequest
+
+  /digitalized-documents/v1/_update:
+    post:
+      tags:
+        - DigitalizedDocuments
+      summary: Update an existing digitalized document
+      description: |
+        API to update an existing digitalized document record.
+      requestBody:
+        description: Details for updating the digitalized document + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/DigitalizedDocumentRequest'
+        required: true
+      responses:
+        '200':
+          description: Digitalized document updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/DigitalizedDocumentResponse'
+        '400':
+          description: Update failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: digitalizedDocumentRequest
+
+  /digitalized-documents/v1/_search:
+    post:
+      tags:
+        - DigitalizedDocuments
+      summary: Search digitalized documents
+      description: |
+        API to search for digitalized documents based on various criteria.
+      requestBody:
+        description: Search criteria + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/DigitalizedDocumentSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: ResponseInfo with list of digitalized documents matching search criteria
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/DigitalizedDocumentSearchResponse'
+        '400':
+          description: Search failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+      x-codegen-request-body-name: digitalizedDocumentSearchRequest
+
+components:
+  schemas:
+    DigitalizedDocumentRequest:
+      type: object
+      required:
+        - RequestInfo
+        - digitalizedDocument
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        digitalizedDocument:
+          $ref: '#/components/schemas/DigitalizedDocument'
+      x-codegen-request-body-name: digitalizedDocumentRequest
+
+    DigitalizedDocumentResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        digitalizedDocument:
+          $ref: '#/components/schemas/DigitalizedDocument'
+
+    DigitalizedDocumentSearchRequest:
+      type: object
+      required:
+        - RequestInfo
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/DigitalizedDocumentSearchCriteria'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    DigitalizedDocumentSearchCriteria:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Filter by document ID
+        documentNumber:
+          type: string
+          description: Filter by generated document number
+        orderNumber:
+          type: string
+        orderItemId:
+          type: string
+        type:
+          type: string
+          enum: [plea, examination_of_accused, mediation]
+        status:
+          type: string
+        tenantId:
+          type: string
+          description: Tenant context
+
+    DigitalizedDocumentSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DigitalizedDocument'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+        totalCount:
+          type: integer
+
+    MediationDetails:
+      type: object
+      description: Details captured for mediation proceedings.
+      properties:
+        natureOfComplainant:
+          type: string
+        dateOfInstitution:
+          type: integer
+          format: int64
+          description: Epoch milliseconds for date of institution
+        caseStage:
+          type: string
+        hearingDate:
+          type: integer
+          format: int64
+          description: Epoch milliseconds for hearing date
+        partyDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/MediationPartyDetails'
+
+    MediationPartyDetails:
+      type: object
+      properties:
+        partyType:
+          type: string
+          enum:
+            - COMPLAINANT
+            - RESPONDENT
+        uniqueId:
+          type: string
+          description: user uuid of the party
+        mobileNumber:
+          type: string
+        partyName:
+          type: string
+        partyIndex:
+          type: integer
+        hasSigned:
+          type: boolean
+          description: Indicates whether this party has signed the mediation document.
+    PleaDetails:
+      type: object
+      description: Details captured for recording plea of the accused.
+      properties:
+        accusedName:
+          type: string
+        accusedUniqueId:
+          type: string
+        fatherName:
+          type: string
+        village:
+          type: string
+        taluk:
+          type: string
+        caste:
+          type: string
+        calling:
+          type: string
+        religion:
+          type: string
+        age:
+          type: integer
+          format: int32
+        isChargesUnderstood:
+          type: boolean
+        pleadGuilty:
+          type: boolean
+        magistrateRemarks:
+          type: string
+    ExaminationOfAccusedDetails:
+      type: object
+      description: Details captured during examination of the accused.
+      properties:
+        accusedName:
+          type: string
+        accusedUniqueId:
+          type: string
+          description: Unique identifier of the accused in the system
+        examinationDescription:
+          type: string
+        accusedMobileNumber:
+          type: string
+
+    DigitalizedDocument:
+      type: object
+      description: A digitalized document entity captured during proceedings.
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the digitalized document
+        type:
+          type: string
+          description: Type of the document
+          enum:
+            - plea
+            - examination_of_accused
+            - mediation
+        documentNumber:
+          type: string
+          description: IdGen formatted number for the digitalized document
+        caseId:
+          type: string
+          description: Unique identifier of the case associated with this document
+        caseFilingNumber:
+          type: string
+          description: Filing number of the case associated with this document
+        shortenedUrl:
+          type: string
+          description: shortened url used to send in sms as a link
+          example: https://dristi-kerala-dev.pucar.org/eus/shorturl?code=BZ90r
+        orderNumber:
+          type: string
+          description: Order number associated with this document. Applicable only in Mediation
+        orderItemId:
+          type: string
+          description: Order item identifier associated with this document. Applicable only in Mediation
+        pleaDetails:
+          $ref: '#/components/schemas/PleaDetails'
+        examinationOfAccusedDetails:
+          $ref: '#/components/schemas/ExaminationOfAccusedDetails'
+        mediationDetails:
+          $ref: '#/components/schemas/MediationDetails'
+        additionalDetails:
+          type: object
+          additionalProperties: true
+          description: Additional details related to the document
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+        workflow:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Workflow'
+        status:
+          type: string
+          description: Current status of the digitalized document
+        documents:
+          type: array
+          description: documents related to the digitalized document, for example generated PDFs or attachments
+          items:
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Document'
+        tenantId:
+          type: string
+          description: Tenant context for the document

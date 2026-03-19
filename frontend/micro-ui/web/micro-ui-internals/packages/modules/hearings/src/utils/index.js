@@ -3,16 +3,6 @@ import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
 
-export const formatDate = (date, format) => {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  if (format === "DD-MM-YYYY") {
-    return `${day}-${month}-${year}`;
-  }
-  return `${year}-${month}-${day}`;
-};
-
 export const overrideHooks = () => {
   Object.keys(CustomisedHooks).map((ele) => {
     if (ele === "Hooks") {
@@ -54,7 +44,10 @@ export const updateCustomConfigs = () => {
 };
 
 export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
-  const nameParts = [firstName, middleName, lastName].filter(Boolean).join(" ");
+  const nameParts = [firstName, middleName, lastName]
+    ?.map((part) => part?.trim())
+    ?.filter(Boolean)
+    ?.join(" ");
 
   const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
 
