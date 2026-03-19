@@ -213,9 +213,15 @@ public class IndexerUtils {
                 }
             }
 
+            RequestInfo requestInfo = buildSystemRequestInfo(application.getTenantId());
+
+            Map<String, String> messagesMap =
+                    localizationUtil.getMessagesMap(requestInfo, application.getTenantId());
+
+
             if (application.getSelectedCaseBundle() != null) {
                 for (CaseBundleNode node : application.getSelectedCaseBundle()) {
-                    collectDocuments(null,node, application, currentTime, documents, fileStoreIdMap);
+                    collectDocuments(null,node, application, currentTime, documents, fileStoreIdMap,messagesMap);
                 }
             }
 
@@ -246,7 +252,7 @@ public class IndexerUtils {
 
     private void collectDocuments(CaseBundleNode prevNode,CaseBundleNode node, CtcApplication application,
                                   Long currentTime, List<IssueCtcDocument> documents,
-                                  Map<String, String> fileStoreIdMap) {
+                                  Map<String, String> fileStoreIdMap,Map<String, String> messagesMap) {
         if (node == null) return;
 
         // Use fileStoreId from selectedCaseBundle, fallback to caseBundles lookup
@@ -272,12 +278,12 @@ public class IndexerUtils {
             requestInfo.getUserInfo().getRoles().add(role);
             requestInfo.getUserInfo().getRoles().add(role2);
 
-            String translatedTitle = localizeTitle(node.getTitle(), localizationUtil.getMessagesMap(requestInfo, application.getTenantId()));
+            String translatedTitle = localizeTitle(node.getTitle(), messagesMap);
 
             if (prevNode != null && prevNode.getTitle() != null
                     && !excludedParentTitles.contains(prevNode.getTitle())) {
 
-                String translatedParent = localizeTitle(prevNode.getTitle(), getMessagesMap());
+                String translatedParent = localizeTitle(prevNode.getTitle(),  messagesMap);
                 docTitle = translatedTitle + " - " + translatedParent;
 
             } else {
@@ -309,10 +315,27 @@ public class IndexerUtils {
 
         if (node.getChildren() != null) {
             for (CaseBundleNode child : node.getChildren()) {
-                collectDocuments(node,child, application, currentTime, documents, fileStoreIdMap);
+                collectDocuments(node,child, application, currentTime, documents, fileStoreIdMap,messagesMap);
             }
         }
     }
+
+    private RequestInfo buildSystemRequestInfo(String tenantId) {
+        RequestInfo requestInfo = new RequestInfo();
+
+        requestInfo.setUserInfo(User.builder().roles(new ArrayList<>()).build());
+
+        requestInfo.getUserInfo().getRoles().add(
+                Role.builder().code("SYSTEM_ADMIN").tenantId(tenantId).build()
+        );
+
+        requestInfo.getUserInfo().getRoles().add(
+                Role.builder().code("SYSTEM").tenantId(tenantId).build()
+        );
+
+        return requestInfo;
+    }
+
 
     private String localizeTitle(String title, Map<String, String> messagesMap) {
         if (title == null) return null;
