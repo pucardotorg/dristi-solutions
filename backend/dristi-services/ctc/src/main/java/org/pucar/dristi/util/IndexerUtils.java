@@ -16,6 +16,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -27,12 +29,14 @@ public class IndexerUtils {
     private final RestTemplate restTemplate;
     private final Configuration config;
     private final ObjectMapper objectMapper;
+    private final LocalizationUtil localizationUtil;
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, ObjectMapper objectMapper) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, ObjectMapper objectMapper, LocalizationUtil localizationUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.objectMapper = objectMapper;
+        this.localizationUtil = localizationUtil;
     }
 
     public void pushIssueCtcDocuments(List<IssueCtcDocument> documents) throws Exception {
@@ -247,10 +251,30 @@ public class IndexerUtils {
                 ? node.getFileStoreId()
                 : fileStoreIdMap.get(node.getId());
 
-        String docTitle = node.getTitle();
-        if(docTitle.contains("APPLICATION")|| docTitle.contains("ORDER")){
-            if(prevNode!=null)
-             docTitle = prevNode.getTitle() +"-"+docTitle;
+        String docTitle = null;
+
+        Set<String> excludedParentTitles = new HashSet<>(Arrays.asList(
+                "INITIAL_FILINGS", "AFFIDAVITS_PDF", "VAKALATS",
+                "ADDITIONAL_FILINGS", "MEDIATION", "PLEA",
+                "S351_EXAMINATION", "OBJECTION_APPLICATION_HEADING",
+                "NOTICE", "WARRANT", "SUMMONS", "PAYMENT_RECEIPT_CASE_PDF"
+        ));
+
+        if (node.getTitle() != null) {
+
+            //String localizedValue = localizationUtil.callLocalization(requestInfo, tenantId, value);
+
+            String translatedTitle = localizeTitle(node.getTitle(), getMessagesMap());
+
+            if (prevNode != null && prevNode.getTitle() != null
+                    && !excludedParentTitles.contains(prevNode.getTitle())) {
+
+                String translatedParent = localizeTitle(prevNode.getTitle(), getMessagesMap());
+                docTitle = translatedTitle + " - " + translatedParent;
+
+            } else {
+                docTitle = translatedTitle;
+            }
         }
 
         if (fileStoreId != null) {
@@ -282,4 +306,30 @@ public class IndexerUtils {
         }
     }
 
+    private String localizeTitle(String title, Map<String, String> messagesMap) {
+        if (title == null) return null;
+
+        Pattern pattern = Pattern.compile("^(.*?)\\s+(\\d+)$");
+        Matcher matcher = pattern.matcher(title.trim());
+
+        if (matcher.matches()) {
+            String baseTitle = matcher.group(1);
+            String number = matcher.group(2);
+
+            String translatedBase = messagesMap.getOrDefault(baseTitle, baseTitle);
+            return translatedBase + " " + number;
+        }
+
+        return messagesMap.getOrDefault(title, title);
+    }
+
+    private Map<String, String> getMessagesMap() {
+        Map<String, String> map = new HashMap<>();
+
+        map.put("APPLICATION", "Application");
+        map.put("ORDER", "Order");
+        map.put("NOTICE", "Notice");
+        map.put("SUMMONS", "Summons");
+        return map;
+    }
 }
