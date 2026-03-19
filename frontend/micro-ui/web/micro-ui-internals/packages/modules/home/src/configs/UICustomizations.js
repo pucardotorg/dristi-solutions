@@ -14,16 +14,6 @@ import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
-export const formatLabel = (text) => {
-  if (!text) return "";
-
-  return text
-    ?.toLowerCase()
-    ?.split("_")
-    ?.map((word) => word?.charAt(0)?.toUpperCase() + word?.slice(1))
-    ?.join(" ");
-};
-
 const handleTaskDetails = (taskDetails) => {
   try {
     // Check if taskDetails is a string
@@ -708,7 +698,7 @@ export const UICustomizations = {
                   column.clickFunc({ original: row });
                 }
               }}
-            >{`${formatLabel(value)}`}</span>
+            >{`${t(value)}`}</span>
           );
         case "CASE_NAME":
           return <span>{value}</span>;
