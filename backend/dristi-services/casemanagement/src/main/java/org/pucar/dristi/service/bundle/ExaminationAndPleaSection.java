@@ -35,7 +35,7 @@ public class ExaminationAndPleaSection implements CaseBundleSection {
                     String partyName = extractPleaPartyName(doc);
                     return CaseBundleNode.builder()
                             .id("plea-" + doc.getId())
-                            .title(partyName != null ? partyName : "PLEA")
+                            .title(partyName != null ? "Plea (" + partyName + ")" : "PLEA")
                             .fileStoreId(fs)
                             .build();
                 })
@@ -59,7 +59,7 @@ public class ExaminationAndPleaSection implements CaseBundleSection {
                     String partyName = extractExamPartyName(doc);
                     return CaseBundleNode.builder()
                             .id("exam-" + doc.getId())
-                            .title(partyName != null ? partyName : "S351_EXAMINATION")
+                            .title(partyName != null ? "S351 Examination (" + partyName + ")" : "S351_EXAMINATION")
                             .fileStoreId(fs)
                             .build();
                 })
