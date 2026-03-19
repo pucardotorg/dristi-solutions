@@ -394,14 +394,12 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
         ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
     const advocateMobileNumbersArray =
-      caseDetails?.additionalDetails?.advocateDetails?.formdata
+      caseDetails?.advocateDetailBlock
         ?.filter((data) => {
-          return data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length > 0;
+          return data?.advocates?.length > 0;
         })
         ?.map((data) => {
-          return data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
-            ?.filter((advocate) => advocate?.advocateNameDetails?.advocateMobileNumber)
-            ?.map((advocate) => advocate?.advocateNameDetails?.advocateMobileNumber);
+          return data?.advocates?.filter((adv) => adv?.mobileNumber)?.map((adv) => adv?.mobileNumber);
         })
         ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
