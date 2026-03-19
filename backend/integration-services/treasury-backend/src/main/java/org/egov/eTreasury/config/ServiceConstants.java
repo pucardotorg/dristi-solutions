@@ -94,6 +94,7 @@ public class ServiceConstants {
     public static final String COMPLAINT_FEE = "COMPLAINT_FEE";
     public static final String APPLICATION_FEE = "APPLICATION_FEE";
     public static final String PETITION_FEE = "PETITION_FEE";
+    public static final String COPYING_FEE = "COPYING_FEE";
     public static final String CASE_DEFAULT_ENTITY_TYPE = "case-default";
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
     public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";

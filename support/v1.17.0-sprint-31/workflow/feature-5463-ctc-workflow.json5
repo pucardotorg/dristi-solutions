@@ -1,0 +1,235 @@
+{
+  "BusinessServices": [
+    {
+      "tenantId": "kl",
+      "businessService": "ctc-default",
+      "business": "ctc",
+      "businessServiceSla": null,
+      "states": [
+        {
+          "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": false,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SAVE_DRAFT",
+              "nextState": "DRAFT_IN_PROGRESS",
+              "roles": [
+                "CITIZEN"
+              ]
+            }
+          ]
+        },
+        {
+          "state": "DRAFT_IN_PROGRESS",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SAVE_DRAFT",
+              "nextState": "DRAFT_IN_PROGRESS",
+              "roles": [
+                "CITIZEN"
+              ]
+            },
+            {
+              "action": "DELETE",
+              "nextState": "DELETED",
+              "roles": [
+                "CITIZEN"
+              ]
+            },
+            {
+              "action": "SUBMIT",
+              "nextState": "PENDING_SIGN",
+              "roles": [
+                "CITIZEN"
+              ]
+            }
+          ]
+        },
+        {
+          "state": "PENDING_SIGN",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "EDIT",
+              "nextState": "DRAFT_IN_PROGRESS",
+              "roles": [
+                "CITIZEN"
+              ]
+            },
+            {
+              "action": "ESIGN",
+              "nextState": "PENDING_PAYMENT",
+              "roles": [
+                "CITIZEN"
+              ]
+            },
+            {
+              "action": "UPLOAD_SIGNED_COPY",
+              "nextState": "PENDING_PAYMENT",
+              "roles": [
+                "CITIZEN"
+              ]
+            }
+          ]
+        },
+        {
+          "state": "PENDING_PAYMENT",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "MAKE_PAYMENT_FOR_SEND_FOR_APPROVAL",
+              "nextState": "PENDING_APPROVAL",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "MAKE_PAYMENT_FOR_SEND_FOR_ISSUE",
+              "nextState": "PENDING_ISSUE",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "state": "PENDING_APPROVAL",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "APPROVE",
+              "nextState": "PENDING_ISSUE",
+              "roles": [
+                "CTC_APPLICATION_APPROVER"
+              ]
+            },
+            {
+              "action": "REJECT",
+              "nextState": "REJECTED",
+              "roles": [
+                "CTC_APPLICATION_APPROVER"
+              ]
+            }
+          ]
+        },
+        {
+          "state": "PENDING_ISSUE",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "ISSUE",
+              "nextState": "PARTIALLY_ISSUED",
+              "roles": [
+                "CTC_DOCUMENT_APPROVER"
+              ]
+            },
+            {
+              "action": "REJECT",
+              "nextState": "PENDING_ISSUE",
+              "roles": [
+                "CTC_DOCUMENT_APPROVER"
+              ]
+            },
+            {
+              "action": "REJECT_ALL",
+              "nextState": "REJECTED_ALL",
+              "roles": [
+                "CTC_DOCUMENT_APPROVER"
+              ]
+            },
+            {
+              "action": "ISSUE_ALL",
+              "nextState": "ISSUED",
+              "roles": [
+                "CTC_DOCUMENT_APPROVER"
+              ]
+            }
+          ]
+        },
+        {
+          "state": "PARTIALLY_ISSUED",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "ISSUE_ALL",
+              "nextState": "ISSUED",
+              "roles": [
+                "CTC_DOCUMENT_APPROVER"
+              ]
+            },
+            {
+              "action": "ISSUE",
+              "nextState": "PARTIALLY_ISSUED",
+              "roles": [
+                "CTC_DOCUMENT_APPROVER"
+              ]
+            }
+          ]
+        },
+        {
+          "state": "ISSUED",
+          "applicationStatus": "ACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false
+        },
+        {
+          "state": "REJECTED",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false
+        },
+        {
+          "state": "DELETED",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false
+        },
+        {
+          "state": "REJECTED_ALL",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false
+        }
+      ]
+    }
+  ]
+}

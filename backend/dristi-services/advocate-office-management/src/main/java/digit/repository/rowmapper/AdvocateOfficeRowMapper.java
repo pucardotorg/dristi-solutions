@@ -48,6 +48,7 @@ public class AdvocateOfficeRowMapper implements ResultSetExtractor<List<AddMembe
                             .memberId(getUuidFromString(rs.getString("member_id")))
                             .memberName(rs.getString("member_name"))
                             .memberMobileNumber(rs.getString("member_mobile_number"))
+                            .advocateOfficeMobileNumber(rs.getString("advocate_office_mobile_number"))
                             .memberEmail(rs.getString("member_email"))
                             .accessType(getAccessType(rs))
                             .allowCaseCreate(rs.getBoolean("allow_case_create"))

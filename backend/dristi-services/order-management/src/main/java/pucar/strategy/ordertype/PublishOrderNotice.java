@@ -2,10 +2,10 @@ package pucar.strategy.ordertype;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
@@ -229,12 +229,12 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
             uniqueSet.add(userUUID);
         }
 
+        log.info("Getting sla");
         Long sla = pendingTaskUtil.getStateSlaBasedOnOrderType(order.getOrderType());
         String applicationNumber = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "refApplicationId"), String.class);
-
+        log.info("Application number :: {}",applicationNumber);
         Map<String, Object> additionalDetails = new HashMap<>();
         additionalDetails.put("applicationNumber", applicationNumber);
-        log.info("Application number :: {}",applicationNumber);
         additionalDetails.put("litigants", complainantIndividualId);
         additionalDetails.put("orderItemId", getItemId(order));
         List<Map<String, Object>> partyTypeToUniqueIdList = getMaps(partyTypeToUniqueIdMap);
@@ -244,7 +244,9 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
 
             String itemId = getItemId(order);
             log.info("itemId :: {}",itemId);
+
             String referenceId = MANUAL + (itemId != null ? itemId + "_" : "") + COMPLAINANT + "_" + order.getOrderNumber();
+
             log.info("Creating payment pending task for referenceId :: {}",referenceId);
 
             PendingTask pendingTask = PendingTask.builder()
@@ -299,7 +301,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
 //                });
 //                String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
 //
-//                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase, channel);
+//                TaskRequest taskRequest = taskUtil.createTaskRequest(requestInfo, order, taskDetail,courtCase, channel);
 //                TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 //
 //                // create pending task

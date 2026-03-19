@@ -149,4 +149,23 @@ public class AdvocateRepository {
             }
         }
     }
+
+    public boolean isBarRegistrationNumberActive(String tenantId, String stateCode, String normalizedSerialNumber, String year) {
+        String query =
+                "SELECT EXISTS ( " +
+                        " SELECT 1 FROM dristi_advocate " +
+                        " WHERE tenantid = ? " +
+                        " AND status = 'ACTIVE' " +
+                        " AND array_length(string_to_array(barregistrationnumber, '/'), 1) = 3 " +
+                        " AND split_part(barregistrationnumber, '/', 1) = ? " +
+                        " AND CASE WHEN split_part(barregistrationnumber, '/', 2) ~ '^\\d+$' " +
+                        "          THEN split_part(barregistrationnumber, '/', 2)::int " +
+                        "          END = ? " +
+                        " AND split_part(barregistrationnumber, '/', 3) = ? " +
+                        ")";
+
+        // Format is already validated before this stage, so normalizedSerialNumber is guaranteed to be an integer
+        Boolean exists = jdbcTemplate.queryForObject(query, Boolean.class, tenantId, stateCode, Integer.valueOf(normalizedSerialNumber), year);
+        return Boolean.TRUE.equals(exists);
+    }
 }

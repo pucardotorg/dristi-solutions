@@ -23,6 +23,7 @@ import org.pucar.dristi.web.models.bailbond.OpenApiBailSearchRequest;
 import org.pucar.dristi.web.models.bailbond.OpenApiUpdateBailBondRequest;
 import org.pucar.dristi.web.models.esign.ESignParameter;
 import org.pucar.dristi.web.models.esign.ESignResponse;
+import org.pucar.dristi.web.models.filestore.StorageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.constraints.*;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -84,6 +86,23 @@ public class OpenapiApiController {
 
         CaseListResponse caseList = openApiService.getCaseListByCaseType(tenantId, year, caseType, offset, limit, sort);
         return new ResponseEntity<>(caseList, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/openapi/v1/{tenantId}/case/search", method = RequestMethod.GET)
+    public ResponseEntity<CaseSearchTextResponse> getCasesBySearchText(
+            @Pattern(regexp = "^[a-zA-Z]{2}$") @Size(min = 2, max = 2)
+            @Parameter(in = ParameterIn.PATH, description = "tenant ID", required = true, schema = @Schema())
+            @PathVariable("tenantId") String tenantId,
+            @Parameter(in = ParameterIn.PATH, description = "Search text to match against CNR number, case number, filing number, CMP number etc.", required = true, schema = @Schema())
+            @RequestParam("searchText") String searchText,
+            @NotNull @Parameter(in = ParameterIn.QUERY, description = "Court ID", required = true, schema = @Schema())
+            @RequestParam("courtId") String courtId,
+            @Min(1) @Max(100) @Parameter(in = ParameterIn.QUERY, description = "Number of items per page", schema = @Schema(allowableValues = "", defaultValue = "10")) 
+            @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit,
+            @Min(0) @Parameter(in = ParameterIn.QUERY, description = "Page number to retrieve (0-based index)", schema = @Schema(allowableValues = "", defaultValue = "0")) 
+            @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset) {
+        CaseSearchTextResponse response = openApiService.getCasesBySearchText(tenantId, searchText, courtId, limit, offset);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/openapi/v1/hearings")
@@ -175,4 +194,20 @@ public class OpenapiApiController {
         return ResponseEntity.ok(response);
 
     }
+
+    @PostMapping(value = "/openapi/v1/file/upload", consumes = "multipart/form-data")
+    public ResponseEntity<StorageResponse> uploadFile(
+            @RequestParam("tenantId") String tenantId,
+            @RequestParam("file") List<MultipartFile> files,
+            @RequestParam("module") String module,
+            @RequestParam(value = "tag", required = false) String tag
+    ) {
+
+        RequestInfo requestInfo = requestInfoGenerator.createInternalRequestInfo();
+
+        StorageResponse response = openApiService.uploadFiles(files, tenantId, module, tag, requestInfo);
+
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+
 }

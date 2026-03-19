@@ -10,8 +10,7 @@ import { getFilingType } from "../../../Utils";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { DRISTIService } from "../../../services";
 import isEqual from "lodash/isEqual";
-import WitnessDepositionSignatureModal from "./WitnessDepositionSignatureModal";
-import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+
 import WitnessDepositionESignLockModal from "./WitnessDepositionESignLockModal";
 import AddWitnessMobileNumberModal from "./AddWitnessMobileNumberModal";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
@@ -33,11 +32,7 @@ const formatAddress = (addr) => {
   return `${locality}, ${city}, ${district}, ${state}, ${pincode}`.trim();
 };
 
-const formatAddressFromIndividualData = (addr) => {
-  if (!addr) return "";
-  const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
-  return `${addressLine1}, ${addressLine2}, ${buildingName}, ${street}, ${city}, ${pincode}`.trim();
-};
+
 
 export const _getPdfConfigForExamination = (documentNumber, caseDetails, courtId, tenantId) => {
   return {
@@ -71,15 +66,11 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [showAccusedExaminationReview, setShowAccusedExaminationReview] = useState(localStorage.getItem("showPdfPreview") || false);
   const [documentFileStoreId, setDocumentFileStoreId] = useState("");
-  const [showSignatureModal, setShowsignatureModal] = useState(false);
   const [currentDocumentNumber, setCurrentDocumentNumber] = useState(documentNumber || localStorage.getItem("documentNumber") || null);
-  const [examinationUploadLoader, setExaminationUploadLoader] = useState(false);
   const [showExaminationESign, setShowExaminationESign] = useState(false);
-  const { downloadPdf } = useDownloadCasePdf();
   const [showAddAccusedMobileNumberModal, setShowAddAccusedMobileNumberModal] = useState(false);
   const [accusedMobileNumber, setAccusedMobileNumber] = useState("");
   const [examinationSignatureURL, setExaminationSignatureURL] = useState("");
-  const [showUploadSignature, setShowUploadSignature] = useState(false);
   const [loader, setLoader] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showConfirmDeleteExaminationModal, setShowConfirmDeleteExaminationModal] = useState({ show: false, tab: {} });
@@ -174,8 +165,8 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
               numberFromIndividual = individualData?.Individual?.[0]?.mobileNumber
                 ? individualData?.Individual?.[0]?.mobileNumber
                 : individualData?.Individual?.[0]?.userDetails?.username
-                ? individualData?.Individual?.[0]?.userDetails?.username
-                : "";
+                  ? individualData?.Individual?.[0]?.userDetails?.username
+                  : "";
             } catch (error) {
               console.error("Error fetching respondent individual data:", error);
             }
@@ -661,13 +652,13 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       const party = allParties?.find((p) => p?.uniqueId === selectedAccused?.value);
       const documentsFile = fileStoreId
         ? [
-            {
-              fileStore: fileStoreId,
-              documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
-              additionalDetails: { name: `${t("S351_EXAMINATION")} (${party?.name}).pdf` },
-              tenantId,
-            },
-          ]
+          {
+            fileStore: fileStoreId,
+            documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
+            additionalDetails: { name: `${t("S351_EXAMINATION")} (${party?.name}).pdf` },
+            tenantId,
+          },
+        ]
         : null;
       const document = activeTabs?.find((tab) => tab?.documentNumber === currentDocumentNumber);
       const reqBody = {
@@ -682,7 +673,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
           },
           workflow: {
             action,
-            ...(action === "INITIATE_E-SIGN" && party?.uuid && { assignes: [party?.uuid] }), // uniqueId of accused, so that accused can receive the pending task
+            ...(action === "SUBMIT" && party?.uuid && { assignes: [party?.uuid] }),
           },
         },
       };
@@ -694,52 +685,28 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
     }
   };
 
+  const handleProceedToMobileNumber = () => {
+    setShowAccusedExaminationReview(false);
+    localStorage.removeItem("documentNumber");
+    localStorage.removeItem("showPdfPreview");
+    setShowAddAccusedMobileNumberModal(true);
+  };
+
   const handleESign = async (number = "") => {
-    // TODO: call Api then close this modal and show next modal
     try {
-      const updatedDocument = await updateExaminationDocument(documentFileStoreId, "INITIATE_E-SIGN", number);
+      setLoader(true);
+      const updatedDocument = await updateExaminationDocument(documentFileStoreId, "SUBMIT", number);
       setExaminationSignatureURL(updatedDocument?.digitalizedDocument?.shortenedUrl);
       setShowAddAccusedMobileNumberModal(false);
-      setShowsignatureModal(false);
       setShowExaminationESign(true);
       documentsRefetch();
       setCurrentDocumentNumber(null);
     } catch (error) {
-      console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
-    } finally {
-      setShowsignatureModal(false);
-    }
-  };
-
-  const handleSubmitSignature = async (fileStoreId) => {
-    // TODO: api call with fileStoreID then
-    try {
-      setLoader(false);
-      const res = await updateExaminationDocument(fileStoreId, "UPLOAD");
-      setShowsignatureModal(false);
-      setShowUploadSignature(false);
-      setShowSuccessModal(true);
-      documentsRefetch();
-      setCurrentDocumentNumber(null);
-    } catch (error) {
-      console.error("Error while updating bail bond:", error);
+      console.error("Error while updating examination:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setLoader(false);
-      setShowsignatureModal(false);
-      setShowUploadSignature(false);
-      setExaminationText("");
     }
-  };
-
-  const handleCloseSignatureModal = () => {
-    setShowsignatureModal(false);
-    setShowAccusedExaminationReview(true);
-  };
-
-  const handleDownload = () => {
-    downloadPdf(tenantId, documentFileStoreId);
   };
 
   if (isFilingTypeLoading || isDocumentsDataLoading || caseApiLoading || examinationQuestionsDataLoading) {
@@ -971,7 +938,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             t={t}
             header={"REVIEW_EXAMINATION"}
             cancelLabel={"CS_COMMON_BACK"}
-            saveLabel={"PROCEED_TO_SIGN"}
+            saveLabel={"CS_PROCEED"}
             handleBack={() => {
               setShowAccusedExaminationReview(false);
               localStorage.removeItem("documentNumber");
@@ -979,7 +946,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             }}
             setPreviewModal={setShowAccusedExaminationReview}
             pdfConfig={_getPdfConfigForExamination(currentDocumentNumber, caseDetails, courtId, tenantId)}
-            setShowsignatureModal={setShowsignatureModal}
+            setShowsignatureModal={handleProceedToMobileNumber}
             setFileStoreId={setDocumentFileStoreId}
             callback={() => {
               localStorage.removeItem("documentNumber");
@@ -989,27 +956,12 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
           />
         )}
 
-        {showSignatureModal && (
-          <WitnessDepositionSignatureModal
-            t={t}
-            handleCloseSignatureModal={handleCloseSignatureModal}
-            handleDownload={handleDownload}
-            handleESign={() => setShowAddAccusedMobileNumberModal(true)}
-            setShowUploadSignature={setShowUploadSignature}
-            showUploadSignature={showUploadSignature}
-            handleSubmit={handleSubmitSignature}
-            setLoader={setExaminationUploadLoader}
-            loader={examinationUploadLoader}
-            witnessDepositionFileStoreId={documentFileStoreId}
-          />
-        )}
-
         {showAddAccusedMobileNumberModal && (
           <AddWitnessMobileNumberModal
             t={t}
             handleClose={() => {
               setShowAddAccusedMobileNumberModal(false);
-              setShowsignatureModal(true);
+              setShowAccusedExaminationReview(true);
               setAccusedMobileNumber("");
             }}
             submit={(mobileNumber) => handleESign(mobileNumber)}

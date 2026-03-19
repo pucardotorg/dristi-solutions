@@ -53,6 +53,7 @@ import {
   getRespondentName,
   prayerAndSwornValidation,
   respondentValidation,
+  runGenericTextSanitizer,
   showDemandNoticeModal,
   showToastForComplainant,
   signatureValidation,
@@ -184,7 +185,6 @@ function EFilingCases({ path }) {
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const todayDate = new Date().getTime();
   const userInfo = Digit?.UserService?.getUser()?.info;
-
   const moduleCode = "DRISTI";
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
@@ -625,11 +625,13 @@ function EFilingCases({ path }) {
   }, [caseDetails]);
 
   const caseDraftEditAllowedParties = useMemo(() => {
+    if (!caseDetails?.filingNumber) return null;
     const createdByUuid = caseDetails?.auditDetails?.createdBy;
     return findCaseDraftEditAllowedParties(caseDetails, createdByUuid);
   }, [caseDetails]);
 
   useEffect(() => {
+    if (!caseDetails?.filingNumber || !caseDraftEditAllowedParties) return;
     if (caseDetails?.status === "DRAFT_IN_PROGRESS") {
       const loggedInUserUuid = userInfo?.uuid;
       const isEditingAllowedToUser = caseDraftEditAllowedParties?.includes(loggedInUserUuid);
@@ -1581,11 +1583,19 @@ function EFilingCases({ path }) {
                     return {};
                   }
                 }
+                const isFieldDisabled =
+                  disableConfigFields.some((field) => field === body?.populators?.name) ||
+                  disableDelayCondonationType ||
+                  (typeof body?.populators?.disable === "string" && body?.populators?.disable.includes("{{")
+                    ? Boolean(extractValue(data, body?.populators?.disable.replace(/{{|}}/g, "")))
+                    : false);
+
                 return {
                   ...body,
-                  disable: disableConfigFields.some((field) => field === body?.populators?.name) || disableDelayCondonationType,
+                  disable: isFieldDisabled,
                   populators: {
                     ...body?.populators,
+                    disable: isFieldDisabled,
                     validation: {
                       ...body?.populators?.validation,
                       ...validationUpdate,
@@ -1593,9 +1603,16 @@ function EFilingCases({ path }) {
                   },
                 };
               }
+
+              const isFieldDisabled =
+                disableConfigFields.some((field) => field === body?.name) ||
+                (typeof body?.disable === "string" && body?.disable.includes("{{")
+                  ? Boolean(extractValue(data, body?.disable.replace(/{{|}}/g, "")))
+                  : false);
+
               return {
                 ...body,
-                disable: disableConfigFields.some((field) => field === body?.name),
+                disable: isFieldDisabled,
               };
             }),
           };
@@ -1859,16 +1876,6 @@ function EFilingCases({ path }) {
     setFormdata([...formdata, { isenabled: true, data: {}, displayindex: activeForms }]);
   };
 
-  // const handleDeleteForm = (index) => {
-  //   const newArray = formdata.map((item, i) => ({
-  //     ...item,
-  //     isenabled: index === i ? false : item.isenabled,
-  //     displayindex: i < index ? item.displayindex : i === index ? -Infinity : item.displayindex - 1,
-  //   }));
-  //   setConfirmDeleteModal(true);
-  //   setFormdata(newArray);
-  // };
-
   const handleSkip = () => {
     setShowConfirmOptionalModal(false);
     // optionalFieldModalAlreadyViewed -> We want to show the optional remaining fields modal only once when the user visits the review page for the first time.
@@ -1929,6 +1936,11 @@ function EFilingCases({ path }) {
   };
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index, currentDisplayIndex) => {
+    runGenericTextSanitizer({
+      formData,
+      formConfig: modifiedFormConfig,
+      setValue,
+    });
     checkIfscValidation({ formData, setValue, selected });
     checkNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     checkOnlyCharInCheque({ formData, setValue, selected });
@@ -2666,7 +2678,7 @@ function EFilingCases({ path }) {
       } catch (error) {
         let message = t("SOMETHING_WENT_WRONG");
         if (error instanceof DocumentUploadError) {
-          message = `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
+          message = `${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
         } else if (extractCodeFromErrorMsg(error) === 413) {
           message = t("FAILED_TO_UPLOAD_FILE");
         }
@@ -2733,7 +2745,7 @@ function EFilingCases({ path }) {
       })
       .catch(async (error) => {
         if (error instanceof DocumentUploadError) {
-          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`);
+          toast.error(`${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`);
         } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {

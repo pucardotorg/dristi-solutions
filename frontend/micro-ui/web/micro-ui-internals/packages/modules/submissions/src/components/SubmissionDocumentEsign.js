@@ -1,11 +1,10 @@
-import React, { useState, useMemo, useEffect, useContext } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import useESign from "@egovernments/digit-ui-module-orders/src/hooks/orders/useESign";
 import useDocumentUpload from "@egovernments/digit-ui-module-orders/src/hooks/orders/useDocumentUpload";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { Urls } from "../hooks/services/Urls";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSignedDocumentUploadID, combinedFileStoreId }) {
   const [isSigned, setIsSigned] = useState(false);
@@ -22,8 +21,8 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
   const authorizedUuid = getAuthorizedUuid(userUuid);
-  const { AdvocateData } = useContext(AdvocateDataContext);
-  const storedAdvocate = AdvocateData;
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const name = "Signature";
   const isAdvocateOrClerk = userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role.code));
@@ -61,6 +60,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const cleanString = (input) => {
@@ -83,6 +83,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
       } catch (error) {
         console.error("error", error);
         setFormData({});
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -110,7 +111,9 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
           </h1>
           <div>
             <h2 style={{ fontFamily: "Roboto", fontSize: "16px", fontWeight: 400, lineHeight: "18.75px", textAlign: "left" }}>
-              {t("SUBMISSION_DOCUMENT_SIGNATURE_SUBTEXT")}
+              {authorizedUuid === userUuid
+                ? t("SUBMISSION_DOCUMENT_SIGNATURE_SUBTEXT_MAIN")
+                : t("SUBMISSION_DOCUMENT_SIGNATURE_SUBTEXT_CLERK_OR_JUNIOR_ADV")}
             </h2>
           </div>
           <div style={{ display: "flex" }}>
@@ -206,6 +209,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
       config={uploadModalConfig}
       formData={formData}
       onSubmit={onSubmit}
+      fileUploadError={fileUploadError}
     />
   );
 }

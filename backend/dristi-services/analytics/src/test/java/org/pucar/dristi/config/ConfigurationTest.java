@@ -28,6 +28,8 @@ class ConfigurationTest {
         ReflectionTestUtils.setField(configuration, "bailBondBusinessServices", "bailBondService1,bailBondService2");
         ReflectionTestUtils.setField(configuration, "taskManagementBusinessServices", "taskManagementService1,taskManagementService2");
         ReflectionTestUtils.setField(configuration, "digitalizedDocumentsBusinessServices", "digitalizedDocumentService1,digitalizedDocumentService2");
+        ReflectionTestUtils.setField(configuration, "ctcApplicationBusinessServices", "ctcApplicationService1,ctcApplicationService2");
+
     }
 
     @Test
@@ -38,18 +40,25 @@ class ConfigurationTest {
         List<String> expectedCaseList = Arrays.asList("caseService1", "caseService2");
         List<String> expectedEvidenceList = Arrays.asList("evidenceService1", "evidenceService2");
         List<String> expectedTaskList = Arrays.asList("taskService1", "taskService2");
+        List<String> expectedTaskManagementList = Arrays.asList("taskManagementService1", "taskManagementService2");
+        List<String> expectedDigitalizedDocumentsList = Arrays.asList("digitalizedDocumentService1", "digitalizedDocumentService2");
         List<String> expectedApplicationList = Arrays.asList("applicationService1", "applicationService2");
         List<String> expectedOrderList = Arrays.asList("orderService1", "orderService2");
         List<String> expectedADiaryList = Arrays.asList("aDiaryService1", "aDiaryService2");
         List<String> expectedbailBondBusinessServiceList = Arrays.asList("bailBondService1", "bailBondService2");
+        List<String> expectedCtcApplicationList = Arrays.asList("ctcApplicationService1", "ctcApplicationService2");
 
         assertEquals(expectedHearingList, configuration.getHearingBusinessServiceList());
         assertEquals(expectedCaseList, configuration.getCaseBusinessServiceList());
         assertEquals(expectedEvidenceList, configuration.getEvidenceBusinessServiceList());
         assertEquals(expectedTaskList, configuration.getTaskBusinessServiceList());
+        assertEquals(expectedTaskManagementList, configuration.getTaskManagementBusinessServiceList());
+        assertEquals(expectedDigitalizedDocumentsList, configuration.getDigitalizedDocumentsBusinessServiceList());
         assertEquals(expectedApplicationList, configuration.getApplicationBusinessServiceList());
         assertEquals(expectedOrderList, configuration.getOrderBusinessServiceList());
+        assertEquals(expectedADiaryList, configuration.getADiaryBusinessServiceList());
         assertEquals(expectedbailBondBusinessServiceList, configuration.getBailBondBusinessServiceList());
+        assertEquals(expectedCtcApplicationList, configuration.getCtcApplicationBusinessServiceList());
     }
 
     @Test

@@ -9,7 +9,7 @@ import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/d
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory, useLocation } from "react-router-dom";
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
-import { combineMultipleFiles, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { submissionService } from "../../hooks/services";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionWorkflow";
@@ -51,6 +51,7 @@ const convertToFormData = (t, obj) => {
             mobileNumber: surety?.mobileNumber,
             address: surety?.address,
             email: surety?.email,
+            index: surety?.index,
             identityProof: {
               document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF" && doc?.isActive === true) || [],
             },
@@ -60,7 +61,9 @@ const convertToFormData = (t, obj) => {
             otherDocuments: {
               document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS" && doc?.isActive === true) || [],
             },
-          }))
+          }))?.sort((a, b) => 
+            (a?.index != null ? a.index : Infinity) - 
+            (b?.index != null ? b.index : Infinity))
         : Array.from({ length: obj?.noOfSureties || 0 }, () => ({})),
   };
 
@@ -151,6 +154,7 @@ const GenerateBailBondV2 = () => {
       criteria: {
         bailId: bailBondId,
         filingNumber,
+        asUser: authorizedUuid,
       },
       tenantId,
     },
@@ -291,6 +295,7 @@ const GenerateBailBondV2 = () => {
         filingNumber,
         applicationNumber: pendingTaskAdditionalDetails?.refApplicationId,
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
@@ -574,7 +579,7 @@ const GenerateBailBondV2 = () => {
   };
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-    // Continue with the existing validation logic
+    runComprehensiveSanitizer({ formData, setValue });
     if (formData?.bailAmount <= 0 && !Object.keys(formState?.errors).includes("bailAmount")) {
       setError("bailAmount", { message: t("Must be greater than zero") });
     } else if (formData?.bailAmount > 0 && Object.keys(formState?.errors).includes("bailAmount")) {

@@ -33,7 +33,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode } from "../../utils";
-import { combineMultipleFiles, DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, DateUtils, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -277,6 +277,7 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationNumber,
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
@@ -296,6 +297,7 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationType: "DELAY_CONDONATION",
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
@@ -849,6 +851,7 @@ const SubmissionsCreate = ({ path }) => {
   );
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    runComprehensiveSanitizer({ formData, setValue, ignoredKeys: ["prayer"] });
     if (
       applicationType &&
       ![
@@ -1713,7 +1716,7 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
-  const handleReviewModalSubmit = async ({ applicationPreviewPdf, applicationPreviewFileName }) => {
+  const handleReviewModalSubmit = async ({ applicationPreviewPdf, applicationPreviewFileName, isUpload = false }) => {
     try {
       if (applicationDetails?.status === SubmissionWorkflowState.DRAFT_IN_PROGRESS) {
         const res = await updateSubmission(SubmissionWorkflowAction.SUBMIT);
@@ -1751,10 +1754,29 @@ const SubmissionsCreate = ({ path }) => {
       if (!fileStoreId) {
         throw new Error("FileStoreId not generated");
       }
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const userUuid = userInfo?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUuid);
+
+      const isSendForEsign = authorizedUuid !== userUuid;
+
       if (fileStoreId) {
         setApplicationPdfFileStoreId(fileStoreId);
       }
-      setShowsignatureModal(true);
+
+      if (isUpload) {
+        setShowsignatureModal(true);
+      } else {
+        if (!isSendForEsign) {
+          setShowsignatureModal(true);
+        } else {
+          setShowErrorToast({ label: t("SUCCESFULLY_SENT_FOR_ESIGN"), error: false });
+          history.replace(
+            `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+          );
+        }
+      }
+
       setShowReviewModal(false);
     } catch (error) {
       console.error("Error while submitting the application:", error);
@@ -1993,23 +2015,28 @@ const SubmissionsCreate = ({ path }) => {
       )}
       <div className="citizen create-submission" style={{ width: "50%", ...(!isCitizen && { padding: "0 8px 24px 16px" }) }}>
         <Header styles={{ margin: "25px 0px 0px 25px" }}> {t("CREATE_SUBMISSION")}</Header>
-        <div style={{ minHeight: "550px", overflowY: "auto" }}>
-          <FormComposerV2
-            label={t("REVIEW_SUBMISSION")}
-            className={"submission-create submission-form-filed-style"}
-            secondaryLabel={t("SAVE_AS_DRAFT")}
-            showSecondaryLabel={restrictedApplicationTypes?.includes(applicationType) ? false : orderNumber ? false : true}
-            onSecondayActionClick={handleSaveDraft}
-            config={modifiedFormConfig}
-            defaultValues={defaultFormValue}
-            onFormValueChange={onFormValueChange}
-            onSubmit={handleOpenReview}
-            fieldStyle={fieldStyle}
-            key={formKey + isApplicationFetching}
-            isDisabled={isSubmitDisabled}
-            actionClassName={"bail-action-bar"}
-          />
-        </div>
+        {isCaseDetailsLoading ? (
+          <Loader></Loader>
+        ) : (
+          <div style={{ minHeight: "550px", overflowY: "auto" }}>
+            <FormComposerV2
+              label={t("REVIEW_SUBMISSION")}
+              className={"submission-create submission-form-filed-style"}
+              secondaryLabel={t("SAVE_AS_DRAFT")}
+              showSecondaryLabel={restrictedApplicationTypes?.includes(applicationType) ? false : orderNumber ? false : true}
+              onSecondayActionClick={handleSaveDraft}
+              config={modifiedFormConfig}
+              defaultValues={defaultFormValue}
+              onFormValueChange={onFormValueChange}
+              onSubmit={handleOpenReview}
+              fieldStyle={fieldStyle}
+              key={formKey + isApplicationFetching}
+              isDisabled={isSubmitDisabled}
+              actionClassName={"bail-action-bar"}
+              s
+            />
+          </div>
+        )}
         {showReviewModal && (
           <ReviewSubmissionModal
             t={t}

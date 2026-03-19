@@ -1,11 +1,10 @@
 import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
 
-import React, { useContext, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { useToast } from "../../../components/Toast/useToast";
 import Modal from "../../../components/Modal";
-import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 
 const caseLockingMainDiv = {
   padding: "24px",
@@ -53,8 +52,7 @@ function CaseLockModal({
   const [submitConfirmed, setSubmitConfirmed] = useState(false);
   const history = useHistory();
   const toast = useToast();
-  const { AdvocateData } = useContext(AdvocateDataContext);
-  const selectedSeniorAdvocate = AdvocateData;
+  const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
   const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
 
   const filingNumber = useMemo(() => {

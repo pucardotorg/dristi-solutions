@@ -10,6 +10,7 @@ import Menu from "../../components/Menu";
 import { useToast } from "../../components/Toast/useToast";
 import { ErrorInfoIcon, SuccessIcon } from "../../icons/svgIndex";
 import ImageModal from "../../components/ImageModal";
+import { sanitizeData } from "../../Utils";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -55,9 +56,9 @@ const extractFormattedAddresses = (individualData, t) => {
 
   const formatAddress = (addr) => {
     if (!addr) return "";
-    const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
+    const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "", doorNo = "" } = addr;
 
-    return `${addressLine1}, ${addressLine2}, ${buildingName}, ${street}, ${city}, ${pincode}`.trim();
+    return `${doorNo}, ${buildingName}, ${street}, ${city}, ${addressLine2}, ${addressLine1}, ${pincode}`.trim();
   };
 
   const permanentAddress = addresses?.find((addr) => addr?.type === "PERMANENT");
@@ -352,7 +353,7 @@ const ApplicationDetails = ({ location, match }) => {
             />
 
             <DocumentDetailCard cardData={personalData} />
-            {type === "advocate" && (userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") && (
+            {(userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") && (
               <DocumentDetailCard onClick={() => handleImageModalOpen(fileStoreId, fileName)} cardData={barDetails} />
             )}
           </div>
@@ -362,7 +363,7 @@ const ApplicationDetails = ({ location, match }) => {
               <SubmitBar
                 label={t("Go_Back_Home")}
                 onSubmit={() => {
-                  history.push(`/${window?.contextPath}/citizen/dristi/home`);
+                  history.push(`/${window?.contextPath}/citizen/dristi/home?refetchIndividual=${true}`);
                 }}
                 className="action-button-width"
               />

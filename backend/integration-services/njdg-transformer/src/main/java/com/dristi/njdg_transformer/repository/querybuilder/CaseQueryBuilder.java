@@ -1,7 +1,6 @@
 package com.dristi.njdg_transformer.repository.querybuilder;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import java.sql.Types;
@@ -286,8 +285,8 @@ public class CaseQueryBuilder {
     public String getCaseConversionInsertQuery() {
         return "INSERT INTO case_conversion " +
                "(cino, oldregcase_type, oldreg_no, oldreg_year, newregcase_type, newreg_no, newreg_year, " +
-               "sr_no, oldfilcase_type, oldfil_no, oldfil_year, newfilcase_type, newfil_no, newfil_year, jocode) " +
-               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+               "sr_no, oldfilcase_type, oldfil_no, oldfil_year, newfilcase_type, newfil_no, newfil_year, jocode, converted_at) " +
+               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                "ON CONFLICT (cino, sr_no) DO UPDATE SET " +
                "oldregcase_type = EXCLUDED.oldregcase_type, " +
                "oldreg_no = EXCLUDED.oldreg_no, " +
@@ -301,7 +300,8 @@ public class CaseQueryBuilder {
                "newfilcase_type = EXCLUDED.newfilcase_type, " +
                "newfil_no = EXCLUDED.newfil_no, " +
                "newfil_year = EXCLUDED.newfil_year, " +
-               "jocode = EXCLUDED.jocode";
+               "jocode = EXCLUDED.jocode, " +
+               "converted_at = EXCLUDED.converted_at";
     }
 
     public String getCaseConversionSelectQuery() {

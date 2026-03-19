@@ -17,7 +17,7 @@ class ProducerTest {
     private Producer producer;
 
     @Mock
-    private CustomKafkaTemplate<String, Object> kafkaTemplate;
+    private KafkaProducerService kafkaProducerService;
 
     @Test
     void testPush() {
@@ -26,7 +26,7 @@ class ProducerTest {
 
         producer.push(topic, value);
 
-        verify(kafkaTemplate, times(1)).send(topic, value);
+        verify(kafkaProducerService, times(1)).send(topic, value);
     }
 
     @Test
@@ -35,7 +35,7 @@ class ProducerTest {
 
         producer.push(null, value);
 
-        verify(kafkaTemplate, times(1)).send(null, value);
+        verify(kafkaProducerService, times(1)).send(null, value);
     }
 
     @Test
@@ -44,6 +44,6 @@ class ProducerTest {
 
         producer.push(topic, null);
 
-        verify(kafkaTemplate, times(1)).send(topic, null);
+        verify(kafkaProducerService, times(1)).send(topic, null);
     }
 }

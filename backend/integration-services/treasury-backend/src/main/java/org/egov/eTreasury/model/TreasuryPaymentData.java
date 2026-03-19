@@ -78,7 +78,13 @@ public class TreasuryPaymentData {
 
     private double petitionFee;
 
+    private double copyingFee;
+
     private double totalAmount;
 
     private List<FeeBreakDown> feeBreakDown;
+
+    private Object requestBlob;
+
+    private Object responseBlob;
 }

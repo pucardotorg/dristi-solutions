@@ -2,13 +2,16 @@ package org.pucar.dristi.repository.queryBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.web.models.ApplicationCriteria;
+import org.pucar.dristi.web.models.ApplicationSearchRequest;
 import org.pucar.dristi.web.models.Pagination;
 import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -59,7 +62,7 @@ public class ApplicationQueryBuilder {
         }
     }
 
-    public String getApplicationSearchQuery(ApplicationCriteria applicationCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, String userUuid, RequestInfo requestInfo) {
+    public String getApplicationSearchQuery(ApplicationCriteria applicationCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, String asUser, RequestInfo requestInfo) {
         try {
             StringBuilder query = new StringBuilder(BASE_APP_QUERY);
             query.append(FROM_APP_TABLE);
@@ -93,39 +96,34 @@ public class ApplicationQueryBuilder {
                 firstCriteria = false;
             }
 
-            if (requestInfo != null && requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null) {
-                List<String> officeAdvocateUserUuids = applicationCriteria.getOfficeAdvocateUserUuids();
-                boolean isAdvocateOrClerk = applicationCriteria.isAdvocate() || applicationCriteria.isClerk();
-                boolean hasUserUuidsList = officeAdvocateUserUuids != null && !officeAdvocateUserUuids.isEmpty();
+            boolean isCitizen = Optional.ofNullable(requestInfo)
+                    .map(RequestInfo::getUserInfo)
+                    .map(User::getType)
+                    .map(CITIZEN_UPPER::equalsIgnoreCase)
+                    .orElse(false);
 
-                addClauseIfRequired(query, firstCriteria);
-
-                if (isAdvocateOrClerk && hasUserUuidsList) {
-                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.asuser IN (");
-                    for (int i = 0; i < officeAdvocateUserUuids.size(); i++) {
-                        query.append("?");
-                        if (i < officeAdvocateUserUuids.size() - 1) {
-                            query.append(", ");
-                        }
-                        preparedStmtList.add(officeAdvocateUserUuids.get(i));
-                        preparedStmtArgList.add(Types.VARCHAR);
-                    }
-                    query.append(")))");
-                } else {
-                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.createdBy = ?))");
-                    preparedStmtList.add(userUuid);
+            if (isCitizen) {
+                if(asUser != null){
+                    addClauseIfRequired(query, firstCriteria);
+                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.asuser = ?))");
+                    preparedStmtList.add(asUser);
                     preparedStmtArgList.add(Types.VARCHAR);
+                    firstCriteria = false;
                 }
+            }
+            else {
+                addClauseIfRequired(query, firstCriteria);
+                query.append("app.status != 'DRAFT_IN_PROGRESS'");
                 firstCriteria = false;
             }
 
             // TODO : remove this, this is temporary fix (#5016)
             // --------- REQUEST_FOR_BAIL visibility ----------
-            List<String> officeAdvocateUserUuids = applicationCriteria.getOfficeAdvocateUserUuids();
-            boolean isAdvocateOrClerk = applicationCriteria.isAdvocate() || applicationCriteria.isClerk();
-            applyRequestForBailVisibility(
-                    query, firstCriteria, userUuid, officeAdvocateUserUuids, isAdvocateOrClerk,
-                    preparedStmtList, preparedStmtArgList);
+            if(isCitizen){
+                applyRequestForBailVisibility(
+                        query, firstCriteria, asUser, applicationCriteria.getOnBehalfOf(),
+                        preparedStmtList, preparedStmtArgList);
+            }
 
             return query.toString();
 
@@ -135,14 +133,12 @@ public class ApplicationQueryBuilder {
         }
     }
 
-    private void applyRequestForBailVisibility(StringBuilder query, boolean firstCriteria, String userUuid, List<String> userUuids, boolean isAdvocateOrClerk, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    private void applyRequestForBailVisibility(StringBuilder query, boolean firstCriteria, String asUser, List<UUID> onBehalfOf, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
 
         // If user info is missing, do not restrict visibility
-        if (userUuid == null || userUuid.isEmpty()) {
+        if (asUser == null || asUser.isEmpty()) {
             return;
         }
-
-        boolean hasUserUuidsList = userUuids != null && !userUuids.isEmpty();
 
         addClauseIfRequired(query, firstCriteria);
 
@@ -151,8 +147,7 @@ public class ApplicationQueryBuilder {
                 .append("OR ")
                 .append("(")
                 .append("app.applicationType = ? ")
-                .append("AND ")
-                .append("(");
+                .append("AND ");
 
         preparedStmtList.add(REQUEST_FOR_BAIL);
         preparedStmtArgList.add(Types.VARCHAR);
@@ -160,36 +155,32 @@ public class ApplicationQueryBuilder {
         preparedStmtList.add(REQUEST_FOR_BAIL);
         preparedStmtArgList.add(Types.VARCHAR);
 
-        if (isAdvocateOrClerk && hasUserUuidsList) {
-            query.append("app.onBehalfOf ??| ?::text[] ");
-            preparedStmtList.add(userUuids.toArray(new String[0]));
-            preparedStmtArgList.add(Types.ARRAY);
-
-            query.append("OR app.asuser IN (");
-            for (int i = 0; i < userUuids.size(); i++) {
-                query.append("?");
-                if (i < userUuids.size() - 1) {
-                    query.append(", ");
+        if (onBehalfOf != null && !onBehalfOf.isEmpty()) {
+            query.append("(");
+            for (int i = 0; i < onBehalfOf.size(); i++) {
+                if (i > 0) {
+                    query.append(" OR ");
                 }
-                preparedStmtList.add(userUuids.get(i));
+                query.append("app.onBehalfOf @> ?::jsonb");
+                preparedStmtList.add("[\"" + onBehalfOf.get(i).toString() + "\"]");
                 preparedStmtArgList.add(Types.VARCHAR);
             }
-            query.append(")")
-                    .append(")")
-                    .append(")")
-                    .append(")");
+            query.append(")");
         } else {
-            query.append("app.onBehalfOf @> ?::jsonb ")
-                    .append("OR app.createdBy = ?)")
-                    .append(")")
+            query.append("(")
+                    .append("app.onBehalfOf @> ?::jsonb ")
+                    .append("OR app.asUser = ?")
                     .append(")");
 
-            preparedStmtList.add("[\"" + userUuid + "\"]");
+            preparedStmtList.add("[\"" + asUser + "\"]");
             preparedStmtArgList.add(Types.VARCHAR);
 
-            preparedStmtList.add(userUuid);
+            preparedStmtList.add(asUser);
             preparedStmtArgList.add(Types.VARCHAR);
         }
+
+        query.append(")")
+                .append(")");
     }
     boolean addMultipleCriteria(List<UUID> criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import HomeSidebar from "../../components/HomeSidebar";
 import HomeHearingsTab from "./HomeHearingsTab";
@@ -26,6 +26,8 @@ import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
 import TemplateOrConfigurationPage from "./TemplateOrConfigurationPage";
+import CTCApplications from "./CTCApplications";
+import BulkIssueCTC from "./BulkIssueCTC";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -56,12 +58,14 @@ const MainHomeScreen = () => {
   const [homeActiveTab] = useState(initialActiveTab);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTab, setActiveTab] = useState(homeActiveTab);
+  const prevActiveTabRef = useRef(activeTab);
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
   const [scrutinyConfig, setScrutinyConfig] = useState(structuredClone(scrutinyPendingTaskConfig[0]));
   const [tabData, setTabData] = useState(null);
   const [scrutinyDueCount, setScrutinyDueCount] = useState(0);
+  const [ctcApplicationCount, setCtcApplicationCount] = useState(0);
 
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
   const [pendingTaskCount, setPendingTaskCount] = useState({
@@ -78,6 +82,7 @@ const MainHomeScreen = () => {
     RESCHEDULE_APPLICATIONS: 0,
     DELAY_CONDONATION: 0,
     OTHERS: 0,
+    CTC_APPLICATIONS: 0,
   });
   const [stepper, setStepper] = useState(0);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -109,6 +114,7 @@ const MainHomeScreen = () => {
   const hasCaseReviewerAccess = useMemo(() => assignedRoles?.includes("CASE_REVIEWER"), [assignedRoles]);
   const hasViewProcessManagementAccess = useMemo(() => assignedRoles?.includes("VIEW_PROCESS_MANAGEMENT"), [assignedRoles]);
   const hasViewReschedulingRequestAccess = useMemo(() => assignedRoles?.includes("VIEW_RESCHEDULING_REQUESTS"), [assignedRoles]);
+  const hasViewCTCApplicationAccess = useMemo(() => assignedRoles?.includes("CTC_APPLICATION_APPROVER"), [assignedRoles]);
 
   const today = new Date();
 
@@ -139,6 +145,16 @@ const MainHomeScreen = () => {
     }
     // sessionStorage.removeItem("homeActiveTab");
   }, [userType, history, isEpostUser, location]);
+
+  useEffect(() => {
+    const prevActiveTab = prevActiveTabRef.current;
+
+    if (prevActiveTab === "REGISTER_USERS" && activeTab !== "REGISTER_USERS") {
+      window.sessionStorage.removeItem("registerUsersUserType");
+    }
+
+    prevActiveTabRef.current = activeTab;
+  }, [activeTab]);
 
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
@@ -265,6 +281,34 @@ const MainHomeScreen = () => {
     }
   };
 
+  const fetchCTCApplicationCount = async () => {
+    try {
+      if (!hasViewCTCApplicationAccess) return;
+      const ctcApplicationPayload = {
+        inbox: {
+          processSearchCriteria: {
+            businessService: ["ctc-default"],
+            moduleName: "CTC Service",
+            tenantId: tenantId,
+          },
+          moduleSearchCriteria: {
+            tenantId: tenantId,
+            courtId: localStorage.getItem("courtId"),
+            status: "PENDING_APPROVAL",
+          },
+          tenantId: tenantId,
+          limit: 10,
+          offset: 0,
+        },
+      };
+
+      const resCtCApplication = await HomeService.InboxSearch(ctcApplicationPayload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+      setCtcApplicationCount(resCtCApplication?.totalCount || 0);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const fetchPendingTaskCounts = async () => {
     const { toDate } = getTodayRange();
     try {
@@ -347,7 +391,9 @@ const MainHomeScreen = () => {
           },
         },
       };
+
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
+
       const reviwCount = res?.reviewProcessData?.totalCount || 0;
       const registerCount = res?.registerCasesData?.totalCount || 0;
       const bailBondStatusCount = res?.bailBondData?.totalCount || 0;
@@ -845,6 +891,12 @@ const MainHomeScreen = () => {
 
   useEffect(() => {
     if (userType === "employee") {
+      fetchCTCApplicationCount();
+    }
+  }, [userType, hasViewCTCApplicationAccess]);
+
+  useEffect(() => {
+    if (userType === "employee") {
       fetchPendingTaskCounts();
       fetchHearingCount(filters, activeTab);
     }
@@ -872,6 +924,9 @@ const MainHomeScreen = () => {
   if (hasViewCollectOfflinePaymentsAccess) {
     options.OFFLINE_PAYMENTS = { name: "HOME_OFFLINE_PAYMENTS" };
   }
+  if (hasViewCTCApplicationAccess) {
+    options.CTC_APPLICATIONS = { name: "HOME_CTC_APPLICATIONS" };
+  }
 
   // VIEW_APPLICATION: {
   //   name: "View Applications",
@@ -893,6 +948,19 @@ const MainHomeScreen = () => {
   if (hasViewOthers) {
     applicationOptions.OTHERS = { name: "HOME_OTHER_APPLICATIONS" };
   }
+
+  const handleSetCount = useCallback((value) => {
+    if (typeof value === "function") {
+      setPendingTaskCount((prev) => {
+        const next = value(prev);
+        return { ...prev, ...next };
+      });
+    } else if (typeof value === "object" && value !== null) {
+      setPendingTaskCount((prev) => ({ ...prev, ...value }));
+    } else {
+      setPendingTaskCount((prev) => ({ ...prev, [activeTab]: Number(value) || 0 }));
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     let updatedConfig = structuredClone(pendingTaskConfig);
@@ -1005,14 +1073,14 @@ const MainHomeScreen = () => {
               ?.map((column) => {
                 return column?.label === "PENDING_CASE_NAME"
                   ? {
-                      ...column,
-                      clickFunc:
-                        activeTab === "BAIL_BOND_STATUS"
-                          ? openBailBondModal
-                          : activeTab === "NOTICE_SUMMONS_MANAGEMENT"
+                    ...column,
+                    clickFunc:
+                      activeTab === "BAIL_BOND_STATUS"
+                        ? openBailBondModal
+                        : activeTab === "NOTICE_SUMMONS_MANAGEMENT"
                           ? setCourierServicePendingTask
                           : null,
-                    }
+                  }
                   : column;
               })
               ?.filter((column) => {
@@ -1035,7 +1103,7 @@ const MainHomeScreen = () => {
         },
       },
       additionalDetails: {
-        setCount: setPendingTaskCount,
+        setCount: handleSetCount,
         activeTab: activeTab,
         setShowBailBondModal: setShowBailBondModal,
         setSelectedBailBond: setSelectedBailBond,
@@ -1096,6 +1164,7 @@ const MainHomeScreen = () => {
         fetchPendingTaskCounts();
       }
     }
+    fetchCTCApplicationCount();
     setActiveTab(label || title);
     setActiveTabTitle(title);
     sessionStorage.removeItem("diaryDateFilter");
@@ -1124,7 +1193,7 @@ const MainHomeScreen = () => {
           configs={{
             ...scrutinyConfig,
             additionalDetails: {
-              setCount: setPendingTaskCount,
+              setCount: handleSetCount,
               activeTab: activeTab,
               hasCaseReviewerAccess: hasCaseReviewerAccess,
             },
@@ -1170,7 +1239,7 @@ const MainHomeScreen = () => {
           isOptionsLoading={false}
           applicationOptions={applicationOptions}
           hearingCount={hearingCount}
-          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount }}
+          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount, CTC_APPLICATIONS: ctcApplicationCount }}
           showToast={showToast}
         />
         {activeTab === "TEMPLATE_OR_CONFIGURATION" ? (
@@ -1234,6 +1303,14 @@ const MainHomeScreen = () => {
         ) : activeTab === "CS_HOME_SIGN_FORMS" ? (
           <div className="home-bulk-sign">
             <BulkSignDigitalizationView />
+          </div>
+        ) : activeTab === "CTC_APPLICATIONS" ? (
+          <div className="home-bulk-sign">
+            <CTCApplications refetch={fetchCTCApplicationCount} />
+          </div>
+        ) : activeTab === "CS_HOME_ISSUE_CTC_COPY" ? (
+          <div className="home-bulk-sign">
+            <BulkIssueCTC />
           </div>
         ) : (
           <div className={`bulk-esign-order-view`}>

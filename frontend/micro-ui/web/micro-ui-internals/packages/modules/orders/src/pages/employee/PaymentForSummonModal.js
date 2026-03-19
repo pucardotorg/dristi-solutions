@@ -326,10 +326,10 @@ const PaymentForSummonModal = ({ path }) => {
       isCaseAdmitted
         ? submitModalInfo
         : {
-            ...submitModalInfo,
-            header: "CS_HEADER_FOR_NOTICE_POST",
-            subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
-          },
+          ...submitModalInfo,
+          header: "CS_HEADER_FOR_NOTICE_POST",
+          subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
+        },
     [isCaseAdmitted]
   );
 
@@ -451,29 +451,7 @@ const PaymentForSummonModal = ({ path }) => {
       }
     };
 
-    // Temporarily disabling SBI Payment integration for ePost
-    // const onPayOnlineSBI = async () => {
-    //   try {
-    //     history.push(`/${window?.contextPath}/citizen/home/sbi-epost-payment`, {
-    //       state: {
-    //         billData: ePostBillResponse,
-    //         serviceNumber: taskNumber,
-    //         businessService: service,
-    //         caseDetails: caseDetails,
-    //         consumerCode: `${taskNumber}_POST_PROCESS`,
-    //         orderData: orderData,
-    //         partyIndex: partyIndex,
-    //         filteredTasks: filteredTasks,
-    //         filingNumber: filingNumber,
-    //         isCourtBillPaid: courtBillResponse?.Bill?.[0]?.status === "PAID",
-    //         hearingId: orderData?.list?.[0]?.hearingNumber,
-    //         orderType: orderType,
-    //       },
-    //     });
-    //   } catch (error) {
-    //     console.error(error);
-    //   }
-    // };
+
     return {
       "e-post": [
         {
@@ -542,9 +520,8 @@ const PaymentForSummonModal = ({ path }) => {
     const addressDetails = filteredTasks?.[0]?.taskDetails?.respondentDetails?.address;
     const formattedAddress =
       typeof addressDetails === "object"
-        ? `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${addressDetails?.state || ""}, ${
-            addressDetails?.pincode || ""
-          }`
+        ? `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${addressDetails?.state || ""}, ${addressDetails?.pincode || ""
+        }`
         : addressDetails;
     return [
       { key: "Issued to", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },

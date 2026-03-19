@@ -37,7 +37,7 @@ public class EsignRowMapperTest {
         Mockito.when(resultSet.getString("pagemodule")).thenReturn("module-name");
         Mockito.when(resultSet.getString("signplaceholder")).thenReturn("sign-placeholder");
         Mockito.when(resultSet.getString("signedfilestoreid")).thenReturn("signed-file-101");
-        Mockito.when(resultSet.getString("filepath")).thenReturn("/path/to/file");
+        Mockito.when(resultSet.getString("unsigned_filepath")).thenReturn("/path/to/file");
 
         Mockito.when(resultSet.getString("createdby")).thenReturn("creator-user");
         Mockito.when(resultSet.getLong("createdtime")).thenReturn(1627382934000L);
@@ -54,7 +54,7 @@ public class EsignRowMapperTest {
         assertEquals("module-name", result.getPageModule());
         assertEquals("sign-placeholder", result.getSignPlaceHolder());
         assertEquals("signed-file-101", result.getSignedFileStoreId());
-        assertEquals("/path/to/file", result.getFilePath());
+        assertEquals("/path/to/file", result.getUnsignedFilePath());
 
         assertNotNull(result.getAuditDetails());
         assertEquals("creator-user", result.getAuditDetails().getCreatedBy());

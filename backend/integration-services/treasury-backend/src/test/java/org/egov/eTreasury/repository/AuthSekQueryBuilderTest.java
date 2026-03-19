@@ -33,7 +33,7 @@ class AuthSekQueryBuilderTest {
         // Then
         assertThat(preparedStmtList).containsExactly("testAuthToken");
         assertThat(query).isEqualTo(
-                "SELECT auth_token, decrypted_sek, bill_id, business_service, service_number, total_due, mobile_number, paid_by, session_time, department_id  FROM auth_sek_session_data  WHERE  auth_token = ? ORDER BY session_time "
+                "SELECT auth_token, decrypted_sek, bill_id, business_service, service_number, total_due, mobile_number, paid_by, session_time, department_id, request_blob  FROM auth_sek_session_data  WHERE  auth_token = ? ORDER BY session_time "
         );
     }
 
@@ -47,7 +47,7 @@ class AuthSekQueryBuilderTest {
         String query = queryBuilder.getAuthSekQuery(authToken, preparedStmtList);
 
         // Then
-        assertThat(query).isEqualTo("SELECT auth_token, decrypted_sek, bill_id, business_service, service_number, total_due, mobile_number, paid_by, session_time, department_id  FROM auth_sek_session_data ORDER BY session_time ");
+        assertThat(query).isEqualTo("SELECT auth_token, decrypted_sek, bill_id, business_service, service_number, total_due, mobile_number, paid_by, session_time, department_id, request_blob  FROM auth_sek_session_data ORDER BY session_time ");
         Assertions.assertNotNull(preparedStmtList);
     }
 
@@ -63,7 +63,7 @@ class AuthSekQueryBuilderTest {
 
         // Then
         assertThat(query).isEqualTo(
-                "SELECT auth_token, decrypted_sek, bill_id, business_service, service_number, total_due, mobile_number, paid_by, session_time, department_id  FROM auth_sek_session_data  AND  auth_token = ? ORDER BY session_time "
+                "SELECT auth_token, decrypted_sek, bill_id, business_service, service_number, total_due, mobile_number, paid_by, session_time, department_id, request_blob  FROM auth_sek_session_data  AND  auth_token = ? ORDER BY session_time "
         );
         Assertions.assertNotNull(preparedStmtList);
     }

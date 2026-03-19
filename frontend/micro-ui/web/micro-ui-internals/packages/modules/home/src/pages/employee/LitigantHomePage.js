@@ -443,7 +443,7 @@ const containerJoinFileCaseStyle = {
   border: "1px solid #e8e8e8",
   borderRadius: "8px",
 };
-const LitigantHomePage = ({ isApprovalPending, unAssociatedClerk = false, isLoggedInUserClerk = false }) => {
+const LitigantHomePage = ({ isApprovalPending, unAssociatedClerk = false, isLoggedInUserClerk = false, isRejected = false }) => {
   const userName = Digit.SessionStorage.get("User");
   const { t } = useTranslation();
   const today = new Date();
@@ -468,7 +468,8 @@ const LitigantHomePage = ({ isApprovalPending, unAssociatedClerk = false, isLogg
     .split(" ")
     .filter((part) => part && part.toLowerCase() !== "null")
     .join(" ");
-  if (isApprovalPending) {
+
+  if (isApprovalPending || isRejected) {
     history.push(`/${window?.contextPath}/${userType}/dristi/home`);
   }
   return (

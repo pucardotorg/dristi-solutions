@@ -98,7 +98,7 @@ class CaseOverallStatusUtilTest {
         Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, action, tenantId, requestInfoJson);
 
         // Assertions
-        assertNull(result); // processCaseOverallStatus returns null
+        assertNotNull(result); // processCaseOverallStatus returns the computed CaseOverallStatus
 
         // Verify publishToCaseOverallStatus method is called with correct arguments
 //        verify(producer, times(1)).push(anyString(), any(CaseStageSubStage.class));

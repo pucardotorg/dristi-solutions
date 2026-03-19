@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, TextInput, CardLabelError, CustomDropdown } from "@egovernments/digit-ui-react-components";
 import MultiUploadWrapper from "../../../dristi/src/components/MultiUploadWrapper";
+import { sanitizeData } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const CloseBtn = () => {
   return (
@@ -208,7 +209,8 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         key={input.name}
                         value={docObj?.[input.name] || ""}
                         onChange={(e) => {
-                          setValue(e.target.value, input.name, input, index);
+                          const newValue = sanitizeData(e.target.value);
+                          setValue(newValue, input.name, input, index);
                         }}
                         disable={input.isDisabled || disable}
                         defaultValue={undefined}
@@ -273,7 +275,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
       )}
       {!disable && (
         <button type="button" onClick={addAnotherForm} style={{ background: "none", fontSize: "16px", fontWeight: 700, color: "#007E7E" }}>
-          {formInstances?.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER_SURETY")}`}
+          {formInstances?.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER_SUBMISSION_DOCUMENTS")}`}
         </button>
       )}
     </React.Fragment>

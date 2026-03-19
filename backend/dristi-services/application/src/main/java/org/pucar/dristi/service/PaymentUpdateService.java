@@ -130,7 +130,7 @@ public class PaymentUpdateService {
                 applicationRequest.setApplication(application);
                 applicationRequest.setRequestInfo(requestInfo);
 
-                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus()) || PENDINGREVIEW.equalsIgnoreCase(application.getStatus()) || (COMPLETED.equalsIgnoreCase(application.getStatus()) && REQUEST_FOR_BAIL.equalsIgnoreCase(application.getApplicationType()))) {
+                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus()) || PENDINGREVIEW.equalsIgnoreCase(application.getStatus())) {
                     enrichment.enrichApplicationNumberByCMPNumber(applicationRequest);
                 }
 
@@ -218,7 +218,7 @@ public class PaymentUpdateService {
 
         Set<String> mobileNumber = new HashSet<>();
 
-        List<Individual> individuals = individualService.getIndividualsBylId(requestInfo, new ArrayList<>(ids));
+        List<Individual> individuals = individualService.getIndividualsByUserUuid(requestInfo, new ArrayList<>(ids));
         for(Individual individual : individuals) {
             if (individual.getMobileNumber() != null) {
                 mobileNumber.add(individual.getMobileNumber());

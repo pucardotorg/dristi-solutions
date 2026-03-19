@@ -7,6 +7,7 @@ import { Urls } from "../hooks/services/Urls";
 import { useQuery } from "react-query";
 import { convertToDateInputFormat, getUserInfoFromUuids } from "../utils/index";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -89,11 +90,6 @@ const SubmissionPreviewSubmissionTypeMap = {
   ADVANCEMENT_OR_ADJOURNMENT_APPLICATION: "application-reschedule-hearing",
 };
 
-const onDocumentUpload = async (fileData, filename) => {
-  const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
-  return { file: fileUploadRes?.data, fileType: fileData.type, filename };
-};
-
 function ReviewSubmissionModal({
   applicationType,
   application,
@@ -119,6 +115,10 @@ function ReviewSubmissionModal({
     createdByUser: null,
     onBehalfOfUser: null,
   });
+
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -254,7 +254,9 @@ function ReviewSubmissionModal({
       headerBarEnd={<CloseBtn onClick={handleBack} />}
       actionCancelLabel={t(cancelLabel)}
       actionCancelOnSubmit={handleCancel}
-      actionSaveLabel={t("ADD_SIGNATURE")}
+      actionCustomLabel={authorizedUuid != userUuid ? t("UPLOAD_SIGNED_COPY") : null}
+      actionCustomLabelSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName, isUpload: true })}
+      actionSaveLabel={authorizedUuid === userUuid ? t("ADD_SIGNATURE") : application?.status === "DRAFT_IN_PROGRESS" ? t("SEND_FOR_ESIGN") : null}
       isDisabled={isLoading}
       actionSaveOnSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName })}
       className={"review-submission-appl-modal"}

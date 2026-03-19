@@ -11,7 +11,7 @@ import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/s
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import ADiaryDocumentPdfModal from "./ADiaryDocumentPdfModal";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const buttonStyle = {
   borderRadius: "4px",
@@ -71,6 +71,7 @@ function BulkSignADiaryView() {
   const [showDocumentPdfModal, setShowDocumentPdfModal] = useState({ show: false, rowData: null });
   const [toastMsg, setToastMsg] = useState(null);
   const [reload, setReload] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
 
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
@@ -84,6 +85,8 @@ function BulkSignADiaryView() {
   const diaryDateFilter = sessionStorage.getItem("diaryDateFilter");
   const name = "Signature";
   const pageModule = "en";
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const [diaryEntries, setDiaryEntries] = useState([]);
 
@@ -175,6 +178,7 @@ function BulkSignADiaryView() {
                 ...(courtId && { courtId: courtId }),
                 filingNumber: entry?.additionalDetails?.filingNumber,
                 artifactNumber: entry?.referenceId,
+                asUser: authorizedUuid,
                 tenantId,
               },
               tenantId,
@@ -334,6 +338,7 @@ function BulkSignADiaryView() {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onUploadSubmit = async () => {
@@ -350,6 +355,7 @@ function BulkSignADiaryView() {
         setLoader(false);
         setFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
       setLoader(false);
     }
@@ -581,6 +587,7 @@ function BulkSignADiaryView() {
             formData={formData}
             onSubmit={onUploadSubmit}
             isDisabled={loader}
+            fileUploadError={fileUploadError}
           />
         )}
 

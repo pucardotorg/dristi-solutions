@@ -1,6 +1,7 @@
 package org.egov.inbox.service.V2;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.wnameless.json.flattener.JsonFlattener;
 import com.jayway.jsonpath.JsonPath;
@@ -9,6 +10,7 @@ import org.egov.hash.HashService;
 import org.egov.inbox.config.InboxConfiguration;
 import org.egov.inbox.repository.ServiceRequestRepository;
 import org.egov.inbox.repository.builder.V2.InboxQueryBuilder;
+import org.egov.inbox.service.CacheService;
 import org.egov.inbox.service.V2.validator.ValidatorDefaultImplementation;
 import org.egov.inbox.service.WorkflowService;
 import org.egov.inbox.util.MDMSUtil;
@@ -18,11 +20,16 @@ import org.egov.inbox.web.model.workflow.BusinessService;
 import org.egov.inbox.web.model.workflow.ProcessInstance;
 import org.egov.inbox.web.model.workflow.ProcessInstanceSearchCriteria;
 import org.egov.tracer.model.CustomException;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -55,6 +62,9 @@ public class InboxServiceV2 {
 
     @Autowired
     private HashService hashService;
+
+    @Autowired
+    private CacheService cacheService;
 
 
     /**
@@ -495,8 +505,10 @@ public class InboxServiceV2 {
         searchCriteria.put("actionCategory", criteria.getActionCategory());
         putOrRemove(searchCriteria, "stateSla", criteria.getDate());
 
+        boolean isGroupByFilingNumber = !"Rescheduling Request".equalsIgnoreCase(criteria.getActionCategory());
+
         if (!criteria.getIsOnlyCountRequired()) {
-            PaginatedDataResponse unfiltered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
+            PaginatedDataResponse unfiltered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex(),isGroupByFilingNumber);
             criteria.setTotalCount(unfiltered.getTotalSize());
         }
 
@@ -507,7 +519,7 @@ public class InboxServiceV2 {
         putOrRemove(searchCriteria, "substage", criteria.getSubstage());
 
         // Final filtered search
-        PaginatedDataResponse filtered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
+        PaginatedDataResponse filtered = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex(),isGroupByFilingNumber);
         criteria.setCount(filtered.getTotalSize());
 
         if (criteria.getIsOnlyCountRequired()) {
@@ -599,8 +611,8 @@ public class InboxServiceV2 {
         return searchResponse;
     }
 
-    private PaginatedDataResponse getDataFromSimpleSearchGroupByFilingNumber(SearchRequest searchRequest, String index) {
-        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, true);
+    private PaginatedDataResponse getDataFromSimpleSearchGroupByFilingNumber(SearchRequest searchRequest, String index, boolean isGroupByFilingNumber) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, isGroupByFilingNumber);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
             log.info("Query: " + q);
@@ -618,9 +630,14 @@ public class InboxServiceV2 {
 
         int totalSize = 0;
         Map<String, Object> aggregations = (Map<String, Object>) ((Map<String, Object>) result).get("aggregations");
-        Map<String, Object> uniqueFilingNumbers = (Map<String, Object>) aggregations.get("unique_filing_numbers");
-
-        totalSize = ((Number) uniqueFilingNumbers.get("value")).intValue();
+        if (aggregations != null) {
+            Map<String, Object> uniqueFilingNumbers = (Map<String, Object>) aggregations.get("unique_filing_numbers");
+            totalSize = ((Number) uniqueFilingNumbers.get("value")).intValue();
+        } else {
+            // Get total count from hits when aggregations are not present (isGroupByFilingNumber = false)
+            Map<String, Object> hitsTotal = (Map<String, Object>) hits.get("total");
+            totalSize = ((Number) hitsTotal.get("value")).intValue();
+        }
         paginatedDataResponse.setTotalSize(totalSize);
 
         List<Map<String, Object>> nestedHits = (List<Map<String, Object>>) hits.get(HITS);
@@ -705,6 +722,12 @@ public class InboxServiceV2 {
 //        if(CollectionUtils.isEmpty(inboxRequest.getInbox().getProcessSearchCriteria().getStatus())){
 //            return new ArrayList<>();
 //        }
+
+        List<Inbox> cachedResult = searchInRedisCache(inboxRequest);
+        if (cachedResult != null) {
+            log.info("Found cached result for key: {}", inboxRequest.getInbox().getModuleSearchCriteria().get("courtId"));
+            return cachedResult;
+        }
         Map<String, Object> finalQueryBody = queryBuilder.getESQuery(inboxRequest, Boolean.TRUE);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
@@ -717,6 +740,53 @@ public class InboxServiceV2 {
         List<Inbox> inboxItemsList = parseIndexItemsFromSearchResponse(result);
         log.info(result.toString());
         return inboxItemsList;
+    }
+
+    @Nullable
+    private List<Inbox> searchInRedisCache(InboxRequest inboxRequest) {
+        if (!config.getRedisEnabled()) {
+            log.info("Redis cache is disabled, skipping cache search");
+            return null;
+        }
+        
+        try {
+            log.info("Searching in redis cache");
+            String courtId = (String) inboxRequest.getInbox().getModuleSearchCriteria().get("courtId");
+            Long hearingDate = (Long) inboxRequest.getInbox().getModuleSearchCriteria().get("fromDate");
+            String currentDate = getDate(hearingDate);
+            String cacheKey = CACHE_KEY_PREFIX + courtId + ":" + currentDate;
+            Object cachedResult = cacheService.getCache(cacheKey);
+            if (cachedResult != null) {
+                return parseCachedResultToInboxItems(cachedResult);
+            }
+            log.info("No cached result found for key: {}", cacheKey);
+        } catch (Exception e) {
+            log.error("Error while searching in redis cache: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    @Nullable
+    private List<Inbox> parseCachedResultToInboxItems(Object cachedResult) {
+        List<Inbox> inboxItems = new ArrayList<>();
+
+        if (cachedResult instanceof List<?>) {
+            List<?> cachedList = (List<?>) cachedResult;
+            for (Object cachedInboxItem : cachedList) {
+                if (cachedInboxItem instanceof Map) {
+                    Inbox inbox = new Inbox();
+                    Map<String, Object> businessObject = new HashMap<>();
+                    businessObject.put("hearingDetails", cachedInboxItem);
+                    inbox.setBusinessObject(businessObject);
+                    inboxItems.add(inbox);
+                } else {
+                    return null;
+                }
+            }
+            return inboxItems;
+        }
+
+        return null;
     }
 
     private List<Inbox> parseIndexItemsFromSearchResponse(Object result) {
@@ -763,4 +833,17 @@ public class InboxServiceV2 {
         return ((Number) valueObj).intValue();
     }
 
+    public String getDate(Long hearingDate) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
+        LocalDate date;
+        if (hearingDate != null) {
+            date = Instant.ofEpochMilli(hearingDate)
+                    .atZone(ZoneId.of("Asia/Kolkata"))
+                    .toLocalDate();
+        } else {
+            date = LocalDate.now();
+        }
+
+        return date.format(formatter);
+    }
 }

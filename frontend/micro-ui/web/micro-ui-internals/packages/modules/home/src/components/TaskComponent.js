@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, Dropdown } from "@egovernments/digit-ui-components";
 import { Button, LabelFieldPair, Card } from "@egovernments/digit-ui-react-components";
 import { Loader } from "@egovernments/digit-ui-react-components";
@@ -20,7 +20,6 @@ import { createOrUpdateTask, filterValidAddresses, getSuffixByBusinessCode } fro
 import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
-import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const CaseWorkflowAction = {
@@ -58,6 +57,7 @@ const TasksComponent = ({
   pendingSignOrderList,
   tableView = false,
   needRefresh = false,
+  applicationData = [],
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const CourierService = useMemo(() => Digit.ComponentRegistryService.getComponent("CourierService"), []);
@@ -100,7 +100,7 @@ const TasksComponent = ({
     joinCasePaymentModal: false,
     data: {},
   });
-  const { AdvocateData: selectedSeniorAdvocate } = useContext(AdvocateDataContext);
+  const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
 
   const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -664,6 +664,14 @@ const TasksComponent = ({
       const applicationType = data?.fields?.find((field) => field.key === "additionalDetails.applicationType")?.value;
       const bailBondId = data?.fields?.find((field) => field.key === "additionalDetails.bailBondId")?.value;
       const courtId = data?.fields?.find((field) => field.key === "courtId")?.value;
+      let applicationName = "";
+      let applicationCMPNumber = "";
+
+      if (isApplicationCompositeOrder) {
+        const application = applicationData?.applicationList?.find((application) => application?.applicationNumber === referenceId) || {};
+        applicationName = application?.applicationType || "";
+        applicationCMPNumber = application?.applicationCMPNumber || "";
+      }
 
       const updateReferenceId = referenceId?.split("_").pop();
       const defaultObj = {
@@ -691,9 +699,9 @@ const TasksComponent = ({
       const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
       const isCustomFunction = Boolean(pendingTaskActions?.[status]?.customFunction);
       const dayCount = stateSla
-        ? Math.abs(Math.ceil((Number(stateSla) - todayDate) / dayInMillisecond))
+        ? Math.ceil((Number(stateSla) - todayDate) / dayInMillisecond)
         : dueInSec
-        ? Math.abs(Math.ceil(dueInSec / dayInMillisecond))
+        ? Math.ceil(dueInSec / dayInMillisecond)
         : null;
       let additionalDetails = pendingTaskActions?.[status]?.additionalDetailsKeys?.reduce((result, current) => {
         result[current] = data?.fields?.find((field) => field.key === `additionalDetails.${current}`)?.value;
@@ -717,7 +725,14 @@ const TasksComponent = ({
       const redirectUrl = isCustomFunction
         ? getCustomFunction[pendingTaskActions?.[status]?.customFunction]
         : `/${window?.contextPath}/${userType}${pendingTaskActions?.[status]?.redirectDetails?.url}?${searchParams.toString()}`;
-      const due = dayCount > 1 ? `Due in ${dayCount} Days` : dayCount === 1 || dayCount === 0 ? `Due today` : `No Due Date`;
+      const due =
+        dayCount > 1
+          ? `Due in ${dayCount} Days`
+          : dayCount < -1
+          ? `Overdue by ${Math.abs(dayCount) + 1} Days`
+          : dayCount === 1 || dayCount === 0
+          ? `Due today`
+          : `No Due Date`;
       return {
         actionName: actionName || pendingTaskActions?.[status]?.actionName,
         status,
@@ -732,7 +747,7 @@ const TasksComponent = ({
         createdTime,
         dayCount: dayCount ? dayCount : dayCount === 0 ? 0 : Infinity,
         isCompleted,
-        dueDateColor: due === "Due today" ? "#9E400A" : "",
+        dueDateColor: due === "Due today" || dayCount < -1 ? "#9E400A" : "",
         redirectUrl,
         orderItemId,
         partyType,
@@ -754,6 +769,8 @@ const TasksComponent = ({
         isCustomFunction,
         referenceId,
         screenType,
+        applicationName: applicationName || applicationType,
+        applicationCMPNumber: applicationCMPNumber,
       };
     });
 
@@ -1199,7 +1216,7 @@ const TasksComponent = ({
             setHideCancelButton(false);
             setCourierServicePendingTask(null);
             setCourierOrderDetails({});
-            await refetch()
+            await refetch();
           });
         } else {
           setShowCourierServiceModal(false);
