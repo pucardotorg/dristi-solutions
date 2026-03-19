@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.CtcApplicationRepository;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.web.models.*;
@@ -30,6 +31,7 @@ class CtcApplicationValidatorTest {
     @Mock private CaseUtil caseUtil;
     @Spy  private ObjectMapper objectMapper = new ObjectMapper();
     @Mock private CtcApplicationRepository repository;
+    @Mock private Configuration configuration;
 
     @InjectMocks
     private CtcApplicationValidator validator;
@@ -139,11 +141,12 @@ class CtcApplicationValidatorTest {
     @Test
     void validateAndEnrichUser_shouldSetNotPartyWhenCaseNotFound() {
         when(caseUtil.getCase(anyString(), anyString(), any())).thenReturn(null);
+        when(configuration.getOutsiderDesignation()).thenReturn("Outside Petitioner");
 
         validator.validateAndEnrichUser(requestInfo, application);
 
         assertFalse(application.getIsPartyToCase());
-        assertNull(application.getPartyDesignation());
+        assertEquals("Outside Petitioner", application.getPartyDesignation());
     }
 
     @Test
