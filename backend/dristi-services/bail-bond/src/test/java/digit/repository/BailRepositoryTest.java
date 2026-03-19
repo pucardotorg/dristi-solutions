@@ -51,13 +51,13 @@ class BailRepositoryTest {
         List<Bail> expectedBails = List.of(Bail.builder().id("id1").build());
 
         // Mock queryBuilder calls
-        when(queryBuilder.getPaginatedBailIdsQuery(any(), any(), anyList(), anyList()))
+        when(queryBuilder.getPaginatedBailIdsQuery(any(), any(), any(), anyList(), anyList()))
                 .thenReturn("SELECT id FROM bail");
 
         when(queryBuilder.getBailDetailsByIdsQuery(any(), any(), anyList(), anyList()))
                 .thenReturn("SELECT * FROM bail WHERE id IN (?, ?)");
 
-        when(queryBuilder.getTotalCountQuery(any(), anyList(), anyList()))
+        when(queryBuilder.getTotalCountQuery(any(), any(), anyList(), anyList()))
                 .thenReturn("SELECT COUNT(*) FROM bail");
 
         // Mock internal method call for paginated bail IDs
@@ -97,11 +97,11 @@ class BailRepositoryTest {
 
         List<String> ids = List.of("id1");
 
-        when(queryBuilder.getPaginatedBailIdsQuery(any(), any(), any(), any()))
+        when(queryBuilder.getPaginatedBailIdsQuery(any(), any(), any(), any(), any()))
                 .thenReturn("SELECT id FROM bail");
         when(jdbcTemplate.query(anyString(), any(Object[].class), any(int[].class), any(RowMapper.class)))
                 .thenReturn(List.of(Bail.builder().id("id1").build()));
-        when(queryBuilder.getTotalCountQuery(any(), any(), any()))
+        when(queryBuilder.getTotalCountQuery(any(), any(), any(), any()))
                 .thenReturn("SELECT COUNT(*) FROM bail");
         when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(int[].class), eq(Integer.class)))
                 .thenReturn(1);
@@ -126,7 +126,7 @@ class BailRepositoryTest {
                 .pagination(Pagination.builder().limit(10).offSet(0).build())
                 .build();
 
-        when(queryBuilder.getPaginatedBailIdsQuery(any(), any(), any(), any()))
+        when(queryBuilder.getPaginatedBailIdsQuery(any(), any(), any(), any(), any()))
                 .thenReturn("SELECT id FROM bail");
         when(jdbcTemplate.query(anyString(), any(Object[].class), any(int[].class), any(RowMapper.class)))
                 .thenReturn(List.of("id1", "id2"));
@@ -138,12 +138,12 @@ class BailRepositoryTest {
     @Test
     void testGetTotalCountBail_ReturnsCorrectCount() {
         BailSearchCriteria criteria = BailSearchCriteria.builder().tenantId("tenant").build();
-        when(queryBuilder.getTotalCountQuery(any(), any(), any()))
+        when(queryBuilder.getTotalCountQuery(any(), any(), any(), any()))
                 .thenReturn("SELECT COUNT(*) FROM bail");
         when(jdbcTemplate.queryForObject(anyString(), any(Object[].class), any(int[].class), eq(Integer.class)))
                 .thenReturn(5);
 
-        Integer count = bailRepository.getTotalCountBail(criteria);
+        Integer count = bailRepository.getTotalCountBail(null, criteria);
         assertEquals(5, count);
     }
 }
