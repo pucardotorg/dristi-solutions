@@ -187,4 +187,7 @@ public class Configuration {
     @Value("${application.fees}")
     private Double applicationFees;
 
+    @Value("${outsider.designation}")
+    private String outsiderDesignation;
+
 }
