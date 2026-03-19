@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
+import org.pucar.dristi.web.models.enums.AccessType;
 import org.pucar.dristi.web.models.enums.MemberType;
 
 import java.util.UUID;
@@ -57,4 +58,7 @@ public class AddMember {
 
     @JsonProperty("isActive")
     private Boolean isActive;
+
+    @JsonProperty("accessType")
+    private AccessType accessType = AccessType.ALL_CASES;
 }

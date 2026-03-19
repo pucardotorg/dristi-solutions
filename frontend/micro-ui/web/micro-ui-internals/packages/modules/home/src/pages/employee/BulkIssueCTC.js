@@ -48,20 +48,27 @@ const BulkIssueCTC = () => {
         return [{ ...applicationData, isSelected: checked }];
       }
 
+      const isMatch = (item) => {
+        return (
+          item?.businessObject?.ctcApplicationNumber === applicationData?.businessObject?.ctcApplicationNumber &&
+          item?.businessObject?.docId === applicationData?.businessObject?.docId
+        );
+      };
+
       const updated = prev?.map((item) => {
-        if (item?.businessObject?.ctcApplicationNumber !== applicationData?.businessObject?.ctcApplicationNumber) return item;
+        if (!isMatch(item)) return item;
         return {
           ...item,
           isSelected: checked,
         };
       });
 
-      const hasMatch = prev.some((item) => item?.businessObject?.ctcApplicationNumber === applicationData?.businessObject?.ctcApplicationNumber);
+      const hasMatch = prev.some(isMatch);
       if (!hasMatch) {
         updated.push({ ...applicationData, isSelected: checked });
       }
 
-      return updated.filter((item) => item.isSelected);
+      return updated.filter((item) => item?.isSelected);
     });
   };
 
@@ -364,7 +371,7 @@ const BulkIssueCTC = () => {
         ctcApplicationNumber: row?.businessObject?.ctcApplicationNumber || "",
         filingNumber: row?.businessObject?.filingNumber || "",
         courtId: courtId,
-        placeholder: "Signature",
+        placeholder: "Certification Signature",
         tenantId: tenantId,
         docTitle: formatLabel(row?.businessObject?.docTitle),
       }));
@@ -409,33 +416,35 @@ const BulkIssueCTC = () => {
     }
   };
 
-  const handleIssueDocuments = async () => {
+  const handleCTCDocumentAction = async ({ action, documents = [], successMessage, closeRejectModal = false }) => {
     try {
       setIsLoading(true);
-      let localStorageID = sessionStorage.getItem("fileStoreId");
+
       const docsDetails = {
         docId: selectedRowData?.businessObject?.docId || "",
         ctcApplicationNumber: selectedRowData?.businessObject?.ctcApplicationNumber || "",
         filingNumber: selectedRowData?.businessObject?.filingNumber || "",
-        documents: [
-          {
-            documentType: "SIGNED_CTC_APPLICATION",
-            fileStore: localStorageID || signedDocumentUploadId,
-          },
-        ],
+        documents,
       };
+
       const payload = {
         courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId") || "KLKM52",
-        action: "ISSUE",
+        action,
         docs: [docsDetails],
         status: "PENDING",
       };
 
       await HomeService.updateCTCDocs(payload, { tenantId });
+
       sessionStorage.removeItem("fileStoreId");
       setShowSignatureModal(false);
       setSelectedRowData(null);
-      showToast({ isError: false, message: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY" });
+
+      if (closeRejectModal) {
+        setShowModal(false);
+      }
+
+      showToast({ isError: false, message: successMessage });
 
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
@@ -444,6 +453,30 @@ const BulkIssueCTC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleIssueDocuments = async () => {
+    const localStorageID = sessionStorage.getItem("fileStoreId");
+
+    await handleCTCDocumentAction({
+      action: "ISSUE",
+      documents: [
+        {
+          documentType: "SIGNED_CTC_APPLICATION",
+          fileStore: localStorageID || signedDocumentUploadId,
+        },
+      ],
+      successMessage: "CTC_DOCUMENT_ISSUED_SUCCESSFULLY",
+    });
+  };
+
+  const handleRejectDocument = async () => {
+    await handleCTCDocumentAction({
+      action: "REJECT",
+      documents: [],
+      successMessage: "CTC_DOCUMENT_REJECT_SUCCESSFULLY",
+      closeRejectModal: true,
+    });
   };
 
   const closeToast = () => {
@@ -465,26 +498,23 @@ const BulkIssueCTC = () => {
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
-    const savedOrderPdf = sessionStorage.getItem("orderPDF");
+    const savedOrderPdf = sessionStorage.getItem("docPdf");
     const signedState = JSON.parse(sessionStorage.getItem("ctcSignState"));
     if (isSignSuccess && signedState) {
       setShowSignatureModal(true);
       setSignedDocumentUploadID(savedOrderPdf);
       setSelectedRowData(signedState);
-    }
-  }, []);
 
-  useEffect(() => {
-    if (showSignatureModal) {
       const cleanupTimer = setTimeout(() => {
         sessionStorage.removeItem("esignProcess");
-        sessionStorage.removeItem("orderPDF");
+        sessionStorage.removeItem("docPdf");
         sessionStorage.removeItem("ctcSignState");
+        sessionStorage.removeItem("homeActiveTab");
       }, 2000);
 
       return () => clearTimeout(cleanupTimer);
     }
-  }, [showSignatureModal]);
+  }, []);
 
   return (
     <React.Fragment>
@@ -539,6 +569,7 @@ const BulkIssueCTC = () => {
             setShowModal(false);
             setShowSignatureModal(true);
           }}
+          handleCancelSubmit={handleRejectDocument}
         />
       )}
       {showSignatureModal && (
@@ -547,11 +578,16 @@ const BulkIssueCTC = () => {
           documentBlob={selectedRowData?.businessObject?.downloadedDocument}
           documentName={selectedRowData?.businessObject?.fileName}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
-          handleGoBackSignatureModal={() => {
-            setShowSignatureModal(false);
-            setShowModal(true);
+          handleGoBackSignatureModal={async () => {
             sessionStorage.removeItem("ctcSignState");
             sessionStorage.removeItem("fileStoreId");
+            if (!(selectedRowData?.businessObject?.downloadedDocument instanceof Blob)) {
+              await handleRowClick(selectedRowData);
+              setShowSignatureModal(false);
+            } else {
+              setShowSignatureModal(false);
+              setShowModal(true);
+            }
           }}
           saveOnsubmitLabel={"CS_ISSUE"}
           handleIssue={handleIssueDocuments}

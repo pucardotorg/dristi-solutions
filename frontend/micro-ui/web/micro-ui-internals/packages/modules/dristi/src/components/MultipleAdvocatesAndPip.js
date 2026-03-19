@@ -1063,7 +1063,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                                   .map((type) => `.${type.toLowerCase()}`)
                                   .join(", ")} ${t("CS_COMMON_OR")} .${input?.fileTypes[input?.fileTypes.length - 1].toLowerCase()}`
                               : `.${input?.fileTypes[0].toLowerCase()}`
-                          }. ${t("CS_MAX_UPLOAD")} ${input.maxFileSize}MB`}
+                          }. ${t("CS_MAX_UPLOAD")} ${input.maxFileSize}MB. ${t("UPLOAD_NOTE")}`}
                         </p>
                       ) : (
                         <p>{input.uploadGuidelines}</p>

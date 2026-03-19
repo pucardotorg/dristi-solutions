@@ -7,19 +7,19 @@ async function getCourtAndJudgeDetails(
   tenantId,
   employeeType,
   courtId,
-  requestInfo
+  requestInfo,
 ) {
   const resHrms = await handleApiCall(
     res,
     () => search_hrms(tenantId, employeeType, courtId, requestInfo),
-    "Failed to query HRMS service"
+    "Failed to query HRMS service",
   );
 
   const resMdms = await handleApiCall(
     res,
     () =>
       search_mdms(courtId, "common-masters.Court_Rooms", tenantId, requestInfo),
-    "Failed to query MDMS service for court room"
+    "Failed to query MDMS service for court room",
   );
   const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
   if (!mdmsCourtRoom) {
@@ -32,8 +32,8 @@ async function getCourtAndJudgeDetails(
         mdmsCourtRoom.establishment === courtEstablishment &&
         courtroom === courtId &&
         fromDate <= Date.now() &&
-        (toDate === null || toDate > Date.now())
-    )
+        (toDate === null || toDate > Date.now()),
+    ),
   );
 
   if (!employee) {
@@ -41,7 +41,7 @@ async function getCourtAndJudgeDetails(
   }
 
   const assignment = employee.assignments.find(
-    (assignment) => assignment.courtroom === courtId
+    (assignment) => assignment.courtroom === courtId,
   );
 
   const responseMdms = await handleApiCall(
@@ -51,9 +51,9 @@ async function getCourtAndJudgeDetails(
         assignment.designation,
         "common-masters.Designation",
         tenantId,
-        requestInfo
+        requestInfo,
       ),
-    "Failed to query MDMS service for Designation"
+    "Failed to query MDMS service for Designation",
   );
   const mdmsDesignation = responseMdms?.data?.mdms[0]?.data;
   if (!mdmsCourtRoom) {
@@ -84,16 +84,27 @@ async function getCourtAndJudgeDetails(
 function getSelectedTitles(data, messagesMap) {
   const titles = [];
 
+  const localizeTitle = (title) => {
+    const match = title?.trim().match(/^(.*?)\s+(\d+)$/);
+    if (match) {
+      const baseTitle = match[1];
+      const number = match[2];
+      const translatedBase = messagesMap[baseTitle] || baseTitle;
+      return `${translatedBase} ${number}`;
+    }
+    return messagesMap[title] || title;
+  };
+
   const traverse = (items, parentTitle) => {
     items?.forEach((item) => {
       if (item.children?.length) {
-        // Non-leaf: recurse, passing this node's title as the parent
         traverse(item.children, item.title);
       } else if (item.title) {
-        // Leaf node: combine parent title (if any) with this title
-        const translatedTitle = messagesMap[item.title] || item.title;
-        if (parentTitle) {
-          const translatedParent = messagesMap[parentTitle] || parentTitle;
+        const translatedTitle = localizeTitle(item.title);
+
+        const excludedParentTitles = ["INITIAL_FILINGS", "AFFIDAVITS_PDF", "VAKALATS", "ADDITIONAL_FILINGS", "MEDIATION", "PLEA", "S351_EXAMINATION", "OBJECTION_APPLICATION_HEADING", "NOTICE", "WARRANT","SUMMONS"];
+        if (parentTitle && !excludedParentTitles.includes(parentTitle)) {
+          const translatedParent = localizeTitle(parentTitle);
           titles.push(`${translatedTitle} - ${translatedParent}`);
         } else {
           titles.push(translatedTitle);

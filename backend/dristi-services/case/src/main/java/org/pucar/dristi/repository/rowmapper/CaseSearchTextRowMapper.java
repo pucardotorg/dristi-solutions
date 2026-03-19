@@ -17,6 +17,7 @@ public class CaseSearchTextRowMapper implements RowMapper<CaseSearchTextItem> {
                 .filingNumber(rs.getString("filingnumber"))
                 .courtCaseNumber(rs.getString("courtcasenumber"))
                 .cnrNumber(rs.getString("cnrNumber"))
+                .caseTitle(rs.getString("caseTitle"))
                 .build();
     }
 }

@@ -45,12 +45,22 @@ public class IndexerUtils {
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.joining());
 
-        String uri = config.getEsHostUrl() + config.getBulkPath();
+        String uri = config.getEsHostUrl() + config.getBulkPath() + "?refresh=true";
         esPostManual(uri, bulkPayload);
     }
 
     public String buildPayload(IssueCtcDocument doc) {
         String indexName = config.getIssueCtcDocumentsIndex();
+        String docName = Optional.ofNullable(doc.getDocTitle())
+                .map(s -> s.replace("_", " "))
+                .orElse(null);
+
+        List<String> searchableFields = new ArrayList<>();
+        if (doc.getCaseTitle() != null) searchableFields.add(doc.getCaseTitle());
+        if (doc.getCaseNumber() != null) searchableFields.add(doc.getCaseNumber());
+
+        String searchableFieldsJson = objectMapper.valueToTree(searchableFields).toString();
+
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_ISSUE_CTC_DOC_FORMAT,
                 indexName,
@@ -60,14 +70,18 @@ public class IndexerUtils {
                 doc.getCtcApplicationNumber(),
                 doc.getCreatedTime(),
                 doc.getLastModifiedTime(),
-                doc.getDocTitle(),
+                docName,
                 doc.getStatus(),
                 doc.getCaseTitle(),
                 doc.getCaseNumber(),
                 doc.getFilingNumber(),
                 doc.getCourtId(),
                 doc.getTenantId(),
-                doc.getFileStoreId()
+                doc.getFileStoreId(),
+                doc.getNameOfApplicant(),
+                doc.getDateOfApplication(),
+                doc.getDateOfApplicationApproval(),
+                searchableFieldsJson
         );
     }
 
@@ -131,7 +145,7 @@ public class IndexerUtils {
     public void updateTrackerStatus(String ctcApplicationNumber, String status, Long date) {
         try {
             String indexName = config.getCtcApplicationTrackerIndex();
-            String uri = config.getEsHostUrl() + indexName + "/_update_by_query";
+            String uri = config.getEsHostUrl() + indexName + "/_update_by_query?refresh=true";
             String request;
             request = String.format(ServiceConstants.ES_UPDATE_TRACKER_STATUS_BY_APPLICATION, ctcApplicationNumber, status, date);
 
@@ -169,7 +183,7 @@ public class IndexerUtils {
                     searchableFieldsJson
             );
 
-            String uri = config.getEsHostUrl() + config.getBulkPath();
+            String uri = config.getEsHostUrl() + config.getBulkPath() + "?refresh=true";
             esPostManual(uri, payload);
             log.info("Pushed ctc-application-tracker to ES for application: {}", tracker.getCtcApplicationNumber());
         } catch (Exception e) {
@@ -248,6 +262,9 @@ public class IndexerUtils {
                     .courtId(application.getCourtId())
                     .tenantId(application.getTenantId())
                     .fileStoreId(fileStoreId)
+                    .nameOfApplicant(application.getApplicantName())
+                    .dateOfApplication(application.getAuditDetails().getCreatedTime())
+                    .dateOfApplicationApproval(application.getDateOfApplicationApproval())
                     .build();
             documents.add(doc);
         }

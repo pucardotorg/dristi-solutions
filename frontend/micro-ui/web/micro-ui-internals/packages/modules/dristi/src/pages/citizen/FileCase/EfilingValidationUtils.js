@@ -913,6 +913,33 @@ export const chequeDetailFileValidation = ({ formData, selected, setShowErrorToa
       setShowErrorToast(true);
       return true;
     }
+    for (const field of ["payeeIfscField", "payerIfscField"]) {
+      const ifscKey = field.replace("Field", "");
+      const ifscValue = formData?.[field]?.[ifscKey];
+
+      const prefix = ifscKey.replace("Ifsc", "");
+
+      const bank = formData?.[`${prefix}BankName`];
+      const branch = formData?.[`${prefix}BranchName`];
+
+      if (!ifscValue) {
+        setFormErrors(field, { msg: "CORE_REQUIRED_FIELD_ERROR" });
+        setShowErrorToast(true);
+        return true;
+      }
+
+      if (ifscValue.length !== 11) {
+        setFormErrors(field, { msg: "CS_INVALID_IFSC" });
+        setShowErrorToast(true);
+        return true;
+      }
+
+      if (!bank || !branch) {
+        setFormErrors(field, { msg: "PLEASE_SEARCH_IFSC" });
+        setShowErrorToast(true);
+        return true;
+      }
+    }
   } else {
     return false;
   }

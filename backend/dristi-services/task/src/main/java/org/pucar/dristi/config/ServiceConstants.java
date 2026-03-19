@@ -218,4 +218,11 @@ public class ServiceConstants {
 
     public static final String TASK_NOT_FOUND = "TASK_NOT_FOUND";
     public static final String INVALID_DELIVERY_CHANNEL = "INVALID_DELIVERY_CHANNEL";
+
+    public static final String ACCUSED = "ACCUSED";
+    public static final String COMPLAINANT = "COMPLAINANT";
+    public static final String COURT_WITNESS = "-";
+
+    public static final String COMPOSITE = "COMPOSITE";
+    public static final String INTERMEDIATE = "INTERMEDIATE";
 }

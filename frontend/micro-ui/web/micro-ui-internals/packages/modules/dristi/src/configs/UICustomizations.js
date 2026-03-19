@@ -1545,6 +1545,8 @@ export const UICustomizations = {
             ? t(row?.status)
             : ["poa.regular"].includes(row?.partyType)
             ? t("JOINED")
+            : row?.status
+            ? t(row.status)
             : "";
 
           return caseJoinStatus ? <span style={{ backgroundColor: "#E8E8E8", padding: "6px", borderRadius: "14px" }}>{caseJoinStatus}</span> : null;
@@ -2854,6 +2856,12 @@ export const UICustomizations = {
         case "CASE_NAME": {
           const rawTitle = (row?.caseTitle || "").toString().trim();
           return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
+        }
+        case "CASE_NUMBER": {
+          const caseNumber = row?.isLPRCase
+            ? row?.lprNumber
+            : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
+          return caseNumber || "";
         }
         default:
           return value != null ? value : "";

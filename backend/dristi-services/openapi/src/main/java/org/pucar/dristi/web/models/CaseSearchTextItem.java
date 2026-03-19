@@ -23,4 +23,7 @@ public class CaseSearchTextItem {
 
     @JsonProperty("cnrNumber")
     private String cnrNumber;
+
+    @JsonProperty("caseTitle")
+    private String caseTitle;
 }

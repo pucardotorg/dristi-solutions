@@ -35,6 +35,22 @@
   {
     "tenantId": "kl",
     "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+    "uniqueIdentifier": "2794",
+    "data": {
+      "id": 2794,
+      "url": "/ctc/applications/_update",
+      // TODO : need to be give access to CITIZEN
+      "code": "2794",
+      "name": "update ctc application",
+      "displayName": "update ctc application",
+      "serviceCode": "ctc",
+      "parentModule": "ctc"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
     "uniqueIdentifier": "2793",
     "data": {
       "id": 2793,

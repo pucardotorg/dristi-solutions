@@ -1,26 +1,20 @@
 package pucar.strategy.ordertype;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import pucar.config.StateSlaMap;
 import pucar.service.SmsNotificationService;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.*;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
-import pucar.web.models.SMSTemplateData;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.*;
-import pucar.web.models.pendingtask.PendingTask;
-import pucar.web.models.pendingtask.PendingTaskRequest;
 import pucar.web.models.task.TaskRequest;
 import pucar.web.models.task.TaskResponse;
 
@@ -99,7 +93,7 @@ public class PublishMiscellaneousProcess implements OrderUpdateStrategy {
                 });
                 String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
 
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail, courtCase, channel);
+                TaskRequest taskRequest = taskUtil.createTaskRequest(requestInfo, order, taskDetail, courtCase, channel);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
             }
         } catch (Exception e) {

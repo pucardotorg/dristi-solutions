@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.repository.CtcApplicationRepository;
 import org.pucar.dristi.util.CaseUtil;
@@ -14,8 +15,10 @@ import org.pucar.dristi.web.models.courtcase.CourtCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -26,12 +29,14 @@ public class CtcApplicationValidator {
     private final CaseUtil caseUtil;
     private final ObjectMapper objectMapper;
     private final CtcApplicationRepository ctcApplicationRepository;
+    private final Configuration configuration;
 
     @Autowired
-    public CtcApplicationValidator(CaseUtil caseUtil, ObjectMapper objectMapper, CtcApplicationRepository ctcApplicationRepository) {
+    public CtcApplicationValidator(CaseUtil caseUtil, ObjectMapper objectMapper, CtcApplicationRepository ctcApplicationRepository, Configuration configuration) {
         this.caseUtil = caseUtil;
         this.objectMapper = objectMapper;
         this.ctcApplicationRepository = ctcApplicationRepository;
+        this.configuration = configuration;
     }
 
     public void validateCreateRequest(CtcApplicationRequest request) {
@@ -48,7 +53,7 @@ public class CtcApplicationValidator {
 
     }
 
-    public void validateUpdateRequest(CtcApplicationRequest request) {
+    public void validateUpdateRequest(CtcApplicationRequest request, List<String> inactiveFileStoreIds) {
         CtcApplication application = request.getCtcApplication();
         if (application.getCtcApplicationNumber() == null || application.getCtcApplicationNumber().isEmpty()) {
             throw new CustomException(ServiceConstants.CTC_VALIDATION_EXCEPTION, "CTC Application Number cannot be null or empty");
@@ -76,6 +81,31 @@ public class CtcApplicationValidator {
             if (existingApplication.get(0).getCaseBundles() != null && !existingApplication.get(0).getCaseBundles().isEmpty()) {
                 request.getCtcApplication().setCaseBundles(existingApplication.get(0).getCaseBundles());
             }
+
+            if(existingApplication.get(0).getAffidavitDocument() != null && existingApplication.get(0).getAffidavitDocument().getFileStore() != null
+            && (application.getAffidavitDocument() == null || !existingApplication.get(0).getAffidavitDocument().getFileStore().equals(application.getAffidavitDocument().getFileStore()))) {
+                inactiveFileStoreIds.add(existingApplication.get(0).getAffidavitDocument().getFileStore());
+            }
+
+            Set<String> requestedDocumentFileStores = new HashSet<>();
+            if (application.getDocuments() != null) {
+                for (Document document : application.getDocuments()) {
+                    if (document != null && document.getFileStore() != null) {
+                        requestedDocumentFileStores.add(document.getFileStore());
+                    }
+                }
+            }
+
+            if (existingApplication.get(0).getDocuments() != null) {
+                for (Document existingDocument : existingApplication.get(0).getDocuments()) {
+                    if (existingDocument != null
+                            && existingDocument.getFileStore() != null
+                            && !requestedDocumentFileStores.contains(existingDocument.getFileStore())) {
+                        inactiveFileStoreIds.add(existingDocument.getFileStore());
+                    }
+                }
+            }
+
         }
     }
 
@@ -89,7 +119,7 @@ public class CtcApplicationValidator {
             CourtCase courtCase = caseUtil.getCase(application.getFilingNumber(), application.getCourtId(), requestInfo);
 
             if (courtCase == null) {
-                application.setPartyDesignation(null);
+                application.setPartyDesignation(configuration.getOutsiderDesignation());
                 application.setIsPartyToCase(false);
                 return;
             }

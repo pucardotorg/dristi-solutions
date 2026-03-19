@@ -192,7 +192,7 @@ const applicationCaseTransfer = async (
           caseNumber: caseNumber,
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
-          originalCourt: mdmsCourtRoom.name,
+          originalCourt: mdmsCourtRoom.courtName,
           newCourt: selectRequestedCourt,
           date: formattedToday,
           partyName: partyName,
@@ -208,7 +208,7 @@ const applicationCaseTransfer = async (
           complainantList: complainantList,
           accusedList: accusedList,
           partyType: partyType,
-          applicationTitle: "APPLICATION FOR CASE TRANSFER",
+          applicationTitle: "APPLICATION FOR TRANSFER OF CRIMINAL COMPLAINT",
           reasonForTransfer: grounds, // need to confirm with PO if this is the correct field from application object to be used in template
         },
       ],
