@@ -158,7 +158,7 @@ public class EvidenceQueryBuilder {
         preparedStmtList.add(asUser);
         preparedStmtArgList.add(Types.VARCHAR);
 
-        queryBuilder.append(" OR ( ( art.asUser <> ? || art.asUser is NULL ) ");
+        queryBuilder.append(" OR ( art.asUser <> ? ");
         preparedStmtList.add(asUser);
         preparedStmtArgList.add(Types.VARCHAR);
 
