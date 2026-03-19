@@ -41,9 +41,11 @@ public class IcopsService {
 
     private final IcopsConfiguration config;
 
+    private final com.egov.icops_integrationkerala.repository.IcopsRepository icopsRepository;
+
     @Autowired
     public IcopsService(AuthUtil authUtil, AuthenticationManager authenticationManager,
-                        JwtUtil jwtUtil, IcopsEnrichment icopsEnrichment, ProcessRequestUtil processRequestUtil, RequestInfoGenerator requestInfoGenerator, PoliceJurisdictionUtil policeJurisdictionUtil, Producer producer, IcopsConfiguration config) {
+                        JwtUtil jwtUtil, IcopsEnrichment icopsEnrichment, ProcessRequestUtil processRequestUtil, RequestInfoGenerator requestInfoGenerator, PoliceJurisdictionUtil policeJurisdictionUtil, Producer producer, IcopsConfiguration config, com.egov.icops_integrationkerala.repository.IcopsRepository icopsRepository) {
 
         this.authUtil = authUtil;
         this.authenticationManager = authenticationManager;
@@ -54,6 +56,7 @@ public class IcopsService {
         this.policeJurisdictionUtil = policeJurisdictionUtil;
         this.producer = producer;
         this.config = config;
+        this.icopsRepository = icopsRepository;
     }
 
 
@@ -149,6 +152,10 @@ public class IcopsService {
         IcopsTracker icopsTracker = icopsEnrichment.enrichIcopsTrackerForUpdate(icopsProcessReport);
         updateIcopsTracker(icopsTracker,icopsProcessReport);
         RequestInfo requestInfo = requestInfoGenerator.generateSystemRequestInfo();
+        
+        icopsRepository.updateResponseBlob(icopsTracker.getProcessNumber(), icopsTracker.getResponseBlob());
+        icopsTracker.setResponseBlob(null);
+        
         IcopsRequest icopsRequest = IcopsRequest.builder().requestInfo(requestInfo).icopsTracker(icopsTracker).build();
         producer.push("update-icops-tracker",icopsRequest);
         return ChannelMessage.builder().acknowledgeUniqueNumber(icopsTracker.getTaskNumber()).acknowledgementStatus("SUCCESS").build();
@@ -172,7 +179,6 @@ public class IcopsService {
             icopsTracker.setRemarks(icopsProcessReport.getProcessActionRemarks());
             icopsTracker.setFailureReason(icopsProcessReport.getProcessFailureReason());
         }
-        icopsTracker.setResponseBlob(icopsProcessReport);
         ZoneId zone;
         try {
             zone = ZoneId.of(config.getZoneId());
