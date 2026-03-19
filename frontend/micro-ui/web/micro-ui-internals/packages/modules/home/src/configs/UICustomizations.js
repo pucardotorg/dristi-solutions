@@ -657,7 +657,7 @@ export const UICustomizations = {
 
       const moduleSearchCriteria = {
         tenantId,
-        ...(searchForm?.caseTitle && { caseTitle: searchForm.caseTitle }),
+        ...(searchForm?.searchQuery && { searchableFields: searchForm.searchQuery }),
         ...(searchForm?.documentName && { docTitle: searchForm.documentName }),
         ...(courtId && { courtId }),
         status: "PENDING",
@@ -756,6 +756,9 @@ export const UICustomizations = {
         config: {
           ...requestCriteria?.config,
           select: (data) => {
+            if (additionalDetails?.setCount) {
+              additionalDetails.setCount(data?.totalCount || 0);
+            }
             return { ...data, items: data?.items || [], totalCount: data?.totalCount || 0 };
           },
         },
@@ -1106,9 +1109,8 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
-                  applicationNumber || ""
-                }&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${applicationNumber || ""
+                  }&individualId=${individualId}&type=${usertype}`}
               >
                 {applicationNumber
                   ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)
