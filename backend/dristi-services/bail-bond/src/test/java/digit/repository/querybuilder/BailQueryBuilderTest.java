@@ -38,7 +38,7 @@ class BailQueryBuilderTest {
         List<Object> preparedStmtList = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();
 
-        String query = queryBuilder.getPaginatedBailIdsQuery(criteria, pagination, preparedStmtList, preparedStmtArgList);
+        String query = queryBuilder.getPaginatedBailIdsQuery(null, criteria, pagination, preparedStmtList, preparedStmtArgList);
 
         // Check that base tables are included
         assertTrue(query.contains("FROM dristi_bail bail"));
@@ -162,7 +162,7 @@ class BailQueryBuilderTest {
         List<Object> preparedStmtList = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();
 
-        String countQuery = queryBuilder.getTotalCountQuery(criteria, preparedStmtList, preparedStmtArgList);
+        String countQuery = queryBuilder.getTotalCountQuery(null, criteria, preparedStmtList, preparedStmtArgList);
 
         // Check that count query contains COUNT(*)
         assertTrue(countQuery.startsWith("SELECT COUNT(*) FROM"));
