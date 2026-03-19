@@ -3,6 +3,9 @@ package org.pucar.dristi.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
@@ -261,10 +264,15 @@ public class IndexerUtils {
         ));
 
         if (node.getTitle() != null) {
+            RequestInfo requestInfo = new RequestInfo();
+            requestInfo.setUserInfo(User.builder().roles(new ArrayList<>()).build());
 
-            //String localizedValue = localizationUtil.callLocalization(requestInfo, tenantId, value);
+            Role role = Role.builder().code("SYSTEM_ADMIN").tenantId(application.getTenantId()).build();
+            Role role2 = Role.builder().code("SYSTEM").tenantId(application.getTenantId()).build();
+            requestInfo.getUserInfo().getRoles().add(role);
+            requestInfo.getUserInfo().getRoles().add(role2);
 
-            String translatedTitle = localizeTitle(node.getTitle(), getMessagesMap());
+            String translatedTitle = localizeTitle(node.getTitle(), localizationUtil.getMessagesMap(requestInfo, application.getTenantId()));
 
             if (prevNode != null && prevNode.getTitle() != null
                     && !excludedParentTitles.contains(prevNode.getTitle())) {
