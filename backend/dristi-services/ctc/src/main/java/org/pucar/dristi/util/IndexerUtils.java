@@ -270,13 +270,6 @@ public class IndexerUtils {
         ));
 
         if (node.getTitle() != null) {
-            RequestInfo requestInfo = new RequestInfo();
-            requestInfo.setUserInfo(User.builder().roles(new ArrayList<>()).build());
-
-            Role role = Role.builder().code("SYSTEM_ADMIN").tenantId(application.getTenantId()).build();
-            Role role2 = Role.builder().code("SYSTEM").tenantId(application.getTenantId()).build();
-            requestInfo.getUserInfo().getRoles().add(role);
-            requestInfo.getUserInfo().getRoles().add(role2);
 
             String translatedTitle = localizeTitle(node.getTitle(), messagesMap);
 
