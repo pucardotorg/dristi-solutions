@@ -102,7 +102,8 @@ function getSelectedTitles(data, messagesMap) {
       } else if (item.title) {
         const translatedTitle = localizeTitle(item.title);
 
-        if (parentTitle) {
+        const excludedParentTitles = ["INITIAL_FILINGS", "AFFIDAVITS_PDF", "VAKALATS", "ADDITIONAL_FILINGS", "MEDIATION", "PLEA", "S351_EXAMINATION", "OBJECTION_APPLICATION_HEADING", "NOTICE", "WARRANT","SUMMONS"];
+        if (parentTitle && !excludedParentTitles.includes(parentTitle)) {
           const translatedParent = localizeTitle(parentTitle);
           titles.push(`${translatedTitle} - ${translatedParent}`);
         } else {
