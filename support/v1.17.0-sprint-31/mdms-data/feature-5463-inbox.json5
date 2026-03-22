@@ -7,16 +7,16 @@
     "uniqueIdentifier": "issue-ctc-documents",
     "data": {
       "sortBy": {
-        "path": "Data.createdTime",
-        "defaultOrder": "DESC"
+        "path": "Data.dateOfApplication",
+        "defaultOrder": "ASC"
       },
       "sourceFilterPathList": [
         "Data"
       ],
       "allowedSearchCriteria": [
         {
-          "name": "searchableFields",
-          "path": "Data.searchableFields",
+          "name": "caseTitle",
+          "path": "Data.caseTitle.keyword",
           "operator": "WILDCARD",
           "isMandatory": false
         },
@@ -64,7 +64,7 @@
       "module": "CTC Service",
       "sortBy": {
         "path": "Data.dateRaised",
-        "defaultOrder": "DESC"
+        "defaultOrder": "ASC"
       },
       "sourceFilterPathList": [
         "Data"
@@ -72,7 +72,7 @@
       "allowedSearchCriteria": [
         {
           "name": "searchableFields",
-          "path": "Data.searchableFields",
+          "path": "Data.searchableFields.keyword",
           "operator": "WILDCARD",
           "isMandatory": false
         },
