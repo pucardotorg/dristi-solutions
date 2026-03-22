@@ -272,15 +272,23 @@ public class IndexerUtils {
         if (node.getTitle() != null) {
 
             String translatedTitle = localizeTitle(node.getTitle(), messagesMap);
+            log.info("Translated title: {}", translatedTitle);
+            log.info("Node title: {}", node.getTitle());
+            if(prevNode!=null){
+                log.info("Prev node title: {}", prevNode.getTitle());
+            }
 
             if (prevNode != null && prevNode.getTitle() != null
                     && !excludedParentTitles.contains(prevNode.getTitle())) {
 
                 String translatedParent = localizeTitle(prevNode.getTitle(),  messagesMap);
+                log.info("Translated parent: {}", translatedParent);
                 docTitle = translatedTitle + " - " + translatedParent;
+                log.info("Doc title: {}", docTitle);
 
             } else {
                 docTitle = translatedTitle;
+                log.info("Doc title: {}", docTitle);
             }
         }
 
@@ -341,6 +349,7 @@ public class IndexerUtils {
             String number = matcher.group(2);
 
             String translatedBase = messagesMap.getOrDefault(baseTitle, baseTitle);
+            log.info("Translated base: {}", translatedBase + " " + number);
             return translatedBase + " " + number;
         }
 
