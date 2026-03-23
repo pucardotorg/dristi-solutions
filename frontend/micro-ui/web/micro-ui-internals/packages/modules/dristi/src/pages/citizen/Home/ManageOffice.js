@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { userTypeOptions } from "../registration/config";
-import { ManageOfficeDeleteIcon, ManageOfficeCloseIcon, ManageOfficeLeaveIcon } from "../../../icons/svgIndex";
+import { ManageOfficeDeleteIcon, ManageOfficeCloseIcon, ManageOfficeLeaveIcon, ProvideCaseAccessArrowIcon } from "../../../icons/svgIndex";
 
 const ManageOffice = () => {
   const { t } = useTranslation();
@@ -643,7 +643,8 @@ const ManageOffice = () => {
                   </button>
                   {searchResult ? (
                     <button onClick={handleConfirmAddMember} className="manage-office-btn manage-office-btn--primary">
-                      {t("PROVIDE_CASE_ACCESS")} &nbsp;→
+                      <span style={{ marginRight: "8px" }}>{t("PROVIDE_CASE_ACCESS")}</span>
+                      <ProvideCaseAccessArrowIcon />
                     </button>
                   ) : (
                     <button
