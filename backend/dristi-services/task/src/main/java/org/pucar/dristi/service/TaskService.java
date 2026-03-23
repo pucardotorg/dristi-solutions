@@ -388,6 +388,7 @@ public class TaskService {
     public Task uploadDocument(TaskRequest body) {
         try {
             Task task = validator.validateApplicationUploadDocumentExistence(body.getTask(), body.getRequestInfo());
+            log.info("Task validateApplicationUploadDocumentExistence response :: {}", task);
 
             // Enrich application upon update
            TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
