@@ -366,6 +366,7 @@ const ManageOfficeMember = () => {
               memberId: member?.memberId,
               memberName: member?.memberName || memberName,
               memberMobileNumber: member?.memberMobileNumber,
+              memberEmail: member?.memberEmail || "",
               accessType: accessType,
               allowCaseCreate: true,
               addNewCasesAutomatically: accessType === "ALL_CASES",
