@@ -96,21 +96,29 @@ public class ApplicationQueryBuilder {
                 firstCriteria = false;
             }
 
-            if (asUser != null) {
-                addClauseIfRequired(query, firstCriteria);
-                query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.asuser = ?))");
-                preparedStmtList.add(asUser);
-                preparedStmtArgList.add(Types.VARCHAR);
-                firstCriteria = false;
-            }
-
-            // TODO : remove this, this is temporary fix (#5016)
-            // --------- REQUEST_FOR_BAIL visibility ----------
             boolean isCitizen = Optional.ofNullable(requestInfo)
                     .map(RequestInfo::getUserInfo)
                     .map(User::getType)
                     .map(CITIZEN_UPPER::equalsIgnoreCase)
                     .orElse(false);
+
+            if (isCitizen) {
+                if(asUser != null){
+                    addClauseIfRequired(query, firstCriteria);
+                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.asuser = ?))");
+                    preparedStmtList.add(asUser);
+                    preparedStmtArgList.add(Types.VARCHAR);
+                    firstCriteria = false;
+                }
+            }
+            else {
+                addClauseIfRequired(query, firstCriteria);
+                query.append("app.status != 'DRAFT_IN_PROGRESS'");
+                firstCriteria = false;
+            }
+
+            // TODO : remove this, this is temporary fix (#5016)
+            // --------- REQUEST_FOR_BAIL visibility ----------
             if(isCitizen){
                 applyRequestForBailVisibility(
                         query, firstCriteria, asUser, applicationCriteria.getOnBehalfOf(),

@@ -29,7 +29,6 @@ const DocumentsV2 = ({
   setShowWitnessDepositionDoc,
   counter,
   setShowWitnessModal,
-  setEditWitnessDepositionArtifact,
   setShowExaminationModal,
   setExaminationDocumentNumber,
   setDocumentCounter,
@@ -158,7 +157,8 @@ const DocumentsV2 = ({
         if (type === "PLEA") {
           if (status === "DRAFT_IN_PROGRESS" && !isCitizen) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/submissions/record-plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`
             );
             return;
@@ -182,7 +182,8 @@ const DocumentsV2 = ({
 
           if (["PENDING_E-SIGN", "PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(status)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/home/digitized-document-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&caseId=${caseId}`
             );
           }
@@ -210,7 +211,8 @@ const DocumentsV2 = ({
 
           if (["PENDING_E-SIGN", "PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(status)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/home/digitized-document-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&caseId=${caseId}`
             );
           }
@@ -219,7 +221,8 @@ const DocumentsV2 = ({
             [MediationWorkflowState.PENDING_E_SIGN, MediationWorkflowState.PENDING_UPLOAD, MediationWorkflowState.PENDING_REVIEW]?.includes(status)
           ) {
             history.push(
-              `/${window.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/home/mediation-form-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&courtId=${courtId}`
             );
             return;
@@ -227,7 +230,8 @@ const DocumentsV2 = ({
 
           if (["COMPLETED", "VOID"]?.includes(status)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/home/digitized-document-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&caseId=${caseId}`
             );
             return;
@@ -244,21 +248,24 @@ const DocumentsV2 = ({
         if (isCitizen) {
           if (bailStatus === "DRAFT_IN_PROGRESS" && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondId}`
             );
           }
 
           if (bailStatus === "PENDING_E-SIGN") {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/dristi/home/bail-bond-sign?tenantId=${tenantId}&bailbondId=${bailBondId}&filingNumber=${filingNumber}&caseId=${caseId}`
             );
           }
 
           if (["PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(bailStatus)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/home/sign-bail-bond?filingNumber=${filingNumber}&bailId=${bailBondId}&caseId=${caseId}`,
               { state: { params: { caseId, filingNumber } } }
             );
@@ -266,7 +273,8 @@ const DocumentsV2 = ({
         } else {
           if (["PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(bailStatus)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/home/sign-bail-bond?filingNumber=${filingNumber}&bailId=${bailBondId}&caseId=${caseId}`,
               { state: { params: { caseId, filingNumber } } }
             );
@@ -280,13 +288,13 @@ const DocumentsV2 = ({
         const isUserLoggedIn = Boolean(token);
         if (documentStatus === "PENDING_E-SIGN" && sourceID === userUuid && isUserLoggedIn) {
           history.push(
-            `/${window?.contextPath
+            `/${
+              window?.contextPath
             }/${"citizen"}/dristi/home/evidence-sign?tenantId=${tenantId}&artifactNumber=${artifactNumber}&filingNumber=${filingNumber}`
           );
         }
         if (documentStatus === "DRAFT_IN_PROGRESS") {
-          setShowWitnessModal(true);
-          setEditWitnessDepositionArtifact(artifactNumber);
+          setShowWitnessModal({ show: true, artifactNumber: artifactNumber });
         } else {
           if (documentStatus === "PENDING_REVIEW" && canSign) {
             history.push({
@@ -309,7 +317,8 @@ const DocumentsV2 = ({
         const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentOwnerUuid);
         if (documentStatus === "PENDING_E-SIGN" && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
           history.push(
-            `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+            `/${window?.contextPath}/${
+              isCitizen ? "citizen" : "employee"
             }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
           );
         }
@@ -318,7 +327,8 @@ const DocumentsV2 = ({
         ) {
           if (allAllowedPartiesForApplicationsActions.includes(userUuid)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
             );
           }
@@ -564,8 +574,6 @@ const DocumentsV2 = ({
     if (!caseDetails?.filingNumber) return null; // wait for caseDetails to load
     return newTabSearchConfig?.TabSearchconfig;
   }, [newTabSearchConfig?.TabSearchconfig, caseDetails?.filingNumber]);
-
-
 
   useEffect(() => {
     if (showErrorToast) {

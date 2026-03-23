@@ -142,7 +142,6 @@ const WitnessDrawerV2 = ({
     const fetchAdvocateData = async () => {
       const advocatesWithFetchedData = await Promise.all(
         (caseDetails?.representatives || []).map(async (rep) => {
-          const advocates = caseDetails?.additionalDetails?.advocateDetails?.formdata;
           let ownerType = "";
           for (let i = 0; i < rep?.representing?.length; i++) {
             const represetingObj = rep?.representing?.[i];
@@ -156,11 +155,11 @@ const WitnessDrawerV2 = ({
 
           // First try to get mobile number from local data (your original logic)
           let mobileNumber = null;
-          for (let i = 0; i < advocates?.length; i++) {
-            for (let j = 0; j < advocates[i]?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length; j++) {
-              const advocateData = advocates[i]?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.[j];
-              if (advocateData?.advocateBarRegNumberWithName?.advocateUuid === rep?.additionalDetails?.uuid) {
-                mobileNumber = advocateData?.advocateNameDetails?.advocateMobileNumber;
+          for (let i = 0; i < caseDetails?.advocateDetailBlock?.length; i++) {
+            for (let j = 0; j < caseDetails?.advocateDetailBlock?.[i]?.advocates?.length; j++) {
+              const advocateData = caseDetails?.advocateDetailBlock?.[i]?.advocates?.[j];
+              if (advocateData?.advocateUuid === rep?.additionalDetails?.uuid) {
+                mobileNumber = advocateData?.mobileNumber;
                 break;
               }
             }
