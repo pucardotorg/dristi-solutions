@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
 import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import DocViewerWrapper from "../docViewerWrapper";
-import {  modifiedEvidenceNumber } from "../../../Utils";
+import { modifiedEvidenceNumber } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import useDownloadFiles from "../../../hooks/dristi/useDownloadFiles";
 import MarkAsEvidence from "./MarkAsEvidence";
@@ -145,7 +145,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     return map;
   }, [completeEvidenceData]);
 
-  debugger;
   const dynamicCaseFileStructure = useMemo(() => {
     const processNode = (node) => {
       const processedNode = { ...node };
