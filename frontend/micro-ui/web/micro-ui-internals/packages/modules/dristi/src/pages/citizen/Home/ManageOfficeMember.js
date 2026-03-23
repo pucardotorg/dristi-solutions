@@ -463,6 +463,11 @@ const ManageOfficeMember = () => {
       // it should already exist. Incrementing the key forces InboxSearchComposer to remount & fetch cases.
       setCasesRefreshKey((prev) => prev + 1);
 
+      if (isNewMember) {
+        history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office`);
+        return;
+      }
+
       history.replace(history.location?.pathname || window.location.pathname, {
         ...currentState,
         isNewMember: false,
