@@ -13,6 +13,8 @@ const sectionsParentStyle = {
   gap: "0.5rem",
 };
 
+const REDIRECT_DELAY_MS = 400;
+
 
 
 const ManageOfficeMember = () => {
@@ -51,6 +53,7 @@ const ManageOfficeMember = () => {
   const [showAddMemberConfirmModal, setShowAddMemberConfirmModal] = useState(false);
   const [isUpdatingAccess, setIsUpdatingAccess] = useState(false);
   const [toast, setToast] = useState(null);
+  const redirectTimeoutRef = useRef(null);
 
   // Auto-close toast after 5 seconds (same pattern as ManageOffice)
   useEffect(() => {
@@ -58,6 +61,14 @@ const ManageOfficeMember = () => {
     const timer = setTimeout(() => setToast(null), 5000);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER");
   const clerkLabel = t("CLERK");
@@ -465,9 +476,9 @@ const ManageOfficeMember = () => {
 
       if (isNewMember) {
         // Let the success toast render briefly, then replace to avoid keeping create-flow in history stack.
-        window.setTimeout(() => {
+        redirectTimeoutRef.current = window.setTimeout(() => {
           history.replace(`/${window?.contextPath}/citizen/dristi/home/manage-office`);
-        }, 400);
+        }, REDIRECT_DELAY_MS);
         return;
       }
 
