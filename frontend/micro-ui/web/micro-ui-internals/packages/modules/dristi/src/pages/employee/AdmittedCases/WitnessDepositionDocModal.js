@@ -5,15 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { DRISTIService } from "../../../services";
 
-function WitnessDepositionDocModal({
-  t,
-  docObj,
-  setShowWitnessDepositionDoc,
-  showWitnessModal,
-  setShowWitnessModal,
-  setEditWitnessDepositionArtifact,
-  editWitnessDepositionArtifact,
-}) {
+function WitnessDepositionDocModal({ t, docObj, setShowWitnessDepositionDoc, setShowWitnessModal }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const artifact = docObj?.artifactList;
@@ -99,8 +91,7 @@ function WitnessDepositionDocModal({
         };
         const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
         if (updatedEvidence?.artifact) {
-          setShowWitnessModal(true);
-          setEditWitnessDepositionArtifact(updatedEvidence?.artifact?.artifactNumber);
+          setShowWitnessModal({ show: true, artifactNumber: updatedEvidence?.artifact?.artifactNumber });
           setShowWitnessDepositionDoc({ docObj: null, show: false });
         }
       } catch (error) {

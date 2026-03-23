@@ -245,9 +245,7 @@ public class HearingService {
         String date = dateUtil.getCurrentDate();
         String key  = CACHE_KEY_PREFIX + courtId + ":" + date;
         Object response = cacheService.getCache(key);
-        if(response == null) {
-            cacheService.updateCache(key, List.of(openHearing));
-        } else {
+        if (response != null) {
             List<OpenHearing> openHearingList = new ArrayList<>();
             if (response instanceof List<?> rawList) {
                 for (Object item : rawList) {
@@ -255,9 +253,7 @@ public class HearingService {
                         openHearingList.add((OpenHearing) item);
                     } else if (item instanceof LinkedHashMap) {
                         try {
-                            ObjectMapper objectMapper = new ObjectMapper();
-                            String json = objectMapper.writeValueAsString(item);
-                            OpenHearing convertedHearing = objectMapper.readValue(json, OpenHearing.class);
+                            OpenHearing convertedHearing = objectMapper.convertValue(item, OpenHearing.class);
                             openHearingList.add(convertedHearing);
                         } catch (Exception e) {
                             log.error("Error converting LinkedHashMap to OpenHearing: {}", e.getMessage());

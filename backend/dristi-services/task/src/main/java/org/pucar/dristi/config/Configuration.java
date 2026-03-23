@@ -196,6 +196,9 @@ public class Configuration {
     @Value("${egov.order.path}")
     private String orderPath;
 
+    @Value("${egov.order.search.path}")
+    private String orderSearchPath;
+
     @Value("${summons.court.fees.sufix}")
     private String summonsCourtFeesSufix;
 
