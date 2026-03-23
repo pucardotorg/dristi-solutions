@@ -392,6 +392,7 @@ public class TaskService {
             // Enrich application upon update
            TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
+            enrichmentUtil.enrichIsPendingCollectionUponUpdate(taskRequest);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
 
