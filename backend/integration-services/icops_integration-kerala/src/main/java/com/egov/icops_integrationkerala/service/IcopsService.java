@@ -4,6 +4,7 @@ import com.egov.icops_integrationkerala.config.IcopsConfiguration;
 import com.egov.icops_integrationkerala.enrichment.IcopsEnrichment;
 import com.egov.icops_integrationkerala.kafka.Producer;
 import com.egov.icops_integrationkerala.model.*;
+import com.egov.icops_integrationkerala.repository.IcopsRepository;
 import com.egov.icops_integrationkerala.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -41,7 +42,7 @@ public class IcopsService {
 
     private final IcopsConfiguration config;
 
-    private final com.egov.icops_integrationkerala.repository.IcopsRepository icopsRepository;
+    private final IcopsRepository icopsRepository;
 
     @Autowired
     public IcopsService(AuthUtil authUtil, AuthenticationManager authenticationManager,
