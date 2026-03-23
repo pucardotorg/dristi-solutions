@@ -83,9 +83,6 @@ public class Configuration {
     @Value("${egov.localization.host}")
     private String localizationHost;
 
-    @Value("${egov.localization.context.path}")
-    private String localizationContextPath;
-
     @Value("${egov.localization.search.endpoint}")
     private String localizationSearchEndpoint;
 
