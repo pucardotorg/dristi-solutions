@@ -464,7 +464,10 @@ const ManageOfficeMember = () => {
       setCasesRefreshKey((prev) => prev + 1);
 
       if (isNewMember) {
-        history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office`);
+        // Let the success toast render briefly, then replace to avoid keeping create-flow in history stack.
+        window.setTimeout(() => {
+          history.replace(`/${window?.contextPath}/citizen/dristi/home/manage-office`);
+        }, 400);
         return;
       }
 
