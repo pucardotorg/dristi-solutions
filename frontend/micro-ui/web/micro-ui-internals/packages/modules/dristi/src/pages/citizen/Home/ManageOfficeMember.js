@@ -13,6 +13,8 @@ const sectionsParentStyle = {
   gap: "0.5rem",
 };
 
+const REDIRECT_DELAY_MS = 400;
+
 
 
 const ManageOfficeMember = () => {
@@ -51,6 +53,7 @@ const ManageOfficeMember = () => {
   const [showAddMemberConfirmModal, setShowAddMemberConfirmModal] = useState(false);
   const [isUpdatingAccess, setIsUpdatingAccess] = useState(false);
   const [toast, setToast] = useState(null);
+  const redirectTimeoutRef = useRef(null);
 
   // Auto-close toast after 5 seconds (same pattern as ManageOffice)
   useEffect(() => {
@@ -58,6 +61,14 @@ const ManageOfficeMember = () => {
     const timer = setTimeout(() => setToast(null), 5000);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER");
   const clerkLabel = t("CLERK");
@@ -462,6 +473,14 @@ const ManageOfficeMember = () => {
       // if it wasn't there before (or if it relies on individualId). Since `member.memberId` is mapped from the search response, 
       // it should already exist. Incrementing the key forces InboxSearchComposer to remount & fetch cases.
       setCasesRefreshKey((prev) => prev + 1);
+
+      if (isNewMember) {
+        // Let the success toast render briefly, then replace to avoid keeping create-flow in history stack.
+        redirectTimeoutRef.current = window.setTimeout(() => {
+          history.replace(`/${window?.contextPath}/citizen/dristi/home/manage-office`);
+        }, REDIRECT_DELAY_MS);
+        return;
+      }
 
       history.replace(history.location?.pathname || window.location.pathname, {
         ...currentState,
