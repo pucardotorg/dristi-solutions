@@ -7,6 +7,7 @@ import com.egov.icops_integrationkerala.enrichment.IcopsEnrichment;
 import com.egov.icops_integrationkerala.config.IcopsConfiguration;
 import com.egov.icops_integrationkerala.kafka.Producer;
 import com.egov.icops_integrationkerala.model.*;
+import com.egov.icops_integrationkerala.repository.IcopsRepository;
 import com.egov.icops_integrationkerala.util.*;
 import org.egov.common.contract.request.RequestInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +55,8 @@ class IcopsServiceTest {
     private IcopsConfiguration config;
 
     @Mock
-    private com.egov.icops_integrationkerala.repository.IcopsRepository icopsRepository;
+    private IcopsRepository icopsRepository;
+
 
     @InjectMocks
     private IcopsService icopsService;
@@ -177,6 +179,7 @@ class IcopsServiceTest {
         when(icopsTracker.getRowVersion()).thenReturn(1);
         when(icopsProcessReport.getProcessActionStatus()).thenReturn("Executed");
         when(icopsProcessReport.getProcessActionRemarks()).thenReturn("Executed successfully");
+        doNothing().when(icopsRepository).updateResponseBlob(any(), any());
         ChannelMessage result = icopsService.processPoliceReport(icopsProcessReport);
 
         assertEquals("SUCCESS", result.getAcknowledgementStatus());
@@ -191,6 +194,7 @@ class IcopsServiceTest {
         when(icopsProcessReport.getProcessActionStatus()).thenReturn("Not Executed");
         when(icopsProcessReport.getProcessActionRemarks()).thenReturn("Not executed");
         when(icopsProcessReport.getProcessFailureReason()).thenReturn("Failure reason");
+        doNothing().when(icopsRepository).updateResponseBlob(any(), any());
         ChannelMessage result = icopsService.processPoliceReport(icopsProcessReport);
 
         assertEquals("SUCCESS", result.getAcknowledgementStatus());
@@ -205,6 +209,7 @@ class IcopsServiceTest {
         when(icopsProcessReport.getProcessActionStatus()).thenReturn("Else");
         when(icopsProcessReport.getProcessActionRemarks()).thenReturn("In transit");
         when(icopsProcessReport.getProcessFailureReason()).thenReturn("In transit failure");
+        doNothing().when(icopsRepository).updateResponseBlob(any(), any());
         ChannelMessage result = icopsService.processPoliceReport(icopsProcessReport);
 
         assertEquals("SUCCESS", result.getAcknowledgementStatus());
