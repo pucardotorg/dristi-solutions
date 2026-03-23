@@ -1,5 +1,5 @@
 import { BackButton, CheckSvg, CloseSvg, EditIcon, FormComposerV2, Header, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowAction } from "../../../Utils/caseWorkflow";
@@ -18,6 +18,7 @@ import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import { DateUtils, getCaseEditAllowedAssignees, runComprehensiveSanitizer } from "../../../Utils";
 import isEqual from "lodash/isEqual";
+import { transformCaseDataForFetching } from "../../citizen/FileCase/EfilingValidationUtils";
 const judgeId = "JUDGE_ID";
 const benchId = "BENCH_ID";
 
@@ -163,10 +164,11 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     Boolean(caseId && !caseDetailsAdmitted)
   );
 
-  const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || caseDetailsAdmitted || null, [
-    caseFetchResponse,
-    caseDetailsAdmitted,
-  ]);
+  const caseDetails = useMemo(() => {
+    const caseDetails = structuredClone(caseFetchResponse?.criteria?.[0]?.responseList?.[0] || caseDetailsAdmitted || {});
+    const updatedCaseData = transformCaseDataForFetching(caseDetails, ["witnessDetails", "advocateDetails"]);
+    return updatedCaseData;
+  }, [caseFetchResponse, caseDetailsAdmitted]);
 
   // Case correction/edition is allowed to all complainant side parties including poa holders, advocates, advocate's associated office members.
   // but no need to send uuid of office members in assignee payload
@@ -297,23 +299,10 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
       inputErrors,
     };
   }, [scrutinyErrors]);
-  const isDisabled = useMemo(() => totalErrors?.total > 0);
+  const isDisabled = useMemo(() => totalErrors?.total > 0, [totalErrors]);
 
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
-  const transformedData = useCallback(
-    (input) => {
-      if (input?.key === "witnessDetails") {
-        return (caseDetails?.witnessDetails || [])?.map((details) => ({
-          data: { ...(details || {}) },
-        }));
-      }
-      return caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
-    },
-    [caseDetails]
-  );
-
-  const state = useMemo(() => caseDetails?.status, [caseDetails]);
   const formConfig = useMemo(() => {
     if (!caseDetails) return null;
 
@@ -459,7 +448,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                     } else
                       return {
                         ...input,
-                        data: transformedData(input),
+                        data: caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {},
                         prevErrors: defaultScrutinyErrors?.data?.[section.key]?.[input.key] || {},
                       };
                   }),
@@ -469,7 +458,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
         };
       }),
     ];
-  }, [caseDetails, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t, transformedData]);
+  }, [caseDetails, inViewCase, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t]);
 
   const primaryButtonLabel = useMemo(() => {
     if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {

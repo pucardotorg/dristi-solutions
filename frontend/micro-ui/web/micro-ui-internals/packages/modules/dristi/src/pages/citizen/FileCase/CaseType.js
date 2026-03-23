@@ -214,70 +214,44 @@ function CaseType({ t }) {
                 additionalDetails: {
                   payerMobileNo: individualData?.Individual?.[0]?.mobileNumber,
                   payerName: `${givenName} ${familyName}`,
-                  ...(selectedAdvocateId
-                    ? {
-                        advocateDetails: {
-                          formdata: [
-                            {
-                              isenabled: true,
-                              displayindex: 0,
-                              data: {},
+                  ...(!selectedAdvocateId && {
+                    complainantDetails: {
+                      formdata: [
+                        {
+                          isenabled: true,
+                          data: {
+                            complainantType: complainantRespondentTypeData.find((item) => item.id === 1),
+                            "addressDetails-select": {
+                              pincode: pincode,
+                              district: addressLine2,
+                              city: city,
+                              state: addressLine1,
+                              locality: address,
                             },
-                          ],
-                        },
-                      }
-                    : {
-                        complainantDetails: {
-                          formdata: [
-                            {
-                              isenabled: true,
-                              data: {
-                                complainantType: complainantRespondentTypeData.find((item) => item.id === 1),
+                            complainantId: { complainantId: true },
+                            firstName: givenName,
+                            middleName: otherNames,
+                            lastName: familyName,
+                            complainantVerification: {
+                              mobileNumber: userInfo?.userName,
+                              otpNumber: "123456",
+                              individualDetails: {
+                                individualId: individualId,
+                                document: identifierIdDetails?.fileStoreId
+                                  ? [
+                                      {
+                                        fileName: idType,
+                                        fileStore: identifierIdDetails?.fileStoreId,
+                                        documentName: identifierIdDetails?.filename,
+                                      },
+                                    ]
+                                  : null,
                                 "addressDetails-select": {
                                   pincode: pincode,
                                   district: addressLine2,
                                   city: city,
                                   state: addressLine1,
                                   locality: address,
-                                },
-                                complainantId: { complainantId: true },
-                                firstName: givenName,
-                                middleName: otherNames,
-                                lastName: familyName,
-                                complainantVerification: {
-                                  mobileNumber: userInfo?.userName,
-                                  otpNumber: "123456",
-                                  individualDetails: {
-                                    individualId: individualId,
-                                    document: identifierIdDetails?.fileStoreId
-                                      ? [
-                                          {
-                                            fileName: idType,
-                                            fileStore: identifierIdDetails?.fileStoreId,
-                                            documentName: identifierIdDetails?.filename,
-                                          },
-                                        ]
-                                      : null,
-                                    "addressDetails-select": {
-                                      pincode: pincode,
-                                      district: addressLine2,
-                                      city: city,
-                                      state: addressLine1,
-                                      locality: address,
-                                    },
-                                    addressDetails: {
-                                      pincode: pincode,
-                                      district: addressLine2,
-                                      city: city,
-                                      state: addressLine1,
-                                      coordinates: {
-                                        longitude: longitude,
-                                        latitude: latitude,
-                                      },
-                                      locality: address,
-                                    },
-                                  },
-                                  isUserVerified: true,
                                 },
                                 addressDetails: {
                                   pincode: pincode,
@@ -291,11 +265,25 @@ function CaseType({ t }) {
                                   locality: address,
                                 },
                               },
-                              displayindex: 0,
+                              isUserVerified: true,
                             },
-                          ],
+                            addressDetails: {
+                              pincode: pincode,
+                              district: addressLine2,
+                              city: city,
+                              state: addressLine1,
+                              coordinates: {
+                                longitude: longitude,
+                                latitude: latitude,
+                              },
+                              locality: address,
+                            },
+                          },
+                          displayindex: 0,
                         },
-                      }),
+                      ],
+                    },
+                  }),
                 },
               };
               DRISTIService.caseCreateService({ cases, tenantId })

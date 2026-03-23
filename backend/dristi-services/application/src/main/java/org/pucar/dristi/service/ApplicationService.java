@@ -146,6 +146,7 @@ public class ApplicationService {
                             artifact.setComments(application.getComment());
                             artifact.setCaseId(application.getCaseId());
                             artifact.setFile(doc);
+                            artifact.setAsUser(application.getAsUser());
 
                             ObjectNode additionalDetails = objectMapper.createObjectNode();
                             if (applicationRequest.getRequestInfo().getUserInfo() != null)
