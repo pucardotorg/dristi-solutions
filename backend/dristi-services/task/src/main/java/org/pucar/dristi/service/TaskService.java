@@ -59,13 +59,14 @@ public class TaskService {
     private final CipherUtil cipherUtil;
     private final XmlRequestGenerator xmlRequestGenerator;
     private final UserUtil userUtil;
+    private final EsUtil esUtil;
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
                        TaskRegistrationEnrichment enrichmentUtil,
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, ESignUtil eSignUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator, UserUtil userUtil) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, ESignUtil eSignUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator, UserUtil userUtil, EsUtil esUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -85,6 +86,7 @@ public class TaskService {
         this.cipherUtil = cipherUtil;
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.userUtil = userUtil;
+        this.esUtil = esUtil;
     }
 
     @Autowired
@@ -113,6 +115,8 @@ public class TaskService {
             }
 
             producer.push(config.getTaskCreateTopic(), body);
+
+            indexTaskCaseToEs(body);
 
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
@@ -260,6 +264,8 @@ public class TaskService {
                 topicBasedOnStatus.pushToTopicBasedOnStatus(status, body);
             }
             producer.push(config.getTaskUpdateTopic(), body);
+
+            indexTaskCaseToEs(body);
 
             if (!isValidTask) {
                 // join case pending task is not valid
@@ -456,6 +462,23 @@ public class TaskService {
         }
         return taskRepository.getTaskWithCaseDetails(request);
 
+    }
+
+    public List<TaskCase> searchCaseTaskFromEs(TaskCaseSearchRequest request) {
+        RequestInfo requestInfo = request.getRequestInfo();
+        List<Role> userRoles = requestInfo.getUserInfo().getRoles();
+
+        List<String> orderType = getOrderType(request, userRoles);
+
+        if (orderType.isEmpty()) {
+            log.info("No order type found for user roles");
+            if (request.getPagination() != null) {
+                request.getPagination().setTotalCount(0D);
+            }
+            return Collections.emptyList();
+        }
+
+        return esUtil.searchTasksFromEs(request.getCriteria(), request.getPagination());
     }
 
     private static void addOrderTypeIfRolePresent(List<String> orderType, List<Role> userRoles, String roleCode, String type) {
@@ -1147,6 +1170,138 @@ public class TaskService {
             }
         }
         return request.getTasks();
+    }
+
+    public BulkIndexResponse bulkIndexToElasticsearch(BulkIndexRequest request) {
+        long startTime = System.currentTimeMillis();
+        BulkIndexResponse.BulkIndexResponseBuilder responseBuilder = BulkIndexResponse.builder();
+
+        try {
+            log.info("Starting bulk indexing operation for courtId: {}", request.getCourtId());
+
+            int batchSize = request.getBatchSize() != null ? request.getBatchSize() : 1000;
+            String esBulkUrl = config.getEsHost() + "/" + config.getIndex() + "/_bulk";
+
+            int batchesProcessed = 0;
+            long successCount = 0;
+            long failureCount = 0;
+            int offset = 0;
+
+            while (true) {
+                List<TaskCase> batch = fetchTaskPage(request.getCourtId(), request.getRequestInfo(), offset, batchSize);
+
+                if (batch.isEmpty()) {
+                    break;
+                }
+
+                try {
+                    esUtil.bulkIndex(esBulkUrl, batch);
+                    successCount += batch.size();
+                    batchesProcessed++;
+                    log.info("Successfully indexed batch {} ({} tasks, offset {})", batchesProcessed, batch.size(), offset);
+                } catch (Exception e) {
+                    failureCount += batch.size();
+                    log.error("Failed to index batch at offset {}: {}", offset, e.getMessage());
+                }
+
+                offset += batch.size();
+
+                if (batch.size() < batchSize) {
+                    break;
+                }
+            }
+
+            long processingTime = System.currentTimeMillis() - startTime;
+            long totalTasks = successCount + failureCount;
+            String status = totalTasks == 0 ? "NO_TASKS_FOUND" : (failureCount == 0 ? "SUCCESS" : "PARTIAL_SUCCESS");
+
+            responseBuilder
+                .totalTasks(totalTasks)
+                .successCount(successCount)
+                .failureCount(failureCount)
+                .batchesProcessed(batchesProcessed)
+                .processingTimeMs(processingTime)
+                .status(status);
+
+            log.info("Bulk indexing completed. Total: {}, Success: {}, Failure: {}, Time: {}ms",
+                    totalTasks, successCount, failureCount, processingTime);
+
+        } catch (Exception e) {
+            log.error("Bulk indexing failed: {}", e.getMessage(), e);
+            responseBuilder
+                .totalTasks(0L)
+                .successCount(0L)
+                .failureCount(0L)
+                .batchesProcessed(0)
+                .processingTimeMs(System.currentTimeMillis() - startTime)
+                .status("FAILED")
+                .errorMessage(e.getMessage());
+        }
+
+        return responseBuilder.build();
+    }
+
+    private List<TaskCase> fetchTaskPage(String courtId, RequestInfo requestInfo, int offset, int limit) {
+        TaskCaseSearchCriteria searchCriteria = TaskCaseSearchCriteria.builder()
+            .courtId(courtId)
+            .build();
+
+        TaskCaseSearchRequest searchRequest = TaskCaseSearchRequest.builder()
+            .criteria(searchCriteria)
+            .requestInfo(requestInfo)
+            .pagination(Pagination.builder()
+                .offSet((double) offset)
+                .limit((double) limit)
+                .build())
+            .build();
+
+        return searchCaseTask(searchRequest);
+    }
+
+    private void indexTaskCaseToEs(TaskRequest body) {
+        try {
+            Task task = body.getTask();
+            List<CourtCase> courtCases = caseUtil.getCaseDetails(body);
+            CourtCase courtCase = (courtCases != null && !courtCases.isEmpty()) ? courtCases.get(0) : null;
+
+            TaskCase taskCase = buildTaskCaseFromTask(task, courtCase);
+            esUtil.indexTaskCase(taskCase);
+        } catch (Exception e) {
+            log.error("Failed to index TaskCase to ES for task {}: {}", body.getTask().getId(), e.getMessage());
+        }
+    }
+
+    private TaskCase buildTaskCaseFromTask(Task task, CourtCase courtCase) {
+        boolean hasSigned = task.getDocuments() != null && task.getDocuments().stream()
+                .anyMatch(doc -> "SIGNED_TASK_DOCUMENT".equals(doc.getDocumentType()) && Boolean.TRUE.equals(doc.getIsActive()));
+        String documentStatus = hasSigned ? "SIGNED" : "SIGN_PENDING";
+
+        return TaskCase.builder()
+                .id(task.getId())
+                .tenantId(task.getTenantId())
+                .caseName(courtCase != null ? courtCase.getCaseTitle() : task.getCaseTitle())
+                .orderType(task.getTaskType())
+                .orderId(task.getOrderId())
+                .filingNumber(task.getFilingNumber())
+                .taskNumber(task.getTaskNumber())
+                .cnrNumber(task.getCnrNumber())
+                .cmpNumber(courtCase != null ? courtCase.getCmpNumber() : null)
+                .courtCaseNumber(courtCase != null ? courtCase.getCourtCaseNumber() : null)
+                .courtId(courtCase != null ? courtCase.getCourtId() : task.getCourtId())
+                .createdDate(task.getCreatedDate())
+                .dateCloseBy(task.getDateCloseBy())
+                .dateClosed(task.getDateClosed())
+                .taskDescription(task.getTaskDescription())
+                .taskType(task.getTaskType())
+                .taskDetails(task.getTaskDetails())
+                .amount(task.getAmount())
+                .status(task.getStatus())
+                .documentStatus(documentStatus)
+                .isActive(task.getIsActive())
+                .documents(task.getDocuments())
+                .additionalDetails(task.getAdditionalDetails())
+                .auditDetails(task.getAuditDetails())
+                .build();
     }
 
 }

@@ -360,4 +360,17 @@ public class Configuration {
 
     @Value("${allowed.content.types}")
     private String[] allowedContentTypes;
+
+    // Elasticsearch Config
+    @Value("${elasticsearch.username}")
+    private String esUsername;
+
+    @Value("${elasticsearch.password}")
+    private String esPassword;
+
+    @Value("${elasticsearch.index}")
+    private String index;
+
+    @Value("${elasticsearch.host}")
+    private String esHost;
 }

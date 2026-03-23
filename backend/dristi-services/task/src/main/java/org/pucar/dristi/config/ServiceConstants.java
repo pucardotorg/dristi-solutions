@@ -218,4 +218,11 @@ public class ServiceConstants {
 
     public static final String TASK_NOT_FOUND = "TASK_NOT_FOUND";
     public static final String INVALID_DELIVERY_CHANNEL = "INVALID_DELIVERY_CHANNEL";
+
+    // Elasticsearch Constants
+    public static final String ERRORS_PATH = "$.errors";
+    public static final String ES_INDEX_HEADER_FORMAT = "{ \"index\" : {\"_index\" : \"%s\"} }\n";
+    public static final String ES_INDEX_DOCUMENT_FORMAT = "%s\n";
+    public static final String ES_BULK_INDEX_ERROR = "ES_BULK_INDEX_ERROR";
+    public static final String ES_SEARCH_ERROR = "ES_SEARCH_ERROR";
 }
