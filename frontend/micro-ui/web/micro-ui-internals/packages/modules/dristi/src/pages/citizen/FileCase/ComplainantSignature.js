@@ -357,6 +357,7 @@ const ComplainantSignature = ({ path }) => {
   }, [caseDetails]);
 
   const caseDraftEditAllowedParties = useMemo(() => {
+    if (!caseDetails?.filingNumber) return null;
     const createdByUuid = caseDetails?.auditDetails?.createdBy;
     // Parties who are allowed to edit case details during filing draft stage:
     // 1. If the case created by litigant -> only that litigant can have the edit access.
