@@ -130,6 +130,9 @@ public class CtcApplicationValidator {
                 application.setApplicantName(result.name());
                 application.setPartyDesignation(result.designation());
                 application.setIsPartyToCase(true);
+            } else {
+                application.setPartyDesignation(configuration.getOutsiderDesignation());
+                application.setIsPartyToCase(false);
             }
 
         } catch (Exception e) {

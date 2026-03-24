@@ -5,29 +5,6 @@ const { getUniqueAcronym } = require("../util/formatUtil");
 const { htmlToFormattedText } = require("../util/htmlToFormattedText");
 
 /**
- * Extracts case section from the case object.
- *
- * @param {Object} cases - The cases object containing court case details.
- * @returns {String} A string object that refers to section Number.
- */
-function getCaseSectionNumber(cases) {
-  const statutesAndSections = cases.statutesAndSections;
-  if (statutesAndSections.length === 0) {
-    return "";
-  }
-
-  const firstElement = statutesAndSections[0];
-  const firstSection = firstElement.sections[0];
-  const firstSubsection = firstElement.subsections[0];
-
-  if (firstSection && firstSubsection) {
-    return `Section ${firstSubsection} of ${firstSection}`;
-  } else {
-    return "";
-  }
-}
-
-/**
  * Extracts document file store id from respective object.
  *
  * @param {Object} fileUploadDocuments - The object containing file store id.
@@ -38,12 +15,15 @@ function getDocumentFileStore(fileUploadDocuments, fileName) {
   const documents = fileUploadDocuments?.document;
   if (Array.isArray(documents)) {
     const document = documents.find(
-      (doc) => doc?.fileName === fileName || doc?.name === fileName
+      (doc) =>
+        doc?.fileName === fileName ||
+        doc?.name === fileName ||
+        doc?.additionalDetails?.fileName === fileName,
     );
     return document?.fileStore ?? null;
   } else if (documents && documents?.fileName) {
     return documents.fileName === fileName
-      ? documents?.fileStore ?? null
+      ? (documents?.fileStore ?? null)
       : null;
   }
   return null;
@@ -56,22 +36,6 @@ function getComplaintAdditionalDocumentFileStore(fileUploadDocuments) {
     .flatMap((doc) => doc?.document || [])
     .map((item) => item?.fileStore)
     .filter((fileStore) => fileStore);
-}
-
-/**
- * Extracts address information from a nested object.
- *
- * @param {Object} addressObject - The object containing address details.
- * @returns {Object} An object containing extracted address details.
- */
-function getAddressDetails(addressObject) {
-  return {
-    locality: addressObject?.locality || "",
-    city: addressObject?.city || "",
-    district: addressObject?.district || "",
-    state: addressObject?.state || "",
-    pincode: addressObject?.pincode || "",
-  };
 }
 
 function getStringAddressDetails(addressObject) {
@@ -111,194 +75,6 @@ function convertToIndianCurrency(amount, locale, currency) {
 }
 
 /**
- * Extracts complainant information from the case object.
- *
- * @param {Object} cases - The cases object containing court case details.
- * @returns {Array} An array of complainant information objects.
- */
-function getComplainantsDetails(cases) {
-  if (
-    !cases.additionalDetails ||
-    !cases.additionalDetails.complainantDetails ||
-    !cases.additionalDetails.complainantDetails.formdata
-  ) {
-    return [];
-  }
-  return cases.additionalDetails.complainantDetails.formdata.map((formData) => {
-    const data = formData.data;
-    const complainantType = data.complainantType || "";
-    const firstName = data.firstName || "";
-    const middleName = data.middleName || "";
-    const lastName = data.lastName || "";
-    const phoneNumber =
-      (data.complainantVerification &&
-        data.complainantVerification.mobileNumber) ||
-      "";
-
-    if (complainantType.code === "REPRESENTATIVE") {
-      const companyDetails = data.addressCompanyDetails || {};
-      const companyAddress = getAddressDetails(companyDetails);
-
-      return {
-        complainantType: complainantType.name || "",
-        representativeName: `${firstName} ${middleName} ${lastName}`,
-        name: "",
-        phoneNumber,
-        companyName: data.companyName || "",
-        companyDetailsFileStore:
-          getDocumentFileStore(
-            data.companyDetailsUpload,
-            "Company documents"
-          ) || "",
-        companyAddress: companyAddress,
-        address: "",
-      };
-    } else {
-      const addressDetails =
-        (data.complainantVerification &&
-          data.complainantVerification.individualDetails &&
-          data.complainantVerification.individualDetails.addressDetails) ||
-        {};
-      const address = getAddressDetails(addressDetails);
-
-      return {
-        complainantType: complainantType.name || "",
-        name: `${firstName} ${middleName} ${lastName}`,
-        representativeName: "",
-        phoneNumber,
-        address: address,
-        companyName: "",
-        companyAddress: "",
-        companyDetailsFileStore: "",
-      };
-    }
-  });
-}
-
-/**
- * Extracts respondent information from the case object.
- *
- * @param {Object} cases - The cases object containing court case details.
- * @returns {Array} An array of respondent information objects.
- */
-function getRespondentsDetails(cases) {
-  if (
-    !cases.additionalDetails ||
-    !cases.additionalDetails.respondentDetails ||
-    !cases.additionalDetails.respondentDetails.formdata
-  ) {
-    return [];
-  }
-  return cases.additionalDetails.respondentDetails.formdata.map((formData) => {
-    const data = formData.data;
-
-    const firstName = data.respondentFirstName || "";
-    const middleName = data.respondentMiddleName || "";
-    const lastName = data.respondentLastName || "";
-    const addresses = data.addressDetails.map((addressDetail) => {
-      return getAddressDetails(addressDetail.addressDetails);
-    });
-
-    return {
-      name: `${firstName} ${middleName} ${lastName}`,
-      respondentType: data.respondentType.name,
-      phoneNumber:
-        data.phonenumbers && data.phonenumbers.mobileNumber
-          ? data.phonenumbers.mobileNumber.join(", ")
-          : null,
-      email:
-        data.emails && data.emails.emailId
-          ? data.emails.emailId.join(", ")
-          : null,
-      address: addresses,
-      inquiryAffidavitFileStore: getDocumentFileStore(
-        data.inquiryAffidavitFileUpload,
-        "Affidavit documents"
-      ),
-    };
-  });
-}
-
-/**
- * Extracts witness information from the cases object.
- *
- * @param {Object} cases - The cases object containing court case details.
- * @returns {Array} An array of witness information objects.
- */
-function getWitnessDetails(cases) {
-  if (
-    !cases.additionalDetails ||
-    !cases.additionalDetails.witnessDetails ||
-    !cases.additionalDetails.witnessDetails.formdata
-  ) {
-    return [];
-  }
-  return cases.additionalDetails.witnessDetails.formdata.map((formData) => {
-    const data = formData.data;
-    const addresses = data.addressDetails.map((addressDetail) => {
-      return getAddressDetails(addressDetail.addressDetails);
-    });
-    const firstName = data.firstName || "";
-    const middleName = data.middleName || "";
-    const lastName = data.lastName || "";
-
-    const additionalDetails =
-      data &&
-      data.witnessAdditionalDetails &&
-      typeof data.witnessAdditionalDetails === "object" &&
-      data.witnessAdditionalDetails.text
-        ? data.witnessAdditionalDetails.text
-        : "";
-
-    return {
-      name: `${firstName} ${middleName} ${lastName}`,
-      phoneNumber:
-        data &&
-        data.phonenumbers &&
-        Array.isArray(data.phonenumbers.mobileNumber) &&
-        data.phonenumbers.mobileNumber.length > 0
-          ? data.phonenumbers.mobileNumber[0]
-          : null,
-      email:
-        data && data.emails && data.emails.textfieldValue
-          ? data.emails.textfieldValue
-          : null,
-      address: addresses,
-      additionalDetails,
-    };
-  });
-}
-
-/**
- * Extracts advocate information from the case object.
- *
- * @param {Object} cases - The cases object containing court case details.
- * @returns {Array} An array of advocate information objects.
- */
-function getAdvocateDetails(cases) {
-  if (
-    !cases.additionalDetails ||
-    !cases.additionalDetails.advocateDetails ||
-    !cases.additionalDetails.advocateDetails.formdata
-  ) {
-    return [];
-  }
-  return cases.additionalDetails.advocateDetails.formdata.map((formData) => {
-    const data = formData.data;
-
-    return {
-      name: data.advocateName,
-      barRegistrationNumber: data.barRegistrationNumber,
-      vakalatnamaFileStore: getDocumentFileStore(
-        data.vakalatnamaFileUpload,
-        "UPLOAD_VAKALATNAMA"
-      ),
-      isRepresenting: data.isAdvocateRepresenting.name,
-    };
-  });
-}
-
-/**
  * Extracts cheque information from the case object.
  *
  * @param {Object} cases - The cases object containing court case details.
@@ -320,7 +96,7 @@ function getChequeDetails(cases) {
         signatoryName: chequeDetailsData.chequeSignatoryName || null,
         bouncedChequeFileStore: getDocumentFileStore(
           chequeDetailsData.bouncedChequeFileUpload,
-          "CS_BOUNCED_CHEQUE"
+          "CS_BOUNCED_CHEQUE",
         ),
         nameOnCheque: chequeDetailsData.name || null,
         chequeNumber: chequeDetailsData.chequeNumber || null,
@@ -331,18 +107,18 @@ function getChequeDetails(cases) {
         dateOfDeposit: chequeDetailsData.depositDate || null,
         depositChequeFileStore: getDocumentFileStore(
           chequeDetailsData.depositChequeFileUpload,
-          "CS_PROOF_DEPOSIT_CHEQUE"
+          "CS_PROOF_DEPOSIT_CHEQUE",
         ),
         returnMemoFileStore: getDocumentFileStore(
           chequeDetailsData.returnMemoFileUpload,
-          "CS_CHEQUE_RETURN_MEMO"
+          "CS_CHEQUE_RETURN_MEMO",
         ),
         chequeAdditionalDetails:
           (chequeDetailsData.chequeAdditionalDetails &&
             chequeDetailsData.chequeAdditionalDetails.text) ||
           null,
       };
-    }
+    },
   );
 
   return chequeDetailsList;
@@ -378,7 +154,7 @@ function getDebtLiabilityDetails(cases) {
             : null,
         proofOfLiabilityFileStore: getDocumentFileStore(
           debtLiabilityData.debtLiabilityFileUpload,
-          "CS_PROOF_DEBT"
+          "CS_PROOF_DEBT",
         ),
         additionalDetails:
           (debtLiabilityData.additionalDebtLiabilityDetails &&
@@ -418,11 +194,11 @@ function getDemandNoticeDetails(cases) {
         dateOfDispatch: demandNoticeData.dateOfDispatch || null,
         legalDemandNoticeFileStore: getDocumentFileStore(
           demandNoticeData.legalDemandNoticeFileUpload,
-          "LEGAL_DEMAND_NOTICE"
+          "LEGAL_DEMAND_NOTICE",
         ),
         proofOfDispatchFileStore: getDocumentFileStore(
           demandNoticeData.proofOfDispatchFileUpload,
-          "PROOF_OF_DISPATCH_FILE_NAME"
+          "PROOF_OF_DISPATCH_FILE_NAME",
         ),
         proofOfService:
           (demandNoticeData.proofOfService &&
@@ -432,7 +208,7 @@ function getDemandNoticeDetails(cases) {
         dateOfAccrual: demandNoticeData.dateOfAccrual || null,
         proofOfAcknowledgmentFileStore: getDocumentFileStore(
           demandNoticeData.proofOfAcknowledgmentFileUpload,
-          "PROOF_LEGAL_DEMAND_NOTICE_FILE_NAME"
+          "PROOF_LEGAL_DEMAND_NOTICE_FILE_NAME",
         ),
         replyReceived:
           (demandNoticeData.proofOfReply &&
@@ -441,7 +217,7 @@ function getDemandNoticeDetails(cases) {
         dateOfReply: demandNoticeData.dateOfReply || null,
         proofOfReplyFileStore: getDocumentFileStore(
           demandNoticeData.proofOfReplyFileUpload,
-          "CS_PROOF_TO_REPLY_DEMAND_NOTICE_FILE_NAME"
+          "CS_PROOF_TO_REPLY_DEMAND_NOTICE_FILE_NAME",
         ),
       };
     });
@@ -474,7 +250,7 @@ function getDelayCondonationDetails(cases) {
           null,
         proofOfReplyFileStore: getDocumentFileStore(
           delayData.legalDemandNoticeFileUpload,
-          "CS_DELAY_CONDONATION_APPLICATION"
+          "CS_DELAY_CONDONATION_APPLICATION",
         ),
       };
     });
@@ -521,7 +297,7 @@ function getPrayerSwornStatementDetails(cases) {
           null,
         memorandumOfComplaintFileStore: getDocumentFileStore(
           swornStatementData.memorandumOfComplaint,
-          "CS_MEMORANDUM_OF_COMPLAINT_HEADER"
+          "CS_MEMORANDUM_OF_COMPLAINT_HEADER",
         ),
         prayerForReliefText:
           (swornStatementData.prayerForRelief &&
@@ -529,12 +305,12 @@ function getPrayerSwornStatementDetails(cases) {
           null,
         prayerForReliefFileStore: getDocumentFileStore(
           swornStatementData.prayerForRelief,
-          "CS_PRAYER_FOR_RELIEF_HEADER"
+          "CS_PRAYER_FOR_RELIEF_HEADER",
         ),
         swornStatement:
           getDocumentFileStore(
             swornStatementData.swornStatement,
-            "CS_SWORN_STATEMENT_HEADER"
+            "CS_SWORN_STATEMENT_HEADER",
           ) || "",
         additionalDetails:
           (swornStatementData.additionalDetails &&
@@ -546,7 +322,7 @@ function getPrayerSwornStatementDetails(cases) {
           null,
         complaintAdditionalDocumentFileStore:
           getComplaintAdditionalDocumentFileStore(
-            swornStatementData?.SelectUploadDocWithName
+            swornStatementData?.SelectUploadDocWithName,
           ),
       };
     });
@@ -577,7 +353,7 @@ function getComplainantsDetailsForComplaint(cases) {
       const currentAdvocateDetails = allAdvocateDetails?.find(
         (advocateDetails) =>
           advocateDetails?.individualId ===
-          data?.complainantVerification?.individualDetails?.individualId
+          data?.complainantVerification?.individualDetails?.individualId,
       );
 
       if (complainantType.code === "REPRESENTATIVE") {
@@ -589,12 +365,12 @@ function getComplainantsDetailsForComplaint(cases) {
           institutionName: data?.complainantCompanyName || "",
           complainantAddress: companyAddress || "",
           nameOfAuthorizedSignatory:
-            `${firstName} ${middleName} ${lastName}` || "",
+            [firstName, middleName, lastName].filter(Boolean).join(" ") || "",
           designationOfAuthorizedSignatory: data?.complainantDesignation || "",
           companyDetailsFileStore:
             getDocumentFileStore(
               data?.companyDetailsUpload,
-              "Company documents"
+              "Company documents",
             ) || "",
           advocateList: currentAdvocateDetails?.advocateList,
           isPartyInPerson: currentAdvocateDetails?.isPartyInPerson,
@@ -609,67 +385,63 @@ function getComplainantsDetailsForComplaint(cases) {
 
         return {
           ifIndividual: true,
-          complainantName: `${firstName} ${middleName} ${lastName}` || "",
+          complainantName:
+            [firstName, middleName, lastName].filter(Boolean).join(" ") || "",
           complainantAge: data?.complainantAge || "",
           complainantAddress: address || "",
           phoneNumber: phoneNumber || "",
           emailId: "",
           complainantIdProofFileStore:
             getDocumentFileStore(
-              data?.complainantVerification?.individualDetails
+              data?.complainantVerification?.individualDetails,
             ) || "",
           advocateList: currentAdvocateDetails?.advocateList,
           isPartyInPerson: currentAdvocateDetails?.isPartyInPerson,
         };
       }
-    }
+    },
   );
 }
 
 function getAdvocateDetailsForComplainant(cases) {
-  if (
-    !cases.additionalDetails ||
-    !cases.additionalDetails.advocateDetails ||
-    !cases.additionalDetails.advocateDetails.formdata
-  ) {
+  if (!cases?.advocateDetailBlock) {
     return [];
   }
-  return cases.additionalDetails.advocateDetails.formdata.map((formdata) => {
-    const data = formdata.data?.multipleAdvocatesAndPip;
+  return cases.advocateDetailBlock.map((data) => {
     if (data?.isComplainantPip?.code === "YES") {
       return {
         isPartyInPerson: true,
-        individualId: data.boxComplainant.individualId,
+        individualId: data.complainant.individualId,
         pipAffidavitFileStore:
           getDocumentFileStore(
-            data.pipAffidavitFileUpload,
-            "UPLOAD_PIP_AFFIDAVIT"
+            { document: data.documents.pipAffidavit },
+            "UPLOAD_PIP_AFFIDAVIT",
           ) || "",
         advocateList: [],
       };
     } else if (data?.isComplainantPip?.code === "NO") {
       return {
         isPartyInPerson: false,
-        individualId: data.boxComplainant.individualId,
+        individualId: data.complainant.individualId,
         vakalatnamaFileStore:
           getDocumentFileStore(
-            data.vakalatnamaFileUpload,
-            "UPLOAD_VAKALATNAMA"
+            { document: data.documents.vakalatnama },
+            "VAKALATNAMA",
           ) || "",
-        advocateList: data.multipleAdvocateNameDetails.map(
-          (advocate, index) => {
-            return {
-              index: index,
-              advocateName:
-                advocate.advocateBarRegNumberWithName.advocateName || "",
-              barId:
-                advocate.advocateBarRegNumberWithName
-                  .barRegistrationNumberOriginal || "",
-              advocatePhoneNumber:
-                advocate.advocateNameDetails.advocateMobileNumber || "",
-            };
-          }
-        ),
+        advocateList: data.advocates.map((advocate, index) => {
+          return {
+            index: index,
+            advocateName: [
+              advocate.firstName,
+              advocate.middleName,
+              advocate.lastName,
+            ]
+              .filter(Boolean)
+              .join(" "),
+            barId: advocate.barRegistrationNumber || "",
+            advocatePhoneNumber: advocate.mobileNumber || "",
+          };
+        }),
       };
     }
     return [];
@@ -699,24 +471,25 @@ function getRespondentsDetailsForComplaint(cases) {
         accusedInstitutionName: data?.respondentCompanyName || "",
         accusedAddress: (addresses && addresses?.join(", ")) || "",
         nameOfAccusedAuthorizedSignatory:
-          `${firstName} ${middleName} ${lastName}` || "",
+          [firstName, middleName, lastName].filter(Boolean).join(" ") || "",
         designationOfAccusedAuthorizedSignatory:
           data?.respondentDesignation || "",
         inquiryAffidavitFileStore:
           getDocumentFileStore(
             data?.inquiryAffidavitFileUpload,
-            "Affidavit documents"
+            "Affidavit documents",
           ) || "",
         companyDetailsUpload:
           getDocumentFileStore(
             data?.companyDetailsUpload,
-            "Company documents"
+            "Company documents",
           ) || "",
       };
     } else {
       return {
         ifAccusedIndividual: true,
-        accusedName: `${firstName} ${middleName} ${lastName}` || "",
+        accusedName:
+          [firstName, middleName, lastName].filter(Boolean).join(" ") || "",
         accusedAge: data?.respondentAge || "",
         accusedAddress: (addresses && addresses?.join(", ")) || "",
         accusedPhoneNumber: data?.phonenumbers?.mobileNumber?.join(", ") || "",
@@ -724,7 +497,7 @@ function getRespondentsDetailsForComplaint(cases) {
         inquiryAffidavitFileStore:
           getDocumentFileStore(
             data?.inquiryAffidavitFileUpload,
-            "Affidavit documents"
+            "Affidavit documents",
           ) || "",
       };
     }
@@ -759,7 +532,7 @@ function getDocumentList(cases) {
     ...affidavitInLieuComplaint,
     ...proofOfReply,
     ...proofOfDeposit,
-    ...optionalDocs
+    ...optionalDocs,
   );
   return newDocumentList;
 }
@@ -777,7 +550,7 @@ function generateBounceChequeDescriptions(chequeDetailsList) {
 function generateChequeReturnMemoDescriptions(chequeDetailsList) {
   return chequeDetailsList.map((chequeDetails) => {
     const dateOfDishonorCheque = convertDateToDDMMYYYY(
-      chequeDetails.dateOfDeposit
+      chequeDetails.dateOfDeposit,
     );
     return `Digital record of cheque return memo dated ${dateOfDishonorCheque}.`;
   });
@@ -806,7 +579,7 @@ function generateProofServiceDescriptions(demandNoticeList) {
     .filter((demandNotice) => demandNotice.proofOfAcknowledgmentFileStore)
     .map((demandNotice) => {
       const dateOfDeemedService = convertDateToDDMMYYYY(
-        demandNotice.dateOfDeemedService
+        demandNotice.dateOfDeemedService,
       );
       return `Digital record of proof of service- ${dateOfDeemedService}.`;
     });
@@ -878,13 +651,14 @@ function getWitnessDetailsForComplaint(cases) {
     const lastName = data?.lastName || "";
 
     return {
-      witnessName: `${firstName} ${middleName} ${lastName}` || "",
+      witnessName:
+        [firstName, middleName, lastName].filter(Boolean).join(" ") || "",
       witnessOccupation: data?.witnessDesignation,
       witnessPhoneNumber: data?.phonenumbers?.mobileNumber?.join(", ") || "",
       witnessEmail: data?.emails?.emailId?.join(", ") || "",
       witnessAddress: addresses?.join(", ") || "",
       witnessAdditionalDetails: htmlToFormattedText(
-        data?.witnessAdditionalDetails?.text || ""
+        data?.witnessAdditionalDetails?.text || "",
       ),
     };
   });
@@ -916,11 +690,11 @@ function getComplainantPlaceholderList(caseDetails) {
       (rep) => {
         return {
           ...caseDetails?.litigants?.find(
-            (lit) => rep?.individualId === lit?.individualId
+            (lit) => rep?.individualId === lit?.individualId,
           ),
           ...rep,
         };
-      }
+      },
     );
     return {
       ...poaHolder,
@@ -934,8 +708,8 @@ function getComplainantPlaceholderList(caseDetails) {
       ...litigant,
       poaHolder: poaHolders?.find((poaHolder) =>
         poaHolder?.representingLitigants?.some(
-          (complainant) => complainant?.individualId === litigant?.individualId
-        )
+          (complainant) => complainant?.individualId === litigant?.individualId,
+        ),
       ),
     }));
 
@@ -965,7 +739,7 @@ function getComplainantPlaceholderList(caseDetails) {
       });
     } else {
       const complainantPoaHolder = poaHolders?.find(
-        (poa) => poa?.individualId === litigant?.individualId
+        (poa) => poa?.individualId === litigant?.individualId,
       );
       if (complainantPoaHolder) {
         const representedNames = complainantPoaHolder?.representingLitigants
@@ -992,12 +766,7 @@ function getComplainantPlaceholderList(caseDetails) {
 }
 
 module.exports = {
-  getCaseSectionNumber,
   formatDate,
-  getComplainantsDetails,
-  getRespondentsDetails,
-  getWitnessDetails,
-  getAdvocateDetails,
   getChequeDetails,
   getDebtLiabilityDetails,
   getDemandNoticeDetails,
