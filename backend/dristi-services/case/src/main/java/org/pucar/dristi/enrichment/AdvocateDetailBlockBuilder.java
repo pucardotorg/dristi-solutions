@@ -94,24 +94,19 @@ public class AdvocateDetailBlockBuilder {
                             if (nameBuilder.length() > 0) complainant.setFullName(nameBuilder.toString());
                         }
 
-                        List<Document> vakalatnama = getVakalatnamaDocumentsForLitigant(courtCase, litigant);
+            List<Document> vakalatnama = getVakalatnamaDocumentsForLitigant(courtCase, litigant);
 
-                        List<Document> pipAffidavit = caseDocuments.stream()
-                                .filter(d -> {
-                                    if (d == null) return false;
-                                    Object additional = d.getAdditionalDetails();
-                                    try {
-                                        if (additional != null) {
-                                            JsonNode node = objectMapper.convertValue(additional, JsonNode.class);
-                                            String docName = node.has("documentName") ? node.get("documentName").asText() : "";
-                                            return UPLOAD_PIP_AFFIDAVIT.equalsIgnoreCase(docName) || "pipAffidavit".equalsIgnoreCase(docName);
-                                        }
-                                    } catch (Exception ignored) { }
-                                    return false;
-                                })
-                                .collect(Collectors.toList());
+            // Identify PIP affidavit documents only by documentType
+            List<Document> pipAffidavit = caseDocuments.stream()
+                .filter(d -> d != null
+                    && d.getDocumentType() != null
+                    && d.getDocumentType().equalsIgnoreCase("COMPLAINANT_PIP_AFFIDAVIT"))
+                .collect(Collectors.toList());
 
-                        Documents docs = Documents.builder().vakalatnama(vakalatnama).pipAffidavit(pipAffidavit).build();
+            Documents docs = Documents.builder()
+                .vakalatnama(vakalatnama)
+                .pipAffidavit(pipAffidavit)
+                .build();
 
                         // Build advocates list by finding representatives who represent this litigant (match by individualId)
                         List<Advocate> advocates = new ArrayList<>();
