@@ -46,7 +46,7 @@ public class EsUtil {
         StringBuilder bulkPayload = new StringBuilder();
         
         for (TaskCase taskCase : taskCases) {
-            String indexHeader = String.format(ES_INDEX_HEADER_FORMAT, config.getIndex());
+            String indexHeader = String.format(ES_INDEX_HEADER_FORMAT, config.getIndex(), taskCase.getId().toString());
             String document = objectMapper.writeValueAsString(taskCase);
             bulkPayload.append(indexHeader).append(document).append("\n");
         }
