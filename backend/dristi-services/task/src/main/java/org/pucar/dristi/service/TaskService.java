@@ -30,6 +30,7 @@ import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -1179,55 +1180,26 @@ public class TaskService {
         try {
             log.info("Starting bulk indexing operation for courtId: {}", request.getCourtId());
 
-            int batchSize = request.getBatchSize() != null ? request.getBatchSize() : 1000;
-            String esBulkUrl = config.getEsHost() + "/" + config.getIndex() + "/_bulk";
-
-            int batchesProcessed = 0;
-            long successCount = 0;
-            long failureCount = 0;
-            int offset = 0;
-
-            while (true) {
-                List<TaskCase> batch = fetchTaskPage(request.getCourtId(), request.getRequestInfo(), offset, batchSize);
-
-                if (batch.isEmpty()) {
-                    break;
-                }
-
-                try {
-                    esUtil.bulkIndex(esBulkUrl, batch);
-                    successCount += batch.size();
-                    batchesProcessed++;
-                    log.info("Successfully indexed batch {} ({} tasks, offset {})", batchesProcessed, batch.size(), offset);
-                } catch (Exception e) {
-                    failureCount += batch.size();
-                    log.error("Failed to index batch at offset {}: {}", offset, e.getMessage());
-                }
-
-                offset += batch.size();
-
-                if (batch.size() < batchSize) {
-                    break;
-                }
-            }
-
-            long processingTime = System.currentTimeMillis() - startTime;
-            long totalTasks = successCount + failureCount;
-            String status = totalTasks == 0 ? "NO_TASKS_FOUND" : (failureCount == 0 ? "SUCCESS" : "PARTIAL_SUCCESS");
+            // Start async processing - return immediately with job ID
+            String jobId = UUID.randomUUID().toString();
+            
+            CompletableFuture.runAsync(() -> {
+                processBulkIndexAsync(request, jobId);
+            });
 
             responseBuilder
-                .totalTasks(totalTasks)
-                .successCount(successCount)
-                .failureCount(failureCount)
-                .batchesProcessed(batchesProcessed)
-                .processingTimeMs(processingTime)
-                .status(status);
+                .totalTasks(-1L) // Unknown yet
+                .successCount(0L)
+                .failureCount(0L)
+                .batchesProcessed(0)
+                .processingTimeMs(System.currentTimeMillis() - startTime)
+                .status("STARTED")
+                .jobId(jobId);
 
-            log.info("Bulk indexing completed. Total: {}, Success: {}, Failure: {}, Time: {}ms",
-                    totalTasks, successCount, failureCount, processingTime);
+            log.info("Bulk indexing job {} started for courtId: {}", jobId, request.getCourtId());
 
         } catch (Exception e) {
-            log.error("Bulk indexing failed: {}", e.getMessage(), e);
+            log.error("Failed to start bulk indexing: {}", e.getMessage(), e);
             responseBuilder
                 .totalTasks(0L)
                 .successCount(0L)
@@ -1239,6 +1211,72 @@ public class TaskService {
         }
 
         return responseBuilder.build();
+    }
+
+    private void processBulkIndexAsync(BulkIndexRequest request, String jobId) {
+        long startTime = System.currentTimeMillis();
+        int batchSize = request.getBatchSize() != null ? request.getBatchSize() : 500;
+        String esBulkUrl = config.getEsHost() + "/" + config.getIndex() + "/_bulk";
+
+        int batchesProcessed = 0;
+        long successCount = 0;
+        long failureCount = 0;
+        int offset = 0;
+
+        log.info("Processing bulk indexing job {} for courtId: {}", jobId, request.getCourtId());
+
+        while (true) {
+            List<TaskCase> batch;
+            try {
+                batch = fetchTaskPage(request.getCourtId(), request.getRequestInfo(), offset, batchSize);
+            } catch (Exception e) {
+                log.error("Job {}: Failed to fetch task page at offset {}: {}", jobId, offset, e.getMessage());
+                break;
+            }
+
+            if (batch.isEmpty()) {
+                break;
+            }
+
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    esUtil.bulkIndex(esBulkUrl, batch);
+                    successCount += batch.size();
+                    batchesProcessed++;
+                    log.info("Job {}: Successfully indexed batch {} ({} tasks, offset {}, attempt {})",
+                            jobId, batchesProcessed, batch.size(), offset, attempt);
+                    break;
+                } catch (Exception e) {
+                    log.warn("Job {}: Failed to index batch at offset {} (attempt {}/3): {}",
+                            jobId, offset, attempt, e.getMessage());
+
+                    if (attempt == 3) {
+                        failureCount += batch.size();
+                        log.error("Job {}: Failed to index batch after 3 attempts, offset: {}", jobId, offset);
+                    } else {
+                        try {
+                            Thread.sleep(2000L * attempt); // Linear backoff: 2s, 4s
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
+                    }
+                }
+            }
+
+            offset += batch.size();
+
+            if (batch.size() < batchSize) {
+                break;
+            }
+        }
+
+        long processingTime = System.currentTimeMillis() - startTime;
+        long totalTasks = successCount + failureCount;
+        String status = totalTasks == 0 ? "NO_TASKS_FOUND" : (failureCount == 0 ? "SUCCESS" : "PARTIAL_SUCCESS");
+
+        log.info("Job {} completed. Status: {}, Total: {}, Success: {}, Failure: {}, Time: {}ms",
+                jobId, status, totalTasks, successCount, failureCount, processingTime);
     }
 
     private List<TaskCase> fetchTaskPage(String courtId, RequestInfo requestInfo, int offset, int limit) {
@@ -1266,6 +1304,7 @@ public class TaskService {
 
             TaskCase taskCase = buildTaskCaseFromTask(task, courtCase);
             esUtil.indexTaskCase(taskCase);
+            
         } catch (Exception e) {
             log.error("Failed to index TaskCase to ES for task {}: {}", body.getTask().getId(), e.getMessage());
         }

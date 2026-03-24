@@ -1,6 +1,5 @@
 package org.pucar.dristi.web.models;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,17 +7,23 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.response.ResponseInfo;
 
-@Schema(description = "Response for bulk indexing tasks to Elasticsearch")
+@Schema(description = "Response for bulk indexing job status")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BulkIndexResponse {
+public class BulkIndexStatusResponse {
 
     @Schema(description = "Response information")
     private ResponseInfo responseInfo;
 
-    @Schema(description = "Total number of tasks processed")
+    @Schema(description = "Job ID")
+    private String jobId;
+
+    @Schema(description = "Status of the job: STARTED, IN_PROGRESS, SUCCESS, PARTIAL_SUCCESS, FAILED, NO_TASKS_FOUND")
+    private String status;
+
+    @Schema(description = "Total number of tasks to process (may be -1 if still counting)")
     private Long totalTasks;
 
     @Schema(description = "Number of successfully indexed tasks")
@@ -36,9 +41,6 @@ public class BulkIndexResponse {
     @Schema(description = "Error message if any")
     private String errorMessage;
 
-    @Schema(description = "Status of the bulk indexing operation")
-    private String status;
-
-    @Schema(description = "Job ID for tracking async operations")
-    private String jobId;
+    @Schema(description = "Percentage complete")
+    private Double percentageComplete;
 }
