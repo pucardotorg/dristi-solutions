@@ -36,7 +36,7 @@ public class OthersSection implements CaseBundleSection {
                     int idx = medIdx.getAndIncrement();
                     return CaseBundleNode.builder()
                             .id("mediation-" + doc.getId())
-                            .title("MEDIATION " + idx)
+                            .title("MEDIATION_FORM " + idx)
                             .fileStoreId(fs)
                             .build();
                 })
@@ -46,7 +46,7 @@ public class OthersSection implements CaseBundleSection {
         if (!mediationNodes.isEmpty()) {
             result.add(CaseBundleNode.builder()
                     .id("mediation-group")
-                    .title("MEDIATION")
+                    .title("MEDIATION_FORM")
                     .children(mediationNodes)
                     .build());
         }

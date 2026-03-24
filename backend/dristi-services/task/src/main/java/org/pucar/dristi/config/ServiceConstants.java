@@ -225,4 +225,10 @@ public class ServiceConstants {
     public static final String ES_INDEX_DOCUMENT_FORMAT = "%s\n";
     public static final String ES_BULK_INDEX_ERROR = "ES_BULK_INDEX_ERROR";
     public static final String ES_SEARCH_ERROR = "ES_SEARCH_ERROR";
+    public static final String ACCUSED = "ACCUSED";
+    public static final String COMPLAINANT = "COMPLAINANT";
+    public static final String COURT_WITNESS = "-";
+
+    public static final String COMPOSITE = "COMPOSITE";
+    public static final String INTERMEDIATE = "INTERMEDIATE";
 }
