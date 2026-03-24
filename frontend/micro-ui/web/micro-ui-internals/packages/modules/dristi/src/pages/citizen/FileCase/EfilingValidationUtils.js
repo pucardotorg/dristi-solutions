@@ -3717,7 +3717,7 @@ export const transformCaseDataForFetching = (caseDetails, keys) => {
             advocateIdProof: advocate?.documents || [],
           },
           advocateBarRegNumberWithName: {
-            advocateName: getFullName("", advocate?.firstName, advocate?.middleName, advocate?.lastName) || "",
+            advocateName: getFullName(" ", advocate?.firstName, advocate?.middleName, advocate?.lastName) || "",
             isDisable: true,
             advocateId: advocate?.id || "",
             advocateUuid: advocate?.advocateUuid || "",
