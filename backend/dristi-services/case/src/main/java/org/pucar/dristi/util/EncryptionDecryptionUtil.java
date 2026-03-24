@@ -192,9 +192,17 @@ public class EncryptionDecryptionUtil {
         }
 
         try {
-            Map<String, String> keyPurposeMap = getKeyToDecrypt(contextCase == null ? Collections.singletonList(contextCase) : Collections.singletonList(contextCase), requestInfo);
-            String key = keyPurposeMap.get("key");
-            String decrypted = encryptionService.decrypt(value, key);
+            // Wrap the encrypted value so we can reuse decryptObject/decryptJson logic
+            EncryptedStringWrapper wrapper = new EncryptedStringWrapper(value);
+
+            EncryptedStringWrapper decryptedWrapper = decryptObject(
+                    Collections.singletonList(wrapper),
+                    null, // let getKeyToDecrypt decide key & purpose
+                    EncryptedStringWrapper.class,
+                    requestInfo
+            );
+
+            String decrypted = decryptedWrapper != null ? decryptedWrapper.getValue() : null;
             if (decrypted != null && !decrypted.isBlank()) {
                 node.put(fieldName, decrypted);
             }
@@ -205,6 +213,29 @@ public class EncryptionDecryptionUtil {
 
     private boolean looksEncrypted(String value) {
         return value != null && (value.contains("|") || value.matches("\\d+\\|.+"));
+    }
+
+    /**
+     * Simple wrapper DTO used to decrypt scalar string values via existing
+     * decryptObject / decryptJson flow, so ABAC and key selection logic are reused.
+     */
+    private static class EncryptedStringWrapper {
+        private String value;
+
+        public EncryptedStringWrapper() {
+        }
+
+        public EncryptedStringWrapper(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
+        }
     }
 
     private boolean isUserDecryptingForAllowedRoles(User userInfo){
