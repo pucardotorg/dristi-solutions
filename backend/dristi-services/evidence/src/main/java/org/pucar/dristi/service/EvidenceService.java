@@ -1058,7 +1058,7 @@ public class EvidenceService {
                             throw new CustomException(ARTIFACT_NOT_FOUND, "Artifact not found for id: " + artifactNumber);
                         }
 
-                        String fileName = signedArtifact.getIsWitnessDeposition() != null && signedArtifact.getIsWitnessDeposition() ? SIGNED_WITNESS_DEPOSITION_DOCUMENT : SIGNED_EVIDENCE_SEAL;
+                        String fileName = signedArtifact.getIsWitnessDeposition() != null && signedArtifact.getIsWitnessDeposition() ? getFileNameForWitnessDeposition(existingArtifact) : SIGNED_EVIDENCE_SEAL;
 
                         // Update signed data (assuming a document or field for signed data exists)
 
@@ -1122,6 +1122,24 @@ public class EvidenceService {
             }
         }
         return updatedArtifacts;
+    }
+
+    private String getFileNameForWitnessDeposition(Artifact evidence) {
+        if (evidence == null || evidence.getFile() == null) {
+            return SIGNED_WITNESS_DEPOSITION_DOCUMENT;
+        }
+
+        Object additionalDetails = evidence.getFile().getAdditionalDetails();
+
+        if (additionalDetails instanceof Map<?, ?> detailsMap) {
+            Object nameObj = detailsMap.get(NAME);
+
+            if (nameObj instanceof String fileName && StringUtils.isNotBlank(fileName)) {
+                return fileName;
+            }
+        }
+
+        return SIGNED_WITNESS_DEPOSITION_DOCUMENT;
     }
 
 
