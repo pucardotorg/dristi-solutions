@@ -29,7 +29,6 @@ const CloseBtn = (props) => {
 };
 
 
-
 const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript, handleConfirmationModal }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [isCustomDateSelected, setIsCustomDateSelected] = useState(false);

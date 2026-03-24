@@ -136,7 +136,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
 //                });
 //                String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
 //
-//                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase, channel);
+//                TaskRequest taskRequest = taskUtil.createTaskRequest(requestInfo, order, taskDetail,courtCase, channel);
 //                TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 //
 //                // create pending task

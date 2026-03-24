@@ -32,7 +32,6 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
 
   const history = useHistory();
 
-
   useEffect(() => {
     if (!user) {
       return;

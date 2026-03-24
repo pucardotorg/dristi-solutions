@@ -484,9 +484,19 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           (userType === "ADVOCATE" ? isPrimaryAdvocate : true) &&
           caseDetails?.status === CaseWorkflowState.DRAFT_IN_PROGRESS // Append filing advocate automatically only while  in filing stage, not thereafter (like case reassigned stage)
         ) {
-          const firstAdvocate = { advocateBarRegNumberWithName, advocateNameDetails };
-          const updatedData = [firstAdvocate, ...advData];
-          newData = { ...advocateAndPipData, multipleAdvocateNameDetails: updatedData, showVakalatNamaUpload: true, showAffidavit: false };
+          const isFilingAdvocateAlreadyPresent = advData?.some((advocateObj) => {
+            const existingAdvocate = advocateObj?.advocateBarRegNumberWithName || {};
+            return (
+              (individualId && existingAdvocate?.individualId === individualId) ||
+              (advocateId && existingAdvocate?.advocateId === advocateId) ||
+              (barRegNum && existingAdvocate?.barRegistrationNumberOriginal === barRegNum)
+            );
+          });
+          if (!isFilingAdvocateAlreadyPresent) {
+            const firstAdvocate = { advocateBarRegNumberWithName, advocateNameDetails };
+            const updatedData = [firstAdvocate, ...advData];
+            newData = { ...advocateAndPipData, multipleAdvocateNameDetails: updatedData, showVakalatNamaUpload: true, showAffidavit: false };
+          }
         }
         if (!isEqual(advocateAndPipData, newData)) {
           setAdvocateAndPipData(newData);
@@ -1053,7 +1063,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                                   .map((type) => `.${type.toLowerCase()}`)
                                   .join(", ")} ${t("CS_COMMON_OR")} .${input?.fileTypes[input?.fileTypes.length - 1].toLowerCase()}`
                               : `.${input?.fileTypes[0].toLowerCase()}`
-                          }. ${t("CS_MAX_UPLOAD")} ${input.maxFileSize}MB`}
+                          }. ${t("CS_MAX_UPLOAD")} ${input.maxFileSize}MB. ${t("UPLOAD_NOTE")}`}
                         </p>
                       ) : (
                         <p>{input.uploadGuidelines}</p>

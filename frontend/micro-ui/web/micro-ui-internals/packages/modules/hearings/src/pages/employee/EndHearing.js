@@ -61,7 +61,6 @@ const EndHearing = ({
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
 
 
-
   const endHearing = async (updatedTranscriptText) => {
     try {
       let updatedHearing = structuredClone(hearing);

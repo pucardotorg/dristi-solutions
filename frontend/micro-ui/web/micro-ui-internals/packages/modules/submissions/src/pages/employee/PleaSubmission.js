@@ -18,7 +18,6 @@ import {
 } from "../../utils/digitilization";
 import { submissionService } from "../../hooks/services";
 import PreviewPdfModal from "../../components/PreviewPdfModal";
-
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
 import GenericNumberInputModal from "../../components/GenericNumberInputModal";
 import { getFormattedName } from "../../utils";

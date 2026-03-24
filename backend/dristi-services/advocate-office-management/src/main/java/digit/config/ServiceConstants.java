@@ -71,7 +71,7 @@ public class ServiceConstants {
 
     public static final String UPDATE_MEMBER_ACCESS_ERROR = "UPDATE_MEMBER_ACCESS_ERROR";
     public static final String UPDATE_MEMBER_ACCESS_ERROR_MESSAGE = "Error while updating member access: ";
-    
+
     public static final String SEARCH_MEMBER_ERROR = "SEARCH_MEMBER_ERROR";
     public static final String SEARCH_MEMBER_ERROR_MESSAGE = "Error while searching members: ";
     

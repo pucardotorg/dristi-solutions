@@ -433,7 +433,7 @@ const TopBarComponent = ({
                 const pathUnwind = pathname.split("/").slice(0, 3).join("/") + (isUserLoggedIn ? "/home/home-pending-task" : "/dristi");
                 if (advocateId || advClerkId) {
                   refetchMembers().then(() => {
-                    history.push(pathUnwind);
+                    history.push(pathUnwind, { refectMemberData: Date.now() });
                   });
                 } else {
                   history.push(pathUnwind);
