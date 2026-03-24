@@ -135,7 +135,10 @@ public class EncryptionDecryptionUtil {
         }
 
         CourtCase decrypted = decryptObject(source, config.getCaseDecryptSelf(), CourtCase.class, requestInfo);
+        // Decrypt migrated advocate personal details stored in representative.additionalDetails
         decryptRepresentativeAdditionalDetails(decrypted, requestInfo);
+        // Also decrypt embedded Advocate objects so firstName / mobile etc. are plain in the response
+        decryptAdvocates(decrypted, requestInfo);
         return decrypted;
     }
 
@@ -165,6 +168,37 @@ public class EncryptionDecryptionUtil {
                 mapping.setAdditionalDetails(objectMapper.convertValue(node, Object.class));
             } catch (Exception e) {
                 log.warn("Failed to decrypt representative additionalDetails for mapping id={}", mapping.getId(), e);
+            }
+        }
+    }
+
+    /**
+     * Decrypt advocates embedded in CourtCase so that personal fields like
+     * firstName / middleName / lastName / mobileNumber are plain text in the
+     * API response for both migrated and non-migrated data.
+     */
+    private void decryptAdvocates(CourtCase courtCase, RequestInfo requestInfo) {
+        if (courtCase == null) {
+            return;
+        }
+
+        // Decrypt advocates inside representatives (primary source objects)
+        if (courtCase.getRepresentatives() != null) {
+            for (AdvocateMapping mapping : courtCase.getRepresentatives()) {
+                if (mapping == null || mapping.getAdvocate() == null) {
+                    continue;
+                }
+                try {
+                    Advocate decryptedAdvocate = decryptObject(
+                            mapping.getAdvocate(),
+                            null, // let getKeyToDecrypt decide the right key/purpose
+                            Advocate.class,
+                            requestInfo
+                    );
+                    mapping.setAdvocate(decryptedAdvocate);
+                } catch (Exception e) {
+                    log.warn("Failed to decrypt advocate for mapping id={}", mapping.getId(), e);
+                }
             }
         }
     }
