@@ -1,6 +1,7 @@
 package org.pucar.dristi.enrichment;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -145,5 +146,21 @@ public class TaskRegistrationEnrichment {
     public void enrichAuditDetailsForUpdate(Task task, RequestInfo requestInfo) {
         task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
         task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
+    }
+
+    public void enrichIsPendingCollectionUponUpdate(TaskRequest taskRequest) {
+
+        try {
+            Task task = taskRequest.getTask();
+
+            JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+            if (taskDetails.has("deliveryChannels")) {
+                ((ObjectNode) taskDetails.get("deliveryChannels")).put("isPendingCollection", false);
+                task.setTaskDetails(taskDetails);
+            }
+        } catch (Exception e) {
+            log.error("Error enriching isPendingCollection upon update :: {}", e.toString());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Exception in task enrichment service during task update process: " + e.getMessage());
+        }
     }
 }
