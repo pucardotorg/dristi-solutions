@@ -131,7 +131,7 @@ public class EsUtil {
             String searchUrl = config.getEsHost() + "/" + config.getIndex() + "/_search";
             String query = buildSearchQuery(criteria, pagination);
 
-            log.debug("ES search query: {}", query);
+            log.info("ES search query: {}", query);
 
             final HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -148,6 +148,7 @@ public class EsUtil {
     }
 
     private String buildSearchQuery(TaskCaseSearchCriteria criteria, Pagination pagination) throws JsonProcessingException {
+        log.debug("Building ES search query with criteria: {}, pagination: {}", criteria, pagination);
         ObjectNode rootNode = objectMapper.createObjectNode();
         ObjectNode queryNode = objectMapper.createObjectNode();
         ObjectNode boolNode = objectMapper.createObjectNode();
@@ -253,7 +254,9 @@ public class EsUtil {
 
         rootNode.put("track_total_hits", true);
 
-        return objectMapper.writeValueAsString(rootNode);
+        String query = objectMapper.writeValueAsString(rootNode);
+        log.debug("Generated ES search query: {}", query);
+        return query;
     }
 
     private ObjectNode buildTermQuery(String field, String value) {
@@ -273,9 +276,11 @@ public class EsUtil {
     }
 
     private List<TaskCase> parseSearchResponse(String response, Pagination pagination) throws JsonProcessingException {
+        log.info("Parsing ES search response");
         JsonNode responseNode = objectMapper.readTree(response);
         JsonNode hitsNode = responseNode.path("hits");
         long totalHits = hitsNode.path("total").path("value").asLong(0);
+        log.info("ES search returned {} total hits", totalHits);
 
         if (pagination != null) {
             pagination.setTotalCount((double) totalHits);
@@ -290,6 +295,7 @@ public class EsUtil {
             results.add(taskCase);
         }
 
+        log.info("Parsed {} TaskCase results from ES response", results.size());
         return results;
     }
 }
