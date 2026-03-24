@@ -1293,7 +1293,7 @@ public class TaskService {
                 .build())
             .build();
 
-        return searchCaseTask(searchRequest);
+        return taskRepository.getTaskWithCaseDetails(searchRequest);
     }
 
     private void indexTaskCaseToEs(TaskRequest body) {
