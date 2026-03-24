@@ -47,6 +47,7 @@ const ManageOfficeMember = () => {
   const [casesRefreshKey, setCasesRefreshKey] = useState(0);
   const [caseSelectionDiff, setCaseSelectionDiff] = useState({ addCaseIds: [], removeCaseIds: [] });
   const [accessType, setAccessType] = useState(member?.accessType || "ALL_CASES");
+  const initialAccessType = useRef(member?.accessType || "ALL_CASES");
   const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
   const [isRemovingMember, setIsRemovingMember] = useState(false);
   const [showUpdateAccessModal, setShowUpdateAccessModal] = useState(false);
@@ -326,6 +327,13 @@ const ManageOfficeMember = () => {
     if (isNewMember) {
       setShowAddMemberConfirmModal(true);
     } else {
+      const accessTypeChanged = accessType !== initialAccessType.current;
+      const hasCaseDiff = currentDiff.addCaseIds.length > 0 || currentDiff.removeCaseIds.length > 0;
+
+      if (!accessTypeChanged && !hasCaseDiff) {
+        setToast({ label: t("NO_CHANGES_TO_UPDATE"), type: "error" });
+        return;
+      }
       setShowUpdateAccessModal(true);
     }
   };
@@ -366,6 +374,7 @@ const ManageOfficeMember = () => {
               memberId: member?.memberId,
               memberName: member?.memberName || memberName,
               memberMobileNumber: member?.memberMobileNumber,
+              memberEmail: member?.memberEmail || "",
               accessType: accessType,
               allowCaseCreate: true,
               addNewCasesAutomatically: accessType === "ALL_CASES",
@@ -443,7 +452,8 @@ const ManageOfficeMember = () => {
       setToast({ label: isNewMember ? t("MEMBER_ADDED_SUCCESSFULLY") : t("UPDATE_ACCESS_SUCCESS"), type: "success" });
       setShowUpdateAccessModal(false);
       setShowAddMemberConfirmModal(false);
-      
+      initialAccessType.current = accessType;
+
       setCaseSelectionDiff({ addCaseIds: [], removeCaseIds: [] });
       const container = document.querySelector(".manage-office-member-inbox");
       if (container) {

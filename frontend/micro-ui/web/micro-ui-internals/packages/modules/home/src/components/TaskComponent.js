@@ -58,6 +58,7 @@ const TasksComponent = ({
   tableView = false,
   needRefresh = false,
   applicationData = [],
+  refetchTasks = false,
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const CourierService = useMemo(() => Digit.ComponentRegistryService.getComponent("CourierService"), []);
@@ -156,7 +157,7 @@ const TasksComponent = ({
       },
     },
     params: { tenantId },
-    key: `${filingNumber}-${isDiary}-${isApplicationCompositeOrder}-${isScrutiny}-${courtId}`,
+    key: `${filingNumber}-${isDiary}-${isApplicationCompositeOrder}-${isScrutiny}-${courtId}-${refetchTasks}`,
     config: { enabled: Boolean(tenantId) && Boolean(litigantSearchCriteriaAdditional) },
   });
 

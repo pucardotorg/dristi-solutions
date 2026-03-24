@@ -404,10 +404,10 @@ function getComplainantsDetailsForComplaint(cases) {
 }
 
 function getAdvocateDetailsForComplainant(cases) {
-  if (!cases?.advocateDetailsBlock) {
+  if (!cases?.advocateDetailBlock) {
     return [];
   }
-  return cases.advocateDetailsBlock.map((data) => {
+  return cases.advocateDetailBlock.map((data) => {
     if (data?.isComplainantPip?.code === "YES") {
       return {
         isPartyInPerson: true,
