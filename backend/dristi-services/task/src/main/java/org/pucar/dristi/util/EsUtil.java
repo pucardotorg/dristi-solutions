@@ -170,7 +170,7 @@ public class EsUtil {
         }
 
         if (criteria.getApplicationStatus() != null) {
-            mustArray.add(buildTermQuery("status.keyword", criteria.getApplicationStatus()));
+            mustArray.add(buildTermQuery("documentStatus.keyword", criteria.getApplicationStatus()));
         }
 
         if (criteria.getCompleteStatus() != null && !criteria.getCompleteStatus().isEmpty()) {
