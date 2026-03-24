@@ -1,5 +1,8 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
@@ -35,19 +38,23 @@ public class EncryptionDecryptionUtil {
     private final IndividualService individualService;
     private final AdvocateUtil advocateUtil;
     private final Configuration config;
+    private final ObjectMapper objectMapper;
 
     @Autowired
     public EncryptionDecryptionUtil(@Qualifier("caseEncryptionServiceImpl") EncryptionService encryptionService,
                                     @Value("${state.level.tenant.id}") String stateLevelTenantId,
                                     @Value("${decryption.abac.enabled}") boolean abacEnabled,
                                     IndividualService individualService,
-                                    AdvocateUtil advocateUtil, Configuration config) {
+                                    AdvocateUtil advocateUtil,
+                                    Configuration config,
+                                    ObjectMapper objectMapper) {
         this.encryptionService = encryptionService;
         this.stateLevelTenantId = stateLevelTenantId;
         this.abacEnabled = abacEnabled;
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
         this.config = config;
+        this.objectMapper = objectMapper;
     }
 
     public <T> T encryptObject(Object objectToEncrypt, String key, Class<T> classType) {
@@ -115,6 +122,89 @@ public class EncryptionDecryptionUtil {
             log.error("Unknown Error occurred while decrypting", e);
             throw new CustomException("UNKNOWN_ERROR", "Unknown error occurred in decryption process");
         }
+    }
+
+    /**
+     * High-level helper for API/search responses: decrypts CourtCase using existing
+     * rules and additionally decrypts any encrypted string fields under
+     * representative.additionalDetails.
+     */
+    public CourtCase decryptForResponse(CourtCase source, RequestInfo requestInfo) {
+        if (source == null) {
+            return null;
+        }
+
+        CourtCase decrypted = decryptObject(source, config.getCaseDecryptSelf(), CourtCase.class, requestInfo);
+        decryptRepresentativeAdditionalDetails(decrypted, requestInfo);
+        return decrypted;
+    }
+
+    private void decryptRepresentativeAdditionalDetails(CourtCase courtCase, RequestInfo requestInfo) {
+        if (courtCase == null || courtCase.getRepresentatives() == null) {
+            return;
+        }
+
+        for (AdvocateMapping mapping : courtCase.getRepresentatives()) {
+            if (mapping == null || mapping.getAdditionalDetails() == null) {
+                continue;
+            }
+
+            try {
+                ObjectNode node = objectMapper.convertValue(mapping.getAdditionalDetails(), ObjectNode.class);
+                if (node == null) {
+                    continue;
+                }
+
+                // Generic: check every top-level string field under additionalDetails
+                Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+                while (fields.hasNext()) {
+                    Map.Entry<String, JsonNode> entry = fields.next();
+                    decryptJsonStringField(node, entry.getKey(), courtCase, requestInfo);
+                }
+
+                mapping.setAdditionalDetails(objectMapper.convertValue(node, Object.class));
+            } catch (Exception e) {
+                log.warn("Failed to decrypt representative additionalDetails for mapping id={}", mapping.getId(), e);
+            }
+        }
+    }
+
+    private void decryptJsonStringField(ObjectNode node,
+                                        String fieldName,
+                                        CourtCase contextCase,
+                                        RequestInfo requestInfo) {
+        if (node == null || !node.has(fieldName) || node.get(fieldName).isNull()) {
+            return;
+        }
+
+        JsonNode valueNode = node.get(fieldName);
+        if (!valueNode.isTextual()) {
+            return;
+        }
+
+        String value = valueNode.asText();
+        if (value == null || value.isBlank()) {
+            return;
+        }
+
+        if (!looksEncrypted(value)) {
+            return;
+        }
+
+        try {
+            Map<String, String> keyPurposeMap = getKeyToDecrypt(contextCase == null ? Collections.singletonList(contextCase) : Collections.singletonList(contextCase), requestInfo);
+            String key = keyPurposeMap.get("key");
+            String decrypted = encryptionService.decrypt(value, key);
+            if (decrypted != null && !decrypted.isBlank()) {
+                node.put(fieldName, decrypted);
+            }
+        } catch (Exception e) {
+            log.debug("Skipping decryption of field {}='{}': {}", fieldName, value, e.getMessage());
+        }
+    }
+
+    private boolean looksEncrypted(String value) {
+        return value != null && (value.contains("|") || value.matches("\\d+\\|.+"));
     }
 
     private boolean isUserDecryptingForAllowedRoles(User userInfo){

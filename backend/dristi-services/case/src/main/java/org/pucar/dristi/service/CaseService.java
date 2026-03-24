@@ -417,18 +417,26 @@ public class CaseService {
 
             casesList.forEach(caseCriteria -> {
                 List<CourtCase> decryptedCourtCases = new ArrayList<>();
+
+                // First decrypt all CourtCase objects for this criteria using extended logic
                 caseCriteria.getResponseList().forEach(cases -> {
-                    decryptedCourtCases.add(encryptionDecryptionUtil.decryptObject(cases, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo()));
-                    decryptedCourtCases.forEach(
-                            courtCase -> {
-                                enrichAdvocateJoinedStatus(courtCase, caseCriteria.getAdvocateId());
-                                try {
-                                    advocateDetailBlockBuilder.buildAndSet(courtCase);
-                                } catch (Exception e) {
-                                    log.error("Error building AdvocateDetailBlock in CaseService.searchCases: {}", e.toString());
-                                }
-                            });
+                    CourtCase courtCase = encryptionDecryptionUtil.decryptForResponse(
+                            cases,
+                            caseSearchRequests.getRequestInfo()
+                    );
+                    decryptedCourtCases.add(courtCase);
                 });
+
+                // Then enrich and build advocate detail block on decrypted cases
+                decryptedCourtCases.forEach(courtCase -> {
+                    enrichAdvocateJoinedStatus(courtCase, caseCriteria.getAdvocateId());
+                    try {
+                        advocateDetailBlockBuilder.buildAndSet(courtCase);
+                    } catch (Exception e) {
+                        log.error("Error building AdvocateDetailBlock in CaseService.searchCases: {}", e.toString());
+                    }
+                });
+
                 caseCriteria.setResponseList(decryptedCourtCases);
             });
 
