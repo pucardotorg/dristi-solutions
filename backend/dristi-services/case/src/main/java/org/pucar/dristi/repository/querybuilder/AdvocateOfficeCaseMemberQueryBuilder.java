@@ -23,7 +23,8 @@ public class AdvocateOfficeCaseMemberQueryBuilder {
                     "ON r.case_id = m.case_id " +
                     "AND m.member_user_uuid = ? " +
                     "AND m.office_advocate_user_uuid = ? " +
-                    "WHERE r.tenantid = ? AND r.advocateid = ? ";
+                    "WHERE r.tenantid = ? AND r.advocateid = ? " +
+                    "AND r.isactive = true ";
 
     private static final String TOTAL_COUNT_QUERY =
             "SELECT COUNT(*) FROM ({baseQuery}) total_result";
