@@ -148,7 +148,7 @@ public class EncryptionDecryptionUtil {
         }
 
         for (AdvocateMapping mapping : courtCase.getRepresentatives()) {
-            if (mapping == null || mapping.getAdditionalDetails() == null) {
+            if (mapping == null || mapping.getAdditionalDetails() == null || mapping.getAdvocate() == null) {
                 continue;
             }
 
@@ -158,16 +158,30 @@ public class EncryptionDecryptionUtil {
                     continue;
                 }
 
-                // Generic: check every top-level string field under additionalDetails
-                Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
-                while (fields.hasNext()) {
-                    Map.Entry<String, JsonNode> entry = fields.next();
-                    decryptJsonStringField(node, entry.getKey(), courtCase, requestInfo);
+                Advocate advocate = mapping.getAdvocate();
+
+                // If additionalDetails contains encrypted-looking values but advocate is already
+                // decrypted, copy from advocate into additionalDetails so responses show plain text.
+                if (node.has("firstName") && looksEncrypted(node.get("firstName").asText())
+                        && advocate.getFirstName() != null) {
+                    node.put("firstName", advocate.getFirstName());
+                }
+                if (node.has("middleName") && looksEncrypted(node.get("middleName").asText())
+                        && advocate.getMiddleName() != null) {
+                    node.put("middleName", advocate.getMiddleName());
+                }
+                if (node.has("lastName") && looksEncrypted(node.get("lastName").asText())
+                        && advocate.getLastName() != null) {
+                    node.put("lastName", advocate.getLastName());
+                }
+                if (node.has("mobileNumber") && looksEncrypted(node.get("mobileNumber").asText())
+                        && advocate.getMobileNumber() != null) {
+                    node.put("mobileNumber", advocate.getMobileNumber());
                 }
 
                 mapping.setAdditionalDetails(objectMapper.convertValue(node, Object.class));
             } catch (Exception e) {
-                log.warn("Failed to decrypt representative additionalDetails for mapping id={}", mapping.getId(), e);
+                log.warn("Failed to adjust representative additionalDetails for mapping id={}", mapping.getId(), e);
             }
         }
     }
@@ -203,73 +217,8 @@ public class EncryptionDecryptionUtil {
         }
     }
 
-    private void decryptJsonStringField(ObjectNode node,
-                                        String fieldName,
-                                        CourtCase contextCase,
-                                        RequestInfo requestInfo) {
-        if (node == null || !node.has(fieldName) || node.get(fieldName).isNull()) {
-            return;
-        }
-
-        JsonNode valueNode = node.get(fieldName);
-        if (!valueNode.isTextual()) {
-            return;
-        }
-
-        String value = valueNode.asText();
-        if (value == null || value.isBlank()) {
-            return;
-        }
-
-        if (!looksEncrypted(value)) {
-            return;
-        }
-
-        try {
-            // Wrap the encrypted value so we can reuse decryptObject/decryptJson logic
-            EncryptedStringWrapper wrapper = new EncryptedStringWrapper(value);
-
-            EncryptedStringWrapper decryptedWrapper = decryptObject(
-                    Collections.singletonList(wrapper),
-                    null, // let getKeyToDecrypt decide key & purpose
-                    EncryptedStringWrapper.class,
-                    requestInfo
-            );
-
-            String decrypted = decryptedWrapper != null ? decryptedWrapper.getValue() : null;
-            if (decrypted != null && !decrypted.isBlank()) {
-                node.put(fieldName, decrypted);
-            }
-        } catch (Exception e) {
-            log.debug("Skipping decryption of field {}='{}': {}", fieldName, value, e.getMessage());
-        }
-    }
-
     private boolean looksEncrypted(String value) {
         return value != null && (value.contains("|") || value.matches("\\d+\\|.+"));
-    }
-
-    /**
-     * Simple wrapper DTO used to decrypt scalar string values via existing
-     * decryptObject / decryptJson flow, so ABAC and key selection logic are reused.
-     */
-    private static class EncryptedStringWrapper {
-        private String value;
-
-        public EncryptedStringWrapper() {
-        }
-
-        public EncryptedStringWrapper(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public void setValue(String value) {
-            this.value = value;
-        }
     }
 
     private boolean isUserDecryptingForAllowedRoles(User userInfo){
