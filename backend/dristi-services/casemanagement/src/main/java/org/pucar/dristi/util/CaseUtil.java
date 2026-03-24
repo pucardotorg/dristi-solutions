@@ -48,7 +48,7 @@ public class CaseUtil {
                         .build()))
                 .build();
 
-        if (Boolean.FALSE.equals(isCaseFileView)) {
+        if (!Boolean.TRUE.equals(isCaseFileView)) {
             request.setFlow("flow_jac");
         }
         try {
