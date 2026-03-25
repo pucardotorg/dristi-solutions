@@ -156,7 +156,7 @@ public class EsUtil {
         ArrayNode shouldArray = objectMapper.createArrayNode();
 
         if (criteria.getCourtId() != null) {
-            filterArray.add(buildTermQuery("courtId.keyword", criteria.getCourtId()));
+            filterArray.add(buildTermQuery("courtId", criteria.getCourtId()));
         }
 
         if (criteria.getOrderType() != null && !criteria.getOrderType().isEmpty()) {
@@ -164,13 +164,13 @@ public class EsUtil {
             ObjectNode termsInner = objectMapper.createObjectNode();
             ArrayNode valuesArray = objectMapper.createArrayNode();
             criteria.getOrderType().forEach(valuesArray::add);
-            termsInner.set("orderType.keyword", valuesArray);
+            termsInner.set("orderType", valuesArray);
             termsNode.set("terms", termsInner);
             filterArray.add(termsNode);
         }
 
         if (criteria.getApplicationStatus() != null) {
-            filterArray.add(buildTermQuery("documentStatus.keyword", criteria.getApplicationStatus()));
+            filterArray.add(buildTermQuery("documentStatus", criteria.getApplicationStatus()));
         }
 
         if (criteria.getCompleteStatus() != null && !criteria.getCompleteStatus().isEmpty()) {
@@ -178,17 +178,17 @@ public class EsUtil {
             ObjectNode termsInner = objectMapper.createObjectNode();
             ArrayNode valuesArray = objectMapper.createArrayNode();
             criteria.getCompleteStatus().forEach(valuesArray::add);
-            termsInner.set("status.keyword", valuesArray);
+            termsInner.set("status", valuesArray);
             termsNode.set("terms", termsInner);
             filterArray.add(termsNode);
         }
 
         if (criteria.getNoticeType() != null) {
-            filterArray.add(buildTermQuery("taskType.keyword", criteria.getNoticeType()));
+            filterArray.add(buildTermQuery("taskType", criteria.getNoticeType()));
         }
 
         if (criteria.getDeliveryChanel() != null) {
-            filterArray.add(buildTermQuery("taskDetails.deliveryChannels.channelCode.keyword", criteria.getDeliveryChanel()));
+            filterArray.add(buildTermQuery("channelCode", criteria.getDeliveryChanel()));
         }
 
         if (criteria.getHearingDate() != null) {
@@ -203,7 +203,7 @@ public class EsUtil {
         }
 
         if (criteria.getIsPendingCollection() != null) {
-            filterArray.add(buildTermQuery("taskDetails.deliveryChannels.isPendingCollection", criteria.getIsPendingCollection()));
+            filterArray.add(buildTermQuery("isPendingCollection", criteria.getIsPendingCollection()));
         }
 
         if (criteria.getSearchText() != null && !criteria.getSearchText().isEmpty()) {
