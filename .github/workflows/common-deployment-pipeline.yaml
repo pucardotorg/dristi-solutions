@@ -37,6 +37,7 @@ on:
           - dev
           - qa
           - demo
+          - PROD
 
   push:
     branches:
