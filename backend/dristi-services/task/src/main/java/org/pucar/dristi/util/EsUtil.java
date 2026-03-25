@@ -152,11 +152,11 @@ public class EsUtil {
         ObjectNode rootNode = objectMapper.createObjectNode();
         ObjectNode queryNode = objectMapper.createObjectNode();
         ObjectNode boolNode = objectMapper.createObjectNode();
-        ArrayNode mustArray = objectMapper.createArrayNode();
+        ArrayNode filterArray = objectMapper.createArrayNode();
         ArrayNode shouldArray = objectMapper.createArrayNode();
 
         if (criteria.getCourtId() != null) {
-            mustArray.add(buildTermQuery("courtId.keyword", criteria.getCourtId()));
+            filterArray.add(buildTermQuery("courtId.keyword", criteria.getCourtId()));
         }
 
         if (criteria.getOrderType() != null && !criteria.getOrderType().isEmpty()) {
@@ -166,11 +166,11 @@ public class EsUtil {
             criteria.getOrderType().forEach(valuesArray::add);
             termsInner.set("orderType.keyword", valuesArray);
             termsNode.set("terms", termsInner);
-            mustArray.add(termsNode);
+            filterArray.add(termsNode);
         }
 
         if (criteria.getApplicationStatus() != null) {
-            mustArray.add(buildTermQuery("documentStatus.keyword", criteria.getApplicationStatus()));
+            filterArray.add(buildTermQuery("documentStatus.keyword", criteria.getApplicationStatus()));
         }
 
         if (criteria.getCompleteStatus() != null && !criteria.getCompleteStatus().isEmpty()) {
@@ -180,15 +180,15 @@ public class EsUtil {
             criteria.getCompleteStatus().forEach(valuesArray::add);
             termsInner.set("status.keyword", valuesArray);
             termsNode.set("terms", termsInner);
-            mustArray.add(termsNode);
+            filterArray.add(termsNode);
         }
 
         if (criteria.getNoticeType() != null) {
-            mustArray.add(buildTermQuery("taskType.keyword", criteria.getNoticeType()));
+            filterArray.add(buildTermQuery("taskType.keyword", criteria.getNoticeType()));
         }
 
         if (criteria.getDeliveryChanel() != null) {
-            mustArray.add(buildMatchQuery("taskDetails.deliveryChannels.channelCode", criteria.getDeliveryChanel()));
+            filterArray.add(buildTermQuery("taskDetails.deliveryChannels.channelCode.keyword", criteria.getDeliveryChanel()));
         }
 
         if (criteria.getHearingDate() != null) {
@@ -197,13 +197,13 @@ public class EsUtil {
             ObjectNode rangeField = objectMapper.createObjectNode();
             rangeField.put("gte", criteria.getHearingDate());
             rangeField.put("lte", criteria.getHearingDate());
-            rangeInner.set("createdDate", rangeField);
+            rangeInner.set("taskDetails.caseDetails.hearingDate", rangeField);
             rangeNode.set("range", rangeInner);
-            mustArray.add(rangeNode);
+            filterArray.add(rangeNode);
         }
 
         if (criteria.getIsPendingCollection() != null) {
-            mustArray.add(buildMatchQuery("taskDetails.deliveryChannels.isPendingCollection", criteria.getIsPendingCollection().toString()));
+            filterArray.add(buildTermQuery("taskDetails.deliveryChannels.isPendingCollection", criteria.getIsPendingCollection()));
         }
 
         if (criteria.getSearchText() != null && !criteria.getSearchText().isEmpty()) {
@@ -221,10 +221,10 @@ public class EsUtil {
             multiMatchInner.put("type", "best_fields");
             multiMatchInner.put("operator", "OR");
             multiMatchNode.set("multi_match", multiMatchInner);
-            mustArray.add(multiMatchNode);
+            filterArray.add(multiMatchNode);
         }
 
-        boolNode.set("must", mustArray);
+        boolNode.set("filter", filterArray);
         queryNode.set("bool", boolNode);
         rootNode.set("query", queryNode);
 
@@ -252,7 +252,27 @@ public class EsUtil {
             rootNode.set("sort", sortArray);
         }
 
-        rootNode.put("track_total_hits", true);
+        // Only track exact count if pagination needs it, otherwise use approximate
+        if (pagination != null && pagination.getOffSet() != null && pagination.getOffSet() > 0) {
+            rootNode.put("track_total_hits", 10000);
+        } else {
+            rootNode.put("track_total_hits", true);
+        }
+        
+        // Add _source filtering to return only necessary fields
+        ArrayNode sourceFields = objectMapper.createArrayNode();
+        sourceFields.add("id");
+        sourceFields.add("caseName");
+        sourceFields.add("courtId");
+        sourceFields.add("status");
+        sourceFields.add("documentStatus");
+        sourceFields.add("createdDate");
+        sourceFields.add("taskNumber");
+        sourceFields.add("cnrNumber");
+        sourceFields.add("filingNumber");
+        sourceFields.add("taskType");
+        sourceFields.add("orderType");
+        rootNode.set("_source", sourceFields);
 
         String query = objectMapper.writeValueAsString(rootNode);
         log.debug("Generated ES search query: {}", query);
@@ -260,6 +280,14 @@ public class EsUtil {
     }
 
     private ObjectNode buildTermQuery(String field, String value) {
+        ObjectNode termNode = objectMapper.createObjectNode();
+        ObjectNode termInner = objectMapper.createObjectNode();
+        termInner.put(field, value);
+        termNode.set("term", termInner);
+        return termNode;
+    }
+
+    private ObjectNode buildTermQuery(String field, Boolean value) {
         ObjectNode termNode = objectMapper.createObjectNode();
         ObjectNode termInner = objectMapper.createObjectNode();
         termInner.put(field, value);
