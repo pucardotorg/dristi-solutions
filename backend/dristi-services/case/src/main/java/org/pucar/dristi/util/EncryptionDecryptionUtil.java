@@ -1,8 +1,5 @@
 package org.pucar.dristi.util;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
@@ -38,23 +35,19 @@ public class EncryptionDecryptionUtil {
     private final IndividualService individualService;
     private final AdvocateUtil advocateUtil;
     private final Configuration config;
-    private final ObjectMapper objectMapper;
 
     @Autowired
     public EncryptionDecryptionUtil(@Qualifier("caseEncryptionServiceImpl") EncryptionService encryptionService,
                                     @Value("${state.level.tenant.id}") String stateLevelTenantId,
                                     @Value("${decryption.abac.enabled}") boolean abacEnabled,
                                     IndividualService individualService,
-                                    AdvocateUtil advocateUtil,
-                                    Configuration config,
-                                    ObjectMapper objectMapper) {
+                                    AdvocateUtil advocateUtil, Configuration config) {
         this.encryptionService = encryptionService;
         this.stateLevelTenantId = stateLevelTenantId;
         this.abacEnabled = abacEnabled;
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
         this.config = config;
-        this.objectMapper = objectMapper;
     }
 
     public <T> T encryptObject(Object objectToEncrypt, String key, Class<T> classType) {
@@ -122,103 +115,6 @@ public class EncryptionDecryptionUtil {
             log.error("Unknown Error occurred while decrypting", e);
             throw new CustomException("UNKNOWN_ERROR", "Unknown error occurred in decryption process");
         }
-    }
-
-    /**
-     * High-level helper for API/search responses: decrypts CourtCase using existing
-     * rules and additionally decrypts any encrypted string fields under
-     * representative.additionalDetails.
-     */
-    public CourtCase decryptForResponse(CourtCase source, RequestInfo requestInfo) {
-        if (source == null) {
-            return null;
-        }
-
-        CourtCase decrypted = decryptObject(source, config.getCaseDecryptSelf(), CourtCase.class, requestInfo);
-        // Decrypt migrated advocate personal details stored in representative.additionalDetails
-        decryptRepresentativeAdditionalDetails(decrypted, requestInfo);
-        // Also decrypt embedded Advocate objects so firstName / mobile etc. are plain in the response
-        decryptAdvocates(decrypted, requestInfo);
-        return decrypted;
-    }
-
-    private void decryptRepresentativeAdditionalDetails(CourtCase courtCase, RequestInfo requestInfo) {
-        if (courtCase == null || courtCase.getRepresentatives() == null) {
-            return;
-        }
-
-        for (AdvocateMapping mapping : courtCase.getRepresentatives()) {
-            if (mapping == null || mapping.getAdditionalDetails() == null || mapping.getAdvocate() == null) {
-                continue;
-            }
-
-            try {
-                ObjectNode node = objectMapper.convertValue(mapping.getAdditionalDetails(), ObjectNode.class);
-                if (node == null) {
-                    continue;
-                }
-
-                Advocate advocate = mapping.getAdvocate();
-
-                // If additionalDetails contains encrypted-looking values but advocate is already
-                // decrypted, copy from advocate into additionalDetails so responses show plain text.
-                if (node.has("firstName") && looksEncrypted(node.get("firstName").asText())
-                        && advocate.getFirstName() != null) {
-                    node.put("firstName", advocate.getFirstName());
-                }
-                if (node.has("middleName") && looksEncrypted(node.get("middleName").asText())
-                        && advocate.getMiddleName() != null) {
-                    node.put("middleName", advocate.getMiddleName());
-                }
-                if (node.has("lastName") && looksEncrypted(node.get("lastName").asText())
-                        && advocate.getLastName() != null) {
-                    node.put("lastName", advocate.getLastName());
-                }
-                if (node.has("mobileNumber") && looksEncrypted(node.get("mobileNumber").asText())
-                        && advocate.getMobileNumber() != null) {
-                    node.put("mobileNumber", advocate.getMobileNumber());
-                }
-
-                mapping.setAdditionalDetails(objectMapper.convertValue(node, Object.class));
-            } catch (Exception e) {
-                log.warn("Failed to adjust representative additionalDetails for mapping id={}", mapping.getId(), e);
-            }
-        }
-    }
-
-    /**
-     * Decrypt advocates embedded in CourtCase so that personal fields like
-     * firstName / middleName / lastName / mobileNumber are plain text in the
-     * API response for both migrated and non-migrated data.
-     */
-    private void decryptAdvocates(CourtCase courtCase, RequestInfo requestInfo) {
-        if (courtCase == null) {
-            return;
-        }
-
-        // Decrypt advocates inside representatives (primary source objects)
-        if (courtCase.getRepresentatives() != null) {
-            for (AdvocateMapping mapping : courtCase.getRepresentatives()) {
-                if (mapping == null || mapping.getAdvocate() == null) {
-                    continue;
-                }
-                try {
-                    Advocate decryptedAdvocate = decryptObject(
-                            mapping.getAdvocate(),
-                            null, // let getKeyToDecrypt decide the right key/purpose
-                            Advocate.class,
-                            requestInfo
-                    );
-                    mapping.setAdvocate(decryptedAdvocate);
-                } catch (Exception e) {
-                    log.warn("Failed to decrypt advocate for mapping id={}", mapping.getId(), e);
-                }
-            }
-        }
-    }
-
-    private boolean looksEncrypted(String value) {
-        return value != null && (value.contains("|") || value.matches("\\d+\\|.+"));
     }
 
     private boolean isUserDecryptingForAllowedRoles(User userInfo){
