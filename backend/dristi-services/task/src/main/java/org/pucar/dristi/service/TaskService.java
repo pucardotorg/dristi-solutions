@@ -105,10 +105,10 @@ public class TaskService {
             }
             workflowUpdate(body);
 
-            if(body.getTask().getTaskType().equalsIgnoreCase("SUMMONS")
-                    || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")
-                    || body.getTask().getTaskType().equalsIgnoreCase("PROCLAMATION")
-                    || body.getTask().getTaskType().equalsIgnoreCase("ATTACHMENT")) {
+            if("SUMMONS".equalsIgnoreCase(body.getTask().getTaskType())
+                    || "WARRANT".equalsIgnoreCase(body.getTask().getTaskType())
+                    || "PROCLAMATION".equalsIgnoreCase(body.getTask().getTaskType())
+                    || "ATTACHMENT".equalsIgnoreCase(body.getTask().getTaskType())) {
                 updateCase(body);
             }
 

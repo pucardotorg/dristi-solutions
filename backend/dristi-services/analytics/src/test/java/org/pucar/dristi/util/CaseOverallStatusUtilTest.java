@@ -260,14 +260,14 @@ class CaseOverallStatusUtilTest {
         List<CaseStageSubStage> capturedCaseStatuses = caseStatusCaptor.getAllValues();
 //        assertEquals(2, capturedCaseStatuses.size());
 //        assertTrue(capturedCaseStatuses.stream()
-//                .anyMatch(c -> c.getCaseOverallStatus().getStage().equalsIgnoreCase("stage1")));
+//                .anyMatch(c -> c.getCaseOverallStatus()."stage1".equalsIgnoreCase(getStage())));
 //        assertTrue(capturedCaseStatuses.stream()
-//                .anyMatch(c -> c.getCaseOverallStatus().getStage().equalsIgnoreCase("stage2")));
+//                .anyMatch(c -> c.getCaseOverallStatus()."stage2".equalsIgnoreCase(getStage())));
 //
 //        assertTrue(capturedCaseStatuses.stream()
-//                .anyMatch(c -> c.getCaseOverallStatus().getSubstage().equalsIgnoreCase("subStage1")));
+//                .anyMatch(c -> c.getCaseOverallStatus()."subStage1".equalsIgnoreCase(getSubstage())));
 //        assertTrue(capturedCaseStatuses.stream()
-//                .anyMatch(c -> c.getCaseOverallStatus().getSubstage().equalsIgnoreCase("subStage2")));
+//                .anyMatch(c -> c.getCaseOverallStatus()."subStage2".equalsIgnoreCase(getSubstage())));
 
 
         // Validate case outcome message

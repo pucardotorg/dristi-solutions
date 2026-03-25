@@ -227,7 +227,7 @@ public class TaskUtil {
 //            CalculationRes calculationRes = paymentCalculatorUtil.callPaymentCalculator(taskPaymentRequest);
 //            Double courtFee = calculationRes.getCalculation().stream()
 //                    .flatMap(c -> c.getBreakDown().stream())
-//                    .filter(bd -> bd.getCode().equals("COURT_FEE"))
+//                    .filter(bd -> "COURT_FEE".equals(bd.getCode()))
 //                    .mapToDouble(BreakDown::getAmount)
 //                    .sum();
 //
@@ -303,7 +303,7 @@ public class TaskUtil {
 //        RespondentDetails respondentDetails = null;
 //        WitnessDetails witnessDetails = null;
 //        if (docSubType != null) {
-//            respondentDetails = docSubType.equals("Witness") ? getRespondentAccused(order, courtCase) : null;
+//            respondentDetails = "Witness".equals(docSubType) ? getRespondentAccused(order, courtCase) : null;
 //        }
 //
 //        if (respondentDetails != null) {
@@ -326,7 +326,7 @@ public class TaskUtil {
 //        RespondentDetails respondentDetails = null;
 //
 //        if (docSubType != null) {
-//            respondentDetails = docSubType.equals("Witness") ? getCaseRespondentFromCourtCase(courtCase) : getRespondentAccused(order, courtCase);
+//            respondentDetails = "Witness".equals(docSubType) ? getCaseRespondentFromCourtCase(courtCase) : getRespondentAccused(order, courtCase);
 //        }
 //
 //        taskDetails.setRespondentDetails(respondentDetails);
@@ -455,7 +455,7 @@ public class TaskUtil {
 //            return null;
 //        }
 //
-//        boolean isWitness = ((Map<String, Object>) respondentNameData).getOrDefault("partyType", "").toString().equalsIgnoreCase("witness");
+//        boolean isWitness = ((Map<String, Object>) respondentNameData).getOrDefault("partyType", "")."witness".equalsIgnoreCase(toString());
 //        String partyName = isWitness
 //                ? getFormattedName(
 //                (String) ((Map<String, Object>) respondentNameData).get("firstName"),
@@ -487,7 +487,7 @@ public class TaskUtil {
 //
 //                String docSubType = jsonUtil.getNestedValue(orderFormData, Arrays.asList("party", "data", "partyType"), String.class);
 //                if (docSubType != null) {
-//                    docSubType = docSubType.equals("Witness") ? "WITNESS" : "ACCUSED";
+//                    docSubType = "Witness".equals(docSubType) ? "WITNESS" : "ACCUSED";
 //                }
 //
 //                SummonsDetails summonsDetails = SummonsDetails.builder()
@@ -520,7 +520,7 @@ public class TaskUtil {
 //
 //                String docSubType = jsonUtil.getNestedValue(orderFormData, Arrays.asList("party", "data", "partyType"), String.class);
 //                if (docSubType != null) {
-//                    docSubType = docSubType.equals("Witness") ? "WITNESS" : "ACCUSED";
+//                    docSubType = "Witness".equals(docSubType) ? "WITNESS" : "ACCUSED";
 //                }
 //
 //                String noticeType = jsonUtil.getNestedValue(orderFormValue, Arrays.asList("noticeType", "type"), String.class);
