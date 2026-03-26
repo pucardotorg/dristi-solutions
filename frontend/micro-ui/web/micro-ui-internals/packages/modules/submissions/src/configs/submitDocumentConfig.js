@@ -24,11 +24,14 @@ const submissionDocumentConfig = [
       },
       {
         label: "DOCUMENT_TITLE",
-        labelChildren: "optional",
-        isMandatory: false,
+        isMandatory: true,
         key: "documentTitle",
         type: "text",
-        populators: { name: "documentTitle", customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" } },
+        populators: {
+          name: "documentTitle",
+          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+          error: "CORE_REQUIRED_FIELD_ERROR",
+        },
       },
       {
         type: "component",
