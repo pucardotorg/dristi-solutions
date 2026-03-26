@@ -13,6 +13,8 @@ import useSearchEvidenceService from "../../hooks/submissions/useSearchEvidenceS
 import downloadPdfFromFile from "@egovernments/digit-ui-module-dristi/src/Utils/downloadPdfFromFile";
 import { SubmissionDocumentWorkflowAction, SubmissionDocumentWorkflowState } from "../../utils/submissionDocumentsWorkflow";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
+import { formatName } from "@egovernments/digit-ui-module-home/src/utils";
+import { validateAndFormatFields } from "../../utils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -304,6 +306,18 @@ const SubmissionDocuments = ({ path }) => {
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     runComprehensiveSanitizer({ formData, setValue });
+    validateAndFormatFields({
+      formData,
+      setValue,
+      clearErrors,
+      fieldConfigs: [
+        {
+          key: "documentTitle",
+          maxLength: 100,
+          formatter: formatName,
+        },
+      ],
+    });
     if (formData?.submissionDocuments?.uploadedDocs?.length > 0 && Object.keys(formState?.errors).includes("uploadedDocs")) {
       clearErrors("uploadedDocs");
     } else if (
@@ -369,25 +383,6 @@ const SubmissionDocuments = ({ path }) => {
 
   return (
     <React.Fragment>
-      <style>
-        {`
-          .formComposer .card {
-            margin: 0px;
-            padding: 0px;
-            border: none;
-          }
-
-          .formComposer .card .label-field-pair h2.card-label {
-            font-weight: 400;
-            font-size : 16px;
-            margin-bottom: 8px !important;
-          }   
-            
-          .formComposer .employeeCard .label-field-pair {
-            flex-direction: column;
-          } 
-        `}
-      </style>
       {(loader || isFilingTypeLoading || isEvidenceLoading) && (
         <div
           style={{
@@ -425,7 +420,7 @@ const SubmissionDocuments = ({ path }) => {
             onSubmit={handleOpenReview}
             fieldStyle={fieldStyle}
             key={formKey}
-            className={"formComposer"}
+            className={"submitDocument-formComposer"}
             isDisabled={isSubmitDisabled}
           />
         </div>
