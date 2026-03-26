@@ -25,7 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
@@ -58,12 +58,12 @@ public class EgovUserApplication {
     }
 
     @Bean
-    public WebMvcConfigurerAdapter webMvcConfigurerAdapter() {
-        return new WebMvcConfigurerAdapter() {
+    public WebMvcConfigurer webMvcConfigurer() {
+        return new WebMvcConfigurer() {
 
             @Override
             public void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
-                configurer.defaultContentType(MediaType.APPLICATION_JSON_UTF8);
+                configurer.defaultContentType(MediaType.APPLICATION_JSON);
             }
         };
     }

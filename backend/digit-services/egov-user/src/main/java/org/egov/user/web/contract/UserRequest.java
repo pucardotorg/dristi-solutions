@@ -8,8 +8,7 @@ import org.egov.user.domain.model.Address;
 import org.egov.user.domain.model.Role;
 import org.egov.user.domain.model.User;
 import org.egov.user.domain.model.enums.*;
-import org.hibernate.validator.constraints.Email;
-import org.hibernate.validator.constraints.SafeHtml;
+import javax.validation.constraints.Email;
 
 import java.util.Date;
 import java.util.HashSet;
@@ -18,6 +17,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import org.hibernate.validator.constraints.SafeHtml;
 
 @Setter
 @Getter
