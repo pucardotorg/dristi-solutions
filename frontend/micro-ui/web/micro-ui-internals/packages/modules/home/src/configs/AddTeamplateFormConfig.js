@@ -7,11 +7,24 @@ export const AddTeamplateFormConfig = [
         key: "processTitle",
         disable: false,
         type: "text",
-        populators: { name: "processTitle", error: "CORE_REQUIRED_FIELD_ERROR", validation: {
-          required: true,
-          minLength: 1,
-          maxLength: 200,
-        }, },
+        populators: {
+          name: "processTitle",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          validation: {
+            required: true,
+            minLength: 1,
+            maxLength: 200,
+          },
+        },
+      },
+      {
+        label: "Sub Title",
+        isMandatory: false,
+        key: "subTitle",
+        disable: false,
+        labelChildren: "optional",
+        type: "text",
+        populators: { name: "subTitle", minLength: 1, maxLength: 200 },
       },
       {
         label: "IS_COVER_LETTER_REQUIRED",
