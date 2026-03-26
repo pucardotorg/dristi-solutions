@@ -16,6 +16,7 @@ const convertToFormData = (t, data) => {
     selectAddressee: { code: data?.addressee || "", name: data?.addressee || "" },
     processText: { text: data?.processText || "" },
     addresseeName: data?.addresseeName || "",
+    subTitle: data?.subTitle || "",
   };
 
   return formData;
@@ -151,7 +152,20 @@ const TemplateOrConfigurationPage = () => {
   const modifiedFormConfig = useMemo(() => {
     const selectedAddresseeCode = formdata?.selectAddressee?.code;
 
-    return AddTeamplateFormConfig.map((section) => {
+    const applyUiChanges = (config) => ({
+      ...config,
+      body: config?.body?.map((body) => {
+        if (body?.labelChildren === "optional") {
+          return {
+            ...body,
+            labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
+          };
+        }
+        return body;
+      }),
+    });
+
+    const modifiedConfig =  AddTeamplateFormConfig.map((section) => {
       return {
         ...section,
         body: section.body.filter((field) => {
@@ -163,7 +177,9 @@ const TemplateOrConfigurationPage = () => {
         }),
       };
     });
-  }, [formdata?.selectAddressee]);
+
+    return modifiedConfig?.map((config) => applyUiChanges(config));
+  }, [formdata?.selectAddressee?.code, t]);
 
   const getDefaultValues = useMemo(() => {
     if (stepper === 1) {
@@ -207,6 +223,7 @@ const TemplateOrConfigurationPage = () => {
           orderText: formdata?.orderText?.text || "",
           processText: formdata?.processText?.text || "",
           addresseeName: formdata?.addresseeName || "",
+          subTitle: formdata?.subTitle,
         },
       };
 
