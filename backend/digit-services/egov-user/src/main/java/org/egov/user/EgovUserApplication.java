@@ -11,6 +11,7 @@ import org.egov.common.utils.MultiStateInstanceUtil;
 import org.egov.encryption.config.EncryptionConfiguration;
 import org.egov.tracer.config.TracerConfiguration;
 import org.egov.user.security.CustomAuthenticationKeyGenerator;
+import org.egov.user.security.JacksonRedisTokenStoreSerializationStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -97,6 +98,7 @@ public class EgovUserApplication {
     public TokenStore tokenStore() {
         RedisTokenStore redisTokenStore = new RedisTokenStore(connectionFactory());
         redisTokenStore.setAuthenticationKeyGenerator(customAuthenticationKeyGenerator);
+        redisTokenStore.setSerializationStrategy(new JacksonRedisTokenStoreSerializationStrategy());
         return redisTokenStore;
     }
 

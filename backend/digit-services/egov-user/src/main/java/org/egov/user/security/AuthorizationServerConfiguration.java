@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
@@ -63,7 +64,8 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
 
     @Bean
     public JedisConnectionFactory connectionFactory() throws Exception {
-        return new JedisConnectionFactory(new JedisShardInfo(host));
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host);
+        return new JedisConnectionFactory(config);
     }
 
     @Bean
