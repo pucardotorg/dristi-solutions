@@ -9,8 +9,6 @@ import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStoreSerializationStrategy;
 
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -18,9 +16,10 @@ import java.nio.charset.StandardCharsets;
  * instead of JDK serialization. This avoids serialVersionUID compatibility issues
  * when upgrading Java/Spring Security versions.
  *
- * For backward compatibility, this strategy can also deserialize tokens that were
- * stored using JDK serialization (before the upgrade). It detects the format by
- * checking for the Java serialization magic bytes (0xAC 0xED).
+ * Old tokens in Redis that were serialized with JDK serialization (before the upgrade)
+ * cannot be deserialized due to serialVersionUID mismatches in Spring Security classes.
+ * These are treated as invalid tokens — returning null causes the caller to treat
+ * them as expired, forcing the user to re-authenticate and get a new JSON-serialized token.
  */
 @Slf4j
 public class JacksonRedisTokenStoreSerializationStrategy implements RedisTokenStoreSerializationStrategy {
@@ -41,16 +40,17 @@ public class JacksonRedisTokenStoreSerializationStrategy implements RedisTokenSt
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public <T> T deserialize(byte[] bytes, Class<T> clazz) {
         if (bytes == null || bytes.length == 0) {
             return null;
         }
 
-        // Check if the data was serialized using JDK serialization (legacy tokens)
+        // Old tokens serialized with JDK serialization are incompatible after the
+        // Spring Security upgrade (serialVersionUID mismatch). Treat them as expired.
         if (isJdkSerialized(bytes)) {
-            log.debug("Detected JDK-serialized token, falling back to JDK deserialization for type: {}", clazz.getName());
-            return deserializeWithJdk(bytes, clazz);
+            log.warn("Encountered legacy JDK-serialized token (incompatible with upgraded Spring Security). "
+                    + "Treating as invalid for type: {}. User will need to re-authenticate.", clazz.getName());
+            return null;
         }
 
         try {
@@ -95,17 +95,5 @@ public class JacksonRedisTokenStoreSerializationStrategy implements RedisTokenSt
         return bytes.length >= 2
                 && bytes[0] == JAVA_SERIAL_MAGIC_BYTE_0
                 && bytes[1] == JAVA_SERIAL_MAGIC_BYTE_1;
-    }
-
-    /**
-     * Fall back to JDK ObjectInputStream deserialization for legacy tokens.
-     */
-    @SuppressWarnings("unchecked")
-    private <T> T deserializeWithJdk(byte[] bytes, Class<T> clazz) {
-        try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
-            return (T) ois.readObject();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to JDK-deserialize object of type: " + clazz.getName(), e);
-        }
     }
 }
