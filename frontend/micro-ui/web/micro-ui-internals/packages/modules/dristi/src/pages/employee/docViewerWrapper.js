@@ -1,5 +1,6 @@
 import { Card } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useHistory } from "react-router-dom";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import { useTranslation } from "react-i18next";
 import { Urls } from "../../hooks";
@@ -13,6 +14,16 @@ if (!window.__docViewerFileStoreCache) {
   window.__docViewerFileStoreCache = new Map();
 }
 const fileStoreCache = window.__docViewerFileStoreCache;
+
+// Revoke all cached blob URLs and clear the cache
+const clearFileStoreCache = () => {
+  for (const [key, entry] of fileStoreCache) {
+    if (entry.blobUrl) {
+      URL.revokeObjectURL(entry.blobUrl);
+    }
+  }
+  fileStoreCache.clear();
+};
 
 const DocViewerWrapper = ({
   style,
@@ -35,6 +46,31 @@ const DocViewerWrapper = ({
 }) => {
   const { t } = useTranslation();
   const token = localStorage.getItem("token");
+  const history = useHistory();
+
+  // Track current filingNumber to detect case switches
+  const prevFilingNumberRef = useRef(new URLSearchParams(window.location.search).get("filingNumber"));
+
+  // Clear cache when user navigates away from case view pages or switches to a different case
+  useEffect(() => {
+    const unlisten = history.listen((location) => {
+      const newParams = new URLSearchParams(location.search);
+      const newFilingNumber = newParams.get("filingNumber");
+
+      if (!location.pathname.includes("view-case")) {
+        // Left case view entirely
+        clearFileStoreCache();
+        prevFilingNumberRef.current = null;
+      } else if (prevFilingNumberRef.current && newFilingNumber && newFilingNumber !== prevFilingNumberRef.current) {
+        // Still on view-case but switched to a different case
+        clearFileStoreCache();
+        prevFilingNumberRef.current = newFilingNumber;
+      } else {
+        prevFilingNumberRef.current = newFilingNumber;
+      }
+    });
+    return () => unlisten();
+  }, [history]);
 
   const [docUrl, setDocUrl] = useState(() => {
     // Initialize from cache if blob is already available
