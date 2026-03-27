@@ -38,7 +38,7 @@ public class OtpService {
 
     public void sendOtp(OtpRequest otpRequest) {
         otpRequest.validate();
-        if (otpRequest.isRegistrationRequestType() || otpRequest.isLoginRequestType()) {
+        if (otpRequest.isRegistrationRequestType() || otpRequest.isLoginRequestType() || otpRequest.isCTCApplicationRequestType()) {
             sendOtpForUserRegistration(otpRequest);
         } else {
             sendOtpForPasswordReset(otpRequest);
@@ -58,7 +58,7 @@ public class OtpService {
         if(!isTest) {
             otpSMSSender.send(otpRequest, otpNumber);
         }
-        if(!otpRequest.isRegistrationRequestType()) // Because new user doesn't have any email configured
+        if(!otpRequest.isRegistrationRequestType() && !otpRequest.isCTCApplicationRequestType()) // Because new user doesn't have any email configured
             try{
                 otpEmailRepository.send(matchingUser.getEmail(), otpNumber, otpRequest);
             } catch (Exception ignore){
