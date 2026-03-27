@@ -21,7 +21,7 @@ import org.springframework.validation.annotation.Validated;
 @Builder
 public class Pagination {
 	@JsonProperty("limit")
-	@DecimalMax("100")
+	//@DecimalMax("100")
 	private Double limit = 10d;
 
 	@JsonProperty("offSet")

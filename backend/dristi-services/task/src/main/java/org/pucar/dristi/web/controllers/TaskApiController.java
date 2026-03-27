@@ -101,6 +101,20 @@ public class TaskApiController {
         return new ResponseEntity<>(taskCaseResponse, HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/v1/table/es/search", method = RequestMethod.POST)
+    public ResponseEntity<TaskCaseResponse> taskV1EsSearchPost(@Parameter(in = ParameterIn.DEFAULT, schema = @Schema()) @Valid @RequestBody TaskCaseSearchRequest request) {
+        List<TaskCase> tasks = taskService.searchCaseTaskFromEs(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        int totalCount;
+        if (request.getPagination() != null) {
+            totalCount = request.getPagination().getTotalCount().intValue();
+        } else {
+            totalCount = tasks.size();
+        }
+        TaskCaseResponse taskCaseResponse = TaskCaseResponse.builder().list(tasks).totalCount(totalCount).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(taskCaseResponse, HttpStatus.OK);
+    }
+
     @PostMapping("/v1/_getTasksToSign")
     public ResponseEntity<TasksToSignResponse> getTasksToSign(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody TasksToSignRequest request){
         List<TaskToSign> taskToSign = taskService.createTasksToSignRequest(request);
@@ -153,6 +167,14 @@ public class TaskApiController {
                 .tasks(tasks)
                 .responseInfo(responseInfo)
                 .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/v1/_bulkIndex", method = RequestMethod.POST)
+    public ResponseEntity<BulkIndexResponse> bulkIndexToElasticsearch(@Parameter(in = ParameterIn.DEFAULT, description = "Bulk index tasks to Elasticsearch", schema = @Schema()) @Valid @RequestBody BulkIndexRequest body) {
+        BulkIndexResponse response = taskService.bulkIndexToElasticsearch(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        response.setResponseInfo(responseInfo);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

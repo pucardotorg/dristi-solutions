@@ -363,4 +363,17 @@ public class Configuration {
 
     @Value("${allowed.content.types}")
     private String[] allowedContentTypes;
+
+    // Elasticsearch Config
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+    @Value("${elasticsearch.index}")
+    private String index;
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHost;
 }
