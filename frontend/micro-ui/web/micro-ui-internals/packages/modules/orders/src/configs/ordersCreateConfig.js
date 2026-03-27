@@ -6264,7 +6264,7 @@ export const configMiscellaneousProcess = [
         populators: {
           styles: { maxWidth: "100%" },
           name: "processTemplate",
-          optionsKey: "processTitle",
+          optionsKey: "processTitleLabel",
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
