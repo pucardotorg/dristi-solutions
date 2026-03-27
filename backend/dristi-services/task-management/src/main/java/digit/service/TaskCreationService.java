@@ -933,7 +933,7 @@ public class TaskCreationService {
 
     private String normalizePartyType(String type) {
         if (type == null) return null;
-        return type.equalsIgnoreCase("Witness") ? WITNESS : ACCUSED;
+        return "Witness".equalsIgnoreCase(type) ? WITNESS : ACCUSED;
     }
 
     private ComplainantDetails getComplainantDetails(CourtCase courtCase) {

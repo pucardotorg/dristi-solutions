@@ -253,7 +253,7 @@ public class IndexerUtils {
             if (assignedToList != null && !assignedToList.isEmpty()) {
                 offices = (pendingTask.getOffices() != null && !pendingTask.getOffices().isEmpty()) ? new JSONArray(pendingTask.getOffices()).toString() : enrichOfficesFromCaseDetails(caseDetails, assignedToList);
             } else {
-                log.error("assignedToList is null or empty while enriching offices from case details during manual pending task creation");
+                log.info("assignedToList is null or empty while enriching offices from case details during manual pending task creation");
             }
         }
 
@@ -354,7 +354,7 @@ public class IndexerUtils {
             if (assignedToList != null && !assignedToList.isEmpty()) {
                 offices = (pendingTask.getOffices() != null && !pendingTask.getOffices().isEmpty()) ? new JSONArray(pendingTask.getOffices()).toString() : enrichOfficesFromCaseDetails(caseDetails, assignedToList);
             } else {
-                log.error("assignedToList is null or empty while enriching offices from case details during manual pending task creation");
+                log.info("assignedToList is null or empty while enriching offices from case details during manual pending task creation");
             }
         }
 
@@ -608,7 +608,7 @@ public class IndexerUtils {
                     }
                 }
             } else {
-                log.error("assignedToList is null or empty while enriching offices from case details during workflow driven pending task creation");
+                log.info("assignedToList is null or empty while enriching offices from case details during workflow driven pending task creation");
             }
         }
 
@@ -1323,7 +1323,7 @@ public class IndexerUtils {
         }
 
         // Collect UUIDs from office members
-        if (officesJson != null && !officesJson.isEmpty() && !officesJson.equals("[]")) {
+        if (officesJson != null && !officesJson.isEmpty() && !"[]".equals(officesJson)) {
             try {
                 List<AdvocateOffice> offices = mapper.readValue(officesJson, new TypeReference<List<AdvocateOffice>>() {});
                 for (AdvocateOffice office : offices) {
@@ -1346,7 +1346,7 @@ public class IndexerUtils {
     }
 
     private String filterOfficesByExcludedUuids(String officesJson, List<String> excludedUuids) {
-        if (officesJson == null || officesJson.isEmpty() || officesJson.equals("[]")) {
+        if (officesJson == null || officesJson.isEmpty() || "[]".equals(officesJson)) {
             return "[]";
         }
 
