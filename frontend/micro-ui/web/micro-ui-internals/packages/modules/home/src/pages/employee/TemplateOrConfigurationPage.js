@@ -7,6 +7,8 @@ import { AddTeamplateFormConfig, coverLetterTextConfig } from "../../configs/Add
 import { HomeService, Urls } from "../../hooks/services";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { isRichTextEmpty } from "../../utils";
+import { OutlinedInfoIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import ReactTooltip from "react-tooltip";
 
 const convertToFormData = (t, data) => {
   const formData = {
@@ -161,11 +163,28 @@ const TemplateOrConfigurationPage = () => {
             labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
           };
         }
+        if (body?.labelChildren === "OptionalWithOutlinedInfoIcon") {
+          return {
+            ...body,
+            labelChildren: (
+              <React.Fragment>
+                <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>
+                <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
+                  <OutlinedInfoIcon />
+                </span>
+
+                <ReactTooltip id={`${body.label}-tooltip`} place="bottom" content={body?.tooltipValue || ""}>
+                  {t(body?.tooltipValue || body.label)}
+                </ReactTooltip>
+              </React.Fragment>
+            ),
+          };
+        }
         return body;
       }),
     });
 
-    const modifiedConfig =  AddTeamplateFormConfig.map((section) => {
+    const modifiedConfig = AddTeamplateFormConfig.map((section) => {
       return {
         ...section,
         body: section.body.filter((field) => {
