@@ -22,6 +22,7 @@ import static java.lang.String.format;
 public class OtpSMSRepository {
 
     private static final String LOCALIZATION_KEY_REGISTER_SMS = "sms.register.otp.msg";
+    private static final String LOCALIZATION_CTC_APPLICATION_SMS = "sms.ctc.application.otp.msg";
     private static final String LOCALIZATION_KEY_LOGIN_SMS = "sms.login.otp.msg";
     private static final String LOCALIZATION_KEY_PWD_RESET_SMS = "sms.pwd.reset.otp.msg";
 
@@ -83,13 +84,18 @@ public class OtpSMSRepository {
             localisedMsgs.put(LOCALIZATION_KEY_REGISTER_SMS, "High Court of Kerala, Your OTP for mobile number verification is %s. Do not share this code with anyone.");
             localisedMsgs.put(LOCALIZATION_KEY_LOGIN_SMS, "Dear Citizen, Your Login OTP is %s.");
             localisedMsgs.put(LOCALIZATION_KEY_PWD_RESET_SMS, "Dear Citizen, Your OTP for recovering password is %s.");
+            localisedMsgs.put(LOCALIZATION_CTC_APPLICATION_SMS, "Hello,\\nPlease use the OTP %s to verify your mobile number and file/track application for certified true copy on oncourts.kerala.gov.in.\\n- ON Courts");
         }
         String message = null;
 
         if (otpRequest.isRegistrationRequestType())
             message = localisedMsgs.get(LOCALIZATION_KEY_REGISTER_SMS);
-        else if (otpRequest.isLoginRequestType())
-            message = localisedMsgs.get(LOCALIZATION_KEY_LOGIN_SMS);
+        else if (otpRequest.isLoginRequestType()){
+             message = localisedMsgs.get(LOCALIZATION_KEY_LOGIN_SMS);
+        }
+        else if (otpRequest.isCTCApplicationRequestType()){
+             message = localisedMsgs.get(LOCALIZATION_CTC_APPLICATION_SMS);
+        }
         else
             message = localisedMsgs.get(LOCALIZATION_KEY_PWD_RESET_SMS);
 
