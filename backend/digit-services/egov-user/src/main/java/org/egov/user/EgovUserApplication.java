@@ -18,6 +18,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -33,7 +34,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.JedisShardInfo;
+
 
 @SpringBootApplication
 @Slf4j
@@ -104,7 +105,8 @@ public class EgovUserApplication {
 
     @Bean
     public JedisConnectionFactory connectionFactory() {
-        return new JedisConnectionFactory(new JedisShardInfo(host));
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host);
+        return new JedisConnectionFactory(config);
     }
 
     public static void main(String[] args) {
