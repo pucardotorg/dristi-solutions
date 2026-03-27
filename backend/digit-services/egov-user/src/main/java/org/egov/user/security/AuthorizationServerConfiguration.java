@@ -5,8 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
@@ -15,7 +13,6 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
-import redis.clients.jedis.JedisShardInfo;
 
 import static org.egov.user.config.UserServiceConstants.USER_CLIENT_ID;
 
@@ -23,8 +20,7 @@ import static org.egov.user.config.UserServiceConstants.USER_CLIENT_ID;
 @EnableAuthorizationServer
 public class AuthorizationServerConfiguration extends AuthorizationServerConfigurerAdapter {
 
-    @Value("${spring.redis.host}")
-    private String host;
+
 
     @Value("${access.token.validity.in.minutes}")
     private int accessTokenValidityInMinutes;
@@ -62,11 +58,7 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
                 .authenticationManager(customAuthenticationManager);
     }
 
-    @Bean
-    public JedisConnectionFactory connectionFactory() throws Exception {
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host);
-        return new JedisConnectionFactory(config);
-    }
+
 
     @Bean
     public DefaultTokenServices customTokenServices() {
