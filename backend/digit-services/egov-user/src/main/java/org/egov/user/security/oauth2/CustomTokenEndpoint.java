@@ -100,8 +100,8 @@ public class CustomTokenEndpoint {
     }
 
     private Map<String, Object> issueTokenResponse(Authentication authentication, String scope) {
-        String accessToken = UUID.randomUUID().toString().replace("-", "");
-        String refreshToken = UUID.randomUUID().toString().replace("-", "");
+        String accessToken = UUID.randomUUID().toString();
+        String refreshToken = UUID.randomUUID().toString();
 
         long accessExpirySeconds = (long) accessTokenValidityMinutes * 60;
         long refreshExpirySeconds = (long) refreshTokenValidityMinutes * 60;

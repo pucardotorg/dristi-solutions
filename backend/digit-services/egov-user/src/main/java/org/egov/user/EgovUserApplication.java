@@ -92,7 +92,6 @@ public class EgovUserApplication implements WebMvcConfigurer {
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
-        log.info("setting redis host : {}", redisHost);
         redisStandaloneConfiguration.setHostName(redisHost);
         return new JedisConnectionFactory(redisStandaloneConfiguration);
     }
