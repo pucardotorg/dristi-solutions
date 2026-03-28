@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -59,6 +60,7 @@ public class TaskService {
     private final CipherUtil cipherUtil;
     private final XmlRequestGenerator xmlRequestGenerator;
     private final UserUtil userUtil;
+
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
                        TaskRegistrationEnrichment enrichmentUtil,
@@ -99,13 +101,13 @@ public class TaskService {
 
             enrichmentUtil.enrichTaskRegistration(body);
 
-            if(body.getTask().getTaskType().equalsIgnoreCase(GENERIC)) {
+            if (body.getTask().getTaskType().equalsIgnoreCase(GENERIC)) {
                 updateAssignedToList(body);
                 createDemandForPayment(body);
             }
             workflowUpdate(body);
 
-            if(body.getTask().getTaskType().equalsIgnoreCase("SUMMONS")
+            if (body.getTask().getTaskType().equalsIgnoreCase("SUMMONS")
                     || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")
                     || body.getTask().getTaskType().equalsIgnoreCase("PROCLAMATION")
                     || body.getTask().getTaskType().equalsIgnoreCase("ATTACHMENT")) {
@@ -162,10 +164,10 @@ public class TaskService {
             List<AssignedTo> newAssignedToList = new ArrayList<>(assignedToList); // Create a new list to avoid ConcurrentModificationException
             List<CourtCase> courtCases = caseUtil.getCaseDetails(body);
 
-            for(AssignedTo assignedTo : newAssignedToList) {
+            for (AssignedTo assignedTo : newAssignedToList) {
                 String uuid = assignedTo.getUuid().toString();
                 List<AdvocateMapping> representatives = courtCases.get(0).getRepresentatives();
-                if(representatives != null) {
+                if (representatives != null) {
                     for (AdvocateMapping advocateMapping : representatives) {
                         List<Party> parties = advocateMapping.getRepresenting();
                         List<String> individualIds = parties.stream().filter(party -> uuid.equalsIgnoreCase(objectMapper.convertValue(party.getAdditionalDetails(), JsonNode.class).get("uuid").textValue()))
@@ -177,13 +179,13 @@ public class TaskService {
                     }
                 }
             }
-            if(!assignedToList.isEmpty()){
+            if (!assignedToList.isEmpty()) {
                 body.getTask().getWorkflow().setAssignes(assignedToList.stream().map(assignedTo -> assignedTo.getUuid().toString()).toList());
                 body.getTask().getWorkflow().setAdditionalDetails(getAdditionalDetails(body.getTask()));
             }
         } catch (Exception e) {
             log.error("Error occurred while updating assignedTo list :: {}", e.toString());
-            throw new CustomException("ERROR_UPDATING_ASSIGNED_TO_LIST",e.getMessage());
+            throw new CustomException("ERROR_UPDATING_ASSIGNED_TO_LIST", e.getMessage());
         }
     }
 
@@ -236,22 +238,22 @@ public class TaskService {
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
             log.info("status , taskType : {} , {} ", status, taskType);
-            if (PROCESS_SENT.equalsIgnoreCase(status) || SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status) || PROCLAMATION_SENT.equalsIgnoreCase(status) || ATTACHMENT_SENT.equalsIgnoreCase(status)){
+            if (PROCESS_SENT.equalsIgnoreCase(status) || SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status) || PROCLAMATION_SENT.equalsIgnoreCase(status) || ATTACHMENT_SENT.equalsIgnoreCase(status)) {
                 String acknowledgementId = summonUtil.sendSummons(body);
                 updateAcknowledgementId(body, acknowledgementId);
-                if(!PROCESS_SENT.equalsIgnoreCase(status))
-                 closeEnvelopePendingTaskOfRpad(body);
+                if (!PROCESS_SENT.equalsIgnoreCase(status))
+                    closeEnvelopePendingTaskOfRpad(body);
             }
 
             List<String> fileStoreIds = new ArrayList<>();
-            if(body.getTask().getDocuments() != null){
+            if (body.getTask().getDocuments() != null) {
                 for (Document document : body.getTask().getDocuments()) {
                     if (!document.getIsActive()) {
                         fileStoreIds.add(document.getFileStore());
                     }
                 }
             }
-            if(!fileStoreIds.isEmpty()){
+            if (!fileStoreIds.isEmpty()) {
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, body.getTask().getTenantId());
                 log.info("Deleted files from file store: {}", fileStoreIds);
             }
@@ -259,16 +261,29 @@ public class TaskService {
             if (taskType.equalsIgnoreCase(JOIN_CASE)) {
                 topicBasedOnStatus.pushToTopicBasedOnStatus(status, body);
             }
+
+            if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status)) {
+                Object taskDetailsObject = body.getTask().getTaskDetails();
+                JsonNode taskDetails = objectMapper.readTree(objectMapper.writeValueAsString(taskDetailsObject));
+
+                // Extract channel code from deliveryChannels and check if it's RPAD
+                String channelCode = taskDetails.has("deliveryChannels") ?
+                        taskDetails.path("deliveryChannels").path("channelCode").textValue() : "";
+
+                if (RPAD.equalsIgnoreCase(channelCode))
+                    callNotificationServiceForRPADDispatch(body,taskType,taskDetails);
+            }
+
             producer.push(config.getTaskUpdateTopic(), body);
 
             if (!isValidTask) {
                 // join case pending task is not valid
-                throw new CustomException(INVALID_PENDING_TASK,"the pending task is not valid");
+                throw new CustomException(INVALID_PENDING_TASK, "the pending task is not valid");
             }
 
             String messageCode = status != null ? getMessageCode(taskType, status) : null;
             log.info("Message Code :: {}", messageCode);
-            if(messageCode != null){
+            if (messageCode != null) {
                 callNotificationService(body, messageCode);
             }
 
@@ -342,7 +357,7 @@ public class TaskService {
                     config.getTaskSummonBusinessServiceName(), workflow, config.getTaskSummonBusinessName());
             case WARRANT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
-            case PROCLAMATION-> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+            case PROCLAMATION -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskProclamationBusinessServiceName(), workflow, config.getTaskProclamationBusinessName());
             case ATTACHMENT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskAttachmentBusinessServiceName(), workflow, config.getTaskAttachmentBusinessName());
@@ -390,7 +405,7 @@ public class TaskService {
             Task task = validator.validateApplicationUploadDocumentExistence(body.getTask(), body.getRequestInfo());
 
             // Enrich application upon update
-           TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
+            TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -500,7 +515,7 @@ public class TaskService {
     private void callNotificationService(TaskRequest taskRequest, String messageCode) {
         try {
             JsonNode caseList = caseUtil.searchCaseDetails(taskRequest.getRequestInfo(), taskRequest.getTask().getTenantId(), null, taskRequest.getTask().getFilingNumber(), null);
-            if(caseList.isEmpty()) {
+            if (caseList.isEmpty()) {
                 throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, "Case Not Found!");
             }
             JsonNode caseDetails = caseList.get(0);
@@ -513,21 +528,21 @@ public class TaskService {
             extractPowerOfAttorneyIds(caseDetails, individualIds);
 
             if (Objects.equals(messageCode, WARRANT_ISSUED)) {
-                 accusedName = accusedName.split(" \\(")[0];
-                individualIds = extractIndividualIds(caseDetails,accusedName);
+                accusedName = accusedName.split(" \\(")[0];
+                individualIds = extractIndividualIds(caseDetails, accusedName);
             }
 
-            if(PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)) {
+            if (PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)) {
                 individualIds.clear();
                 Object workflowAdditionalDetailsObj = taskRequest.getTask().getWorkflow().getAdditionalDetails();
                 JsonNode workflowAdditionalDetails = objectMapper.readTree(objectMapper.writeValueAsString(workflowAdditionalDetailsObj));
                 ArrayNode litigants = (ArrayNode) workflowAdditionalDetails.get("litigants");
-                for(JsonNode litigant : litigants) {
+                for (JsonNode litigant : litigants) {
                     individualIds.add(litigant.asText());
                 }
             }
             Set<String> phoneNumbers = callIndividualService(taskRequest.getRequestInfo(), individualIds);
-            if(PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)) {
+            if (PROCESS_FEE_PAYMENT.equalsIgnoreCase(messageCode)) {
                 CourtCase courtCase = objectMapper.convertValue(caseDetails, CourtCase.class);
                 List<String> advocateIds = courtCase.getRepresentatives().stream()
                         .map(AdvocateMapping::getAdvocateId)
@@ -547,13 +562,118 @@ public class TaskService {
             for (String number : phoneNumbers) {
                 notificationService.sendNotification(taskRequest.getRequestInfo(), smsTemplateData, messageCode, number);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error occurred while sending notification: {}", e.toString());
         }
     }
 
-    public  Set<String> extractComplainantIndividualIds(JsonNode caseDetails) {
+    private void callNotificationServiceForRPADDispatch(TaskRequest taskRequest, String taskType,JsonNode taskDetails) {
+        try {
+            JsonNode caseList = caseUtil.searchCaseDetails(taskRequest.getRequestInfo(), taskRequest.getTask().getTenantId(), null, taskRequest.getTask().getFilingNumber(), null);
+            if (caseList.isEmpty()) {
+                throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, "Case Not Found!");
+            }
+            JsonNode caseDetails = caseList.get(0);
+
+            // Extract mobile numbers for complainants, their POA, and advocates
+            Set<String> mobileNumbers = new HashSet<>();
+            
+            // Get complainant mobile numbers
+            extractComplainantMobileNumbers(caseDetails, taskRequest.getTask().getTenantId(), mobileNumbers);
+            extractComplainantAdvocateMobileNumbers(caseDetails, taskRequest.getTask().getTenantId(), mobileNumbers);
+            extractComplainantPoaMobileNumber(taskRequest, caseDetails, mobileNumbers);
+
+            String respondentName = taskDetails.has("respondentDetails") ?
+                taskDetails.path("respondentDetails").path("name").textValue() : "";
+            String partyType = respondentName.isEmpty() ? "witness" : "accused";
+
+           String courtCaseNumber = caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "";
+           String cmpNumber = caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "";
+           String caseNumber = courtCaseNumber.isEmpty()?cmpNumber:courtCaseNumber;
+           String processType = SUMMON.equalsIgnoreCase(taskType)?"Summon":"Notice";
+
+            SmsTemplateData templateData = SmsTemplateData.builder()
+                    .caseNumber(caseNumber)
+                    .partyType(partyType)
+                    .processType(SUMMON.equalsIgnoreCase(taskType)?"Summon":"Notice")
+                    .tenantId(taskRequest.getTask().getTenantId()).build();
+
+            // Send notifications to all extracted mobile numbers (complainants, POA, advocates)
+            for (String mobileNumber : mobileNumbers) {
+                if (mobileNumber != null && !mobileNumber.isEmpty()) {
+                    try {
+                        String message = notificationService.getMessage(taskRequest.getRequestInfo(),templateData, "RPAD_DISPATCH");
+                        if (StringUtils.isEmpty(message)) {
+                            log.info("SMS content has not been configured for this case");
+                            return;
+                        }
+
+                        log.info("building Notification Request for case number {}", templateData.getCaseNumber());
+                        message = message.replace("{{processType}}", Optional.of(processType).orElse(""))
+                                .replace("{{partyType}}", Optional.of(partyType).orElse(""))
+                                .replace("{{caseNumber}}", Optional.ofNullable(caseNumber).orElse(""));
+
+                        SMSRequest smsRequest = SMSRequest.builder()
+                                .mobileNumber(mobileNumber)
+                                .tenantId(taskRequest.getTask().getTenantId())
+                                .templateId(config.getSmsNotificationRPADTemplateId())
+                                .contentType("TEXT")
+                                .category("NOTIFICATION")
+                                .locale(NOTIFICATION_ENG_LOCALE_CODE)
+                                .expiryTime(System.currentTimeMillis() + 60 * 60 * 1000)
+                                .message(message).build();
+                        log.info("push message {}", smsRequest);
+
+                        producer.push(config.getSmsNotificationTopic(), smsRequest);
+
+                    } catch (Exception e){
+                        log.error("Error in Sending Message To Notification Service: " , e);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
+    }
+
+    private void extractComplainantPoaMobileNumber(TaskRequest taskRequest, JsonNode caseDetails, Set<String> mobileNumbers) {
+        JsonNode poaHolders = caseDetails.path("poaHolders");
+        JsonNode litigants = caseDetails.path("litigants");
+
+        if (poaHolders!=null&&poaHolders.isArray()) {
+            for (JsonNode poaHolder : poaHolders) {
+                JsonNode representingLitigants = poaHolder.path("representingLitigants");
+                if (representingLitigants!=null&&representingLitigants.isArray()) {
+                    for (JsonNode representingLitigant : representingLitigants) {
+                        String litigantIndividualId = representingLitigant.path("individualId").asText(null);
+                        // Check if this individualId belongs to a complainant in litigants array
+                        boolean isComplainant = false;
+                        if (litigantIndividualId != null && litigants.isArray()) {
+                            for (JsonNode litigant : litigants) {
+                                if (litigantIndividualId.equals(litigant.path("individualId").asText())
+                                        && litigant.path("partyType").asText().contains("complainant")) {
+                                    isComplainant = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (isComplainant) {
+                            String poaUuid = poaHolder.path("additionalDetails").path("uuid").asText(null);
+                            if (poaUuid != null && !poaUuid.isEmpty()) {
+                                String poaMobile = extractMobileNumberFromIndividual(poaUuid, taskRequest.getTask().getTenantId());
+                                if (poaMobile != null && !poaMobile.isEmpty()) {
+                                    mobileNumbers.add(poaMobile);
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public Set<String> extractComplainantIndividualIds(JsonNode caseDetails) {
 
         JsonNode litigantNode = caseDetails.get("litigants");
         JsonNode representativeNode = caseDetails.get("representatives");
@@ -563,7 +683,7 @@ public class TaskService {
             for (JsonNode node : litigantNode) {
                 if (node.get("partyType").asText().contains("complainant")) {
                     String uuid = node.path("additionalDetails").get("uuid").asText();
-                    if (!uuid.isEmpty() ) {
+                    if (!uuid.isEmpty()) {
                         uuids.add(uuid);
                     }
                 }
@@ -574,9 +694,9 @@ public class TaskService {
             for (JsonNode advocateNode : representativeNode) {
                 JsonNode representingNode = advocateNode.get("representing");
                 if (representingNode.isArray()) {
-                    if(representingNode.get(0).get("partyType").asText().contains("complainant")) {
+                    if (representingNode.get(0).get("partyType").asText().contains("complainant")) {
                         String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
-                        if (!uuid.isEmpty() ) {
+                        if (!uuid.isEmpty()) {
                             uuids.add(uuid);
                         }
 
@@ -587,7 +707,7 @@ public class TaskService {
         return uuids;
     }
 
-    public Set<String> extractIndividualIds(JsonNode caseDetails,String respondentName) {
+    public Set<String> extractIndividualIds(JsonNode caseDetails, String respondentName) {
         JsonNode litigantNode = caseDetails.get("litigants");
         Set<String> uuids = new HashSet<>();
 
@@ -618,12 +738,71 @@ public class TaskService {
         }
     }
 
+    private void extractComplainantMobileNumbers(JsonNode caseDetails, String tenantId,Set<String> mobileNumbers) {
+        JsonNode litigants = caseDetails.path("litigants");
+        if (litigants.isArray()) {
+            for (JsonNode litigant : litigants) {
+                if (litigant.path("partyType").asText().contains("complainant")) {
+                    String uuid = litigant.path("additionalDetails").path("uuid").asText(null);
+                    if (uuid != null && !uuid.isEmpty()) {
+                        String mobile = extractMobileNumberFromIndividual(uuid, tenantId);
+                        if (mobile != null && !mobile.isEmpty()) {
+                            mobileNumbers.add(mobile);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void extractComplainantAdvocateMobileNumbers(JsonNode caseDetails, String tenantId, Set<String> mobileNumbers) {
+        JsonNode representatives = caseDetails.path("representatives");
+        if (representatives.isArray()) {
+            for (JsonNode representative : representatives) {
+                JsonNode representing = representative.path("representing");
+                if (representing.isArray()) {
+                    for (JsonNode party : representing) {
+                        if (party.path("partyType").asText().contains("complainant")) {
+                                String uuid = representative.path("additionalDetails").path("uuid").asText(null);
+                                if (uuid != null && !uuid.isEmpty()) {
+                                    String mobile = extractMobileNumberFromIndividual(uuid, tenantId);
+                                    if (mobile != null && !mobile.isEmpty()) {
+                                        mobileNumbers.add(mobile);
+                                    }
+                                }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private String extractMobileNumberFromIndividual(String individualId,String tenantId) {
+        try {
+            // Get RequestInfo from current context or create a new one
+            RequestInfo requestInfo = RequestInfo.builder()
+                    .build();
+
+            // Get individual details using individualId
+            List<Individual> individuals = individualService.getIndividuals(requestInfo, List.of(individualId));
+
+            if (!individuals.isEmpty()) {
+                Individual individual = individuals.get(0);
+                return individual.getMobileNumber();
+            }
+        } catch (Exception e) {
+            log.error("Error fetching mobile number for individualId: {}", individualId, e);
+        }
+        return null;
+    }
+
     private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> ids) {
 
         Set<String> mobileNumber = new HashSet<>();
 
         List<Individual> individuals = individualService.getIndividuals(requestInfo, new ArrayList<>(ids));
-        for(Individual individual : individuals) {
+        for (Individual individual : individuals) {
             if (individual.getMobileNumber() != null) {
                 mobileNumber.add(individual.getMobileNumber());
             }
@@ -764,7 +943,6 @@ public class TaskService {
     }
 
 
-
     private CourtCase getCourtCase(TaskRequest taskRequest) {
         List<CourtCase> caseDetails = caseUtil.getCaseDetails(taskRequest);
         if (caseDetails.isEmpty()) {
@@ -776,6 +954,7 @@ public class TaskService {
     private JsonNode getTaskDetails(TaskRequest taskRequest) {
         return objectMapper.convertValue(taskRequest.getTask().getTaskDetails(), JsonNode.class);
     }
+
     private JsonNode updateGeoLocationInAddress(JsonNode additionalDetails, String addressDetailId, JsonNode geoLocation, String formDataPath) {
         if (geoLocation != null && geoLocation.isObject()) {
             ((ObjectNode) geoLocation).putNull("latitude");
@@ -806,7 +985,7 @@ public class TaskService {
         return additionalDetails;
     }
 
-    public List<TaskToSign> createTasksToSignRequest(TasksToSignRequest request){
+    public List<TaskToSign> createTasksToSignRequest(TasksToSignRequest request) {
         log.info("Method=createTasksToSignRequest, result= IN_PROGRESS, tasksCriteria:{}", request.getCriteria().size());
 
         List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
@@ -913,7 +1092,7 @@ public class TaskService {
         return attribute;
     }
 
-    public List<Task> updateTaskWithSignedDoc(@Valid UpdateSignedTaskRequest request){
+    public List<Task> updateTaskWithSignedDoc(@Valid UpdateSignedTaskRequest request) {
 
         log.info("Method=updateTaskWithSignedDoc, result= IN_PROGRESS, signedTasks:{}", request.getSignedTasks().size());
         List<Task> updatedTasks = new ArrayList<>();
@@ -952,7 +1131,7 @@ public class TaskService {
                         }
                     }
 
-                    if(isTaskSigned){
+                    if (isTaskSigned) {
                         log.warn("Skipping task {} which has already been signed", task.getTaskNumber());
                         continue;
                     }
@@ -995,7 +1174,8 @@ public class TaskService {
         // Convert Object → Map
         Map<String, Object> taskDetails = objectMapper.convertValue(
                 task.getTaskDetails(),
-                new TypeReference<Map<String, Object>>() {}
+                new TypeReference<Map<String, Object>>() {
+                }
         );
 
         // Navigate to deliveryChannels
@@ -1023,7 +1203,7 @@ public class TaskService {
                 task.setWorkflow(workflowObject);
                 updateTask(TaskRequest.builder().task(task).requestInfo(bulkSendRequest.getRequestInfo()).build());
 
-            }catch (Exception e) {
+            } catch (Exception e) {
                 bulkSendTask.setErrorMessage(e.getMessage());
                 bulkSendTask.setSuccess(false);
             }
@@ -1041,6 +1221,7 @@ public class TaskService {
 
     /**
      * Process task details request containing taskDetails, taskNumber and uniqueId
+     *
      * @param request TaskDetailsRequest containing RequestInfo and TaskDetailsDTO
      * @return processed TaskDetailsDTO
      */
@@ -1049,52 +1230,52 @@ public class TaskService {
             TaskDetailsDTO taskDetailsDTO = request.getTaskDetailsDTO();
             String taskNumber = taskDetailsDTO.getTaskNumber();
             String uniqueId = taskDetailsDTO.getUniqueId();
-            
+
             log.info("Processing task details for taskNumber: {} and uniqueId: {}", taskNumber, uniqueId);
-            
+
             // Search for the task using taskNumber
             TaskSearchRequest searchRequest = new TaskSearchRequest();
             searchRequest.setCriteria(TaskCriteria.builder()
                     .taskNumber(taskNumber)
                     .build());
             searchRequest.setRequestInfo(request.getRequestInfo());
-            
+
             List<Task> tasks = searchTask(searchRequest);
-            
+
             if (tasks == null || tasks.isEmpty()) {
                 log.error("No task found with taskNumber: {}", taskNumber);
-                throw new CustomException(TASK_NOT_FOUND, 
+                throw new CustomException(TASK_NOT_FOUND,
                         "No task found with taskNumber: " + taskNumber);
             }
-            
+
             Task task = tasks.get(0);
             Object taskDetails = task.getTaskDetails();
             taskDetailsDTO.setAuditDetails(task.getAuditDetails());
 
             taskDetailsDTO.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
             taskDetailsDTO.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
-            
+
             // Log the taskDetails
             log.info("Task details before update for task number : {} , {}", taskNumber, objectMapper.writeValueAsString(taskDetails));
-            
+
             // Create a request to push to Kafka topic
             TaskDetailsRequest kafkaRequest = TaskDetailsRequest.builder()
                     .requestInfo(request.getRequestInfo())
                     .taskDetailsDTO(taskDetailsDTO)
                     .build();
-            
+
             producer.push(config.getTaskUpdateUniqueIdTopic(), kafkaRequest);
 
             log.info("Task details after update for task number : {} , {}", taskNumber, objectMapper.writeValueAsString(taskDetailsDTO.getTaskDetails()));
-            
+
             return taskDetailsDTO;
-            
+
         } catch (CustomException e) {
             log.error("Custom exception while processing task details", e);
             throw e;
         } catch (Exception e) {
             log.error("Error processing task details", e);
-            throw new CustomException("TASK_DETAILS_PROCESSING_ERROR", 
+            throw new CustomException("TASK_DETAILS_PROCESSING_ERROR",
                     "Error processing task details: " + e.getMessage());
         }
     }
