@@ -353,7 +353,7 @@ public class UserTest {
         assertNull(user.getPassword());
         assertNull(user.getPasswordExpiryDate());
         assertNull(user.getRoles());
-        assertNull(user.getActive());
+        assertNotNull(user.getActive());
     }
 
     @Test
