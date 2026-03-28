@@ -15,6 +15,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -40,6 +43,9 @@ public class EgovUserApplication implements WebMvcConfigurer {
 
     @Value("${app.timezone}")
     private String timeZone;
+
+    @Value("${spring.redis.host}")
+    private String redisHost;
 
 
     @PostConstruct
@@ -81,6 +87,14 @@ public class EgovUserApplication implements WebMvcConfigurer {
     public StringRedisTemplate stringRedisTemplate(
             org.springframework.data.redis.connection.RedisConnectionFactory connectionFactory) {
         return new StringRedisTemplate(connectionFactory);
+    }
+
+    @Bean
+    public RedisConnectionFactory redisConnectionFactory() {
+        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
+        log.info("setting redis host : {}", redisHost);
+        redisStandaloneConfiguration.setHostName(redisHost);
+        return new JedisConnectionFactory(redisStandaloneConfiguration);
     }
 
     public static void main(String[] args) {
