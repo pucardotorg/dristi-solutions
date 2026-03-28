@@ -196,7 +196,8 @@ public class PleaDocumentService implements DocumentTypeService {
 
         SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                 .tenantId(request.getDigitalizedDocument().getTenantId())
-                .caseNumber(courtCaseNumber==null?cmpNumber:courtCaseNumber)
+                .cmpNumber(cmpNumber)
+                .courtCaseNumber(courtCaseNumber)
                 .courtCaseNumber(courtCaseNumber)
                 .build();
 
