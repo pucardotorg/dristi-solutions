@@ -44,6 +44,7 @@ public class CaseFeeCalculationService {
 
         LinkedHashMap<String, HashMap<String, Integer>> noOfAdvocateFees = eFillingDefaultData.getNoOfAdvocateFees();
         Map<String, Range> complaintFeeRange = eFillingDefaultData.getComplaintFee();
+        LinkedHashMap<String, HashMap<String, Integer>> stipendStampRange = eFillingDefaultData.getStipendStamp();
 
 
         List<Calculation> result = new ArrayList<>();
@@ -55,14 +56,24 @@ public class CaseFeeCalculationService {
 
             Map<String, List<JsonNode>> litigantAdvocateMap = caseUtil.getAdvocateForLitigant(request.getRequestInfo(), criteria.getFilingNumber(), criteria.getTenantId());
             Double advocateFee = 0.0;
+            Double stipendStamp = 0.0;
 
-            Double calculatedCourtFee =  courtFee;
-            Double calculatedLegalBasicFund = legalBasicFund;
-            Double calculatedAdvocateClerkWelfareFund = advocateClerkWelfareFund;
+            // Check if at least one advocate is present
+            boolean hasAdvocate = litigantAdvocateMap != null && !litigantAdvocateMap.isEmpty() && litigantAdvocateMap.values().stream()
+                    .anyMatch(list -> !list.isEmpty());
+            log.info("caseId={}, litigantAdvocateMap size={}, hasAdvocate={}", criteria.getCaseId(), 
+                    litigantAdvocateMap != null ? litigantAdvocateMap.size() : "null", hasAdvocate);
 
-            for (Map.Entry<String, List<JsonNode>> entry : litigantAdvocateMap.entrySet()) {
-                int advocateCount = entry.getValue().size();
-                advocateFee += getAdvocateFee(noOfAdvocateFees, advocateCount);
+            Double calculatedCourtFee = hasAdvocate ? courtFee : 0.0;
+            Double calculatedLegalBasicFund = hasAdvocate ? legalBasicFund : 0.0;
+            Double calculatedAdvocateClerkWelfareFund = hasAdvocate ? advocateClerkWelfareFund : 0.0;
+
+            if (litigantAdvocateMap != null) {
+                for (Map.Entry<String, List<JsonNode>> entry : litigantAdvocateMap.entrySet()) {
+                    int advocateCount = entry.getValue().size();
+                    advocateFee += getAdvocateFee(noOfAdvocateFees, advocateCount);
+                    stipendStamp += getStipendStamp(stipendStampRange, advocateCount);
+                }
             }
 
             calculatedCourtFee = Math.ceil(calculatedCourtFee);
@@ -71,11 +82,12 @@ public class CaseFeeCalculationService {
             complaintFee = Math.ceil(complaintFee);
             delayFee = Math.ceil(delayFee);
             advocateFee = Math.ceil(advocateFee);
+            stipendStamp = Math.ceil(stipendStamp);
 
-            log.info("complaintFee={}, courtFee={}, legalBasicFund={}, advocateClerkWelfareFund={}, delayFee={}, advocateFee={}", complaintFee, calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, delayFee, advocateFee);
+            log.info("complaintFee={}, courtFee={}, legalBasicFund={}, advocateClerkWelfareFund={}, delayFee={}, advocateFee={}, stipendStamp={}", complaintFee, calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, delayFee, advocateFee, stipendStamp);
 
-            List<BreakDown> feeBreakdown = getFeeBreakdown(calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, complaintFee, delayFee, advocateFee);
-            Double totalCourtFee = calculatedCourtFee + calculatedLegalBasicFund + calculatedAdvocateClerkWelfareFund + complaintFee + delayFee + advocateFee;
+            List<BreakDown> feeBreakdown = getFeeBreakdown(calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, complaintFee, delayFee, advocateFee, stipendStamp);
+            Double totalCourtFee = calculatedCourtFee + calculatedLegalBasicFund + calculatedAdvocateClerkWelfareFund + complaintFee + delayFee + advocateFee + stipendStamp;
 
             Calculation calculation = Calculation.builder()
                     .applicationId(criteria.getCaseId())
@@ -92,7 +104,7 @@ public class CaseFeeCalculationService {
     }
 
 
-    public List<BreakDown> getFeeBreakdown(double courtFee, double legalBasicFund, double advocateClerkWelfareFund, double complaintFee, double condonationFee, double advocateFee) {
+    public List<BreakDown> getFeeBreakdown(double courtFee, double legalBasicFund, double advocateClerkWelfareFund, double complaintFee, double condonationFee, double advocateFee, double stipendStamp) {
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
         addBreakdownIfPositive(feeBreakdowns, COURT_FEE, "COURT_FEE", courtFee);
@@ -101,6 +113,7 @@ public class CaseFeeCalculationService {
         addBreakdownIfPositive(feeBreakdowns, COMPLAINT_FEE, "COMPLAINT_FEE", complaintFee);
         addBreakdownIfPositive(feeBreakdowns, ADVOCATE_FEE, "ADVOCATE_WELFARE_FUND", advocateFee);
         addBreakdownIfPositive(feeBreakdowns, DELAY_CONDONATION_FEE, "DELAY_CONDONATION_FEE", condonationFee);
+        addBreakdownIfPositive(feeBreakdowns, STIPEND_STAMP, "STIPEND_STAMP", stipendStamp);
 
         return feeBreakdowns;
     }
@@ -139,6 +152,21 @@ public class CaseFeeCalculationService {
             }
         }
         return advocateFee;
+    }
+
+    private Double getStipendStamp(LinkedHashMap<String, HashMap<String, Integer>> stipendStampRange, int noOfAdvocates) {
+        Double stipendStamp = 0.0;
+        for (Map.Entry<String, HashMap<String, Integer>> entry : stipendStampRange.entrySet()) {
+            HashMap<String, Integer> value = entry.getValue();
+            Double lowerBound = Double.valueOf(value.get("min"));
+            Double upperBound = Double.valueOf(value.get("max"));
+
+            if (noOfAdvocates >= lowerBound && noOfAdvocates <= upperBound) {
+                stipendStamp = Double.valueOf(value.get("fee"));
+                break;
+            }
+        }
+        return stipendStamp;
     }
 
     public List<Calculation> calculateJoinCaseFees(@Valid JoinCasePaymentRequest request) {

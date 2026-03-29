@@ -46,4 +46,7 @@ public class EFilingParam {
     @JsonProperty("noOfAdvocateFees")
     private LinkedHashMap<String, HashMap<String, Integer>> noOfAdvocateFees;
 
+    @JsonProperty("stipendStamp")
+    private LinkedHashMap<String, HashMap<String, Integer>> stipendStamp;
+
 }
