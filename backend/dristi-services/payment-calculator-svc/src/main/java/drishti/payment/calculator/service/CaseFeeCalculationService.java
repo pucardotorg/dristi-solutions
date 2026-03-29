@@ -59,17 +59,21 @@ public class CaseFeeCalculationService {
             Double stipendStamp = 0.0;
 
             // Check if at least one advocate is present
-            boolean hasAdvocate = litigantAdvocateMap.values().stream()
+            boolean hasAdvocate = litigantAdvocateMap != null && !litigantAdvocateMap.isEmpty() && litigantAdvocateMap.values().stream()
                     .anyMatch(list -> !list.isEmpty());
+            log.info("caseId={}, litigantAdvocateMap size={}, hasAdvocate={}", criteria.getCaseId(), 
+                    litigantAdvocateMap != null ? litigantAdvocateMap.size() : "null", hasAdvocate);
 
             Double calculatedCourtFee = hasAdvocate ? courtFee : 0.0;
             Double calculatedLegalBasicFund = hasAdvocate ? legalBasicFund : 0.0;
             Double calculatedAdvocateClerkWelfareFund = hasAdvocate ? advocateClerkWelfareFund : 0.0;
 
-            for (Map.Entry<String, List<JsonNode>> entry : litigantAdvocateMap.entrySet()) {
-                int advocateCount = entry.getValue().size();
-                advocateFee += getAdvocateFee(noOfAdvocateFees, advocateCount);
-                stipendStamp += getStipendStamp(stipendStampRange, advocateCount);
+            if (litigantAdvocateMap != null) {
+                for (Map.Entry<String, List<JsonNode>> entry : litigantAdvocateMap.entrySet()) {
+                    int advocateCount = entry.getValue().size();
+                    advocateFee += getAdvocateFee(noOfAdvocateFees, advocateCount);
+                    stipendStamp += getStipendStamp(stipendStampRange, advocateCount);
+                }
             }
 
             calculatedCourtFee = Math.ceil(calculatedCourtFee);
