@@ -1,16 +1,27 @@
-import { Button, CloseSvg, FormComposerV2, Modal } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useRef, useState } from "react";
+import { Button, CloseSvg, FormComposerV2, Modal, Loader } from "@egovernments/digit-ui-react-components";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import addPartyConfig from "../../configs/AddNewPartyConfig.js";
 import { useTranslation } from "react-i18next";
 import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote.js";
 import { Urls } from "../../hooks/services/Urls.js";
 
-const AddParty = ({ onCancel, onAddSuccess, caseData, tenantId, hearing, refetchHearing }) => {
+const AddParty = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearing, refetchHearing }) => {
   const { t } = useTranslation();
   const DRISTIService = Digit?.ComponentRegistryService?.getComponent("DRISTIService");
   const [formConfigs, setFormConfigs] = useState([addPartyConfig(1)]);
   const [aFormData, setFormData] = useState([{}]);
   const setFormErrors = useRef([]);
+  const [isPartyAdding, setIsPartyAdding] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [previewData, setPreviewData] = useState([]);
+  const fieldLabelMap = {
+    partyType: "Party Type",
+    partyName: "Party Name",
+    phoneNumber: "Phone Number",
+    emailId: "Email ID",
+    address: "Address",
+    additionalDetails: "Additional Details",
+  };
 
   const { mutateAsync: updateAttendees } = Digit.Hooks.useCustomAPIMutationHook({
     url: Urls.hearing.hearingUpdateTranscript,
@@ -28,6 +39,17 @@ const AddParty = ({ onCancel, onAddSuccess, caseData, tenantId, hearing, refetch
       </div>
     );
   };
+
+  // check if labelchildren is optional then change it to span with color #77787B
+  useMemo(() => {
+    formConfigs.forEach((config) => {
+      config.body.forEach((body) => {
+        if (body.labelChildren === "optional") {
+          body.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
+        }
+      });
+    });
+  }, [formConfigs, t]);
 
   const handleAddParty = () => {
     const newConfig = addPartyConfig(formConfigs.length + 1);
@@ -48,8 +70,14 @@ const AddParty = ({ onCancel, onAddSuccess, caseData, tenantId, hearing, refetch
     const errors = {};
     if (!data["partyName" + index] || !/^[a-zA-Z\s]+$/.test(data["partyName" + index])) errors["partyName" + index] = "Party name is required";
     if (!data["partyType" + index]) errors["partyType" + index] = "Party type is required";
-    if (!data["phoneNumber" + index] || !/^\d{10}$/.test(data["phoneNumber" + index])) errors["phoneNumber" + index] = "Phone number is invalid";
-    if (!data["emailId" + index] || !/\S+@\S+\.\S+/.test(data["emailId" + index])) errors["emailId" + index] = "Email is invalid";
+    const phone = data["phoneNumber" + index];
+    if (phone && !/^\d{10}$/.test(phone)) {
+      errors["phoneNumber" + index] = "Phone number is invalid";
+    }
+    const email = data["emailId" + index];
+    if (email && !/\S+@\S+\.\S+/.test(email)) {
+      errors["emailId" + index] = "Email is invalid";
+    }
     if (!data["address" + index]) errors["address" + index] = "Address is required";
     return errors;
   };
@@ -57,38 +85,61 @@ const AddParty = ({ onCancel, onAddSuccess, caseData, tenantId, hearing, refetch
   const handleSubmit = (e) => {
     e?.stopPropagation();
     e?.preventDefault();
-    const cleanedData = aFormData
-      .map(({ data }, index) => {
-        const newData = {};
-        Object.keys(data).forEach((key) => {
-          const newKey = key.replace(/\d+$/, "");
-          if (newKey === "partyType") {
-            newData[newKey] = data[key].name;
-          } else {
-            newData[newKey] = data[key];
-          }
-        });
-        newData.uuid = generateUUID();
-        const errors = validateFormData(data, index + 1);
-        if (Object.keys(errors).length > 0) {
-          Object.entries(errors).forEach(([errorKey, value]) => {
-            setFormErrors.current[index](errorKey, value);
-          });
-          return null;
-        }
-        return newData;
-      })
-      .filter(Boolean);
 
-    if (cleanedData.length === aFormData.length) {
-      onAdd(cleanedData)
-        .catch(console.error)
-        .then(() => {
-          onAddSuccess();
-          onCancel();
+    let hasErrors = false;
+
+    aFormData.forEach(({ data }, index) => {
+      const errors = validateFormData(data, index + 1);
+      if (Object.keys(errors).length > 0) {
+        hasErrors = true;
+        Object.entries(errors).forEach(([errorKey, value]) => {
+          setFormErrors.current[index](errorKey, value);
         });
-    }
+      }
+    });
+
+    if (hasErrors) return;
+
+    const collectedData = aFormData.map(({ data }) => {
+      const entry = {};
+      Object.entries(data).forEach(([key, value]) => {
+        entry[key] = typeof value === "object" && value?.name ? value.name : value;
+      });
+      return entry;
+    });
+
+    setPreviewData(collectedData);
+    setShowConfirmModal(true);
   };
+
+  const confirmAndSubmit = (e) => {
+    setIsPartyAdding(true);
+    e?.stopPropagation();
+    e?.preventDefault();
+
+    const cleanedData = aFormData.map(({ data }) => {
+      const newData = {};
+      Object.keys(data).forEach((key) => {
+        const newKey = key.replace(/\d+$/, "");
+        if (newKey === "partyType") {
+          newData[newKey] = data[key].name;
+        } else {
+          newData[newKey] = data[key];
+        }
+      });
+      newData.uuid = generateUUID();
+      return newData;
+    });
+    setIsPartyAdding(false);
+    onAdd(cleanedData)
+      .catch(console.error)
+      .then(() => {
+        onAddSuccess();
+        onCancel();
+        setShowConfirmModal(false);
+      });
+  };
+
   const generateUUID = () => {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
       const r = (Math.random() * 16) | 0;
@@ -118,9 +169,6 @@ const AddParty = ({ onCancel, onAddSuccess, caseData, tenantId, hearing, refetch
       };
     });
 
-    const caseDetails = {
-      ...caseData?.criteria?.[0]?.responseList?.[0],
-    };
     const witnessDetails = caseDetails.additionalDetails?.witnessDetails
       ? [...caseDetails.additionalDetails?.witnessDetails?.formdata, ...newWitnesses]
       : [...newWitnesses];
@@ -168,115 +216,160 @@ const AddParty = ({ onCancel, onAddSuccess, caseData, tenantId, hearing, refetch
   );
 
   return (
-    <Modal
-      popupStyles={{
-        width: "60%",
-        minWidth: "600px",
-        position: "absolute",
-        height: "calc(100% - 100px)",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        justify: "space-between",
-      }}
-      popupModuleMianStyles={{
-        padding: 0,
-        margin: "0px",
-        height: "calc(100% - 100px)",
-        overflowY: "auto",
-      }}
-      headerBarMain={<h1 className="heading-m">{t("ADD_NEW_PARTY")}</h1>}
-      headerBarEnd={<CloseBtn onClick={onCancel} />}
-      // actionCancelLabel={t("HEARING_BACK")}
-      // actionCancelOnSubmit={onCancel}
-      actionSaveLabel={t("HEARING_ADD")}
-      actionSaveOnSubmit={handleSubmit}
-    >
-      <div style={{ padding: "16px 0px 24px 0px" }}>
-        <SelectCustomNote
-          config={{
-            populators: {
-              inputs: [
-                {
-                  infoHeader: "CS_PLEASE_COMMON_NOTE",
-                  infoText: "NEW_PARTY_NOTE",
-                  infoTooltipMessage: "NEW_PARTY_NOTE",
-                  type: "InfoComponent",
-                },
-              ],
-            },
-          }}
-          t={t}
-        />
-      </div>
-      <div className="add-party">
-        {formConfigs.map((config, index) => (
-          <FormComposerV2
-            key={index}
-            config={[config]}
-            onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-              onFormValueChange(formData, index);
-              if (!setFormErrors.current.hasOwnProperty(index)) {
-                setFormErrors.current[index] = setError;
-              }
-              if (JSON.stringify(formData) !== JSON.stringify(aFormData[index].data)) {
-                if (formData && Object.keys(formData).length !== 0) {
-                  const errors = validateFormData(formData, index + 1);
-                  for (const key of Object.keys(formData)) {
-                    if (formData[key] && !errors.hasOwnProperty(key)) {
-                      clearErrors(key);
+    <React.Fragment>
+      <Modal
+        popupStyles={{
+          width: "60%",
+          minWidth: "600px",
+          position: "absolute",
+          height: "calc(100% - 100px)",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          justify: "space-between",
+        }}
+        popupModuleMianStyles={{
+          padding: 0,
+          margin: "0px",
+          height: "calc(100% - 100px)",
+          overflowY: "auto",
+        }}
+        headerBarMain={<h1 className="heading-m">{t("ADD_NEW_PARTY")}</h1>}
+        headerBarEnd={<CloseBtn onClick={onCancel} />}
+        // actionCancelLabel={t("HEARING_BACK")}
+        // actionCancelOnSubmit={onCancel}
+        actionSaveLabel={t("HEARING_ADD")}
+        actionSaveOnSubmit={handleSubmit}
+      >
+        <div style={{ padding: "16px 0px 24px 0px" }}>
+          <SelectCustomNote
+            config={{
+              populators: {
+                inputs: [
+                  {
+                    infoHeader: "CS_PLEASE_COMMON_NOTE",
+                    infoText: "NEW_PARTY_NOTE",
+                    infoTooltipMessage: "NEW_PARTY_NOTE",
+                    type: "InfoComponent",
+                  },
+                ],
+              },
+            }}
+            t={t}
+          />
+        </div>
+        <div className="add-party">
+          {formConfigs.map((config, index) => (
+            <FormComposerV2
+              key={index}
+              config={[config]}
+              onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+                onFormValueChange(formData, index);
+                if (!setFormErrors.current.hasOwnProperty(index)) {
+                  setFormErrors.current[index] = setError;
+                }
+                if (JSON.stringify(formData) !== JSON.stringify(aFormData[index].data)) {
+                  if (formData && Object.keys(formData).length !== 0) {
+                    const errors = validateFormData(formData, index + 1);
+                    for (const key of Object.keys(formData)) {
+                      if (formData[key] && !errors.hasOwnProperty(key)) {
+                        clearErrors(key);
+                      }
                     }
                   }
                 }
-              }
+              }}
+              fieldStyle={{ width: "100%" }}
+            />
+          ))}
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3rem" }}>
+          <Button
+            onButtonClick={handleAddParty}
+            label={t("ADD_PARTY")}
+            style={{
+              border: "none",
+              boxShadow: "none",
+              marginTop: "10px",
+              borderColor: "#007E7E",
+              width: "28%",
+              backgroundColor: "#fff",
             }}
-            fieldStyle={{ width: "100%" }}
+            textStyles={{
+              fontFamily: "Roboto",
+              fontSize: "16px",
+              fontWeight: 700,
+              lineHeight: "18.75px",
+              textAlign: "start",
+              color: "#007E7E",
+            }}
           />
-        ))}
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3rem" }}>
-        <Button
-          onButtonClick={handleAddParty}
-          label={t("ADD_PARTY")}
-          style={{
-            border: "none",
-            boxShadow: "none",
-            marginTop: "10px",
-            borderColor: "#007E7E",
-            width: "28%",
-            backgroundColor: "#fff",
-          }}
-          textStyles={{
-            fontFamily: "Roboto",
-            fontSize: "16px",
-            fontWeight: 700,
-            lineHeight: "18.75px",
-            textAlign: "start",
-            color: "#007E7E",
-          }}
-        />
-        <Button
-          onButtonClick={handleRemoveParty}
-          label={t("REMOVE_PARTY")}
-          style={{
-            border: "none",
-            boxShadow: "none",
-            marginTop: "10px",
-            borderColor: "#007E7E",
-            width: "28%",
-            backgroundColor: "#fff",
-          }}
-          textStyles={{
-            fontFamily: "Roboto",
-            fontSize: "16px",
-            fontWeight: 700,
-            lineHeight: "18.75px",
-            textAlign: "end",
-            color: "#007E7E",
-          }}
-        />
-      </div>
-    </Modal>
+          <Button
+            onButtonClick={handleRemoveParty}
+            label={t("REMOVE_PARTY")}
+            style={{
+              border: "none",
+              boxShadow: "none",
+              marginTop: "10px",
+              borderColor: "#007E7E",
+              width: "28%",
+              backgroundColor: "#fff",
+            }}
+            textStyles={{
+              fontFamily: "Roboto",
+              fontSize: "16px",
+              fontWeight: 700,
+              lineHeight: "18.75px",
+              textAlign: "end",
+              color: "#007E7E",
+            }}
+          />
+        </div>
+      </Modal>
+      {showConfirmModal && (
+        <Modal
+          popupStyles={{ width: "50%", padding: "10px" }}
+          headerBarMain={<h1>{t("CONFIRM_PARTY_DETAIL")}</h1>}
+          actionSaveLabel={t("CS_CONFIRM_DETAILS")}
+          actionCancelLabel={t("CS_BACK")}
+          actionSaveOnSubmit={confirmAndSubmit}
+          actionCancelOnSubmit={() => setShowConfirmModal(false)}
+        >
+          {isPartyAdding ? (
+            <Loader />
+          ) : (
+            <div style={{ padding: "1rem" }}>
+              {previewData.map((data, index) => (
+                <div key={index} style={{ marginBottom: "1rem", borderBottom: "1px solid #ccc" }}>
+                  <h1 style={{ fontSize: "25px" }}>
+                    {t("PARTY")} {index + 1}
+                  </h1>
+                  <ul>
+                    {Object.entries(data).map(([key, value]) => {
+                      const cleanedKey = key.replace(/\d+$/, "");
+                      const label = fieldLabelMap[cleanedKey] || key;
+                      let displayValue = value;
+                      if (value && typeof value === "object") {
+                        if ("text" in value) {
+                          displayValue = value.text;
+                        } else {
+                          displayValue = JSON.stringify(value);
+                        }
+                      }
+                      return (
+                        <li key={key} style={{ marginBottom: "8px" }}>
+                          <strong>{t(label)}:</strong> {displayValue || "-"}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </Modal>
+      )}
+    </React.Fragment>
   );
 };
 

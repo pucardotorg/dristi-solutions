@@ -27,10 +27,6 @@ const ViewHearing = () => {
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const handleNavigate = (path) => {
-    const contextPath = window?.contextPath || ''; // Adjust as per your context path logic
-    history.push(`/${contextPath}${path}`);
-  };
 
   const dropdownItems = [
     { label: 'View Case', path: '/employee/hearings/view-case' },
@@ -53,7 +49,7 @@ const ViewHearing = () => {
       'fromDate': epochFromDateTime,
       'toDate': epochToDateTime
     }
-    downloadHearingsAsPDF({t, params})
+    downloadHearingsAsPDF({ t, params })
   }
 
   useEffect(() => {
@@ -64,16 +60,16 @@ const ViewHearing = () => {
   return (
     // <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
     <React.Fragment>
-      <Header >{t(indConfigs?.label)}</Header> 
+      <Header >{t(indConfigs?.label)}</Header>
       <div className="inbox-search-wrapper">
         {/* Pass defaultValues as props to InboxSearchComposer */}
         <InboxSearchComposer configs={indConfigs} defaultValues={defaultValues}></InboxSearchComposer>
       </div>
       // TODO: Create a button and call downloadHearing()
     </React.Fragment>
-  // </div>
-  
-    
+    // </div>
+
+
   );
 };
 export default ViewHearing;

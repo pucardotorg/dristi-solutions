@@ -98,26 +98,11 @@ function WitnessDetails() {
     }
   };
 
-  // const handleMobileChange = (event) => {
-  //   const { value } = event.target;
-  //   setParmas({ ...params, mobileNumber: value });
-  //   const temp = params?.mobileNumbers || [];
-  //   if (value.length !== 10 && canAdd) {
-  //     setCanAdd(false);
-  //   }
-  //   if (value.length === 10 && !temp.includes(value)) {
-  //     setCanAdd(true);
-  //   }
-  // };
 
-  // const handleAddMobileNumber = (mobileNumber) => {
-  //   const temp = params?.mobileNumbers || [];
-  //   setParmas({ ...params, mobileNumbers: [...temp, mobileNumber], mobileNumber: "" });
-  // };
 
-  // const handleDeleteMobileNumber = (mobileNumber) => {
-  //   setParmas({ ...params, mobileNumbers: params?.mobileNumbers.filter((mobile) => mobile !== mobileNumber) });
-  // };
+
+
+
 
   return (
     <div>

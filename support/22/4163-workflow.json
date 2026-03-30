@@ -1,0 +1,82 @@
+[
+  {
+    "BusinessServices": [
+      {
+        "tenantId": "kl",
+        "businessService": "task-generic",
+        "business": "task",
+        "businessServiceSla": null,
+        "states": [
+          {
+            "sla": null,
+            "state": null,
+            "applicationStatus": null,
+            "docUploadRequired": true,
+            "isStartState": true,
+            "isTerminateState": false,
+            "isStateUpdatable": true,
+            "actions": [
+              {
+                "action": "CREATE",
+                "nextState": "PENDING_PAYMENT",
+                "roles": [
+                  "TASK_CREATOR",
+                  "PENDING_TASK_CREATOR",
+                  "SYSTEM",
+                  "SYSTEM_ADMIN"
+                ]
+              }
+            ]
+          },
+          {
+            "sla": null,
+            "state": "PENDING_PAYMENT",
+            "applicationStatus": "INWORKFLOW",
+            "docUploadRequired": false,
+            "isStartState": false,
+            "isTerminateState": false,
+            "isStateUpdatable": true,
+            "actions": [
+              {
+                "action": "MAKE_PAYMENT",
+                "nextState": "COMPLETED",
+                "roles": [
+                  "CITIZEN",
+                  "TASK_CREATOR",
+                  "SYSTEM",
+                  "SYSTEM_ADMIN"
+                ]
+              },
+              {
+                "action": "REJECT",
+                "nextState": "REJECTED",
+                "roles": [
+                  "SYSTEM",
+                  "SYSTEM_ADMIN"
+                ]
+              }
+            ]
+          },
+          {
+            "sla": null,
+            "state": "COMPLETED",
+            "applicationStatus": "ACTIVE",
+            "isStateUpdatable": false,
+            "docUploadRequired": false,
+            "isStartState": false,
+            "isTerminateState": true
+          },
+          {
+            "sla": null,
+            "state": "REJECTED",
+            "applicationStatus": "INACTIVE",
+            "isStateUpdatable": false,
+            "docUploadRequired": false,
+            "isStartState": false,
+            "isTerminateState": true
+          }
+        ]
+      }
+    ]
+  }
+]

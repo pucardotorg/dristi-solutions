@@ -8,8 +8,8 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
-import { formatDate } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const CloseBtn = (props) => {
   return (
@@ -40,12 +40,14 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
   const [isApiCalled, setIsApiCalled] = useState(false);
 
   const [{ modalType, isOpen }, setConfirmModal] = useState({ modalType: null, isOpen: false });
+  const courtId = localStorage.getItem("courtId");
 
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
           filingNumber: filingNumber,
+          ...(courtId && !isCitizen && { courtId }),
         },
       ],
       tenantId,
@@ -56,16 +58,24 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
     Boolean(filingNumber)
   );
 
+  const caseDetails = useMemo(
+    () => ({
+      ...caseData?.criteria?.[0]?.responseList?.[0],
+    }),
+    [caseData]
+  );
+
   const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
     {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
+        ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
       },
     },
     {},
     taskNumber,
-    Boolean(taskNumber)
+    Boolean(taskNumber && caseDetails?.courtId)
   );
 
   const task = useMemo(() => tasksData?.list?.[0], [tasksData]);
@@ -116,14 +126,9 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
     [task, tenantId, setPendingTaskActionModals, toast, t, refetch]
   );
 
-  const caseDetails = useMemo(
-    () => ({
-      ...caseData?.criteria?.[0]?.responseList?.[0],
-    }),
-    [caseData]
-  );
-
   const replaceAdvocateOrderCreate = async (type) => {
+    const taskDetails = task?.taskDetails;
+    const { firstName, middleName, lastName } = taskDetails?.advocateDetails?.individualDetails || {};
     const formdata = {
       orderType: {
         code: "ADVOCATE_REPLACEMENT_APPROVAL",
@@ -162,6 +167,11 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
         },
         documents: [],
         additionalDetails: additionalDetails,
+        orderDetails: {
+          advocateName: getFullName(" ", firstName, middleName, lastName),
+          applicationStatus: type === "reject" ? "REJECT" : type === "approve" ? "GRANT" : null,
+          action: type === "reject" ? "rejected" : type === "approve" ? "accepted" : null,
+        },
       },
     };
     setIsApiCalled(true);
@@ -169,12 +179,13 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
       const res = await ordersService.createOrder(reqbody, { tenantId });
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
+          actionCategory: "View Application",
           name: t("ADVOCATE_REPLACEMENT_APPROVAL"),
           entityType: "order-default",
           referenceId: `MANUAL_${res?.order?.orderNumber}`,
           status: "DRAFT_IN_PROGRESS",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["PENDING_TASK_ORDER"],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: filingNumber,
           caseId: caseDetails?.id,
@@ -185,7 +196,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
           tenantId,
         },
       });
-      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+      history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
     } catch (error) {
       console.error("error", error);
     } finally {
@@ -202,7 +213,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
         { label: "ADVOCATE_NAME", value: getFullName(" ", firstName, middleName, lastName) },
         { label: "BAR_REGISTRATION_NO", value: taskDetails?.advocateDetails?.barRegistrationNumber },
         { label: "MOBILE_NUMBER", value: taskDetails?.advocateDetails?.mobileNumber },
-        { label: "REQUEST_DATE", value: formatDate(new Date(taskDetails?.advocateDetails?.requestedDate)) },
+        { label: "REQUEST_DATE", value: DateUtils.getFormattedDate(new Date(taskDetails?.advocateDetails?.requestedDate)) },
       ],
       vakalatnama: {
         label: "VAKALATNAMA",

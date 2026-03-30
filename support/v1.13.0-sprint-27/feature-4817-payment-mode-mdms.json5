@@ -1,0 +1,16 @@
+// TODO : need to add this new entry , can be added through work bench
+{
+  "tenantId": "kl",
+  "schemaCode": "payment.paymentMode",
+  "uniqueIdentifier": "17",
+  "data": {
+    "id": 17,
+    "suffix": "TASK_COURT_POST_PROCESS",
+    "gateway": "eTreasury",
+    "paymentMode": [
+      "ONLINE",
+      "OFFLINE"
+    ]
+  },
+  "isActive": true
+}

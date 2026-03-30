@@ -1,0 +1,212 @@
+[
+  {
+    "tenantId": "kl",
+    "schemaCode": "case.CaseOverallStatusType",
+    "uniqueIdentifier": "20",
+    "data": {
+      "id": "20",
+      "stage": "Long Pending Register",
+      "state": "published",
+      "action": "E-SIGN",
+      // TODO : need to update the priority
+      "priority": 0,
+      "substage": "Long Pending Register",
+      // TODO : need to update the entity type
+      "entityType": "ORDER",
+      "processHandler": "UPDATE_BACKUP",
+      "typeIdentifier": "MOVE_CASE_TO_LONG_PENDING_REGISTER",
+      "workflowModule": "order-default"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "case.CaseOverallStatusType",
+    "uniqueIdentifier": "9",
+    "data": {
+      "id": "9",
+      "stage": "Post-Trial",
+      "state": "published",
+      "action": "",
+      // TODO : need to update the priority
+      "priority": 2,
+      "substage": "POST_JUDGEMENT",
+      // TODO : need to update the entity type
+      "entityType": "ORDER",
+      "typeIdentifier": "judgement",
+      "workflowModule": "order-default"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "case.CaseOverallStatusType",
+    "uniqueIdentifier": "17",
+    "data": {
+      "id": "17",
+      "stage": "Trial",
+      // TODO : need to update the state
+      "state": "published",
+      // TODO : need to update the action
+      "action": "E-SIGN",
+      // TODO : need to update the priority
+      "priority": 7,
+      "substage": "EVIDENCE",
+      // TODO : need to update the entity type
+      "entityType": "HEARING",
+      "typeIdentifier": "EVIDENCE_COMPLAINANT",
+      // TODO : need to update the workflow module
+      "workflowModule": "order-default",
+      // TODO : need to update the composite hearing path
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
+      // TODO : need to update the intermediate hearing path
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "case.CaseOverallStatusType",
+    "uniqueIdentifier": "4",
+    "data": {
+      "id": "4",
+      "stage": "Pre-Trial",
+      // TODO : need to update the state
+      "state": "published",
+      "action": "admit",
+      // TODO : need to update the priority
+      "priority": 8,
+      "substage": "APPEARANCE",
+      // TODO : need to update the entity type
+      "entityType": "ORDER",
+      // TODO : need to update the type identifier
+      "typeIdentifier": "TAKE_COGNIZANCE",
+      // TODO : need to update the workflow module
+      "workflowModule": "order-default"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "case.CaseOverallStatusType",
+    "uniqueIdentifier": "16",
+    "data": {
+      "id": "16",
+      "stage": "Trial",
+      // TODO : need to update the state
+      "state": "published",
+      // TODO : need to update the action
+      "action": "E-SIGN",
+      // TODO : need to update the priority
+      "priority": 6,
+      "substage": "EVIDENCE",
+      // TODO : need to update the entity type
+      "entityType": "HEARING",
+      "typeIdentifier": "EVIDENCE_ACCUSED",
+      // TODO : need to update the workflow module
+      "workflowModule": "order-default",
+      // TODO : need to update the composite hearing path
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
+      // TODO : need to update the intermediate hearing path
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "case.CaseOverallStatusType",
+    "uniqueIdentifier": "6",
+    "data": {
+      "id": "6",
+      "stage": "Trial",
+      // TODO : need to update the state
+      "state": "published",
+      // TODO : need to update the action
+      "action": "E-SIGN",
+      // TODO : need to update the priority
+      "priority": 5,
+      "substage": "EVIDENCE",
+      // TODO : need to update the entity type
+      "entityType": "HEARING",
+      "typeIdentifier": "evidence",
+      // TODO : need to update the workflow module
+      "workflowModule": "order-default",
+      // TODO : need to update the composite hearing path
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
+      // TODO : need to update the intermediate hearing path
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "case.CaseOverallStatusType",
+    "uniqueIdentifier": "7",
+    "data": {
+      "id": "7",
+      "stage": "Trial",
+      // TODO : need to update the state
+      "state": "published",
+      // TODO : need to update the action
+      "action": "E-SIGN",
+      // TODO : need to update the priority
+      "priority": 4,
+      "substage": "ARGUMENTS",
+      // TODO : need to update the entity type
+      "entityType": "HEARING",
+      "typeIdentifier": "arguments",
+      // TODO : need to update the workflow module
+      "workflowModule": "order-default",
+      // TODO : need to update the composite hearing path
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
+      // TODO : need to update the intermediate hearing path
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
+    },
+    "isActive": true
+  },
+  {
+    "tenantId": "kl",
+    "schemaCode": "case.CaseOverallStatusType",
+    "uniqueIdentifier": "8",
+    "data": {
+      "id": "8",
+      "stage": "Post-Trial",
+      // TODO : need to update the state
+      "state": "published",
+      // TODO : need to update the action
+      "action": "E-SIGN",
+      // TODO : need to update the priority
+      "priority": 3,
+      "substage": "JUDGEMENT",
+      // TODO : need to update the entity type
+      "entityType": "HEARING",
+      "typeIdentifier": "judgement",
+      // TODO : need to update the workflow module
+      "workflowModule": "order-default",
+      // TODO : need to update the composite hearing path
+      "compositeHearingPath": "$.orderSchema.additionalDetails.formdata.hearingPurpose.type",
+      // TODO : need to update the intermediate hearing path
+      "intermediateHearingPath": "$.additionalDetails.formdata.hearingPurpose.type"
+    },
+    "isActive": true
+  },
+  // TODO : need to add this new data
+  {
+    "tenantId": "kl",
+    "schemaCode": "case.CaseOverallStatusType",
+    "uniqueIdentifier": "21",
+    "data": {
+      "id": "21",
+      "stage": "RESTORE_BACKUP",
+      "state": "published",
+      "action": "E-SIGN",
+      "priority": 1,
+      "substage": "RESTORE_BACKUP",
+      "entityType": "ORDER",
+      "processHandler": "RESTORE_BACKUP",
+      "typeIdentifier": "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER",
+      "workflowModule": "order-default"
+    },
+    "isActive": true
+  }
+]

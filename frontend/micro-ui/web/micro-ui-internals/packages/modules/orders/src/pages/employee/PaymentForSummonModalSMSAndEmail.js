@@ -4,14 +4,13 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
 import DocumentModal from "../../components/DocumentModal";
-import { formatDate } from "../../../../hearings/src/utils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { ordersService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { paymentType } from "../../utils/paymentType";
-import { extractFeeMedium, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { getSuffixByDeliveryChannel } from "../../utils";
+import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { getFormattedName, getSuffixByDeliveryChannel } from "../../utils";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 
@@ -32,6 +31,8 @@ const orderTypeEnum = {
   SUMMONS: "Summons",
   NOTICE: "Notice",
   WARRANT: "Warrant",
+  PROCLAMATION: "Proclamation",
+  ATTACHMENT: "Attachment",
 };
 
 const PaymentForSummonComponent = ({
@@ -51,22 +52,6 @@ const PaymentForSummonComponent = ({
   const CustomErrorTooltip = window?.Digit?.ComponentRegistryService?.getComponent("CustomErrorTooltip");
   const [selectedOption, setSelectedOption] = useState({});
 
-  const getDateWithMonthName = (orderDate) => {
-    let today = new Date();
-
-    today.setDate(today.getDate() - 15);
-
-    // Array of month names
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-    let dd = String(today.getDate()).padStart(2, "0");
-    let mm = monthNames[today.getMonth()];
-    let yyyy = today.getFullYear();
-
-    let formattedDate = `${dd} ${mm} ${yyyy}`;
-
-    return formattedDate; // Output: formatted date 15 days ago with month name
-  };
 
   return (
     <div className="payment-for-summon">
@@ -113,6 +98,8 @@ const PaymentForSummonComponent = ({
 const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const history = useHistory();
   const userInfo = Digit.UserService.getUser()?.info;
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const { filingNumber, taskNumber } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [caseId, setCaseId] = useState();
@@ -145,7 +132,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     if (caseData) {
       const id = caseData?.criteria?.[0]?.responseList?.[0]?.id;
       if (id) {
-        console.log(id, "id");
         setCaseId(id); // Set the caseId in state
       } else {
         console.error("caseId is undefined or not available");
@@ -156,6 +142,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
+
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const fetchCaseLockStatus = useCallback(async () => {
     try {
       const status = await DRISTIService.getCaseLockStatus(
@@ -183,7 +171,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     }
     return [];
   }, [allAdvocates]);
-  const isUserAdv = useMemo(() => advocatesUuids.includes(userInfo.uuid), [advocatesUuids, userInfo.uuid]);
+  const isUserAdv = useMemo(() => advocatesUuids.includes(authorizedUuid), [advocatesUuids, authorizedUuid]);
 
   const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails]);
 
@@ -192,10 +180,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       isCaseAdmitted
         ? submitModalInfo
         : {
-            ...submitModalInfo,
-            header: "CS_HEADER_FOR_NOTICE_POST",
-            subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
-          },
+          ...submitModalInfo,
+          header: "CS_HEADER_FOR_NOTICE_POST",
+          subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
+        },
     [isCaseAdmitted]
   );
 
@@ -204,20 +192,21 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
 
-  const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId } },
+  const { data: orderData, isLoading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
+    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
-    Boolean(filteredTasks?.[0]?.orderId)
+    Boolean(filteredTasks?.[0]?.orderId && caseCourtId)
   );
   const orderDetails = useMemo(() => orderData?.list?.[0] || {}, [orderData]);
   const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
@@ -239,18 +228,21 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderDetails?.hearingNumber,
+        hearingId: orderDetails?.scheduledHearingNumber || orderDetails?.hearingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
-    orderDetails?.hearingNumber,
-    Boolean(orderDetails?.hearingNumber)
+    orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber,
+    Boolean((orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber) && caseCourtId)
   );
 
   const getBusinessService = (orderType) => {
     const businessServiceMap = {
       SUMMONS: paymentType.TASK_SUMMON,
       WARRANT: paymentType.TASK_WARRANT,
+      PROCLAMATION: paymentType.TASK_PROCLAMATION,
+      ATTACHMENT: paymentType.TASK_ATTACHMENT,
       NOTICE: paymentType.TASK_NOTICE,
     };
     return businessServiceMap?.[orderType];
@@ -331,7 +323,17 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     breakupResponse,
   ]);
 
-  const service = useMemo(() => (orderType === "WARRANT" ? paymentType.TASK_WARRANT : paymentType.TASK_NOTICE), [orderType]);
+  const service = useMemo(() => {
+    if (orderType === "WARRANT") {
+      return paymentType.TASK_WARRANT;
+    } else if (orderType === "PROCLAMATION") {
+      return paymentType.TASK_PROCLAMATION;
+    } else if (orderType === "ATTACHMENT") {
+      return paymentType.TASK_ATTACHMENT;
+    } else {
+      return paymentType.TASK_NOTICE;
+    }
+  }, [orderType]);
 
   const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchCourtBill } = Digit.Hooks.dristi.useBillSearch(
     {},
@@ -368,7 +370,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       try {
         const { data: freshBillResponse } = await refetchBill();
         if (!billResponse?.Bill?.length) {
-          console.log("Bill not found");
           return null;
         }
         if (freshBillResponse?.Bill?.[0]?.status === "PAID") {
@@ -393,7 +394,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
 
         if (!billPaymentStatus) {
-          console.log("Payment canceled or failed", taskNumber);
           return;
         }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: billResponse?.Bill?.[0]?.id, tenantId });
@@ -432,7 +432,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         if (type !== "EPOST") {
           await ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
-              name: orderType === "WARRANT" ? "PAYMENT_PENDING_FOR_WARRANT" : `MAKE_PAYMENT_FOR_${orderType}_POST`,
+              name:
+                orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT"
+                  ? `PAYMENT_PENDING_FOR_${orderType}`
+                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
               entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
               referenceId: `MANUAL_${taskNumber}`,
               status: status,
@@ -451,7 +454,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         } else if (fileStoreId && ePostBillResponse?.Bill?.[0]?.status === "PAID") {
           await ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
-              name: orderType === "WARRANT" ? "PAYMENT_PENDING_FOR_WARRANT" : `MAKE_PAYMENT_FOR_${orderType}_POST`,
+              name:
+                orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT"
+                  ? `PAYMENT_PENDING_FOR_${orderType}`
+                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
               entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
               referenceId: `MANUAL_${taskNumber}`,
               status: status,
@@ -524,6 +530,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           onClick: () => onPayOnline("SMS"),
         },
       ],
+      // not sure it is using here
       EPOST: [
         {
           label: "Fee Type",
@@ -596,16 +603,33 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   ]);
 
   const infos = useMemo(() => {
+    const formDataKeyMap = {
+      NOTICE: "noticeOrder",
+      SUMMONS: "SummonsOrder",
+      WARRANT: "warrantFor",
+      PROCLAMATION: "proclamationFor",
+      ATTACHMENT: "attachmentFor", // Assuming ATTACHMENT uses the same formdata key as WARRANT
+      // Add more types here easily in future
+    };
     const formdata =
       orderDetails?.orderCategory === "COMPOSITE"
         ? compositeItem?.orderSchema?.additionalDetails?.formdata
         : orderDetails?.additionalDetails?.formdata;
-    const orderKey = orderType === "SUMMONS" ? "SummonsOrder" : orderType === "WARRANT" ? "warrantFor" : "noticeOrder";
-    const partyData = formdata?.[orderKey]?.party?.data;
+    const partyData = formdata?.[formDataKeyMap[orderType]]?.party?.data;
     const name =
-      [partyData?.firstName, partyData?.lastName]?.filter(Boolean)?.join(" ") ||
+      getFormattedName(
+        partyData?.firstName?.trim(),
+        partyData?.middleName?.trim(),
+        partyData?.lastName?.trim(),
+        partyData?.witnessDesignation?.trim(),
+        null
+      ) ||
       (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
+      (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
+      (orderType === "ATTACHMENT" && formdata?.attachmentFor?.name) ||
       formdata?.warrantFor ||
+      formdata?.proclamationFor ||
+      formdata?.attachmentFor ||
       "";
 
     const task = filteredTasks?.[0];
@@ -627,7 +651,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
     return [
       { key: "Issued to", value: name },
-      { key: "Next Hearing Date", value: formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },
+      { key: "Next Hearing Date", value: DateUtils.getFormattedDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },
       {
         key: "Delivery Channel",
         value: deliveryChannel ? `${deliveryChannel} (${contactDetail})` : "Not available",
@@ -641,7 +665,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
   const links = useMemo(() => {
     const onViewOrderClick = () => {
-      console.log(caseId, "caseID");
       history.push(
         `/${window.contextPath}/citizen/dristi/home/view-case?caseId=${caseData?.criteria?.[0]?.responseList?.[0]?.id}&filingNumber=${filingNumber}&tab=Orders`
       );
@@ -666,6 +689,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
       payOnlineButtonTitle: payOnlineButtonTitle,
+      className: "payment-modal",
       modalBody: (
         <PaymentForSummonComponent
           infos={infos}
@@ -698,7 +722,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     history,
   ]);
 
-  if (isOrdersLoading || isPaymentTypeLoading || isSummonsBreakUpLoading || isBillLoading) {
+  if (isOrdersLoading || !orderData || isPaymentTypeLoading || isSummonsBreakUpLoading || isBillLoading) {
     return <Loader />;
   }
   return <DocumentModal config={paymentForSummonModalConfig} />;
