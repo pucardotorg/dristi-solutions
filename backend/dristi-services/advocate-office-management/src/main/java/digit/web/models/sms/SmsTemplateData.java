@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models;
+package digit.web.models.sms;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,17 +15,8 @@ public class SmsTemplateData {
 
     private String tenantId;
 
-    private String courtCaseNumber;
+    private String advocateName;
 
-    private String partyType;
+    private String memberType;
 
-    private String processType;
-
-    private String caseNumber;
-
-    private String hearingDate;
-
-    private String cmpNumber;
-
-    private String accusedName;
 }

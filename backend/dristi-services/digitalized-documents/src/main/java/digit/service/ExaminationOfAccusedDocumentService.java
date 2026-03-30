@@ -11,15 +11,10 @@ import digit.kafka.Producer;
 import digit.util.CaseUtil;
 import digit.util.UrlShortenerUtil;
 import digit.util.FileStoreUtil;
+import digit.util.IndividualUtil;
 import digit.validators.ExaminationOfAccusedValidator;
 import digit.validators.MediationDocumentValidator;
-import digit.web.models.CaseSearchRequest;
-import digit.web.models.DigitalizedDocument;
-import digit.web.models.DigitalizedDocumentRequest;
-import digit.web.models.Document;
-import digit.web.models.ExaminationOfAccusedDetails;
-import digit.web.models.TypeEnum;
-import digit.web.models.WorkflowObject;
+import digit.web.models.*;
 import digit.web.models.sms.SmsTemplateData;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -46,10 +41,11 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
     private final UrlShortenerUtil urlShortenerUtil;
     private final FileStoreUtil fileStoreUtil;
     private final CaseUtil caseUtil;
+    private final IndividualUtil individualUtil;
     private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
 
-    public ExaminationOfAccusedDocumentService(ExaminationOfAccusedValidator validator, DigitalizedDocumentEnrichment enrichment, ExaminationOfAccusedEnrichment examinationOfAccusedEnrichment, WorkflowService workflowService, Producer producer, Configuration config, FileStoreUtil fileStoreUtil, UrlShortenerUtil urlShortenerUtil, CaseUtil caseUtil, NotificationService notificationService, ObjectMapper objectMapper) {
+    public ExaminationOfAccusedDocumentService(ExaminationOfAccusedValidator validator, DigitalizedDocumentEnrichment enrichment, ExaminationOfAccusedEnrichment examinationOfAccusedEnrichment, WorkflowService workflowService, Producer producer, Configuration config, FileStoreUtil fileStoreUtil, UrlShortenerUtil urlShortenerUtil, CaseUtil caseUtil, IndividualUtil individualUtil, NotificationService notificationService, ObjectMapper objectMapper) {
         this.validator = validator;
         this.enrichment = enrichment;
         this.examinationOfAccusedEnrichment = examinationOfAccusedEnrichment;
@@ -59,6 +55,7 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
         this.fileStoreUtil = fileStoreUtil;
         this.urlShortenerUtil = urlShortenerUtil;
         this.caseUtil = caseUtil;
+        this.individualUtil = individualUtil;
         this.notificationService = notificationService;
         this.objectMapper = objectMapper;
     }
@@ -102,6 +99,7 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
             log.info("Calling notification service for SMS");
             try{
                 callNotificationServiceForSMS(request);
+                callNotificationServiceForSMSToAccusedAdvocate(request);
             } catch (Exception e) {
                 log.error("Error occurred while trying to send SMS: {}", e.getMessage());
             }
@@ -178,6 +176,100 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
     private String getMessageCode(String action){
         if(SUBMIT.equalsIgnoreCase(action)){
             return SIGN_EXAMINATION_DOCUMENT;
+        }
+        return null;
+    }
+
+    private void callNotificationServiceForSMSToAccusedAdvocate(DigitalizedDocumentRequest request){
+
+        RequestInfo requestInfo = request.getRequestInfo();
+        CaseCriteria caseCriteria = CaseCriteria.builder()
+                .filingNumber(request.getDigitalizedDocument().getCaseFilingNumber())
+                .courtId(request.getDigitalizedDocument().getCourtId())
+                .defaultFields(true)
+                .build();
+
+        CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(List.of(caseCriteria))
+                .build();
+        JsonNode courtCase = caseUtil.searchCaseDetails(caseSearchRequest);
+        String cmpNumber = courtCase.path("cmpNumber").asText(null);
+        String courtCaseNumber = courtCase.path("courtCaseNumber").asText(null);
+
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .tenantId(request.getDigitalizedDocument().getTenantId())
+                .courtCaseNumber(courtCaseNumber)
+                .cmpNumber(cmpNumber)
+                .shortenedUrl(request.getDigitalizedDocument().getShortenedUrl())
+                .build();
+
+        String mobileNumber = Optional.ofNullable(request.getDigitalizedDocument())
+                .map(DigitalizedDocument::getExaminationOfAccusedDetails)
+                .map(ExaminationOfAccusedDetails::getAccusedMobileNumber)
+                .orElse(null);
+
+        JsonNode representatives = courtCase.path("representatives");
+
+        Individual accusedIndividual = individualUtil.getIndividualFromMobileNumber(requestInfo,mobileNumber);
+
+        String accusedIndividualId = accusedIndividual.getIndividualId();
+
+        if (representatives != null && representatives.isArray()) {
+            for (JsonNode representative : representatives) {
+
+                JsonNode representingLitigants = representative.path("representing");
+
+                if (representingLitigants != null && representingLitigants.isArray()) {
+                    for (JsonNode representing : representingLitigants) {
+
+                        String individualId = representing.path("individualId").asText();
+
+                        if (accusedIndividualId.equalsIgnoreCase(individualId)) {
+
+                            // ✅ Get representative's UUID (correct person)
+                            String representativeUuid = representative
+                                    .path("additionalDetails")
+                                    .path("uuid")
+                                    .asText();
+
+                            String advocateMobileNumber = extractMobileNumberFromIndividual(
+                                    representativeUuid,
+                                    request.getDigitalizedDocument().getTenantId()
+                            );
+
+                            if (advocateMobileNumber != null && !advocateMobileNumber.isEmpty()) {
+                                notificationService.sendNotification(
+                                        requestInfo,
+                                        smsTemplateData,
+                                        CLIENT_EXAMINATION_ESIGN,
+                                        advocateMobileNumber
+                                );
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private String extractMobileNumberFromIndividual(String uuid,String tenantId) {
+        try {
+            // Get RequestInfo from current context or create a new one
+            RequestInfo requestInfo = RequestInfo.builder()
+                    .build();
+            
+            // Get individual details using individualId
+            List<Individual> individuals = individualUtil.getIndividuals(requestInfo, List.of(uuid), tenantId);
+            
+            if (!individuals.isEmpty()) {
+                Individual individual = individuals.get(0);
+                return individual.getMobileNumber();
+            }
+        } catch (Exception e) {
+            log.error("Error fetching mobile number for uuid: {}", uuid, e);
         }
         return null;
     }
