@@ -581,10 +581,10 @@ public class TaskService {
             Set<String> mobileNumbers = new HashSet<>();
             
             // Get complainant mobile numbers
-            extractComplainantMobileNumbers(caseDetails, taskRequest.getTask().getTenantId(), mobileNumbers);
-            extractComplainantAdvocateMobileNumbers(caseDetails, taskRequest.getTask().getTenantId(), mobileNumbers);
+            extractComplainantMobileNumbers(caseDetails, mobileNumbers,taskRequest.getRequestInfo());
+            extractComplainantAdvocateMobileNumbers(caseDetails, taskRequest.getRequestInfo(), mobileNumbers);
             extractComplainantPoaMobileNumber(taskRequest, caseDetails, mobileNumbers);
-            extractComplainantAdvocateClerkMobileNumbers(caseDetails, taskRequest.getTask().getTenantId(), mobileNumbers);
+            extractComplainantAdvocateClerkMobileNumbers(caseDetails, taskRequest.getRequestInfo(), mobileNumbers);
 
             String respondentName = taskDetails.has("respondentDetails") ?
                 taskDetails.path("respondentDetails").path("name").textValue() : "";
@@ -667,7 +667,7 @@ public class TaskService {
                         if (individualIds.contains(litigantIndividualId)) {
                             String poaUuid = poaHolder.path("additionalDetails").path("uuid").asText(null);
                             if (poaUuid != null && !poaUuid.isEmpty()) {
-                                String poaMobile = extractMobileNumberFromIndividual(poaUuid, taskRequest.getTask().getTenantId());
+                                String poaMobile = extractMobileNumberFromIndividual(poaUuid, taskRequest.getRequestInfo());
                                 if (poaMobile != null && !poaMobile.isEmpty()) {
                                     mobileNumbers.add(poaMobile);
                                 }
@@ -745,14 +745,14 @@ public class TaskService {
         }
     }
 
-    private void extractComplainantMobileNumbers(JsonNode caseDetails, String tenantId,Set<String> mobileNumbers) {
+    private void extractComplainantMobileNumbers(JsonNode caseDetails,Set<String> mobileNumbers,RequestInfo requestInfo) {
         JsonNode litigants = caseDetails.path("litigants");
         if (litigants.isArray()) {
             for (JsonNode litigant : litigants) {
                 if (litigant.path("partyType").asText().contains("complainant")) {
                     String uuid = litigant.path("additionalDetails").path("uuid").asText(null);
                     if (uuid != null && !uuid.isEmpty()) {
-                        String mobile = extractMobileNumberFromIndividual(uuid, tenantId);
+                        String mobile = extractMobileNumberFromIndividual(uuid, requestInfo);
                         if (mobile != null && !mobile.isEmpty()) {
                             mobileNumbers.add(mobile);
                         }
@@ -762,7 +762,7 @@ public class TaskService {
         }
     }
 
-    private void extractComplainantAdvocateMobileNumbers(JsonNode caseDetails, String tenantId, Set<String> mobileNumbers) {
+    private void extractComplainantAdvocateMobileNumbers(JsonNode caseDetails, RequestInfo requestInfo, Set<String> mobileNumbers) {
         JsonNode representatives = caseDetails.path("representatives");
         if (representatives.isArray()) {
             for (JsonNode representative : representatives) {
@@ -772,7 +772,7 @@ public class TaskService {
                         if (party.path("partyType").asText().contains("complainant")) {
                                 String uuid = representative.path("additionalDetails").path("uuid").asText(null);
                                 if (uuid != null && !uuid.isEmpty()) {
-                                    String mobile = extractMobileNumberFromIndividual(uuid, tenantId);
+                                    String mobile = extractMobileNumberFromIndividual(uuid, requestInfo);
                                     if (mobile != null && !mobile.isEmpty()) {
                                         mobileNumbers.add(mobile);
                                     }
@@ -785,7 +785,7 @@ public class TaskService {
         }
     }
 
-    private void extractComplainantAdvocateClerkMobileNumbers(JsonNode caseDetails, String tenantId, Set<String> mobileNumbers) {
+    private void extractComplainantAdvocateClerkMobileNumbers(JsonNode caseDetails, RequestInfo requestInfo, Set<String> mobileNumbers) {
         // Find complainant advocate IDs from representatives
         Set<String> complainantAdvocateIds = new HashSet<>();
         JsonNode representatives = caseDetails.path("representatives");
@@ -819,7 +819,7 @@ public class TaskService {
                             if (isActive) {
                                 String clerkUserUuid = clerk.path("memberUserUuid").asText(null);
                                 if (clerkUserUuid != null && !clerkUserUuid.isEmpty()) {
-                                    String mobile = extractMobileNumberFromIndividual(clerkUserUuid, tenantId);
+                                    String mobile = extractMobileNumberFromIndividual(clerkUserUuid, requestInfo);
                                     if (mobile != null && !mobile.isEmpty()) {
                                         mobileNumbers.add(mobile);
                                     }
@@ -832,11 +832,8 @@ public class TaskService {
         }
     }
 
-    private String extractMobileNumberFromIndividual(String individualId,String tenantId) {
+    private String extractMobileNumberFromIndividual(String individualId,RequestInfo requestInfo) {
         try {
-            // Get RequestInfo from current context or create a new one
-            RequestInfo requestInfo = RequestInfo.builder()
-                    .build();
 
             // Get individual details using individualId
             List<Individual> individuals = individualService.getIndividuals(requestInfo, List.of(individualId));
