@@ -63,9 +63,9 @@ public class AdvocateOfficeService {
 
             validator.validateCanAddMember(request);
 
-            callNotificationService(request);
-
             producer.push(configuration.getAddMemberTopic(), request);
+
+            callNotificationService(request);
 
             log.info("Member added successfully with id: {}", request.getAddMember().getId());
             return request.getAddMember();

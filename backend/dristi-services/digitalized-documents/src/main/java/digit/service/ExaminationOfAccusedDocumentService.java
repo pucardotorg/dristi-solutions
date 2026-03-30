@@ -212,7 +212,9 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
         JsonNode representatives = courtCase.path("representatives");
 
         Individual accusedIndividual = individualUtil.getIndividualFromMobileNumber(requestInfo,mobileNumber);
-
+        if(accusedIndividual == null){
+            return;
+        }
         String accusedIndividualId = accusedIndividual.getIndividualId();
 
         if (representatives != null && representatives.isArray()) {
