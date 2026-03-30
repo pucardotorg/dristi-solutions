@@ -1,55 +1,90 @@
-{
-  "id": "2bce16b4-6a27-4913-9f00-65e9ae0a3df9",
-  "tenantId": "kl",
-  "schemaCode": "payment.paymentTypeToBreakupMapping",
-  "uniqueIdentifier": "1",
-  "data": {
-    "breakUpList": [
-      {
-        "breakUpCode": "VAKALATHNAMA_FEE",
-        "breakUpName": "Vakalathnama Fee"
-      },
-      {
-        "breakUpCode": "ADVOCATE_CLERK_WELFARE_FUND",
-        "breakUpName": "Advocate Clerk Welfare Fund"
-      },
-      {
-        "breakUpCode": "TOTAL_APPLICATION_FEE",
-        "breakUpName": "Total Application Fee"
-      },
-      {
-        "breakUpCode": "PETITION_FEE",
-        "breakUpName": "Petition Fee"
-      },
-      {
-        "breakUpCode": "ADVOCATE_WELFARE_FUND",
-        "breakUpName": "Advocate Welfare Fund"
-      },
-      {
-        "breakUpCode": "DELAY_CONDONATION_FEE",
-        "breakUpName": "Delay Condonation Application Fee"
-      },
-      {
-        "breakUpCode": "COMPLAINT_FEE",
-        "breakUpName": "Complaing Fee"
-      },
-      {
-        "breakUpCode": "LEGAL_BENEFIT_FEE",
-        "breakUpName": "Legal Benefit Fee"
-      },
-      // todo add this
-      {
-        "breakUpCode": "STIPEND_STAMP",
-        "breakUpName": "Stipend Stamp"
-      }
-    ],
-    "paymentType": "1"
+[
+  {
+    "id": "2bce16b4-6a27-4913-9f00-65e9ae0a3df9",
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentTypeToBreakupMapping",
+    "uniqueIdentifier": "1",
+    "data": {
+      "breakUpList": [
+        {
+          "breakUpCode": "VAKALATHNAMA_FEE",
+          "breakUpName": "Vakalathnama Fee"
+        },
+        {
+          "breakUpCode": "ADVOCATE_CLERK_WELFARE_FUND",
+          "breakUpName": "Advocate Clerk Welfare Fund"
+        },
+        {
+          "breakUpCode": "TOTAL_APPLICATION_FEE",
+          "breakUpName": "Total Application Fee"
+        },
+        {
+          "breakUpCode": "PETITION_FEE",
+          "breakUpName": "Petition Fee"
+        },
+        {
+          "breakUpCode": "ADVOCATE_WELFARE_FUND",
+          "breakUpName": "Advocate Welfare Fund"
+        },
+        {
+          "breakUpCode": "DELAY_CONDONATION_FEE",
+          "breakUpName": "Delay Condonation Application Fee"
+        },
+        {
+          "breakUpCode": "COMPLAINT_FEE",
+          "breakUpName": "Complaing Fee"
+        },
+        {
+          "breakUpCode": "LEGAL_BENEFIT_FEE",
+          "breakUpName": "Legal Benefit Fee"
+        },
+        // todo add this
+        {
+          "breakUpCode": "STIPEND_STAMP",
+          "breakUpName": "Stipend Stamp"
+        }
+      ],
+      "paymentType": "1" // todo for e-filing
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+      "createdTime": 1743152137814,
+      "lastModifiedTime": 1774864048827
+    }
   },
-  "isActive": true,
-  "auditDetails": {
-    "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
-    "lastModifiedBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
-    "createdTime": 1743152137814,
-    "lastModifiedTime": 1774864048827
+  {
+    "id": "cb2ae601-0f35-4e01-ba5a-719d7701b402",
+    "tenantId": "kl",
+    "schemaCode": "payment.paymentTypeToBreakupMapping",
+    "uniqueIdentifier": "15",
+    "data": {
+      "breakUpList": [
+        {
+          "breakUpCode": "ADVOCATE_WELFARE_FUND",
+          "breakUpName": "Advocate Welfare Fund"
+        },
+        {
+          "breakUpCode": "COURT_FEE",
+          "breakUpName": "Court Fee"
+        },
+        {
+          "breakUpCode": "LEGAL_BENEFIT_FEE",
+          "breakUpName": "Legal Benefit Fee"
+        },
+        {
+          "breakUpCode": "ADVOCATE_CLERK_WELFARE_FUND",
+          "breakUpName": "Advocate Clerk Welfare Fund"
+        },
+        // todo add this
+        {
+          "breakUpCode": "STIPEND_STAMP",
+          "breakUpName": "Stipend Stamp"
+        }
+      ],
+      "paymentType": "15" // todo for advocate join case
+    },
+    "isActive": true
   }
-}
+]
