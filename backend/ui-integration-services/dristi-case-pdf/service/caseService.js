@@ -324,6 +324,9 @@ function getPrayerSwornStatementDetails(cases) {
           getComplaintAdditionalDocumentFileStore(
             swornStatementData?.SelectUploadDocWithName,
           ),
+          synopsisText:
+          (swornStatementData.synopsis && swornStatementData.synopsis.text) ||
+          null,
       };
     });
 
