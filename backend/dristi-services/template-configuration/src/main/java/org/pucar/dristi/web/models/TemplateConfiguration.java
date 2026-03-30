@@ -37,6 +37,9 @@ public class TemplateConfiguration {
     @JsonProperty("processTitle")
     private String processTitle = null;
 
+    @JsonProperty("subTitle")
+    private String subTitle = null;
+
     @JsonProperty("processText")
     private String processText = null;
 
