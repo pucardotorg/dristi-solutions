@@ -37,12 +37,14 @@ on:
           - dev
           - qa
           - demo
+          - sdc-uat
 
   push:
     branches:
       - main
       - develop
       - release/*
+      - sdc-uat
 
 
 jobs:
@@ -160,6 +162,7 @@ jobs:
           elif [[ "$EVENT" == "pull_request" ]]; then
             case "$BASE_REF" in
               main)          ENV_VALUE="demo" ;;
+              sdc-uat)       ENV_VALUE="sdc-uat" ;;
               develop)       ENV_VALUE="dev" ;;
               release/*)     ENV_VALUE="qa" ;;
               *)             ENV_VALUE="dev" ;;
@@ -167,6 +170,7 @@ jobs:
           elif [[ "$EVENT" == "push" ]]; then
             case "$REF_NAME" in
               main)          ENV_VALUE="demo" ;;
+              sdc-uat)       ENV_VALUE="sdc-uat" ;;
               develop)       ENV_VALUE="dev" ;;
               release/*)     ENV_VALUE="qa" ;;
               *)             ENV_VALUE="dev" ;;
@@ -218,14 +222,14 @@ jobs:
         run: |
           echo "Docker image build: docker.io/venkatramireddyb/${{ matrix.service }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
 
-      - name: Deploy to Kubernetes
-        uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
-        with:
-          environment: ${{ needs.check-diff.outputs.deployment_env }}
-          service_group: ${{ env.service_group }}
-          service_name: ${{ matrix.service }}
-          image_tag: ${{ steps.docker_build.outputs.image_tag }}
-          kubeconfig: ${{ secrets.KUBECONFIG }}
-          env_file: ${{ vars.HELMFILE_ENV }}
-          checkout_ref: ${{ vars.DEVOPS_BRANCH }}
-          sops_keys_txt: ${{ secrets.SOPS_KEYS_TXT }}
+      # - name: Deploy to Kubernetes
+      #   uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
+      #   with:
+      #     environment: ${{ needs.check-diff.outputs.deployment_env }}
+      #     service_group: ${{ env.service_group }}
+      #     service_name: ${{ matrix.service }}
+      #     image_tag: ${{ steps.docker_build.outputs.image_tag }}
+      #     kubeconfig: ${{ secrets.KUBECONFIG }}
+      #     env_file: ${{ vars.HELMFILE_ENV }}
+      #     checkout_ref: ${{ vars.DEVOPS_BRANCH }}
+      #     sops_keys_txt: ${{ secrets.SOPS_KEYS_TXT }}
