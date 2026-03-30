@@ -50,6 +50,9 @@ exports.generateCasePdf = async (req, res, next) => {
     const prayerSwornStatementDetails =
       caseService.getPrayerSwornStatementDetails(caseData);
     const placeholderList = caseService.getComplainantPlaceholderList(caseData);
+    const synopsis = htmlToFormattedText(
+      caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.synopsisText
+    );
 
     const pdfRequest = {
       RequestInfo: requestInfo,
@@ -66,6 +69,7 @@ exports.generateCasePdf = async (req, res, next) => {
           documentList: documentList,
           witnessScheduleList: witnessScheduleList,
           placeholderList: placeholderList,
+          synopsis: synopsis,
         },
       ],
     };
@@ -149,6 +153,9 @@ exports.caseComplaintPdf = async (req, res, next) => {
     const witnessScheduleList =
       caseService.getWitnessDetailsForComplaint(caseData);
     const placeholderList = caseService.getComplainantPlaceholderList(caseData);
+    const synopsis = htmlToFormattedText(
+      caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.synopsisText
+    );
 
     const pdfRequest = {
       RequestInfo: requestInfo,
@@ -165,6 +172,7 @@ exports.caseComplaintPdf = async (req, res, next) => {
           documentList: documentList,
           witnessScheduleList: witnessScheduleList,
           placeholderList: placeholderList,
+          synopsis: synopsis,
         },
       ],
     };
