@@ -54,6 +54,7 @@ public class TemplateConfigurationRowMapper implements ResultSetExtractor<List<T
                             .courtId(rs.getString("court_id"))
                             .isActive(rs.getBoolean("is_active"))
                             .processTitle(rs.getString("process_title"))
+                            .subTitle(rs.getString("sub_title"))
                             .addresseeName(rs.getString("addressee_name"))
                             .processText(rs.getString("process_text"))
                             .isCoverLetterRequired(rs.getBoolean("is_cover_letter_required"))
