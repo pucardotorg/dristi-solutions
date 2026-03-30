@@ -585,7 +585,13 @@ public class TaskService {
 
             String respondentName = taskDetails.has("respondentDetails") ?
                 taskDetails.path("respondentDetails").path("name").textValue() : "";
-            String partyType = respondentName.isEmpty() ? "witness" : "accused";
+            String witnessName = taskDetails.has("witnessDetails") ?
+                taskDetails.path("witnessDetails").path("name").textValue() : "";
+
+            StringJoiner partyJoiner = new StringJoiner(", ");
+            if (respondentName != null && !respondentName.isEmpty()) partyJoiner.add(respondentName);
+            if (witnessName != null && !witnessName.isEmpty()) partyJoiner.add(witnessName);
+            String partyType = partyJoiner.toString();
 
            String courtCaseNumber = caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "";
            String cmpNumber = caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "";
@@ -640,24 +646,22 @@ public class TaskService {
         JsonNode poaHolders = caseDetails.path("poaHolders");
         JsonNode litigants = caseDetails.path("litigants");
 
+        Set<String> individualIds = new HashSet<>();
+        if (litigants.isArray()) {
+            for (JsonNode litigant : litigants) {
+                if (litigant.path("partyType").asText().contains("complainant")) {
+                    individualIds.add(litigant.path("individualId").asText());
+                }
+            }
+        }
+
         if (poaHolders!=null&&poaHolders.isArray()) {
             for (JsonNode poaHolder : poaHolders) {
                 JsonNode representingLitigants = poaHolder.path("representingLitigants");
                 if (representingLitigants!=null&&representingLitigants.isArray()) {
                     for (JsonNode representingLitigant : representingLitigants) {
                         String litigantIndividualId = representingLitigant.path("individualId").asText(null);
-                        // Check if this individualId belongs to a complainant in litigants array
-                        boolean isComplainant = false;
-                        if (litigantIndividualId != null && litigants.isArray()) {
-                            for (JsonNode litigant : litigants) {
-                                if (litigantIndividualId.equals(litigant.path("individualId").asText())
-                                        && litigant.path("partyType").asText().contains("complainant")) {
-                                    isComplainant = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (isComplainant) {
+                        if (individualIds.contains(litigantIndividualId)) {
                             String poaUuid = poaHolder.path("additionalDetails").path("uuid").asText(null);
                             if (poaUuid != null && !poaUuid.isEmpty()) {
                                 String poaMobile = extractMobileNumberFromIndividual(poaUuid, taskRequest.getTask().getTenantId());

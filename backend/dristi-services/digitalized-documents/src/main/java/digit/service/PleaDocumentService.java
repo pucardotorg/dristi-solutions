@@ -198,7 +198,7 @@ public class PleaDocumentService implements DocumentTypeService {
                 .tenantId(request.getDigitalizedDocument().getTenantId())
                 .cmpNumber(cmpNumber)
                 .courtCaseNumber(courtCaseNumber)
-                .courtCaseNumber(courtCaseNumber)
+                .shortenedUrl(request.getDigitalizedDocument().getShortenedUrl())
                 .build();
 
         String mobileNumber = Optional.ofNullable(request.getDigitalizedDocument())

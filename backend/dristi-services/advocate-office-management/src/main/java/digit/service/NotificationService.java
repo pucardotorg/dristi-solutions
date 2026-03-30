@@ -120,23 +120,9 @@ public class NotificationService {
     }
 
     public String buildMessage(Map<String, String> userDetailsForSMS, String message) {
-        message = message.replace("{{cmpNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
-                .replace("{{shortenedUrl}}",Optional.ofNullable(userDetailsForSMS.get("shortenedUrl")).orElse(""));
+        message = message.replace("{{advocateName}}", Optional.ofNullable(userDetailsForSMS.get("advocateName")).orElse(""))
+                .replace("{{memberType}}",Optional.ofNullable(userDetailsForSMS.get("memberType")).orElse(""));
         return message;
-    }
-
-    private String getPreferredCaseIdentifier(Map<String, String> userDetailsForSMS) {
-        String courtCaseNumber = userDetailsForSMS.get("courtCaseNumber");
-        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
-            return courtCaseNumber;
-        }
-
-        String cmpNumber = userDetailsForSMS.get("cmpNumber");
-        if (cmpNumber != null && !cmpNumber.isEmpty()) {
-            return cmpNumber;
-        }
-
-        return "";
     }
 
     private Map<String, String> getDetailsForSMS(SmsTemplateData smsTemplateData, String mobileNumber) {

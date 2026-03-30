@@ -51,7 +51,7 @@ public class OtpService {
 
         if (otpRequest.isRegistrationRequestType() && null != matchingUser)
             throw new UserAlreadyExistInSystemException();
-        else if (otpRequest.isLoginRequestType() && null == matchingUser)
+        else if ((otpRequest.isLoginRequestType() || otpRequest.isCTCApplicationRequestType()) && null == matchingUser)
             throw new UserNotExistingInSystemException();
 
         final String otpNumber = otpRepository.fetchOtp(otpRequest);
