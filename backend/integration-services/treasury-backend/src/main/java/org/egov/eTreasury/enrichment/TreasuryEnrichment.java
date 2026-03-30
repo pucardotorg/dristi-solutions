@@ -191,9 +191,10 @@ public class TreasuryEnrichment {
                     case APPLICATION_FEE -> data.setApplicationFee(breakDown.getAmount());
                     case PETITION_FEE -> data.setPetitionFee(breakDown.getAmount());
                     case COPYING_FEE -> data.setCopyingFee(breakDown.getAmount());
+                    case STIPEND_STAMP -> data.setStipendStamp(breakDown.getAmount());
                 }
             }
-            double totalAmount = data.getCourtFee() + data.getAdvocateWelfareFund() + data.getAdvocateClerkWelfareFund() + data.getLegalBenefitFee() + data.getEpostFee() + data.getDelayCondonationFee() + data.getComplaintFee() + data.getApplicationFee() + data.getPetitionFee() + data.getCopyingFee();
+            double totalAmount = data.getCourtFee() + data.getAdvocateWelfareFund() + data.getAdvocateClerkWelfareFund() + data.getLegalBenefitFee() + data.getEpostFee() + data.getDelayCondonationFee() + data.getComplaintFee() + data.getApplicationFee() + data.getPetitionFee() + data.getCopyingFee() + data.getStipendStamp();
             data.setTotalAmount(totalAmount);
             buildFeeBreakDown(data);
             log.info("operation=enrichTreasuryPaymentData, result=SUCCESS");
@@ -264,6 +265,13 @@ public class TreasuryEnrichment {
             fees.add(FeeBreakDown.builder()
                     .feeName("Copying Fee:")
                     .feeAmount(data.getCopyingFee())
+                    .build());
+        }
+
+        if(data.getStipendStamp() > 0) {
+            fees.add(FeeBreakDown.builder()
+                    .feeName("Stipend Stamp:")
+                    .feeAmount(data.getStipendStamp())
                     .build());
         }
 
