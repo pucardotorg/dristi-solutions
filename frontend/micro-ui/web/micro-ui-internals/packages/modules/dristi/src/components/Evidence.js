@@ -38,7 +38,6 @@ export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, 
     },
   ];
 
-  // const message = () => ;
 
   return (
     <React.Fragment>

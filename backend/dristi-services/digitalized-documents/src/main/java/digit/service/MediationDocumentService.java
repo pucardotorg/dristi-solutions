@@ -1,16 +1,21 @@
 package digit.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import digit.config.Configuration;
 import digit.enrichment.MediationEnrichment;
 import digit.kafka.Producer;
+import digit.util.CaseUtil;
 import digit.util.FileStoreUtil;
+import digit.util.UrlShortenerUtil;
 import digit.validators.MediationDocumentValidator;
 import digit.web.models.*;
+import digit.web.models.sms.SmsTemplateData;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,17 +47,26 @@ public class MediationDocumentService implements DocumentTypeService {
 
     private final FileStoreUtil fileStoreUtil;
 
+    private final UrlShortenerUtil urlShortenerUtil;
+
+    private final CaseUtil caseUtil;
+
+    private final NotificationService notificationService;
+
     private final ObjectMapper objectMapper;
 
 
     @Autowired
-    public MediationDocumentService(MediationDocumentValidator validator, MediationEnrichment enrichment, Producer producer, Configuration configuration, WorkflowService workflowService, FileStoreUtil fileStoreUtil, ObjectMapper objectMapper) {
+    public MediationDocumentService(MediationDocumentValidator validator, MediationEnrichment enrichment, Producer producer, Configuration configuration, WorkflowService workflowService, FileStoreUtil fileStoreUtil, UrlShortenerUtil urlShortenerUtil, CaseUtil caseUtil, NotificationService notificationService, ObjectMapper objectMapper) {
         this.validator = validator;
         this.enrichment = enrichment;
         this.producer = producer;
         this.configuration = configuration;
         this.workflowService = workflowService;
         this.fileStoreUtil = fileStoreUtil;
+        this.urlShortenerUtil = urlShortenerUtil;
+        this.caseUtil = caseUtil;
+        this.notificationService = notificationService;
         this.objectMapper = objectMapper;
     }
 
@@ -72,6 +86,8 @@ public class MediationDocumentService implements DocumentTypeService {
             List<String> assignees = computeAssignees(document.getMediationDetails());
             documentRequest.getDigitalizedDocument().getWorkflow().setAssignes(assignees);
             updateWorkflowAdditionalDetails(documentRequest.getDigitalizedDocument().getWorkflow(), document.getMediationDetails());
+
+            createShortenedUrlAndNotify(documentRequest);
         }
 
         workflowService.updateWorkflowStatus(documentRequest);
@@ -98,6 +114,12 @@ public class MediationDocumentService implements DocumentTypeService {
         handleEditAction(document);
 
         handleSubmitAndSkipSignAction(document);
+
+        // Expire old shortened URL and create new one on INITIATE_E_SIGN
+        if (!ObjectUtils.isEmpty(workflow) && INITIATE_E_SIGN.equalsIgnoreCase(workflow.getAction())) {
+            expireTheShorteningUrl(request);
+            createShortenedUrlAndNotify(request);
+        }
 
         boolean isLastSign = isLastSignature(document);
 
@@ -303,5 +325,64 @@ public class MediationDocumentService implements DocumentTypeService {
         );
     }
 
+    private void createShortenedUrlAndNotify(DigitalizedDocumentRequest request) {
+        DigitalizedDocument document = request.getDigitalizedDocument();
+        String shortenedUrl = urlShortenerUtil.createShortenedUrl(document.getTenantId(), document.getDocumentNumber(), String.valueOf(document.getType()), configuration.getMediationBaseUrl());
+        document.setShortenedUrl(shortenedUrl);
+        log.info("Calling notification service for SMS");
+        try {
+            callNotificationServiceForSMS(request);
+        } catch (Exception e) {
+            log.error("Error occurred while trying to send SMS: {}", e.getMessage());
+        }
+    }
+
+    private void expireTheShorteningUrl(DigitalizedDocumentRequest digitalizedDocumentRequest) {
+        if (digitalizedDocumentRequest.getDigitalizedDocument().getShortenedUrl() != null) {
+            urlShortenerUtil.expireTheUrl(digitalizedDocumentRequest);
+        }
+    }
+
+    private void callNotificationServiceForSMS(DigitalizedDocumentRequest request) {
+        String action = Optional.ofNullable(request.getDigitalizedDocument())
+                .map(DigitalizedDocument::getWorkflow)
+                .map(WorkflowObject::getAction)
+                .orElse(null);
+        String messageCode = getMessageCode(action);
+        if (messageCode == null) {
+            log.info("No message code found");
+            return;
+        }
+
+        RequestInfo requestInfo = request.getRequestInfo();
+
+        JsonNode courtCase = caseUtil.getCaseFromFilingNumber(requestInfo, request.getDigitalizedDocument().getCaseFilingNumber());
+        String cmpNumber = courtCase.path("cmpNumber").asText(null);
+        String courtCaseNumber = courtCase.path("courtCaseNumber").asText(null);
+
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .tenantId(request.getDigitalizedDocument().getTenantId())
+                .cmpNumber(cmpNumber)
+                .courtCaseNumber(courtCaseNumber)
+                .shortenedUrl(request.getDigitalizedDocument().getShortenedUrl())
+                .build();
+
+        MediationDetails mediationDetails = request.getDigitalizedDocument().getMediationDetails();
+        if (mediationDetails != null && !ObjectUtils.isEmpty(mediationDetails.getPartyDetails())) {
+            mediationDetails.getPartyDetails().stream()
+                    .map(MediationPartyDetails::getMobileNumber)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .forEach(mobileNumber ->
+                            notificationService.sendNotification(requestInfo, smsTemplateData, messageCode, mobileNumber));
+        }
+    }
+
+    private String getMessageCode(String action) {
+        if (INITIATE_E_SIGN.equalsIgnoreCase(action)) {
+            return SIGN_MEDIATION_DOCUMENT;
+        }
+        return null;
+    }
 
 }

@@ -80,7 +80,7 @@ public class Task {
     private String status = null;
 
     @JsonProperty("assignedTo")
-    private AssignedTo assignedTo = null;
+    private Object assignedTo = null;
 
     @JsonProperty("isActive")
     private Boolean isActive = null;
@@ -111,7 +111,7 @@ public class Task {
         if (null != dateTime) {
             if (dateTime > 0) {
                 formattedDateTime = Instant.ofEpochMilli(dateTime)
-                        .atZone(ZoneId.systemDefault())
+                        .atZone(ZoneId.of("Asia/Kolkata"))
                         .toLocalDate()
                         .format(DateTimeFormatter.ofPattern(pattern));
             }

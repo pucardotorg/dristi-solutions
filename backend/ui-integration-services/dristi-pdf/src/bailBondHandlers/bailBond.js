@@ -53,12 +53,14 @@ const processSureties = (bailData) => {
     return formattedAddress;
   };
 
-  return sureties?.map((surety) => ({
-    suretyName: surety?.name || "",
-    suretyParentName: surety?.fatherName || "",
-    suretyAddress: formatAddress(surety?.address) || "",
-    index: surety?.index,
-  }));
+  return sureties
+    ?.map((surety) => ({
+      suretyName: surety?.name || "",
+      suretyParentName: surety?.fatherName || "",
+      suretyAddress: formatAddress(surety?.address) || "",
+      index: surety?.index,
+    }))
+    ?.sort((a, b) => (a?.index ? a?.index : 0) - (b?.index ? b?.index : 0));
 };
 
 const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
@@ -69,6 +71,7 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
   const code = req.query.code;
   const requestInfo = req.body.RequestInfo;
   const filingNumber = req.query.filingNumber;
+  const asUser = req.query.asUser;
 
   const missingFields = [];
   if (!cnrNumber) missingFields.push("cnrNumber");
@@ -107,7 +110,14 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
     }
 
     const resBailBond = await handleApiCall(
-      () => search_bailBond(tenantId, bailBondId, requestInfo, filingNumber),
+      () =>
+        search_bailBond(
+          tenantId,
+          bailBondId,
+          requestInfo,
+          filingNumber,
+          asUser
+        ),
       "Failed to query bailBond service"
     );
 

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.HearingRepository;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.PdfRequestUtil;
@@ -46,12 +47,16 @@ class WitnessDepositionPdfServiceTest {
     @Mock
     private ObjectMapper mapper;
 
+    @Mock
+    private Configuration config;
+
     @InjectMocks
     private WitnessDepositionPdfService service;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(config.getZoneId()).thenReturn("Asia/Kolkata");
     }
 
     @Test

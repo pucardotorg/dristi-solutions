@@ -1,5 +1,6 @@
 package com.dristi.njdg_transformer.service;
 
+import com.dristi.njdg_transformer.config.TransformerProperties;
 import com.dristi.njdg_transformer.model.AdvocateDetails;
 import com.dristi.njdg_transformer.model.advocate.*;
 import com.dristi.njdg_transformer.producer.Producer;
@@ -12,6 +13,7 @@ import org.egov.common.models.individual.Address;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class AdvocateService {
     private final ObjectMapper objectMapper;
     private final Producer producer;
     private final IndividualUtil individualUtil;
+    private final TransformerProperties properties;
 
     public AdvocateDetails processAndUpdateAdvocates(AdvocateRequest advocateRequest) {
         Advocate advocate = advocateRequest.getAdvocate();
@@ -85,7 +88,7 @@ public class AdvocateService {
                     
                     if (individual.getDateOfBirth() != null) {
                         dob = individual.getDateOfBirth().toInstant()
-                                .atZone(java.time.ZoneId.systemDefault())
+                                .atZone(ZoneId.of(properties.getApplicationZoneId()))
                                 .toLocalDate();
                     }
                     

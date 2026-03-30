@@ -1,5 +1,6 @@
 package digit.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -122,7 +123,7 @@ public class TaskCreationService {
             TaskDetails baseTaskDetails = buildSummonAndNoticeDetails(order, courtCase, partyType, taskManagement.getOrderItemId());
 
             log.info("Building task details list for {} party", partyType);
-            List<TaskDetails> taskDetailsList = buildTaskDetailsList(partyDetails, caseDetails, baseTaskDetails, complainantDetails);
+            List<TaskDetails> taskDetailsList = buildTaskDetailsList(partyDetails, caseDetails, baseTaskDetails, complainantDetails, courtCase);
             
             log.info("Building base task template");
             Task taskTemplate = buildBaseTask(taskManagement, order, courtCase, additionalDetails);
@@ -140,7 +141,7 @@ public class TaskCreationService {
                             .build());
                     createdTasks++;
                     log.info("Successfully created task {} of {} for {} party", createdTasks, taskDetailsList.size(), partyType);
-                    createPendingTaskForRPAD(taskResponse.getTask(), requestInfo);
+                    createPendingTaskForRPAD(taskResponse.getTask(), requestInfo, order);
                 } catch (Exception e) {
                     log.error("Error creating task {} for {} party: {}", createdTasks + 1, partyType, e.getMessage(), e);
                     // Continue with next task
@@ -394,6 +395,87 @@ public class TaskCreationService {
         return null;
     }
 
+    public List<Order> getItemListFormCompositeItem(Order order) {
+        log.info("method=getItemListFormCompositeItem , result= IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
+
+
+        Object compositeItems = order.getCompositeItems();
+        ObjectNode orderNode = null;
+        try {
+            String jsonString = objectMapper.writeValueAsString(order);
+            JsonNode jsonNode = objectMapper.readTree(jsonString);
+            if (jsonNode.isObject()) {
+                orderNode = (ObjectNode) jsonNode;
+            }
+        } catch (JsonProcessingException e) {
+            log.error("Error while converting order to json", e);
+            throw new CustomException("COMPOSITE_ORDER_CONVERSION_ERROR", "Error while converting order to json");
+        }
+
+        List<Order> compositeItemsList = new ArrayList<>();
+
+        try {
+            log.info("enriching order type ,order details and additional details");
+            JsonNode compositeItemArray = objectMapper.readTree(objectMapper.writeValueAsString(compositeItems));
+            for (JsonNode item : compositeItemArray) {
+                String orderType = item.get("orderType").asText();
+                JsonNode additionalDetails = item.get("orderSchema").get("additionalDetails");
+                ObjectNode additionalDetailsNode = (ObjectNode) additionalDetails;
+                additionalDetailsNode.put("itemId", item.get("id").asText());
+
+                JsonNode orderDetails = item.get("orderSchema").get("orderDetails");
+
+                assert orderNode != null;
+                orderNode.put("orderType", orderType);
+                orderNode.set("additionalDetails", additionalDetailsNode);
+                orderNode.set("orderDetails", orderDetails);
+
+                Order orderItem = objectMapper.convertValue(orderNode, Order.class);
+                compositeItemsList.add(orderItem);
+            }
+            log.info("successfully enriched order type ,order details and additional details completed");
+
+
+        } catch (Exception e) {
+            log.error("Error while enriching order type ,order details and additional details", e);
+            throw new CustomException("COMPOSITE_ORDER_ENRICHMENT_ERROR", "Error while enriching order type ,order details and additional details");
+        }
+        return compositeItemsList;
+    }
+
+    private List<String> getPartyListForSummonsOrder(Order order){
+        List<String> partyTypeList = new ArrayList<>();
+        List<Object> parties = jsonUtil.getNestedValue(
+                order.getAdditionalDetails(),
+                Arrays.asList("formdata", "SummonsOrder", "party"),
+                List.class
+        );
+
+        if (parties != null) {
+            for (Object obj : parties) {
+                if (obj instanceof Map<?, ?> partyMap) {
+                    Object dataObj = partyMap.get("data");
+                    if (dataObj instanceof Map<?, ?> dataMap) {
+                        if(dataMap.get("ownerType") != null){
+                            // ACCUSED, COMPLAINANT, - (Court Witness)
+                            String ownerType = String.valueOf(dataMap.get("ownerType"));
+                            if(ACCUSED.equalsIgnoreCase(ownerType)){
+                                partyTypeList.add("respondent");
+                            }
+                            else if(COMPLAINANT.equalsIgnoreCase(ownerType)){
+                                partyTypeList.add("complainant");
+                            }
+                            else{
+                                partyTypeList.add(ownerType);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return partyTypeList;
+    }
+
     private String extractNoticeTypeFromCompositeItems(Order order, String itemId) {
 
         ObjectNode compositeItem = extractCompositeItems(order, itemId);
@@ -438,7 +520,7 @@ public class TaskCreationService {
 
     }
 
-    private List<TaskDetails> buildTaskDetailsList(PartyDetails party, CaseDetails caseDetails, TaskDetails baseTaskDetails, ComplainantDetails complainantDetails) {
+    private List<TaskDetails> buildTaskDetailsList(PartyDetails party, CaseDetails caseDetails, TaskDetails baseTaskDetails, ComplainantDetails complainantDetails, CourtCase courtCase) {
         List<TaskDetails> result = new ArrayList<>();
 
         if (party == null || party.getAddresses() == null || party.getAddresses().isEmpty()) {
@@ -479,7 +561,11 @@ public class TaskCreationService {
                                 .channelCode(channel != null ? channel.getChannelCode() : null)
                                 .fees(channel != null ? channel.getFees() : null)
                                 .feePaidDate(channel != null ? channel.getFeePaidDate() : null)
-                                .isPendingCollection(channel != null && RPAD.equalsIgnoreCase(channel.getChannelCode()))
+                                .isPendingCollection(channel != null &&
+                                        RPAD.equalsIgnoreCase(channel.getChannelCode()) &&
+                                        channel.getFeePaidDate() != null &&
+                                        !Boolean.TRUE.equals(courtCase.getIsLPRCase())
+                                )
                                 .build())
                         .build());
             }
@@ -1001,16 +1087,16 @@ public class TaskCreationService {
         }
     }
 
-    public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {
+    public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo, Order order) {
         if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
                 || task.getTaskType().equalsIgnoreCase(NOTICE) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT)) && (isRPADdeliveryChannel(task))) {
             log.info("Creating pending task for envelope submission");
-            createPendingTaskForEnvelope(task, requestInfo);
+            createPendingTaskForEnvelope(task, requestInfo, order);
             log.info("Successfully created pending task for envelope submission");
         }
     }
 
-    private void createPendingTaskForEnvelope(Task task, RequestInfo requestInfo) {
+    private void createPendingTaskForEnvelope(Task task, RequestInfo requestInfo, Order order) {
 
         try {
             TaskRequest taskRequest = TaskRequest.builder()
@@ -1028,22 +1114,47 @@ public class TaskCreationService {
             Map<String, List<String>> advocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
             Map<String, List<POAHolder>> poaMapping = caseUtil.getLitigantPoaMapping(courtCase);
 
-            List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, "complainant");
-            List<String> assigneeUUIDs = collectAssigneeUUIDs(complainants, advocateMapping, poaMapping);
+            List<String> partyList = new ArrayList<>();
+            if(NOTICE.equalsIgnoreCase(order.getOrderType())){
+                partyList = Collections.singletonList("complainant");
+            }
+            else if(SUMMONS.equalsIgnoreCase(order.getOrderType())){
 
-            List<User> uniqueAssignees = assigneeUUIDs.stream()
-                    .distinct()
-                    .map(uuid -> User.builder().uuid(uuid).build())
-                    .collect(Collectors.toList());
+                if(COMPOSITE.equalsIgnoreCase(order.getOrderCategory())){
+                    List<Order> orderList = getItemListFormCompositeItem(order);
+                    for(Order orderItem: orderList){
+                        if(SUMMONS.equalsIgnoreCase(orderItem.getOrderType())){
+                            partyList.addAll(getPartyListForSummonsOrder(orderItem));
+                        }
+                    }
+                }
+                else{
+                    partyList = getPartyListForSummonsOrder(order);
+                }
+            }
 
-            PendingTask pendingTask = buildPendingTask(task, courtCase, uniqueAssignees);
-            pendingTaskUtil.createPendingTask(
-                    PendingTaskRequest.builder()
-                            .requestInfo(requestInfo)
-                            .pendingTask(pendingTask)
-                            .build()
-            );
-            callNotificationServiceForRPADSubmission(requestInfo, courtCase, assigneeUUIDs);
+            for(String party: partyList){
+                if(COURT_WITNESS.equalsIgnoreCase(party)){
+                    // Pending task need not be created
+                    continue;
+                }
+                List<Party> parties = caseUtil.getRespondentOrComplainant(courtCase, party);
+                List<String> assigneeUUIDs = collectAssigneeUUIDs(parties, advocateMapping, poaMapping);
+
+                List<User> uniqueAssignees = assigneeUUIDs.stream()
+                        .distinct()
+                        .map(uuid -> User.builder().uuid(uuid).build())
+                        .collect(Collectors.toList());
+
+                PendingTask pendingTask = buildPendingTask(task, courtCase, uniqueAssignees);
+                pendingTaskUtil.createPendingTask(
+                        PendingTaskRequest.builder()
+                                .requestInfo(requestInfo)
+                                .pendingTask(pendingTask)
+                                .build()
+                );
+                callNotificationServiceForRPADSubmission(requestInfo, courtCase, assigneeUUIDs);
+            }
         } catch (Exception e) {
             log.error("Error while creating pending task for envelope submission", e);
             throw new CustomException("CREATE_PENDING_TASK_ERROR", "Error while creating pending task for envelope submission");
@@ -1087,7 +1198,7 @@ public class TaskCreationService {
 
         String entityType = getEntityType(taskType);
 
-        ZoneId zoneId = ZoneId.of("Asia/Kolkata");
+        ZoneId zoneId = ZoneId.of(configuration.getZoneId());
         ZonedDateTime istTime = ZonedDateTime.now(zoneId);
         long currentISTMillis = istTime.toInstant().toEpochMilli();
 

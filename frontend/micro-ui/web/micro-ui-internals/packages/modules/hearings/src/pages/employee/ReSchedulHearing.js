@@ -65,10 +65,6 @@
 //   let b = "John vs Doe";
 //   let c = "NIA S";
 
-//   const handleNavigate = (path) => {
-//     const contextPath = window?.contextPath || '';
-//     history.push(`/${contextPath}${path}`);
-//   };
 
 //   return isMobileView ? (
 //     <Modal

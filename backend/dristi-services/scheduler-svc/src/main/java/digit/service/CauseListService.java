@@ -3,7 +3,6 @@ package digit.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
 import digit.config.ServiceConstants;
 import digit.kafka.producer.Producer;
@@ -24,12 +23,8 @@ import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.ResourceAccessException;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -166,7 +161,7 @@ public class CauseListService {
                     .judgeId(causeList.get(0).getJudgeId())
                     .fileStoreId(document.getFileStore())
                     .date(dateUtil.getLocalDateFromEpoch(causeList.get(0).getStartTime()).toString())
-                    .createdTime(dateUtil.getEpochFromLocalDateTime(LocalDateTime.now()))
+                    .createdTime(dateUtil.getEpochFromLocalDateTime(LocalDateTime.now(ZoneId.of(config.getZoneId()))))
                     .createdBy(uuid == null ? serviceConstants.SYSTEM_ADMIN : uuid)
                     .build();
 
@@ -198,7 +193,11 @@ public class CauseListService {
 
             log.info("Update open hearing index with serialNumber");
             esUtil.updateOpenHearingSerialNumber(openHearings);
-
+            try {
+                esUtil.updateOpenHearingInCache(openHearings, getFromDate(hearingDate));
+            } catch (Exception e) {
+                log.error("Failed to update open hearing in cache for date: {}, error: {}", causeListDate.toString(), e.getMessage(), e);
+            }
             log.info("operation = generateCauseListForJudge, result = SUCCESS, judgeId = {}", courtId);
         } catch (Exception e) {
             log.error("operation = generateCauseListForJudge, result = FAILURE, judgeId = {}, error = {}", courtId, e.getMessage(), e);
@@ -207,13 +206,13 @@ public class CauseListService {
 
     private Long getToDate(String hearingDate) {
         return hearingDate == null
-                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(1).atTime(LocalTime.MAX))
+                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now(ZoneId.of(config.getZoneId())).toLocalDate().plusDays(1).atTime(LocalTime.MAX))
                 : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).atTime(LocalTime.MAX));
     }
 
     private Long getFromDate(String hearingDate) {
         return hearingDate == null
-                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(1).atStartOfDay())
+                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now(ZoneId.of(config.getZoneId())).toLocalDate().plusDays(1).atStartOfDay())
                 : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).atStartOfDay());
     }
 
@@ -352,7 +351,7 @@ public class CauseListService {
 
     private List<CauseList> getCauseListForTomorrow(CauseListSearchCriteria searchCriteria) {
         if (searchCriteria != null && searchCriteria.getSearchDate() != null
-                && searchCriteria.getSearchDate().isAfter(LocalDate.now().plusDays(1))) {
+                && searchCriteria.getSearchDate().isAfter(LocalDate.now(ZoneId.of(config.getZoneId())).plusDays(1))) {
             throw new CustomException("DK_CL_APP_ERR", "CauseList Search date cannot be after than tomorrow");
         }
         return causeListRepository.getCauseLists(searchCriteria);
@@ -360,7 +359,7 @@ public class CauseListService {
 
     public List<String> getFileStoreForCauseList(CauseListSearchCriteria searchCriteria) {
         if (searchCriteria != null && searchCriteria.getSearchDate() != null
-                && searchCriteria.getSearchDate().isAfter(LocalDate.now().plusDays(1))) {
+                && searchCriteria.getSearchDate().isAfter(LocalDate.now(ZoneId.of(config.getZoneId())).plusDays(1))) {
             throw new CustomException("DK_CL_APP_ERR", "CauseList Search date cannot be after than tomorrow");
         }
         return causeListRepository.getCauseListFileStore(searchCriteria);
@@ -766,10 +765,10 @@ public class CauseListService {
 
     public List<CauseListSearchCriteria> generateRecentSearchCriteriaList(RecentCauseListSearchCriteria recentCauseListSearchCriteria) {
         List<CauseListSearchCriteria> criteriaList = new ArrayList<>();
-        LocalDate today = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+        LocalDate today = LocalDate.now(ZoneId.of(config.getZoneId()));
         LocalDate yesterday = today.minusDays(1);
         LocalDate tomorrow = today.plusDays(1);
-        LocalTime now = LocalTime.now(ZoneId.of("Asia/Kolkata"));
+        LocalTime now = LocalTime.now(ZoneId.of(config.getZoneId()));
         String courtId = recentCauseListSearchCriteria.getCourtId();
 
         criteriaList.add(CauseListSearchCriteria.builder().searchDate(today).courtId(courtId).build());

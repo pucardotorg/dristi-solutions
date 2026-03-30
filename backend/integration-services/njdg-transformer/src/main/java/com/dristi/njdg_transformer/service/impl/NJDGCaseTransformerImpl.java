@@ -14,11 +14,11 @@ import com.dristi.njdg_transformer.service.interfaces.CaseTransformer;
 import com.dristi.njdg_transformer.utils.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -481,7 +481,7 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
             return LocalDate.now(); // fallback to current date
         }
         return Instant.ofEpochMilli(timestamp)
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneId.of(properties.getApplicationZoneId()))
                 .toLocalDate();
     }
 

@@ -26,6 +26,7 @@ function UploadSignatureModal({
   showDownloadText = false,
   fileStoreId,
   fileUploadError,
+  onCustomDownload,
 }) {
   const toast = useToast();
   const [error, setError] = useState({});
@@ -116,7 +117,26 @@ function UploadSignatureModal({
       {showDownloadText && (
         <div className="donwload-submission" style={{ display: "flex", alignItems: "center" }}>
           <h2>{t("WANT_TO_UNSIGNED_DOWNLOAD")}</h2>
-          <AuthenticatedLink uri={uri} t={t} displayFilename={"CLICK_HERE"} pdf={true} />
+          {onCustomDownload ? (
+            <span
+              onClick={onCustomDownload}
+              style={{
+                display: "flex",
+                color: "#007e7e",
+                maxWidth: "250px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                cursor: "pointer",
+                textDecoration: "underline",
+                marginLeft: "5px",
+              }}
+            >
+              {t("CLICK_HERE")}
+            </span>
+          ) : (
+            <AuthenticatedLink uri={uri} t={t} displayFilename={"CLICK_HERE"} pdf={true} />
+          )}
         </div>
       )}
     </Modal>

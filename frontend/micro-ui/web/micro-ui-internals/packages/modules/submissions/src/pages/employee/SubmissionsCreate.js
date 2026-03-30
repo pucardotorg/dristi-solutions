@@ -33,7 +33,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode } from "../../utils";
-import { combineMultipleFiles, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, DateUtils, getAuthorizedUuid, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -52,12 +52,12 @@ import {
   uploadDocumentsIfAny,
   restrictedApplicationTypes,
   _getDefaultFormValue,
-  formatDate,
   _getFinalDocumentList,
   replaceUploadedDocsWithFile,
 } from "../../utils/application";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
+const requiredDateFormat = "YYYY-MM-DD";
 
 const SubmissionsCreate = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -277,6 +277,7 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationNumber,
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
@@ -296,6 +297,7 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationType: "DELAY_CONDONATION",
         tenantId,
+        asUser: authorizedUuid,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
@@ -671,7 +673,7 @@ const SubmissionsCreate = ({ path }) => {
           isactive: true,
           name: `APPLICATION_TYPE_${applicationTypeUrl}`,
         },
-        applicationDate: formatDate(new Date()),
+        applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
         ...(selectComplainant !== null ? { selectComplainant } : {}),
         prayer: { text: "" },
       };
@@ -683,7 +685,7 @@ const SubmissionsCreate = ({ path }) => {
             ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
             : undefined;
           const initialSubmissionDate = latestExtensionOrder
-            ? formatDate(
+            ? DateUtils.getFormattedDate(
                 new Date(
                   latestExtensionOrder?.orderCategory === "COMPOSITE"
                     ? latestExtensionOrder?.compositeItems?.find(
@@ -692,7 +694,8 @@ const SubmissionsCreate = ({ path }) => {
                           item?.orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE"
                       )?.orderSchema?.orderDetails?.newSubmissionDate
                     : latestExtensionOrder?.orderDetails?.newSubmissionDate
-                )
+                ),
+                requiredDateFormat
               )
             : isComposite
             ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.submissionDeadline
@@ -708,7 +711,7 @@ const SubmissionsCreate = ({ path }) => {
               name: "APPLICATION_TYPE_EXTENSION_SUBMISSION_DEADLINE",
             },
             refOrderId: orderDetails?.orderNumber,
-            applicationDate: formatDate(new Date()),
+            applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
             documentType: isComposite
               ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentType
               : orderDetails?.additionalDetails?.formdata?.documentType,
@@ -733,7 +736,7 @@ const SubmissionsCreate = ({ path }) => {
               name: "APPLICATION_TYPE_PRODUCTION_DOCUMENTS",
             },
             refOrderId: orderDetails?.orderNumber,
-            applicationDate: formatDate(new Date()),
+            applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
             ...(selectComplainant !== undefined ? { selectComplainant } : {}),
             prayer: { text: "" },
           };
@@ -749,7 +752,7 @@ const SubmissionsCreate = ({ path }) => {
             name: "APPLICATION_TYPE_BAIL_BOND",
           },
           refOrderId: orderDetails?.orderNumber,
-          applicationDate: formatDate(new Date()),
+          applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
           prayer: { text: "" },
         };
       } else if ((isComposite ? compositeSetTermBailItem : orderDetails)?.orderType === orderTypes.SET_BAIL_TERMS) {
@@ -767,7 +770,7 @@ const SubmissionsCreate = ({ path }) => {
             name: "APPLICATION_TYPE_SUBMIT_BAIL_DOCUMENTS",
           },
           refOrderId: orderDetails?.orderNumber,
-          applicationDate: formatDate(new Date()),
+          applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
           ...(selectComplainant !== undefined ? { selectComplainant } : {}),
           prayer: { text: "" },
         };
@@ -777,7 +780,7 @@ const SubmissionsCreate = ({ path }) => {
             code: "APPLICATION",
             name: "APPLICATION",
           },
-          applicationDate: formatDate(new Date()),
+          applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
           prayer: { text: "" },
         };
       }
@@ -796,7 +799,7 @@ const SubmissionsCreate = ({ path }) => {
           name: `APPLICATION_TYPE_${applicationType}`,
           isActive: true,
         },
-        applicationDate: formatDate(new Date()),
+        applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
         ...(applicationType === "REQUEST_FOR_BAIL"
           ? {
               addSurety: { code: "YES", name: "Yes", showSurety: true },
@@ -812,7 +815,7 @@ const SubmissionsCreate = ({ path }) => {
           code: "APPLICATION",
           name: "APPLICATION",
         },
-        applicationDate: formatDate(new Date()),
+        applicationDate: DateUtils.getFormattedDate(new Date(), requiredDateFormat),
         prayer: { text: "" },
       };
     }
@@ -864,13 +867,13 @@ const SubmissionsCreate = ({ path }) => {
       ].includes(applicationType) &&
       !formData?.applicationDate
     ) {
-      setValue("applicationDate", formatDate(new Date()));
+      setValue("applicationDate", DateUtils.getFormattedDate(new Date(), requiredDateFormat));
     }
     // if (applicationType && applicationType === "TRANSFER" && !formData?.requestedCourt) {
     //   setValue("requestedCourt", caseDetails?.courtId ? t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`) : "");
     // }
     if (applicationType && hearingId && ["CHECKOUT_REQUEST", "RE_SCHEDULE"].includes(applicationType) && !formData?.initialHearingDate) {
-      setValue("initialHearingDate", formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime)));
+      setValue("initialHearingDate", DateUtils.getFormattedDate(new Date(hearingsData?.HearingList?.[0]?.startTime), requiredDateFormat));
     }
     if (
       applicationType &&
@@ -938,7 +941,7 @@ const SubmissionsCreate = ({ path }) => {
 
     if (applicationType && ["ADVANCEMENT_OR_ADJOURNMENT_APPLICATION"].includes(applicationType)) {
       if (scheduledHearing && !formData?.initialHearingDate) {
-        setValue("initialHearingDate", formatDate(new Date(scheduledHearing?.startTime)));
+        setValue("initialHearingDate", DateUtils.getFormattedDate(new Date(scheduledHearing?.startTime), requiredDateFormat));
         setValue("initialHearingPurpose", scheduledHearing?.hearingType);
         setValue("refHearingId", scheduledHearing?.hearingId);
       }
@@ -1321,7 +1324,9 @@ const SubmissionsCreate = ({ path }) => {
                 ...filteredFormdata,
                 refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
               },
-              ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
+              ...(orderDetails && {
+                orderDate: DateUtils.getFormattedDate(new Date(orderDetails?.auditDetails?.lastModifiedTime), requiredDateFormat),
+              }),
               ...(isComposite
                 ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName && {
                     documentName: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName,
@@ -1379,7 +1384,9 @@ const SubmissionsCreate = ({ path }) => {
                 ...filteredFormdata,
                 refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
               },
-              ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
+              ...(orderDetails && {
+                orderDate: DateUtils.getFormattedDate(new Date(orderDetails?.auditDetails?.lastModifiedTime), requiredDateFormat),
+              }),
               ...(isComposite
                 ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName && {
                     documentName: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName,
@@ -1708,7 +1715,7 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
-  const handleReviewModalSubmit = async ({ applicationPreviewPdf, applicationPreviewFileName }) => {
+  const handleReviewModalSubmit = async ({ applicationPreviewPdf, applicationPreviewFileName, isUpload = false }) => {
     try {
       if (applicationDetails?.status === SubmissionWorkflowState.DRAFT_IN_PROGRESS) {
         const res = await updateSubmission(SubmissionWorkflowAction.SUBMIT);
@@ -1746,10 +1753,29 @@ const SubmissionsCreate = ({ path }) => {
       if (!fileStoreId) {
         throw new Error("FileStoreId not generated");
       }
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const userUuid = userInfo?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUuid);
+
+      const isSendForEsign = authorizedUuid !== userUuid;
+
       if (fileStoreId) {
         setApplicationPdfFileStoreId(fileStoreId);
       }
-      setShowsignatureModal(true);
+
+      if (isUpload) {
+        setShowsignatureModal(true);
+      } else {
+        if (!isSendForEsign) {
+          setShowsignatureModal(true);
+        } else {
+          setShowErrorToast({ label: t("SUCCESFULLY_SENT_FOR_ESIGN"), error: false });
+          history.replace(
+            `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+          );
+        }
+      }
+
       setShowReviewModal(false);
     } catch (error) {
       console.error("Error while submitting the application:", error);
@@ -2060,7 +2086,7 @@ const SubmissionsCreate = ({ path }) => {
             actionCancelLabel={"DOWNLOAD_SUBMISSION"}
             actionCancelOnSubmit={handleDownloadSubmission}
             applicationNumber={applicationNumber}
-            createdDate={formatDate(new Date(applicationDetails?.createdDate), "DD-MM-YYYY HH")}
+            createdDate={DateUtils.getFormattedDate(new Date(applicationDetails?.createdDate))}
             makePayment={makePaymentLabel}
             paymentStatus={paymentStatus}
             bannerlabel={

@@ -2,6 +2,7 @@ import _ from "lodash";
 import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 export const overrideHooks = () => {
   Object.keys(CustomisedHooks).map((ele) => {
@@ -45,35 +46,6 @@ export const updateCustomConfigs = () => {
 
 export default {};
 
-export const formatDateDifference = (previousDate) => {
-  const currentDate = new Date();
-  let previousDateObj;
-
-  if (typeof previousDate === "string" && previousDate.includes("-")) {
-    const [day, month, year] = previousDate.split("-");
-    previousDateObj = new Date(year, month - 1, day);
-  } else {
-    previousDateObj = new Date(Number(previousDate));
-  }
-
-  const timeDifference = currentDate - previousDateObj;
-  const dayDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
-
-  return dayDifference;
-};
-
-export const formatDate = (dateInput) => {
-  if (!dateInput) return "N/A";
-
-  const date = new Date(dateInput);
-  // Check for invalid date
-  if (isNaN(date)) return "N/A";
-
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
 
 export const convertToDateInputFormat = (dateInput) => {
   if (!dateInput) {
@@ -94,7 +66,7 @@ export const convertToDateInputFormat = (dateInput) => {
     console.error("Invalid input type or format");
   }
 
-  return formatDate(date);
+  return DateUtils.getFormattedDate(date);
 };
 
 export const getSuffixByBusinessCode = (paymentType = [], businessCode) => {
@@ -145,12 +117,12 @@ export const getRespondantName = (respondentNameData) => {
   const isWitness = respondentNameData?.partyType?.toLowerCase() === "witness";
   const partyName = isWitness
     ? getFormattedName(
-        respondentNameData?.firstName,
-        respondentNameData?.middleName,
-        respondentNameData?.lastName,
-        respondentNameData?.witnessDesignation,
-        null
-      )
+      respondentNameData?.firstName,
+      respondentNameData?.middleName,
+      respondentNameData?.lastName,
+      respondentNameData?.witnessDesignation,
+      null
+    )
     : constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName);
 
   if (respondentNameData?.respondentCompanyName) {
@@ -163,9 +135,8 @@ export const getRespondantName = (respondentNameData) => {
 export const getComplainantName = (complainantDetails) => {
   const partyName =
     complainantDetails?.firstName &&
-    `${complainantDetails?.firstName?.trim() || ""} ${complainantDetails?.middleName?.trim() || ""} ${
-      complainantDetails?.lastName?.trim() || ""
-    }`.trim();
+    `${complainantDetails?.firstName?.trim() || ""} ${complainantDetails?.middleName?.trim() || ""} ${complainantDetails?.lastName?.trim() || ""
+      }`.trim();
   if (complainantDetails?.complainantType?.code === "INDIVIDUAL") {
     return partyName;
   }
@@ -212,92 +183,6 @@ export const numberToWords = (num) => {
 export const formatAddress = (value) => {
   const parts = [value?.locality, value?.city, value?.district, value?.pincode];
   return parts.filter((part) => part !== undefined && part !== null && part !== "").join(", ");
-};
-
-const IST_OFFSET = 5.5 * 60 * 60 * 1000;
-
-function getISTEpoch(year, month, day, hour, minute, second, ms) {
-  const utcDate = Date.UTC(year, month, day, hour, minute, second, ms - IST_OFFSET);
-
-  return utcDate;
-}
-
-export function getEpochRangeFromDateIST(dateStr) {
-  if (!dateStr) return { start: null, end: null };
-
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const monthIndex = month - 1;
-
-  const start = getISTEpoch(year, monthIndex, day, 0, 0, 0, 0);
-  const end = getISTEpoch(year, monthIndex, day, 23, 59, 59, 999);
-
-  return { start, end };
-}
-
-export function getEpochRangeFromMonthIST(monthStr) {
-  if (!monthStr) return { start: null, end: null };
-
-  const [year, month] = monthStr.split("-").map(Number);
-  const monthIndex = month - 1;
-
-  const start = getISTEpoch(year, monthIndex, 1, 0, 0, 0, 0);
-
-  // Gets the number of the last day of the month
-  const lastDay = new Date(year, monthIndex + 1, 0).getDate();
-
-  const end = getISTEpoch(year, monthIndex, lastDay, 23, 59, 59, 999);
-
-  return { start, end };
-}
-
-export const formatDateWithTime = (dateInput, showTime = false) => {
-  if (!dateInput) return "-";
-
-  const date = new Date(dateInput);
-
-  if (isNaN(date.getTime())) return "N/A";
-  const dateInIST = new Date(date.getTime() + IST_OFFSET);
-
-  const day = String(dateInIST.getUTCDate()).padStart(2, "0");
-  const month = String(dateInIST.getUTCMonth() + 1).padStart(2, "0");
-  const year = dateInIST.getUTCFullYear();
-
-  let formattedDate = `${day}-${month}-${year}`;
-
-  if (showTime) {
-    const hours = String(dateInIST.getUTCHours()).padStart(2, "0");
-    const minutes = String(dateInIST.getUTCMinutes()).padStart(2, "0");
-    const seconds = String(dateInIST.getUTCSeconds()).padStart(2, "0");
-
-    formattedDate += ` ${hours}:${minutes}:${seconds}`;
-  }
-
-  return formattedDate;
-};
-
-export const _getDate = (epoch, formatDate = false) => {
-  const date = epoch ? new Date(epoch) : new Date();
-
-  const options = { timeZone: "Asia/Kolkata" };
-  const istDate = new Date(date.toLocaleString("en-US", options));
-
-  const year = istDate.getFullYear();
-  const month = String(istDate.getMonth() + 1).padStart(2, "0");
-  const day = String(istDate.getDate()).padStart(2, "0");
-
-  if (formatDate) {
-    return `${day}-${month}-${year}`;
-  }
-
-  return `${year}-${month}-${day}`;
-};
-
-export const _toEpoch = (dateString) => {
-  if (!dateString) return null;
-  const [year, month, day] = dateString.split("-").map(Number);
-  const utcDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  return utcDate.getTime() - istOffset;
 };
 
 export const _getStatus = (status, dropdownData = []) => {

@@ -113,6 +113,9 @@ public class Configuration {
     @Value("${egov.base.url}")
     private String baseUrl;
 
+    @Value("${egov.mediation.base.url}")
+    private String mediationBaseUrl;
+
     @Value("${egov.long.url}")
     private String longUrl;
 
@@ -192,5 +195,8 @@ public class Configuration {
 
     @Value("${dristi.esign.signature.height:50}")
     private int esignSignatureHeight;
+
+    @Value("${app.zone.id}")
+    private String zoneId;
 
 }

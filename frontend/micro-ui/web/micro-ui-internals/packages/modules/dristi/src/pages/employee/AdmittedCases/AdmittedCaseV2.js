@@ -26,7 +26,15 @@ import { Urls } from "../../../hooks";
 import { getFormattedName } from "@egovernments/digit-ui-module-hearings/src/utils";
 import { admitCaseSubmitConfig, scheduleCaseAdmissionConfig, selectParticipantConfig } from "../../citizen/FileCase/Config/admissionActionConfig";
 import Modal from "../../../components/Modal";
-import { getAllAssociatedPartyUuids, getAuthorizedUuid, getDate, removeInvalidNameParts } from "../../../Utils";
+import {
+  checkIfCaseAccessThroughMultipleAdvocates,
+  DateUtils,
+  getAllAdvocatesAndClerksUuids,
+  getAllAssociatedPartyUuids,
+  getAuthorizedUuid,
+  getDate,
+  removeInvalidNameParts,
+} from "../../../Utils";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import VoidSubmissionBody from "./VoidSubmissionBody";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
@@ -113,16 +121,6 @@ const actionEnabledStatuses = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PE
 const viewEnabledStatuses = [...actionEnabledStatuses, "CASE_DISMISSED"];
 const judgeReviewStages = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION", "CASE_DISMISSED"];
 
-const formatDate = (date) => {
-  if (date instanceof Date && !isNaN(date)) {
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  }
-  return "";
-};
-
 const AdmittedCaseV2 = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -136,7 +134,7 @@ const AdmittedCaseV2 = () => {
   const urlParams = new URLSearchParams(location.search);
   const { hearingId, taskOrderType, artifactNumber, fromHome, openExaminationModal, examinationDocNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
-  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userInfo = useMemo(() => JSON.parse(window.localStorage.getItem("user-info")), []);
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -146,7 +144,7 @@ const AdmittedCaseV2 = () => {
   const applicationNumber = urlParams.get("applicationNumber");
   const userRoles = useMemo(() => roles.map((role) => role.code), [roles]);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
-  const [showWitnessModal, setShowWitnessModal] = useState(false);
+  const [showWitnessModal, setShowWitnessModal] = useState({ show: false, artifactNumber: null });
   const [showExaminationModal, setShowExaminationModal] = useState(openExaminationModal || false);
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
@@ -196,7 +194,6 @@ const AdmittedCaseV2 = () => {
   const [bailBondLoading, setBailBondLoading] = useState(false);
   const [showAddWitnessModal, setShowAddWitnessModal] = useState(false);
   const [showWitnessDepositionDoc, setShowWitnessDepositionDoc] = useState({ docObj: null, show: false });
-  const [editWitnessDepositionArtifact, setEditWitnessDepositionArtifact] = useState(null);
   const [examinationDocumentNumber, setExaminationDocumentNumber] = useState(examinationDocNumber || null);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
@@ -215,6 +212,7 @@ const AdmittedCaseV2 = () => {
   );
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isEmployee = useMemo(() => userType === "employee", [userType]);
+  const isAdvocateOrClerk = useMemo(() => userRoles?.includes("ADVOCATE_ROLE") || userRoles?.includes("ADVOCATE_CLERK_ROLE"), [userRoles]);
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
   const [isShow, setIsShow] = useState(false);
@@ -237,7 +235,8 @@ const AdmittedCaseV2 = () => {
   const { data: hearingTypeOptions } = useSortedMDMSData("Hearing", "HearingType", "type", t);
   const { data: orderTypeOptions } = useSortedMDMSData("Order", "OrderType", "type", t);
   const { data: applicationTypeOptions, isLoading } = useSortedMDMSData("Application", "ApplicationType", "type", t);
-  const bailBondPendingtaskSearchRef = useRef(null);
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
+  const [showPopupForClerkOrAdvocate, setShowPopupForClerkOrAdvocate] = useState({ show: false, message: "" });
 
   const hasHearingEditAccess = useMemo(() => roles?.some((role) => role?.code === "HEARING_APPROVER"), [roles]);
   const reqEvidenceUpdate = {
@@ -328,7 +327,7 @@ const AdmittedCaseV2 = () => {
     }
   }, []);
 
-  const homeNextHearingFilter = JSON.parse(localStorage.getItem("Digit.homeNextHearingFilter"));
+  const homeNextHearingFilter = useMemo(() => JSON.parse(localStorage.getItem("Digit.homeNextHearingFilter")), []);
 
   useEffect(() => {
     const fetchInboxForNextHearingData = async () => {
@@ -571,6 +570,7 @@ const AdmittedCaseV2 = () => {
       criteria: {
         filingNumber,
         tenantId,
+        asUser: authorizedUuid,
       },
       tenantId,
       ...(caseCourtId && { courtId: caseCourtId }),
@@ -688,14 +688,14 @@ const AdmittedCaseV2 = () => {
     setSubmissionsViewModal(true);
   };
 
-  const handleTakeAction = () => {
+  const handleTakeAction = useCallback(() => {
     setShowMenu(!showMenu);
     setShowOtherMenu(false);
 
     if (showCitizenMenu) {
       setShowCitizenMenu(false);
     }
-  };
+  }, [showMenu, showCitizenMenu]);
 
   const showToast = useCallback((details, duration = 5000) => {
     setToast(true);
@@ -775,14 +775,14 @@ const AdmittedCaseV2 = () => {
       },
       {
         key: "SUBMITTED_ON",
-        value: formatDate(new Date(caseDetails?.filingDate)),
+        value: DateUtils.getFormattedDate(new Date(caseDetails?.filingDate)),
       },
     ],
     [caseCourtId, caseDetails?.caseCategory, caseDetails?.filingDate, caseDetails?.filingNumber, t]
   );
 
-  const configList = useMemo(() => {
-    const docSetFunc = (docObj) => {
+  const docSetFunc = useCallback(
+    (docObj) => {
       // This is redundant for document tab, used only for submissions tab
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
       const status = docObj?.[0]?.applicationList?.status;
@@ -826,9 +826,12 @@ const AdmittedCaseV2 = () => {
         setDocumentSubmission(docObj);
         setShow(true);
       }
-    };
+    },
+    [caseDetails, filingNumber, history, isCitizen, userUuid, setDocumentSubmission, setShow]
+  );
 
-    const orderSetFunc = async (order) => {
+  const orderSetFunc = useCallback(
+    async (order) => {
       if (order?.businessObject?.orderNotification?.entityType === "Notification") {
         const notificationResponse = await Digit.HearingService.searchNotification({
           criteria: {
@@ -873,9 +876,23 @@ const AdmittedCaseV2 = () => {
           }
         }
       }
-    };
+    },
+    [
+      caseCourtId,
+      filingNumber,
+      history,
+      isCitizen,
+      ordersService,
+      tenantId,
+      setCurrentOrder,
+      setCurrentNotification,
+      setShowNotificationModal,
+      setShowOrderReviewModal,
+    ]
+  );
 
-    const orderDeleteFunc = async (history, column, row, item) => {
+  const orderDeleteFunc = useCallback(
+    async (history, column, row, item) => {
       try {
         const orderResponse = await ordersService.searchOrder(
           {
@@ -897,18 +914,27 @@ const AdmittedCaseV2 = () => {
           message: t("SOMETHING_WENT_WRONG"),
         });
       }
-    };
+    },
+    [caseCourtId, filingNumber, ordersService, showToast, t, tenantId, setDeleteOrder]
+  );
 
-    const handleApplicationDeleteFunc = async (row) => {
+  const handleApplicationDeleteFunc = useCallback(
+    async (row) => {
       setDeleteApplication(row);
-    };
+    },
+    [setDeleteApplication]
+  );
 
-    const takeActionFunc = (hearingData) => {
+  const takeActionFunc = useCallback(
+    (hearingData) => {
       setCurrentHearing(hearingData);
       setShowHearingTranscriptModal(true);
-    };
+    },
+    [setCurrentHearing, setShowHearingTranscriptModal]
+  );
 
-    const handleFilingAction = async (history, column, row, item) => {
+  const handleFilingAction = useCallback(
+    async (history, column, row, item) => {
       const docObj = [
         {
           itemType: item.id,
@@ -944,8 +970,11 @@ const AdmittedCaseV2 = () => {
       } else if ("download_filing" === item.id) {
         downloadPdf(tenantId, row?.file?.fileStore);
       }
-    };
+    },
+    [downloadPdf, tenantId, setSelectedRow, setSelectedItem, setShowConfirmationModal, setDocumentSubmission, setVoidReason, setShowVoidModal]
+  );
 
+  const configList = useMemo(() => {
     const activeTabConfig = TabSearchconfigNew?.TabSearchconfig.find((tabConfig) => tabConfig.label === activeTab);
     if (!activeTabConfig) return [];
 
@@ -1315,6 +1344,13 @@ const AdmittedCaseV2 = () => {
     orderTypeOptions,
     applicationTypeOptions,
     hearingTypeOptions,
+    docSetFunc,
+    orderSetFunc,
+    orderDeleteFunc,
+    handleApplicationDeleteFunc,
+    takeActionFunc,
+    handleFilingAction,
+    showMakeSubmission,
   ]);
 
   const handleEvidenceAction = async () => {
@@ -1563,6 +1599,7 @@ const AdmittedCaseV2 = () => {
             filingNumber: filingNumber,
             artifactNumber: artifactNumber,
             tenantId: tenantId,
+            asUser: authorizedUuid,
             ...(caseCourtId && { courtId: caseCourtId }),
           },
           tenantId,
@@ -1657,6 +1694,8 @@ const AdmittedCaseV2 = () => {
   }, [newWitnesToast, showToast, t]);
 
   useEffect(() => {
+    const { refApplicationNumber, ...rest } = location?.state || {};
+    const applicationNumber = urlParams.get("applicationNumber") || refApplicationNumber;
     if (applicationData && applicationNumber) {
       const applicationDetails = applicationData?.applicationList?.filter((application) => application?.applicationNumber === applicationNumber)?.[0];
       setDocumentSubmission(
@@ -1685,8 +1724,15 @@ const AdmittedCaseV2 = () => {
         })
       );
       setShow(true);
+      if (refApplicationNumber) {
+        history.replace({
+          pathname: location.pathname,
+          search: location.search,
+          state: Object.keys(rest).length ? rest : null,
+        });
+      }
     }
-  }, [applicationData, applicationNumber]);
+  }, [applicationData, applicationNumber, location?.state?.refApplicationNumber]);
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
@@ -2102,7 +2148,6 @@ const AdmittedCaseV2 = () => {
     Boolean(filingNumber && !historyOrderData && caseCourtId),
     0
   );
-
   const ordersData = useMemo(() => historyOrderData || apiOrdersData, [historyOrderData, apiOrdersData]);
 
   const onTabChange = useCallback(
@@ -2194,6 +2239,26 @@ const AdmittedCaseV2 = () => {
       handleDownloadPDF();
     }
   }, [showDownloadCasePdfModal, handleDownloadPDF]);
+
+  useEffect(() => {
+    if (!caseDetails) return;
+    // if the same advocate is working as a senior advocate himself as well as junior advocate under another advocate in the same case- > show a warning popup.
+    const isJuniorAndDirectAdvocate = checkIfCaseAccessThroughMultipleAdvocates(caseDetails, userUuid);
+    const shouldShowPopup = sessionStorage.getItem("showPopupIfCaseAccessThroughMultipleAdvocates");
+    if (isJuniorAndDirectAdvocate && !showPopupForClerkOrAdvocate?.show && shouldShowPopup) {
+      const message = `${t("YOU_HAVE_CASE_ACCESS_THROUGH_MULTIPLE_ADVOCATES")} ${
+        storedAdvocate?.uuid === userUuid ? t("yourself.") : `Advocate ${storedAdvocate?.advocateName}'s office.`
+      }`;
+      setShowPopupForClerkOrAdvocate({ show: true, message: message });
+    }
+  }, [showPopupForClerkOrAdvocate, caseDetails, userUuid, storedAdvocate, t]);
+
+  useEffect(() => {
+    console.log("mount");
+    return () => {
+      console.log("unmount");
+    };
+  }, []);
 
   const handleDownloadClick = useCallback(() => {
     if (casePdfFileStoreId) {
@@ -2447,7 +2512,7 @@ const AdmittedCaseV2 = () => {
       } else if (option.value === "END_HEARING") {
         setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true });
       } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
-        setShowWitnessModal(true);
+        setShowWitnessModal({ show: true, artifactNumber: null });
       } else if (option.value === "RECORD_EXAMINATION_OF_ACCUSED") {
         setShowExaminationModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
@@ -2745,7 +2810,7 @@ const AdmittedCaseV2 = () => {
         documents: [],
         additionalDetails: {
           formdata: {
-            hearingDate: formatDate(date).split("-").reverse().join("-"),
+            hearingDate: DateUtils.getFormattedDate(date).split("-").reverse().join("-"),
             hearingPurpose: data.purpose,
             orderType: {
               code: "SCHEDULE_OF_HEARING_DATE",
@@ -3281,7 +3346,6 @@ const AdmittedCaseV2 = () => {
         counter={documentCounter}
         // handleFilingAction={handleFilingAction}
         setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
-        setEditWitnessDepositionArtifact={setEditWitnessDepositionArtifact}
         setExaminationDocumentNumber={setExaminationDocumentNumber}
         setShowWitnessModal={setShowWitnessModal}
         setShowExaminationModal={setShowExaminationModal}
@@ -3322,6 +3386,42 @@ const AdmittedCaseV2 = () => {
       />
     );
   }, [caseRelatedData, filingNumber, currentHearingId, caseDetails, isCitizen, isBailBondTaskExists, ordersData, hearingDetails]);
+
+  const popupForJuniorAdvocate = useMemo(() => {
+    return (
+      <Modal
+        headerBarMain={<Heading label={t("JUNIOR_ADVOCATE_WARNING_HEADER")} />}
+        headerBarEnd={
+          <CloseBtn
+            onClick={() => {
+              sessionStorage.removeItem("showPopupIfCaseAccessThroughMultipleAdvocates");
+              setShowPopupForClerkOrAdvocate({ show: false, message: "" });
+            }}
+          />
+        }
+        actionSaveLabel={t("ADVOCATE_CONFIRM_OK")}
+        children={<div style={{ margin: "25px 0px" }}>{showPopupForClerkOrAdvocate?.message || ""}</div>}
+        actionSaveOnSubmit={() => {
+          sessionStorage.removeItem("showPopupIfCaseAccessThroughMultipleAdvocates");
+          setShowPopupForClerkOrAdvocate({ show: false, message: "" });
+        }}
+      ></Modal>
+    );
+  }, [t, showPopupForClerkOrAdvocate]);
+
+  const isMemberPartOfCase = useMemo(() => {
+    if (!caseDetails?.filingNumber) return null;
+    if (!isAdvocateOrClerk) return true;
+
+    const advocatesAndClerksUuids = getAllAdvocatesAndClerksUuids(caseDetails);
+    return !!advocatesAndClerksUuids?.includes(userUuid);
+  }, [caseDetails, isAdvocateOrClerk, userUuid]);
+
+  useEffect(() => {
+    if (isMemberPartOfCase === false) {
+      history.push(homePath);
+    }
+  }, [isMemberPartOfCase, history, homePath]);
 
   if (isEpostUser) {
     history.push(homePath);
@@ -3476,7 +3576,7 @@ const AdmittedCaseV2 = () => {
                                 subLabel={
                                   hasHearingPriorityView
                                     ? null
-                                    : `(${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
+                                    : `(${DateUtils.getFormattedDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
                                         .split("-")
                                         .join("/")})`
                                 }
@@ -3502,7 +3602,7 @@ const AdmittedCaseV2 = () => {
                               <Button
                                 variation={"primary"}
                                 label={t("CS_CASE_NEXT_HEARING")}
-                                subLabel={`(${formatDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
+                                subLabel={`(${DateUtils.getFormattedDate(new Date(parseInt(homeNextHearingFilter?.homeFilterDate)))
                                   .split("-")
                                   .join("/")})`}
                                 children={<RightArrow />}
@@ -3756,8 +3856,6 @@ const AdmittedCaseV2 = () => {
           setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
           showWitnessModal={showWitnessModal}
           setShowWitnessModal={setShowWitnessModal}
-          setEditWitnessDepositionArtifact={setEditWitnessDepositionArtifact}
-          editWitnessDepositionArtifact={editWitnessDepositionArtifact}
         />
       )}
       {show && (
@@ -3821,6 +3919,7 @@ const AdmittedCaseV2 = () => {
           submissionList={submissionsViewList.list}
           openEvidenceModal={submissionsViewList.func}
           filingNumber={filingNumber}
+          asUser={getAuthorizedUuid(userInfo?.uuid)}
         />
       )}
       {toast && toastDetails && (
@@ -3859,6 +3958,7 @@ const AdmittedCaseV2 = () => {
           isDelayApplicationRejected={isDelayApplicationRejected}
         ></AdmissionActionModal>
       )}
+      {showPopupForClerkOrAdvocate?.show && popupForJuniorAdvocate}
       {showDismissCaseConfirmation && (
         <Modal
           headerBarMain={<Heading label={t("DISMISS_CASE_CONFIRMATION")} />}
@@ -4075,15 +4175,15 @@ const AdmittedCaseV2 = () => {
           setShowBailBondModal={setShowBailBondModal}
         />
       )}
-      {showWitnessModal && (
+      {showWitnessModal?.show && (
         <WitnessDrawerV2
-          isOpen={showWitnessModal}
+          isOpen={showWitnessModal?.show}
           onClose={() => {
-            setShowWitnessModal(false);
-            setEditWitnessDepositionArtifact(null);
+            setShowWitnessModal({ show: false, artifactNumber: null });
             refetchHearing();
             refetchCaseData();
             onTabChange(0, {}, "Documents");
+            setDocumentCounter((prev) => prev + 1);
           }}
           onSubmit={(action) => {
             if (action === "end-hearing") {
@@ -4091,13 +4191,13 @@ const AdmittedCaseV2 = () => {
             } else if (action === "view-cause-list") {
               // Handle view cause list action
             }
-            setShowWitnessModal(false);
+            setShowWitnessModal({ show: false, artifactNumber: null });
           }}
           attendees={currentActiveHearing?.attendees}
           hearing={currentActiveHearing}
           hearingId={currentInProgressHearingId}
           tenantId={tenantId}
-          artifactNumber={editWitnessDepositionArtifact}
+          artifactNumber={showWitnessModal?.artifactNumber}
           caseId={caseId}
           courtId={courtId}
         />

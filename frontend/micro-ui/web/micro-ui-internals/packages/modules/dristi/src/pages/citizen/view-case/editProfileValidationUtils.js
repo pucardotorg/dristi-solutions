@@ -1,4 +1,3 @@
-import { Urls } from "../../../hooks";
 import { DRISTIService } from "../../../services";
 import { cleanString, combineMultipleFiles, documentsTypeMapping, getAuthorizedUuid } from "../../../Utils";
 import { SubmissionWorkflowAction } from "../../../Utils/submissionWorkflow";

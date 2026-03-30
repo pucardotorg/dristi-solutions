@@ -29,7 +29,6 @@ const DocumentsV2 = ({
   setShowWitnessDepositionDoc,
   counter,
   setShowWitnessModal,
-  setEditWitnessDepositionArtifact,
   setShowExaminationModal,
   setExaminationDocumentNumber,
   setDocumentCounter,
@@ -120,6 +119,7 @@ const DocumentsV2 = ({
             courtId: courtId,
             filingNumber: filingNo,
             artifactNumber: artifactNum,
+            asUser: authorizedUuid,
             tenantId,
           },
           tenantId,
@@ -294,8 +294,7 @@ const DocumentsV2 = ({
           );
         }
         if (documentStatus === "DRAFT_IN_PROGRESS") {
-          setShowWitnessModal(true);
-          setEditWitnessDepositionArtifact(artifactNumber);
+          setShowWitnessModal({ show: true, artifactNumber: artifactNumber });
         } else {
           if (documentStatus === "PENDING_REVIEW" && canSign) {
             history.push({
@@ -575,10 +574,6 @@ const DocumentsV2 = ({
     if (!caseDetails?.filingNumber) return null; // wait for caseDetails to load
     return newTabSearchConfig?.TabSearchconfig;
   }, [newTabSearchConfig?.TabSearchconfig, caseDetails?.filingNumber]);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
 
   useEffect(() => {
     if (showErrorToast) {

@@ -11,6 +11,7 @@ import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/s
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import ADiaryDocumentPdfModal from "./ADiaryDocumentPdfModal";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const buttonStyle = {
   borderRadius: "4px",
@@ -40,12 +41,6 @@ const Heading = ({ label }) => {
       <h1 className="heading-m">{label}</h1>
     </div>
   );
-};
-
-const formatDate = (date) => {
-  if (!date) return "";
-  const convertedDate = new Date(date);
-  return convertedDate.toLocaleDateString();
 };
 
 function BulkSignADiaryView() {
@@ -90,6 +85,8 @@ function BulkSignADiaryView() {
   const diaryDateFilter = sessionStorage.getItem("diaryDateFilter");
   const name = "Signature";
   const pageModule = "en";
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const [diaryEntries, setDiaryEntries] = useState([]);
 
@@ -181,6 +178,7 @@ function BulkSignADiaryView() {
                 ...(courtId && { courtId: courtId }),
                 filingNumber: entry?.additionalDetails?.filingNumber,
                 artifactNumber: entry?.referenceId,
+                asUser: authorizedUuid,
                 tenantId,
               },
               tenantId,
@@ -535,7 +533,7 @@ function BulkSignADiaryView() {
                   additionalElements={[
                     <p key="note">
                       {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
-                      <span style={{ fontWeight: "bold" }}>{`${t("ADIARY")} - ${formatDate(entryDate)}`}</span>
+                      <span style={{ fontWeight: "bold" }}>{`${t("ADIARY")} - ${DateUtils.getFormattedDate(entryDate, "DD-MM-YYYY", "/")}`}</span>
                     </p>,
                   ]}
                   inline
@@ -610,7 +608,7 @@ function BulkSignADiaryView() {
                 additionalElements={[
                   <p key="note">
                     {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
-                    <span style={{ fontWeight: "bold" }}>{`${t("ADIARY")} - ${formatDate(entryDate)}`}</span>
+                    <span style={{ fontWeight: "bold" }}>{`${t("ADIARY")} - ${DateUtils.getFormattedDate(entryDate, "DD-MM-YYYY", "/")}`}</span>
                   </p>,
                 ]}
                 inline

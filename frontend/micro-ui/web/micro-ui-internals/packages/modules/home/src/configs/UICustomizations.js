@@ -1,17 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { formatDate } from "../../../cases/src/utils";
-import { formatDateDDMMYYYY, formatNoticeDeliveryDate } from "../utils";
+import { formatNoticeDeliveryDate } from "../utils";
 import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
 import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
-import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
 import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
-import { formatDateWithTime } from "../../../orders/src/utils";
 import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components/EditDeleteModal";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
@@ -45,12 +43,6 @@ const handleTaskDetails = (taskDetails) => {
     console.error("Failed to parse taskDetails:", error);
     return null;
   }
-};
-
-const handleNavigate = (path) => {
-  const contextPath = window?.contextPath || "";
-
-  window.location.href = `/${contextPath}${path}`;
 };
 
 export const UICustomizations = {
@@ -89,9 +81,9 @@ export const UICustomizations = {
           return value ? `${Math.round(value)}/-` : "-";
         case "BOOKING_DATE":
         case "BOOKING_DATE_TIME":
-          return formatDateWithTime(value) || "-";
+          return DateUtils.formatDateWithTime(value) || "-";
         case "RECIEVED_DATE":
-          return formatDateWithTime(value) || "-";
+          return DateUtils.formatDateWithTime(value) || "-";
         case "ADDRESS":
           return `${row?.respondentName}, ${value}` || "-";
         case "TASK_TYPE":
@@ -276,7 +268,7 @@ export const UICustomizations = {
         case "CS_STAGE":
           return t(value);
         case "CS_FILING_DATE":
-          return <span>{formatDate(new Date(value))}</span>;
+          return <span>{DateUtils.getFormattedDate(new Date(value))}</span>;
         case "CS_CASE_NUMBER_HOME":
           return caseId;
         case "CS_LAST_EDITED":
@@ -466,7 +458,7 @@ export const UICustomizations = {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
         case "CS_FILING_DATE":
-          return <span>{formatDate(new Date(value))}</span>;
+          return <span>{DateUtils.getFormattedDate(new Date(value))}</span>;
         case "CD_OUTCOME":
           return t(value);
         case "CS_STAGE":
@@ -584,7 +576,10 @@ export const UICustomizations = {
       const taskDetails = handleTaskDetails(row?.taskDetails);
       const delieveryDate = formatNoticeDeliveryDate(taskDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
       const hearingDate = formatNoticeDeliveryDate(taskDetails?.caseDetails?.hearingDate);
-      const caseId = (row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+      const activeTab = searchResult?.additionalDetails?.activeTab || "";
+      const isDisposedTab = activeTab === "DISPOSED";
+      const caseId =
+        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
 
       switch (key) {
         // case "CASE_NAME_ID":
@@ -592,7 +587,7 @@ export const UICustomizations = {
         case "STATUS":
           return t(value); // document status
         case "ISSUE_DATE":
-          return `${formatDate(new Date(value))}`;
+          return `${DateUtils.getFormattedDate(new Date(value))}`;
         case "PROCESS_TYPE":
           const processType = value?.toUpperCase?.();
           if (processType === "NOTICE") {
@@ -635,6 +630,171 @@ export const UICustomizations = {
           return taskDetails?.deliveryChannels?.statusChangeDate || "-";
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
+        case "PAYMENT_MADE":
+          return taskDetails?.deliveryChannels?.feePaidDate || "-";
+        default:
+          return t("ES_COMMON_NA");
+      }
+    },
+  },
+
+  bulkIssueCTCConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const searchForm = requestCriteria?.state?.searchForm || {};
+      const tableForm = requestCriteria?.state?.tableForm || {};
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+
+      const moduleSearchCriteria = {
+        tenantId,
+        ...(searchForm?.searchQuery && { searchableFields: searchForm.searchQuery }),
+        ...(searchForm?.documentName && { docTitle: searchForm.documentName }),
+        ...(courtId && { courtId }),
+        status: "PENDING",
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            processSearchCriteria: {
+              businessService: ["ctc-default"],
+              moduleName: "CTC Issue Doc",
+              tenantId,
+            },
+            moduleSearchCriteria,
+            tenantId,
+            limit: tableForm?.limit || 10,
+            offset: tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, items: data?.items || [], totalCount: data?.totalCount || 0 };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
+        case "DOCUMENTS_REQUESTED":
+          return (
+            <span
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+              role="button"
+              tabIndex={0}
+              onClick={() => column?.clickFunc && column.clickFunc({ original: row })}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === " ") && column?.clickFunc) {
+                  e.preventDefault();
+                  column.clickFunc({ original: row });
+                }
+              }}
+            >{`${t(value)}`}</span>
+          );
+        case "CASE_NAME":
+          return <span>{value}</span>;
+        case "CASE_NUMBER":
+          return <span>{value}</span>;
+        case "APPLICATION_NUMBER":
+          return <span>{value}</span>;
+        default:
+          return t("ES_COMMON_NA");
+      }
+    },
+  },
+
+  CTCApplicationsConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const searchForm = requestCriteria?.state?.searchForm || {};
+      const tableForm = requestCriteria?.state?.tableForm || {};
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+
+      const moduleSearchCriteria = {
+        tenantId,
+        ...(searchForm?.caseSearchText && { searchableFields: searchForm.caseSearchText }),
+        ...(courtId && { courtId }),
+        status: "PENDING_APPROVAL",
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            processSearchCriteria: {
+              businessService: ["ctc-default"],
+              moduleName: "CTC Service",
+              tenantId,
+            },
+            moduleSearchCriteria,
+            tenantId,
+            limit: tableForm?.limit || 10,
+            offset: tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            if (additionalDetails?.setCount) {
+              additionalDetails.setCount(data?.totalCount || 0);
+            }
+            return { ...data, items: data?.items || [], totalCount: data?.totalCount || 0 };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
+        case "APPLICATION_NUMBER":
+          return (
+            <span
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+              role="button"
+              tabIndex={0}
+              onClick={() => column?.clickFunc && column.clickFunc({ original: row })}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === " ") && column?.clickFunc) {
+                  e.preventDefault();
+                  column.clickFunc({ original: row });
+                }
+              }}
+            >{`${value}`}</span>
+          );
+        case "CASE_NUMBER":
+          return <span>{value || ""}</span>;
+        case "PETITIONER":
+          return <span>{value || ""}</span>;
+        case "DATE_RAISED":
+          const date = value ? new Date(value) : new Date();
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0");
+          const year = date.getFullYear();
+          return <span>{`${day}-${month}-${year}`}</span>;
+        case "STATUS":
+          return (
+            <span
+              style={{ padding: "4px 8px", background: "#FFF0E6", color: "#CC6600", borderRadius: "16px", fontSize: "12px", display: "inline-block" }}
+            >
+              {t(value || "")}
+            </span>
+          );
         default:
           return t("ES_COMMON_NA");
       }
@@ -852,7 +1012,7 @@ export const UICustomizations = {
           return <ADiaryRowClick rowData={row} colData={column} value={value} />;
 
         case "NEXT_HEARING_DATE":
-          return <span>{value ? formatDateDDMMYYYY(value) : ""}</span>;
+          return <span>{value ? DateUtils.getFormattedDate(value) : ""}</span>;
         default:
           return value || "";
       }
@@ -870,6 +1030,10 @@ export const UICustomizations = {
     },
     preProcess: (requestCriteria, additionalDetails) => {
       const userType = requestCriteria?.state?.searchForm?.userType;
+
+      if (userType) {
+        window.sessionStorage.setItem("registerUsersUserType", userType);
+      }
 
       // Determine business service based on selected user type
       let businessService = ["user-registration-advocate"];
@@ -935,9 +1099,8 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
-                  applicationNumber || ""
-                }&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${applicationNumber || ""
+                  }&individualId=${individualId}&type=${usertype}`}
               >
                 {applicationNumber
                   ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)
@@ -1248,7 +1411,7 @@ export const UICustomizations = {
         case "CS_ACTIONS":
           return <EditDeleteModal rowData={row} colData={column} value={value} isDelete={true} isEdit={true} />;
         case "DATE_CREATED":
-          return formatDateDDMMYYYY(row?.auditDetails?.createdTime);
+          return DateUtils.getFormattedDate(row?.auditDetails?.createdTime);
         default:
           return value || "";
       }

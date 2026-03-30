@@ -9,8 +9,6 @@ import { DRISTIService } from "../../../services";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { OrderTypes, OrderWorkflowAction } from "../../../Utils/orderWorkflow";
 import Breadcrumb from "../../../components/BreadCrumb";
-
-import { formatDate } from "../../citizen/FileCase/CaseType";
 import {
   admitCaseSubmitConfig,
   registerCaseConfig,
@@ -22,6 +20,7 @@ import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
 import {
   advocateCaseFilingStatusTypes,
+  DateUtils,
   getAuthorizedUuid,
   getCaseEditAllowedAssignees,
   getFilingType,
@@ -117,18 +116,6 @@ function CaseFileAdmission({ t, path }) {
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
 
-  // const employeeCrumbs = useMemo(
-  //   () => [
-  //     {
-  //       path: `/${window?.contextPath}/employee/home/home-screen`,
-  //       content: t("ES_COMMON_HOME"),
-  //       show: true,
-  //       isLast: false,
-  //       homeActiveTab: location?.state?.homeActiveTab || null,
-  //     },
-  //   ],
-  //   [location?.state?.homeActiveTab, t]
-  // );
   const { data: caseFetchResponse, isLoading, refetch } = useSearchCaseService(
     {
       criteria: [
@@ -425,7 +412,7 @@ function CaseFileAdmission({ t, path }) {
     },
     {
       key: "SUBMITTED_ON",
-      value: formatDate(new Date(caseDetails?.filingDate)),
+      value: DateUtils.getFormattedDate(new Date(caseDetails?.filingDate)),
     },
   ];
 
@@ -936,7 +923,7 @@ function CaseFileAdmission({ t, path }) {
         documents: [],
         additionalDetails: {
           formdata: {
-            hearingDate: formatDate(date).split("-").reverse().join("-"),
+            hearingDate: DateUtils.getFormattedDate(date).split("-").reverse().join("-"),
             hearingPurpose: data.purpose,
             orderType: {
               code: "SCHEDULE_OF_HEARING_DATE",

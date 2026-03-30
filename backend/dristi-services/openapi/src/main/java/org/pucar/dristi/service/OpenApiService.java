@@ -24,6 +24,7 @@ import org.pucar.dristi.web.models.courtcase.WitnessDetails;
 import org.pucar.dristi.web.models.esign.ESignParameter;
 import org.pucar.dristi.web.models.esign.ESignRequest;
 import org.pucar.dristi.web.models.esign.ESignResponse;
+import org.pucar.dristi.web.models.filestore.StorageResponse;
 import org.pucar.dristi.web.models.inbox.*;
 
 import org.springframework.core.io.Resource;
@@ -31,6 +32,7 @@ import org.springframework.http.ResponseEntity;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -192,6 +194,28 @@ public class OpenApiService {
 
     public boolean validCaseType(String CaseType) {
         return CaseType.equals(CASE_TYPE_CMP) || CaseType.equals(CASE_TYPE_ST);
+    }
+
+    public CaseSearchTextResponse getCasesBySearchText(String tenantId, String searchText, String courtId, Integer limit, Integer offset) {
+        log.info("Fetching cases from Case Service by search text");
+        StringBuilder uri = new StringBuilder(configuration.getCaseServiceHost()).append(configuration.getCaseServiceSearchByCaseSearchTextEndpoint());
+
+        Pagination pagination = null;
+        if (limit != null || offset != null) {
+            pagination = Pagination.builder()
+                    .limit(limit != null ? limit.doubleValue() : 10.0)
+                    .offSet(offset != null ? offset.doubleValue() : 0.0)
+                    .build();
+        }
+
+        CaseSearchTextRequest request = CaseSearchTextRequest.builder()
+                .tenantId(tenantId)
+                .searchText(searchText)
+                .courtId(courtId)
+                .pagination(pagination)
+                .build();
+        Object response = serviceRequestRepository.fetchResult(uri, request);
+        return objectMapper.convertValue(response, CaseSearchTextResponse.class);
     }
 
     public List<OpenHearing> getHearings(OpenAPiHearingRequest body) {
@@ -1176,6 +1200,11 @@ public class OpenApiService {
 
         Object response = serviceRequestRepository.fetchResult(uri, addAddressRequest);
         return objectMapper.convertValue(response, AddAddressResponse.class);
+    }
+
+    public StorageResponse uploadFiles(List<MultipartFile> files, String tenantId, String module, String tag, RequestInfo requestInfo) {
+
+        return fileStoreUtil.uploadFiles(files, tenantId, module, tag, requestInfo);
     }
 
 }

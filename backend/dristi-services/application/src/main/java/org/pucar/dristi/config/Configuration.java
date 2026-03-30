@@ -271,4 +271,17 @@ public class Configuration {
     @Value("${state.level.tenant.id}")
     private String stateLevelTenantId;
 
+    @Value("${app.zone.id}")
+    private String zoneId;
+
+    //Advocate Config
+    @Value("${dristi.advocate.host}")
+    private String advocateHost;
+
+    @Value("${dristi.advocate.search.endpoint}")
+    private String advocateSearchEndPoint;
+
+    @Value("${dristi.advocate.clerk.search.endpoint}")
+    private String advocateClerkSearchEndPoint;
+
 }

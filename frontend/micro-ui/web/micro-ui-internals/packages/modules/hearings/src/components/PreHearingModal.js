@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next";
 import Modal from "../../../dristi/src/components/Modal";
 import { preHearingConfig } from "../configs/PreHearingConfig";
 // import { ReschedulingPurpose } from "../pages/employee/ReschedulingPurpose";
-import { formatDate } from "../utils";
 import BulkReschedule from "../pages/employee/BulkReschedule";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 function PreHearingModal({ onCancel, hearingData, courtData, individualId, userType, events }) {
   const { t } = useTranslation();
@@ -75,9 +75,9 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       ...configCopy.sections.searchResult.uiConfig.columns.map((column) => {
         return column.label === "Actions"
           ? {
-              ...column,
-              openRescheduleDialog: openRescheduleModal,
-            }
+            ...column,
+            openRescheduleDialog: openRescheduleModal,
+          }
           : column;
       }),
     ];
@@ -125,10 +125,6 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
     borderRadius: "0.3rem",
   };
 
-  // const onRescheduleAllClick = () => {
-  //   setRescheduleAll(true);
-  //   openRescheduleModal(hearingData);
-  // };
 
   const closeFunc = () => {
     setPurposeModalOpen(false);
@@ -166,7 +162,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
         style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem 0 0 0", borderTop: "1px solid lightgray" }}
       >
         <div>
-          <strong>{formatDate(new Date(hearingData.fromDate), DateFormat)}</strong>, {hearingData.slot}
+          <strong>{DateUtils.getFormattedDate(new Date(hearingData.fromDate), DateFormat)}</strong>, {hearingData.slot}
         </div>
         {Digit.UserService.getType() === "employee" && (
           <Button

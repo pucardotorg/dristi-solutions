@@ -267,12 +267,14 @@ export const runGenericTextSanitizer = ({ formData, setValue }) => {
 
 export const checkIfscValidation = ({ formData, setValue, selected }) => {
   if (selected === "chequeDetails") {
-    const formDataCopy = structuredClone(formData);
-    for (const key in formDataCopy) {
+    const chequeData = structuredClone(formData?.chequeDetails || {});
+
+    for (const key in chequeData) {
       switch (key) {
-        case "ifsc":
-          if (Object.hasOwnProperty.call(formDataCopy, key)) {
-            const oldValue = formDataCopy[key];
+        case "payeeIfsc":
+        case "payerIfsc":
+          if (Object.hasOwnProperty.call(chequeData, key)) {
+            const oldValue = chequeData[key];
             let value = oldValue;
 
             if (typeof value === "string") {
@@ -297,7 +299,7 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
                 const element = document.querySelector(`[name="${key}"]`);
                 const start = element?.selectionStart;
                 const end = element?.selectionEnd;
-                setValue(key, updatedValue);
+                setValue(`chequeDetails.${key}`, updatedValue);
                 setTimeout(() => {
                   element?.setSelectionRange(start, end);
                 }, 0);
@@ -305,6 +307,15 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
             }
           }
           break;
+        default:
+          break;
+      }
+    }
+
+    const formDataCopy = structuredClone(formData);
+
+    for (const key in formDataCopy) {
+      switch (key) {
         case "chequeAmount":
           if (Object.hasOwnProperty.call(formDataCopy, key)) {
             const oldValue = formDataCopy[key];
@@ -351,6 +362,55 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
       }
     }
   }
+};
+
+export const fetchBankDetails = async (ifsc) => {
+  try {
+    const criteria = [{ ifsc }];
+    const resp = await DRISTIService.fetchBankDetails({ criteria }, {});
+    return resp?.bankDetails?.[0] || null;
+  } catch (e) {
+    console.warn("IFSC lookup failed");
+    return null;
+  }
+};
+
+export const handleIfscAutofill = async ({ ifsc, bankField, branchField, setValue, getValues, setError, clearErrors, cache }) => {
+  if (!cache?.current) {
+    console.error("Cache not initialized properly");
+    return false;
+  }
+  if (!ifsc || ifsc.length !== 11) {
+    return false;
+  }
+
+  let bankDetails = cache.current[ifsc];
+
+  // fetching details only if not cached
+  if (!bankDetails) {
+    bankDetails = await fetchBankDetails(ifsc);
+
+    if (!bankDetails) {
+      return false;
+    }
+
+    cache.current[ifsc] = bankDetails;
+  }
+
+  const currentBank = getValues(bankField);
+  const currentBranch = getValues(branchField);
+
+  if (currentBank !== bankDetails.name) {
+    setValue(bankField, bankDetails.name || "");
+    clearErrors(bankField);
+  }
+
+  if (currentBranch !== bankDetails.branch) {
+    setValue(branchField, bankDetails.branch || "");
+    clearErrors(branchField);
+  }
+
+  return true;
 };
 
 export const checkNameValidation = ({ formData, setValue, selected, reset, index, formdata, clearErrors, formState }) => {
@@ -853,6 +913,33 @@ export const chequeDetailFileValidation = ({ formData, selected, setShowErrorToa
       setShowErrorToast(true);
       return true;
     }
+    for (const field of ["payeeIfscField", "payerIfscField"]) {
+      const ifscKey = field.replace("Field", "");
+      const ifscValue = formData?.[field]?.[ifscKey];
+
+      const prefix = ifscKey.replace("Ifsc", "");
+
+      const bank = formData?.[`${prefix}BankName`];
+      const branch = formData?.[`${prefix}BranchName`];
+
+      if (!ifscValue) {
+        setFormErrors(field, { msg: "CORE_REQUIRED_FIELD_ERROR" });
+        setShowErrorToast(true);
+        return true;
+      }
+
+      if (ifscValue.length !== 11) {
+        setFormErrors(field, { msg: "CS_INVALID_IFSC" });
+        setShowErrorToast(true);
+        return true;
+      }
+
+      if (!bank || !branch) {
+        setFormErrors(field, { msg: "PLEASE_SEARCH_IFSC" });
+        setShowErrorToast(true);
+        return true;
+      }
+    }
   } else {
     return false;
   }
@@ -973,58 +1060,6 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
     }
   }
   return allErrorData;
-};
-
-export const advocateDetailsFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors, t, isSubmitDisabled }) => {
-  if (selected === "advocateDetails") {
-    const { boxComplainant, isComplainantPip, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
-      formData?.multipleAdvocatesAndPip || {};
-    let errorObject = {
-      advocateDetailsAbsent: false,
-      vakalatnamaFileUploadAbsent: false,
-      pipAffidavitFileUploadAbsent: false,
-    };
-    if (boxComplainant?.individualId) {
-      let isAnAdvocateMissing = false;
-      let isVakalatnamaFileMissing = false;
-      let isPipAffidavitFileMissing = false;
-      if (isComplainantPip?.code === "NO") {
-        // IF complainant is not party in person, an advocate must be present
-        if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length === 0)) {
-          isAnAdvocateMissing = true;
-        } else if (
-          multipleAdvocateNameDetails &&
-          Array.isArray(multipleAdvocateNameDetails) &&
-          multipleAdvocateNameDetails?.length > 0 &&
-          multipleAdvocateNameDetails?.some((adv) => !adv?.advocateBarRegNumberWithName?.advocateId)
-        ) {
-          isAnAdvocateMissing = true;
-        }
-        // IF complainant is not party in person, there must be a vakalathnama document uploaded.
-        if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
-          isVakalatnamaFileMissing = true;
-        }
-      }
-      if (isComplainantPip?.code === "YES") {
-        // IF complainant is party in person, there must be a PIP affidavit document uploaded.
-        if (!pipAffidavitFileUpload || pipAffidavitFileUpload?.document?.length === 0) {
-          isPipAffidavitFileMissing = true;
-        }
-      }
-      errorObject = {
-        advocateDetailsAbsent: isAnAdvocateMissing,
-        vakalatnamaFileUploadAbsent: isVakalatnamaFileMissing,
-        pipAffidavitFileUploadAbsent: isPipAffidavitFileMissing,
-      };
-    }
-    let mandatoryLeft = false;
-    for (let key in errorObject) {
-      if (errorObject[key] === true) {
-        mandatoryLeft = true;
-      }
-    }
-    // setError("multipleAdvocatesAndPip", errorObject);
-  }
 };
 
 export const complainantValidation = ({

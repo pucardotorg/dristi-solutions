@@ -74,6 +74,15 @@ public class SummonsService {
 
     public TaskResponse generateSummonsDocument(TaskRequest taskRequest) {
         String taskType = taskRequest.getTask().getTaskType();
+
+        boolean isWarrantToWitness = false;
+
+        if (WARRANT.equalsIgnoreCase(taskType)) {
+            if (taskRequest.getTask().getTaskDetails() != null && taskRequest.getTask().getTaskDetails().getWitnessDetails() != null) {
+                isWarrantToWitness = true;
+            }
+        }
+
         String docSubType = getDocSubType(taskType, taskRequest.getTask().getTaskDetails());
         String templateType = getTemplateType(taskType, taskRequest.getTask().getTaskDetails());
         String noticeType = getNoticeType(taskRequest.getTask().getTaskDetails());
@@ -83,7 +92,7 @@ public class SummonsService {
                 task.getTaskDetails().getDeliveryChannel() != null)
                 ? task.getTaskDetails().getDeliveryChannel().getChannelName()
                 : null;
-        String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, false, noticeType, templateType);
+        String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, false, noticeType, templateType, isWarrantToWitness);
 
         if (E_POST.equalsIgnoreCase(deliveryChannel)) {
             pdfTemplateKey = pdfTemplateKey + "-e-post";
@@ -144,7 +153,7 @@ public class SummonsService {
         if (!(MISCELLANEOUS_PROCESS.equalsIgnoreCase(taskType) || taskType.equalsIgnoreCase(WARRANT) || taskType.equalsIgnoreCase(PROCLAMATION) || taskType.equalsIgnoreCase(ATTACHMENT))) {
             String docSubType = getDocSubType(taskType, task.getTaskDetails());
             String noticeType = getNoticeType(task.getTaskDetails());
-            String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true, noticeType, null);
+            String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true, noticeType, null,false);
 
             generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, true);
         }
@@ -261,6 +270,7 @@ public class SummonsService {
                     .filingType(getFilingType(taskRequest.getRequestInfo(), taskRequest.getTask()))
                     .isEvidence(true)
                     .additionalDetails(getAdditionalDetails(taskRequest.getRequestInfo()))
+                    .asUser(taskRequest.getRequestInfo().getUserInfo().getUuid())
                     .build();
 
             EvidenceRequest evidenceRequest = EvidenceRequest.builder()
@@ -339,7 +349,7 @@ public class SummonsService {
                 .orElse(null);
     }
 
-    private String getPdfTemplateKey(String taskType, String docSubType, boolean qrCode, String noticeType, String templateType) {
+    private String getPdfTemplateKey(String taskType, String docSubType, boolean qrCode, String noticeType, String templateType, Boolean isWarrantToWitness) {
         switch (taskType) {
             case SUMMON -> {
                 if (ACCUSED.equals(docSubType)) {
@@ -351,6 +361,9 @@ public class SummonsService {
                 }
             }
             case WARRANT -> {
+                if (isWarrantToWitness) {
+                    return config.getWitnessWarrantPdfTemplateKey();
+                }
                 if (SPECIFIC.equals(templateType)) {
                     if (BAILABLE.equals(docSubType)) {
                         return config.getBailableWarrantPdfTemplateKey();

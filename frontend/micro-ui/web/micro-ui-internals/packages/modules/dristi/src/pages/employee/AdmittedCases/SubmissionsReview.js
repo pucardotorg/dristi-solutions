@@ -7,8 +7,7 @@ import EvidenceModal from "./EvidenceModal";
 import { useGetPendingTask } from "../../../../../home/src/hooks/useGetPendingTask";
 import { useHistory } from "react-router-dom";
 import { DRISTIService } from "../../../services";
-import { formatDateDDMMYYYY } from "../../../../../home/src/utils";
-import { getAuthorizedUuid } from "../../../Utils";
+import { DateUtils, getAuthorizedUuid } from "../../../Utils";
 
 const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal }) => {
   const { t } = useTranslation();
@@ -102,6 +101,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        asUser: authorizedUuid,
         ...(caseData?.case?.courtId && { courtId: caseData?.case?.courtId }),
       },
     },
@@ -283,7 +283,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
                     marginLeft: "2px",
                   }}
                 >
-                  {app?.createdDate ? formatDateDDMMYYYY(app?.createdDate) : "N/A"}
+                  {app?.createdDate ? DateUtils.getFormattedDate(app?.createdDate) : "N/A"}
                 </span>
               </div>
             </div>

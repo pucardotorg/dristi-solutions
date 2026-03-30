@@ -9,11 +9,9 @@ import org.pucar.dristi.repository.AdvocateOfficeCaseMemberRepository;
 import org.pucar.dristi.web.models.AdvocateOffice;
 import org.pucar.dristi.web.models.AdvocateOfficeMember;
 import org.pucar.dristi.web.models.CourtCase;
-import org.pucar.dristi.web.models.advocateofficemember.AddMemberRequest;
-import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMember;
-import org.pucar.dristi.web.models.advocateofficemember.AdvocateOfficeCaseMemberRequest;
-import org.pucar.dristi.web.models.advocateofficemember.LeaveOfficeRequest;
-import org.pucar.dristi.web.models.advocateofficemember.MemberAdvocatesRequest;
+import org.pucar.dristi.web.models.Pagination;
+import org.pucar.dristi.web.models.advocateofficemember.*;
+import org.pucar.dristi.web.models.enums.AccessType;
 import org.pucar.dristi.web.models.enums.MemberType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+
+import static org.pucar.dristi.web.models.enums.OfficeManagementStatus.IN_PROGRESS;
 
 @Slf4j
 @Service
@@ -50,79 +50,87 @@ public class AdvocateOfficeCaseMemberService {
                     request.getAddMember().getOfficeAdvocateId(),
                     request.getAddMember().getMemberId());
 
-            String advocateId = request.getAddMember().getOfficeAdvocateId().toString();
+            if (request.getAddMember().getAccessType().equals(AccessType.ALL_CASES)) {
 
-            List<String> caseIds = repository.getCaseIdsByAdvocateId(advocateId);
 
-            if (caseIds.isEmpty()) {
-                log.info("No cases found for advocateId: {}. Skipping member addition.", advocateId);
-                return;
-            }
+                cacheService.save(request.getAddMember().getOfficeAdvocateUserUuid() + "-" + request.getAddMember().getMemberUserUuid(), IN_PROGRESS);
 
-            log.info("Found {} cases for advocateId: {}", caseIds.size(), advocateId);
+                String advocateId = request.getAddMember().getOfficeAdvocateId().toString();
 
-            // Process cases in batches to optimize memory usage and enable streaming
-            int batchSize = configuration.getBatchSize();
-            int totalCases = caseIds.size();
-            int batchCount = (int) Math.ceil((double) totalCases / batchSize);
-            
-            log.info("Processing {} cases in {} batches of max size {}", totalCases, batchCount, batchSize);
+                List<String> caseIds = repository.getCaseIdsByAdvocateId(advocateId);
 
-            List<AdvocateOfficeCaseMember> currentBatch = new ArrayList<>();
-            int publishedBatchCount = 0;
+                if (caseIds.isEmpty()) {
+                    log.info("No cases found for advocateId: {}. Skipping member addition.", advocateId);
+                    return;
+                }
 
-            for (int i = 0; i < totalCases; i++) {
-                String caseId = caseIds.get(i);
-                
-                // Create member for this case
-                AdvocateOfficeCaseMember member = AdvocateOfficeCaseMember.builder()
-                        .id(UUID.randomUUID())
-                        .tenantId(request.getAddMember().getTenantId())
-                        .officeAdvocateId(request.getAddMember().getOfficeAdvocateId())
-                        .officeAdvocateName(request.getAddMember().getOfficeAdvocateName())
-                        .officeAdvocateUserUuid(request.getAddMember().getOfficeAdvocateUserUuid().toString())
-                        .caseId(UUID.fromString(caseId))
-                        .memberId(request.getAddMember().getMemberId())
-                        .memberUserUuid(request.getAddMember().getMemberUserUuid().toString())
-                        .memberType(request.getAddMember().getMemberType())
-                        .memberName(request.getAddMember().getMemberName())
-                        .isActive(request.getAddMember().getIsActive() != null ? request.getAddMember().getIsActive() : true)
-                        .auditDetails(createAuditDetails(request))
-                        .build();
+                log.info("Found {} cases for advocateId: {}", caseIds.size(), advocateId);
 
-                currentBatch.add(member);
+                // Process cases in batches to optimize memory usage and enable streaming
+                int batchSize = configuration.getBatchSize();
+                int totalCases = caseIds.size();
+                int batchCount = (int) Math.ceil((double) totalCases / batchSize);
 
-                // Process batch when it reaches the configured size OR it's the last case
-                boolean isBatchFull = currentBatch.size() >= batchSize;
-                boolean isLastCase = i == totalCases - 1;
+                log.info("Processing {} cases in {} batches of max size {}", totalCases, batchCount, batchSize);
 
-                if (isBatchFull || isLastCase) {
-                    publishedBatchCount++;
-                    
-                    AdvocateOfficeCaseMemberRequest batchRequest = AdvocateOfficeCaseMemberRequest.builder()
-                            .requestInfo(request.getRequestInfo())
-                            .members(new ArrayList<>(currentBatch))
+                List<AdvocateOfficeCaseMember> currentBatch = new ArrayList<>();
+                int publishedBatchCount = 0;
+
+                for (int i = 0; i < totalCases; i++) {
+                    String caseId = caseIds.get(i);
+
+                    // Create member for this case
+                    AdvocateOfficeCaseMember member = AdvocateOfficeCaseMember.builder()
+                            .id(UUID.randomUUID())
+                            .tenantId(request.getAddMember().getTenantId())
+                            .officeAdvocateId(request.getAddMember().getOfficeAdvocateId())
+                            .officeAdvocateName(request.getAddMember().getOfficeAdvocateName())
+                            .officeAdvocateUserUuid(request.getAddMember().getOfficeAdvocateUserUuid().toString())
+                            .caseId(UUID.fromString(caseId))
+                            .memberId(request.getAddMember().getMemberId())
+                            .memberUserUuid(request.getAddMember().getMemberUserUuid().toString())
+                            .memberType(request.getAddMember().getMemberType())
+                            .memberName(request.getAddMember().getMemberName())
+                            .isActive(request.getAddMember().getIsActive() != null ? request.getAddMember().getIsActive() : true)
+                            .auditDetails(createAuditDetails(request))
                             .build();
 
-                    // Update Redis cache for this batch
-                    updateRedisCacheForAddMember(batchRequest);
+                    currentBatch.add(member);
 
-                    // Push to save topic for persistence
-                    producer.push(configuration.getAdvocateOfficeCaseMemberSaveTopic(), batchRequest);
-                    log.info("Successfully published batch {}/{} with {} members to save topic",
-                            publishedBatchCount, batchCount, currentBatch.size());
+                    // Process batch when it reaches the configured size OR it's the last case
+                    boolean isBatchFull = currentBatch.size() >= batchSize;
+                    boolean isLastCase = i == totalCases - 1;
 
-                    // Push to analytics topic only for the LAST batch to trigger processing
-                    // This avoids: 1) RecordTooLargeException (message size limit)
-                    //              2) Repetitive processing (analytics fetches ALL cases anyway)
-                    if (isLastCase) {
-                        producer.push(configuration.getAdvocateOfficeCaseMemberAnalyticsTopic(), batchRequest);
-                        log.info("Successfully published last batch to analytics topic to trigger processing for advocate");
+                    if (isBatchFull || isLastCase) {
+                        publishedBatchCount++;
+
+                        AdvocateOfficeCaseMemberRequest batchRequest = AdvocateOfficeCaseMemberRequest.builder()
+                                .requestInfo(request.getRequestInfo())
+                                .members(new ArrayList<>(currentBatch))
+                                .build();
+
+                        // Update Redis cache for this batch
+                        updateRedisCacheForAddMember(batchRequest);
+
+                        // Push to save topic for persistence
+                        producer.push(configuration.getAdvocateOfficeCaseMemberSaveTopic(), batchRequest);
+                        log.info("Successfully published batch {}/{} with {} members to save topic",
+                                publishedBatchCount, batchCount, currentBatch.size());
+
+                        // Push to analytics topic only for the LAST batch to trigger processing
+                        // This avoids: 1) RecordTooLargeException (message size limit)
+                        //              2) Repetitive processing (analytics fetches ALL cases anyway)
+                        if (isLastCase) {
+                            producer.push(configuration.getAdvocateOfficeCaseMemberAnalyticsTopic(), batchRequest);
+                            log.info("Successfully published last batch to analytics topic to trigger processing for advocate");
+                        }
+
+                        // Clear batch for next iteration
+                        currentBatch.clear();
                     }
-
-                    // Clear batch for next iteration
-                    currentBatch.clear();
                 }
+            } else {
+                log.info("skipping adding cases access type : {}", request.getAddMember().getAccessType());
             }
 
         } catch (Exception e) {
@@ -136,6 +144,8 @@ public class AdvocateOfficeCaseMemberService {
             log.info("Processing leave office request for officeAdvocateId: {}, memberId: {}",
                     request.getLeaveOffice().getOfficeAdvocateUserUuid(),
                     request.getLeaveOffice().getMemberUserUuid());
+
+            cacheService.save(request.getLeaveOffice().getOfficeAdvocateUserUuid() + "-" + request.getLeaveOffice().getMemberUserUuid(), IN_PROGRESS);
 
             request.getLeaveOffice().setIsActive(false);
             request.getLeaveOffice().setAuditDetails(createAuditDetailsForLeave(request));
@@ -176,6 +186,19 @@ public class AdvocateOfficeCaseMemberService {
 
         return auditDetails;
 
+    }
+
+    private AuditDetails createAuditDetailsForProcessCaseMember(ProcessCaseMemberRequest request) {
+        Long currentTime = System.currentTimeMillis();
+        String userId = request.getRequestInfo() != null && request.getRequestInfo().getUserInfo() != null ?
+                request.getRequestInfo().getUserInfo().getUuid() : "SYSTEM";
+
+        return AuditDetails.builder()
+                .createdBy(userId)
+                .createdTime(currentTime)
+                .lastModifiedBy(userId)
+                .lastModifiedTime(currentTime)
+                .build();
     }
 
     private void updateRedisCacheForAddMember(AdvocateOfficeCaseMemberRequest memberRequest) {
@@ -337,6 +360,256 @@ public class AdvocateOfficeCaseMemberService {
             log.error("Error fetching advocates for memberUserUuid: {} and caseId: {}", 
                     request.getMemberUserUuid(), request.getCaseId(), e);
             throw e;
+        }
+    }
+
+    public CaseMemberSearchResponse searchCaseMembers(CaseMemberSearchRequest request) {
+        try {
+            CaseMemberSearchCriteria criteria = request.getCriteria();
+            Pagination pagination = request.getPagination();
+
+            log.info("Searching case members for officeAdvocateUserUuid: {} and memberUserUuid: {}",
+                    criteria.getOfficeAdvocateUserUuid(),
+                    criteria.getMemberUserUuid());
+
+            // Get total count
+            Integer totalCount = repository.getCaseMembersTotalCount(criteria);
+
+            log.info("Total case members found: {}", totalCount);
+
+            // Set total count in pagination if pagination is provided
+            if (pagination != null) {
+                pagination.setTotalCount(totalCount.doubleValue());
+            }
+
+            // Fetch paginated results
+            List<CaseMemberInfo> caseMembers = repository.searchCaseMembers(criteria, pagination);
+
+            log.info("Found {} case members in current page", caseMembers.size());
+
+            return CaseMemberSearchResponse.builder()
+                    .cases(caseMembers)
+                    .totalCount(totalCount)
+                    .pagination(pagination)
+                    .build();
+        } catch (Exception e) {
+            log.error("Error searching case members", e);
+            throw e;
+        }
+    }
+
+    public void processCaseMember(ProcessCaseMemberRequest request) {
+        try {
+            log.info("Processing case member request for advocateUserUuid: {}, memberUserUuid: {}",
+                    request.getProcessCaseMember().getOfficeAdvocateUserUuid(),
+                    request.getProcessCaseMember().getMemberUserUuid());
+
+            cacheService.save(request.getProcessCaseMember().getOfficeAdvocateUserUuid() + "-" + request.getProcessCaseMember().getMemberUserUuid(), IN_PROGRESS);
+
+            ProcessCaseMember processCaseMember = request.getProcessCaseMember();
+
+            int batchSize = configuration.getBatchSize();
+            List<AdvocateOfficeCaseMember> currentBatch = new ArrayList<>();
+
+            int totalCases = 0;
+
+            // Combine both lists logically
+            List<String> addCaseIds = processCaseMember.getAddCaseIds();
+            List<String> removeCaseIds = processCaseMember.getRemoveCaseIds();
+
+            if (addCaseIds != null) totalCases += addCaseIds.size();
+            if (removeCaseIds != null) totalCases += removeCaseIds.size();
+
+            int processed = 0;
+
+            // -------- ADD CASES ----------
+            if (addCaseIds != null) {
+                for (String caseId : addCaseIds) {
+                    currentBatch.add(
+                            buildCaseMember(processCaseMember, caseId, true, request)
+                    );
+
+                    processed++;
+                    pushBatchIfNeeded(currentBatch, batchSize, processed, totalCases, request);
+                }
+            }
+
+            // -------- REMOVE CASES ----------
+            if (removeCaseIds != null) {
+                for (String caseId : removeCaseIds) {
+                    currentBatch.add(
+                            buildCaseMember(processCaseMember, caseId, false, request)
+                    );
+
+                    processed++;
+                    pushBatchIfNeeded(currentBatch, batchSize, processed, totalCases, request);
+                }
+            }
+
+            log.info("Completed processing {} cases in batches", totalCases);
+
+        } catch (Exception e) {
+            log.error("Error processing case member request", e);
+            throw e;
+        }
+    }
+
+    private AdvocateOfficeCaseMember buildCaseMember(
+            ProcessCaseMember processCaseMember,
+            String caseId,
+            boolean isActive,
+            ProcessCaseMemberRequest request) {
+
+        return AdvocateOfficeCaseMember.builder()
+                .id(UUID.randomUUID())
+                .tenantId(processCaseMember.getTenantId())
+                .officeAdvocateId(processCaseMember.getOfficeAdvocateId())
+                .officeAdvocateName(processCaseMember.getOfficeAdvocateName())
+                .officeAdvocateUserUuid(processCaseMember.getOfficeAdvocateUserUuid().toString())
+                .caseId(UUID.fromString(caseId))
+                .memberId(processCaseMember.getMemberId())
+                .memberUserUuid(processCaseMember.getMemberUserUuid().toString())
+                .memberType(processCaseMember.getMemberType())
+                .memberName(processCaseMember.getMemberName())
+                .isActive(isActive)
+                .auditDetails(createAuditDetailsForProcessCaseMember(request))
+                .build();
+    }
+
+    private void updateRedisCacheForProcessCaseMember(
+            AdvocateOfficeCaseMemberRequest memberRequest) {
+
+        List<AdvocateOfficeCaseMember> members = memberRequest.getMembers();
+
+        if (members == null || members.isEmpty()) {
+            return;
+        }
+
+        members.forEach(member -> {
+            try {
+                String caseId = member.getCaseId().toString();
+                String tenantId = member.getTenantId();
+                String redisKey = tenantId + ":" + caseId;
+
+                Object cachedValue = cacheService.findById(redisKey);
+                if (cachedValue == null) {
+                    return;
+                }
+
+                CourtCase courtCase = objectMapper.convertValue(cachedValue, CourtCase.class);
+                List<AdvocateOffice> advocateOffices = courtCase.getAdvocateOffices();
+
+                if (advocateOffices == null) {
+                    return;
+                }
+
+                for (AdvocateOffice office : advocateOffices) {
+                    if (!member.getOfficeAdvocateId().toString()
+                            .equals(office.getOfficeAdvocateId())) {
+                        continue;
+                    }
+
+                    // ADD
+                    if (Boolean.TRUE.equals(member.getIsActive())) {
+                        addMemberToOffice(office, member);
+                    }
+                    // REMOVE
+                    else {
+                        removeMemberFromOffice(office, member);
+                    }
+                }
+
+                cacheService.save(redisKey, courtCase);
+                log.info("Updated Redis for caseId: {}", caseId);
+
+            } catch (Exception e) {
+                log.warn("Failed updating Redis for caseId: {}", member.getCaseId(), e);
+            }
+        });
+    }
+
+    private void addMemberToOffice(AdvocateOffice office,
+                                   AdvocateOfficeCaseMember member) {
+
+        AdvocateOfficeMember officeMember = AdvocateOfficeMember.builder()
+                .id(member.getId().toString())
+                .tenantId(member.getTenantId())
+                .caseId(member.getCaseId().toString())
+                .memberId(member.getMemberId().toString())
+                .memberUserUuid(member.getMemberUserUuid())
+                .memberName(member.getMemberName())
+                .memberType(member.getMemberType())
+                .isActive(true)
+                .auditDetails(member.getAuditDetails())
+                .build();
+
+        if (MemberType.ADVOCATE.equals(member.getMemberType())) {
+            if (office.getAdvocates() == null) {
+                office.setAdvocates(new ArrayList<>());
+            }
+
+            boolean exists = office.getAdvocates().stream()
+                    .anyMatch(m -> member.getMemberUserUuid()
+                            .equals(m.getMemberUserUuid()));
+
+            if (!exists) {
+                office.getAdvocates().add(officeMember);
+            }
+
+        } else {
+            if (office.getClerks() == null) {
+                office.setClerks(new ArrayList<>());
+            }
+
+            boolean exists = office.getClerks().stream()
+                    .anyMatch(m -> member.getMemberUserUuid()
+                            .equals(m.getMemberUserUuid()));
+
+            if (!exists) {
+                office.getClerks().add(officeMember);
+            }
+        }
+    }
+
+    private void removeMemberFromOffice(AdvocateOffice office,
+                                        AdvocateOfficeCaseMember member) {
+
+        if (office.getAdvocates() != null) {
+            office.getAdvocates().removeIf(m ->
+                    member.getMemberUserUuid().equals(m.getMemberUserUuid()));
+        }
+
+        if (office.getClerks() != null) {
+            office.getClerks().removeIf(m ->
+                    member.getMemberUserUuid().equals(m.getMemberUserUuid()));
+        }
+    }
+
+    private void pushBatchIfNeeded(
+            List<AdvocateOfficeCaseMember> currentBatch,
+            int batchSize,
+            int processed,
+            int totalCases,
+            ProcessCaseMemberRequest originalRequest) {
+
+        boolean isBatchFull = currentBatch.size() >= batchSize;
+        boolean isLastRecord = processed == totalCases;
+
+        if (isBatchFull || isLastRecord) {
+
+            AdvocateOfficeCaseMemberRequest memberRequest =
+                    AdvocateOfficeCaseMemberRequest.builder()
+                            .requestInfo(originalRequest.getRequestInfo())
+                            .members(new ArrayList<>(currentBatch))
+                            .build();
+
+            updateRedisCacheForProcessCaseMember(memberRequest);
+
+            producer.push(configuration.getProcessCaseSpecificAccessTopic(), memberRequest);
+
+            log.info("Published batch of size {}", currentBatch.size());
+
+            currentBatch.clear();
         }
     }
 

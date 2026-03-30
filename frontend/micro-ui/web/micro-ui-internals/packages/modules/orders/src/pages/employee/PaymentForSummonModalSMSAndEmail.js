@@ -4,13 +4,12 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
 import DocumentModal from "../../components/DocumentModal";
-import { formatDate } from "../../../../hearings/src/utils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { ordersService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { paymentType } from "../../utils/paymentType";
-import { extractFeeMedium, getAuthorizedUuid, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { getFormattedName, getSuffixByDeliveryChannel } from "../../utils";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
@@ -53,22 +52,6 @@ const PaymentForSummonComponent = ({
   const CustomErrorTooltip = window?.Digit?.ComponentRegistryService?.getComponent("CustomErrorTooltip");
   const [selectedOption, setSelectedOption] = useState({});
 
-  const getDateWithMonthName = (orderDate) => {
-    let today = new Date();
-
-    today.setDate(today.getDate() - 15);
-
-    // Array of month names
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-    let dd = String(today.getDate()).padStart(2, "0");
-    let mm = monthNames[today.getMonth()];
-    let yyyy = today.getFullYear();
-
-    let formattedDate = `${dd} ${mm} ${yyyy}`;
-
-    return formattedDate; // Output: formatted date 15 days ago with month name
-  };
 
   return (
     <div className="payment-for-summon">
@@ -197,10 +180,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       isCaseAdmitted
         ? submitModalInfo
         : {
-            ...submitModalInfo,
-            header: "CS_HEADER_FOR_NOTICE_POST",
-            subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
-          },
+          ...submitModalInfo,
+          header: "CS_HEADER_FOR_NOTICE_POST",
+          subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
+        },
     [isCaseAdmitted]
   );
 
@@ -668,7 +651,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
     return [
       { key: "Issued to", value: name },
-      { key: "Next Hearing Date", value: formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },
+      { key: "Next Hearing Date", value: DateUtils.getFormattedDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },
       {
         key: "Delivery Channel",
         value: deliveryChannel ? `${deliveryChannel} (${contactDetail})` : "Not available",

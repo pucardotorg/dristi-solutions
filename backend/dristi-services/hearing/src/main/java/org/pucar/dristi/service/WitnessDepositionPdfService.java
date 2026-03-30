@@ -8,6 +8,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.models.individual.Gender;
 import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.HearingRepository;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.PdfRequestUtil;
@@ -29,16 +30,18 @@ public class WitnessDepositionPdfService {
     private final IndividualService individualService;
     private final CaseUtil caseUtil;
     private final PdfRequestUtil pdfRequestUtil;
+    private final Configuration config;
 
     private final ObjectMapper mapper;
 
     @Autowired
-    public WitnessDepositionPdfService(HearingRepository hearingRepository, IndividualService individualService, CaseUtil caseUtil, PdfRequestUtil pdfRequestUtil, ObjectMapper mapper) {
+    public WitnessDepositionPdfService(HearingRepository hearingRepository, IndividualService individualService, CaseUtil caseUtil, PdfRequestUtil pdfRequestUtil, ObjectMapper mapper, Configuration config) {
         this.hearingRepository = hearingRepository;
         this.individualService = individualService;
         this.caseUtil = caseUtil;
         this.pdfRequestUtil = pdfRequestUtil;
         this.mapper = mapper;
+        this.config = config;
     }
 
     public ByteArrayResource getWitnessDepositionPdf(HearingSearchRequest searchRequest) {
@@ -187,8 +190,8 @@ public class WitnessDepositionPdfService {
         if (dateOfBirth == null) {
             return null;
         }
-        LocalDate birthDate = dateOfBirth.toInstant().atZone(ZoneId.of("Asia/Kolkata")).toLocalDate();
-        Period period = Period.between(birthDate, LocalDate.now());
+        LocalDate birthDate = dateOfBirth.toInstant().atZone(ZoneId.of(config.getZoneId())).toLocalDate();
+        Period period = Period.between(birthDate, LocalDate.now(ZoneId.of(config.getZoneId())));
         return period.getYears();
     }
 
@@ -226,7 +229,7 @@ public class WitnessDepositionPdfService {
     private String formatDateFromMillis(long millis) {
         try {
             ZonedDateTime dateTime = Instant.ofEpochMilli(millis)
-                    .atZone(ZoneId.of("Asia/Kolkata"));
+                    .atZone(ZoneId.of(config.getZoneId()));
 
             String day = String.valueOf(dateTime.getDayOfMonth());
 

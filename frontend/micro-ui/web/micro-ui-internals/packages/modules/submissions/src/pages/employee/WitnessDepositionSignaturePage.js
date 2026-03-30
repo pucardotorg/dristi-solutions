@@ -11,6 +11,7 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom";
 import useOpenApiSearchWitnessDeposition from "../../hooks/submissions/useOpenApiSearchWitnessDeposition";
 import useSearchEvidenceService from "../../hooks/submissions/useSearchEvidenceService";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const getStyles = () => ({
   details: { color: "#0A0A0A", fontWeight: 700, fontSize: "18px", paddingBottom: "22px" },
@@ -54,8 +55,6 @@ const WitnessDepositionSignaturePage = () => {
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const EditSendBackModal = Digit?.ComponentRegistryService?.getComponent("EditSendBackModal");
-  const [isEditCaseModal, setEditCaseModal] = useState(false);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
@@ -64,6 +63,8 @@ const WitnessDepositionSignaturePage = () => {
 
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
   const [loader, setLoader] = useState(false);
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const { data: witnessDepositionOpenData, isLoading: isWitnessDepositionOpenLoading } = useOpenApiSearchWitnessDeposition(
     {
@@ -81,6 +82,7 @@ const WitnessDepositionSignaturePage = () => {
       criteria: {
         artifactNumber: artifactNumber,
         filingNumber: filingNumber,
+        asUser: authorizedUuid,
       },
       tenantId,
     },
@@ -221,6 +223,16 @@ const WitnessDepositionSignaturePage = () => {
     }
   };
 
+  const showEsignButton = useMemo(() => {
+    if (witnessDepositionDetails?.status === "PENDING_E-SIGN") {
+      if (isUserLoggedIn) {
+        if (authorizedUuid === userUuid) return true;
+        return false;
+      }
+      return true;
+    } else return false;
+  }, [authorizedUuid, isUserLoggedIn, userUuid, witnessDepositionDetails?.status]);
+
   if (isWitnessDepositionOpenLoading || isWitnessDepositionLoading || isLoading) {
     return <Loader />;
   }
@@ -281,7 +293,7 @@ const WitnessDepositionSignaturePage = () => {
               className="back-button"
             />
           }
-          {witnessDepositionDetails?.status === "PENDING_E-SIGN" && (
+          {showEsignButton && (
             <SubmitBar
               label={
                 <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>

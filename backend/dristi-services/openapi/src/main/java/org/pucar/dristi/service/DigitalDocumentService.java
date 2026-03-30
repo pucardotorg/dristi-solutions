@@ -15,7 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -58,16 +61,7 @@ public class DigitalDocumentService {
             }
 
             DigitalizedDocument digitalizedDocument = response.getDocuments().get(0);
-            List<String> mobileNumbers = new ArrayList<>();
-            if (TypeEnum.PLEA.equals(digitalizedDocument.getType())) {
-                if (digitalizedDocument.getPleaDetails() != null && digitalizedDocument.getPleaDetails().getAccusedMobileNumber() != null) {
-                    mobileNumbers.add(digitalizedDocument.getPleaDetails().getAccusedMobileNumber());
-                }
-            } else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
-                if (digitalizedDocument.getExaminationOfAccusedDetails() != null && digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber() != null) {
-                    mobileNumbers.add(digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber());
-                }
-            }
+            List<String> mobileNumbers = getMobileNumbers(digitalizedDocument);
 
             if (!mobileNumbers.contains(request.getMobileNumber())) {
                 return null;
@@ -102,16 +96,7 @@ public class DigitalDocumentService {
 
             DigitalizedDocument digitalizedDocument = response.getDocuments().get(0);
 
-            List<String> mobileNumbers = new ArrayList<>();
-            if (TypeEnum.PLEA.equals(digitalizedDocument.getType())) {
-                if (digitalizedDocument.getPleaDetails() != null && digitalizedDocument.getPleaDetails().getAccusedMobileNumber() != null) {
-                    mobileNumbers.add(digitalizedDocument.getPleaDetails().getAccusedMobileNumber());
-                }
-            } else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
-                if (digitalizedDocument.getExaminationOfAccusedDetails() != null && digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber() != null) {
-                    mobileNumbers.add(digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber());
-                }
-            }
+            List<String> mobileNumbers = getMobileNumbers(digitalizedDocument);
 
             DigitalizedDocumentResponse digitalizedDocumentResponse;
             if (mobileNumbers.contains(request.getMobileNumber())) {
@@ -120,6 +105,8 @@ public class DigitalDocumentService {
                         .fileStore(request.getFileStoreId())
                         .documentType("SIGNED")
                         .documentUid(UUID.randomUUID().toString())
+                        .tenantId(request.getTenantId())
+                        .additionalDetails(buildAdditionalDetails(digitalizedDocument))
                         .build();
 
                 if (digitalizedDocument.getDocuments() == null) {
@@ -129,8 +116,12 @@ public class DigitalDocumentService {
                 digitalizedDocument.getDocuments().add(document);
 
                 WorkflowObject workflow = new WorkflowObject();
-                workflow.setAction(E_SIGN);
+                workflow.setAction(Objects.requireNonNullElse(request.getAction(), E_SIGN));
                 digitalizedDocument.setWorkflow(workflow);
+
+                if (TypeEnum.MEDIATION.equals(digitalizedDocument.getType())) {
+                    digitalizedDocument.setMediationDetails(request.getMediationDetails());
+                }
 
                 digitalizedDocumentResponse = digitalizedDocumentUtil.updateDigitalizeDoc(digitalizedDocument, createInternalRequestInfoWithSystemUserType());
                 log.info("method=updateDigitalDocument, status=COMPLETED, request={}", request);
@@ -143,6 +134,73 @@ public class DigitalDocumentService {
             log.error("method=updateDigitalDocument, status=FAILED, request={}", request, e);
             throw new CustomException(DIGITALIZE_UPDATE_EXCEPTION, "Digitalize document service exception");
         }
+    }
+
+    private Object buildAdditionalDetails(DigitalizedDocument digitalizedDocument) {
+        try {
+            if (digitalizedDocument == null || digitalizedDocument.getType() == null) {
+                return null;
+            }
+
+            String documentName = null;
+            String accusedName;
+
+            if (TypeEnum.PLEA.equals(digitalizedDocument.getType())) {
+                accusedName = digitalizedDocument.getPleaDetails() != null
+                        ? digitalizedDocument.getPleaDetails().getAccusedName()
+                        : null;
+
+                documentName = buildFileName(TypeEnum.PLEA.name(), accusedName);
+
+            } else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
+                accusedName = digitalizedDocument.getExaminationOfAccusedDetails() != null
+                        ? digitalizedDocument.getExaminationOfAccusedDetails().getAccusedName()
+                        : null;
+
+                documentName = buildFileName(S351_EXAMINATION, accusedName);
+            }
+
+            if (documentName == null) {
+                return null;
+            }
+
+            Map<String, Object> additionalDetails = new HashMap<>();
+            additionalDetails.put("name", documentName);
+            return additionalDetails;
+
+        } catch (Exception e) {
+            log.error("method=buildAdditionalDetails, status=FAILED, documentNumber={}",
+                    digitalizedDocument.getDocumentNumber(), e);
+            return null;
+        }
+    }
+
+    private String buildFileName(String label, String name) {
+        if (name != null && !name.isBlank()) {
+            return String.format("%s (%s).pdf", label, name);
+        }
+        return String.format("%s.pdf", label);
+    }
+
+    private List<String> getMobileNumbers(DigitalizedDocument digitalizedDocument) {
+        List<String> mobileNumbers = new ArrayList<>();
+        if (TypeEnum.PLEA.equals(digitalizedDocument.getType())) {
+            if (digitalizedDocument.getPleaDetails() != null && digitalizedDocument.getPleaDetails().getAccusedMobileNumber() != null) {
+                mobileNumbers.add(digitalizedDocument.getPleaDetails().getAccusedMobileNumber());
+            }
+        } else if (TypeEnum.EXAMINATION_OF_ACCUSED.equals(digitalizedDocument.getType())) {
+            if (digitalizedDocument.getExaminationOfAccusedDetails() != null && digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber() != null) {
+                mobileNumbers.add(digitalizedDocument.getExaminationOfAccusedDetails().getAccusedMobileNumber());
+            }
+        } else if (TypeEnum.MEDIATION.equals(digitalizedDocument.getType())) {
+            if (digitalizedDocument.getMediationDetails() != null && digitalizedDocument.getMediationDetails().getPartyDetails() != null) {
+                digitalizedDocument.getMediationDetails().getPartyDetails().stream()
+                        .map(MediationPartyDetails::getMobileNumber)
+                        .filter(Objects::nonNull)
+                        .forEach(mobileNumbers::add);
+            }
+        }
+        return mobileNumbers;
     }
 
     private RequestInfo createInternalRequestInfoWithSystemUserType() {

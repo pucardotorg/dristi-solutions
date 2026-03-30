@@ -100,6 +100,9 @@ public class Configuration {
     @Value("${case.service.searchbycasenumber.endpoint}")
     private String caseServiceSearchByCaseNumberEndpoint;
 
+    @Value("${case.service.searchbycasesearchtext.endpoint}")
+    private String caseServiceSearchByCaseSearchTextEndpoint;
+
     @Value("${case.service.search.endpoint}")
     private String caseServiceSearchEndpoint;
 
@@ -139,6 +142,9 @@ public class Configuration {
 
     @Value("${egov.file.store.get.endpoint}")
     private String fileStoreGetEndPoint;
+
+    @Value("${egov.file.store.save.endpoint}")
+    private String fileStoreSaveEndPoint;
 
     @Value("${app.zone.id}")
     private String zoneId;

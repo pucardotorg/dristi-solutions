@@ -2286,6 +2286,27 @@ public class CaseService {
                 .build();
         enrichmentUtil.enrichAdvocateOffices(caseRequestForOffice, auditDetails);
 
+        List<AdvocateOffice> offices = caseRequestForOffice.getCases().getAdvocateOffices();
+
+        if (offices != null) {
+            offices.forEach(office -> {
+                int existingIndex = -1;
+                for (int i = 0; i < courtCase.getAdvocateOffices().size(); i++) {
+                    AdvocateOffice existing = courtCase.getAdvocateOffices().get(i);
+                    if (existing.getOfficeAdvocateUserUuid() != null
+                            && existing.getOfficeAdvocateUserUuid().equals(office.getOfficeAdvocateUserUuid())) {
+                        existingIndex = i;
+                        break;
+                    }
+                }
+                if (existingIndex != -1) {
+                    courtCase.getAdvocateOffices().set(existingIndex, office);
+                } else {
+                    courtCase.getAdvocateOffices().add(office);
+                }
+            });
+        }
+
         log.info("Pushing join case representative details :: {}", caseObj);
         producer.push(config.getRepresentativeJoinCaseTopic(), caseObj);
 
@@ -2370,6 +2391,11 @@ public class CaseService {
             workflowObject.setAction("TYPE DEPOSITION");
             workflowObject.setDocuments(Collections.singletonList(workflowDocument));
 
+            String userUuid = Optional.of(requestInfo)
+                    .map(RequestInfo::getUserInfo)
+                    .map(User::getUuid)
+                    .orElse(null);
+
             EvidenceRequest evidenceRequest = EvidenceRequest.builder().requestInfo(requestInfo)
                     .artifact(Artifact.builder()
                             .artifactType(artifactType)
@@ -2383,6 +2409,7 @@ public class CaseService {
                             .tenantId(courtCase.getTenantId())
                             .file(document)
                             .workflow(workflowObject)
+                            .asUser(userUuid)
                             .build()).build();
 
             evidenceUtil.createEvidence(evidenceRequest);
@@ -2401,6 +2428,11 @@ public class CaseService {
             workflowObject.setAction("TYPE DEPOSITION");
             workflowObject.setDocuments(Collections.singletonList(workflowDocument));
 
+            String userUuid = Optional.of(requestInfo)
+                    .map(RequestInfo::getUserInfo)
+                    .map(User::getUuid)
+                    .orElse(null);
+
             EvidenceRequest evidenceRequest = EvidenceRequest.builder().requestInfo(requestInfo)
                     .artifact(Artifact.builder()
                             .artifactType(VAKALATNAMA_DOC)
@@ -2414,6 +2446,7 @@ public class CaseService {
                             .tenantId(courtCase.getTenantId())
                             .file(document)
                             .workflow(workflowObject)
+                            .asUser(userUuid)
                             .build()).build();
 
             evidenceUtil.createEvidence(evidenceRequest);
@@ -4133,6 +4166,11 @@ public class CaseService {
 
     }
 
+    public List<CaseSearchTextItem> searchCasesByText(@Valid CaseSearchTextRequest request) {
+
+        return caseRepository.searchCasesByText(request);
+    }
+
     private void smsForNewWitnessAddition(CourtCase courtCase, AddWitnessRequest addWitnessRequest) {
         try {
             RequestInfo requestInfo = addWitnessRequest.getRequestInfo();
@@ -5642,6 +5680,11 @@ public class CaseService {
         workflowObject.setAction("TYPE DEPOSITION");
         workflowObject.setDocuments(Collections.singletonList(workflowDocument));
 
+        String userUuid = Optional.of(requestInfo)
+                .map(RequestInfo::getUserInfo)
+                .map(User::getUuid)
+                .orElse(null);
+
         return EvidenceRequest.builder().requestInfo(requestInfo)
                 .artifact(Artifact.builder()
                         .artifactType(VAKALATNAMA_DOC)
@@ -5655,6 +5698,7 @@ public class CaseService {
                         .tenantId(courtCase.getTenantId())
                         .file(document)
                         .workflow(workflowObject)
+                        .asUser(userUuid)
                         .build()).build();
     }
 
@@ -5674,6 +5718,11 @@ public class CaseService {
                 .build();
         org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
 
+        String userUuid = Optional.of(requestInfo)
+                .map(RequestInfo::getUserInfo)
+                .map(User::getUuid)
+                .orElse(null);
+
         return EvidenceRequest.builder().requestInfo(requestInfo)
                 .artifact(Artifact.builder()
                         .artifactType(REASON_DOCUMENT)
@@ -5687,6 +5736,7 @@ public class CaseService {
                         .caseId(courtCase.getId().toString())
                         .tenantId(courtCase.getTenantId())
                         .file(document)
+                        .asUser(userUuid)
                         .build()).build();
     }
 

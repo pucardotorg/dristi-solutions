@@ -1,5 +1,6 @@
 package digit.enrichment;
 
+import digit.config.Configuration;
 import digit.config.HearingSlotStatus;
 import digit.config.MdmsDataConfig;
 import digit.web.models.Hearing;
@@ -20,11 +21,14 @@ public class HearingsEnrichmentTest {
 
     private HearingsEnrichment hearingsEnrichment;
     private MdmsDataConfig mdmsDataConfig;
+    private Configuration config;
 
     @BeforeEach
     public void setup() {
         mdmsDataConfig = Mockito.mock(MdmsDataConfig.class);
-        hearingsEnrichment = new HearingsEnrichment(mdmsDataConfig);
+        config = Mockito.mock(Configuration.class);
+        Mockito.when(config.getZoneId()).thenReturn("Asia/Kolkata");
+        hearingsEnrichment = new HearingsEnrichment(mdmsDataConfig, config);
     }
 
     @Test

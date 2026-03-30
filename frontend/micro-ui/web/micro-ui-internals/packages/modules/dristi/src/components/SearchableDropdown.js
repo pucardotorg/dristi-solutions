@@ -38,21 +38,12 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
     });
   }, [filteredAdvocatesList]);
 
-  const finalAdvocatesBarRegAndNameList = filteredAdvocatesBarRegAndNameList
-    ?.filter(
-      (advocate) =>
-        !selectedAdvocatesList.some(
-          (selected) => selected.advocateBarRegNumberWithName.barRegistrationNumberOriginal === advocate.barRegistrationNumberOriginal
-        )
-    )
-    ?.filter((advocate) => {
-      const { advocateUuid } = advocate;
-      if (authorizedUuid !== userUuid && userUuid === advocateUuid) {
-        // if junior adv is filing on behalf of senior, his own name should not be visible in dropdown
-        return false;
-      }
-      return true;
-    });
+  const finalAdvocatesBarRegAndNameList = filteredAdvocatesBarRegAndNameList?.filter(
+    (advocate) =>
+      !selectedAdvocatesList.some(
+        (selected) => selected.advocateBarRegNumberWithName.barRegistrationNumberOriginal === advocate.barRegistrationNumberOriginal
+      )
+  );
 
   useEffect(() => {
     const handler = setTimeout(() => {
