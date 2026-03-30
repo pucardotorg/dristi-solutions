@@ -184,6 +184,7 @@ public class CaseFeeCalculationService {
             Double calculatedLegalBasicFund = 0.0;
             Double calculatedAdvocateClerkWelfareFund = 0.0;
             Double calculatedAdvocateFee = 0.0;
+            Double calculatedStipendStamp = 0.0;
 
             for (LitigantAdvocateMap litigantAdvocateMap : joinCaseCriteria.getLitigantAdvocateMap()) {
                 if (litigantAdvocateMap.getAdvocateCount() > 0) {
@@ -191,15 +192,18 @@ public class CaseFeeCalculationService {
                     calculatedLegalBasicFund = legalBasicFund;
                     calculatedAdvocateClerkWelfareFund = advocateClerkWelfareFund;
                     Double advocateFee = getAdvocateFee(eFillingDefaultData.getNoOfAdvocateFees(), litigantAdvocateMap.getAdvocateCount());
+                    Double stipendStamp = getStipendStamp(eFillingDefaultData.getStipendStamp(), litigantAdvocateMap.getAdvocateCount());
                     calculatedAdvocateFee += advocateFee;
+                    calculatedStipendStamp += stipendStamp;
                 }
             }
             calculatedAdvocateFee = Math.ceil(calculatedAdvocateFee);
+            calculatedStipendStamp = Math.ceil(calculatedStipendStamp);
             calculatedCourtFee = Math.ceil(calculatedCourtFee);
             calculatedLegalBasicFund = Math.ceil(calculatedLegalBasicFund);
             calculatedAdvocateClerkWelfareFund = Math.ceil(calculatedAdvocateClerkWelfareFund);
-            List<BreakDown> feeBreakdown = getFeeBreakdownForJoinCase(calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, calculatedAdvocateFee);
-            Double totalAmount = calculatedCourtFee + calculatedLegalBasicFund + calculatedAdvocateClerkWelfareFund + calculatedAdvocateFee;
+            List<BreakDown> feeBreakdown = getFeeBreakdownForJoinCase(calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, calculatedAdvocateFee, calculatedStipendStamp);
+            Double totalAmount = calculatedCourtFee + calculatedLegalBasicFund + calculatedAdvocateClerkWelfareFund + calculatedAdvocateFee + calculatedStipendStamp;
             Calculation calculation = Calculation.builder()
                     .applicationId(joinCaseCriteria.getCaseId())
                     .totalAmount(totalAmount)
@@ -220,7 +224,7 @@ public class CaseFeeCalculationService {
         }
     }
 
-    public List<BreakDown> getFeeBreakdownForJoinCase(double courtFee, double legalBasicFund, double advocateClerkWelfareFund, double advocateFee) {
+    public List<BreakDown> getFeeBreakdownForJoinCase(double courtFee, double legalBasicFund, double advocateClerkWelfareFund, double advocateFee, double stipendStamp) {
 
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
@@ -228,6 +232,7 @@ public class CaseFeeCalculationService {
         addBreakdownIfPositive(feeBreakdowns, LEGAL_BENEFIT_FEE, "LEGAL_BENEFIT_FEE", legalBasicFund);
         addBreakdownIfPositive(feeBreakdowns, ADVOCATE_CLERK_WELFARE_FUND, "ADVOCATE_CLERK_WELFARE_FUND", advocateClerkWelfareFund);
         addBreakdownIfPositive(feeBreakdowns, ADVOCATE_FEE, "ADVOCATE_WELFARE_FUND", advocateFee);
+        addBreakdownIfPositive(feeBreakdowns, STIPEND_STAMP, "STIPEND_STAMP", stipendStamp);
 
         return feeBreakdowns;
     }
