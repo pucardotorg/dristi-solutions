@@ -130,6 +130,8 @@ public class NotificationService {
 
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("mobileNumber", mobileNumber);
+        smsDetails.put("advocateName", smsTemplateData.getAdvocateName());
+        smsDetails.put("memberType", smsTemplateData.getMemberType());
 
         return smsDetails;
     }
