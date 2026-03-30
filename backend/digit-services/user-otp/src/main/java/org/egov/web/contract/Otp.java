@@ -14,6 +14,7 @@ public class Otp {
     private static final String USER_REGISTRATION = "register";
     private static final String PASSWORD_RESET = "passwordreset";
     private static final String USER_LOGIN = "login";
+    private static final String CTC_APPLICATION = "ctc_application";
     private String mobileNumber;
     private String tenantId;
     private String type;
@@ -31,6 +32,8 @@ public class Otp {
             return OtpRequestType.LOGIN;
         } else if (PASSWORD_RESET.equalsIgnoreCase(type)) {
             return OtpRequestType.PASSWORD_RESET;
+        } else if (CTC_APPLICATION.equalsIgnoreCase(type)) {
+            return OtpRequestType.CTC_APPLICATION;
         }
         return null;
     }
