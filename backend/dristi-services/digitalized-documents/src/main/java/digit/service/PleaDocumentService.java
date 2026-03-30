@@ -183,7 +183,7 @@ public class PleaDocumentService implements DocumentTypeService {
         CaseCriteria caseCriteria = CaseCriteria.builder()
                 .filingNumber(request.getDigitalizedDocument().getCaseFilingNumber())
                 .courtId(request.getDigitalizedDocument().getCourtId())
-                .defaultFields(true)
+                .defaultFields(false)
                 .build();
 
         CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
