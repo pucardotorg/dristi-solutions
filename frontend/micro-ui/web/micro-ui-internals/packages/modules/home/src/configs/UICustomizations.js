@@ -220,6 +220,9 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.substage && {
           substage: requestCriteria?.state?.searchForm?.substage?.code,
         }),
+        ...(requestCriteria?.state?.searchForm?.secondaryStage && {
+          secondaryStage: requestCriteria?.state?.searchForm?.secondaryStage?.code,
+        }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
           offSet: requestCriteria?.state?.tableForm?.offset,
@@ -234,6 +237,9 @@ export const UICustomizations = {
           ...requestCriteria?.body,
           ...(requestCriteria?.state?.searchForm?.substage && {
             substage: requestCriteria?.state?.searchForm?.substage?.code,
+          }),
+          ...(requestCriteria?.state?.searchForm?.secondaryStage && {
+            secondaryStage: requestCriteria?.state?.searchForm?.secondaryStage?.code,
           }),
           criteria,
           tenantId,
@@ -267,6 +273,8 @@ export const UICustomizations = {
           return t(value);
         case "CS_STAGE":
           return t(value);
+        case "CS_SECONDARY_STAGE":
+          return value ? t(value) : t("ES_COMMON_NA");
         case "CS_FILING_DATE":
           return <span>{DateUtils.getFormattedDate(new Date(value))}</span>;
         case "CS_CASE_NUMBER_HOME":
@@ -312,6 +320,9 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.substage && {
           substage: requestCriteria?.state?.searchForm?.substage?.code,
         }),
+        ...(requestCriteria?.state?.searchForm?.secondaryStage && {
+          secondaryStage: requestCriteria?.state?.searchForm?.secondaryStage?.code,
+        }),
         tenantId,
         ...additionalDetails,
         ...("sortBy" in additionalDetails && {
@@ -333,6 +344,9 @@ export const UICustomizations = {
           ...requestCriteria?.body,
           ...(requestCriteria?.state?.searchForm?.substage && {
             substage: requestCriteria?.state?.searchForm?.substage?.code,
+          }),
+          ...(requestCriteria?.state?.searchForm?.secondaryStage && {
+            secondaryStage: requestCriteria?.state?.searchForm?.secondaryStage?.code,
           }),
           criteria,
           tenantId,
@@ -357,6 +371,8 @@ export const UICustomizations = {
           return <span>NIA S138</span>;
         case "CS_STAGE":
           return t(value);
+        case "CS_SECONDARY_STAGE":
+          return value ? t(value) : t("ES_COMMON_NA");
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_CASE_NUMBER_HOME":
@@ -421,6 +437,9 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.substage && {
           substage: requestCriteria?.state?.searchForm?.substage?.code,
         }),
+        ...(requestCriteria?.state?.searchForm?.secondaryStage && {
+          secondaryStage: requestCriteria?.state?.searchForm?.secondaryStage?.code,
+        }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
           offSet: requestCriteria?.state?.tableForm?.offset,
@@ -435,6 +454,9 @@ export const UICustomizations = {
           ...requestCriteria?.body,
           ...(requestCriteria?.state?.searchForm?.substage && {
             substage: requestCriteria?.state?.searchForm?.substage?.code,
+          }),
+          ...(requestCriteria?.state?.searchForm?.secondaryStage && {
+            secondaryStage: requestCriteria?.state?.searchForm?.secondaryStage?.code,
           }),
           criteria,
           tenantId,
@@ -463,6 +485,8 @@ export const UICustomizations = {
           return t(value);
         case "CS_STAGE":
           return t(value);
+        case "CS_SECONDARY_STAGE":
+          return value ? t(value) : t("ES_COMMON_NA");
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_CASE_NUMBER_HOME":

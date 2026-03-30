@@ -2,6 +2,7 @@ const defaultSearchValues = {
   caseSearchText: "",
   caseType: "NIA S138",
   substage: "",
+  secondaryStage: "",
 };
 
 export const outcomesOptions = [
@@ -198,6 +199,29 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
+                label: "CS_SECONDARY_STAGE",
+                isMandatory: false,
+                key: "secondaryStage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "secondaryStage",
+                  optionsKey: "code",
+                  mdmsConfig: {
+                    masterName: "SecondaryStage",
+                    moduleName: "case",
+                    select: "(data) => {return data['case'].SecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
                 label: "CS_CASE_NAME_ID",
                 type: "text",
                 isMandatory: false,
@@ -227,6 +251,11 @@ export const TabCourtRoomSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -324,6 +353,29 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
+                label: "CS_SECONDARY_STAGE",
+                isMandatory: false,
+                key: "secondaryStage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "secondaryStage",
+                  optionsKey: "code",
+                  mdmsConfig: {
+                    masterName: "SecondaryStage",
+                    moduleName: "case",
+                    select: "(data) => {return data['case'].SecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
                 label: "CS_CASE_NAME_ID",
                 type: "text",
                 isMandatory: false,
@@ -353,6 +405,11 @@ export const TabCourtRoomSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -465,6 +522,29 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
+                label: "CS_SECONDARY_STAGE",
+                isMandatory: false,
+                key: "secondaryStage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "secondaryStage",
+                  optionsKey: "code",
+                  mdmsConfig: {
+                    masterName: "SecondaryStage",
+                    moduleName: "case",
+                    select: "(data) => {return data['case'].SecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
                 label: "CS_CASE_NAME_ID",
                 type: "text",
                 isMandatory: false,
@@ -493,6 +573,11 @@ export const TabCourtRoomSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
 
