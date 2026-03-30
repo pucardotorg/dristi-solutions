@@ -4,9 +4,9 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.ArrayUtils.isEquals;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.argThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -51,7 +51,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -393,7 +392,7 @@ public class UserControllerTest {
         }
     }
 
-    class UserSearchMatcher extends ArgumentMatcher<UserSearchCriteria> {
+    class UserSearchMatcher implements org.mockito.ArgumentMatcher<UserSearchCriteria> {
 
         private UserSearchCriteria expectedUserSearch;
 
@@ -402,8 +401,7 @@ public class UserControllerTest {
         }
 
         @Override
-        public boolean matches(Object o) {
-            UserSearchCriteria userSearch = (UserSearchCriteria) o;
+        public boolean matches(UserSearchCriteria userSearch) {
             return userSearch.getId().equals(expectedUserSearch.getId()) &&
                     userSearch.getUserName().equals(expectedUserSearch.getUserName()) &&
                     userSearch.getName().equals(expectedUserSearch.getName()) &&
@@ -421,7 +419,7 @@ public class UserControllerTest {
         }
     }
 
-    class UserSearchActiveFlagMatcher extends ArgumentMatcher<UserSearchCriteria> {
+    class UserSearchActiveFlagMatcher implements org.mockito.ArgumentMatcher<UserSearchCriteria> {
 
         private UserSearchCriteria expectedUserSearch;
 
@@ -430,8 +428,7 @@ public class UserControllerTest {
         }
 
         @Override
-        public boolean matches(Object o) {
-            UserSearchCriteria userSearch = (UserSearchCriteria) o;
+        public boolean matches(UserSearchCriteria userSearch) {
             return userSearch.getActive() == expectedUserSearch.getActive();
         }
     }
