@@ -582,6 +582,7 @@ public class TaskService {
             extractComplainantMobileNumbers(caseDetails, taskRequest.getTask().getTenantId(), mobileNumbers);
             extractComplainantAdvocateMobileNumbers(caseDetails, taskRequest.getTask().getTenantId(), mobileNumbers);
             extractComplainantPoaMobileNumber(taskRequest, caseDetails, mobileNumbers);
+            extractComplainantAdvocateClerkMobileNumbers(caseDetails, taskRequest.getTask().getTenantId(), mobileNumbers);
 
             String respondentName = taskDetails.has("respondentDetails") ?
                 taskDetails.path("respondentDetails").path("name").textValue() : "";
@@ -775,6 +776,53 @@ public class TaskService {
                                     }
                                 }
                             break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void extractComplainantAdvocateClerkMobileNumbers(JsonNode caseDetails, String tenantId, Set<String> mobileNumbers) {
+        // Find complainant advocate IDs from representatives
+        Set<String> complainantAdvocateIds = new HashSet<>();
+        JsonNode representatives = caseDetails.path("representatives");
+        if (representatives.isArray()) {
+            for (JsonNode representative : representatives) {
+                JsonNode representing = representative.path("representing");
+                if (representing.isArray()) {
+                    for (JsonNode party : representing) {
+                        if (party.path("partyType").asText().contains("complainant")) {
+                            String advocateId = representative.path("advocateId").asText(null);
+                            if (advocateId != null && !advocateId.isEmpty()) {
+                                complainantAdvocateIds.add(advocateId);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Look through advocateOffices to find clerks of complainant advocates
+        JsonNode advocateOffices = caseDetails.path("advocateOffices");
+        if (advocateOffices.isArray()) {
+            for (JsonNode office : advocateOffices) {
+                String officeAdvocateId = office.path("officeAdvocateId").asText(null);
+                if (officeAdvocateId != null && complainantAdvocateIds.contains(officeAdvocateId)) {
+                    JsonNode clerks = office.path("clerks");
+                    if (clerks.isArray()) {
+                        for (JsonNode clerk : clerks) {
+                            boolean isActive = clerk.path("isActive").asBoolean(false);
+                            if (isActive) {
+                                String clerkUserUuid = clerk.path("memberUserUuid").asText(null);
+                                if (clerkUserUuid != null && !clerkUserUuid.isEmpty()) {
+                                    String mobile = extractMobileNumberFromIndividual(clerkUserUuid, tenantId);
+                                    if (mobile != null && !mobile.isEmpty()) {
+                                        mobileNumbers.add(mobile);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
