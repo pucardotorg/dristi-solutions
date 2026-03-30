@@ -670,12 +670,15 @@ public class CaseService {
         Set<String> updatedFileStoreIds = updatedDocumentsMap.keySet();
         List<Document> documentsToDelete = existingDocumentsMap.entrySet().stream()
                 .filter(entry -> {
-                    if (COMPLAINANT_ID_PROOF.equals(entry.getValue().getDocumentType())
-                            && !updatedFileStoreIds.contains(entry.getKey())) {
+                    String docType = entry.getValue().getDocumentType();
+                    boolean isMissingInUpdate = !updatedFileStoreIds.contains(entry.getKey());
+
+                    if ((COMPLAINANT_ID_PROOF.equals(docType) || ADVOCATE_ID_PROOF.equals(docType))
+                            && isMissingInUpdate) {
                         entry.getValue().setIsActive(false);
-                        return false;
+                        return false; 
                     }
-                    return !updatedFileStoreIds.contains(entry.getKey());
+                    return isMissingInUpdate;
                 })
                 .map(entry -> {
                     Document doc = entry.getValue();
