@@ -208,7 +208,9 @@ public class PleaDocumentService implements DocumentTypeService {
         JsonNode representatives = courtCase.path("representatives");
 
         Individual accusedIndividual = individualUtil.getIndividualFromMobileNumber(requestInfo,mobileNumber);
-
+        if(accusedIndividual == null){
+            return;
+        }
         String accusedIndividualId = accusedIndividual.getIndividualId();
 
         if (representatives != null && representatives.isArray()) {
@@ -238,7 +240,7 @@ public class PleaDocumentService implements DocumentTypeService {
                                 notificationService.sendNotification(
                                         requestInfo,
                                         smsTemplateData,
-                                        CLIENT_EXAMINATION_ESIGN,
+                                        CLIENT_PLEA_ESIGN,
                                         advocateMobileNumber
                                 );
                             }

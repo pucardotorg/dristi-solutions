@@ -97,7 +97,13 @@ public class IndividualUtil {
                 JsonNode rootNode = objectMapper.readTree(jsonString);
 
                 JsonNode individualNode = rootNode.path("Individual");
+                if (individualNode == null || individualNode.isMissingNode() || !individualNode.isArray() || individualNode.isEmpty()) {
+                    return null;
+                }
                 JsonNode node = individualNode.get(0);
+                if (node == null) {
+                    return null;
+                }
                 return objectMapper.treeToValue(node, Individual.class);
 
             }
