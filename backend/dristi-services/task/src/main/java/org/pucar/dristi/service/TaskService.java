@@ -605,21 +605,21 @@ public class TaskService {
                     .processType(SUMMON.equalsIgnoreCase(taskType)?"Summon":"Notice")
                     .tenantId(taskRequest.getTask().getTenantId()).build();
 
+            String message = notificationService.getMessage(taskRequest.getRequestInfo(),templateData, "RPAD_DISPATCH");
+            if (StringUtils.isEmpty(message)) {
+                log.info("SMS content has not been configured for this case");
+                return;
+            }
+
+            log.info("building Notification Request for case number {}", templateData.getCaseNumber());
+            message = message.replace("{{processType}}", Optional.of(processType).orElse(""))
+                    .replace("{{partyType}}", Optional.of(partyType).orElse(""))
+                    .replace("{{caseNumber}}", Optional.ofNullable(caseNumber).orElse(""));
+
             // Send notifications to all extracted mobile numbers (complainants, POA, advocates)
             for (String mobileNumber : mobileNumbers) {
                 if (mobileNumber != null && !mobileNumber.isEmpty()) {
                     try {
-                        String message = notificationService.getMessage(taskRequest.getRequestInfo(),templateData, "RPAD_DISPATCH");
-                        if (StringUtils.isEmpty(message)) {
-                            log.info("SMS content has not been configured for this case");
-                            return;
-                        }
-
-                        log.info("building Notification Request for case number {}", templateData.getCaseNumber());
-                        message = message.replace("{{processType}}", Optional.of(processType).orElse(""))
-                                .replace("{{partyType}}", Optional.of(partyType).orElse(""))
-                                .replace("{{caseNumber}}", Optional.ofNullable(caseNumber).orElse(""));
-
                         SMSRequest smsRequest = SMSRequest.builder()
                                 .mobileNumber(mobileNumber)
                                 .tenantId(taskRequest.getTask().getTenantId())
