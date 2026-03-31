@@ -114,11 +114,18 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
                 placeholder={t(input?.placeholder)}
                 className={`ifsc-text-input ${errors?.[config.key] ? "error" : ""}`}
                 error={errors?.[config.key]}
+                disable={config?.disable}
               />
             </div>
 
             <div>
-              <button className="ifsc-search-btn" onClick={() => handleSearch(input)} type="button">
+              <button
+                className="ifsc-search-btn"
+                style={{ opacity: config?.disable ? 0.5 : 1 }}
+                onClick={() => handleSearch(input)}
+                type="button"
+                disabled={config?.disable}
+              >
                 {t("ES_COMMON_SEARCH")}
               </button>
             </div>
