@@ -4507,7 +4507,7 @@ public class CaseService {
                 log.error("no case found for the given criteria");
             } else {
                 CourtCase courtCase = courtCaseList.get(0);
-                if (!task.getTaskDescription().equalsIgnoreCase("poaJoinCase")) {
+                if (!"poaJoinCase".equalsIgnoreCase(task.getTaskDescription())) {
                     // get the pending requests of advocates in the case
                     List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
                     JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
