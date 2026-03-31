@@ -207,11 +207,15 @@ export const TabUnifiedEmployeeSearchConfig = {
                 populators: {
                   name: "secondaryStage",
                   optionsKey: "code",
-                  mdmsConfig: {
-                    masterName: "SecondaryStage",
-                    moduleName: "case",
-                    select: "(data) => {return data['case'].SecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
-                  },
+                  options: [
+                    { code: "Delay Condonation" },
+                    { code: "Notice" },
+                    { code: "Summons" },
+                    { code: "Warrant" },
+                    { code: "Proclamation & Attachment" },
+                    { code: "N/A" },
+                    { code: "Mediation" },
+                  ],
                   styles: {
                     maxWidth: "250px",
                     minWidth: "200px",
@@ -364,11 +368,15 @@ export const TabUnifiedEmployeeSearchConfig = {
                 populators: {
                   name: "secondaryStage",
                   optionsKey: "code",
-                  mdmsConfig: {
-                    masterName: "SecondaryStage",
-                    moduleName: "case",
-                    select: "(data) => {return data['case'].SecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
-                  },
+                  options: [
+                    { code: "Delay Condonation" },
+                    { code: "Notice" },
+                    { code: "Summons" },
+                    { code: "Warrant" },
+                    { code: "Proclamation & Attachment" },
+                    { code: "N/A" },
+                    { code: "Mediation" },
+                  ],
                   styles: {
                     maxWidth: "250px",
                     minWidth: "200px",
@@ -536,11 +544,15 @@ export const TabUnifiedEmployeeSearchConfig = {
                 populators: {
                   name: "secondaryStage",
                   optionsKey: "code",
-                  mdmsConfig: {
-                    masterName: "SecondaryStage",
-                    moduleName: "case",
-                    select: "(data) => {return data['case'].SecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
-                  },
+                  options: [
+                    { code: "Delay Condonation" },
+                    { code: "Notice" },
+                    { code: "Summons" },
+                    { code: "Warrant" },
+                    { code: "Proclamation & Attachment" },
+                    { code: "N/A" },
+                    { code: "Mediation" },
+                  ],
                   styles: {
                     maxWidth: "250px",
                     minWidth: "200px",
@@ -982,11 +994,15 @@ export const CaseReviewerAdditionalTab = {
             populators: {
               name: "secondaryStage",
               optionsKey: "code",
-              mdmsConfig: {
-                masterName: "SecondaryStage",
-                moduleName: "case",
-                select: "(data) => {return data['case'].SecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
-              },
+              options: [
+                { code: "Delay Condonation" },
+                { code: "Notice" },
+                { code: "Summons" },
+                { code: "Warrant" },
+                { code: "Proclamation & Attachment" },
+                { code: "N/A" },
+                { code: "Mediation" },
+              ],
               styles: {
                 maxWidth: "250px",
                 minWidth: "200px",
