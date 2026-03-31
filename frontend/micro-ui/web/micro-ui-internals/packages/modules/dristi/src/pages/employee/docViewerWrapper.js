@@ -1,11 +1,29 @@
 import { Card } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useHistory } from "react-router-dom";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import { useTranslation } from "react-i18next";
 import { Urls } from "../../hooks";
 import AuthenticatedLink from "../../Utils/authenticatedLink";
 import { DocumentViewErrorIcon } from "../../icons/svgIndex";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+
+// Global cache: fileStoreId -> { blobUrl, fetchPromise }
+// Attached to window to ensure a single shared instance across all bundles/chunks
+if (!window.__docViewerFileStoreCache) {
+  window.__docViewerFileStoreCache = new Map();
+}
+const fileStoreCache = window.__docViewerFileStoreCache;
+
+// Revoke all cached blob URLs and clear the cache
+const clearFileStoreCache = () => {
+  for (const [key, entry] of fileStoreCache) {
+    if (entry.blobUrl) {
+      URL.revokeObjectURL(entry.blobUrl);
+    }
+  }
+  fileStoreCache.clear();
+};
 
 const DocViewerWrapper = ({
   style,
@@ -28,54 +46,127 @@ const DocViewerWrapper = ({
 }) => {
   const { t } = useTranslation();
   const token = localStorage.getItem("token");
+  const history = useHistory();
 
-  const [docUrl, setDocUrl] = useState(null);
+  // Track current filingNumber to detect case switches
+  const prevFilingNumberRef = useRef(new URLSearchParams(window.location.search).get("filingNumber"));
+
+  // Clear cache when user navigates away from case view pages or switches to a different case
+  useEffect(() => {
+    const unlisten = history.listen((location) => {
+      const newParams = new URLSearchParams(location.search);
+      const newFilingNumber = newParams.get("filingNumber");
+
+      if (!location.pathname.includes("view-case")) {
+        // Left case view entirely
+        clearFileStoreCache();
+        prevFilingNumberRef.current = null;
+      } else if (prevFilingNumberRef.current && newFilingNumber && newFilingNumber !== prevFilingNumberRef.current) {
+        // Still on view-case but switched to a different case
+        clearFileStoreCache();
+        prevFilingNumberRef.current = newFilingNumber;
+      } else {
+        prevFilingNumberRef.current = newFilingNumber;
+      }
+    });
+    return () => unlisten();
+  }, [history]);
+
+  const [docUrl, setDocUrl] = useState(() => {
+    // Initialize from cache if blob is already available
+    const cached = fileStoreId && fileStoreCache.get(fileStoreId);
+    return cached?.blobUrl || null;
+  });
   const [docError, setDocError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const mountedRef = useRef(true);
 
   const uri = fileStoreId && `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
 
   const headers = { "auth-token": token };
 
-  // FETCH FUNCTION WITH RETRY SUPPORT
-  const fetchRemoteDoc = useCallback(async () => {
-    if (!fileStoreId) return;
-
-    setLoading(true);
-    setDocError(null);
-
-    try {
+  // Creates the actual fetch, stores it as a shared promise in the cache
+  const doFetch = useCallback(async () => {
+    const fetchPromise = (async () => {
       const res = await axiosInstance.get(uri, {
         headers,
         responseType: "blob",
       });
-
-      // Axios does not have res.ok, so we emulate it
       if (res.status < 200 || res.status >= 300) {
         const error = new Error("Error fetching file");
         error.status = res.status;
         throw error;
       }
-
       const blob = res.data;
-      const blobUrl = URL.createObjectURL(blob);
-      setDocUrl(blobUrl);
-    } catch (err) {
-      setDocError({
-        status: err.status || err?.response?.status,
-        message: err.message,
-      });
-    } finally {
-      setLoading(false);
-    }
+      return URL.createObjectURL(blob);
+    })();
+
+    // Store the promise in cache so other instances can await it
+    const entry = fileStoreCache.get(fileStoreId) || {};
+    entry.fetchPromise = fetchPromise;
+    fileStoreCache.set(fileStoreId, entry);
+
+    return fetchPromise;
   }, [fileStoreId, uri]);
 
-  // Initial fetch
+  // Fetch or reuse cached result
+  const fetchRemoteDoc = useCallback(async () => {
+    if (!fileStoreId) return;
+
+    const cached = fileStoreCache.get(fileStoreId);
+
+    // 1. Already have blob URL cached — use it
+    if (cached?.blobUrl) {
+      setDocUrl(cached.blobUrl);
+      return;
+    }
+
+    setLoading(true);
+    setDocError(null);
+
+    try {
+      let blobUrl;
+
+      // 2. Another instance already started fetching — await the same promise
+      if (cached?.fetchPromise) {
+        blobUrl = await cached.fetchPromise;
+      } else {
+        // 3. First fetch — start it and share the promise
+        blobUrl = await doFetch();
+      }
+
+      // Store the resolved blobUrl in cache
+      const entry = fileStoreCache.get(fileStoreId) || {};
+      entry.blobUrl = blobUrl;
+      fileStoreCache.set(fileStoreId, entry);
+
+      if (mountedRef.current) setDocUrl(blobUrl);
+    } catch (err) {
+      // Clear the failed promise from cache so retry can work
+      const entry = fileStoreCache.get(fileStoreId);
+      if (entry) {
+        entry.fetchPromise = null;
+        fileStoreCache.set(fileStoreId, entry);
+      }
+      if (mountedRef.current) {
+        setDocError({
+          status: err.status || err?.response?.status,
+          message: err.message,
+        });
+      }
+    } finally {
+      if (mountedRef.current) setLoading(false);
+    }
+  }, [fileStoreId, doFetch]);
+
+  // Initial fetch on mount
   useEffect(() => {
+    mountedRef.current = true;
     fetchRemoteDoc();
 
     return () => {
-      if (docUrl) URL.revokeObjectURL(docUrl);
+      mountedRef.current = false;
+      // Do NOT clear cache on unmount — the remounted instance needs it
     };
   }, [fileStoreId]);
 
@@ -88,6 +179,7 @@ const DocViewerWrapper = ({
         uri: window.URL.createObjectURL(file),
         fileName: file?.name,
       }));
+
 
   return (
     <div className="docviewer-wrapper" id="docviewer-id">
