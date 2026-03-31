@@ -639,7 +639,11 @@ const GenerateOrdersV2 = () => {
     return (
       miscellaneousTemplateData?.list?.map((template) => {
         const { auditDetails, ...result } = template;
-        return result;
+        const processTitleLabel = `${result?.processTitle} ${result?.subTitle ? `- ${result?.subTitle}` : ""}`;
+        return {
+          ...result,
+          processTitleLabel,
+        };
       }) || []
     );
   }, [miscellaneousTemplateData]);
