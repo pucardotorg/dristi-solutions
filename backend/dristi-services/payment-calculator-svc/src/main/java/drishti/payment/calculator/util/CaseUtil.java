@@ -98,6 +98,7 @@ public class CaseUtil {
                 .collect(Collectors.groupingBy(Map.Entry::getKey,
                         Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
 
+        log.info("filingNumber={}, representatives={}, representativesMap size={}", filingNumber, representatives, representativesMap.size());
         return representativesMap;
 
     }
