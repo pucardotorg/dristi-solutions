@@ -64,7 +64,7 @@ public class OtpSMSRepository {
         SMSRequest smsRequest = SMSRequest.builder()
                 .mobileNumber(otpRequest.getMobileNumber())
                 .tenantId(otpRequest.getTenantId())
-                .templateId(otpRequest.isLoginRequestType() ? templateId : otpRequest.isCTCApplicationRequestType() ? ctcApplicationTemplateId : registerTemplateId)
+                .templateId(otpRequest.isLoginRequestType() ? templateId : (otpRequest.isCTCApplicationLoginRequestType() || otpRequest.isCTCApplicationRegisterRequestType())? ctcApplicationTemplateId : registerTemplateId)
                 .contentType("TEXT")
                 .category(Category.OTP)
                 .locale("en_IN")
@@ -96,7 +96,7 @@ public class OtpSMSRepository {
         else if (otpRequest.isLoginRequestType()){
              message = localisedMsgs.get(LOCALIZATION_KEY_LOGIN_SMS);
         }
-        else if (otpRequest.isCTCApplicationRequestType()){
+        else if (otpRequest.isCTCApplicationLoginRequestType() || otpRequest.isCTCApplicationRegisterRequestType()){
              message = localisedMsgs.get(LOCALIZATION_CTC_APPLICATION_SMS);
         }
         else
