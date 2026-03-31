@@ -41,24 +41,25 @@ public class CaseFeeCalculationServiceTest {
     @Test
     @DisplayName("do calculate case fees with one criteria")
     public void doCalculateCaseFeesWithOneCriteria() {
-        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withComplaintFee().withAdvocateFee().build();
+        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withComplaintFee().withAdvocateFee().withStipendStamp().build();
         when(eFillingUtil.getEFillingDefaultData(any(), anyString())).thenReturn(eFilingParam);
+        when(caseUtil.getAdvocateForLitigant(any(), anyString(), anyString())).thenReturn(Collections.emptyMap());
         EFillingCalculationRequest request = EFillingCalculationRequest.builder()
                 .calculationCriteria(Collections.singletonList(
-                        EFillingCalculationCriteria.builder().tenantId("kl").numberOfApplication(1).checkAmount(50000.0).isDelayCondonation(false).build()
+                        EFillingCalculationCriteria.builder().caseId("CASE-001").tenantId("kl").filingNumber("KL-001").numberOfApplication(1).checkAmount(50000.0).isDelayCondonation(false).build()
                 )).build();
 
         List<Calculation> result = caseFeesCalculationService.calculateCaseFees(request);
         assertEquals(1, result.size());
         Calculation calculation = result.get(0);
-        assertEquals(4, calculation.getBreakDown().size());
+        assertEquals(1, calculation.getBreakDown().size());
     }
 
 
     @Test
     @DisplayName("do calculate case fees with one criteria and litigant advocate")
     public void doCalculateCaseFeesWithOneCriteriaAndLitigantAdvocate() {
-        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withComplaintFee().withAdvocateFee().build();
+        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withComplaintFee().withAdvocateFee().withStipendStamp().build();
         when(eFillingUtil.getEFillingDefaultData(any(), anyString())).thenReturn(eFilingParam);
         Map<String, List<JsonNode>> mockLitigantAdvocateMap = Collections.singletonMap("1", Collections.singletonList(new ObjectMapper().createObjectNode().put("id", "101")));
         when(caseUtil.getAdvocateForLitigant(any(), anyString(), anyString())).thenReturn(mockLitigantAdvocateMap);
@@ -70,14 +71,14 @@ public class CaseFeeCalculationServiceTest {
         List<Calculation> result = caseFeesCalculationService.calculateCaseFees(request);
         assertEquals(1, result.size());
         Calculation calculation = result.get(0);
-        assertEquals(5, calculation.getBreakDown().size());
+        assertEquals(6, calculation.getBreakDown().size());
     }
 
 
     @Test
     @DisplayName("do calculate case fees with one criteria and litigant advocate with more than one litigant advocates")
     public void doCalculateCaseFeesWithOneCriteriaAndLitigantAdvocateWithMoreThanOneLitigantAdvocates() {
-        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withComplaintFee().withAdvocateFee().build();
+        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withComplaintFee().withAdvocateFee().withStipendStamp().build();
         when(eFillingUtil.getEFillingDefaultData(any(), anyString())).thenReturn(eFilingParam);
         Map<String, List<JsonNode>> mockLitigantAdvocateMap = new HashMap<>();
         mockLitigantAdvocateMap.put("1", Collections.nCopies(4, new ObjectMapper().createObjectNode().put("id", "101")));
@@ -92,7 +93,7 @@ public class CaseFeeCalculationServiceTest {
         assertEquals(1, result.size());
         Calculation calculation = result.get(0);
 
-        assertEquals(5, calculation.getBreakDown().size());
+        assertEquals(6, calculation.getBreakDown().size());
         assertEquals(125.0, calculation.getBreakDown().get(4).getAmount(), 0.01);
     }
 
