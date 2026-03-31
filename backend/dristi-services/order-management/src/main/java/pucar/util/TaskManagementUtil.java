@@ -15,6 +15,7 @@ import pucar.config.Configuration;
 import pucar.kafka.Producer;
 import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.Order;
+import pucar.web.models.WorkflowObject;
 import pucar.web.models.taskManagement.*;
 import pucar.web.models.taskManagement.TaskSearchRequest;
 
@@ -380,16 +381,17 @@ public class TaskManagementUtil {
                     .build();
 
             List<TaskManagement> taskManagementList = searchTaskManagement(searchRequest);
-            log.info("Fetched {} TaskManagement records for warrant upfront check", 
-                    taskManagementList != null ? taskManagementList.size() : 0);
+
+            log.info("Fetched {} TaskManagement records for warrant upfront check", taskManagementList != null ? taskManagementList.size() : 0);
 
             if (CollectionUtils.isEmpty(taskManagementList)) {
                 return false;
             }
 
             for (TaskManagement taskManagement : taskManagementList) {
+
                 List<PartyDetails> partyDetailsList = taskManagement.getPartyDetails();
-                if (partyDetailsList == null) {
+                if (CollectionUtils.isEmpty(partyDetailsList)) {
                     continue;
                 }
 
@@ -400,29 +402,54 @@ public class TaskManagementUtil {
                     }
 
                     List<WarrantUpfrontData> warrantUpfrontDataList = partyDetails.getWarrantUpfrontData();
-                    if (warrantUpfrontDataList == null) {
+                    if (CollectionUtils.isEmpty(warrantUpfrontDataList)) {
                         continue;
                     }
 
                     for (WarrantUpfrontData upfrontData : warrantUpfrontDataList) {
-                        if (addressId.equals(upfrontData.getAddressId()) 
+                        if (addressId.equals(upfrontData.getAddressId())
                                 && channelCode.equalsIgnoreCase(upfrontData.getChannelCode())
                                 && WarrantUpfrontStatus.NOT_COMPLETED.equals(upfrontData.getStatus())) {
-                            log.info("Found warrant upfront payment with NOT_COMPLETED status for addressId: {}, channelCode: {}", 
-                                    addressId, channelCode);
-                            
-                            // Update WarrantUpfrontData status to COMPLETED
+                            log.info("Found warrant upfront payment with NOT_COMPLETED status for addressId: {}, channelCode: {}",addressId, channelCode);
+
+                            // mark upfront as completed
                             upfrontData.setStatus(WarrantUpfrontStatus.COMPLETED);
-                            
-                            // Update task management record directly
-                            // Task creation is handled in PublishOrderWarrant via createWarrantTaskRequest
+
+                            // check if all upfront data for THIS party completed
+                            boolean isPartyCompleted =
+                                    partyDetails.getWarrantUpfrontData()
+                                            .stream()
+                                            .allMatch(data ->
+                                                    WarrantUpfrontStatus.COMPLETED.equals(data.getStatus()));
+
+                            if (isPartyCompleted) {
+                                partyDetails.setStatus(UpFrontStatus.COMPLETED);
+                            }
+
+                            // check if ALL party details completed
+                            boolean areAllPartiesCompleted = partyDetailsList.stream().allMatch(partyDetail -> UpFrontStatus.COMPLETED.equals(partyDetail.getStatus()));
+
+                            WorkflowObject workflowObject = new WorkflowObject();
+
+                            // decide workflow action
+                            if (areAllPartiesCompleted) {
+                                workflowObject.setAction(COMPLETE_TASK_CREATION);
+                            } else {
+                                workflowObject.setAction(UPDATE_UPFRONT_PAYMENT);
+                            }
+
+                            // attach workflow if required
+                            taskManagement.setWorkflow(workflowObject);
+
+                            // update order details
                             taskManagement.setOrderNumber(order.getOrderNumber());
                             taskManagement.setOrderItemId(getItemId(order));
+
                             updateTaskManagement(TaskManagementRequest.builder()
                                     .requestInfo(requestInfo)
                                     .taskManagement(taskManagement)
                                     .build());
-                            
+
                             return true;
                         }
                     }

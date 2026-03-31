@@ -217,4 +217,8 @@ public class ServiceConstants {
     public static final String ES_UPDATE_DOCUMENT_FORMAT =
             "{\"doc\":{\"Data\":{\"hearingDetails\":{\"orderStatus\":\"%s\"}}}}\n";
 
+    public static final String COMPLETE_TASK_CREATION = "COMPLETE_TASK_CREATION";
+
+    public static final String UPDATE_UPFRONT_PAYMENT = "UPDATE_UPFRONT_PAYMENT";
+
 }
