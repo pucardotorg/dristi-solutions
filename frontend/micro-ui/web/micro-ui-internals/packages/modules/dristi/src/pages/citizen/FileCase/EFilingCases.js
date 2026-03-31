@@ -1759,6 +1759,9 @@ function EFilingCases({ path }) {
                       key = formComponent.key + "." + formComponent.populators?.inputs?.[1]?.name;
                     }
                   }
+                  if (selected === "chequeDetails" && formComponent.component === "InputWithSearch") {
+                    key = formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name;
+                  }
                   if (
                     selected === "debtLiabilityDetails" &&
                     formComponent.component === "CustomInput" &&
