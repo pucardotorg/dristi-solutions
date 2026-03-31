@@ -53,8 +53,12 @@ public class OtpRequest {
     	return OtpRequestType.LOGIN.equals(getType());
 	}
 
-	public boolean isCTCApplicationRequestType() {
-		return OtpRequestType.CTC_APPLICATION.equals(getType());
+	public boolean isCTCApplicationLoginRequestType() {
+		return OtpRequestType.CTC_APPLICATION_LOGIN.equals(getType());
+	}
+
+	public boolean isCTCApplicationRegisterRequestType() {
+		return OtpRequestType.CTC_APPLICATION_REGISTER.equals(getType());
 	}
 
 	public boolean isInvalidType() {
