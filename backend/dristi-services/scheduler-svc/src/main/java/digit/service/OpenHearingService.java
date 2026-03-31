@@ -68,7 +68,7 @@ public class OpenHearingService {
             List<OpenHearing> openHearings = inboxUtil.getOpenHearings(inboxRequest);
 
             if (openHearings != null && !openHearings.isEmpty()) {
-                String dateStr = today.format(DateTimeFormatter.ofPattern(DATE_FORMAT));
+                String dateStr = today.format(DateTimeFormatter.ofPattern(DATE_FORMAT_REDIS));
                 String cacheKey = CACHE_KEY_PREFIX + courtId + ":" + dateStr;
                 cacheService.updateCache(cacheKey, openHearings);
 
@@ -116,7 +116,7 @@ public class OpenHearingService {
             log.info("operation = clearOpenHearingsCache, result = IN_PROGRESS");
             String courtId = config.getCourtId();
             LocalDate today = LocalDate.now(ZoneId.of(config.getZoneId()));
-            String dateStr = today.format(DateTimeFormatter.ofPattern(DATE_FORMAT));
+            String dateStr = today.format(DateTimeFormatter.ofPattern(DATE_FORMAT_REDIS));
             String cacheKey = CACHE_KEY_PREFIX + courtId + ":" + dateStr;
 
             Object cachedHearings = cacheService.getCache(cacheKey);
