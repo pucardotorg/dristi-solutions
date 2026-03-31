@@ -1332,7 +1332,6 @@ export const debtLiabilityValidation = ({ t, formData, selected, setShowErrorToa
 
 export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors, clearFormDataErrors }) => {
   if (selected === "prayerSwornStatement") {
-    debugger;
     let hasError = false;
 
     if ("SelectUploadDocWithName" in formData && Array.isArray(formData?.SelectUploadDocWithName)) {
