@@ -97,6 +97,9 @@ public class CredentialService {
             //check condition for create-vc and recreate-vc
             if ("recreate-vc".equals(topic)){
                 CredentialIdUuidMapper credentialUuidObject=credentialUuidRepository.getUuidVcidMapperRow(uuid);
+                if (credentialUuidObject == null || credentialUuidObject.getVcid() == null) {
+                    throw new CustomException("VCID_NOT_FOUND", "Credential mapping not found for uuid: " + uuid);
+                }
                 String revokeApiResponse=revokeCredentialService.revokeCredential(credentialUuidObject.getVcid());
                 JsonNode jsonNode = objectMapper.readTree(revokeApiResponse);
                 String status = jsonNode.path("status").asText("");
