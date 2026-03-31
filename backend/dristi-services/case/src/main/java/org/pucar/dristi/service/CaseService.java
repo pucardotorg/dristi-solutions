@@ -3094,7 +3094,7 @@ public class CaseService {
         Task task = new Task();
         task.setTaskType(JOIN_CASE);
         task.setStatus("");
-        task.setTaskDescription("poaJoinCase");
+        task.setTaskDescription(POA_JOIN_CASE);
         task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
         task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
         WorkflowObject workflow = new WorkflowObject();
@@ -4600,7 +4600,7 @@ public class CaseService {
                 log.error("no case found for the given criteria");
             } else {
                 CourtCase courtCase = courtCaseList.get(0);
-                if (!task.getTaskDescription().equalsIgnoreCase("poaJoinCase")) {
+                if (!POA_JOIN_CASE.equalsIgnoreCase(task.getTaskDescription())) {
                     // get the pending requests of advocates in the case
                     List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
                     JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
@@ -4652,7 +4652,7 @@ public class CaseService {
             } else {
                 CourtCase courtCase = courtCaseList.get(0);
                 courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, taskRequest.getRequestInfo());
-                if ("poaJoinCase".equals(task.getTaskDescription())) {
+                if (POA_JOIN_CASE.equals(task.getTaskDescription())) {
                     POAJoinCaseTaskRequest joinCaseTaskRequest = objectMapper.convertValue(task.getTaskDetails(), POAJoinCaseTaskRequest.class);
                     validator.isStillValidPOAJoinCase(courtCase, joinCaseTaskRequest);
                     updateCourtCaseObjectPOA(courtCase, joinCaseTaskRequest, requestInfo);

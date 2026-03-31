@@ -260,6 +260,7 @@ public class ServiceConstants {
     public static final String SCHEDULED = "SCHEDULED";
     public static final String FILING = "FILING";
     public static final String LP = "LP";
+    public static final String POA_JOIN_CASE = "poaJoinCase";
     private ServiceConstants() {
     }
 }
