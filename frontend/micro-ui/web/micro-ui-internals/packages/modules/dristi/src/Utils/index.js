@@ -1114,3 +1114,9 @@ export const DateUtils = {
     return `${day} ${month} ${year}`;
   },
 };
+
+export const isRichTextEmpty = (html) => {
+  if (!html) return true;
+  const plainText = html?.replace(/<[^>]*>/g, "").trim();
+  return plainText?.length === 0;
+};
