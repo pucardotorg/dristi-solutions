@@ -36,4 +36,7 @@ public class PartyDetails {
     @JsonProperty("status")
     private UpFrontStatus status;
 
+    @JsonProperty("warrantUpfrontData")
+    private List<WarrantUpfrontData> warrantUpfrontData;
+
 }

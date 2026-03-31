@@ -348,5 +348,94 @@ public class TaskManagementUtil {
             default -> "complainant";
         };
     }
+
+    /**
+     * Checks if the given address and channel combination has an existing upfront payment record
+     * with NOT_COMPLETED status for WARRANT order type. If found, updates the status to COMPLETED
+     * and checks if all WarrantUpfrontData are COMPLETED to set UpFrontStatus to COMPLETED.
+     *
+     * @param order The warrant order
+     * @param requestInfo Request info for API calls
+     * @param addressId The address ID to check
+     * @param channelCode The delivery channel code to check
+     * @return true if upfront payment exists and was NOT_COMPLETED (payment was done upfront), false otherwise
+     */
+    public boolean hasWarrantUpfrontPayment(Order order, RequestInfo requestInfo, String addressId, String channelCode) {
+        try {
+            if (addressId == null || channelCode == null) {
+                log.info("Address ID or channel code is null, no upfront payment check needed");
+                return false;
+            }
+
+            TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
+                    .tenantId(order.getTenantId())
+                    .filingNumber(order.getFilingNumber())
+                    .status(TASK_CREATION)
+                    .taskType(List.of(WARRANT))
+                    .build();
+
+            TaskSearchRequest searchRequest = TaskSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(searchCriteria)
+                    .build();
+
+            List<TaskManagement> taskManagementList = searchTaskManagement(searchRequest);
+            log.info("Fetched {} TaskManagement records for warrant upfront check", 
+                    taskManagementList != null ? taskManagementList.size() : 0);
+
+            if (CollectionUtils.isEmpty(taskManagementList)) {
+                return false;
+            }
+
+            for (TaskManagement taskManagement : taskManagementList) {
+                List<PartyDetails> partyDetailsList = taskManagement.getPartyDetails();
+                if (partyDetailsList == null) {
+                    continue;
+                }
+
+                for (PartyDetails partyDetails : partyDetailsList) {
+
+                    if (UpFrontStatus.COMPLETED.equals(partyDetails.getStatus())) {
+                        continue;
+                    }
+
+                    List<WarrantUpfrontData> warrantUpfrontDataList = partyDetails.getWarrantUpfrontData();
+                    if (warrantUpfrontDataList == null) {
+                        continue;
+                    }
+
+                    for (WarrantUpfrontData upfrontData : warrantUpfrontDataList) {
+                        if (addressId.equals(upfrontData.getAddressId()) 
+                                && channelCode.equalsIgnoreCase(upfrontData.getChannelCode())
+                                && WarrantUpfrontStatus.NOT_COMPLETED.equals(upfrontData.getStatus())) {
+                            log.info("Found warrant upfront payment with NOT_COMPLETED status for addressId: {}, channelCode: {}", 
+                                    addressId, channelCode);
+                            
+                            // Update WarrantUpfrontData status to COMPLETED
+                            upfrontData.setStatus(WarrantUpfrontStatus.COMPLETED);
+                            
+                            // Update task management record directly
+                            // Task creation is handled in PublishOrderWarrant via createWarrantTaskRequest
+                            taskManagement.setOrderNumber(order.getOrderNumber());
+                            taskManagement.setOrderItemId(getItemId(order));
+                            updateTaskManagement(TaskManagementRequest.builder()
+                                    .requestInfo(requestInfo)
+                                    .taskManagement(taskManagement)
+                                    .build());
+                            
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            log.info("No warrant upfront payment found with NOT_COMPLETED status for addressId: {}, channelCode: {}", addressId, channelCode);
+            return false;
+
+        } catch (Exception e) {
+            log.error("Error checking warrant upfront payment for addressId: {}, channelCode: {}", addressId, channelCode, e);
+            return false;
+        }
+    }
 }
 

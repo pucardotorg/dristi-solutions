@@ -39,9 +39,10 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
     private final AdvocateUtil advocateUtil;
     private final UserUtil userUtil;
     private final SmsNotificationService smsNotificationService;
+    private final TaskManagementUtil taskManagementUtil;
 
     @Autowired
-    public PublishOrderWarrant(TaskUtil taskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, AdvocateUtil advocateUtil, UserUtil userUtil, SmsNotificationService smsNotificationService) {
+    public PublishOrderWarrant(TaskUtil taskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, AdvocateUtil advocateUtil, UserUtil userUtil, SmsNotificationService smsNotificationService, TaskManagementUtil taskManagementUtil) {
         this.taskUtil = taskUtil;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
@@ -50,6 +51,7 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
         this.advocateUtil = advocateUtil;
         this.userUtil = userUtil;
         this.smsNotificationService = smsNotificationService;
+        this.taskManagementUtil = taskManagementUtil;
     }
 
     @Override
@@ -149,13 +151,19 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
                 Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<>() {
                 });
                 String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
+                String addressId = jsonUtil.getNestedValue(jsonMap, Arrays.asList("respondentDetails", "address", "id"), String.class);
 
-                TaskRequest taskRequest = taskUtil.createTaskRequest(requestInfo, order, taskDetail,courtCase,channel);
+                // Check if this address+channel combination has upfront payment
+                boolean hasUpfrontPayment = taskManagementUtil.hasWarrantUpfrontPayment(order, requestInfo, addressId, channel);
+                log.info("Warrant upfront payment check - addressId: {}, channel: {}, hasUpfront: {}", addressId, channel, hasUpfrontPayment);
+
+                TaskRequest taskRequest = taskUtil.createWarrantTaskRequest(requestInfo, order, taskDetail, courtCase, channel, hasUpfrontPayment);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
-                // create pending task
-
-                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))
+                // Create pending task for non-EMAIL/SMS channels only when upfront payment was NOT done
+                // hasUpfrontPayment=true: payment was done upfront
+                // hasUpfrontPayment=false: payment required, pending task tracks payment
+                if (!hasUpfrontPayment && channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))
                         && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail) && !courtCase.getIsLPRCase()) {
 
                     PendingTask pendingTask = PendingTask.builder()
