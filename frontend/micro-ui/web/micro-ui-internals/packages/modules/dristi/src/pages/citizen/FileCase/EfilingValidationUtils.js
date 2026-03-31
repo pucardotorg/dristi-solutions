@@ -8,6 +8,7 @@ import {
   generateUUID,
   getAuthorizedUuid,
   isEmptyValue,
+  isRichTextEmpty,
   TaskManagementWorkflowAction,
 } from "../../../Utils";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
@@ -1349,6 +1350,24 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
 
     if (formData?.prayer?.text === "<p></p>\n" || formData?.memorandumOfComplaint?.text === "<p></p>\n") {
       setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+      setShowErrorToast(true);
+      hasError = true;
+    }
+
+    if(isRichTextEmpty(formData?.prayer?.text)){
+      setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+      setShowErrorToast(true);
+      hasError = true;
+    }
+
+    if(isRichTextEmpty(formData?.memorandumOfComplaint?.text)){
+      setFormErrors("memorandumOfComplaint", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
+      setShowErrorToast(true);
+      hasError = true;
+    }
+
+    if(isRichTextEmpty(formData?.synopsis?.text)){
+      setFormErrors("synopsis", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
       setShowErrorToast(true);
       hasError = true;
     }
