@@ -77,7 +77,9 @@ public class AdvocateDetailBlockBuilder {
                                 // if additionalDetails contains a display/full name, prefer that
                                 if (litNode.has("fullName")) complainant.setFullName(litNode.get("fullName").asText());
                             }
-                        } catch (Exception ignored) { }
+                        } catch (Exception e) {
+                            log.trace("Could not parse additionalDetails for litigant: {}", e.getMessage());
+                        }
 
                         // Derive fullName if not set explicitly
                         if (complainant.getFullName() == null) {
@@ -279,7 +281,7 @@ public class AdvocateDetailBlockBuilder {
 
     private String getDocumentIdentity(Document document) {
         if (document == null) {
-            return UUID.randomUUID().toString();
+           return "NULL_DOCUMENT";
         }
         if (document.getFileStore() != null && !document.getFileStore().isBlank()) {
             return "filestore:" + document.getFileStore();

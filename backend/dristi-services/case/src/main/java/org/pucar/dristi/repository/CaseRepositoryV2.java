@@ -480,12 +480,7 @@ public class CaseRepositoryV2 {
     }
 
     private void setAdvocateDetailBlock(CourtCase courtCase, List<String> ids) {
-        // Delegate to centralized builder for consistency across v1/v2
-        try {
             advocateDetailBlockBuilder.buildAndSet(courtCase);
-        } catch (Exception e) {
-            log.error("Error while delegating AdvocateDetailBlock build: {}", e.toString());
-        }
     }
 
     private void setPoaDocuments(CourtCase courtCase, List<String> individualIdsPoaHolder) {

@@ -68,7 +68,13 @@ public class CaseServiceV2 {
                     caseRepository.refreshRepresentativeData(courtCase);
 
                     validateIfUserPartOfCase(caseSearchRequests, courtCase);
-                    return encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
+                    CourtCase decryptedCachedCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
+                    try {
+                       advocateDetailBlockBuilder.buildAndSet(decryptedCachedCase);
+                    } catch (Exception e) {
+                        log.error("Error building AdvocateDetailBlock for cached case: {}", e.toString());
+                    }
+                   return decryptedCachedCase;
                 } else {
                     log.debug("CourtCase not found in Redis cache for caseId: {}", criteria.getCaseId());
                 }

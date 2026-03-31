@@ -655,7 +655,7 @@ public class CaseRegistrationValidator {
         List<String> mobiles = new ArrayList<>();
         for (AdvocateDetailBlock block : blocks) {
             if (block == null || block.getAdvocates() == null) continue;
-            for (org.pucar.dristi.web.models.Advocate adv : block.getAdvocates()) {
+             for (Advocate adv : block.getAdvocates()) {
                 if (adv == null) continue;
                 String mob = adv.getMobileNumber();
                 if (mob != null && !mob.trim().isEmpty()) mobiles.add(mob);
