@@ -99,7 +99,7 @@ public class CredentialService {
                 CredentialIdUuidMapper credentialUuidObject=credentialUuidRepository.getUuidVcidMapperRow(uuid);
                 String revokeApiResponse=revokeCredentialService.revokeCredential(credentialUuidObject.getVcid());
                 JsonNode jsonNode = objectMapper.readTree(revokeApiResponse);
-                String status = jsonNode.get("status").asText();
+                String status = jsonNode.path("status").asText("");
                 if("REVOKED".equals(status)){
                     String credentialIdUuidData=generateCredentials(uuid, entityDid, entitySchemaId,payloadFromJsonPath,credentialContext,expiryDate);
                     log.info("credential uuid data {} ", credentialIdUuidData);

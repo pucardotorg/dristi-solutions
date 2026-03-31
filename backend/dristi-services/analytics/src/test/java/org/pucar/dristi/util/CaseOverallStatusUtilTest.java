@@ -259,15 +259,15 @@ class CaseOverallStatusUtilTest {
         // Validate case status messages
         List<CaseStageSubStage> capturedCaseStatuses = caseStatusCaptor.getAllValues();
 //        assertEquals(2, capturedCaseStatuses.size());
-//        assertTrue(capturedCaseStatuses.stream()
-//                .anyMatch(c -> c.getCaseOverallStatus()."stage1".equalsIgnoreCase(getStage())));
-//        assertTrue(capturedCaseStatuses.stream()
-//                .anyMatch(c -> c.getCaseOverallStatus()."stage2".equalsIgnoreCase(getStage())));
-//
-//        assertTrue(capturedCaseStatuses.stream()
-//                .anyMatch(c -> c.getCaseOverallStatus()."subStage1".equalsIgnoreCase(getSubstage())));
-//        assertTrue(capturedCaseStatuses.stream()
-//                .anyMatch(c -> c.getCaseOverallStatus()."subStage2".equalsIgnoreCase(getSubstage())));
+assertTrue(capturedCaseStatuses.stream()
+                .anyMatch(c -> "stage1".equalsIgnoreCase(c.getCaseOverallStatus().getStage())));
+        assertTrue(capturedCaseStatuses.stream()
+                .anyMatch(c -> "stage2".equalsIgnoreCase(c.getCaseOverallStatus().getStage())));
+
+        assertTrue(capturedCaseStatuses.stream()
+                .anyMatch(c -> "subStage1".equalsIgnoreCase(c.getCaseOverallStatus().getSubstage())));
+        assertTrue(capturedCaseStatuses.stream()
+                .anyMatch(c -> "subStage2".equalsIgnoreCase(c.getCaseOverallStatus().getSubstage())));
 
 
         // Validate case outcome message
