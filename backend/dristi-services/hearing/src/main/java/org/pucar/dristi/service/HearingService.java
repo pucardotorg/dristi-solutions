@@ -454,7 +454,7 @@ public class HearingService {
             Set<String> phoneNumbers = callIndividualService(hearingRequest.getRequestInfo(), individualIds);
 
             String localizedHearingType = "";
-            if (hearingType != null && messageCode.equals(VARIABLE_HEARING_SCHEDULED)) {
+            if (hearingType != null && VARIABLE_HEARING_SCHEDULED.equals(messageCode)) {
                 localizedHearingType = getLocalizedMessageOfHearingType(hearingRequest, hearingType);
             }
             String oldHearingDate = null;

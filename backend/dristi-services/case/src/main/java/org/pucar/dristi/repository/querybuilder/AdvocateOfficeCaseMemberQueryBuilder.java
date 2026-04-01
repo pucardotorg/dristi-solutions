@@ -125,7 +125,7 @@ public class AdvocateOfficeCaseMemberQueryBuilder {
         return query + ORDERBY_CLAUSE
                 .replace("{orderBy}", sortColumn)
                 .replace("{sortingOrder}",
-                        pagination.getOrder().name().equalsIgnoreCase("ASC")
+                        "ASC".equalsIgnoreCase(pagination.getOrder().name())
                                 ? "ASC" : "DESC");
     }
 

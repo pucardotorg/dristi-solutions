@@ -4761,42 +4761,11 @@ const GenerateOrdersV2 = () => {
               </React.Fragment>
             )}
 
-            <LabelFieldPair className="order-type-dropdown">
-              <OrderTypeControls
-                t={t}
-                currentOrder={currentOrder}
-                orderTypeData={orderTypeData}
-                orderTypeConfig={{
-                  ...applicationTypeConfigUpdated?.[0]?.body[0],
-                  populators: {
-                    ...applicationTypeConfigUpdated?.[0]?.body[0]?.populators,
-                    styles: { maxWidth: "75%" },
-                  },
-                }}
-                setOrderType={setOrderType}
-                setCompositeOrderIndex={setCompositeOrderIndex}
-                handleEditOrder={handleEditOrder}
-                setDeleteOrderItemIndex={setDeleteOrderItemIndex}
-                handleOrderTypeChange={handleOrderTypeChange}
-              />
-              <div style={{ marginBottom: "10px" }}>
-                <Button
-                  variation="secondary"
-                  onButtonClick={() => {
-                    handleAddForm();
-                  }}
-                  className="add-new-form"
-                  icon={<CustomAddIcon width="16px" height="16px" />}
-                  label={t("ADD_ITEM")}
-                  style={{ border: "none" }}
-                  isDisabled={isAddItemDisabled}
-                ></Button>
-              </div>
-            </LabelFieldPair>
-
             {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <React.Fragment>
-                <div className="checkbox-item">
+                <CardHeader styles={{ fontSize: "16px", fontWeight: "bold", marginTop: "20px" }}>{t("ORDER_NEXT_HEARING_DETAILS")}</CardHeader>
+
+                <div className="checkbox-item" style={{ marginTop: "10px" }}>
                   <input
                     id="skip-scheduling"
                     type="checkbox"
@@ -4876,6 +4845,40 @@ const GenerateOrdersV2 = () => {
                 </LabelFieldPair>
               </React.Fragment>
             )}
+
+            <LabelFieldPair className="order-type-dropdown">
+              <OrderTypeControls
+                t={t}
+                isHearingAvailable={currentInProgressHearing || currentOrder?.hearingNumber}
+                currentOrder={currentOrder}
+                orderTypeData={orderTypeData}
+                orderTypeConfig={{
+                  ...applicationTypeConfigUpdated?.[0]?.body[0],
+                  populators: {
+                    ...applicationTypeConfigUpdated?.[0]?.body[0]?.populators,
+                    styles: { maxWidth: "75%" },
+                  },
+                }}
+                setOrderType={setOrderType}
+                setCompositeOrderIndex={setCompositeOrderIndex}
+                handleEditOrder={handleEditOrder}
+                setDeleteOrderItemIndex={setDeleteOrderItemIndex}
+                handleOrderTypeChange={handleOrderTypeChange}
+              />
+              <div style={{ marginBottom: "10px" }}>
+                <Button
+                  variation="secondary"
+                  onButtonClick={() => {
+                    handleAddForm();
+                  }}
+                  className="add-new-form"
+                  icon={<CustomAddIcon width="16px" height="16px" />}
+                  label={t("ADD_ITEM")}
+                  style={{ border: "none" }}
+                  isDisabled={isAddItemDisabled}
+                ></Button>
+              </div>
+            </LabelFieldPair>
           </div>
 
           {/* Right Column */}

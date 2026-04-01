@@ -224,6 +224,10 @@ const ComplainantSignature = ({ path }) => {
     return !userInfo?.roles?.some((role) => role.code === "ADVOCATE_ROLE" || role.code === "ADVOCATE_CLERK_ROLE");
   }, [userInfo]);
 
+  const isAdvocateClerk = useMemo(() => {
+    return userInfo.roles?.some((role) => role?.code === "ADVOCATE_CLERK_ROLE");
+  }, [userInfo.roles]);
+
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -1331,10 +1335,10 @@ const ComplainantSignature = ({ path }) => {
             {isSelectedUploadDoc && !(isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) && (
               <p style={styles.signatureDescription}>{t("ONLY_ADVOCATES_AND_ASSOCIATED_MEMBERS_CAN_UPLOAD_SIGNED_COPY")}</p>
             )}
-            {isSelectedEsign && isMemberOnBehalfOfOwnerAdvocate && (
+            {isSelectedEsign && (isMemberOnBehalfOfOwnerAdvocate || isAdvocateClerk) && (
               <p style={styles.signatureDescription}>{t("YOU_ARE_NOT_AUTHORIZED_TO_DO_ESIGN")}</p>
             )}
-            {isSelectedEsign && !isMemberOnBehalfOfOwnerAdvocate && (
+            {isSelectedEsign && !isMemberOnBehalfOfOwnerAdvocate && !isAdvocateClerk && (
               <button style={styles.esignButton} onClick={handleEsignAction}>
                 {t("CS_ESIGN")}
               </button>

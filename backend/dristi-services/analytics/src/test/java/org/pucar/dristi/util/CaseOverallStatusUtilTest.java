@@ -223,8 +223,8 @@ class CaseOverallStatusUtilTest {
 
         Map<String, List<CaseOverallStatusType>> caseOverallStatusTypeMap = new HashMap<>();
         caseOverallStatusTypeMap.put("order", List.of(
-                CaseOverallStatusType.builder().action(action).typeIdentifier("WITHDRAWAL").state(status).stage("stage1").substage("subStage1").build(),
-                CaseOverallStatusType.builder().action(action).typeIdentifier("DISMISSAL").state(status).stage("stage2").substage("subStage2").build()
+                CaseOverallStatusType.builder().action(action).typeIdentifier("WITHDRAWAL").state(status).stage("stage1").substage("subStage1").priority(5).build(),
+                CaseOverallStatusType.builder().action(action).typeIdentifier("DISMISSAL").state(status).stage("stage2").substage("subStage2").priority(10).build()
         ));
 
         Map<String, CaseOutcomeType> caseOutcomeTypeMap = new HashMap<>();
@@ -233,12 +233,15 @@ class CaseOverallStatusUtilTest {
 
         // Mock configuration
         when(config.getOrderBusinessServiceList()).thenReturn(List.of("order"));
+        when(config.getApiCallDelayInSeconds()).thenReturn(0);
+        when(config.getStateLevelTenantId()).thenReturn("pg");
         when(orderUtil.getOrder(any(), eq(referenceId), any())).thenReturn(orderObject);
         when(mapper.readValue(anyString(), eq(RequestInfo.class))).thenReturn(requestInfo);
         when(config.getCaseOverallStatusTopic()).thenReturn("case-overall-status-topic");
         when(config.getCaseOutcomeTopic()).thenReturn("case-outcome-topic");
         when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(caseOverallStatusTypeMap);
         when(mdmsDataConfig.getCaseOutcomeTypeMap()).thenReturn(caseOutcomeTypeMap);
+        when(caseUtil.getCase(any(), anyString(), anyString(), anyString(), anyString())).thenReturn(new JSONObject().put("stage", "Test"));
 
         // Mock composite item extraction
         when(util.constructArray(orderObject.toString(), "$.compositeItems.*")).thenReturn(compositeItems);
@@ -248,31 +251,6 @@ class CaseOverallStatusUtilTest {
 
         // Assertions
         assertNotNull(result); // processOrderOverallStatus returns the orderObject
-
-        // Capture arguments passed to producer
-        ArgumentCaptor<CaseStageSubStage> caseStatusCaptor = ArgumentCaptor.forClass(CaseStageSubStage.class);
-        ArgumentCaptor<CaseOutcome> caseOutcomeCaptor = ArgumentCaptor.forClass(CaseOutcome.class);
-
-//        verify(producer, times(2)).push(eq("case-overall-status-topic"), caseStatusCaptor.capture());
-//        verify(producer, times(1)).push(eq("case-outcome-topic"), caseOutcomeCaptor.capture());
-
-        // Validate case status messages
-        List<CaseStageSubStage> capturedCaseStatuses = caseStatusCaptor.getAllValues();
-//        assertEquals(2, capturedCaseStatuses.size());
-//        assertTrue(capturedCaseStatuses.stream()
-//                .anyMatch(c -> c.getCaseOverallStatus().getStage().equalsIgnoreCase("stage1")));
-//        assertTrue(capturedCaseStatuses.stream()
-//                .anyMatch(c -> c.getCaseOverallStatus().getStage().equalsIgnoreCase("stage2")));
-//
-//        assertTrue(capturedCaseStatuses.stream()
-//                .anyMatch(c -> c.getCaseOverallStatus().getSubstage().equalsIgnoreCase("subStage1")));
-//        assertTrue(capturedCaseStatuses.stream()
-//                .anyMatch(c -> c.getCaseOverallStatus().getSubstage().equalsIgnoreCase("subStage2")));
-
-
-        // Validate case outcome message
-//        CaseOutcome capturedCaseOutcome = caseOutcomeCaptor.getValue();
-//        assertEquals("WITHDRAWAL", capturedCaseOutcome.getOutcome().getOutcome());
     }
 
     @Test
