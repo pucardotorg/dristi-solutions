@@ -1,3 +1,6 @@
+import { chequeDetailsConfig } from "./chequedetailsConfig";
+import { processDeliveryCourierServiceConfig } from "./processDeliveryCourierServiceConfig";
+
 export const sideMenuConfig = [
   {
     isOpen: false,
@@ -123,16 +126,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "chequeDetailsConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: chequeDetailsConfig,
         mandatoryFields: [
           "chequeSignatoryName",
           "bouncedChequeFileUpload.document",
@@ -144,7 +138,8 @@ export const sideMenuConfig = [
           "payerBankName",
           "payerBranchName",
           "delayReason.reasonForReturnCheque",
-          "ifsc",
+          "payeeIfscField.payeeIfsc",
+          "payerIfscField.payerIfsc",
           "chequeAmount",
           "depositDate",
           "returnMemoFileUpload.document",
@@ -304,9 +299,8 @@ export const sideMenuConfig = [
             ],
           },
         ],
-        mandatoryFields: ["memorandumOfComplaint.text"],
-        anyOneOfTheseMandatoryFields: ["swornStatement.document"],
-        initialMandatoryFieldCount: 2,
+        mandatoryFields: ["memorandumOfComplaint.text", "synopsis.text", "prayer.text", "swornStatement.document"],
+        initialMandatoryFieldCount: 4,
         dependentMandatoryFields: [],
         optionalFields: [
           "prayerAndSwornStatementType",
@@ -341,8 +335,26 @@ export const sideMenuConfig = [
         optionalFields: [],
         dependentOptionalFields: [],
         dependentMandatoryFields: [],
+        initialOptionalFieldCount: 0,
+      },
+    ],
+  },
+  {
+    isOpen: false,
+    isDisabled: false,
+    title: "CS_PAYMENT_CONFIRMATION",
+    key: "paymentConfirmation",
+    children: [
+      {
+        key: "processCourierService",
+        label: "PROCESS_DELIVERY_COURIER_SERVICE",
+        checked: false,
+        isCompleted: false,
+        isDisabled: false,
+        pageConfig: processDeliveryCourierServiceConfig,
+        mandatoryFields: [],
+        initialMandatoryFieldCount: 1,
         optionalFields: [],
-        dependentOptionalFields: [],
         initialOptionalFieldCount: 0,
       },
     ],

@@ -4,7 +4,23 @@
 //   applicationNumber:""
 // };
 
-export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId }) => {
+const _getPartyType = (orderType, partyType) => {
+  if (orderType === "MISCELLANEOUS_PROCESS") {
+    if (partyType === "other" || partyType === "others") {
+      return "others";
+    }
+
+    return partyType === "Accused" || partyType === "Respondent" ? "respondent" : partyType?.toLowerCase();
+  }
+
+  if (!["NOTICE", "SUMMONS"]?.includes(orderType)) {
+    return "respondent";
+  }
+
+  return partyType === "Accused" || partyType === "Respondent" ? "respondent" : partyType?.toLowerCase();
+};
+
+export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, partyUniqueId, partyType }) => {
   return {
     label: `1(${orderType === "NOTICE" ? "Notice" : "Summon"}s)`,
     type: "search",
@@ -21,6 +37,8 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
           tenantId: Digit.ULBService.getCurrentTenantId(),
           // cnrNumber: taskCnrNumber,
           orderId: orderId,
+          partyType: _getPartyType(orderType, partyType),
+          ...(!["police", "other", "others"]?.includes((partyType || "")?.toLowerCase()) && { partyUniqueId: partyUniqueId }),
         },
       },
       masterName: "commonUiConfig",
@@ -44,6 +62,7 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
             {
               label: "Delivery Channels",
               jsonPath: "deliveryChannel",
+              additionalCustomization: true,
             },
 
             {
@@ -64,6 +83,11 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
               label: "Remarks",
               jsonPath: "remarks",
             },
+            {
+              label: "PROCESS_FEE_PAID_ON",
+              jsonPath: "feePaidDate",
+              additionalCustomization: true,
+            },
           ],
 
           enableColumnSort: true,
@@ -72,6 +96,6 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
         show: true,
       },
     },
-    additionalDetails: { filingNumber, orderNumber, orderId, taskCnrNumber, itemId },
+    additionalDetails: { filingNumber, orderNumber, orderId, taskCnrNumber, itemId, orderType },
   };
 };

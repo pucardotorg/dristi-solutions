@@ -1,0 +1,45 @@
+{
+  "tenantId": "kl",
+  "masterName": "INBOX",
+  "moduleName": "InboxSortConfiguration",
+  "mdmsPayload": [
+    {
+      "tenantId": "kl",
+      "schemaCode": "INBOX.InboxSortConfiguration",
+      "uniqueIdentifier": "open-hearing-index",
+      "data": {
+        "index": "open-hearing-index",
+        "module": "Hearing Service",
+
+        /// this order needs to be maintained
+        "sortBy": [
+          {
+            "code": "STATUS_ORDER",
+            "path": "Data.hearingDetails.statusOrder",
+            "isActive": true,
+            "orderType": "ASC"
+          },
+          {
+            "code": "TYPE_SORTING_SCRIPT",
+            "script": "{\"_script\":{\"type\":\"string\",\"script\":{\"source\":\"def value = doc['Data.hearingDetails.caseNumber.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { return parts[0]; } else { return ''; } } else { return ''; }\"},\"order\":\"desc\"}}",
+            "isActive": true,
+            "orderType": "ASC"
+          },
+          {
+            "code": "YEAR_SORTING_SCRIPT",
+            "script": "{\"_script\":{\"type\":\"number\",\"script\":{\"source\":\"def value = doc['Data.hearingDetails.caseNumber.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 2) { return Long.parseLong(parts[2]); } else { return 0; } } else { return 0; }\"},\"order\":\"asc\"}}",
+            "isActive": true,
+            "orderType": "ASC"
+          },
+          {
+            "code": "NUMBER_SORTING_SCRIPT",
+            "script": "{\"_script\":{\"type\":\"number\",\"script\":{\"source\":\"def value = doc['Data.hearingDetails.caseNumber.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { return Long.parseLong(parts[1]); } else { return 0; } } else { return 0; }\"},\"order\":\"asc\"}}",
+            "isActive": true,
+            "orderType": "ASC"
+          }
+        ]
+      },
+      "isActive": true
+    }
+  ]
+}

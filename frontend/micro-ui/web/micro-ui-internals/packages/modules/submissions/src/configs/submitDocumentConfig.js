@@ -16,18 +16,22 @@ const submissionDocumentConfig = [
           mdmsConfig: {
             moduleName: "Submission",
             masterName: "SubmissionDocumentType",
-            select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
+            select:
+              "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;}).sort((a,b) => a.code.localeCompare(b.code));}",
           },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
       },
       {
         label: "DOCUMENT_TITLE",
-        labelChildren: "optional",
-        isMandatory: false,
+        isMandatory: true,
         key: "documentTitle",
         type: "text",
-        populators: { name: "documentTitle", customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" } },
+        populators: {
+          name: "documentTitle",
+          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+          error: "CORE_REQUIRED_FIELD_ERROR",
+        },
       },
       {
         type: "component",
@@ -39,12 +43,12 @@ const submissionDocumentConfig = [
             {
               name: "uploadedDocs",
               isMandatory: true,
-              textAreaHeader: "CS_DOCUMENT",
+              label: "CS_DOCUMENT",
               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-              uploadGuidelines: "UPLOAD_DOC_50",
-              maxFileSize: 50,
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-              textAreaStyle: {
+              uploadGuidelines: "UPLOAD_DOC_10",
+              maxFileSize: 10,
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
+              labelStyle: {
                 fontSize: "16px",
                 fontWeight: 400,
                 marginBottom: "8px",
@@ -56,7 +60,7 @@ const submissionDocumentConfig = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         key: "reasonForFiling",
         isMandatory: true,
         populators: {

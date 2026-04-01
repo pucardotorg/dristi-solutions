@@ -2,6 +2,7 @@ import { FormComposerV2, Header, Toast } from "@egovernments/digit-ui-react-comp
 import React, { useMemo, useState } from "react";
 import { CustomArrowDownIcon } from "../../../icons/svgIndex";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
+import { runComprehensiveSanitizer } from "../../../Utils";
 
 function CaseFileScrutiny({ t }) {
   const [isDisabled, setIsDisabled] = useState(false);
@@ -51,6 +52,7 @@ function CaseFileScrutiny({ t }) {
   const onSaveDraft = () => {};
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
+      runComprehensiveSanitizer({ formData, setValue });
       setFormdata((prev) => {
         return { ...prev, data: formData };
       });
