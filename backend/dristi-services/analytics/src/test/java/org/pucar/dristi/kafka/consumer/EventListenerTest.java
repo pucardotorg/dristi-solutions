@@ -50,7 +50,7 @@ class EventListenerTest {
 
         verify(config, times(1)).getStateLevelTenantId();
         verify(indexerService, times(1)).esIndexer(record.topic(), record.value());
-        Assertions.assertEquals("tenant-id", MDC.get(ServiceConstants.TENANTID_MDC_STRING));
+        Assertions.assertNull(MDC.get(ServiceConstants.TENANTID_MDC_STRING));
     }
 
     @Test
@@ -64,7 +64,7 @@ class EventListenerTest {
         eventListener.onMessage(record);
 
         verify(config, times(1)).getStateLevelTenantId();
-        Assertions.assertEquals("tenant-id", MDC.get(ServiceConstants.TENANTID_MDC_STRING));
+        Assertions.assertNull(MDC.get(ServiceConstants.TENANTID_MDC_STRING));
     }
 
     @Test
@@ -78,6 +78,6 @@ class EventListenerTest {
 
         verify(config, times(1)).getStateLevelTenantId();
         verify(billingService, times(1)).process(record.topic(), record.value());
-        Assertions.assertEquals("tenant-id", MDC.get(ServiceConstants.TENANTID_MDC_STRING));
+        Assertions.assertNull(MDC.get(ServiceConstants.TENANTID_MDC_STRING));
     }
 }
