@@ -4763,7 +4763,9 @@ const GenerateOrdersV2 = () => {
 
             {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <React.Fragment>
-                <div className="checkbox-item" style={{ marginTop: "2.5rem" }}>
+                <CardHeader styles={{ fontSize: "16px", fontWeight: "bold", marginTop: "20px" }}>{t("ORDER_NEXT_HEARING_DETAILS")}</CardHeader>
+
+                <div className="checkbox-item" style={{ marginTop: "10px" }}>
                   <input
                     id="skip-scheduling"
                     type="checkbox"
@@ -4847,6 +4849,7 @@ const GenerateOrdersV2 = () => {
             <LabelFieldPair className="order-type-dropdown">
               <OrderTypeControls
                 t={t}
+                isHearingAvailable={currentInProgressHearing || currentOrder?.hearingNumber}
                 currentOrder={currentOrder}
                 orderTypeData={orderTypeData}
                 orderTypeConfig={{
