@@ -11,15 +11,15 @@ public class FileValidationUtil {
                 contentType.equals(MediaType.IMAGE_JPEG_VALUE) ||
                         contentType.equals(MediaType.IMAGE_PNG_VALUE) ||
                         contentType.equals(MediaType.APPLICATION_PDF_VALUE) ||
-                        contentType.equals("application/vnd.oasis.opendocument.text") ||
-                        contentType.equals("application/vnd.oasis.opendocument.spreadsheet") ||
-                        contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document") ||
-                        contentType.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") ||
-                        contentType.equals("application/msword") ||
-                        contentType.equals("application/vnd.ms-excel") ||
-                        contentType.equals("application/dxf") ||
-                        contentType.equals("text/csv") ||
-                        contentType.equals("text/plain")
+                        "application/vnd.oasis.opendocument.text".equals(contentType) ||
+                        "application/vnd.oasis.opendocument.spreadsheet".equals(contentType) ||
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document".equals(contentType) ||
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet".equals(contentType) ||
+                        "application/msword".equals(contentType) ||
+                        "application/vnd.ms-excel".equals(contentType) ||
+                        "application/dxf".equals(contentType) ||
+                        "text/csv".equals(contentType) ||
+                        "text/plain".equals(contentType)
         );
     }
 }
