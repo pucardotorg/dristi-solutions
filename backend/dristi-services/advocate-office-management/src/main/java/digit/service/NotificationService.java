@@ -4,7 +4,6 @@ import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
 import digit.kafka.Producer;
 import digit.repository.ServiceRequestRepository;
-
 import digit.web.models.sms.SMSRequest;
 import digit.web.models.sms.SmsTemplateData;
 import lombok.extern.slf4j.Slf4j;
@@ -67,11 +66,7 @@ public class NotificationService {
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData smsTemplateData, String messageCode, String message, String mobileNumber) {
 
         String templateId = switch (messageCode) {
-            case SIGN_EXAMINATION_DOCUMENT -> config.getExaminationSignTemplateId();
-            case SIGN_PLEA_DOCUMENT -> config.getPleaSignTemplateId();
-            case SIGN_MEDIATION_DOCUMENT -> config.getMediationSignTemplateId();
-            case CLIENT_EXAMINATION_ESIGN -> config.getClientExaminationEsignTemplateId();
-            case CLIENT_PLEA_ESIGN -> config.getClientPleaEsignTemplateId();
+            case ADVOCATE_OFFICE_ADDITION -> config.getAdvocateAdditionTemplateId();
             default -> null;
         };
 
@@ -109,7 +104,6 @@ public class NotificationService {
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {
         Map<String, String> smsDetails = getDetailsForSMS(templateData, mobileNumber);
 
-        log.info("building Notification Request for case number {}", templateData.getCmpNumber());
         message = buildMessage(smsDetails, message);
         SMSRequest smsRequest = SMSRequest.builder()
                 .mobileNumber(smsDetails.get("mobileNumber"))
@@ -126,33 +120,18 @@ public class NotificationService {
     }
 
     public String buildMessage(Map<String, String> userDetailsForSMS, String message) {
-        message = message.replace("{{cmpNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
-                .replace("{{shortenedUrl}}",Optional.ofNullable(userDetailsForSMS.get("shortenedUrl")).orElse(""));
+        message = message.replace("{{advocateName}}", Optional.ofNullable(userDetailsForSMS.get("advocateName")).orElse(""))
+                .replace("{{memberType}}",Optional.ofNullable(userDetailsForSMS.get("memberType")).orElse(""));
         return message;
-    }
-
-    private String getPreferredCaseIdentifier(Map<String, String> userDetailsForSMS) {
-        String courtCaseNumber = userDetailsForSMS.get("courtCaseNumber");
-        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
-            return courtCaseNumber;
-        }
-
-        String cmpNumber = userDetailsForSMS.get("cmpNumber");
-        if (cmpNumber != null && !cmpNumber.isEmpty()) {
-            return cmpNumber;
-        }
-
-        return "";
     }
 
     private Map<String, String> getDetailsForSMS(SmsTemplateData smsTemplateData, String mobileNumber) {
         Map<String, String> smsDetails = new HashMap<>();
 
-        smsDetails.put("courtCaseNumber", smsTemplateData.getCourtCaseNumber());
-        smsDetails.put("cmpNumber", smsTemplateData.getCmpNumber());
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("mobileNumber", mobileNumber);
-        smsDetails.put("shortenedUrl", smsTemplateData.getShortenedUrl());
+        smsDetails.put("advocateName", smsTemplateData.getAdvocateName());
+        smsDetails.put("memberType", smsTemplateData.getMemberType());
 
         return smsDetails;
     }
