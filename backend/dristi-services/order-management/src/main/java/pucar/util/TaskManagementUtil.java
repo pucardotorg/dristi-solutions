@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
 import org.springframework.stereotype.Component;
@@ -484,6 +485,9 @@ public class TaskManagementUtil {
             // Update order details
             taskManagement.setOrderNumber(order.getOrderNumber());
             taskManagement.setOrderItemId(getItemId(order));
+
+            Role role = Role.builder().code(SYSTEM_ADMIN).name(SYSTEM_ADMIN).tenantId(taskManagement.getTenantId()).build();
+            requestInfo.getUserInfo().getRoles().add(role);
 
             updateTaskManagement(TaskManagementRequest.builder()
                     .requestInfo(requestInfo)

@@ -221,4 +221,6 @@ public class ServiceConstants {
 
     public static final String UPDATE_UPFRONT_PAYMENT = "UPDATE_UPFRONT_PAYMENT";
 
+    public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
+
 }
