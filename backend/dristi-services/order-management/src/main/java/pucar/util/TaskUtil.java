@@ -23,6 +23,8 @@ import pucar.web.models.WorkflowObject;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.task.*;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -199,7 +201,8 @@ public class TaskUtil {
             }
             deliveryChannels.put("isPendingCollection", false);
             if (hasUpfrontPayment) {
-                deliveryChannels.put("feePaidDate", courtCase.getFilingDate());
+                LocalDate feePaidDate = dateUtil.getLocalDateFromEpoch(courtCase.getFilingDate());
+                deliveryChannels.put("feePaidDate", feePaidDate.format(DateTimeFormatter.ofPattern(LOCAL_DATE_FORMAT)));
             }
         } else {
             workflowObject.setAction("CREATE");
