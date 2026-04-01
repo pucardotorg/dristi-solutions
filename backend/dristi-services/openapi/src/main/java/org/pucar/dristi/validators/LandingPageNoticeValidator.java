@@ -25,7 +25,7 @@ public class LandingPageNoticeValidator {
             throw new CustomException("VALIDATION_EXCEPTION", "request Info or user info can not be null");
         }
 
-        if (!requestInfo.getUserInfo().getType().equals("EMPLOYEE")) {
+        if (!"EMPLOYEE".equals(requestInfo.getUserInfo().getType())) {
             throw new CustomException("VALIDATION_EXCEPTION", "user must be employee");
         }
     }
@@ -43,7 +43,7 @@ public class LandingPageNoticeValidator {
             throw new CustomException("VALIDATION_EXCEPTION", "request Info or user info can not be null");
         }
 
-        if (!requestInfo.getUserInfo().getType().equals("EMPLOYEE")) {
+        if (!"EMPLOYEE".equals(requestInfo.getUserInfo().getType())) {
             throw new CustomException("VALIDATION_EXCEPTION", "user must be employee");
         }
 

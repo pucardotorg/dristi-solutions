@@ -190,8 +190,8 @@ public class WorkflowServiceTest {
 
         // Then
         assertEquals(2, result.size());
-        assertTrue(result.stream().anyMatch(user -> user.getUuid().equals("uuid1")));
-        assertTrue(result.stream().anyMatch(user -> user.getUuid().equals("uuid2")));
+        assertTrue(result.stream().anyMatch(user -> "uuid1".equals(user.getUuid())));
+        assertTrue(result.stream().anyMatch(user -> "uuid2".equals(user.getUuid())));
     }
 
     @Test

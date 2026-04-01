@@ -2244,7 +2244,7 @@ public class CaseService {
                     .filingNumber(courtCase.getFilingNumber())
                     .build();
             List<Hearing> hearingList = getHearingsForCase(hearingCriteria);
-            List<Hearing> scheduledHearings = hearingList.stream().filter(hearing -> hearing.getStatus().equalsIgnoreCase("SCHEDULED")).toList();
+            List<Hearing> scheduledHearings = hearingList.stream().filter(hearing -> "SCHEDULED".equalsIgnoreCase(hearing.getStatus())).toList();
             Attendee newAttendee = new Attendee();
             newAttendee.setIndividualId(joinCaseAdvocate.getIndividualId());
             newAttendee.setName(getName(individual));
@@ -3024,7 +3024,7 @@ public class CaseService {
         Task task = new Task();
         task.setTaskType(JOIN_CASE);
         task.setStatus("");
-        task.setTaskDescription("poaJoinCase");
+        task.setTaskDescription(POA_JOIN_CASE);
         task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
         task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
         WorkflowObject workflow = new WorkflowObject();
@@ -3250,7 +3250,7 @@ public class CaseService {
                 .filingNumber(courtCase.getFilingNumber())
                 .build();
         List<Hearing> hearingList = getHearingsForCase(hearingCriteria);
-        List<Hearing> scheduledHearings = hearingList.stream().filter(hearing -> hearing.getStatus().equalsIgnoreCase("SCHEDULED")).toList();
+        List<Hearing> scheduledHearings = hearingList.stream().filter(hearing -> "SCHEDULED".equalsIgnoreCase(hearing.getStatus())).toList();
         log.info("hearing list :: {}", scheduledHearings);
 
         List<Attendee> newAttendees = new ArrayList<>();
@@ -4265,13 +4265,13 @@ public class CaseService {
                         editorUuid = profile.get("editorDetails").get("uuid").asText();
                         String partyType = profile.get("litigantDetails").get("partyType").asText();
                         String uniqueId = profile.get("litigantDetails").get("uniqueId").asText();
-                        String detailsKey = partyType.equals("complainant") ? "complainantDetails" : "respondentDetails";
+                        String detailsKey = "complainant".equals(partyType) ? "complainantDetails" : "respondentDetails";
 
                         JsonNode newDetails = profile.get("newData").get(detailsKey);
                         updatePartyDetails(uniqueId, additionalDetails, newDetails, detailsKey);
 
                         String individualId;
-                        if (detailsKey.equals("respondentDetails")) {
+                        if ("respondentDetails".equals(detailsKey)) {
                             individualId = extractIndividualIdIfPresent(additionalDetails, uniqueId);
                             if (individualId == null)
                                 log.info("Respondent has not joined case yet.");
@@ -4420,7 +4420,7 @@ public class CaseService {
             log.info("Updating {} with uniqueId: {}", detailsKey, uniqueId);
             for (JsonNode data : formData) {
                 if (data.at(getIndividualIdPath(detailsKey)).asText().equals(uniqueId) ||
-                        (detailsKey.equals("respondentDetails") && data.at("/uniqueId").asText().equals(uniqueId))) {
+                        ("respondentDetails".equals(detailsKey) && data.at("/uniqueId").asText().equals(uniqueId))) {
                     JsonNode newData = objectMapper.convertValue(newDetails, JsonNode.class);
                     ((ObjectNode) data).set("data", newData);
                 }
@@ -4451,7 +4451,7 @@ public class CaseService {
     }
 
     private String getIndividualIdPath(String detailsKey) {
-        return detailsKey.equals("complainantDetails") ? COMPLAINANT_INDIVIDUAL_ID_PATH : RESPONDENT_INDIVIDUAL_ID_PATH;
+        return "complainantDetails".equals(detailsKey) ? COMPLAINANT_INDIVIDUAL_ID_PATH : RESPONDENT_INDIVIDUAL_ID_PATH;
     }
 
 
@@ -4481,12 +4481,12 @@ public class CaseService {
 
     private String getFullName(JsonNode data, String detailsKey) {
         String fullName = null;
-        if (detailsKey.equals("complainantDetails")) {
+        if ("complainantDetails".equals(detailsKey)) {
             String firstName = data.get("data").path("firstName").asText("");
             String middleName = data.get("data").path("middleName").asText("");
             String lastName = data.get("data").path("lastName").asText("");
             fullName = (firstName + " " + middleName + " " + lastName).replaceAll("\\s+", " ").trim();
-        } else if (detailsKey.equals("respondentDetails")) {
+        } else if ("respondentDetails".equals(detailsKey)) {
             String firstName = data.get("data").path("respondentFirstName").asText("");
             String middleName = data.get("data").path("respondentMiddleName").asText("");
             String lastName = data.get("data").path("respondentLastName").asText("");
@@ -4507,7 +4507,7 @@ public class CaseService {
                 log.error("no case found for the given criteria");
             } else {
                 CourtCase courtCase = courtCaseList.get(0);
-                if (!task.getTaskDescription().equalsIgnoreCase("poaJoinCase")) {
+                if (!POA_JOIN_CASE.equalsIgnoreCase(task.getTaskDescription())) {
                     // get the pending requests of advocates in the case
                     List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
                     JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
@@ -4559,7 +4559,7 @@ public class CaseService {
             } else {
                 CourtCase courtCase = courtCaseList.get(0);
                 courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, taskRequest.getRequestInfo());
-                if ("poaJoinCase".equals(task.getTaskDescription())) {
+                if (POA_JOIN_CASE.equals(task.getTaskDescription())) {
                     POAJoinCaseTaskRequest joinCaseTaskRequest = objectMapper.convertValue(task.getTaskDetails(), POAJoinCaseTaskRequest.class);
                     validator.isStillValidPOAJoinCase(courtCase, joinCaseTaskRequest);
                     updateCourtCaseObjectPOA(courtCase, joinCaseTaskRequest, requestInfo);
@@ -5770,7 +5770,7 @@ public class CaseService {
 
         List<Hearing> hearings = getHearingsForCase(hearingCriteria);
 
-        List<Hearing> scheduledHearings = hearings.stream().filter(hearing -> hearing.getStatus().equalsIgnoreCase("SCHEDULED")).toList();
+        List<Hearing> scheduledHearings = hearings.stream().filter(hearing -> "SCHEDULED".equalsIgnoreCase(hearing.getStatus())).toList();
 
         for (Hearing hearing : scheduledHearings) {
             // add new advocate to the hearing who is joining the case
