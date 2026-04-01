@@ -311,19 +311,18 @@ const GenerateOrdersV2 = () => {
   }, [bailPendingTaskExpiry]);
 
   // Extract task-related handlers to reduce component complexity
-  const { createPendingTaskForJudge, createPendingTaskForEmployee, createPendingTask, handleIssueSummons, handleIssueNotice } =
-    useOrderTaskHandlers({
-      filingNumber,
-      tenantId,
-      courtId,
-      caseDetails,
-      applicationData,
-      bailPendingTaskExpiryDays,
-      todayDate,
-      cnrNumber,
-      t,
-      orderType,
-    });
+  const { createPendingTaskForJudge, createPendingTaskForEmployee, createPendingTask, handleIssueSummons, handleIssueNotice } = useOrderTaskHandlers({
+    filingNumber,
+    tenantId,
+    courtId,
+    caseDetails,
+    applicationData,
+    bailPendingTaskExpiryDays,
+    todayDate,
+    cnrNumber,
+    t,
+    orderType,
+  });
 
   const applicationTypeConfigUpdated = useMemo(() => {
     const updatedConfig = structuredClone(applicationTypeConfig);
@@ -1413,10 +1412,7 @@ const GenerateOrdersV2 = () => {
   );
 
   // Create default order data structure for new orders
-  const defaultOrderData = useMemo(
-    () => createDefaultOrderData({ tenantId, cnrNumber, filingNumber }),
-    [cnrNumber, filingNumber, tenantId]
-  );
+  const defaultOrderData = useMemo(() => createDefaultOrderData({ tenantId, cnrNumber, filingNumber }), [cnrNumber, filingNumber, tenantId]);
 
   useEffect(() => {
     if (isOrdersLoading || isOrdersFetching) {
@@ -2982,6 +2978,7 @@ const GenerateOrdersV2 = () => {
 
             <OrderTypeSection
               t={t}
+              isHearingAvailable={currentInProgressHearing || currentOrder?.hearingNumber}
               currentOrder={currentOrder}
               orderTypeData={orderTypeData}
               applicationTypeConfigUpdated={applicationTypeConfigUpdated}

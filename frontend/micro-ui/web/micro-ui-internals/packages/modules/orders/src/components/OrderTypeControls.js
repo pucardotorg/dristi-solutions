@@ -4,6 +4,7 @@ import { CardHeader } from "@egovernments/digit-ui-react-components";
 
 const OrderTypeControls = ({
   t,
+  isHearingAvailable,
   currentOrder,
   orderTypeData,
   orderTypeConfig,
@@ -26,6 +27,7 @@ const OrderTypeControls = ({
                 <OrderTypeControlItem
                   key={item.id}
                   t={t}
+                  isHearingAvailable={isHearingAvailable}
                   orderType={item?.orderType}
                   orderTypeData={orderTypeData}
                   orderTypeConfig={orderTypeConfig}
@@ -43,6 +45,7 @@ const OrderTypeControls = ({
         ) : (
           <OrderTypeControlItem
             t={t}
+            isHearingAvailable={isHearingAvailable}
             orderType={currentOrder?.orderType}
             dropdownType={orderTypeConfig?.type}
             orderTypeData={orderTypeData}

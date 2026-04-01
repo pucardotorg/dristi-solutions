@@ -11,6 +11,7 @@ import { CustomAddIcon } from "@egovernments/digit-ui-module-dristi/src/icons/sv
  */
 const OrderTypeSection = ({
   t,
+  isHearingAvailable,
   currentOrder,
   orderTypeData,
   applicationTypeConfigUpdated,
@@ -123,6 +124,7 @@ const OrderTypeSection = ({
       <LabelFieldPair className="order-type-dropdown">
         <OrderTypeControls
           t={t}
+          isHearingAvailable={isHearingAvailable}
           currentOrder={currentOrder}
           orderTypeData={orderTypeData}
           orderTypeConfig={{
