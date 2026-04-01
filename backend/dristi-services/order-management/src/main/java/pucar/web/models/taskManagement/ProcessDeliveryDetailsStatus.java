@@ -1,6 +1,6 @@
 package pucar.web.models.taskManagement;
 
-public enum WarrantUpfrontStatus {
+public enum ProcessDeliveryDetailsStatus {
 
     NOT_COMPLETED,
 

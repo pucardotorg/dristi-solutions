@@ -1,6 +1,6 @@
 package digit.web.models.taskdetails;
 
-public enum WarrantUpfrontStatus {
+public enum ProcessDeliveryDetailsStatus {
 
     NOT_COMPLETED,
 

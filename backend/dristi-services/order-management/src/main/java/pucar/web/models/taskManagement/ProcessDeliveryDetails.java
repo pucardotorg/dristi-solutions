@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class WarrantUpfrontData {
+public class ProcessDeliveryDetails {
 
     @JsonProperty("addressId")
     private String addressId;
@@ -18,6 +18,6 @@ public class WarrantUpfrontData {
     @JsonProperty("channelCode")
     private String channelCode;
 
-    @JsonProperty("status")
-    private WarrantUpfrontStatus status;
+    @JsonProperty("processDeliveryDetailsStatus")
+    private ProcessDeliveryDetailsStatus processDeliveryDetailsStatus;
 }

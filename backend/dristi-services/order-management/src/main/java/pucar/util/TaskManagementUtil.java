@@ -351,23 +351,15 @@ public class TaskManagementUtil {
     }
 
     /**
-     * Checks if the given address and channel combination has an existing upfront payment record
-     * with NOT_COMPLETED status for WARRANT order type. If found, updates the status to COMPLETED
-     * and checks if all WarrantUpfrontData are COMPLETED to set UpFrontStatus to COMPLETED.
+     * Fetches warrant TaskManagement records once for batch processing.
+     * Call this method once before the loop and pass the result to findWarrantUpfrontPayment or checkAndUpdateWarrantUpfrontPayment.
      *
-     * @param order The warrant order
-     * @param requestInfo Request info for API calls
-     * @param addressId The address ID to check
-     * @param channelCode The delivery channel code to check
-     * @return true if upfront payment exists and was NOT_COMPLETED (payment was done upfront), false otherwise
+     * @param order       The order to check
+     * @param requestInfo The request info
+     * @return List of TaskManagement records for warrant upfront check
      */
-    public boolean hasWarrantUpfrontPayment(Order order, RequestInfo requestInfo, String addressId, String channelCode) {
+    public List<TaskManagement> fetchWarrantTaskManagementRecords(Order order, RequestInfo requestInfo) {
         try {
-            if (addressId == null || channelCode == null) {
-                log.info("Address ID or channel code is null, no upfront payment check needed");
-                return false;
-            }
-
             TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
                     .tenantId(order.getTenantId())
                     .filingNumber(order.getFilingNumber())
@@ -381,88 +373,135 @@ public class TaskManagementUtil {
                     .build();
 
             List<TaskManagement> taskManagementList = searchTaskManagement(searchRequest);
-
             log.info("Fetched {} TaskManagement records for warrant upfront check", taskManagementList != null ? taskManagementList.size() : 0);
+            return taskManagementList != null ? taskManagementList : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error fetching warrant TaskManagement records", e);
+            return Collections.emptyList();
+        }
+    }
 
-            if (CollectionUtils.isEmpty(taskManagementList)) {
-                return false;
+    /**
+     * Finds warrant upfront payment record for a specific address+channel combination.
+     * This method does NOT make any API calls - it uses the pre-fetched taskManagementList.
+     *
+     * @param addressId          The address ID to check
+     * @param channelCode        The delivery channel code to check
+     * @param taskManagementList Pre-fetched TaskManagement records from fetchWarrantTaskManagementRecords
+     * @return WarrantUpfrontResult containing the matching task, party and process data, or null if not found
+     */
+    public WarrantUpfrontResult findWarrantUpfrontPayment(String addressId, String channelCode, List<TaskManagement> taskManagementList) {
+        if (addressId == null || channelCode == null) {
+            log.info("Address ID or channel code is null, no upfront payment check needed");
+            return null;
+        }
+
+        if (CollectionUtils.isEmpty(taskManagementList)) {
+            return null;
+        }
+
+        for (TaskManagement taskManagement : taskManagementList) {
+            List<PartyDetails> partyDetailsList = taskManagement.getPartyDetails();
+            if (CollectionUtils.isEmpty(partyDetailsList)) {
+                continue;
             }
 
-            for (TaskManagement taskManagement : taskManagementList) {
-
-                List<PartyDetails> partyDetailsList = taskManagement.getPartyDetails();
-                if (CollectionUtils.isEmpty(partyDetailsList)) {
+            for (PartyDetails partyDetails : partyDetailsList) {
+                if (UpFrontStatus.COMPLETED.equals(partyDetails.getStatus())) {
                     continue;
                 }
 
-                for (PartyDetails partyDetails : partyDetailsList) {
+                // Check if this party has the matching address in their delivery process details
+                List<ProcessDeliveryDetails> deliveryProcessList = partyDetails.getProcessDeliveryDetails();
+                if (CollectionUtils.isEmpty(deliveryProcessList)) {
+                    continue;
+                }
 
-                    if (UpFrontStatus.COMPLETED.equals(partyDetails.getStatus())) {
-                        continue;
-                    }
-
-                    List<WarrantUpfrontData> warrantUpfrontDataList = partyDetails.getWarrantUpfrontData();
-                    if (CollectionUtils.isEmpty(warrantUpfrontDataList)) {
-                        continue;
-                    }
-
-                    for (WarrantUpfrontData upfrontData : warrantUpfrontDataList) {
-                        if (addressId.equals(upfrontData.getAddressId())
-                                && channelCode.equalsIgnoreCase(upfrontData.getChannelCode())
-                                && WarrantUpfrontStatus.NOT_COMPLETED.equals(upfrontData.getStatus())) {
-                            log.info("Found warrant upfront payment with NOT_COMPLETED status for addressId: {}, channelCode: {}",addressId, channelCode);
-
-                            // mark upfront as completed
-                            upfrontData.setStatus(WarrantUpfrontStatus.COMPLETED);
-
-                            // check if all upfront data for THIS party completed
-                            boolean isPartyCompleted =
-                                    partyDetails.getWarrantUpfrontData()
-                                            .stream()
-                                            .allMatch(data ->
-                                                    WarrantUpfrontStatus.COMPLETED.equals(data.getStatus()));
-
-                            if (isPartyCompleted) {
-                                partyDetails.setStatus(UpFrontStatus.COMPLETED);
-                            }
-
-                            // check if ALL party details completed
-                            boolean areAllPartiesCompleted = partyDetailsList.stream().allMatch(partyDetail -> UpFrontStatus.COMPLETED.equals(partyDetail.getStatus()));
-
-                            WorkflowObject workflowObject = new WorkflowObject();
-
-                            // decide workflow action
-                            if (areAllPartiesCompleted) {
-                                workflowObject.setAction(COMPLETE_TASK_CREATION);
-                            } else {
-                                workflowObject.setAction(UPDATE_UPFRONT_PAYMENT);
-                            }
-
-                            // attach workflow if required
-                            taskManagement.setWorkflow(workflowObject);
-
-                            // update order details
-                            taskManagement.setOrderNumber(order.getOrderNumber());
-                            taskManagement.setOrderItemId(getItemId(order));
-
-                            updateTaskManagement(TaskManagementRequest.builder()
-                                    .requestInfo(requestInfo)
-                                    .taskManagement(taskManagement)
-                                    .build());
-
-                            return true;
-                        }
+                for (ProcessDeliveryDetails processData : deliveryProcessList) {
+                    if (addressId.equals(processData.getAddressId())
+                            && channelCode.equalsIgnoreCase(processData.getChannelCode())
+                            && ProcessDeliveryDetailsStatus.NOT_COMPLETED.equals(processData.getProcessDeliveryDetailsStatus())) {
+                        log.info("Found warrant upfront payment with NOT_COMPLETED status for addressId: {}, channelCode: {}", addressId, channelCode);
+                        return new WarrantUpfrontResult(taskManagement, partyDetails, processData);
                     }
                 }
             }
+        }
 
-            log.info("No warrant upfront payment found with NOT_COMPLETED status for addressId: {}, channelCode: {}", addressId, channelCode);
-            return false;
+        log.info("No warrant upfront payment found with NOT_COMPLETED status for addressId: {}, channelCode: {}", addressId, channelCode);
+        return null;
+    }
 
+    /**
+     * Updates the warrant upfront payment status and task management record.
+     *
+     * @param order       The order to update
+     * @param requestInfo The request info
+     * @param result      The warrant upfront result from findWarrantUpfrontPayment
+     * @return true if update was successful, false otherwise
+     */
+    public boolean updateWarrantUpfrontPayment(Order order, RequestInfo requestInfo, WarrantUpfrontResult result) {
+        try {
+            if (result == null) {
+                return false;
+            }
+
+            TaskManagement taskManagement = result.taskManagement();
+            PartyDetails partyDetails = result.partyDetails();
+            ProcessDeliveryDetails processData = result.processData();
+
+            // Mark upfront as completed
+            processData.setProcessDeliveryDetailsStatus(ProcessDeliveryDetailsStatus.COMPLETED);
+
+            // Check if all delivery process details for THIS party are completed
+            boolean isPartyCompleted = partyDetails.getProcessDeliveryDetails()
+                    .stream()
+                    .allMatch(data -> ProcessDeliveryDetailsStatus.COMPLETED.equals(data.getProcessDeliveryDetailsStatus()));
+
+            if (isPartyCompleted) {
+                partyDetails.setStatus(UpFrontStatus.COMPLETED);
+            }
+
+            // Check if ALL party details are completed
+            List<PartyDetails> partyDetailsList = taskManagement.getPartyDetails();
+            boolean areAllPartiesCompleted = partyDetailsList.stream()
+                    .allMatch(party -> UpFrontStatus.COMPLETED.equals(party.getStatus()));
+
+            WorkflowObject workflowObject = new WorkflowObject();
+
+            // Decide workflow action
+            if (areAllPartiesCompleted) {
+                log.info("All parties have completed upfront payment");
+                workflowObject.setAction(COMPLETE_TASK_CREATION);
+            } else {
+                log.info("Not all parties completed upfront payment");
+                workflowObject.setAction(UPDATE_UPFRONT_PAYMENT);
+            }
+
+            // Attach workflow
+            taskManagement.setWorkflow(workflowObject);
+
+            // Update order details
+            taskManagement.setOrderNumber(order.getOrderNumber());
+            taskManagement.setOrderItemId(getItemId(order));
+
+            updateTaskManagement(TaskManagementRequest.builder()
+                    .requestInfo(requestInfo)
+                    .taskManagement(taskManagement)
+                    .build());
+
+            return true;
         } catch (Exception e) {
-            log.error("Error checking warrant upfront payment for addressId: {}, channelCode: {}", addressId, channelCode, e);
+            log.error("Error updating warrant upfront payment", e);
             return false;
         }
+    }
+
+    /**
+     * Record to hold the result of finding a warrant upfront payment.
+     */
+    public record WarrantUpfrontResult(TaskManagement taskManagement, PartyDetails partyDetails,
+                                       ProcessDeliveryDetails processData) {
     }
 }
 

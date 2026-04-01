@@ -22,6 +22,7 @@ import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
 import pucar.web.models.task.TaskRequest;
 import pucar.web.models.task.TaskResponse;
+import pucar.web.models.taskManagement.TaskManagement;
 
 import java.util.*;
 
@@ -144,6 +145,9 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
             JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
             log.info("taskDetailsArray:{}", taskDetailsArray.size());
 
+            // Fetch TaskManagement records once before the loop to avoid multiple API calls
+            List<TaskManagement> warrantTaskManagementRecords = taskManagementUtil.fetchWarrantTaskManagementRecords(order, requestInfo);
+
             for (JsonNode taskDetail : taskDetailsArray) {
 
 
@@ -153,12 +157,18 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
                 String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
                 String addressId = jsonUtil.getNestedValue(jsonMap, Arrays.asList("respondentDetails", "address", "id"), String.class);
 
-                // Check if this address+channel combination has upfront payment
-                boolean hasUpfrontPayment = taskManagementUtil.hasWarrantUpfrontPayment(order, requestInfo, addressId, channel);
+                // Find upfront payment result once - avoid computing twice
+                TaskManagementUtil.WarrantUpfrontResult upfrontResult = taskManagementUtil.findWarrantUpfrontPayment(addressId, channel, warrantTaskManagementRecords);
+                boolean hasUpfrontPayment = upfrontResult != null;
                 log.info("Warrant upfront payment check - addressId: {}, channel: {}, hasUpfront: {}", addressId, channel, hasUpfrontPayment);
 
                 TaskRequest taskRequest = taskUtil.createWarrantTaskRequest(requestInfo, order, taskDetail, courtCase, channel, hasUpfrontPayment);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
+
+                // Update task management record after task creation if upfront payment was found
+                if (hasUpfrontPayment) {
+                    taskManagementUtil.updateWarrantUpfrontPayment(order, requestInfo, upfrontResult);
+                }
 
                 // Create pending task for non-EMAIL/SMS channels only when upfront payment was NOT done
                 // hasUpfrontPayment=true: payment was done upfront

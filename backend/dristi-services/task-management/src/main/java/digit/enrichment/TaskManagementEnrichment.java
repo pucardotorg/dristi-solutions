@@ -5,7 +5,7 @@ import digit.util.IdgenUtil;
 import digit.util.TaskManagementUtil;
 import digit.web.models.*;
 import digit.web.models.cases.PartyAddress;
-import digit.web.models.taskdetails.WarrantUpfrontStatus;
+import digit.web.models.taskdetails.ProcessDeliveryDetailsStatus;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
@@ -94,7 +94,7 @@ public class TaskManagementEnrichment {
 
             for (PartyDetails partyDetail : taskManagement.getPartyDetails()) {
 
-                if (partyDetail.getWarrantUpfrontData() == null || partyDetail.getWarrantUpfrontData().isEmpty()) {
+                if (partyDetail.getProcessDeliveryDetails() == null || partyDetail.getProcessDeliveryDetails().isEmpty()) {
 
                     List<PartyAddress> addresses = partyDetail.getAddresses();
                     List<DeliveryChannel> deliveryChannels = partyDetail.getDeliveryChannels();
@@ -103,15 +103,15 @@ public class TaskManagementEnrichment {
                         continue;
                     }
 
-                    List<WarrantUpfrontData> warrantUpfrontDataList = new ArrayList<>();
+                    List<ProcessDeliveryDetails> warrantUpfrontDataList = new ArrayList<>();
 
                     // Create combinations of Address + Delivery Channel
                     for (PartyAddress address : addresses) {
                         for (DeliveryChannel channel : deliveryChannels) {
-                            WarrantUpfrontData data = WarrantUpfrontData.builder()
+                            ProcessDeliveryDetails data = ProcessDeliveryDetails.builder()
                                     .addressId(address.getId())
                                     .channelCode(channel.getChannelCode())
-                                    .status(WarrantUpfrontStatus.NOT_COMPLETED)
+                                    .processDeliveryDetailsStatus(ProcessDeliveryDetailsStatus.NOT_COMPLETED)
                                     .build();
 
                             warrantUpfrontDataList.add(data);
@@ -119,7 +119,7 @@ public class TaskManagementEnrichment {
                     }
 
                     // set generated upfront data
-                    partyDetail.setWarrantUpfrontData(warrantUpfrontDataList);
+                    partyDetail.setProcessDeliveryDetails(warrantUpfrontDataList);
                 }
             }
 
