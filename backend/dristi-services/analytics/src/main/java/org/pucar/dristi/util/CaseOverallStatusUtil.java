@@ -84,7 +84,7 @@ public class CaseOverallStatusUtil {
 			} else if (config.getOrderBusinessServiceList().contains(entityType)) {
 				return processOrderOverallStatus(request, referenceId, status, tenantId);
 			}
-			log.error("Case overall status not supported for entityType: {}", entityType);
+			log.info("Case overall status not supported for entityType: {}", entityType);
 			return null;
 		} catch (InterruptedException e) {
 			log.error("Processing interrupted for entityType: {}", entityType, e);

@@ -265,7 +265,7 @@ public class PendingTaskUtil {
 
 
     public @Valid String getPendingTaskNameForSummonAndNotice(String channelCode, String orderType) {
-        orderType = orderType.equals("SUMMONS") ? "Summons" : "Notice";
+        orderType = "SUMMONS".equals(orderType) ? "Summons" : "Notice";
         return switch (channelCode) {
             case "EMAIL" -> "Make Payment for Email " + orderType;
             case "SMS" -> "Make Payment for SMS " + orderType;
