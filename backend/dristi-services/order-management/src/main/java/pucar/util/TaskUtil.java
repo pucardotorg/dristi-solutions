@@ -198,6 +198,9 @@ public class TaskUtil {
                 taskDetailsObjNode.set("deliveryChannels", deliveryChannels);
             }
             deliveryChannels.put("isPendingCollection", false);
+            if (hasUpfrontPayment) {
+                deliveryChannels.put("feePaidDate", courtCase.getFilingDate());
+            }
         } else {
             workflowObject.setAction("CREATE");
             log.info("Creating warrant task with payment - channel: {}, hasUpfrontPayment: {}", channel, hasUpfrontPayment);
