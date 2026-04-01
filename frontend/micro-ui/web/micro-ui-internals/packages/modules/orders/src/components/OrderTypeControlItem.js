@@ -41,7 +41,7 @@ const OrderTypeControlItem = ({
           config={{
             ...orderTypeConfig?.populators,
             styles: { ...orderTypeConfig?.populators?.styles, flex: 1 },
-            optionsCustomStyle: { marginTop: "42px" },
+            optionsCustomStyle: { position: "absolute", bottom: "100%", top: "auto", marginBottom: "5px" },
           }}
           disable={orderType}
         />
