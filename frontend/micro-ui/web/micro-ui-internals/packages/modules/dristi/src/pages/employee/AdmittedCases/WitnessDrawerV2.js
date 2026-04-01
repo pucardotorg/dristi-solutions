@@ -886,6 +886,7 @@ const WitnessDrawerV2 = ({
   const handleESign = async (number = "") => {
     // TODO: call Api then close this modal and show next modal
     try {
+      setLoader(true);
       const currentParty = allParties?.find((p) => (p?.uuid || p?.uniqueId) === selectedWitness?.value);
       const currnetEvidenceUpdated = structuredClone(currentEvidence);
       let witnessMobileNum = [];
@@ -918,6 +919,7 @@ const WitnessDrawerV2 = ({
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       // evidenceRefetch();
+      setLoader(false);
       setShowsignatureModal(false);
     }
   };
@@ -925,7 +927,7 @@ const WitnessDrawerV2 = ({
   const handleSubmitSignature = async (fileStoreId) => {
     // TODO: api call with fileStoreID then
     try {
-      setLoader(false);
+      setLoader(true);
       const res = await updateWitnessDepositionDocument(fileStoreId, "UPLOAD");
       setShowsignatureModal(false);
       setShowUploadSignature(false);
@@ -1205,7 +1207,7 @@ const WitnessDrawerV2 = ({
             style={{
               width: "100vw",
               height: "100vh",
-              zIndex: "9999",
+              zIndex: "999999999999999999",
               position: "fixed",
               right: "0",
               display: "flex",
