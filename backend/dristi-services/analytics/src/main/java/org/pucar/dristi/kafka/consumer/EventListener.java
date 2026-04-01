@@ -41,15 +41,22 @@ public class EventListener implements MessageListener<String, String> {
      * index 5. Core indexing
      */
     public void onMessage(ConsumerRecord<String, String> data) {
-        log.info("Topic from CoreIndexMessageListener: " + data.topic());
-        MDC.put(ServiceConstants.TENANTID_MDC_STRING, config.getStateLevelTenantId());
-        MDC.put(ServiceConstants.CORRELATION_ID, getCorrelationIdFromBody(data.value()));
-        if (config.getDemandGenerateTopic().equals(data.topic())) {
-            handleDemandGenerateTopic(data.value());
-        } else if (config.getPaymentCollectTopic().equals(data.topic())) {
-            handlePaymentCollectTopic(data.value());
-        } else {
-            handleOtherTopics(data.topic(), data.value());
+        try {
+            log.info("Topic from CoreIndexMessageListener: " + data.topic());
+            MDC.put(ServiceConstants.TENANTID_MDC_STRING, config.getStateLevelTenantId());
+            MDC.put(ServiceConstants.CORRELATION_ID, getCorrelationIdFromBody(data.value()));
+            if (config.getDemandGenerateTopic().equals(data.topic())) {
+                handleDemandGenerateTopic(data.value());
+            } else if (config.getPaymentCollectTopic().equals(data.topic())) {
+                handlePaymentCollectTopic(data.value());
+            } else {
+                handleOtherTopics(data.topic(), data.value());
+            }
+        } catch (Exception e) {
+            log.error("Error processing message from topic: {} at offset: {} partition: {}",
+                    data.topic(), data.offset(), data.partition(), e);
+        } finally {
+            MDC.clear();
         }
     }
 

@@ -125,10 +125,15 @@ public class EventConsumerConfig implements ApplicationRunner {
 		setTopics();
 		ContainerProperties properties = new ContainerProperties(this.topics); // set more properties
 		properties.setMessageListener(indexerMessageListener);
+		properties.setAckMode(ContainerProperties.AckMode.RECORD);
+		properties.setPollTimeout(30000);
 
 		log.info("Custom KafkaListenerContainer built...");
 
-		return new KafkaMessageListenerContainer<>(consumerFactory(), properties);
+		KafkaMessageListenerContainer<String, String> container = new KafkaMessageListenerContainer<>(consumerFactory(),
+				properties);
+		container.setCommonErrorHandler(kafkaConsumerErrorHandler);
+		return container;
 	}
 
 	public boolean initializeContainer() {
