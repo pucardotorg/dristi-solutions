@@ -1,5 +1,5 @@
 import React from "react";
-import { LabelFieldPair, CardLabel, CustomDropdown, CardLabelError, Button } from "@egovernments/digit-ui-react-components";
+import { LabelFieldPair, CardLabel, CustomDropdown, CardLabelError, Button, CardHeader } from "@egovernments/digit-ui-react-components";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
 import OrderTypeControls from "../components/OrderTypeControls";
 import { CustomAddIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
@@ -39,7 +39,9 @@ const OrderTypeSection = ({
     <React.Fragment>
       {(currentInProgressHearing || currentOrder?.hearingNumber) && (
         <React.Fragment>
-          <div className="checkbox-item" style={{ marginTop: "2.5rem" }}>
+          <CardHeader styles={{ fontSize: "16px", fontWeight: "bold", marginTop: "20px" }}>{t("ORDER_NEXT_HEARING_DETAILS")}</CardHeader>
+
+          <div className="checkbox-item" style={{ marginTop: "10px" }}>
             <input
               id="skip-scheduling"
               type="checkbox"

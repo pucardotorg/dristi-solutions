@@ -1,5 +1,6 @@
 import React from "react";
 import OrderTypeControlItem from "./OrderTypeControlItem";
+import { CardHeader } from "@egovernments/digit-ui-react-components";
 
 const OrderTypeControls = ({
   t,
@@ -15,6 +16,8 @@ const OrderTypeControls = ({
   return (
     <React.Fragment>
       <div className="order-type-dropdown">
+        <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>{t("ORDER_ITEMS")}</CardHeader>
+
         {currentOrder?.orderCategory === "COMPOSITE" ? (
           <div>
             {currentOrder?.compositeItems
