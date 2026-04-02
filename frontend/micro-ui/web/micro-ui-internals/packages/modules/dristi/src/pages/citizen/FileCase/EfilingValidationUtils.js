@@ -3845,10 +3845,28 @@ export const createOrUpdateTask = async ({
   }
   if (!accusedDetails || accusedDetails?.length === 0) return;
 
+  const _getdelieveryChannels = (deliveryChannels) => {
+    if (!deliveryChannels || deliveryChannels?.length === 0) return [];
+    return deliveryChannels?.map((channel) => {
+      let updatedChannelCode = channel?.channelCode;
+      if (channel?.taskType === "WARRANT") {
+        if (channel?.channelCode === "REGISTERED_POST") {
+          updatedChannelCode = "RPAD";
+        } else if (channel?.channelCode === "ICOPS") {
+          updatedChannelCode = "POLICE";
+        }
+      }
+      return {
+        ...channel,
+        channelCode: updatedChannelCode,
+      };
+    });
+  };
+
   const partyDetails = accusedDetails?.map((accused) => ({
     ...(status && { status }),
     addresses: accused?.addressDetails?.filter((addr) => addr?.checked) || [],
-    deliveryChannels: accused?.[`${type?.toLowerCase()}CourierService`],
+    deliveryChannels: _getdelieveryChannels(accused?.[`${type?.toLowerCase()}CourierService`] || []),
     respondentDetails: {
       ...respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data,
       uniqueId: accused?.uniqueId,
