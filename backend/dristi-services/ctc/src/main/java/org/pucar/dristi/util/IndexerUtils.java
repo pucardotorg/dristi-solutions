@@ -3,6 +3,9 @@ package org.pucar.dristi.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
@@ -16,6 +19,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -27,12 +32,14 @@ public class IndexerUtils {
     private final RestTemplate restTemplate;
     private final Configuration config;
     private final ObjectMapper objectMapper;
+    private final LocalizationUtil localizationUtil;
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, ObjectMapper objectMapper) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, ObjectMapper objectMapper, LocalizationUtil localizationUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.objectMapper = objectMapper;
+        this.localizationUtil = localizationUtil;
     }
 
     public void pushIssueCtcDocuments(List<IssueCtcDocument> documents) throws Exception {
@@ -206,9 +213,15 @@ public class IndexerUtils {
                 }
             }
 
+            RequestInfo requestInfo = buildSystemRequestInfo(application.getTenantId());
+
+            Map<String, String> messagesMap =
+                    localizationUtil.getMessagesMap(requestInfo, application.getTenantId());
+
+
             if (application.getSelectedCaseBundle() != null) {
                 for (CaseBundleNode node : application.getSelectedCaseBundle()) {
-                    collectDocuments(node, application, currentTime, documents, fileStoreIdMap);
+                    collectDocuments(null,node, application, currentTime, documents, fileStoreIdMap,messagesMap);
                 }
             }
 
@@ -237,15 +250,47 @@ public class IndexerUtils {
         }
     }
 
-    private void collectDocuments(CaseBundleNode node, CtcApplication application,
+    private void collectDocuments(CaseBundleNode prevNode,CaseBundleNode node, CtcApplication application,
                                   Long currentTime, List<IssueCtcDocument> documents,
-                                  Map<String, String> fileStoreIdMap) {
+                                  Map<String, String> fileStoreIdMap,Map<String, String> messagesMap) {
         if (node == null) return;
 
         // Use fileStoreId from selectedCaseBundle, fallback to caseBundles lookup
         String fileStoreId = node.getFileStoreId() != null
                 ? node.getFileStoreId()
                 : fileStoreIdMap.get(node.getId());
+
+        String docTitle = null;
+
+        Set<String> excludedParentTitles = new HashSet<>(Arrays.asList(
+                "INITIAL_FILINGS", "AFFIDAVITS_PDF", "VAKALATS",
+                "ADDITIONAL_FILINGS", "MEDIATION", "PLEA",
+                "S351_EXAMINATION", "OBJECTION_APPLICATION_HEADING",
+                "NOTICE", "WARRANT", "SUMMONS", "PAYMENT_RECEIPT_CASE_PDF"
+        ));
+
+        if (node.getTitle() != null) {
+
+            String translatedTitle = localizeTitle(node.getTitle(), messagesMap);
+            log.info("Translated title: {}", translatedTitle);
+            log.info("Node title: {}", node.getTitle());
+            if(prevNode!=null){
+                log.info("Prev node title: {}", prevNode.getTitle());
+            }
+
+            if (prevNode != null && prevNode.getTitle() != null
+                    && !excludedParentTitles.contains(prevNode.getTitle())) {
+
+                String translatedParent = localizeTitle(prevNode.getTitle(),  messagesMap);
+                log.info("Translated parent: {}", translatedParent);
+                docTitle = translatedTitle + " - " + translatedParent;
+                log.info("Doc title: {}", docTitle);
+
+            } else {
+                docTitle = translatedTitle;
+                log.info("Doc title: {}", docTitle);
+            }
+        }
 
         if (fileStoreId != null) {
             IssueCtcDocument doc = IssueCtcDocument.builder()
@@ -254,7 +299,7 @@ public class IndexerUtils {
                     .ctcApplicationNumber(application.getCtcApplicationNumber())
                     .createdTime(currentTime)
                     .lastModifiedTime(currentTime)
-                    .docTitle(node.getTitle())
+                    .docTitle(docTitle)
                     .status("PENDING")
                     .caseTitle(application.getCaseTitle())
                     .caseNumber(application.getCaseNumber())
@@ -271,9 +316,53 @@ public class IndexerUtils {
 
         if (node.getChildren() != null) {
             for (CaseBundleNode child : node.getChildren()) {
-                collectDocuments(child, application, currentTime, documents, fileStoreIdMap);
+                collectDocuments(node,child, application, currentTime, documents, fileStoreIdMap,messagesMap);
             }
         }
     }
 
+    private RequestInfo buildSystemRequestInfo(String tenantId) {
+        RequestInfo requestInfo = new RequestInfo();
+
+        requestInfo.setUserInfo(User.builder().roles(new ArrayList<>()).build());
+
+        requestInfo.getUserInfo().getRoles().add(
+                Role.builder().code("SYSTEM_ADMIN").tenantId(tenantId).build()
+        );
+
+        requestInfo.getUserInfo().getRoles().add(
+                Role.builder().code("SYSTEM").tenantId(tenantId).build()
+        );
+
+        return requestInfo;
+    }
+
+
+    private String localizeTitle(String title, Map<String, String> messagesMap) {
+        if (title == null) return null;
+
+        Pattern pattern = Pattern.compile("^(.*?)\\s+(\\d+)$");
+        Matcher matcher = pattern.matcher(title.trim());
+
+        if (matcher.matches()) {
+            String baseTitle = matcher.group(1);
+            String number = matcher.group(2);
+
+            String translatedBase = messagesMap.getOrDefault(baseTitle, baseTitle);
+            log.info("Translated base: {}", translatedBase + " " + number);
+            return translatedBase + " " + number;
+        }
+
+        return messagesMap.getOrDefault(title, title);
+    }
+
+    private Map<String, String> getMessagesMap() {
+        Map<String, String> map = new HashMap<>();
+
+        map.put("APPLICATION", "Application");
+        map.put("ORDER", "Order");
+        map.put("NOTICE", "Notice");
+        map.put("SUMMONS", "Summons");
+        return map;
+    }
 }

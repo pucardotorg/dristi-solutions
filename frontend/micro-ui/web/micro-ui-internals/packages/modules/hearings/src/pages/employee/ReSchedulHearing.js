@@ -65,8 +65,6 @@
 //   let b = "John vs Doe";
 //   let c = "NIA S";
 
-
-
 //   return isMobileView ? (
 //     <Modal
 //       popupStyles={{

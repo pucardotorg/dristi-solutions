@@ -75,9 +75,9 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       ...configCopy.sections.searchResult.uiConfig.columns.map((column) => {
         return column.label === "Actions"
           ? {
-            ...column,
-            openRescheduleDialog: openRescheduleModal,
-          }
+              ...column,
+              openRescheduleDialog: openRescheduleModal,
+            }
           : column;
       }),
     ];
@@ -124,8 +124,6 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
     height: "fit-content",
     borderRadius: "0.3rem",
   };
-
-
 
   const closeFunc = () => {
     setPurposeModalOpen(false);

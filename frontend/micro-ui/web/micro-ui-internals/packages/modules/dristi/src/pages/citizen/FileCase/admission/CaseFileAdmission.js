@@ -85,7 +85,6 @@ function CaseFileAdmission({ t }) {
     setShowErrorToast(false);
   };
 
-
   // {
   //   modalInfo.type === "Schedule" && modalInfo.page === 0 && <Modal1 modalData={modalData} setModalData={setModalData} />;
   // }
@@ -107,7 +106,7 @@ function CaseFileAdmission({ t }) {
           <div className="header-content">
             <div className="header-details">
               <Header>{t("Review Case")}</Header>
-              <div className="header-icon" onClick={() => { }}>
+              <div className="header-icon" onClick={() => {}}>
                 <CustomArrowDownIcon />
               </div>
             </div>
