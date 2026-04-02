@@ -31,4 +31,8 @@ public class IcopsQueryBuilder {
             query.append(" AND ");
         }
     }
+
+    public String getUpdateResponseBlobQuery() {
+        return "UPDATE dristi_kerala_icops SET response_blob = ?::jsonb WHERE process_number = ?";
+    }
 }
