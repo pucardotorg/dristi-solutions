@@ -220,7 +220,7 @@ public class TaskManagementUtil {
         try {
             String orderType = order.getOrderType();
             List<Object> parties = null;
-            
+
             // Extract parties based on order type
             if (NOTICE.equalsIgnoreCase(orderType)) {
                 parties = jsonUtil.getNestedValue(
@@ -297,7 +297,7 @@ public class TaskManagementUtil {
 
     /**
      * Processes party data and adds it to the appropriate party type mapping
-     * 
+     *
      * @param dataMap The party data map containing uniqueId, partyType, and ownerType
      * @param uniqueIdPendingTask Set of unique IDs that have pending tasks
      * @param partyTypeToUniqueIdMap Map to store party type to unique ID mappings
@@ -307,20 +307,20 @@ public class TaskManagementUtil {
         String uniqueId = (String) dataMap.get("uniqueId");
         String partyType = (String) dataMap.get("partyType");
         String ownerType = (String) dataMap.get("ownerType");
-        
+
         if (!uniqueIdPendingTask.contains(uniqueId)) {
             return;
         }
-        
+
         Map<String, String> partyMap = createPartyMap(partyType, uniqueId);
         String targetPartyType = determineTargetPartyType(ownerType);
-        
+
         partyTypeToUniqueIdMap.get(targetPartyType).add(partyMap);
     }
 
     /**
      * Creates a party map with partyType and uniqueId
-     * 
+     *
      * @param partyType The type of party
      * @param uniqueId The unique identifier
      * @return Map containing partyType and uniqueId
@@ -334,7 +334,7 @@ public class TaskManagementUtil {
 
     /**
      * Determines the target party type based on owner type
-     * 
+     *
      * @param ownerType The owner type from the data
      * @return The target party type for mapping
      */
@@ -342,7 +342,7 @@ public class TaskManagementUtil {
         if (ownerType == null) {
             return "complainant";
         }
-        
+
         return switch (ownerType) {
             case ACCUSED -> "respondent";
             case COMPLAINANT -> "complainant";
@@ -391,7 +391,7 @@ public class TaskManagementUtil {
      * @param taskManagementList Pre-fetched TaskManagement records from fetchWarrantTaskManagementRecords
      * @return WarrantUpfrontResult containing the matching task, party and process data, or null if not found
      */
-    public WarrantUpfrontResult findWarrantUpfrontPayment(String addressId, String channelCode, List<TaskManagement> taskManagementList) {
+    public WarrantUpfrontResult findWarrantUpfrontPayment(String addressId, String channelCode, List<TaskManagement> taskManagementList, String uniqueId) {
         if (addressId == null || channelCode == null) {
             log.info("Address ID or channel code is null, no upfront payment check needed");
             return null;
@@ -407,24 +407,36 @@ public class TaskManagementUtil {
                 continue;
             }
 
-            for (PartyDetails partyDetails : partyDetailsList) {
-                if (UpFrontStatus.COMPLETED.equals(partyDetails.getStatus())) {
-                    continue;
-                }
+            PartyDetails partyDetails = partyDetailsList.stream()
+                    .filter(pd -> pd.getRespondentDetails() != null &&
+                            uniqueId.equals(pd.getRespondentDetails().getUniqueId()))
+                    .findFirst()
+                    .orElse(null);
 
-                // Check if this party has the matching address in their delivery process details
-                List<ProcessDeliveryDetails> deliveryProcessList = partyDetails.getProcessDeliveryDetails();
-                if (CollectionUtils.isEmpty(deliveryProcessList)) {
-                    continue;
-                }
+            if (partyDetails == null) {
+                partyDetails = partyDetailsList.stream()
+                        .filter(pd -> pd.getWitnessDetails() != null &&
+                                uniqueId.equals(pd.getWitnessDetails().getUniqueId()))
+                        .findFirst()
+                        .orElse(null);
+            }
 
-                for (ProcessDeliveryDetails processData : deliveryProcessList) {
-                    if (addressId.equals(processData.getAddressId())
-                            && channelCode.equalsIgnoreCase(processData.getChannelCode())
-                            && ProcessDeliveryDetailsStatus.NOT_COMPLETED.equals(processData.getProcessDeliveryDetailsStatus())) {
-                        log.info("Found warrant upfront payment with NOT_COMPLETED status for addressId: {}, channelCode: {}", addressId, channelCode);
-                        return new WarrantUpfrontResult(taskManagement, partyDetails, processData);
-                    }
+            if (partyDetails == null || UpFrontStatus.COMPLETED.equals(partyDetails.getStatus())) {
+                continue;
+            }
+
+            // Check if this party has the matching address in their delivery process details
+            List<ProcessDeliveryDetails> deliveryProcessList = partyDetails.getProcessDeliveryDetails();
+            if (CollectionUtils.isEmpty(deliveryProcessList)) {
+                continue;
+            }
+
+            for (ProcessDeliveryDetails processData : deliveryProcessList) {
+                if (addressId.equals(processData.getAddressId())
+                        && channelCode.equalsIgnoreCase(processData.getChannelCode())
+                        && ProcessDeliveryDetailsStatus.NOT_COMPLETED.equals(processData.getProcessDeliveryDetailsStatus())) {
+                    log.info("Found warrant upfront payment with NOT_COMPLETED status for addressId: {}, channelCode: {}", addressId, channelCode);
+                    return new WarrantUpfrontResult(taskManagement, partyDetails, processData);
                 }
             }
         }

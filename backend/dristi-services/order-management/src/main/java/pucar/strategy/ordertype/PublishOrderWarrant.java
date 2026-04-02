@@ -155,10 +155,12 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
                 Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<>() {
                 });
                 String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
+                // TODO : need to update this, UI is sending uniqueId, addressId for witness as well in respondentDetails
                 String addressId = jsonUtil.getNestedValue(jsonMap, Arrays.asList("respondentDetails", "address", "id"), String.class);
+                String uniqueId = jsonUtil.getNestedValue(jsonMap, Arrays.asList("respondentDetails", "uniqueId"), String.class);
 
                 // Find upfront payment result once - avoid computing twice
-                TaskManagementUtil.WarrantUpfrontResult upfrontResult = taskManagementUtil.findWarrantUpfrontPayment(addressId, channel, warrantTaskManagementRecords);
+                TaskManagementUtil.WarrantUpfrontResult upfrontResult = taskManagementUtil.findWarrantUpfrontPayment(addressId, channel, warrantTaskManagementRecords, uniqueId);
                 boolean hasUpfrontPayment = upfrontResult != null;
                 log.info("Warrant upfront payment check - addressId: {}, channel: {}, hasUpfront: {}", addressId, channel, hasUpfrontPayment);
 
