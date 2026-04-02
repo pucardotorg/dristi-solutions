@@ -1,8 +1,8 @@
 package org.pucar.dristi.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.web.models.BillResponse;
 import org.pucar.dristi.web.models.RequestInfoWrapper;
@@ -16,6 +16,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Collections;
+
+import static org.pucar.dristi.config.ServiceConstants.ERROR_WHILE_SEARCHING_FOR_BILL;
 
 @Service
 @Slf4j
@@ -33,7 +35,7 @@ public class BillingUtil {
     public boolean billExists(RequestInfo requestInfo, String tenantId, String consumerCode, String service) {
         try {
             String uri = UriComponentsBuilder
-                    .fromHttpUrl(config.getBillingHost() + config.getEtreasuryBillSearchPath())
+                    .fromHttpUrl(config.getBillingHost() + config.getBillSearchPath())
                     .queryParam("tenantId", tenantId)
                     .queryParam("consumerCode", consumerCode)
                     .queryParam("service", service)
@@ -62,7 +64,9 @@ public class BillingUtil {
 
         } catch (Exception e) {
             log.error("Error searching for bill: {}", e.getMessage(), e);
-            return false;
+            throw new CustomException(ERROR_WHILE_SEARCHING_FOR_BILL,
+                    String.format("Error occurred while searching for bill with consumerCode %s and service %s: %s",
+                            consumerCode, service, e));
         }
     }
 }

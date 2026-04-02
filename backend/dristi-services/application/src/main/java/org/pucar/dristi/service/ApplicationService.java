@@ -197,10 +197,13 @@ public class ApplicationService {
     }
 
     private boolean shouldCreateDemand(Application application) {
-        return application.getWorkflow() != null &&
-                ESIGN.equalsIgnoreCase(application.getWorkflow().getAction()) &&
-                PENDINGPAYMENT.equalsIgnoreCase(application.getStatus()) &&
-                !SUBMIT_BAIL_DOCUMENTS.equalsIgnoreCase(application.getApplicationType());
+        boolean isActionESign = application.getWorkflow() != null &&
+                ESIGN.equalsIgnoreCase(application.getWorkflow().getAction());
+        boolean isStatusPendingPayment = PENDINGPAYMENT.equalsIgnoreCase(application.getStatus());
+        boolean isApplicationTypeExcluded = config.getExcludedApplicationTypes().stream()
+                .anyMatch(type -> type.trim().equalsIgnoreCase(application.getApplicationType()));
+        
+        return isActionESign && isStatusPendingPayment && !isApplicationTypeExcluded;
     }
 
     private String getIndividualId(Object additionalDetails) {
@@ -426,18 +429,13 @@ public class ApplicationService {
 
     private Double getApplicationAmountFromMdms(RequestInfo requestInfo, String tenantId, String applicationType) {
         try {
-            // Fetch ApplicationType from MDMS (Application.ApplicationType)
-            List<String> masterNames = new ArrayList<>();
-            masterNames.add("ApplicationType");
-            
             Map<String, Map<String, net.minidev.json.JSONArray>> mdmsData = 
-                mdmsUtil.fetchMdmsData(requestInfo, tenantId, "Application", masterNames);
+                mdmsUtil.fetchMdmsData(requestInfo, tenantId, APPLICATION_MODULE, Collections.singletonList(APPLICATION_TYPE_MASTER));
             
-            if (mdmsData != null && mdmsData.containsKey("Application")) {
-                net.minidev.json.JSONArray applicationTypes = mdmsData.get("Application").get("ApplicationType");
+            if (mdmsData != null && mdmsData.containsKey(APPLICATION_MODULE)) {
+                JSONArray applicationTypes = mdmsData.get(APPLICATION_MODULE).get(APPLICATION_TYPE_MASTER);
                 
                 if (applicationTypes != null) {
-                    // Find matching application type and return totalAmount
                     for (Object appTypeObj : applicationTypes) {
                         JsonNode appTypeNode = objectMapper.valueToTree(appTypeObj);
                         String type = appTypeNode.path("type").asText();

@@ -15,8 +15,10 @@ import org.springframework.web.client.RestTemplate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.pucar.dristi.config.ServiceConstants.ERROR_WHILE_CREATING_DEMAND_FOR_CASE;
+import static org.pucar.dristi.config.ServiceConstants.VALIDATION_ERR;
 
 @Service
 @Slf4j
@@ -36,6 +38,8 @@ public class DemandUtil {
     }
 
     public void createDemand(RequestInfo requestInfo, String tenantId, String entityType, String filingNumber, String consumerCode, Double totalAmount) {
+        validateParamsForDemandCreate(requestInfo, tenantId, entityType, filingNumber, consumerCode, totalAmount);
+
         try {
             if (billingUtil.billExists(requestInfo, tenantId, consumerCode, entityType)) {
                 log.info("Bill already exists for consumerCode: {}. Skipping demand creation.", consumerCode);
@@ -46,7 +50,7 @@ public class DemandUtil {
 
             DemandCreateRequest demandRequest = buildDemandRequest(requestInfo, tenantId, entityType, filingNumber, consumerCode, totalAmount);
 
-            log.info("Creating demand with request: {}", demandRequest);
+            log.info("Creating demand for consumerCode: {}", consumerCode);
             restTemplate.postForEntity(uri, demandRequest, Object.class);
             log.info("Demand created successfully for consumerCode: {}", consumerCode);
         } catch (Exception e) {
@@ -84,5 +88,18 @@ public class DemandUtil {
                 .consumerCode(consumerCode)
                 .calculation(calculations)
                 .build();
+    }
+
+    private void validateParamsForDemandCreate(RequestInfo requestInfo, String tenantId, String entityType,
+                                               String filingNumber, String consumerCode, Double totalAmount) {
+        
+        boolean isRequestInvalid = Stream.of(tenantId, entityType, filingNumber, consumerCode)
+                .anyMatch(param -> param == null || param.isBlank()) ||
+                totalAmount == null || totalAmount <= 0D ||
+                requestInfo == null;
+        
+        if (isRequestInvalid) {
+            throw new CustomException(VALIDATION_ERR, "Invalid parameters for demand creation");
+        }
     }
 }

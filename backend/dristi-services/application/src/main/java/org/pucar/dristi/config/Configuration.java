@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @Data
 @Import({TracerConfiguration.class})
@@ -296,6 +298,9 @@ public class Configuration {
     private String billingHost;
 
     @Value("${egov.billing.bill.search.path}")
-    private String etreasuryBillSearchPath;
+    private String billSearchPath;
+
+    @Value("${egov.demand.excluded.application.types}")
+    private List<String> excludedApplicationTypes;
 
 }
