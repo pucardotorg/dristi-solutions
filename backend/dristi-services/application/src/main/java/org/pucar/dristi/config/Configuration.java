@@ -284,4 +284,18 @@ public class Configuration {
     @Value("${dristi.advocate.clerk.search.endpoint}")
     private String advocateClerkSearchEndPoint;
 
+    //etreasury Config
+    @Value("${egov.etreasury.host}")
+    private String etreasuryHost;
+
+    @Value("${egov.etreasury.create.demand.path}")
+    private String etreasuryCreateDemandPath;
+
+    //billing Config
+    @Value("${egov.billing.host}")
+    private String billingHost;
+
+    @Value("${egov.billing.bill.search.path}")
+    private String etreasuryBillSearchPath;
+
 }
