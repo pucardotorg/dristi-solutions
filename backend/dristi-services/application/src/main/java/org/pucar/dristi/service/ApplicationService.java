@@ -200,7 +200,7 @@ public class ApplicationService {
         boolean isActionESign = application.getWorkflow() != null &&
                 ESIGN.equalsIgnoreCase(application.getWorkflow().getAction());
         boolean isStatusPendingPayment = PENDINGPAYMENT.equalsIgnoreCase(application.getStatus());
-        boolean isApplicationTypeExcluded = config.getExcludedApplicationTypes().stream()
+        boolean isApplicationTypeExcluded = config.getExcludedApplicationTypesForDemandCreate().stream()
                 .anyMatch(type -> type.trim().equalsIgnoreCase(application.getApplicationType()));
         
         return isActionESign && isStatusPendingPayment && !isApplicationTypeExcluded;
