@@ -300,7 +300,4 @@ public class Configuration {
     @Value("${egov.billing.bill.search.path}")
     private String billSearchPath;
 
-    @Value("${excluded.application.types.for.demand.create}")
-    private List<String> excludedApplicationTypesForDemandCreate;
-
 }

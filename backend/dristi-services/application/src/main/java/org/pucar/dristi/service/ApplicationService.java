@@ -197,13 +197,9 @@ public class ApplicationService {
     }
 
     private boolean shouldCreateDemand(Application application) {
-        boolean isActionESign = application.getWorkflow() != null &&
-                ESIGN.equalsIgnoreCase(application.getWorkflow().getAction());
-        boolean isStatusPendingPayment = PENDINGPAYMENT.equalsIgnoreCase(application.getStatus());
-        boolean isApplicationTypeExcluded = config.getExcludedApplicationTypesForDemandCreate().stream()
-                .anyMatch(type -> type.trim().equalsIgnoreCase(application.getApplicationType()));
-        
-        return isActionESign && isStatusPendingPayment && !isApplicationTypeExcluded;
+        return application.getWorkflow() != null &&
+                ESIGN.equalsIgnoreCase(application.getWorkflow().getAction()) &&
+                PENDINGPAYMENT.equalsIgnoreCase(application.getStatus());
     }
 
     private String getIndividualId(Object additionalDetails) {
@@ -387,6 +383,13 @@ public class ApplicationService {
             if (totalAmount == null) {
                 totalAmount = 20.0;
             }
+            
+            if (totalAmount <= 0) {
+                log.info("Skipping demand creation for application {} with type {} as totalAmount is {}", 
+                        applicationNumber, applicationType, totalAmount);
+                return;
+            }
+            
             demandUtil.createDemand(requestInfo, tenantId, entityType, filingNumber, consumerCode, totalAmount);
         } catch (Exception e) {
             log.error("Error while creating demand for application: {}", e.getMessage(), e);
