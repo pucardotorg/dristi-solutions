@@ -1319,19 +1319,19 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
       hasError = true;
     }
 
-    if(isRichTextEmpty(formData?.prayer?.text)){
+    if (isRichTextEmpty(formData?.prayer?.text)) {
       setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
       setShowErrorToast(true);
       hasError = true;
     }
 
-    if(isRichTextEmpty(formData?.memorandumOfComplaint?.text)){
+    if (isRichTextEmpty(formData?.memorandumOfComplaint?.text)) {
       setFormErrors("memorandumOfComplaint", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
       setShowErrorToast(true);
       hasError = true;
     }
 
-    if(isRichTextEmpty(formData?.synopsis?.text)){
+    if (isRichTextEmpty(formData?.synopsis?.text)) {
       setFormErrors("synopsis", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
       setShowErrorToast(true);
       hasError = true;
