@@ -280,7 +280,7 @@ const CTCApplications = ({ refetch }) => {
   const handleConfirmReject = async (reason) => {
     try {
       setIsLoading(true);
-      const applicationData = pendingRejectData|| pendingRejectData?.businessObject;
+      const applicationData = pendingRejectData || pendingRejectData?.businessObject;
       const payload = {
         courtId: courtId,
         action: "REJECT",
@@ -381,9 +381,9 @@ const CTCApplications = ({ refetch }) => {
 
     return primaryFileStore
       ? [
-        { fileStore: primaryFileStore, name: t(primaryDocType) },
-        { fileStore: affidavitfileStoreId, name: t(affidavitName) },
-      ]
+          { fileStore: primaryFileStore, name: t(primaryDocType) },
+          { fileStore: affidavitfileStoreId, name: t(affidavitName) },
+        ]
       : [];
   }, [selectedRowApplicationData, t]);
 

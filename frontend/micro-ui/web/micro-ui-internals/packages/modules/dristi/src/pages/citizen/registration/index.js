@@ -121,7 +121,6 @@ const Registration = ({ stateCode }) => {
       [newConfig]
     )
   );
-
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const { data, isLoading, refetch, isFetching } = Digit.Hooks.dristi.useGetIndividualUser(
     {

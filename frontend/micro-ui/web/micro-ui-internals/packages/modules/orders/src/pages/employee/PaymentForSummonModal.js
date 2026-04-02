@@ -326,10 +326,10 @@ const PaymentForSummonModal = ({ path }) => {
       isCaseAdmitted
         ? submitModalInfo
         : {
-          ...submitModalInfo,
-          header: "CS_HEADER_FOR_NOTICE_POST",
-          subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
-        },
+            ...submitModalInfo,
+            header: "CS_HEADER_FOR_NOTICE_POST",
+            subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
+          },
     [isCaseAdmitted]
   );
 
@@ -451,7 +451,6 @@ const PaymentForSummonModal = ({ path }) => {
       }
     };
 
-
     return {
       "e-post": [
         {
@@ -520,8 +519,9 @@ const PaymentForSummonModal = ({ path }) => {
     const addressDetails = filteredTasks?.[0]?.taskDetails?.respondentDetails?.address;
     const formattedAddress =
       typeof addressDetails === "object"
-        ? `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${addressDetails?.state || ""}, ${addressDetails?.pincode || ""
-        }`
+        ? `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${addressDetails?.state || ""}, ${
+            addressDetails?.pincode || ""
+          }`
         : addressDetails;
     return [
       { key: "Issued to", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
