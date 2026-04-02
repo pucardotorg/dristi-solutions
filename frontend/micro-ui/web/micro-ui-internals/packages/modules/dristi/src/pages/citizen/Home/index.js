@@ -7,7 +7,7 @@ import { useGetAccessToken } from "../../../hooks/useGetAccessToken";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
-function CitizenHome({ tenantId = "kl", setHideBack = () => {} }) {
+function CitizenHome({ tenantId, setHideBack = () => {} }) {
   const Digit = window?.Digit || {};
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
