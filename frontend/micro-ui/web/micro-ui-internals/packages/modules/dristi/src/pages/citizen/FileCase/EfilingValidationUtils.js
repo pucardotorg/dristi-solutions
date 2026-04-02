@@ -1803,7 +1803,7 @@ export const updateCaseDetails = async ({
     }
   };
 
-  function transformFileData(inputArray, tenantId = "kl", fileType = "application/pdf") {
+  function transformFileData(inputArray, tenantId, fileType = "application/pdf") {
     if (!Array.isArray(inputArray) || inputArray.length === 0) return null;
 
     const { fileStore, documentName } = inputArray[0];
@@ -1917,7 +1917,7 @@ export const updateCaseDetails = async ({
                   let documentData = {};
 
                   if (data?.data?.complainantVerification?.individualDetails?.document) {
-                    documentData = transformFileData(data?.data?.complainantVerification?.individualDetails?.document);
+                    documentData = transformFileData(data?.data?.complainantVerification?.individualDetails?.document, tenantId);
                   } else {
                     documentData = await onDocumentUpload(
                       documentsTypeMapping["complainantId"],
