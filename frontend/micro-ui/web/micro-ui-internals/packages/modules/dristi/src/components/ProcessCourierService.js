@@ -23,6 +23,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [summonsActive, setSummonsActive] = useState(false);
   const [noticeActive, setNoticeActive] = useState(false);
+  const [warrantActive, setWarrantActive] = useState(false);
   const [checked, setChecked] = useState(true);
   const urlParams = new URLSearchParams(window.location.search);
   const caseId = urlParams.get("caseId");
@@ -47,7 +48,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
       return addr;
     });
     if (updatedAddresses?.every((addr) => !addr?.checked)) {
-      handleDataChange({ addressDetails: updatedAddresses, noticeCourierService: [], summonsCourierService: [] });
+      handleDataChange({ addressDetails: updatedAddresses, noticeCourierService: [], summonsCourierService: [], warrantCourierService: [] });
     } else {
       handleDataChange({ addressDetails: updatedAddresses });
     }
@@ -58,6 +59,8 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
       handleDataChange({ noticeCourierService: value });
     } else if (type === "summons") {
       handleDataChange({ summonsCourierService: value });
+    } else if (type === "warrant") {
+      handleDataChange({ warrantCourierService: value });
     }
   };
 
@@ -106,6 +109,8 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
         setSummonsActive={setSummonsActive}
         noticeActive={noticeActive}
         setNoticeActive={setNoticeActive}
+        warrantActive={warrantActive}
+        setWarrantActive={setWarrantActive}
         setShowConfirmationModal={setShowConfirmationModal}
         handleAddAddress={handleAddAddress}
         isDisableAllFields={isDisableAllFields}

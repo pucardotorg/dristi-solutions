@@ -132,7 +132,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     setSelectedDocument(docId);
     setSelectedFileStoreId(fileStoreId);
   };
-
   const evidenceFileStoreMap = useMemo(() => {
     const map = new Map();
     if (completeEvidenceData?.artifacts && Array.isArray(completeEvidenceData?.artifacts)) {
@@ -257,7 +256,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       </div>
     );
   }
-
   const renderMenuItem = (item, level = 0, parentNumber = "") => {
     const isExpanded = expandedItems[item.id];
     const isSelected = selectedDocument === item.id;

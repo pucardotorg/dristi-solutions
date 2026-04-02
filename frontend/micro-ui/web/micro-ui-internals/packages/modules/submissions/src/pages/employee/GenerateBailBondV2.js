@@ -44,26 +44,26 @@ const convertToFormData = (t, obj) => {
     noOfSureties: obj?.noOfSureties || obj?.sureties?.length || null,
     sureties:
       Array.isArray(obj?.sureties) && obj.sureties.length > 0
-        ? obj.sureties.map((surety) => ({
-            id: surety?.id,
-            name: surety?.name,
-            fatherName: surety?.fatherName,
-            mobileNumber: surety?.mobileNumber,
-            address: surety?.address,
-            email: surety?.email,
-            index: surety?.index,
-            identityProof: {
-              document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF" && doc?.isActive === true) || [],
-            },
-            proofOfSolvency: {
-              document: surety?.documents?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY" && doc?.isActive === true) || [],
-            },
-            otherDocuments: {
-              document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS" && doc?.isActive === true) || [],
-            },
-          }))?.sort((a, b) => 
-            (a?.index != null ? a.index : Infinity) - 
-            (b?.index != null ? b.index : Infinity))
+        ? obj.sureties
+            .map((surety) => ({
+              id: surety?.id,
+              name: surety?.name,
+              fatherName: surety?.fatherName,
+              mobileNumber: surety?.mobileNumber,
+              address: surety?.address,
+              email: surety?.email,
+              index: surety?.index,
+              identityProof: {
+                document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF" && doc?.isActive === true) || [],
+              },
+              proofOfSolvency: {
+                document: surety?.documents?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY" && doc?.isActive === true) || [],
+              },
+              otherDocuments: {
+                document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS" && doc?.isActive === true) || [],
+              },
+            }))
+            ?.sort((a, b) => (Boolean(a?.index) ? a.index : 0) - (Boolean(b?.index) ? b.index : 0))
         : Array.from({ length: obj?.noOfSureties || 0 }, () => ({})),
   };
 

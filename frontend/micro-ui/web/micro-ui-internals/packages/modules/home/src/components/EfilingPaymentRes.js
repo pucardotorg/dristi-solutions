@@ -29,8 +29,6 @@ const mockSubmitModalInfo = {
   showTable: true,
 };
 
-
-
 function EFilingPaymentResponse({ setShowModal, header, subHeader, submitModalInfo = mockSubmitModalInfo, amount = 2000, path }) {
   const history = useHistory();
   const location = useLocation();
@@ -49,15 +47,15 @@ function EFilingPaymentResponse({ setShowModal, header, subHeader, submitModalIn
 
   const bannerProps = isSuccess
     ? {
-      ...commonProps,
-      successful: true,
-      message: t(submitModalInfo?.header),
-    }
+        ...commonProps,
+        successful: true,
+        message: t(submitModalInfo?.header),
+      }
     : {
-      ...commonProps,
-      successful: false,
-      message: t("CS_PAYMENT_FAILED"),
-    };
+        ...commonProps,
+        successful: false,
+        message: t("CS_PAYMENT_FAILED"),
+      };
 
   return (
     <div className=" user-registration">
