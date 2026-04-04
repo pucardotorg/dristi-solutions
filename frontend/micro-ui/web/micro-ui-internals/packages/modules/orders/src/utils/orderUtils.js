@@ -78,10 +78,10 @@ export const getUpdateDocuments = (documents, documentsFile, signedDoucumentUplo
       return documents?.map((doc) =>
         doc?.documentType === "UNSIGNED"
           ? {
-            ...doc,
-            fileStore: documentsFile?.fileStore,
-            additionalDetails: documentsFile?.additionalDetails,
-          }
+              ...doc,
+              fileStore: documentsFile?.fileStore,
+              additionalDetails: documentsFile?.additionalDetails,
+            }
           : doc
       );
     }
@@ -135,8 +135,9 @@ export const generateAddress = ({
   if (address) {
     return address;
   }
-  return `${locality ? `${locality},` : ""} ${district ? `${district},` : ""} ${city ? `${city},` : ""} ${state ? `${state},` : ""} ${pincode ? `- ${pincode}` : ""
-    }`.trim();
+  return `${locality ? `${locality},` : ""} ${district ? `${district},` : ""} ${city ? `${city},` : ""} ${state ? `${state},` : ""} ${
+    pincode ? `- ${pincode}` : ""
+  }`.trim();
 };
 
 export const channelTypeEnum = {
@@ -191,8 +192,8 @@ export const getParties = (type, orderSchema, allParties) => {
     parties = orderSchema?.orderDetails?.respondentName?.name
       ? [orderSchema?.orderDetails?.respondentName?.name]
       : orderSchema?.orderDetails?.respondentName
-        ? [orderSchema?.orderDetails?.respondentName]
-        : [];
+      ? [orderSchema?.orderDetails?.respondentName]
+      : [];
   } else if (["SUMMONS", "NOTICE"].includes(type)) {
     parties = orderSchema?.orderDetails?.respondentName;
   } else if (type === "SECTION_202_CRPC") {
@@ -794,11 +795,7 @@ export const getRaiseBailBondReferenceId = ({ accusedKey, filingNumber }) => {
   }
 };
 
-export const createTaskPayload = async (
-  orderType,
-  orderDetails,
-  { caseDetails, courtRoomData, tenantId, judgeName }
-) => {
+export const createTaskPayload = async (orderType, orderDetails, { caseDetails, courtRoomData, tenantId, judgeName }) => {
   let payload = {};
   const { litigants } = caseDetails;
   const complainantIndividualId = litigants?.find((item) => item?.partyType === "complainant.primary")?.individualId;
@@ -819,8 +816,8 @@ export const createTaskPayload = async (
   const respondentAddress = orderFormData?.addressDetails
     ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
     : respondentNameData?.address
-      ? respondentNameData?.address
-      : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
+    ? respondentNameData?.address
+    : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
   const partyIndex = orderFormData?.party?.data?.partyIndex || "";
   const result = getRespondantName(respondentNameData);
   const respondentName = result?.name || result;

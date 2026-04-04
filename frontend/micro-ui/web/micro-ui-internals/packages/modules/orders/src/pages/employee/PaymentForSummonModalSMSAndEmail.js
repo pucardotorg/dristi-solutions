@@ -52,8 +52,6 @@ const PaymentForSummonComponent = ({
   const CustomErrorTooltip = window?.Digit?.ComponentRegistryService?.getComponent("CustomErrorTooltip");
   const [selectedOption, setSelectedOption] = useState({});
 
-
-
   return (
     <div className="payment-for-summon">
       <p style={{ marginTop: "0px", marginBottom: "0px" }}>
@@ -181,10 +179,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       isCaseAdmitted
         ? submitModalInfo
         : {
-          ...submitModalInfo,
-          header: "CS_HEADER_FOR_NOTICE_POST",
-          subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
-        },
+            ...submitModalInfo,
+            header: "CS_HEADER_FOR_NOTICE_POST",
+            subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
+          },
     [isCaseAdmitted]
   );
 

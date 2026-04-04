@@ -18,7 +18,6 @@ import {
 } from "../../utils/digitilization";
 import { submissionService } from "../../hooks/services";
 import PreviewPdfModal from "../../components/PreviewPdfModal";
-
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
 import GenericNumberInputModal from "../../components/GenericNumberInputModal";
 import { getFormattedName } from "../../utils";
@@ -260,8 +259,6 @@ const PleaSubmission = () => {
     }
   };
 
-
-
   const handleProceedToMobileNumber = async () => {
     try {
       setLoader(true);
@@ -280,8 +277,7 @@ const PleaSubmission = () => {
           { tenantId, limit: 1000, offset: 0 }
         );
         setPleaMobileNumber(individualData?.Individual?.[0]?.mobileNumber);
-      }
-      else if(respondentData?.data?.phonenumbers?.mobileNumber?.[0]){
+      } else if (respondentData?.data?.phonenumbers?.mobileNumber?.[0]) {
         setPleaMobileNumber(respondentData?.data?.phonenumbers?.mobileNumber?.[0]);
       }
       setShowAddPleaMobileNumber(true);
@@ -426,7 +422,6 @@ const PleaSubmission = () => {
             setFileStoreId={setPleaFileStoreId}
           />
         )}
-
         {showAddPleaMobileNumber && (
           <GenericNumberInputModal
             t={t}

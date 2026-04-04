@@ -224,7 +224,6 @@ function ScheduleHearing({
     setShowErrorToast(false);
   };
 
-
   const handleClickDate = (label) => {
     if (status === "OPTOUT") {
       const newSelectedChip = selectedChip.includes(label) ? null : label;
@@ -295,8 +294,9 @@ function ScheduleHearing({
           documents: [],
           additionalDetails: {
             formdata: {
-              hearingDate: `${dateArr[2]}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${dateArr[0] < 9 ? `0${dateArr[0]}` : dateArr[0]
-                }`,
+              hearingDate: `${dateArr[2]}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                dateArr[0] < 9 ? `0${dateArr[0]}` : dateArr[0]
+              }`,
               hearingPurpose: data.purpose,
               orderType: {
                 code: "SCHEDULE_OF_HEARING_DATE",

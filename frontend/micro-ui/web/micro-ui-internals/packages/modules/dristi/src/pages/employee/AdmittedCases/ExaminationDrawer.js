@@ -10,7 +10,6 @@ import { getFilingType } from "../../../Utils";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { DRISTIService } from "../../../services";
 import isEqual from "lodash/isEqual";
-
 import WitnessDepositionESignLockModal from "./WitnessDepositionESignLockModal";
 import AddWitnessMobileNumberModal from "./AddWitnessMobileNumberModal";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
@@ -19,20 +18,6 @@ import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearc
 import SelectCustomFormatterTextArea from "../../../components/SelectCustomFormatterTextArea";
 import { MultiSelectDropdownNew } from "../../../components/MultiSelectDropdownNew";
 import PreviewPdfModal from "../../../../../submissions/src/components/PreviewPdfModal";
-
-const defaultExaminationQuestionOptions = [
-  { code: "Q1", title: "whereabouts", label: "Where were you on the night of the incident?" },
-  { code: "Q2", title: "silence", label: "Are you sure you want to stay silent?" },
-  { code: "Q3", title: "threat", label: "Did anyone threaten you to stay silent?" },
-];
-
-const formatAddress = (addr) => {
-  if (!addr) return "";
-  const { locality = "", city = "", district = "", state = "", pincode = "" } = addr;
-  return `${locality}, ${city}, ${district}, ${state}, ${pincode}`.trim();
-};
-
-
 
 export const _getPdfConfigForExamination = (documentNumber, caseDetails, courtId, tenantId) => {
   return {
@@ -165,8 +150,8 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
               numberFromIndividual = individualData?.Individual?.[0]?.mobileNumber
                 ? individualData?.Individual?.[0]?.mobileNumber
                 : individualData?.Individual?.[0]?.userDetails?.username
-                  ? individualData?.Individual?.[0]?.userDetails?.username
-                  : "";
+                ? individualData?.Individual?.[0]?.userDetails?.username
+                : "";
             } catch (error) {
               console.error("Error fetching respondent individual data:", error);
             }
@@ -652,13 +637,13 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       const party = allParties?.find((p) => p?.uniqueId === selectedAccused?.value);
       const documentsFile = fileStoreId
         ? [
-          {
-            fileStore: fileStoreId,
-            documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
-            additionalDetails: { name: `${t("S351_EXAMINATION")} (${party?.name}).pdf` },
-            tenantId,
-          },
-        ]
+            {
+              fileStore: fileStoreId,
+              documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
+              additionalDetails: { name: `${t("S351_EXAMINATION")} (${party?.name}).pdf` },
+              tenantId,
+            },
+          ]
         : null;
       const document = activeTabs?.find((tab) => tab?.documentNumber === currentDocumentNumber);
       const reqBody = {
@@ -1007,7 +992,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
               setShowSuccessModal(false);
               documentsRefetch();
               setCurrentDocument(null);
-              setExaminationUploadLoader(false);
               onClose();
             }}
             message={"EXAMINATION_OF_ACCUSED_SUCCESS_BANNER_HEADER"}

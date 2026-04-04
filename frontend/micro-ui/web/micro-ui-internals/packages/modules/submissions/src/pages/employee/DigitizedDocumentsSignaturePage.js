@@ -155,7 +155,7 @@ const DigitizedDocumentsSignaturePage = () => {
         .post(
           `${Urls.openApi.FileFetchByFileStore}`,
           {
-            tenantId: "kl",
+            tenantId,
             fileStoreId: fileStoreId,
             moduleName: "DRISTI",
           },
