@@ -179,12 +179,12 @@ public class TaskManagementUtil {
         String uniqueId = null;
         //witness details
         if(partyDetail.getWitnessDetails() != null){
-            Object witness = partyDetail.getWitnessDetails();
-            uniqueId = jsonUtil.getNestedValue(witness, List.of("uniqueId"), String.class);
+            WitnessDetails witness = partyDetail.getWitnessDetails();
+            uniqueId = witness.getUniqueId();
         }
         if (partyDetail.getRespondentDetails() != null) {
-            Object respondent = partyDetail.getRespondentDetails();
-            uniqueId = jsonUtil.getNestedValue(respondent, List.of("uniqueId"), String.class);
+            RespondentDetails respondent = partyDetail.getRespondentDetails();
+            uniqueId = respondent.getUniqueId();
         }
 
         return uniqueId;
