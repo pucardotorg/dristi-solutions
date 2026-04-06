@@ -17,6 +17,7 @@ public class RedisEgovTokenStore implements EgovTokenStore {
     private static final String ACCESS_PREFIX = "access_token:";
     private static final String REFRESH_PREFIX = "refresh_token:";
     private static final String USER_TOKENS_PREFIX = "user_tokens:";
+    private static final String REFRESH_TO_ACCESS_PREFIX = "refresh_to_access:";
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
@@ -50,6 +51,38 @@ public class RedisEgovTokenStore implements EgovTokenStore {
         } catch (Exception e) {
             log.error("Failed to store refresh token in Redis", e);
             throw new RuntimeException("Failed to store refresh token", e);
+        }
+    }
+
+    @Override
+    public void storeAccessTokenToRefreshTokenMapping(String accessToken, String refreshToken) {
+        try {
+            // Store mapping: refresh_token -> access_token (to find and invalidate old access token)
+            redisTemplate.opsForValue().set(REFRESH_TO_ACCESS_PREFIX + refreshToken, accessToken);
+            // Set same expiry as refresh token (will be cleaned up automatically)
+            Long ttl = redisTemplate.getExpire(REFRESH_PREFIX + refreshToken, TimeUnit.SECONDS);
+            if (ttl != null && ttl > 0) {
+                redisTemplate.expire(REFRESH_TO_ACCESS_PREFIX + refreshToken, ttl, TimeUnit.SECONDS);
+            }
+        } catch (Exception e) {
+            log.error("Failed to store access token to refresh token mapping", e);
+        }
+    }
+
+    @Override
+    public void removeAccessTokenUsingRefreshToken(String refreshToken) {
+        try {
+            // Find the access token associated with this refresh token
+            String accessToken = redisTemplate.opsForValue().get(REFRESH_TO_ACCESS_PREFIX + refreshToken);
+            if (accessToken != null) {
+                // Remove the old access token
+                redisTemplate.delete(ACCESS_PREFIX + accessToken);
+                log.debug("Removed old access token associated with refresh token");
+            }
+            // Clean up the mapping
+            redisTemplate.delete(REFRESH_TO_ACCESS_PREFIX + refreshToken);
+        } catch (Exception e) {
+            log.error("Failed to remove access token using refresh token", e);
         }
     }
 

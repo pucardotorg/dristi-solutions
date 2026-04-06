@@ -84,6 +84,9 @@ public class CustomTokenEndpoint {
         if ("password".equals(grantType)) {
             authenticated = authenticatePassword(username, password, tenantId, userType, isInternal);
         } else if ("refresh_token".equals(grantType)) {
+            // Remove old access token associated with this refresh token (mirrors old Spring OAuth2 behavior)
+            tokenStore.removeAccessTokenUsingRefreshToken(refreshToken);
+            
             authenticated = refreshTokenAuthentication(refreshToken, tenantId, userType);
             existingRefreshToken = refreshToken; // For reuse
         } else {
@@ -246,6 +249,9 @@ public class CustomTokenEndpoint {
         if (!reuseRefreshToken || existingRefreshToken == null) {
             tokenStore.storeRefreshToken(refreshTokenToReturn, authentication, refreshExpirySeconds);
         }
+        
+        // Store mapping between access token and refresh token (for invalidation on next refresh)
+        tokenStore.storeAccessTokenToRefreshTokenMapping(accessToken, refreshTokenToReturn);
 
         SecureUser secureUser = (SecureUser) authentication.getPrincipal();
 
