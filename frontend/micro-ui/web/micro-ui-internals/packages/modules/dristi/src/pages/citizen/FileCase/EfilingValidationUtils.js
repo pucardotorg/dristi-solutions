@@ -1031,7 +1031,9 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
     let errorObject = {
       NOTICE_PROCESS_COURIER_INFORMATION_MISSING: false,
       SUMMON_PROCESS_COURIER_INFORMATION_MISSING: false,
+      WARRANT_PROCESS_COURIER_INFORMATION_MISSING: false,
     };
+
     if (isDelayCondonation) {
       if (formData?.multipleAccusedProcessCourier?.noticeCourierService?.length === 0) {
         errorObject.NOTICE_PROCESS_COURIER_INFORMATION_MISSING = true;
@@ -1040,6 +1042,11 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
       if (formData?.multipleAccusedProcessCourier?.summonsCourierService?.length === 0) {
         errorObject.SUMMON_PROCESS_COURIER_INFORMATION_MISSING = true;
       }
+    }
+    
+    // warrant courier details are mandatory for both delay condonation and normal flow as warrant is issued in both scenarios
+    if (formData?.multipleAccusedProcessCourier?.warrantCourierService?.length === 0) {
+      errorObject.WARRANT_PROCESS_COURIER_INFORMATION_MISSING = true;
     }
     let mandatoryLeft = false;
     for (let key in errorObject) {
