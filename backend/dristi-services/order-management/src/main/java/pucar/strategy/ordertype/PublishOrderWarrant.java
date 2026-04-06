@@ -170,6 +170,7 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
                 // Update task management record after task creation if upfront payment was found
                 if (hasUpfrontPayment) {
                     taskManagementUtil.updateWarrantUpfrontPayment(order, requestInfo, upfrontResult);
+                    pendingTaskUtil.createPendingTaskForRPAD(taskResponse.getTask(), requestInfo, courtCase, uniqueAssignee);
                 }
 
                 // Create pending task for non-EMAIL/SMS channels only when upfront payment was NOT done
