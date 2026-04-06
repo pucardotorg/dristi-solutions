@@ -1,5 +1,6 @@
 package org.pucar.dristi.util;
 
+import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
@@ -31,13 +32,15 @@ public class SecondaryStageProcessor {
     private final Configuration config;
     private final Producer producer;
     private final ObjectMapper mapper;
+    private final CaseUtil caseUtil;
 
     @Autowired
-    public SecondaryStageProcessor(CaseStageTrackingUtil caseStageTrackingUtil, Configuration config, Producer producer, ObjectMapper mapper) {
+    public SecondaryStageProcessor(CaseStageTrackingUtil caseStageTrackingUtil, Configuration config, Producer producer, ObjectMapper mapper, CaseUtil caseUtil) {
         this.caseStageTrackingUtil = caseStageTrackingUtil;
         this.config = config;
         this.producer = producer;
         this.mapper = mapper;
+        this.caseUtil = caseUtil;
     }
 
     /**
@@ -148,7 +151,7 @@ public class SecondaryStageProcessor {
             return SECONDARY_STAGE_SUMMONS;
         } else if (upperOrderType.contains(ORDER_TYPE_WARRANT)) {
             return SECONDARY_STAGE_WARRANT;
-        } else if (upperOrderType.contains(ORDER_TYPE_PROCLAMATION)) {
+        } else if (upperOrderType.contains(ORDER_TYPE_PROCLAMATION) || upperOrderType.contains(ORDER_TYPE_ATTACHMENT)) {
             return SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT;
         }
         return null;
@@ -175,6 +178,16 @@ public class SecondaryStageProcessor {
             caseOverallStatus.setFilingNumber(filingNumber);
             caseOverallStatus.setTenantId(tenantId);
             caseOverallStatus.setSubstage(substage);
+
+            Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+            String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
+            String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);
+            String caseSubStageBackup = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_BACKUP_PATH);
+
+            caseOverallStatus.setStage(caseStage);
+            caseOverallStatus.setStageBackup(caseStageBackup);
+            caseOverallStatus.setSubstageBackup(caseSubStageBackup);
 
             AuditDetails auditDetails = new AuditDetails();
             String lastModifiedBy = (requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null)
