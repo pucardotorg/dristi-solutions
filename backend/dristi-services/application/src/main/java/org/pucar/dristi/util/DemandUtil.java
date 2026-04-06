@@ -95,7 +95,7 @@ public class DemandUtil {
         
         boolean isRequestInvalid = Stream.of(tenantId, entityType, filingNumber, consumerCode)
                 .anyMatch(param -> param == null || param.isBlank()) ||
-                totalAmount == null || totalAmount <= 0D ||
+                totalAmount == null || totalAmount < 0D ||
                 requestInfo == null;
         
         if (isRequestInvalid) {
