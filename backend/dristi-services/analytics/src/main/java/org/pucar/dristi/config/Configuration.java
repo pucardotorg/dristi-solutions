@@ -38,6 +38,9 @@ public class Configuration {
 	@Value("${billing.index}")
 	private String billingIndex;
 
+	@Value("${case.stage.tracking.index}")
+	private String caseStageTrackingIndex;
+
 	@Value("${egov.case.overall.status.topic}")
 	private String caseOverallStatusTopic;
 
