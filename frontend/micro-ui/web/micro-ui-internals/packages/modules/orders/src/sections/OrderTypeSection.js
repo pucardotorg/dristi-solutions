@@ -1,5 +1,5 @@
 import React from "react";
-import { LabelFieldPair, CardLabel, CustomDropdown, CardLabelError, Button } from "@egovernments/digit-ui-react-components";
+import { LabelFieldPair, CardLabel, CustomDropdown, CardLabelError, Button, CardHeader } from "@egovernments/digit-ui-react-components";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
 import OrderTypeControls from "../components/OrderTypeControls";
 import { CustomAddIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
@@ -11,6 +11,7 @@ import { CustomAddIcon } from "@egovernments/digit-ui-module-dristi/src/icons/sv
  */
 const OrderTypeSection = ({
   t,
+  isHearingAvailable,
   currentOrder,
   orderTypeData,
   applicationTypeConfigUpdated,
@@ -37,42 +38,11 @@ const OrderTypeSection = ({
 }) => {
   return (
     <React.Fragment>
-      <LabelFieldPair className="order-type-dropdown">
-        <OrderTypeControls
-          t={t}
-          currentOrder={currentOrder}
-          orderTypeData={orderTypeData}
-          orderTypeConfig={{
-            ...applicationTypeConfigUpdated?.[0]?.body[0],
-            populators: {
-              ...applicationTypeConfigUpdated?.[0]?.body[0]?.populators,
-              styles: { maxWidth: "75%" },
-            },
-          }}
-          setOrderType={setOrderType}
-          setCompositeOrderIndex={setCompositeOrderIndex}
-          handleEditOrder={handleEditOrder}
-          setDeleteOrderItemIndex={setDeleteOrderItemIndex}
-          handleOrderTypeChange={handleOrderTypeChange}
-        />
-        <div style={{ marginBottom: "10px" }}>
-          <Button
-            variation="secondary"
-            onButtonClick={() => {
-              handleAddForm();
-            }}
-            className="add-new-form"
-            icon={<CustomAddIcon width="16px" height="16px" />}
-            label={t("ADD_ITEM")}
-            style={{ border: "none" }}
-            isDisabled={isAddItemDisabled}
-          ></Button>
-        </div>
-      </LabelFieldPair>
-
       {(currentInProgressHearing || currentOrder?.hearingNumber) && (
         <React.Fragment>
-          <div className="checkbox-item">
+          <CardHeader styles={{ fontSize: "16px", fontWeight: "bold", marginTop: "20px" }}>{t("ORDER_NEXT_HEARING_DETAILS")}</CardHeader>
+
+          <div className="checkbox-item" style={{ marginTop: "10px" }}>
             <input
               id="skip-scheduling"
               type="checkbox"
@@ -150,6 +120,40 @@ const OrderTypeSection = ({
           </LabelFieldPair>
         </React.Fragment>
       )}
+
+      <LabelFieldPair className="order-type-dropdown">
+        <OrderTypeControls
+          t={t}
+          isHearingAvailable={isHearingAvailable}
+          currentOrder={currentOrder}
+          orderTypeData={orderTypeData}
+          orderTypeConfig={{
+            ...applicationTypeConfigUpdated?.[0]?.body[0],
+            populators: {
+              ...applicationTypeConfigUpdated?.[0]?.body[0]?.populators,
+              styles: { maxWidth: "75%" },
+            },
+          }}
+          setOrderType={setOrderType}
+          setCompositeOrderIndex={setCompositeOrderIndex}
+          handleEditOrder={handleEditOrder}
+          setDeleteOrderItemIndex={setDeleteOrderItemIndex}
+          handleOrderTypeChange={handleOrderTypeChange}
+        />
+        <div style={{ marginBottom: "10px" }}>
+          <Button
+            variation="secondary"
+            onButtonClick={() => {
+              handleAddForm();
+            }}
+            className="add-new-form"
+            icon={<CustomAddIcon width="16px" height="16px" />}
+            label={t("ADD_ITEM")}
+            style={{ border: "none" }}
+            isDisabled={isAddItemDisabled}
+          ></Button>
+        </div>
+      </LabelFieldPair>
     </React.Fragment>
   );
 };

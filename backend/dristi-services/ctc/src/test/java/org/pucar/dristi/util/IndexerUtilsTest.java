@@ -28,6 +28,9 @@ class IndexerUtilsTest {
     @Mock
     private Configuration config;
 
+    @Mock
+    private LocalizationUtil localizationUtil;
+
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -303,6 +306,9 @@ class IndexerUtilsTest {
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn("{\"errors\":false}");
 
+        when(localizationUtil.getMessagesMap(any(), any()))
+                .thenReturn(new HashMap<>());
+
         indexerUtils.pushIssueCtcDocumentsToIndex(application);
 
         ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
@@ -329,6 +335,9 @@ class IndexerUtilsTest {
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn("{\"errors\":false}");
 
+        when(localizationUtil.getMessagesMap(any(), any()))
+                .thenReturn(new HashMap<>());
+
         indexerUtils.pushIssueCtcDocumentsToIndex(application);
 
         ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
@@ -353,6 +362,9 @@ class IndexerUtilsTest {
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn("{\"errors\":false}");
 
+        when(localizationUtil.getMessagesMap(any(), any()))
+                .thenReturn(new HashMap<>());
+
         indexerUtils.pushIssueCtcDocumentsToIndex(application);
 
         ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
@@ -372,6 +384,9 @@ class IndexerUtilsTest {
 
         application.setSelectedCaseBundle(List.of(selectedNode));
         application.setCaseBundles(List.of(bundleNode));
+
+        when(localizationUtil.getMessagesMap(any(), any()))
+                .thenReturn(new HashMap<>());
 
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn("{\"errors\":false}");
@@ -394,6 +409,9 @@ class IndexerUtilsTest {
         application.setSelectedCaseBundle(List.of(selectedNode));
         application.setCaseBundles(null);
 
+        when(localizationUtil.getMessagesMap(any(), any()))
+                .thenReturn(new HashMap<>());
+
         indexerUtils.pushIssueCtcDocumentsToIndex(application);
 
         verifyNoInteractions(restTemplate);
@@ -413,6 +431,9 @@ class IndexerUtilsTest {
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn("{\"errors\":false}");
 
+        when(localizationUtil.getMessagesMap(any(), any()))
+                .thenReturn(new HashMap<>());
+
         indexerUtils.pushIssueCtcDocumentsToIndex(application);
 
         ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
@@ -428,7 +449,8 @@ class IndexerUtilsTest {
         CaseBundleNode node = CaseBundleNode.builder()
                 .id("doc-1").title("Doc").fileStoreId("fs-1").children(null).build();
         application.setSelectedCaseBundle(List.of(node));
-
+        when(localizationUtil.getMessagesMap(any(), any()))
+                .thenReturn(new HashMap<>());
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new RuntimeException("ES down"));
 

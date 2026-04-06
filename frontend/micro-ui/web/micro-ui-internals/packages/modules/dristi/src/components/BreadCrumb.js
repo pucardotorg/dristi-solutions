@@ -3,8 +3,6 @@ import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 
 const Breadcrumb = (props) => {
-
-
   return (
     <ol className={`bread-crumb ${props?.className ? props?.className : ""}`} style={props?.breadcrumbStyle}>
       {props?.crumbs?.map((crumb, ci) => {

@@ -93,4 +93,13 @@ public class ServiceConstants {
 
     public static final String PROCESS_VALIDATION_ERROR = "PROCESS_VALIDATION_ERROR";
 
+    // Notification constants
+    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+    public static final String NOTIFICATION_MODULE_CODE = "notification";
+    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+
+    // Document signing constants
+    public static final String ADVOCATE_OFFICE_ADDITION = "ADVOCATE_OFFICE_ADDITION";
+
 }

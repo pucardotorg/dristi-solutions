@@ -8,6 +8,7 @@ import { EditPencilIcon, CustomDeleteIcon } from "../../../dristi/src/icons/svgI
  */
 const OrderTypeControlItem = ({
   t,
+  isHearingAvailable,
   orderType,
   dropdownType,
   orderTypeData,
@@ -41,7 +42,9 @@ const OrderTypeControlItem = ({
           config={{
             ...orderTypeConfig?.populators,
             styles: { ...orderTypeConfig?.populators?.styles, flex: 1 },
-            optionsCustomStyle: { marginTop: "42px" },
+            optionsCustomStyle: isHearingAvailable
+              ? { position: "absolute", bottom: "100%", top: "auto", marginBottom: "5px" }
+              : { marginTop: "42px" },
           }}
           disable={orderType}
         />

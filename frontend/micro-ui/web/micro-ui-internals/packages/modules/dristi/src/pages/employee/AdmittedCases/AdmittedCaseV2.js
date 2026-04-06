@@ -307,19 +307,19 @@ const AdmittedCaseV2 = () => {
           processSearchCriteria: {
             businessService: ["hearing-default"],
             moduleName: "Hearing Service",
-            tenantId: "kl",
+            tenantId,
           },
           moduleSearchCriteria: {
-            tenantId: "kl",
+            tenantId,
             ...(fromDate && toDate ? { fromDate, toDate } : {}),
           },
-          tenantId: "kl",
+          tenantId,
           limit: 300,
           offset: 0,
         },
       };
 
-      const res = await HomeService.InboxSearch(payload, { tenantId: "kl" });
+      const res = await HomeService.InboxSearch(payload, { tenantId });
       setData(res?.items || []);
     } catch (err) {
       console.error("error", err);
@@ -338,13 +338,13 @@ const AdmittedCaseV2 = () => {
               processSearchCriteria: {
                 businessService: ["hearing-default"],
                 moduleName: "Hearing Service",
-                tenantId: "kl",
+                tenantId,
               },
               moduleSearchCriteria: {
-                tenantId: "kl",
+                tenantId,
                 ...(fromDate && toDate ? { fromDate, toDate } : {}),
               },
-              tenantId: "kl",
+              tenantId,
               limit: 300,
               offset: 0,
             },
@@ -355,7 +355,7 @@ const AdmittedCaseV2 = () => {
           const fromDateForNextHearings = new Date(homeNextHearingFilter.homeFilterDate).setHours(0, 0, 0, 0);
           const toDateForNextHearings = new Date(homeNextHearingFilter.homeFilterDate).setHours(23, 59, 59, 999);
 
-          const resForNextHearings = await HomeService.InboxSearch(payload(fromDateForNextHearings, toDateForNextHearings), { tenantId: "kl" });
+          const resForNextHearings = await HomeService.InboxSearch(payload(fromDateForNextHearings, toDateForNextHearings), { tenantId });
           setDataForNextHearings(resForNextHearings?.items || []);
         }
       } catch (err) {
@@ -2148,7 +2148,6 @@ const AdmittedCaseV2 = () => {
     Boolean(filingNumber && !historyOrderData && caseCourtId),
     0
   );
-
   const ordersData = useMemo(() => historyOrderData || apiOrdersData, [historyOrderData, apiOrdersData]);
 
   const onTabChange = useCallback(

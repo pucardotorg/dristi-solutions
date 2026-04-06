@@ -95,12 +95,15 @@ public class CredentialService {
 
             JsonNode payloadFromJsonPath= extractPayloadFromJsonPath(listofJsonPaths,requestPayload,entityDid);
             //check condition for create-vc and recreate-vc
-            if (topic.equals("recreate-vc")){
+            if ("recreate-vc".equals(topic)){
                 CredentialIdUuidMapper credentialUuidObject=credentialUuidRepository.getUuidVcidMapperRow(uuid);
+                if (credentialUuidObject == null || credentialUuidObject.getVcid() == null) {
+                    throw new CustomException("VCID_NOT_FOUND", "Credential mapping not found for uuid: " + uuid);
+                }
                 String revokeApiResponse=revokeCredentialService.revokeCredential(credentialUuidObject.getVcid());
                 JsonNode jsonNode = objectMapper.readTree(revokeApiResponse);
-                String status = jsonNode.get("status").asText();
-                if(status.equals("REVOKED")){
+                String status = jsonNode.path("status").asText("");
+                if("REVOKED".equals(status)){
                     String credentialIdUuidData=generateCredentials(uuid, entityDid, entitySchemaId,payloadFromJsonPath,credentialContext,expiryDate);
                     log.info("credential uuid data {} ", credentialIdUuidData);
                     if(credentialIdUuidData!=null){
