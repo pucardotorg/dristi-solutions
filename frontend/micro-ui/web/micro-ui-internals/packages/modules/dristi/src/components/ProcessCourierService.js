@@ -64,6 +64,17 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
     }
   };
 
+  const handleInitialCourierServiceChange = (data) => {
+    const updatedData = {
+      ...processCourierData,
+      noticeCourierService: data?.notice || processCourierData?.noticeCourierService || [],
+      summonsCourierService: data?.summons || processCourierData?.summonsCourierService || [],
+      warrantCourierService: data?.warrant || processCourierData?.warrantCourierService || [],
+    };
+    setProcessCourierData(updatedData);
+    onSelect(config?.key, updatedData);
+  };
+
   const handleAddAddress = async (newAddress, accusedData) => {
     const addressPayload = {
       tenantId,
@@ -114,6 +125,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
         setShowConfirmationModal={setShowConfirmationModal}
         handleAddAddress={handleAddAddress}
         isDisableAllFields={isDisableAllFields}
+        handleInitialCourierServiceChange={handleInitialCourierServiceChange}
       />
       {showConfirmationModal && (
         <Modal
