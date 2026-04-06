@@ -46,6 +46,7 @@ function CourierService({
   handleAddAddress,
   orderType,
   isDisableAllFields = false,
+  handleInitialCourierServiceChange,
 }) {
   const [newAddress, setNewAddress] = useState({});
   const [addressErrors, setAddressErrors] = useState({});
@@ -206,13 +207,14 @@ function CourierService({
 
   useEffect(() => {
     if (courierOptions?.length > 0 && !hasSetInitialDefaults.current) {
+      let data = {};
       if (
         (orderType === "NOTICE" || isDelayCondonation) &&
         (!processCourierData?.noticeCourierService || processCourierData?.noticeCourierService?.length === 0)
       ) {
         const rpadNoticeOption = courierOptions?.find((option) => option?.channelId === "RPAD" && option?.taskType === "NOTICE");
         if (rpadNoticeOption) {
-          handleCourierServiceChange([rpadNoticeOption], "notice");
+          data = { ...data, notice: [rpadNoticeOption] };
         }
       }
 
@@ -222,7 +224,7 @@ function CourierService({
       ) {
         const rpadSummonsOption = courierOptions?.find((option) => option?.channelId === "RPAD" && option?.taskType === "SUMMONS");
         if (rpadSummonsOption) {
-          handleCourierServiceChange([rpadSummonsOption], "summons");
+          data = { ...data, summons: [rpadSummonsOption] };
         }
       }
 
@@ -232,13 +234,16 @@ function CourierService({
       ) {
         const policeWarrantOption = courierOptions?.find((option) => option?.channelId === "POLICE" && option?.taskType === "WARRANT");
         if (policeWarrantOption) {
-          handleCourierServiceChange([policeWarrantOption], "warrant");
+          data = { ...data, warrant: [policeWarrantOption] };
         }
       }
 
+      if (!hasSetInitialDefaults.current) {
+        handleInitialCourierServiceChange(data);
+      }
       hasSetInitialDefaults.current = true;
     }
-  }, [courierOptions, orderType, isDelayCondonation, handleCourierServiceChange, processCourierData]);
+  }, [courierOptions, orderType, isDelayCondonation, handleInitialCourierServiceChange, processCourierData]);
 
   if (isBreakUpLoading || isLoading) {
     return (
