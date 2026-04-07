@@ -225,4 +225,8 @@ public class ServiceConstants {
 
     public static final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
 
+    public static final String CHANNEL_CODE = "channelCode";
+
+    public static final String PENDING_ENVELOPE_SUBMISSION = "PENDING_ENVELOPE_SUBMISSION";
+
 }

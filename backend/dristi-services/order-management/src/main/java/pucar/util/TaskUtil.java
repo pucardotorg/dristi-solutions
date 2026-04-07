@@ -203,6 +203,10 @@ public class TaskUtil {
             if (hasUpfrontPayment) {
                 LocalDate feePaidDate = dateUtil.getLocalDateFromEpoch(courtCase.getFilingDate());
                 deliveryChannels.put("feePaidDate", feePaidDate.format(DateTimeFormatter.ofPattern(LOCAL_DATE_FORMAT)));
+                if (RPAD.equalsIgnoreCase(channel)) {
+                    deliveryChannels.put("isPendingCollection", true);
+                }
+
             }
         } else {
             workflowObject.setAction("CREATE");
