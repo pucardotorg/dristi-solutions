@@ -527,7 +527,7 @@ export const TabJudgeSearchConfig = {
                 disable: false,
                 populators: {
                   name: "secondaryStage",
-                  optionsKey: "subStage",
+                  optionsKey: "substage",
                   mdmsConfig: {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
