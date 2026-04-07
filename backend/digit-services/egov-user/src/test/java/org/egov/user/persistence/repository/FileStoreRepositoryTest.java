@@ -1,6 +1,6 @@
 package org.egov.user.persistence.repository;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -10,15 +10,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestTemplate;
 
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class FileStoreRepositoryTest {
 
     @InjectMocks
@@ -60,7 +61,7 @@ public class FileStoreRepositoryTest {
             e.printStackTrace();
         }
 
-        Assert.assertNull(fileStoreUrl);
+        assertNull(fileStoreUrl);
     }
 
     @Test
@@ -76,17 +77,15 @@ public class FileStoreRepositoryTest {
             e.printStackTrace();
         }
 
-        Assert.assertNull(fileStoreUrl);
+        assertNull(fileStoreUrl);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void test_should_throwexception_restcallfails() throws Exception {
         when(restTemplate.getForObject(any(String.class), eq(Map.class))).thenThrow(new RuntimeException());
-        Map<String, String> fileStoreUrl = null;
         List<String> list = new ArrayList<String>();
         list.add("key");
-        fileStoreUrl = fileStoreRepository.getUrlByFileStoreId("default", list);
-        Assert.assertNull(fileStoreUrl);
+        assertThrows(RuntimeException.class, () -> fileStoreRepository.getUrlByFileStoreId("default", list));
     }
 
 }
