@@ -332,7 +332,8 @@ public class PendingTaskService {
         List<JsonNode> filteredTasks = new ArrayList<>();
         for(JsonNode hit: hitsNode) {
             JsonNode dataNode = hit.path("_source").path("Data");
-            if(dataNode.get("entityType").asText().equals("application-order-submission-feedback") && dataNode.get("status").asText().equals("PENDINGRESPONSE")) {
+            if ("application-order-submission-feedback".equals(dataNode.path("entityType").asText()) &&
+                    "PENDINGRESPONSE".equals(dataNode.path("status").asText())) {
                 filteredTasks.add(dataNode);
             }
         }

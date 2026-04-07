@@ -371,13 +371,13 @@ public class CaseApiController {
 
     @PostMapping(value = "/v1/_searchCaseMember")
     public ResponseEntity<CaseMemberSearchResponse> searchCaseMember(
-            @Parameter(in = ParameterIn.DEFAULT, description = "Search criteria for case members by office advocate and member UUIDs + RequestInfo meta data.", required = true, schema = @Schema()) 
+            @Parameter(in = ParameterIn.DEFAULT, description = "Search criteria for case members by office advocate and member UUIDs + RequestInfo meta data.", required = true, schema = @Schema())
             @Valid @RequestBody CaseMemberSearchRequest body) {
         log.info("api=/v1/_searchCaseMember, result=IN_PROGRESS");
         CaseMemberSearchResponse searchResponse = advocateOfficeCaseMemberService.searchCaseMembers(body);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         searchResponse.setResponseInfo(responseInfo);
-        log.info("api=/v1/_searchCaseMember, result=SUCCESS, found {} cases out of {} total", 
+        log.info("api=/v1/_searchCaseMember, result=SUCCESS, found {} cases out of {} total",
                 searchResponse.getCases().size(), searchResponse.getTotalCount());
         return new ResponseEntity<>(searchResponse, HttpStatus.OK);
     }

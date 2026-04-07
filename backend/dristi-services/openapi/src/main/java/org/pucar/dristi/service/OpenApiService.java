@@ -313,9 +313,9 @@ public class OpenApiService {
                             caseNumberCriteria.getYear());
 
                     String caseType = caseNumberCriteria.getCaseType();
-                    if (caseType.equalsIgnoreCase("ST")) {
+                    if ("ST".equalsIgnoreCase(caseType)) {
                         moduleSearchCriteria.put("stNumber", caseNumber);
-                    } else if (caseType.equalsIgnoreCase("CMP")) {
+                    } else if ("CMP".equalsIgnoreCase(caseType)) {
                         moduleSearchCriteria.put("cmpNumber", caseNumber);
                     } else {
                         return null;
