@@ -1,3 +1,5 @@
+> **Note:** This workflow describes frontend (React micro-UI) PR review guidance for the separate frontend repository. Use it there; this backend-only repo focuses on Java/Spring services.
+
 Act as a Senior Frontend Engineer reviewing a GitHub Pull Request.
 
 Use GitHub MCP to read:

@@ -38,12 +38,12 @@ paths:
                 authToken: <AUTH_TOKEN>
                 userInfo:
                   uuid: 64220357-defd-4abd-bcc3-e4b278203917
-                  tenantId: kl
+                  tenantId: pb
               advocate:
-                tenantId: kl
+                tenantId: pb
                 individualId: 9e8d13f2-7d6c-4a8c-b9cb-97c1b8fd6f21
-                barCouncilNumber: KL/2016/1234
-                barCouncilName: Kerala Bar Council
+                barCouncilNumber: PB/2016/1234
+                barCouncilName: Punjab Bar Council
                 yearOfEnrollment: 2016
                 specialization:
                   - Criminal Law
@@ -74,7 +74,7 @@ paths:
                 authToken: <AUTH_TOKEN>
               advocate:
                 id: 3e2c2f66-1f6d-4ef6-8a4c-9c33d3e3c9b9
-                tenantId: kl
+                tenantId: pb
                 specialization:
                   - Criminal Law
                   - Cyber Law

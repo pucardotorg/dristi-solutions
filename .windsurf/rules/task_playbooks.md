@@ -1,5 +1,7 @@
 # Task Playbooks
 
+> **Note:** This playbook covers both backend (Java/DIGIT services) and frontend (React micro-UI) tasks. In this backend-only repo, follow only the backend-related steps; frontend steps belong to the frontend repository.
+
 ## Adding a New API
 
 ### 1. Define API Specification

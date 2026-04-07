@@ -18,7 +18,7 @@ trigger: always_on
 - **HTTP Client**: Axios
 - **Build Tools**: Webpack 4.x, Babel
 - **Package Manager**: Yarn
-- **CSS**: Custom CSS with dristi-ui-css 0.1.0-dristi-kerala.2
+- **CSS**: Custom CSS with dristi-ui-css (UI lives in separate frontend repo)
 
 ## Backend
 - **Language**: Java 17

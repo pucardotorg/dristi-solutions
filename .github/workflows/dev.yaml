@@ -1,4 +1,4 @@
-name: Dristi-kerala Image Build workflow
+name: Dristi Image Build workflow
 on:
 #  pull_request:
 #    types:

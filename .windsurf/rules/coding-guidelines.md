@@ -1,5 +1,7 @@
 # Coding Guidelines
 
+> **Note:** This file contains both frontend (React micro-UI) and backend guidelines. In this backend-only repo, only the backend sections apply; frontend rules here are for the separate frontend repository.
+
 ## Mandatory Coding Rules
 
 ### General
@@ -68,7 +70,7 @@ backend/
 │   │   ├── test/                     # Unit tests
 ```
 
-## React / JS Rules
+
 
 ### Component Structure
 - **Functional Components**: Use functional components with hooks instead of class components

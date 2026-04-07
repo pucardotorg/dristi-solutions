@@ -1,5 +1,7 @@
 # Prompt Rules
 
+> **Note:** These prompt rules govern both frontend (React micro-UI) and backend behavior. In this backend-only repo, frontend-specific guidance applies to the separate frontend repository.
+
 ## General Behavior
 
 ### Documentation as Hard Constraints

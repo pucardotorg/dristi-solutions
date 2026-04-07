@@ -1,5 +1,7 @@
 # Known Gotchas
 
+> **Note:** Some issues and workarounds here reference frontend behavior (React micro-UI) that now lives in the frontend repository. Treat those as frontend-only; backend fixes should be implemented in this repo.
+
 ## Known Bugs
 
 ### Input Validation Vulnerability

@@ -1,5 +1,7 @@
 # Environment and Deployment
 
+> **Note:** Frontend commands and `frontend/*` paths in this document refer to the separate frontend repository. This backend repo only uses the backend deployment and environment sections.
+
 ## Environments
 
 ### Local Development

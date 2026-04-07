@@ -95,15 +95,6 @@
         "language": "java",
         "version": "17"
     },
-    "dristi-case-pdf": {
-        "service_group": "core-services",
-        "db_source_path": "",
-        "dockerfile_path": "backend/ui-integration-services/dristi-case-pdf/Dockerfile",
-        "service_source_path": "backend/ui-integration-services/dristi-case-pdf",
-        "language": "nodejs",
-        "version": "20",
-        "sonar_sources": ""
-    },
     "egov-accesscontrol" :{
         "service_group": "core-services",
         "db_source_path": "backend/digit-services/egov-accesscontrol/src/main/resources/db",
@@ -320,15 +311,6 @@
         "language": "java",
         "version": "17"
     },
-    "sbi-webpage": {
-        "service_group": "core-services",
-        "db_source_path": "",
-        "dockerfile_path": "frontend/sbi-webpage/Dockerfile",
-        "service_source_path": "frontend/sbi-webpage",
-        "language": "nodejs",
-        "version": "20",
-        "sonar_sources": ""
-    },
     "scheduler": {
         "service_group": "core-services",
         "db_source_path": "backend/dristi-services/scheduler-svc/src/main/resources/db",
@@ -384,15 +366,6 @@
         "service_source_path": "backend/integration-services/treasury-backend",
         "language": "java",
         "version": "17"
-    },
-    "epayments": {
-        "service_group": "core-services",
-        "db_source_path": "",
-        "dockerfile_path": "frontend/treasury-webpage/Dockerfile",
-        "service_source_path": "frontend/treasury-webpage",
-        "language": "nodejs",
-        "version": "20",
-        "sonar_sources": ""
     },
     "billing-service": {
         "service_group": "core-services",
@@ -522,15 +495,7 @@
         "language": "java",
         "version": "17"
     },
-    "pdf-service": {
-        "service_group": "core-services",
-        "db_source_path": "backend/ui-integration-services/pdf-service/migration",
-        "dockerfile_path": "backend/ui-integration-services/pdf-service/Dockerfile",
-        "service_source_path": "backend/ui-integration-services/pdf-service",
-        "language": "nodejs",
-        "version": "20",
-        "sonar_sources": "src"
-    },
+    
     "sunbirdrc-credential-service": {
         "service_group": "core-services",
         "db_source_path": "backend/dristi-services/sunbirdrc-credential-service/src/main/resources/db",
@@ -546,24 +511,5 @@
         "service_source_path": "backend/digit-services/user-otp",
         "language": "java",
         "version": "17"
-    },
-    "digit-ui": {
-        "service_group": "core-services",
-        "db_source_path": "",
-        "dockerfile_path": "frontend/micro-ui/web/docker/Dockerfile",
-        "service_source_path": "frontend/micro-ui",
-        "language": "nodejs",
-        "version": "14",
-        "sonar_sources": ""
-
-    },
-    "dristi-pdf": {
-        "service_group": "core-services",
-        "db_source_path": "",
-        "dockerfile_path": "backend/ui-integration-services/dristi-pdf/Dockerfile",
-        "service_source_path": "backend/ui-integration-services/dristi-pdf",
-        "language": "nodejs",
-        "version": "20",
-        "sonar_sources": "src"
     }
 }

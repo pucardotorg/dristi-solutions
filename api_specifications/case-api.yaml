@@ -333,6 +333,49 @@ components:
         auditDetails:
           $ref: "https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails"
 
+    StatuteSection:
+      type: object
+      description: >-
+        Holds the statute ID and the corresponding section & subsections
+        applicable to the case.
+      required: [tenantId, statuteId]
+      properties:
+        id:
+          type: string
+          description: Read only UUID
+          readOnly: true
+          format: uuid
+          minLength: 2
+          maxLength: 64
+        tenantId:
+          type: string
+          description: This is tenantId of the case.
+          minLength: 2
+          maxLength: 64
+        statute:
+          type: string
+          description: >-
+            The statute ID from master data.
+        sections:
+          type: array
+          items:
+            type: string
+        subsections:
+          type: array
+          description: >-
+            Holds an array of subsections under which this case is filed. This
+            can be a master or a free form text entry field.
+          items:
+            type: string
+        additionalDetails:
+          type: string
+          description: >-
+            This field is meant to hold any extra information to be stored as
+            part of this entity.
+        auditDetails:
+          $ref: >-
+            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails
+
     Address:
       type: object
       required:

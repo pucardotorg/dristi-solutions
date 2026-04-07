@@ -1,5 +1,7 @@
 # Tech Stack
 
+> **Note:** The Frontend section below describes the React micro-UI, which now lives in a separate frontend repository. In this backend-only repo, treat that section as reference only; backend code and builds here should not assume any `frontend/*` paths.
+
 ## Frontend
 - **Framework**: React 17.0.2
 - **Routing**: React Router 5.3.0
@@ -14,7 +16,7 @@
 - **HTTP Client**: Axios
 - **Build Tools**: Webpack 4.x, Babel
 - **Package Manager**: Yarn
-- **CSS**: Custom CSS with dristi-ui-css 0.1.0-dristi-kerala.2
+- **CSS**: Custom CSS with dristi-ui-css (UI lives in separate frontend repo)
 
 ## Backend
 - **Language**: Java 17

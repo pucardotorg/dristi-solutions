@@ -1,5 +1,7 @@
 # Architecture
 
+> **Note:** Frontend state management and micro-frontend details in this document refer to the React micro-UI in the frontend repository. This backend repo primarily follows the backend and integration parts of this architecture.
+
 ## High-Level Architecture
 
 ### System Architecture

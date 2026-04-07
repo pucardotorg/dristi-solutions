@@ -1,20 +1,9 @@
 # Tech Stack
 
-## Frontend
-- **Framework**: React 17.0.2
-- **Routing**: React Router 5.3.0
-- **State Management**: 
-  - Server State: React Query 3.6.1
-  - Global State: Redux 4.1.x with Redux Thunk
-- **UI Components**: 
-  - Digit UI Components (@egovernments/digit-ui-components 0.0.1-beta.28)
-  - Custom React Components (@egovernments/digit-ui-react-components 1.8.2-beta.11)
-- **Form Handling**: React Hook Form 6.15.8
-- **Internationalization**: React i18next 11.16.2
-- **HTTP Client**: Axios
-- **Build Tools**: Webpack 4.x, Babel
-- **Package Manager**: Yarn
-- **CSS**: Custom CSS with dristi-ui-css 0.1.0-dristi-kerala.3
+> This document describes the **backend** tech stack for this repository.
+> The React-based frontend for DRISTI now lives in a **separate repository**;
+> any frontend tools or modules mentioned here are informational only and are
+> not part of this codebase.
 
 ## Backend
 - **Language**: Java 17
@@ -43,7 +32,6 @@
 
 ## Testing
 - **Backend**: JUnit 5, Spring Boot Test
-- **Frontend**: Jest, React Testing Library
 - **Coverage Tool**: JaCoCo 0.8.9
 
 ## Logging and Monitoring
@@ -55,26 +43,20 @@
 - **Secrets Management**: No hardcoded credentials
 
 ## Code Quality and Standards
-- **Linting**: ESLint for JavaScript/React
-- **Formatting**: Prettier
-- **Static Analysis**: SonarQube
+- **Static Analysis**: SonarQube (Java backend services)
+- **Coding Guidelines**: Follow DRISTI Java backend conventions (controller → service → repository layering, clear DTO/domain separation)
 
 ## CI/CD
 - **Pipeline Tool**: Jenkins
-- **Containerization**: Docker
+- **Containerization**: Docker images for Spring Boot microservices
 - **Repository**: Nexus (eGovernments and DIGIT repositories)
 
 ## Module Structure
-- **Frontend Modules**:
-  - dristi (core application)
-  - cases
-  - hearings
-  - home
-  - orders
-  - submissions
-  - core
 
-- **Backend Services**:
+> Frontend micro-UI modules (like `dristi`, `cases`, `hearings`, etc.) now live
+> in the separate frontend repository and are not part of this backend repo.
+
+- **Backend Services (this repository)**:
   - case
   - advocate
   - hearing
