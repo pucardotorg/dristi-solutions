@@ -194,16 +194,12 @@ export const TabBenchSearchConfig = {
                 disable: false,
                 populators: {
                   name: "secondaryStage",
-                  optionsKey: "code",
-                  options: [
-                    { code: "Delay Condonation" },
-                    { code: "Notice" },
-                    { code: "Summons" },
-                    { code: "Warrant" },
-                    { code: "Proclamation & Attachment" },
-                    { code: "N/A" },
-                    { code: "Mediation" },
-                  ],
+                  optionsKey: "substage",
+                  mdmsConfig: {
+                    masterName: "CaseSecondaryStage",
+                    moduleName: "case",
+                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                  },
                   styles: {
                     maxWidth: "250px",
                     minWidth: "200px",
@@ -352,16 +348,12 @@ export const TabBenchSearchConfig = {
                 disable: false,
                 populators: {
                   name: "secondaryStage",
-                  optionsKey: "code",
-                  options: [
-                    { code: "Delay Condonation" },
-                    { code: "Notice" },
-                    { code: "Summons" },
-                    { code: "Warrant" },
-                    { code: "Proclamation & Attachment" },
-                    { code: "N/A" },
-                    { code: "Mediation" },
-                  ],
+                  optionsKey: "substage",
+                  mdmsConfig: {
+                    masterName: "CaseSecondaryStage",
+                    moduleName: "case",
+                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                  },
                   styles: {
                     maxWidth: "250px",
                     minWidth: "200px",
@@ -525,16 +517,12 @@ export const TabBenchSearchConfig = {
                 disable: false,
                 populators: {
                   name: "secondaryStage",
-                  optionsKey: "code",
-                  options: [
-                    { code: "Delay Condonation" },
-                    { code: "Notice" },
-                    { code: "Summons" },
-                    { code: "Warrant" },
-                    { code: "Proclamation & Attachment" },
-                    { code: "N/A" },
-                    { code: "Mediation" },
-                  ],
+                  optionsKey: "substage",
+                  mdmsConfig: {
+                    masterName: "CaseSecondaryStage",
+                    moduleName: "case",
+                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                  },
                   styles: {
                     maxWidth: "250px",
                     minWidth: "200px",

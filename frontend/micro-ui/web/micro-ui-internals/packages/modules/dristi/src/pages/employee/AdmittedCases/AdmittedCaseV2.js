@@ -3698,11 +3698,25 @@ const AdmittedCaseV2 = () => {
             )}
             {(caseDetails?.courtCaseNumber || caseDetails?.cmpNumber) && (
               <React.Fragment>
-                {" "}
-                <div className="sub-details-text">{t(caseDetails?.filingNumber)}</div> <hr className="vertical-line" />
+                <div className="sub-details-text">{t(caseDetails?.filingNumber)}</div>
+                <hr className="vertical-line" />
               </React.Fragment>
             )}
-            <div className="sub-details-text">{t(caseDetails?.substage)}</div>
+            <div className="sub-details-text">Stage: {t(caseDetails?.stage)}</div>
+            {(Array.isArray(caseDetails?.secondaryStage) ? caseDetails?.secondaryStage?.length > 0 : caseDetails?.secondaryStage) && (
+              <React.Fragment>
+                <hr className="vertical-line" />
+                <div className="sub-details-text">
+                  Secondary Stage:{" "}
+                  {(Array.isArray(caseDetails?.secondaryStage) ? caseDetails?.secondaryStage : [caseDetails?.secondaryStage]).map((stage, index) => (
+                    <React.Fragment key={`${stage}-${index}`}>
+                      {index > 0 ? ", " : ""}
+                      {t(stage)}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </React.Fragment>
+            )}
             {caseDetails?.outcome && (
               <React.Fragment>
                 <hr className="vertical-line" />
