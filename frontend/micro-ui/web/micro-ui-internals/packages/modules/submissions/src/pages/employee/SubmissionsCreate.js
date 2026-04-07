@@ -1815,9 +1815,6 @@ const SubmissionsCreate = ({ path }) => {
   const handleAddSignature = async () => {
     setLoader(true);
     try {
-      if (applicationType !== "SUBMIT_BAIL_DOCUMENTS") {
-        await createDemand();
-      }
       const response = await updateSubmission(SubmissionWorkflowAction.ESIGN);
       setShowsignatureModal(false);
       setShowPaymentModal(true);
@@ -1897,38 +1894,6 @@ const SubmissionsCreate = ({ path }) => {
     totalAmount: _getApplicationAmount(applicationTypeAmount, applicationType),
     scenario,
   });
-
-  const { data: billResponse, isLoading: isBillLoading } = Digit.Hooks.dristi.useBillSearch(
-    {},
-    { tenantId, consumerCode: applicationDetails?.applicationNumber + `_${suffix}`, service: entityType },
-    `dristi_${suffix}`,
-    Boolean(applicationDetails?.applicationNumber && suffix)
-  );
-
-  const createDemand = async () => {
-    if (billResponse?.Bill?.length === 0) {
-      await DRISTIService.etreasuryCreateDemand({
-        tenantId,
-        entityType,
-        filingNumber: caseDetails?.filingNumber || filingNumber,
-        consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
-        calculation: [
-          {
-            tenantId: tenantId,
-            totalAmount: _getApplicationAmount(applicationTypeAmount, applicationType),
-            breakDown: [
-              {
-                type: "Application Fee",
-                code: "APPLICATION_FEE",
-                amount: _getApplicationAmount(applicationTypeAmount, applicationType),
-                additionalParams: {},
-              },
-            ],
-          },
-        ],
-      });
-    }
-  };
 
   const handleMakePayment = async (totalAmount) => {
     try {
