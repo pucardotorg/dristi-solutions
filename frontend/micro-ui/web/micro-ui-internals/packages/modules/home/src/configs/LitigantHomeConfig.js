@@ -175,12 +175,13 @@ export const TabLitigantSearchConfig = {
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "substage",
-                  optionsKey: "code",
+                  name: "stage",
+                  optionsKey: "stage",
                   mdmsConfig: {
-                    masterName: "SubStage",
+                    masterName: "CasePrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                    select:
+                      "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage !== 'RESTORE_BACKUP').sort((a,b) => (a?.stage || '').localeCompare(b?.stage || ''));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -203,7 +204,8 @@ export const TabLitigantSearchConfig = {
                   mdmsConfig: {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -437,7 +439,8 @@ export const TabLitigantSearchConfig = {
                   mdmsConfig: {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
                   },
                   styles: {
                     maxWidth: "250px",

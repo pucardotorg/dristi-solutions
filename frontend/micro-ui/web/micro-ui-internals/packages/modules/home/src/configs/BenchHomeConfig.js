@@ -169,12 +169,12 @@ export const TabBenchSearchConfig = {
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "substage",
-                  optionsKey: "code",
+                  name: "stage",
+                  optionsKey: "stage",
                   mdmsConfig: {
-                    masterName: "SubStage",
+                    masterName: "CasePrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                    select: "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage !== 'RESTORE_BACKUP').sort((a,b) => (a?.stage || '').localeCompare(b?.stage || ''));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -324,11 +324,11 @@ export const TabBenchSearchConfig = {
                 disable: false,
                 populators: {
                   name: "substage",
-                  optionsKey: "code",
+                  optionsKey: "stage",
                   mdmsConfig: {
-                    masterName: "SubStage",
+                    masterName: "CasePrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                    select: "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage !== 'RESTORE_BACKUP').sort((a,b) => (a?.stage || '').localeCompare(b?.stage || ''));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -493,11 +493,11 @@ export const TabBenchSearchConfig = {
                 disable: false,
                 populators: {
                   name: "substage",
-                  optionsKey: "code",
+                  optionsKey: "stage",
                   mdmsConfig: {
-                    masterName: "SubStage",
+                    masterName: "CasePrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                    select: "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage !== 'RESTORE_BACKUP').sort((a,b) => (a?.stage || '').localeCompare(b?.stage || ''));}",
                   },
                   styles: {
                     maxWidth: "250px",
