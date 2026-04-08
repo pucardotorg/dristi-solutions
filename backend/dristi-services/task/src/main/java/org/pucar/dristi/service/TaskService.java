@@ -105,10 +105,10 @@ public class TaskService {
             }
             workflowUpdate(body);
 
-            if(body.getTask().getTaskType().equalsIgnoreCase("SUMMONS")
-                    || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")
-                    || body.getTask().getTaskType().equalsIgnoreCase("PROCLAMATION")
-                    || body.getTask().getTaskType().equalsIgnoreCase("ATTACHMENT")) {
+            if("SUMMONS".equalsIgnoreCase(body.getTask().getTaskType())
+                    || "WARRANT".equalsIgnoreCase(body.getTask().getTaskType())
+                    || "PROCLAMATION".equalsIgnoreCase(body.getTask().getTaskType())
+                    || "ATTACHMENT".equalsIgnoreCase(body.getTask().getTaskType())) {
                 updateCase(body);
             }
 
@@ -388,10 +388,12 @@ public class TaskService {
     public Task uploadDocument(TaskRequest body) {
         try {
             Task task = validator.validateApplicationUploadDocumentExistence(body.getTask(), body.getRequestInfo());
+            log.info("Task validateApplicationUploadDocumentExistence response :: {}", task);
 
             // Enrich application upon update
            TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
+            enrichmentUtil.enrichIsPendingCollectionUponUpdate(taskRequest);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
 
