@@ -148,14 +148,14 @@ public class TaskRegistrationEnrichment {
         task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
     }
 
-    public void enrichIsPendingCollectionUponUpdate(TaskRequest taskRequest) {
+    public void enrichIsPendingCollectionUponUpdate(TaskRequest taskRequest, boolean isPendingCollection) {
 
         try {
             Task task = taskRequest.getTask();
 
             JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
             if (taskDetails.has("deliveryChannels")) {
-                ((ObjectNode) taskDetails.get("deliveryChannels")).put("isPendingCollection", false);
+                ((ObjectNode) taskDetails.get("deliveryChannels")).put("isPendingCollection", isPendingCollection);
                 task.setTaskDetails(taskDetails);
             }
         } catch (Exception e) {
