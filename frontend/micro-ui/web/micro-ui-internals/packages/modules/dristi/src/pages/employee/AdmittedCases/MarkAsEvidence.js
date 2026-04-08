@@ -651,7 +651,7 @@ const MarkAsEvidence = ({
       const markedPart = markedOverride || `${evidenceTag?.value}${evidenceNumber}`;
       const payload = {
         ...evidenceDetails,
-        evidenceNumber: `${filingNumber}-${markedPart}`,
+        evidenceNumber: action === MarkAsEvidenceAction?.ESIGN ? evidenceDetails?.evidenceNumber : `${filingNumber}-${markedPart}`, //here
         isEvidenceMarkedFlow: action ? true : false,
         tag: witnessTag?.code,
         isEvidence: isEvidence,

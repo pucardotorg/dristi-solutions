@@ -461,6 +461,10 @@ const GenerateOrdersV2 = () => {
         const asUser = newApplicationDetails?.asUser; // this main advocate's uuid in case clerk/jr adv create on senior's behalf otherwise creator's uuid
 
         const assignedTo = Array.from(new Set([targetUserUuid, ...(poaUuids || []), asUser].filter(Boolean))).map((uuid) => ({ uuid }));
+        console.log("orderObj", orderObj);
+        console.log("applicationData", applicationData);
+        console.log("newApplicationDetails", newApplicationDetails);
+        console.log("asUser:", asUser, "targetUserUuid:", targetUserUuid, "poaUuids:", poaUuids, "assignedTo:", assignedTo);
 
         const bailTypeCode = typeof bailType === "string" ? bailType.toUpperCase() : (bailType?.code || bailType?.type || "").toUpperCase();
         const bailTypeObj = bailTypeCode ? { code: bailTypeCode, type: bailTypeCode } : null;
@@ -639,7 +643,11 @@ const GenerateOrdersV2 = () => {
     return (
       miscellaneousTemplateData?.list?.map((template) => {
         const { auditDetails, ...result } = template;
-        return result;
+        const processTitleLabel = `${result?.processTitle} ${result?.subTitle ? `- ${result?.subTitle}` : ""}`;
+        return {
+          ...result,
+          processTitleLabel,
+        };
       }) || []
     );
   }, [miscellaneousTemplateData]);
@@ -3384,7 +3392,9 @@ const GenerateOrdersV2 = () => {
         }
       }
 
+      console.log("updatedOrderData", updatedOrderData);
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
+      console.log("updateOrderResponse", updateOrderResponse);
       if (isAcceptBailOrder && requestBailBond) {
         await createPendingTaskForJudge(updateOrderResponse?.order);
         await createPendingTaskForEmployee(updateOrderResponse?.order, false);
@@ -4757,42 +4767,11 @@ const GenerateOrdersV2 = () => {
               </React.Fragment>
             )}
 
-            <LabelFieldPair className="order-type-dropdown">
-              <OrderTypeControls
-                t={t}
-                currentOrder={currentOrder}
-                orderTypeData={orderTypeData}
-                orderTypeConfig={{
-                  ...applicationTypeConfigUpdated?.[0]?.body[0],
-                  populators: {
-                    ...applicationTypeConfigUpdated?.[0]?.body[0]?.populators,
-                    styles: { maxWidth: "75%" },
-                  },
-                }}
-                setOrderType={setOrderType}
-                setCompositeOrderIndex={setCompositeOrderIndex}
-                handleEditOrder={handleEditOrder}
-                setDeleteOrderItemIndex={setDeleteOrderItemIndex}
-                handleOrderTypeChange={handleOrderTypeChange}
-              />
-              <div style={{ marginBottom: "10px" }}>
-                <Button
-                  variation="secondary"
-                  onButtonClick={() => {
-                    handleAddForm();
-                  }}
-                  className="add-new-form"
-                  icon={<CustomAddIcon width="16px" height="16px" />}
-                  label={t("ADD_ITEM")}
-                  style={{ border: "none" }}
-                  isDisabled={isAddItemDisabled}
-                ></Button>
-              </div>
-            </LabelFieldPair>
-
             {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <React.Fragment>
-                <div className="checkbox-item">
+                <CardHeader styles={{ fontSize: "16px", fontWeight: "bold", marginTop: "20px" }}>{t("ORDER_NEXT_HEARING_DETAILS")}</CardHeader>
+
+                <div className="checkbox-item" style={{ marginTop: "10px" }}>
                   <input
                     id="skip-scheduling"
                     type="checkbox"
@@ -4872,6 +4851,40 @@ const GenerateOrdersV2 = () => {
                 </LabelFieldPair>
               </React.Fragment>
             )}
+
+            <LabelFieldPair className="order-type-dropdown">
+              <OrderTypeControls
+                t={t}
+                isHearingAvailable={currentInProgressHearing || currentOrder?.hearingNumber}
+                currentOrder={currentOrder}
+                orderTypeData={orderTypeData}
+                orderTypeConfig={{
+                  ...applicationTypeConfigUpdated?.[0]?.body[0],
+                  populators: {
+                    ...applicationTypeConfigUpdated?.[0]?.body[0]?.populators,
+                    styles: { maxWidth: "75%" },
+                  },
+                }}
+                setOrderType={setOrderType}
+                setCompositeOrderIndex={setCompositeOrderIndex}
+                handleEditOrder={handleEditOrder}
+                setDeleteOrderItemIndex={setDeleteOrderItemIndex}
+                handleOrderTypeChange={handleOrderTypeChange}
+              />
+              <div style={{ marginBottom: "10px" }}>
+                <Button
+                  variation="secondary"
+                  onButtonClick={() => {
+                    handleAddForm();
+                  }}
+                  className="add-new-form"
+                  icon={<CustomAddIcon width="16px" height="16px" />}
+                  label={t("ADD_ITEM")}
+                  style={{ border: "none" }}
+                  isDisabled={isAddItemDisabled}
+                ></Button>
+              </div>
+            </LabelFieldPair>
           </div>
 
           {/* Right Column */}

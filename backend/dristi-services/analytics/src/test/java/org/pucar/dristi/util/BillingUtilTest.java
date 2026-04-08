@@ -69,7 +69,7 @@ class BillingUtilTest {
 
         assertEquals("mocked-demand-response", result);
         verify(requestRepository).fetchResult(
-                argThat(sb -> sb.toString().equals("http://demand-host/demand?tenantId=test-tenant&demandId=demand-001")),
+                argThat(sb -> "http://demand-host/demand?tenantId=test-tenant&demandId=demand-001".equals(sb.toString())),
                 eq(requestInfo)
         );
     }

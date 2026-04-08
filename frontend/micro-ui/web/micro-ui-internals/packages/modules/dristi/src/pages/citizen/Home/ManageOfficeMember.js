@@ -13,6 +13,8 @@ const sectionsParentStyle = {
   gap: "0.5rem",
 };
 
+const REDIRECT_DELAY_MS = 400;
+
 
 
 const ManageOfficeMember = () => {
@@ -45,12 +47,14 @@ const ManageOfficeMember = () => {
   const [casesRefreshKey, setCasesRefreshKey] = useState(0);
   const [caseSelectionDiff, setCaseSelectionDiff] = useState({ addCaseIds: [], removeCaseIds: [] });
   const [accessType, setAccessType] = useState(member?.accessType || "ALL_CASES");
+  const initialAccessType = useRef(member?.accessType || "ALL_CASES");
   const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
   const [isRemovingMember, setIsRemovingMember] = useState(false);
   const [showUpdateAccessModal, setShowUpdateAccessModal] = useState(false);
   const [showAddMemberConfirmModal, setShowAddMemberConfirmModal] = useState(false);
   const [isUpdatingAccess, setIsUpdatingAccess] = useState(false);
   const [toast, setToast] = useState(null);
+  const redirectTimeoutRef = useRef(null);
 
   // Auto-close toast after 5 seconds (same pattern as ManageOffice)
   useEffect(() => {
@@ -58,6 +62,14 @@ const ManageOfficeMember = () => {
     const timer = setTimeout(() => setToast(null), 5000);
     return () => clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER");
   const clerkLabel = t("CLERK");
@@ -315,6 +327,13 @@ const ManageOfficeMember = () => {
     if (isNewMember) {
       setShowAddMemberConfirmModal(true);
     } else {
+      const accessTypeChanged = accessType !== initialAccessType.current;
+      const hasCaseDiff = currentDiff.addCaseIds.length > 0 || currentDiff.removeCaseIds.length > 0;
+
+      if (!accessTypeChanged && !hasCaseDiff) {
+        setToast({ label: t("NO_CHANGES_TO_UPDATE"), type: "error" });
+        return;
+      }
       setShowUpdateAccessModal(true);
     }
   };
@@ -355,6 +374,7 @@ const ManageOfficeMember = () => {
               memberId: member?.memberId,
               memberName: member?.memberName || memberName,
               memberMobileNumber: member?.memberMobileNumber,
+              memberEmail: member?.memberEmail || "",
               accessType: accessType,
               allowCaseCreate: true,
               addNewCasesAutomatically: accessType === "ALL_CASES",
@@ -432,7 +452,8 @@ const ManageOfficeMember = () => {
       setToast({ label: isNewMember ? t("MEMBER_ADDED_SUCCESSFULLY") : t("UPDATE_ACCESS_SUCCESS"), type: "success" });
       setShowUpdateAccessModal(false);
       setShowAddMemberConfirmModal(false);
-      
+      initialAccessType.current = accessType;
+
       setCaseSelectionDiff({ addCaseIds: [], removeCaseIds: [] });
       const container = document.querySelector(".manage-office-member-inbox");
       if (container) {
@@ -462,6 +483,14 @@ const ManageOfficeMember = () => {
       // if it wasn't there before (or if it relies on individualId). Since `member.memberId` is mapped from the search response, 
       // it should already exist. Incrementing the key forces InboxSearchComposer to remount & fetch cases.
       setCasesRefreshKey((prev) => prev + 1);
+
+      if (isNewMember) {
+        // Let the success toast render briefly, then replace to avoid keeping create-flow in history stack.
+        redirectTimeoutRef.current = window.setTimeout(() => {
+          history.replace(`/${window?.contextPath}/citizen/dristi/home/manage-office`);
+        }, REDIRECT_DELAY_MS);
+        return;
+      }
 
       history.replace(history.location?.pathname || window.location.pathname, {
         ...currentState,

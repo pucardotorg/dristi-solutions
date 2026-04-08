@@ -587,6 +587,9 @@ function removeParentReferences(pdfContent) {
 }
 
 function htmlToFormattedText(input) {
+  if (!input) return [];
+  
+  input = String(input);
   const isHtml = /<\/?[a-z][\s\S]*>/i.test(input);
   if (!isHtml) return cleanUnsupportedChars(input);
 

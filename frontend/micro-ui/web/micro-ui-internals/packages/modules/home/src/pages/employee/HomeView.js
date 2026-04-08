@@ -361,7 +361,7 @@ const HomeView = () => {
   useEffect(() => {
     if (!selectedSeniorAdvocate?.id) return;
     initialCountFetchRef.current === true && refreshInboxAfterSelectedAdvocateChange();
-  }, [selectedSeniorAdvocate?.id]);
+  }, [selectedSeniorAdvocate?.id, refetchMemberData]);
 
   const citizenId = useMemo(() => {
     if (userInfoType === "citizen" && !isSearchLoading) {
@@ -793,6 +793,7 @@ const HomeView = () => {
               caseType={caseType}
               setCaseType={setCaseType}
               pendingSignOrderList={ordersNotificationData}
+              refetchTasks={refetchMemberData}
             />
           </div>
         )}

@@ -30,6 +30,7 @@ public class ServiceConstants {
     public static final String COMPLAINT_FEE = "Complaint Fee";
     public static final String DELAY_CONDONATION_FEE = "Delay Condonation Application Fee";
     public static final String ADVOCATE_FEE = "Advocate Welfare Fund";
+    public static final String STIPEND_STAMP = "Stipend Stamp";
 
     public static final String COURT_FEE = "Court Fee";
     public static final String LEGAL_BENEFIT_FEE = "Legal Benefit Fee";

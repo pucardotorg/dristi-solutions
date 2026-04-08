@@ -6,7 +6,6 @@ const {
   create_pdf,
   search_advocate,
   search_message,
-  search_hearing,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { cleanName } = require("./cleanName");
@@ -109,7 +108,7 @@ async function applicationRescheduleHearing(
             messages.map(({ code, message }) => [code, message])
           )
         : {};
-    
+
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     let advocateName = "";
     const advocateIndividualId =
@@ -284,8 +283,22 @@ async function applicationRescheduleHearing(
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const partyName = application?.additionalDetails?.onBehalOfName || "";
-    const purposeOfHearing = application?.applicationDetails?.initialHearingPurpose || "";
-    const localizedPurposeOfHearing = messagesMap?.[purposeOfHearing] || purposeOfHearing;
+    const purposeOfHearing =
+      application?.applicationDetails?.initialHearingPurpose || "";
+    const localizedPurposeOfHearing =
+      messagesMap?.[purposeOfHearing] || purposeOfHearing;
+    const onBehalfOfuuid = application?.onBehalfOf?.[0];
+    const onBehalfOfLitigent = courtCase?.litigants?.find(
+      (item) => item.additionalDetails.uuid === onBehalfOfuuid
+    );
+
+    let partyType = "Court";
+    if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("complainant")) {
+      partyType = "Complainant";
+    }
+    if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("respondent")) {
+      partyType = "Accused";
+    }
 
     const data = {
       Data: [
@@ -308,7 +321,11 @@ async function applicationRescheduleHearing(
           partyName: partyName,
           qrCodeUrl: base64Url,
           purposeOfHearing: localizedPurposeOfHearing,
-          allPartiesAgreed: application?.applicationDetails?.isAllPartiesAgreed === "YES" ? true : false,
+          allPartiesAgreed:
+            application?.applicationDetails?.isAllPartiesAgreed === "YES"
+              ? true
+              : false,
+          partyType: partyType,
         },
       ],
     };

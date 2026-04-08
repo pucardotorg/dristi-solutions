@@ -78,7 +78,7 @@ const AdvocateProfileDropdown = React.memo(({ t, options = [], selected, onSelec
   );
 
   const fullName = selected?.advocateName ? t(selected.advocateName) : "";
-  const buttonLabel = selected?.advocateName ? `Adv. ${fullName}'s Profile` : t("SELECT_ADVOCATE");
+  const buttonLabel = selected?.advocateName ? `${fullName}'s Profile` : t("SELECT_ADVOCATE");
 
   return (
     <div className="advocate-profile-dropdown" ref={wrapperRef}>
@@ -470,7 +470,7 @@ const TopBarComponent = ({
                 onSelect={changeAdvocateSelection}
                 disabled={disableAdvocateChange}
               />
-              {isAdvocate && (
+              {isAdvocate && !disableAdvocateChange && (
                 <button
                   className="manage-office-btn"
                   onClick={handleManageOfficeClick}
