@@ -66,6 +66,9 @@ public class BundleSectionUtils {
             Object name = fileAd.get("name");
             if (name instanceof String && !((String) name).isBlank()) {
                 title = (String) name;
+                if ("Signed_Witness_Deposition_Document.pdf".equalsIgnoreCase(title)) {
+                    return "Witness Deposition (" + artifact.getTag() + ")";
+                }
                 return title;
             }
         }

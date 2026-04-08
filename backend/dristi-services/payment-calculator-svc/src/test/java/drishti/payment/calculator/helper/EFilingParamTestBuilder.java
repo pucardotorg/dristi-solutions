@@ -114,4 +114,25 @@ public class EFilingParamTestBuilder {
         this.builder.noOfAdvocateFees(advocateFees).build();
         return this;
     }
+
+    public EFilingParamTestBuilder withStipendStamp() {
+        LinkedHashMap<String, HashMap<String, Integer>> stipendStamps = new LinkedHashMap<>();
+        HashMap<String, Integer> stipendStamp = new HashMap<>();
+        stipendStamp.put("min", 1);
+        stipendStamp.put("max", 1);
+        stipendStamp.put("fee", 10);
+        stipendStamps.put("1", new HashMap<>(stipendStamp));
+
+        stipendStamp.put("min", 2);
+        stipendStamp.put("max", 2);
+        stipendStamp.put("fee", 20);
+        stipendStamps.put("2", new HashMap<>(stipendStamp));
+
+        stipendStamp.put("min", 3);
+        stipendStamp.put("max", 500000000);
+        stipendStamp.put("fee", 30);
+        stipendStamps.put("3-500000000", new HashMap<>(stipendStamp));
+        this.builder.stipendStamp(stipendStamps).build();
+        return this;
+    }
 }

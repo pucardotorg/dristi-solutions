@@ -224,6 +224,10 @@ const ComplainantSignature = ({ path }) => {
     return !userInfo?.roles?.some((role) => role.code === "ADVOCATE_ROLE" || role.code === "ADVOCATE_CLERK_ROLE");
   }, [userInfo]);
 
+  const isAdvocateClerk = useMemo(() => {
+    return userInfo.roles?.some((role) => role?.code === "ADVOCATE_CLERK_ROLE");
+  }, [userInfo.roles]);
+
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -357,6 +361,7 @@ const ComplainantSignature = ({ path }) => {
   }, [caseDetails]);
 
   const caseDraftEditAllowedParties = useMemo(() => {
+    if (!caseDetails?.filingNumber) return null;
     const createdByUuid = caseDetails?.auditDetails?.createdBy;
     // Parties who are allowed to edit case details during filing draft stage:
     // 1. If the case created by litigant -> only that litigant can have the edit access.
@@ -460,6 +465,7 @@ const ComplainantSignature = ({ path }) => {
       const courierGroups = [
         { taskType: "NOTICE", channels: accused?.noticeCourierService || [] },
         { taskType: "SUMMONS", channels: accused?.summonsCourierService || [] },
+        { taskType: "WARRANT", channels: accused?.warrantCourierService || [] },
       ];
       courierGroups.forEach(({ taskType, channels }) => {
         channels.forEach((channel) => {
@@ -1330,10 +1336,10 @@ const ComplainantSignature = ({ path }) => {
             {isSelectedUploadDoc && !(isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) && (
               <p style={styles.signatureDescription}>{t("ONLY_ADVOCATES_AND_ASSOCIATED_MEMBERS_CAN_UPLOAD_SIGNED_COPY")}</p>
             )}
-            {isSelectedEsign && isMemberOnBehalfOfOwnerAdvocate && (
+            {isSelectedEsign && (isMemberOnBehalfOfOwnerAdvocate || isAdvocateClerk) && (
               <p style={styles.signatureDescription}>{t("YOU_ARE_NOT_AUTHORIZED_TO_DO_ESIGN")}</p>
             )}
-            {isSelectedEsign && !isMemberOnBehalfOfOwnerAdvocate && (
+            {isSelectedEsign && !isMemberOnBehalfOfOwnerAdvocate && !isAdvocateClerk && (
               <button style={styles.esignButton} onClick={handleEsignAction}>
                 {t("CS_ESIGN")}
               </button>

@@ -1633,15 +1633,15 @@ export const UICustomizations = {
         processSearchCriteria: {
           businessService: ["hearing-default"],
           moduleName: "Hearing Service",
-          tenantId: requestCriteria?.params?.tenantId || "kl",
+          tenantId: requestCriteria?.params?.tenantId,
         },
         moduleSearchCriteria: {
           fromDate: new Date(requestCriteria?.state?.searchForm?.date + "T00:00:00").getTime(),
           toDate: new Date(requestCriteria?.state?.searchForm?.date + "T23:59:59.999").getTime(),
-          tenantId: requestCriteria?.params?.tenantId || "kl",
+          tenantId: requestCriteria?.params?.tenantId,
           ...(requestCriteria?.state?.searchForm?.status && { status: requestCriteria?.state?.searchForm?.status?.value }),
         },
-        tenantId: requestCriteria?.params?.tenantId || "kl",
+        tenantId: requestCriteria?.params?.tenantId,
         limit: requestCriteria?.state?.tableForm?.limit || 10,
         offset: requestCriteria?.state?.tableForm?.offset || 0,
       };

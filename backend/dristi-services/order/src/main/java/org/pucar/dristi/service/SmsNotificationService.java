@@ -113,7 +113,7 @@ public class SmsNotificationService {
 
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber, Order order) {
 
-        if(messageCode.equalsIgnoreCase(ORDER_ISSUED)){
+        if(ORDER_ISSUED.equalsIgnoreCase(messageCode)){
             if(shouldSendNotificationForOrderIssued(order)){
                 Instant instant = dateUtil.getInstantFrom(config.getSmsOrderIssuedTime());
                 schedulePushNotification(templateData, message, mobileNumber, config.getSmsNotificationJudgeIssueOrderTemplateId(), instant);
@@ -123,13 +123,13 @@ public class SmsNotificationService {
             Instant instant = dateUtil.getInstantFrom(config.getSmsHearingScheduledTime());
             schedulePushNotification(templateData, message, mobileNumber, config.getSmsNotificationHearingScheduledTemplateId(), instant);
         }
-        if(messageCode.equalsIgnoreCase(NOTICE_ISSUED)){
+        if(NOTICE_ISSUED.equalsIgnoreCase(messageCode)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationNoticeIssuedTemplateId());
         }
-        if(messageCode.equalsIgnoreCase(HEARING_RESCHEDULED)){
+        if(HEARING_RESCHEDULED.equalsIgnoreCase(messageCode)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationHearingReScheduledTemplateId());
         }
-        if(messageCode.equalsIgnoreCase(SUMMONS_ISSUED)){
+        if(SUMMONS_ISSUED.equalsIgnoreCase(messageCode)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationSummonsIssuedTemplateId());
         }
     }

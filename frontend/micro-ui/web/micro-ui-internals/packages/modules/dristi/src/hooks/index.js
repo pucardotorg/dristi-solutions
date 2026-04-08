@@ -118,6 +118,7 @@ export const Urls = {
     searchCaseMember: "/advocate-office-management/v1/_searchCaseMember",
     leaveOffice: "/advocate-office-management/v1/_leaveOffice",
     bankDetails: "/bank-details/v1/_search",
+    previewDoc: "/casemanagement/casemanager/preview/doc",
   },
   case: {
     addWitness: "/case/v1/add/witness",

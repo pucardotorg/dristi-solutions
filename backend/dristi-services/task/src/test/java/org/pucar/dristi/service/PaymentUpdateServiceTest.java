@@ -232,7 +232,7 @@ class PaymentUpdateServiceTest {
         // Verify producer pushed update for remaining pending tasks
         verify(producer).push(eq(config.getTaskJoinCaseUpdateTopic()), argThat(request ->
                 request instanceof TaskRequest &&
-                        ((TaskRequest) request).getTask().getTaskNumber().equals("TSK-002")));
+                        "TSK-002".equals(((TaskRequest) request).getTask().getTaskNumber())));
     }
 
     @Test

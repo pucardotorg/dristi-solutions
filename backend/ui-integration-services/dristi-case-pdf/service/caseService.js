@@ -324,6 +324,9 @@ function getPrayerSwornStatementDetails(cases) {
           getComplaintAdditionalDocumentFileStore(
             swornStatementData?.SelectUploadDocWithName,
           ),
+        synopsisText:
+          (swornStatementData.synopsis && swornStatementData.synopsis.text) ||
+          null,
       };
     });
 
@@ -404,48 +407,95 @@ function getComplainantsDetailsForComplaint(cases) {
 }
 
 function getAdvocateDetailsForComplainant(cases) {
-  if (!cases?.advocateDetailsBlock) {
-    return [];
+  const isReassigned = cases?.status === "CASE_REASSIGNED";
+
+  const buildPIP = (individualId, pipAffidavit) => ({
+    isPartyInPerson: true,
+    individualId,
+    pipAffidavitFileStore:
+      getDocumentFileStore(pipAffidavit, "UPLOAD_PIP_AFFIDAVIT") || "",
+    advocateList: [],
+  });
+
+  const buildAdvocate = (individualId, vakalatnama, advocates = []) => ({
+    isPartyInPerson: false,
+    individualId,
+    vakalatnamaFileStore:
+      getDocumentFileStore(vakalatnama, "VAKALATNAMA") || "",
+    advocateList: advocates,
+  });
+
+  if (isReassigned) {
+    const formDataList =
+      cases?.additionalDetails?.advocateDetails?.formdata || [];
+
+    return formDataList
+      .map(({ data }) => {
+        const details = data?.multipleAdvocatesAndPip;
+
+        if (details?.isComplainantPip?.code === "YES") {
+          return buildPIP(
+            details?.boxComplainant?.individualId,
+            details?.pipAffidavitFileUpload,
+          );
+        }
+
+        if (details?.isComplainantPip?.code === "NO") {
+          const advocates =
+            details?.multipleAdvocateNameDetails?.map((adv, index) => ({
+              index,
+              advocateName:
+                adv?.advocateBarRegNumberWithName?.advocateName || "",
+              barId:
+                adv?.advocateBarRegNumberWithName
+                  ?.barRegistrationNumberOriginal || "",
+              advocatePhoneNumber:
+                adv?.advocateNameDetails?.advocateMobileNumber || "",
+            })) || [];
+
+          return buildAdvocate(
+            details?.boxComplainant?.individualId,
+            details?.vakalatnamaFileUpload,
+            advocates,
+          );
+        }
+
+        return null;
+      })
+      .filter(Boolean);
   }
-  return cases.advocateDetailsBlock.map((data) => {
-    if (data?.isComplainantPip?.code === "YES") {
-      return {
-        isPartyInPerson: true,
-        individualId: data.complainant.individualId,
-        pipAffidavitFileStore:
-          getDocumentFileStore(
-            { document: data.documents.pipAffidavit },
-            "UPLOAD_PIP_AFFIDAVIT",
-          ) || "",
-        advocateList: [],
-      };
-    } else if (data?.isComplainantPip?.code === "NO") {
-      return {
-        isPartyInPerson: false,
-        individualId: data.complainant.individualId,
-        vakalatnamaFileStore:
-          getDocumentFileStore(
-            { document: data.documents.vakalatnama },
-            "VAKALATNAMA",
-          ) || "",
-        advocateList: data.advocates.map((advocate, index) => {
-          return {
-            index: index,
-            advocateName: [
-              advocate.firstName,
-              advocate.middleName,
-              advocate.lastName,
-            ]
+
+  const advocateBlocks = cases?.advocateDetailBlock || [];
+
+  return advocateBlocks
+    .map((data) => {
+      if (data?.isComplainantPip?.code === "YES") {
+        return buildPIP(data?.complainant?.individualId, {
+          document: data?.documents?.pipAffidavit,
+        });
+      }
+
+      if (data?.isComplainantPip?.code === "NO") {
+        const advocates =
+          data?.advocates?.map((adv, index) => ({
+            index,
+            advocateName: [adv?.firstName, adv?.middleName, adv?.lastName]
               .filter(Boolean)
               .join(" "),
-            barId: advocate.barRegistrationNumber || "",
-            advocatePhoneNumber: advocate.mobileNumber || "",
-          };
-        }),
-      };
-    }
-    return [];
-  });
+            barId: adv?.barRegistrationNumber || "",
+            advocatePhoneNumber: adv?.mobileNumber || "",
+          })) || [];
+
+        return buildAdvocate(
+          data?.complainant?.individualId,
+          { document: data?.documents?.vakalatnama },
+          advocates,
+        );
+      }
+
+      return null;
+    })
+    .filter(Boolean);
 }
 
 function getRespondentsDetailsForComplaint(cases) {

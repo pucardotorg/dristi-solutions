@@ -1,10 +1,10 @@
-import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { ordersService } from "../hooks/services";
 import { getMediationChangedFlag, getParties } from "./orderUtils";
 
 export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId) => {
   try {
-    const breakupResponse = await DRISTIService.getSummonsPaymentBreakup(
+    const breakupResponse = await window?.Digit?.DRISTIService.getSummonsPaymentBreakup(
       {
         Criteria: [
           {
@@ -195,4 +195,73 @@ export const deleteOrderItem = async (order, itemID, tenantId) => {
   } catch (error) {
     console.error(error);
   }
+};
+
+export const onDocumentUpload = async (fileData, filename, tenantId) => {
+  if (fileData?.fileStore) return fileData;
+  const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
+  return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+};
+
+export const replaceUploadedDocsWithCombinedFile = async (formData, tenantId) => {
+  try {
+    const docsArray = formData?.lprDocuments?.documents;
+    if (!Array.isArray(docsArray) || docsArray.length === 0) {
+      return formData;
+    }
+    const uploadedDocs = await Promise.all(
+      docsArray.map(async (fileData) => {
+        if (fileData?.fileStore) {
+          return fileData;
+        }
+        try {
+          const docs = await onDocumentUpload(fileData, fileData?.name, tenantId);
+          return {
+            documentType: docs?.fileType || "application/pdf",
+            fileStore: docs?.file?.files?.[0]?.fileStoreId || null,
+            additionalDetails: { name: docs?.filename || fileData?.name || "lpr" },
+          };
+        } catch (err) {
+          console.error("Error uploading document:", fileData, err);
+          return null;
+        }
+      })
+    );
+    formData.lprDocuments.documents = uploadedDocs.filter(Boolean);
+    return formData;
+  } catch (err) {
+    console.error("replaceUploadedDocsWithCombinedFile failed:", err);
+    throw err;
+  }
+};
+
+export const fetchInboxData = async ({ tenantId }) => {
+  const now = new Date();
+
+  const from = new Date(now);
+  from.setHours(0, 0, 0, 0);
+
+  const to = new Date(now);
+  to.setHours(23, 59, 59, 999);
+
+  const payload = {
+    inbox: {
+      processSearchCriteria: {
+        businessService: ["hearing-default"],
+        moduleName: "Hearing Service",
+        tenantId,
+      },
+      moduleSearchCriteria: {
+        tenantId,
+        fromDate: from.getTime(),
+        toDate: to.getTime(),
+      },
+      tenantId,
+      limit: 300,
+      offset: 0,
+    },
+  };
+
+  const res = await HomeService.InboxSearch(payload, { tenantId });
+  return res?.items || [];
 };

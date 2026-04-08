@@ -82,7 +82,7 @@ public class BailRegistrationEnrichment {
         String caseType = caseUtil.getCaseType(caseDetails);
         if(caseType != null){
             bail.setCaseType(Bail.CaseTypeEnum.valueOf(caseType)) ;
-            if(caseType.equalsIgnoreCase("ST")){
+            if("ST".equalsIgnoreCase(caseType)){
                 bail.setCaseNumber(caseUtil.getCourtCaseNumber(caseDetails));
             }
             else{
