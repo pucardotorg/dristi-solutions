@@ -390,12 +390,17 @@ public class TaskService {
             Task task = validator.validateApplicationUploadDocumentExistence(body.getTask(), body.getRequestInfo());
             log.info("Task validateApplicationUploadDocumentExistence response :: {}", task);
 
-            JsonNode taskDetails = (JsonNode) body.getTask().getTaskDetails();
-            boolean isPendingCollection = taskDetails.get("deliveryChannels").get("isPendingCollection").asBoolean();
             // Enrich application upon update
            TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
-            enrichmentUtil.enrichIsPendingCollectionUponUpdate(taskRequest, isPendingCollection);
+            try {
+                JsonNode taskDetails = (JsonNode) body.getTask().getTaskDetails();
+                boolean isPendingCollection = taskDetails.get("deliveryChannels").get("isPendingCollection").asBoolean();
+                enrichmentUtil.enrichIsPendingCollectionUponUpdate(taskRequest, isPendingCollection);
+            }
+            catch (Exception e) {
+                log.error("Error occurred while enriching isPendingCollection into task :: {}", e.toString());
+            }
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
 
