@@ -198,7 +198,7 @@ export const TabBenchSearchConfig = {
                   mdmsConfig: {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -352,7 +352,7 @@ export const TabBenchSearchConfig = {
                   mdmsConfig: {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -521,7 +521,7 @@ export const TabBenchSearchConfig = {
                   mdmsConfig: {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
                   },
                   styles: {
                     maxWidth: "250px",
