@@ -161,7 +161,7 @@ jobs:
             ENV_VALUE="${{ inputs.deployment_env }}"
           elif [[ "$EVENT" == "pull_request" ]]; then
             case "$BASE_REF" in
-              main)          ENV_VALUE="demo" ;;
+              main)          ENV_VALUE="sdc-uat" ;;
               sdc-uat)       ENV_VALUE="sdc-uat" ;;
               develop)       ENV_VALUE="dev" ;;
               release/*)     ENV_VALUE="qa" ;;
@@ -169,7 +169,7 @@ jobs:
             esac
           elif [[ "$EVENT" == "push" ]]; then
             case "$REF_NAME" in
-              main)          ENV_VALUE="demo" ;;
+              main)          ENV_VALUE="sdc-uat" ;;
               sdc-uat)       ENV_VALUE="sdc-uat" ;;
               develop)       ENV_VALUE="dev" ;;
               release/*)     ENV_VALUE="qa" ;;
