@@ -262,9 +262,6 @@ CREATE INDEX idx_poaholders_individual_tenant ON dristi_case_poaholders(individu
 
 CREATE INDEX IF NOT EXISTS idx_dristi_cases_courtid ON dristi_cases(courtId);
 
-UPDATE dristi_cases
-SET courtId = 'KLKM52'
-WHERE courtId IS NULL;
 
 ALTER TABLE dristi_cases ADD COLUMN  lprNumber varchar(64) NULL;
 ALTER TABLE dristi_cases ADD COLUMN isLPRCase bool DEFAULT false;
