@@ -137,7 +137,6 @@ export const TabCourtRoomSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            stage: ["Pre-Trial", "Trial", "Post-Trial", "Long Pending Register"],
             status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
           },
         },
@@ -291,7 +290,7 @@ export const TabCourtRoomSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            stage: ["Trial"],
+            stage: "Trial",
             status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
           },
         },
@@ -445,7 +444,7 @@ export const TabCourtRoomSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            stage: ["Pre-Trial"],
+            stage: "Pre-Trial",
             status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
           },
         },
