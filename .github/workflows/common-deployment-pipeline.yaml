@@ -223,7 +223,7 @@ jobs:
           echo "Docker image build: docker.io/venkatramireddyb/${{ matrix.service }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
 
       - name: Deploy to Kubernetes
-        if: ${{ needs.check-diff.outputs.deployment_env }} != 'sdc-uat'
+        if: needs.check-diff.outputs.deployment_env != 'sdc-uat'
         uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
         with:
           environment: ${{ needs.check-diff.outputs.deployment_env }}
@@ -236,7 +236,7 @@ jobs:
           sops_keys_txt: ${{ secrets.SOPS_KEYS_TXT }}
 
       - name: Deploy to SDC UAT
-        if: ${{ needs.check-diff.outputs.deployment_env }} == 'sdc-uat'
+        if: needs.check-diff.outputs.deployment_env == 'sdc-uat'
         run: |
           curl -X POST \
           -H "Accept: application/vnd.github.v3+json" \
