@@ -201,6 +201,8 @@ export const UICustomizations = {
           });
         },
       });
+      const selectedStage = requestCriteria?.state?.searchForm?.substage?.code;
+      const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
@@ -217,12 +219,9 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.outcome && {
           outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
         }),
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
-        ...(requestCriteria?.state?.searchForm?.secondaryStage && {
-          secondaryStage: requestCriteria?.state?.searchForm?.secondaryStage?.code,
-        }),
+        ...(selectedStage && { stage: selectedStage }),
+        substage: undefined,
+        ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
           offSet: requestCriteria?.state?.tableForm?.offset,
@@ -235,12 +234,8 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.code,
-          }),
-          ...(requestCriteria?.state?.searchForm?.secondaryStage && {
-            secondaryStage: requestCriteria?.state?.searchForm?.secondaryStage?.code,
-          }),
+          substage: undefined,
+          secondaryStage: undefined,
           criteria,
           tenantId,
         },
@@ -314,15 +309,14 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       // We need to change tenantId "processSearchCriteria" here
       const tenantId = window?.Digit.ULBService.getStateId();
+      const selectedStage = requestCriteria?.state?.searchForm?.substage?.code;
+      const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
-        ...(requestCriteria?.state?.searchForm?.secondaryStage && {
-          secondaryStage: requestCriteria?.state?.searchForm?.secondaryStage?.code,
-        }),
+        ...(selectedStage && { stage: selectedStage }),
+        substage: undefined,
+        ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         tenantId,
         ...additionalDetails,
         ...("sortBy" in additionalDetails && {
@@ -342,12 +336,8 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.code,
-          }),
-          ...(requestCriteria?.state?.searchForm?.secondaryStage && {
-            secondaryStage: requestCriteria?.state?.searchForm?.secondaryStage?.code,
-          }),
+          substage: undefined,
+          secondaryStage: undefined,
           criteria,
           tenantId,
         },
@@ -418,6 +408,8 @@ export const UICustomizations = {
           });
         },
       });
+      const selectedStage = requestCriteria?.state?.searchForm?.substage?.code;
+      const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
@@ -434,12 +426,9 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.outcome?.outcome && {
           outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
         }),
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
-        ...(requestCriteria?.state?.searchForm?.secondaryStage && {
-          secondaryStage: requestCriteria?.state?.searchForm?.secondaryStage?.code,
-        }),
+        ...(selectedStage && { stage: selectedStage }),
+        substage: undefined,
+        ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
           offSet: requestCriteria?.state?.tableForm?.offset,
@@ -452,12 +441,8 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.code,
-          }),
-          ...(requestCriteria?.state?.searchForm?.secondaryStage && {
-            secondaryStage: requestCriteria?.state?.searchForm?.secondaryStage?.code,
-          }),
+          substage: undefined,
+          secondaryStage: undefined,
           criteria,
           tenantId,
         },
