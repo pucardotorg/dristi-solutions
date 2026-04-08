@@ -209,7 +209,8 @@ export const TabCourtRoomSearchConfig = {
                   mdmsConfig: {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -290,7 +291,6 @@ export const TabCourtRoomSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            stage: "Trial",
             status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
           },
         },
@@ -363,7 +363,8 @@ export const TabCourtRoomSearchConfig = {
                   mdmsConfig: {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -444,7 +445,6 @@ export const TabCourtRoomSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            stage: "Pre-Trial",
             status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
           },
         },
@@ -532,7 +532,8 @@ export const TabCourtRoomSearchConfig = {
                   mdmsConfig: {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
                   },
                   styles: {
                     maxWidth: "250px",

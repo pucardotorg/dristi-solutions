@@ -209,7 +209,8 @@ export const TabUnifiedEmployeeSearchConfig = {
                   mdmsConfig: {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -288,7 +289,6 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           criteria: {
-            stage: "Trial",
             status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
           },
         },
@@ -366,7 +366,8 @@ export const TabUnifiedEmployeeSearchConfig = {
                   mdmsConfig: {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -445,7 +446,6 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           criteria: {
-            stage: "Pre-Trial",
             status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
           },
         },
@@ -538,7 +538,8 @@ export const TabUnifiedEmployeeSearchConfig = {
                   mdmsConfig: {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -984,7 +985,8 @@ export const CaseReviewerAdditionalTab = {
               mdmsConfig: {
                 masterName: "CaseSecondaryStage",
                 moduleName: "case",
-                select: "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                select:
+                  "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
               },
               styles: {
                 maxWidth: "250px",
