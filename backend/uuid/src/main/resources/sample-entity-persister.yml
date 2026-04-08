@@ -1,0 +1,46 @@
+serviceMaps:
+  serviceName: sample-entity-services
+  mappings:
+    - version: 1.0
+      description: Persists sample entity details in tables
+      fromTopic: save-sample-entity
+      isTransaction: true
+      isAuditEnabled: true
+      module: SAMPLE
+      objectIdJsonPath: $.sampleEntity.id
+      tenantIdJsonPath: $.sampleEntity.id
+      transactionCodeJsonPath: $.sampleEntity.id
+      queryMaps:
+        - query: |
+            INSERT INTO eg_sample_entity (
+              id, 
+              test_uuid
+            ) VALUES (?, ?);
+          basePath: sampleEntity
+          jsonMaps:
+            - jsonPath: $.sampleEntity.id
+              type: UUID
+            - jsonPath: $.sampleEntity.testUuid
+              type: UUID
+
+    - version: 1.0
+      description: Update sample entity details in tables
+      fromTopic: update-sample-entity
+      isTransaction: true
+      isAuditEnabled: true
+      module: SAMPLE
+      objectIdJsonPath: $.sampleEntity.id
+      tenantIdJsonPath: $.sampleEntity.id
+      transactionCodeJsonPath: $.sampleEntity.id
+      queryMaps:
+        - query: |
+            UPDATE eg_sample_entity 
+            SET 
+              test_uuid = ?
+            WHERE id = ?;
+          basePath: sampleEntity
+          jsonMaps:
+            - jsonPath: $.sampleEntity.testUuid
+              type: UUID
+            - jsonPath: $.sampleEntity.id
+              type: UUID
