@@ -222,14 +222,24 @@ jobs:
         run: |
           echo "Docker image build: docker.io/venkatramireddyb/${{ matrix.service }}:${{ steps.docker_build.outputs.image_tag }} and deploying to ${{ needs.check-diff.outputs.deployment_env }}"
 
-      # - name: Deploy to Kubernetes
-      #   uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
-      #   with:
-      #     environment: ${{ needs.check-diff.outputs.deployment_env }}
-      #     service_group: ${{ env.service_group }}
-      #     service_name: ${{ matrix.service }}
-      #     image_tag: ${{ steps.docker_build.outputs.image_tag }}
-      #     kubeconfig: ${{ secrets.KUBECONFIG }}
-      #     env_file: ${{ vars.HELMFILE_ENV }}
-      #     checkout_ref: ${{ vars.DEVOPS_BRANCH }}
-      #     sops_keys_txt: ${{ secrets.SOPS_KEYS_TXT }}
+      - name: Deploy to Kubernetes
+        if: ${{ needs.check-diff.outputs.deployment_env }} != 'sdc-uat'
+        uses: pucardotorg/pucar-DevOps/.github/actions/deploy-service@Solutions-Pipeline
+        with:
+          environment: ${{ needs.check-diff.outputs.deployment_env }}
+          service_group: ${{ env.service_group }}
+          service_name: ${{ matrix.service }}
+          image_tag: ${{ steps.docker_build.outputs.image_tag }}
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+          env_file: ${{ vars.HELMFILE_ENV }}
+          checkout_ref: ${{ vars.DEVOPS_BRANCH }}
+          sops_keys_txt: ${{ secrets.SOPS_KEYS_TXT }}
+
+      - name: Deploy to SDC UAT
+        if: ${{ needs.check-diff.outputs.deployment_env }} == 'sdc-uat'
+        run: |
+          curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${{ secrets.GHUB_TOKEN }}" \
+          https://api.github.com/repos/pucardotorg/pucar-Devops/actions/workflows/update-image-tag.yaml/dispatches \
+          -d '{"ref":"pucar-stg", "inputs": {"service_name": "${{ matrix.service }}", "service_tag": "${{ steps.docker_build.outputs.image_tag }}"}}'
