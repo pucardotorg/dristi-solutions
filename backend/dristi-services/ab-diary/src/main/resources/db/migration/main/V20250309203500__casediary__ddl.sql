@@ -1,2 +1,0 @@
-ALTER TABLE dristi_diaryentries
-ALTER COLUMN businessOfDay TYPE VARCHAR

@@ -1,1 +1,0 @@
-ALTER TABLE INDIVIDUAL ALTER COLUMN gender TYPE character varying(20);

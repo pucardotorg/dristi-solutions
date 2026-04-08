@@ -1,1 +1,0 @@
-ALTER TABLE dristi_cases ADD COLUMN natureOfDisposal varchar(64);

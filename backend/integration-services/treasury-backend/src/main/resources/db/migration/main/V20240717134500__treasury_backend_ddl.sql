@@ -1,2 +1,0 @@
-ALTER TABLE public.treasury_payment_data ALTER COLUMN challan_timestamp TYPE varchar(30) USING challan_timestamp::varchar(30);
-ALTER TABLE public.treasury_payment_data ALTER COLUMN bank_timestamp TYPE varchar(30) USING bank_timestamp::varchar(30);

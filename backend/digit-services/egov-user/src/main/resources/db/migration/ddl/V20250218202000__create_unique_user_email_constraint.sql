@@ -1,1 +1,0 @@
-ALTER TABLE eg_user ADD CONSTRAINT eg_user_email_id_key UNIQUE (emailid);

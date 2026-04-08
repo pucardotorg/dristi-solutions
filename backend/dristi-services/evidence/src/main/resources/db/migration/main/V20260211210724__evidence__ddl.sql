@@ -1,2 +1,0 @@
-ALTER TABLE dristi_evidence_artifact
-RENAME COLUMN officeAdvocateUserUuid TO asUser

@@ -1,1 +1,0 @@
-need to restart the analytics service once mdms data is updated (#4790)

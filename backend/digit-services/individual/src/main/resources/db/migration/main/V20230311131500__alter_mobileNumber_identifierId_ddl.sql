@@ -1,2 +1,0 @@
-ALTER TABLE INDIVIDUAL ALTER COLUMN mobileNumber TYPE character varying(256);
-ALTER TABLE INDIVIDUAL_IDENTIFIER ALTER COLUMN identifierId TYPE character varying(256);

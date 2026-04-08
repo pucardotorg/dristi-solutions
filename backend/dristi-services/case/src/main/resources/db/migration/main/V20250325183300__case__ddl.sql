@@ -1,1 +1,0 @@
-CREATE INDEX IF NOT EXISTS idx_dristi_cases_pending_advocate_requests ON dristi_cases USING GIN (pendingAdvocateRequests);

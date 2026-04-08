@@ -95,15 +95,7 @@
         "language": "java",
         "version": "17"
     },
-    "dristi-case-pdf": {
-        "service_group": "core-services",
-        "db_source_path": "",
-        "dockerfile_path": "backend/ui-integration-services/dristi-case-pdf/Dockerfile",
-        "service_source_path": "backend/ui-integration-services/dristi-case-pdf",
-        "language": "nodejs",
-        "version": "20",
-        "sonar_sources": ""
-    },
+    
     "egov-accesscontrol" :{
         "service_group": "core-services",
         "db_source_path": "backend/digit-services/egov-accesscontrol/src/main/resources/db",

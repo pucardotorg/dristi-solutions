@@ -1,2 +1,0 @@
-ALTER TABLE transaction_details
-ADD COLUMN IF NOT EXISTS bill_id VARCHAR(30);

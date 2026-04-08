@@ -1,1 +1,0 @@
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dristi_application_tenant_id ON dristi_application(tenantId);

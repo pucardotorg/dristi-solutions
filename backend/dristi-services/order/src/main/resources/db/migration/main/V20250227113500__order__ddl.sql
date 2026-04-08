@@ -1,1 +1,0 @@
-CREATE INDEX IF NOT EXISTS idx_dristi_order_composite_items ON dristi_orders USING GIN (compositeItems);

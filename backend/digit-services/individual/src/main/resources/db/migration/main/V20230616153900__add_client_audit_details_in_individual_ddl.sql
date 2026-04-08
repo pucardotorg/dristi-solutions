@@ -1,2 +1,0 @@
-ALTER TABLE INDIVIDUAL ADD COLUMN clientCreatedTime bigint;
-ALTER TABLE INDIVIDUAL ADD COLUMN clientLastModifiedTime bigint;
