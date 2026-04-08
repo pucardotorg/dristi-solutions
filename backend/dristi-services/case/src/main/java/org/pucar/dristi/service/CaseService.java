@@ -4116,6 +4116,7 @@ public class CaseService {
             courtCaseRedis.setSubstage(caseOverallStatus.getSubstage());
             courtCaseRedis.setStageBackup(caseOverallStatus.getStageBackup());
             courtCaseRedis.setSubstageBackup(caseOverallStatus.getSubstageBackup());
+            courtCaseRedis.setSecondaryStage(caseOverallStatus.getSecondaryStage());
         }
         updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
     }

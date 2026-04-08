@@ -22,7 +22,7 @@ public class CaseQueryBuilder {
     private static final String BASE_CASE_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
             "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.accesscode as accesscode, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber, " +
             " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby," +
-            " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails";
+            " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails, cases.secondaryStage as secondaryStage";
 
     private static final String BASE_CASE_SUMMARY_LIST_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.courtid as courtid, cases.casetitle as casetitle, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
             " cases.cmpnumber as cmpnumber, cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.status as status, cases.pendingadvocaterequests as pendingadvocaterequests, cases.substage as substage, cases.filingdate as filingdate,cases.lastmodifiedtime as lastmodifiedtime, cases.createdtime as createdtime, cases.isLPRCase as isLPRCase, cases.lprNumber as lprNumber";
@@ -138,6 +138,8 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
+                firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
+
                 addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
             }
 
@@ -178,6 +180,8 @@ public class CaseQueryBuilder {
                 firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
                 firstCriteria = addAdvocateCriteriaForListSearch(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), criteria.getOfficeAdvocateId(), criteria.getIsMemberActiveInCase(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+
+                firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
 
                 firstCriteria = addListCriteria(criteria.getStatus(), query, firstCriteria, "cases.status", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
@@ -405,6 +409,8 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
+                firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
+
                 firstCriteria = addListCriteria(criteria.getStatus(), query, firstCriteria, "cases.status", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
                 firstCriteria = addFilingDateCriteria(criteria, firstCriteria, query, preparedStmtList, preparedStmtArgList);
@@ -423,6 +429,23 @@ public class CaseQueryBuilder {
         if (itemList != null && !itemList.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
             prepareStatementAndArgumentForListCriteria(itemList, query, str, preparedStmtList, preparedStmtArgList, varchar);
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    private boolean addJsonbArrayCriteria(List<String> itemList, StringBuilder query, boolean firstCriteria, String jsonbColumn, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (itemList != null && !itemList.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            
+            // Use PostgreSQL JSONB array containment operator
+            // For searching cases where ANY of the provided secondary stages match
+            query.append(jsonbColumn).append(" ?| array[");
+            query.append(itemList.stream().map(item -> "?").collect(Collectors.joining(",")));
+            query.append("]::text[]");
+            
+            preparedStmtList.addAll(itemList);
+            itemList.forEach(item -> preparedStmtArgList.add(Types.VARCHAR));
             firstCriteria = false;
         }
         return firstCriteria;

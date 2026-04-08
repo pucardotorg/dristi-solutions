@@ -202,4 +202,7 @@ public class CourtCase {
     @JsonProperty("courtCaseNumberBackup")
     private String courtCaseNumberBackup = null;
 
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
+
 }

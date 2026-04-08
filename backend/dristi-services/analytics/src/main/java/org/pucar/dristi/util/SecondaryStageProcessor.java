@@ -4,6 +4,7 @@ import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.web.models.CaseOverallStatus;
 import org.pucar.dristi.web.models.CaseStageSubStage;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -33,14 +35,16 @@ public class SecondaryStageProcessor {
     private final Producer producer;
     private final ObjectMapper mapper;
     private final CaseUtil caseUtil;
+    private final MdmsDataConfig mdmsDataConfig;
 
     @Autowired
-    public SecondaryStageProcessor(CaseStageTrackingUtil caseStageTrackingUtil, Configuration config, Producer producer, ObjectMapper mapper, CaseUtil caseUtil) {
+    public SecondaryStageProcessor(CaseStageTrackingUtil caseStageTrackingUtil, Configuration config, Producer producer, ObjectMapper mapper, CaseUtil caseUtil, MdmsDataConfig mdmsDataConfig) {
         this.caseStageTrackingUtil = caseStageTrackingUtil;
         this.config = config;
         this.producer = producer;
         this.mapper = mapper;
         this.caseUtil = caseUtil;
+        this.mdmsDataConfig = mdmsDataConfig;
     }
 
     /**
@@ -59,7 +63,8 @@ public class SecondaryStageProcessor {
 
             // Start triggers: order type published triggers corresponding secondary stage
             if (ORDER_STATUS_PUBLISHED.equalsIgnoreCase(status)) {
-                String secondaryStage = mapOrderTypeToSecondaryStage(orderType);
+                Map<String, String> orderTypeToSubstageMap = mdmsDataConfig.getOrderTypeToSubstageMap();
+                String secondaryStage = mapOrderTypeToSecondaryStage(orderType, orderTypeToSubstageMap);
                 if (secondaryStage != null) {
                     log.info("Order type '{}' published triggers secondary stage '{}' for filingNumber: {}", orderType, secondaryStage, filingNumber);
                     caseStageTrackingUtil.startSecondaryStage(filingNumber, tenantId, secondaryStage);
@@ -86,15 +91,18 @@ public class SecondaryStageProcessor {
             if (applicationType == null || status == null) return;
 
             if (APPLICATION_DELAY_CONDONATION.equalsIgnoreCase(applicationType)) {
+                // Delay Condonation is not mapped to orderType, handle it separately
+                String delayCondonationStage = "Delay Condonation";
+                
                 if (APPLICATION_STATUS_ACCEPTED.equalsIgnoreCase(status) || APPLICATION_STATUS_REJECTED.equalsIgnoreCase(status)) {
                     // End trigger for Delay Condonation
-                    log.info("Application '{}' status '{}' ends secondary stage '{}' for filingNumber: {}", applicationType, status, SECONDARY_STAGE_DELAY_CONDONATION, filingNumber);
-                    caseStageTrackingUtil.endSecondaryStage(filingNumber, SECONDARY_STAGE_DELAY_CONDONATION);
+                    log.info("Application '{}' status '{}' ends secondary stage '{}' for filingNumber: {}", applicationType, status, delayCondonationStage, filingNumber);
+                    caseStageTrackingUtil.endSecondaryStage(filingNumber, delayCondonationStage);
                     publishSubstageUpdate(filingNumber, tenantId, request);
                 } else {
                     // Start trigger for Delay Condonation (application created/submitted)
-                    log.info("Application '{}' triggers secondary stage '{}' for filingNumber: {}", applicationType, SECONDARY_STAGE_DELAY_CONDONATION, filingNumber);
-                    caseStageTrackingUtil.startSecondaryStage(filingNumber, tenantId, SECONDARY_STAGE_DELAY_CONDONATION);
+                    log.info("Application '{}' triggers secondary stage '{}' for filingNumber: {}", applicationType, delayCondonationStage, filingNumber);
+                    caseStageTrackingUtil.startSecondaryStage(filingNumber, tenantId, delayCondonationStage);
                     publishSubstageUpdate(filingNumber, tenantId, request);
                 }
             }
@@ -116,17 +124,20 @@ public class SecondaryStageProcessor {
         try {
             if (hearingType == null) return;
 
+            // Mediation is not mapped to orderType, handle it separately
+            String mediationStage = "Mediation";
+
             if (HEARING_PURPOSE_MEDIATION.equalsIgnoreCase(hearingType)) {
                 // Start trigger: hearing purpose is Mediation
-                log.info("Hearing purpose '{}' triggers secondary stage '{}' for filingNumber: {}", hearingType, SECONDARY_STAGE_MEDIATION, filingNumber);
-                caseStageTrackingUtil.startSecondaryStage(filingNumber, tenantId, SECONDARY_STAGE_MEDIATION);
+                log.info("Hearing purpose '{}' triggers secondary stage '{}' for filingNumber: {}", hearingType, mediationStage, filingNumber);
+                caseStageTrackingUtil.startSecondaryStage(filingNumber, tenantId, mediationStage);
                 publishSubstageUpdate(filingNumber, tenantId, request);
             } else {
                 // End trigger for Mediation: a new hearing with a different purpose is scheduled
                 List<String> activeStages = caseStageTrackingUtil.getActiveSecondaryStageNames(filingNumber);
-                if (activeStages.contains(SECONDARY_STAGE_MEDIATION)) {
-                    log.info("New hearing with purpose '{}' ends secondary stage '{}' for filingNumber: {}", hearingType, SECONDARY_STAGE_MEDIATION, filingNumber);
-                    caseStageTrackingUtil.endSecondaryStage(filingNumber, SECONDARY_STAGE_MEDIATION);
+                if (activeStages.contains(mediationStage)) {
+                    log.info("New hearing with purpose '{}' ends secondary stage '{}' for filingNumber: {}", hearingType, mediationStage, filingNumber);
+                    caseStageTrackingUtil.endSecondaryStage(filingNumber, mediationStage);
                     publishSubstageUpdate(filingNumber, tenantId, request);
                 }
             }
@@ -136,48 +147,47 @@ public class SecondaryStageProcessor {
     }
 
     /**
-     * Maps an order type to the corresponding secondary stage name.
+     * Maps an order type to the corresponding secondary stage name using MDMS data.
      *
      * @param orderType the order type
+     * @param orderTypeToSubstageMap map of orderType to substage from MDMS
      * @return the secondary stage name, or null if no mapping exists
      */
-    private String mapOrderTypeToSecondaryStage(String orderType) {
-        if (orderType == null) return null;
-        String upperOrderType = orderType.toUpperCase();
-
-        if (upperOrderType.contains(ORDER_TYPE_NOTICE)) {
-            return SECONDARY_STAGE_NOTICE;
-        } else if (upperOrderType.contains(ORDER_TYPE_SUMMONS)) {
-            return SECONDARY_STAGE_SUMMONS;
-        } else if (upperOrderType.contains(ORDER_TYPE_WARRANT)) {
-            return SECONDARY_STAGE_WARRANT;
-        } else if (upperOrderType.contains(ORDER_TYPE_PROCLAMATION) || upperOrderType.contains(ORDER_TYPE_ATTACHMENT)) {
-            return SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT;
+    private String mapOrderTypeToSecondaryStage(String orderType, Map<String, String> orderTypeToSubstageMap) {
+        if (orderType == null || orderTypeToSubstageMap == null) return null;
+        
+        // Direct lookup first
+        String directMatch = orderTypeToSubstageMap.get(orderType.toUpperCase());
+        if (directMatch != null) {
+            return directMatch;
         }
+        
+        // Partial match for order types that contain the key
+        String upperOrderType = orderType.toUpperCase();
+        for (Map.Entry<String, String> entry : orderTypeToSubstageMap.entrySet()) {
+            if (upperOrderType.contains(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        
         return null;
     }
 
     /**
-     * Computes the current substage from active secondary stages and publishes a CaseOverallStatus update.
-     * If no secondary stages are active, substage is set to "N/A".
-     * If one or more are active, substage is set to a comma-separated list of active stage names.
+     * Computes the current secondary stages from active secondary stages and publishes a CaseOverallStatus update.
+     * If no secondary stages are active, secondaryStage is set to empty list.
+     * If one or more are active, secondaryStage is set to the list of active stage names.
      */
     private void publishSubstageUpdate(String filingNumber, String tenantId, JSONObject request) {
         try {
             List<String> activeStages = caseStageTrackingUtil.getActiveSecondaryStageNames(filingNumber);
-            String substage;
-            if (activeStages.isEmpty()) {
-                substage = SECONDARY_STAGE_NA;
-            } else {
-                substage = String.join(", ", activeStages);
-            }
 
             RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
 
             CaseOverallStatus caseOverallStatus = new CaseOverallStatus();
             caseOverallStatus.setFilingNumber(filingNumber);
             caseOverallStatus.setTenantId(tenantId);
-            caseOverallStatus.setSubstage(substage);
+            caseOverallStatus.setSecondaryStage(activeStages);
 
             Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
 
@@ -197,10 +207,10 @@ public class SecondaryStageProcessor {
             caseOverallStatus.setAuditDetails(auditDetails);
 
             CaseStageSubStage caseStageSubStage = new CaseStageSubStage(requestInfo, caseOverallStatus);
-            log.info("Publishing substage update to kafka topic: {}, substage: '{}' for filingNumber: {}", config.getCaseOverallStatusTopic(), substage, filingNumber);
+            log.info("Publishing secondary stage update to kafka topic: {}, secondaryStage: '{}' for filingNumber: {}", config.getCaseOverallStatusTopic(), activeStages, filingNumber);
             producer.push(config.getCaseOverallStatusTopic(), caseStageSubStage);
         } catch (Exception e) {
-            log.error("Error publishing substage update for filingNumber: {}", filingNumber, e);
+            log.error("Error publishing secondary stage update for filingNumber: {}", filingNumber, e);
         }
     }
 }

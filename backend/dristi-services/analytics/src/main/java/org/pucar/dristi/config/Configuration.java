@@ -135,6 +135,12 @@ public class Configuration {
 	@Value("${egov.mdms.case.outcome.module.name}")
 	private String mdmsCaseOutcomeModuleName;
 
+	@Value("${egov.mdms.case.secondary.stage.module.name}")
+	private String mdmsCaseSecondaryStageModuleName;
+
+	@Value("${egov.mdms.case.secondary.stage.master.name}")
+	private String mdmsCaseSecondaryStageMasterName;
+
 	@Value("${egov.mdms.case.outcome.master.name}")
 	private String mdmsCaseOutcomeMasterName;
 

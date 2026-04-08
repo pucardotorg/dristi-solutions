@@ -329,8 +329,8 @@ public class ServiceConstants {
     public static final String ORDER_TYPE_NOTICE = "NOTICE";
     public static final String ORDER_TYPE_SUMMONS = "SUMMONS";
     public static final String ORDER_TYPE_WARRANT = "WARRANT";
-    public static final String ORDER_TYPE_PROCLAMATION = "PROCLAMATION_AND_ATTACHMENT";
-    public static final String ORDER_TYPE_ATTACHMENT = "PROCLAMATION_AND_ATTACHMENT";
+    public static final String ORDER_TYPE_PROCLAMATION = "PROCLAMATION";
+    public static final String ORDER_TYPE_ATTACHMENT = "ATTACHMENT";
 
     // Application type for delay condonation
     public static final String APPLICATION_DELAY_CONDONATION = "DELAY_CONDONATION";

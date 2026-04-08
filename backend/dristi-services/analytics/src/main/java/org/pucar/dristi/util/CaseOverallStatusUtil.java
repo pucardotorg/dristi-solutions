@@ -155,7 +155,7 @@ public class CaseOverallStatusUtil {
 		for (CaseOverallStatusType caseOverallStatusType : caseOverallStatusTypeList) {
 			if (HEARING.equalsIgnoreCase(caseOverallStatusType.getEntityType()) && caseOverallStatusType.getTypeIdentifier().equalsIgnoreCase(hearingType)) {
 				Integer priority = caseOverallStatusType.getPriority() != null ? caseOverallStatusType.getPriority() : Integer.MAX_VALUE;
-				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, caseOverallStatusType.getStage(), caseOverallStatusType.getSubstage());
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, caseOverallStatusType.getStage(), "");
 				caseOverallStatus.setProcessHandler(caseOverallStatusType.getProcessHandler());
 				priorityMap.put(priority, caseOverallStatus);
 			}
@@ -224,7 +224,7 @@ public class CaseOverallStatusUtil {
 				// Track stage timing in ES: add new stage entry with startTime=now, endTime=null
 				trackStageTransition(filingNumber, tenantId, statusType);
 
-                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), "");
 			}
 		}
 		return null;
@@ -312,7 +312,7 @@ public class CaseOverallStatusUtil {
 	private org.pucar.dristi.web.models.CaseOverallStatus determineHearingStage(String filingNumber, String tenantId, String hearingType, String action) {
 		for (org.pucar.dristi.web.models.CaseOverallStatusType statusType : caseOverallStatusTypeList) {
 			if (statusType.getAction().equalsIgnoreCase(action) && statusType.getTypeIdentifier().equalsIgnoreCase(hearingType))
-                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), "");
 		}
 		return null;
 	}
@@ -332,7 +332,7 @@ public class CaseOverallStatusUtil {
 			}
 			
 			if (isMatch) {
-				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), "");
 				caseOverallStatus.setProcessHandler(statusType.getProcessHandler());
 				Integer priority = statusType.getPriority() != null ? statusType.getPriority() : Integer.MAX_VALUE;
 				priorityMap.put(priority, caseOverallStatus);
