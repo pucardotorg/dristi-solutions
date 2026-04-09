@@ -459,8 +459,8 @@ public class CaseQueryBuilder {
 
             preparedStmtList.add(jsonArray);
 
-            // Use Types.OTHER for JSONB
-            preparedStmtArgList.add(Types.OTHER);
+            // Use VARCHAR since SQL already casts with ::jsonb
+            preparedStmtArgList.add(Types.VARCHAR);
 
             firstCriteria = false;
         }
