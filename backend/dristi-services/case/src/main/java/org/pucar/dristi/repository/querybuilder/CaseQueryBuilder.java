@@ -446,25 +446,20 @@ public class CaseQueryBuilder {
         if (itemList != null && !itemList.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
 
-            // Handle NULL safely + use ?| operator with ARRAY syntax
+            // Use placeholder instead of hardcoding ARRAY
             query.append("COALESCE(")
                     .append(jsonbColumn)
-                    .append(", '[]'::jsonb) ?| ARRAY[");
+                    .append(", '[]'::jsonb) ?| ?");
 
-            // Build ARRAY['value1','value2',...] syntax
-            query.append(itemList.stream()
-                    .filter(Objects::nonNull)
-                    .map(item -> "'" + item.replace("'", "''") + "'")
-                    .collect(Collectors.joining(",")));
-
-            query.append("]");
+            // Add as SQL Array (NOT string)
+            preparedStmtList.add(itemList.toArray(new String[0]));
+            preparedStmtArgList.add(Types.ARRAY);
 
             firstCriteria = false;
         }
 
         return firstCriteria;
     }
-
 
     private static void prepareStatementAndArgumentForListCriteria(List<String> itemList, StringBuilder query, String str, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, int varchar) {
         if (!itemList.isEmpty()) {
