@@ -446,14 +446,18 @@ public class CaseQueryBuilder {
         if (itemList != null && !itemList.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
 
-            // Use placeholder instead of hardcoding ARRAY
-            query.append("COALESCE(")
+            // Use jsonb_exists_any() function instead of ?| operator
+            // because JDBC interprets ? in ?| as a parameter placeholder
+            query.append("jsonb_exists_any(COALESCE(")
                     .append(jsonbColumn)
-                    .append(", '[]'::jsonb) ?| ?");
+                    .append(", '[]'::jsonb), ARRAY[");
 
-            // Add as SQL Array (NOT string)
-            preparedStmtList.add(itemList.toArray(new String[0]));
-            preparedStmtArgList.add(Types.ARRAY);
+            query.append(itemList.stream()
+                    .filter(Objects::nonNull)
+                    .map(item -> "'" + item.replace("'", "''") + "'")
+                    .collect(Collectors.joining(",")));
+
+            query.append("])");
 
             firstCriteria = false;
         }
