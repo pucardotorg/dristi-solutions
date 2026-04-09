@@ -315,6 +315,7 @@ public class ServiceConstants {
 
     // JSON path for case litigants
     public static final String CASE_LITIGANTS_PATH = "$.litigants";
+    public static final String SUMMONS = "Summons";
 
     // PRD Secondary Stage Names
     public static final String SECONDARY_STAGE_DELAY_CONDONATION = "Delay Condonation";
@@ -344,5 +345,9 @@ public class ServiceConstants {
 
     // Status for order published
     public static final String ORDER_STATUS_PUBLISHED = "published";
+
+    // JSON path for delay condonation type in case details
+    public static final String DELAY_CONDONATION_TYPE_CODE_PATH = "$.caseDetails.delayApplications.formdata[0].data.delayCondonationType.code";
+    public static final String DELAY_CONDONATION_REQUIRED = "YES";
 
 }
