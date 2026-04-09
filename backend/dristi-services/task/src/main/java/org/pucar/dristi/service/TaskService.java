@@ -393,14 +393,7 @@ public class TaskService {
             // Enrich application upon update
            TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
-            try {
-                JsonNode taskDetails = (JsonNode) body.getTask().getTaskDetails();
-                boolean isPendingCollection = taskDetails.get("deliveryChannels").get("isPendingCollection").asBoolean();
-                enrichmentUtil.enrichIsPendingCollectionUponUpdate(taskRequest, isPendingCollection);
-            }
-            catch (Exception e) {
-                log.error("Error occurred while enriching isPendingCollection into task :: {}", e.toString());
-            }
+            enrichmentUtil.enrichIsPendingCollectionUponUpdate(taskRequest, body);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
 
