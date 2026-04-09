@@ -428,8 +428,10 @@ const GenerateOrdersV2 = () => {
       const bailAmount = bailFormData?.chequeAmount || null;
       const noOfSureties = bailFormData?.noOfSureties || null;
 
+      const refApplicationId = bailFormData?.refApplicationId;
+
       const newApplicationDetails = applicationData?.applicationList?.find(
-        (application) => application?.applicationNumber === orderObj?.additionalDetails?.formdata?.refApplicationId
+        (application) => application?.applicationNumber === refApplicationId
       );
 
       const candidateName = bailOfName || newApplicationDetails?.additionalDetails?.onBehalOfName || "";
