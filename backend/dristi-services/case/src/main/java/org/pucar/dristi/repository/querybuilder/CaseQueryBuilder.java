@@ -446,21 +446,18 @@ public class CaseQueryBuilder {
         if (itemList != null && !itemList.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
 
-            // Handle NULL safely + use JSONB overlap operator
+            // Handle NULL safely + use ?| operator with ARRAY syntax
             query.append("COALESCE(")
                     .append(jsonbColumn)
-                    .append(", '[]'::jsonb) && ?::jsonb");
+                    .append(", '[]'::jsonb) ?| ARRAY[");
 
-            // Convert list to safe JSON array string
-            String jsonArray = itemList.stream()
+            // Build ARRAY['value1','value2',...] syntax
+            query.append(itemList.stream()
                     .filter(Objects::nonNull)
-                    .map(item -> "\"" + item.replace("\"", "\\\"") + "\"") // escape quotes
-                    .collect(Collectors.joining(",", "[", "]"));
+                    .map(item -> "'" + item.replace("'", "''") + "'")
+                    .collect(Collectors.joining(",")));
 
-            preparedStmtList.add(jsonArray);
-
-            // Use VARCHAR since SQL already casts with ::jsonb
-            preparedStmtArgList.add(Types.VARCHAR);
+            query.append("]");
 
             firstCriteria = false;
         }
