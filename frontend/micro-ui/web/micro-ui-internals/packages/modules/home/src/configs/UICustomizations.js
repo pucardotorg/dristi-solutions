@@ -202,27 +202,11 @@ export const UICustomizations = {
         },
       });
       const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
-      const selectedStage = typeof stageForm === "string" ? stageForm : (stageForm?.code || stageForm?.stage || "");
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.stage || stageForm?.code || "";
       const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
-      const cleanedSearchForm = { ...(requestCriteria?.state?.searchForm || {}) };
-      [
-        "action",
-        "entityType",
-        "id",
-        "state",
-        "typeIdentifier",
-        "workflowModule",
-        "priority",
-        "processHandler",
-        "compositeHearingPath",
-        "intermediateHearingPath",
-        "endStage",
-      ].forEach((key) => {
-        delete cleanedSearchForm[key];
-      });
       const criteria = {
         ...requestCriteria?.body?.criteria,
-        ...cleanedSearchForm,
+        ...requestCriteria?.state?.searchForm,
         tenantId,
         ...additionalDetails,
         ...("sortBy" in additionalDetails && {
@@ -286,8 +270,7 @@ export const UICustomizations = {
           return t(value);
         case "CS_STAGE":
           return t(value);
-        case "CS_SECONDARY_STAGE":
-          return value ? t(value) : t("ES_COMMON_NA");
+
         case "CS_FILING_DATE":
           return <span>{DateUtils.getFormattedDate(new Date(value))}</span>;
         case "CS_CASE_NUMBER_HOME":
@@ -328,27 +311,11 @@ export const UICustomizations = {
       // We need to change tenantId "processSearchCriteria" here
       const tenantId = window?.Digit.ULBService.getStateId();
       const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
-      const selectedStage = typeof stageForm === "string" ? stageForm : (stageForm?.code || stageForm?.stage || "");
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.stage || stageForm?.code || "";
       const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
-      const cleanedSearchForm = { ...(requestCriteria?.state?.searchForm || {}) };
-      [
-        "action",
-        "entityType",
-        "id",
-        "state",
-        "typeIdentifier",
-        "workflowModule",
-        "priority",
-        "processHandler",
-        "compositeHearingPath",
-        "intermediateHearingPath",
-        "endStage",
-      ].forEach((key) => {
-        delete cleanedSearchForm[key];
-      });
       const criteria = {
         ...requestCriteria?.body?.criteria,
-        ...cleanedSearchForm,
+        ...requestCriteria?.state?.searchForm,
         ...(selectedStage && { stage: [selectedStage] }),
         substage: undefined,
         ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
@@ -397,8 +364,7 @@ export const UICustomizations = {
           return <span>NIA S138</span>;
         case "CS_STAGE":
           return t(value);
-        case "CS_SECONDARY_STAGE":
-          return value ? t(value) : t("ES_COMMON_NA");
+
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_CASE_NUMBER_HOME":
@@ -445,27 +411,11 @@ export const UICustomizations = {
         },
       });
       const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
-      const selectedStage = typeof stageForm === "string" ? stageForm : (stageForm?.code || stageForm?.stage || "");
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.stage || stageForm?.code || "";
       const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
-      const cleanedSearchForm = { ...(requestCriteria?.state?.searchForm || {}) };
-      [
-        "action",
-        "entityType",
-        "id",
-        "state",
-        "typeIdentifier",
-        "workflowModule",
-        "priority",
-        "processHandler",
-        "compositeHearingPath",
-        "intermediateHearingPath",
-        "endStage",
-      ].forEach((key) => {
-        delete cleanedSearchForm[key];
-      });
       const criteria = {
         ...requestCriteria?.body?.criteria,
-        ...cleanedSearchForm,
+        ...requestCriteria?.state?.searchForm,
         tenantId,
         ...additionalDetails,
         ...("sortBy" in additionalDetails && {
@@ -524,8 +474,7 @@ export const UICustomizations = {
           return t(value);
         case "CS_STAGE":
           return t(value);
-        case "CS_SECONDARY_STAGE":
-          return value ? t(value) : t("ES_COMMON_NA");
+
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_CASE_NUMBER_HOME":
@@ -1162,8 +1111,9 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${applicationNumber || ""
-                  }&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
+                  applicationNumber || ""
+                }&individualId=${individualId}&type=${usertype}`}
               >
                 {applicationNumber
                   ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)

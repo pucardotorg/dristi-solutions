@@ -174,7 +174,8 @@ export const TabBenchSearchConfig = {
                   mdmsConfig: {
                     masterName: "CasePrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
+                    select:
+                      "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -198,7 +199,7 @@ export const TabBenchSearchConfig = {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -239,11 +240,6 @@ export const TabBenchSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
-                additionalCustomization: true,
-              },
-              {
-                label: "CS_SECONDARY_STAGE",
-                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -328,7 +324,8 @@ export const TabBenchSearchConfig = {
                   mdmsConfig: {
                     masterName: "CasePrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
+                    select:
+                      "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -352,7 +349,7 @@ export const TabBenchSearchConfig = {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -393,11 +390,6 @@ export const TabBenchSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
-                additionalCustomization: true,
-              },
-              {
-                label: "CS_SECONDARY_STAGE",
-                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -497,7 +489,8 @@ export const TabBenchSearchConfig = {
                   mdmsConfig: {
                     masterName: "CasePrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
+                    select:
+                      "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -521,7 +514,7 @@ export const TabBenchSearchConfig = {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -563,12 +556,6 @@ export const TabBenchSearchConfig = {
                 jsonPath: "substage",
                 additionalCustomization: true,
               },
-              {
-                label: "CS_SECONDARY_STAGE",
-                jsonPath: "secondaryStage",
-                additionalCustomization: true,
-              },
-
               {
                 label: "CS_CASE_NUMBER_HOME",
                 jsonPath: "filingNumber",

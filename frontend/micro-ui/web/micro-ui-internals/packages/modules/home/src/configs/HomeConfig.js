@@ -211,7 +211,7 @@ export const TabUnifiedEmployeeSearchConfig = {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -251,11 +251,6 @@ export const TabUnifiedEmployeeSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
-                additionalCustomization: true,
-              },
-              {
-                label: "CS_SECONDARY_STAGE",
-                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -369,7 +364,7 @@ export const TabUnifiedEmployeeSearchConfig = {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -409,11 +404,6 @@ export const TabUnifiedEmployeeSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
-                additionalCustomization: true,
-              },
-              {
-                label: "CS_SECONDARY_STAGE",
-                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -542,7 +532,7 @@ export const TabUnifiedEmployeeSearchConfig = {
                     masterName: "CaseSecondaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -582,11 +572,6 @@ export const TabUnifiedEmployeeSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
-                additionalCustomization: true,
-              },
-              {
-                label: "CS_SECONDARY_STAGE",
-                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -989,7 +974,7 @@ export const CaseReviewerAdditionalTab = {
                 masterName: "CaseSecondaryStage",
                 moduleName: "case",
                 select:
-                  "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).sort((a,b) => a.substage.localeCompare(b.substage));}",
+                  "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
               },
               styles: {
                 maxWidth: "250px",
