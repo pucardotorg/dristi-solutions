@@ -118,29 +118,31 @@ const useOrderTaskHandlers = ({
         return acceptBailItem?.orderSchema?.additionalDetails?.formdata || {};
       })();
 
-      const bailOfName = bailFormData?.bailOf;
       const bailType = bailFormData?.bailType?.code || null;
       const bailAmount = bailFormData?.chequeAmount || null;
       const noOfSureties = bailFormData?.noOfSureties || null;
 
-      const refApplicationId = bailFormData?.refApplicationId;
+      const refApplicationId = bailFormData?.refApplicationId;
 
-      const newApplicationDetails = applicationData?.applicationList?.find(
-        (application) => application?.applicationNumber === refApplicationId
-      );
+      const newApplicationDetails = applicationData?.applicationList?.find((application) => application?.applicationNumber === refApplicationId);
 
-      const candidateName = bailOfName || newApplicationDetails?.additionalDetails?.onBehalOfName || "";
+      const accusedIndividualId =
+        newApplicationDetails?.additionalDetails?.individualId || newApplicationDetails?.additionalDetails?.accusedId || null;
 
-      const targetLitigant =
-        (caseDetails?.litigants || []).find((lit) => {
-          const fullName = lit?.additionalDetails?.fullName || "";
-          return candidateName && fullName?.toLowerCase?.() === candidateName?.toLowerCase?.();
-        }) || (caseDetails?.litigants || []).find((lit) => lit?.partyType?.includes?.("respondent"));
+      let targetLitigant = null;
+
+      if (accusedIndividualId) {
+        targetLitigant = (caseDetails?.litigants || []).find((lit) => lit?.individualId === accusedIndividualId);
+      }
+
+      if (!targetLitigant) {
+        targetLitigant = (caseDetails?.litigants || []).find((lit) => lit?.partyType?.includes?.("respondent"));
+      }
 
       const targetIndividualId = targetLitigant?.individualId;
       const targetUserUuid = targetIndividualId ? await getUserUUID(targetIndividualId) : "";
 
-      const accusedKey = targetIndividualId || targetLitigant?.uniqueId || targetLitigant?.partyUuid || targetLitigant?.additionalDetails?.uuid || "";
+      const accusedKey = targetIndividualId || targetLitigant?.additionalDetails?.uuid || "";
       const referenceId = getRaiseBailBondReferenceId({ accusedKey, filingNumber });
 
       let pendingTaskPayload = {};
@@ -164,7 +166,7 @@ const useOrderTaskHandlers = ({
         const additionalDetails = {
           accusedIndividualId: targetIndividualId || null,
           accusedKey: accusedKey || null,
-          litigantUuid: targetIndividualId || accusedKey || null,
+          litigantUuid: targetLitigant?.additionalDetails?.uuid || accusedKey || null,
           individualId: targetIndividualId || null,
           addSurety: bailTypeCode === "SURETY" ? "YES" : bailTypeCode ? "NO" : undefined,
           refApplicationId:
@@ -174,7 +176,7 @@ const useOrderTaskHandlers = ({
             "",
           bailType: bailTypeObj || bailTypeCode || bailType || null,
           ...(bailTypeCode && { bailTypeCode }),
-          ...(targetIndividualId || accusedKey ? { litigants: [targetIndividualId || accusedKey] } : {}),
+          ...(targetIndividualId ? { litigants: [targetIndividualId] } : {}),
           ...(bailAmount != null &&
             (() => {
               const amt = Number(bailAmount);
@@ -237,7 +239,7 @@ const useOrderTaskHandlers = ({
             filingNumber,
             caseId: caseDetails?.id,
             caseTitle: caseDetails?.caseTitle,
-            isCompleted: bailFormData?.bailType?.code === "SURETY" ? false : true,
+            isCompleted: bailTypeCode === "SURETY" ? false : true,
             expiryDate: bailPendingTaskExpiryDays * 24 * 60 * 60 * 1000 + todayDate,
             stateSla: todayDate,
             additionalDetails,
