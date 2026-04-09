@@ -65,4 +65,31 @@ public class LocalizationUtil {
 
         return localizedMessageMap;
     }
+
+    public Map<String, String> getMessagesMap(RequestInfo requestInfo, String tenantId) {
+
+        Map<String, String> messagesMap = new HashMap<>();
+
+        try {
+            Map<String, Map<String, String>> localizedMessageMap =
+                    getLocalisedMessages(requestInfo, tenantId, ENG_LOCALE_CODE, MODULE_CODE);
+
+            if (localizedMessageMap != null && !localizedMessageMap.isEmpty()) {
+
+                String key = ENG_LOCALE_CODE + "|" + tenantId;
+
+                Map<String, String> tenantMessages = localizedMessageMap.get(key);
+
+                if (tenantMessages != null) {
+                    messagesMap.putAll(tenantMessages);
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Error building messagesMap", e);
+        }
+
+        return messagesMap;
+    }
+
 }
