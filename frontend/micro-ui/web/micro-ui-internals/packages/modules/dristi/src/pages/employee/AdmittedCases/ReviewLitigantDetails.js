@@ -297,8 +297,8 @@ const ReviewLitigantDetails = ({ path }) => {
         );
       }
     } catch (error) {
-      toast.error(t("SOMETHING_WENT_WRONG"));
-      console.error(error);
+      console.error("Failed to create order for updating litigant details:", error);
+      toast.error(t("LITIGANT_UPDATE_FAILED"));
     }
   };
 

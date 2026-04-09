@@ -21,7 +21,6 @@ import PreviewPdfModal from "../../components/PreviewPdfModal";
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
 import GenericNumberInputModal from "../../components/GenericNumberInputModal";
 import { getFormattedName } from "../../utils";
-import SuccessBannerModal from "../../components/SuccessBannerModal";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 const convertToFormData = (obj) => {
@@ -67,7 +66,6 @@ const PleaSubmission = () => {
   const [defaultFormValueData, setDefaultFormValueData] = useState({});
   const [previewPleaModal, setPreviewPleModal] = useState(false);
   const [pleaFileStoreId, setPleaFileStoreId] = useState("");
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showPleaEsign, setShowPleaEsign] = useState(false);
   const [pleaSignatureURL, setPleaSignatureURL] = useState("");
   const [showAddPleaMobileNumber, setShowAddPleaMobileNumber] = useState(false);
@@ -252,8 +250,8 @@ const PleaSubmission = () => {
         setPreviewPleModal(true);
       }
     } catch (error) {
-      console.error("Error while updating plea:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to save plea draft:", error);
+      setShowErrorToast({ label: t("PLEA_SAVE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }
@@ -282,8 +280,8 @@ const PleaSubmission = () => {
       }
       setShowAddPleaMobileNumber(true);
     } catch (error) {
-      console.error("Error while updating plea:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to submit plea:", error);
+      setShowErrorToast({ label: t("PLEA_SUBMISSION_FAILED"), error: true });
     } finally {
       setLoader(false);
     }
@@ -319,8 +317,8 @@ const PleaSubmission = () => {
       setShowAddPleaMobileNumber(false);
       setShowPleaEsign(true);
     } catch (error) {
-      console.error("Error while updating plea:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to verify plea OTP:", error);
+      setShowErrorToast({ label: t("PLEA_OTP_VERIFICATION_FAILED"), error: true });
     } finally {
       setLoader(false);
     }
@@ -444,7 +442,6 @@ const PleaSubmission = () => {
             header={"PLEA_ESIGN_MODAL_HEADER"}
           />
         )}
-        {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"PLEA_ESIGN_MODAL_SUCCESS"} />}
       </div>
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>

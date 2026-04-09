@@ -328,8 +328,8 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           history.goBack();
         });
     } catch (error) {
-      console.error("error: ", error);
-      showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+      console.error("Failed to update business of the day entry:", error);
+      showToast("error", t("UPDATE_BUSINESS_OF_DAY_FAILED"), 5000);
     }
   };
 

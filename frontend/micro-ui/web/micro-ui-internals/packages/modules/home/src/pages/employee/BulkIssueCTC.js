@@ -141,7 +141,7 @@ const BulkIssueCTC = () => {
       setShowModal(true);
     } catch (error) {
       console.error("Failed to generate CTC PDF:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("BULK_CTC_PDF_ISSUE_FAILED"), error: true });
     } finally {
       setIsLoading(false);
     }
@@ -448,7 +448,7 @@ const BulkIssueCTC = () => {
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error("error while updating", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("BULK_CTC_ISSUE_FAILED"), error: true });
     } finally {
       setIsLoading(false);
     }

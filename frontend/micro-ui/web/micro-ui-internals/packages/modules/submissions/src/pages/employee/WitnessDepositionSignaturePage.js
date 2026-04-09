@@ -148,7 +148,7 @@ const WitnessDepositionSignaturePage = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("WITNESS_DEPOSITION_SIGNATURE_FAILED"), error: true });
     } finally {
       setShowSignatureModal(false);
       sessionStorage.removeItem("isSignSuccess");
@@ -216,8 +216,8 @@ const WitnessDepositionSignaturePage = () => {
       setShowSignatureModal(false);
       setShowSuccessModal(true);
     } catch (error) {
-      console.error("Error while updating witness deposition:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to upload witness deposition:", error);
+      setShowErrorToast({ label: t("WITNESS_DEPOSITION_UPLOAD_FAILED"), error: true });
     } finally {
       setLoader(false);
     }

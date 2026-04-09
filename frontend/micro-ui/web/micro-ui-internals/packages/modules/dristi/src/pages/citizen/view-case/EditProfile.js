@@ -825,7 +825,7 @@ const EditProfile = ({ path }) => {
           `/${window.contextPath}/citizen/submissions/submissions-create?filingNumber=${caseDetails?.filingNumber}&applicationNumber=${newapplicationNumber}`
         );
       } catch (error) {
-        let message = t("SOMETHING_WENT_WRONG");
+        let message = t("PROFILE_UPDATE_FAILED");
         if (error instanceof DocumentUploadError) {
           message = `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
         } else if (extractCodeFromErrorMsg(error) === 413) {

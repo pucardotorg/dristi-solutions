@@ -93,7 +93,7 @@ const TemplateOrConfigurationPage = () => {
           setRefreshKey((prev) => prev + 1);
         } catch (error) {
           console.error("Delete failed", error);
-          setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+          setShowErrorToast({ label: t("TEMPLATE_DELETE_FAILED"), error: true });
         } finally {
           setIsLoading(false);
         }
@@ -270,7 +270,7 @@ const TemplateOrConfigurationPage = () => {
       }
     } catch (error) {
       console.error("Error while Updating....", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("ERROR_UPDATING_TEMPLATE"), error: true });
     } finally {
       setIsLoading(false);
     }
@@ -305,7 +305,7 @@ const TemplateOrConfigurationPage = () => {
       }
     } catch (error) {
       console.log("Error whle Updating....", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("TEMPLATE_SAVE_FAILED"), error: true });
     } finally {
       setIsLoading(false);
     }

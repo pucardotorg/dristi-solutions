@@ -37,8 +37,8 @@ function ADiaryDocumentPdfModal({ t, tenantId, data, setShowDocumentPdfModal, is
         try {
           downloadPdf(tenantId, filestoreId);
         } catch (error) {
-          console.error("error: ", error);
-          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+          console.error("Failed to generate diary document PDF:", error);
+          showToast("error", t("DIARY_DOCUMENT_PDF_FAILED"));
         }
       }
     },

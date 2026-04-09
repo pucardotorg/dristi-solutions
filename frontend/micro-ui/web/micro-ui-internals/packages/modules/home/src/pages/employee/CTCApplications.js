@@ -68,7 +68,7 @@ const CTCApplications = ({ refetch }) => {
       setShowModal(true);
     } catch (error) {
       console.error("handleRowClick error:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("CTC_SEARCH_APPLICATION_FAILED"), error: true });
     } finally {
       setIsLoading(false);
     }
@@ -271,7 +271,7 @@ const CTCApplications = ({ refetch }) => {
       setShowErrorToast({ label: t("CTC_APPLICATION_ACCEPTED"), error: false });
     } catch (error) {
       console.error("handleCTCApplications error:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("CTC_APPLICATION_APPROVE_FAILED"), error: true });
     } finally {
       setIsLoading(false);
     }
@@ -302,7 +302,7 @@ const CTCApplications = ({ refetch }) => {
       setShowErrorToast({ label: t("CTC_APPLICATION_REJECTED"), error: false });
     } catch (error) {
       console.error("handleConfirmReject error:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("CTC_APPLICATION_REJECT_FAILED"), error: true });
     } finally {
       setIsLoading(false);
     }
@@ -329,8 +329,8 @@ const CTCApplications = ({ refetch }) => {
       setShowErrorToast({ label: t("BULK_ACCEPT_DONE"), error: false });
       setUpdateCounter((prev) => prev + 1);
     } catch (error) {
-      console.error(error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to process bulk CTC applications:", error);
+      setShowErrorToast({ label: t("BULK_ACCEPT_FAILED"), error: true });
     } finally {
       setIsLoading(false);
     }

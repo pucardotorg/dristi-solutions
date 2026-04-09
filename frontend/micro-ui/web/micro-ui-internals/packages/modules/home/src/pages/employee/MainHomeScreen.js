@@ -668,16 +668,30 @@ const MainHomeScreen = () => {
       const existingTask = taskManagementList?.find((item) => item?.taskType === orderType);
       setIsProcessLoader(true);
       try {
-        await createOrUpdateTask({
-          type: orderType,
-          existingTask: existingTask,
-          courierData: courierData,
-          formData: formData,
-          filingNumber: courierOrderDetails?.filingNumber,
-          tenantId,
-          isLast,
-        });
-        await refetchTaskManagement();
+        try {
+          await createOrUpdateTask({
+            type: orderType,
+            existingTask: existingTask,
+            courierData: courierData,
+            formData: formData,
+            filingNumber: courierOrderDetails?.filingNumber,
+            tenantId,
+            isLast,
+          });
+        } catch (error) {
+          console.error("Failed to create or update courier task:", error);
+          showToast("error", t("FAILED_TO_UPDATE_COURIER_TASK"));
+          return { continue: false };
+        }
+
+        try {
+          await refetchTaskManagement();
+        } catch (error) {
+          console.error("Failed to refetch task management:", error);
+          showToast("error", t("FAILED_TO_REFETCH_TASKS"));
+          return { continue: false };
+        }
+
         if (isLast) {
           setCourierServicePendingTask(null);
           setCourierOrderDetails({});
@@ -687,8 +701,8 @@ const MainHomeScreen = () => {
         }
         return { continue: true };
       } catch (error) {
-        console.error("Error creating or updating task:", error);
-        showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+        console.error("Unexpected error in courier processing:", error);
+        showToast("error", t("HOME_SCREEN_UPDATE_FAILED"));
         return { continue: false };
       } finally {
         setIsProcessLoader(false);

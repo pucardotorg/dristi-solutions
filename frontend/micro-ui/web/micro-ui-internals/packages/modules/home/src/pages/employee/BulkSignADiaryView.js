@@ -166,7 +166,7 @@ function BulkSignADiaryView() {
           setShowDocumentPdfModal({ show: true, rowData: { document: order?.documents?.[0], rowData: entry } });
         } catch (error) {
           console.error("error: ", error);
-          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+          showToast("error", t("BULK_SIGN_DIARY_SEARCH_ORDER_FAILED"), 5000);
         }
       }
 
@@ -188,7 +188,7 @@ function BulkSignADiaryView() {
           setShowDocumentPdfModal({ show: true, rowData: { document: response?.artifacts?.[0]?.file, rowData: entry } });
         } catch (error) {
           console.error("error: ", error);
-          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+          showToast("error", t("BULK_SIGN_DIARY_SEARCH_EVIDENCE_FAILED"), 5000);
         }
       }
       if (entry?.referenceType === "notice") {
@@ -209,8 +209,8 @@ function BulkSignADiaryView() {
             rowData: { document: notification?.documents?.[notification?.documents?.length - 1], rowData: entry },
           });
         } catch (error) {
-          console.error("error: ", error);
-          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+          console.error("Failed to fetch notification:", error);
+          showToast("error", t("NOTIFICATION_FETCH_FAILED"), 5000);
         }
       }
     };

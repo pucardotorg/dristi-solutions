@@ -105,8 +105,8 @@ function CaseLockModal({
       await Promise.all(promises);
       history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}&caseId=${caseId}`);
     } catch (error) {
-      console.error("An error occurred:", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Failed to create e-sign tasks:", error);
+      toast.error(t("FAILED_TO_CREATE_ESIGN_TASKS"));
     }
   };
 
@@ -137,8 +137,8 @@ function CaseLockModal({
         });
         history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}&caseId=${caseId}`);
       } catch (error) {
-        console.error("An error occurred:", error);
-        toast.error(t("SOMETHING_WENT_WRONG"));
+        console.error("Failed to create signature upload task:", error);
+        toast.error(t("FAILED_TO_CREATE_SIGNATURE_UPLOAD_TASK"));
       }
     }
   };

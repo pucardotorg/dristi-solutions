@@ -95,8 +95,8 @@ function WitnessDepositionDocModal({ t, docObj, setShowWitnessDepositionDoc, set
           setShowWitnessDepositionDoc({ docObj: null, show: false });
         }
       } catch (error) {
-        console.error("Error updating witness:", error);
-        setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+        console.error("Failed to update witness evidence:", error);
+        setShowErrorToast({ label: t("WITNESS_UPDATE_FAILED"), error: true });
       } finally {
         setIsLoading(false);
       }
@@ -113,6 +113,8 @@ function WitnessDepositionDocModal({ t, docObj, setShowWitnessDepositionDoc, set
         actionSaveLabel={saveLabel}
         hideSubmit={!Boolean(saveLabel)}
         actionSaveOnSubmit={handleSubmit}
+        isDisabled={isLoading}
+        isBackButtonDisabled={isLoading}
         popupStyles={{ width: "70vw", minHeight: "75vh", maxHeight: "90vh" }}
         headerBarMainStyle={{ minHeight: "50px" }}
         className={"review-submission-appl-modal bail-bond"}

@@ -2513,9 +2513,7 @@ function EFilingCases({ path }) {
 
             const noticeTask = taskManagementList?.find((item) => item?.taskType === "NOTICE");
             const summonsTask = taskManagementList?.find((item) => item?.taskType === "SUMMONS");
-            const warrantTask = taskManagementList?.find(
-              (item) => item?.taskType === "WARRANT"
-            );
+            const warrantTask = taskManagementList?.find((item) => item?.taskType === "WARRANT");
             let updatedWarrantTask = null;
 
             // removing processDelieveryDetails for warrant because of payment calculation handled at backend
@@ -2525,7 +2523,7 @@ function EFilingCases({ path }) {
                 ...party,
                 processDeliveryDetails: null,
               }));
-            
+
               updatedWarrantTask = {
                 ...warrantTask,
                 partyDetails: updatedWarrantPartyDetails,
@@ -2630,7 +2628,7 @@ function EFilingCases({ path }) {
           history.push(`?caseId=${caseId}&selected=${nextSelected}`);
         }
       } catch (error) {
-        let message = t("SOMETHING_WENT_WRONG");
+        let message = t("E_FILING_SUBMISSION_FAILED");
         if (error instanceof DocumentUploadError) {
           message = `${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
         } else if (extractCodeFromErrorMsg(error) === 413) {
@@ -2703,8 +2701,8 @@ function EFilingCases({ path }) {
         } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
-          console.error("Error:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          console.error("Failed to save case:", error);
+          toast.error(t("CASE_SAVE_FAILED"));
         }
         setIsDisabled(false);
       });
@@ -2785,8 +2783,8 @@ function EFilingCases({ path }) {
         } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
-          console.error("Error:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          console.error("Failed to submit case:", error);
+          toast.error(t("CASE_SUBMISSION_FAILED"));
         }
         setIsDisabled(false);
       })
@@ -3083,8 +3081,8 @@ function EFilingCases({ path }) {
       setPdfDetails(response?.data);
       setIsModalOpen(true);
     } catch (error) {
-      console.error("Error generating case PDF:", error);
-      toast.error(t("CASE_PDF_GENERATION_ERROR"));
+      console.error("Failed to generate case PDF:", error);
+      setShowErrorToast({ label: t("CASE_PDF_GENERATION_ERROR"), error: true });
     } finally {
       setIsLoader(false);
     }

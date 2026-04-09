@@ -259,9 +259,9 @@ const SubmissionDocuments = ({ path }) => {
         }
       }
     } catch (error) {
-      console.error("Error occured", error);
+      console.error("Failed to upload submission document:", error);
       const errorCode = error?.response?.data?.Errors?.[0]?.code;
-      setShowErrorToast({ label: t(errorCode || "SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t(errorCode || "SUBMISSION_DOCUMENT_UPLOAD_FAILED"), error: true });
     } finally {
       setLoader(false);
     }
@@ -283,8 +283,8 @@ const SubmissionDocuments = ({ path }) => {
         setShowReviewModal(true);
       }
     } catch (error) {
-      console.error("Error occured", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to update submission:", error);
+      setShowErrorToast({ label: t("SUBMISSION_UPDATE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }

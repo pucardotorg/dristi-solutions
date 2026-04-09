@@ -1719,7 +1719,7 @@ const GenerateOrdersV2 = () => {
           return response;
         });
     } catch (error) {
-      setShowErrorToast({ label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("ORDER_SAVE_FAILED"), error: true });
     }
   };
 
@@ -1787,7 +1787,7 @@ const GenerateOrdersV2 = () => {
       }
       return updateOrderResponse;
     } catch (error) {
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("ORDER_SAVE_FAILED"), error: true });
       throw error;
     } finally {
       setIsApiCallLoading(false);
@@ -1828,10 +1828,34 @@ const GenerateOrdersV2 = () => {
         }
       }
 
-      const updateOrderResponse = await handleSaveDraft(updatedOrderData);
+      let updateOrderResponse;
+      try {
+        updateOrderResponse = await handleSaveDraft(updatedOrderData);
+      } catch (error) {
+        console.error("Failed to save order draft:", error);
+        setShowErrorToast({ label: t("ORDER_SAVE_FAILED"), error: true });
+        setAddOrderTypeLoader(false);
+        return;
+      }
+
       if (isAcceptBailOrder && requestBailBond) {
-        await createPendingTaskForJudge(updateOrderResponse?.order);
-        await createPendingTaskForEmployee(updateOrderResponse?.order, false);
+        try {
+          await createPendingTaskForJudge(updateOrderResponse?.order);
+        } catch (error) {
+          console.error("Failed to create pending task for judge:", error);
+          setShowErrorToast({ label: t("FAILED_TO_CREATE_TASK_FOR_JUDGE"), error: true });
+          setAddOrderTypeLoader(false);
+          return;
+        }
+
+        try {
+          await createPendingTaskForEmployee(updateOrderResponse?.order, false);
+        } catch (error) {
+          console.error("Failed to create pending task for employee:", error);
+          setShowErrorToast({ label: t("FAILED_TO_CREATE_TASK_FOR_EMPLOYEE"), error: true });
+          setAddOrderTypeLoader(false);
+          return;
+        }
       }
       setCurrentOrder(updateOrderResponse?.order);
       setAddOrderModal(false);
@@ -1843,11 +1867,16 @@ const GenerateOrdersV2 = () => {
           `/${window.contextPath}/employee/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${updateOrderResponse?.order?.orderNumber}`
         );
       } else {
-        await refetchOrdersData();
+        try {
+          await refetchOrdersData();
+        } catch (error) {
+          console.error("Failed to refetch orders data:", error);
+          setShowErrorToast({ label: t("FAILED_TO_REFETCH_ORDERS"), error: true });
+        }
       }
     } catch (error) {
-      console.error("Error while saving draft:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Unexpected error while adding order:", error);
+      setShowErrorToast({ label: t("ORDER_SAVE_FAILED"), error: true });
     } finally {
       setAddOrderTypeLoader(false);
     }
@@ -2353,7 +2382,7 @@ const GenerateOrdersV2 = () => {
       });
     } catch (error) {
       console.error("error: ", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      toast.error(t("ORDER_SUBMISSION_FAILED"));
     }
   };
 
@@ -2677,7 +2706,7 @@ const GenerateOrdersV2 = () => {
             } catch (error) {
               const errorCode = error?.response?.data?.Errors?.[0]?.code;
               const errorMsg =
-                errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+                errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
               toast.error(errorMsg);
             }
           } else {
@@ -2753,7 +2782,7 @@ const GenerateOrdersV2 = () => {
         } catch (error) {
           const errorCode = error?.response?.data?.Errors?.[0]?.code;
           const errorMsg =
-            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
           toast.error(errorMsg);
         }
       } else {
@@ -2825,14 +2854,14 @@ const GenerateOrdersV2 = () => {
         } catch (error) {
           const errorCode = error?.response?.data?.Errors?.[0]?.code;
           const errorMsg =
-            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
           toast.error(errorMsg);
         }
       }
     } catch (error) {
       const errorCode = error?.response?.data?.Errors?.[0]?.code;
       const errorMsg =
-        errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
+        errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
       toast.error(errorMsg);
     }
   };
@@ -3060,7 +3089,7 @@ const GenerateOrdersV2 = () => {
                       await handleSaveDraft(currentOrder);
                       setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
                     } catch (error) {
-                      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+                      setShowErrorToast({ label: t("ORDER_SAVE_FAILED"), error: true });
                     }
                   }}
                   style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}

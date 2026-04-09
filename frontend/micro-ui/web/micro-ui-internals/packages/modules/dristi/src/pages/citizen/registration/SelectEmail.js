@@ -98,8 +98,8 @@ const SelectEmail = ({
         history.replace(`/${window?.contextPath}/citizen/dristi/home`);
       }
     } catch (error) {
-      console.error("error: ", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Email update failed:", error);
+      toast.error(t("EMAIL_UPDATE_FAILED"));
     } finally {
       setIsLoading(false);
     }

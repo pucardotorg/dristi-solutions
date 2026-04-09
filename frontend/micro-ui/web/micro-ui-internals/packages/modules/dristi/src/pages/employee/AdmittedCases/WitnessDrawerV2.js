@@ -752,8 +752,8 @@ const WitnessDrawerV2 = ({
         }
       }
     } catch (error) {
-      console.error("Error saving draft:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to save witness deposition draft:", error);
+      setShowErrorToast({ label: t("WITNESS_DEPOSITION_SAVE_FAILED"), error: true });
     } finally {
       setLoader(false);
       if (backAction) {
@@ -914,8 +914,8 @@ const WitnessDrawerV2 = ({
       evidenceRefetch();
       setCurrentArtifactNumber(null);
     } catch (error) {
-      console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to update witness deposition:", error);
+      setShowErrorToast({ label: t("WITNESS_DEPOSITION_UPDATE_FAILED"), error: true });
     } finally {
       // evidenceRefetch();
       setLoader(false);
@@ -934,8 +934,8 @@ const WitnessDrawerV2 = ({
       evidenceRefetch();
       setCurrentArtifactNumber(null);
     } catch (error) {
-      console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to update bail bond signature:", error);
+      setShowErrorToast({ label: t("BAIL_BOND_UPDATE_FAILED"), error: true });
     } finally {
       setLoader(false);
       setShowsignatureModal(false);
@@ -1012,8 +1012,8 @@ const WitnessDrawerV2 = ({
         evidenceRefetch();
       }
     } catch (error) {
-      console.error("Error while deleting witness deposition bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to delete witness deposition:", error);
+      setShowErrorToast({ label: t("WITNESS_DELETE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }
@@ -1140,8 +1140,8 @@ const WitnessDrawerV2 = ({
 
       // Also refresh evidence list to ensure server and client are in sync
     } catch (error) {
-      console.error("Error saving draft:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to save examination draft:", error);
+      setShowErrorToast({ label: t("EXAMINATION_SAVE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }

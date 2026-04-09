@@ -1036,6 +1036,7 @@ const AdmittedCases = () => {
   ]);
 
   const handleEvidenceAction = async () => {
+    setCaseAdmitLoader(true);
     const docObj = [
       {
         itemType: selectedItem.id,
@@ -1084,8 +1085,10 @@ const AdmittedCases = () => {
       );
       await handleMarkEvidence(docObj, selectedRow?.isEvidence);
     } catch (error) {
-      console.error("error: ", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Failed to mark evidence:", error);
+      toast.error(t("EVIDENCE_MARK_FAILED"));
+    } finally {
+      setCaseAdmitLoader(false);
     }
     setShowConfirmationModal(false);
   };

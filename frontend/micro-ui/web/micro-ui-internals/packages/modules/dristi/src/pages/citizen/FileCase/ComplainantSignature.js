@@ -591,8 +591,8 @@ const ComplainantSignature = ({ path }) => {
         }
       });
     } catch (error) {
-      console.error("Error:", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Failed to close pending tasks:", error);
+      toast.error(t("FAILED_TO_CLOSE_PENDING_TASKS"));
       setLoader(false);
     }
   };
@@ -724,15 +724,15 @@ const ComplainantSignature = ({ path }) => {
         try {
           await handleCaseUnlockingWhenMockESign();
         } catch (error) {
-          console.error("Error:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          console.error("Failed to unlock case:", error);
+          toast.error(t("FAILED_TO_UNLOCK_CASE"));
         }
       } else {
         handleEsign(name, "ci", DocumentFileStoreId, getPlaceholder());
       }
     } catch (error) {
-      console.error("Error:", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Failed to initiate e-signature:", error);
+      toast.error(t("ESIGN_INITIATION_FAILED"));
       setLoader(false);
     }
   };
@@ -912,7 +912,7 @@ const ComplainantSignature = ({ path }) => {
         history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculation } });
       } catch (err) {
         console.error("Payment recovery failed:", err);
-        toast.error(t("SOMETHING_WENT_WRONG"));
+        toast.error(t("PAYMENT_RECOVERY_FAILED"));
         history.replace(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`);
       } finally {
         setLoader(false);
@@ -1078,13 +1078,13 @@ const ComplainantSignature = ({ path }) => {
           }
         })
         .catch((error) => {
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          toast.error(t("ESIGN_CALLBACK_FAILED"));
           setEsignSuccess(false);
           throw error;
         });
     } catch (error) {
-      console.error("Error:", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("E-sign process failed:", error);
+      toast.error(t("ESIGN_PROCESS_FAILED"));
       setEsignSuccess(false);
       setLoader(false);
     }

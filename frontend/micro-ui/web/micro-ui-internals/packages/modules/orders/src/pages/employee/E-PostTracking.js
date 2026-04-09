@@ -222,7 +222,7 @@ const EpostTrackingPage = () => {
         downloadFile(response?.data, filename);
         setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
       } catch (error) {
-        setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+        setShowErrorToast({ label: t("POST_TRACKING_UPDATE_FAILED"), error: true });
         console.error(error);
       } finally {
         setLoading(false);
@@ -264,7 +264,7 @@ const EpostTrackingPage = () => {
         downloadFile(response?.data, filename);
         setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
       } catch (error) {
-        setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+        setShowErrorToast({ label: t("POST_TRACKING_UPDATE_FAILED"), error: true });
         console.error(error);
       } finally {
         setLoading(false);
@@ -453,7 +453,7 @@ const EpostTrackingPage = () => {
     } catch (error) {
       console.error("error while updating : ", error);
       const errorCode = error?.response?.data?.Errors?.[0]?.code;
-      const errorMsg = errorCode === "DUPLICATE_SPEED_POST_ID_ERROR" ? t("DUPLICATE_SPEED_POST_ID_ERROR") : t("SOMETHING_WENT_WRONG");
+      const errorMsg = errorCode === "DUPLICATE_SPEED_POST_ID_ERROR" ? t("DUPLICATE_SPEED_POST_ID_ERROR") : t("POST_TRACKING_FAILED");
 
       if (errorCode === "DUPLICATE_SPEED_POST_ID_ERROR") {
         setFormErrors?.current("speedPostId", {

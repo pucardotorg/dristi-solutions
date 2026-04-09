@@ -232,8 +232,8 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
         }
       }
     } catch (error) {
-      toast.error(t("CS_PAYMENT_ERROR"));
-      console.error(error);
+      console.error("Payment initiation failed:", error);
+      toast.error(t("PAYMENT_INITIATION_FAILED"));
     } finally {
       setLoader(false);
     }

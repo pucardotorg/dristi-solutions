@@ -269,7 +269,8 @@ const OrderDrawer = ({
             await ordersService.updateOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
             setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
           } catch (error) {
-            console.error("error", error);
+            console.error("Failed to update order:", error);
+            setShowErrorToast({ label: t("ORDER_UPDATE_FAILED"), error: true });
           }
         } else {
           const payload = {
@@ -318,7 +319,8 @@ const OrderDrawer = ({
             await ordersService.createOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
             setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
           } catch (error) {
-            console.error("error", error);
+            console.error("Failed to create order:", error);
+            setShowErrorToast({ label: t("ORDER_CREATE_FAILED"), error: true });
           }
         }
       } else if (type === "add-other-items") {
@@ -349,7 +351,8 @@ const OrderDrawer = ({
               `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
             );
           } catch (error) {
-            console.error("error", error);
+            console.error("Failed to update order for navigation:", error);
+            setShowErrorToast({ label: t("ORDER_UPDATE_FAILED"), error: true });
           }
         } else {
           const payload = {
@@ -400,7 +403,8 @@ const OrderDrawer = ({
               `/${window.contextPath}/${userType}/orders/generate-order?filingNumber=${caseDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
             );
           } catch (error) {
-            console.error("error", error);
+            console.error("Failed to create order for navigation:", error);
+            setShowErrorToast({ label: t("ORDER_CREATE_FAILED"), error: true });
           }
         }
       }

@@ -908,10 +908,10 @@ const AdmittedCaseV2 = () => {
         row = orderResponse?.list?.[0];
         setDeleteOrder(row);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to search order for delete request:", error);
         showToast({
           isError: true,
-          message: t("SOMETHING_WENT_WRONG"),
+          message: t("FAILED_TO_SEARCH_ORDER_FOR_DELETE_REQUEST"),
         });
       }
     },
@@ -1401,11 +1401,14 @@ const AdmittedCaseV2 = () => {
         {}
       );
       await handleMarkEvidence(docObj, selectedRow?.isEvidence);
+      setShowConfirmationModal(false);
     } catch (error) {
-      console.error("error: ", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Error marking evidence:", error);
+      showToast({
+        isError: true,
+        message: t("ERROR_MARKING_EVIDENCE"),
+      });
     }
-    setShowConfirmationModal(false);
   };
 
   const newTabSearchConfig = useMemo(
@@ -3278,11 +3281,12 @@ const AdmittedCaseV2 = () => {
       });
       history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${config?.label}`);
       setDeleteOrder(null);
+      setUpdateCounter((prev) => prev + 1);
     } catch (error) {
       console.error(error);
       showToast({
         isError: true,
-        message: t("SOMETHING_WENT_WRONG"),
+        message: t("FAILED_TO_DELETE_ORDER"),
       });
     } finally {
       setLoader(false);
@@ -3308,7 +3312,7 @@ const AdmittedCaseV2 = () => {
       console.error(error);
       showToast({
         isError: true,
-        message: t("SOMETHING_WENT_WRONG"),
+        message: t("FAILED_TO_SUBMIT_DELETE_APPLICATION_REQUEST"),
       });
     } finally {
       setLoader(false);

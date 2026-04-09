@@ -1050,7 +1050,7 @@ const GenerateBailBondV2 = () => {
       }
     } catch (error) {
       console.error("Error while creating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }
@@ -1065,35 +1065,66 @@ const GenerateBailBondV2 = () => {
       }
 
       setLoader(true);
-      const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
+      let individualData;
+      try {
+        individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
+      } catch (error) {
+        console.error("Failed to fetch user UUID:", error);
+        setShowErrorToast({ label: t("FAILED_TO_FETCH_USER_DETAILS"), error: true });
+        setLoader(false);
+        return;
+      }
+
       let bailBondResponse = null;
       if (!bailBondId) {
         const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
-        bailBondResponse = await createBailBond(individualData);
-        setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        try {
+          bailBondResponse = await createBailBond(individualData);
+          setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        } catch (error) {
+          console.error("Failed to create bail bond:", error);
+          setShowErrorToast({ label: t("BAIL_BOND_CREATE_FAILED"), error: true });
+          setLoader(false);
+          return;
+        }
+
         if (pendingTasks?.length > 0) {
-          await submissionService.customApiService(Urls.pendingTask, {
-            pendingTask: {
-              ...getPendingTaskPayload,
-              additionalDetails: {
-                ...getPendingTaskPayload?.additionalDetails,
-                bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+          try {
+            await submissionService.customApiService(Urls.pendingTask, {
+              pendingTask: {
+                ...getPendingTaskPayload,
+                additionalDetails: {
+                  ...getPendingTaskPayload?.additionalDetails,
+                  bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+                },
+                tenantId,
               },
-              tenantId,
-            },
-          });
+            });
+          } catch (error) {
+            console.error("Failed to update pending task:", error);
+            setShowErrorToast({ label: t("FAILED_TO_UPDATE_PENDING_TASK"), error: true });
+            setLoader(false);
+            return;
+          }
         }
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}`
         );
       } else {
-        bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
-        setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        try {
+          bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
+          setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        } catch (error) {
+          console.error("Failed to update bail bond:", error);
+          setShowErrorToast({ label: t("BAIL_BOND_UPDATE_FAILED"), error: true });
+          setLoader(false);
+          return;
+        }
       }
       setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
     } catch (error) {
-      console.error("Error while creating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Unexpected error while saving bail bond:", error);
+      setShowErrorToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }
@@ -1127,7 +1158,7 @@ const GenerateBailBondV2 = () => {
       setShowBailBondEsign(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true });
     } finally {
       setShowsignatureModal(false);
     }
@@ -1153,7 +1184,7 @@ const GenerateBailBondV2 = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }

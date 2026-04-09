@@ -743,7 +743,7 @@ export const updateProfileData = async ({
 
     return res;
   } catch (error) {
-    toast.error(t("SOMETHING_WENT_WRONG"));
-    console.error(error);
+    console.error("Profile validation failed:", error);
+    toast.error(t("PROFILE_VALIDATION_FAILED"));
   }
 };

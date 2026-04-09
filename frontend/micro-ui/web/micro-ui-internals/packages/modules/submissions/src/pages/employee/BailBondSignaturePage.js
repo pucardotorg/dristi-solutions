@@ -191,7 +191,7 @@ const BailBondSignaturePage = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("BAIL_BOND_SIGNATURE_FAILED"), error: true });
     } finally {
       setShowSignatureModal(false);
       sessionStorage.removeItem("isSignSuccess");
@@ -224,7 +224,7 @@ const BailBondSignaturePage = () => {
       }
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("BAIL_BOND_SIGNATURE_FAILED"), error: true });
     } finally {
       setEditCaseModal(false);
     }
@@ -283,8 +283,8 @@ const BailBondSignaturePage = () => {
       setShowSignatureModal(false);
       setShowSuccessModal(true);
     } catch (error) {
-      console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to process e-signature:", error);
+      setShowErrorToast({ label: t("BAIL_BOND_SIGNATURE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }

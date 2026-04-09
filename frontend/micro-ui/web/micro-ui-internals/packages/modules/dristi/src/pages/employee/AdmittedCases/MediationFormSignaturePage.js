@@ -359,7 +359,7 @@ const MediationFormSignaturePage = () => {
       );
     } catch (error) {
       console.error("Error:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("MEDIATION_FORM_EDIT_FAILED"), error: true });
     }
   };
 
@@ -396,7 +396,7 @@ const MediationFormSignaturePage = () => {
           }
         } catch (error) {
           console.error("Error:", error);
-          setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+          setShowErrorToast({ label: t("MEDIATION_FORM_UNLOCK_FAILED"), error: true });
         }
       } else {
         if (!isUserLoggedIn) {
@@ -405,9 +405,8 @@ const MediationFormSignaturePage = () => {
         handleEsign(name, pageModule, mediationFileStoreId, getPlaceholder());
       }
     } catch (error) {
-      console.error("Error:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
-      setLoader(false);
+      console.error("Failed to save mediation form:", error);
+      setShowErrorToast({ label: t("MEDIATION_FORM_SAVE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }
@@ -444,7 +443,7 @@ const MediationFormSignaturePage = () => {
           }
         } catch (error) {
           console.error("Error:", error);
-          setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+          setShowErrorToast({ label: t("MEDIATION_FORM_SIGNATURE_FAILED"), error: true });
         } finally {
           setLoader(false);
           isUpdatingRef.current = false;

@@ -221,7 +221,7 @@ const DigitizedDocumentsSignaturePage = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error uploading signed document:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("DIGITIZED_DOCUMENT_SIGNATURE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }
@@ -243,7 +243,7 @@ const DigitizedDocumentsSignaturePage = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("DIGITIZED_DOCUMENT_SIGNATURE_FAILED"), error: true });
     } finally {
       setShowSignatureModal(false);
       sessionStorage.removeItem("isSignSuccess");
@@ -328,7 +328,7 @@ const DigitizedDocumentsSignaturePage = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating document:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("DIGITIZED_DOCUMENT_UPDATE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }

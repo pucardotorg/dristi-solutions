@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Dropdown, LabelFieldPair, CardLabel, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { LeftArrow, CustomAddIcon, CustomDeleteIcon } from "../../../icons/svgIndex";
@@ -6,7 +6,6 @@ import Button from "../../../components/Button";
 import isEmpty from "lodash/isEmpty";
 import TranscriptComponent from "../../../../../hearings/src/pages/employee/Transcription";
 import { Urls } from "../../../hooks";
-import { getFilingType } from "../../../Utils";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { DRISTIService } from "../../../services";
 import isEqual from "lodash/isEqual";
@@ -39,12 +38,10 @@ export const _getPdfConfigForExamination = (documentNumber, caseDetails, courtId
 
 const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, caseId, courtId }) => {
   const { t } = useTranslation();
-  const textAreaRef = useRef(null);
   const [options, setOptions] = useState([]);
   const [selectedAccused, setSelectedAccused] = useState({});
   const [examinationText, setExaminationText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [isProceeding, setIsProceeding] = useState(false);
   const [activeTabs, setActiveTabs] = useState([]);
   const [activeTabIndex, setActiveTabIndex] = useState(0); // set activetabindex based on new or already existing tab.
   const [currentDocument, setCurrentDocument] = useState(null);
@@ -61,7 +58,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
   const [showConfirmDeleteExaminationModal, setShowConfirmDeleteExaminationModal] = useState({ show: false, tab: {} });
   const [respondentsData, setRespondentsData] = useState([]);
   const [active, setActive] = useState(false);
-  const [selectedQuestions, setSelectedQuestions] = useState([]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -105,7 +101,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
     );
   }, [examinationQuestionsData]);
 
-  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
+  const { data: apiCaseData, isLoading: caseApiLoading } = useCaseDetailSearchService(
     {
       criteria: {
         caseId: caseId,
@@ -194,10 +190,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
   const documentsList = useMemo(() => documentsData?.documents?.filter((document) => document?.status === "DRAFT_IN_PROGRESS") || [], [
     documentsData,
   ]);
-  const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
-    { name: "FilingType" },
-  ]);
-  const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "CaseFiling"), [filingTypeData?.FilingType]);
 
   useEffect(() => {
     if (isOpen) {
@@ -437,7 +429,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       }
     } catch (error) {
       console.error("Error saving draft:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("EXAMINATION_DRAFT_SAVE_FAILED"), error: true });
     } finally {
       setLoader(false);
       if (backAction) {
@@ -482,7 +474,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
           },
         };
 
-        const updatedDocument = await DRISTIService.updateDigitizedDocument(reqBody);
+        await DRISTIService.updateDigitizedDocument(reqBody);
         setShowErrorToast({ label: t("EXAMINATION_OF_ACCUSED_DELETED_SUCCESSFULLY"), error: false });
         const updatedActiveTabs = activeTabs?.filter((tab) => tab?.documentNumber !== selectedTab?.documentNumber);
         setActiveTabs(updatedActiveTabs);
@@ -509,7 +501,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       }
     } catch (error) {
       console.error("Error while deleting examination of accused", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("EXAMINATION_DELETE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }
@@ -601,8 +593,8 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
         }
       }
     } catch (error) {
-      console.error("Error saving draft:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to save examination:", error);
+      setShowErrorToast({ label: t("EXAMINATION_CREATE_FAILED"), error: true });
     } finally {
       setLoader(false);
     }
@@ -688,13 +680,13 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       setCurrentDocumentNumber(null);
     } catch (error) {
       console.error("Error while updating examination:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("EXAMINATION_ESIGN_SUBMIT_FAILED"), error: true });
     } finally {
       setLoader(false);
     }
   };
 
-  if (isFilingTypeLoading || isDocumentsDataLoading || caseApiLoading || examinationQuestionsDataLoading) {
+  if (isDocumentsDataLoading || caseApiLoading || examinationQuestionsDataLoading) {
     return <Loader />;
   }
   const CONFIG_KEY = "examinationOfAccused";
@@ -712,11 +704,9 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
     }
   };
 
-  const isDisabled = isProceeding;
-
   const config = {
     key: CONFIG_KEY,
-    disable: isDisabled,
+    disable: false,
     populators: {
       inputs: [
         {
@@ -727,10 +717,10 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             width: "100%",
             minHeight: "40vh",
             fontSize: "large",
-            opacity: isDisabled ? 0.5 : 1,
+            opacity: 1,
             pointerEvents: !IsSelectedAccused ? "unset !important" : "auto",
-            backgroundColor: isDisabled ? "#f5f5f5" : "white",
-            color: isDisabled ? "#666" : "black",
+            backgroundColor: "white",
+            color: "black",
           },
         },
       ],
@@ -854,7 +844,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
                       optionKey={"label"}
                       select={handleDropdownChange}
                       freeze={true}
-                      disable={isProceeding}
                       selected={selectedAccused}
                       placeholder={t("SELECT_HERE")}
                       style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
@@ -868,7 +857,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
                       t={t}
                       defaultLabel={t("SELECT_HERE")}
                       options={examinationQuestionOptions}
-                      selected={selectedQuestions}
                       onConfirm={handleConfirmQuestions}
                       optionsKey="code"
                       displayKey="title"
@@ -894,7 +882,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
               <div className="drawer-footer" style={{ display: "flex", justifyContent: "end", flexDirection: "row", gap: "16px" }}>
                 <Button
                   label={t("SAVE_DRAFT")}
-                  isDisabled={!IsSelectedAccused || isProceeding}
+                  isDisabled={!IsSelectedAccused}
                   onButtonClick={() => handleSaveDraft()}
                   style={{
                     width: "130px",
@@ -906,7 +894,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
                 />
                 <Button
                   label={t("SUBMIT_BUTTON")}
-                  isDisabled={!IsSelectedAccused || isProceeding || examinationText?.length === 0}
+                  isDisabled={!IsSelectedAccused || examinationText?.length === 0}
                   className={"order-drawer-save-btn"}
                   onButtonClick={() => handleSaveDraft(true)}
                   style={{

@@ -1718,37 +1718,73 @@ const SubmissionsCreate = ({ path }) => {
   const handleReviewModalSubmit = async ({ applicationPreviewPdf, applicationPreviewFileName, isUpload = false }) => {
     try {
       if (applicationDetails?.status === SubmissionWorkflowState.DRAFT_IN_PROGRESS) {
-        const res = await updateSubmission(SubmissionWorkflowAction.SUBMIT);
+        let res;
+        try {
+          res = await updateSubmission(SubmissionWorkflowAction.SUBMIT);
+        } catch (error) {
+          console.error("Failed to update submission:", error);
+          setShowErrorToast({ label: t("SUBMISSION_UPDATE_FAILED"), error: true });
+          return;
+        }
+
         const newapplicationNumber = res?.application?.applicationNumber;
         if (newapplicationNumber) {
           if (isCitizen) {
-            await createPendingTask({
-              name: t("ESIGN_THE_SUBMISSION"),
-              status: "ESIGN_THE_SUBMISSION",
-              refId: newapplicationNumber,
-              stateSla: todayDate + stateSla.ESIGN_THE_SUBMISSION,
-            });
-            if (applicationType === "DELAY_CONDONATION")
+            try {
               await createPendingTask({
-                name: "Create DCA Applications",
-                status: "CREATE_DCA_SUBMISSION",
-                refId: `DCA_${filingNumber}`,
-                isCompleted: true,
+                name: t("ESIGN_THE_SUBMISSION"),
+                status: "ESIGN_THE_SUBMISSION",
+                refId: newapplicationNumber,
+                stateSla: todayDate + stateSla.ESIGN_THE_SUBMISSION,
               });
+            } catch (error) {
+              console.error("Failed to create e-sign task:", error);
+              setShowErrorToast({ label: t("FAILED_TO_CREATE_ESIGN_TASK"), error: true });
+              return;
+            }
+
+            if (applicationType === "DELAY_CONDONATION") {
+              try {
+                await createPendingTask({
+                  name: "Create DCA Applications",
+                  status: "CREATE_DCA_SUBMISSION",
+                  refId: `DCA_${filingNumber}`,
+                  isCompleted: true,
+                });
+              } catch (error) {
+                console.error("Failed to create DCA task:", error);
+                setShowErrorToast({ label: t("FAILED_TO_CREATE_DCA_TASK"), error: true });
+                return;
+              }
+            }
           } else if (hasSubmissionRole) {
-            await createPendingTask({
-              name: t("ESIGN_THE_SUBMISSION"),
-              status: "ESIGN_THE_SUBMISSION",
-              refId: newapplicationNumber,
-              stateSla: todayDate + stateSla.ESIGN_THE_SUBMISSION,
-              isAssignedRole: true,
-              assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
-            });
+            try {
+              await createPendingTask({
+                name: t("ESIGN_THE_SUBMISSION"),
+                status: "ESIGN_THE_SUBMISSION",
+                refId: newapplicationNumber,
+                stateSla: todayDate + stateSla.ESIGN_THE_SUBMISSION,
+                isAssignedRole: true,
+                assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
+              });
+            } catch (error) {
+              console.error("Failed to create e-sign task for role:", error);
+              setShowErrorToast({ label: t("FAILED_TO_CREATE_ESIGN_TASK"), error: true });
+              return;
+            }
           }
         }
       }
+
       const pdfFile = new File([applicationPreviewPdf], applicationPreviewFileName, { type: "application/pdf" });
-      const document = await onDocumentUpload(pdfFile, pdfFile.name, tenantId);
+      let document;
+      try {
+        document = await onDocumentUpload(pdfFile, pdfFile.name, tenantId);
+      } catch (error) {
+        console.error("Failed to upload document:", error);
+        setShowErrorToast({ label: t("SUBMISSION_DOCUMENT_UPLOAD_FAILED"), error: true });
+        return;
+      }
       const fileStoreId = document?.file?.files?.[0]?.fileStoreId;
       if (!fileStoreId) {
         throw new Error("FileStoreId not generated");

@@ -2616,7 +2616,7 @@ const GenerateOrders = () => {
           }
         });
     } catch (error) {
-      setShowErrorToast({ label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("ORDER_SAVE_FAILED"), error: true });
     }
   };
 
@@ -2879,7 +2879,7 @@ const GenerateOrders = () => {
       }
     } catch (error) {
       console.error("Error while saving draft:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setShowErrorToast({ label: t("ORDER_DELETE_FAILED"), error: true });
       setLoader(false);
     }
   };
@@ -3413,8 +3413,10 @@ const GenerateOrders = () => {
         history.goBack();
       });
     } catch (error) {
-      console.error("error: ", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Failed to update business of the day:", error);
+      toast.error(t("BUSINESS_OF_DAY_UPDATE_FAILED"));
+    } finally {
+      setLoader(false);
     }
   };
 
