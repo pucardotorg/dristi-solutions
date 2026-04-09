@@ -61,7 +61,7 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
                         .outcome(rs.getString("outcome"))
                         .status(rs.getString("status"))
                         .natureOfDisposal(getNatureOfDisposal(rs))
-                        .substage(rs.getString("substage"))
+                        .stage(rs.getString("stage"))
                         .courtCaseNumber(rs.getString("courtcasenumber"))
                         .cnrNumber(rs.getString("cnrnumber"))
                         .cmpNumber(rs.getString("cmpnumber"))
