@@ -181,7 +181,7 @@ export const TabLitigantSearchConfig = {
                     masterName: "CasePrimaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage !== 'RESTORE_BACKUP').sort((a,b) => (a?.stage || '').localeCompare(b?.stage || ''));}",
+                      "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
