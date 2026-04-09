@@ -2,6 +2,7 @@ package org.pucar.dristi.repository.querybuilder;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -434,22 +435,39 @@ public class CaseQueryBuilder {
         return firstCriteria;
     }
 
-    private boolean addJsonbArrayCriteria(List<String> itemList, StringBuilder query, boolean firstCriteria, String jsonbColumn, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    private boolean addJsonbArrayCriteria(
+            List<String> itemList,
+            StringBuilder query,
+            boolean firstCriteria,
+            String jsonbColumn,
+            List<Object> preparedStmtList,
+            List<Integer> preparedStmtArgList) {
+
         if (itemList != null && !itemList.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
-            
-            // Use PostgreSQL JSONB array containment operator
-            // For searching cases where ANY of the provided secondary stages match
-            query.append(jsonbColumn).append(" ?| array[");
-            query.append(itemList.stream().map(item -> "?").collect(Collectors.joining(",")));
-            query.append("]::text[]");
-            
-            preparedStmtList.addAll(itemList);
-            itemList.forEach(item -> preparedStmtArgList.add(Types.VARCHAR));
+
+            // Handle NULL safely + use JSONB overlap operator
+            query.append("COALESCE(")
+                    .append(jsonbColumn)
+                    .append(", '[]'::jsonb) && ?::jsonb");
+
+            // Convert list to safe JSON array string
+            String jsonArray = itemList.stream()
+                    .filter(Objects::nonNull)
+                    .map(item -> "\"" + item.replace("\"", "\\\"") + "\"") // escape quotes
+                    .collect(Collectors.joining(",", "[", "]"));
+
+            preparedStmtList.add(jsonArray);
+
+            // Use Types.OTHER for JSONB
+            preparedStmtArgList.add(Types.OTHER);
+
             firstCriteria = false;
         }
+
         return firstCriteria;
     }
+
 
     private static void prepareStatementAndArgumentForListCriteria(List<String> itemList, StringBuilder query, String str, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, int varchar) {
         if (!itemList.isEmpty()) {
