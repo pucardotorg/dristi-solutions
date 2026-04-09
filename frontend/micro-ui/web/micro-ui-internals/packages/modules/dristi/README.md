@@ -354,10 +354,7 @@ Case Viewing Flow:
 | `react-select` | ^5.10.1 | Advanced select component |
 | `dompurify` | ^3.2.6 | HTML sanitization |
 | `jsonpath` | ^1.1.1 | JSONPath query |
-| `recharts` | ^2.0.9 | Charting library |
 | `react-tooltip` | 4.1.2 | Tooltips |
-| `react-time-picker` | 4.2.1 | Time picker |
-| `react-simple-maps` | 2.0.0 | Map rendering |
 
 ---
 
