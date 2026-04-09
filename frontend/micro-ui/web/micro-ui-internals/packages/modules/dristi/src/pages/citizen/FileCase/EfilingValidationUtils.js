@@ -1031,7 +1031,9 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
     let errorObject = {
       NOTICE_PROCESS_COURIER_INFORMATION_MISSING: false,
       SUMMON_PROCESS_COURIER_INFORMATION_MISSING: false,
+      WARRANT_PROCESS_COURIER_INFORMATION_MISSING: false,
     };
+
     if (isDelayCondonation) {
       if (formData?.multipleAccusedProcessCourier?.noticeCourierService?.length === 0) {
         errorObject.NOTICE_PROCESS_COURIER_INFORMATION_MISSING = true;
@@ -1040,6 +1042,11 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
       if (formData?.multipleAccusedProcessCourier?.summonsCourierService?.length === 0) {
         errorObject.SUMMON_PROCESS_COURIER_INFORMATION_MISSING = true;
       }
+    }
+    
+    // warrant courier details are mandatory for both delay condonation and normal flow as warrant is issued in both scenarios
+    if (formData?.multipleAccusedProcessCourier?.warrantCourierService?.length === 0) {
+      errorObject.WARRANT_PROCESS_COURIER_INFORMATION_MISSING = true;
     }
     let mandatoryLeft = false;
     for (let key in errorObject) {
@@ -1319,19 +1326,19 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
       hasError = true;
     }
 
-    if(isRichTextEmpty(formData?.prayer?.text)){
+    if (isRichTextEmpty(formData?.prayer?.text)) {
       setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
       setShowErrorToast(true);
       hasError = true;
     }
 
-    if(isRichTextEmpty(formData?.memorandumOfComplaint?.text)){
+    if (isRichTextEmpty(formData?.memorandumOfComplaint?.text)) {
       setFormErrors("memorandumOfComplaint", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
       setShowErrorToast(true);
       hasError = true;
     }
 
-    if(isRichTextEmpty(formData?.synopsis?.text)){
+    if (isRichTextEmpty(formData?.synopsis?.text)) {
       setFormErrors("synopsis", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
       setShowErrorToast(true);
       hasError = true;
@@ -1803,7 +1810,7 @@ export const updateCaseDetails = async ({
     }
   };
 
-  function transformFileData(inputArray, tenantId = "kl", fileType = "application/pdf") {
+  function transformFileData(inputArray, tenantId, fileType = "application/pdf") {
     if (!Array.isArray(inputArray) || inputArray.length === 0) return null;
 
     const { fileStore, documentName } = inputArray[0];
@@ -1917,7 +1924,7 @@ export const updateCaseDetails = async ({
                   let documentData = {};
 
                   if (data?.data?.complainantVerification?.individualDetails?.document) {
-                    documentData = transformFileData(data?.data?.complainantVerification?.individualDetails?.document);
+                    documentData = transformFileData(data?.data?.complainantVerification?.individualDetails?.document, tenantId);
                   } else {
                     documentData = await onDocumentUpload(
                       documentsTypeMapping["complainantId"],
@@ -3845,10 +3852,28 @@ export const createOrUpdateTask = async ({
   }
   if (!accusedDetails || accusedDetails?.length === 0) return;
 
+  const _getdelieveryChannels = (deliveryChannels) => {
+    if (!deliveryChannels || deliveryChannels?.length === 0) return [];
+    return deliveryChannels?.map((channel) => {
+      let updatedChannelCode = channel?.channelCode;
+      if (channel?.taskType === "WARRANT") {
+        if (channel?.channelCode === "REGISTERED_POST") {
+          updatedChannelCode = "RPAD";
+        } else if (channel?.channelCode === "ICOPS") {
+          updatedChannelCode = "POLICE";
+        }
+      }
+      return {
+        ...channel,
+        channelCode: updatedChannelCode,
+      };
+    });
+  };
+
   const partyDetails = accusedDetails?.map((accused) => ({
     ...(status && { status }),
     addresses: accused?.addressDetails?.filter((addr) => addr?.checked) || [],
-    deliveryChannels: accused?.[`${type?.toLowerCase()}CourierService`],
+    deliveryChannels: _getdelieveryChannels(accused?.[`${type?.toLowerCase()}CourierService`] || []),
     respondentDetails: {
       ...respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data,
       uniqueId: accused?.uniqueId,

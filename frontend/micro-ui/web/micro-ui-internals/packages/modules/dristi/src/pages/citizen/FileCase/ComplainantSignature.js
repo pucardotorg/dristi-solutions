@@ -465,6 +465,7 @@ const ComplainantSignature = ({ path }) => {
       const courierGroups = [
         { taskType: "NOTICE", channels: accused?.noticeCourierService || [] },
         { taskType: "SUMMONS", channels: accused?.summonsCourierService || [] },
+        { taskType: "WARRANT", channels: accused?.warrantCourierService || [] },
       ];
       courierGroups.forEach(({ taskType, channels }) => {
         channels.forEach((channel) => {
