@@ -250,6 +250,11 @@ export const TabJudgeSearchConfig = {
                 additionalCustomization: true,
               },
               {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
+                additionalCustomization: true,
+              },
+              {
                 label: "CS_CASE_NUMBER_HOME",
                 jsonPath: "filingNumber",
                 additionalCustomization: true,
@@ -396,6 +401,11 @@ export const TabJudgeSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "stage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -560,6 +570,11 @@ export const TabJudgeSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "stage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
 

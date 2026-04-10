@@ -262,6 +262,11 @@ export const TabFSOSearchConfig = {
                 additionalCustomization: true,
               },
               {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
+                additionalCustomization: true,
+              },
+              {
                 label: "CS_CASE_NUMBER_HOME",
                 jsonPath: "filingNumber",
                 additionalCustomization: true,
