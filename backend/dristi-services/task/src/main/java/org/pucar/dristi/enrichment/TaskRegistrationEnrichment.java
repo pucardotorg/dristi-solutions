@@ -151,7 +151,7 @@ public class TaskRegistrationEnrichment {
     public void enrichIsPendingCollectionUponUpdate(TaskRequest taskRequest, TaskRequest body) {
 
         try {
-            JsonNode bodyTaskDetails = (JsonNode) body.getTask().getTaskDetails();
+            JsonNode bodyTaskDetails = objectMapper.convertValue(body.getTask().getTaskDetails(), JsonNode.class);
             boolean isPendingCollection = false;
             
             // Safe extraction with null checks
