@@ -195,17 +195,17 @@ jobs:
           echo "repo_branch is ${{ needs.check-diff.outputs.repo_branch }}"
 
       - name: Sonar Analysis
-        uses: pucardotorg/dristi-solutions/.github/actions/sonar-analysis@develop
+        uses: pucardotorg/dristi-backend-pbhrch/.github/actions/sonar-analysis@develop
         with:
           service_name: ${{ matrix.service }}
           sonar_token: ${{ secrets.SONAR_TOKEN_BEEHYV }}
           branch: ${{ needs.check-diff.outputs.repo_branch }}
-          repo: "pucardotorg/dristi-solutions"
+          repo: "pucardotorg/dristi-backend-pbhrch"
           ghub_token: ${{ secrets.GHUB_TOKEN }}
 
       - name: Docker Build
         id: docker_build
-        uses: pucardotorg/dristi-solutions/.github/actions/docker-build@develop
+        uses: pucardotorg/dristi-backend-pbhrch/.github/actions/docker-build@develop
         with:
           service_name: ${{ matrix.service }}
           docker_password: ${{ secrets.ACR_PASSWORD }}
