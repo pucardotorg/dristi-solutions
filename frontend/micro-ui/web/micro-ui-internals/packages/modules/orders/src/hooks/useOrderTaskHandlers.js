@@ -123,8 +123,10 @@ const useOrderTaskHandlers = ({
       const bailAmount = bailFormData?.chequeAmount || null;
       const noOfSureties = bailFormData?.noOfSureties || null;
 
+      const refApplicationId = bailFormData?.refApplicationId;
+
       const newApplicationDetails = applicationData?.applicationList?.find(
-        (application) => application?.applicationNumber === orderObj?.additionalDetails?.formdata?.refApplicationId
+        (application) => application?.applicationNumber === refApplicationId
       );
 
       const candidateName = bailOfName || newApplicationDetails?.additionalDetails?.onBehalOfName || "";
@@ -155,7 +157,24 @@ const useOrderTaskHandlers = ({
         })();
         const asUser = newApplicationDetails?.asUser; // this main advocate's uuid in case clerk/jr adv create on senior's behalf otherwise creator's uuid
 
-        const assignedTo = Array.from(new Set([targetUserUuid, ...(poaUuids || []), asUser].filter(Boolean))).map((uuid) => ({ uuid }));
+        const advocateUuids = (() => {
+          const reps = caseDetails?.representatives || [];
+          if (!targetIndividualId) {
+            return reps.map((rep) => rep?.additionalDetails?.uuid).filter(Boolean);
+          }
+          return reps
+            ?.filter((rep) => rep?.representing?.some?.((r) => r?.individualId === targetIndividualId))
+            ?.map((rep) => rep?.additionalDetails?.uuid)
+            ?.filter(Boolean);
+        })();
+
+
+        let assignedTo = [];
+        if(refApplicationId){
+          assignedTo = Array.from(new Set([targetUserUuid, ...(poaUuids || []), asUser].filter(Boolean))).map((uuid) => ({ uuid }));
+        }else{
+          assignedTo = Array.from(new Set([targetUserUuid, ...(poaUuids || []), ...advocateUuids].filter(Boolean))).map((uuid) => ({ uuid }));
+        }
 
         const bailTypeCode = typeof bailType === "string" ? bailType.toUpperCase() : (bailType?.code || bailType?.type || "").toUpperCase();
         const bailTypeObj = bailTypeCode ? { code: bailTypeCode, type: bailTypeCode } : null;
