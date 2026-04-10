@@ -46,11 +46,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class UserServiceTest {
 
     private static final int DEFAULT_PASSWORD_EXPIRY_IN_DAYS = 90;
@@ -91,6 +91,12 @@ public class UserServiceTest {
         userService = new UserService(userRepository, otpRepository, fileRepository, userUtils, passwordEncoder, encryptionDecryptionUtil,
                 tokenStore, DEFAULT_PASSWORD_EXPIRY_IN_DAYS,
                 isCitizenLoginOtpBased, isEmployeeLoginOtpBased, pwdRegex, pwdMaxLength, pwdMinLength);
+
+    // By default, treat encryption/decryption as no-ops in unit tests so that
+    // service logic can be tested independently of crypto configuration.
+    Mockito.when(encryptionDecryptionUtil.encryptObject(Mockito.any(UserSearchCriteria.class),
+            Mockito.anyString(), Mockito.eq(UserSearchCriteria.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
 
@@ -532,7 +538,6 @@ public class UserServiceTest {
                 .type(UserType.CITIZEN)
                 .newPassword("nEwP@ssw0rd")
                 .build();
-        when(otpRepository.validateOtp(any())).thenThrow(Exception.class);
         final User domainUser = mock(User.class);
         when(domainUser.getType()).thenReturn(UserType.CITIZEN);
         when(userRepository.findAll(any(UserSearchCriteria.class))).thenReturn(Collections.singletonList(domainUser));
@@ -551,7 +556,6 @@ public class UserServiceTest {
                 .type(UserType.EMPLOYEE)
                 .newPassword("nEwP@ssw0rd")
                 .build();
-        when(otpRepository.validateOtp(any())).thenThrow(Exception.class);
         final User domainUser = mock(User.class);
         when(domainUser.getType()).thenReturn(UserType.EMPLOYEE);
         when(userRepository.findAll(any(UserSearchCriteria.class))).thenReturn(Collections.singletonList(domainUser));

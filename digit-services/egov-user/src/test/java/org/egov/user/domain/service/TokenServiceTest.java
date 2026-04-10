@@ -22,10 +22,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class TokenServiceTest {
 
     @InjectMocks
@@ -44,8 +45,10 @@ public class TokenServiceTest {
         when(tokenStore.readAuthentication(accessToken)).thenReturn(oAuth2Authentication);
         SecureUser secureUser = new SecureUser(getUser());
         when(oAuth2Authentication.getPrincipal()).thenReturn(secureUser);
-        final List<Action> expectedActions = getActions();
-        when(actionRestRepository.getActionByRoleCodes(getRoleCodes(), "default")).thenReturn(expectedActions);
+    final List<Action> expectedActions = getActions();
+    // Use lenient stubbing to avoid UnnecessaryStubbingException with newer Mockito
+    lenient().when(actionRestRepository.getActionByRoleCodes(getRoleCodes(), "default"))
+        .thenReturn(expectedActions);
         UserDetail actualUserDetails = tokenService.getUser(accessToken);
 
         assertEquals(secureUser, actualUserDetails.getSecureUser());

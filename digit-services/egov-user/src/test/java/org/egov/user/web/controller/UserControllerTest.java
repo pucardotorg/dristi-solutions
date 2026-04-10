@@ -4,9 +4,9 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.ArrayUtils.isEquals;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.argThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -393,7 +393,7 @@ public class UserControllerTest {
         }
     }
 
-    class UserSearchMatcher extends ArgumentMatcher<UserSearchCriteria> {
+        class UserSearchMatcher implements ArgumentMatcher<UserSearchCriteria> {
 
         private UserSearchCriteria expectedUserSearch;
 
@@ -401,9 +401,8 @@ public class UserControllerTest {
             this.expectedUserSearch = expectedUserSearch;
         }
 
-        @Override
-        public boolean matches(Object o) {
-            UserSearchCriteria userSearch = (UserSearchCriteria) o;
+                @Override
+                public boolean matches(UserSearchCriteria userSearch) {
             return userSearch.getId().equals(expectedUserSearch.getId()) &&
                     userSearch.getUserName().equals(expectedUserSearch.getUserName()) &&
                     userSearch.getName().equals(expectedUserSearch.getName()) &&
@@ -421,7 +420,7 @@ public class UserControllerTest {
         }
     }
 
-    class UserSearchActiveFlagMatcher extends ArgumentMatcher<UserSearchCriteria> {
+        class UserSearchActiveFlagMatcher implements ArgumentMatcher<UserSearchCriteria> {
 
         private UserSearchCriteria expectedUserSearch;
 
@@ -429,9 +428,8 @@ public class UserControllerTest {
             this.expectedUserSearch = expectedUserSearch;
         }
 
-        @Override
-        public boolean matches(Object o) {
-            UserSearchCriteria userSearch = (UserSearchCriteria) o;
+                @Override
+                public boolean matches(UserSearchCriteria userSearch) {
             return userSearch.getActive() == expectedUserSearch.getActive();
         }
     }
