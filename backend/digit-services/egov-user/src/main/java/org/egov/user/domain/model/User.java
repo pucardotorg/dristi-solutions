@@ -201,7 +201,6 @@ public class User {
         roles = null;
         accountLocked = null;
         accountLockedDate = null;
-        active = null;
     }
 
     @JsonIgnore
