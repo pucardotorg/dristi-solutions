@@ -246,7 +246,7 @@ export const TabJudgeSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
                 additionalCustomization: true,
               },
               {
@@ -395,7 +395,7 @@ export const TabJudgeSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
                 additionalCustomization: true,
               },
               {
@@ -559,7 +559,7 @@ export const TabJudgeSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
                 additionalCustomization: true,
               },
 

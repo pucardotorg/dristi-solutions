@@ -258,7 +258,7 @@ export const TabFSOSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
                 additionalCustomization: true,
               },
               {

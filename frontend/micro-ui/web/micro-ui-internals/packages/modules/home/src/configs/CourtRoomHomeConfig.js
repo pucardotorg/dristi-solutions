@@ -250,7 +250,7 @@ export const TabCourtRoomSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
                 additionalCustomization: true,
               },
               {
@@ -399,7 +399,7 @@ export const TabCourtRoomSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
                 additionalCustomization: true,
               },
               {
@@ -562,7 +562,7 @@ export const TabCourtRoomSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
                 additionalCustomization: true,
               },
 

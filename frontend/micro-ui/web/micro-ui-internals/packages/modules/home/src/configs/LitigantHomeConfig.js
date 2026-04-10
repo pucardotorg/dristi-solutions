@@ -246,7 +246,7 @@ export const TabLitigantSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
                 additionalCustomization: true,
               },
               {
