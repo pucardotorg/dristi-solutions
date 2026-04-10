@@ -1,10 +1,11 @@
-import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
+import { CheckBox } from "@egovernments/digit-ui-react-components";
 
 import React, { useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { useToast } from "../../../components/Toast/useToast";
 import Modal from "../../../components/Modal";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 const caseLockingMainDiv = {
   padding: "24px",
@@ -20,23 +21,6 @@ const caseSubmissionWarningText = {
   lineHeight: "21.6px",
   color: "#3D3C3C",
 };
-
-const Heading = (props) => {
-  return (
-    <h1 className="heading-m" style={{ marginLeft: "47px" }}>
-      {props.label}
-    </h1>
-  );
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
 function CaseLockModal({
   t,
   path,
@@ -158,7 +142,7 @@ function CaseLockModal({
       actionCancelLabel={selectedAdvocateUuid ? t("UPLOAD_SIGNED_COPY") : t("DOWNLOAD_CS_BACK")}
       actionCancelOnSubmit={handleCancelOnSubmit}
       formId="modal-action"
-      headerBarMain={<Heading label={selectedAdvocateUuid ? t("SUBMIT_CASE_CONFIRMATION") : t("CONFIRM_CASE_DETAILS")} />}
+      headerBarMain={<Heading style={{ marginLeft: "47px" }} label={selectedAdvocateUuid ? t("SUBMIT_CASE_CONFIRMATION") : t("CONFIRM_CASE_DETAILS")} />}
       popmoduleClassName={"case-lock-confirm-modal"}
       style={{ width: "50%", height: "40px" }}
       // textStyle={{ margin: "0px", color: "" }}

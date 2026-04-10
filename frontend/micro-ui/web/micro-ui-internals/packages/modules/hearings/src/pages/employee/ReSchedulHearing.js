@@ -1,3 +1,4 @@
+import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 // import React from 'react';
 // import { useHistory } from 'react-router-dom';
 // import { useState } from 'react';
@@ -21,21 +22,7 @@
 //   </svg>
 // );
 
-// const CloseBtn = (props) => {
-//   return (
-//     <div onClick={props?.onClick} style={props?.isMobileView ? { padding: 5 } : null}>
-//       {props?.isMobileView ? (
-//         <CloseSvg />
-//       ) : (
-//         <div className={"icon-bg-secondary"} style={{ backgroundColor: "#505A5F" }}>
-//           {" "}
-//           <Close />{" "}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
+// 
 // const RescheduleHearing = ({ onSelect, onCancel, onDismiss , rescheduleAll}) => {
 //   const { t } = useTranslation();
 //   const history = useHistory();

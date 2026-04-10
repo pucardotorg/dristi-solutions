@@ -1,7 +1,7 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useMemo } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import ApplicationInfoComponent from "./ApplicationInfoComponent";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 // import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 // import downloadPdfFromFile from "@egovernments/digit-ui-module-dristi/src/Utils/downloadPdfFromFile";
 
@@ -14,17 +14,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   const useDownloadCasePdf = Digit?.Hooks?.dristi?.useDownloadCasePdf;
   const { downloadPdf } = useDownloadCasePdf();
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
+  
   const handleDownload = async (tenantId, filestoreId, filestoreIdPolice) => {
     // await downloadPdfFromFile(file?.[0]);
     if (filestoreId) {

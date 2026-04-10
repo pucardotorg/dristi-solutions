@@ -1,24 +1,7 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { DateUtils, downloadPdfFromBlob } from "@egovernments/digit-ui-module-dristi/src/Utils";
-
-const Heading = (props) => {
-  return (
-    <h1 className="heading-m" style={{ margin: 0 }}>
-      {props.label}
-    </h1>
-  );
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const HeaderBarEnd = ({ t, setShowModal, handleDownload }) => {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "10px", paddingRight: "20px" }}>
@@ -57,7 +40,7 @@ const IssueCTCModal = ({ rowData, setShowModal, handleIssue, handleCancelSubmit 
 
   return (
     <Modal
-      headerBarMain={<Heading label={t("DOCUMENT_REVIEW")} />}
+      headerBarMain={<Heading style={{ margin: 0 }} label={t("DOCUMENT_REVIEW")} />}
       headerBarEnd={<HeaderBarEnd t={t} setShowModal={setShowModal} handleDownload={handleDownload} />}
       actionCancelLabel={t("REJECT")}
       actionCancelOnSubmit={handleCancelSubmit}
