@@ -277,7 +277,7 @@ public class SecondaryStageProcessor {
             for (int i = 0; i < tasks.length(); i++) {
                 JSONObject task = tasks.getJSONObject(i);
                 String status = task.optString("status", "");
-                if(referenceId!=null && referenceId.equals(task.optString("referenceId", ""))){
+                if(referenceId!=null && referenceId.equals(task.optString("taskNumber", ""))){
                     continue;
                 }
                 if ("DELIVERED".equalsIgnoreCase(status) || "EXPIRED".equalsIgnoreCase(status) || "EXECUTED".equalsIgnoreCase(status)) {

@@ -95,7 +95,7 @@ public class CaseOverallStatusUtil {
 			} else if (config.getApplicationBusinessServiceList().contains(entityType)) {
 				return processApplicationSecondaryStageUpdate(request, referenceId, status, action, tenantId);
 			} else if (config.getTaskBusinessServiceList().contains(entityType) || "task-notice".equalsIgnoreCase(entityType)) {
-				return processTaskSecondaryStageUpdate(request, entityType, referenceId, tenantId,action);
+				return processTaskSecondaryStageUpdate(request, entityType, referenceId, tenantId,status);
 			}
 			log.info("Case overall status not supported for entityType: {}", entityType);
 			return null;
@@ -185,9 +185,9 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private Object processTaskSecondaryStageUpdate(JSONObject request, String entityType, String referenceId, String tenantId,String action) {
+	private Object processTaskSecondaryStageUpdate(JSONObject request, String entityType, String referenceId, String tenantId,String status) {
 		try {
-			if(action!=null && Arrays.asList("SEND","EXPIRE","DELIVERED").contains(action)){
+			if(status!=null && Arrays.asList("EXECUTED","EXPIRED","DELIVERED").contains(status)){
 				log.info("Processing task secondary stage end trigger: entityType={}, referenceId={}", entityType, referenceId);
 				secondaryStageProcessor.processTaskEndTrigger(referenceId, tenantId, entityType, request);
 			}
