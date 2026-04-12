@@ -280,7 +280,7 @@ public class SecondaryStageProcessor {
                 if(referenceId!=null && referenceId.equals(task.optString("referenceId", ""))){
                     continue;
                 }
-                if ("DELIVERED".equalsIgnoreCase(status) || "EXPIRED".equalsIgnoreCase(status)) {
+                if ("DELIVERED".equalsIgnoreCase(status) || "EXPIRED".equalsIgnoreCase(status) || "EXECUTED".equalsIgnoreCase(status)) {
                     completedCount++;
                 }
             }
