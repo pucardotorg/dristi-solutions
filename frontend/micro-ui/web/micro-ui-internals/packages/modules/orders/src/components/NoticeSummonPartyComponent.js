@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import useSearchCaseService from "../../../dristi/src/hooks/dristi/useSearchCaseService";
 import { Button, Loader } from "@egovernments/digit-ui-react-components";
-import _ from "lodash";
+import isEqual from "lodash/isEqual";
 import { getFormattedName } from "../utils";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 import { Toast } from "@egovernments/digit-ui-components";
@@ -122,8 +122,8 @@ const NoticeSummonPartyComponent = ({ t, config, formData, onSelect, clearErrors
     if (Array.isArray(selectedOption)) {
       onSelect(config.key, { ...formData[config.key], party: selectedOption?.map((item) => item.value) });
     } else {
-      const isEqual = _.isEqual(selectedOption.value.data, formData?.[config.key]?.party?.data);
-      if (!isEqual) {
+      const isDataEqual = isEqual(selectedOption.value.data, formData?.[config.key]?.party?.data);
+      if (!isDataEqual) {
         onSelect(config.key, { ...formData[config.key], party: selectedOption.value });
       }
     }

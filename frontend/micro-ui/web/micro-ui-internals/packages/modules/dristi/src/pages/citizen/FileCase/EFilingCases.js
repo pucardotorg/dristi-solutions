@@ -1371,6 +1371,7 @@ function EFilingCases({ path }) {
               if (selected === "processCourierService") {
                 if (judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "multipleAccusedProcessCourier") {
                   body.isDisableAllFields = true;
+                  body.isDelayCondonation = isDelayCondonation;
                 }
               }
 
