@@ -94,10 +94,8 @@ public class CaseOverallStatusUtil {
 				return processOrderOverallStatus(request, referenceId, status, tenantId);
 			} else if (config.getApplicationBusinessServiceList().contains(entityType)) {
 				return processApplicationSecondaryStageUpdate(request, referenceId, status, action, tenantId);
-			} else if (config.getTaskBusinessServiceList().contains(entityType)) {
+			} else if (config.getTaskBusinessServiceList().contains(entityType) || "task-notice".equalsIgnoreCase(entityType)) {
 				return processTaskSecondaryStageUpdate(request, entityType, referenceId, tenantId);
-			} else if (config.getTaskManagementBusinessServiceList().contains(entityType)) {
-				return processTaskManagementSecondaryStageUpdate(request, referenceId, tenantId);
 			}
 			log.info("Case overall status not supported for entityType: {}", entityType);
 			return null;
@@ -198,24 +196,13 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private Object processTaskManagementSecondaryStageUpdate(JSONObject request, String referenceId, String tenantId) {
-		try {
-			log.info("Processing task management secondary stage end trigger: referenceId={}", referenceId);
-			secondaryStageProcessor.processTaskManagementEndTrigger(referenceId, tenantId, request);
-			return null;
-		} catch (Exception e) {
-			log.error("Error processing task management secondary stage for referenceId: {}", referenceId, e);
-			return null;
-		}
-	}
-
 	private Object processCaseOverallStatus(JSONObject request, String referenceId, String status, String action, String tenantId) throws JsonProcessingException {
 		RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
 		CaseOverallStatus caseOverallStatus = determineCaseStage(referenceId,tenantId,status,action,requestInfo);
 		publishToCaseOverallStatus(caseOverallStatus, request);
 
 		// When case is registered, check if delay condonation is required and start the secondary stage
-		if (caseOverallStatus != null && STAGE_REGISTRATION.equalsIgnoreCase(caseOverallStatus.getStage())) {
+		if (caseOverallStatus != null && STAGE_COGNIZANCE.equalsIgnoreCase(caseOverallStatus.getStage())) {
 			try {
 				Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, referenceId, null);
 				secondaryStageProcessor.processCaseRegistrationSecondaryStage(referenceId, tenantId, caseObject, request);
@@ -243,11 +230,11 @@ public class CaseOverallStatusUtil {
 		publishToCaseOverallStatus(determineHearingStage( filingNumber, tenantId, hearingType, action ), request);
 
 		// Secondary stage processing: evaluate hearing-based triggers (e.g., Mediation)
-		try {
-			secondaryStageProcessor.processHearingSecondaryStage(filingNumber, tenantId, hearingType, request);
-		} catch (Exception e) {
-			log.error("Error in secondary stage processing for hearing type: {} filingNumber: {}", hearingType, filingNumber, e);
-		}
+//		try {
+//			secondaryStageProcessor.processHearingSecondaryStage(filingNumber, tenantId, hearingType, request);
+//		} catch (Exception e) {
+//			log.error("Error in secondary stage processing for hearing type: {} filingNumber: {}", hearingType, filingNumber, e);
+//		}
 
 		return hearingObject;
 	}

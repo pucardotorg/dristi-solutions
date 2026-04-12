@@ -323,7 +323,6 @@ public class ServiceConstants {
     public static final String SECONDARY_STAGE_SUMMONS = "Summons";
     public static final String SECONDARY_STAGE_WARRANT = "Warrant";
     public static final String SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT = "Proclamation & Attachment";
-    public static final String SECONDARY_STAGE_NA = "N/A";
     public static final String SECONDARY_STAGE_MEDIATION = "Mediation";
 
     // Order type identifiers that trigger secondary stages (start triggers)
@@ -348,6 +347,6 @@ public class ServiceConstants {
 
     // JSON path for delay condonation type in case details
     public static final String DELAY_CONDONATION_TYPE_CODE_PATH = "$.caseDetails.delayApplications.formdata[0].data.delayCondonationType.code";
-    public static final String DELAY_CONDONATION_REQUIRED = "YES";
+    public static final String DELAY_CONDONATION_REQUIRED = "NO";
 
 }

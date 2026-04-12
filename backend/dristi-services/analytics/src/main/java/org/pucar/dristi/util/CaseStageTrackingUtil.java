@@ -191,31 +191,27 @@ public class CaseStageTrackingUtil {
      * Ends a secondary stage by setting its endTime to now.
      *
      * @param filingNumber case filing number
-     * @param stageName    the secondary stage name to end
      * @return true if a stage was actually ended
      */
-    public boolean endSecondaryStage(String filingNumber, String stageName) {
+    public boolean endSecondaryStage(String filingNumber) {
         CaseStageTracking tracking = getStageTrackingByFilingNumber(filingNumber);
         if (tracking == null) {
-            log.info("No tracking document found for filingNumber: {} to end secondary stage '{}'", filingNumber, stageName);
+            log.info("No tracking document found for filingNumber: {}", filingNumber);
             return false;
         }
 
         boolean updated = false;
         long now = System.currentTimeMillis();
         for (CaseStageTrackingEntry entry : tracking.getSecondaryStages()) {
-            if (entry.getStage() != null && entry.getStage().equalsIgnoreCase(stageName) && entry.getEndTime() == null) {
+            if (entry.getStage() != null && entry.getEndTime() == null) {
                 entry.setEndTime(now);
-                log.info("Ended secondary stage '{}' with endTime={} for filingNumber: {}", stageName, now, filingNumber);
+                log.info("endTime={} for filingNumber: {}", now, filingNumber);
                 updated = true;
-                break;
             }
         }
 
         if (updated) {
             upsertStageTracking(tracking);
-        } else {
-            log.info("Secondary stage '{}' not found or already ended for filingNumber: {}", stageName, filingNumber);
         }
         return updated;
     }
