@@ -4,6 +4,7 @@ import CourierService from "./CourierService";
 import Modal from "./Modal";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { DRISTIService } from "../services";
+import { ORDER_TYPES, TASK_TYPES } from "../Utils/constants";
 
 const Heading = (props) => {
   return <h1 className="main-heading">{props.label}</h1>;
@@ -55,11 +56,11 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
   };
 
   const handleCourierServiceChange = (value, type) => {
-    if (type === "notice") {
+    if (type === TASK_TYPES.NOTICE) {
       handleDataChange({ noticeCourierService: value });
-    } else if (type === "summons") {
+    } else if (type === TASK_TYPES.SUMMONS) {
       handleDataChange({ summonsCourierService: value });
-    } else if (type === "warrant") {
+    } else if (type === TASK_TYPES.WARRANT) {
       handleDataChange({ warrantCourierService: value });
     }
   };

@@ -31,6 +31,7 @@ import { DRISTIService } from "../../../services";
 import { sideMenuConfig } from "./Config";
 import EditFieldsModal from "./EditFieldsModal";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { ORDER_TYPES, TASK_TYPES } from "../../../Utils/constants";
 import {
   accusedAddressValidation,
   addressValidation,
@@ -2512,10 +2513,10 @@ function EFilingCases({ path }) {
             const summonsAccusedDetails = getAccusedDetails("SUMMONS");
             const warrantAccusedDetails = getAccusedDetails("WARRANT");
 
-            const noticeTask = taskManagementList?.find((item) => item?.taskType === "NOTICE");
-            const summonsTask = taskManagementList?.find((item) => item?.taskType === "SUMMONS");
+            const noticeTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.NOTICE);
+            const summonsTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.SUMMONS);
             const warrantTask = taskManagementList?.find(
-              (item) => item?.taskType === "WARRANT"
+              (item) => item?.taskType === TASK_TYPES.WARRANT
             );
             let updatedWarrantTask = null;
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatNoticeDeliveryDate } from "../utils";
+import { ORDER_TYPES } from "../utils/constants";
 import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
@@ -590,10 +591,10 @@ export const UICustomizations = {
           return `${DateUtils.getFormattedDate(new Date(value))}`;
         case "PROCESS_TYPE":
           const processType = value?.toUpperCase?.();
-          if (processType === "NOTICE") {
+          if (processType === ORDER_TYPES.NOTICE) {
             const noticeType = row?.taskDetails?.noticeDetails?.noticeType || "NOTICE";
             return t(noticeType);
-          } else if (processType === "MISCELLANEOUS_PROCESS") {
+          } else if (processType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
             const miscType = row?.taskDetails?.miscellaneuosDetails?.processTitle || "MISCELLANEOUS_PROCESS";
             return t(miscType);
           }

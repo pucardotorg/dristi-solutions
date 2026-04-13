@@ -7,6 +7,7 @@ import { ordersService } from "../hooks/services";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
 import { Urls } from "../hooks/services/Urls";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { ORDER_TYPES } from "../utils/constants";
 function ReIssueSummonsModal() {
   const { t } = useTranslation();
   const history = useHistory();
@@ -72,7 +73,7 @@ function ReIssueSummonsModal() {
         },
         documents: [],
         additionalDetails: {
-          [taskOrderType === "NOTICE" ? "isReIssueNotice" : "isReIssueSummons"]: true,
+          [taskOrderType === ORDER_TYPES.NOTICE ? "isReIssueNotice" : "isReIssueSummons"]: true,
           formdata: {
             orderType: {
               code: orderType,

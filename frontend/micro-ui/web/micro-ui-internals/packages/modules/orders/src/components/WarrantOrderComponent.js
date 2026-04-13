@@ -7,6 +7,7 @@ import { getFormattedName } from "../utils";
 import WarrantRenderDeliveryChannels from "./WarrantRenderDeliveryChannels";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 import { Toast } from "@egovernments/digit-ui-components";
+import { ORDER_TYPES } from "../utils/constants";
 
 // Helper function to compare addresses without police station data
 const compareAddressValues = (value1, value2) => {
@@ -80,7 +81,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       code: "RPAD",
       values: [],
     },
-    (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") && {
+    (orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT) && {
       label: "VIA_POLICE",
       type: "Via Police",
       code: "POLICE",
@@ -357,7 +358,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             code: "RPAD",
             values: address || [],
           },
-          (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") && {
+          (orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT) && {
             label: "SEND_ICOPS",
             type: "Via Police",
             code: "POLICE",

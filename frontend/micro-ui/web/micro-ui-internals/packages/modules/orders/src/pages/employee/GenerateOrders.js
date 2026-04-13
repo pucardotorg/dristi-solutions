@@ -4,6 +4,7 @@ import { useHistory } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { Header, FormComposerV2, Toast, Button, EditIcon, Modal, CloseButton, TextInput, CloseSvg } from "@egovernments/digit-ui-react-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core"; // Import breadcrumb context from core module
+import { ORDER_TYPES } from "../../utils/constants";
 import {
   applicationTypeConfig,
   configCheckout,
@@ -780,10 +781,10 @@ const GenerateOrders = () => {
   // Checking if the current order type is NOTICE.
   const isNoticeOrder = useMemo(() => {
     if (currentOrder?.orderCategory === "COMPOSITE") {
-      if (currentOrder?.compositeItems?.find((item) => item?.orderType === "NOTICE")) {
+      if (currentOrder?.compositeItems?.find((item) => item?.orderType === ORDER_TYPES.NOTICE)) {
         return true;
       } else return false;
-    } else if (currentOrder?.orderType === "NOTICE") {
+    } else if (currentOrder?.orderType === ORDER_TYPES.NOTICE) {
       return true;
     } else return false;
   }, [currentOrder]);
@@ -1220,7 +1221,7 @@ const GenerateOrders = () => {
             });
           }
 
-          if (orderType === "WARRANT") {
+          if (orderType === ORDER_TYPES.WARRANT) {
             const warrantSubtypeCode = item?.orderSchema?.additionalDetails?.formdata?.warrantSubType?.templateType;
             orderTypeForm = orderTypeForm?.map((section) => {
               const updatedBody = section.body
@@ -1514,7 +1515,7 @@ const GenerateOrders = () => {
           });
         }
 
-        if (orderType === "WARRANT") {
+        if (orderType === ORDER_TYPES.WARRANT) {
           const warrantSubtypeCode = currentOrder?.additionalDetails?.formdata?.warrantSubType?.templateType;
           orderTypeForm = orderTypeForm?.map((section) => {
             const updatedBody = section.body
@@ -1812,7 +1813,7 @@ const GenerateOrders = () => {
         }
       }
 
-      if (orderType === "SUMMONS") {
+      if (orderType === ORDER_TYPES.SUMMONS) {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -1854,7 +1855,7 @@ const GenerateOrders = () => {
           setValueRef?.current?.[index]?.("SummonsOrder", updatedFormdata.SummonsOrder);
         }
       }
-      if (orderType === "NOTICE") {
+      if (orderType === ORDER_TYPES.NOTICE) {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -1899,7 +1900,7 @@ const GenerateOrders = () => {
           setValueRef?.current?.[index]?.("noticeOrder", updatedFormdata.noticeOrder);
         }
       }
-      if (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") {
+      if (orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT) {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -3114,7 +3115,7 @@ const GenerateOrders = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType
+              orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "WARRANT" : orderType
             ),
             feesStatus: "",
           },
@@ -3160,7 +3161,7 @@ const GenerateOrders = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" ? "WARRANT" : orderType
+              orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION ? "WARRANT" : orderType
             ),
             feesStatus: "",
           },
@@ -3209,7 +3210,7 @@ const GenerateOrders = () => {
             fees: await getCourtFee(
               "POLICE",
               respondentAddress?.[0]?.pincode,
-              orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType
+              orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "WARRANT" : orderType
             ),
             feesStatus: "",
           },
@@ -3253,7 +3254,7 @@ const GenerateOrders = () => {
           let courtFees = await getCourtFee(
             item?.code,
             pincode,
-            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType
+            orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "WARRANT" : orderType
           );
 
           if ("deliveryChannels" in clonedPayload) {
@@ -3265,7 +3266,7 @@ const GenerateOrders = () => {
             };
 
             let address = {};
-            if (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" || item?.type === "Via Police") {
+            if (orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT || item?.type === "Via Police") {
               address = {
                 ...item?.value,
                 locality: item?.value?.locality || "",
@@ -3901,7 +3902,7 @@ const GenerateOrders = () => {
           }
         }
 
-        if (orderType === "NOTICE") {
+        if (orderType === ORDER_TYPES.NOTICE) {
           if (formData?.noticeOrder?.selectedChannels?.length === 0) {
             setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
             hasError = true;
@@ -3909,7 +3910,7 @@ const GenerateOrders = () => {
           }
         }
 
-        if (orderType === "SUMMONS") {
+        if (orderType === ORDER_TYPES.SUMMONS) {
           if (formData?.SummonsOrder?.selectedChannels?.length === 0) {
             setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_SUMMONS_ORDER"), error: true });
             hasError = true;
@@ -3925,7 +3926,7 @@ const GenerateOrders = () => {
           }
         }
 
-        if (orderType === "WARRANT") {
+        if (orderType === ORDER_TYPES.WARRANT) {
           if (!formData?.bailInfo?.noOfSureties && formData?.bailInfo?.isBailable?.code === true) {
             setFormErrors?.current?.[index]?.("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
             hasError = true;
@@ -3959,7 +3960,7 @@ const GenerateOrders = () => {
           }
         }
 
-        if (orderType === "PROCLAMATION") {
+        if (orderType === ORDER_TYPES.PROCLAMATION) {
           if (formData?.proclamationFor?.selectedChannels?.length === 0) {
             setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
             hasError = true;
@@ -3979,7 +3980,7 @@ const GenerateOrders = () => {
           }
         }
 
-        if (orderType === "ATTACHMENT") {
+        if (orderType === ORDER_TYPES.ATTACHMENT) {
           if (formData?.attachmentFor?.selectedChannels?.length === 0) {
             setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
             hasError = true;

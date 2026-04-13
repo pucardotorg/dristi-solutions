@@ -6,6 +6,7 @@ import { CustomMultiSelectDropdown } from "./CustomMultiSelectDropdown";
 import Modal from "./Modal";
 import SelectCustomNote from "./SelectCustomNote";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
+import { TASK_TYPES, CHANNEL_IDS } from "../Utils/constants";
 
 const InfoIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -90,7 +91,7 @@ function CourierService({
 
     return processCourierData?.addressDetails?.flatMap((addr) =>
       taskTypes?.flatMap((taskType) => {
-        const channels = taskType === "WARRANT" ? warrantChannels : defaultChannels;
+        const channels = taskType === TASK_TYPES.WARRANT ? warrantChannels : defaultChannels;
 
         return channels.map((channelId) => ({
           channelId,
@@ -114,12 +115,12 @@ function CourierService({
 
   const _getChannelCodeAndDeliveryTime = ({ taskType, channelId }) => {
     if (["NOTICE", "SUMMONS"]?.includes(taskType)) {
-      const channelCode = channelId === "RPAD" ? "REGISTERED_POST" : "E_POST";
-      const channelDeliveryTime = channelId === "RPAD" ? "RPAD_DELIVERY_TIME" : "EPOST_DELIVERY_TIME";
+      const channelCode = channelId === CHANNEL_IDS.RPAD ? "REGISTERED_POST" : "E_POST";
+      const channelDeliveryTime = channelId === CHANNEL_IDS.RPAD ? "RPAD_DELIVERY_TIME" : "EPOST_DELIVERY_TIME";
       return { channelCode, channelDeliveryTime };
     } else {
-      const channelCode = channelId === "RPAD" ? "REGISTERED_POST" : "ICOPS";
-      const channelDeliveryTime = channelId === "RPAD" ? "RPAD_DELIVERY_TIME" : "POLICE_DELIVERY_TIME";
+      const channelCode = channelId === CHANNEL_IDS.RPAD ? "REGISTERED_POST" : "ICOPS";
+      const channelDeliveryTime = channelId === CHANNEL_IDS.RPAD ? "RPAD_DELIVERY_TIME" : "POLICE_DELIVERY_TIME";
       return { channelCode, channelDeliveryTime };
     }
   };
@@ -158,7 +159,7 @@ function CourierService({
     }));
 
     if (Array.isArray(processCourierData?.noticeCourierService) && processCourierData?.noticeCourierService?.length > 0) {
-      const noticeOptions = options?.filter((opt) => opt?.taskType === "NOTICE");
+      const noticeOptions = options?.filter((opt) => opt?.taskType === TASK_TYPES.NOTICE);
       const needsUpdate = processCourierData?.noticeCourierService?.some((selected) => {
         const updatedOption = noticeOptions?.find((opt) => opt?.channelId === selected?.channelId);
         return updatedOption && updatedOption?.fees !== selected?.fees;
@@ -173,7 +174,7 @@ function CourierService({
     }
 
     if (Array.isArray(processCourierData?.summonsCourierService) && processCourierData?.summonsCourierService?.length > 0) {
-      const summonsOptions = options?.filter((opt) => opt?.taskType === "SUMMONS");
+      const summonsOptions = options?.filter((opt) => opt?.taskType === TASK_TYPES.SUMMONS);
       const needsUpdate = processCourierData?.summonsCourierService?.some((selected) => {
         const updatedOption = summonsOptions?.find((opt) => opt?.channelId === selected?.channelId);
         return updatedOption && updatedOption?.fees !== selected?.fees;
@@ -188,7 +189,7 @@ function CourierService({
     }
 
     if (Array.isArray(processCourierData?.warrantCourierService) && processCourierData?.warrantCourierService?.length > 0) {
-      const warrantOptions = options?.filter((opt) => opt?.taskType === "WARRANT");
+      const warrantOptions = options?.filter((opt) => opt?.taskType === TASK_TYPES.WARRANT);
       const needsUpdate = processCourierData?.warrantCourierService?.some((selected) => {
         const updatedOption = warrantOptions?.find((opt) => opt?.channelId === selected?.channelId);
         return updatedOption && updatedOption?.fees !== selected?.fees;
@@ -212,7 +213,7 @@ function CourierService({
         (orderType === "NOTICE" || isDelayCondonation) &&
         (!processCourierData?.noticeCourierService || processCourierData?.noticeCourierService?.length === 0)
       ) {
-        const rpadNoticeOption = courierOptions?.find((option) => option?.channelId === "RPAD" && option?.taskType === "NOTICE");
+        const rpadNoticeOption = courierOptions?.find((option) => option?.channelId === CHANNEL_IDS.RPAD && option?.taskType === TASK_TYPES.NOTICE);
         if (rpadNoticeOption) {
           data = { ...data, notice: [rpadNoticeOption] };
         }
@@ -222,7 +223,7 @@ function CourierService({
         (orderType === "SUMMONS" || (!orderType && !isDelayCondonation)) &&
         (!processCourierData?.summonsCourierService || processCourierData?.summonsCourierService?.length === 0)
       ) {
-        const rpadSummonsOption = courierOptions?.find((option) => option?.channelId === "RPAD" && option?.taskType === "SUMMONS");
+        const rpadSummonsOption = courierOptions?.find((option) => option?.channelId === CHANNEL_IDS.RPAD && option?.taskType === TASK_TYPES.SUMMONS);
         if (rpadSummonsOption) {
           data = { ...data, summons: [rpadSummonsOption] };
         }
@@ -232,7 +233,7 @@ function CourierService({
         (orderType === "WARRANT" || !orderType) &&
         (!processCourierData?.warrantCourierService || processCourierData?.warrantCourierService?.length === 0)
       ) {
-        const policeWarrantOption = courierOptions?.find((option) => option?.channelId === "POLICE" && option?.taskType === "WARRANT");
+        const policeWarrantOption = courierOptions?.find((option) => option?.channelId === CHANNEL_IDS.POLICE && option?.taskType === TASK_TYPES.WARRANT);
         if (policeWarrantOption) {
           data = { ...data, warrant: [policeWarrantOption] };
         }
@@ -334,7 +335,7 @@ function CourierService({
               <CustomMultiSelectDropdown
                 t={t}
                 defaultLabel={t("SELECT_COURIER_SERVICES")}
-                options={courierOptions?.filter((option) => option?.taskType === "NOTICE")}
+                options={courierOptions?.filter((option) => option?.taskType === TASK_TYPES.NOTICE)}
                 selected={processCourierData?.noticeCourierService}
                 onSelect={(value) => handleCourierServiceChange(value, "notice")}
                 optionsKey="deliveryChannelName"
@@ -377,7 +378,7 @@ function CourierService({
               <CustomMultiSelectDropdown
                 t={t}
                 defaultLabel={t("SELECT_COURIER_SERVICES")}
-                options={courierOptions?.filter((option) => option?.taskType === "SUMMONS")}
+                options={courierOptions?.filter((option) => option?.taskType === TASK_TYPES.SUMMONS)}
                 selected={processCourierData?.summonsCourierService}
                 onSelect={(value) => {
                   handleCourierServiceChange(value, "summons");
@@ -416,7 +417,7 @@ function CourierService({
               <CustomMultiSelectDropdown
                 t={t}
                 defaultLabel={t("SELECT_COURIER_SERVICES")}
-                options={courierOptions?.filter((option) => option?.taskType === "WARRANT")}
+                options={courierOptions?.filter((option) => option?.taskType === TASK_TYPES.WARRANT)}
                 selected={processCourierData?.warrantCourierService}
                 onSelect={(value) => {
                   handleCourierServiceChange(value, "warrant");

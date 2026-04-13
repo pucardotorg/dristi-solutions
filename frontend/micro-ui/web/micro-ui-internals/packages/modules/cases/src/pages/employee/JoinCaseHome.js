@@ -23,6 +23,7 @@ import POAInfo from "./joinCaseComponent/POAInfo";
 import { cleanString, combineMultipleFiles, getAuthorizedUuid, removeInvalidNameParts } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/submissionWorkflow";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { JoinHomeLocalisation, optionsStatus } from "../../utils/constants";
 
 const CloseBtn = (props) => {
   return (
@@ -37,18 +38,6 @@ const Heading = (props) => {
       <h1 className="heading-m">{props.label}</h1>
     </div>
   );
-};
-
-const JoinHomeLocalisation = {
-  ADVOCATE_OPT: "ADVOCATE_OPT",
-  LITIGANT_OPT: "LITIGANT_OPT",
-  COMPLAINANT_BRACK: "COMPLAINANT_BRACK",
-  RESPONDENT_BRACK: "RESPONDENT_BRACK",
-  CASE_NOT_ADMITTED_TEXT: "CASE_NOT_ADMITTED_TEXT",
-  JOIN_CASE_BACK_TEXT: "JOIN_CASE_BACK_TEXT",
-  INVALID_ACCESS_CODE_MESSAGE: "INVALID_ACCESS_CODE_MESSAGE",
-  JOIN_CASE_SUCCESS: "JOIN_CASE_SUCCESS",
-  APPLICATION_CREATION_FAILED: "APPLICATION_CREATION_FAILED",
 };
 
 const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data }) => {
@@ -390,7 +379,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   }, [setShowJoinCase]);
 
   const onSelect = (option) => {
-    if (["PENDING_RESPONSE", "ADMISSION_HEARING_SCHEDULED", "CASE_ADMITTED", "PENDING_ADMISSION"].includes(option?.status)) {
+    if (optionsStatus.includes(option?.status)) {
       setIsDisabled(false);
       setCaseDetails(option);
 

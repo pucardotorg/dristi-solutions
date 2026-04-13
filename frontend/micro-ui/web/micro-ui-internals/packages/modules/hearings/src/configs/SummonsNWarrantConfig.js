@@ -4,25 +4,27 @@
 //   applicationNumber:""
 // };
 
+import { ORDER_TYPES, PARTY_TYPES } from "../utils/constants";
+
 const _getPartyType = (orderType, partyType) => {
-  if (orderType === "MISCELLANEOUS_PROCESS") {
-    if (partyType === "other" || partyType === "others") {
+  if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
+    if (partyType === PARTY_TYPES.OTHER || partyType === PARTY_TYPES.OTHERS) {
       return "others";
     }
 
-    return partyType === "Accused" || partyType === "Respondent" ? "respondent" : partyType?.toLowerCase();
+    return partyType === PARTY_TYPES.ACCUSED || partyType === PARTY_TYPES.RESPONDENT ? "respondent" : partyType?.toLowerCase();
   }
 
-  if (!["NOTICE", "SUMMONS"]?.includes(orderType)) {
+  if (![ORDER_TYPES.NOTICE, ORDER_TYPES.SUMMONS]?.includes(orderType)) {
     return "respondent";
   }
 
-  return partyType === "Accused" || partyType === "Respondent" ? "respondent" : partyType?.toLowerCase();
+  return partyType === PARTY_TYPES.ACCUSED || partyType === PARTY_TYPES.RESPONDENT ? "respondent" : partyType?.toLowerCase();
 };
 
 export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, partyUniqueId, partyType }) => {
   return {
-    label: `1(${orderType === "NOTICE" ? "Notice" : "Summon"}s)`,
+    label: `1(${orderType === ORDER_TYPES.NOTICE ? "Notice" : "Summon"}s)`,
     type: "search",
     apiDetails: {
       serviceName: "/task/v1/search",
@@ -38,7 +40,7 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
           // cnrNumber: taskCnrNumber,
           orderId: orderId,
           partyType: _getPartyType(orderType, partyType),
-          ...(!["police", "other", "others"]?.includes((partyType || "")?.toLowerCase()) && { partyUniqueId: partyUniqueId }),
+          ...(![PARTY_TYPES.POLICE, PARTY_TYPES.OTHER, PARTY_TYPES.OTHERS]?.includes((partyType || "")?.toLowerCase()) && { partyUniqueId: partyUniqueId }),
         },
       },
       masterName: "commonUiConfig",
