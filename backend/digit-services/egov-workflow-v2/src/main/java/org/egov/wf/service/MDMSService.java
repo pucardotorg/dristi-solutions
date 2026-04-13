@@ -63,23 +63,22 @@ public class MDMSService {
 
 
     @Bean
-    public void stateLevelMapping(){
+    public Map<String, Boolean> stateLevelMapping() {
+
         Map<String, Boolean> stateLevelMapping = new HashMap<>();
 
         Object mdmsData = getBusinessServiceMDMS();
-        List<HashMap<String, Object>> configs = JsonPath.read(mdmsData,JSONPATH_BUSINESSSERVICE_STATELEVEL);
+        List<HashMap<String, Object>> configs =
+                JsonPath.read(mdmsData, JSONPATH_BUSINESSSERVICE_STATELEVEL);
 
-        for (Map map : configs){
-
+        for (Map map : configs) {
             String businessService = (String) map.get("businessService");
             Boolean isStatelevel = Boolean.valueOf((String) map.get("isStatelevel"));
-
             stateLevelMapping.put(businessService, isStatelevel);
         }
 
-        this.stateLevelMapping = stateLevelMapping;
+        return stateLevelMapping;
     }
-
 
     /**
      * Calls MDMS service to fetch master data
