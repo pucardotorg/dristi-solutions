@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -76,8 +77,8 @@ public class SecondaryStageProcessor {
                 String secondaryStage = mapOrderTypeToSecondaryStage(orderType, orderTypeToSubstageMap);
                 if (secondaryStage != null) {
                     log.info("Order type '{}' published triggers secondary stage '{}' for filingNumber: {}", orderType, secondaryStage, filingNumber);
+                    publishSubstageUpdate(filingNumber, tenantId, request,secondaryStage);
                     caseStageTrackingUtil.startSecondaryStage(filingNumber, tenantId, secondaryStage);
-                    publishSubstageUpdate(filingNumber, tenantId, request);
                 }
             }
         } catch (Exception e) {
@@ -103,8 +104,8 @@ public class SecondaryStageProcessor {
             if (DELAY_CONDONATION_REQUIRED.equalsIgnoreCase(delayCondonationTypeCode)) {
                 log.info("Delay condonation required (code='{}') for filingNumber: {}, starting secondary stage '{}'",
                         delayCondonationTypeCode, filingNumber, SECONDARY_STAGE_DELAY_CONDONATION);
+                publishSubstageUpdate(filingNumber, tenantId, request,SECONDARY_STAGE_DELAY_CONDONATION);
                 caseStageTrackingUtil.startSecondaryStage(filingNumber, tenantId, SECONDARY_STAGE_DELAY_CONDONATION);
-                publishSubstageUpdate(filingNumber, tenantId, request);
             } else {
                 log.info("Delay condonation not required (code='{}') for filingNumber: {}", delayCondonationTypeCode, filingNumber);
             }
@@ -136,8 +137,8 @@ public class SecondaryStageProcessor {
                 if (APPLICATION_STATUS_ACCEPTED.equalsIgnoreCase(status) || APPLICATION_STATUS_REJECTED.equalsIgnoreCase(status)) {
                     // End trigger for Delay Condonation
                     log.info("Application '{}' status '{}' ends secondary stage '{}' for filingNumber: {}", applicationType, status, delayCondonationStage, filingNumber);
+                    publishSubstageUpdate(filingNumber, tenantId, request,null);
                     caseStageTrackingUtil.endSecondaryStage(filingNumber);
-                    publishSubstageUpdate(filingNumber, tenantId, request);
                 }
             }
         } catch (Exception e) {
@@ -288,7 +289,7 @@ public class SecondaryStageProcessor {
             if ((tasks.length() > 1 && completedCount==tasks.length()-1) || (tasks.length() == 1)) {
                 log.info("All {} tasks delivered/expired for filingNumber: {}, ending secondary stage '{}'", taskType, filingNumber, secondaryStage);
                 caseStageTrackingUtil.endSecondaryStage(filingNumber);
-                publishSubstageUpdate(filingNumber, tenantId, request);
+                publishSubstageUpdate(filingNumber, tenantId, request,null);
             } else {
                 log.info("Not all {} tasks delivered/expired for filingNumber: {}, secondary stage '{}' remains active", taskType, filingNumber, secondaryStage);
             }
@@ -312,7 +313,7 @@ public class SecondaryStageProcessor {
             if (activeStages.contains(SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT)) {
                 log.info("Accused joined case, ending secondary stage '{}' for filingNumber: {}", SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT, filingNumber);
                 caseStageTrackingUtil.endSecondaryStage(filingNumber);
-                publishSubstageUpdate(filingNumber, tenantId, request);
+                publishSubstageUpdate(filingNumber, tenantId, request,null);
             }
         } catch (Exception e) {
             log.error("Error processing join case secondary stage for filingNumber: {}", filingNumber, e);
@@ -341,9 +342,14 @@ public class SecondaryStageProcessor {
      * If no secondary stages are active, secondaryStage is set to empty list.
      * If one or more are active, secondaryStage is set to the list of active stage names.
      */
-    private void publishSubstageUpdate(String filingNumber, String tenantId, JSONObject request) {
+    private void publishSubstageUpdate(String filingNumber, String tenantId, JSONObject request,String secondaryStage) {
         try {
             List<String> activeStages = caseStageTrackingUtil.getActiveSecondaryStageNames(filingNumber);
+            if(!activeStages.contains(secondaryStage) && secondaryStage!=null){
+                activeStages.add(secondaryStage);
+            }
+            if (secondaryStage==null)
+                activeStages.clear();
 
             RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
 
