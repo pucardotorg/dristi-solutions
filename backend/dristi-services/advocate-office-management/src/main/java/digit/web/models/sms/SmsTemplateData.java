@@ -15,14 +15,8 @@ public class SmsTemplateData {
 
     private String tenantId;
 
-    private String courtCaseNumber;
+    private String advocateName;
 
-    private String cmpNumber;
-
-    private String caseNumber;
-
-    private String filingNumber;
-
-    private String shortenedUrl;
+    private String memberType;
 
 }
