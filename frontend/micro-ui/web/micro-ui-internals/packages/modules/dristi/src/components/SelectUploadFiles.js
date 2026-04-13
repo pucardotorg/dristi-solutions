@@ -1,4 +1,4 @@
-import { CardLabelError, CloseSvg, UploadIcon } from "@egovernments/digit-ui-react-components";
+import { CardLabelError, UploadIcon } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
@@ -6,6 +6,7 @@ import CustomErrorTooltip from "./CustomErrorTooltip";
 import Modal from "./Modal";
 import MultiUploadWrapper from "./MultiUploadWrapper";
 import RenderFileCard from "./RenderFileCard";
+import { CloseBtn, Heading } from "./ModalComponents";
 
 const textAreaJSX = (value, t, input, handleChange, error, disabled) => {
   return (
@@ -39,19 +40,6 @@ const textAreaJSX = (value, t, input, handleChange, error, disabled) => {
     </div>
   );
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setError }) {
   const checkIfTextPresent = () => {
     if (!formData) {

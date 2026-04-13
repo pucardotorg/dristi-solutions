@@ -1,4 +1,4 @@
-import { BackButton, CheckSvg, CloseSvg, EditIcon, FormComposerV2, Header, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import { BackButton, CheckSvg, EditIcon, FormComposerV2, Header, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
@@ -19,6 +19,7 @@ import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import { DateUtils, getCaseEditAllowedAssignees, runComprehensiveSanitizer } from "../../../Utils";
 import isEqual from "lodash/isEqual";
 import { transformCaseDataForFetching } from "../../citizen/FileCase/EfilingValidationUtils";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 const judgeId = "JUDGE_ID";
 const benchId = "BENCH_ID";
 
@@ -708,22 +709,12 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     },
   ];
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny && !inViewCase) {
     history.push(homePath);
   }
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
+  
   const scrollToHeading = (heading) => {
     const scroller = Array.from(document.querySelectorAll(".label-field-pair .accordion-title")).find((el) => el.textContent === heading);
     scroller.scrollIntoView({ block: "center", behavior: "smooth" });
