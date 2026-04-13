@@ -912,10 +912,19 @@ const ReviewSummonsNoticeAndWarrant = () => {
       sessionStorage.removeItem("fileStoreId");
       sessionStorage.removeItem("homeActiveTab");
       sessionStorage.setItem("SignedFileStoreID", documentsFile?.fileStore);
+      
+      const parsedTaskDetails = typeof rowData?.taskDetails === "string" ? JSON.parse(rowData?.taskDetails) : rowData?.taskDetails;
+      
       const reqBody = {
         task: {
           ...rowData,
-          ...(typeof rowData?.taskDetails === "string" && { taskDetails: JSON.parse(rowData?.taskDetails) }),
+          taskDetails: {
+            ...parsedTaskDetails,
+            deliveryChannels: {
+              ...parsedTaskDetails?.deliveryChannels,
+              isPendingCollection: false,
+            },
+          },
           documents: documentsFile ? [...documents, documentsFile] : documents,
           tenantId,
         },

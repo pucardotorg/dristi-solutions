@@ -44,7 +44,7 @@
           "breakUpName": "Stipend Stamp"
         }
       ],
-      "paymentType": "1" // todo for e-filing
+      "paymentType": "1" // todo to be fetched from payment.paymentType for CASE_FILING suffix
     },
     "isActive": true,
     "auditDetails": {
@@ -83,7 +83,7 @@
           "breakUpName": "Stipend Stamp"
         }
       ],
-      "paymentType": "15" // todo for advocate join case
+      "paymentType": "15" // // todo to be fetched from payment.paymentType for JOIN_CASE suffix
     },
     "isActive": true
   }

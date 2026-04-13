@@ -180,7 +180,6 @@ const DocViewerWrapper = ({
         fileName: file?.name,
       }));
 
-
   return (
     <div className="docviewer-wrapper" id="docviewer-id">
       <Card

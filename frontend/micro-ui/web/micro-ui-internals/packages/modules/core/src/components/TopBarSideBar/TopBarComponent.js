@@ -250,6 +250,16 @@ const TopBarComponent = ({
     );
   }, [searchResult, userType]);
 
+  const isRejected = useMemo(() => {
+    return (
+      userType !== "LITIGANT" &&
+      Array.isArray(searchResult) &&
+      searchResult?.length > 0 &&
+      searchResult?.[0]?.isActive === false &&
+      searchResult?.[0]?.status === "INACTIVE"
+    );
+  }, [searchResult, userType]);
+
   const advocateId = useMemo(() => {
     return userType === "ADVOCATE" ? searchResult?.[0]?.id : null;
   }, [searchResult, userType]);
@@ -271,7 +281,7 @@ const TopBarComponent = ({
     },
     { tenantId },
     searchCriteria + isApprovalPending,
-    Boolean((advocateId || advClerkId) && tenantId && !isApprovalPending)
+    Boolean((advocateId || advClerkId) && tenantId && !isApprovalPending && !isRejected)
   );
 
   const seniorAdvocates = useMemo(() => {
@@ -411,12 +421,21 @@ const TopBarComponent = ({
   const hasMembers = Array.isArray(seniorAdvocates) && seniorAdvocates?.length > 0;
 
   const advocateDropdownOptions = useMemo(() => {
-    if (isSearchLoading || isApprovalPending || individualDataLoading || isIndividuaIdMappingsLoading) return [];
+    if (isSearchLoading || isApprovalPending || isRejected || individualDataLoading || isIndividuaIdMappingsLoading) return [];
     else if (isUserLoggedIn && !isSearchLoading && !isApprovalPending && hasMembers && !individualDataLoading) {
       return seniorAdvocates;
     }
     return [];
-  }, [hasMembers, individualDataLoading, isApprovalPending, isIndividuaIdMappingsLoading, isSearchLoading, isUserLoggedIn, seniorAdvocates]);
+  }, [
+    hasMembers,
+    individualDataLoading,
+    isApprovalPending,
+    isRejected,
+    isIndividuaIdMappingsLoading,
+    isSearchLoading,
+    isUserLoggedIn,
+    seniorAdvocates,
+  ]);
 
   return (
     <div className="navbar" style={{ zIndex: "999" }}>
@@ -461,7 +480,7 @@ const TopBarComponent = ({
 
         <div className="RightMostTopBarOptions">
           {/* Manage Office button & Advocate profile dropdown - only visible for advocates / clerks */}
-          {(isAdvocate || (isAdvocateClerk && advocateDropdownOptions?.length > 0)) && (
+          {(isAdvocate || (isAdvocateClerk && advocateDropdownOptions?.length > 0)) && !isApprovalPending && !isRejected && (
             <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
               <AdvocateProfileDropdown
                 t={t}

@@ -12,7 +12,6 @@ const Response = ({ refetch, setHideBack }) => {
   const location = useLocation();
   const history = useHistory();
 
-
   useGetAccessToken("citizen.refresh-token", true);
 
   useEffect(() => {

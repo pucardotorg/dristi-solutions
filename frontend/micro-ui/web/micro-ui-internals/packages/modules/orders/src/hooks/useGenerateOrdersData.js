@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import _ from "lodash";
+import get from "lodash/get";
 import useSearchOrdersService from "./orders/useSearchOrdersService";
 import { OrderWorkflowState } from "../utils/orderWorkflow";
 
@@ -96,7 +96,7 @@ const useGenerateOrdersData = ({
     [{ name: "OrderType" }],
     {
       select: (data) =>
-        _.get(data, "Order.OrderType", [])
+        get(data, "Order.OrderType", [])
           .filter((opt) => (opt?.hasOwnProperty("isactive") ? opt.isactive : true))
           .sort((a, b) => a.code.localeCompare(b.code))
           .map((opt) => ({ ...opt, name: `ORDER_TYPE_${opt.code}` })),
@@ -110,7 +110,7 @@ const useGenerateOrdersData = ({
     [{ name: "BailType" }],
     {
       select: (data) =>
-        _.get(data, "Order.BailType", [])
+        get(data, "Order.BailType", [])
           .filter((opt) => (opt?.hasOwnProperty("isactive") ? opt.isactive : true))
           .map((item) => {
             if (item.type === "BAIL_BOND") {
@@ -128,7 +128,7 @@ const useGenerateOrdersData = ({
     [{ name: "HearingType" }],
     {
       select: (data) =>
-        _.get(data, "Hearing.HearingType", [])
+        get(data, "Hearing.HearingType", [])
           .filter((opt) => (opt?.hasOwnProperty("isactive") ? opt.isactive : true))
           ?.sort((a, b) => a.code.localeCompare(b.code))
           .map((opt) => ({ ...opt })),
@@ -155,7 +155,7 @@ const useGenerateOrdersData = ({
     select: (data) => {
       let newData = {};
       [{ name: "Court_Rooms" }]?.forEach((master) => {
-        const optionsData = _.get(data, `${"common-masters"}.${master?.name}`, []);
+        const optionsData = get(data, `${"common-masters"}.${master?.name}`, []);
         newData = {
           ...newData,
           [master.name]: optionsData.filter((opt) => (opt?.hasOwnProperty("active") ? opt.active : true)).map((opt) => ({ ...opt })),

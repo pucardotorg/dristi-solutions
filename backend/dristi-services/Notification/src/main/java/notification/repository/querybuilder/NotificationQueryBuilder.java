@@ -160,13 +160,13 @@ public class NotificationQueryBuilder {
                 if (field.get(obj) != null) {
                     if ("isFuzzySearch".equalsIgnoreCase(field.getName())) continue;
                     addClause(sb);
-                    if (isFuzzySearch && (field.getName().equalsIgnoreCase("notificationNumber"))) {
+                    if (isFuzzySearch && ("notificationNumber".equalsIgnoreCase(field.getName()))) {
                         sb.append("LOWER(").append(field.getName()).append(") LIKE LOWER(?)");
                         preparedStmtList.add("%" + field.get(obj) + "%");
-                    } else if(!isFuzzySearch && field.getName().equalsIgnoreCase("notificationNumber")){
+                    } else if(!isFuzzySearch && "notificationNumber".equalsIgnoreCase(field.getName())){
                         sb.append("LOWER(").append(field.getName()).append(") = LOWER(?)");
                         preparedStmtList.add(field.get(obj));
-                    }else if(!field.getName().equalsIgnoreCase("notificationNumber")) {
+                    }else if(!"notificationNumber".equalsIgnoreCase(field.getName())) {
                         sb.append(field.getName()).append(" = ?");
                         preparedStmtList.add(field.get(obj));
                     }

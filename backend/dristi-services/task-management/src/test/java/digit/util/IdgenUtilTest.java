@@ -131,7 +131,7 @@ class IdgenUtilTest {
         idgenUtil.getIdList(requestInfo, "kl", "task.id", "TM-[SEQ]", 1, false);
 
         verify(restRepo).fetchResult(
-            argThat(uri -> uri.toString().equals("http://localhost:8080/egov-idgen/id/_generate")),
+            argThat(uri -> "http://localhost:8080/egov-idgen/id/_generate".equals(uri.toString())),
             any()
         );
     }
