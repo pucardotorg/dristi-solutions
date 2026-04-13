@@ -21,6 +21,7 @@ import NoticeSummonPaymentModal from "./NoticeSummonPaymentModal";
 import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useCaseDetailSearchService";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { ORDER_TYPES } from "../utils/constants";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -420,7 +421,7 @@ const TasksComponent = ({
               let noticeCourierService = [];
               let summonsCourierService = [];
 
-              if (orderType === "SUMMONS") {
+              if (orderType === ORDER_TYPES.SUMMONS) {
                 summonsCourierService = partyDetails?.deliveryChannels;
               } else {
                 noticeCourierService = partyDetails?.deliveryChannels;
@@ -1037,7 +1038,7 @@ const TasksComponent = ({
       if (updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party?.[index]) {
         const updatedParties = [...updatedOrderDetails.additionalDetails.formdata[formDataKey].party];
         const updatedParty = { ...updatedParties[index] };
-        updatedParty[type === "notice" ? "noticeCourierService" : "summonsCourierService"] = value;
+        updatedParty[type === ORDER_TYPES.NOTICE ? "noticeCourierService" : "summonsCourierService"] = value;
         updatedParties[index] = updatedParty;
         updatedOrderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
       }
@@ -1217,7 +1218,7 @@ const TasksComponent = ({
             isTaskManagementLoading ||
             isCaseLoading ||
             isLoader ||
-            (orderType === "SUMMONS" ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
+            (orderType === ORDER_TYPES.SUMMONS ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
         };
       }) || [];
     return courierServiceSteps;

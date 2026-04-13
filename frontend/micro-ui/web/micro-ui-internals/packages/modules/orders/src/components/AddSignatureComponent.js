@@ -6,6 +6,7 @@ import useESign from "../hooks/orders/useESign";
 import { Urls } from "../hooks/services/Urls";
 import useDocumentUpload from "../hooks/orders/useDocumentUpload";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
+import { ORDER_TYPES } from "../utils/constants";
 
 const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData, setSignatureId, signatureId, deliveryChannel }) => {
   const { handleEsign, checkSignStatus } = useESign();
@@ -76,19 +77,19 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
 
   const documentType = useMemo(() => {
     let txt = "";
-    if (rowData?.orderType === "SUMMONS") {
+    if (rowData?.orderType === ORDER_TYPES.SUMMONS) {
       txt = "Summons";
-    } else if (rowData?.orderType === "WARRANT") {
+    } else if (rowData?.orderType === ORDER_TYPES.WARRANT) {
       txt = "Warrant";
-    } else if (rowData?.orderType === "PROCLAMATION") {
+    } else if (rowData?.orderType === ORDER_TYPES.PROCLAMATION) {
       txt = "Proclamation";
-    } else if (rowData?.orderType === "ATTACHMENT") {
+    } else if (rowData?.orderType === ORDER_TYPES.ATTACHMENT) {
       txt = "Attachment";
     } else {
       txt = "Notice";
     }
-    return `${txt} Document`;
-  }, [rowData]);
+    return txt;
+  }, [rowData?.orderType]);
 
   const fileStore = sessionStorage.getItem("fileStoreId") || signatureId;
 
@@ -96,7 +97,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
     if (mockESignEnabled) {
       setIsSigned(true);
     } else {
-      const placeHolder = rowData?.taskType === "MISCELLANEOUS_PROCESS" ? "Judicial Magistrate of First Class" : signPlaceHolder;
+      const placeHolder = rowData?.taskType === ORDER_TYPES.MISCELLANEOUS_PROCESS ? "Judicial Magistrate of First Class" : signPlaceHolder;
       sessionStorage.setItem("ESignSummons", JSON.stringify(rowData));
       sessionStorage.setItem("delieveryChannel", deliveryChannel);
       sessionStorage.setItem("homeActiveTab", "CS_HOME_PROCESS");

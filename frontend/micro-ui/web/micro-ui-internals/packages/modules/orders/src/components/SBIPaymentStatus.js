@@ -9,6 +9,7 @@ import { paymentType } from "../utils/paymentType";
 import { ordersService } from "../hooks/services";
 import { Urls } from "../hooks/services/Urls";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { ORDER_TYPES } from "../utils/constants";
 
 const getStatusMessage = (status) => {
   switch (status) {
@@ -55,12 +56,12 @@ const SBIPaymentStatus = ({ path }) => {
           await Promise.all([
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: receiptData?.orderType === "SUMMONS" ? "Show Summon-Warrant Status" : "Show Notice Status",
+                name: receiptData?.orderType === ORDER_TYPES.SUMMONS ? "Show Summon-Warrant Status" : "Show Notice Status",
                 entityType: paymentType.ORDER_MANAGELIFECYCLE,
                 referenceId: receiptData?.hearingId,
-                status: receiptData?.orderType === "SUMMONS" ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
+                status: receiptData?.orderType === ORDER_TYPES.SUMMONS ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
                 assignedTo: [],
-                assignedRole: [receiptData?.orderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
+                assignedRole: [receiptData?.orderType === ORDER_TYPES.SUMMONS ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
                 cnrNumber: receiptData?.filteredTasks?.[0]?.cnrNumber,
                 filingNumber: receiptData?.filingNumber,
                 caseId: receiptData?.caseId,

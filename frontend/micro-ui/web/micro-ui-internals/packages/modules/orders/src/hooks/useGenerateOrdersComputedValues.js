@@ -3,6 +3,7 @@ import { HearingWorkflowState } from "../utils/hearingWorkflow";
 import { SubmissionWorkflowState } from "../utils/submissionWorkflow";
 import { getAdvocates, getAdvocatesNames, getuuidNameMap } from "../utils/caseUtils";
 import { constructFullName, getFormattedName, removeInvalidNameParts } from "../utils";
+import { CaseWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/caseWorkflow";
 
 /**
  * useGenerateOrdersComputedValues
@@ -103,7 +104,7 @@ const useGenerateOrdersComputedValues = ({
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
   const allAdvocatesNames = useMemo(() => getAdvocatesNames(caseDetails), [caseDetails]);
   const uuidNameMap = useMemo(() => getuuidNameMap(caseDetails), [caseDetails]);
-  const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails?.status]);
+  const isCaseAdmitted = useMemo(() => caseDetails?.status === CaseWorkflowState.CASE_ADMITTED, [caseDetails?.status]);
 
   const complainants = useMemo(() => {
     return (

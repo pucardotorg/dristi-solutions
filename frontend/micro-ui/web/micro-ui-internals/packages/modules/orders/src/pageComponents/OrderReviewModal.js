@@ -6,6 +6,7 @@ import { Toast, TextInput } from "@egovernments/digit-ui-react-components";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { ORDER_CATEGORIES } from "../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const onDocumentUpload = async (fileData, filename) => {
@@ -184,7 +185,7 @@ function OrderReviewModal({
         let hearingNumber = "";
         const todayDate = new Date().toISOString().split("T")[0];
 
-        if (order?.orderCategory === "INTERMEDIATE" && order?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
+        if (order?.orderCategory === ORDER_CATEGORIES.INTERMEDIATE && order?.orderType === "ACCEPT_RESCHEDULING_REQUEST") {
           const hearingDate = order?.additionalDetails?.formdata?.newHearingDate;
           if (hearingDate === todayDate) {
             hearingNumber = order?.additionalDetails?.refHearingId;

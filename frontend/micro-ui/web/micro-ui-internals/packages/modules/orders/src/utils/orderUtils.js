@@ -2,6 +2,7 @@ import React from "react";
 import { formatAddress, mapAddressDetails, getComplainantName, getRespondantName } from ".";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { getCourtFee } from "./orderApiCallUtils";
+import { ORDER_CATEGORIES, ORDER_TYPES } from "./constants";
 
 export { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
@@ -9,7 +10,7 @@ export const prepareUpdatedOrderData = (currentOrder, orderFormData, compOrderIn
   let updatedCompositeItems = null;
   let updatedCurrentOrder = { ...currentOrder };
 
-  if (updatedCurrentOrder?.orderCategory === "COMPOSITE") {
+  if (updatedCurrentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
     updatedCompositeItems = updatedCurrentOrder?.compositeItems?.map((compItem, compIndex) => {
       if (compIndex === compOrderIndex) {
         return {
@@ -216,7 +217,7 @@ export const getParties = (type, orderSchema, allParties) => {
     parties = [...updatedComplainants, ...updatedRespondents];
 
     return parties;
-  } else if (type === "MISCELLANEOUS_PROCESS") {
+  } else if (type === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
     let updatedPartiesdata = [];
     if (orderSchema?.orderDetails?.selectedPartiesDetails?.length > 0) {
       updatedPartiesdata = orderSchema?.orderDetails?.selectedPartiesDetails?.map((party) => {
@@ -304,7 +305,7 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
   //   }
   // }
 
-  if (currentOrderType === "WARRANT") {
+  if (currentOrderType === ORDER_TYPES.WARRANT) {
     if (!formData?.bailInfo?.noOfSureties && formData?.bailInfo?.isBailable?.code === true) {
       setFormErrors?.current?.[index]?.("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
       hasError = true;
@@ -334,7 +335,7 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
     }
   }
 
-  if (currentOrderType === "PROCLAMATION") {
+  if (currentOrderType === ORDER_TYPES.PROCLAMATION) {
     if (formData?.proclamationFor?.selectedChannels?.length === 0) {
       setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
       hasError = true;
@@ -352,7 +353,7 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
     }
   }
 
-  if (currentOrderType === "ATTACHMENT") {
+  if (currentOrderType === ORDER_TYPES.ATTACHMENT) {
     if (formData?.attachmentFor?.selectedChannels?.length === 0) {
       setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
       hasError = true;
@@ -406,7 +407,7 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
 export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder, currentInProgressHearing, skipScheduling) => {
   let errors = [];
 
-  if (currentOrder?.orderCategory === "COMPOSITE") {
+  if (currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
     for (let i = 0; i < currentOrder?.compositeItems?.length; i++) {
       const item = currentOrder?.compositeItems?.[i];
       if (!item?.isEnabled) continue;
@@ -952,7 +953,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
           fees: await getCourtFee(
             "POLICE",
             respondentAddress?.[0]?.pincode,
-            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+            orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "WARRANT" : orderType,
             tenantId
           ),
           feesStatus: "",
@@ -992,7 +993,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
           fees: await getCourtFee(
             "POLICE",
             respondentAddress?.[0]?.pincode,
-            orderType === "WARRANT" || orderType === "PROCLAMATION" ? "WARRANT" : orderType,
+            orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION ? "WARRANT" : orderType,
             tenantId
           ),
           feesStatus: "",
@@ -1035,7 +1036,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
           fees: await getCourtFee(
             "POLICE",
             respondentAddress?.[0]?.pincode,
-            orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+            orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "WARRANT" : orderType,
             tenantId
           ),
           feesStatus: "",
@@ -1082,7 +1083,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
     default:
       break;
   }
-  if (orderType === "MISCELLANEOUS_PROCESS") return payload;
+  if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) return payload;
   if (Object.keys(payload || {}).length > 0 && !Array.isArray(selectedChannel)) return [payload];
   else if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
     const channelPayloads = await Promise.all(
@@ -1096,7 +1097,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
         let courtFees = await getCourtFee(
           item?.code,
           pincode,
-          orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "WARRANT" : orderType,
+          orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "WARRANT" : orderType,
           tenantId
         );
 
@@ -1110,7 +1111,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
           };
 
           let address = {};
-          if (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" || item?.type === "Via Police") {
+          if (orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT || item?.type === "Via Police") {
             address = {
               ...item?.value,
               locality: item?.value?.locality || "",
