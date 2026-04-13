@@ -187,7 +187,7 @@ public class CaseOverallStatusUtil {
 
 	private Object processTaskSecondaryStageUpdate(JSONObject request, String entityType, String referenceId, String tenantId,String status) {
 		try {
-			if(status!=null && Arrays.asList("EXECUTED","EXPIRED","DELIVERED").contains(status)){
+			if(status!=null && Arrays.asList("EXECUTED","EXPIRED","DELIVERED","ABATED","UNDELIVERED","NOT_EXECUTED").contains(status)){
 				log.info("Processing task secondary stage end trigger: entityType={}, referenceId={}", entityType, referenceId);
 				secondaryStageProcessor.processTaskEndTrigger(referenceId, tenantId, entityType, request);
 			}
