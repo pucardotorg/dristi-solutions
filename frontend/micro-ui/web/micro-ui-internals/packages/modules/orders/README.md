@@ -320,7 +320,6 @@ Summons Payment Flow (SMS - unauthenticated):
 | `react-hook-form` | 6.15.8 | Form management |
 | `react-i18next` | 11.16.2 | i18n |
 | `react-query` | 3.6.1 | Data fetching |
-| `react-date-range` | ^1.4.0 | Date range picker |
 | `react-tooltip` | 4.1.2 | Tooltips |
 | `@egovernments/digit-ui-react-components` | 1.8.2-beta.11 | Shared UI |
 | `@egovernments/digit-ui-components` | 0.0.2-beta.1 | Design system |
