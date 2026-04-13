@@ -1160,6 +1160,7 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("submissionDocuments", updatedFormdata.submissionDocuments);
 
         updatedFormdata.bailOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
+        updatedFormdata.bailOfIndividualId = newApplicationDetails?.additionalDetails?.individualId || null;
         setValueRef?.current?.[index]?.("bailOf", updatedFormdata.bailOf);
       }
 
@@ -1174,6 +1175,7 @@ const GenerateOrdersV2 = () => {
             newApplicationDetails?.additionalDetails?.formdata?.supportingDocuments?.flatMap((doc) => doc.submissionDocuments?.uploadedDocs || []) ||
             [],
         };
+        updatedFormdata.bailPartyIndividualId = newApplicationDetails?.additionalDetails?.individualId || null;
         setValueRef?.current?.[index]?.("bailParty", updatedFormdata.bailParty);
         setValueRef?.current?.[index]?.("submissionDocuments", updatedFormdata.submissionDocuments);
       }
