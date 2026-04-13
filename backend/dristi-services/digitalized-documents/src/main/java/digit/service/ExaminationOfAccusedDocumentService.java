@@ -186,7 +186,7 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
         CaseCriteria caseCriteria = CaseCriteria.builder()
                 .filingNumber(request.getDigitalizedDocument().getCaseFilingNumber())
                 .courtId(request.getDigitalizedDocument().getCourtId())
-                .defaultFields(true)
+                .defaultFields(false)
                 .build();
 
         CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
@@ -199,7 +199,8 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
 
         SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                 .tenantId(request.getDigitalizedDocument().getTenantId())
-                .caseNumber(courtCaseNumber==null?cmpNumber:courtCaseNumber)
+                .courtCaseNumber(courtCaseNumber)
+                .cmpNumber(cmpNumber)
                 .shortenedUrl(request.getDigitalizedDocument().getShortenedUrl())
                 .build();
 
@@ -211,7 +212,9 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
         JsonNode representatives = courtCase.path("representatives");
 
         Individual accusedIndividual = individualUtil.getIndividualFromMobileNumber(requestInfo,mobileNumber);
-
+        if(accusedIndividual == null){
+            return;
+        }
         String accusedIndividualId = accusedIndividual.getIndividualId();
 
         if (representatives != null && representatives.isArray()) {
@@ -254,21 +257,21 @@ public class ExaminationOfAccusedDocumentService implements DocumentTypeService 
         }
     }
 
-    private String extractMobileNumberFromIndividual(String individualId,String tenantId) {
+    private String extractMobileNumberFromIndividual(String uuid,String tenantId) {
         try {
             // Get RequestInfo from current context or create a new one
             RequestInfo requestInfo = RequestInfo.builder()
                     .build();
             
             // Get individual details using individualId
-            List<Individual> individuals = individualUtil.getIndividuals(requestInfo, List.of(individualId), tenantId);
+            List<Individual> individuals = individualUtil.getIndividuals(requestInfo, List.of(uuid), tenantId);
             
             if (!individuals.isEmpty()) {
                 Individual individual = individuals.get(0);
                 return individual.getMobileNumber();
             }
         } catch (Exception e) {
-            log.error("Error fetching mobile number for individualId: {}", individualId, e);
+            log.error("Error fetching mobile number for uuid: {}", uuid, e);
         }
         return null;
     }

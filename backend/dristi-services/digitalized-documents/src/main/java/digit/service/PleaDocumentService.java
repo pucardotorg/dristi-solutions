@@ -183,7 +183,7 @@ public class PleaDocumentService implements DocumentTypeService {
         CaseCriteria caseCriteria = CaseCriteria.builder()
                 .filingNumber(request.getDigitalizedDocument().getCaseFilingNumber())
                 .courtId(request.getDigitalizedDocument().getCourtId())
-                .defaultFields(true)
+                .defaultFields(false)
                 .build();
 
         CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
@@ -196,8 +196,9 @@ public class PleaDocumentService implements DocumentTypeService {
 
         SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                 .tenantId(request.getDigitalizedDocument().getTenantId())
-                .caseNumber(courtCaseNumber==null?cmpNumber:courtCaseNumber)
+                .cmpNumber(cmpNumber)
                 .courtCaseNumber(courtCaseNumber)
+                .shortenedUrl(request.getDigitalizedDocument().getShortenedUrl())
                 .build();
 
         String mobileNumber = Optional.ofNullable(request.getDigitalizedDocument())
@@ -207,7 +208,9 @@ public class PleaDocumentService implements DocumentTypeService {
         JsonNode representatives = courtCase.path("representatives");
 
         Individual accusedIndividual = individualUtil.getIndividualFromMobileNumber(requestInfo,mobileNumber);
-
+        if(accusedIndividual == null){
+            return;
+        }
         String accusedIndividualId = accusedIndividual.getIndividualId();
 
         if (representatives != null && representatives.isArray()) {
@@ -237,7 +240,7 @@ public class PleaDocumentService implements DocumentTypeService {
                                 notificationService.sendNotification(
                                         requestInfo,
                                         smsTemplateData,
-                                        CLIENT_EXAMINATION_ESIGN,
+                                        CLIENT_PLEA_ESIGN,
                                         advocateMobileNumber
                                 );
                             }

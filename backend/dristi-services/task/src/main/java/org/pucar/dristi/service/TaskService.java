@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -59,6 +60,7 @@ public class TaskService {
     private final CipherUtil cipherUtil;
     private final XmlRequestGenerator xmlRequestGenerator;
     private final UserUtil userUtil;
+
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
                        TaskRegistrationEnrichment enrichmentUtil,
@@ -259,6 +261,19 @@ public class TaskService {
             if (taskType.equalsIgnoreCase(JOIN_CASE)) {
                 topicBasedOnStatus.pushToTopicBasedOnStatus(status, body);
             }
+
+            if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status)) {
+                Object taskDetailsObject = body.getTask().getTaskDetails();
+                JsonNode taskDetails = objectMapper.readTree(objectMapper.writeValueAsString(taskDetailsObject));
+
+                // Extract channel code from deliveryChannels and check if it's RPAD
+                String channelCode = taskDetails.has("deliveryChannels") ?
+                        taskDetails.path("deliveryChannels").path("channelCode").textValue() : "";
+
+                if (RPAD.equalsIgnoreCase(channelCode))
+                    callNotificationServiceForRPADDispatch(body,taskType,taskDetails);
+            }
+
             producer.push(config.getTaskUpdateTopic(), body);
 
             if (!isValidTask) {
@@ -555,7 +570,118 @@ public class TaskService {
         }
     }
 
-    public  Set<String> extractComplainantIndividualIds(JsonNode caseDetails) {
+    private void callNotificationServiceForRPADDispatch(TaskRequest taskRequest, String taskType,JsonNode taskDetails) {
+        try {
+            JsonNode caseList = caseUtil.searchCaseDetails(taskRequest.getRequestInfo(), taskRequest.getTask().getTenantId(), null, taskRequest.getTask().getFilingNumber(), null);
+            if (caseList.isEmpty()) {
+                throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, "Case Not Found!");
+            }
+            JsonNode caseDetails = caseList.get(0);
+
+            // Extract mobile numbers for complainants, their POA, and advocates
+            Set<String> mobileNumbers = new HashSet<>();
+
+            // Get complainant mobile numbers
+            extractComplainantMobileNumbers(caseDetails, mobileNumbers,taskRequest.getRequestInfo());
+            extractComplainantAdvocateMobileNumbers(caseDetails, taskRequest.getRequestInfo(), mobileNumbers);
+            extractComplainantPoaMobileNumber(taskRequest, caseDetails, mobileNumbers);
+            extractComplainantAdvocateClerkMobileNumbers(caseDetails, taskRequest.getRequestInfo(), mobileNumbers);
+
+            String respondentName = taskDetails.has("respondentDetails") ?
+                taskDetails.path("respondentDetails").path("name").textValue() : "";
+            String witnessName = taskDetails.has("witnessDetails") ?
+                taskDetails.path("witnessDetails").path("name").textValue() : "";
+
+            StringJoiner partyJoiner = new StringJoiner(", ");
+            if (respondentName != null && !respondentName.isEmpty()) partyJoiner.add(respondentName);
+            if (witnessName != null && !witnessName.isEmpty()) partyJoiner.add(witnessName);
+            String partyType = partyJoiner.toString();
+
+           String courtCaseNumber = caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "";
+           String cmpNumber = caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "";
+           String caseNumber = courtCaseNumber.isEmpty()?cmpNumber:courtCaseNumber;
+           String processType = SUMMON.equalsIgnoreCase(taskType)?"Summon":"Notice";
+
+            SmsTemplateData templateData = SmsTemplateData.builder()
+                    .caseNumber(caseNumber)
+                    .partyType(partyType)
+                    .processType(SUMMON.equalsIgnoreCase(taskType)?"Summon":"Notice")
+                    .tenantId(taskRequest.getTask().getTenantId()).build();
+
+            String message = notificationService.getMessage(taskRequest.getRequestInfo(),templateData, "RPAD_DISPATCH");
+            if (StringUtils.isEmpty(message)) {
+                log.info("SMS content has not been configured for this case");
+                return;
+            }
+
+            log.info("building Notification Request for case number {}", templateData.getCaseNumber());
+            message = message.replace("{{processType}}", Optional.of(processType).orElse(""))
+                    .replace("{{partyType}}", Optional.of(partyType).orElse(""))
+                    .replace("{{caseNumber}}", Optional.ofNullable(caseNumber).orElse(""));
+
+            // Send notifications to all extracted mobile numbers (complainants, POA, advocates)
+            for (String mobileNumber : mobileNumbers) {
+                if (mobileNumber != null && !mobileNumber.isEmpty()) {
+                    try {
+                        SMSRequest smsRequest = SMSRequest.builder()
+                                .mobileNumber(mobileNumber)
+                                .tenantId(taskRequest.getTask().getTenantId())
+                                .templateId(config.getSmsNotificationRPADTemplateId())
+                                .contentType("TEXT")
+                                .category("NOTIFICATION")
+                                .locale(NOTIFICATION_ENG_LOCALE_CODE)
+                                .expiryTime(System.currentTimeMillis() + 60 * 60 * 1000)
+                                .message(message).build();
+                        log.info("push message {}", smsRequest);
+
+                        producer.push(config.getSmsNotificationTopic(), smsRequest);
+
+                    } catch (Exception e){
+                        log.error("Error in Sending Message To Notification Service: " , e);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
+    }
+
+    private void extractComplainantPoaMobileNumber(TaskRequest taskRequest, JsonNode caseDetails, Set<String> mobileNumbers) {
+        JsonNode poaHolders = caseDetails.path("poaHolders");
+        JsonNode litigants = caseDetails.path("litigants");
+
+        Set<String> individualIds = new HashSet<>();
+        if (litigants.isArray()) {
+            for (JsonNode litigant : litigants) {
+                if (litigant.path("partyType").asText().contains("complainant")) {
+                    individualIds.add(litigant.path("individualId").asText());
+                }
+            }
+        }
+
+        if (poaHolders!=null&&poaHolders.isArray()) {
+            for (JsonNode poaHolder : poaHolders) {
+                JsonNode representingLitigants = poaHolder.path("representingLitigants");
+                if (representingLitigants!=null&&representingLitigants.isArray()) {
+                    for (JsonNode representingLitigant : representingLitigants) {
+                        String litigantIndividualId = representingLitigant.path("individualId").asText(null);
+                        if (individualIds.contains(litigantIndividualId)) {
+                            String poaUuid = poaHolder.path("additionalDetails").path("uuid").asText(null);
+                            if (poaUuid != null && !poaUuid.isEmpty()) {
+                                String poaMobile = extractMobileNumberFromIndividual(poaUuid, taskRequest.getRequestInfo());
+                                if (poaMobile != null && !poaMobile.isEmpty()) {
+                                    mobileNumbers.add(poaMobile);
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public Set<String> extractComplainantIndividualIds(JsonNode caseDetails) {
 
         JsonNode litigantNode = caseDetails.get("litigants");
         JsonNode representativeNode = caseDetails.get("representatives");
@@ -565,7 +691,7 @@ public class TaskService {
             for (JsonNode node : litigantNode) {
                 if (node.get("partyType").asText().contains("complainant")) {
                     String uuid = node.path("additionalDetails").get("uuid").asText();
-                    if (!uuid.isEmpty() ) {
+                    if (!uuid.isEmpty()) {
                         uuids.add(uuid);
                     }
                 }
@@ -576,9 +702,9 @@ public class TaskService {
             for (JsonNode advocateNode : representativeNode) {
                 JsonNode representingNode = advocateNode.get("representing");
                 if (representingNode.isArray()) {
-                    if(representingNode.get(0).get("partyType").asText().contains("complainant")) {
+                    if (representingNode.get(0).get("partyType").asText().contains("complainant")) {
                         String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
-                        if (!uuid.isEmpty() ) {
+                        if (!uuid.isEmpty()) {
                             uuids.add(uuid);
                         }
 
@@ -589,7 +715,7 @@ public class TaskService {
         return uuids;
     }
 
-    public Set<String> extractIndividualIds(JsonNode caseDetails,String respondentName) {
+    public Set<String> extractIndividualIds(JsonNode caseDetails, String respondentName) {
         JsonNode litigantNode = caseDetails.get("litigants");
         Set<String> uuids = new HashSet<>();
 
@@ -620,12 +746,115 @@ public class TaskService {
         }
     }
 
+    private void extractComplainantMobileNumbers(JsonNode caseDetails,Set<String> mobileNumbers,RequestInfo requestInfo) {
+        JsonNode litigants = caseDetails.path("litigants");
+        if (litigants.isArray()) {
+            for (JsonNode litigant : litigants) {
+                if (litigant.path("partyType").asText().contains("complainant")) {
+                    String uuid = litigant.path("additionalDetails").path("uuid").asText(null);
+                    if (uuid != null && !uuid.isEmpty()) {
+                        String mobile = extractMobileNumberFromIndividual(uuid, requestInfo);
+                        if (mobile != null && !mobile.isEmpty()) {
+                            mobileNumbers.add(mobile);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void extractComplainantAdvocateMobileNumbers(JsonNode caseDetails, RequestInfo requestInfo, Set<String> mobileNumbers) {
+        JsonNode representatives = caseDetails.path("representatives");
+        if (representatives.isArray()) {
+            for (JsonNode representative : representatives) {
+                JsonNode representing = representative.path("representing");
+                if (representing.isArray()) {
+                    for (JsonNode party : representing) {
+                        if (party.path("partyType").asText().contains("complainant")) {
+                                String uuid = representative.path("additionalDetails").path("uuid").asText(null);
+                                if (uuid != null && !uuid.isEmpty()) {
+                                    String mobile = extractMobileNumberFromIndividual(uuid, requestInfo);
+                                    if (mobile != null && !mobile.isEmpty()) {
+                                        mobileNumbers.add(mobile);
+                                    }
+                                }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void extractComplainantAdvocateClerkMobileNumbers(JsonNode caseDetails, RequestInfo requestInfo, Set<String> mobileNumbers) {
+        // Find complainant advocate IDs from representatives
+        Set<String> complainantAdvocateIds = new HashSet<>();
+        JsonNode representatives = caseDetails.path("representatives");
+        if (representatives.isArray()) {
+            for (JsonNode representative : representatives) {
+                JsonNode representing = representative.path("representing");
+                if (representing.isArray()) {
+                    for (JsonNode party : representing) {
+                        if (party.path("partyType").asText().contains("complainant")) {
+                            String advocateId = representative.path("advocateId").asText(null);
+                            if (advocateId != null && !advocateId.isEmpty()) {
+                                complainantAdvocateIds.add(advocateId);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Look through advocateOffices to find clerks of complainant advocates
+        JsonNode advocateOffices = caseDetails.path("advocateOffices");
+        if (advocateOffices.isArray()) {
+            for (JsonNode office : advocateOffices) {
+                String officeAdvocateId = office.path("officeAdvocateId").asText(null);
+                if (officeAdvocateId != null && complainantAdvocateIds.contains(officeAdvocateId)) {
+                    JsonNode clerks = office.path("clerks");
+                    if (clerks.isArray()) {
+                        for (JsonNode clerk : clerks) {
+                            boolean isActive = clerk.path("isActive").asBoolean(false);
+                            if (isActive) {
+                                String clerkUserUuid = clerk.path("memberUserUuid").asText(null);
+                                if (clerkUserUuid != null && !clerkUserUuid.isEmpty()) {
+                                    String mobile = extractMobileNumberFromIndividual(clerkUserUuid, requestInfo);
+                                    if (mobile != null && !mobile.isEmpty()) {
+                                        mobileNumbers.add(mobile);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private String extractMobileNumberFromIndividual(String individualId,RequestInfo requestInfo) {
+        try {
+
+            // Get individual details using individualId
+            List<Individual> individuals = individualService.getIndividuals(requestInfo, List.of(individualId));
+
+            if (!individuals.isEmpty()) {
+                Individual individual = individuals.get(0);
+                return individual.getMobileNumber();
+            }
+        } catch (Exception e) {
+            log.error("Error fetching mobile number for individualId: {}", individualId, e);
+        }
+        return null;
+    }
+
     private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> ids) {
 
         Set<String> mobileNumber = new HashSet<>();
 
         List<Individual> individuals = individualService.getIndividuals(requestInfo, new ArrayList<>(ids));
-        for(Individual individual : individuals) {
+        for (Individual individual : individuals) {
             if (individual.getMobileNumber() != null) {
                 mobileNumber.add(individual.getMobileNumber());
             }
@@ -778,6 +1007,7 @@ public class TaskService {
     private JsonNode getTaskDetails(TaskRequest taskRequest) {
         return objectMapper.convertValue(taskRequest.getTask().getTaskDetails(), JsonNode.class);
     }
+
     private JsonNode updateGeoLocationInAddress(JsonNode additionalDetails, String addressDetailId, JsonNode geoLocation, String formDataPath) {
         if (geoLocation != null && geoLocation.isObject()) {
             ((ObjectNode) geoLocation).putNull("latitude");
@@ -1043,6 +1273,7 @@ public class TaskService {
 
     /**
      * Process task details request containing taskDetails, taskNumber and uniqueId
+     *
      * @param request TaskDetailsRequest containing RequestInfo and TaskDetailsDTO
      * @return processed TaskDetailsDTO
      */

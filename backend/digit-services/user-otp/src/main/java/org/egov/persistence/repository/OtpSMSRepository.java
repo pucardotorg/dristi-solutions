@@ -38,6 +38,9 @@ public class OtpSMSRepository {
     @Value("${egov.register.sms.template.id}")
     private String registerTemplateId;
 
+    @Value("${egov.ctc.application.sms.template.id}")
+    private String ctcApplicationTemplateId;
+
     private CustomKafkaTemplate<String, SMSRequest> kafkaTemplate;
     private String smsTopic;
 
@@ -61,7 +64,7 @@ public class OtpSMSRepository {
         SMSRequest smsRequest = SMSRequest.builder()
                 .mobileNumber(otpRequest.getMobileNumber())
                 .tenantId(otpRequest.getTenantId())
-                .templateId(otpRequest.isLoginRequestType() ? templateId : registerTemplateId)
+                .templateId(otpRequest.isLoginRequestType() ? templateId : (otpRequest.isCTCApplicationLoginRequestType() || otpRequest.isCTCApplicationRegisterRequestType())? ctcApplicationTemplateId : registerTemplateId)
                 .contentType("TEXT")
                 .category(Category.OTP)
                 .locale("en_IN")
@@ -84,7 +87,7 @@ public class OtpSMSRepository {
             localisedMsgs.put(LOCALIZATION_KEY_REGISTER_SMS, "High Court of Kerala, Your OTP for mobile number verification is %s. Do not share this code with anyone.");
             localisedMsgs.put(LOCALIZATION_KEY_LOGIN_SMS, "Dear Citizen, Your Login OTP is %s.");
             localisedMsgs.put(LOCALIZATION_KEY_PWD_RESET_SMS, "Dear Citizen, Your OTP for recovering password is %s.");
-            localisedMsgs.put(LOCALIZATION_CTC_APPLICATION_SMS, "Hello,\\nPlease use the OTP %s to verify your mobile number and file/track application for certified true copy on oncourts.kerala.gov.in.\\n- ON Courts");
+            localisedMsgs.put(LOCALIZATION_CTC_APPLICATION_SMS, "Hello,\nPlease use the OTP %s to verify your mobile number and file/track application for certified true copy on oncourts.kerala.gov.in.\n- ON Courts");
         }
         String message = null;
 
@@ -93,7 +96,7 @@ public class OtpSMSRepository {
         else if (otpRequest.isLoginRequestType()){
              message = localisedMsgs.get(LOCALIZATION_KEY_LOGIN_SMS);
         }
-        else if (otpRequest.isCTCApplicationRequestType()){
+        else if (otpRequest.isCTCApplicationLoginRequestType() || otpRequest.isCTCApplicationRegisterRequestType()){
              message = localisedMsgs.get(LOCALIZATION_CTC_APPLICATION_SMS);
         }
         else
