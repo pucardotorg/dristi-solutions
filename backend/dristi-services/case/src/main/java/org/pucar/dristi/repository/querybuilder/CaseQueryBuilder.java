@@ -70,8 +70,8 @@ public class CaseQueryBuilder {
 
 
     private static final String BASE_REPRESENTATIVES_QUERY = " SELECT rep.id as id, rep.tenantid as tenantid, rep.advocateid as advocateid, rep.case_id as case_id, " +
-            " rep.isactive as isactive, rep.additionaldetails as additionaldetails, rep.createdby as createdby," +
-            " rep.lastmodifiedby as lastmodifiedby, rep.createdtime as createdtime, rep.lastmodifiedtime as lastmodifiedtime , rep.hassigned as hassigned, rep.advocate_filing_status as advocate_filing_status ";
+        " rep.isactive as isactive, rep.additionaldetails as additionaldetails, rep.createdby as createdby," +
+        " rep.lastmodifiedby as lastmodifiedby, rep.createdtime as createdtime, rep.lastmodifiedtime as lastmodifiedtime , rep.hassigned as hassigned, rep.advocate_filing_status as advocate_filing_status ";
 
     private static final String BASE_REPRESENTATIVES_SUMMARY_QUERY = " SELECT  rep.case_id as case_id, rep.id as id, rep.advocateid as advocateid, rep.additionaldetails as additionaldetails";
 
@@ -776,6 +776,7 @@ public class CaseQueryBuilder {
         try {
             StringBuilder query = new StringBuilder(BASE_REPRESENTATIVES_QUERY);
             query.append(FROM_REPRESENTATIVES_TABLE);
+            // NOTE: Do not join advocates by default here; tests expect only representatives columns.
             if (!ids.isEmpty()) {
                 query.append(" WHERE rep.case_id IN (")
                         .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
@@ -790,6 +791,42 @@ public class CaseQueryBuilder {
         } catch (Exception e) {
             log.error("Error while building representatives search query :: {}", e.toString());
             throw new CustomException(REPRESENTATIVES_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative search query: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Returns representatives query with a LEFT JOIN to dristi_advocate to fetch authoritative advocate columns.
+     * This is used by search flows that need the joined advocate fields populated in the row mapper.
+     */
+    public String getRepresentativesSearchQueryWithAdvocateJoin(List<String> ids, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        try {
+            StringBuilder query = new StringBuilder();
+            // select representative columns
+            query.append(BASE_REPRESENTATIVES_QUERY);
+            // select joined advocate columns with aliases expected by the row mapper
+            query.append(
+                ", da.id as advocate_id, da.tenantid as advocate_tenantid, da.applicationnumber as advocate_applicationnumber, da.status as advocate_status, " +
+                "da.barregistrationnumber as advocate_barregistrationnumber, da.organisationid as advocate_organisationid, da.individualid as advocate_individualid, da.isactive as advocate_isactive, da.additionaldetails as advocate_additionaldetails"
+            );
+
+            // from representatives with left join to advocates
+            query.append(" ").append(FROM_REPRESENTATIVES_TABLE)
+                 .append(" LEFT JOIN dristi_advocate da ON rep.advocateid = da.id");
+
+            if (!ids.isEmpty()) {
+                query.append(" WHERE rep.case_id IN (")
+                        .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
+                        .append(")")
+                        .append(AND)
+                        .append("rep.isactive = true");
+                preparedStmtList.addAll(ids);
+                ids.forEach(i -> preparedStmtArgList.add(Types.VARCHAR));
+            }
+
+            return query.toString();
+        } catch (Exception e) {
+            log.error("Error while building representatives search query with advocate join :: {}", e.toString());
+            throw new CustomException(REPRESENTATIVES_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative search query with advocate join: " + e.getMessage());
         }
     }
 

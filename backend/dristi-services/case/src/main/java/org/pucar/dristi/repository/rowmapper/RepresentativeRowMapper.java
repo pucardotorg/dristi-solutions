@@ -11,6 +11,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
 import org.pucar.dristi.web.models.AdvocateMapping;
+import org.pucar.dristi.web.models.Advocate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
@@ -52,6 +53,62 @@ public class RepresentativeRowMapper implements ResultSetExtractor<Map<UUID, Lis
                 PGobject pgObject = (PGobject) rs.getObject("additionalDetails");
                 if (pgObject != null)
                     advocateMapping.setAdditionalDetails(objectMapper.readTree(pgObject.getValue()));
+
+                // read joined advocate fields (if present)
+                String advId = null;
+                try {
+                    advId = rs.getString("advocate_id");
+                } catch (Exception ignored) { }
+
+                if (advId != null) {
+                    Advocate advocate = Advocate.builder().build();
+                    try { advocate.setId(UUID.fromString(advId)); } catch (Exception ignored) {}
+                    try { advocate.setTenantId(rs.getString("advocate_tenantid")); } catch (Exception ignored) {}
+                    try { advocate.setApplicationNumber(rs.getString("advocate_applicationnumber")); } catch (Exception ignored) {}
+                    try { advocate.setStatus(rs.getString("advocate_status")); } catch (Exception ignored) {}
+                    try { advocate.setBarRegistrationNumber(rs.getString("advocate_barregistrationnumber")); } catch (Exception ignored) {}
+                    try { advocate.setAdvocateType(rs.getString("advocate_type")); } catch (Exception ignored) {}
+                   // try { advocate.setOrganisationID(rs.getString("advocate_organisationid")); } catch (Exception ignored) {}
+                    try { advocate.setIndividualId(rs.getString("advocate_individualid")); } catch (Exception ignored) {}
+                    try { advocate.setIsActive(rs.getBoolean("advocate_isactive")); } catch (Exception ignored) {}
+
+                    PGobject advAdditional = (PGobject) rs.getObject("advocate_additionaldetails");
+                    if (advAdditional != null) {
+                        try {
+                            advocate.setAdditionalDetails(objectMapper.readTree(advAdditional.getValue()));
+                        } catch (Exception ignored) {}
+                    }
+
+                    // If advocate additional details contains personal fields, map them to Advocate model
+                    try {
+                        if (advocate.getAdditionalDetails() != null) {
+                            com.fasterxml.jackson.databind.JsonNode advNode = (com.fasterxml.jackson.databind.JsonNode) advocate.getAdditionalDetails();
+                            if (advNode.has("advocateUuid") && !advNode.get("advocateUuid").isNull()) {
+                                try { advocate.setAdvocateUuid(UUID.fromString(advNode.get("advocateUuid").asText())); } catch (Exception ignored) {}
+                            }
+                            if (advNode.has("firstName")) advocate.setFirstName(advNode.get("firstName").asText());
+                            if (advNode.has("middleName")) advocate.setMiddleName(advNode.get("middleName").asText());
+                            if (advNode.has("lastName")) advocate.setLastName(advNode.get("lastName").asText());
+                            if (advNode.has("mobileNumber")) advocate.setMobileNumber(advNode.get("mobileNumber").asText());
+                        }
+                    } catch (Exception ignored) {}
+
+                    // Also check representative additionalDetails for advocate-like fields (fallback)
+                    try {
+                        if (advocateMapping.getAdditionalDetails() != null) {
+                            com.fasterxml.jackson.databind.JsonNode repNode = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), com.fasterxml.jackson.databind.JsonNode.class);
+                            if (advocate.getAdvocateUuid() == null && repNode.has("uuid") && !repNode.get("uuid").isNull()) {
+                                try { advocate.setAdvocateUuid(UUID.fromString(repNode.get("uuid").asText())); } catch (Exception ignored) {}
+                            }
+                            if ((advocate.getFirstName() == null || advocate.getFirstName().isBlank()) && repNode.has("firstName")) advocate.setFirstName(repNode.get("firstName").asText());
+                            if ((advocate.getMiddleName() == null || advocate.getMiddleName().isBlank()) && repNode.has("middleName")) advocate.setMiddleName(repNode.get("middleName").asText());
+                            if ((advocate.getLastName() == null || advocate.getLastName().isBlank()) && repNode.has("lastName")) advocate.setLastName(repNode.get("lastName").asText());
+                            if ((advocate.getMobileNumber() == null || advocate.getMobileNumber().isBlank()) && repNode.has("mobileNumber")) advocate.setMobileNumber(repNode.get("mobileNumber").asText());
+                        }
+                    } catch (Exception ignored) {}
+
+                    advocateMapping.setAdvocate(advocate);
+                }
 
                 if (advocateMap.containsKey(uuid)) {
                     advocateMap.get(uuid).add(advocateMapping);
