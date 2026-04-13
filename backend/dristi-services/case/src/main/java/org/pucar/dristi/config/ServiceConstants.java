@@ -243,7 +243,6 @@ public class ServiceConstants {
     public static final String PAYMENT_RECEIPT = "PAYMENT_RECEIPT";
     public static final String ONLINE = "ONLINE";
     public static final String COMPLAINANT_ID_PROOF = "COMPLAINANT_ID_PROOF";
-    public static final String ADVOCATE_ID_PROOF="ADVOCATE_ID_PROOF";
     public static final String DIRECT = "DIRECT";
     public static final String COMPLAINANT = "COMPLAINANT";
     public static final String ACCUSED = "ACCUSED";

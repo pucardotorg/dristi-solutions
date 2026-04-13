@@ -10,7 +10,6 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.repository.CaseRepositoryV2;
 import org.pucar.dristi.util.*;
-import org.pucar.dristi.enrichment.AdvocateDetailBlockBuilder;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,21 +32,19 @@ public class CaseServiceV2 {
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final ObjectMapper objectMapper;
     private final CacheService cacheService;
-    private final AdvocateDetailBlockBuilder advocateDetailBlockBuilder;
 
     @Autowired
     public CaseServiceV2(CaseRegistrationEnrichment enrichmentUtil,
                          CaseRepositoryV2 caseRepository,
                          Configuration config,
                          EncryptionDecryptionUtil encryptionDecryptionUtil,
-                         ObjectMapper objectMapper, CacheService cacheService, AdvocateDetailBlockBuilder advocateDetailBlockBuilder) {
+                         ObjectMapper objectMapper, CacheService cacheService) {
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
         this.config = config;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.objectMapper = objectMapper;
         this.cacheService = cacheService;
-        this.advocateDetailBlockBuilder = advocateDetailBlockBuilder;
     }
 
     public CourtCase searchCases(CaseSearchRequestV2 caseSearchRequests) {
@@ -65,16 +62,8 @@ public class CaseServiceV2 {
                 if(courtCase!=null) {
                     log.info("CourtCase found in Redis cache for caseId: {}", criteria.getCaseId());
 
-                    caseRepository.refreshRepresentativeData(courtCase);
-
                     validateIfUserPartOfCase(caseSearchRequests, courtCase);
-                    CourtCase decryptedCachedCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
-                    try {
-                       advocateDetailBlockBuilder.buildAndSet(decryptedCachedCase);
-                    } catch (Exception e) {
-                        log.error("Error building AdvocateDetailBlock for cached case: {}", e.toString());
-                    }
-                   return decryptedCachedCase;
+                    return encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
                 } else {
                     log.debug("CourtCase not found in Redis cache for caseId: {}", criteria.getCaseId());
                 }
@@ -90,12 +79,6 @@ public class CaseServiceV2 {
 
             CourtCase decryptedCourtCases = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
             enrichAdvocateJoinedStatus(decryptedCourtCases, criteria.getAdvocateId());
-
-            try {
-                advocateDetailBlockBuilder.buildAndSet(decryptedCourtCases);
-            } catch (Exception e) {
-                log.error("Error building AdvocateDetailBlock in CaseServiceV2.searchCases: {}", e.toString());
-            }
 
             return decryptedCourtCases;
 

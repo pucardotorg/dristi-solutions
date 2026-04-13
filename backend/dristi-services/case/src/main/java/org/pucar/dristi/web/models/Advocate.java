@@ -80,21 +80,6 @@ public class Advocate {
 	@Valid
 	private List<Document> documents = new ArrayList<>();
 
-	@JsonProperty("advocateUuid")
-	private UUID advocateUuid = null;
-
-	@JsonProperty("firstName")
-	private String firstName = null;
-
-	@JsonProperty("middleName")
-	private String middleName = null;
-
-	@JsonProperty("lastName")
-	private String lastName = null;
-
-	@JsonProperty("mobileNumber")
-	private String mobileNumber = null;
-
 	@JsonProperty("auditDetails")
 	@Valid
 	private AuditDetails auditDetails = null;

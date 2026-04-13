@@ -55,9 +55,6 @@ public class AdvocateMapping {
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;
 
-    @JsonProperty("advocate")
-    private Advocate advocate = null;
-
     @JsonProperty("hasSigned")
     private Boolean hasSigned = false;
 
