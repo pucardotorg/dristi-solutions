@@ -13,6 +13,7 @@ import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@eg
 import { getFormattedName, getSuffixByDeliveryChannel } from "../../utils";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
+import { ORDER_TYPES } from "../../utils/constants";
 
 const submitModalInfo = {
   header: "CS_HEADER_FOR_SUMMON_POST",
@@ -322,17 +323,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     breakupResponse,
   ]);
 
-  const service = useMemo(() => {
-    if (orderType === "WARRANT") {
-      return paymentType.TASK_WARRANT;
-    } else if (orderType === "PROCLAMATION") {
-      return paymentType.TASK_PROCLAMATION;
-    } else if (orderType === "ATTACHMENT") {
-      return paymentType.TASK_ATTACHMENT;
-    } else {
-      return paymentType.TASK_NOTICE;
-    }
-  }, [orderType]);
+  const service = useMemo(() => (orderType === ORDER_TYPES.SUMMONS ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
 
   const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchCourtBill } = Digit.Hooks.dristi.useBillSearch(
     {},
@@ -432,7 +423,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           await ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
               name:
-                orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT"
+                orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
                   ? `PAYMENT_PENDING_FOR_${orderType}`
                   : `MAKE_PAYMENT_FOR_${orderType}_POST`,
               entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
@@ -454,7 +445,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           await ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
               name:
-                orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT"
+                orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
                   ? `PAYMENT_PENDING_FOR_${orderType}`
                   : `MAKE_PAYMENT_FOR_${orderType}_POST`,
               entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
@@ -489,7 +480,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
             caseDetails: caseDetails,
             consumerCode: `${taskNumber}_POST_PROCESS`,
             orderData: orderData,
-            partyIndex: partyIndex,
+            partyIndex: orderType === ORDER_TYPES.NOTICE ? partyIndex : "",
             filteredTasks: filteredTasks,
             filingNumber: filingNumber,
             isCourtBillPaid: courtBillResponse?.Bill?.[0]?.status === "PAID",
@@ -623,9 +614,9 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         partyData?.witnessDesignation?.trim(),
         null
       ) ||
-      (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
-      (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
-      (orderType === "ATTACHMENT" && formdata?.attachmentFor?.name) ||
+      (orderType === ORDER_TYPES.WARRANT && formdata?.warrantFor?.name) ||
+      (orderType === ORDER_TYPES.PROCLAMATION && formdata?.proclamationFor?.name) ||
+      (orderType === ORDER_TYPES.ATTACHMENT && formdata?.attachmentFor?.name) ||
       formdata?.warrantFor ||
       formdata?.proclamationFor ||
       formdata?.attachmentFor ||
@@ -683,7 +674,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     return {
       handleClose: handleClose,
       heading: {
-        label: `Payment for ${orderTypeEnum?.[orderType]} via ${formattedChannelId}`,
+        label: `Payment for ${orderType === ORDER_TYPES.SUMMONS ? "Summons" : "Notice"} via ${formattedChannelId}`,
       },
       isStepperModal: false,
       isCaseLocked: isCaseLocked,

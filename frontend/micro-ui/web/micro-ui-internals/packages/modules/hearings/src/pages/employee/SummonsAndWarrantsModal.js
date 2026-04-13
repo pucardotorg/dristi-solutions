@@ -9,6 +9,17 @@ import { Urls } from "../../hooks/services/Urls";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { CaseWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/caseWorkflow";
+import {
+  ORDER_TYPES,
+  ORDER_CATEGORIES,
+  USER_TYPES,
+  PARTY_TYPES,
+  STATUS_TYPES,
+  WORKFLOW_ACTIONS,
+  ENTITY_TYPES,
+  USER_ROLES,
+} from "../../utils/constants";
 
 const modalPopup = {
   height: "70%",
@@ -64,11 +75,11 @@ function groupOrdersByParty(filteredOrders) {
 
     let partyName = party.partyName.trim();
     let partyType = party.partyType.toLowerCase();
-    if (partyType === "respondent") {
-      partyType = "Accused";
+    if (partyType === PARTY_TYPES.RESPONDENT_LOWER) {
+      partyType = PARTY_TYPES.ACCUSED;
     }
-    if (partyType === "witness") {
-      partyType = "Witness";
+    if (partyType === PARTY_TYPES.WITNESS) {
+      partyType = PARTY_TYPES.WITNESS_DISPLAY;
     }
 
     if (!accusedWiseOrdersMap.has(partyName)) {
@@ -82,8 +93,8 @@ function groupOrdersByParty(filteredOrders) {
 
   // Sort first by partyType: "respondent", then "witness"
   accusedWiseOrdersList.sort((a, b) => {
-    if (a.partyType === "Accused" && b.partyType !== "Accused") return -1;
-    if (a.partyType !== "Accused" && b.partyType === "Accused") return 1;
+    if (a.partyType === PARTY_TYPES.ACCUSED && b.partyType !== PARTY_TYPES.ACCUSED) return -1;
+    if (a.partyType !== PARTY_TYPES.ACCUSED && b.partyType === PARTY_TYPES.ACCUSED) return 1;
     return 0;
   });
 
@@ -115,7 +126,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
       criteria: [
         {
           filingNumber: filingNumber,
-          ...(courtId && userType === "employee" && { courtId }),
+          ...(courtId && userType === USER_TYPES.EMPLOYEE && { courtId }),
         },
       ],
       tenantId,
@@ -134,7 +145,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   );
 
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
-  const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails]);
+  const isCaseAdmitted = useMemo(() => caseDetails?.status === CaseWorkflowState.CASE_ADMITTED, [caseDetails]);
 
   const { caseId, cnrNumber, caseTitle } = useMemo(
     () => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
@@ -183,12 +194,12 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           tenantId,
         },
         orderTitle: orderType,
-        orderCategory: "INTERMEDIATE",
+        orderCategory: ORDER_CATEGORIES.INTERMEDIATE,
         orderType: orderType,
         status: "",
         isActive: true,
         workflow: {
-          action: "SAVE_DRAFT",
+          action: WORKFLOW_ACTIONS.SAVE_DRAFT,
           comments: "Creating order",
           assignes: null,
           rating: null,
@@ -214,11 +225,11 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
       hearingService.customApiService(Urls.pendingTask, {
         pendingTask: {
           name: "Order Created",
-          entityType: "order-default",
+          entityType: ENTITY_TYPES.ORDER_DEFAULT,
           referenceId: `MANUAL_${res.order.orderNumber}`,
-          status: "DRAFT_IN_PROGRESS",
+          status: STATUS_TYPES.DRAFT_IN_PROGRESS,
           assignedTo: [],
-          assignedRole: ["PENDING_TASK_ORDER"],
+          assignedRole: [USER_ROLES.PENDING_TASK_ORDER],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: filingNumber,
           caseId: caseDetails?.id,
@@ -234,7 +245,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   };
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
+    { criteria: { tenantId: tenantId, filingNumber, status: STATUS_TYPES.PUBLISHED, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber,
     Boolean(filingNumber && caseCourtId)
@@ -246,13 +257,13 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     if (!ordersData?.list) return [];
 
     const filteredOrders = ordersData?.list?.flatMap((order) => {
-      if (order?.orderCategory === "COMPOSITE") {
+      if (order?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
         return order?.compositeItems
           ?.filter(
             (item) =>
-              (taskOrderType === "NOTICE"
-                ? item?.orderType === "NOTICE"
-                : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(item?.orderType)) &&
+              (taskOrderType === ORDER_TYPES.NOTICE
+                ? item?.orderType === ORDER_TYPES.NOTICE
+                : [ORDER_TYPES.SUMMONS, ORDER_TYPES.WARRANT, ORDER_TYPES.PROCLAMATION, ORDER_TYPES.ATTACHMENT].includes(item?.orderType)) &&
               (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
           )
           ?.map((item) => ({
@@ -263,9 +274,9 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             itemId: item?.id,
           }));
       } else {
-        return (taskOrderType === "NOTICE"
-          ? order?.orderType === "NOTICE"
-          : ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(order?.orderType)) &&
+        return (taskOrderType === ORDER_TYPES.NOTICE
+          ? order?.orderType === ORDER_TYPES.NOTICE
+          : [ORDER_TYPES.SUMMONS, ORDER_TYPES.WARRANT, ORDER_TYPES.PROCLAMATION, ORDER_TYPES.ATTACHMENT].includes(order?.orderType)) &&
           (order?.scheduledHearingNumber || order?.hearingNumber) === hearingId
           ? [order]
           : [];
@@ -304,7 +315,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   const { respondentName, partyType } = useMemo(() => {
     const partyData = getOrderPartyData(orderType, orderList);
     const respondentName = partyData?.[0]?.partyName || "Unknown";
-    const partyType = partyData?.[0]?.partyType || "Respondent";
+    const partyType = partyData?.[0]?.partyType || PARTY_TYPES.RESPONDENT_DISPLAY;
     return { respondentName, partyType };
   }, [orderList, orderType]);
 
@@ -317,27 +328,27 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   };
 
   const totalSummons = useMemo(() => {
-    return (orderList || [])?.filter((order) => order?.orderType === "SUMMONS")?.length;
+    return (orderList || [])?.filter((order) => order?.orderType === ORDER_TYPES.SUMMONS)?.length;
   }, [orderList]);
 
   const totalWarrants = useMemo(() => {
-    return (orderList || [])?.filter((order) => order?.orderType === "WARRANT")?.length;
+    return (orderList || [])?.filter((order) => order?.orderType === ORDER_TYPES.WARRANT)?.length;
   }, [orderList]);
 
   const totalNotices = useMemo(() => {
-    return (orderList || [])?.filter((order) => order?.orderType === "NOTICE")?.length;
+    return (orderList || [])?.filter((order) => order?.orderType === ORDER_TYPES.NOTICE)?.length;
   }, [orderList]);
 
   const lastSummon = useMemo(() => {
-    return orderList?.find((order) => order?.orderType === "SUMMONS") || null;
+    return orderList?.find((order) => order?.orderType === ORDER_TYPES.SUMMONS) || null;
   }, [orderList]);
 
   const lastWarrant = useMemo(() => {
-    return orderList?.find((order) => order?.orderType === "WARRANT") || null;
+    return orderList?.find((order) => order?.orderType === ORDER_TYPES.WARRANT) || null;
   }, [orderList]);
 
   const lastNotice = useMemo(() => {
-    return orderList?.find((order) => order?.orderType === "NOTICE") || null;
+    return orderList?.find((order) => order?.orderType === ORDER_TYPES.NOTICE) || null;
   }, [orderList]);
 
   const caseInfo = useMemo(() => {
@@ -402,7 +413,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     );
   }, [caseDetails, filingNumber, respondentName, hearingDetails, orderList, userType, caseId]);
 
-  const modalLabel = ["SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
+  const modalLabel = [ORDER_TYPES.SUMMONS, ORDER_TYPES.WARRANT, ORDER_TYPES.PROCLAMATION, ORDER_TYPES.ATTACHMENT].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
 
   function removeAccusedSuffix(partyName) {
     return partyName.replace(/\s*\(Accused\)$/, "");
@@ -479,7 +490,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
         {orderNumber && !orderLoading && <InboxSearchComposer configs={config} defaultValues={filingNumber}></InboxSearchComposer>}
 
         <div className="action-buttons" style={actionButtonStyle}>
-          {isCaseAdmitted && orderType !== "NOTICE" ? (
+          {isCaseAdmitted && orderType !== ORDER_TYPES.NOTICE ? (
             <Button
               variation="secondary"
               className="action-button"
@@ -489,14 +500,14 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
                 handleIssueWarrant({
                   cnrNumber,
                   filingNumber,
-                  orderType: "WARRANT",
+                  orderType: ORDER_TYPES.WARRANT,
                   hearingId,
                 });
               }}
               style={{ marginRight: "1rem", fontWeight: "900" }}
             />
           ) : (
-            orderType === "NOTICE" && (
+            orderType === ORDER_TYPES.NOTICE && (
               <Button
                 variation="secondary"
                 className="action-button"
