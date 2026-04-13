@@ -38,6 +38,7 @@ import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/p
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { validateSuretyContactNumber } from "../../utils/bailBondUtils";
+import { ORDER_TYPES } from "../../utils/constants";
 import {
   _getApplicationAmount,
   BAIL_APPLICATION_EXCLUDED_STATUSES,
@@ -580,7 +581,7 @@ const SubmissionsCreate = ({ path }) => {
   }, [itemId, orderDetails]);
 
   const compositeWarrantItem = useMemo(() => {
-    return orderDetails?.compositeItems?.find((item) => item?.orderType === "WARRANT" && item?.id === itemId);
+    return orderDetails?.compositeItems?.find((item) => item?.orderType === ORDER_TYPES.WARRANT && item?.id === itemId);
   }, [itemId, orderDetails]);
 
   const { data: allOrdersData, isloading: isAllOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(

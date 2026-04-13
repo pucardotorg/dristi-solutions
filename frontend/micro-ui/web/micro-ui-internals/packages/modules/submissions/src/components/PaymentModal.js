@@ -1,7 +1,7 @@
 import React from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import SelectCustomNote from "../../../dristi/src/components/SelectCustomNote";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const customNoteConfig = {
   populators: {
@@ -17,18 +17,7 @@ const customNoteConfig = {
 };
 
 function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMakePayment, tenantId, consumerCode, paymentLoader, totalAmount }) {
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   return (
     <Modal
       popupStyles={{

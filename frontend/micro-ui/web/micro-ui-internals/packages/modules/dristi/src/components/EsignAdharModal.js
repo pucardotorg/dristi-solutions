@@ -1,8 +1,9 @@
-import { CloseSvg, TextInput } from "@egovernments/digit-ui-react-components";
+import { TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState } from "react";
 import { ErrorInfoIcon } from "../icons/svgIndex";
 import Modal from "./Modal";
 import { useToast } from "./Toast/useToast";
+import { CloseBtn, Heading } from "./ModalComponents";
 
 function EsignAdharModal({ t, setOpenAadharModal, name, onSelect, config, formData }) {
   const toast = useToast();
@@ -22,18 +23,8 @@ function EsignAdharModal({ t, setOpenAadharModal, name, onSelect, config, formDa
   const [aadharNumber, setAadharNumber] = useState("");
   const [otp, setOtp] = useState("");
   const [errorMessage, setErrorMessage] = useState(null);
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
+  
+  
   const onSubmit = () => {
     if (page === 0) {
       setPage(1);

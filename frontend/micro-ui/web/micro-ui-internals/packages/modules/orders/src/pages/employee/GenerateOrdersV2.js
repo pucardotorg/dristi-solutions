@@ -22,6 +22,8 @@ import { applicationTypes } from "../../utils/applicationTypes";
 import { ordersService, taskService } from "../../hooks/services";
 import { createDefaultOrderData } from "../../configs/generateOrdersConstants";
 import { getSafeFileExtension } from "../../utils";
+import { ORDER_TYPES, ORDER_CATEGORIES } from "../../utils/constants";
+import { userRolesEnum } from "@egovernments/digit-ui-module-dristi/src/Utils/constants";
 import {
   checkValidation,
   compositeOrderAllowedTypes,
@@ -51,6 +53,7 @@ import {
   setApplicationStatus,
 } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import useSearchMiscellaneousTemplate from "../../hooks/orders/useSearchMiscellaneousTemplate";
+import { CaseWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/caseWorkflow";
 
 const GenerateOrdersV2 = () => {
   const { t } = useTranslation();
@@ -83,7 +86,7 @@ const GenerateOrdersV2 = () => {
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const userType = useMemo(() => (userInfo?.type === userRolesEnum.CITIZEN ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [addOrderTypeLoader, setAddOrderTypeLoader] = useState(false);
@@ -100,21 +103,21 @@ const GenerateOrdersV2 = () => {
   const [showsignatureModal, setShowsignatureModal] = useState(null);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [currentPublishedOrder, setCurrentPublishedOrder] = useState(null);
-  const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
-  const canSaveSignLater = roles?.some((role) => role.code === "ALLOW_SEND_FOR_SIGN_LATER");
+  const canESign = roles?.some((role) => role.code === userRolesEnum.ORDER_ESIGN);
+  const canSaveSignLater = roles?.some((role) => role.code === userRolesEnum.ALLOW_SEND_FOR_SIGN_LATER);
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
   const toast = useToast();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
-  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const userInfoType = useMemo(() => (userInfo?.type === userRolesEnum.CITIZEN ? "citizen" : "employee"), [userInfo]);
   const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
   const [taskType, setTaskType] = useState({});
   const [errors, setErrors] = useState({});
   const [warrantSubtypeCode, setWarrantSubtypeCode] = useState("");
   const [data, setData] = useState([]);
-  const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
-  const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
-  const hasOrderUpdateAccess = useMemo(() => roles?.some((role) => role?.code === "ORDER_APPROVER"), [roles]);
+  const isJudge = roles?.some((role) => role.code === userRolesEnum.JUDGE_ROLE);
+  const isTypist = roles?.some((role) => role.code === userRolesEnum.TYPIST_ROLE);
+  const hasOrderUpdateAccess = useMemo(() => roles?.some((role) => role?.code === userRolesEnum.ORDER_APPROVER), [roles]);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const SelectCustomFormatterTextArea = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomFormatterTextArea");
   const [bailBondRequired, setBailBondRequired] = useState(false);
@@ -192,7 +195,7 @@ const GenerateOrdersV2 = () => {
     },
     {},
     filingNumber,
-    Boolean(filingNumber && caseCourtId && orderType?.code === "MISCELLANEOUS_PROCESS" && showAddOrderModal === true)
+    Boolean(filingNumber && caseCourtId && orderType?.code === ORDER_TYPES.MISCELLANEOUS_PROCESS && showAddOrderModal === true)
   );
 
   const miscellaneousProcessTemplateDropDown = useMemo(() => {
@@ -210,7 +213,7 @@ const GenerateOrdersV2 = () => {
 
   // Checking if the current order is for approving/rejecting the litigant's profile edit request.
   const isApproveRejectLitigantDetailsChange = useMemo(() => {
-    if (currentOrder?.orderCategory === "COMPOSITE") {
+    if (currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
       if (currentOrder?.compositeItems?.find((item) => item?.orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE")) {
         return true;
       } else return false;
@@ -221,7 +224,7 @@ const GenerateOrdersV2 = () => {
 
   // If current order is Judgement type, then we require published bail orders list.
   const isJudgementOrder = useMemo(() => {
-    if (currentOrder?.orderCategory === "COMPOSITE") {
+    if (currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
       if (currentOrder?.compositeItems?.find((item) => item?.orderType === "JUDGEMENT")) {
         return true;
       } else return false;
@@ -521,7 +524,7 @@ const GenerateOrdersV2 = () => {
       let formConfig = [...newConfig];
       let selectedOrderType = "";
       let currentSelectedOrder = {};
-      if (currentOrder?.orderCategory === "COMPOSITE") {
+      if (currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
         selectedOrderType = currentOrder?.compositeItems?.[compositeActiveOrderIndex]?.orderType || orderType?.code || "";
         const item = currentOrder?.compositeItems?.[compositeActiveOrderIndex];
         const schema = item?.orderSchema;
@@ -777,7 +780,7 @@ const GenerateOrdersV2 = () => {
           });
         }
 
-        if (selectedOrderType === "WARRANT") {
+        if (selectedOrderType === ORDER_TYPES.WARRANT) {
           orderTypeForm = orderTypeForm?.map((section) => {
             const updatedBody = section.body
               .map((field) => {
@@ -1002,10 +1005,10 @@ const GenerateOrdersV2 = () => {
 
   const successModalActionSaveLabel = useMemo(() => {
     if (
-      (prevOrder?.orderCategory === "COMPOSITE"
+      (prevOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE
         ? prevOrder?.compositeItems?.some((item) => item?.orderType === "RESCHEDULE_OF_HEARING_DATE")
         : prevOrder?.orderType === "RESCHEDULE_OF_HEARING_DATE" ||
-          (currentOrder?.orderCategory === "COMPOSITE"
+          (currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE
             ? currentOrder?.compositeItems?.some(
                 (item) =>
                   item?.orderType === "SCHEDULE_OF_HEARING_DATE" &&
@@ -1016,7 +1019,7 @@ const GenerateOrdersV2 = () => {
       isCaseAdmitted
     ) {
       if (
-        currentOrder?.orderCategory === "COMPOSITE"
+        currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE
           ? currentOrder?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.isReIssueNotice)
           : currentOrder?.additionalDetails?.isReIssueNotice
       ) {
@@ -1038,7 +1041,7 @@ const GenerateOrdersV2 = () => {
   }, [currentOrder, prevOrder?.orderType, t, isCaseAdmitted]);
 
   const extractedHearingDate = useMemo(() => {
-    if (currentOrder?.orderCategory === "INTERMEDIATE") {
+    if (currentOrder?.orderCategory === ORDER_CATEGORIES.INTERMEDIATE) {
       // check and add condition for ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes orderType if its needed,
       // and take "newHearingDate" value
       return currentOrder?.additionalDetails?.formdata?.hearingDate;
@@ -1074,7 +1077,7 @@ const GenerateOrdersV2 = () => {
 
       const requiredDateFormat = "YYYY-MM-DD";
       const newCurrentOrder =
-        currentOrder?.orderCategory === "COMPOSITE"
+        currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE
           ? {
               ...currentOrder,
               additionalDetails: currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails,
@@ -1160,6 +1163,7 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("submissionDocuments", updatedFormdata.submissionDocuments);
 
         updatedFormdata.bailOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
+        updatedFormdata.bailOfIndividualId = newApplicationDetails?.additionalDetails?.individualId || null;
         setValueRef?.current?.[index]?.("bailOf", updatedFormdata.bailOf);
       }
 
@@ -1174,6 +1178,7 @@ const GenerateOrdersV2 = () => {
             newApplicationDetails?.additionalDetails?.formdata?.supportingDocuments?.flatMap((doc) => doc.submissionDocuments?.uploadedDocs || []) ||
             [],
         };
+        updatedFormdata.bailPartyIndividualId = newApplicationDetails?.additionalDetails?.individualId || null;
         setValueRef?.current?.[index]?.("bailParty", updatedFormdata.bailParty);
         setValueRef?.current?.[index]?.("submissionDocuments", updatedFormdata.submissionDocuments);
       }
@@ -1188,7 +1193,7 @@ const GenerateOrdersV2 = () => {
         }
       }
 
-      if (currentOrderType === "SUMMONS") {
+      if (currentOrderType === ORDER_TYPES.SUMMONS) {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -1242,7 +1247,7 @@ const GenerateOrdersV2 = () => {
           setValueRef?.current?.[index]?.("SummonsOrder", updatedFormdata.SummonsOrder);
         }
       }
-      if (currentOrderType === "NOTICE") {
+      if (currentOrderType === ORDER_TYPES.NOTICE) {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -1298,10 +1303,10 @@ const GenerateOrdersV2 = () => {
         }
       }
       if (
-        currentOrderType === "WARRANT" ||
-        currentOrderType === "PROCLAMATION" ||
-        currentOrderType === "ATTACHMENT" ||
-        currentOrderType === "MISCELLANEOUS_PROCESS"
+        currentOrderType === ORDER_TYPES.WARRANT ||
+        currentOrderType === ORDER_TYPES.PROCLAMATION ||
+        currentOrderType === ORDER_TYPES.ATTACHMENT ||
+        currentOrderType === ORDER_TYPES.MISCELLANEOUS_PROCESS
       ) {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
@@ -1423,7 +1428,7 @@ const GenerateOrdersV2 = () => {
     } else {
       const formListNew = structuredClone([...(ordersData?.list || [])].reverse());
       const updatedFormList = formListNew?.map((order, index) => {
-        if (order?.orderCategory === "COMPOSITE") {
+        if (order?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
           const updatedCompositeItems = order?.compositeItems?.map((compItem, i) => {
             return {
               ...compItem,
@@ -1455,7 +1460,7 @@ const GenerateOrdersV2 = () => {
   };
 
   const handleEditConfirmationOrder = async () => {
-    if (orderType?.code === "MISCELLANEOUS_PROCESS") {
+    if (orderType?.code === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
       await refectMiscellaneous();
     }
     setAddOrderModal(true);
@@ -1527,7 +1532,7 @@ const GenerateOrdersV2 = () => {
       const newCompositeItems = [];
       const isSigning = [OrderWorkflowAction.ESIGN, OrderWorkflowAction.SUBMIT_BULK_E_SIGN]?.includes(action);
       if (isSigning) {
-        if (order?.orderCategory === "COMPOSITE") {
+        if (order?.orderCategory === ORDER_CATEGORIES.COMPOSITE) {
           const updatedOrders = order?.compositeItems?.map((item) => {
             return {
               order: {
@@ -1578,7 +1583,7 @@ const GenerateOrdersV2 = () => {
               fileStore: signedDoucumentUploadedID || localStorageID,
               documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
               additionalDetails: {
-                name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.${fileExtension}`,
+                name: `Order: ${order?.orderCategory === ORDER_CATEGORIES.COMPOSITE ? order?.orderTitle : t(order?.orderType)}.${fileExtension}`,
               },
             }
           : unsignedFileStoreId
@@ -1587,7 +1592,7 @@ const GenerateOrdersV2 = () => {
               fileStore: unsignedFileStoreId,
               documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
               additionalDetails: {
-                name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.${fileExtension}`,
+                name: `Order: ${order?.orderCategory === ORDER_CATEGORIES.COMPOSITE ? order?.orderTitle : t(order?.orderType)}.${fileExtension}`,
               },
             }
           : null;
@@ -1805,7 +1810,7 @@ const GenerateOrdersV2 = () => {
       const requestBailBond = orderFormData?.requestBailBond;
       let updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
 
-      if (orderFormData?.orderType?.code === "MISCELLANEOUS_PROCESS") {
+      if (orderFormData?.orderType?.code === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
         const miscItemText = orderFormData?.processTemplate?.orderText || "";
         const baseOrder = updatedOrderData && typeof updatedOrderData === "object" ? updatedOrderData : {};
 
@@ -1990,11 +1995,11 @@ const GenerateOrdersV2 = () => {
         }
 
         if (
-          (orderType === "TAKE_COGNIZANCE" && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) ||
-          (orderType === "DISMISS_CASE" && ["CASE_DISMISSED"].includes(caseDetails?.status))
+          (orderType === "TAKE_COGNIZANCE" && [CaseWorkflowState.CASE_DISMISSED, CaseWorkflowState.CASE_ADMITTED].includes(caseDetails?.status)) ||
+          (orderType === "DISMISS_CASE" && [CaseWorkflowState.CASE_DISMISSED].includes(caseDetails?.status))
         ) {
           setShowErrorToast({
-            label: "CASE_ADMITTED" === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
+            label: CaseWorkflowState.CASE_ADMITTED === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
             error: true,
           });
           hasError = true;
@@ -2276,7 +2281,7 @@ const GenerateOrdersV2 = () => {
         compositeItems: updatedCompositeItems,
       });
     } else {
-      if (currentOrder?.orderCategory === "INTERMEDIATE") {
+      if (currentOrder?.orderCategory === ORDER_CATEGORIES.INTERMEDIATE) {
         await updateOrder(
           {
             ...currentOrder,
@@ -2575,7 +2580,7 @@ const GenerateOrdersV2 = () => {
         ...(refHearingId && { refHearingId: refHearingId }),
       };
       const isSameOrder =
-        currentOrder?.orderCategory === "COMPOSITE"
+        currentOrder?.orderCategory === ORDER_CATEGORIES.COMPOSITE
           ? currentOrder?.compositeItems?.some(
               (item) => item?.isEnabled && item?.orderSchema?.additionalDetails?.formdata?.refApplicationId === refApplicationId
             )

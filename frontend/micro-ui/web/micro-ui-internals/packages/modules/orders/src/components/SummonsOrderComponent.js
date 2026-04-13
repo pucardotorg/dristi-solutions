@@ -8,6 +8,7 @@ import { formatAddress, getFormattedName } from "../utils";
 import GetPoliceStationModal from "./GetPoliceStationModal";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 import { Toast } from "@egovernments/digit-ui-components";
+import { ORDER_TYPES } from "../utils/constants";
 
 // Helper function to compare addresses without police station data
 const compareAddressValues = (value1, value2) => {
@@ -237,7 +238,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       code: "RPAD",
       values: [],
     },
-    orderType === "SUMMONS" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: [] },
+    orderType === ORDER_TYPES.SUMMONS && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: [] },
   ]);
 
   const { data: caseData, refetch } = useSearchCaseService(
@@ -510,7 +511,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             code: "RPAD",
             values: address || [],
           },
-          orderType === "SUMMONS" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: address || [] },
+          orderType === ORDER_TYPES.SUMMONS && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: address || [] },
         ]
           .filter((item) => Boolean(item))
           .map((item) => item)

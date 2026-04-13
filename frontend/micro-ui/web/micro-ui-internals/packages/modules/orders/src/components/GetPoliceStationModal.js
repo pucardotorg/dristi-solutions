@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { Modal, CloseSvg, TextInput, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
+import { Modal, TextInput, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
 import { InfoIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const customNoteConfig = {
   populators: {
@@ -254,11 +255,4 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
     </Modal>
   );
 };
-
-const CloseBtn = (props) => (
-  <div className="icon-bg-secondary" onClick={props.onClick} style={{ cursor: "pointer", padding: "8px", background: "none" }}>
-    <CloseSvg />
-  </div>
-);
-
 export default GetPoliceStationModal;
