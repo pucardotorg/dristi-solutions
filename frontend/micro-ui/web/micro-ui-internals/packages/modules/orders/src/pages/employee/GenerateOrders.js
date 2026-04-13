@@ -57,7 +57,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../utils/submissionWorkflow";
 import { getAdvocates, getuuidNameMap } from "../../utils/caseUtils";
 import { HearingWorkflowAction, HearingWorkflowState } from "../../utils/hearingWorkflow";
-import _ from "lodash";
+import get from "lodash/get";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
@@ -475,7 +475,7 @@ const GenerateOrders = () => {
     select: (data) => {
       let newData = {};
       [{ name: "Court_Rooms" }]?.forEach((master) => {
-        const optionsData = _.get(data, `${"common-masters"}.${master?.name}`, []);
+        const optionsData = get(data, `${"common-masters"}.${master?.name}`, []);
         newData = {
           ...newData,
           [master.name]: optionsData.filter((opt) => (opt?.hasOwnProperty("active") ? opt.active : true)).map((opt) => ({ ...opt })),
@@ -487,7 +487,7 @@ const GenerateOrders = () => {
 
   const { data: orderTypeData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Order", [{ name: "OrderType" }], {
     select: (data) => {
-      return _.get(data, "Order.OrderType", [])
+      return get(data, "Order.OrderType", [])
         .filter((opt) => (opt?.hasOwnProperty("isactive") ? opt.isactive : true))
         .map((opt) => ({ ...opt }));
     },
