@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ActionBar, SubmitBar, Loader, Button, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { ActionBar, SubmitBar, Loader, Button } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import { FileUploadIcon } from "../../../icons/svgIndex";
@@ -21,6 +21,7 @@ import { useToast } from "../../../components/Toast/useToast";
 import Modal from "../../../components/Modal";
 import { mergeBreakdowns } from "./EfilingValidationUtils";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 const getStyles = () => ({
   container: { display: "flex", flexDirection: "row", marginBottom: "50px" },
@@ -126,29 +127,6 @@ const getStyles = () => ({
   submitButton: { backgroundColor: "#008080", color: "#fff", fontWeight: "bold", cursor: "pointer" },
   editCaseButton: { backgroundColor: "#fff", border: "#007E7E solid", color: "#007E7E", cursor: "pointer" },
 });
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
 const RightArrow = () => (
   <svg style={{ marginLeft: "8px" }} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M8 0L6.59 1.41L12.17 7H0V9H12.17L6.59 14.59L8 16L16 8L8 0Z" fill="white" />

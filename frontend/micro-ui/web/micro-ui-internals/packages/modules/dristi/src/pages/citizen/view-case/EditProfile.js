@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { CloseSvg, FormComposerV2, Header, Loader, Modal, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Header, Loader, Modal, Toast } from "@egovernments/digit-ui-react-components";
 import { extractCodeFromErrorMsg, extractValue, OutlinedInfoIcon } from "../FileCase/EFilingCases";
 import useGetAllCasesConfig from "../../../hooks/dristi/useGetAllCasesConfig";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
@@ -24,19 +24,7 @@ import { editRespondentConfig } from "./Config/editRespondentConfig";
 import { getAdvocates } from "../FileCase/EfilingValidationUtils";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 const EditProfile = ({ path }) => {
   const { t } = useTranslation();
   const history = useHistory();

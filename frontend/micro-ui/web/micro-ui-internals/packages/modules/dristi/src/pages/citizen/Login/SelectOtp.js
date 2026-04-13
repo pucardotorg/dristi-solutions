@@ -1,4 +1,4 @@
-import { CardLabel, CardLabelError, CardText, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { CardLabel, CardLabelError, CardText } from "@egovernments/digit-ui-react-components";
 import React, { Fragment, useCallback, useEffect, useState } from "react";
 import useInterval from "../../../hooks/useInterval";
 import OTPInput from "../../../components/OTPInput";
@@ -7,6 +7,7 @@ import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.m
 import { CloseIconWhite } from "../../../icons/svgIndex";
 import Modal from "../../../components/Modal";
 import { maskEmail } from "../../../Utils";
+import { CloseBtn } from "../../../components/ModalComponents";
 
 const SelectOtp = ({
   config,
@@ -88,21 +89,7 @@ const SelectOtp = ({
       </h1>
     );
   };
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={props?.isMobileView ? { padding: 5 } : null}>
-        {props?.isMobileView ? (
-          <CloseSvg />
-        ) : (
-          <div className={"icon-bg-secondary"} style={{ backgroundColor: "#505A5F" }}>
-            {" "}
-            <CloseIconWhite />{" "}
-          </div>
-        )}
-      </div>
-    );
-  };
-
+  
   if (userType === "employee") {
     return (
       <Fragment>

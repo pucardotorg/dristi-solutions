@@ -1,6 +1,6 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
-import { Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
+import { Header, InboxSearchComposer, Loader, Menu, Toast, CheckBox } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
@@ -61,6 +61,7 @@ import WitnessDepositionDocModal from "./WitnessDepositionDocModal";
 import { convertTaskResponseToPayload } from "@egovernments/digit-ui-module-orders/src/utils";
 import ExaminationDrawer from "./ExaminationDrawer";
 import useSortedMDMSData from "../../../hooks/dristi/useSortedMDMSData";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -94,29 +95,6 @@ const homeTabEnum = {
   DELAY_CONDONATION: "HOME_DELAY_CONDONATION_APPLICATIONS",
   OTHERS: "HOME_OTHER_APPLICATIONS",
 };
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
 const actionEnabledStatuses = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION"];
 const viewEnabledStatuses = [...actionEnabledStatuses, "CASE_DISMISSED"];
 const judgeReviewStages = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION", "CASE_DISMISSED"];
