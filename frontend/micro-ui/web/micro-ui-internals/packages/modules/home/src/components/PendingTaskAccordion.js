@@ -4,21 +4,8 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { checkIfDueDatePassed, getFormattedDate } from "../utils";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 // import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 function addParamToUrl(url, key, value) {
   const [baseUrl, queryString] = url.split("?");
   const params = new URLSearchParams(queryString);

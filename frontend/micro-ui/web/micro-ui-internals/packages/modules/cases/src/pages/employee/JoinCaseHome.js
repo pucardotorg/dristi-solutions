@@ -1,4 +1,4 @@
-import { Button, CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Button, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DRISTIService } from "../../../../dristi/src/services";
 import { useTranslation } from "react-i18next";
@@ -23,32 +23,15 @@ import POAInfo from "./joinCaseComponent/POAInfo";
 import { cleanString, combineMultipleFiles, getAuthorizedUuid, removeInvalidNameParts } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/submissionWorkflow";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import { JoinHomeLocalisation, optionsStatus } from "../../utils/constants";
 
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
 const Heading = (props) => {
   return (
     <div className="evidence-title">
       <h1 className="heading-m">{props.label}</h1>
     </div>
   );
-};
-
-const JoinHomeLocalisation = {
-  ADVOCATE_OPT: "ADVOCATE_OPT",
-  LITIGANT_OPT: "LITIGANT_OPT",
-  COMPLAINANT_BRACK: "COMPLAINANT_BRACK",
-  RESPONDENT_BRACK: "RESPONDENT_BRACK",
-  CASE_NOT_ADMITTED_TEXT: "CASE_NOT_ADMITTED_TEXT",
-  JOIN_CASE_BACK_TEXT: "JOIN_CASE_BACK_TEXT",
-  INVALID_ACCESS_CODE_MESSAGE: "INVALID_ACCESS_CODE_MESSAGE",
-  JOIN_CASE_SUCCESS: "JOIN_CASE_SUCCESS",
-  APPLICATION_CREATION_FAILED: "APPLICATION_CREATION_FAILED",
 };
 
 const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data }) => {
@@ -390,7 +373,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   }, [setShowJoinCase]);
 
   const onSelect = (option) => {
-    if (["PENDING_RESPONSE", "ADMISSION_HEARING_SCHEDULED", "CASE_ADMITTED", "PENDING_ADMISSION"].includes(option?.status)) {
+    if (optionsStatus.includes(option?.status)) {
       setIsDisabled(false);
       setCaseDetails(option);
 

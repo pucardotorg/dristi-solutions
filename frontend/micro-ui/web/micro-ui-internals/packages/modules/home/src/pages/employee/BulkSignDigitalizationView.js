@@ -1,4 +1,4 @@
-import { Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import { Toast, InboxSearchComposer, SubmitBar, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -10,6 +10,7 @@ import qs from "qs";
 import { HomeService } from "../../hooks/services";
 import DigitalDocumentSignModal from "./DigitalDocumentSignModal";
 import { numberToWords } from "@egovernments/digit-ui-module-orders/src/utils";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -62,18 +63,7 @@ function BulkSignDigitalizationView() {
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const closeToast = () => {
     setShowErrorToast(null);
   };
