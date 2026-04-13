@@ -220,7 +220,6 @@ Inside Hearing:
 |---|---|---|
 | `react` | 17.0.2 | UI framework |
 | `react-router-dom` | 5.3.0 | Routing |
-| `react-hook-form` | 6.15.8 | Form management |
 | `react-i18next` | 11.16.2 | i18n |
 | `react-query` | 3.6.1 | Data fetching |
 | `@fullcalendar/core` | ^6.1.14 | Calendar core |
