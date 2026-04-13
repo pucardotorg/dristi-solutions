@@ -168,7 +168,7 @@ const MediationFormSignaturePage = () => {
         .post(
           `${Urls.openApi.FileFetchByFileStore}`,
           {
-            tenantId: "kl",
+            tenantId,
             fileStoreId: mediationFileStoreId,
             moduleName: "mediation-document",
           },

@@ -405,7 +405,7 @@ function EFilingCases({ path }) {
         filingNumber: caseDetails?.filingNumber,
         status: TaskManagementWorkflowState.TASK_CREATION,
         tenantId: tenantId,
-        taskType: ["NOTICE", "SUMMONS"],
+        taskType: ["NOTICE", "SUMMONS", "WARRANT"],
       },
     },
     {},
@@ -1371,6 +1371,7 @@ function EFilingCases({ path }) {
               if (selected === "processCourierService") {
                 if (judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "multipleAccusedProcessCourier") {
                   body.isDisableAllFields = true;
+                  body.isDelayCondonation = isDelayCondonation;
                 }
               }
 
@@ -2509,9 +2510,28 @@ function EFilingCases({ path }) {
 
             const noticeAccusedDetails = getAccusedDetails("NOTICE");
             const summonsAccusedDetails = getAccusedDetails("SUMMONS");
+            const warrantAccusedDetails = getAccusedDetails("WARRANT");
 
             const noticeTask = taskManagementList?.find((item) => item?.taskType === "NOTICE");
             const summonsTask = taskManagementList?.find((item) => item?.taskType === "SUMMONS");
+            const warrantTask = taskManagementList?.find(
+              (item) => item?.taskType === "WARRANT"
+            );
+            let updatedWarrantTask = null;
+
+            // removing processDelieveryDetails for warrant because of payment calculation handled at backend
+            if (warrantTask) {
+              const warrantPartyDetails = warrantTask?.partyDetails || [];
+              const updatedWarrantPartyDetails = warrantPartyDetails?.map((party) => ({
+                ...party,
+                processDeliveryDetails: null,
+              }));
+            
+              updatedWarrantTask = {
+                ...warrantTask,
+                partyDetails: updatedWarrantPartyDetails,
+              };
+            }
 
             await createOrUpdateTask({
               type: "NOTICE",
@@ -2528,6 +2548,17 @@ function EFilingCases({ path }) {
               type: "SUMMONS",
               existingTask: summonsTask,
               accusedDetails: summonsAccusedDetails,
+              respondentFormData,
+              filingNumber: caseDetails?.filingNumber,
+              tenantId,
+              isUpfrontPayment: true,
+              status: "NOT_COMPLETED",
+            });
+
+            await createOrUpdateTask({
+              type: "WARRANT",
+              existingTask: updatedWarrantTask,
+              accusedDetails: warrantAccusedDetails,
               respondentFormData,
               filingNumber: caseDetails?.filingNumber,
               tenantId,

@@ -75,8 +75,6 @@ const TopBar = ({
     history.push(`/${window?.contextPath}/citizen/engagement/notifications`);
   }
 
-
-
   if (CITIZEN) {
     return (
       <TopBarComponent

@@ -17,8 +17,6 @@ const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournH
 
   const history = useHistory();
 
-
-
   const onSubmit = (data) => {
     setStepper(stepper + 1);
     setDisable(true);
@@ -143,19 +141,19 @@ const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournH
             defaultValues={
               reasonFormData?.reason
                 ? {
-                  reason: {
-                    code: reasonFormData?.reason?.code,
-                    name: reasonFormData?.reason?.name,
-                    isEnabled: true,
-                  },
-                }
+                    reason: {
+                      code: reasonFormData?.reason?.code,
+                      name: reasonFormData?.reason?.name,
+                      isEnabled: true,
+                    },
+                  }
                 : {
-                  reason: {
-                    code: "Select a Reason",
-                    name: "Select a Reason",
-                    isEnabled: true,
-                  },
-                }
+                    reason: {
+                      code: "Select a Reason",
+                      name: "Select a Reason",
+                      isEnabled: true,
+                    },
+                  }
             }
             fieldStyle={{ width: "100%" }}
           ></FormComposerV2>
