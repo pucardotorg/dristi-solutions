@@ -430,9 +430,7 @@ const GenerateOrdersV2 = () => {
 
       const refApplicationId = bailFormData?.refApplicationId;
 
-      const newApplicationDetails = applicationData?.applicationList?.find(
-        (application) => application?.applicationNumber === refApplicationId
-      );
+      const newApplicationDetails = applicationData?.applicationList?.find((application) => application?.applicationNumber === refApplicationId);
 
       const candidateName = bailOfName || newApplicationDetails?.additionalDetails?.onBehalOfName || "";
 
@@ -474,16 +472,11 @@ const GenerateOrdersV2 = () => {
         })();
 
         let assignedTo = [];
-        if(refApplicationId){
+        if (refApplicationId) {
           assignedTo = Array.from(new Set([targetUserUuid, ...(poaUuids || []), asUser].filter(Boolean))).map((uuid) => ({ uuid }));
-        }else{
+        } else {
           assignedTo = Array.from(new Set([targetUserUuid, ...(poaUuids || []), ...advocateUuids].filter(Boolean))).map((uuid) => ({ uuid }));
         }
-        
-        console.log("orderObj", orderObj);
-        console.log("applicationData", applicationData);
-        console.log("newApplicationDetails", newApplicationDetails);
-        console.log("asUser:", asUser, "targetUserUuid:", targetUserUuid, "poaUuids:", poaUuids, "assignedTo:", assignedTo);
 
         const bailTypeCode = typeof bailType === "string" ? bailType.toUpperCase() : (bailType?.code || bailType?.type || "").toUpperCase();
         const bailTypeObj = bailTypeCode ? { code: bailTypeCode, type: bailTypeCode } : null;
@@ -3411,9 +3404,7 @@ const GenerateOrdersV2 = () => {
         }
       }
 
-      console.log("updatedOrderData", updatedOrderData);
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
-      console.log("updateOrderResponse", updateOrderResponse);
       if (isAcceptBailOrder && requestBailBond) {
         await createPendingTaskForJudge(updateOrderResponse?.order);
         await createPendingTaskForEmployee(updateOrderResponse?.order, false);
