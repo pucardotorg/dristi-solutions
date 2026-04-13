@@ -552,10 +552,7 @@ public class CaseOverallStatusUtil {
 			}
 			for (Map<String, Object> litigant : litigants) {
 				Object partyType = litigant.get("partyType");
-				Object isActive = litigant.get("isActive");
-				if (partyType != null && isActive != null
-						&& Boolean.TRUE.equals(isActive)
-						&& partyType.toString().contains(ACCUSED_PARTY_TYPE)) {
+				if (partyType != null && partyType.toString().contains(ACCUSED_PARTY_TYPE)) {
 					log.info("Found active accused-side litigant with partyType: {}", partyType);
 					return true;
 				}
@@ -688,6 +685,7 @@ public class CaseOverallStatusUtil {
 			if(!isAccusedJoinedCase && STAGE_COGNIZANCE.equalsIgnoreCase(stage)){
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, STAGE_APPEARANCE, "");
 				publishToCaseOverallStatus(caseOverallStatus, request);
+				caseStageTrackingUtil.updateEndTimeForStage(caseOverallStatus.getFilingNumber(), STAGE_COGNIZANCE);
 				caseStageTrackingUtil.addStageEntry(filingNumber, caseId, tenantId,STAGE_APPEARANCE);
 				return;
 			}
