@@ -2127,12 +2127,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
               select: `(data) => {
               const list = (${originalSelect})(data) || [];
               return list.filter(item => 
-                (item.code === ORDER_TYPES.ATTACHMENT && ${hasViewAttachmentAccess}) ||
-                (item.code === ORDER_TYPES.PROCLAMATION && ${hasViewProclamationAccess}) ||
-                (item.code === ORDER_TYPES.SUMMONS && ${hasViewSummonsAccess}) ||
-                (item.code === ORDER_TYPES.WARRANT && ${hasViewWarrantAccess}) ||
-                (item.code === ORDER_TYPES.NOTICE && ${hasViewNoticeAccess}) ||
-                (item.code === ORDER_TYPES.MISCELLANEOUS_PROCESS && ${hasViewMiscellaneousAccess}) 
+                (item.code === "ATTACHMENT" && ${hasViewAttachmentAccess}) ||
+                (item.code === "PROCLAMATION" && ${hasViewProclamationAccess}) ||
+                (item.code === "SUMMONS" && ${hasViewSummonsAccess}) ||
+                (item.code === "WARRANT" && ${hasViewWarrantAccess}) ||
+                (item.code === "NOTICE" && ${hasViewNoticeAccess}) ||
+                (item.code === "MISCELLANEOUS_PROCESS" && ${hasViewMiscellaneousAccess}) 
               );
             }`,
             },
