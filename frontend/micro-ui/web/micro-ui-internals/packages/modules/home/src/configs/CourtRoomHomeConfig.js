@@ -2,6 +2,7 @@ const defaultSearchValues = {
   caseSearchText: "",
   caseType: "NIA S138",
   substage: "",
+  secondaryStage: "",
 };
 
 export const outcomesOptions = [
@@ -136,7 +137,6 @@ export const TabCourtRoomSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            stage: ["Pre-Trial", "Trial", "Post-Trial", "Long Pending Register"],
             status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
           },
         },
@@ -181,12 +181,36 @@ export const TabCourtRoomSearchConfig = {
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "substage",
-                  optionsKey: "code",
+                  name: "stage",
+                  optionsKey: "stage",
                   mdmsConfig: {
-                    masterName: "SubStage",
+                    masterName: "CasePrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                    select: "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                isMandatory: false,
+                key: "secondaryStage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "secondaryStage",
+                  optionsKey: "substage",
+                  mdmsConfig: {
+                    masterName: "CaseSecondaryStage",
+                    moduleName: "case",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -226,7 +250,12 @@ export const TabCourtRoomSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -262,7 +291,6 @@ export const TabCourtRoomSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            stage: ["Trial"],
             status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
           },
         },
@@ -308,11 +336,35 @@ export const TabCourtRoomSearchConfig = {
                 disable: false,
                 populators: {
                   name: "substage",
-                  optionsKey: "code",
+                  optionsKey: "stage",
                   mdmsConfig: {
-                    masterName: "SubStage",
+                    masterName: "CasePrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                    select: "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                isMandatory: false,
+                key: "secondaryStage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "secondaryStage",
+                  optionsKey: "substage",
+                  mdmsConfig: {
+                    masterName: "CaseSecondaryStage",
+                    moduleName: "case",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -352,7 +404,12 @@ export const TabCourtRoomSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -388,7 +445,6 @@ export const TabCourtRoomSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            stage: ["Pre-Trial"],
             status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
           },
         },
@@ -448,12 +504,36 @@ export const TabCourtRoomSearchConfig = {
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "substage",
-                  optionsKey: "code",
+                  name: "stage",
+                  optionsKey: "stage",
                   mdmsConfig: {
-                    masterName: "SubStage",
+                    masterName: "CasePrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                    select: "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                isMandatory: false,
+                key: "secondaryStage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "secondaryStage",
+                  optionsKey: "substage",
+                  mdmsConfig: {
+                    masterName: "CaseSecondaryStage",
+                    moduleName: "case",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -492,7 +572,12 @@ export const TabCourtRoomSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
 

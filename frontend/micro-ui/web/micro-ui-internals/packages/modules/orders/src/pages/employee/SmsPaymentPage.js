@@ -15,6 +15,7 @@ import { prepareTaskPayload, formDataKeyMap, formatAddress } from "../../utils/P
 import useOpenApiPaymentProcess from "../../hooks/SmsPayment/useOpenApiPaymentProcess";
 import { useOpenApiDownloadFile } from "../../hooks/SmsPayment/useOpenApiDownloadFile";
 import { filterValidAddresses } from "@egovernments/digit-ui-module-home/src/utils";
+import { ORDER_TYPES } from "../../utils/constants";
 
 const SmsPaymentPage = () => {
   const { t } = useTranslation();
@@ -156,7 +157,7 @@ const SmsPaymentPage = () => {
 
       return {
         id: index + 1,
-        title: orderType?.toLowerCase() === "summons" ? t("SUMMONS") : t("NOTICE"),
+        title: orderType?.toLowerCase() === ORDER_TYPES.SUMMONS.toLowerCase() ? t("SUMMONS") : t("NOTICE"),
         subtitle: `${party?.partyType || "Party"} - ${name || ""}`,
         partyName: party?.partyName,
         orderType,

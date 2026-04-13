@@ -1,4 +1,4 @@
-import { Button, CloseSvg, FormComposerV2, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Button, FormComposerV2, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import addWitnessConfig from "../../configs/AddWitnessConfig.js";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min.js";
 import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
 import { formatName } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils.js";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmployee, showToast, onAddSuccess, style }) => {
   const { t } = useTranslation();
@@ -42,18 +43,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
     }
   }, [showErrorToast]);
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const generateUUID = () => {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
       const r = (Math.random() * 16) | 0;

@@ -2,6 +2,7 @@ import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { ORDER_TYPES } from "./constants";
 
 export const overrideHooks = () => {
   Object.keys(CustomisedHooks).map((ele) => {
@@ -204,7 +205,7 @@ export const downloadFile = (responseBlob, fileName) => {
 };
 
 export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, taskDetails) => {
-  if (orderType === "MISCELLANEOUS_PROCESS") {
+  if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
     const type = taskDetails?.miscellaneuosDetails?.addressee || "";
 
     switch (type) {
@@ -241,9 +242,9 @@ export const getPartyNameForInfos = (orderDetails, compositeItem, orderType, tas
       null
     ) ||
     (["NOTICE", "SUMMONS"]?.includes(orderType) && (taskDetails?.respondentDetails?.name || taskDetails?.witnessDetails?.name)) ||
-    (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
-    (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
-    (orderType === "ATTACHMENT" && formdata?.attachmentFor?.name) ||
+    (orderType === ORDER_TYPES.WARRANT && formdata?.warrantFor?.name) ||
+    (orderType === ORDER_TYPES.PROCLAMATION && formdata?.proclamationFor?.name) ||
+    (orderType === ORDER_TYPES.ATTACHMENT && formdata?.attachmentFor?.name) ||
     formdata?.warrantFor ||
     formdata?.proclamationFor ||
     formdata?.attachmentFor ||

@@ -1,8 +1,8 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import React, { useEffect, useState } from "react";
 import { Toast } from "@egovernments/digit-ui-react-components";
 import CustomChip from "./CustomChip";
+import { CloseBtn } from "./ModalComponents";
 
 const Heading = ({ t, showCustomChip, label, customChipText }) => {
   return (
@@ -12,15 +12,6 @@ const Heading = ({ t, showCustomChip, label, customChipText }) => {
     </div>
   );
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
 const getStyles = (key) => {
   const styles = {
     container: {

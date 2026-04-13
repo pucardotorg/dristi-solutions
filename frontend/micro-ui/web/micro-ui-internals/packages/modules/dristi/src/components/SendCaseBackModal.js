@@ -1,9 +1,10 @@
 import React from "react";
 import Modal from "./Modal";
-import { CloseSvg, Loader, TextArea } from "@egovernments/digit-ui-react-components";
+import { Loader, TextArea } from "@egovernments/digit-ui-react-components";
 import SelectCustomNote from "./SelectCustomNote";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { sanitizeData } from "../Utils";
+import { CloseBtn, Heading } from "./ModalComponents";
 
 function SendCaseBackModal({
   loading,
@@ -24,17 +25,9 @@ function SendCaseBackModal({
     setComment(newValue);
   };
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
+  
   const history = useHistory();
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
+  
   const textAreaHeader = {
     registerCase: t("COMMENTS_FOR_JUDGE"),
     sendCaseBack: t("COMMENTS_FOR_SEND_BACK"),

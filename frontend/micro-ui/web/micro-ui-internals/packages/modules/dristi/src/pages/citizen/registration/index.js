@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import AdvocateClerkAdditionalDetail from "./AdvocateClerkAdditionalDetail";
 import SelectUserType from "./SelectUserType";
@@ -16,6 +16,7 @@ import UploadIdType from "./UploadIdType";
 import TermsCondition from "./TermsCondition";
 import SelectEmail from "./SelectEmail";
 import Modal from "../../../components/Modal";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 const TYPE_REGISTER = { type: "REGISTER" };
 const setCitizenDetail = (userObject, token, tenantId) => {
@@ -30,19 +31,6 @@ const setCitizenDetail = (userObject, token, tenantId) => {
   localStorage.setItem("user-info", JSON.stringify(userObject));
   localStorage.setItem("Citizen.user-info", JSON.stringify(userObject));
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 const Registration = ({ stateCode }) => {
   const Digit = window.Digit || {};
   const tenantId = Digit.ULBService.getCurrentTenantId();
