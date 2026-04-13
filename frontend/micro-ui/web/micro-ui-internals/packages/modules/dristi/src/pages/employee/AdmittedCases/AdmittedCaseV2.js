@@ -1,6 +1,6 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
-import { Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
+import { Header, InboxSearchComposer, Loader, Menu, Toast, CheckBox } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
@@ -63,6 +63,7 @@ import ExaminationDrawer from "./ExaminationDrawer";
 import useSortedMDMSData from "../../../hooks/dristi/useSortedMDMSData";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { actionEnabledStatuses, applicationTypes, homeTabEnum, judgeReviewStages, userRolesEnum, viewEnabledStatuses } from "../../../Utils/constants";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -81,28 +82,6 @@ const delayCondonationTextStyle = {
   fontWeight: 400,
   lineHeight: "16.41px",
   color: "#231F20",
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
 };
 
 const AdmittedCaseV2 = () => {

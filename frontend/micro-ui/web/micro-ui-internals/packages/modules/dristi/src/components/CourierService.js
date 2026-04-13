@@ -1,4 +1,4 @@
-import { Button, TextInput, CardLabelError, CloseSvg, Loader } from "@egovernments/digit-ui-react-components";
+import { Button, TextInput, CardLabelError, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { CustomAddIcon } from "../icons/svgIndex";
 import ReactTooltip from "react-tooltip";
@@ -7,6 +7,7 @@ import Modal from "./Modal";
 import SelectCustomNote from "./SelectCustomNote";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { TASK_TYPES, CHANNEL_IDS } from "../Utils/constants";
+import { CloseBtn, Heading } from "./ModalComponents";
 
 const InfoIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -18,18 +19,6 @@ const InfoIcon = () => (
     />
   </svg>
 );
-const Heading = (props) => {
-  return <h1 className="main-heading">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
 function CourierService({
   t,
   isDelayCondonation,
@@ -436,7 +425,7 @@ function CourierService({
 
       {showAddAddressModal && (
         <Modal
-          headerBarMain={<Heading label={t("CS_ADD_ADDRESS")} />}
+          headerBarMain={<Heading className="main-heading" label={t("CS_ADD_ADDRESS")} />}
           headerBarEnd={
             <CloseBtn
               onClick={() => {

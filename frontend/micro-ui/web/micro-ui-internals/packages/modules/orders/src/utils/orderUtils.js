@@ -1,31 +1,10 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import React from "react";
 import { formatAddress, mapAddressDetails, getComplainantName, getRespondantName } from ".";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { getCourtFee } from "./orderApiCallUtils";
 import { ORDER_CATEGORIES, ORDER_TYPES } from "./constants";
 
-export const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-export const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
+export { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 export const prepareUpdatedOrderData = (currentOrder, orderFormData, compOrderIndex) => {
   let updatedCompositeItems = null;

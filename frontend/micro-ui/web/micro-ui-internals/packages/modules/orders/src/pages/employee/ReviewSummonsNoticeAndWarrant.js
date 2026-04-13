@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { InboxSearchComposer, SubmitBar, Toast, CloseSvg, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, SubmitBar, Toast, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
@@ -21,6 +21,7 @@ import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS } from "../../utils/constants";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const defaultSearchValues = {
   eprocess: "",
@@ -1118,18 +1119,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
   }, [tenantId, rowData?.taskNumber, t]);
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   // XML parsing utility from BulkESignView
   const parseXml = (xmlString, tagName) => {
     const parser = new DOMParser();

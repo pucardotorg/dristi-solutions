@@ -2,21 +2,9 @@ import React, { useEffect, useState } from "react";
 import isEqual from "lodash/isEqual";
 import CourierService from "./CourierService";
 import Modal from "./Modal";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { DRISTIService } from "../services";
-import { ORDER_TYPES, TASK_TYPES } from "../Utils/constants";
-
-const Heading = (props) => {
-  return <h1 className="main-heading">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
+import { CloseBtn, Heading } from "./ModalComponents";
+import { TASK_TYPES } from "../Utils/constants";
 
 function ProcessCourierService({ t, config, onSelect, formData, errors, setError, clearErrors }) {
   // Initialize state based on formData or default values
@@ -130,7 +118,7 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
       />
       {showConfirmationModal && (
         <Modal
-          headerBarMain={<Heading label={t("CONSENT_FOR_SUMMON")} />}
+          headerBarMain={<Heading className="main-heading" label={t("CONSENT_FOR_SUMMON")} />}
           headerBarEnd={
             <CloseBtn
               onClick={() => {

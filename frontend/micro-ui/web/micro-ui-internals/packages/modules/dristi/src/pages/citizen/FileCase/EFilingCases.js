@@ -83,6 +83,7 @@ import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
 import { documentLabels } from "../../../Utils";
 import useSearchTaskMangementService from "../../../hooks/dristi/useSearchTaskMangementService";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 export const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -127,11 +128,6 @@ export const extractValue = (data, key) => {
   });
   return value;
 };
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 const selectedArray = [
   "complainantDetails",
   "respondentDetails",
@@ -1064,14 +1060,7 @@ function EFilingCases({ path }) {
     return pageConfig?.confirmmodalconfig;
   }, [pageConfig?.confirmmodalconfig]);
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const isDependentEnabled = useMemo(() => {
     let result = false;
     formConfig.forEach((config) => {

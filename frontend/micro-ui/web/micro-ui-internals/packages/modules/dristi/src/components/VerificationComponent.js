@@ -1,24 +1,12 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
-import { CardLabel, CloseSvg, FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import { CardLabel, FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useMemo, useState } from "react";
 import { idProofVerificationConfig } from "../configs/component";
 import Button from "./Button";
 import Modal from "./Modal";
 import RenderFileCard from "./RenderFileCard";
 import { useToast } from "./Toast/useToast";
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { CloseBtn, Heading } from "./ModalComponents";
 function VerificationComponent({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) {
   const [{ showModal, verificationType, modalData, isAadharVerified }, setState] = useState({
     showModal: false,
