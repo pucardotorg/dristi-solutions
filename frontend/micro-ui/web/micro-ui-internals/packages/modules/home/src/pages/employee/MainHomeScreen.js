@@ -976,18 +976,21 @@ const MainHomeScreen = () => {
     applicationOptions.OTHERS = { name: "HOME_OTHER_APPLICATIONS" };
   }
 
-  const handleSetCount = useCallback((value) => {
-    if (typeof value === "function") {
-      setPendingTaskCount((prev) => {
-        const next = value(prev);
-        return { ...prev, ...next };
-      });
-    } else if (typeof value === "object" && value !== null) {
-      setPendingTaskCount((prev) => ({ ...prev, ...value }));
-    } else {
-      setPendingTaskCount((prev) => ({ ...prev, [activeTab]: Number(value) || 0 }));
-    }
-  }, [activeTab]);
+  const handleSetCount = useCallback(
+    (value) => {
+      if (typeof value === "function") {
+        setPendingTaskCount((prev) => {
+          const next = value(prev);
+          return { ...prev, ...next };
+        });
+      } else if (typeof value === "object" && value !== null) {
+        setPendingTaskCount((prev) => ({ ...prev, ...value }));
+      } else {
+        setPendingTaskCount((prev) => ({ ...prev, [activeTab]: Number(value) || 0 }));
+      }
+    },
+    [activeTab]
+  );
 
   useEffect(() => {
     let updatedConfig = structuredClone(pendingTaskConfig);
@@ -1100,14 +1103,14 @@ const MainHomeScreen = () => {
               ?.map((column) => {
                 return column?.label === "PENDING_CASE_NAME"
                   ? {
-                    ...column,
-                    clickFunc:
-                      activeTab === "BAIL_BOND_STATUS"
-                        ? openBailBondModal
-                        : activeTab === "NOTICE_SUMMONS_MANAGEMENT"
+                      ...column,
+                      clickFunc:
+                        activeTab === "BAIL_BOND_STATUS"
+                          ? openBailBondModal
+                          : activeTab === "NOTICE_SUMMONS_MANAGEMENT"
                           ? setCourierServicePendingTask
                           : null,
-                  }
+                    }
                   : column;
               })
               ?.filter((column) => {
@@ -1260,6 +1263,7 @@ const MainHomeScreen = () => {
       <div className="main-home-screen">
         <HomeSidebar
           t={t}
+          tenantId={tenantId}
           onTabChange={handleTabChange}
           activeTab={activeTab}
           options={options}
