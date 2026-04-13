@@ -288,8 +288,8 @@ public class SecondaryStageProcessor {
 
             if ((tasks.length() > 1 && completedCount==tasks.length()-1) || (tasks.length() == 1)) {
                 log.info("All {} tasks delivered/expired for filingNumber: {}, ending secondary stage '{}'", taskType, filingNumber, secondaryStage);
-                caseStageTrackingUtil.endSecondaryStage(filingNumber);
                 publishSubstageUpdate(filingNumber, tenantId, request,null);
+                caseStageTrackingUtil.endSecondaryStage(filingNumber);
             } else {
                 log.info("Not all {} tasks delivered/expired for filingNumber: {}, secondary stage '{}' remains active", taskType, filingNumber, secondaryStage);
             }
@@ -312,8 +312,8 @@ public class SecondaryStageProcessor {
             List<String> activeStages = caseStageTrackingUtil.getActiveSecondaryStageNames(filingNumber);
             if (activeStages.contains(SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT)) {
                 log.info("Accused joined case, ending secondary stage '{}' for filingNumber: {}", SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT, filingNumber);
-                caseStageTrackingUtil.endSecondaryStage(filingNumber);
                 publishSubstageUpdate(filingNumber, tenantId, request,null);
+                caseStageTrackingUtil.endSecondaryStage(filingNumber);
             }
         } catch (Exception e) {
             log.error("Error processing join case secondary stage for filingNumber: {}", filingNumber, e);
