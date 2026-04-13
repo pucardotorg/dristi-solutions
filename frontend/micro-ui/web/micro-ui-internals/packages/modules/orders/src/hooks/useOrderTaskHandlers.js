@@ -126,13 +126,12 @@ const useOrderTaskHandlers = ({
 
       const newApplicationDetails = applicationData?.applicationList?.find((application) => application?.applicationNumber === refApplicationId);
 
-      const accusedIndividualId =
-        newApplicationDetails?.additionalDetails?.individualId || newApplicationDetails?.additionalDetails?.accusedId || null;
+      const accusedIndividualId = newApplicationDetails?.onBehalfOf?.[0] || null;
 
       let targetLitigant = null;
 
       if (accusedIndividualId) {
-        targetLitigant = (caseDetails?.litigants || []).find((lit) => lit?.individualId === accusedIndividualId);
+        targetLitigant = (caseDetails?.litigants || []).find((lit) => lit?.additionalDetails?.uuid === accusedIndividualId);
       }
 
       if (!targetLitigant) {
