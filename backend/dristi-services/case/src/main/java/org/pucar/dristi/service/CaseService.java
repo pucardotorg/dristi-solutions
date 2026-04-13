@@ -38,6 +38,10 @@ import org.pucar.dristi.web.models.task.Task;
 import org.pucar.dristi.web.models.task.TaskRequest;
 import org.pucar.dristi.web.models.task.TaskResponse;
 import org.pucar.dristi.web.models.v2.*;
+import org.pucar.dristi.web.models.advocateDetails.AdvocateDetailBlock;
+import org.pucar.dristi.web.models.advocateDetails.PipStatus;
+import org.pucar.dristi.web.models.advocateDetails.Documents;
+import org.pucar.dristi.web.models.advocateDetails.UiFlags;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -84,6 +88,7 @@ public class CaseService {
     private final EvidenceUtil evidenceUtil;
     private final EvidenceValidator evidenceValidator;
     private final PaymentCalculaterUtil paymentCalculaterUtil;
+    private final org.pucar.dristi.enrichment.AdvocateDetailBlockBuilder advocateDetailBlockBuilder;
 
     private final CaseUtil caseUtil;
 
@@ -107,7 +112,7 @@ public class CaseService {
                        HearingUtil analyticsUtil,
                        UserService userService,
                        PaymentCalculaterUtil paymentCalculaterUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateOfficeCaseMemberRepository advocateOfficeCaseMemberRepository) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil, OrderUtil orderUtil, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateOfficeCaseMemberRepository advocateOfficeCaseMemberRepository, org.pucar.dristi.enrichment.AdvocateDetailBlockBuilder advocateDetailBlockBuilder) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -134,6 +139,7 @@ public class CaseService {
         this.dateUtil = dateUtil;
         this.inboxUtil = inboxUtil;
         this.advocateOfficeCaseMemberRepository = advocateOfficeCaseMemberRepository;
+        this.advocateDetailBlockBuilder = advocateDetailBlockBuilder;
     }
 
     public static List<String> extractIndividualIds(JsonNode rootNode) {
@@ -199,6 +205,44 @@ public class CaseService {
         }
 
         return individualIds;
+    }
+
+    /**
+     * Instance helper: extract individual ids from typed AdvocateDetailBlock on the CourtCase.
+     * Falls back to parsing additionalDetails JSON when advocateDetailBlock is not present.
+     */
+    public List<String> extractIndividualIds(CourtCase courtCase) {
+        List<String> individualIds = new ArrayList<>();
+        if (courtCase == null) return individualIds;
+
+        List<AdvocateDetailBlock> blocks = courtCase.getAdvocateDetailBlock();
+        if (blocks != null && !blocks.isEmpty()) {
+            for (AdvocateDetailBlock block : blocks) {
+                if (block == null) continue;
+                try {
+                    if (block.getComplainant() != null && block.getComplainant().getIndividualId() != null && !block.getComplainant().getIndividualId().isEmpty()) {
+                        individualIds.add(block.getComplainant().getIndividualId());
+                    }
+                } catch (Exception ignored) { }
+
+                if (block.getAdvocates() != null) {
+                    for (org.pucar.dristi.web.models.Advocate adv : block.getAdvocates()) {
+                        if (adv == null) continue;
+                        if (adv.getIndividualId() != null && !adv.getIndividualId().isEmpty()) individualIds.add(adv.getIndividualId());
+                    }
+                }
+            }
+            return individualIds;
+        }
+
+        // Fallback to legacy additionalDetails JSON parsing
+        try {
+            JsonNode rootNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+            return extractIndividualIds(rootNode);
+        } catch (Exception e) {
+            log.debug("Failed to extract individualIds from additionalDetails fallback: {}", e.getMessage());
+            return individualIds;
+        }
     }
 
     private static void validateLitigantAlreadyPartOfCase(CourtCase courtCase, JoinCaseDataV2 joinCaseData) {
@@ -355,6 +399,7 @@ public class CaseService {
                 }
                 if (courtCase != null) {
                     log.info("CourtCase found in Redis cache for caseId: {}", criteria.getCaseId());
+                    caseRepository.refreshRepresentativeData(courtCase);
                     criteria.setResponseList(Collections.singletonList(courtCase));
                     caseCriteriaInRedis.add(criteria);
                 } else {
@@ -377,6 +422,11 @@ public class CaseService {
                     decryptedCourtCases.forEach(
                             courtCase -> {
                                 enrichAdvocateJoinedStatus(courtCase, caseCriteria.getAdvocateId());
+                                try {
+                                    advocateDetailBlockBuilder.buildAndSet(courtCase);
+                                } catch (Exception e) {
+                                    log.error("Error building AdvocateDetailBlock in CaseService.searchCases: {}", e.toString());
+                                }
                             });
                 });
                 caseCriteria.setResponseList(decryptedCourtCases);
@@ -481,7 +531,7 @@ public class CaseService {
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
             //todo: enhance for files delete
-            removeInactiveDocuments(documentToDelete);
+            removeInactiveDocuments(documentToDelete, caseRequest.getCases().getTenantId());
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
             //to prevent from double encryption
@@ -620,12 +670,15 @@ public class CaseService {
         Set<String> updatedFileStoreIds = updatedDocumentsMap.keySet();
         List<Document> documentsToDelete = existingDocumentsMap.entrySet().stream()
                 .filter(entry -> {
-                    if (COMPLAINANT_ID_PROOF.equals(entry.getValue().getDocumentType())
-                            && !updatedFileStoreIds.contains(entry.getKey())) {
+                    String docType = entry.getValue().getDocumentType();
+                    boolean isMissingInUpdate = !updatedFileStoreIds.contains(entry.getKey());
+
+                    if ((COMPLAINANT_ID_PROOF.equals(docType) || ADVOCATE_ID_PROOF.equals(docType))
+                            && isMissingInUpdate) {
                         entry.getValue().setIsActive(false);
-                        return false;
+                        return false; 
                     }
-                    return !updatedFileStoreIds.contains(entry.getKey());
+                    return isMissingInUpdate;
                 })
                 .map(entry -> {
                     Document doc = entry.getValue();
@@ -760,16 +813,45 @@ public class CaseService {
         }
     }
 
-    private void removeInactiveDocuments(List<Document> documentsToDelete) {
-        List<String> fileStoreIds = new ArrayList<>();
-        for (Document document : documentsToDelete) {
-            if (!document.getIsActive()) {
-                fileStoreIds.add(document.getFileStore());
-            }
+    private void removeInactiveDocuments(List<Document> documentsToDelete, String tenantId) {
+        if (documentsToDelete == null || documentsToDelete.isEmpty()) {
+            return;
         }
+
+        if (tenantId == null || tenantId.isBlank()) {
+            log.warn("Skipping file deletion because tenantId is null/blank for documents: {}",
+                    documentsToDelete.stream()
+                            .map(Document::getFileStore)
+                            .filter(Objects::nonNull)
+                            .toList());
+            return;
+        }
+
+        List<String> fileStoreIds = documentsToDelete.stream()
+                .filter(Objects::nonNull)
+                .filter(document -> Boolean.FALSE.equals(document.getIsActive()))
+                .map(Document::getFileStore)
+                .filter(Objects::nonNull)
+                .filter(fileStoreId -> !fileStoreId.isBlank())
+                .distinct()
+                .filter(fileStoreId -> {
+                    try {
+                        boolean exists = fileStoreUtil.doesFileExist(tenantId, fileStoreId);
+                        if (!exists) {
+                            log.warn("Skipping filestore delete for missing fileStoreId={} tenantId={}", fileStoreId, tenantId);
+                        }
+                        return exists;
+                    } catch (Exception e) {
+                        log.warn("Skipping filestore delete for fileStoreId={} tenantId={} due to existence check failure: {}",
+                                fileStoreId, tenantId, e.getMessage());
+                        return false;
+                    }
+                })
+                .toList();
+
         if (!fileStoreIds.isEmpty()) {
-            fileStoreUtil.deleteFilesByFileStore(fileStoreIds, config.getTenantId());
-            log.info("Deleted files for case with ids: {}", fileStoreIds);
+            fileStoreUtil.deleteFilesByFileStore(fileStoreIds, tenantId);
+            log.info("Deleted files for case with ids: {} tenantId={}", fileStoreIds, tenantId);
         }
     }
 
@@ -1398,9 +1480,41 @@ public class CaseService {
         }
 
         Object additionalDetails = joinCaseRequest.getAdditionalDetails();
-        if (joinCaseRequest.getAdditionalDetails() != null) {
+        if (additionalDetails != null) {
             log.info("EnrichRepresentative, additional details :: {}", joinCaseRequest.getAdditionalDetails());
-            caseObj.setAdditionalDetails(editAdvocateDetails(joinCaseRequest.getAdditionalDetails(), courtCase.getAdditionalDetails()));
+
+            // Prefer to extract advocate details (typed or legacy) and pass that to editAdvocateDetails
+            ObjectNode addNode = objectMapper.convertValue(joinCaseRequest.getAdditionalDetails(), ObjectNode.class);
+            JsonNode advNode = null;
+            if (addNode != null) {
+                if (addNode.has("advocateDetailBlock")) advNode = addNode.get("advocateDetailBlock");
+                else if (addNode.has("advocateDetails")) advNode = addNode.get("advocateDetails");
+            }
+
+            // If advocate-specific node exists, pass it; otherwise fall back to passing the whole additionalDetails
+            Object sourceForEdit = advNode != null ? advNode : joinCaseRequest.getAdditionalDetails();
+            caseObj.setAdditionalDetails(editAdvocateDetails(sourceForEdit, courtCase.getAdditionalDetails()));
+
+            // Attempt to populate typed advocateDetailBlock from incoming additionalDetails (compatibility path)
+            try {
+                if (advNode == null && addNode != null) {
+                    // if no advocate-specific node found, try to pick from addNode as before
+                    if (addNode.has("advocateDetailBlock")) advNode = addNode.get("advocateDetailBlock");
+                    else if (addNode.has("advocateDetails")) advNode = addNode.get("advocateDetails");
+                }
+                if (advNode != null) {
+
+                    if (advNode != null) {
+                        try {
+                            List<AdvocateDetailBlock> blocks = objectMapper.convertValue(advNode, new com.fasterxml.jackson.core.type.TypeReference<List<AdvocateDetailBlock>>() {});
+                            caseObj.setAdvocateDetailBlock(blocks);
+                            courtCase.setAdvocateDetailBlock(blocks);
+                        } catch (IllegalArgumentException ignored) {
+                            // If advocateDetails is in a different legacy shape, skip and let other mechanisms (builder) populate blocks
+                        }
+                    }
+                }
+            } catch (Exception ignored) { }
             caseObj = encryptionDecryptionUtil.encryptObject(caseObj, config.getCourtCaseEncrypt(), CourtCase.class);
             courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             joinCaseRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
@@ -1921,46 +2035,46 @@ public class CaseService {
         }
     }
 
-    //for updating pip related info from additional details
+    //for updating pip related info using advocateDetailBlock on the CourtCase
     private void modifyAdditionalDetailsForPIP(CourtCase courtCase, String individualIdPIPRepresenting) {
-        ObjectNode additionalDetailsNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), ObjectNode.class);
-
         try {
-            if (additionalDetailsNode.has("advocateDetails")) {
-                ObjectNode advocateDetails = (ObjectNode) additionalDetailsNode.get("advocateDetails");
+            List<AdvocateDetailBlock> blocks = courtCase.getAdvocateDetailBlock();
+            if (blocks == null || blocks.isEmpty()) return;
 
-                if (advocateDetails.has("formdata") && advocateDetails.get("formdata").isArray()) {
-                    ArrayNode formData = (ArrayNode) advocateDetails.get("formdata");
+            for (AdvocateDetailBlock block : blocks) {
+                if (block == null || block.getComplainant() == null) continue;
+                String complainantIndividualId = block.getComplainant().getIndividualId();
+                if (complainantIndividualId == null) continue;
+                if (!complainantIndividualId.equalsIgnoreCase(individualIdPIPRepresenting)) continue;
 
-                    for (JsonNode formDataItem : formData) {
-                        if (!formDataItem.has("data")) continue;
-                        ObjectNode dataNode = (ObjectNode) formDataItem.get("data");
+                // Set pip status to NO
+                PipStatus pipStatus = PipStatus.builder()
+                        .code("NO")
+                        .label("No")
+                        .isEnabled(true)
+                        .build();
+                block.setIsComplainantPip(pipStatus);
 
-                        if (!dataNode.has("multipleAdvocatesAndPip")) continue;
-                        ObjectNode multipleAdvocatesAndPip = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
-
-                        if (!multipleAdvocatesAndPip.has("boxComplainant")) continue;
-                        ObjectNode boxComplainant = (ObjectNode) multipleAdvocatesAndPip.get("boxComplainant");
-
-                        if (!boxComplainant.has("individualId") || !boxComplainant.get("individualId").asText().equalsIgnoreCase(individualIdPIPRepresenting)) {
-                            continue;
-                        }
-
-                        ObjectNode isComplainantPipNode = objectMapper.createObjectNode();
-                        isComplainantPipNode.put("code", "NO");
-                        isComplainantPipNode.put("name", "No");
-                        isComplainantPipNode.put("isEnabled", true);
-                        multipleAdvocatesAndPip.set("isComplainantPip", isComplainantPipNode);
-
-                        multipleAdvocatesAndPip.putNull("pipAffidavitFileUpload");
-                    }
+                // Clear pip affidavit documents
+                Documents docs = block.getDocuments();
+                if (docs != null) {
+                    docs.setPipAffidavit(new ArrayList<>());
+                    block.setDocuments(docs);
+                } else {
+                    block.setDocuments(Documents.builder().vakalatnama(null).pipAffidavit(new ArrayList<>()).build());
                 }
+
+                // Update UI flags
+                UiFlags uiFlags = block.getUiFlags() != null ? block.getUiFlags() : UiFlags.builder().build();
+                uiFlags.setShowAffidavit(false);
+                block.setUiFlags(uiFlags);
             }
 
-            courtCase.setAdditionalDetails(objectMapper.convertValue(additionalDetailsNode, Object.class));
+            // persist the transformed advocateDetailBlock back onto the case
+            courtCase.setAdvocateDetailBlock(blocks);
 
         } catch (Exception e) {
-            log.error("Error modifying additionalDetails for pip: {}", e.getMessage(), e);
+            log.error("Error modifying advocateDetailBlock for pip: {}", e.getMessage(), e);
         }
     }
 
@@ -2145,7 +2259,7 @@ public class CaseService {
                     additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(), individual));
                 } else {
                     //complainant name enrich
-                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), representingJoinCase.getIndividualId()));
+                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase, representingJoinCase.getIndividualId()));
                 }
                 Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
                 party.setAdditionalDetails(additionalDetailsObject);
@@ -2210,7 +2324,7 @@ public class CaseService {
                     additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(), individual));
                 } else {
                     //complainant name enrich
-                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), representingJoinCase.getIndividualId()));
+                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase, representingJoinCase.getIndividualId()));
                 }
 
                 Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
@@ -2275,7 +2389,13 @@ public class CaseService {
 
         joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting().forEach(representingJoinCase -> {
             if (representingJoinCase.getUniqueId() == null) {
-                courtCase.setAdditionalDetails(modifyAdditionalDetails(joinCaseRequest.getRequestInfo(), courtCase.getAdditionalDetails(), representingJoinCase, joinCaseData.getRepresentative()));
+                Object updatedAdditional = modifyAdditionalDetails(joinCaseRequest.getRequestInfo(), courtCase, representingJoinCase, joinCaseData.getRepresentative());
+                // keep existing additionalDetails unchanged; method will update typed advocateDetailBlock on the courtCase
+                courtCase.setAdditionalDetails(updatedAdditional);
+                // Rebuild typed AdvocateDetailBlock from current courtCase data (representatives/litigants) so code can rely on it.
+                try {
+                    advocateDetailBlockBuilder.buildAndSet(courtCase);
+                } catch (Exception ignored) { }
             }
         });
 
@@ -2454,131 +2574,81 @@ public class CaseService {
         }
     }
 
-    private Object modifyAdditionalDetails(RequestInfo requestInfo, Object additionalDetails, RepresentingJoinCase representingJoinCase, JoinCaseRepresentative joinCaseRepresentative) {
-        ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
-
+    private Object modifyAdditionalDetails(RequestInfo requestInfo, CourtCase courtCase, RepresentingJoinCase representingJoinCase, JoinCaseRepresentative joinCaseRepresentative) {
+        // Update typed advocateDetailBlock on the courtCase instead of mutating legacy additionalDetails JSON
         try {
-            // Convert the additionalDetails object to an ObjectNode for easier manipulation
-
-            // Check if advocateDetails exist
-            if (additionalDetailsNode.has("advocateDetails")) {
-                ObjectNode advocateDetails = (ObjectNode) additionalDetailsNode.get("advocateDetails");
-
-                // Check if the formdata array exists within advocateDetails
-                if (advocateDetails.has("formdata") && advocateDetails.get("formdata").isArray()) {
-                    ArrayNode formData = (ArrayNode) advocateDetails.get("formdata");
-
-                    // Iterate over each element in the formData array
-                    for (int i = 0; i < formData.size(); i++) {
-                        ObjectNode dataNode = (ObjectNode) formData.get(i).get("data");
-
-                        // Get the boxComplainant object for matching the litigant
-                        ObjectNode boxComplainant = (ObjectNode) dataNode.get("multipleAdvocatesAndPip").get("boxComplainant");
-
-                        // Skip if the litigant doesn't match
-                        if (!boxComplainant.get("individualId").textValue().equalsIgnoreCase(representingJoinCase.getIndividualId())) {
-                            continue;
-                        }
-
-                        // Ensure vakalatnamaFileUpload is initialized
-                        ObjectNode multipleAdvocatesAndPip = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
-                        // Update isComplainantPip
-                        ObjectNode isComplainantPipNode = objectMapper.createObjectNode();
-                        isComplainantPipNode.put("code", "NO");
-                        isComplainantPipNode.put("name", "no");
-                        isComplainantPipNode.put("isEnabled", true);
-                        multipleAdvocatesAndPip.set("isComplainantPip", isComplainantPipNode);
-
-                        if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
-
-                            ObjectNode vakalatnamaFileUpload = objectMapper.createObjectNode();
-
-                            // Initialize the 'document' array
-                            ArrayNode document = objectMapper.createArrayNode();
-
-                            ObjectNode documentNode = objectMapper.createObjectNode();
-                            documentNode.put("fileStore", representingJoinCase.getDocuments().get(0).getFileStore());
-                            documentNode.put("documentType", representingJoinCase.getDocuments().get(0).getDocumentType());
-
-                            document.add(documentNode);
-
-                            vakalatnamaFileUpload.set("document", document);
-                            multipleAdvocatesAndPip.set("vakalatnamaFileUpload", vakalatnamaFileUpload);
-
-                            // Ensure vakalatnamaFileUpload is properly set after modification
-                            multipleAdvocatesAndPip.set("vakalatnamaFileUpload", vakalatnamaFileUpload);
-
-                        }
-
-                        // Ensure multipleAdvocateNameDetails is initialized and clear it
-                        ArrayNode multipleAdvocateNameDetails = ensureArrayNodeInitialized(multipleAdvocatesAndPip.get("multipleAdvocateNameDetails"));
-
-                        List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(requestInfo, joinCaseRepresentative.getAdvocateId());
-                        Advocate joinCaseAdvocate = advocatesList.get(0);
-
-                        List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseAdvocate.getIndividualId());
-                        Individual individual = individualsList.get(0);
-
-                        // Create a new ObjectNode for the new advocate details
-                        ObjectNode newAdvocateNode = objectMapper.createObjectNode();
-
-                        // Create advocateNameDetails node
-                        ObjectNode advocateNameDetails = objectMapper.createObjectNode();
-                        advocateNameDetails.put("lastName", individual.getName().getFamilyName());
-                        advocateNameDetails.put("firstName", individual.getName().getGivenName());
-                        advocateNameDetails.put("middleName", individual.getName().getOtherNames());
-                        advocateNameDetails.put("advocateMobileNumber", individual.getMobileNumber());
-
-                        // Add advocateIdProof array
-                        ArrayNode advocateIdProof = objectMapper.createArrayNode();
-                        ObjectNode idProofNode = objectMapper.createObjectNode();
-
-                        Identifier identifier = individual.getIdentifiers().get(0);
-                        AdditionalFields additionalFields = individual.getAdditionalFields();
-
-                        List<Field> fields = additionalFields.getFields();
-                        String fileStoreId = null;
-                        String filename = null;
-
-                        for (Field field : fields) {
-                            if ("identifierIdDetails".equals(field.getKey())) {
-                                JsonNode jsonNode = objectMapper.readTree(field.getValue());
-                                fileStoreId = jsonNode.has("fileStoreId") ? jsonNode.get("fileStoreId").asText() : null;
-                                filename = jsonNode.has("filename") ? jsonNode.get("filename").asText() : null;
-                                break;
-                            }
-                        }
-
-                        idProofNode.put("name", identifier.getIdentifierType());
-                        idProofNode.put("fileName", identifier.getIdentifierType() + " Card");
-                        idProofNode.put("fileStore", fileStoreId);
-                        idProofNode.put("documentName", filename);
-                        advocateIdProof.add(idProofNode);
-
-                        // Set the advocateNameDetails and advocateIdProof into the newAdvocateNode
-                        newAdvocateNode.set("advocateNameDetails", advocateNameDetails);
-                        newAdvocateNode.set("advocateIdProof", advocateIdProof);
-
-                        // Add the new advocate node to the multipleAdvocateNameDetails array
-                        multipleAdvocateNameDetails.add(newAdvocateNode);
-                        multipleAdvocatesAndPip.set("multipleAdvocateNameDetails", multipleAdvocateNameDetails);
-
-                        // Ensure the multipleAdvocatesAndPip object exists, if not create one
-//                        ObjectNode pipNode = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
-//                        dataNode.set("multipleAdvocatesAndPip", pipNode);
-
-                        // Set updated multipleAdvocateNameDetails back to pipNode
-                        // pipNode.set("multipleAdvocateNameDetails", multipleAdvocateNameDetails);
-
-                        // No need to explicitly set pipNode again to dataNode as it's already updated within
-                        break;
-                    }
-                }
+            List<AdvocateDetailBlock> blocks = courtCase.getAdvocateDetailBlock();
+            if (blocks == null || blocks.isEmpty()) {
+                // try to build from available data
+                try { advocateDetailBlockBuilder.buildAndSet(courtCase); } catch (Exception ignored) { }
+                blocks = courtCase.getAdvocateDetailBlock();
             }
-        } catch (JsonProcessingException e) {
-            // Handle JSON processing exceptions (e.g., invalid JSON syntax)
+
+            if (blocks == null || blocks.isEmpty()) return courtCase.getAdditionalDetails();
+
+            for (AdvocateDetailBlock block : blocks) {
+                if (block == null || block.getComplainant() == null) continue;
+                String complainantIndividualId = block.getComplainant().getIndividualId();
+                if (complainantIndividualId == null) continue;
+                if (!complainantIndividualId.equalsIgnoreCase(representingJoinCase.getIndividualId())) continue;
+
+                // Set pip status to NO
+                PipStatus pipStatus = PipStatus.builder()
+                        .code("NO")
+                        .label("No")
+                        .isEnabled(true)
+                        .build();
+                block.setIsComplainantPip(pipStatus);
+
+                // Add vakalatnama document if provided
+                if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
+                    Document incoming = representingJoinCase.getDocuments().get(0);
+                    Document doc = Document.builder()
+                            .fileStore(incoming.getFileStore())
+                            .documentType(incoming.getDocumentType())
+                            .fileName(incoming.getFileName())
+                            .documentName(incoming.getDocumentName())
+                            .build();
+                    Documents docs = block.getDocuments() != null ? block.getDocuments() : Documents.builder().build();
+                    List<Document> vakalat = docs.getVakalatnama() != null ? new ArrayList<>(docs.getVakalatnama()) : new ArrayList<>();
+                    vakalat.add(doc);
+                    docs.setVakalatnama(vakalat);
+                    block.setDocuments(docs);
+                }
+
+                // Add the advocate to the block's advocate list
+                try {
+                    List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(requestInfo, joinCaseRepresentative.getAdvocateId());
+                    if (advocatesList != null && !advocatesList.isEmpty()) {
+                        Advocate joinCaseAdvocate = advocatesList.get(0);
+                        // enrich advocate with individual details
+                        try {
+                            List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseAdvocate.getIndividualId());
+                            if (individualsList != null && !individualsList.isEmpty()) {
+                                Individual individual = individualsList.get(0);
+                                joinCaseAdvocate.setFirstName(individual.getName().getGivenName());
+                                joinCaseAdvocate.setMiddleName(individual.getName().getOtherNames());
+                                joinCaseAdvocate.setLastName(individual.getName().getFamilyName());
+                                joinCaseAdvocate.setMobileNumber(individual.getMobileNumber());
+                            }
+                        } catch (Exception ignored) { }
+
+                        List<org.pucar.dristi.web.models.Advocate> advList = block.getAdvocates() != null ? block.getAdvocates() : new ArrayList<>();
+                        advList.add(joinCaseAdvocate);
+                        block.setAdvocates(advList);
+                        block.setIsFormCompleted(!advList.isEmpty());
+                    }
+                } catch (Exception ignored) { }
+            }
+
+            // persist changed blocks back
+            courtCase.setAdvocateDetailBlock(blocks);
+        } catch (Exception e) {
+            log.error("Error modifying advocateDetailBlock: {}", e.getMessage(), e);
         }
-        return objectMapper.convertValue(additionalDetailsNode, additionalDetails.getClass());
+
+        // Return existing additionalDetails unchanged for compatibility
+        return courtCase.getAdditionalDetails();
     }
 
     private void replaceAdvocate(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, String advocateId) {
@@ -2740,7 +2810,7 @@ public class CaseService {
                 fullName = getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(), individualForLitigant);
             } else {
                 //complainant name enrich
-                fullName = getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), litigant.getIndividualId());
+                fullName = getComplainantNameByIndividualId(courtCase, litigant.getIndividualId());
             }
             litigantDetails.setName(fullName);
 
@@ -2863,7 +2933,7 @@ public class CaseService {
             fullName = getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(), individualForLitigant);
         } else {
             //complainant name enrich
-            fullName = getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), litigant.getIndividualId());
+            fullName = getComplainantNameByIndividualId(courtCase, litigant.getIndividualId());
         }
         litigantDetails.setName(fullName);
 
@@ -2955,7 +3025,7 @@ public class CaseService {
                 fullName = getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(), individualForLitigant);
             } else {
                 //complainant name enrich
-                fullName = getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), litigant.getIndividualId());
+                fullName = getComplainantNameByIndividualId(courtCase, litigant.getIndividualId());
             }
             litigantDetails.setName(fullName);
 
@@ -3287,7 +3357,7 @@ public class CaseService {
                         type = "respondent";
                     } else {
                         //complainant name enrich
-                        fullName = getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), litigant.getIndividualId());
+                        fullName = getComplainantNameByIndividualId(courtCase, litigant.getIndividualId());
                         additionalDetails.put("fullName", fullName);
                         type = "complainant";
                     }
@@ -3429,10 +3499,38 @@ public class CaseService {
 
                         return fullName.trim();
                     }
+
+                    // Prefer typed advocateDetailBlock on CourtCase to find complainant's name. Falls back to legacy additionalDetails parsing.
                 }
             }
         }
         return "";
+    }
+
+    private String getComplainantNameByIndividualId(CourtCase courtCase, String individualId) {
+        if (courtCase == null) return "";
+        List<AdvocateDetailBlock> blocks = courtCase.getAdvocateDetailBlock();
+        if (blocks != null) {
+            for (AdvocateDetailBlock block : blocks) {
+                if (block == null || block.getComplainant() == null) continue;
+                if (individualId.equalsIgnoreCase(block.getComplainant().getIndividualId())) {
+                    String firstName = block.getComplainant().getFirstName() == null ? "" : block.getComplainant().getFirstName();
+                    String middleName = block.getComplainant().getMiddleName() == null ? "" : block.getComplainant().getMiddleName();
+                    String lastName = block.getComplainant().getLastName() == null ? "" : block.getComplainant().getLastName();
+                    String fullName = (firstName.isEmpty() ? "" : firstName) +
+                            (middleName.isEmpty() ? "" : " " + middleName) +
+                            (lastName.isEmpty() ? "" : " " + lastName);
+                    if (!fullName.trim().isEmpty()) return fullName.trim();
+                }
+            }
+        }
+
+        // fallback to legacy additionalDetails parsing
+        try {
+            return getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), individualId);
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private TaskResponse createTask(JoinCaseV2Request joinCaseRequest, String assignes, CourtCase courtCase) {
@@ -3818,8 +3916,8 @@ public class CaseService {
                 enrichAndCallEvidenceCreate(courtCase, joinCaseLitigant, joinCaseRequest.getRequestInfo());
             }
 
-            if (joinCaseLitigant.getPartyType().contains("complainant") && joinCaseLitigant.getIsPip()) {
-                courtCase.setAdditionalDetails(modifyAdvocateDetails(courtCase.getAdditionalDetails(), joinCaseLitigant));
+                if (joinCaseLitigant.getPartyType().contains("complainant") && joinCaseLitigant.getIsPip()) {
+                courtCase.setAdditionalDetails(modifyAdvocateDetails(courtCase, joinCaseLitigant));
             } else if (joinCaseLitigant.getPartyType().contains("respondent")) {
                 courtCase.setAdditionalDetails(updateRespondentDetails(courtCase.getAdditionalDetails(), joinCaseRequest.getRequestInfo(), joinCaseLitigant));
             }
@@ -3837,76 +3935,55 @@ public class CaseService {
         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), encrptedCourtCase);
     }
 
-    private Object modifyAdvocateDetails(Object additionalDetails, JoinCaseLitigant joinCaseLitigant) {
-
-        ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
-
-        // Check if advocateDetails exist
-        if (additionalDetailsNode.has("advocateDetails")) {
-            ObjectNode advocateDetails = (ObjectNode) additionalDetailsNode.get("advocateDetails");
-
-            // Check if the formdata array exists within advocateDetails
-            if (advocateDetails.has("formdata") && advocateDetails.get("formdata").isArray()) {
-                ArrayNode formData = (ArrayNode) advocateDetails.get("formdata");
-
-                // Iterate over each element in the formData array
-                for (int i = 0; i < formData.size(); i++) {
-                    ObjectNode dataNode = (ObjectNode) formData.get(i).get("data");
-
-                    // Get the boxComplainant object for matching the litigant
-                    ObjectNode boxComplainant = (ObjectNode) dataNode.get("multipleAdvocatesAndPip").get("boxComplainant");
-
-                    // Skip if the litigant doesn't match
-
-                    if (!(boxComplainant.get("individualId").textValue().equalsIgnoreCase(joinCaseLitigant.getIndividualId()))) {
-                        continue;
-                    }
-                    // Ensure 'multipleAdvocatesAndPip' is an ObjectNode
-                    ObjectNode multipleAdvocatesAndPipNode = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
-
-                    ObjectNode multipleAdvocatesAndPip;
-                    if (multipleAdvocatesAndPipNode != null && multipleAdvocatesAndPipNode.isObject()) {
-                        multipleAdvocatesAndPip = multipleAdvocatesAndPipNode;
-                    } else {
-                        multipleAdvocatesAndPip = objectMapper.createObjectNode();
-                        dataNode.set("multipleAdvocatesAndPip", multipleAdvocatesAndPip);
-                    }
-
-                    // Update isComplainantPip
-                    ObjectNode isComplainantPipNode = objectMapper.createObjectNode();
-                    isComplainantPipNode.put("code", "YES");
-                    isComplainantPipNode.put("name", "yes");
-                    isComplainantPipNode.put("isEnabled", true);
-                    multipleAdvocatesAndPip.set("isComplainantPip", isComplainantPipNode);
-
-                    // Ensure pipAffidavitFileUpload is initialized and add a new document to it
-                    ObjectNode pipAffidavitFileUpload = objectMapper.createObjectNode();
-
-                    // Initialize the 'document' array
-                    ArrayNode document = objectMapper.createArrayNode();
-
-                    ObjectNode documentNode = objectMapper.createObjectNode();
-                    documentNode.put("documentType", joinCaseLitigant.getDocuments().get(0).getDocumentType());
-                    documentNode.put("fileStore", joinCaseLitigant.getDocuments().get(0).getFileStore());
-
-                    document.add(documentNode);
-                    pipAffidavitFileUpload.set("document", document);
-                    multipleAdvocatesAndPip.set("pipAffidavitFileUpload", pipAffidavitFileUpload);
-
-                    // Ensure vakalatnamaFileUpload is initialized and clear it
-                    ArrayNode vakalatnamaFileUpload = ensureArrayNodeInitialized(dataNode.get("multipleAdvocatesAndPip").get("vakalatnamaFileUpload"));
-                    vakalatnamaFileUpload.removeAll();
-
-                    // Ensure multipleAdvocateNameDetails is initialized and clear it
-                    ArrayNode multipleAdvocateNameDetails = ensureArrayNodeInitialized(dataNode.get("multipleAdvocatesAndPip").get("multipleAdvocateNameDetails"));
-                    multipleAdvocateNameDetails.removeAll();
-
-                    // Exit the loop after processing the first matching item
-                    break;
-                }
+    private Object modifyAdvocateDetails(CourtCase courtCase, JoinCaseLitigant joinCaseLitigant) {
+        try {
+            List<AdvocateDetailBlock> blocks = courtCase.getAdvocateDetailBlock();
+            if (blocks == null || blocks.isEmpty()) {
+                try { advocateDetailBlockBuilder.buildAndSet(courtCase); } catch (Exception ignored) { }
+                blocks = courtCase.getAdvocateDetailBlock();
             }
+
+            if (blocks == null || blocks.isEmpty()) return courtCase.getAdditionalDetails();
+
+            for (AdvocateDetailBlock block : blocks) {
+                if (block == null || block.getComplainant() == null) continue;
+                String complainantIndividualId = block.getComplainant().getIndividualId();
+                if (complainantIndividualId == null) continue;
+                if (!complainantIndividualId.equalsIgnoreCase(joinCaseLitigant.getIndividualId())) continue;
+
+                // Set isComplainantPip = YES
+                PipStatus pipStatus = PipStatus.builder().code("YES").label("Yes").isEnabled(true).build();
+                block.setIsComplainantPip(pipStatus);
+
+                // Add pip affidavit document
+                Documents docs = block.getDocuments() != null ? block.getDocuments() : Documents.builder().build();
+                List<Document> pipAff = docs.getPipAffidavit() != null ? new ArrayList<>(docs.getPipAffidavit()) : new ArrayList<>();
+                if (joinCaseLitigant.getDocuments() != null && !joinCaseLitigant.getDocuments().isEmpty()) {
+                    Document incoming = joinCaseLitigant.getDocuments().get(0);
+                    Document doc = Document.builder()
+                            .documentType(incoming.getDocumentType())
+                            .fileStore(incoming.getFileStore())
+                            .fileName(incoming.getFileName())
+                            .documentName(incoming.getDocumentName())
+                            .build();
+                    pipAff.add(doc);
+                }
+                docs.setPipAffidavit(pipAff);
+                // clear vakalatnama
+                docs.setVakalatnama(new ArrayList<>());
+                block.setDocuments(docs);
+
+                // clear multipleAdvocateNameDetails and mark form not completed if needed
+                block.setIsFormCompleted(block.getAdvocates() != null && !block.getAdvocates().isEmpty());
+                break;
+            }
+
+            courtCase.setAdvocateDetailBlock(blocks);
+        } catch (Exception e) {
+            log.error("Error modifying advocateDetailBlock in modifyAdvocateDetails: {}", e.getMessage(), e);
         }
-        return objectMapper.convertValue(additionalDetailsNode, additionalDetails.getClass());
+
+        return courtCase.getAdditionalDetails();
     }
 
     // Utility method to ensure ArrayNode is initialized and not null
@@ -4015,19 +4092,32 @@ public class CaseService {
         }
     }
 
-    private Object editAdvocateDetails(Object additionalDetails1, Object additionalDetails2) {
-        // Convert the Objects to ObjectNodes for easier manipulation
-        ObjectNode details1Node = objectMapper.convertValue(additionalDetails1, ObjectNode.class);
+    private Object editAdvocateDetails(Object advocateSource, Object additionalDetails2) {
+        // Convert the target additionalDetails to ObjectNode for manipulation
         ObjectNode details2Node = objectMapper.convertValue(additionalDetails2, ObjectNode.class);
 
-        // Replace the specified field in additionalDetails2 with the value from additionalDetails1
-        if (details1Node.has("advocateDetails")) {
-            details2Node.set("advocateDetails", details1Node.get("advocateDetails"));
-        } else {
-            throw new CustomException(VALIDATION_ERR, "advocateDetails not found in additionalDetails object.");
+        // Convert the source into a JsonNode (it might be: 1) a wrapper additionalDetails object containing
+        // advocateDetailBlock/advocateDetails, or 2) the advocateDetailBlock/advocateDetails node itself.
+        JsonNode sourceNode = objectMapper.convertValue(advocateSource, JsonNode.class);
+
+        if (sourceNode == null || sourceNode.isMissingNode()) {
+            throw new CustomException(VALIDATION_ERR, "advocateDetailBlock/advocateDetails not found in source object.");
         }
 
-        // Convert the updated ObjectNode back to its original form
+        // If the source is a wrapper object having advocateDetailBlock or legacy advocateDetails, use that.
+        if (sourceNode.isObject() && sourceNode.has("advocateDetailBlock")) {
+            details2Node.set("advocateDetailBlock", sourceNode.get("advocateDetailBlock"));
+        } else if (sourceNode.isObject() && sourceNode.has("advocateDetails")) {
+            // Copy legacy advocateDetails under the new advocateDetailBlock key to migrate shape on write
+            details2Node.set("advocateDetailBlock", sourceNode.get("advocateDetails"));
+        } else if (sourceNode.isArray() || sourceNode.isObject()) {
+            // If the source itself is an array/object representing the advocate blocks, set it directly.
+            details2Node.set("advocateDetailBlock", sourceNode);
+        } else {
+            throw new CustomException(VALIDATION_ERR, "advocateDetailBlock/advocateDetails not found in source object.");
+        }
+
+        // Convert the updated ObjectNode back to the original type of additionalDetails2
         return objectMapper.convertValue(details2Node, additionalDetails2.getClass());
     }
 
@@ -4082,8 +4172,11 @@ public class CaseService {
 
         if (isLitigantPIP) {
             // Replace the specified field in additionalDetails2 with the value from additionalDetails1
-            if (details1Node.has("advocateDetails")) {
-                details2Node.set("advocateDetails", details1Node.get("advocateDetails"));
+            if (details1Node.has("advocateDetailBlock")) {
+                details2Node.set("advocateDetailBlock", details1Node.get("advocateDetailBlock"));
+            } else if (details1Node.has("advocateDetails")) {
+                // migrate legacy key into new key
+                details2Node.set("advocateDetailBlock", details1Node.get("advocateDetails"));
             }
         }
         // Convert the updated ObjectNode back to its original form
@@ -4116,6 +4209,7 @@ public class CaseService {
             courtCaseRedis.setSubstage(caseOverallStatus.getSubstage());
             courtCaseRedis.setStageBackup(caseOverallStatus.getStageBackup());
             courtCaseRedis.setSubstageBackup(caseOverallStatus.getSubstageBackup());
+            courtCaseRedis.setSecondaryStage(caseOverallStatus.getSecondaryStage());
         }
         updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
     }

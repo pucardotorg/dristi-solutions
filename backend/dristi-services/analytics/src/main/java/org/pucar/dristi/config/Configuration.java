@@ -38,6 +38,9 @@ public class Configuration {
 	@Value("${billing.index}")
 	private String billingIndex;
 
+	@Value("${case.stage.tracking.index}")
+	private String caseStageTrackingIndex;
+
 	@Value("${egov.case.overall.status.topic}")
 	private String caseOverallStatusTopic;
 
@@ -131,6 +134,12 @@ public class Configuration {
 
 	@Value("${egov.mdms.case.outcome.module.name}")
 	private String mdmsCaseOutcomeModuleName;
+
+	@Value("${egov.mdms.case.secondary.stage.module.name}")
+	private String mdmsCaseSecondaryStageModuleName;
+
+	@Value("${egov.mdms.case.secondary.stage.master.name}")
+	private String mdmsCaseSecondaryStageMasterName;
 
 	@Value("${egov.mdms.case.outcome.master.name}")
 	private String mdmsCaseOutcomeMasterName;
