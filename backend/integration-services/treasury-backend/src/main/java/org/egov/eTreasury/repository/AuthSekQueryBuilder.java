@@ -8,7 +8,7 @@ import org.springframework.util.StringUtils;
 @Component
 public class AuthSekQueryBuilder {
 
-    private static final String BASE_QUERY = "SELECT auth_token, decrypted_sek, bill_id, business_service, service_number, total_due, mobile_number, paid_by, session_time, department_id, request_blob ";
+    private static final String BASE_QUERY = "SELECT auth_token, decrypted_sek, bill_id, business_service, service_number, total_due, mobile_number, paid_by, session_time, department_id, request_blob, payment_status, completion_source, verification_timestamp ";
 
     private static final String FROM_TABLES = " FROM auth_sek_session_data ";
 
@@ -33,5 +33,14 @@ public class AuthSekQueryBuilder {
         } else {
             query.append(" AND ");
         }
+    }
+
+    public String getPendingAuthSeksQuery(Long thresholdTime, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_QUERY);
+        query.append(FROM_TABLES);
+        query.append(" WHERE (payment_status = 'INITIATED' OR payment_status IS NULL) AND session_time <= ? ");
+        preparedStmtList.add(thresholdTime);
+        query.append(ORDER_BY_SESSION_TIME);
+        return query.toString();
     }
 }

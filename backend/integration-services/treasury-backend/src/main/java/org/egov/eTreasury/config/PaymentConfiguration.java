@@ -227,4 +227,11 @@ public class PaymentConfiguration {
     @Value("${egov.localization.search.endpoint}")
     private String localizationSearchEndpoint;
 
+    // Payment Reconciliation
+    @Value("${payment.reconciliation.cron}")
+    private String reconciliationCron;
+
+    @Value("${payment.reconciliation.threshold.hours}")
+    private Long reconciliationThresholdHours;
+
 }

@@ -80,14 +80,18 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
-//    @PostMapping("/v1/_doubleVerification")
-//    public HtmlResponse verifyDetails(@RequestBody VerificationRequest request) {
-//        log.info("Performing double verification for request: {}", request);
-//        Payload verificationPage = paymentService.doubleVerifyPayment(request.getVerificationData(), request.getRequestInfo());
-//        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
-//        log.info("Double verification successful for request: {}", request);
-//        return HtmlResponse.builder().payload(verificationPage).responseInfo(responseInfo).build();
-//    }
+    @PostMapping("/v1/_doubleVerification")
+    public TreasuryPaymentResponse verifyDetails(@RequestBody VerificationRequest request) {
+        log.info("Performing double verification for request: {}", request);
+        TreasuryPaymentData treasuryPaymentData = paymentService.doubleVerifyPayment(request.getVerificationData(), request.getRequestInfo());
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        log.info("Double verification successful for request: {} | status: {} | GRN: {}", 
+                request, treasuryPaymentData.getStatus(), treasuryPaymentData.getGrn());
+        return TreasuryPaymentResponse.builder()
+                .responseInfo(responseInfo)
+                .treasuryPaymentData(treasuryPaymentData)
+                .build();
+    }
 
 //    @PostMapping("/v1/_printPayInSlip")
 //    public PrintResponse printPayInSlip(@RequestBody PrintRequest request) {
