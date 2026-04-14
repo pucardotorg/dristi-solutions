@@ -107,7 +107,7 @@
     "egov-enc-service" :{
         "service_group": "core-services",
         "db_source_path": "digit-services/egov-enc-service/src/main/resources/db",
-        "dockerfile_path": "build/maven/Dockerfile",
+        "dockerfile_path": "build/maven/Dockerfile.v2",
         "service_source_path": "digit-services/egov-enc-service",
         "language": "java",
         "version": "17"
