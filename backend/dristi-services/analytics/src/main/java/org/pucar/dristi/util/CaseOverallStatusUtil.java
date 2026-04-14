@@ -177,8 +177,10 @@ public class CaseOverallStatusUtil {
 			}
 			String filingNumber = JsonPath.read(applicationObject.toString(), FILING_NUMBER_PATH);
 			String applicationType = JsonPath.read(applicationObject.toString(), APPLICATION_TYPE_PATH);
+			Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
 			log.info("Processing application secondary stage: filingNumber={}, applicationType={}, status={}", filingNumber, applicationType, status);
-			secondaryStageProcessor.processApplicationSecondaryStage(filingNumber, tenantId, applicationType, status, request);
+			secondaryStageProcessor.processApplicationSecondaryStage(filingNumber, tenantId, applicationType, status, request,caseObject);
 			return applicationObject;
 		} catch (Exception e) {
 			log.error("Error processing application secondary stage for referenceId: {}", referenceId, e);
@@ -201,13 +203,14 @@ public class CaseOverallStatusUtil {
 
 	private Object processCaseOverallStatus(JSONObject request, String referenceId, String status, String action, String tenantId) throws JsonProcessingException {
 		RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
+		Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, referenceId, null);
+
 		CaseOverallStatus caseOverallStatus = determineCaseStage(referenceId,tenantId,status,action,requestInfo);
-		publishToCaseOverallStatus(caseOverallStatus, request);
+		publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
 
 		// When case is registered, check if delay condonation is required and start the secondary stage
 		if (caseOverallStatus != null && STAGE_COGNIZANCE.equalsIgnoreCase(caseOverallStatus.getStage())) {
 			try {
-				Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, referenceId, null);
 				secondaryStageProcessor.processCaseRegistrationSecondaryStage(referenceId, tenantId, caseObject, request);
 			} catch (Exception e) {
 				log.error("Error checking delay condonation for case registration, filingNumber: {}", referenceId, e);
@@ -230,7 +233,9 @@ public class CaseOverallStatusUtil {
 			throw new RuntimeException("Filing number not present for case overall status");
 		}
 		String hearingType = JsonPath.read(hearingObject.toString(), HEARING_TYPE_PATH);
-		publishToCaseOverallStatus(determineHearingStage( filingNumber, tenantId, hearingType, action ), request);
+		Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+		publishToCaseOverallStatus(determineHearingStage( filingNumber, tenantId, hearingType, action ), request,caseObject);
 
 		// Secondary stage processing: evaluate hearing-based triggers (e.g., Mediation)
 //		try {
@@ -414,7 +419,7 @@ public class CaseOverallStatusUtil {
 				log.info("Case {} is in Appearance stage and accused has joined, transitioning to Bail & Recording of Plea", filingNumber);
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(
 						filingNumber, tenantId, STAGE_BAIL_AND_RECORDING_OF_PLEA, "");
-				publishToCaseOverallStatus(caseOverallStatus, request);
+				publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
 				caseStageTrackingUtil.updateEndTimeForStage(filingNumber, STAGE_APPEARANCE);
 				caseStageTrackingUtil.addStageEntry(filingNumber, caseId, tenantId,STAGE_BAIL_AND_RECORDING_OF_PLEA);
 			} else {
@@ -425,7 +430,7 @@ public class CaseOverallStatusUtil {
 			// Check if Proclamation & Attachment secondary stage should end due to accused joining
 			if (hasAccusedJoinedCase(caseObject)) {
 				try {
-					secondaryStageProcessor.processJoinCaseSecondaryStage(filingNumber, tenantId, request);
+					secondaryStageProcessor.processJoinCaseSecondaryStage(filingNumber, tenantId, request,caseObject);
 				} catch (Exception ex) {
 					log.error("Error processing Proclamation secondary stage end trigger for filingNumber: {}", filingNumber, ex);
 				}
@@ -435,7 +440,7 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private void publishToCaseOverallStatus(CaseOverallStatus caseOverallStatus, JSONObject request) {
+	private void publishToCaseOverallStatus(CaseOverallStatus caseOverallStatus, JSONObject request,Object caseObject) {
 		try {
 			if(caseOverallStatus==null){
 				log.info("Case overall workflow update not eligible");
@@ -446,7 +451,6 @@ public class CaseOverallStatusUtil {
 			else{
 				RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
                 String filingNumber = caseOverallStatus.getFilingNumber();
-                Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
 
 				// Enrich caseId in stage tracking index if available
 				try {
@@ -468,9 +472,9 @@ public class CaseOverallStatusUtil {
 					return;
 				}
 
-				// If the stage being set is Appearance, check if accused has already joined.
-				// If accused has joined, move directly to Bail & Recording of Plea instead.
-				handleAppearanceConditional(caseOverallStatus, caseObject);
+//				// If the stage being set is Appearance, check if accused has already joined.
+//				// If accused has joined, move directly to Bail & Recording of Plea instead.
+//				handleAppearanceConditional(caseOverallStatus, caseObject);
 
 				AuditDetails auditDetails = new AuditDetails();
 				String lastModifiedBy = (requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null)
@@ -654,6 +658,11 @@ public class CaseOverallStatusUtil {
     private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory, boolean canPublishCaseOverallStatus, boolean isHearingFound, TreeMap<Integer, CaseOverallStatus> priorityMap) {
         String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
 		String hearingType = null;
+		Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+		if (caseObject == null) {
+			log.info("Case not found for filingNumber: {} during join-case stage update", filingNumber);
+			return;
+		}
 		if (!isHearingFound) {
 			if (SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(orderType) || SCHEDULING_NEXT_HEARING.equalsIgnoreCase(orderType)) {
 				String path = null;
@@ -677,11 +686,6 @@ public class CaseOverallStatusUtil {
 			}
 		}
 		if(SUMMONS.equalsIgnoreCase(orderType)){
-			Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
-			if (caseObject == null) {
-				log.info("Case not found for filingNumber: {} during join-case stage update", filingNumber);
-				return;
-			}
 			boolean isAccusedJoinedCase = hasAccusedJoinedCase(caseObject);
 			String stage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
 			String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
@@ -690,7 +694,7 @@ public class CaseOverallStatusUtil {
 			}
 			if(!isAccusedJoinedCase && STAGE_COGNIZANCE.equalsIgnoreCase(stage)){
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, STAGE_APPEARANCE, "");
-				publishToCaseOverallStatus(caseOverallStatus, request);
+				publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
 				caseStageTrackingUtil.updateEndTimeForStage(caseOverallStatus.getFilingNumber(), STAGE_COGNIZANCE);
 				caseStageTrackingUtil.addStageEntry(filingNumber, caseId, tenantId,STAGE_APPEARANCE);
 				return;
@@ -718,13 +722,13 @@ public class CaseOverallStatusUtil {
 			}
 
 			log.info("Publishing case overall status with priority: {} for filing number: {}", priorityMap.firstEntry().getKey(), filingNumber);
-			publishToCaseOverallStatus(finalCaseOverallStatus, request);
+			publishToCaseOverallStatus(finalCaseOverallStatus, request,caseObject);
 		}
         publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderItemJson, orderCategory), request);
 
 		// Secondary stage processing: evaluate order-based triggers independently from primary stage
 		try {
-			secondaryStageProcessor.processOrderSecondaryStage(filingNumber, tenantId, orderType, status, request);
+			secondaryStageProcessor.processOrderSecondaryStage(filingNumber, tenantId, orderType, status, request,caseObject);
 		} catch (Exception e) {
 			log.error("Error in secondary stage processing for order type: {} filingNumber: {}", orderType, filingNumber, e);
 		}

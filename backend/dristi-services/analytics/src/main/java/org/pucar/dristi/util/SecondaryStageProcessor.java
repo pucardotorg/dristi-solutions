@@ -67,7 +67,7 @@ public class SecondaryStageProcessor {
      * @param status       the order status
      * @param request      the JSONObject request containing RequestInfo
      */
-    public void processOrderSecondaryStage(String filingNumber, String tenantId, String orderType, String status, JSONObject request) {
+    public void processOrderSecondaryStage(String filingNumber, String tenantId, String orderType, String status, JSONObject request,Object caseObject) {
         try {
             if (orderType == null || status == null) return;
 
@@ -77,7 +77,7 @@ public class SecondaryStageProcessor {
                 String secondaryStage = mapOrderTypeToSecondaryStage(orderType, orderTypeToSubstageMap);
                 if (secondaryStage != null) {
                     log.info("Order type '{}' published triggers secondary stage '{}' for filingNumber: {}", orderType, secondaryStage, filingNumber);
-                    publishSubstageUpdate(filingNumber, tenantId, request,secondaryStage);
+                    publishSubstageUpdate(filingNumber, tenantId, request,secondaryStage,caseObject);
                     caseStageTrackingUtil.startSecondaryStage(filingNumber, tenantId, secondaryStage);
                 }
             }
@@ -104,7 +104,7 @@ public class SecondaryStageProcessor {
             if (DELAY_CONDONATION_REQUIRED.equalsIgnoreCase(delayCondonationTypeCode)) {
                 log.info("Delay condonation required (code='{}') for filingNumber: {}, starting secondary stage '{}'",
                         delayCondonationTypeCode, filingNumber, SECONDARY_STAGE_DELAY_CONDONATION);
-                publishSubstageUpdate(filingNumber, tenantId, request,SECONDARY_STAGE_DELAY_CONDONATION);
+                publishSubstageUpdate(filingNumber, tenantId, request,SECONDARY_STAGE_DELAY_CONDONATION,caseObject);
                 caseStageTrackingUtil.startSecondaryStage(filingNumber, tenantId, SECONDARY_STAGE_DELAY_CONDONATION);
             } else {
                 log.info("Delay condonation not required (code='{}') for filingNumber: {}", delayCondonationTypeCode, filingNumber);
@@ -126,7 +126,7 @@ public class SecondaryStageProcessor {
      * @param status          the application status/action
      * @param request         the JSONObject request containing RequestInfo
      */
-    public void processApplicationSecondaryStage(String filingNumber, String tenantId, String applicationType, String status, JSONObject request) {
+    public void processApplicationSecondaryStage(String filingNumber, String tenantId, String applicationType, String status, JSONObject request,Object caseObject) {
         try {
             if (applicationType == null || status == null) return;
 
@@ -137,7 +137,7 @@ public class SecondaryStageProcessor {
                 if (APPLICATION_STATUS_ACCEPTED.equalsIgnoreCase(status) || APPLICATION_STATUS_REJECTED.equalsIgnoreCase(status)) {
                     // End trigger for Delay Condonation
                     log.info("Application '{}' status '{}' ends secondary stage '{}' for filingNumber: {}", applicationType, status, delayCondonationStage, filingNumber);
-                    publishSubstageUpdate(filingNumber, tenantId, request,null);
+                    publishSubstageUpdate(filingNumber, tenantId, request,null,caseObject);
                     caseStageTrackingUtil.endSecondaryStage(filingNumber);
                 }
             }
@@ -230,6 +230,7 @@ public class SecondaryStageProcessor {
             }
             String filingNumber = JsonPath.read(taskObject.toString(), FILING_NUMBER_PATH);
             String taskType = JsonPath.read(taskObject.toString(), "$.taskType");
+            Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
 
             // Map entity type to secondary stage and task management types
             String secondaryStage = mapTaskTypeToSecondaryStage(taskType);
@@ -239,7 +240,7 @@ public class SecondaryStageProcessor {
                 return;
             }
 
-            evaluateTaskEndTrigger(filingNumber, tenantId, secondaryStage, taskType, request,referenceId);
+            evaluateTaskEndTrigger(filingNumber, tenantId, secondaryStage, taskType, request,referenceId,caseObject);
         } catch (Exception e) {
             log.error("Error processing task end trigger for referenceId: {}, entityType: {}", referenceId, entityType, e);
         }
@@ -256,7 +257,7 @@ public class SecondaryStageProcessor {
      * @param taskType       the task type to search for (e.g., SUMMONS, WARRANT)
      * @param request        the JSONObject request containing RequestInfo
      */
-    private void evaluateTaskEndTrigger(String filingNumber, String tenantId, String secondaryStage, String taskType, JSONObject request,String referenceId) {
+    private void evaluateTaskEndTrigger(String filingNumber, String tenantId, String secondaryStage, String taskType, JSONObject request,String referenceId,Object caseObject) {
         try {
             // Check if the secondary stage is currently active
             List<String> activeStages = caseStageTrackingUtil.getActiveSecondaryStageNames(filingNumber);
@@ -288,7 +289,7 @@ public class SecondaryStageProcessor {
 
             if ((tasks.length() > 1 && completedCount==tasks.length()-1) || (tasks.length() == 1)) {
                 log.info("All {} tasks delivered/expired for filingNumber: {}, ending secondary stage '{}'", taskType, filingNumber, secondaryStage);
-                publishSubstageUpdate(filingNumber, tenantId, request,null);
+                publishSubstageUpdate(filingNumber, tenantId, request,null,caseObject);
                 caseStageTrackingUtil.endSecondaryStage(filingNumber);
             } else {
                 log.info("Not all {} tasks delivered/expired for filingNumber: {}, secondary stage '{}' remains active", taskType, filingNumber, secondaryStage);
@@ -307,12 +308,12 @@ public class SecondaryStageProcessor {
      * @param tenantId     tenant ID
      * @param request      the JSONObject request containing RequestInfo
      */
-    public void processJoinCaseSecondaryStage(String filingNumber, String tenantId, JSONObject request) {
+    public void processJoinCaseSecondaryStage(String filingNumber, String tenantId, JSONObject request,Object caseObject) {
         try {
             List<String> activeStages = caseStageTrackingUtil.getActiveSecondaryStageNames(filingNumber);
             if (activeStages.contains(SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT)) {
                 log.info("Accused joined case, ending secondary stage '{}' for filingNumber: {}", SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT, filingNumber);
-                publishSubstageUpdate(filingNumber, tenantId, request,null);
+                publishSubstageUpdate(filingNumber, tenantId, request,null,caseObject);
                 caseStageTrackingUtil.endSecondaryStage(filingNumber);
             }
         } catch (Exception e) {
@@ -342,7 +343,7 @@ public class SecondaryStageProcessor {
      * If no secondary stages are active, secondaryStage is set to empty list.
      * If one or more are active, secondaryStage is set to the list of active stage names.
      */
-    private void publishSubstageUpdate(String filingNumber, String tenantId, JSONObject request,String secondaryStage) {
+    private void publishSubstageUpdate(String filingNumber, String tenantId, JSONObject request,String secondaryStage,Object caseObject) {
         try {
             List<String> activeStages = caseStageTrackingUtil.getActiveSecondaryStageNames(filingNumber);
             if(!activeStages.contains(secondaryStage) && secondaryStage!=null){
@@ -357,8 +358,6 @@ public class SecondaryStageProcessor {
             caseOverallStatus.setFilingNumber(filingNumber);
             caseOverallStatus.setTenantId(tenantId);
             caseOverallStatus.setSecondaryStage(activeStages);
-
-            Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
 
             String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
             String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);

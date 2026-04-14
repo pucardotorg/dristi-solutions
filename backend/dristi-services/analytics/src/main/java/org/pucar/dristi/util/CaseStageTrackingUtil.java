@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+import static org.pucar.dristi.config.ServiceConstants.STAGE_REGISTRATION;
+import static org.pucar.dristi.config.ServiceConstants.STAGE_SCRUTINY;
+
 @Slf4j
 @Component
 public class CaseStageTrackingUtil {
@@ -131,13 +134,19 @@ public class CaseStageTrackingUtil {
 
         boolean updated = false;
         long now = System.currentTimeMillis();
-        for (CaseStageTrackingEntry entry : tracking.getStages()) {
-            if (entry.getStage() != null && entry.getStage().equalsIgnoreCase(endStageName) && entry.getEndTime() == null) {
-                entry.setEndTime(now);
-                log.info("Setting endTime={} for stage '{}' in filingNumber: {}", now, endStageName, filingNumber);
-                updated = true;
-                break;
+        String[] stageNames = endStageName.contains(",") ? endStageName.split(",") : new String[]{endStageName};
+
+        for (String stageName : stageNames) {
+            String trimmed = stageName.trim();
+            for (CaseStageTrackingEntry entry : tracking.getStages()) {
+                if (entry.getStage() != null && entry.getStage().equalsIgnoreCase(trimmed) && entry.getEndTime() == null) {
+                    entry.setEndTime(now);
+                    log.info("Setting endTime={} for stage '{}' in filingNumber: {}", now, trimmed, filingNumber);
+                    updated = true;
+                    break;
+                }
             }
+            if (updated) break;
         }
 
         if (updated) {
