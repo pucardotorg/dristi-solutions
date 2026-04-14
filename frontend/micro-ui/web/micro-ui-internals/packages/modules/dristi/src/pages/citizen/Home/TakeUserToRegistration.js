@@ -24,15 +24,19 @@ function TakeUserToRegistration({ message, isRejected, isLitigantPartialRegister
 
     let params = {};
     const individual = data?.Individual?.[0];
+    const userType = data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value;
 
-    if (isRejected) {
+    if (isRejected || (userType === "ADVOCATE" && !advocate)) {
       const identifierIdDetails = JSON.parse(individual?.additionalFields?.fields?.find((o) => o.key === "identifierIdDetails")?.value || "{}");
 
       const uri = `${window.location.origin}/filestore/v1/files/id?tenantId=${individual?.tenantId}&fileStoreId=${identifierIdDetails?.fileStoreId}`;
       const file = await getFileByFileStore(uri, identifierIdDetails?.filename);
 
-      const barCouncilUri = `${window.location.origin}/filestore/v1/files/id?tenantId=${advocate?.tenantId}&fileStoreId=${advocate?.documents?.[0]?.fileStore}`;
-      const barCouncilFile = await getFileByFileStore(barCouncilUri, advocate?.documents?.[0]?.additionalDetails?.fileName);
+      let barCouncilFile = null;
+      if (advocate) {
+        const barCouncilUri = `${window.location.origin}/filestore/v1/files/id?tenantId=${advocate?.tenantId}&fileStoreId=${advocate?.documents?.[0]?.fileStore}`;
+        barCouncilFile = await getFileByFileStore(barCouncilUri, advocate?.documents?.[0]?.additionalDetails?.fileName);
+      }
 
       const permanentAddress = individual?.address?.find((a) => a.type === "PERMANENT");
       const correspondenceAddress = individual?.address?.find((a) => a.type === "CORRESPONDENCE");
@@ -91,25 +95,36 @@ function TakeUserToRegistration({ message, isRejected, isLitigantPartialRegister
           IdType: identifierTypeData?.find((identifier) => identifier?.type === individual?.identifiers[0]?.identifierType) || {},
           filename: identifierIdDetails?.filename || "",
         },
-        formData: {
-          clientDetails: {
-            barCouncilId: [
-              [
-                advocate?.documents?.[0]?.additionalDetails?.fileName || "",
-                {
-                  file: barCouncilFile,
-                  fileStoreId: advocate?.documents?.[0]?.fileStore || "",
-                },
+        ...(advocate && {
+          formData: {
+            clientDetails: {
+              barCouncilId: [
+                [
+                  advocate?.documents?.[0]?.additionalDetails?.fileName || "",
+                  {
+                    file: barCouncilFile,
+                    fileStoreId: advocate?.documents?.[0]?.fileStore || "",
+                  },
+                ],
               ],
-            ],
-            // For clerk, use stateRegnNumber; for advocate, use barRegistrationNumber
-            barRegistrationNumber: advocate?.stateRegnNumber || advocate?.barRegistrationNumber || "",
+              // For clerk, use stateRegnNumber; for advocate, use barRegistrationNumber
+              barRegistrationNumber: advocate?.stateRegnNumber || advocate?.barRegistrationNumber || "",
+            },
           },
-        },
+        }),
       };
     }
 
-    !isRejected
+    userType === "ADVOCATE" && !advocate
+      ? history.push(`/${window?.contextPath}/citizen/dristi/home/registration/email`, {
+          newParams: { ...data, ...params, isRejected: !advocate },
+          userType: {
+            clientDetails: {
+              selectUserType: userTypeOptions?.find((item) => item?.code === userType),
+            },
+          },
+        })
+      : !isRejected
       ? history.push(`/${window?.contextPath}/citizen/dristi/home/registration/user-name`, {
           newParams: {
             name: {
