@@ -477,10 +477,10 @@
     "egov-user": {
         "service_group": "core-services",
         "db_source_path": "digit-services/egov-user/src/main/resources/db",
-        "dockerfile_path": "build/maven-java8/Dockerfile",
+        "dockerfile_path": "build/maven/Dockerfile.v2",
         "service_source_path": "digit-services/egov-user",
         "language": "java",
-        "version": "8"
+        "version": "17"
     },
     "egov-workflow-v2": {
         "service_group": "core-services",
