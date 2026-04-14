@@ -209,7 +209,7 @@ ADD COLUMN advocateCount int8 NULL;
 ALTER TABLE dristi_case_document
 ADD COLUMN  isActive bool DEFAULT TRUE;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dristi_cases_tenant_id ON dristi_cases(tenantId);
+CREATE INDEX IF NOT EXISTS idx_dristi_cases_tenant_id ON dristi_cases(tenantId);
 
 
 ALTER TABLE dristi_case_litigants
