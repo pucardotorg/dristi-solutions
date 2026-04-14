@@ -7,6 +7,7 @@ import { Modal, Button, CardText, RadioButtons, CardLabel, LabelFieldPair } from
 import { useTranslation } from "react-i18next";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { ORDER_TYPES } from "../../utils/constants";
 
 const modeOptions = [
   { label: "Net Banking", value: "NB" },
@@ -154,7 +155,7 @@ const SBIEpostPayment = () => {
           isCourtBillPaid: isCourtBillPaid,
           hearingId: hearingId,
           orderType: orderType,
-          partyIndex: orderType === "NOTICE" && partyIndex,
+          partyIndex: orderType === ORDER_TYPES.NOTICE && partyIndex,
         };
 
         sessionStorage.setItem("paymentReceiptData", JSON.stringify({ receiptData }));

@@ -289,10 +289,8 @@ Application Submission Flow:
 |---|---|---|
 | `react` | 17.0.2 | UI framework |
 | `react-router-dom` | 5.3.0 | Routing |
-| `react-hook-form` | 6.15.8 | Form management |
 | `react-i18next` | 11.16.2 | i18n |
 | `react-query` | 3.6.1 | Data fetching |
-| `react-date-range` | ^1.4.0 | Date range picker |
 | `@egovernments/digit-ui-react-components` | 1.8.2-beta.9 | Shared UI |
 | `@egovernments/digit-ui-components` | 0.0.2-beta.1 | Design system |
 | `@egovernments/digit-ui-module-core` | 1.8.1-beta.6 | Core module |

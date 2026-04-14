@@ -1,5 +1,4 @@
 import { Loader } from "@egovernments/digit-ui-components";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
 import Button from "../../../components/Button";
@@ -12,6 +11,7 @@ import { DRISTIService } from "../../../services";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import { userTypeOptions } from "../registration/config";
 import CustomDetailsDropdownCard from "../../../components/CustomDetailsDropdownCard";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 const customNoteConfig = {
   populators: {
@@ -48,16 +48,7 @@ function CaseType({ t }) {
   const onSelect = () => {
     setPage(1);
   };
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
+  
   const { data: complainantRespondentTypeData, isLoading: isComplainantRespondentTypeLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "case",

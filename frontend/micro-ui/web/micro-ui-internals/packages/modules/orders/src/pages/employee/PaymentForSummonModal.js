@@ -15,6 +15,8 @@ import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@eg
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { getPartyNameForInfos } from "../../utils";
+import { CaseWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/caseWorkflow";
+import { ORDER_TYPES } from "../../utils/constants";
 
 const modeOptions = [{ label: "E-Post (3-5 days)", value: "e-post" }];
 
@@ -65,7 +67,7 @@ const PaymentForSummonComponent = ({
         label={"Complete in 2 days"}
         additionalElements={[
           <p>
-            {t(orderType === "SUMMONS" ? "SUMMON_DELIVERY_NOTE" : "NOTICE_DELIVERY_NOTE")}{" "}
+            {t(orderType === ORDER_TYPES.SUMMONS ? "SUMMON_DELIVERY_NOTE" : "NOTICE_DELIVERY_NOTE")}{" "}
             <span style={{ fontWeight: "bold" }}>{getDateWithMonthName(orderDate)}</span> {t("ON_TIME_DELIVERY")}
           </p>,
         ]}
@@ -151,7 +153,7 @@ const PaymentForSummonModal = ({ path }) => {
     Boolean(filingNumber)
   );
 
-  const isCaseAdmitted = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0]?.status === "CASE_ADMITTED", [caseData]);
+  const isCaseAdmitted = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0]?.status === CaseWorkflowState.CASE_ADMITTED, [caseData]);
 
   useEffect(() => {
     if (caseData) {
@@ -262,7 +264,17 @@ const PaymentForSummonModal = ({ path }) => {
   const consumerCode = useMemo(() => {
     return taskNumber ? `${taskNumber}_POST_PROCESS_COURT` : undefined;
   }, [taskNumber]);
-  const service = useMemo(() => (orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
+  const service = useMemo(() => {
+    if (orderType === ORDER_TYPES.WARRANT) {
+      return paymentType.TASK_WARRANT;
+    } else if (orderType === ORDER_TYPES.PROCLAMATION) {
+      return paymentType.TASK_PROCLAMATION;
+    } else if (orderType === ORDER_TYPES.ATTACHMENT) {
+      return paymentType.TASK_ATTACHMENT;
+    } else {
+      return orderType === ORDER_TYPES.SUMMONS ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE;
+    }
+  }, [orderType]);
   const taskType = useMemo(() => getTaskType(service), [service]);
   const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useBillSearch(
     {},
@@ -374,12 +386,14 @@ const PaymentForSummonModal = ({ path }) => {
           await Promise.all([
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: orderType === "SUMMONS" ? "Show Summon-Warrant Status" : "Show Notice Status",
-                entityType: paymentType.ORDER_MANAGELIFECYCLE,
+                name: orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+                  ? `PAYMENT_PENDING_FOR_${orderType}`
+                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
+                entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
                 referenceId: hearingsData?.HearingList?.[0]?.hearingId,
-                status: orderType === "SUMMONS" ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
+                status: paymentType.PAYMENT_PENDING_POST,
                 assignedTo: [],
-                assignedRole: [orderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
+                assignedRole: [orderType === ORDER_TYPES.WARRANT ? "PENDING_TASK_SHOW_WARRANT_STATUS" : orderType === ORDER_TYPES.PROCLAMATION ? "PENDING_TASK_SHOW_PROCLAMATION_STATUS" : orderType === ORDER_TYPES.ATTACHMENT ? "PENDING_TASK_SHOW_ATTACHMENT_STATUS" : orderType === ORDER_TYPES.SUMMONS ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
                 cnrNumber: filteredTasks?.[0]?.cnrNumber,
                 filingNumber: filingNumber,
                 caseId: caseDetails?.id,
@@ -388,14 +402,16 @@ const PaymentForSummonModal = ({ path }) => {
                 stateSla: 3 * dayInMillisecond + todayDate,
                 additionalDetails: {
                   hearingId: hearingsData?.list?.[0]?.hearingId,
-                  partyIndex: orderType === "NOTICE" ? partyIndex : "",
+                  partyIndex: orderType === ORDER_TYPES.NOTICE ? partyIndex : "",
                 },
                 tenantId,
               },
             }),
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: orderType === "SUMMONS" ? `MAKE_PAYMENT_FOR_SUMMONS_POST` : `MAKE_PAYMENT_FOR_NOTICE_POST`,
+                name: orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+                  ? `PAYMENT_PENDING_FOR_${orderType}`
+                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
                 entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
                 referenceId: `MANUAL_${taskNumber}`,
                 status: paymentType.PAYMENT_PENDING_POST,
@@ -555,7 +571,7 @@ const PaymentForSummonModal = ({ path }) => {
 
     return {
       handleClose: handleClose,
-      heading: { label: `Payment for ${orderType === "SUMMONS" ? "Summons" : "Notice"} via post` },
+      heading: { label: `Payment for ${orderType === ORDER_TYPES.SUMMONS ? "Summons" : "Notice"} via post` },
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
       payOnlineButtonTitle: payOnlineButtonTitle,

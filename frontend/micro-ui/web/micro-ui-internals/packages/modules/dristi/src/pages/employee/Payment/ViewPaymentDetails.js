@@ -7,6 +7,7 @@ import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import CustomCopyTextDiv from "../../../components/CustomCopyTextDiv";
 import { extractFeeMedium, getFilteredPaymentData, getTaskType } from "../../../Utils";
+import { ORDER_TYPES } from "../../../Utils/constants";
 
 const paymentTaskType = {
   TASK_SUMMON: "task-summons",
@@ -351,12 +352,12 @@ const ViewPaymentDetails = ({ location, match }) => {
       if (["task-notice", "task-summons", "task-warrant"].includes(businessService)) {
         await DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
-            name: taskOrderType === "SUMMONS" ? "Show Summon-Warrant Status" : "Show Notice Status",
+            name: taskOrderType === ORDER_TYPES.SUMMONS ? "Show Summon-Warrant Status" : "Show Notice Status",
             entityType: paymentTaskType.ORDER_MANAGELIFECYCLE,
             referenceId: taskHearingNumber,
-            status: taskOrderType === "SUMMONS" ? paymentTaskType.SUMMON_WARRANT_STATUS : paymentTaskType.NOTICE_STATUS,
+            status: taskOrderType === ORDER_TYPES.SUMMONS ? paymentTaskType.SUMMON_WARRANT_STATUS : paymentTaskType.NOTICE_STATUS,
             assignedTo: [],
-            assignedRole: [taskOrderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
+            assignedRole: [taskOrderType === ORDER_TYPES.SUMMONS ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
             cnrNumber: demandBill?.additionalDetails?.cnrNumber,
             filingNumber: filingNumber,
             caseId: caseId,

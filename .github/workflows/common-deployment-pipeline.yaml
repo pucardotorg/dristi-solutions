@@ -37,7 +37,7 @@ on:
           - dev
           - qa
           - demo
-
+          - sdc-uat
   push:
     branches:
       - main

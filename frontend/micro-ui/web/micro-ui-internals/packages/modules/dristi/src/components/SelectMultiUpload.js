@@ -2,26 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import { UploadIcon } from "../icons/svgIndex";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
-import { CardLabelError, TextInput, CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
+import { CardLabelError, TextInput, Toast } from "@egovernments/digit-ui-react-components";
 import Button from "./Button";
 import ImageModal from "./ImageModal";
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        cursor: "pointer",
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn } from "./ModalComponents";
 const DragDropComponent = ({ config, label }) => {
   return (
     <div

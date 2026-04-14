@@ -16,7 +16,6 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import Accordion from "../../../components/Accordion";
-import ConfirmCourtModal from "../../../components/ConfirmCourtModal";
 import ErrorsAccordion from "../../../components/ErrorsAccordion";
 import FlagBox from "../../../components/FlagBox";
 import Modal from "../../../components/Modal";
@@ -31,6 +30,7 @@ import { DRISTIService } from "../../../services";
 import { sideMenuConfig } from "./Config";
 import EditFieldsModal from "./EditFieldsModal";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
+import { ORDER_TYPES, TASK_TYPES } from "../../../Utils/constants";
 import {
   accusedAddressValidation,
   addressValidation,
@@ -82,6 +82,7 @@ import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
 import { documentLabels } from "../../../Utils";
 import useSearchTaskMangementService from "../../../hooks/dristi/useSearchTaskMangementService";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 export const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -126,11 +127,6 @@ export const extractValue = (data, key) => {
   });
   return value;
 };
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 const selectedArray = [
   "complainantDetails",
   "respondentDetails",
@@ -205,7 +201,6 @@ function EFilingCases({ path }) {
   const [parentOpen, setParentOpen] = useState(sideMenuConfig.findIndex((parent) => parent.children.some((child) => child.key === selected)));
 
   const [openConfigurationModal, setOpenConfigurationModal] = useState(false);
-  const [openConfirmCourtModal, setOpenConfirmCourtModal] = useState(false);
   const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState({ show: false, index: 0 });
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
@@ -1063,14 +1058,6 @@ function EFilingCases({ path }) {
     return pageConfig?.confirmmodalconfig;
   }, [pageConfig?.confirmmodalconfig]);
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
   const isDependentEnabled = useMemo(() => {
     let result = false;
     formConfig.forEach((config) => {
@@ -1371,6 +1358,7 @@ function EFilingCases({ path }) {
               if (selected === "processCourierService") {
                 if (judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "multipleAccusedProcessCourier") {
                   body.isDisableAllFields = true;
+                  body.isDelayCondonation = isDelayCondonation;
                 }
               }
 
@@ -2511,9 +2499,9 @@ function EFilingCases({ path }) {
             const summonsAccusedDetails = getAccusedDetails("SUMMONS");
             const warrantAccusedDetails = getAccusedDetails("WARRANT");
 
-            const noticeTask = taskManagementList?.find((item) => item?.taskType === "NOTICE");
-            const summonsTask = taskManagementList?.find((item) => item?.taskType === "SUMMONS");
-            const warrantTask = taskManagementList?.find((item) => item?.taskType === "WARRANT");
+            const noticeTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.NOTICE);
+            const summonsTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.SUMMONS);
+            const warrantTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.WARRANT);
             let updatedWarrantTask = null;
 
             // removing processDelieveryDetails for warrant because of payment calculation handled at backend
@@ -2883,74 +2871,6 @@ function EFilingCases({ path }) {
       calculation: calculationResponse?.Calculation,
     });
     return calculationResponse;
-  };
-  const onSubmitCase = async (data) => {
-    setOpenConfirmCourtModal(false);
-    setIsDisabled(true);
-    let calculationResponse = {};
-    const assignees = getAllAssignees(caseDetails);
-    const poaHolders = (caseDetails?.poaHolders || [])?.map((poaHolder) => ({
-      uuid: poaHolder?.additionalDetails?.uuid,
-    }));
-
-    const fileStoreId = sessionStorage.getItem("fileStoreId");
-    await DRISTIService.caseUpdateService(
-      {
-        cases: {
-          ...caseDetails,
-          ...(fileStoreId && {
-            additionalDetails: {
-              ...caseDetails?.additionalDetails,
-              signedCaseDocument: fileStoreId,
-            },
-          }),
-          caseTitle:
-            `${getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata || {}, t)} vs ${getRespondentName(
-              caseDetails?.additionalDetails?.respondentDetails?.formdata || {},
-              t
-            )}` || caseDetails?.caseTitle,
-          courtId: "KLKM52" || data?.court?.code,
-          workflow: {
-            ...caseDetails?.workflow,
-            action: data?.action || "E-SIGN",
-            assignes: [],
-          },
-        },
-        tenantId,
-      },
-      tenantId
-    ).then(async (res) => {
-      await closePendingTask({ status: "PENDING_PAYMENT" });
-      if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
-        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-          pendingTask: {
-            name: "Pending Payment",
-            entityType: "case-default",
-            referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-            status: "PENDING_PAYMENT",
-            assignedTo: [...assignees?.map((uuid) => ({ uuid })), ...poaHolders],
-            assignedRole: ["CASE_CREATOR"],
-            cnrNumber: caseDetails?.cnrNumber,
-            filingNumber: caseDetails?.filingNumber,
-            caseId: caseDetails?.id,
-            caseTitle: caseDetails?.caseTitle,
-            isCompleted: false,
-            stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
-            additionalDetails: {},
-            tenantId,
-          },
-        });
-        calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
-      }
-      if (isPendingReESign) setCaseResubmitSuccess(true);
-      setIsDisabled(false);
-      return;
-    });
-
-    setPrevSelected(selected);
-    if (isPendingESign) {
-      history.push(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculationResponse } });
-    }
   };
 
   const getFormClassName = useCallback(() => {
@@ -3508,7 +3428,6 @@ function EFilingCases({ path }) {
           {showSuccessToast && <Toast label={t(successMsg)} isDleteBtn={true} onClose={closeToast} />}
         </div>
       </div>
-      {openConfirmCourtModal && <ConfirmCourtModal setOpenConfirmCourtModal={setOpenConfirmCourtModal} t={t} onSubmitCase={onSubmitCase} />}
 
       {caseResubmitSuccess && (
         <CorrectionsSubmitModal

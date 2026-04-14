@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { ActionBar, Button, Toast, Loader, CloseSvg, LabelFieldPair, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
+import { ActionBar, Button, Toast, Loader, LabelFieldPair, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
@@ -17,6 +17,7 @@ import { useQuery } from "react-query";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { Urls } from "../../../../../submissions/src/hooks/services/Urls";
 import useESignOpenApi from "../../../../../submissions/src/hooks/submissions/useESignOpenApi";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 const MediationFormSignaturePage = () => {
   const { t } = useTranslation();
@@ -76,18 +77,7 @@ const MediationFormSignaturePage = () => {
   const pageModule = isUserLoggedIn ? (isCitizen ? "ci" : "en") : "ci";
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",

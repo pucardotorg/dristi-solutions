@@ -304,8 +304,8 @@ const TemplateOrConfigurationPage = () => {
         }
       }
     } catch (error) {
-      console.log("Error whle Updating....", error);
-      setShowErrorToast({ label: t("TEMPLATE_SAVE_FAILED"), error: true });
+      console.error("Error whle Updating....", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setIsLoading(false);
     }

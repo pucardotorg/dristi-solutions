@@ -28,6 +28,7 @@ import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
 import TemplateOrConfigurationPage from "./TemplateOrConfigurationPage";
 import CTCApplications from "./CTCApplications";
 import BulkIssueCTC from "./BulkIssueCTC";
+import { ORDER_TYPES } from "../../utils/constants";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -632,7 +633,7 @@ const MainHomeScreen = () => {
               let noticeCourierService = [];
               let summonsCourierService = [];
 
-              if (orderType === "SUMMONS") {
+              if (orderType === ORDER_TYPES.SUMMONS) {
                 summonsCourierService = partyDetails?.deliveryChannels;
               } else {
                 noticeCourierService = partyDetails?.deliveryChannels;
@@ -719,7 +720,33 @@ const MainHomeScreen = () => {
       if (updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party?.[index]) {
         const updatedParties = [...updatedOrderDetails.additionalDetails.formdata[formDataKey].party];
         const updatedParty = { ...updatedParties[index] };
-        updatedParty[type === "notice" ? "noticeCourierService" : "summonsCourierService"] = value;
+        updatedParty[type === ORDER_TYPES.NOTICE ? "noticeCourierService" : "summonsCourierService"] = value;
+        updatedParties[index] = updatedParty;
+        updatedOrderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
+      }
+
+      return updatedOrderDetails;
+    });
+  }, []);
+
+  const handleInitialCourierServiceChange = useCallback((data, index) => {
+    setCourierOrderDetails((prevOrderDetails) => {
+      const updatedOrderDetails = { ...prevOrderDetails };
+      const formDataKey = formDataKeyMap[updatedOrderDetails?.orderType];
+
+      if (updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party?.[index]) {
+        const updatedParties = [...updatedOrderDetails.additionalDetails.formdata[formDataKey].party];
+        const updatedParty = { ...updatedParties[index] };
+        const courierFieldMap = {
+          notice: "noticeCourierService",
+          summons: "summonsCourierService",
+        };
+
+        Object.keys(courierFieldMap).forEach((key) => {
+          if (data?.[key]) {
+            updatedParty[courierFieldMap[key]] = data[key];
+          }
+        });
         updatedParties[index] = updatedParty;
         updatedOrderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
       }
@@ -863,6 +890,7 @@ const MainHomeScreen = () => {
               setNoticeActive={setActive}
               orderType={orderType}
               handleAddAddress={handleAddAddress}
+              handleInitialCourierServiceChange={(data) => handleInitialCourierServiceChange(data, i)}
             />
           ),
           actionSaveOnSubmit: async () => {
@@ -872,7 +900,7 @@ const MainHomeScreen = () => {
             isTaskManagementLoading ||
             isCaseLoading ||
             isProcessLoader ||
-            (orderType === "SUMMONS" ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
+            (orderType === ORDER_TYPES.SUMMONS ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
         };
       }) || [];
     return courierServiceSteps;

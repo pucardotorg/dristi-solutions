@@ -1,6 +1,6 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
-import { Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
+import { Header, InboxSearchComposer, Loader, Menu, Toast, CheckBox } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
@@ -61,6 +61,9 @@ import WitnessDepositionDocModal from "./WitnessDepositionDocModal";
 import { convertTaskResponseToPayload } from "@egovernments/digit-ui-module-orders/src/utils";
 import ExaminationDrawer from "./ExaminationDrawer";
 import useSortedMDMSData from "../../../hooks/dristi/useSortedMDMSData";
+import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
+import { actionEnabledStatuses, applicationTypes, homeTabEnum, judgeReviewStages, userRolesEnum, viewEnabledStatuses } from "../../../Utils/constants";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -81,46 +84,6 @@ const delayCondonationTextStyle = {
   color: "#231F20",
 };
 
-const HearingWorkflowState = {
-  OPTOUT: "OPT_OUT",
-  INPROGRESS: "IN_PROGRESS",
-  COMPLETED: "COMPLETED",
-  ABATED: "ABATED",
-  SCHEDULED: "SCHEDULED",
-};
-
-const homeTabEnum = {
-  RESCHEDULE_APPLICATIONS: "HOME_RESCHEDULE_APPLICATIONS",
-  DELAY_CONDONATION: "HOME_DELAY_CONDONATION_APPLICATIONS",
-  OTHERS: "HOME_OTHER_APPLICATIONS",
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
-const actionEnabledStatuses = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION"];
-const viewEnabledStatuses = [...actionEnabledStatuses, "CASE_DISMISSED"];
-const judgeReviewStages = ["CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE", "PENDING_ADMISSION", "CASE_DISMISSED"];
-
 const AdmittedCaseV2 = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -138,7 +101,7 @@ const AdmittedCaseV2 = () => {
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === userRolesEnum.POST_MANAGER), [roles]);
   const activeTab = urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
@@ -198,8 +161,8 @@ const AdmittedCaseV2 = () => {
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
-  const isCitizen = userRoles?.includes("CITIZEN");
-  const isJudge = userRoles?.includes("JUDGE_ROLE");
+  const isCitizen = userRoles?.includes(userRolesEnum.CITIZEN);
+  const isJudge = userRoles?.includes(userRolesEnum.JUDGE_ROLE);
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
   const submissionService = useMemo(() => Digit.ComponentRegistryService.getComponent("submissionService") || {}, []);
@@ -210,9 +173,12 @@ const AdmittedCaseV2 = () => {
     () => Digit.ComponentRegistryService.getComponent("NoticeProcessModal") || <React.Fragment></React.Fragment>,
     []
   );
-  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const userType = useMemo(() => (userInfo?.type === userRolesEnum.CITIZEN ? "citizen" : "employee"), [userInfo?.type]);
   const isEmployee = useMemo(() => userType === "employee", [userType]);
-  const isAdvocateOrClerk = useMemo(() => userRoles?.includes("ADVOCATE_ROLE") || userRoles?.includes("ADVOCATE_CLERK_ROLE"), [userRoles]);
+  const isAdvocateOrClerk = useMemo(
+    () => userRoles?.includes(userRolesEnum.ADVOCATE_ROLE) || userRoles?.includes(userRolesEnum.ADVOCATE_CLERK_ROLE),
+    [userRoles]
+  );
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
   const [isShow, setIsShow] = useState(false);
@@ -230,7 +196,10 @@ const AdmittedCaseV2 = () => {
   const courtId = localStorage.getItem("courtId");
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && !isCitizen) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
-  const hasHearingPriorityView = useMemo(() => roles?.some((role) => role?.code === "HEARING_PRIORITY_VIEW") && isEmployee, [roles, isEmployee]);
+  const hasHearingPriorityView = useMemo(() => roles?.some((role) => role?.code === userRolesEnum.HEARING_PRIORITY_VIEW) && isEmployee, [
+    roles,
+    isEmployee,
+  ]);
 
   const { data: hearingTypeOptions } = useSortedMDMSData("Hearing", "HearingType", "type", t);
   const { data: orderTypeOptions } = useSortedMDMSData("Order", "OrderType", "type", t);
@@ -238,7 +207,7 @@ const AdmittedCaseV2 = () => {
   const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
   const [showPopupForClerkOrAdvocate, setShowPopupForClerkOrAdvocate] = useState({ show: false, message: "" });
 
-  const hasHearingEditAccess = useMemo(() => roles?.some((role) => role?.code === "HEARING_APPROVER"), [roles]);
+  const hasHearingEditAccess = useMemo(() => roles?.some((role) => role?.code === userRolesEnum.HEARING_APPROVER), [roles]);
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
     params: {},
@@ -258,7 +227,7 @@ const AdmittedCaseV2 = () => {
     }
   );
   const bailPendingTaskExpiryDays = useMemo(() => {
-    return bailPendingTaskExpiry?.find((data) => data?.enitiyName === "BAIL_BONDS_REVIEW")?.noofdaysforexpiry || 0;
+    return bailPendingTaskExpiry?.find((data) => data?.enitiyName === userRolesEnum.BAIL_BONDS_REVIEW)?.noofdaysforexpiry || 0;
   }, [bailPendingTaskExpiry]);
 
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
@@ -287,7 +256,7 @@ const AdmittedCaseV2 = () => {
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
 
-  const showTakeAction = useMemo(() => userRoles?.includes("ORDER_CREATOR") && !isCitizen && actionEnabledStatuses.includes(caseDetails?.status), [
+  const showTakeAction = useMemo(() => userRoles?.includes(userRolesEnum.ORDER_CREATOR) && !isCitizen && actionEnabledStatuses.includes(caseDetails?.status), [
     caseDetails?.status,
     userRoles,
     isCitizen,
@@ -583,7 +552,7 @@ const AdmittedCaseV2 = () => {
     () =>
       applicationData?.applicationList?.filter(
         (item) =>
-          item?.applicationType === "EXTENSION_SUBMISSION_DEADLINE" &&
+          item?.applicationType === applicationTypes.EXTENSION_SUBMISSION_DEADLINE &&
           item?.onBehalfOf?.includes(onBehalfOfuuid) &&
           ![
             SubmissionWorkflowState.COMPLETED,
@@ -599,7 +568,7 @@ const AdmittedCaseV2 = () => {
     () =>
       applicationData?.applicationList?.filter(
         (item) =>
-          item?.applicationType === "PRODUCTION_DOCUMENTS" &&
+          item?.applicationType === applicationTypes.PRODUCTION_DOCUMENTS &&
           item?.onBehalfOf?.includes(onBehalfOfuuid) &&
           ![SubmissionWorkflowState.DELETED, SubmissionWorkflowState.ABATED].includes(item?.status)
       ) || [],
@@ -610,7 +579,7 @@ const AdmittedCaseV2 = () => {
     () =>
       applicationData?.applicationList?.filter(
         (item) =>
-          item?.applicationType === "SUBMIT_BAIL_DOCUMENTS" &&
+          item?.applicationType === applicationTypes.SUBMIT_BAIL_DOCUMENTS &&
           item?.onBehalfOf?.includes(onBehalfOfuuid) &&
           ![SubmissionWorkflowState.DELETED, SubmissionWorkflowState.ABATED].includes(item?.status)
       ) || [],
@@ -622,7 +591,7 @@ const AdmittedCaseV2 = () => {
       Boolean(
         applicationData?.applicationList?.some(
           (item) =>
-            item?.applicationType === "DELAY_CONDONATION" &&
+            item?.applicationType === applicationTypes.DELAY_CONDONATION &&
             [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
         )
       )
@@ -633,7 +602,7 @@ const AdmittedCaseV2 = () => {
     () =>
       Boolean(
         applicationData?.applicationList?.some(
-          (item) => item?.applicationType === "DELAY_CONDONATION" && [SubmissionWorkflowState.COMPLETED].includes(item?.status)
+          (item) => item?.applicationType === applicationTypes.DELAY_CONDONATION && [SubmissionWorkflowState.COMPLETED].includes(item?.status)
         )
       ),
     [applicationData]
@@ -643,7 +612,7 @@ const AdmittedCaseV2 = () => {
     () =>
       Boolean(
         applicationData?.applicationList?.some(
-          (item) => item?.applicationType === "DELAY_CONDONATION" && [SubmissionWorkflowState.REJECTED].includes(item?.status)
+          (item) => item?.applicationType === applicationTypes.DELAY_CONDONATION && [SubmissionWorkflowState.REJECTED].includes(item?.status)
         )
       ),
     [applicationData]
@@ -667,7 +636,7 @@ const AdmittedCaseV2 = () => {
   const showMakeSubmission = useMemo(() => {
     return (
       isAdvocatePresent &&
-      userRoles?.includes("SUBMISSION_CREATOR") &&
+      userRoles?.includes(userRolesEnum.SUBMISSION_CREATOR) &&
       [
         CaseWorkflowState.PENDING_ADMISSION_HEARING,
         CaseWorkflowState.PENDING_NOTICE,
@@ -794,7 +763,7 @@ const AdmittedCaseV2 = () => {
       const allAllowedPartiesForApplicationsActions = getAllAssociatedPartyUuids(caseDetails, applicationOwnerUuid);
       const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentOwnerUuid);
 
-      if (documentStatus === "PENDING_E-SIGN" && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
+      if (documentStatus === SubmissionWorkflowState.PENDING_E_SIGN && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
         history.push(
           `/${window?.contextPath}/${
             isCitizen ? "citizen" : "employee"
@@ -1179,28 +1148,6 @@ const AdmittedCaseV2 = () => {
                 uiConfig: {
                   ...tabConfig.sections.search.uiConfig,
                   fields: [
-                    // {
-                    //   label: "OWNER",
-                    //   isMandatory: false,
-                    //   key: "owner",
-                    //   type: "dropdown",
-                    //   populators: {
-                    //     name: "owner",
-                    //     optionsKey: "name",
-                    //     options: Array.from(
-                    //       new Map(
-                    //         artifacts?.map((artifact) => [
-                    //           removeInvalidNameParts(artifact.owner), // Key for uniqueness
-                    //           {
-                    //             code: removeInvalidNameParts(artifact.owner),
-                    //             name: removeInvalidNameParts(artifact.owner),
-                    //             value: artifact.sourceID,
-                    //           },
-                    //         ])
-                    //       ).values()
-                    //     ),
-                    //   },
-                    // },
                     ...tabConfig.sections.search.uiConfig.fields,
                   ],
                 },
@@ -1380,7 +1327,7 @@ const AdmittedCaseV2 = () => {
     ];
     const courtId = localStorage.getItem("courtId");
     try {
-      const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
+      const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status ===  HearingWorkflowState.SCHEDULED);
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
@@ -1590,7 +1537,7 @@ const AdmittedCaseV2 = () => {
   }, [caseDetails?.status]);
 
   const isCaseAdmitted = useMemo(() => {
-    return caseDetails?.status === "CASE_ADMITTED";
+    return caseDetails?.status === CaseWorkflowState.CASE_ADMITTED;
   }, [caseDetails?.status]);
 
   const getEvidence = async () => {
@@ -2255,13 +2202,6 @@ const AdmittedCaseV2 = () => {
       setShowPopupForClerkOrAdvocate({ show: true, message: message });
     }
   }, [showPopupForClerkOrAdvocate, caseDetails, userUuid, storedAdvocate, t]);
-
-  useEffect(() => {
-    console.log("mount");
-    return () => {
-      console.log("unmount");
-    };
-  }, []);
 
   const handleDownloadClick = useCallback(() => {
     if (casePdfFileStoreId) {
@@ -3702,11 +3642,25 @@ const AdmittedCaseV2 = () => {
             )}
             {(caseDetails?.courtCaseNumber || caseDetails?.cmpNumber) && (
               <React.Fragment>
-                {" "}
-                <div className="sub-details-text">{t(caseDetails?.filingNumber)}</div> <hr className="vertical-line" />
+                <div className="sub-details-text">{t(caseDetails?.filingNumber)}</div>
+                <hr className="vertical-line" />
               </React.Fragment>
             )}
-            <div className="sub-details-text">{t(caseDetails?.substage)}</div>
+            <div className="sub-details-text">Stage: {t(caseDetails?.stage)}</div>
+            {(Array.isArray(caseDetails?.secondaryStage) ? caseDetails?.secondaryStage?.length > 0 : caseDetails?.secondaryStage) && (
+              <React.Fragment>
+                <hr className="vertical-line" />
+                <div className="sub-details-text">
+                  Secondary Stage:{" "}
+                  {(Array.isArray(caseDetails?.secondaryStage) ? caseDetails?.secondaryStage : [caseDetails?.secondaryStage]).map((stage, index) => (
+                    <React.Fragment key={`${stage}-${index}`}>
+                      {index > 0 ? ", " : ""}
+                      {t(stage)}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </React.Fragment>
+            )}
             {caseDetails?.outcome && (
               <React.Fragment>
                 <hr className="vertical-line" />
