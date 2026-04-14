@@ -818,11 +818,20 @@ public class PaymentService {
             VerificationDetails verificationDetails = verificationData.getVerificationDetails();
             
             // Authenticate and get secret map
-            Map<String, String> secretMap = authenticate();
-            log.debug("Authentication successful for double verification");
+            Map<String, String> secretMap;
+            String decryptedSek;
+            if(config.isMockEnabled() && verificationData.isMockEnabled()){
+                //mocking the treasury for authentication
+                log.info("Treasury is in mock mode, using mock authentication.");
+                secretMap = mockAuthentication();
+                decryptedSek = secretMap.get("sek");
+            } else {
+                secretMap = authenticate();
+                log.debug("Authentication successful for double verification");
 
-            // Decrypt the SEK using the appKey
-            String decryptedSek = encryptionUtil.decryptAES(secretMap.get("sek"), secretMap.get("appKey"));
+                // Decrypt the SEK using the appKey
+                decryptedSek = encryptionUtil.decryptAES(secretMap.get("sek"), secretMap.get("appKey"));
+            }
             
             // Build AuthSek for tracking
             AuthSek authSek = AuthSek.builder()
@@ -843,7 +852,13 @@ public class PaymentService {
             // Prepare the request body
             verificationDetails.setOfficeCode(config.getOfficeCode());
             verificationDetails.setServiceDeptCode(config.getServiceDeptCode());
-            String postBody = generatePostBody(decryptedSek, objectMapper.writeValueAsString(verificationDetails));
+            String postBody;
+            if (config.isMockEnabled() && verificationData.isMockEnabled()) {
+                log.info("Treasury is in mock mode, generating post body without encryption.");
+                postBody = objectMapper.writeValueAsString(verificationDetails);
+            } else {
+                postBody = generatePostBody(decryptedSek, objectMapper.writeValueAsString(verificationDetails));
+            }
 
             // Prepare headers
             Headers headers = new Headers();
@@ -893,8 +908,14 @@ public class PaymentService {
                     verificationData.getBillId(), responseEntity.getStatusCode());
             
             // Decrypt the response
-            String decryptedRek = encryptionUtil.decryptResponse(response.getRek(), decryptedSek);
-            String decryptedData = encryptionUtil.decryptResponse(response.getData(), decryptedRek);
+            String decryptedData;
+            if (config.isMockEnabled() && verificationData.isMockEnabled()) {
+                log.info("Treasury is in mock mode, using mock data.");
+                decryptedData = response.getData();
+            } else {
+                String decryptedRek = encryptionUtil.decryptResponse(response.getRek(), decryptedSek);
+                decryptedData = encryptionUtil.decryptResponse(response.getData(), decryptedRek);
+            }
             log.debug("Decrypted verification response data for billId: {}", verificationData.getBillId());
 
             // Parse transaction details from response
