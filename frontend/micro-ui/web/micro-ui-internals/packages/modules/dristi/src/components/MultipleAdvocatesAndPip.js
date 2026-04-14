@@ -717,7 +717,9 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         }}
       >
         <span style={{ fontSize: "16px", fontWeight: 700 }}>Complainant {advocateAndPipData?.boxComplainant?.index + 1 || 1}</span>
-        <span style={{ fontSize: "16px" }}>{advocateAndPipData?.boxComplainant?.firstName || ""}</span>
+        <span style={{ fontSize: "16px" }}>
+          {[advocateAndPipData?.boxComplainant?.firstName, advocateAndPipData?.boxComplainant?.lastName].filter(Boolean).join(" ") || ""}
+        </span>
       </div>
       <div
         style={{
