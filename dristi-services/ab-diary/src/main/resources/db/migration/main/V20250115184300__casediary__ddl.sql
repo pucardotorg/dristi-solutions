@@ -62,9 +62,9 @@ CREATE INDEX idx_dristi_diaryentries_casediary_id ON dristi_diaryentries(tenant_
 CREATE INDEX idx_dristi_diaryentries_entry_date ON dristi_diaryentries(tenant_id, entry_date);
 
 ALTER TABLE dristi_diaryentries
-ALTER COLUMN businessOfDay TYPE VARCHAR
+ALTER COLUMN businessOfDay TYPE VARCHAR;
 ALTER TABLE dristi_diaryentries
-ADD COLUMN case_id VARCHAR(64)
+ADD COLUMN case_id VARCHAR(64);
 
 ALTER TABLE dristi_casediary
 RENAME COLUMN judge_id TO court_id;
