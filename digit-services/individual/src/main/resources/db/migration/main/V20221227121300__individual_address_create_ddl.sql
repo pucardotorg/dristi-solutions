@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS ADDRESS
     street            character varying(256),
     localityCode      character varying(256),
     CONSTRAINT uk_address_id PRIMARY KEY (id)
-)
+);
 
 CREATE TABLE IF NOT EXISTS INDIVIDUAL
 (
