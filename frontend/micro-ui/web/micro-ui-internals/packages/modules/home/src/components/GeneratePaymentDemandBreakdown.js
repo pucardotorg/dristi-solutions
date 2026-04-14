@@ -116,7 +116,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
         criteria: {
           tenantId: tenantId,
           taskNumber: taskNumber,
-          courtId: courtId || "KLKM52",
+          courtId: courtId,
         },
       });
       const taskData = task?.list?.[0];

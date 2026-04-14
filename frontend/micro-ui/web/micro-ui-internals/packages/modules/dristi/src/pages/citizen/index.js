@@ -207,7 +207,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     history.push(`${path}/home/login`);
   }
   if (
-    !isRejected &&
+    !(isRejected || searchResult?.length === 0) &&
     individualId &&
     !isLitigantPartialRegistered &&
     whiteListedRoutes.includes(location.pathname) &&
