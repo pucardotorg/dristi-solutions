@@ -189,4 +189,48 @@ class PaymentServiceTest {
         when(authSekRepository.getAuthSek(treasuryParams.getAuthToken())).thenReturn(list);
        assertThrows(CustomException.class, () -> paymentService.decryptAndProcessTreasuryPayload(treasuryParams,requestInfo));
     }
+    @Test
+    void doubleVerifyPayment_success_mockEnabled() throws Exception {
+        VerificationData verificationData = new VerificationData();
+        verificationData.setBillId("bill-123");
+        verificationData.setBusinessService("pg-service");
+        verificationData.setMockEnabled(true);
+        VerificationDetails details = new VerificationDetails();
+        details.setDepartmentId("deptId-1");
+        verificationData.setVerificationDetails(details);
+
+        RequestInfo requestInfo = new RequestInfo();
+        User user = new User();
+        requestInfo.setUserInfo(user);
+
+        when(config.isMockEnabled()).thenReturn(true);
+        when(config.getDoubleVerificationUrl()).thenReturn("http://mock-url");
+        when(config.getSaveTreasuryPaymentData()).thenReturn("save-topic");
+
+        when(objectMapper.writeValueAsString(any())).thenReturn("mockBody");
+        
+        String mockResponseRaw = "{\"RETURN_PARAMS\": {\"status\": true, \"data\": \"mockData\"}}";
+        ResponseEntity<String> responseEntity = ResponseEntity.ok(mockResponseRaw);
+
+        when(treasuryUtil.callService(anyString(), anyString(), eq("http://mock-url"), eq(String.class), any()))
+                .thenReturn(responseEntity);
+        
+        com.fasterxml.jackson.databind.JsonNode rootNode = new ObjectMapper().readTree(mockResponseRaw);
+        when(objectMapper.readTree(mockResponseRaw)).thenReturn(rootNode);
+        
+        TransactionDetails transactionDetailsMock = new TransactionDetails();
+        transactionDetailsMock.setGrn("grn-123");
+        transactionDetailsMock.setStatus("Y");
+        transactionDetailsMock.setAmount("100.0");
+        when(objectMapper.readValue("mockData", TransactionDetails.class)).thenReturn(transactionDetailsMock);
+
+        TreasuryPaymentData data = paymentService.doubleVerifyPayment(verificationData, requestInfo);
+
+        assertNotNull(data);
+        assertEquals("grn-123", data.getGrn());
+        assertEquals(BigDecimal.valueOf(100.0), data.getAmount());
+
+        verify(producer).push(anyString(), any(TreasuryPaymentRequest.class));
+        verify(authSekRepository).updateAuthSekStatus(anyString(), eq("SUCCESS"), eq("RECONCILIATION"), anyLong());
+    }
 }
