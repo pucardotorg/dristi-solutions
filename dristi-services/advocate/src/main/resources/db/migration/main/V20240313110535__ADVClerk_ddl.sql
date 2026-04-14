@@ -53,7 +53,7 @@ CREATE INDEX IF NOT EXISTS idx_dristi_advocate_clerk_state_regn_number ON dristi
 CREATE INDEX IF NOT EXISTS idx_dristi_document_advocate_id ON dristi_document(advocateId);
 CREATE INDEX IF NOT EXISTS idx_dristi_document_clerk_id ON dristi_document(clerk_id);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dristi_advocate_tenant_id ON dristi_advocate(tenantId);
+CREATE INDEX IF NOT EXISTS idx_dristi_advocate_tenant_id ON dristi_advocate(tenantId);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dristi_advocate_clerk_tenant_id ON dristi_advocate_clerk(tenantId);
+CREATE INDEX IF NOT EXISTS idx_dristi_advocate_clerk_tenant_id ON dristi_advocate_clerk(tenantId);
 
