@@ -16,7 +16,6 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import Accordion from "../../../components/Accordion";
-import ConfirmCourtModal from "../../../components/ConfirmCourtModal";
 import ErrorsAccordion from "../../../components/ErrorsAccordion";
 import FlagBox from "../../../components/FlagBox";
 import Modal from "../../../components/Modal";
@@ -202,7 +201,6 @@ function EFilingCases({ path }) {
   const [parentOpen, setParentOpen] = useState(sideMenuConfig.findIndex((parent) => parent.children.some((child) => child.key === selected)));
 
   const [openConfigurationModal, setOpenConfigurationModal] = useState(false);
-  const [openConfirmCourtModal, setOpenConfirmCourtModal] = useState(false);
   const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState({ show: false, index: 0 });
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
@@ -2877,74 +2875,6 @@ function EFilingCases({ path }) {
     });
     return calculationResponse;
   };
-  const onSubmitCase = async (data) => {
-    setOpenConfirmCourtModal(false);
-    setIsDisabled(true);
-    let calculationResponse = {};
-    const assignees = getAllAssignees(caseDetails);
-    const poaHolders = (caseDetails?.poaHolders || [])?.map((poaHolder) => ({
-      uuid: poaHolder?.additionalDetails?.uuid,
-    }));
-
-    const fileStoreId = sessionStorage.getItem("fileStoreId");
-    await DRISTIService.caseUpdateService(
-      {
-        cases: {
-          ...caseDetails,
-          ...(fileStoreId && {
-            additionalDetails: {
-              ...caseDetails?.additionalDetails,
-              signedCaseDocument: fileStoreId,
-            },
-          }),
-          caseTitle:
-            `${getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata || {}, t)} vs ${getRespondentName(
-              caseDetails?.additionalDetails?.respondentDetails?.formdata || {},
-              t
-            )}` || caseDetails?.caseTitle,
-          courtId: "KLKM52" || data?.court?.code,
-          workflow: {
-            ...caseDetails?.workflow,
-            action: data?.action || "E-SIGN",
-            assignes: [],
-          },
-        },
-        tenantId,
-      },
-      tenantId
-    ).then(async (res) => {
-      await closePendingTask({ status: "PENDING_PAYMENT" });
-      if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
-        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-          pendingTask: {
-            name: "Pending Payment",
-            entityType: "case-default",
-            referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-            status: "PENDING_PAYMENT",
-            assignedTo: [...assignees?.map((uuid) => ({ uuid })), ...poaHolders],
-            assignedRole: ["CASE_CREATOR"],
-            cnrNumber: caseDetails?.cnrNumber,
-            filingNumber: caseDetails?.filingNumber,
-            caseId: caseDetails?.id,
-            caseTitle: caseDetails?.caseTitle,
-            isCompleted: false,
-            stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
-            additionalDetails: {},
-            tenantId,
-          },
-        });
-        calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
-      }
-      if (isPendingReESign) setCaseResubmitSuccess(true);
-      setIsDisabled(false);
-      return;
-    });
-
-    setPrevSelected(selected);
-    if (isPendingESign) {
-      history.push(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculationResponse } });
-    }
-  };
 
   const getFormClassName = useCallback(() => {
     if (formdata && formdata?.[0]?.data?.advocateBarRegNumberWithName?.[0]?.isDisable) {
@@ -3501,7 +3431,6 @@ function EFilingCases({ path }) {
           {showSuccessToast && <Toast label={t(successMsg)} isDleteBtn={true} onClose={closeToast} />}
         </div>
       </div>
-      {openConfirmCourtModal && <ConfirmCourtModal setOpenConfirmCourtModal={setOpenConfirmCourtModal} t={t} onSubmitCase={onSubmitCase} />}
 
       {caseResubmitSuccess && (
         <CorrectionsSubmitModal
