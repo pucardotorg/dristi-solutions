@@ -329,9 +329,6 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
             },
             { shouldValidate: true }
           );
-          if (config?.screen === "join-case") {
-            ["firstName", "lastName", "middleName"].forEach((key) => onSelect(key, data[key], { shouldValidate: true }));
-          }
         } else {
           onSelect(
             config?.key,
