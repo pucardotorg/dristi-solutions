@@ -86,9 +86,9 @@ ADD COLUMN cmpNumber varchar(64) NULL;
 ALTER TABLE dristi_application
 ADD COLUMN applicationCMPNumber varchar(64) NULL;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dristi_application_tenant_id ON dristi_application(tenantId);
+CREATE INDEX IF NOT EXISTS idx_dristi_application_tenant_id ON dristi_application(tenantId);
 ALTER TABLE dristi_application_document
-ADD COLUMN documentOrder int8
+ADD COLUMN documentOrder int8;
 
 ALTER TABLE dristi_application
 ADD COLUMN officeAdvocateUserUuid VARCHAR(64);
