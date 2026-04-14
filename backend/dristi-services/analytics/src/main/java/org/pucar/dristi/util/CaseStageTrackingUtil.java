@@ -120,6 +120,67 @@ public class CaseStageTrackingUtil {
     }
 
     /**
+     * Atomically ends the specified stage(s) and adds a new stage in a single read-modify-write.
+     * This avoids stale-read overwrites when updateEndTimeForStage and addStageEntry are called separately.
+     *
+     * @param filingNumber  case filing number
+     * @param caseId        case ID (used only if no tracking doc exists)
+     * @param tenantId      tenant ID
+     * @param endStageName  comma-separated stage name(s) to close (nullable)
+     * @param newStageName  new stage to add (nullable)
+     */
+    public void transitionStage(String filingNumber, String caseId, String tenantId, String endStageName, String newStageName) {
+        CaseStageTracking tracking = getStageTrackingByFilingNumber(filingNumber);
+        long now = System.currentTimeMillis();
+
+        if (tracking == null) {
+            tracking = CaseStageTracking.builder()
+                    .filingNumber(filingNumber)
+                    .caseId(caseId)
+                    .tenantId(tenantId)
+                    .stages(new ArrayList<>())
+                    .build();
+        }
+
+        // End the specified stage(s)
+        if (endStageName != null && !endStageName.isEmpty()) {
+            String[] stageNames = endStageName.contains(",") ? endStageName.split(",") : new String[]{endStageName};
+            boolean ended = false;
+            for (String stageName : stageNames) {
+                String trimmed = stageName.trim();
+                for (CaseStageTrackingEntry entry : tracking.getStages()) {
+                    if (entry.getStage() != null && entry.getStage().equalsIgnoreCase(trimmed) && entry.getEndTime() == null) {
+                        entry.setEndTime(now);
+                        log.info("Setting endTime={} for stage '{}' in filingNumber: {}", now, trimmed, filingNumber);
+                        ended = true;
+                        break;
+                    }
+                }
+                if (ended) break;
+            }
+        }
+
+        // Add the new stage if not already active
+        if (newStageName != null && !newStageName.isEmpty()) {
+            boolean alreadyActive = tracking.getStages().stream()
+                    .anyMatch(e -> e.getStage() != null && e.getStage().equalsIgnoreCase(newStageName) && e.getEndTime() == null);
+            if (!alreadyActive) {
+                CaseStageTrackingEntry entry = CaseStageTrackingEntry.builder()
+                        .stage(newStageName)
+                        .startTime(now)
+                        .endTime(null)
+                        .build();
+                tracking.getStages().add(entry);
+                log.info("Adding stage entry '{}' with startTime={} for filingNumber: {}", newStageName, now, filingNumber);
+            } else {
+                log.info("Stage '{}' is already active for filingNumber: {}, skipping duplicate entry", newStageName, filingNumber);
+            }
+        }
+
+        upsertStageTracking(tracking);
+    }
+
+    /**
      * Finds the stage matching endStageName in the tracking document and sets its endTime to now.
      *
      * @param filingNumber case filing number

@@ -274,18 +274,8 @@ public class CaseOverallStatusUtil {
 		try {
 			String newStage = statusType.getStage();
 			String endStage = statusType.getEndStage();
-
-			// If endStage is specified, close out that stage's endTime
-			if (endStage != null && !endStage.isEmpty()) {
-				log.info("Updating endTime for stage '{}' in tracking index for filingNumber: {}", endStage, filingNumber);
-				caseStageTrackingUtil.updateEndTimeForStage(filingNumber, endStage);
-			}
-
-			// Add the new stage entry with startTime=now
-			if (newStage != null && !newStage.isEmpty()) {
-				log.info("Adding stage '{}' to tracking index for filingNumber: {}", newStage, filingNumber);
-				caseStageTrackingUtil.addStageEntry(filingNumber, null, tenantId, newStage);
-			}
+			log.info("Stage transition for filingNumber: {}, endStage='{}', newStage='{}'", filingNumber, endStage, newStage);
+			caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, endStage, newStage);
 		} catch (Exception e) {
 			log.error("Error tracking stage transition for filingNumber: {}", filingNumber, e);
 		}
@@ -433,8 +423,7 @@ public class CaseOverallStatusUtil {
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(
 						filingNumber, tenantId, STAGE_BAIL_AND_RECORDING_OF_PLEA, "");
 				publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
-				caseStageTrackingUtil.updateEndTimeForStage(filingNumber, STAGE_APPEARANCE);
-				caseStageTrackingUtil.addStageEntry(filingNumber, caseId, tenantId,STAGE_BAIL_AND_RECORDING_OF_PLEA);
+				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_APPEARANCE, STAGE_BAIL_AND_RECORDING_OF_PLEA);
 			} else {
 				log.info("Case {} stage is '{}'. No Appearance->Bail transition for join-case event.",
 						filingNumber, currentStage);
@@ -555,8 +544,7 @@ public class CaseOverallStatusUtil {
 						caseOverallStatus.getFilingNumber());
 				caseOverallStatus.setStage(STAGE_BAIL_AND_RECORDING_OF_PLEA);
 				String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
-				caseStageTrackingUtil.updateEndTimeForStage(caseOverallStatus.getFilingNumber(), STAGE_APPEARANCE);
-				caseStageTrackingUtil.addStageEntry(caseOverallStatus.getFilingNumber(), caseId, caseOverallStatus.getTenantId(), STAGE_BAIL_AND_RECORDING_OF_PLEA);
+				caseStageTrackingUtil.transitionStage(caseOverallStatus.getFilingNumber(), caseId, caseOverallStatus.getTenantId(), STAGE_APPEARANCE, STAGE_BAIL_AND_RECORDING_OF_PLEA);
 			}
 		} catch (Exception e) {
 			log.error("Error in handleAppearanceConditional for filingNumber: {}", caseOverallStatus.getFilingNumber(), e);
@@ -708,8 +696,7 @@ public class CaseOverallStatusUtil {
 			if(!isAccusedJoinedCase && STAGE_COGNIZANCE.equalsIgnoreCase(stage)){
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, STAGE_APPEARANCE, "");
 				publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
-				caseStageTrackingUtil.updateEndTimeForStage(caseOverallStatus.getFilingNumber(), STAGE_COGNIZANCE);
-				caseStageTrackingUtil.addStageEntry(filingNumber, caseId, tenantId,STAGE_APPEARANCE);
+				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_COGNIZANCE, STAGE_APPEARANCE);
 				return;
 			}
 		}
