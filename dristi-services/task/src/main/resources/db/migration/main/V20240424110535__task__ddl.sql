@@ -86,7 +86,7 @@ ADD COLUMN state varchar (64);
 ALTER TABLE dristi_task
 ADD COLUMN duedate varchar(64);
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dristi_task_tenant_id ON dristi_task(tenantId);
+CREATE INDEX IF NOT EXISTS idx_dristi_task_tenant_id ON dristi_task(tenantId);
 
 
 ALTER TABLE dristi_task
