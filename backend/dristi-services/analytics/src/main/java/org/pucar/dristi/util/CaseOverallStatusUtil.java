@@ -8,6 +8,8 @@ import com.jayway.jsonpath.PathNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
 import org.egov.common.models.individual.Individual;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -402,9 +404,20 @@ public class CaseOverallStatusUtil {
 			if (requestInfoObj == null) {
 				requestInfoObj = joinCaseJson.get("RequestInfo");
 			}
-			request.put("RequestInfo", requestInfoObj != null
-					? new JSONObject(mapper.writeValueAsString(requestInfoObj))
-					: new JSONObject());
+			RequestInfo requestInfo;
+			if (requestInfoObj != null) {
+				requestInfo = mapper.readValue(mapper.writeValueAsString(requestInfoObj), RequestInfo.class);
+			} else {
+				requestInfo = new RequestInfo();
+			}
+			if (requestInfo.getUserInfo() == null) {
+				requestInfo.setUserInfo(new User());
+			}
+			requestInfo.getUserInfo().setType("SYSTEM");
+			Role role = Role.builder().code("SYSTEM").name("SYSTEM").tenantId(tenantId).build();
+			requestInfo.getUserInfo().setRoles(List.of(role));
+			requestInfo.getUserInfo().setTenantId(tenantId);
+			request.put("RequestInfo", new JSONObject(mapper.writeValueAsString(requestInfo)));
 
 			Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
 			if (caseObject == null) {

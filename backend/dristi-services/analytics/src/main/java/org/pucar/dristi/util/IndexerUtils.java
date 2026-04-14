@@ -312,7 +312,7 @@ public class IndexerUtils {
 
             String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
             String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
-            caseSubStage = caseDetails.get(0).path("substage").textValue();
+            caseSubStage = caseDetails.get(0).path("stage").textValue();
 
             if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
                 caseNumber = courtCaseNumber;
