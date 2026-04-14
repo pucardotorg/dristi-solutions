@@ -31,4 +31,16 @@ public class AuthSekRepository {
         log.debug("Final query: {}", query);
         return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
     }
+
+    public List<AuthSek> getPendingAuthSeks(long thresholdTime) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getPendingAuthSeksQuery(thresholdTime, preparedStmtList);
+        log.debug("Final pending query: {}", query);
+        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
+    }
+
+    public void updateAuthSekStatus(String authToken, String paymentStatus, String completionSource, Long verificationTimestamp) {
+        String updateQuery = "UPDATE auth_sek_session_data SET payment_status = ?, completion_source = ?, verification_timestamp = ? WHERE auth_token = ?";
+        jdbcTemplate.update(updateQuery, paymentStatus, completionSource, verificationTimestamp, authToken);
+    }
 }
