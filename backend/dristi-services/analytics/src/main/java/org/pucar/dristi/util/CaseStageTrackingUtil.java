@@ -307,24 +307,33 @@ public class CaseStageTrackingUtil {
     }
 
     /**
-     * Enriches the caseId on an existing tracking document if it is currently null.
+     * Enriches the caseId and courtId on an existing tracking document if they are currently null.
+     * Each field is enriched independently so one being already set does not block the other.
      *
      * @param filingNumber case filing number
      * @param caseId       the case ID to set
+     * @param courtId      the court ID to set
      */
-    public void enrichCaseId(String filingNumber, String caseId) {
-        if (caseId == null || caseId.isEmpty()) {
-            return;
-        }
+    public void enrichCaseId(String filingNumber, String caseId, String courtId) {
         try {
             CaseStageTracking tracking = getStageTrackingByFilingNumber(filingNumber);
-            if (tracking != null && (tracking.getCaseId() == null || tracking.getCaseId().isEmpty())) {
+            if (tracking == null) return;
+
+            boolean needsUpdate = false;
+            if (caseId != null && !caseId.isEmpty() && (tracking.getCaseId() == null || tracking.getCaseId().isEmpty())) {
                 tracking.setCaseId(caseId);
+                needsUpdate = true;
+            }
+            if (courtId != null && !courtId.isEmpty() && (tracking.getCourtId() == null || tracking.getCourtId().isEmpty())) {
+                tracking.setCourtId(courtId);
+                needsUpdate = true;
+            }
+            if (needsUpdate) {
                 upsertStageTracking(tracking);
-                log.info("Enriched caseId '{}' for stage tracking filingNumber: {}", caseId, filingNumber);
+                log.info("Enriched caseId='{}', courtId='{}' for stage tracking filingNumber: {}", tracking.getCaseId(), tracking.getCourtId(), filingNumber);
             }
         } catch (Exception e) {
-            log.error("Error enriching caseId for filingNumber: {}", filingNumber, e);
+            log.error("Error enriching caseId/courtId for filingNumber: {}", filingNumber, e);
         }
     }
 

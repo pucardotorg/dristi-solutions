@@ -454,10 +454,11 @@ public class CaseOverallStatusUtil {
 				RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
                 String filingNumber = caseOverallStatus.getFilingNumber();
 
-				// Enrich caseId in stage tracking index if available
+				// Enrich caseId and courtId in stage tracking index if available
 				try {
 					String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
-					caseStageTrackingUtil.enrichCaseId(filingNumber, caseId);
+					String courtId = JsonPath.read(caseObject.toString(), CASE_COURTID_PATH);
+					caseStageTrackingUtil.enrichCaseId(filingNumber, caseId,courtId);
 				} catch (Exception e) {
 					log.debug("Could not enrich caseId in stage tracking for filingNumber: {}", filingNumber);
 				}
