@@ -54,7 +54,7 @@ ADD COLUMN courtCaseNumber varchar(64) NULL;
 ALTER TABLE dristi_hearing
 ADD COLUMN cmpNumber varchar(64) NULL;
 
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dristi_hearing_tenant_id ON dristi_hearing (tenantId);
+CREATE INDEX IF NOT EXISTS idx_dristi_hearing_tenant_id ON dristi_hearing (tenantId);
 
 ALTER TABLE dristi_hearing_document
 ADD COLUMN  isActive bool DEFAULT TRUE;
