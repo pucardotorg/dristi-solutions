@@ -17,6 +17,7 @@ import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
+import java.util.Arrays;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.CaseOutcome;
 import org.pucar.dristi.web.models.CaseOutcomeType;
@@ -346,17 +347,23 @@ public class CaseOverallStatusUtil {
 	private org.pucar.dristi.web.models.CaseOverallStatus determineOrderStage(String filingNumber, String tenantId, String orderType, String status, String hearingType, TreeMap<Integer, CaseOverallStatus> priorityMap) {
 		for (CaseOverallStatusType statusType : caseOverallStatusTypeList) {
 			boolean isMatch = false;
-			
+
 			if (statusType.getEntityType() != null) {
-				if (ORDER.equalsIgnoreCase(statusType.getEntityType()) && statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status)) {
-					isMatch = true;
+				if (ORDER.equalsIgnoreCase(statusType.getEntityType()) && statusType.getState().equalsIgnoreCase(status)) {
+					if("Post-Disposal".equalsIgnoreCase(statusType.getStage())){
+						String[] orderTypeList = statusType.getTypeIdentifier().split(",");
+						if(Arrays.asList(orderTypeList).contains(orderType))
+							isMatch = true;
+					}else if(statusType.getTypeIdentifier().equalsIgnoreCase(orderType)){
+						isMatch = true;
+					}
 				} else if (HEARING.equalsIgnoreCase(statusType.getEntityType()) && statusType.getTypeIdentifier().equalsIgnoreCase(hearingType) && statusType.getState().equalsIgnoreCase(status)) {
 					isMatch = true;
 				}
 			} else if (statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status)) {
 				isMatch = true;
 			}
-			
+
 			if (isMatch) {
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), "");
 				caseOverallStatus.setProcessHandler(statusType.getProcessHandler());
@@ -400,14 +407,13 @@ public class CaseOverallStatusUtil {
 				return;
 			}
 			String currentStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
-			String currentSubStage = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_PATH);
 			String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
-			log.info("Join-case stage update: filingNumber={}, currentStage={}, currentSubStage={}", filingNumber, currentStage, currentSubStage);
+			log.info("Join-case stage update: filingNumber={}, currentStage={}", filingNumber, currentStage);
 
 			if (STAGE_APPEARANCE.equalsIgnoreCase(currentStage) && hasAccusedJoinedCase(caseObject)) {
 				log.info("Case {} is in Appearance stage and accused has joined, transitioning to Bail & Recording of Plea", filingNumber);
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(
-						filingNumber, tenantId, STAGE_BAIL_AND_RECORDING_OF_PLEA, currentSubStage);
+						filingNumber, tenantId, STAGE_BAIL_AND_RECORDING_OF_PLEA, "");
 				publishToCaseOverallStatus(caseOverallStatus, request);
 				caseStageTrackingUtil.updateEndTimeForStage(filingNumber, STAGE_APPEARANCE);
 				caseStageTrackingUtil.addStageEntry(filingNumber, caseId, tenantId,STAGE_BAIL_AND_RECORDING_OF_PLEA);
@@ -455,9 +461,9 @@ public class CaseOverallStatusUtil {
 				String caseSubStage = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_PATH);
 				String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);
 				String caseSubStageBackup = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_BACKUP_PATH);
-				
+
 				handleProcessBackup(caseOverallStatus, caseStage, caseSubStage, caseStageBackup, caseSubStageBackup);
-				
+
 				if (!handleLprCase(caseOverallStatus, isLprCase, caseStage, filingNumber)) {
 					return;
 				}
@@ -489,7 +495,7 @@ public class CaseOverallStatusUtil {
 		if (caseOverallStatus.getProcessHandler() == null) {
 			caseOverallStatus.setProcessHandler(ProcessHandler.RESET_BACKUP);
 		}
-		
+
 		if (caseOverallStatus.getProcessHandler() == UPDATE_BACKUP) {
 			if (caseOverallStatus.getStageBackup() == null) {
 				caseOverallStatus.setStageBackup(currentCaseStage);
@@ -698,7 +704,7 @@ public class CaseOverallStatusUtil {
 				Map.Entry<Integer, CaseOverallStatus> secondEntry = priorityMap.higherEntry(priorityMap.firstKey());
 				if (secondEntry != null) {
 					CaseOverallStatus backupCaseOverallStatus = secondEntry.getValue();
-					
+
 					if (finalCaseOverallStatus.getProcessHandler() == ProcessHandler.RESTORE_BACKUP) {
 						// For RESTORE_BACKUP, use second priority values directly for stage/substage
 						finalCaseOverallStatus.setStage(backupCaseOverallStatus.getStage());

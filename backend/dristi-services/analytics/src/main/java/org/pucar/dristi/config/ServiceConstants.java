@@ -339,8 +339,8 @@ public class ServiceConstants {
     public static final String HEARING_PURPOSE_MEDIATION = "MEDIATION";
 
     // Status constants for application end triggers
-    public static final String APPLICATION_STATUS_ACCEPTED = "accepted";
-    public static final String APPLICATION_STATUS_REJECTED = "rejected";
+    public static final String APPLICATION_STATUS_ACCEPTED = "COMPLETED";
+    public static final String APPLICATION_STATUS_REJECTED = "REJECTED";
 
     // Status for order published
     public static final String ORDER_STATUS_PUBLISHED = "published";
