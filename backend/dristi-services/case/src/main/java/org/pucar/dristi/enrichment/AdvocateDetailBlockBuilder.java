@@ -209,7 +209,7 @@ public class AdvocateDetailBlockBuilder {
 
                         UiFlags uiFlags = UiFlags.builder()
                                 .showAffidavit(!pipAffidavit.isEmpty())
-                                .showVakalatNamaUpload(!vakalatnama.isEmpty())
+                                .showVakalatNamaUpload(pipAffidavit.isEmpty())
                                 .build();
 
 
