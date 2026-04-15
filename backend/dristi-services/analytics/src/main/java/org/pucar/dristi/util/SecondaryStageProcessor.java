@@ -312,7 +312,7 @@ public class SecondaryStageProcessor {
             List<String> activeStages = caseStageTrackingUtil.getActiveSecondaryStageNames(filingNumber);
             if (activeStages.contains(SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT)) {
                 log.info("Accused joined case, ending secondary stage '{}' for filingNumber: {}", SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT, filingNumber);
-                publishSubstageUpdate(filingNumber, tenantId, request,null,caseObject);
+                publishSubstageUpdate(filingNumber, tenantId, request,SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT,caseObject);
                 caseStageTrackingUtil.endSecondaryStage(filingNumber);
             }
         } catch (Exception e) {
@@ -348,7 +348,7 @@ public class SecondaryStageProcessor {
             if(!activeStages.contains(secondaryStage) && secondaryStage!=null){
                 activeStages.add(secondaryStage);
             }
-            if (secondaryStage==null)
+            if (secondaryStage==null || SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT.equalsIgnoreCase(secondaryStage))
                 activeStages.clear();
 
             RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
@@ -362,10 +362,13 @@ public class SecondaryStageProcessor {
             String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);
             String caseSubStageBackup = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_BACKUP_PATH);
 
-            if(SECONDARY_STAGE_DELAY_CONDONATION.equalsIgnoreCase(secondaryStage)){
+            if(STAGE_REGISTRATION.equalsIgnoreCase(caseStage) && SECONDARY_STAGE_DELAY_CONDONATION.equalsIgnoreCase(secondaryStage)){
                 caseOverallStatus.setStage(STAGE_COGNIZANCE);
             }else {
                 caseOverallStatus.setStage(caseStage);
+            }
+            if(STAGE_APPEARANCE.equalsIgnoreCase(caseStage) && SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT.equalsIgnoreCase(secondaryStage)){
+                caseOverallStatus.setStage(STAGE_BAIL_AND_RECORDING_OF_PLEA);
             }
             caseOverallStatus.setStageBackup(caseStageBackup);
             caseOverallStatus.setSubstageBackup(caseSubStageBackup);
