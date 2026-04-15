@@ -74,10 +74,10 @@ function getAction(selectedDelievery, orderType) {
   }
 
   if (key === "DELIVERED") {
-    return orderType === ORDER_TYPES.WARRANT || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "DELIVERED" : "SERVED";
+    return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "DELIVERED" : "SERVED";
   }
 
-  return orderType === ORDER_TYPES.WARRANT || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "NOT_DELIVERED" : "NOT_SERVED";
+  return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "NOT_DELIVERED" : "NOT_SERVED";
 }
 
 // Tab configuration mapping - maps tab labels to their storage keys
@@ -563,7 +563,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           if (
             res?.task &&
             selectedDelievery?.key === "NOT_DELIVERED" &&
-            !(orderType === ORDER_TYPES.WARRANT || orderType === "PROCLAMATION" || orderType === "ATTACHMENT")
+            !(orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT)
           ) {
             let action = "";
             if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
