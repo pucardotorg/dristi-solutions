@@ -11,12 +11,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
-// FIX: Replacement for JUnit 4 Assertions
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class) // Replacement for @RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class UserRequestErrorAdapterTest {
 
     @Mock
@@ -24,7 +23,7 @@ public class UserRequestErrorAdapterTest {
 
     private UserRequestErrorAdapter errorAdapter;
 
-    @BeforeEach // Replacement for @Before
+    @BeforeEach
     public void before() {
         errorAdapter = new UserRequestErrorAdapter();
     }
@@ -107,4 +106,5 @@ public class UserRequestErrorAdapterTest {
         final List<ErrorField> errorFields = errorResponse.getError().getFields();
         assertEquals(0, errorFields.size());
     }
+
 }

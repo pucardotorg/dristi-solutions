@@ -1,6 +1,7 @@
 import React from "react";
 import { CardText, Modal } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
+import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const getStyles = () => ({
   modal: {
@@ -74,11 +75,6 @@ const getStyles = () => ({
     },
   },
 });
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 const Close = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black">
     <path d="M0 0h24v24H0V0z" fill="none" />

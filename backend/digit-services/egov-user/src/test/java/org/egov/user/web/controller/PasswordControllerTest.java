@@ -1,7 +1,6 @@
 package org.egov.user.web.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -9,13 +8,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.utils.MultiStateInstanceUtil;
+import org.egov.encryption.EncryptionService;
 import org.egov.encryption.masking.MaskingService;
 import org.egov.user.Resources;
 import org.egov.user.TestConfiguration;
 import org.egov.user.domain.model.NonLoggedInUserUpdatePasswordRequest;
 import org.egov.user.domain.service.UserService;
-import org.egov.user.security.CustomAuthenticationKeyGenerator;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +27,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-@Disabled("Requires MDMS service configuration")
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(PasswordController.class)
-@Import(TestConfiguration.class)
+@Import({TestConfiguration.class, org.egov.user.security.SecurityConfig.class})
 public class PasswordControllerTest {
 
     @Autowired
@@ -48,13 +45,13 @@ public class PasswordControllerTest {
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     @MockBean
-    private CustomAuthenticationKeyGenerator authenticationKeyGenerator;
-
-    @MockBean
     private MultiStateInstanceUtil multiStateInstanceUtil;
 
     @MockBean
     private MaskingService maskingService;
+
+    @MockBean
+    private EncryptionService encryptionService;
 
     private Resources resources = new Resources();
 
@@ -65,8 +62,17 @@ public class PasswordControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(resources.getFileContents("loggedInUserUpdatePasswordRequest.json")))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(resources.getFileContents("updatePasswordResponse.json")));
+
+//		final LoggedInUserUpdatePasswordRequest expectedRequest = LoggedInUserUpdatePasswordRequest.builder()
+//				.existingPassword("oldPassword")
+//				.newPassword("newPassword")
+//				.userName("greenfish424")
+//				.tenantId("foo")
+//				.build();
+//
+//		verify(userService).updatePasswordForLoggedInUser(expectedRequest);
     }
 
     @Test
@@ -76,7 +82,7 @@ public class PasswordControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(resources.getFileContents("nonLoggedInUserUpdatePasswordRequest.json")))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(resources.getFileContents("updatePasswordResponse.json")));
 
         final NonLoggedInUserUpdatePasswordRequest expectedRequest = NonLoggedInUserUpdatePasswordRequest.builder()
@@ -88,4 +94,5 @@ public class PasswordControllerTest {
 
         verify(userService).updatePasswordForNonLoggedInUser(eq(expectedRequest), any(RequestInfo.class));
     }
+
 }

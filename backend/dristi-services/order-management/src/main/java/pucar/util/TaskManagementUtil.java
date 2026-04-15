@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ import pucar.config.Configuration;
 import pucar.kafka.Producer;
 import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.Order;
+import pucar.web.models.WorkflowObject;
 import pucar.web.models.taskManagement.*;
 import pucar.web.models.taskManagement.TaskSearchRequest;
 
@@ -177,12 +179,12 @@ public class TaskManagementUtil {
         String uniqueId = null;
         //witness details
         if(partyDetail.getWitnessDetails() != null){
-            Object witness = partyDetail.getWitnessDetails();
-            uniqueId = jsonUtil.getNestedValue(witness, List.of("uniqueId"), String.class);
+            WitnessDetails witness = partyDetail.getWitnessDetails();
+            uniqueId = witness.getUniqueId();
         }
         if (partyDetail.getRespondentDetails() != null) {
-            Object respondent = partyDetail.getRespondentDetails();
-            uniqueId = jsonUtil.getNestedValue(respondent, List.of("uniqueId"), String.class);
+            RespondentDetails respondent = partyDetail.getRespondentDetails();
+            uniqueId = respondent.getUniqueId();
         }
 
         return uniqueId;
@@ -218,7 +220,7 @@ public class TaskManagementUtil {
         try {
             String orderType = order.getOrderType();
             List<Object> parties = null;
-            
+
             // Extract parties based on order type
             if (NOTICE.equalsIgnoreCase(orderType)) {
                 parties = jsonUtil.getNestedValue(
@@ -295,7 +297,7 @@ public class TaskManagementUtil {
 
     /**
      * Processes party data and adds it to the appropriate party type mapping
-     * 
+     *
      * @param dataMap The party data map containing uniqueId, partyType, and ownerType
      * @param uniqueIdPendingTask Set of unique IDs that have pending tasks
      * @param partyTypeToUniqueIdMap Map to store party type to unique ID mappings
@@ -305,20 +307,20 @@ public class TaskManagementUtil {
         String uniqueId = (String) dataMap.get("uniqueId");
         String partyType = (String) dataMap.get("partyType");
         String ownerType = (String) dataMap.get("ownerType");
-        
+
         if (!uniqueIdPendingTask.contains(uniqueId)) {
             return;
         }
-        
+
         Map<String, String> partyMap = createPartyMap(partyType, uniqueId);
         String targetPartyType = determineTargetPartyType(ownerType);
-        
+
         partyTypeToUniqueIdMap.get(targetPartyType).add(partyMap);
     }
 
     /**
      * Creates a party map with partyType and uniqueId
-     * 
+     *
      * @param partyType The type of party
      * @param uniqueId The unique identifier
      * @return Map containing partyType and uniqueId
@@ -332,7 +334,7 @@ public class TaskManagementUtil {
 
     /**
      * Determines the target party type based on owner type
-     * 
+     *
      * @param ownerType The owner type from the data
      * @return The target party type for mapping
      */
@@ -340,13 +342,182 @@ public class TaskManagementUtil {
         if (ownerType == null) {
             return "complainant";
         }
-        
+
         return switch (ownerType) {
             case ACCUSED -> "respondent";
             case COMPLAINANT -> "complainant";
             case COURT_WITNESS -> "court";
             default -> "complainant";
         };
+    }
+
+    /**
+     * Fetches warrant TaskManagement records once for batch processing.
+     * Call this method once before the loop and pass the result to findWarrantUpfrontPayment or checkAndUpdateWarrantUpfrontPayment.
+     *
+     * @param order       The order to check
+     * @param requestInfo The request info
+     * @return List of TaskManagement records for warrant upfront check
+     */
+    public List<TaskManagement> fetchWarrantTaskManagementRecords(Order order, RequestInfo requestInfo) {
+        try {
+            TaskSearchCriteria searchCriteria = TaskSearchCriteria.builder()
+                    .tenantId(order.getTenantId())
+                    .filingNumber(order.getFilingNumber())
+                    .status(TASK_CREATION)
+                    .taskType(List.of(WARRANT))
+                    .build();
+
+            TaskSearchRequest searchRequest = TaskSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(searchCriteria)
+                    .build();
+
+            List<TaskManagement> taskManagementList = searchTaskManagement(searchRequest);
+            log.info("Fetched {} TaskManagement records for warrant upfront check", taskManagementList != null ? taskManagementList.size() : 0);
+            return taskManagementList != null ? taskManagementList : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Error fetching warrant TaskManagement records", e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Finds warrant upfront payment record for a specific address+channel combination.
+     * This method does NOT make any API calls - it uses the pre-fetched taskManagementList.
+     *
+     * @param addressId          The address ID to check
+     * @param channelCode        The delivery channel code to check
+     * @param taskManagementList Pre-fetched TaskManagement records from fetchWarrantTaskManagementRecords
+     * @return WarrantUpfrontResult containing the matching task, party and process data, or null if not found
+     */
+    public WarrantUpfrontResult findWarrantUpfrontPayment(String addressId, String channelCode, List<TaskManagement> taskManagementList, String uniqueId) {
+        if (addressId == null || channelCode == null) {
+            log.info("Address ID or channel code is null, no upfront payment check needed");
+            return null;
+        }
+
+        if (CollectionUtils.isEmpty(taskManagementList)) {
+            return null;
+        }
+
+        for (TaskManagement taskManagement : taskManagementList) {
+            List<PartyDetails> partyDetailsList = taskManagement.getPartyDetails();
+            if (CollectionUtils.isEmpty(partyDetailsList)) {
+                continue;
+            }
+
+            PartyDetails partyDetails = partyDetailsList.stream()
+                    .filter(pd -> pd.getRespondentDetails() != null &&
+                            uniqueId.equals(pd.getRespondentDetails().getUniqueId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (partyDetails == null) {
+                partyDetails = partyDetailsList.stream()
+                        .filter(pd -> pd.getWitnessDetails() != null &&
+                                uniqueId.equals(pd.getWitnessDetails().getUniqueId()))
+                        .findFirst()
+                        .orElse(null);
+            }
+
+            if (partyDetails == null || UpFrontStatus.COMPLETED.equals(partyDetails.getStatus())) {
+                continue;
+            }
+
+            // Check if this party has the matching address in their delivery process details
+            List<ProcessDeliveryDetails> deliveryProcessList = partyDetails.getProcessDeliveryDetails();
+            if (CollectionUtils.isEmpty(deliveryProcessList)) {
+                continue;
+            }
+
+            for (ProcessDeliveryDetails processData : deliveryProcessList) {
+                if (addressId.equals(processData.getAddressId())
+                        && channelCode.equalsIgnoreCase(processData.getChannelCode())
+                        && ProcessDeliveryDetailsStatus.NOT_COMPLETED.equals(processData.getProcessDeliveryDetailsStatus())) {
+                    log.info("Found warrant upfront payment with NOT_COMPLETED status for addressId: {}, channelCode: {}", addressId, channelCode);
+                    return new WarrantUpfrontResult(taskManagement, partyDetails, processData);
+                }
+            }
+        }
+
+        log.info("No warrant upfront payment found with NOT_COMPLETED status for addressId: {}, channelCode: {}", addressId, channelCode);
+        return null;
+    }
+
+    /**
+     * Updates the warrant upfront payment status and task management record.
+     *
+     * @param order       The order to update
+     * @param requestInfo The request info
+     * @param result      The warrant upfront result from findWarrantUpfrontPayment
+     * @return true if update was successful, false otherwise
+     */
+    public boolean updateWarrantUpfrontPayment(Order order, RequestInfo requestInfo, WarrantUpfrontResult result) {
+        try {
+            if (result == null) {
+                return false;
+            }
+
+            TaskManagement taskManagement = result.taskManagement();
+            PartyDetails partyDetails = result.partyDetails();
+            ProcessDeliveryDetails processData = result.processData();
+
+            // Mark upfront as completed
+            processData.setProcessDeliveryDetailsStatus(ProcessDeliveryDetailsStatus.COMPLETED);
+
+            // Check if all delivery process details for THIS party are completed
+            boolean isPartyCompleted = partyDetails.getProcessDeliveryDetails()
+                    .stream()
+                    .allMatch(data -> ProcessDeliveryDetailsStatus.COMPLETED.equals(data.getProcessDeliveryDetailsStatus()));
+
+            if (isPartyCompleted) {
+                partyDetails.setStatus(UpFrontStatus.COMPLETED);
+            }
+
+            // Check if ALL party details are completed
+            List<PartyDetails> partyDetailsList = taskManagement.getPartyDetails();
+            boolean areAllPartiesCompleted = partyDetailsList.stream()
+                    .allMatch(party -> UpFrontStatus.COMPLETED.equals(party.getStatus()));
+
+            WorkflowObject workflowObject = new WorkflowObject();
+
+            // Decide workflow action
+            if (areAllPartiesCompleted) {
+                log.info("All parties have completed upfront payment");
+                workflowObject.setAction(COMPLETE_TASK_CREATION);
+            } else {
+                log.info("Not all parties completed upfront payment");
+                workflowObject.setAction(UPDATE_UPFRONT_PAYMENT);
+            }
+
+            // Attach workflow
+            taskManagement.setWorkflow(workflowObject);
+
+            // Update order details
+            taskManagement.setOrderNumber(order.getOrderNumber());
+            taskManagement.setOrderItemId(getItemId(order));
+
+            Role role = Role.builder().code(SYSTEM_ADMIN).name(SYSTEM_ADMIN).tenantId(taskManagement.getTenantId()).build();
+            requestInfo.getUserInfo().getRoles().add(role);
+
+            updateTaskManagement(TaskManagementRequest.builder()
+                    .requestInfo(requestInfo)
+                    .taskManagement(taskManagement)
+                    .build());
+
+            return true;
+        } catch (Exception e) {
+            log.error("Error updating warrant upfront payment", e);
+            return false;
+        }
+    }
+
+    /**
+     * Record to hold the result of finding a warrant upfront payment.
+     */
+    public record WarrantUpfrontResult(TaskManagement taskManagement, PartyDetails partyDetails,
+                                       ProcessDeliveryDetails processData) {
     }
 }
 

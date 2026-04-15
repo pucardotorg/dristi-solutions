@@ -1,5 +1,6 @@
 package org.pucar.dristi.service.bundle;
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Document;
 import org.pucar.dristi.web.models.Application;
 import org.pucar.dristi.web.models.order.Order;
@@ -10,9 +11,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Component
+@Slf4j
 public class MandatorySubmissionsSection implements CaseBundleSection {
 
     @Override
@@ -113,8 +116,31 @@ public class MandatorySubmissionsSection implements CaseBundleSection {
     }
 
     private String extractDocTitle(Document doc) {
-        String docType = doc.getDocumentType();
-        if (docType != null && !docType.isBlank()) return docType;
-        return "DOCUMENT";
+
+        try {
+            if (doc == null) return "DOCUMENT";
+
+            Object additionalDetails = doc.getAdditionalDetails();
+            if (additionalDetails instanceof Map<?, ?> additionalDetailsObject) {
+                Object dt = additionalDetailsObject.get("documentTitle");
+                if (dt instanceof String title && !title.isBlank()) return title;
+
+                dt = additionalDetailsObject.get("documentType");
+                if (dt instanceof String type && !type.isBlank()) return type;
+
+                Object nameObj = additionalDetailsObject.get("name");
+                if (nameObj instanceof String name && !name.isBlank()) {
+                    int dotIdx = name.lastIndexOf('.');
+                    return dotIdx > 0 ? name.substring(0, dotIdx) : name;
+                }
+            }
+
+            String docType = doc.getDocumentType();
+            if (docType != null && !docType.isBlank()) return docType;
+            return "DOCUMENT";
+        } catch (Exception e) {
+            log.error("Failed to extract document title", e);
+            return "DOCUMENT";
+        }
     }
 }

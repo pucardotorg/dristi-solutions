@@ -11,11 +11,7 @@ import { useToast } from "../../components/Toast/useToast";
 import { ErrorInfoIcon, SuccessIcon } from "../../icons/svgIndex";
 import ImageModal from "../../components/ImageModal";
 import { sanitizeData } from "../../Utils";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { Heading } from "../../components/ModalComponents";
 const Close = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF">
     <path d="M0 0h24v24H0V0z" fill="none" />
@@ -56,9 +52,9 @@ const extractFormattedAddresses = (individualData, t) => {
 
   const formatAddress = (addr) => {
     if (!addr) return "";
-    const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
+    const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "", doorNo = "" } = addr;
 
-    return `${addressLine1}, ${addressLine2}, ${buildingName}, ${street}, ${city}, ${pincode}`.trim();
+    return `${doorNo}, ${buildingName}, ${street}, ${city}, ${addressLine2}, ${addressLine1}, ${pincode}`.trim();
   };
 
   const permanentAddress = addresses?.find((addr) => addr?.type === "PERMANENT");
@@ -353,7 +349,7 @@ const ApplicationDetails = ({ location, match }) => {
             />
 
             <DocumentDetailCard cardData={personalData} />
-            {type === "advocate" && (userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") && (
+            {(userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") && (
               <DocumentDetailCard onClick={() => handleImageModalOpen(fileStoreId, fileName)} cardData={barDetails} />
             )}
           </div>

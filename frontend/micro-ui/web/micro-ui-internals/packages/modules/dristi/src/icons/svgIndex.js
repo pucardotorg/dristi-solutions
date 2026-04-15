@@ -188,6 +188,33 @@ export const ManageOfficeCloseIcon = (props) => (
   </svg>
 );
 
+/** Exit/leave icon (red) for "Advocates I'm working for" – leave office action */
+export const ManageOfficeLeaveIcon = (props) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <path
+      d="M5 4C4.44772 4 4 4.44772 4 5V19C4 19.5523 4.44772 20 5 20H11C11.5523 20 12 20.4477 12 21C12 21.5523 11.5523 22 11 22H5C3.34315 22 2 20.6569 2 19V5C2 3.34315 3.34315 2 5 2H11C11.5523 2 12 2.44772 12 3C12 3.55228 11.5523 4 11 4H5Z"
+      fill="#BB2C2F"
+    />
+    <path
+      d="M14.2929 7.29289C14.6834 6.90237 15.3166 6.90237 15.7071 7.29289L20.7071 12.2929C21.0976 12.6834 21.0976 13.3166 20.7071 13.7071L15.7071 18.7071C15.3166 19.0976 14.6834 19.0976 14.2929 18.7071C13.9024 18.3166 13.9024 17.6834 14.2929 17.2929L17.5858 14H9C8.44772 14 8 13.5523 8 13C8 12.4477 8.44772 12 9 12H17.5858L14.2929 8.70711C13.9024 8.31658 13.9024 7.68342 14.2929 7.29289Z"
+      fill="#BB2C2F"
+    />
+  </svg>
+);
+
+export const ProvideCaseAccessArrowIcon = (props) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+    <g clipPath="url(#clip0_17068_316)">
+      <path d="M12 4L10.59 5.41L16.17 11H4V13H16.17L10.59 18.59L12 20L20 12L12 4Z" fill="white" />
+    </g>
+    <defs>
+      <clipPath id="clip0_17068_316">
+        <rect width="24" height="24" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+);
+
 const CustomDeleteIcon = ({ color = "#C62326", width = "16", height = "19" }) => (
   <svg width={width} height={height} viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path

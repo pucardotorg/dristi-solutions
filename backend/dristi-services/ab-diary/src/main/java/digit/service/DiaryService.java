@@ -240,7 +240,7 @@ public class DiaryService {
 
         try {
 
-            if ((diaryType.equals("ADiary") && date == null) || (diaryType.equals("BDiary") && caseId == null )) {
+            if (("ADiary".equals(diaryType) && date == null) || ("BDiary".equals(diaryType) && caseId == null )) {
                 throw new CustomException(DIARY_SEARCH_EXCEPTION,"One of data or caseId is mandatory");
             }
 

@@ -2,6 +2,7 @@ package org.egov.user.web.controller;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static org.apache.commons.lang3.ArrayUtils.isEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -13,14 +14,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TimeZone;
 
 import org.apache.commons.io.IOUtils;
 import org.egov.common.utils.MultiStateInstanceUtil;
+import org.egov.encryption.EncryptionService;
 import org.egov.encryption.masking.MaskingService;
 import org.egov.user.TestConfiguration;
 import org.egov.user.domain.exception.InvalidUserSearchCriteriaException;
@@ -36,7 +45,6 @@ import org.egov.user.domain.model.enums.GuardianRelation;
 import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.domain.service.TokenService;
 import org.egov.user.domain.service.UserService;
-import org.egov.user.security.CustomAuthenticationKeyGenerator;
 import org.egov.user.web.contract.auth.Role;
 import org.egov.user.web.contract.auth.User;
 import org.junit.jupiter.api.Disabled;
@@ -49,16 +57,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.oauth2.core.OAuth2AccessToken; // Updated package
+import org.springframework.security.core.Authentication;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-@Disabled("Requires MDMS service configuration") // Replacement for @Ignore
-@ExtendWith(SpringExtension.class) // Replacement for @RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @WebMvcTest(UserController.class)
-@Import(TestConfiguration.class)
+@Import({TestConfiguration.class, org.egov.user.security.SecurityConfig.class})
 public class UserControllerTest {
 
     @Autowired
@@ -74,10 +81,10 @@ public class UserControllerTest {
     private MultiStateInstanceUtil multiStateInstanceUtil;
 
     @MockBean
-    private CustomAuthenticationKeyGenerator authenticationKeyGenerator;
+    private MaskingService maskingService;
 
     @MockBean
-    private MaskingService maskingService;
+    private EncryptionService encryptionService;
 
     @Test
     @WithMockUser
@@ -89,11 +96,154 @@ public class UserControllerTest {
         when(userService.searchUsers(argThat(new UserSearchActiveFlagMatcher(expectedSearchCriteria)), anyBoolean(), any()))
                 .thenReturn(getUserModels());
 
-        // Note: APPLICATION_JSON_UTF8 is deprecated, use APPLICATION_JSON
-        mockMvc.perform(post("/_search/").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/_search").contentType(MediaType.APPLICATION_JSON)
                         .content(getFileContents("getUserByIdRequest.json"))).andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(getFileContents("userSearchResponse.json")));
+    }
+
+    @Test
+    @WithMockUser
+    public void test_should_search_for_active_users() throws Exception {
+        final UserSearchCriteria expectedSearchCriteria = UserSearchCriteria.builder()
+                .active(true)
+                .build();
+        when(userService.searchUsers(argThat(new UserSearchActiveFlagMatcher(expectedSearchCriteria)), anyBoolean(), any()))
+                .thenReturn(getUserModels());
+
+        mockMvc.perform(post("/_search").contentType(MediaType.APPLICATION_JSON)
+                        .content(getFileContents("getAllActiveUsersForGivenTenant.json"))).andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("userSearchResponse.json")));
+    }
+
+    @Test
+    @WithMockUser
+    public void test_should_search_for_in_active_users() throws Exception {
+        final UserSearchCriteria expectedSearchCriteria = UserSearchCriteria.builder()
+                .active(false)
+                .build();
+        when(userService.searchUsers(argThat(new UserSearchActiveFlagMatcher(expectedSearchCriteria)), anyBoolean(), any()))
+                .thenReturn(getUserModels());
+
+        mockMvc.perform(post("/_search").contentType(MediaType.APPLICATION_JSON)
+                        .content(getFileContents("getAllInActiveUsersForGivenTenant.json")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("userSearchResponse.json")));
+    }
+
+    @Test
+    @WithMockUser
+    public void test_should_search_for_active_and_in_active_users_via_v1_endpoint() throws Exception {
+        final UserSearchCriteria expectedSearchCriteria = UserSearchCriteria.builder()
+                .active(null)
+                .build();
+        when(userService.searchUsers(argThat(new UserSearchActiveFlagMatcher(expectedSearchCriteria)), anyBoolean(), any()))
+                .thenReturn(getUserModels());
+
+        mockMvc.perform(post("/v1/_search").contentType(MediaType.APPLICATION_JSON)
+                        .content(getFileContents("getAllActiveAndInActiveUsersForGivenTenantV1.json")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("userSearchResponse.json")));
+    }
+
+    @Test
+    @WithMockUser
+    public void test_should_search_for_in_active_users_via_v1_endpoint() throws Exception {
+        final UserSearchCriteria expectedSearchCriteria = UserSearchCriteria.builder()
+                .active(false)
+                .build();
+        when(userService.searchUsers(argThat(new UserSearchActiveFlagMatcher(expectedSearchCriteria)), anyBoolean(), any()))
+                .thenReturn(getUserModels());
+
+        mockMvc.perform(post("/v1/_search").contentType(MediaType.APPLICATION_JSON)
+                        .content(getFileContents("getAllInActiveUsersForGivenTenantV1.json")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("userSearchResponse.json")));
+    }
+
+    @Test
+    @WithMockUser
+    public void test_should_search_for_active_users_via_v1_endpoint() throws Exception {
+        final UserSearchCriteria expectedSearchCriteria = UserSearchCriteria.builder()
+                .active(true).build();
+        when(userService.searchUsers(argThat(new UserSearchActiveFlagMatcher(expectedSearchCriteria)), anyBoolean(), any()))
+                .thenReturn(getUserModels());
+
+        mockMvc.perform(post("/v1/_search").contentType(MediaType.APPLICATION_JSON)
+                        .content(getFileContents("getAllActiveUsersForGivenTenantV1.json")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("userSearchResponse.json")));
+    }
+
+
+    @Test
+    @WithMockUser
+    @Disabled
+    public void test_should_return_error_response_when_user_search_is_invalid() throws Exception {
+        final UserSearchCriteria invalidSearchCriteria = UserSearchCriteria.builder().build();
+        when(userService.searchUsers(any(), true, any())).thenThrow(new InvalidUserSearchCriteriaException(invalidSearchCriteria));
+
+        ResultActions test = mockMvc.perform(post("/_search").contentType(MediaType.APPLICATION_JSON)
+                .content(getFileContents("getUserByIdRequest.json")));//				.andExpect(status().isBadRequest())
+        ;
+        test.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("userSearchErrorResponse.json")));
+    }
+
+    @Test
+    @WithMockUser
+    @Disabled
+    public void test_should_update_user_profile() throws Exception {
+        when(userService.partialUpdate(any(), any())).thenReturn(org.egov.user.domain.model.User.builder().build());
+
+        mockMvc.perform(post("/profile/_update")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(getFileContents("userProfileUpdateRequest.json")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("userProfileUpdateResponse.json")));
+    }
+
+    @Test
+    @WithMockUser
+    @Disabled
+    public void test_should_update_user_details() throws Exception {
+
+        org.egov.user.domain.model.User userRequest = org.egov.user.domain.model.User.builder().name("foo").username("userName").dob(new Date("04/08/1986")).guardian("name of relative").build();
+        when(userService.updateWithoutOtpValidation(any(org.egov.user.domain.model.User.class), any())).thenReturn
+                (userRequest);
+        mockMvc.perform(post("/users/112/_updatenovalidate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(getFileContents("userCreateRequest.json")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("userCreateSuccessResponse.json")));
+    }
+
+    @Disabled
+    @Test
+    @WithMockUser
+    public void test_should_create_citizen() throws Exception {
+        final Date expectedDate = toDate(LocalDateTime.of(1986, 8, 4, 5, 30));
+        final org.egov.user.domain.model.User user = org.egov.user.domain.model.User.builder()
+                .username("userName")
+                .name("foo")
+                .dob(expectedDate)
+                .guardian("name of relative")
+                .build();
+        when(userService.createCitizen(any(), any())).thenReturn(user);
+
+        mockMvc.perform(post("/citizen/_create")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(getFileContents("userCreateRequest.json")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("userCreateSuccessResponse.json")));
     }
 
     @Test
@@ -123,15 +273,152 @@ public class UserControllerTest {
         assertEquals("name of relative", actualUser.getGuardian());
     }
 
+    @Test
+    @WithMockUser
+    public void testUserDetails() throws Exception {
+        Authentication oAuth2Authentication = mock(Authentication.class);
+        SecureUser secureUser = new SecureUser(getUser());
+        when(oAuth2Authentication.getPrincipal()).thenReturn(secureUser);
+        when(tokenService.getUser("c80e0ade-f48d-4077-b0d2-4e58526a6bfd"))
+                .thenReturn(getCustomUserDetails());
+
+        mockMvc.perform(post("/_details?access_token=c80e0ade-f48d-4077-b0d2-4e58526a6bfd"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(getFileContents("userDetailsResponse.json")));
+    }
+
+    private UserSearchCriteria getUserSearch() {
+        return UserSearchCriteria.builder()
+                .id(asList(1L, 2L))
+                .userName("userName")
+                .name("name")
+                .mobileNumber("mobileNumber")
+//				.aadhaarNumber("aadhaarNumber")
+//				.pan("pan")
+                .emailId("emailId")
+                .fuzzyLogic(true)
+                .active(true)
+                .limit(0)
+                .offset(0)
+                .sort(singletonList("name"))
+                .type(UserType.CITIZEN)
+                .roleCodes(Arrays.asList("roleCode1", "roleCode2"))
+                .build();
+    }
+
+    private List<org.egov.user.domain.model.User> getUserModels() {
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("IST"));
+        calendar.set(1990, Calendar.JULY, 1, 16, 41, 11);
+        Date date = calendar.getTime();
+        Date expectedDOB = toDate(LocalDateTime.of(1986, 8, 4, 5, 30));
+
+        org.egov.user.domain.model.User user = org.egov.user.domain.model.User.builder()
+                .id(1L)
+                .tenantId("")
+                .username("userName")
+                .title("title")
+                .password("password")
+                .salutation("salutation")
+                .guardian("name of relative")
+                .guardianRelation(GuardianRelation.FATHER)
+                .name("name")
+                .gender(Gender.FEMALE)
+                .mobileNumber("mobileNumber1")
+                .emailId("email")
+                .altContactNumber("mobileNumber2")
+                .pan("pan")
+                .aadhaarNumber("aadhaarNumber")
+                .permanentAddress(getPermanentAddress())
+                .correspondenceAddress(getCorrespondenceAddress())
+                .active(true)
+                .roles(getListOfRoles())
+                .dob(expectedDOB)
+                .passwordExpiryDate(date)
+                .locale("en_IN")
+                .type(UserType.CITIZEN)
+                .bloodGroup(BloodGroup.A_POSITIVE)
+                .identificationMark("identification mark")
+                .signature("7a9d7f12-bdcb-4487-9d43-709838a0ad39")
+                .photo("3b26fb49-e43d-401b-899a-f8f0a1572de0")
+                .accountLocked(false)
+                .createdDate(date)
+                .lastModifiedDate(date)
+                .createdBy(1L)
+                .lastModifiedBy(1L).build();
+
+        return Collections.singletonList(user);
+    }
+
+    private Address getPermanentAddress() {
+        return Address.builder()
+                .type(AddressType.PERMANENT)
+                .city("city1")
+                .address("post office")
+                .pinCode("pincode 1")
+                .build();
+    }
+
+    private Address getCorrespondenceAddress() {
+        return Address.builder()
+                .type(AddressType.CORRESPONDENCE)
+                .city("city2")
+                .address("sub district")
+                .pinCode("pincode 2")
+                .build();
+    }
+
+    private Set<org.egov.user.domain.model.Role> getListOfRoles() {
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("IST"));
+        calendar.set(1990, Calendar.JULY, 1, 16, 41, 11);
+
+        org.egov.user.domain.model.Role role1 = org.egov.user.domain.model.Role.builder()
+                .name("name of the role 1")
+                .code("roleCode")
+                .description("description")
+                .createdBy(0L)
+                .lastModifiedBy(0L)
+                .createdDate(calendar.getTime())
+                .lastModifiedDate(calendar.getTime())
+                .build();
+
+        return Collections.singleton(role1);
+    }
+
     private String getFileContents(String fileName) {
         try {
-            return IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream(fileName), StandardCharsets.UTF_8);
+            return IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream(fileName), "UTF-8");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    // FIX: ArgumentMatcher is an abstract class in modern Mockito, not an interface
+    class UserSearchMatcher implements ArgumentMatcher<UserSearchCriteria> {
+
+        private UserSearchCriteria expectedUserSearch;
+
+        public UserSearchMatcher(UserSearchCriteria expectedUserSearch) {
+            this.expectedUserSearch = expectedUserSearch;
+        }
+
+        @Override
+        public boolean matches(UserSearchCriteria userSearch) {
+            return userSearch.getId().equals(expectedUserSearch.getId()) &&
+                    userSearch.getUserName().equals(expectedUserSearch.getUserName()) &&
+                    userSearch.getName().equals(expectedUserSearch.getName()) &&
+                    userSearch.getMobileNumber().equals(expectedUserSearch.getMobileNumber()) &&
+//					userSearch.getAadhaarNumber().equals(expectedUserSearch.getAadhaarNumber()) &&
+//					userSearch.getPan().equals(expectedUserSearch.getPan()) &&
+                    userSearch.getEmailId().equals(expectedUserSearch.getEmailId()) &&
+                    userSearch.isFuzzyLogic() == expectedUserSearch.isFuzzyLogic() &&
+                    userSearch.getActive() == expectedUserSearch.getActive() &&
+                    isEquals(userSearch.getRoleCodes(), expectedUserSearch.getRoleCodes()) &&
+                    userSearch.getLimit().equals(expectedUserSearch.getLimit()) &&
+                    userSearch.getOffset().equals(expectedUserSearch.getOffset()) &&
+                    userSearch.getSort().equals(expectedUserSearch.getSort()) &&
+                    userSearch.getType().equals(expectedUserSearch.getType());
+        }
+    }
+
     class UserSearchActiveFlagMatcher implements ArgumentMatcher<UserSearchCriteria> {
 
         private UserSearchCriteria expectedUserSearch;
@@ -142,13 +429,12 @@ public class UserControllerTest {
 
         @Override
         public boolean matches(UserSearchCriteria userSearch) {
-            if (userSearch == null) return false;
-            return Objects.equals(userSearch.getActive(), expectedUserSearch.getActive());
+            return userSearch.getActive() == expectedUserSearch.getActive();
         }
     }
 
-    private org.egov.user.web.contract.auth.User getUser() {
-        return org.egov.user.web.contract.auth.User.builder()
+    private User getUser() {
+        return User.builder()
                 .id(18L)
                 .userName("narasappa")
                 .name("narasappa")
@@ -168,25 +454,33 @@ public class UserControllerTest {
                 .name("Employee")
                 .code("EMPLOYEE")
                 .build();
-        roles.add(new Role(roleModel));
+
+        Role role = new Role(roleModel);
+        roles.add(role);
+
         return roles;
     }
 
-    private List<org.egov.user.domain.model.User> getUserModels() {
-        Date expectedDOB = toDate(LocalDateTime.of(1986, 8, 4, 5, 30));
-        org.egov.user.domain.model.User user = org.egov.user.domain.model.User.builder()
-                .id(1L)
-                .username("userName")
-                .name("name")
-                .active(true)
-                .dob(expectedDOB)
-                .type(UserType.CITIZEN)
+    private UserDetail getCustomUserDetails() {
+        SecureUser secureUser = new SecureUser(getUser());
+        List<Action> actions = new ArrayList<Action>();
+        Action action = Action.builder()
+                .url("/pgr/receivingmode")
+                .name("ReceivingMode")
+                .displayName("ReceivingMode")
+                .orderNumber(0)
+                .queryParams("tenantId=")
+                .parentModule("1")
+                .serviceCode("PGR")
                 .build();
-        return Collections.singletonList(user);
+        actions.add(action);
+
+        return new UserDetail(secureUser, actions);
     }
 
     private Date toDate(LocalDateTime localDateTime) {
         final ZonedDateTime expectedDateTime = ZonedDateTime.of(localDateTime, ZoneId.of("Asia/Calcutta"));
         return Date.from(expectedDateTime.toInstant());
     }
+
 }

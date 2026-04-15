@@ -7,6 +7,8 @@ import { AddTeamplateFormConfig, coverLetterTextConfig } from "../../configs/Add
 import { HomeService, Urls } from "../../hooks/services";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { isRichTextEmpty } from "../../utils";
+import { OutlinedInfoIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import ReactTooltip from "react-tooltip";
 
 const convertToFormData = (t, data) => {
   const formData = {
@@ -16,6 +18,7 @@ const convertToFormData = (t, data) => {
     selectAddressee: { code: data?.addressee || "", name: data?.addressee || "" },
     processText: { text: data?.processText || "" },
     addresseeName: data?.addresseeName || "",
+    subTitle: data?.subTitle || "",
   };
 
   return formData;
@@ -151,7 +154,37 @@ const TemplateOrConfigurationPage = () => {
   const modifiedFormConfig = useMemo(() => {
     const selectedAddresseeCode = formdata?.selectAddressee?.code;
 
-    return AddTeamplateFormConfig.map((section) => {
+    const applyUiChanges = (config) => ({
+      ...config,
+      body: config?.body?.map((body) => {
+        if (body?.labelChildren === "optional") {
+          return {
+            ...body,
+            labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
+          };
+        }
+        if (body?.labelChildren === "OptionalWithOutlinedInfoIcon") {
+          return {
+            ...body,
+            labelChildren: (
+              <React.Fragment>
+                <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>
+                <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
+                  <OutlinedInfoIcon />
+                </span>
+
+                <ReactTooltip id={`${body.label}-tooltip`} place="bottom" content={body?.tooltipValue || ""}>
+                  {t(body?.tooltipValue || body.label)}
+                </ReactTooltip>
+              </React.Fragment>
+            ),
+          };
+        }
+        return body;
+      }),
+    });
+
+    const modifiedConfig = AddTeamplateFormConfig.map((section) => {
       return {
         ...section,
         body: section.body.filter((field) => {
@@ -163,7 +196,9 @@ const TemplateOrConfigurationPage = () => {
         }),
       };
     });
-  }, [formdata?.selectAddressee]);
+
+    return modifiedConfig?.map((config) => applyUiChanges(config));
+  }, [formdata?.selectAddressee?.code, t]);
 
   const getDefaultValues = useMemo(() => {
     if (stepper === 1) {
@@ -207,6 +242,7 @@ const TemplateOrConfigurationPage = () => {
           orderText: formdata?.orderText?.text || "",
           processText: formdata?.processText?.text || "",
           addresseeName: formdata?.addresseeName || "",
+          subTitle: formdata?.subTitle,
         },
       };
 
@@ -268,7 +304,7 @@ const TemplateOrConfigurationPage = () => {
         }
       }
     } catch (error) {
-      console.log("Error whle Updating....", error);
+      console.error("Error whle Updating....", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setIsLoading(false);

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ActionBar, SubmitBar, Loader, Button, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { ActionBar, SubmitBar, Loader, Button } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import { FileUploadIcon } from "../../../icons/svgIndex";
@@ -21,6 +21,7 @@ import { useToast } from "../../../components/Toast/useToast";
 import Modal from "../../../components/Modal";
 import { mergeBreakdowns } from "./EfilingValidationUtils";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 const getStyles = () => ({
   container: { display: "flex", flexDirection: "row", marginBottom: "50px" },
@@ -126,29 +127,6 @@ const getStyles = () => ({
   submitButton: { backgroundColor: "#008080", color: "#fff", fontWeight: "bold", cursor: "pointer" },
   editCaseButton: { backgroundColor: "#fff", border: "#007E7E solid", color: "#007E7E", cursor: "pointer" },
 });
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
 const RightArrow = () => (
   <svg style={{ marginLeft: "8px" }} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M8 0L6.59 1.41L12.17 7H0V9H12.17L6.59 14.59L8 16L16 8L8 0Z" fill="white" />
@@ -223,6 +201,10 @@ const ComplainantSignature = ({ path }) => {
     if (userInfo?.type !== "CITIZEN") return false;
     return !userInfo?.roles?.some((role) => role.code === "ADVOCATE_ROLE" || role.code === "ADVOCATE_CLERK_ROLE");
   }, [userInfo]);
+
+  const isAdvocateClerk = useMemo(() => {
+    return userInfo.roles?.some((role) => role?.code === "ADVOCATE_CLERK_ROLE");
+  }, [userInfo.roles]);
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -357,6 +339,7 @@ const ComplainantSignature = ({ path }) => {
   }, [caseDetails]);
 
   const caseDraftEditAllowedParties = useMemo(() => {
+    if (!caseDetails?.filingNumber) return null;
     const createdByUuid = caseDetails?.auditDetails?.createdBy;
     // Parties who are allowed to edit case details during filing draft stage:
     // 1. If the case created by litigant -> only that litigant can have the edit access.
@@ -460,6 +443,7 @@ const ComplainantSignature = ({ path }) => {
       const courierGroups = [
         { taskType: "NOTICE", channels: accused?.noticeCourierService || [] },
         { taskType: "SUMMONS", channels: accused?.summonsCourierService || [] },
+        { taskType: "WARRANT", channels: accused?.warrantCourierService || [] },
       ];
       courierGroups.forEach(({ taskType, channels }) => {
         channels.forEach((channel) => {
@@ -945,19 +929,12 @@ const ComplainantSignature = ({ path }) => {
 
   const updateCase = async (state) => {
     updatedOnceRef.current = true;
-    const isTopbarMounted = sessionStorage.getItem("isTopbarMounted");
-    console.log("updatecase1", isTopbarMounted);
-
     sessionStorage.removeItem("isTopbarMounted");
     setLoader(true);
-    console.log("updatecase11", isTopbarMounted);
     const caseDocList = updateSignedDocInCaseDoc();
-    console.log("updatecase12");
     let tempDocList = [...caseDocList];
     const isSignedDocumentsPresent = tempDocList?.some((doc) => doc?.documentType === "case.complaint.signed");
     if (isSignedDocumentsPresent) tempDocList = tempDocList?.filter((doc) => doc?.documentType !== "case.complaint.unsigned");
-    console.log("updatecase123");
-
     try {
       await DRISTIService.caseUpdateService(
         {
@@ -1104,11 +1081,8 @@ const ComplainantSignature = ({ path }) => {
     );
   };
 
-  console.log("caseDetails", caseDetails, isEsignSuccess, isLoading, updatedOnceRef.current);
-
   useEffect(() => {
     return () => {
-      console.log("useeffect12345", updatedOnceRef.current);
       updatedOnceRef.current = false;
     };
   }, []);
@@ -1123,12 +1097,10 @@ const ComplainantSignature = ({ path }) => {
   useEffect(() => {
     const esignCaseUpdate = async () => {
       const isTopbarMounted = sessionStorage.getItem("isTopbarMounted");
-      console.log("useeffect1", isLoading, isEsignSuccess, caseDetails?.filingNumber, isTopbarMounted, updatedOnceRef.current);
       const ifRemountCheck = isLitigant ? !updatedOnceRef.current : !updatedOnceRef.current && isTopbarMounted;
 
       if (!isLoading && isEsignSuccess && caseDetails?.filingNumber && ifRemountCheck) {
         await updateCase(state).then(async () => {
-          console.log("useeffect123", isLoading, isEsignSuccess, caseDetails?.filingNumber);
           await refetchCaseData();
           setEsignSuccess(false);
         });
@@ -1137,21 +1109,10 @@ const ComplainantSignature = ({ path }) => {
 
     if (!userInfo) return;
     esignCaseUpdate();
-    return () => {
-      console.log("useeffect1234", updatedOnceRef.current);
-    };
   }, [isEsignSuccess, caseDetails, isLoading, isLitigant, userInfo]);
 
   useEffect(() => {
-    console.log("mounted");
-    return () => {
-      console.log("unmounted");
-    };
-  }, []);
-
-  useEffect(() => {
     if (!caseDetails?.filingNumber || isLoading) return;
-    console.log("set-esign");
     const handleCaseUnlocking = async () => {
       await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
     };
@@ -1160,14 +1121,9 @@ const ComplainantSignature = ({ path }) => {
     const storedESignObj = sessionStorage.getItem("signStatus");
     const parsedESignObj = JSON.parse(storedESignObj);
     const esignProcess = sessionStorage.getItem("esignProcess");
-    console.log("set-esign1", isSignSuccess);
 
     if (isSignSuccess) {
-      console.log("set-esign12", isSignSuccess);
-
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
-      console.log("set-esign123", isSignSuccess, matchedSignStatus);
-
       if (isSignSuccess === "success" && matchedSignStatus) {
         const fileStoreId = sessionStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
@@ -1330,10 +1286,10 @@ const ComplainantSignature = ({ path }) => {
             {isSelectedUploadDoc && !(isOwnerAdvocateSelf || isMemberOnBehalfOfOwnerAdvocate) && (
               <p style={styles.signatureDescription}>{t("ONLY_ADVOCATES_AND_ASSOCIATED_MEMBERS_CAN_UPLOAD_SIGNED_COPY")}</p>
             )}
-            {isSelectedEsign && isMemberOnBehalfOfOwnerAdvocate && (
+            {isSelectedEsign && (isMemberOnBehalfOfOwnerAdvocate || isAdvocateClerk) && (
               <p style={styles.signatureDescription}>{t("YOU_ARE_NOT_AUTHORIZED_TO_DO_ESIGN")}</p>
             )}
-            {isSelectedEsign && !isMemberOnBehalfOfOwnerAdvocate && (
+            {isSelectedEsign && !isMemberOnBehalfOfOwnerAdvocate && !isAdvocateClerk && (
               <button style={styles.esignButton} onClick={handleEsignAction}>
                 {t("CS_ESIGN")}
               </button>

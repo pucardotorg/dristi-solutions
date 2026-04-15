@@ -14,50 +14,73 @@ public class BundleSectionUtils {
     }
 
     @SuppressWarnings("unchecked")
-    public static String extractEvidenceTitle(Artifact a) {
+    public static String extractEvidenceTitle(Artifact artifact) {
+        if (artifact == null) return null;
+
         String title = null;
 
         // 1. artifact.additionalDetails.formdata.documentTitle
-        if (a.getAdditionalDetails() instanceof Map) {
-            Map<String, Object> ad = (Map<String, Object>) a.getAdditionalDetails();
+        if (artifact.getAdditionalDetails() instanceof Map) {
+            Map<String, Object> ad = (Map<String, Object>) artifact.getAdditionalDetails();
             Object formdata = ad.get("formdata");
             if (formdata instanceof Map) {
                 Object dt = ((Map<String, Object>) formdata).get("documentTitle");
-                if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
+                if (dt instanceof String && !((String) dt).isBlank()) {
+                    title = (String) dt;
+                    return title;
+                }
             }
         }
 
         // 2. artifact.file.additionalDetails.documentTitle
-        if (title == null && a.getFile() != null && a.getFile().getAdditionalDetails() instanceof Map) {
-            Map<String, Object> fileAd = (Map<String, Object>) a.getFile().getAdditionalDetails();
+        if (title == null && artifact.getFile() != null && artifact.getFile().getAdditionalDetails() instanceof Map) {
+            Map<String, Object> fileAd = (Map<String, Object>) artifact.getFile().getAdditionalDetails();
             Object dt = fileAd.get("documentTitle");
-            if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
+            if (dt instanceof String && !((String) dt).isBlank()) {
+                title = (String) dt;
+                return title;
+            }
         }
 
         // 3. artifact.file.additionalDetails.documentType
-        if (title == null && a.getFile() != null && a.getFile().getAdditionalDetails() instanceof Map) {
-            Map<String, Object> fileAd = (Map<String, Object>) a.getFile().getAdditionalDetails();
+        if (title == null && artifact.getFile() != null && artifact.getFile().getAdditionalDetails() instanceof Map) {
+            Map<String, Object> fileAd = (Map<String, Object>) artifact.getFile().getAdditionalDetails();
             Object dt = fileAd.get("documentType");
-            if (dt instanceof String && !((String) dt).isBlank()) title = (String) dt;
+            if (dt instanceof String && !((String) dt).isBlank()) {
+                title = (String) dt;
+                return title;
+            }
         }
 
         // 4. artifact.artifactType
-        if (title == null) title = a.getArtifactType();
+        if (title == null) title = artifact.getArtifactType();
 
         return title;
     }
 
     @SuppressWarnings("unchecked")
-    public static String extractDepositionTitle(Artifact a) {
-        String title = extractEvidenceTitle(a);
+    public static String extractDepositionTitle(Artifact artifact) {
+        String title;
+        if (artifact.getFile() != null && artifact.getFile().getAdditionalDetails() instanceof Map) {
+            Map<String, Object> fileAd = (Map<String, Object>) artifact.getFile().getAdditionalDetails();
+            Object name = fileAd.get("name");
+            if (name instanceof String && !((String) name).isBlank()) {
+                title = (String) name;
+                if ("Signed_Witness_Deposition_Document.pdf".equalsIgnoreCase(title)) {
+                    return "Witness Deposition (" + artifact.getTag() + ")";
+                }
+                return title;
+            }
+        }
+        title = extractEvidenceTitle(artifact);
         return title != null ? title : "WITNESS_DEPOSITION";
     }
 
     @SuppressWarnings("unchecked")
-    public static String getWitnessOwnerType(Artifact a) {
-        if (a == null || a.getAdditionalDetails() == null) return null;
-        if (!(a.getAdditionalDetails() instanceof Map)) return null;
-        Map<String, Object> ad = (Map<String, Object>) a.getAdditionalDetails();
+    public static String getWitnessOwnerType(Artifact artifact) {
+        if (artifact == null || artifact.getAdditionalDetails() == null) return null;
+        if (!(artifact.getAdditionalDetails() instanceof Map)) return null;
+        Map<String, Object> ad = (Map<String, Object>) artifact.getAdditionalDetails();
         Object wd = ad.get("witnessDetails");
         if (wd instanceof Map) {
             Object ownerType = ((Map<String, Object>) wd).get("ownerType");
@@ -84,9 +107,9 @@ public class BundleSectionUtils {
                 .orElse(null);
     }
 
-    public static String digitalizedFileStoreId(DigitalizedDocument dd) {
-        if (dd == null || dd.getDocuments() == null || dd.getDocuments().isEmpty()) return null;
-        return dd.getDocuments().stream()
+    public static String digitalizedFileStoreId(DigitalizedDocument digitalizedDocument) {
+        if (digitalizedDocument == null || digitalizedDocument.getDocuments() == null || digitalizedDocument.getDocuments().isEmpty()) return null;
+        return digitalizedDocument.getDocuments().stream()
                 .filter(Objects::nonNull)
                 .map(org.pucar.dristi.web.models.digitalizeddocument.Document::getFileStore)
                 .filter(Objects::nonNull)

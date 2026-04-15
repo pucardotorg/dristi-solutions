@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import useSearchCaseService from "../../../dristi/src/hooks/dristi/useSearchCaseService";
 import { Button, Dropdown } from "@egovernments/digit-ui-react-components";
-import _ from "lodash";
-import AddParty from "../../../hearings/src/pages/employee/AddParty";
+import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useTranslation } from "react-i18next";
 import { formatAddress, getFormattedName } from "../utils";
 import GetPoliceStationModal from "./GetPoliceStationModal";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 import { Toast } from "@egovernments/digit-ui-components";
+import { ORDER_TYPES } from "../utils/constants";
 
 // Helper function to compare addresses without police station data
 const compareAddressValues = (value1, value2) => {
@@ -238,7 +238,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       code: "RPAD",
       values: [],
     },
-    orderType === "SUMMONS" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: [] },
+    orderType === ORDER_TYPES.SUMMONS && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: [] },
   ]);
 
   const { data: caseData, refetch } = useSearchCaseService(
@@ -345,8 +345,8 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
 
   const handleDropdownChange = (selectedOption) => {
     clearErrors(config?.key);
-    const isEqual = _.isEqual(selectedOption.value.data, formData?.[config.key]?.party?.data);
-    if (!isEqual) {
+    const isDataEqual = isEqual(selectedOption.value.data, formData?.[config.key]?.party?.data);
+    if (!isDataEqual) {
       setSelectedChannels([]);
       onSelect(config.key, { ...formData[config.key], party: selectedOption.value, selectedChannels: [] });
     }
@@ -511,7 +511,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             code: "RPAD",
             values: address || [],
           },
-          orderType === "SUMMONS" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: address || [] },
+          orderType === ORDER_TYPES.SUMMONS && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: address || [] },
         ]
           .filter((item) => Boolean(item))
           .map((item) => item)

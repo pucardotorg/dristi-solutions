@@ -194,6 +194,13 @@
               "roles": [
                 "CTC_DOCUMENT_APPROVER"
               ]
+            },
+            {
+              "action": "REJECT",
+              "nextState": "PARTIALLY_ISSUED",
+              "roles": [
+                "CTC_DOCUMENT_APPROVER"
+              ]
             }
           ]
         },

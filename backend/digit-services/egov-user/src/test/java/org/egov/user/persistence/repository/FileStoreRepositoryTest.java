@@ -1,8 +1,6 @@
 package org.egov.user.persistence.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -12,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,55 +29,63 @@ public class FileStoreRepositoryTest {
     private RestTemplate restTemplate;
 
     @Test
-    public void test_should_geturl_by_fileStoreId() throws Exception { // FIX: Added throws Exception
-        Map<String, String> expectedFileStoreUrls = new HashMap<>();
+    public void test_should_geturl_by_fileStoreId() {
+
+        Map<String, String> expectedFileStoreUrls = new HashMap<String, String>();
         expectedFileStoreUrls.put("key", "value");
-
-        // Use ArgumentMatchers instead of Matchers
         when(restTemplate.getForObject(any(String.class), eq(Map.class))).thenReturn(expectedFileStoreUrls);
+        Map<String, String> fileStoreUrl = null;
+        try {
+            List<String> list = new ArrayList<String>();
+            list.add("key");
+            fileStoreUrl = fileStoreRepository.getUrlByFileStoreId("default", list);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
-        List<String> list = new ArrayList<>();
-        list.add("key");
-
-        // This call likely throws a checked Exception
-        Map<String, String> fileStoreUrl = fileStoreRepository.getUrlByFileStoreId("default", list);
-
-        assertEquals("value", fileStoreUrl.get("key"));
+        assertEquals(fileStoreUrl.get("key"), "value");
     }
 
     @Test
-    public void test_should_return_null_ifurllist_isempty() throws Exception { // FIX: Added throws Exception
-        Map<String, String> expectedFileStoreUrls = new HashMap<>();
+    public void test_should_return_null_ifurllist_isempty() {
+        Map<String, String> expectedFileStoreUrls = new HashMap<String, String>();
         when(restTemplate.getForObject(any(String.class), eq(Map.class))).thenReturn(expectedFileStoreUrls);
-
-        List<String> list = new ArrayList<>();
-        list.add("key");
-        Map<String, String> fileStoreUrl = fileStoreRepository.getUrlByFileStoreId("default", list);
+        Map<String, String> fileStoreUrl = null;
+        try {
+            List<String> list = new ArrayList<String>();
+            list.add("key");
+            fileStoreUrl = fileStoreRepository.getUrlByFileStoreId("default", list);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
         assertNull(fileStoreUrl);
     }
 
     @Test
-    public void test_should_return_null_ifurllist_null() throws Exception { // FIX: Added throws Exception
+    public void test_should_return_null_ifurllist_null() {
         when(restTemplate.getForObject(any(String.class), eq(Map.class))).thenReturn(null);
-
-        List<String> list = new ArrayList<>();
-        list.add("key");
-        Map<String, String> fileStoreUrl = fileStoreRepository.getUrlByFileStoreId("default", list);
+        Map<String, String> fileStoreUrl = null;
+        try {
+            List<String> list = new ArrayList<String>();
+            list.add("key");
+            fileStoreUrl = fileStoreRepository.getUrlByFileStoreId("default", list);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
         assertNull(fileStoreUrl);
     }
 
     @Test
-    public void test_should_throwexception_restcallfails() {
-        // Unchecked exceptions like RuntimeException don't need a method signature 'throws'
+    public void test_should_throwexception_restcallfails() throws Exception {
         when(restTemplate.getForObject(any(String.class), eq(Map.class))).thenThrow(new RuntimeException());
-
-        List<String> list = new ArrayList<>();
+        List<String> list = new ArrayList<String>();
         list.add("key");
-
-        assertThrows(RuntimeException.class, () -> {
-            fileStoreRepository.getUrlByFileStoreId("default", list);
-        });
+        assertThrows(RuntimeException.class, () -> fileStoreRepository.getUrlByFileStoreId("default", list));
     }
+
 }

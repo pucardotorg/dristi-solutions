@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
@@ -193,6 +192,38 @@ export const getUserInfoFromIndividualId = async (individualId) => {
     return userData;
   }
   return [];
+};
+
+export const validateAndFormatFields = ({ formData, setValue, clearErrors, fieldConfigs = [] }) => {
+  const formDataCopy = structuredClone(formData);
+
+  fieldConfigs?.forEach(({ key, maxLength, formatter }) => {
+    if (!Object.prototype.hasOwnProperty.call(formDataCopy, key)) return;
+
+    const oldValue = formDataCopy[key];
+    let value = oldValue;
+
+    if (typeof value !== "string") return;
+
+    if (maxLength && value.length > maxLength) {
+      value = value.slice(0, maxLength);
+    }
+
+    const updatedValue = formatter ? formatter(value) : value;
+
+    if (updatedValue !== oldValue) {
+      const element = document.querySelector(`[name="${key}"]`);
+      const start = element?.selectionStart;
+      const end = element?.selectionEnd;
+
+      setValue(key, updatedValue);
+      clearErrors?.(key);
+
+      setTimeout(() => {
+        element?.setSelectionRange(start, end);
+      }, 0);
+    }
+  });
 };
 
 export default {};

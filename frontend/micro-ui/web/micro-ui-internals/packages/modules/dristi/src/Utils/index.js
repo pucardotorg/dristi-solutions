@@ -175,6 +175,7 @@ export const documentsTypeMapping = {
   nocJudgeOrder: "NOC_JUDGE_ORDER",
   supportingDocument: "SUPPORTING_DOCUMENT",
   lprDocument: "LPR_DOCUMENT",
+  advocateIdProof: "ADVOCATE_ID_PROOF",
 };
 
 export const documentLabels = {
@@ -757,6 +758,7 @@ export const advocateCaseFilingStatusTypes = {
 };
 
 export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate")); //selected advocate in the top dropdown.
   const isOwnerAdvocate = caseDetails?.representatives?.find((rep) => rep?.advocateFilingStatus === advocateCaseFilingStatusTypes?.CASE_OWNER);
   //if neither a senior advocate nor junior adv/clerk did the filing on his behalf that means litigant only did case filing and only he/she can have edit draft access.
   if (!isOwnerAdvocate) {
@@ -775,17 +777,19 @@ export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
     // Fallback
     return [createdByUuid];
   }
-  const advocates = matchingOffice?.advocates || [];
-  const clerks = matchingOffice?.clerks || [];
-  // Collect all memberUserUuid
-  const editableUsers = [
-    matchingOffice?.officeAdvocateUserUuid, // senior advocate himself
-    ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
-    ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
-  ];
+  if (matchingOffice?.officeAdvocateUserUuid === storedAdvocate?.uuid) {
+    const advocates = matchingOffice?.advocates || [];
+    const clerks = matchingOffice?.clerks || [];
+    // Collect all memberUserUuid
+    const editableUsers = [
+      matchingOffice?.officeAdvocateUserUuid, // senior advocate himself
+      ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
+      ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
+    ];
 
-  // Remove null/undefined + de-duplicate
-  return Array.from(new Set((editableUsers || []).filter(Boolean)));
+    // Remove null/undefined + de-duplicate
+    return Array.from(new Set((editableUsers || []).filter(Boolean)));
+  } else return [];
 };
 
 export const getLoggedInUserOnBehalfOfUuid = (caseDetails, currentLoggedInUserUuid) => {
@@ -1109,4 +1113,10 @@ export const DateUtils = {
     const year = date.getFullYear();
     return `${day} ${month} ${year}`;
   },
+};
+
+export const isRichTextEmpty = (html) => {
+  if (!html) return true;
+  const plainText = html?.replace(/<[^>]*>/g, "").trim();
+  return plainText?.length === 0;
 };

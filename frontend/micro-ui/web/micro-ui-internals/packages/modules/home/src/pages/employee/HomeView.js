@@ -75,6 +75,7 @@ const HomeView = () => {
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
+  const refetchMemberData = state?.refectMemberData || "";
 
   const [tabData, setTabData] = useState(null);
   const [callRefetch, setCallRefetch] = useState(false);
@@ -217,7 +218,7 @@ const HomeView = () => {
       },
     },
     { tenantId },
-    searchCriteria,
+    `${JSON.stringify(searchCriteria)} + ${refetchMemberData}`,
     Boolean((advocateId || advClerkId) && tenantId)
   );
 
@@ -360,7 +361,7 @@ const HomeView = () => {
   useEffect(() => {
     if (!selectedSeniorAdvocate?.id) return;
     initialCountFetchRef.current === true && refreshInboxAfterSelectedAdvocateChange();
-  }, [selectedSeniorAdvocate?.id]);
+  }, [selectedSeniorAdvocate?.id, refetchMemberData]);
 
   const citizenId = useMemo(() => {
     if (userInfoType === "citizen" && !isSearchLoading) {
@@ -615,7 +616,7 @@ const HomeView = () => {
   useEffect(() => {
     if (!individualData || !searchResult || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) return;
 
-    const userHasIncompleteRegistration = !individualId || isRejected || isLitigantPartialRegistered;
+    const userHasIncompleteRegistration = !individualId || isRejected || isLitigantPartialRegistered || searchResult?.length === 0;
 
     const registrationIsDoneApprovalIsPending = individualId && isApprovalPending && !isRejected && !isLitigantPartialRegistered;
 
@@ -678,7 +679,7 @@ const HomeView = () => {
         userType &&
         userInfoType === "citizen" &&
         ((userType === "LITIGANT" && !isCitizenReferredInAnyCase) || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) ? (
-          <LitigantHomePage isApprovalPending={isApprovalPending} unAssociatedClerk={unAssociatedClerk} />
+          <LitigantHomePage isApprovalPending={isApprovalPending} unAssociatedClerk={unAssociatedClerk} isRejected={isRejected} />
         ) : (
           <React.Fragment>
             <div
@@ -792,6 +793,7 @@ const HomeView = () => {
               caseType={caseType}
               setCaseType={setCaseType}
               pendingSignOrderList={ordersNotificationData}
+              refetchTasks={refetchMemberData}
             />
           </div>
         )}

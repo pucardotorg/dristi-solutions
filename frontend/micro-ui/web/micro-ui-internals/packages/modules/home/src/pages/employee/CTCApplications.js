@@ -15,7 +15,7 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-const CTCApplications = () => {
+const CTCApplications = ({ refetch }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getStateId();
@@ -79,6 +79,11 @@ const CTCApplications = () => {
       ...CTCApplicationsConfig,
       apiDetails: {
         ...CTCApplicationsConfig.apiDetails,
+      },
+      additionalDetails: {
+        setCount: () => {
+          if (refetch) refetch();
+        },
       },
       sections: {
         ...CTCApplicationsConfig.sections,
@@ -275,7 +280,7 @@ const CTCApplications = () => {
   const handleConfirmReject = async (reason) => {
     try {
       setIsLoading(true);
-      const applicationData = pendingRejectData|| pendingRejectData?.businessObject;
+      const applicationData = pendingRejectData || pendingRejectData?.businessObject;
       const payload = {
         courtId: courtId,
         action: "REJECT",
@@ -321,6 +326,7 @@ const CTCApplications = () => {
         applications: bulkUpdate,
       };
       await HomeService.updateBulkCTCApplications(payload);
+      setShowErrorToast({ label: t("BULK_ACCEPT_DONE"), error: false });
       setUpdateCounter((prev) => prev + 1);
     } catch (error) {
       console.error(error);
@@ -370,7 +376,15 @@ const CTCApplications = () => {
 
     const primaryDocType = selectedDoc?.documentType || app?.documents?.[0]?.documentType || "CTC Document";
 
-    return primaryFileStore ? [{ fileStore: primaryFileStore, name: t(primaryDocType) }] : [];
+    const affidavitfileStoreId = app?.affidavitDocument?.fileStore || null;
+    const affidavitName = app?.affidavitDocument?.documentType || "Affadavit";
+
+    return primaryFileStore
+      ? [
+          { fileStore: primaryFileStore, name: t(primaryDocType) },
+          { fileStore: affidavitfileStoreId, name: t(affidavitName) },
+        ]
+      : [];
   }, [selectedRowApplicationData, t]);
 
   return (

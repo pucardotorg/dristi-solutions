@@ -1,4 +1,4 @@
-import { Banner, CardLabel, CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Banner, CardLabel, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import Button from "../../../components/Button";
 import { InfoCard } from "@egovernments/digit-ui-components";
@@ -14,6 +14,7 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import CustomChip from "../../../components/CustomChip";
 import { PrintIcon } from "../../../icons/svgIndex";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 const mockSubmitModalInfo = {
   header: "CS_HEADER_FOR_E_FILING_PAYMENT",
@@ -27,19 +28,6 @@ const mockSubmitModalInfo = {
   isArrow: false,
   showTable: true,
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();

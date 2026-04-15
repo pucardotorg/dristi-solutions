@@ -1,19 +1,11 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import { Toast, Loader } from "@egovernments/digit-ui-react-components";
 
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { DRISTIService } from "../../../services";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
-function WitnessDepositionDocModal({
-  t,
-  docObj,
-  setShowWitnessDepositionDoc,
-  showWitnessModal,
-  setShowWitnessModal,
-  setEditWitnessDepositionArtifact,
-  editWitnessDepositionArtifact,
-}) {
+function WitnessDepositionDocModal({ t, docObj, setShowWitnessDepositionDoc, setShowWitnessModal }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const artifact = docObj?.artifactList;
@@ -40,18 +32,7 @@ function WitnessDepositionDocModal({
     }
   }, [showErrorToast]);
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const showDocument = useMemo(() => {
     return (
       <React.Fragment>
@@ -99,8 +80,7 @@ function WitnessDepositionDocModal({
         };
         const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
         if (updatedEvidence?.artifact) {
-          setShowWitnessModal(true);
-          setEditWitnessDepositionArtifact(updatedEvidence?.artifact?.artifactNumber);
+          setShowWitnessModal({ show: true, artifactNumber: updatedEvidence?.artifact?.artifactNumber });
           setShowWitnessDepositionDoc({ docObj: null, show: false });
         }
       } catch (error) {

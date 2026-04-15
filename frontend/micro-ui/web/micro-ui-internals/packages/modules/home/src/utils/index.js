@@ -1,9 +1,9 @@
-import _ from "lodash";
 import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
 import { TaskManagementWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { ORDER_TYPES } from "./constants";
 
 const formatWithSuffix = (day) => {
   if (day > 3 && day < 21) return `${day}th`;
@@ -185,7 +185,7 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
         partyDetails: updatedPartyDetails,
         workflow: {
           action:
-            type === "SUMMONS"
+            type === ORDER_TYPES.SUMMONS
               ? existingTask?.partyType === "COURT"
                 ? isLast
                   ? TaskManagementWorkflowAction.COMPLETE_WITHOUT_PAYMENT
@@ -205,7 +205,7 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
         partyType: courierData?.witnessPartyType,
         workflow: {
           action:
-            type === "SUMMONS"
+            type === ORDER_TYPES.SUMMONS
               ? courierData?.witnessPartyType === "COURT"
                 ? isLast
                   ? TaskManagementWorkflowAction.COMPLETE_WITHOUT_PAYMENT

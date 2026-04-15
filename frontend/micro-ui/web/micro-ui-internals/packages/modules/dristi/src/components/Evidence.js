@@ -38,8 +38,6 @@ export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, 
     },
   ];
 
-
-
   return (
     <React.Fragment>
       <div

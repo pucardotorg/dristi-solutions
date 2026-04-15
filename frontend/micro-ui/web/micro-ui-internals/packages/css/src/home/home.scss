@@ -259,8 +259,8 @@
 /* Advocate profile dropdown (top bar) - custom component */
 .advocate-profile-dropdown {
   position: relative;
-  min-width: 18.75rem; /* 300px base width */
-  width: auto; /* grow with content */
+  min-width: auto; /* shrink to content for short names */
+  width: auto; /* grow with content when name is long */
   max-width: 100%;
 }
 
@@ -272,8 +272,8 @@
   border: 1px solid #007e7e;
   background-color: #f9fafb; /* surface/primary */
   color: #007e7e;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 1rem; /* 16px */
+  font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -393,7 +393,7 @@
 }
 
 .manage-office-page {
-  padding: 30px 48px;
+  padding: 16px 48px 30px;
   min-height: 100vh;
 }
 
@@ -517,11 +517,13 @@
 .manage-office-table-header > span:last-child {
   flex-grow: 0;
   min-width: 14.5rem;
+  justify-content: center; /* center align Actions header text on both tabs */
 }
 
 .manage-office-table-header--working-for > span:last-child {
   flex-grow: 0;
   min-width: 14.5rem;
+  justify-content: center;
 }
 
 /* ── Table data row ── */
@@ -548,8 +550,8 @@
   font-family: "Roboto", sans-serif;
   font-style: normal;
   font-weight: 400;
-  font-size: 0.875rem;
-  line-height: 1rem;
+  font-size: 1rem; /* 16px for data cells */
+  line-height: 1.25rem;
   color: #3d3c3c;
 
   align-self: stretch;
@@ -596,7 +598,7 @@
 
   font-family: "Roboto", sans-serif;
   font-weight: 500;
-  font-size: 0.75rem;
+  font-size: 1rem;
   line-height: 0.875rem;
   text-align: center;
   color: #241c17;
@@ -611,6 +613,7 @@
 
 .manage-office-actions--compact {
   gap: 0.625rem;
+  justify-content: center; /* center the leave icon under Actions header */
 }
 
 .manage-office-manage-btn {
@@ -660,6 +663,27 @@
   cursor: pointer;
   cursor: pointer;
   padding: 4px;
+}
+
+.manage-office-leave-icon-btn {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  gap: 0;
+
+  width: auto;
+  height: auto;
+
+  background: transparent;
+  border-radius: 0;
+  border: none;
+
+  color: #bb2c2f;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .manage-office-empty {
@@ -716,8 +740,7 @@
   flex-direction: row;
   flex-wrap: wrap;
   align-items: flex-start; /* keep labels aligned on a straight row */
-  padding: 0.75rem; /* 12px */
-  gap: 0.5rem; /* 8px between fields */
+  padding: 1rem 1.5rem; /* 16px 24px */
   position: relative;
 
   width: 100%;
@@ -734,13 +757,12 @@
   padding: 0 0.5rem 0 0;
   gap: 0.25rem;
 
-  width: 9.8125rem;
   min-height: 3rem;
-  flex: none;
+  flex: 1;
 
   &:not(:first-child) {
     border-left: 1px solid #cbd5e1;
-    padding-left: 0.5rem;
+    padding-left: 1.5rem;
   }
 }
 
@@ -993,15 +1015,16 @@
 }
 
 .assign-cases-section {
+  margin-top: 0.5rem;
 
   .assign-cases-section-title {
     font-family: Roboto, sans-serif;
     font-weight: 700;
     font-style: normal;
-    font-size: 2rem; /* 32px */
-    line-height: 2.375rem; /* 38px */
+    font-size: 29px;
+    line-height: 34px;
     color: #231f20;
-    margin: 0;
+    margin: 0 0 0.25rem 0;
   }
 
   .assign-cases-controls {
@@ -1028,10 +1051,12 @@
 .manage-office-member-inbox {
   margin-top: 0;
 
-  /* Remove extra top padding between search bar and table for Manage Office Member */
+  /* Tighten space around assignment filters */
   .inbox-search-component-wrapper {
+    .sections-parent {
+      grid-gap: 0 !important;
+    }
     .sections-parent.search {
-      gap: 0 !important;
 
       .search-wrapper {
         padding-top: 0 !important;
@@ -1057,6 +1082,7 @@
         box-shadow: none;
         background-color: transparent;
         padding: 0;
+        min-height: 5rem !important;
       }
     }
   }
@@ -1093,13 +1119,18 @@
   border-radius: 0.75rem; /* 12px */
   box-shadow: 0rem 0.5rem 1.75rem -0.375rem rgba(24, 39, 75, 0.12),
     0rem 1.125rem 5.5rem -0.25rem rgba(24, 39, 75, 0.14); /* converted from px */
-  width: 37.25rem; /* 596px */
+  width: 37.25rem; /* 596px default width for most modals */
   max-width: 95vw;
   padding: 0;
 }
 
 .manage-office-modal--wide {
-  width: 43.75rem; /* 700px */
+  width: 43.75rem; /* 700px - legacy wide modal */
+}
+
+/* Compact width specifically for Add Member summary step */
+.manage-office-modal--compact {
+  width: 30rem; /* 480px - compact Add Member summary */
 }
 
 .manage-office-modal__header {
@@ -1276,8 +1307,8 @@
   height: 2.5rem; /* 40px */
   border-radius: 0.25rem; /* 4px */
   font-family: "Roboto", sans-serif;
-  font-weight: 700;
   font-size: 1rem; /* 16px */
+  font-weight: 700;
   line-height: 1.1875rem; /* 19px */
   text-align: center;
   border: 1px solid transparent;
@@ -2741,4 +2772,88 @@
       width: 100% !important;
     }
   }
+}
+
+.manage-case-access-radio-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.5rem; /* 24px */
+  padding: 1rem 1.5rem; /* 16px 24px */
+  background: #F7F5F3;
+  border-radius: 0.5rem; /* 8px */
+  margin-bottom: 1.5rem; /* 24px */
+}
+
+.manage-case-access-label {
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  font-size: 1rem; /* 16px */
+  line-height: 1.1875rem; /* 19px */
+  color: #505A5F;
+}
+
+.manage-case-access-radio-group {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem; /* 24px */
+}
+
+.manage-case-access-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-family: "Roboto", sans-serif;
+  font-weight: 500;
+  font-size: 1rem; /* 16px */
+  line-height: 1.1875rem; /* 19px */
+  color: #505A5F;
+}
+
+.manage-case-access-radio input[type="radio"] {
+  appearance: none;
+  background-color: #fff;
+  margin: 0;
+  font: inherit;
+  color: #007E7E;
+  width: 1.25rem; /* 20px */
+  height: 1.25rem; /* 20px */
+  border: 2px solid #505A5F; /* Unchecked border */
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  cursor: pointer;
+}
+
+.manage-case-access-radio input[type="radio"]::before {
+  content: "";
+  width: 0.625rem; /* 10px */
+  height: 0.625rem; /* 10px */
+  border-radius: 50%;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em #007E7E;
+  background-color: #007E7E;
+}
+
+.manage-case-access-radio input[type="radio"]:checked {
+  border: 2px solid #007E7E;
+}
+
+.manage-case-access-radio input[type="radio"]:checked::before {
+  transform: scale(1);
+}
+
+.manage-case-access-info-banner {
+  margin-bottom: 1.5rem;
+}
+
+.assign-cases-subtitle {
+  font-family: "Roboto", sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem; /* 24px */
+  color: #231f20;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
 }

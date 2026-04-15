@@ -22,10 +22,10 @@ import java.util.List;
 public class PartyDetails {
 
     @JsonProperty("respondentDetails")
-    private Object respondentDetails;
+    private RespondentDetails respondentDetails;
 
     @JsonProperty("witnessDetails")
-    private Object witnessDetails;
+    private WitnessDetails witnessDetails;
 
     @JsonProperty("addresses")
     private List<PartyAddress> addresses;
@@ -35,5 +35,8 @@ public class PartyDetails {
 
     @JsonProperty("status")
     private UpFrontStatus status;
+
+    @JsonProperty("processDeliveryDetails")
+    private List<ProcessDeliveryDetails> processDeliveryDetails;
 
 }

@@ -7,7 +7,7 @@ import { useGetAccessToken } from "../../../hooks/useGetAccessToken";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
-function CitizenHome({ tenantId = "kl", setHideBack = () => {} }) {
+function CitizenHome({ tenantId, setHideBack = () => {} }) {
   const Digit = window?.Digit || {};
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
@@ -108,20 +108,27 @@ function CitizenHome({ tenantId = "kl", setHideBack = () => {} }) {
     return searchResult?.find((obj) => obj?.status === "INACTIVE")?.workflow?.comments || "NA";
   }, [isRejected, searchResult]);
 
-  const userHasIncompleteRegistration = useMemo(() => !individualId || isRejected || isLitigantPartialRegistered, [
+  const userHasIncompleteRegistration = useMemo(() => !individualId || isRejected || searchResult?.length === 0 || isLitigantPartialRegistered, [
     individualId,
     isLitigantPartialRegistered,
     isRejected,
+    searchResult?.length,
   ]);
 
   const registrationIsDoneApprovalIsPending = individualId && isApprovalPending && !isRejected && !isLitigantPartialRegistered;
 
   useEffect(() => {
     if (!data || !searchData) return;
-    if (individualId && !isApprovalPending && !isRejected && !isLitigantPartialRegistered) {
+    if (
+      individualId &&
+      !isApprovalPending &&
+      !isRejected &&
+      !isLitigantPartialRegistered &&
+      (userType !== "ADVOCATE" || (userType === "ADVOCATE" && searchResult?.length > 0))
+    ) {
       history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
     }
-  }, [individualId, isLitigantPartialRegistered, isRejected, history, isApprovalPending, searchResult, data, searchData]);
+  }, [individualId, isLitigantPartialRegistered, isRejected, history, isApprovalPending, searchResult, data, searchData, userType]);
 
   useEffect(() => {
     setHideBack(userHasIncompleteRegistration || registrationIsDoneApprovalIsPending);

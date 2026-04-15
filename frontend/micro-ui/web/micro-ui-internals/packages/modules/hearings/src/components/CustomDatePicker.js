@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { LabelFieldPair, TextInput, CloseSvg, CardLabelError, CardLabel } from "@egovernments/digit-ui-react-components";
+import { LabelFieldPair, TextInput, CardLabelError, CardLabel } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const CustomDatePicker = ({ t, config, formData, onSelect, errors, onDateChange }) => {
   const [showModal, setShowModal] = useState(false);
@@ -74,15 +75,6 @@ const CustomDatePicker = ({ t, config, formData, onSelect, errors, onDateChange 
     </div>
   );
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
 const CalendarIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clip-path="url(#clip0_1959_2689)">

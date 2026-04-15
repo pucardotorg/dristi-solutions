@@ -4,6 +4,7 @@ import { FileIcon, PrintIcon } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
 import { Urls } from "../hooks/services/Urls";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
+import { ORDER_TYPES } from "../utils/constants";
 
 const submitButtonStyle = {
   fontFamily: "Roboto",
@@ -33,15 +34,15 @@ const CustomStepperSuccess = ({
 
   const documentType = useMemo(() => {
     let txt = "";
-    if (orderType === "SUMMONS") {
+    if (orderType === ORDER_TYPES.SUMMONS) {
       txt = "Summons";
-    } else if (orderType === "WARRANT") {
+    } else if (orderType === ORDER_TYPES.WARRANT) {
       txt = "Warrant";
-    } else if (orderType === "PROCLAMATION") {
+    } else if (orderType === ORDER_TYPES.PROCLAMATION) {
       txt = "Proclamation";
-    } else if (orderType === "ATTACHMENT") {
+    } else if (orderType === ORDER_TYPES.ATTACHMENT) {
       txt = "Attachment";
-    } else if (orderType === "MISCELLANEOUS_PROCESS") {
+    } else if (orderType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
       txt = "Miscellaneous Process";
     } else {
       txt = "Notice";

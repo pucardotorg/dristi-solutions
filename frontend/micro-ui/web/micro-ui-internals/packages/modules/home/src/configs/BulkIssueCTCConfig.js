@@ -58,7 +58,7 @@ export const bulkIssueCTCConfig = {
             },
           },
           {
-            label: "SEARCH_CASE_NAME",
+            label: "CTC_CASE_NAME_OR_NUMBER",
             type: "text",
             isMandatory: false,
             disable: false,

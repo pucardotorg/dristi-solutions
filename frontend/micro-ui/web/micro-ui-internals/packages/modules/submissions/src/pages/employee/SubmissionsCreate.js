@@ -38,6 +38,7 @@ import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/p
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { validateSuretyContactNumber } from "../../utils/bailBondUtils";
+import { ORDER_TYPES } from "../../utils/constants";
 import {
   _getApplicationAmount,
   BAIL_APPLICATION_EXCLUDED_STATUSES,
@@ -580,7 +581,7 @@ const SubmissionsCreate = ({ path }) => {
   }, [itemId, orderDetails]);
 
   const compositeWarrantItem = useMemo(() => {
-    return orderDetails?.compositeItems?.find((item) => item?.orderType === "WARRANT" && item?.id === itemId);
+    return orderDetails?.compositeItems?.find((item) => item?.orderType === ORDER_TYPES.WARRANT && item?.id === itemId);
   }, [itemId, orderDetails]);
 
   const { data: allOrdersData, isloading: isAllOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
@@ -875,7 +876,6 @@ const SubmissionsCreate = ({ path }) => {
     if (applicationType && hearingId && ["CHECKOUT_REQUEST", "RE_SCHEDULE"].includes(applicationType) && !formData?.initialHearingDate) {
       setValue("initialHearingDate", DateUtils.getFormattedDate(new Date(hearingsData?.HearingList?.[0]?.startTime), requiredDateFormat));
     }
-
     if (
       applicationType &&
       ["CHECKOUT_REQUEST", "RE_SCHEDULE"].includes(applicationType) &&
@@ -1716,7 +1716,7 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
-  const handleReviewModalSubmit = async ({ applicationPreviewPdf, applicationPreviewFileName }) => {
+  const handleReviewModalSubmit = async ({ applicationPreviewPdf, applicationPreviewFileName, isUpload = false }) => {
     try {
       if (applicationDetails?.status === SubmissionWorkflowState.DRAFT_IN_PROGRESS) {
         const res = await updateSubmission(SubmissionWorkflowAction.SUBMIT);
@@ -1754,10 +1754,29 @@ const SubmissionsCreate = ({ path }) => {
       if (!fileStoreId) {
         throw new Error("FileStoreId not generated");
       }
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const userUuid = userInfo?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUuid);
+
+      const isSendForEsign = authorizedUuid !== userUuid;
+
       if (fileStoreId) {
         setApplicationPdfFileStoreId(fileStoreId);
       }
-      setShowsignatureModal(true);
+
+      if (isUpload) {
+        setShowsignatureModal(true);
+      } else {
+        if (!isSendForEsign) {
+          setShowsignatureModal(true);
+        } else {
+          setShowErrorToast({ label: t("SUCCESFULLY_SENT_FOR_ESIGN"), error: false });
+          history.replace(
+            `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+          );
+        }
+      }
+
       setShowReviewModal(false);
     } catch (error) {
       console.error("Error while submitting the application:", error);
@@ -1797,9 +1816,6 @@ const SubmissionsCreate = ({ path }) => {
   const handleAddSignature = async () => {
     setLoader(true);
     try {
-      if (applicationType !== "SUBMIT_BAIL_DOCUMENTS") {
-        await createDemand();
-      }
       const response = await updateSubmission(SubmissionWorkflowAction.ESIGN);
       setShowsignatureModal(false);
       setShowPaymentModal(true);
@@ -1879,38 +1895,6 @@ const SubmissionsCreate = ({ path }) => {
     totalAmount: _getApplicationAmount(applicationTypeAmount, applicationType),
     scenario,
   });
-
-  const { data: billResponse, isLoading: isBillLoading } = Digit.Hooks.dristi.useBillSearch(
-    {},
-    { tenantId, consumerCode: applicationDetails?.applicationNumber + `_${suffix}`, service: entityType },
-    `dristi_${suffix}`,
-    Boolean(applicationDetails?.applicationNumber && suffix)
-  );
-
-  const createDemand = async () => {
-    if (billResponse?.Bill?.length === 0) {
-      await DRISTIService.etreasuryCreateDemand({
-        tenantId,
-        entityType,
-        filingNumber: caseDetails?.filingNumber || filingNumber,
-        consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
-        calculation: [
-          {
-            tenantId: tenantId,
-            totalAmount: _getApplicationAmount(applicationTypeAmount, applicationType),
-            breakDown: [
-              {
-                type: "Application Fee",
-                code: "APPLICATION_FEE",
-                amount: _getApplicationAmount(applicationTypeAmount, applicationType),
-                additionalParams: {},
-              },
-            ],
-          },
-        ],
-      });
-    }
-  };
 
   const handleMakePayment = async (totalAmount) => {
     try {

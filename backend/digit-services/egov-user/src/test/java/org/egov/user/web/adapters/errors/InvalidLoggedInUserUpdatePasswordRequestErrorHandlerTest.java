@@ -6,22 +6,18 @@ import org.egov.common.contract.response.ErrorResponse;
 import org.egov.user.domain.model.LoggedInUserUpdatePasswordRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith; // ADDED
-import org.mockito.junit.jupiter.MockitoExtension; // ADDED
 
 import java.util.List;
 
-// FIX: Updated to JUnit 5 Assertions
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class) // Required for Mockito in JUnit 5
 public class InvalidLoggedInUserUpdatePasswordRequestErrorHandlerTest {
 
     private InvalidLoggedInUserUpdatePasswordRequestErrorHandler errorHandler;
 
-    @BeforeEach // Replacement for @Before
+    @BeforeEach
     public void before() {
         errorHandler = new InvalidLoggedInUserUpdatePasswordRequestErrorHandler();
     }
@@ -70,4 +66,5 @@ public class InvalidLoggedInUserUpdatePasswordRequestErrorHandlerTest {
         assertEquals("New password is mandatory", fields.get(0).getMessage());
         assertEquals("USER.NEW_PASSWORD_MANDATORY", fields.get(0).getCode());
     }
+
 }

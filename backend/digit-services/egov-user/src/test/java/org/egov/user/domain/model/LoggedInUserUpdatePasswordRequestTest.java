@@ -4,7 +4,6 @@ import org.egov.user.domain.exception.InvalidLoggedInUserUpdatePasswordRequestEx
 import org.egov.user.domain.model.enums.UserType;
 import org.junit.jupiter.api.Test;
 
-// FIX: Updated to JUnit 5 Assertions
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -90,36 +89,41 @@ public class LoggedInUserUpdatePasswordRequestTest {
 
     @Test
     public void test_validate_should_throw_exception_when_user_id_is_not_present() {
-        final LoggedInUserUpdatePasswordRequest updatePassword = LoggedInUserUpdatePasswordRequest.builder()
-                .existingPassword("existingPassword")
-                .newPassword("newPassword")
-                .userName(null)
-                .build();
+        assertThrows(InvalidLoggedInUserUpdatePasswordRequestException.class, () -> {
+            final LoggedInUserUpdatePasswordRequest updatePassword = LoggedInUserUpdatePasswordRequest.builder()
+                    .existingPassword("existingPassword")
+                    .newPassword("newPassword")
+                    .userName(null)
+                    .build();
 
-        // FIX: Replaced expected = ... with assertThrows
-        assertThrows(InvalidLoggedInUserUpdatePasswordRequestException.class, updatePassword::validate);
+            updatePassword.validate();
+        });
     }
 
     @Test
     public void test_validate_should_throw_exception_when_old_password_is_not_present() {
-        final LoggedInUserUpdatePasswordRequest updatePassword = LoggedInUserUpdatePasswordRequest.builder()
-                .existingPassword(null)
-                .newPassword("newPassword")
-                .userName("xya")
-                .build();
+        assertThrows(InvalidLoggedInUserUpdatePasswordRequestException.class, () -> {
+            final LoggedInUserUpdatePasswordRequest updatePassword = LoggedInUserUpdatePasswordRequest.builder()
+                    .existingPassword(null)
+                    .newPassword("newPassword")
+                    .userName("xya")
+                    .build();
 
-        assertThrows(InvalidLoggedInUserUpdatePasswordRequestException.class, updatePassword::validate);
+            updatePassword.validate();
+        });
     }
 
     @Test
     public void test_validate_should_throw_exception_when_new_password_is_not_present() {
-        final LoggedInUserUpdatePasswordRequest updatePassword = LoggedInUserUpdatePasswordRequest.builder()
-                .existingPassword("existingPassword")
-                .newPassword(null)
-                .userName("xyz")
-                .build();
+        assertThrows(InvalidLoggedInUserUpdatePasswordRequestException.class, () -> {
+            final LoggedInUserUpdatePasswordRequest updatePassword = LoggedInUserUpdatePasswordRequest.builder()
+                    .existingPassword("existingPassword")
+                    .newPassword(null)
+                    .userName("xyz")
+                    .build();
 
-        assertThrows(InvalidLoggedInUserUpdatePasswordRequestException.class, updatePassword::validate);
+            updatePassword.validate();
+        });
     }
 
 }

@@ -9,7 +9,6 @@ import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosIns
 import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { HomeService } from "../../hooks/services";
 import qs from "qs";
-import { formatLabel } from "../../configs/UICustomizations";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -48,20 +47,27 @@ const BulkIssueCTC = () => {
         return [{ ...applicationData, isSelected: checked }];
       }
 
+      const isMatch = (item) => {
+        return (
+          item?.businessObject?.ctcApplicationNumber === applicationData?.businessObject?.ctcApplicationNumber &&
+          item?.businessObject?.docId === applicationData?.businessObject?.docId
+        );
+      };
+
       const updated = prev?.map((item) => {
-        if (item?.businessObject?.ctcApplicationNumber !== applicationData?.businessObject?.ctcApplicationNumber) return item;
+        if (!isMatch(item)) return item;
         return {
           ...item,
           isSelected: checked,
         };
       });
 
-      const hasMatch = prev.some((item) => item?.businessObject?.ctcApplicationNumber === applicationData?.businessObject?.ctcApplicationNumber);
+      const hasMatch = prev.some(isMatch);
       if (!hasMatch) {
         updated.push({ ...applicationData, isSelected: checked });
       }
 
-      return updated.filter((item) => item.isSelected);
+      return updated.filter((item) => item?.isSelected);
     });
   };
 
@@ -72,7 +78,7 @@ const BulkIssueCTC = () => {
 
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       const accessToken = window.localStorage.getItem("token");
-      const courtId = window.localStorage.getItem("courtId") || "KLKM52";
+      const courtId = window.localStorage.getItem("courtId");
 
       // Call the PDF generation API
       const response = await axiosInstance.post(
@@ -93,7 +99,7 @@ const BulkIssueCTC = () => {
             nameOfApplicant: row?.businessObject?.nameOfApplicant,
             dateOfApplication: row?.businessObject?.dateOfApplication,
             dateOfApplicationApproval: row?.businessObject?.dateOfApplicationApproval || null,
-            requestedDocName: formatLabel(row?.businessObject?.docTitle),
+            requestedDocName: t(row?.businessObject?.docTitle),
           },
         },
         { responseType: "blob" }
@@ -366,7 +372,7 @@ const BulkIssueCTC = () => {
         courtId: courtId,
         placeholder: "Certification Signature",
         tenantId: tenantId,
-        docTitle: formatLabel(row?.businessObject?.docTitle),
+        docTitle: t(row?.businessObject?.docTitle),
       }));
 
       const getDocsResponse = await HomeService._getDocsForCTCApplication(
@@ -421,7 +427,7 @@ const BulkIssueCTC = () => {
       };
 
       const payload = {
-        courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId") || "KLKM52",
+        courtId: selectedRowData?.businessObject?.courtId || window.localStorage.getItem("courtId"),
         action,
         docs: [docsDetails],
         status: "PENDING",
@@ -491,26 +497,23 @@ const BulkIssueCTC = () => {
 
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
-    const savedOrderPdf = sessionStorage.getItem("orderPDF");
+    const savedOrderPdf = sessionStorage.getItem("docPdf");
     const signedState = JSON.parse(sessionStorage.getItem("ctcSignState"));
     if (isSignSuccess && signedState) {
       setShowSignatureModal(true);
       setSignedDocumentUploadID(savedOrderPdf);
       setSelectedRowData(signedState);
-    }
-  }, []);
 
-  useEffect(() => {
-    if (showSignatureModal) {
       const cleanupTimer = setTimeout(() => {
         sessionStorage.removeItem("esignProcess");
-        sessionStorage.removeItem("orderPDF");
+        sessionStorage.removeItem("docPdf");
         sessionStorage.removeItem("ctcSignState");
+        sessionStorage.removeItem("homeActiveTab");
       }, 2000);
 
       return () => clearTimeout(cleanupTimer);
     }
-  }, [showSignatureModal]);
+  }, []);
 
   return (
     <React.Fragment>
@@ -574,11 +577,16 @@ const BulkIssueCTC = () => {
           documentBlob={selectedRowData?.businessObject?.downloadedDocument}
           documentName={selectedRowData?.businessObject?.fileName}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
-          handleGoBackSignatureModal={() => {
-            setShowSignatureModal(false);
-            setShowModal(true);
+          handleGoBackSignatureModal={async () => {
             sessionStorage.removeItem("ctcSignState");
             sessionStorage.removeItem("fileStoreId");
+            if (!(selectedRowData?.businessObject?.downloadedDocument instanceof Blob)) {
+              await handleRowClick(selectedRowData);
+              setShowSignatureModal(false);
+            } else {
+              setShowSignatureModal(false);
+              setShowModal(true);
+            }
           }}
           saveOnsubmitLabel={"CS_ISSUE"}
           handleIssue={handleIssueDocuments}

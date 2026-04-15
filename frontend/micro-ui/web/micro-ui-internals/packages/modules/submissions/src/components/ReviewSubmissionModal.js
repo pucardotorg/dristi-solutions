@@ -1,25 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import { Toast } from "@egovernments/digit-ui-react-components";
 
 import { Urls } from "../hooks/services/Urls";
 import { useQuery } from "react-query";
 import { convertToDateInputFormat, getUserInfoFromUuids } from "../utils/index";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const getStyles = (key) => {
   const styles = {
     container: {
@@ -114,6 +102,10 @@ function ReviewSubmissionModal({
     createdByUser: null,
     onBehalfOfUser: null,
   });
+
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -249,7 +241,9 @@ function ReviewSubmissionModal({
       headerBarEnd={<CloseBtn onClick={handleBack} />}
       actionCancelLabel={t(cancelLabel)}
       actionCancelOnSubmit={handleCancel}
-      actionSaveLabel={t("ADD_SIGNATURE")}
+      actionCustomLabel={authorizedUuid != userUuid ? t("UPLOAD_SIGNED_COPY") : null}
+      actionCustomLabelSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName, isUpload: true })}
+      actionSaveLabel={authorizedUuid === userUuid ? t("ADD_SIGNATURE") : application?.status === "DRAFT_IN_PROGRESS" ? t("SEND_FOR_ESIGN") : null}
       isDisabled={isLoading}
       actionSaveOnSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName })}
       className={"review-submission-appl-modal"}

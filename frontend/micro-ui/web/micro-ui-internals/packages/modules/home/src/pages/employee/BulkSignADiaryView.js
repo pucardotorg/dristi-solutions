@@ -12,6 +12,7 @@ import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosIns
 import ADiaryDocumentPdfModal from "./ADiaryDocumentPdfModal";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { ORDER_TYPES } from "../../utils/constants";
 
 const buttonStyle = {
   borderRadius: "4px",
@@ -191,7 +192,7 @@ function BulkSignADiaryView() {
           showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
         }
       }
-      if (entry?.referenceType === "notice") {
+      if (entry?.referenceType === ORDER_TYPES.NOTICE) {
         try {
           const notificationResponse = await Digit.HearingService.searchNotification({
             criteria: {

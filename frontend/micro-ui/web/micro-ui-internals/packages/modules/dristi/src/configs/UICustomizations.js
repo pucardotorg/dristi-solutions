@@ -1633,15 +1633,15 @@ export const UICustomizations = {
         processSearchCriteria: {
           businessService: ["hearing-default"],
           moduleName: "Hearing Service",
-          tenantId: requestCriteria?.params?.tenantId || "kl",
+          tenantId: requestCriteria?.params?.tenantId,
         },
         moduleSearchCriteria: {
           fromDate: new Date(requestCriteria?.state?.searchForm?.date + "T00:00:00").getTime(),
           toDate: new Date(requestCriteria?.state?.searchForm?.date + "T23:59:59.999").getTime(),
-          tenantId: requestCriteria?.params?.tenantId || "kl",
+          tenantId: requestCriteria?.params?.tenantId,
           ...(requestCriteria?.state?.searchForm?.status && { status: requestCriteria?.state?.searchForm?.status?.value }),
         },
-        tenantId: requestCriteria?.params?.tenantId || "kl",
+        tenantId: requestCriteria?.params?.tenantId,
         limit: requestCriteria?.state?.tableForm?.limit || 10,
         offset: requestCriteria?.state?.tableForm?.offset || 0,
       };
@@ -2610,7 +2610,7 @@ export const UICustomizations = {
       const caseId = row?.caseNumber || row?.filingNumber;
       switch (key) {
         case "PENDING_CASE_NAME":
-          return row?.substage === "SCRUTINY" && row?.hasCaseReviewerAccess ? (
+          return (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
               to={{
@@ -2621,8 +2621,6 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
-          ) : (
-            value || "-"
           );
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -2856,6 +2854,10 @@ export const UICustomizations = {
         case "CASE_NAME": {
           const rawTitle = (row?.caseTitle || "").toString().trim();
           return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
+        }
+        case "CASE_NUMBER": {
+          const caseNumber = row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
+          return caseNumber || "";
         }
         default:
           return value != null ? value : "";

@@ -7,11 +7,7 @@ import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks
 import { HomeService } from "../../../../../home/src/hooks/services";
 import { Urls } from "../../../hooks";
 import { InfoCard } from "@egovernments/digit-ui-components";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { Heading } from "../../../components/ModalComponents";
 const Close = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clip-path="url(#clip0_4124_3214)">
@@ -224,7 +220,6 @@ function ScheduleHearing({
     setShowErrorToast(false);
   };
 
-
   const handleClickDate = (label) => {
     if (status === "OPTOUT") {
       const newSelectedChip = selectedChip.includes(label) ? null : label;
@@ -295,8 +290,9 @@ function ScheduleHearing({
           documents: [],
           additionalDetails: {
             formdata: {
-              hearingDate: `${dateArr[2]}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${dateArr[0] < 9 ? `0${dateArr[0]}` : dateArr[0]
-                }`,
+              hearingDate: `${dateArr[2]}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                dateArr[0] < 9 ? `0${dateArr[0]}` : dateArr[0]
+              }`,
               hearingPurpose: data.purpose,
               orderType: {
                 code: "SCHEDULE_OF_HEARING_DATE",

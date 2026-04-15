@@ -70,7 +70,7 @@ public class PublishOrderApprovalRejectionLitigantDetailsChange implements Order
         CourtCase courtCase = cases.get(0);
 
         String action = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "applicationGrantedRejected", "code"), String.class);
-        String caseAction = action.equalsIgnoreCase("REJECTED") ? "REJECT" : "ACCEPT";
+        String caseAction = "REJECTED".equalsIgnoreCase(action) ? "REJECT" : "ACCEPT";
         String pendingTaskRefId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("pendingTaskRefId"), String.class);
         //create process
 

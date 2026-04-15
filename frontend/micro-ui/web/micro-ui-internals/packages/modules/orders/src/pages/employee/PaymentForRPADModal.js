@@ -14,6 +14,8 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { getPartyNameForInfos } from "../../utils";
+import { CaseWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/caseWorkflow";
+import { ORDER_TYPES } from "../../utils/constants";
 const modeOptions = [{ label: "Registered Post (10-15 days)", value: "registered-post" }];
 
 const submitModalInfo = {
@@ -63,7 +65,7 @@ const PaymentForSummonComponent = ({
         label={"Complete in 2 days"}
         additionalElements={[
           <p>
-            {t(orderType === "SUMMONS" ? "SUMMON_DELIVERY_NOTE" : "NOTICE_DELIVERY_NOTE")}{" "}
+            {t(orderType === ORDER_TYPES.SUMMONS ? "SUMMON_DELIVERY_NOTE" : "NOTICE_DELIVERY_NOTE")}{" "}
             <span style={{ fontWeight: "bold" }}>{getDateWithMonthName(orderDate)}</span> {t("ON_TIME_DELIVERY")}
           </p>,
         ]}
@@ -110,7 +112,7 @@ const PaymentForSummonComponent = ({
                       {t("THIS_OFFLINE_TEXT")}
                       <span className="learn-more-text">
                         {t("LEARN_MORE")}
-                        <p className="text-tooltip">{orderType === "SUMMONS" ? t("SUMMONS_LEARN_MORE") : t("NOTICE_LEARN_MORE")}</p>
+                        <p className="text-tooltip">{orderType === ORDER_TYPES.SUMMONS ? t("SUMMONS_LEARN_MORE") : t("NOTICE_LEARN_MORE")}</p>
                       </span>
                     </p>
                   )}
@@ -150,7 +152,7 @@ const PaymentForRPADModal = ({ path }) => {
     Boolean(filingNumber)
   );
 
-  const isCaseAdmitted = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0]?.status === "CASE_ADMITTED", [caseData]);
+  const isCaseAdmitted = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0]?.status === CaseWorkflowState.CASE_ADMITTED, [caseData]);
 
   useEffect(() => {
     if (caseData) {
@@ -259,7 +261,7 @@ const PaymentForRPADModal = ({ path }) => {
     return taskNumber ? `${taskNumber}_EPOST_COURT` : undefined;
   }, [taskNumber]);
 
-  const service = useMemo(() => (orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
+  const service = useMemo(() => (orderType === ORDER_TYPES.SUMMONS ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
   const taskType = useMemo(() => getTaskType(service), [service]);
   const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useBillSearch(
     {},
@@ -396,12 +398,12 @@ const PaymentForRPADModal = ({ path }) => {
           await Promise.all([
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: orderType === "SUMMONS" ? "Show Summon-Warrant Status" : "Show Notice Status",
+                name: orderType === ORDER_TYPES.SUMMONS ? "Show Summon-Warrant Status" : "Show Notice Status",
                 entityType: paymentType.ORDER_MANAGELIFECYCLE,
                 referenceId: hearingsData?.HearingList?.[0]?.hearingId,
-                status: orderType === "SUMMONS" ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
+                status: orderType === ORDER_TYPES.SUMMONS ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
                 assignedTo: [],
-                assignedRole: [orderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
+                assignedRole: [orderType === ORDER_TYPES.SUMMONS ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
                 cnrNumber: filteredTasks?.[0]?.cnrNumber,
                 filingNumber: filingNumber,
                 caseId: caseDetails?.id,
@@ -417,7 +419,7 @@ const PaymentForRPADModal = ({ path }) => {
             }),
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: orderType === "SUMMONS" ? `MAKE_PAYMENT_FOR_SUMMONS_RPAD` : `MAKE_PAYMENT_FOR_NOTICE_RPAD`,
+                name: orderType === ORDER_TYPES.SUMMONS ? `MAKE_PAYMENT_FOR_SUMMONS_RPAD` : `MAKE_PAYMENT_FOR_NOTICE_RPAD`,
                 entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
                 referenceId: `MANUAL_${taskNumber}`,
                 status: paymentType.PAYMENT_PENDING_RPAD,
@@ -513,7 +515,7 @@ const PaymentForRPADModal = ({ path }) => {
 
     return {
       handleClose: handleClose,
-      heading: { label: `Payment for ${orderType === "SUMMONS" ? "Summons" : "Notice"} via RPAD` },
+      heading: { label: `Payment for ${orderType === ORDER_TYPES.SUMMONS ? "Summons" : "Notice"} via RPAD` },
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
       payOnlineButtonTitle: payOnlineButtonTitle,

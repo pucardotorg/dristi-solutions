@@ -142,7 +142,6 @@ const WitnessDrawerV2 = ({
     const fetchAdvocateData = async () => {
       const advocatesWithFetchedData = await Promise.all(
         (caseDetails?.representatives || []).map(async (rep) => {
-          const advocates = caseDetails?.additionalDetails?.advocateDetails?.formdata;
           let ownerType = "";
           for (let i = 0; i < rep?.representing?.length; i++) {
             const represetingObj = rep?.representing?.[i];
@@ -156,11 +155,11 @@ const WitnessDrawerV2 = ({
 
           // First try to get mobile number from local data (your original logic)
           let mobileNumber = null;
-          for (let i = 0; i < advocates?.length; i++) {
-            for (let j = 0; j < advocates[i]?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length; j++) {
-              const advocateData = advocates[i]?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.[j];
-              if (advocateData?.advocateBarRegNumberWithName?.advocateUuid === rep?.additionalDetails?.uuid) {
-                mobileNumber = advocateData?.advocateNameDetails?.advocateMobileNumber;
+          for (let i = 0; i < caseDetails?.advocateDetailBlock?.length; i++) {
+            for (let j = 0; j < caseDetails?.advocateDetailBlock?.[i]?.advocates?.length; j++) {
+              const advocateData = caseDetails?.advocateDetailBlock?.[i]?.advocates?.[j];
+              if (advocateData?.advocateUuid === rep?.additionalDetails?.uuid) {
+                mobileNumber = advocateData?.mobileNumber;
                 break;
               }
             }
@@ -886,6 +885,7 @@ const WitnessDrawerV2 = ({
   const handleESign = async (number = "") => {
     // TODO: call Api then close this modal and show next modal
     try {
+      setLoader(true);
       const currentParty = allParties?.find((p) => (p?.uuid || p?.uniqueId) === selectedWitness?.value);
       const currnetEvidenceUpdated = structuredClone(currentEvidence);
       let witnessMobileNum = [];
@@ -918,6 +918,7 @@ const WitnessDrawerV2 = ({
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       // evidenceRefetch();
+      setLoader(false);
       setShowsignatureModal(false);
     }
   };
@@ -925,7 +926,7 @@ const WitnessDrawerV2 = ({
   const handleSubmitSignature = async (fileStoreId) => {
     // TODO: api call with fileStoreID then
     try {
-      setLoader(false);
+      setLoader(true);
       const res = await updateWitnessDepositionDocument(fileStoreId, "UPLOAD");
       setShowsignatureModal(false);
       setShowUploadSignature(false);
@@ -1205,7 +1206,7 @@ const WitnessDrawerV2 = ({
             style={{
               width: "100vw",
               height: "100vh",
-              zIndex: "9999",
+              zIndex: "999999999999999999",
               position: "fixed",
               right: "0",
               display: "flex",

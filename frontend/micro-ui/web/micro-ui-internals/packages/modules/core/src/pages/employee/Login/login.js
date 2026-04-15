@@ -32,7 +32,6 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
 
   const history = useHistory();
 
-
   useEffect(() => {
     if (!user) {
       return;
@@ -131,10 +130,10 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
     } catch (err) {
       setShowToast(
         err?.response?.data?.error_description ||
-        (err?.message === "ES_ERROR_USER_NOT_PERMITTED" && t("ES_ERROR_USER_NOT_PERMITTED")) ||
-        (err?.message === "USER_ACCOUNT_VALIDITY_EXPIRED" && t("USER_ACCOUNT_VALIDITY_EXPIRED")) ||
-        err?.response?.data?.Errors[0]?.message ||
-        t("INVALID_LOGIN_CREDENTIALS")
+          (err?.message === "ES_ERROR_USER_NOT_PERMITTED" && t("ES_ERROR_USER_NOT_PERMITTED")) ||
+          (err?.message === "USER_ACCOUNT_VALIDITY_EXPIRED" && t("USER_ACCOUNT_VALIDITY_EXPIRED")) ||
+          err?.response?.data?.Errors[0]?.message ||
+          t("INVALID_LOGIN_CREDENTIALS")
       );
       setTimeout(closeToast, 5000);
     }
@@ -163,6 +162,7 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
   );
 
   const defaultValue = useMemo(() => {
+    // Remove once the default district and courtroom are removed from the login screen
     const district = commonMasterData?.["common-masters"]?.District?.find((district) => district?.code === "KOLLAM");
     const courtRoom = commonMasterData?.["common-masters"]?.Court_Rooms?.find((room) => room?.code === "KLKM52");
     setPrevDistrict(district);

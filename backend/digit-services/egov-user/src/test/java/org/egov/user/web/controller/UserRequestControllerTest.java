@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -19,8 +18,8 @@ import java.util.TimeZone;
 
 import org.apache.commons.io.IOUtils;
 import org.egov.common.utils.MultiStateInstanceUtil;
+import org.egov.encryption.EncryptionService;
 import org.egov.encryption.masking.MaskingService;
-import org.egov.user.Resources;
 import org.egov.user.TestConfiguration;
 import org.egov.user.domain.exception.DuplicateUserNameException;
 import org.egov.user.domain.exception.OtpValidationPendingException;
@@ -33,7 +32,6 @@ import org.egov.user.domain.model.enums.Gender;
 import org.egov.user.domain.model.enums.UserType;
 import org.egov.user.domain.service.TokenService;
 import org.egov.user.domain.service.UserService;
-import org.egov.user.security.CustomAuthenticationKeyGenerator;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,10 +45,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-@Disabled("Requires MDMS service configuration")
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(UserController.class)
-@Import(TestConfiguration.class)
+@Import({TestConfiguration.class, org.egov.user.security.SecurityConfig.class})
 public class UserRequestControllerTest {
 
     @Autowired
@@ -69,10 +66,28 @@ public class UserRequestControllerTest {
     private TokenService tokenService;
 
     @MockBean
-    private CustomAuthenticationKeyGenerator authenticationKeyGenerator;
+    private MaskingService maskingService;
 
     @MockBean
-    private MaskingService maskingService;
+    private EncryptionService encryptionService;
+
+/*
+    @Test
+    @WithMockUser
+    public void testShouldThrowErrorWhileRegisteringWithInvalidCitizen() throws Exception {
+        InvalidUserCreateException exception = new InvalidUserCreateException(org.egov.user.domain.model.User.builder().build());
+        when(userService.createCitizen(any(org.egov.user.domain.model.User.class))).thenThrow(exception);
+
+        String fileContents = getFileContents("createCitizenUnsuccessfulRequest.json");
+        mockMvc.perform(post("/citizen/_create/")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(fileContents)
+        )
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(getFileContents("createCitizenUnsuccessfulResponse.json")));
+    }
+*/
 
     @Disabled
     @Test
@@ -83,12 +98,66 @@ public class UserRequestControllerTest {
 
         String fileContents = getFileContents("createValidatedCitizenSuccessRequest.json");
         mockMvc.perform(post("/citizen/_create")
-            .contentType(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
                         .content(fileContents)
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(getFileContents("createCitizenOtpFailureResponse.json")));
+    }
+
+    private Date toDate(LocalDateTime localDateTime) {
+        final ZonedDateTime expectedDateTime = ZonedDateTime.of(localDateTime, ZoneId.of("Asia/Calcutta"));
+        return Date.from(expectedDateTime.toInstant());
+    }
+
+    private User buildUser() {
+        Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        c.set(1917, Calendar.MARCH, 8, 11, 15, 36);
+        final Date expectedDOB = toDate(LocalDateTime.of(1986, 8, 4, 5, 30));
+
+        c.set(2017, Calendar.FEBRUARY, 8, 11, 15, 36);
+        Date createdDate = c.getTime();
+        c.set(2018, Calendar.FEBRUARY, 8, 11, 15, 36);
+        Date pwdExpiryDate = c.getTime();
+        Role role = Role.builder()
+                .name("CITIZEN")
+                .description("Citizen role")
+                .build();
+        Set<Role> roles = new HashSet<>();
+        roles.add(role);
+        return User.builder()
+                .id(12L)
+                .name("Jamaal Bhai")
+                .username("jamaalbhai")
+                .salutation("dawakhana@charminar")
+                .gender(Gender.MALE)
+                .mobileNumber("9988776655")
+                .emailId("jamalbhai@maildrop.cc")
+                .pan("AITGC5624P")
+                .aadhaarNumber("96a70a9a-03bd-11e7-93ae-92361f002671")
+                .active(Boolean.TRUE)
+                .dob(expectedDOB)
+                .passwordExpiryDate(pwdExpiryDate)
+                .locale("en_IN")
+                .type(UserType.CITIZEN)
+                .accountLocked(Boolean.FALSE)
+                .bloodGroup(BloodGroup.O_POSITIVE)
+                .identificationMark("Head is missing on the body")
+                .createdDate(createdDate)
+                .lastModifiedDate(createdDate)
+                .createdBy(22L)
+                .lastModifiedBy(22L)
+                .roles(roles)
+                .build();
+    }
+
+    private String getFileContents(String fileName) {
+        try {
+            return IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream(fileName), "UTF-8");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
@@ -140,59 +209,5 @@ public class UserRequestControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(getFileContents("updateInvalidCitizenUnsuccessfulResponse.json")));
-    }
-
-    private Date toDate(LocalDateTime localDateTime) {
-        final ZonedDateTime expectedDateTime = ZonedDateTime.of(localDateTime, ZoneId.of("Asia/Calcutta"));
-        return Date.from(expectedDateTime.toInstant());
-    }
-
-    private User buildUser() {
-        Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-        c.set(1917, Calendar.MARCH, 8, 11, 15, 36);
-        final Date expectedDOB = toDate(LocalDateTime.of(1986, 8, 4, 5, 30));
-
-        c.set(2017, Calendar.FEBRUARY, 8, 11, 15, 36);
-        Date createdDate = c.getTime();
-        c.set(2018, Calendar.FEBRUARY, 8, 11, 15, 36);
-        Date pwdExpiryDate = c.getTime();
-        Role role = Role.builder()
-                .name("CITIZEN")
-                .description("Citizen role")
-                .build();
-        Set<Role> roles = new HashSet<>();
-        roles.add(role);
-        return User.builder()
-                .id(12L)
-                .name("Jamaal Bhai")
-                .username("jamaalbhai")
-                .salutation("dawakhana@charminar")
-                .gender(Gender.MALE)
-                .mobileNumber("9988776655")
-                .emailId("jamalbhai@maildrop.cc")
-                .pan("AITGC5624P")
-                .aadhaarNumber("96a70a9a-03bd-11e7-93ae-92361f002671")
-                .active(Boolean.TRUE)
-                .dob(expectedDOB)
-                .passwordExpiryDate(pwdExpiryDate)
-                .locale("en_IN")
-                .type(UserType.CITIZEN)
-                .accountLocked(Boolean.FALSE)
-                .bloodGroup(BloodGroup.O_POSITIVE)
-                .identificationMark("Head is missing on the body")
-                .createdDate(createdDate)
-                .lastModifiedDate(createdDate)
-                .createdBy(22L)
-                .lastModifiedBy(22L)
-                .roles(roles)
-                .build();
-    }
-
-    private String getFileContents(String fileName) {
-        try {
-            return IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream(fileName), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

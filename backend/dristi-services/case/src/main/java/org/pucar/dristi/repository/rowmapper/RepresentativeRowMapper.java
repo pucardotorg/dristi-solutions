@@ -82,7 +82,7 @@ public class RepresentativeRowMapper implements ResultSetExtractor<Map<UUID, Lis
                     // If advocate additional details contains personal fields, map them to Advocate model
                     try {
                         if (advocate.getAdditionalDetails() != null) {
-                            com.fasterxml.jackson.databind.JsonNode advNode = objectMapper.convertValue(advocate.getAdditionalDetails(), com.fasterxml.jackson.databind.JsonNode.class);
+                            com.fasterxml.jackson.databind.JsonNode advNode = (com.fasterxml.jackson.databind.JsonNode) advocate.getAdditionalDetails();
                             if (advNode.has("advocateUuid") && !advNode.get("advocateUuid").isNull()) {
                                 try { advocate.setAdvocateUuid(UUID.fromString(advNode.get("advocateUuid").asText())); } catch (Exception ignored) {}
                             }

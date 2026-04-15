@@ -12,12 +12,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings; // ADDED
-import org.mockito.quality.Strictness; // ADDED
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
-import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.security.core.Authentication;
+import org.egov.user.security.oauth2.EgovTokenStore;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,51 +29,43 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT) // FIX: Resolves UnnecessaryStubbingException
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TokenServiceTest {
 
     @InjectMocks
     private TokenService tokenService;
 
     @Mock
-    private TokenStore tokenStore;
+    private EgovTokenStore tokenStore;
 
     @Mock
     private ActionRestRepository actionRestRepository;
 
     @Test
     public void test_should_get_user_details_for_given_token() {
-        OAuth2Authentication oAuth2Authentication = mock(OAuth2Authentication.class);
+        Authentication authentication = mock(Authentication.class);
         final String accessToken = "c80e0ade-f48d-4077-b0d2-4e58526a6bfd";
-
-        when(tokenStore.readAuthentication(accessToken)).thenReturn(oAuth2Authentication);
+        when(tokenStore.readAuthentication(accessToken)).thenReturn(authentication);
         SecureUser secureUser = new SecureUser(getUser());
-        when(oAuth2Authentication.getPrincipal()).thenReturn(secureUser);
-
+        when(authentication.getPrincipal()).thenReturn(secureUser);
         final List<Action> expectedActions = getActions();
-
-        // Mockito flags this as unnecessary if the service logic doesn't call it exactly like this
         when(actionRestRepository.getActionByRoleCodes(getRoleCodes(), "default")).thenReturn(expectedActions);
-
         UserDetail actualUserDetails = tokenService.getUser(accessToken);
 
         assertEquals(secureUser, actualUserDetails.getSecureUser());
+//		assertEquals(expectedActions, actualUserDetails.getActions());
     }
 
     @Test
     public void test_should_throw_exception_when_access_token_is_not_specified() {
-        assertThrows(InvalidAccessTokenException.class, () -> {
-            tokenService.getUser("");
-        });
+        assertThrows(InvalidAccessTokenException.class, () -> tokenService.getUser(""));
     }
 
     @Test
     public void test_should_throw_exception_when_access_token_is_not_present_in_token_store() {
         when(tokenStore.readAuthentication("accessToken")).thenReturn(null);
 
-        assertThrows(InvalidAccessTokenException.class, () -> {
-            tokenService.getUser("accessToken");
-        });
+        assertThrows(InvalidAccessTokenException.class, () -> tokenService.getUser("accessToken"));
     }
 
     private User getUser() {
@@ -99,20 +94,23 @@ public class TokenServiceTest {
     }
 
     private List<Action> getActions() {
-        return Collections.singletonList(
-                Action.builder()
-                        .url("/pgr/receivingmode")
-                        .name("Get all ReceivingMode")
-                        .displayName("Get all ReceivingMode")
-                        .orderNumber(0)
-                        .queryParams("tenantId=")
-                        .parentModule("1")
-                        .serviceCode("PGR")
-                        .build()
-        );
+        List<Action> actions = new ArrayList<>();
+        Action action = Action.builder()
+                .url("/pgr/receivingmode")
+                .name("Get all ReceivingMode")
+                .displayName("Get all ReceivingMode")
+                .orderNumber(0)
+                .queryParams("tenantId=")
+                .parentModule("1")
+                .serviceCode("PGR")
+                .build();
+        actions.add(action);
+
+        return actions;
     }
 
     private List<String> getRoleCodes() {
         return getUser().getRoles().stream().map(Role::getCode).collect(Collectors.toList());
     }
+
 }

@@ -22,12 +22,13 @@ import { constructFullName, removeInvalidNameParts } from "@egovernments/digit-u
 import { Loader } from "@egovernments/digit-ui-react-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { ORDER_TYPES, USER_TYPES, USER_ROLES, APPLICATION_TYPES, PARTY_TYPES, TAB_NAMES, YES_NO } from "../../utils/constants";
 
 const SECOND = 1000;
 
 const InsideHearingMainPage = () => {
   const history = useHistory();
-  const [activeTab, setActiveTab] = useState("Transcript/Summary");
+  const [activeTab, setActiveTab] = useState(TAB_NAMES.TRANSCRIPT_SUMMARY);
   const [transcriptText, setTranscriptText] = useState("");
   const [hearing, setHearing] = useState({});
   const [witnessDepositionText, setWitnessDepositionText] = useState("");
@@ -52,7 +53,7 @@ const InsideHearingMainPage = () => {
   const authorizedUuid = getAuthorizedUuid(userUUID);
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === USER_ROLES.POST_MANAGER), [roles]);
 
   const onCancel = () => {
     setAddPartyModal(false);
@@ -64,14 +65,14 @@ const InsideHearingMainPage = () => {
 
   const userType = Digit?.UserService?.getType?.();
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (!isEpostUser && userType === USER_TYPES.EMPLOYEE) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const { data: caseData, isLoading: isCaseLoading, refetch: refetchCase } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
           filingNumber,
-          ...(courtId && userType === "employee" && { courtId }),
+          ...(courtId && userType === USER_TYPES.EMPLOYEE && { courtId }),
         },
       ],
       tenantId,
@@ -110,7 +111,7 @@ const InsideHearingMainPage = () => {
     history.push(`/${contextPath}/${userType}/home/pending-task`);
   }
 
-  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const userInfoType = useMemo(() => (userInfo?.type === USER_TYPES.CITIZEN ? "citizen" : "employee"), [userInfo]);
   const userRoles = Digit?.UserService?.getUser?.()?.info?.roles || [];
 
   const userHasRole = (userRole) => {
@@ -180,7 +181,7 @@ const InsideHearingMainPage = () => {
     return Boolean(
       applicationData?.applicationList?.some(
         (item) =>
-          item?.applicationType === "DELAY_CONDONATION" &&
+          item?.applicationType === APPLICATION_TYPES.DELAY_CONDONATION &&
           [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
       )
     );
@@ -190,7 +191,7 @@ const InsideHearingMainPage = () => {
     () =>
       Boolean(
         applicationData?.applicationList?.some(
-          (item) => item?.applicationType === "DELAY_CONDONATION" && [SubmissionWorkflowState.COMPLETED].includes(item?.status)
+          (item) => item?.applicationType === APPLICATION_TYPES.DELAY_CONDONATION && [SubmissionWorkflowState.COMPLETED].includes(item?.status)
         )
       ),
     [applicationData]
@@ -328,7 +329,7 @@ const InsideHearingMainPage = () => {
         ?.filter((party) => party?.isJoined === true)
         .map((party) => ({
           label: party?.name,
-          value: party?.partyType === "poaHolder" ? party?.individualId : party?.partyUuid,
+          value: party?.partyType === PARTY_TYPES.POA_HOLDER ? party?.individualId : party?.partyUuid,
         })) || [];
 
     const combinedOptions = [...witnessOptions, ...advocateOptions, ...partiesOption];
@@ -440,13 +441,13 @@ const InsideHearingMainPage = () => {
             hearingLink={hearingVcLink}
             delayCondonationData={delayCondonationData}
             isDelayApplicationPending={
-              (delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
+              (delayCondonationData?.isDcaSkippedInEFiling?.code === YES_NO.NO && isDelayApplicationPending) ||
               isDelayApplicationPending ||
               isDelayApplicationCompleted
             }
           ></EvidenceHearingHeader>
         </React.Fragment>
-        {activeTab === "Witness Deposition" && (
+        {activeTab === TAB_NAMES.WITNESS_DEPOSITION && (
           <div style={{ width: "100%", marginTop: "15px", marginBottom: "10px" }}>
             <LabelFieldPair className="case-label-field-pair">
               <CardLabel className="case-input-label">{`Select Witness`}</CardLabel>
@@ -478,7 +479,7 @@ const InsideHearingMainPage = () => {
         <div style={{ padding: "40px, 40px", gap: "16px" }}>
           <div style={{ gap: "16px", border: "1px solid", marginTop: "2px" }}>
             <React.Fragment>
-              {activeTab === "Witness Deposition" && (
+              {activeTab === TAB_NAMES.WITNESS_DEPOSITION && (
                 <TextArea
                   style={{
                     width: "100%",

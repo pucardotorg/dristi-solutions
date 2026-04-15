@@ -28,6 +28,7 @@ import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
 import TemplateOrConfigurationPage from "./TemplateOrConfigurationPage";
 import CTCApplications from "./CTCApplications";
 import BulkIssueCTC from "./BulkIssueCTC";
+import { ORDER_TYPES } from "../../utils/constants";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -65,6 +66,7 @@ const MainHomeScreen = () => {
   const [scrutinyConfig, setScrutinyConfig] = useState(structuredClone(scrutinyPendingTaskConfig[0]));
   const [tabData, setTabData] = useState(null);
   const [scrutinyDueCount, setScrutinyDueCount] = useState(0);
+  const [ctcApplicationCount, setCtcApplicationCount] = useState(0);
 
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
   const [pendingTaskCount, setPendingTaskCount] = useState({
@@ -280,6 +282,34 @@ const MainHomeScreen = () => {
     }
   };
 
+  const fetchCTCApplicationCount = async () => {
+    try {
+      if (!hasViewCTCApplicationAccess) return;
+      const ctcApplicationPayload = {
+        inbox: {
+          processSearchCriteria: {
+            businessService: ["ctc-default"],
+            moduleName: "CTC Service",
+            tenantId: tenantId,
+          },
+          moduleSearchCriteria: {
+            tenantId: tenantId,
+            courtId: localStorage.getItem("courtId"),
+            status: "PENDING_APPROVAL",
+          },
+          tenantId: tenantId,
+          limit: 10,
+          offset: 0,
+        },
+      };
+
+      const resCtCApplication = await HomeService.InboxSearch(ctcApplicationPayload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+      setCtcApplicationCount(resCtCApplication?.totalCount || 0);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const fetchPendingTaskCounts = async () => {
     const { toDate } = getTodayRange();
     try {
@@ -363,30 +393,7 @@ const MainHomeScreen = () => {
         },
       };
 
-      const ctcApplicationPayload = {
-        inbox: {
-          processSearchCriteria: {
-            businessService: ["ctc-default"],
-            moduleName: "CTC Service",
-            tenantId: tenantId,
-          },
-          moduleSearchCriteria: {
-            tenantId: tenantId,
-            courtId: localStorage.getItem("courtId"),
-            status: "PENDING_APPROVAL",
-          },
-          tenantId: tenantId,
-          limit: 10,
-          offset: 0,
-        },
-      };
-
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
-      let resCtCApplication = {};
-
-      if (hasViewCTCApplicationAccess) {
-        resCtCApplication = await HomeService.InboxSearch(ctcApplicationPayload, { tenantId: Digit.ULBService.getCurrentTenantId() });
-      }
 
       const reviwCount = res?.reviewProcessData?.totalCount || 0;
       const registerCount = res?.registerCasesData?.totalCount || 0;
@@ -399,7 +406,6 @@ const MainHomeScreen = () => {
       const offlinePaymentsCount = res?.offlinePaymentsData?.count || 0;
       const noticeAndSummonsCount = res?.noticeAndSummonsData?.count || 0;
       const rescheduleHearingRequestCount = res?.reschedulingRequestData?.totalCount || 0;
-      const CTCApplications = resCtCApplication?.totalCount || 0;
 
       setPendingTaskCount({
         REGISTER_USERS: registerUsersCount,
@@ -413,7 +419,6 @@ const MainHomeScreen = () => {
         RESCHEDULE_APPLICATIONS: rescheduleHearingsApplicationCount,
         DELAY_CONDONATION: delayCondonationApplicationCount,
         OTHERS: otherApplicationsCount,
-        CTC_APPLICATIONS: CTCApplications,
       });
     } catch (err) {
       showToast("error", t("ISSUE_IN_FETCHING"), 5000);
@@ -628,7 +633,7 @@ const MainHomeScreen = () => {
               let noticeCourierService = [];
               let summonsCourierService = [];
 
-              if (orderType === "SUMMONS") {
+              if (orderType === ORDER_TYPES.SUMMONS) {
                 summonsCourierService = partyDetails?.deliveryChannels;
               } else {
                 noticeCourierService = partyDetails?.deliveryChannels;
@@ -701,7 +706,33 @@ const MainHomeScreen = () => {
       if (updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party?.[index]) {
         const updatedParties = [...updatedOrderDetails.additionalDetails.formdata[formDataKey].party];
         const updatedParty = { ...updatedParties[index] };
-        updatedParty[type === "notice" ? "noticeCourierService" : "summonsCourierService"] = value;
+        updatedParty[type === ORDER_TYPES.NOTICE ? "noticeCourierService" : "summonsCourierService"] = value;
+        updatedParties[index] = updatedParty;
+        updatedOrderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
+      }
+
+      return updatedOrderDetails;
+    });
+  }, []);
+
+  const handleInitialCourierServiceChange = useCallback((data, index) => {
+    setCourierOrderDetails((prevOrderDetails) => {
+      const updatedOrderDetails = { ...prevOrderDetails };
+      const formDataKey = formDataKeyMap[updatedOrderDetails?.orderType];
+
+      if (updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party?.[index]) {
+        const updatedParties = [...updatedOrderDetails.additionalDetails.formdata[formDataKey].party];
+        const updatedParty = { ...updatedParties[index] };
+        const courierFieldMap = {
+          notice: "noticeCourierService",
+          summons: "summonsCourierService",
+        };
+
+        Object.keys(courierFieldMap).forEach((key) => {
+          if (data?.[key]) {
+            updatedParty[courierFieldMap[key]] = data[key];
+          }
+        });
         updatedParties[index] = updatedParty;
         updatedOrderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
       }
@@ -845,6 +876,7 @@ const MainHomeScreen = () => {
               setNoticeActive={setActive}
               orderType={orderType}
               handleAddAddress={handleAddAddress}
+              handleInitialCourierServiceChange={(data) => handleInitialCourierServiceChange(data, i)}
             />
           ),
           actionSaveOnSubmit: async () => {
@@ -854,7 +886,7 @@ const MainHomeScreen = () => {
             isTaskManagementLoading ||
             isCaseLoading ||
             isProcessLoader ||
-            (orderType === "SUMMONS" ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
+            (orderType === ORDER_TYPES.SUMMONS ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
         };
       }) || [];
     return courierServiceSteps;
@@ -884,6 +916,12 @@ const MainHomeScreen = () => {
       steps: [...courierServiceSteps],
     };
   }, [courierServiceSteps]);
+
+  useEffect(() => {
+    if (userType === "employee") {
+      fetchCTCApplicationCount();
+    }
+  }, [userType, hasViewCTCApplicationAccess]);
 
   useEffect(() => {
     if (userType === "employee") {
@@ -939,18 +977,21 @@ const MainHomeScreen = () => {
     applicationOptions.OTHERS = { name: "HOME_OTHER_APPLICATIONS" };
   }
 
-  const handleSetCount = useCallback((value) => {
-    if (typeof value === "function") {
-      setPendingTaskCount((prev) => {
-        const next = value(prev);
-        return { ...prev, ...next };
-      });
-    } else if (typeof value === "object" && value !== null) {
-      setPendingTaskCount((prev) => ({ ...prev, ...value }));
-    } else {
-      setPendingTaskCount((prev) => ({ ...prev, [activeTab]: Number(value) || 0 }));
-    }
-  }, [activeTab]);
+  const handleSetCount = useCallback(
+    (value) => {
+      if (typeof value === "function") {
+        setPendingTaskCount((prev) => {
+          const next = value(prev);
+          return { ...prev, ...next };
+        });
+      } else if (typeof value === "object" && value !== null) {
+        setPendingTaskCount((prev) => ({ ...prev, ...value }));
+      } else {
+        setPendingTaskCount((prev) => ({ ...prev, [activeTab]: Number(value) || 0 }));
+      }
+    },
+    [activeTab]
+  );
 
   useEffect(() => {
     let updatedConfig = structuredClone(pendingTaskConfig);
@@ -1063,14 +1104,14 @@ const MainHomeScreen = () => {
               ?.map((column) => {
                 return column?.label === "PENDING_CASE_NAME"
                   ? {
-                    ...column,
-                    clickFunc:
-                      activeTab === "BAIL_BOND_STATUS"
-                        ? openBailBondModal
-                        : activeTab === "NOTICE_SUMMONS_MANAGEMENT"
+                      ...column,
+                      clickFunc:
+                        activeTab === "BAIL_BOND_STATUS"
+                          ? openBailBondModal
+                          : activeTab === "NOTICE_SUMMONS_MANAGEMENT"
                           ? setCourierServicePendingTask
                           : null,
-                  }
+                    }
                   : column;
               })
               ?.filter((column) => {
@@ -1154,6 +1195,7 @@ const MainHomeScreen = () => {
         fetchPendingTaskCounts();
       }
     }
+    fetchCTCApplicationCount();
     setActiveTab(label || title);
     setActiveTabTitle(title);
     sessionStorage.removeItem("diaryDateFilter");
@@ -1222,13 +1264,14 @@ const MainHomeScreen = () => {
       <div className="main-home-screen">
         <HomeSidebar
           t={t}
+          tenantId={tenantId}
           onTabChange={handleTabChange}
           activeTab={activeTab}
           options={options}
           isOptionsLoading={false}
           applicationOptions={applicationOptions}
           hearingCount={hearingCount}
-          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount }}
+          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount, CTC_APPLICATIONS: ctcApplicationCount }}
           showToast={showToast}
         />
         {activeTab === "TEMPLATE_OR_CONFIGURATION" ? (
@@ -1295,7 +1338,7 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "CTC_APPLICATIONS" ? (
           <div className="home-bulk-sign">
-            <CTCApplications />
+            <CTCApplications refetch={fetchCTCApplicationCount} />
           </div>
         ) : activeTab === "CS_HOME_ISSUE_CTC_COPY" ? (
           <div className="home-bulk-sign">
