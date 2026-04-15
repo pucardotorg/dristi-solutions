@@ -369,6 +369,8 @@ public class SecondaryStageProcessor {
             }
             if(STAGE_APPEARANCE.equalsIgnoreCase(caseStage) && SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT.equalsIgnoreCase(secondaryStage)){
                 caseOverallStatus.setStage(STAGE_BAIL_AND_RECORDING_OF_PLEA);
+            } if(STAGE_COGNIZANCE.equalsIgnoreCase(caseStage) && SECONDARY_STAGE_SUMMONS.equalsIgnoreCase(secondaryStage) && !hasAccusedJoinedCase(caseObject)){
+                caseOverallStatus.setStage(STAGE_APPEARANCE);
             }
             caseOverallStatus.setStageBackup(caseStageBackup);
             caseOverallStatus.setSubstageBackup(caseSubStageBackup);
@@ -386,5 +388,24 @@ public class SecondaryStageProcessor {
         } catch (Exception e) {
             log.error("Error publishing secondary stage update for filingNumber: {}", filingNumber, e);
         }
+    }
+
+    private boolean hasAccusedJoinedCase(Object caseObject) {
+        try {
+            List<Map<String, Object>> litigants = JsonPath.read(caseObject.toString(), CASE_LITIGANTS_PATH);
+            if (litigants == null || litigants.isEmpty()) {
+                return false;
+            }
+            for (Map<String, Object> litigant : litigants) {
+                Object partyType = litigant.get("partyType");
+                if (partyType != null && partyType.toString().contains(ACCUSED_PARTY_TYPE)) {
+                    log.info("Found active accused-side litigant with partyType: {}", partyType);
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error checking if accused has joined case", e);
+        }
+        return false;
     }
 }
