@@ -844,8 +844,7 @@ public class PaymentService {
                     .sessionTime(System.currentTimeMillis())
                     .departmentId(verificationDetails.getDepartmentId())
                     .build();
-            saveAuthTokenAndSek(requestInfo, authSek);
-            log.debug("AuthSek saved for billId: {}", verificationData.getBillId());
+            log.debug("AuthSek built for billId: {}", verificationData.getBillId());
 
             // Prepare the request body
             verificationDetails.setOfficeCode(config.getOfficeCode());
@@ -948,7 +947,14 @@ public class PaymentService {
             if ("Y".equalsIgnoreCase(String.valueOf(paymentData.getStatus()))) {
                 status = PaymentStatus.SUCCESS;
             }
-            repository.updateAuthSekStatus(authSek.getAuthToken(), status.name(), "RECONCILIATION", System.currentTimeMillis());
+            repository.updateAuthTokenAndStatusByDepartmentId(
+                    authSek.getDepartmentId(),
+                    authSek.getAuthToken(),
+                    authSek.getDecryptedSek(),
+                    status.name(),
+                    "RECONCILIATION",
+                    System.currentTimeMillis()
+            );
             
             log.info("Double verification completed successfully for billId: {}", verificationData.getBillId());
             return paymentData;

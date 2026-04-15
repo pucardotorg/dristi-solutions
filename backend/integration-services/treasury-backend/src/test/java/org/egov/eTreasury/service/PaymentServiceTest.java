@@ -231,6 +231,6 @@ class PaymentServiceTest {
         assertEquals(BigDecimal.valueOf(100.0), data.getAmount());
 
         verify(producer).push(anyString(), any(TreasuryPaymentRequest.class));
-        verify(authSekRepository).updateAuthSekStatus(anyString(), eq("SUCCESS"), eq("RECONCILIATION"), anyLong());
+        verify(authSekRepository).updateAuthTokenAndStatusByDepartmentId(anyString(), anyString(), anyString(), eq("SUCCESS"), eq("RECONCILIATION"), anyLong());
     }
 }

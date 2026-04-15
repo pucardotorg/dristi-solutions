@@ -46,4 +46,12 @@ public class AuthSekRepository {
             throw new RuntimeException("Failed to update auth_sek_session_data for auth_token: " + authToken);
         }
     }
+
+    public void updateAuthTokenAndStatusByDepartmentId(String departmentId, String authToken, String decryptedSek, String paymentStatus, String completionSource, Long verificationTimestamp) {
+        String updateQuery = "UPDATE auth_sek_session_data SET auth_token = ?, decrypted_sek = ?, payment_status = ?, completion_source = ?, verification_timestamp = ? WHERE department_id = ?";
+        int updated = jdbcTemplate.update(updateQuery, authToken, decryptedSek, paymentStatus, completionSource, verificationTimestamp, departmentId);
+        if(updated == 0) {
+            log.error("Failed to update auth_sek_session_data for department_id: {}", departmentId);
+        }
+    }
 }
