@@ -277,14 +277,6 @@ public class PaymentService {
             treasuryEnrichment.enrichTreasuryPaymentData(data, requestInfo);
             requestInfo.getUserInfo().setTenantId(config.getEgovStateTenantId());
 
-            log.info("Request info: {}", requestInfo);
-
-            String statusStr = "FAILED";
-            if ("Y".equalsIgnoreCase(String.valueOf(transactionDetails.getStatus()))) {
-                statusStr = "SUCCESS";
-            }
-            repository.updateAuthSekStatus(authSek.getAuthToken(), statusStr, "CALLBACK", System.currentTimeMillis());
-
             TreasuryPaymentRequest request = TreasuryPaymentRequest.builder()
                     .requestInfo(requestInfo)
                     .treasuryPaymentData(data)
@@ -296,6 +288,12 @@ public class PaymentService {
             log.info("Saving Payment Data: {}", data);
 
             producer.push(config.getSaveTreasuryPaymentData(), request);
+
+            PaymentStatus status = PaymentStatus.FAILED;
+            if ("Y".equalsIgnoreCase(String.valueOf(transactionDetails.getStatus()))) {
+                status = PaymentStatus.SUCCESS;
+            }
+            repository.updateAuthSekStatus(authSek.getAuthToken(), status.name(), "CALLBACK", System.currentTimeMillis());
 
             return data;
 
@@ -946,11 +944,11 @@ public class PaymentService {
             log.info("Saving verified payment data for billId: {}", verificationData.getBillId());
             producer.push(config.getSaveTreasuryPaymentData(), paymentRequest);
 
-            String statusStr = "FAILED";
+            PaymentStatus status = PaymentStatus.FAILED;
             if ("Y".equalsIgnoreCase(String.valueOf(paymentData.getStatus()))) {
-                statusStr = "SUCCESS";
+                status = PaymentStatus.SUCCESS;
             }
-            repository.updateAuthSekStatus(authSek.getAuthToken(), statusStr, "RECONCILIATION", System.currentTimeMillis());
+            repository.updateAuthSekStatus(authSek.getAuthToken(), status.name(), "RECONCILIATION", System.currentTimeMillis());
             
             log.info("Double verification completed successfully for billId: {}", verificationData.getBillId());
             return paymentData;

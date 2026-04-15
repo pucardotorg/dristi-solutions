@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.eTreasury.model.AuthSek;
+import org.egov.eTreasury.model.PaymentStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -54,7 +55,7 @@ class AuthSekRowMapperTest {
         assertThat(authSek.getPaidBy()).isEqualTo("testPaidBy");
         assertThat(authSek.getSessionTime()).isEqualTo(123456789L);
         assertThat(authSek.getDepartmentId()).isEqualTo("testDepartmentId");
-        assertThat(authSek.getPaymentStatus()).isEqualTo("INITIATED");
+        assertThat(authSek.getPaymentStatus()).isEqualTo(PaymentStatus.INITIATED);
         assertThat(authSek.getCompletionSource()).isEqualTo("MANUAL");
         assertThat(authSek.getVerificationTimestamp()).isEqualTo(123456789L);
         

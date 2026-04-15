@@ -14,7 +14,7 @@ public class AuthSekQueryBuilder {
 
     private static final String ORDER_BY_SESSION_TIME = "ORDER BY session_time ";
 
-    public String getAuthSekQuery(String authToken, List<String> preparedStmtList) {
+    public String getAuthSekQuery(String authToken, List<Object> preparedStmtList) {
         StringBuilder query = new StringBuilder(BASE_QUERY);
         query.append(FROM_TABLES);
 
@@ -27,7 +27,7 @@ public class AuthSekQueryBuilder {
         return query.toString();
     }
 
-    private void addClauseIfRequired(StringBuilder query, List<String> preparedStmtList) {
+    private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
         if (preparedStmtList.isEmpty()) {
             query.append(" WHERE ");
         } else {

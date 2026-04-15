@@ -1,5 +1,6 @@
 package org.egov.eTreasury.controller;
 
+import jakarta.validation.Valid;
 import org.egov.common.contract.models.Document;
 import org.egov.eTreasury.model.*;
 import org.egov.eTreasury.model.demand.DemandCreateRequest;
@@ -81,12 +82,11 @@ public class PaymentController {
     }
 
     @PostMapping("/v1/_doubleVerification")
-    public TreasuryPaymentResponse verifyDetails(@RequestBody VerificationRequest request) {
-        log.info("Performing double verification for request: {}", request);
+    public TreasuryPaymentResponse verifyDetails(@Valid @RequestBody VerificationRequest request) {
+        log.info("Performing double verification for billId: {}",  request.getVerificationData() != null ? request.getVerificationData().getBillId() : "null");
         TreasuryPaymentData treasuryPaymentData = paymentService.doubleVerifyPayment(request.getVerificationData(), request.getRequestInfo());
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
-        log.info("Double verification successful for request: {} | status: {} | GRN: {}", 
-                request, treasuryPaymentData.getStatus(), treasuryPaymentData.getGrn());
+        log.info("Double verification completed | status: {} | GRN: {}",  treasuryPaymentData != null ? treasuryPaymentData.getStatus() : "null", treasuryPaymentData != null ? treasuryPaymentData.getGrn() : "null");
         return TreasuryPaymentResponse.builder()
                 .responseInfo(responseInfo)
                 .treasuryPaymentData(treasuryPaymentData)

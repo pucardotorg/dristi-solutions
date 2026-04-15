@@ -25,7 +25,7 @@ class AuthSekQueryBuilderTest {
     void testGetAuthSekQueryWithAuthToken() {
         // Given
         String authToken = "testAuthToken";
-        List<String> preparedStmtList = new ArrayList<>();
+        List<Object> preparedStmtList = new ArrayList<>();
 
         // When
         String query = queryBuilder.getAuthSekQuery(authToken, preparedStmtList);
@@ -41,7 +41,7 @@ class AuthSekQueryBuilderTest {
     void testGetAuthSekQueryWithoutAuthToken() {
         // Given
         String authToken = null;
-        List<String> preparedStmtList = new ArrayList<>();
+        List<Object> preparedStmtList = new ArrayList<>();
 
         // When
         String query = queryBuilder.getAuthSekQuery(authToken, preparedStmtList);
@@ -55,7 +55,7 @@ class AuthSekQueryBuilderTest {
     void testGetAuthSekQueryWithAuthToken_1() {
         // Given
         String authToken = "testAuthToken";
-        List<String> preparedStmtList = new ArrayList<>();
+        List<Object> preparedStmtList = new ArrayList<>();
         preparedStmtList.add("testAuthToken");
 
         // When
