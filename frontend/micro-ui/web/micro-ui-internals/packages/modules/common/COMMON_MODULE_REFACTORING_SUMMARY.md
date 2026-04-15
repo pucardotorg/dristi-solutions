@@ -8,7 +8,7 @@ Successfully created a new `common` module to consolidate duplicate utility func
 
 ### 1. Created Common Module Structure
 
-**Location:** `/home/bhcp0181/Music/dristi-solutions/frontend/micro-ui/web/micro-ui-internals/packages/modules/common/`
+**Location:** `micro-ui-internals/packages/modules/common/`
 
 **Files Created:**
 
@@ -33,23 +33,23 @@ common/
 
 ### 2. Registered Common Module
 
-**File:** `@/home/bhcp0181/Music/dristi-solutions/frontend/micro-ui/web/package.json:21`
+**File:** `package.json:21` (in micro-ui/web)
 
 - Added `"@egovernments/digit-ui-module-common": "0.0.1"` to dependencies
 
-**File:** `@/home/bhcp0181/Music/dristi-solutions/frontend/micro-ui/web/src/App.js:8,39`
+**File:** `src/App.js:8,39` (in micro-ui/web)
 
 - Imported `initCommonComponents` from common module
 - Added `initCommonComponents()` call in `initDigitUI()` function
 
 ### 3. Updated Orders Module
 
-**File:** `@/home/bhcp0181/Music/dristi-solutions/frontend/micro-ui/web/micro-ui-internals/packages/modules/orders/src/utils/caseUtils.js:1`
+**File:** `packages/modules/orders/src/utils/caseUtils.js:1`
 
 - **Removed:** 54 lines of duplicate code (getAllAssignees and getAdvocates functions)
 - **Added:** Single export statement importing from common module
 
-**File:** `@/home/bhcp0181/Music/dristi-solutions/frontend/micro-ui/web/micro-ui-internals/packages/modules/orders/src/utils/index.js:6,103`
+**File:** `packages/modules/orders/src/utils/index.js:6,103`
 
 - **Added:** Import statement for getFormattedName from common module
 - **Removed:** 10 lines of duplicate getFormattedName function
@@ -57,12 +57,12 @@ common/
 
 ### 4. Updated Submissions Module
 
-**File:** `@/home/bhcp0181/Music/dristi-solutions/frontend/micro-ui/web/micro-ui-internals/packages/modules/submissions/src/utils/caseUtils.js:1`
+**File:** `packages/modules/submissions/src/utils/caseUtils.js:1`
 
 - **Removed:** 54 lines of duplicate code (getAllAssignees and getAdvocates functions)
 - **Added:** Single export statement importing from common module
 
-**File:** `@/home/bhcp0181/Music/dristi-solutions/frontend/micro-ui/web/micro-ui-internals/packages/modules/submissions/src/utils/index.js:5,132`
+**File:** `packages/modules/submissions/src/utils/index.js:5,132`
 
 - **Added:** Import statement for getFormattedName from common module
 - **Removed:** 10 lines of duplicate getFormattedName function
@@ -70,7 +70,7 @@ common/
 
 ### 5. Updated Hearings Module
 
-**File:** `@/home/bhcp0181/Music/dristi-solutions/frontend/micro-ui/web/micro-ui-internals/packages/modules/hearings/src/utils/index.js:4,46`
+**File:** `packages/modules/hearings/src/utils/index.js:4,46`
 
 - **Added:** Import statement for getFormattedName from common module
 - **Removed:** 9 lines of duplicate getFormattedName function
@@ -110,7 +110,7 @@ To complete the integration, run the following commands:
 
 ```bash
 # Navigate to the web directory
-cd /home/bhcp0181/Music/dristi-solutions/frontend/micro-ui/web
+cd micro-ui/web
 
 # Install dependencies (this will link the new common module)
 yarn install
