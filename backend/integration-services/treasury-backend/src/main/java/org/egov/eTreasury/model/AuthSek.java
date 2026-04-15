@@ -27,4 +27,5 @@ public class AuthSek {
     private PaymentStatus paymentStatus;
     private String completionSource;
     private Long verificationTimestamp;
+    private String processedStatus;
 }

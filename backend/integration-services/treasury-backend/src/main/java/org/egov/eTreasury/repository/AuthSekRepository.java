@@ -39,19 +39,25 @@ public class AuthSekRepository {
         return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
     }
 
-    public void updateAuthSekStatus(String authToken, String paymentStatus, String completionSource, Long verificationTimestamp) {
-        String updateQuery = "UPDATE auth_sek_session_data SET payment_status = ?, completion_source = ?, verification_timestamp = ? WHERE auth_token = ?";
-        int updated = jdbcTemplate.update(updateQuery, paymentStatus, completionSource, verificationTimestamp, authToken);
+    public void updateAuthSekStatus(String authToken, String paymentStatus, String completionSource, Long verificationTimestamp, String processedStatus) {
+        String updateQuery = "UPDATE auth_sek_session_data SET payment_status = ?, completion_source = ?, verification_timestamp = ?, processed_status = ? WHERE auth_token = ?";
+        int updated = jdbcTemplate.update(updateQuery, paymentStatus, completionSource, verificationTimestamp, processedStatus, authToken);
         if(updated != 1) {
             throw new RuntimeException("Failed to update auth_sek_session_data for auth_token: " + authToken);
         }
     }
 
-    public void updateAuthTokenAndStatusByDepartmentId(String departmentId, String authToken, String decryptedSek, String paymentStatus, String completionSource, Long verificationTimestamp) {
-        String updateQuery = "UPDATE auth_sek_session_data SET auth_token = ?, decrypted_sek = ?, payment_status = ?, completion_source = ?, verification_timestamp = ? WHERE department_id = ?";
-        int updated = jdbcTemplate.update(updateQuery, authToken, decryptedSek, paymentStatus, completionSource, verificationTimestamp, departmentId);
+    public void updateAuthTokenAndStatusByDepartmentId(String departmentId, String authToken, String decryptedSek, String paymentStatus, String completionSource, Long verificationTimestamp, String processedStatus) {
+        String updateQuery = "UPDATE auth_sek_session_data SET auth_token = ?, decrypted_sek = ?, payment_status = ?, completion_source = ?, verification_timestamp = ?, processed_status = ? WHERE department_id = ?";
+        int updated = jdbcTemplate.update(updateQuery, authToken, decryptedSek, paymentStatus, completionSource, verificationTimestamp, processedStatus, departmentId);
         if(updated == 0) {
             log.error("Failed to update auth_sek_session_data for department_id: {}", departmentId);
         }
+    }
+
+    public boolean markAsProcessing(String authToken) {
+        String query = "UPDATE auth_sek_session_data SET processed_status = 'PROCESSING' WHERE auth_token = ? AND processed_status = 'PENDING'";
+        int updated = jdbcTemplate.update(query, authToken);
+        return updated > 0;
     }
 }

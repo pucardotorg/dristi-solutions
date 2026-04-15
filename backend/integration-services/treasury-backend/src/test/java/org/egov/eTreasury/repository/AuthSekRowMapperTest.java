@@ -35,10 +35,11 @@ class AuthSekRowMapperTest {
         when(rs.getString("paid_by")).thenReturn("testPaidBy");
         when(rs.getLong("session_time")).thenReturn(123456789L);
         when(rs.getString("department_id")).thenReturn("testDepartmentId");
-        when(rs.getString("payment_status")).thenReturn("INITIATED");
+        when(rs.getString("payment_status")).thenReturn(null);
         when(rs.getString("completion_source")).thenReturn("MANUAL");
         when(rs.getLong("verification_timestamp")).thenReturn(123456789L);
         when(rs.wasNull()).thenReturn(false);
+        when(rs.getString("processed_status")).thenReturn("PENDING");
         when(rs.getString("request_blob")).thenReturn("{\"key\":\"value\",\"number\":123}");
 
         // Execute the method to test
@@ -55,7 +56,6 @@ class AuthSekRowMapperTest {
         assertThat(authSek.getPaidBy()).isEqualTo("testPaidBy");
         assertThat(authSek.getSessionTime()).isEqualTo(123456789L);
         assertThat(authSek.getDepartmentId()).isEqualTo("testDepartmentId");
-        assertThat(authSek.getPaymentStatus()).isEqualTo(PaymentStatus.INITIATED);
         assertThat(authSek.getCompletionSource()).isEqualTo("MANUAL");
         assertThat(authSek.getVerificationTimestamp()).isEqualTo(123456789L);
         
@@ -82,10 +82,11 @@ class AuthSekRowMapperTest {
         when(rs.getString("paid_by")).thenReturn("testPaidBy");
         when(rs.getLong("session_time")).thenReturn(123456789L);
         when(rs.getString("department_id")).thenReturn("testDepartmentId");
-        when(rs.getString("payment_status")).thenReturn("INITIATED");
+        when(rs.getString("payment_status")).thenReturn(null);
         when(rs.getString("completion_source")).thenReturn("MANUAL");
         when(rs.getLong("verification_timestamp")).thenReturn(123456789L);
         when(rs.wasNull()).thenReturn(false);
+        when(rs.getString("processed_status")).thenReturn("PENDING");
         when(rs.getString("request_blob")).thenReturn(null);
 
         // Execute the method to test
@@ -111,10 +112,11 @@ class AuthSekRowMapperTest {
         when(rs.getString("paid_by")).thenReturn("testPaidBy");
         when(rs.getLong("session_time")).thenReturn(123456789L);
         when(rs.getString("department_id")).thenReturn("testDepartmentId");
-        when(rs.getString("payment_status")).thenReturn("INITIATED");
+        when(rs.getString("payment_status")).thenReturn(null);
         when(rs.getString("completion_source")).thenReturn("MANUAL");
         when(rs.getLong("verification_timestamp")).thenReturn(123456789L);
         when(rs.wasNull()).thenReturn(false);
+        when(rs.getString("processed_status")).thenReturn("PENDING");
         when(rs.getString("request_blob")).thenReturn("");
 
         // Execute the method to test
@@ -140,10 +142,11 @@ class AuthSekRowMapperTest {
         when(rs.getString("paid_by")).thenReturn("testPaidBy");
         when(rs.getLong("session_time")).thenReturn(123456789L);
         when(rs.getString("department_id")).thenReturn("testDepartmentId");
-        when(rs.getString("payment_status")).thenReturn("INITIATED");
+        when(rs.getString("payment_status")).thenReturn(null);
         when(rs.getString("completion_source")).thenReturn("MANUAL");
         when(rs.getLong("verification_timestamp")).thenReturn(123456789L);
         when(rs.wasNull()).thenReturn(false);
+        when(rs.getString("processed_status")).thenReturn("PENDING");
         when(rs.getString("request_blob")).thenReturn("invalid json string");
 
         // Execute the method to test

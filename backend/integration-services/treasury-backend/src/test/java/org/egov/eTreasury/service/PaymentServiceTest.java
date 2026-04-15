@@ -206,6 +206,7 @@ class PaymentServiceTest {
         when(config.isMockEnabled()).thenReturn(true);
         when(config.getDoubleVerificationUrl()).thenReturn("http://mock-url");
         when(config.getSaveTreasuryPaymentData()).thenReturn("save-topic");
+        when(config.isKafkaPushEnabled()).thenReturn(true);
 
         when(objectMapper.writeValueAsString(any())).thenReturn("mockBody");
         
@@ -231,6 +232,6 @@ class PaymentServiceTest {
         assertEquals(BigDecimal.valueOf(100.0), data.getAmount());
 
         verify(producer).push(anyString(), any(TreasuryPaymentRequest.class));
-        verify(authSekRepository).updateAuthTokenAndStatusByDepartmentId(anyString(), anyString(), anyString(), eq("SUCCESS"), eq("RECONCILIATION"), anyLong());
+        verify(authSekRepository).updateAuthTokenAndStatusByDepartmentId(anyString(), anyString(), anyString(), eq("SUCCESS"), eq("RECONCILIATION"), anyLong(), eq("PROCESSED"));
     }
 }
