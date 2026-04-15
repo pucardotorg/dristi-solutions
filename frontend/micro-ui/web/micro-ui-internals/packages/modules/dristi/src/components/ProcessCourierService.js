@@ -44,11 +44,11 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
   };
 
   const handleCourierServiceChange = (value, type) => {
-    if (type === TASK_TYPES.NOTICE) {
+    if (type === TASK_TYPES.NOTICE.toLocaleLowerCase()) {
       handleDataChange({ noticeCourierService: value });
-    } else if (type === TASK_TYPES.SUMMONS) {
+    } else if (type === TASK_TYPES.SUMMONS.toLocaleLowerCase()) {
       handleDataChange({ summonsCourierService: value });
-    } else if (type === TASK_TYPES.WARRANT) {
+    } else if (type === TASK_TYPES.WARRANT.toLocaleLowerCase()) {
       handleDataChange({ warrantCourierService: value });
     }
   };
