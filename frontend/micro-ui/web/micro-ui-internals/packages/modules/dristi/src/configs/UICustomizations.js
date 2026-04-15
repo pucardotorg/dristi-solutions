@@ -2610,7 +2610,7 @@ export const UICustomizations = {
       const caseId = row?.caseNumber || row?.filingNumber;
       switch (key) {
         case "PENDING_CASE_NAME":
-          return row?.substage === "SCRUTINY" && row?.hasCaseReviewerAccess ? (
+          return (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
               to={{
@@ -2621,8 +2621,6 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
-          ) : (
-            value || "-"
           );
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -2858,9 +2856,7 @@ export const UICustomizations = {
           return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
         }
         case "CASE_NUMBER": {
-          const caseNumber = row?.isLPRCase
-            ? row?.lprNumber
-            : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
+          const caseNumber = row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
           return caseNumber || "";
         }
         default:
