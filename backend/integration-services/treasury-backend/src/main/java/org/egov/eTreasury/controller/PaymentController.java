@@ -81,6 +81,13 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/v1/_processDoubleVerification")
+    public ResponseEntity<String> processDoubleVerificationBatch(@RequestBody RequestInfo requestInfo) {
+        log.info("Batch triggering double verification via endpoint");
+        paymentService.processDoubleVerificationBatch(requestInfo);
+        return ResponseEntity.ok("Batch processing initiated.");
+    }
+
     @PostMapping("/v1/_doubleVerification")
     public TreasuryPaymentResponse verifyDetails(@Valid @RequestBody VerificationRequest request) {
         log.info("Performing double verification for billId: {}",  request.getVerificationData() != null ? request.getVerificationData().getBillId() : "null");

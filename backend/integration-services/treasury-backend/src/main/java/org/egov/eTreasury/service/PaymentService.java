@@ -227,6 +227,7 @@ public class PaymentService {
                 .paidBy(challanData.getPaidBy())
                 .sessionTime(System.currentTimeMillis())
                 .departmentId(departmentId)
+                .processedStatus("PENDING")
                 .build();
     }
 
@@ -293,7 +294,7 @@ public class PaymentService {
             if ("Y".equalsIgnoreCase(String.valueOf(transactionDetails.getStatus()))) {
                 status = PaymentStatus.SUCCESS;
             }
-            repository.updateAuthSekStatus(authSek.getAuthToken(), status.name(), "CALLBACK", System.currentTimeMillis());
+            repository.updateAuthSekStatus(authSek.getAuthToken(), status.name(), "CALLBACK", System.currentTimeMillis(), "PROCESSED");
 
             return data;
 
@@ -808,6 +809,43 @@ public class PaymentService {
         return treasuryMappingRepository.getTreasuryMapping(consumerCode);
     }
 
+
+    public void processDoubleVerificationBatch(RequestInfo requestInfo) {
+        log.info("Starting batch process for double verification");
+        Long thresholdTime = System.currentTimeMillis() - (config.getReconciliationThresholdHours() * 60 * 60 * 1000);
+        List<AuthSek> pendingAuthSeks = repository.getPendingAuthSeks(thresholdTime);
+        log.info("Found {} pending auth_sek records to verify", pendingAuthSeks.size());
+
+        for (AuthSek authSek : pendingAuthSeks) {
+            try {
+                if (!repository.markAsProcessing(authSek.getAuthToken())) {
+                    log.info("Record already processing or not in PENDING state for authToken: {}", authSek.getAuthToken());
+                    continue;
+                }
+                log.info("Processing double verification for billId: {}", authSek.getBillId());
+                VerificationDetails details = new VerificationDetails();
+                details.setDepartmentId(authSek.getDepartmentId());
+                details.setOfficeCode(config.getOfficeCode());
+                details.setServiceDeptCode(config.getServiceDeptCode());
+                details.setAmount(authSek.getTotalDue());
+
+                VerificationData verificationData = new VerificationData();
+                verificationData.setBillId(authSek.getBillId());
+                verificationData.setBusinessService(authSek.getBusinessService());
+                verificationData.setServiceNumber(authSek.getServiceNumber());
+                verificationData.setTotalDue(authSek.getTotalDue());
+                verificationData.setPaidBy(authSek.getPaidBy());
+                verificationData.setMobileNumber(authSek.getMobileNumber());
+                verificationData.setVerificationDetails(details);
+                verificationData.setMockEnabled(config.isMockEnabled());
+
+                doubleVerifyPayment(verificationData, requestInfo);
+            } catch (Exception e) {
+                log.error("Error processing double verification for billId: {}", authSek.getBillId(), e);
+            }
+        }
+    }
+
     public TreasuryPaymentData doubleVerifyPayment(VerificationData verificationData, RequestInfo requestInfo) {
         log.info("Starting double verification for billId: {} | businessService: {}", 
                 verificationData.getBillId(), verificationData.getBusinessService());
@@ -843,6 +881,7 @@ public class PaymentService {
                     .mobileNumber(verificationData.getMobileNumber())
                     .sessionTime(System.currentTimeMillis())
                     .departmentId(verificationDetails.getDepartmentId())
+                    .processedStatus("PENDING")
                     .build();
             log.debug("AuthSek built for billId: {}", verificationData.getBillId());
 
@@ -941,7 +980,12 @@ public class PaymentService {
             
             // Save payment data
             log.info("Saving verified payment data for billId: {}", verificationData.getBillId());
-            producer.push(config.getSaveTreasuryPaymentData(), paymentRequest);
+            //add flag to log the payload instead of pushing it to kafka
+            if (config.isKafkaPushEnabled()) {
+                producer.push(config.getSaveTreasuryPaymentData(), paymentRequest);
+            } else {
+                log.info("Kafka push is disabled. Payload: {}", paymentRequest);
+            }
 
             PaymentStatus status = PaymentStatus.FAILED;
             if ("Y".equalsIgnoreCase(String.valueOf(paymentData.getStatus()))) {
@@ -953,7 +997,8 @@ public class PaymentService {
                     authSek.getDecryptedSek(),
                     status.name(),
                     "RECONCILIATION",
-                    System.currentTimeMillis()
+                    System.currentTimeMillis(),
+                    "PROCESSED"
             );
             
             log.info("Double verification completed successfully for billId: {}", verificationData.getBillId());

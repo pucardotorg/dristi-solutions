@@ -184,6 +184,9 @@ public class PaymentConfiguration {
     @Value("${isMock.enabled}")
     private boolean isMockEnabled;
 
+    @Value("${treasury.kafka.push-enabled:true}")
+    private boolean kafkaPushEnabled;
+
     @PostConstruct
     public void init() {
         headsList = Arrays.asList(heads.split(","));

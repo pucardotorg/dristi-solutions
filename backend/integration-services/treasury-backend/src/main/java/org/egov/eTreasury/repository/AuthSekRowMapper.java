@@ -30,12 +30,16 @@ public class AuthSekRowMapper implements RowMapper<AuthSek> {
         authSek.setPaidBy(rs.getString("paid_by"));
         authSek.setSessionTime(rs.getLong("session_time"));
         authSek.setDepartmentId(rs.getString("department_id"));
-        authSek.setPaymentStatus(PaymentStatus.valueOf(rs.getString("payment_status")));
+        String paymentStatusStr = rs.getString("payment_status");
+        if (paymentStatusStr != null && !paymentStatusStr.trim().isEmpty()) {
+            authSek.setPaymentStatus(PaymentStatus.valueOf(paymentStatusStr));
+        }
         authSek.setCompletionSource(rs.getString("completion_source"));
         long verificationTimestamp = rs.getLong("verification_timestamp");
         if (!rs.wasNull()) {
             authSek.setVerificationTimestamp(verificationTimestamp);
         }
+        authSek.setProcessedStatus(rs.getString("processed_status"));
 
         String requestBlobJson = rs.getString("request_blob");
         if (requestBlobJson != null && !requestBlobJson.trim().isEmpty()) {

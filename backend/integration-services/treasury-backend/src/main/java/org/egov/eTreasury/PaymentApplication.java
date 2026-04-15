@@ -9,10 +9,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 
 
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@EnableScheduling
 @Import({ TracerConfiguration.class })
 public class PaymentApplication {
 
