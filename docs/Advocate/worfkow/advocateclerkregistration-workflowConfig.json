@@ -1,7 +1,7 @@
 {
   "BusinessServices": [
     {
-      "tenantId": "kl",
+      "tenantId": "pb",
       "business": "user-registration",
       "businessService": "user-registration-advocate-clerk",
       "businessServiceSla": 172800000,

@@ -38,7 +38,7 @@ paths:
                 msgId: 1730970507148|en_IN
               criteria:
                 filingNumber: KL-000105-2024
-                tenantId: kl
+                tenantId: pb
       responses:
         '200':
           description: Case files retrieved successfully

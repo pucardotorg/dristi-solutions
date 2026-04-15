@@ -44,14 +44,14 @@ class CtcApplicationValidatorTest {
         requestInfo = RequestInfo.builder()
                 .userInfo(User.builder()
                         .uuid("user-1")
-                        .roles(new ArrayList<>(List.of(Role.builder().code("CITIZEN").tenantId("kl").build())))
+                        .roles(new ArrayList<>(List.of(Role.builder().code("CITIZEN").tenantId("pb").build())))
                         .build())
                 .build();
 
         application = CtcApplication.builder()
                 .id("app-1")
                 .ctcApplicationNumber("CA-001")
-                .tenantId("kl")
+                .tenantId("pb")
                 .courtId("KLKM52")
                 .filingNumber("FIL-001")
                 .build();
@@ -194,7 +194,7 @@ class CtcApplicationValidatorTest {
     @Test
     void validateAndEnrichUser_shouldMatchAdvocateRole() {
         requestInfo.getUserInfo().setRoles(new ArrayList<>(List.of(
-                Role.builder().code("ADVOCATE_ROLE").tenantId("kl").build()
+                Role.builder().code("ADVOCATE_ROLE").tenantId("pb").build()
         )));
 
         CourtCase courtCase = new CourtCase();
@@ -219,7 +219,7 @@ class CtcApplicationValidatorTest {
     @Test
     void validateAndEnrichUser_shouldFallbackToPoaForAdvocate() {
         requestInfo.getUserInfo().setRoles(new ArrayList<>(List.of(
-                Role.builder().code("ADVOCATE_ROLE").tenantId("kl").build()
+                Role.builder().code("ADVOCATE_ROLE").tenantId("pb").build()
         )));
 
         CourtCase courtCase = new CourtCase();

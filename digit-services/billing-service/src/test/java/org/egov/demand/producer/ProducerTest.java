@@ -22,7 +22,7 @@ class ProducerTest {
     @InjectMocks
     private Producer producer;
 
-    private final String tenantId = "kl";
+    private final String tenantId = "pb";
     private final String topic = "demand-update";
     private final String updatedTopic = "kl-demand-update";
     private final Object payload = new Object();

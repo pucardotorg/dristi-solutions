@@ -86,7 +86,7 @@ class DemandServiceTest {
 //        masterList.add("PaymentMasterCode");
 //
 //
-//        lenient().when(mdmsUtil.fetchMdmsData(requestInfo, "kl", "payment", masterList)).thenReturn(mdmsRes);
+//        lenient().when(mdmsUtil.fetchMdmsData(requestInfo, "pb", "payment", masterList)).thenReturn(mdmsRes);
 //        when(taskRequest.getTask()).thenReturn(task);
 //        when(task.getTaskDetails()).thenReturn(taskDetails);
 //        when(taskDetails.getDeliveryChannel()).thenReturn(deliveryChannel);

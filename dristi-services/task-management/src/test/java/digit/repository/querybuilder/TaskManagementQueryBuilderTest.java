@@ -34,7 +34,7 @@ class TaskManagementQueryBuilderTest {
     @Test
     void getTaskSearchQuery_WithTenantId_AddsWhereClause() {
         TaskSearchCriteria criteria = TaskSearchCriteria.builder()
-                .tenantId("kl")
+                .tenantId("pb")
                 .build();
 
         String query = queryBuilder.getTaskSearchQuery(criteria, preparedStmtList, preparedStmtArgList);
@@ -42,13 +42,13 @@ class TaskManagementQueryBuilderTest {
         assertTrue(query.contains("WHERE"));
         assertTrue(query.contains("task.tenant_id = ?"));
         assertEquals(1, preparedStmtList.size());
-        assertEquals("kl", preparedStmtList.get(0));
+        assertEquals("pb", preparedStmtList.get(0));
     }
 
     @Test
     void getTaskSearchQuery_WithMultipleCriteria_AddsAndClause() {
         TaskSearchCriteria criteria = TaskSearchCriteria.builder()
-                .tenantId("kl")
+                .tenantId("pb")
                 .filingNumber("KL-2024-001")
                 .status("PENDING")
                 .build();
@@ -66,7 +66,7 @@ class TaskManagementQueryBuilderTest {
     @Test
     void getTaskSearchQuery_WithTaskTypeList_AddsInClause() {
         TaskSearchCriteria criteria = TaskSearchCriteria.builder()
-                .tenantId("kl")
+                .tenantId("pb")
                 .taskType(Arrays.asList("TYPE_A", "TYPE_B"))
                 .build();
 
@@ -162,7 +162,7 @@ class TaskManagementQueryBuilderTest {
     @Test
     void getTaskSearchQuery_WithAllCriteria() {
         TaskSearchCriteria criteria = TaskSearchCriteria.builder()
-                .tenantId("kl")
+                .tenantId("pb")
                 .taskManagementNumber("TM-001")
                 .courtId("COURT-1")
                 .orderNumber("ORDER-001")

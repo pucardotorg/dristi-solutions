@@ -162,7 +162,7 @@ class EvidenceServiceTest {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.setUserInfo(User.builder().type("EMPLOYEE").roles(Collections.singletonList(Role.builder().build())).build());
         EvidenceSearchCriteria criteria = new EvidenceSearchCriteria();
-        criteria.setTenantId("kl");
+        criteria.setTenantId("pb");
         when(repository.getArtifacts(criteria,null)).thenReturn(Collections.emptyList());
 
         List<Artifact> result = evidenceService.searchEvidence(requestInfo, criteria,null);
@@ -175,7 +175,7 @@ class EvidenceServiceTest {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.setUserInfo(User.builder().type("EMPLOYEE").roles(Collections.singletonList(Role.builder().build())).build());
         EvidenceSearchCriteria criteria = new EvidenceSearchCriteria();
-        criteria.setTenantId("kl");
+        criteria.setTenantId("pb");
         when(repository.getArtifacts(criteria,null)).thenReturn(List.of(artifact));
 
         // Mocking the ProcessInstance and Workflow
@@ -192,10 +192,10 @@ class EvidenceServiceTest {
         when(validator.validateEvidenceExistence(evidenceRequest)).thenReturn(mock(Artifact.class));
         evidenceRequest.getArtifact().setWorkflow(new WorkflowObject());
         evidenceRequest.getArtifact().getWorkflow().setAction(INITIATE_E_SIGN);
-        evidenceRequest.getArtifact().setTenantId("kl");
+        evidenceRequest.getArtifact().setTenantId("pb");
         evidenceRequest.getArtifact().setArtifactNumber("123");
 
-        when(urlShortenerUtil.createShortenedUrl("kl", "123")).thenReturn("shortenedUrl");
+        when(urlShortenerUtil.createShortenedUrl("pb", "123")).thenReturn("shortenedUrl");
 
         Artifact result = evidenceService.updateEvidence(evidenceRequest);
 
@@ -375,11 +375,11 @@ class EvidenceServiceTest {
         when(validator.validateEvidenceExistence(evidenceRequest)).thenReturn(mock(Artifact.class));
         evidenceRequest.getArtifact().setWorkflow(new WorkflowObject());
         evidenceRequest.getArtifact().getWorkflow().setAction(INITIATE_E_SIGN);
-        evidenceRequest.getArtifact().setTenantId("kl");
+        evidenceRequest.getArtifact().setTenantId("pb");
         evidenceRequest.getArtifact().setArtifactNumber("123");
         evidenceRequest.getArtifact().setFilingNumber("KL-123");
 
-        when(urlShortenerUtil.createShortenedUrl("kl", "123")).thenReturn("shortenedUrl");
+        when(urlShortenerUtil.createShortenedUrl("pb", "123")).thenReturn("shortenedUrl");
         when(caseUtil.searchCaseDetails(any(CaseSearchRequest.class))).thenReturn(json);
 
         Artifact result = evidenceService.updateEvidence(evidenceRequest);

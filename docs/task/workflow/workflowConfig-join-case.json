@@ -1,7 +1,7 @@
 {
   "BusinessServices": [
     {
-      "tenantId": "kl",
+      "tenantId": "pb",
       "businessService": "task-join-case",
       "business": "task",
       "businessServiceSla": null,

@@ -259,7 +259,7 @@ class WitnessDepositionPdfServiceTest {
     private HearingSearchRequest createMockHearingSearchRequest() {
         return HearingSearchRequest.builder()
                 .criteria(HearingCriteria.builder().build())
-                .requestInfo(RequestInfo.builder().userInfo(User.builder().tenantId("kl").build()).build())
+                .requestInfo(RequestInfo.builder().userInfo(User.builder().tenantId("pb").build()).build())
                 .build();
     }
 

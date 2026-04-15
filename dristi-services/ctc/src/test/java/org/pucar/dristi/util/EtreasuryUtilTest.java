@@ -42,7 +42,7 @@ class EtreasuryUtilTest {
         lenient().when(configs.getCtcBusinessServiceName()).thenReturn("ctc-services");
 
         CtcApplication app = CtcApplication.builder()
-                .filingNumber("FIL-001").tenantId("kl").build();
+                .filingNumber("FIL-001").tenantId("pb").build();
         ctcRequest = CtcApplicationRequest.builder()
                 .requestInfo(RequestInfo.builder().userInfo(User.builder().uuid("u1").build()).build())
                 .ctcApplication(app).build();
@@ -50,7 +50,7 @@ class EtreasuryUtilTest {
 
     @Test
     void createDemand_shouldPostDemandRequest() {
-        Calculation calc = Calculation.builder().totalAmount(35.0).tenantId("kl").build();
+        Calculation calc = Calculation.builder().totalAmount(35.0).tenantId("pb").build();
 
         when(restTemplate.postForObject(anyString(), any(), eq(Map.class))).thenReturn(new HashMap<>());
 
@@ -61,7 +61,7 @@ class EtreasuryUtilTest {
 
     @Test
     void createDemand_shouldThrowCustomExceptionOnError() {
-        Calculation calc = Calculation.builder().totalAmount(35.0).tenantId("kl").build();
+        Calculation calc = Calculation.builder().totalAmount(35.0).tenantId("pb").build();
 
         when(restTemplate.postForObject(anyString(), any(), eq(Map.class)))
                 .thenThrow(new RuntimeException("service down"));

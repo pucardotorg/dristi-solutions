@@ -44,7 +44,7 @@ class TaskManagementRepositoryTest {
     @BeforeEach
     void setUp() {
         criteria = TaskSearchCriteria.builder()
-                .tenantId("kl")
+                .tenantId("pb")
                 .filingNumber("KL-2024-001")
                 .build();
         pagination = Pagination.builder()
@@ -159,7 +159,7 @@ class TaskManagementRepositoryTest {
         String baseQuery = "SELECT * FROM task";
         String countQuery = "SELECT COUNT(*) FROM (SELECT * FROM task) total_result";
         List<Object> preparedStmtList = new ArrayList<>();
-        preparedStmtList.add("kl");
+        preparedStmtList.add("pb");
 
         when(queryBuilder.getTotalCountQuery(baseQuery)).thenReturn(countQuery);
         when(jdbcTemplate.queryForObject(eq(countQuery), eq(Integer.class), any(Object[].class))).thenReturn(100);

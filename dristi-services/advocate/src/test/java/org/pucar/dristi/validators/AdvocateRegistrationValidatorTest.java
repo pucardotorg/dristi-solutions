@@ -102,12 +102,12 @@ import static org.mockito.Mockito.*;
     @Test
     void validateBarRegistrationNumber_Duplicate_ThrowsCustomException() {
         Advocate advocate = new Advocate();
-        advocate.setTenantId("kl");
+        advocate.setTenantId("pb");
         advocate.setBarRegistrationNumber("K/1234/2025");
         advocateRequest.setAdvocate(advocate);
 
         when(configuration.getBarRegistrationNumberFormat()).thenReturn("^K/(?!0+/)(\\d{1,6})/\\d{4}$");
-        when(repository.isBarRegistrationNumberActive(eq("kl"), anyString(), anyString(), anyString())).thenReturn(true);
+        when(repository.isBarRegistrationNumberActive(eq("pb"), anyString(), anyString(), anyString())).thenReturn(true);
 
         assertThrows(CustomException.class, () -> validator.validateBarRegistrationNumber(advocateRequest));
     }

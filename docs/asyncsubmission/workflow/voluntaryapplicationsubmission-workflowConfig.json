@@ -1,7 +1,7 @@
 {
   "BusinessServices": [
     {
-      "tenantId": "kl",
+      "tenantId": "pb",
       "business": "application",
       "businessService": "voluntary-application-submission",
       "businessServiceSla": 432000000,

@@ -152,7 +152,7 @@ components:
         tenantId:
           type: string
           description: Tenant ID for which task management records are being searched
-          example: "kl"
+          example: "pb"
         taskManagementNumber:
           type: string
           description: Unique number assigned to the task management record

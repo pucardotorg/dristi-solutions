@@ -49,7 +49,7 @@ class TaskManagementControllerTest {
         taskManagement = TaskManagement.builder()
                 .id("task-id-123")
                 .taskManagementNumber("TM-001")
-                .tenantId("kl")
+                .tenantId("pb")
                 .filingNumber("KL-2024-001")
                 .build();
         request = TaskManagementRequest.builder()
@@ -88,7 +88,7 @@ class TaskManagementControllerTest {
 
     @Test
     void getTaskManagement_WithResults_ReturnsAcceptedResponse() {
-        TaskSearchCriteria criteria = TaskSearchCriteria.builder().tenantId("kl").build();
+        TaskSearchCriteria criteria = TaskSearchCriteria.builder().tenantId("pb").build();
         Pagination pagination = Pagination.builder().limit(10.0).offSet(0.0).totalCount(2.0).build();
         TaskSearchRequest searchRequest = TaskSearchRequest.builder()
                 .requestInfo(requestInfo)
@@ -114,7 +114,7 @@ class TaskManagementControllerTest {
 
     @Test
     void getTaskManagement_WithoutPagination_UsesListSize() {
-        TaskSearchCriteria criteria = TaskSearchCriteria.builder().tenantId("kl").build();
+        TaskSearchCriteria criteria = TaskSearchCriteria.builder().tenantId("pb").build();
         TaskSearchRequest searchRequest = TaskSearchRequest.builder()
                 .requestInfo(requestInfo)
                 .criteria(criteria)
@@ -137,7 +137,7 @@ class TaskManagementControllerTest {
 
     @Test
     void getTaskManagement_EmptyResults_ReturnsEmptyList() {
-        TaskSearchCriteria criteria = TaskSearchCriteria.builder().tenantId("kl").build();
+        TaskSearchCriteria criteria = TaskSearchCriteria.builder().tenantId("pb").build();
         TaskSearchRequest searchRequest = TaskSearchRequest.builder()
                 .requestInfo(requestInfo)
                 .criteria(criteria)

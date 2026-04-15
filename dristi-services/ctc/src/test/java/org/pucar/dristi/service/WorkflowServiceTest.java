@@ -47,7 +47,7 @@ class WorkflowServiceTest {
 
         application = CtcApplication.builder()
                 .ctcApplicationNumber("CA-001")
-                .tenantId("kl")
+                .tenantId("pb")
                 .workflow(workflow)
                 .build();
 
@@ -105,7 +105,7 @@ class WorkflowServiceTest {
         assertEquals("CA-001", result.getBusinessId());
         assertEquals("SUBMIT", result.getAction());
         assertEquals("ctc", result.getModuleName());
-        assertEquals("kl", result.getTenantId());
+        assertEquals("pb", result.getTenantId());
         assertEquals("ctc-services", result.getBusinessService());
         assertEquals("Test comment", result.getComment());
         assertEquals(2, result.getAssignes().size());

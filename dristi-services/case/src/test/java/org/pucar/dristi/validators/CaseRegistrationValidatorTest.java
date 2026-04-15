@@ -654,7 +654,7 @@ public class CaseRegistrationValidatorTest {
     void testvalidateUpdateRequest_CaseLocked() {
         CourtCase courtCase = new CourtCase();
         courtCase.setId(UUID.randomUUID());
-        courtCase.setTenantId("kl");
+        courtCase.setTenantId("pb");
         courtCase.setCaseCategory("category");
         courtCase.setStatutesAndSections(List.of(StatuteSection.builder().tenantId("pb").build()));
         workflow.setAction(DELETE_DRAFT_WORKFLOW_ACTION);

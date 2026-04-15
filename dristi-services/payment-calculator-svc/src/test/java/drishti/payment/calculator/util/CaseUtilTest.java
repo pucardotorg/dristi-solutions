@@ -61,7 +61,7 @@ public class CaseUtilTest {
     public void testGetAdvocateForLitigant() throws JsonProcessingException {
         RequestInfo requestInfo = new RequestInfo();
         String filingNumber = "KL-123";
-        String tenantId = "kl";
+        String tenantId = "pb";
         Map<String, Object> responseMap = new HashMap<>();
 
         Map<String, Object> response = new HashMap<>();

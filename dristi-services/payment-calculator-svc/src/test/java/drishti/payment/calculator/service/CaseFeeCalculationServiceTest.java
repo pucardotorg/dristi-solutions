@@ -46,7 +46,7 @@ public class CaseFeeCalculationServiceTest {
         when(caseUtil.getAdvocateForLitigant(any(), anyString(), anyString())).thenReturn(Collections.emptyMap());
         EFillingCalculationRequest request = EFillingCalculationRequest.builder()
                 .calculationCriteria(Collections.singletonList(
-                        EFillingCalculationCriteria.builder().caseId("CASE-001").tenantId("kl").filingNumber("KL-001").numberOfApplication(1).checkAmount(50000.0).isDelayCondonation(false).build()
+                        EFillingCalculationCriteria.builder().caseId("CASE-001").tenantId("pb").filingNumber("KL-001").numberOfApplication(1).checkAmount(50000.0).isDelayCondonation(false).build()
                 )).build();
 
         List<Calculation> result = caseFeesCalculationService.calculateCaseFees(request);
@@ -65,7 +65,7 @@ public class CaseFeeCalculationServiceTest {
         when(caseUtil.getAdvocateForLitigant(any(), anyString(), anyString())).thenReturn(mockLitigantAdvocateMap);
         EFillingCalculationRequest request = EFillingCalculationRequest.builder()
                 .calculationCriteria(Collections.singletonList(
-                        EFillingCalculationCriteria.builder().tenantId("kl").filingNumber("KL-123").numberOfApplication(1).checkAmount(50000.0).isDelayCondonation(false).build()
+                        EFillingCalculationCriteria.builder().tenantId("pb").filingNumber("KL-123").numberOfApplication(1).checkAmount(50000.0).isDelayCondonation(false).build()
                 )).build();
 
         List<Calculation> result = caseFeesCalculationService.calculateCaseFees(request);
@@ -86,7 +86,7 @@ public class CaseFeeCalculationServiceTest {
         when(caseUtil.getAdvocateForLitigant(any(), anyString(), anyString())).thenReturn(mockLitigantAdvocateMap);
         EFillingCalculationRequest request = EFillingCalculationRequest.builder()
                 .calculationCriteria(Collections.singletonList(
-                        EFillingCalculationCriteria.builder().tenantId("kl").filingNumber("KL-123").numberOfApplication(1).checkAmount(50000.0).isDelayCondonation(false).build()
+                        EFillingCalculationCriteria.builder().tenantId("pb").filingNumber("KL-123").numberOfApplication(1).checkAmount(50000.0).isDelayCondonation(false).build()
                 )).build();
 
         List<Calculation> result = caseFeesCalculationService.calculateCaseFees(request);

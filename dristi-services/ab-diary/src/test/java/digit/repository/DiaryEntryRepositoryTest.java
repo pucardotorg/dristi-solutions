@@ -134,7 +134,7 @@ class DiaryEntryRepositoryTest {
         // Prepare mock objects
         CaseDiaryExistCriteria searchRequest = new CaseDiaryExistCriteria();
         searchRequest.setId(UUID.randomUUID());
-        searchRequest.setTenantId("kl");
+        searchRequest.setTenantId("pb");
 
         List<Object> preparedStmtList = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();

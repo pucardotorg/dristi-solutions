@@ -46,7 +46,7 @@ public class RequestInfoGenerator {
             Map<String, String> formData = new HashMap<>();
             formData.put("username", configs.getDefaultUserUserName());
             formData.put("password", configs.getDefaultUserPassword());
-            formData.put("tenantId", "kl");
+            formData.put("tenantId", "pb");
             formData.put("userType", "EMPLOYEE");
             formData.put("scope", "read");
             formData.put("grant_type", "password");

@@ -341,7 +341,7 @@ public class PendingTaskService {
     }
 
     private List<JsonNode> checkComplainantJoinCase(List<JsonNode> tasks, Map<String, Object> joinCase) {
-        JsonNode caseObject = objectMapper.convertValue(caseUtil.getCase((JSONObject) joinCase.get("RequestInfo"), "kl", null, joinCase.get("filingNumber").toString(), null), JsonNode.class);
+        JsonNode caseObject = objectMapper.convertValue(caseUtil.getCase((JSONObject) joinCase.get("RequestInfo"), "pb", null, joinCase.get("filingNumber").toString(), null), JsonNode.class);
         JsonNode litigantList = caseObject.get("litigants");
 
         ArrayNode filteredLitigantList = objectMapper.createArrayNode();

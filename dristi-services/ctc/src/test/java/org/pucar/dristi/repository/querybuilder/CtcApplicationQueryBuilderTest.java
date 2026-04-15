@@ -51,7 +51,7 @@ class CtcApplicationQueryBuilderTest {
     @Test
     void getCtcApplicationsQuery_shouldAddMultipleCriteria() {
         CtcApplicationSearchCriteria criteria = CtcApplicationSearchCriteria.builder()
-                .courtId("KLKM52").tenantId("kl").filingNumber("FIL-001").build();
+                .courtId("KLKM52").tenantId("pb").filingNumber("FIL-001").build();
         List<Object> stmtList = new ArrayList<>();
         List<Integer> argList = new ArrayList<>();
 

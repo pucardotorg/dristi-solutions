@@ -7,7 +7,7 @@
   "required": ["name", "tenantId", "caseID", "pdfCreatedDate", "fileStoreId", "contentLastModified"],
   "properties": {
     "name": "case-bundle-pdf",
-    "tenantId": "KL",
+    "tenantId": "PB",
     "isInProcessing": {
       "type": "boolean",
       "description": "once this is under processing, mark as True, to avoid being picked up for processing again and again"

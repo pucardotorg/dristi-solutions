@@ -172,7 +172,7 @@ public class PdfEmbedder {
 
             MultipartFile dummySignedPdf = new ByteArrayMultipartFile(FILE_NAME, baos.toByteArray());
 
-            String dummyFileStoreId = fileStoreUtil.storeFileInFileStore(dummySignedPdf, "kl");
+            String dummyFileStoreId = fileStoreUtil.storeFileInFileStore(dummySignedPdf, "pb");
 
             eSignParameter.setFileStoreId(dummyFileStoreId);
             stamper.close();

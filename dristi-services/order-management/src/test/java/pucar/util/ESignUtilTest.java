@@ -42,7 +42,7 @@ class ESignUtilTest {
     void setUp() {
         coordinateRequest = new CoordinateRequest();
         coordinateResponse = new CoordinateResponse();
-        coordinateResponse.setCoordinates(Collections.singletonList(new Coordinate(0.0F, 0.0F, true,10, "fileStoreId1","kl")));
+        coordinateResponse.setCoordinates(Collections.singletonList(new Coordinate(0.0F, 0.0F, true,10, "fileStoreId1","pb")));
     }
 
     @Test

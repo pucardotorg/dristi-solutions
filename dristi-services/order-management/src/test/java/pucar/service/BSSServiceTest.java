@@ -68,7 +68,7 @@ class BSSServiceTest {
 
     @Test
     void createOrderToSignRequest_Success() throws IOException {
-        Coordinate coordinate = new Coordinate(0.0F, 0.0F, true, 1, "123", "kl");
+        Coordinate coordinate = new Coordinate(0.0F, 0.0F, true, 1, "123", "pb");
         when(eSignUtil.getCoordinateForSign(any())).thenReturn(Collections.singletonList(coordinate));
         when(fileStoreUtil.fetchFileStoreObjectById(anyString(), anyString())).thenReturn(mock(Resource.class));
         when(cipherUtil.encodePdfToBase64(any())).thenReturn("base64EncodedString");
