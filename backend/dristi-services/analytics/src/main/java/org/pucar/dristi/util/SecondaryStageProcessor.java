@@ -274,7 +274,6 @@ public class SecondaryStageProcessor {
                 return;
             }
 
-            // Check if all tasks have DELIVERED or EXPIRED status except the referenceId
             int completedCount = 0;
             for (int i = 0; i < tasks.length(); i++) {
                 JSONObject task = tasks.getJSONObject(i);
@@ -282,12 +281,12 @@ public class SecondaryStageProcessor {
                 if(referenceId!=null && referenceId.equals(task.optString("taskNumber", ""))){
                     continue;
                 }
-                if ("DELIVERED".equalsIgnoreCase(status) || "EXPIRED".equalsIgnoreCase(status) || "EXECUTED".equalsIgnoreCase(status)) {
+                if (TASK_END_TRIGGER_STATUSES.contains(status)) {
                     completedCount++;
                 }
             }
 
-            if ((tasks.length() > 1 && completedCount==tasks.length()-1) || (tasks.length() == 1)) {
+            if (((tasks.length() > 1 && completedCount==tasks.length()-1)) || (tasks.length() == 1)) {
                 log.info("All {} tasks delivered/expired for filingNumber: {}, ending secondary stage '{}'", taskType, filingNumber, secondaryStage);
                 publishSubstageUpdate(filingNumber, tenantId, request,null,caseObject);
                 caseStageTrackingUtil.endSecondaryStage(filingNumber);

@@ -3,6 +3,8 @@ package org.pucar.dristi.config;
 
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
 
 @Component
 public class ServiceConstants {
@@ -309,6 +311,9 @@ public class ServiceConstants {
     public static final String STAGE_POST_JUDGEMENT = "Post-Judgement";
     public static final String STAGE_POST_DISPOSAL = "Post-Disposal";
     public static final String STAGE_LONG_PENDING_REGISTER = "Long Pending Register";
+
+    public static final Set<String> TASK_END_TRIGGER_STATUSES = Set.of(
+            "EXECUTED", "EXPIRED", "DELIVERED", "ABATED", "UNDELIVERED", "NOT_EXECUTED");
 
     // Party type for accused side
     public static final String ACCUSED_PARTY_TYPE = "respondent";
