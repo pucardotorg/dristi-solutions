@@ -503,11 +503,18 @@ public class CaseOverallStatusUtil {
 			caseOverallStatus.setProcessHandler(ProcessHandler.RESET_BACKUP);
 		}
 
+ 		String filingNumber = caseOverallStatus.getFilingNumber();
+		String tenantId = caseOverallStatus.getTenantId();
+
 		if (caseOverallStatus.getProcessHandler() == UPDATE_BACKUP) {
 			if (caseOverallStatus.getStageBackup() == null) {
 				caseOverallStatus.setStageBackup(currentCaseStage);
 				caseOverallStatus.setSubstageBackup(currentCaseSubStage);
 			}
+			// End the current stage and add the new stage in ES (e.g., entering LPR)
+			String newStage = caseOverallStatus.getStage();
+			caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, newStage);
+			log.info("UPDATE_BACKUP: ended stage '{}', started stage '{}' for filingNumber: {}", currentCaseStage, newStage, filingNumber);
 		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESET_BACKUP) {
 			caseOverallStatus.setStageBackup(null);
 			caseOverallStatus.setSubstageBackup(null);
@@ -517,6 +524,10 @@ public class CaseOverallStatusUtil {
 				caseOverallStatus.setStage(caseStageBackup);
 				caseOverallStatus.setSubstage(caseSubStageBackup);
 			}
+			// End the current stage and add the restored stage in ES (e.g., leaving LPR)
+			String restoredStage = caseOverallStatus.getStage();
+			caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, restoredStage);
+			log.info("RESTORE_BACKUP: ended stage '{}', started restored stage '{}' for filingNumber: {}", currentCaseStage, restoredStage, filingNumber);
 		}
 	}
 
