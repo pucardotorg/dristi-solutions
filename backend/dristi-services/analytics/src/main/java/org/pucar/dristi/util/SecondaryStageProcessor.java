@@ -362,7 +362,11 @@ public class SecondaryStageProcessor {
             String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);
             String caseSubStageBackup = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_BACKUP_PATH);
 
-            caseOverallStatus.setStage(caseStage);
+            if(SECONDARY_STAGE_DELAY_CONDONATION.equalsIgnoreCase(secondaryStage)){
+                caseOverallStatus.setStage(STAGE_COGNIZANCE);
+            }else {
+                caseOverallStatus.setStage(caseStage);
+            }
             caseOverallStatus.setStageBackup(caseStageBackup);
             caseOverallStatus.setSubstageBackup(caseSubStageBackup);
 
