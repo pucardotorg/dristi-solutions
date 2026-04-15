@@ -446,6 +446,10 @@ const TopBarComponent = ({
           <div
             style={{ display: "flex", gap: "16px", cursor: "pointer" }}
             onClick={() => {
+              if (!isUserLoggedIn) {
+                window.location.replace(window.location.origin);
+                return;
+              }
               if (isUserLoggedIn && pathname.includes("/citizen/dristi/home/registration")) {
                 history.push(`/${window?.contextPath}/citizen/dristi/home`);
               } else {
