@@ -192,7 +192,7 @@ function BulkSignADiaryView() {
           showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
         }
       }
-      if (entry?.referenceType === ORDER_TYPES.NOTICE) {
+      if (entry?.referenceType === ORDER_TYPES.NOTICE.toLocaleLowerCase()) {
         try {
           const notificationResponse = await Digit.HearingService.searchNotification({
             criteria: {
