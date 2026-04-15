@@ -119,10 +119,16 @@ function CitizenHome({ tenantId, setHideBack = () => {} }) {
 
   useEffect(() => {
     if (!data || !searchData) return;
-    if (individualId && !isApprovalPending && !isRejected && !isLitigantPartialRegistered && searchResult?.length > 0) {
+    if (
+      individualId &&
+      !isApprovalPending &&
+      !isRejected &&
+      !isLitigantPartialRegistered &&
+      (userType !== "ADVOCATE" || (userType === "ADVOCATE" && searchResult?.length > 0))
+    ) {
       history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
     }
-  }, [individualId, isLitigantPartialRegistered, isRejected, history, isApprovalPending, searchResult, data, searchData]);
+  }, [individualId, isLitigantPartialRegistered, isRejected, history, isApprovalPending, searchResult, data, searchData, userType]);
 
   useEffect(() => {
     setHideBack(userHasIncompleteRegistration || registrationIsDoneApprovalIsPending);
