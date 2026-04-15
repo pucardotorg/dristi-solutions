@@ -1,4 +1,4 @@
-export { getAllAssignees, getAdvocates } from "@egovernments/digit-ui-module-common/src/utils/caseUtils";
+export { getAllAssignees, getAdvocates } from "@egovernments/digit-ui-module-common";
 
 export const getAdvocatesNames = (caseDetails) => {
   let litigants = {};

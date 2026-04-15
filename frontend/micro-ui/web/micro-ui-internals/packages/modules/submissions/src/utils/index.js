@@ -2,7 +2,7 @@ import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { getFormattedName } from "@egovernments/digit-ui-module-common/src/utils";
+import { getFormattedName } from "@egovernments/digit-ui-module-common";
 
 export const overrideHooks = () => {
   Object.keys(CustomisedHooks).map((ele) => {

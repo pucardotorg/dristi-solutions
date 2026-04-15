@@ -94,11 +94,7 @@ The common module utilities are accessed like this:
 
 ```javascript
 // In any module
-import {
-  getFormattedName,
-  getAdvocates,
-  getAllAssignees,
-} from "@egovernments/digit-ui-module-common";
+import { getFormattedName, getAdvocates, getAllAssignees } from "@egovernments/digit-ui-module-common";
 
 // Or via the component registry
 const utils = Digit.ComponentRegistryService.getComponent("CommonUtils");
@@ -119,7 +115,7 @@ After the fixes, you should now be able to:
 2. **Use the utilities** in other modules:
 
    ```javascript
-   import { getFormattedName } from "@egovernments/digit-ui-module-common/src/utils";
+   import { getFormattedName } from "@egovernments/digit-ui-module-common";
    ```
 
 3. **Build succeeds** without errors:
