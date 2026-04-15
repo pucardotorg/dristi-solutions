@@ -185,7 +185,7 @@ public class CaseDiaryApiControllerTest {
     @Test
     void testGetDiaryStoreIdFailure() {
 
-        when(diaryService.searchCaseDiaryForCourt("kl","judgeId","diaryType",1L,UUID.randomUUID())).thenThrow(new RuntimeException("Error adding entry"));
+        when(diaryService.searchCaseDiaryForCourt("pb","judgeId","diaryType",1L,UUID.randomUUID())).thenThrow(new RuntimeException("Error adding entry"));
 
         assertThrows(RuntimeException.class, () -> {
             caseDiaryApiController.getDiaryStoreId("tenantId","judgeId","diaryType",17000L,UUID.randomUUID());

@@ -55,14 +55,14 @@ class PaymentUpdateServiceTest {
         requestInfo = RequestInfo.builder()
                 .userInfo(User.builder()
                         .uuid("user-1")
-                        .roles(new ArrayList<>(List.of(Role.builder().code("CITIZEN").tenantId("kl").build())))
+                        .roles(new ArrayList<>(List.of(Role.builder().code("CITIZEN").tenantId("pb").build())))
                         .build())
                 .build();
 
         ctcApplication = CtcApplication.builder()
                 .id("app-1")
                 .ctcApplicationNumber("CA-001")
-                .tenantId("kl")
+                .tenantId("pb")
                 .courtId("KLKM52")
                 .filingNumber("FIL-001")
                 .caseNumber("CASE-001")
@@ -100,7 +100,7 @@ class PaymentUpdateServiceTest {
                 .build();
 
         Payment payment = Payment.builder()
-                .tenantId("kl")
+                .tenantId("pb")
                 .paymentDetails(List.of(paymentDetail))
                 .build();
 
@@ -288,7 +288,7 @@ class PaymentUpdateServiceTest {
 
         CtcApplication app = CtcApplication.builder()
                 .ctcApplicationNumber("APP-123")
-                .tenantId("kl")
+                .tenantId("pb")
                 .courtId("KLKM52")
                 .filingNumber("FIL-002")
                 .caseNumber("CASE-002")
@@ -338,7 +338,7 @@ class PaymentUpdateServiceTest {
         verify(indexerUtils).pushCtcApplicationTracker(trackerCaptor.capture());
 
         CtcApplicationTracker tracker = trackerCaptor.getValue();
-        assertEquals("kl", tracker.getTenantId());
+        assertEquals("pb", tracker.getTenantId());
         assertEquals("KLKM52", tracker.getCourtId());
         assertEquals("FIL-001", tracker.getFilingNumber());
         assertEquals("CA-001", tracker.getCtcApplicationNumber());
@@ -394,7 +394,7 @@ class PaymentUpdateServiceTest {
                 .build();
 
         Payment payment = Payment.builder()
-                .tenantId("kl")
+                .tenantId("pb")
                 .paymentDetails(List.of(pd1, pd2))
                 .build();
 

@@ -44,11 +44,11 @@ class TaskManagementEnrichmentTest {
 
     @BeforeEach
     void setUp() {
-        user = User.builder().uuid("user-uuid-123").tenantId("kl").build();
+        user = User.builder().uuid("user-uuid-123").tenantId("pb").build();
         requestInfo = RequestInfo.builder().userInfo(user).build();
         taskManagement = TaskManagement.builder()
                 .filingNumber("KL-2024-001")
-                .tenantId("kl")
+                .tenantId("pb")
                 .build();
         request = TaskManagementRequest.builder()
                 .requestInfo(requestInfo)

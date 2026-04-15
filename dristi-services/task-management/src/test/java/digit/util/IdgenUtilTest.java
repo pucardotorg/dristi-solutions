@@ -57,7 +57,7 @@ class IdgenUtilTest {
 
         when(restRepo.fetchResult(any(), any())).thenReturn(response);
 
-        List<String> result = idgenUtil.getIdList(requestInfo, "kl", "task.id", "TM-[SEQ]", 1, false);
+        List<String> result = idgenUtil.getIdList(requestInfo, "pb", "task.id", "TM-[SEQ]", 1, false);
 
         assertEquals(1, result.size());
         assertEquals("TM-001", result.get(0));
@@ -80,7 +80,7 @@ class IdgenUtilTest {
 
         when(restRepo.fetchResult(any(), any())).thenReturn(response);
 
-        List<String> result = idgenUtil.getIdList(requestInfo, "kl", "task.id", "TM-[SEQ]", 3, false);
+        List<String> result = idgenUtil.getIdList(requestInfo, "pb", "task.id", "TM-[SEQ]", 3, false);
 
         assertEquals(3, result.size());
         assertTrue(result.contains("TM-001"));
@@ -99,7 +99,7 @@ class IdgenUtilTest {
         when(restRepo.fetchResult(any(), any())).thenReturn(response);
 
         assertThrows(CustomException.class, () -> 
-            idgenUtil.getIdList(requestInfo, "kl", "task.id", "TM-[SEQ]", 1, false));
+            idgenUtil.getIdList(requestInfo, "pb", "task.id", "TM-[SEQ]", 1, false));
     }
 
     @Test
@@ -113,7 +113,7 @@ class IdgenUtilTest {
         when(restRepo.fetchResult(any(), any())).thenReturn(response);
 
         assertThrows(CustomException.class, () -> 
-            idgenUtil.getIdList(requestInfo, "kl", "task.id", "TM-[SEQ]", 1, false));
+            idgenUtil.getIdList(requestInfo, "pb", "task.id", "TM-[SEQ]", 1, false));
     }
 
     @Test
@@ -128,7 +128,7 @@ class IdgenUtilTest {
 
         when(restRepo.fetchResult(any(), any())).thenReturn(response);
 
-        idgenUtil.getIdList(requestInfo, "kl", "task.id", "TM-[SEQ]", 1, false);
+        idgenUtil.getIdList(requestInfo, "pb", "task.id", "TM-[SEQ]", 1, false);
 
         verify(restRepo).fetchResult(
             argThat(uri -> "http://localhost:8080/egov-idgen/id/_generate".equals(uri.toString())),

@@ -44,7 +44,7 @@ class CtcApiControllerTest {
         responseInfo = ResponseInfo.builder().status("successful").build();
 
         application = CtcApplication.builder()
-                .id("app-1").ctcApplicationNumber("CA-001").tenantId("kl").build();
+                .id("app-1").ctcApplicationNumber("CA-001").tenantId("pb").build();
 
         lenient().when(responseInfoFactory.createResponseInfoFromRequestInfo(any(), eq(true)))
                 .thenReturn(responseInfo);
@@ -137,7 +137,7 @@ class CtcApiControllerTest {
         Pagination pagination = Pagination.builder().totalCount(1.0).build();
         CtcApplicationSearchRequest request = CtcApplicationSearchRequest.builder()
                 .requestInfo(requestInfo)
-                .criteria(CtcApplicationSearchCriteria.builder().tenantId("kl").build())
+                .criteria(CtcApplicationSearchCriteria.builder().tenantId("pb").build())
                 .pagination(pagination)
                 .build();
 
@@ -231,7 +231,7 @@ class CtcApiControllerTest {
     void validateUser_shouldReturn200WithInfo() {
         ValidateUserRequest request = ValidateUserRequest.builder()
                 .requestInfo(requestInfo).filingNumber("FIL-001")
-                .mobileNumber("9876543210").tenantId("kl").courtId("KLKM52").build();
+                .mobileNumber("9876543210").tenantId("pb").courtId("KLKM52").build();
 
         ValidateUserInfo info = ValidateUserInfo.builder()
                 .userName("John").designation("Complainant").mobileNumber("9876543210")
@@ -249,7 +249,7 @@ class CtcApiControllerTest {
     void validateUser_shouldWrapUnexpectedException() {
         ValidateUserRequest request = ValidateUserRequest.builder()
                 .requestInfo(requestInfo).filingNumber("FIL-001")
-                .mobileNumber("9876543210").tenantId("kl").courtId("KLKM52").build();
+                .mobileNumber("9876543210").tenantId("pb").courtId("KLKM52").build();
 
         when(ctcApplicationService.validateUser(request)).thenThrow(new RuntimeException("err"));
 

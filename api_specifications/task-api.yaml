@@ -48,7 +48,7 @@ paths:
                 dueDate: 2026-03-01T18:30:00Z
                 businessService: HEARING
                 module: DRISTI
-                tenantId: kl
+                tenantId: pb
       responses:
         '201':
           description: Task created successfully
@@ -77,7 +77,7 @@ paths:
                 title: Prepare hearing documents (updated)
                 status: IN_PROGRESS
                 priority: MEDIUM
-                tenantId: kl
+                tenantId: pb
       responses:
         '200':
           description: Task updated successfully
@@ -106,7 +106,7 @@ paths:
                 status: [OPEN, IN_PROGRESS]
                 assignee:
                   - 7c2d8e6a-2e65-4f8c-bb4c-b8c0c6e93f12
-                tenantId: kl
+                tenantId: pb
               pagination:
                 limit: 10
                 offset: 0

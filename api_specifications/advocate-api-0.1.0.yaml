@@ -457,7 +457,7 @@ components:
         tenantId:
           type: string
           description: The tenant this user belongs to. Advocate clerks typically are registered at the state level.
-          example: kl
+          example: pb
           minLength: 2
           maxLength: 128
         applicationNumber:

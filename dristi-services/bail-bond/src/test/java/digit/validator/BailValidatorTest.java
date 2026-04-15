@@ -38,7 +38,7 @@ class BailValidatorTest {
     private RequestInfo buildValidRequestInfo() {
         RequestInfo reqInfo = new RequestInfo();
         User user = new User();
-        user.setTenantId("kl");
+        user.setTenantId("pb");
         reqInfo.setUserInfo(user);
         return reqInfo;
     }

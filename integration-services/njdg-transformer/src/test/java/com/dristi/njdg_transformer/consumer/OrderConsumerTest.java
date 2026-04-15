@@ -62,7 +62,7 @@ class OrderConsumerTest {
         order.setStatus("PUBLISHED");
         order.setOrderCategory("INTERMEDIATE");
         order.setOrderType("JUDGEMENT");
-        order.setTenantId("kl");
+        order.setTenantId("pb");
         order.setCnrNumber("CNR-001");
 
         orderRequest = new OrderRequest();

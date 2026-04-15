@@ -1,7 +1,7 @@
 {
     "BusinessServices": [
         {
-            "tenantId": "kl",
+            "tenantId": "pb",
             "business": "case",
             "businessService": "case-default",
             "businessServiceSla": null,

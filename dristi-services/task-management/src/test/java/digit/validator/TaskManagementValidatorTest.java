@@ -40,7 +40,7 @@ class TaskManagementValidatorTest {
         taskManagement = TaskManagement.builder()
                 .id("task-id-123")
                 .taskManagementNumber("TM-001")
-                .tenantId("kl")
+                .tenantId("pb")
                 .build();
         request = TaskManagementRequest.builder()
                 .requestInfo(requestInfo)

@@ -34,7 +34,7 @@ paths:
                 authToken: <AUTH_TOKEN>
                 msgId: 1730977593273|en_IN
               bail:
-                tenantId: kl
+                tenantId: pb
                 caseId: 2f6fe4ae-352f-420d-b243-679191b4ba01
                 bailNumber: KL-BAIL-2024-00012
                 bailType: PERSONAL

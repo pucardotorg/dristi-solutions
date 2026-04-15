@@ -84,7 +84,7 @@ class NotificationServiceTest {
     void testBuildEmailRequest() {
         EmailContent content = new EmailContent("Subject", "Body");
         RequestInfo requestInfo = new RequestInfo();
-        String tenantId = "kl";
+        String tenantId = "pb";
 
         Set<String> recipients = Set.of("john@example.com");
 
@@ -93,13 +93,13 @@ class NotificationServiceTest {
         assertEquals("Subject", result.getEmail().getSubject());
         assertEquals("Body", result.getEmail().getBody());
         assertEquals(recipients, result.getEmail().getEmailTo());
-        assertEquals("kl", result.getEmail().getTenantId());
+        assertEquals("pb", result.getEmail().getTenantId());
     }
 
     @Test
     void testSendEmailSuccess() {
         EmailTemplateData templateData = new EmailTemplateData();
-        templateData.setTenantId("kl");
+        templateData.setTenantId("pb");
         templateData.setCaseNumber("123");
         templateData.setCaseName("Test Case");
         templateData.setShortenedURL("http://short.url");
@@ -125,7 +125,7 @@ class NotificationServiceTest {
     void testGetMessage() {
         RequestInfo requestInfo = new RequestInfo();
         String local = "en_IN";
-        String rootTenantId = "kl";
+        String rootTenantId = "pb";
         String messageCode = "BAIL_BOND_INITIATED_LITIGANT";
 
         Map<String, Object> result = Map.of(

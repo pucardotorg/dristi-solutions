@@ -55,7 +55,7 @@ public class IndividualUtil {
         List<Individual> individuals = new ArrayList<>();
         try {
             StringBuilder uri = new StringBuilder();
-            uri.append(properties.getIndividualHost()).append(properties.getIndividualSearchPath()).append("?").append("tenantId=kl").append("&limit=1").append("&offset=0");
+            uri.append(properties.getIndividualHost()).append(properties.getIndividualSearchPath()).append("?").append("tenantId=pb").append("&limit=1").append("&offset=0");
             Object responseMap = serviceRequestRepository.fetchResult(uri, individualRequest);
             if (responseMap != null) {
                 String jsonString = objectMapper.writeValueAsString(responseMap);

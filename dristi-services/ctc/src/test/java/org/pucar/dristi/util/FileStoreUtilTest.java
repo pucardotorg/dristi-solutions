@@ -42,7 +42,7 @@ class FileStoreUtilTest {
         when(restTemplate.getForEntity(anyString(), eq(String.class)))
                 .thenReturn(new ResponseEntity<>("OK", HttpStatus.OK));
 
-        assertTrue(fileStoreUtil.doesFileExist("kl", "fs-1"));
+        assertTrue(fileStoreUtil.doesFileExist("pb", "fs-1"));
     }
 
     @Test
@@ -50,7 +50,7 @@ class FileStoreUtilTest {
         when(restTemplate.getForEntity(anyString(), eq(String.class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
 
-        assertFalse(fileStoreUtil.doesFileExist("kl", "fs-1"));
+        assertFalse(fileStoreUtil.doesFileExist("pb", "fs-1"));
     }
 
     @Test
@@ -58,7 +58,7 @@ class FileStoreUtilTest {
         when(restTemplate.getForEntity(anyString(), eq(String.class)))
                 .thenThrow(new RuntimeException("timeout"));
 
-        assertFalse(fileStoreUtil.doesFileExist("kl", "fs-1"));
+        assertFalse(fileStoreUtil.doesFileExist("pb", "fs-1"));
     }
 
     // ---- fetchFileAsBytes tests ----
@@ -69,7 +69,7 @@ class FileStoreUtilTest {
         when(restTemplate.getForEntity(anyString(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(content, HttpStatus.OK));
 
-        byte[] result = fileStoreUtil.fetchFileAsBytes("kl", "fs-1");
+        byte[] result = fileStoreUtil.fetchFileAsBytes("pb", "fs-1");
 
         assertNotNull(result);
         assertEquals("PDF content", new String(result));
@@ -80,7 +80,7 @@ class FileStoreUtilTest {
         when(restTemplate.getForEntity(anyString(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
 
-        assertNull(fileStoreUtil.fetchFileAsBytes("kl", "fs-1"));
+        assertNull(fileStoreUtil.fetchFileAsBytes("pb", "fs-1"));
     }
 
     @Test
@@ -88,7 +88,7 @@ class FileStoreUtilTest {
         when(restTemplate.getForEntity(anyString(), eq(byte[].class)))
                 .thenThrow(new RuntimeException("error"));
 
-        assertNull(fileStoreUtil.fetchFileAsBytes("kl", "fs-1"));
+        assertNull(fileStoreUtil.fetchFileAsBytes("pb", "fs-1"));
     }
 
     // ---- countPages tests ----
@@ -112,12 +112,12 @@ class FileStoreUtilTest {
 
     @Test
     void getTotalPageCount_shouldReturnZeroForNull() {
-        assertEquals(0, fileStoreUtil.getTotalPageCount("kl", null));
+        assertEquals(0, fileStoreUtil.getTotalPageCount("pb", null));
     }
 
     @Test
     void getTotalPageCount_shouldReturnZeroForEmptyList() {
-        assertEquals(0, fileStoreUtil.getTotalPageCount("kl", Collections.emptyList()));
+        assertEquals(0, fileStoreUtil.getTotalPageCount("pb", Collections.emptyList()));
     }
 
     @Test
@@ -126,7 +126,7 @@ class FileStoreUtilTest {
         when(restTemplate.getForEntity(anyString(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>("invalid".getBytes(), HttpStatus.OK));
 
-        int result = fileStoreUtil.getTotalPageCount("kl", List.of("fs-1", "fs-2"));
+        int result = fileStoreUtil.getTotalPageCount("pb", List.of("fs-1", "fs-2"));
 
         // Both are invalid, so 0+0=0
         assertEquals(0, result);
@@ -137,7 +137,7 @@ class FileStoreUtilTest {
         when(restTemplate.getForEntity(anyString(), eq(byte[].class)))
                 .thenReturn(new ResponseEntity<>(null, HttpStatus.OK));
 
-        int result = fileStoreUtil.getTotalPageCount("kl", List.of("fs-1"));
+        int result = fileStoreUtil.getTotalPageCount("pb", List.of("fs-1"));
 
         assertEquals(0, result);
     }
@@ -146,13 +146,13 @@ class FileStoreUtilTest {
 
     @Test
     void deleteFilesByFileStore_shouldSkipWhenNullIds() {
-        fileStoreUtil.deleteFilesByFileStore(null, "kl");
+        fileStoreUtil.deleteFilesByFileStore(null, "pb");
         verifyNoInteractions(restTemplate);
     }
 
     @Test
     void deleteFilesByFileStore_shouldSkipWhenEmptyIds() {
-        fileStoreUtil.deleteFilesByFileStore(Collections.emptyList(), "kl");
+        fileStoreUtil.deleteFilesByFileStore(Collections.emptyList(), "pb");
         verifyNoInteractions(restTemplate);
     }
 
@@ -161,10 +161,10 @@ class FileStoreUtilTest {
         when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(Object.class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
-        fileStoreUtil.deleteFilesByFileStore(List.of("fs-1", "fs-2"), "kl");
+        fileStoreUtil.deleteFilesByFileStore(List.of("fs-1", "fs-2"), "pb");
 
         verify(restTemplate).postForEntity(
-                eq("http://localhost:8080/filestore/v1/files/delete?tenantId=kl"),
+                eq("http://localhost:8080/filestore/v1/files/delete?tenantId=pb"),
                 any(HttpEntity.class), eq(Object.class));
     }
 
@@ -174,6 +174,6 @@ class FileStoreUtilTest {
                 .thenThrow(new CustomException("FILE_ERR", "delete failed"));
 
         assertThrows(CustomException.class,
-                () -> fileStoreUtil.deleteFilesByFileStore(List.of("fs-1"), "kl"));
+                () -> fileStoreUtil.deleteFilesByFileStore(List.of("fs-1"), "pb"));
     }
 }

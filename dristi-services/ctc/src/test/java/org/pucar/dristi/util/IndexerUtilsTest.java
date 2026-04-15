@@ -50,7 +50,7 @@ class IndexerUtilsTest {
 
         application = CtcApplication.builder()
                 .ctcApplicationNumber("CA-2025-001")
-                .tenantId("kl")
+                .tenantId("pb")
                 .courtId("KLKM52")
                 .filingNumber("FIL-001")
                 .caseTitle("State vs John")
@@ -82,7 +82,7 @@ class IndexerUtilsTest {
                 .caseNumber("CC/1/2025")
                 .filingNumber("FIL-1")
                 .courtId("KLKM52")
-                .tenantId("kl")
+                .tenantId("pb")
                 .fileStoreId("fs-1")
                 .nameOfApplicant("John")
                 .dateOfApplication(3000L)
@@ -102,7 +102,7 @@ class IndexerUtilsTest {
         assertTrue(payload.contains("\"status\": \"PENDING\""));
         assertTrue(payload.contains("\"filingNumber\": \"FIL-1\""));
         assertTrue(payload.contains("\"courtId\": \"KLKM52\""));
-        assertTrue(payload.contains("\"tenantId\": \"kl\""));
+        assertTrue(payload.contains("\"tenantId\": \"pb\""));
         assertTrue(payload.contains("\"fileStoreId\": \"fs-1\""));
     }
 
@@ -126,7 +126,7 @@ class IndexerUtilsTest {
                 .id("uuid-1").docId("doc-1").ctcApplicationNumber("CA-001")
                 .createdTime(1000L).lastModifiedTime(2000L).docTitle("Title")
                 .status("PENDING").caseTitle("Case").caseNumber("CC/1/2025")
-                .filingNumber("FIL-1").courtId("KLKM52").tenantId("kl").fileStoreId("fs-1")
+                .filingNumber("FIL-1").courtId("KLKM52").tenantId("pb").fileStoreId("fs-1")
                 .nameOfApplicant("John").dateOfApplication(3000L).dateOfApplicationApproval(4000L)
                 .build();
 
@@ -225,7 +225,7 @@ class IndexerUtilsTest {
     @Test
     void pushCtcApplicationTracker_shouldPostPayload() throws Exception {
         CtcApplicationTracker tracker = CtcApplicationTracker.builder()
-                .id("tracker-1").tenantId("kl").courtId("KLKM52")
+                .id("tracker-1").tenantId("pb").courtId("KLKM52")
                 .filingNumber("FIL-1").ctcApplicationNumber("CA-001")
                 .status("PENDING_JUDGE_APPROVAL").dateRaised(1000L)
                 .applicantName("John").caseTitle("State vs John")
@@ -249,7 +249,7 @@ class IndexerUtilsTest {
     @Test
     void pushCtcApplicationTracker_shouldHandleNullSearchableFields() throws Exception {
         CtcApplicationTracker tracker = CtcApplicationTracker.builder()
-                .id("tracker-1").tenantId("kl").courtId("KLKM52")
+                .id("tracker-1").tenantId("pb").courtId("KLKM52")
                 .filingNumber("FIL-1").ctcApplicationNumber("CA-001")
                 .status("PENDING").dateRaised(1000L)
                 .applicantName("John").caseTitle("Title")
@@ -272,7 +272,7 @@ class IndexerUtilsTest {
     @Test
     void pushCtcApplicationTracker_shouldThrowCustomExceptionOnError() {
         CtcApplicationTracker tracker = CtcApplicationTracker.builder()
-                .id("t1").tenantId("kl").courtId("C1").filingNumber("F1")
+                .id("t1").tenantId("pb").courtId("C1").filingNumber("F1")
                 .ctcApplicationNumber("CA-001").status("S").dateRaised(1L)
                 .applicantName("A").caseTitle("T").caseNumber("N")
                 .searchableFields(List.of())

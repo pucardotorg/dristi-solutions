@@ -45,7 +45,7 @@ class AdvocateOfficeRowMapperTest {
     }
 
     private void setupCommonMocks() throws SQLException {
-        when(resultSet.getString("tenant_id")).thenReturn("kl");
+        when(resultSet.getString("tenant_id")).thenReturn("pb");
         when(resultSet.getString("office_advocate_user_uuid")).thenReturn(officeAdvocateUserUuid);
         when(resultSet.getString("office_advocate_name")).thenReturn("Office Advocate");
         when(resultSet.getString("member_user_uuid")).thenReturn(memberUserUuid);

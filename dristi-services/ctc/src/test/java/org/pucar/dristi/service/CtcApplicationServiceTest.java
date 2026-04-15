@@ -55,14 +55,14 @@ class CtcApplicationServiceTest {
         requestInfo = RequestInfo.builder()
                 .userInfo(User.builder()
                         .uuid("user-1")
-                        .roles(new ArrayList<>(List.of(Role.builder().code("CITIZEN").tenantId("kl").build())))
+                        .roles(new ArrayList<>(List.of(Role.builder().code("CITIZEN").tenantId("pb").build())))
                         .build())
                 .build();
 
         application = CtcApplication.builder()
                 .id("app-1")
                 .ctcApplicationNumber("CA-001")
-                .tenantId("kl")
+                .tenantId("pb")
                 .courtId("KLKM52")
                 .filingNumber("FIL-001")
                 .caseNumber("CASE-001")
@@ -131,7 +131,7 @@ class CtcApplicationServiceTest {
 
         when(config.getUpdateCtcApplicationTopic()).thenReturn("update-topic");
         when(config.getApplicationFees()).thenReturn(10.0);   // FIX
-        when(fileStoreUtil.getTotalPageCount(eq("kl"), anyList())).thenReturn(10);
+        when(fileStoreUtil.getTotalPageCount(eq("pb"), anyList())).thenReturn(10);
 
         CtcApplication result = ctcApplicationService.updateApplication(ctcApplicationRequest);
 
@@ -160,7 +160,7 @@ class CtcApplicationServiceTest {
 
         assertEquals(1, application.getDocuments().size());
         assertEquals("fs-active", application.getDocuments().get(0).getFileStore());
-        verify(fileStoreUtil).deleteFilesByFileStore(anyList(), eq("kl"));
+        verify(fileStoreUtil).deleteFilesByFileStore(anyList(), eq("pb"));
     }
 
     @Test
@@ -261,7 +261,7 @@ class CtcApplicationServiceTest {
     @Test
     void searchApplications_shouldNotEnrichCreatedByForNonCitizen() {
         requestInfo.getUserInfo().setRoles(new ArrayList<>(List.of(
-                Role.builder().code("JUDGE").tenantId("kl").build()
+                Role.builder().code("JUDGE").tenantId("pb").build()
         )));
         CtcApplicationSearchCriteria criteria = CtcApplicationSearchCriteria.builder().build();
         CtcApplicationSearchRequest searchRequest = CtcApplicationSearchRequest.builder()

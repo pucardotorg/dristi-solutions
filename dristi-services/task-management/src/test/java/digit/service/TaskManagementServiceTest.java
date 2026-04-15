@@ -65,7 +65,7 @@ class TaskManagementServiceTest {
         taskManagement = TaskManagement.builder()
                 .id("task-id-123")
                 .taskManagementNumber("TM-001")
-                .tenantId("kl")
+                .tenantId("pb")
                 .filingNumber("KL-2024-001")
                 .workflow(workflow)
                 .build();
@@ -157,7 +157,7 @@ class TaskManagementServiceTest {
 
     @Test
     void getTaskManagement_ReturnsListFromRepository() {
-        TaskSearchCriteria criteria = TaskSearchCriteria.builder().tenantId("kl").build();
+        TaskSearchCriteria criteria = TaskSearchCriteria.builder().tenantId("pb").build();
         Pagination pagination = Pagination.builder().limit(10.0).offSet(0.0).build();
         TaskSearchRequest searchRequest = TaskSearchRequest.builder()
                 .requestInfo(requestInfo)
@@ -180,7 +180,7 @@ class TaskManagementServiceTest {
 
     @Test
     void getTaskManagement_EmptyResult_ReturnsEmptyList() {
-        TaskSearchCriteria criteria = TaskSearchCriteria.builder().tenantId("kl").build();
+        TaskSearchCriteria criteria = TaskSearchCriteria.builder().tenantId("pb").build();
         TaskSearchRequest searchRequest = TaskSearchRequest.builder()
                 .requestInfo(requestInfo)
                 .criteria(criteria)

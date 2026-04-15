@@ -36,7 +36,7 @@ class HrmsUtilTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        User user = User.builder().uuid("test-uuid").tenantId("kl").build();
+        User user = User.builder().uuid("test-uuid").tenantId("pb").build();
         requestInfo = RequestInfo.builder().userInfo(user).build();
     }
 

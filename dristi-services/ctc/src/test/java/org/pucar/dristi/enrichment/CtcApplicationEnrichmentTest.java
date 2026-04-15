@@ -38,7 +38,7 @@ class CtcApplicationEnrichmentTest {
                 .build();
 
         application = CtcApplication.builder()
-                .tenantId("kl")
+                .tenantId("pb")
                 .build();
 
         lenient().when(config.getCaConfig()).thenReturn("ctc.ca.number");

@@ -106,8 +106,8 @@ class BillingServiceTest {
         paymentTypeArray.add(paymentType1);
         innerMap.put("paymentMode", paymentTypeArray);
         outerMap.put("payment",innerMap);
-        when(config.getStateLevelTenantId()).thenReturn("kl");
-        when(mdmsUtil.fetchMdmsData(requestInfo1,"kl","payment", List.of("paymentMode"))).thenReturn(outerMap);
+        when(config.getStateLevelTenantId()).thenReturn("pb");
+        when(mdmsUtil.fetchMdmsData(requestInfo1,"pb","payment", List.of("paymentMode"))).thenReturn(outerMap);
 
 
         StringBuilder result = billingService.buildBulkRequest(jsonArray, requestInfo,12345l);
@@ -121,11 +121,11 @@ class BillingServiceTest {
         JSONObject requestInfo = new JSONObject("{\"userInfo\": {\"id\": 1}}");
         StringBuilder bulkRequest = new StringBuilder();
         when(billingUtil.buildString(any())).thenReturn("{\"consumerCode\": \"CC_001\"}}");
-        when(config.getStateLevelTenantId()).thenReturn("kl");
+        when(config.getStateLevelTenantId()).thenReturn("pb");
         RequestInfo requestInfo1 = new RequestInfo();
         net.minidev.json.JSONArray list = new net.minidev.json.JSONArray();
         Map<String,Map<String,net.minidev.json.JSONArray>> map = Map.of("payment",Map.of("paymentMode",list));
-        when(mdmsUtil.fetchMdmsData(requestInfo1,"kl","payment", List.of("paymentMode"))).thenReturn(map);
+        when(mdmsUtil.fetchMdmsData(requestInfo1,"pb","payment", List.of("paymentMode"))).thenReturn(map);
         billingService.processJsonObject(jsonObject, bulkRequest, requestInfo,123456l);
 
         assertEquals("", bulkRequest.toString());
