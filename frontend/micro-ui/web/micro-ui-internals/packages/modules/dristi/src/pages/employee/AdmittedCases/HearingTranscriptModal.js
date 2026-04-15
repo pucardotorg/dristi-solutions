@@ -14,7 +14,7 @@ function HearingTranscriptModal({ t, hearing, setShowHearingTranscriptModal }) {
   return (
     <Modal
       headerBarMain={<Heading />}
-      headerBarEnd={<CloseBtn />}
+      headerBarEnd={<CloseBtn onClick={() => setShowHearingTranscriptModal(false)} />}
       actionCancelLabel={null}
       actionCancelOnSubmit={() => {}}
       actionSaveLabel={null}
