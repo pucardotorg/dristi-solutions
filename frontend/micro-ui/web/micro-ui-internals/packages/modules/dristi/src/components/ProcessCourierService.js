@@ -4,7 +4,6 @@ import CourierService from "./CourierService";
 import Modal from "./Modal";
 import { DRISTIService } from "../services";
 import { CloseBtn, Heading } from "./ModalComponents";
-import { TASK_TYPES } from "../Utils/constants";
 
 function ProcessCourierService({ t, config, onSelect, formData, errors, setError, clearErrors }) {
   // Initialize state based on formData or default values
@@ -44,11 +43,11 @@ function ProcessCourierService({ t, config, onSelect, formData, errors, setError
   };
 
   const handleCourierServiceChange = (value, type) => {
-    if (type === TASK_TYPES.NOTICE) {
+    if (type === "notice") {
       handleDataChange({ noticeCourierService: value });
-    } else if (type === TASK_TYPES.SUMMONS) {
+    } else if (type === "summons") {
       handleDataChange({ summonsCourierService: value });
-    } else if (type === TASK_TYPES.WARRANT) {
+    } else if (type === "warrant") {
       handleDataChange({ warrantCourierService: value });
     }
   };
