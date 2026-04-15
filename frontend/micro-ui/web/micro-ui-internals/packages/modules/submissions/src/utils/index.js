@@ -2,6 +2,7 @@ import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { getFormattedName } from "@egovernments/digit-ui-module-common/src/utils";
 
 export const overrideHooks = () => {
   Object.keys(CustomisedHooks).map((ele) => {
@@ -128,17 +129,7 @@ export function convertTaskResponseToPayload(responseArray, id = null) {
   return pendingTask;
 }
 
-export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
-  const nameParts = [firstName, middleName, lastName]
-    ?.map((part) => part?.trim())
-    ?.filter(Boolean)
-    ?.join(" ")
-    ?.trim();
-
-  const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
-
-  return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
-};
+export { getFormattedName };
 
 export const getUserInfoFromUuids = async (uuidList) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
