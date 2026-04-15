@@ -26,7 +26,7 @@ public class AuthSekRepository {
     }
 
     public List<AuthSek> getAuthSek(String authToken) {
-        List<String> preparedStmtList = new ArrayList<>();
+        List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getAuthSekQuery(authToken, preparedStmtList);
         log.debug("Final query: {}", query);
         return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
@@ -41,6 +41,9 @@ public class AuthSekRepository {
 
     public void updateAuthSekStatus(String authToken, String paymentStatus, String completionSource, Long verificationTimestamp) {
         String updateQuery = "UPDATE auth_sek_session_data SET payment_status = ?, completion_source = ?, verification_timestamp = ? WHERE auth_token = ?";
-        jdbcTemplate.update(updateQuery, paymentStatus, completionSource, verificationTimestamp, authToken);
+        int updated = jdbcTemplate.update(updateQuery, paymentStatus, completionSource, verificationTimestamp, authToken);
+        if(updated != 1) {
+            throw new RuntimeException("Failed to update auth_sek_session_data for auth_token: " + authToken);
+        }
     }
 }
