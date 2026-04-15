@@ -211,7 +211,7 @@ public class IndexerUtils {
 
             String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
             String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
-            caseSubStage = caseDetails.get(0).path("substage").textValue();
+            caseSubStage = caseDetails.get(0).path("stage").textValue();
 
             if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
                 caseNumber = courtCaseNumber;
@@ -440,7 +440,7 @@ public class IndexerUtils {
         // Extract computed substage from checkCaseOverAllStatus if available (for case entity types)
         String computedSubStage = null;
         if (object instanceof CaseOverallStatus) {
-            computedSubStage = ((CaseOverallStatus) object).getSubstage();
+            computedSubStage = ((CaseOverallStatus) object).getStage();
         }
         Map<String, String> details = processEntity(entityType, referenceId, status, action, object, requestInfo);
 
@@ -543,7 +543,7 @@ public class IndexerUtils {
 
             String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
             String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
-            caseSubStage = computedSubStage != null ? computedSubStage : caseDetails.get(0).path("substage").textValue();
+            caseSubStage = computedSubStage != null ? computedSubStage : caseDetails.get(0).path("stage").textValue();
 
             if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
                 caseNumber = courtCaseNumber;

@@ -485,7 +485,7 @@ public class CaseOverallStatusUtil {
 				auditDetails.setLastModifiedBy(lastModifiedBy);
 				auditDetails.setLastModifiedTime(System.currentTimeMillis());
 				caseOverallStatus.setAuditDetails(auditDetails);
-				String subStage = caseOverallStatus.getSubstage();
+				String subStage = caseOverallStatus.getStage();
 				if(shouldSendSMSForSubStageChange(subStage)){
 					sendSmsForCaseSubStageChange(filingNumber, requestInfo, subStage);
 				}
