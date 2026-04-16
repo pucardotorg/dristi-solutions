@@ -182,7 +182,8 @@ export const TabJudgeSearchConfig = {
                   mdmsConfig: {
                     masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].CaseUiPrimaryStage?.map((item) => {return item})}",
+                    select:
+                      "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
                   },
                   styles: {
                     maxWidth: "250px",
