@@ -202,7 +202,7 @@ export const UICustomizations = {
         },
       });
       const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
-      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.stage || stageForm?.code || "";
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
       const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
@@ -316,7 +316,7 @@ export const UICustomizations = {
       // We need to change tenantId "processSearchCriteria" here
       const tenantId = window?.Digit.ULBService.getStateId();
       const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
-      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.stage || stageForm?.code || "";
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
       const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
@@ -421,7 +421,7 @@ export const UICustomizations = {
         },
       });
       const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
-      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.stage || stageForm?.code || "";
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
       const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
