@@ -87,6 +87,37 @@ public class SecondaryStageProcessor {
     }
 
     /**
+     * Resolves the secondary stage name for the given order type.
+     * Returns null if no mapping exists.
+     */
+    public String resolveSecondaryStage(String orderType, String status) {
+        if (orderType == null || status == null || !ORDER_STATUS_PUBLISHED.equalsIgnoreCase(status)) return null;
+        Map<String, String> orderTypeToSubstageMap = mdmsDataConfig.getOrderTypeToSubstageMap();
+        return mapOrderTypeToSecondaryStage(orderType, orderTypeToSubstageMap);
+    }
+
+    /**
+     * Batch-starts multiple secondary stages in a single ES write and publishes one Kafka message
+     * with the full combined active stages list. Used for composite orders.
+     */
+    public void batchStartSecondaryStages(String filingNumber, String tenantId, List<String> secondaryStages, JSONObject request, Object caseObject) {
+        try {
+            if (secondaryStages == null || secondaryStages.isEmpty()) return;
+            log.info("Batch starting secondary stages {} for filingNumber: {}", secondaryStages, filingNumber);
+
+            // Single ES write for all secondary stages
+            caseStageTrackingUtil.startSecondaryStages(filingNumber, tenantId, secondaryStages);
+
+            // Single Kafka publish with the last resolved stage (publishSubstageUpdate reads ES
+            // which now contains ALL stages from the write above)
+            String lastStage = secondaryStages.get(secondaryStages.size() - 1);
+            publishSubstageUpdate(filingNumber, tenantId, request, lastStage, caseObject);
+        } catch (Exception e) {
+            log.error("Error batch starting secondary stages for filingNumber: {}", filingNumber, e);
+        }
+    }
+
+    /**
      * Evaluates whether the case registration should trigger the Delay Condonation secondary stage.
      * Checks caseDetails.delayApplications.formdata[0].data.delayCondonationType.code == "YES".
      * If yes, starts the Delay Condonation secondary stage.

@@ -133,18 +133,28 @@ public class CaseOverallStatusUtil {
                     log.warn("No composite items found for filing number: {}", filingNumber);
                     return orderObject;
                 }
+                List<String> collectedSecondaryStages = new ArrayList<>();
+                Object compositeCase = null;
                 for (int i = 0; i < compositeItems.length(); i++) {
 					try{
 						JSONObject compositeItem = compositeItems.getJSONObject(i);
 						boolean canPublishCaseOverallStatus = i == compositeItems.length() - 1;
-                        processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE, canPublishCaseOverallStatus, isHearingFound, priorityMap);
+                        compositeCase = processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE, canPublishCaseOverallStatus, isHearingFound, priorityMap, collectedSecondaryStages);
 					} catch(Exception e){
 						log.error("Error processing composite item: {} for filing number: {}", e.getMessage(), filingNumber, e);
 					}
                 }
+                // Batch-start all collected secondary stages in one ES write + one Kafka publish
+                if (!collectedSecondaryStages.isEmpty()) {
+                    try {
+                        secondaryStageProcessor.batchStartSecondaryStages(filingNumber, tenantId, collectedSecondaryStages, request, compositeCase);
+                    } catch (Exception e) {
+                        log.error("Error batch starting secondary stages for filing number: {}", filingNumber, e);
+                    }
+                }
 
             } else {
-                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject, null, true, isHearingFound, priorityMap);
+                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject, null, true, isHearingFound, priorityMap, null);
             }
         } catch (JSONException e) {
             log.error("Error processing JSON structure in composite items: {}, for filing number: {}", e.getMessage(), filingNumber, e);
@@ -668,13 +678,13 @@ public class CaseOverallStatusUtil {
     }
 
 
-    private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory, boolean canPublishCaseOverallStatus, boolean isHearingFound, TreeMap<Integer, CaseOverallStatus> priorityMap) {
+    private Object processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory, boolean canPublishCaseOverallStatus, boolean isHearingFound, TreeMap<Integer, CaseOverallStatus> priorityMap, List<String> collectedSecondaryStages) {
         String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
 		String hearingType = null;
 		Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
 		if (caseObject == null) {
 			log.info("Case not found for filingNumber: {} during join-case stage update", filingNumber);
-			return;
+			return null;
 		}
 		if (!isHearingFound) {
 			if (SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(orderType) || SCHEDULING_NEXT_HEARING.equalsIgnoreCase(orderType)) {
@@ -703,13 +713,13 @@ public class CaseOverallStatusUtil {
 			String stage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
 			String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
 			if (stage == null || stage.isEmpty()) {
-				return;
+				return null;
 			}
 			if(!isAccusedJoinedCase && STAGE_COGNIZANCE.equalsIgnoreCase(stage)){
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, STAGE_APPEARANCE, "");
-				publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
+					publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
 				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_COGNIZANCE, STAGE_APPEARANCE);
-				return;
+				return caseObject;
 			}
 		}
 		CaseOverallStatus caseOverallStatus = determineOrderStage(filingNumber, tenantId, orderType, status, hearingType, priorityMap);
@@ -740,9 +750,19 @@ public class CaseOverallStatusUtil {
 
 		// Secondary stage processing: evaluate order-based triggers independently from primary stage
 		try {
-			secondaryStageProcessor.processOrderSecondaryStage(filingNumber, tenantId, orderType, status, request,caseObject);
+			if (collectedSecondaryStages != null) {
+				// Composite mode: collect secondary stage for batch processing after the loop
+				String secondaryStage = secondaryStageProcessor.resolveSecondaryStage(orderType, status);
+				if (secondaryStage != null) {
+					collectedSecondaryStages.add(secondaryStage);
+				}
+			} else {
+				// Non-composite: process immediately
+				secondaryStageProcessor.processOrderSecondaryStage(filingNumber, tenantId, orderType, status, request, caseObject);
+			}
 		} catch (Exception e) {
 			log.error("Error in secondary stage processing for order type: {} filingNumber: {}", orderType, filingNumber, e);
 		}
+		return caseObject;
     }
 }

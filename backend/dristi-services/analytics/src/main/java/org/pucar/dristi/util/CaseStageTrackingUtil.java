@@ -218,6 +218,52 @@ public class CaseStageTrackingUtil {
     }
 
     /**
+     * Starts multiple secondary stages in a single ES read-modify-write.
+     * Avoids stale-read issues when starting multiple stages back-to-back (e.g., composite orders).
+     *
+     * @param filingNumber case filing number
+     * @param tenantId     tenant ID
+     * @param stageNames   list of secondary stage names to start
+     */
+    public void startSecondaryStages(String filingNumber, String tenantId, List<String> stageNames) {
+        if (stageNames == null || stageNames.isEmpty()) return;
+
+        CaseStageTracking tracking = getStageTrackingByFilingNumber(filingNumber);
+        long now = System.currentTimeMillis();
+
+        if (tracking == null) {
+            tracking = CaseStageTracking.builder()
+                    .filingNumber(filingNumber)
+                    .tenantId(tenantId)
+                    .stages(new ArrayList<>())
+                    .secondaryStages(new ArrayList<>())
+                    .build();
+        }
+
+        boolean anyAdded = false;
+        for (String stageName : stageNames) {
+            boolean alreadyActive = tracking.getSecondaryStages().stream()
+                    .anyMatch(e -> e.getStage() != null && e.getStage().equalsIgnoreCase(stageName) && e.getEndTime() == null);
+            if (alreadyActive) {
+                log.info("Secondary stage '{}' is already active for filingNumber: {}, skipping", stageName, filingNumber);
+                continue;
+            }
+            CaseStageTrackingEntry entry = CaseStageTrackingEntry.builder()
+                    .stage(stageName)
+                    .startTime(now)
+                    .endTime(null)
+                    .build();
+            tracking.getSecondaryStages().add(entry);
+            log.info("Started secondary stage '{}' with startTime={} for filingNumber: {}", stageName, now, filingNumber);
+            anyAdded = true;
+        }
+
+        if (anyAdded) {
+            upsertStageTracking(tracking);
+        }
+    }
+
+    /**
      * Starts a secondary stage for the given case. Multiple secondary stages can be active simultaneously.
      * If the stage is already active (no endTime), it won't be duplicated.
      *
