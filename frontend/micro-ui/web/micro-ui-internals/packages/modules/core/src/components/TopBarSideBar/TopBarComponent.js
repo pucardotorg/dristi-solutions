@@ -286,7 +286,7 @@ const TopBarComponent = ({
 
   const seniorAdvocates = useMemo(() => {
     if (isLoadingMembers) return [];
-    if (userType === "ADVOCATE" && advocateId) {
+    if (userType === "ADVOCATE" && advocateId && userInfo?.uuid) {
       const selfDetails = [{ id: advocateId, value: advocateId, advocateName: userInfo?.name, uuid: userInfo?.uuid, allowCaseCreate: true }];
       if (officeMembersData?.members?.length > 0) {
         const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
