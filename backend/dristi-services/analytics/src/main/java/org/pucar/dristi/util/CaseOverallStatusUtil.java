@@ -248,14 +248,6 @@ public class CaseOverallStatusUtil {
 		Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
 
 		publishToCaseOverallStatus(determineHearingStage( filingNumber, tenantId, hearingType, action ), request,caseObject);
-
-		// Secondary stage processing: evaluate hearing-based triggers (e.g., Mediation)
-//		try {
-//			secondaryStageProcessor.processHearingSecondaryStage(filingNumber, tenantId, hearingType, request);
-//		} catch (Exception e) {
-//			log.error("Error in secondary stage processing for hearing type: {} filingNumber: {}", hearingType, filingNumber, e);
-//		}
-
 		return hearingObject;
 	}
 
@@ -485,10 +477,6 @@ public class CaseOverallStatusUtil {
 					return;
 				}
 
-//				// If the stage being set is Appearance, check if accused has already joined.
-//				// If accused has joined, move directly to Bail & Recording of Plea instead.
-//				handleAppearanceConditional(caseOverallStatus, caseObject);
-
 				AuditDetails auditDetails = new AuditDetails();
 				String lastModifiedBy = (requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null)
 						? requestInfo.getUserInfo().getUuid() : "SYSTEM";
@@ -551,26 +539,6 @@ public class CaseOverallStatusUtil {
 			caseOverallStatus.setSubstage(config.getLprSubStage());
 		}
 		return true;
-	}
-
-	/**
-	 * PRD Rule: If the stage being set is Appearance, check if any accused-side
-	 * litigant has already joined the case. If yes, skip Appearance and go directly
-	 * to Bail & Recording of Plea.
-	 */
-	private void handleAppearanceConditional(CaseOverallStatus caseOverallStatus, Object caseObject) {
-		try {
-			String stage = caseOverallStatus.getStage();
-			if (STAGE_APPEARANCE.equalsIgnoreCase(stage) && hasAccusedJoinedCase(caseObject)) {
-				log.info("Accused has already joined case {}. Transitioning stage from Appearance to Bail & Recording of Plea.",
-						caseOverallStatus.getFilingNumber());
-				caseOverallStatus.setStage(STAGE_BAIL_AND_RECORDING_OF_PLEA);
-				String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
-				caseStageTrackingUtil.transitionStage(caseOverallStatus.getFilingNumber(), caseId, caseOverallStatus.getTenantId(), STAGE_APPEARANCE, STAGE_BAIL_AND_RECORDING_OF_PLEA);
-			}
-		} catch (Exception e) {
-			log.error("Error in handleAppearanceConditional for filingNumber: {}", caseOverallStatus.getFilingNumber(), e);
-		}
 	}
 
 	/**

@@ -9,9 +9,6 @@ import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.web.models.CaseOverallStatus;
 import org.pucar.dristi.web.models.CaseStageSubStage;
-import org.pucar.dristi.web.models.taskManagement.TaskManagement;
-import org.pucar.dristi.web.models.taskManagement.TaskSearchCriteria;
-import org.pucar.dristi.web.models.taskManagement.TaskSearchRequest;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -185,43 +182,6 @@ public class SecondaryStageProcessor {
     }
 
     /**
-     * Evaluates whether the given hearing event triggers a secondary stage start or end.
-     * Mediation: start when hearing purpose is Mediation, end when a new hearing with different purpose is scheduled.
-     *
-     * @param filingNumber case filing number
-     * @param tenantId     tenant ID
-     * @param hearingType  the hearing purpose/type
-     * @param request      the JSONObject request containing RequestInfo
-     */
-//    public void processHearingSecondaryStage(String filingNumber, String tenantId, String hearingType, JSONObject request) {
-//        try {
-//            if (hearingType == null) return;
-//
-//            // Mediation is not mapped to orderType, handle it separately
-//            String mediationStage = "Mediation";
-//
-//            if (HEARING_PURPOSE_MEDIATION.equalsIgnoreCase(hearingType)) {
-//                // Start trigger: hearing purpose is Mediation
-//                log.info("Hearing purpose '{}' triggers secondary stage '{}' for filingNumber: {}", hearingType, mediationStage, filingNumber);
-//                caseStageTrackingUtil.startSecondaryStage(filingNumber, tenantId, mediationStage);
-//                manageNAStage(filingNumber, tenantId);
-//                publishSubstageUpdate(filingNumber, tenantId, request);
-//            } else {
-//                // End trigger for Mediation: a new hearing with a different purpose is scheduled
-//                List<String> activeStages = caseStageTrackingUtil.getActiveSecondaryStageNames(filingNumber);
-//                if (activeStages.contains(mediationStage)) {
-//                    log.info("New hearing with purpose '{}' ends secondary stage '{}' for filingNumber: {}", hearingType, mediationStage, filingNumber);
-//                    caseStageTrackingUtil.endSecondaryStage(filingNumber, mediationStage);
-//                    manageNAStage(filingNumber, tenantId);
-//                    publishSubstageUpdate(filingNumber, tenantId, request);
-//                }
-//            }
-//        } catch (Exception e) {
-//            log.error("Error processing hearing secondary stage for filingNumber: {}, hearingType: {}", filingNumber, hearingType, e);
-//        }
-//    }
-
-    /**
      * Maps an order type to the corresponding secondary stage name using MDMS data.
      *
      * @param orderType the order type
@@ -388,14 +348,6 @@ public class SecondaryStageProcessor {
             caseOverallStatus.setTenantId(tenantId);
             caseOverallStatus.setSecondaryStage(activeStages);
 
-            String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
-            String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);
-            String caseSubStageBackup = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_BACKUP_PATH);
-
-            caseOverallStatus.setStage(caseStage);
-            caseOverallStatus.setStageBackup(caseStageBackup);
-            caseOverallStatus.setSubstageBackup(caseSubStageBackup);
-
             AuditDetails auditDetails = new AuditDetails();
             String lastModifiedBy = (requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null)
                     ? requestInfo.getUserInfo().getUuid() : "SYSTEM";
@@ -432,13 +384,6 @@ public class SecondaryStageProcessor {
             caseOverallStatus.setTenantId(tenantId);
             caseOverallStatus.setSecondaryStage(activeStages);
 
-            String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
-            String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);
-            String caseSubStageBackup = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_BACKUP_PATH);
-
-            caseOverallStatus.setStageBackup(caseStageBackup);
-            caseOverallStatus.setSubstageBackup(caseSubStageBackup);
-
             AuditDetails auditDetails = new AuditDetails();
             String lastModifiedBy = (requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null)
                     ? requestInfo.getUserInfo().getUuid() : "SYSTEM";
@@ -452,24 +397,5 @@ public class SecondaryStageProcessor {
         } catch (Exception e) {
             log.error("Error publishing secondary stage update for filingNumber: {}", filingNumber, e);
         }
-    }
-
-    private boolean hasAccusedJoinedCase(Object caseObject) {
-        try {
-            List<Map<String, Object>> litigants = JsonPath.read(caseObject.toString(), CASE_LITIGANTS_PATH);
-            if (litigants == null || litigants.isEmpty()) {
-                return false;
-            }
-            for (Map<String, Object> litigant : litigants) {
-                Object partyType = litigant.get("partyType");
-                if (partyType != null && partyType.toString().contains(ACCUSED_PARTY_TYPE)) {
-                    log.info("Found active accused-side litigant with partyType: {}", partyType);
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error checking if accused has joined case", e);
-        }
-        return false;
     }
 }
