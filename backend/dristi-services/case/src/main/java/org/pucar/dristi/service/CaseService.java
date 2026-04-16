@@ -4206,9 +4206,19 @@ public class CaseService {
 
         if (courtCaseRedis != null) {
             courtCaseRedis.setStage(caseOverallStatus.getStage());
-            courtCaseRedis.setSubstage(caseOverallStatus.getSubstage());
             courtCaseRedis.setStageBackup(caseOverallStatus.getStageBackup());
-            courtCaseRedis.setSubstageBackup(caseOverallStatus.getSubstageBackup());
+        }
+        updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
+    }
+
+    public void updateCaseOverallStatusV2(CaseStageSubStage caseStageSubStage) {
+
+        CaseOverallStatus caseOverallStatus = caseStageSubStage.getCaseOverallStatus();
+
+        CourtCase courtCaseDb = fetchCourtCaseByFilingNumber(caseStageSubStage.getRequestInfo(), caseOverallStatus.getFilingNumber());
+        CourtCase courtCaseRedis = searchRedisCache(caseStageSubStage.getRequestInfo(), courtCaseDb.getId().toString());
+
+        if (courtCaseRedis != null) {
             courtCaseRedis.setSecondaryStage(caseOverallStatus.getSecondaryStage());
         }
         updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);

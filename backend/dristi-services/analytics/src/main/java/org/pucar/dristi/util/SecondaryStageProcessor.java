@@ -405,7 +405,7 @@ public class SecondaryStageProcessor {
 
             CaseStageSubStage caseStageSubStage = new CaseStageSubStage(requestInfo, caseOverallStatus);
             log.info("Publishing batch secondary stage update to kafka topic: {}, secondaryStages: '{}' for filingNumber: {}", config.getCaseOverallStatusTopic(), activeStages, filingNumber);
-            producer.push(config.getCaseOverallStatusTopic(), caseStageSubStage);
+            producer.push(config.getCaseOverallStatusTopicV2(), caseStageSubStage);
         } catch (Exception e) {
             log.error("Error publishing batch secondary stage update for filingNumber: {}", filingNumber, e);
         }
@@ -436,16 +436,6 @@ public class SecondaryStageProcessor {
             String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);
             String caseSubStageBackup = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_BACKUP_PATH);
 
-            if(STAGE_REGISTRATION.equalsIgnoreCase(caseStage) && SECONDARY_STAGE_DELAY_CONDONATION.equalsIgnoreCase(secondaryStage)){
-                caseOverallStatus.setStage(STAGE_COGNIZANCE);
-            }else {
-                caseOverallStatus.setStage(caseStage);
-            }
-            if(STAGE_APPEARANCE.equalsIgnoreCase(caseStage) && SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT.equalsIgnoreCase(secondaryStage)){
-                caseOverallStatus.setStage(STAGE_BAIL_AND_RECORDING_OF_PLEA);
-            } if(STAGE_COGNIZANCE.equalsIgnoreCase(caseStage) && SECONDARY_STAGE_SUMMONS.equalsIgnoreCase(secondaryStage) && !hasAccusedJoinedCase(caseObject)){
-                caseOverallStatus.setStage(STAGE_APPEARANCE);
-            }
             caseOverallStatus.setStageBackup(caseStageBackup);
             caseOverallStatus.setSubstageBackup(caseSubStageBackup);
 
@@ -458,7 +448,7 @@ public class SecondaryStageProcessor {
 
             CaseStageSubStage caseStageSubStage = new CaseStageSubStage(requestInfo, caseOverallStatus);
             log.info("Publishing secondary stage update to kafka topic: {}, secondaryStage: '{}' for filingNumber: {}", config.getCaseOverallStatusTopic(), activeStages, filingNumber);
-            producer.push(config.getCaseOverallStatusTopic(), caseStageSubStage);
+            producer.push(config.getCaseOverallStatusTopicV2(), caseStageSubStage);
         } catch (Exception e) {
             log.error("Error publishing secondary stage update for filingNumber: {}", filingNumber, e);
         }

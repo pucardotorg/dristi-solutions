@@ -44,6 +44,9 @@ public class Configuration {
 	@Value("${egov.case.overall.status.topic}")
 	private String caseOverallStatusTopic;
 
+	@Value("${egov.case.overall.status.topic.v2}")
+	private String caseOverallStatusTopicV2;
+
 	@Value("${egov.case.outcome.topic}")
 	private String caseOutcomeTopic;
 
