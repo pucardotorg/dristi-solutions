@@ -126,7 +126,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
       criteria: [
         {
           filingNumber: filingNumber,
-          ...(courtId && userType === USER_TYPES.EMPLOYEE && { courtId }),
+          ...(courtId && userType === USER_TYPES.EMPLOYEE.toLocaleLowerCase() && { courtId }),
         },
       ],
       tenantId,

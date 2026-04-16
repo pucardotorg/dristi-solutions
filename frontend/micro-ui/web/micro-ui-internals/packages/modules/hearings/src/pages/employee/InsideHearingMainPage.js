@@ -65,14 +65,14 @@ const InsideHearingMainPage = () => {
 
   const userType = Digit?.UserService?.getType?.();
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (!isEpostUser && userType === USER_TYPES.EMPLOYEE) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (!isEpostUser && userType === USER_TYPES.EMPLOYEE.toLocaleLowerCase()) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const { data: caseData, isLoading: isCaseLoading, refetch: refetchCase } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
           filingNumber,
-          ...(courtId && userType === USER_TYPES.EMPLOYEE && { courtId }),
+          ...(courtId && userType === USER_TYPES.EMPLOYEE.toLocaleLowerCase() && { courtId }),
         },
       ],
       tenantId,

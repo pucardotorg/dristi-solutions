@@ -3,6 +3,7 @@ import { UICustomizations } from "../configs/UICustomizations";
 import { CustomisedHooks } from "../hooks";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ORDER_TYPES } from "./constants";
+import { getFormattedName } from "@egovernments/digit-ui-module-common";
 
 export const overrideHooks = () => {
   Object.keys(CustomisedHooks).map((ele) => {
@@ -99,17 +100,7 @@ export const constructFullName = (firstName, middleName, lastName) => {
     ?.trim();
 };
 
-export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
-  const nameParts = [firstName, middleName, lastName]
-    ?.map((part) => part?.trim())
-    ?.filter(Boolean)
-    ?.join(" ")
-    ?.trim();
-
-  const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
-
-  return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
-};
+export { getFormattedName };
 
 // name format for entity type
 export const getRespondantName = (respondentNameData) => {
