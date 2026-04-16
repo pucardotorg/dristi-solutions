@@ -105,13 +105,20 @@ public class SecondaryStageProcessor {
             if (secondaryStages == null || secondaryStages.isEmpty()) return;
             log.info("Batch starting secondary stages {} for filingNumber: {}", secondaryStages, filingNumber);
 
+            // Build complete active stages list in memory BEFORE writing to ES
+            // This avoids stale-read issues from ES near-real-time indexing
+            List<String> activeStages = caseStageTrackingUtil.getActiveSecondaryStageNames(filingNumber);
+            for (String stage : secondaryStages) {
+                if (!activeStages.contains(stage)) {
+                    activeStages.add(stage);
+                }
+            }
+
             // Single ES write for all secondary stages
             caseStageTrackingUtil.startSecondaryStages(filingNumber, tenantId, secondaryStages);
 
-            // Single Kafka publish with the last resolved stage (publishSubstageUpdate reads ES
-            // which now contains ALL stages from the write above)
-            String lastStage = secondaryStages.get(secondaryStages.size() - 1);
-            publishSubstageUpdate(filingNumber, tenantId, request, lastStage, caseObject);
+            // Single Kafka publish with the complete in-memory list (no ES read needed)
+            publishSubstageUpdateWithStages(filingNumber, tenantId, request, activeStages, caseObject);
         } catch (Exception e) {
             log.error("Error batch starting secondary stages for filingNumber: {}", filingNumber, e);
         }
@@ -367,6 +374,42 @@ public class SecondaryStageProcessor {
         };
     }
 
+
+    /**
+     * Publishes a CaseOverallStatus update with a pre-built list of active secondary stages.
+     * Used by batchStartSecondaryStages to avoid stale ES reads after write.
+     */
+    private void publishSubstageUpdateWithStages(String filingNumber, String tenantId, JSONObject request, List<String> activeStages, Object caseObject) {
+        try {
+            RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
+
+            CaseOverallStatus caseOverallStatus = new CaseOverallStatus();
+            caseOverallStatus.setFilingNumber(filingNumber);
+            caseOverallStatus.setTenantId(tenantId);
+            caseOverallStatus.setSecondaryStage(activeStages);
+
+            String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
+            String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);
+            String caseSubStageBackup = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_BACKUP_PATH);
+
+            caseOverallStatus.setStage(caseStage);
+            caseOverallStatus.setStageBackup(caseStageBackup);
+            caseOverallStatus.setSubstageBackup(caseSubStageBackup);
+
+            AuditDetails auditDetails = new AuditDetails();
+            String lastModifiedBy = (requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null)
+                    ? requestInfo.getUserInfo().getUuid() : "SYSTEM";
+            auditDetails.setLastModifiedBy(lastModifiedBy);
+            auditDetails.setLastModifiedTime(System.currentTimeMillis());
+            caseOverallStatus.setAuditDetails(auditDetails);
+
+            CaseStageSubStage caseStageSubStage = new CaseStageSubStage(requestInfo, caseOverallStatus);
+            log.info("Publishing batch secondary stage update to kafka topic: {}, secondaryStages: '{}' for filingNumber: {}", config.getCaseOverallStatusTopic(), activeStages, filingNumber);
+            producer.push(config.getCaseOverallStatusTopic(), caseStageSubStage);
+        } catch (Exception e) {
+            log.error("Error publishing batch secondary stage update for filingNumber: {}", filingNumber, e);
+        }
+    }
 
     /**
      * Computes the current secondary stages from active secondary stages and publishes a CaseOverallStatus update.
