@@ -69,7 +69,7 @@ export const UICustomizations = {
                           criteria: {
                             hearingId: row?.hearingId,
                             tenantId: row?.tenantId,
-                            ...(courtId && userType === USER_TYPES.EMPLOYEE && { courtId }),
+                            ...(courtId && userType === USER_TYPES.EMPLOYEE.toLocaleLowerCase() && { courtId }),
                           },
                         },
                         { tenantId: row?.tenantId }
