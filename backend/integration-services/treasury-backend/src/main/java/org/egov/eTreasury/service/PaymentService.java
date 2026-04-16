@@ -863,7 +863,7 @@ public class PaymentService {
                 decryptedSek = secretMap.get("sek");
             } else {
                 secretMap = authenticate();
-                log.debug("Authentication successful for double verification");
+                log.info("Authentication successful for double verification");
 
                 // Decrypt the SEK using the appKey
                 decryptedSek = encryptionUtil.decryptAES(secretMap.get("sek"), secretMap.get("appKey"));
@@ -883,7 +883,7 @@ public class PaymentService {
                     .departmentId(verificationDetails.getDepartmentId())
                     .processedStatus("PENDING")
                     .build();
-            log.debug("AuthSek built for billId: {}", verificationData.getBillId());
+            log.info("AuthSek built for billId: {}", verificationData.getBillId());
 
             // Prepare the request body
             verificationDetails.setOfficeCode(config.getOfficeCode());
@@ -952,7 +952,7 @@ public class PaymentService {
                 String decryptedRek = encryptionUtil.decryptResponse(response.getRek(), decryptedSek);
                 decryptedData = encryptionUtil.decryptResponse(response.getData(), decryptedRek);
             }
-            log.debug("Decrypted verification response data for billId: {}", verificationData.getBillId());
+            log.info("Decrypted verification response data for billId: {}, decryptedData: {}", verificationData.getBillId(), decryptedData);
 
             // Parse transaction details from response
             TransactionDetails transactionDetails = objectMapper.readValue(decryptedData, TransactionDetails.class);
@@ -975,7 +975,7 @@ public class PaymentService {
             
             String fileStore = printPayInSlipPdf(paymentRequest);
             paymentData.setFileStoreId(fileStore);
-            log.debug("Payment receipt generated | billId: {} | fileStoreId: {}", 
+            log.info("Payment receipt generated | billId: {} | fileStoreId: {}",
                     verificationData.getBillId(), fileStore);
             
             // Save payment data
@@ -984,7 +984,7 @@ public class PaymentService {
             if (config.isKafkaPushEnabled()) {
                 producer.push(config.getSaveTreasuryPaymentData(), paymentRequest);
             } else {
-                log.info("Kafka push is disabled. Payload: {}", paymentRequest);
+                log.info("Kafka push is disabled. Request payload we got: {}", paymentRequest);
             }
 
             PaymentStatus status = PaymentStatus.FAILED;
