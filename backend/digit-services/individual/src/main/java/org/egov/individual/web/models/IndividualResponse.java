@@ -28,10 +28,12 @@ public class IndividualResponse {
     @JsonProperty("ResponseInfo")
     @NotNull
     @Valid
+    @Builder.Default
     private ResponseInfo responseInfo = null;
 
     @JsonProperty("Individual")
     @Valid
+    @Builder.Default
     private Individual individual = null;
 }
 

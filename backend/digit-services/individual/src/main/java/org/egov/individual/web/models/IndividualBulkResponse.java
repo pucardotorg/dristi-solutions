@@ -30,10 +30,12 @@ public class IndividualBulkResponse {
     @JsonProperty("ResponseInfo")
     @NotNull
     @Valid
+    @Builder.Default
     private ResponseInfo responseInfo = null;
 
     @JsonProperty("Individual")
     @Valid
+    @Builder.Default
     private List<Individual> individual = null;
 
     public IndividualBulkResponse addIndividualItem(Individual individualItem) {

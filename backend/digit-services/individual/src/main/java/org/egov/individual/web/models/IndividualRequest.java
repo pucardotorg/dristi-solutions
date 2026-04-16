@@ -27,11 +27,13 @@ public class IndividualRequest {
     @JsonProperty("RequestInfo")
     @NotNull
     @Valid
+    @Builder.Default
     private RequestInfo requestInfo = null;
 
     @JsonProperty("Individual")
     @NotNull
     @Valid
+    @Builder.Default
     private Individual individual = null;
 }
 

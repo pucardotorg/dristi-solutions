@@ -30,12 +30,14 @@ public class IndividualBulkRequest {
     @JsonProperty("RequestInfo")
     @NotNull
     @Valid
+    @Builder.Default
     private RequestInfo requestInfo = null;
 
     @JsonProperty("Individuals")
     @NotNull
     @Valid
     @Size(min = 1)
+    @Builder.Default
     private List<Individual> individuals = new ArrayList<>();
 
     public IndividualBulkRequest addIndividualItem(Individual individualItem) {

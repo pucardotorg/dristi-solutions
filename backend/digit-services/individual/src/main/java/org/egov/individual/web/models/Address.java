@@ -34,27 +34,31 @@ public class Address   {
     
 
     @Size(min=2,max=64)
+    @Builder.Default
     private String id = null;
 
     @JsonProperty("clientReferenceId")
     @Size(min = 2, max = 64)
+    @Builder.Default
     private String clientReferenceId = null;
 
     @JsonProperty("individualId")
 
 
     @Size(min=2,max=64)
+    @Builder.Default
     private String individualId = null;
 
         @JsonProperty("tenantId")
 
+    @Builder.Default
     private String tenantId = null;
 
         @JsonProperty("doorNo")
     
 
     @Size(min=0,max=64)
-
+    @Builder.Default
     private String doorNo = null;
 
         @JsonProperty("latitude")
@@ -62,7 +66,7 @@ public class Address   {
 
     @DecimalMin("-90")
     @DecimalMax("90") 
-
+    @Builder.Default
     private Double latitude = null;
 
         @JsonProperty("longitude")
@@ -70,7 +74,7 @@ public class Address   {
 
     @DecimalMin("-180")
     @DecimalMax("180") 
-
+    @Builder.Default
     private Double longitude = null;
 
         @JsonProperty("locationAccuracy")
@@ -78,76 +82,76 @@ public class Address   {
 
     @DecimalMin("0")
     @DecimalMax("10000") 
-
+    @Builder.Default
     private Double locationAccuracy = null;
 
         @JsonProperty("type")
 
         @NotNull
-
+    @Builder.Default
     private AddressType type = null;
 
         @JsonProperty("addressLine1")
     
 
     @Size(min=2,max=256) 
-
+    @Builder.Default
     private String addressLine1 = null;
 
         @JsonProperty("addressLine2")
     
 
     @Size(min=2,max=256) 
-
+    @Builder.Default
     private String addressLine2 = null;
 
         @JsonProperty("landmark")
     
 
     @Size(min=2,max=256) 
-
+    @Builder.Default
     private String landmark = null;
 
         @JsonProperty("city")
     
 
     @Size(min=2,max=256) 
-
+    @Builder.Default
     private String city = null;
 
         @JsonProperty("pincode")
     
 
     @Size(min=2,max=64) 
-
+    @Builder.Default
     private String pincode = null;
 
         @JsonProperty("buildingName")
     
 
     @Size(min=0,max=256)
-
+    @Builder.Default
     private String buildingName = null;
 
         @JsonProperty("street")
     
 
     @Size(min=2,max=256) 
-
+    @Builder.Default
     private String street = null;
 
         @JsonProperty("locality")
     
   @Valid
 
-
+    @Builder.Default
     private Boundary locality = null;
 
     @JsonProperty("ward")
 
     @Valid
 
-
+    @Builder.Default
     private Boundary ward = null;
 
     @JsonProperty("isDeleted")
@@ -160,7 +164,7 @@ public class Address   {
 
     @Valid
 
-
+    @Builder.Default
     private AuditDetails auditDetails = null;
 
 

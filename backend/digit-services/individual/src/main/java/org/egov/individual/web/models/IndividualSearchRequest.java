@@ -28,7 +28,7 @@ public class IndividualSearchRequest   {
 
   @Valid
 
-
+  @Builder.Default
     private org.egov.common.contract.request.RequestInfo requestInfo = null;
 
         @JsonProperty("Individual")
@@ -36,7 +36,7 @@ public class IndividualSearchRequest   {
 
   @Valid
 
-
+  @Builder.Default
     private IndividualSearch individual = null;
 
 

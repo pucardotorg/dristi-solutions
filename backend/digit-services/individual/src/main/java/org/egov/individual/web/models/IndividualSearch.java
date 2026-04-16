@@ -35,60 +35,75 @@ import java.util.List;
     @JsonIgnoreProperties(ignoreUnknown = true)
 public class IndividualSearch   {
     @JsonProperty("id")
+    @Builder.Default
     private List<String> id = null;
 
     @JsonProperty("individualId")
+    @Builder.Default
     private String individualId = null;
 
     @JsonProperty("clientReferenceId")
+    @Builder.Default
     private List<String> clientReferenceId = null;
 
     @JsonProperty("name")
     @Valid
+    @Builder.Default
     private Name name = null;
 
     @JsonProperty("dateOfBirth")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
+    @Builder.Default
     private Date dateOfBirth = null;
 
     @JsonProperty("gender")
     @Valid
+    @Builder.Default
     private Gender gender = null;
 
     @JsonProperty("mobileNumber")
+    @Builder.Default
     private String mobileNumber = null;
 
     @JsonProperty("socialCategory")
     @Exclude
+    @Builder.Default
     private String socialCategory = null;
 
     @JsonProperty("wardCode")
     @Exclude
+    @Builder.Default
     private String wardCode = null;
 
     @JsonProperty("individualName")
     @Exclude
+    @Builder.Default
     private String individualName = null;
 
     @JsonProperty("createdFrom")
     @Exclude
+    @Builder.Default
     private BigDecimal createdFrom = null;
 
     @JsonProperty("createdTo")
     @Exclude
+    @Builder.Default
     private BigDecimal createdTo = null;
 
     @JsonProperty("identifier")
     @Valid
     @Exclude
+    @Builder.Default
     private Identifier identifier = null;
 
     @JsonProperty("boundaryCode")
     @Exclude
+    @Builder.Default
     private String boundaryCode = null;
 
     @JsonProperty("roleCodes")
     @Exclude
+    @Builder.Default
     private List<String> roleCodes = null;
 
     @Exclude

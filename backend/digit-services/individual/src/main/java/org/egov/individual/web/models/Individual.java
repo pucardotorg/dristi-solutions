@@ -36,99 +36,123 @@ public class Individual {
 
     @JsonProperty("id")
     @Size(min = 2, max = 64)
+    @Builder.Default
     private String id = null;
 
     @JsonProperty("individualId")
     @Size(min = 2, max = 64)
+    @Builder.Default
     private String individualId = null;
 
     @JsonProperty("tenantId")
     @NotNull
     @Size(min = 2, max = 1000)
+    @Builder.Default
     private String tenantId = null;
 
     @JsonProperty("clientReferenceId")
     @Size(min = 2, max = 64)
+    @Builder.Default
     private String clientReferenceId = null;
 
     @JsonProperty("userId")
+    @Builder.Default
     private String userId = null;
 
     @JsonProperty("userUuid")
+    @Builder.Default
     private String userUuid = null;
 
     @JsonProperty("name")
     @Valid
+    @Builder.Default
     private Name name = null;
 
     @JsonProperty("dateOfBirth")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
+    @Builder.Default
     private Date dateOfBirth = null;
 
     @JsonProperty("gender")
     @Valid
+    @Builder.Default
     private Gender gender = null;
 
     @JsonProperty("bloodGroup")
     @Valid
+    @Builder.Default
     private BloodGroup bloodGroup = null;
 
     @JsonProperty("mobileNumber")
     @Size(max = 20)
+    @Builder.Default
     private String mobileNumber = null;
 
     @JsonProperty("altContactNumber")
     @Size(max = 16)
+    @Builder.Default
     private String altContactNumber = null;
 
     @JsonProperty("email")
     @Size(min = 5, max = 200)
+    @Builder.Default
     private String email = null;
 
     @JsonProperty("address")
     @Valid
     @Size(max = 3)
+    @Builder.Default
     private List<Address> address = null;
 
     @JsonProperty("fatherName")
     @Size(max = 100)
+    @Builder.Default
     private String fatherName = null;
 
     @JsonProperty("husbandName")
     @Size(max = 100)
+    @Builder.Default
     private String husbandName = null;
 
     @JsonProperty("relationship")
     @Size(max = 100, min = 1)
+    @Builder.Default
     private String relationship = null;
 
     @JsonProperty("identifiers")
     @Valid
+    @Builder.Default
     private List<Identifier> identifiers = null;
 
     @JsonProperty("skills")
     @Valid
+    @Builder.Default
     private List<Skill> skills = null;
 
     @JsonProperty("photo")
+    @Builder.Default
     private String photo = null;
 
     @JsonProperty("additionalFields")
     @Valid
+    @Builder.Default
     private AdditionalFields additionalFields = null;
 
     @JsonProperty("isDeleted")
     private Boolean isDeleted = Boolean.FALSE;
 
     @JsonProperty("rowVersion")
+    @Builder.Default
     private Integer rowVersion = null;
 
     @JsonProperty("auditDetails")
     @Valid
+    @Builder.Default
     private AuditDetails auditDetails = null;
 
     @JsonProperty("clientAuditDetails")
     @Valid
+    @Builder.Default
     private AuditDetails clientAuditDetails = null;
 
     @JsonIgnore
