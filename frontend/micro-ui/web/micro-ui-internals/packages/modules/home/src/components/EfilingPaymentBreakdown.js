@@ -1,9 +1,9 @@
-import { Button, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
-import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import usePaymentProcess from "../hooks/usePaymentProcess";
 import { useTranslation } from "react-i18next";
@@ -22,10 +22,9 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const params = location?.state.state.params;
   const caseId = params?.caseId;
-  const toast = useToast();
   const scenario = "EfillingCase";
   const path = "";
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
   const [receiptFilstoreId, setReceiptFilstoreId] = useState(null);
@@ -87,7 +86,8 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
           setCalculationResponse({ Calculation: [response?.TreasuryHeadMapping?.calculation] });
         } catch (error) {
           console.error("Error fetching payment calculation:", error);
-          toast.error(t("CS_PAYMENT_CALCULATION_ERROR"));
+          const errorId = error?.response?.headers?.["x-correlation-id"];
+          setShowToast({ label: t("CS_PAYMENT_CALCULATION_ERROR"), error: true, errorId });
         } finally {
           setIsLoading(false);
         }
@@ -144,6 +144,8 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("CS_CASE_LOCK_STATUS_ERROR"), error: true, errorId });
     }
   });
 
@@ -179,7 +181,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
         "case-default"
       );
       if (!bill?.Bill?.length) {
-        showToast("success", t("CS_NO_PENDING_PAYMENT"), 5000);
+        setShowToast({ label: t("CS_NO_PENDING_PAYMENT"), error: false });
         setIsCaseLocked(true);
         return;
       }
@@ -193,7 +195,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
       );
       if (caseLockStatus?.Lock?.isLocked) {
         setIsCaseLocked(true);
-        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 5000);
+        setShowToast({ label: t("CS_CASE_LOCKED_BY_ANOTHER_USER"), error: false });
         return;
       }
 
@@ -229,7 +231,8 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
         setRetryPayment(true);
       }
     } catch (error) {
-      toast.error(t("CS_PAYMENT_ERROR"));
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("CS_PAYMENT_ERROR"), error: true, errorId });
       console.error(error);
     } finally {
       setLoader(false);
@@ -239,12 +242,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
   if (isLoading || ispaymentLoading || isPaymentTypeLoading || loader) {
     return <Loader />;
   }
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
+
   return (
     <div className="e-filing-payment">
       <Modal headerBarEnd={<CloseBtn onClick={onCancel} />} formId="modal-action" headerBarMain={<Heading label={t("PENDING_PAYMENT")} />}>
@@ -311,8 +309,14 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
             isDisabled={paymentLoader || isCaseLocked}
           />
         </div>
-        {toastMsg && (
-          <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
         )}
       </Modal>
       {SurveyUI}

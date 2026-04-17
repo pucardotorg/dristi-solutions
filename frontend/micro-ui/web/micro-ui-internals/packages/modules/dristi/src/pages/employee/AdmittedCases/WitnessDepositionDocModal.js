@@ -1,4 +1,5 @@
-import { Toast, Loader } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
@@ -9,30 +10,14 @@ function WitnessDepositionDocModal({ t, docObj, setShowWitnessDepositionDoc, set
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const artifact = docObj?.artifactList;
-  const useDownloadCasePdf = Digit?.Hooks?.dristi?.useDownloadCasePdf;
-  const { downloadPdf } = useDownloadCasePdf();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const isCitizen = useMemo(() => userRoles?.includes("CITIZEN"), [userRoles]);
   const isEmployee = useMemo(() => userRoles?.includes("EMPLOYEE"), [userRoles]);
 
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
-  
   const showDocument = useMemo(() => {
     return (
       <React.Fragment>
@@ -85,7 +70,8 @@ function WitnessDepositionDocModal({ t, docObj, setShowWitnessDepositionDoc, set
         }
       } catch (error) {
         console.error("Failed to update witness evidence:", error);
-        setShowErrorToast({ label: t("WITNESS_UPDATE_FAILED"), error: true });
+        const errorId = error?.response?.headers?.["x-correlation-id"];
+        setShowToast({ label: t("WITNESS_UPDATE_FAILED"), error: true, errorId });
       } finally {
         setIsLoading(false);
       }
@@ -135,7 +121,15 @@ function WitnessDepositionDocModal({ t, docObj, setShowWitnessDepositionDoc, set
             <Loader />
           </div>
         )}
-        {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
+        )}
       </Modal>
     </div>
   );

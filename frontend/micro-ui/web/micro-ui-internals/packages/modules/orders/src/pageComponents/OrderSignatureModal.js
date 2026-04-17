@@ -1,5 +1,6 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
 import React, { useState, useMemo, useEffect } from "react";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "../../../dristi/src/components/Modal";
 import { Button } from "@egovernments/digit-ui-react-components";
 import { FileUploadIcon } from "../../../dristi/src/icons/svgIndex";
@@ -16,16 +17,15 @@ function OrderSignatureModal({
   saveOnsubmitLabel,
   setSignedDocumentUploadID,
   orderPdfFileStoreID,
-  businessOfDay,
   setSignedOrderPdfFileName,
-  // selectedOrder,
 }) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = useESign();
   const [formData, setFormData] = useState({}); // storing the file upload data
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
-  const [pageModule, setPageModule] = useState("en");
+  const pageModule = "en";
   const [loader, setLoader] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${orderPdfFileStoreID}`;
@@ -80,6 +80,8 @@ function OrderSignatureModal({
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"];
+        setShowToast({ label: "CS_FILE_UPLOAD_ERROR", error: true, errorId });
         setLoader(false);
         setFormData({});
         setIsSigned(false);
@@ -102,82 +104,95 @@ function OrderSignatureModal({
     }
   };
 
-  return !openUploadSignatureModal ? (
-    <Modal
-      headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
-      headerBarEnd={<CloseBtn onClick={handleGoBackSignatureModal} />}
-      actionCancelLabel={t("CS_COMMON_BACK")}
-      actionCancelOnSubmit={handleGoBackSignatureModal}
-      actionSaveLabel={t(saveOnsubmitLabel)}
-      isDisabled={!isSigned}
-      actionSaveOnSubmit={() => {
-        handleIssueOrder();
-      }}
-      className={"add-signature-modal"}
-    >
-      <div className="add-signature-main-div">
-        <InfoCard
-          variant={"default"}
-          label={t("PLEASE_NOTE")}
-          additionalElements={[
-            <p>
-              {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")} <span style={{ fontWeight: "bold" }}>{t(order?.orderTitle)}</span>
-            </p>,
-          ]}
-          inline
-          textStyle={{}}
-          className={`custom-info-card`}
-        />
+  return (
+    <React.Fragment>
+      {!openUploadSignatureModal ? (
+        <Modal
+          headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
+          headerBarEnd={<CloseBtn onClick={handleGoBackSignatureModal} />}
+          actionCancelLabel={t("CS_COMMON_BACK")}
+          actionCancelOnSubmit={handleGoBackSignatureModal}
+          actionSaveLabel={t(saveOnsubmitLabel)}
+          isDisabled={!isSigned}
+          actionSaveOnSubmit={() => {
+            handleIssueOrder();
+          }}
+          className={"add-signature-modal"}
+        >
+          <div className="add-signature-main-div">
+            <InfoCard
+              variant={"default"}
+              label={t("PLEASE_NOTE")}
+              additionalElements={[
+                <p>
+                  {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")} <span style={{ fontWeight: "bold" }}>{t(order?.orderTitle)}</span>
+                </p>,
+              ]}
+              inline
+              textStyle={{}}
+              className={`custom-info-card`}
+            />
 
-        {!isSigned ? (
-          <div className="not-signed">
-            <h1>{t("YOUR_SIGNATURE")}</h1>
-            <div className="sign-button-wrap">
-              <Button label={t("CS_ESIGN")} onButtonClick={handleClickEsign} className={"aadhar-sign-in"} labelClassName={"aadhar-sign-in"} />
-              <Button
-                icon={<FileUploadIcon />}
-                label={t("UPLOAD_DIGITAL_SIGN_CERTI")}
-                onButtonClick={() => {
-                  // setOpenUploadSignatureModal(true);
-                  // setIsSigned(true);
-                  setOpenUploadSignatureModal(true);
-                }}
-                className={"upload-signature"}
-                labelClassName={"upload-signature-label"}
-              />
-            </div>
-            <div className="donwload-submission">
-              <h2>{t("WANT_TO_DOWNLOAD")}</h2>
-              <AuthenticatedLink
-                style={{ color: "#007E7E", background: "white", cursor: "pointer", textDecoration: "underline" }}
-                uri={uri}
-                t={t}
-                displayFilename={"CLICK_HERE"}
-                pdf={true}
-              />
-            </div>
+            {!isSigned ? (
+              <div className="not-signed">
+                <h1>{t("YOUR_SIGNATURE")}</h1>
+                <div className="sign-button-wrap">
+                  <Button label={t("CS_ESIGN")} onButtonClick={handleClickEsign} className={"aadhar-sign-in"} labelClassName={"aadhar-sign-in"} />
+                  <Button
+                    icon={<FileUploadIcon />}
+                    label={t("UPLOAD_DIGITAL_SIGN_CERTI")}
+                    onButtonClick={() => {
+                      // setOpenUploadSignatureModal(true);
+                      // setIsSigned(true);
+                      setOpenUploadSignatureModal(true);
+                    }}
+                    className={"upload-signature"}
+                    labelClassName={"upload-signature-label"}
+                  />
+                </div>
+                <div className="donwload-submission">
+                  <h2>{t("WANT_TO_DOWNLOAD")}</h2>
+                  <AuthenticatedLink
+                    style={{ color: "#007E7E", background: "white", cursor: "pointer", textDecoration: "underline" }}
+                    uri={uri}
+                    t={t}
+                    displayFilename={"CLICK_HERE"}
+                    pdf={true}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="signed">
+                <h1>{t("YOUR_SIGNATURE")}</h1>
+                <h2>{t("SIGNED")}</h2>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="signed">
-            <h1>{t("YOUR_SIGNATURE")}</h1>
-            <h2>{t("SIGNED")}</h2>
-          </div>
-        )}
-      </div>
-    </Modal>
-  ) : (
-    <UploadSignatureModal
-      t={t}
-      key={name}
-      name={name}
-      setOpenUploadSignatureModal={setOpenUploadSignatureModal}
-      onSelect={onSelect}
-      config={uploadModalConfig}
-      formData={formData}
-      onSubmit={onSubmit}
-      isDisabled={loader}
-      fileUploadError={fileUploadError}
-    />
+        </Modal>
+      ) : (
+        <UploadSignatureModal
+          t={t}
+          key={name}
+          name={name}
+          setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+          onSelect={onSelect}
+          config={uploadModalConfig}
+          formData={formData}
+          onSubmit={onSubmit}
+          isDisabled={loader}
+          fileUploadError={fileUploadError}
+        />
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </React.Fragment>
   );
 }
 

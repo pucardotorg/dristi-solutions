@@ -11,7 +11,7 @@ import isEqual from "lodash/isEqual";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import RenderFileCard from "./RenderFileCard";
 import { FileUploader } from "react-drag-drop-files";
-import { useToast } from "./Toast/useToast";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { FSOErrorIcon } from "../icons/svgIndex";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import SearchableDropdown from "./SearchableDropdown";
@@ -91,9 +91,10 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const urlParams = new URLSearchParams(window.location.search);
   const caseId = urlParams.get("caseId");
   const [isApproved, setIsApproved] = useState(false);
-  const toast = useToast();
+  const [showToast, setShowToast] = useState(null);
+
   const selectedSeniorAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
-  const { id: selectedAdvocateId, advocateName, uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
+  const { uuid: selectedAdvocateUuid } = selectedSeniorAdvocate || {};
 
   const [advocateAndPipData, setAdvocateAndPipData] = useState(
     formData?.[config?.key]
@@ -236,9 +237,9 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           isMultipleUpload: true,
         },
       ];
-  }, [config?.populators?.inputs]);
+  }, [config?.populators?.inputs, tenantId]);
 
-  const { data: caseData, refetch: refetchCaseData, isCaseLoading } = useSearchCaseService(
+  const { data: caseData, isCaseLoading } = useSearchCaseService(
     {
       criteria: [
         {
@@ -322,7 +323,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return false;
   }, [caseDetails, advocateAndPipData]);
 
-  const { data, isLoading, refetch } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data, isLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         userUuid: selectedAdvocateUuid ? [selectedAdvocateUuid] : [userUuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
@@ -384,7 +385,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return individualData;
   };
 
-  const { data: selectedIndividual, isLoading: isInidividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: selectedIndividual, isLoading: isIndividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         individualId: individualId,
@@ -661,9 +662,6 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
       }
     });
 
-    const fileKey = input?.fileKey;
-    const name = input?.name;
-
     const newData = { ...advocateAndPipData, [input?.fileKey]: { [input?.name]: currentValue } };
     onSelect(config?.key, newData);
     setAdvocateAndPipData(newData);
@@ -699,7 +697,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     [advocateAndPipData, casePrimaryAdvocateId]
   );
 
-  if (isCaseLoading) {
+  if (isCaseLoading || isLoading || isSearchLoading || isIndividualLoading) {
     return <Loader></Loader>;
   }
 
@@ -1051,7 +1049,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                       }
                       key={input?.fileKey}
                       onTypeError={() => {
-                        toast.error(t("CS_INVALID_FILE_TYPE"));
+                        setShowToast({ label: t("CS_INVALID_FILE_TYPE"), error: true, errorId: null });
                       }}
                     />
                     <div className="upload-guidelines-div">
@@ -1100,6 +1098,15 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           );
         })}
       </div>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 }

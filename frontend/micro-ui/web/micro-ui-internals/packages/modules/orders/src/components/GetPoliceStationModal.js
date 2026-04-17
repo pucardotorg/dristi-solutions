@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { Modal, TextInput, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
+import { Modal, TextInput, CardLabel } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
-import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
 import { InfoIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
@@ -20,12 +20,11 @@ const customNoteConfig = {
 
 const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect, address }) => {
   const { t } = useTranslation();
-  const toast = useToast();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [isLoading, setIsLoading] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const [coordinates, setCoordinates] = useState({ latitude: "", longitude: "" });
   const [policeStation, setPoliceStation] = useState(null);
-  const [policeStationOptions, setPoliceStationOptions] = useState([]);
   const [errors, setErrors] = useState({ latitude: "", longitude: "" });
   const [policeStationError, setPoliceStationError] = useState("");
 
@@ -123,7 +122,6 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
       if (!nearestPoliceStation) {
         setPoliceStationError(t("NO_POLICE_STATION_FOUND_FOR_THESE_COORDINATES"));
         setPoliceStation(null);
-        setPoliceStationOptions([]);
         return;
       }
 
@@ -133,13 +131,13 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
       };
 
       setPoliceStation(data);
-      setPoliceStationOptions([data]);
-      toast.success(t("POLICE_STATION_FOUND"));
+      setShowToast({ label: t("POLICE_STATION_FOUND"), error: false });
     } catch (error) {
       console.error("Error fetching police station:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("ERROR_FETCHING_POLICE_STATION"), error: true, errorId });
       setPoliceStationError(t("ERROR_FETCHING_POLICE_STATION"));
       setPoliceStation(null);
-      setPoliceStationOptions([]);
     } finally {
       setIsLoading(false);
     }
@@ -155,104 +153,115 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
   };
 
   return (
-    <Modal
-      headerBarMain={<h1 className="heading-m">{t("FIND_POLICE_STATION")}</h1>}
-      headerBarEnd={<CloseBtn onClick={onClose} />}
-      actionCancelLabel={t("CS_COMMON_CANCEL")}
-      actionCancelOnSubmit={onClose}
-      actionSaveLabel={t("SAVE")}
-      actionSaveOnSubmit={handleSave}
-      isDisabled={isLoading || hasValidationErrors || !policeStation}
-      formId="modal-action"
-      popupStyles={{}}
-      isOpen={isOpen}
-      popmoduleClassName={"get-police-station-modal"}
-    >
-      <div style={{ padding: "24px 0px" }}>
-        <div style={{ marginBottom: "24px" }}>
-          <div
-            style={{
-              padding: "16px",
-              background: "#F7F5F3",
-              borderRadius: "4px",
-              fontSize: "16px",
-              color: "#0B0C0C",
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-          >
-            <span>{t("ADDRESS")}</span>
-            <span> {address}</span>
-          </div>
-        </div>
-
-        <div style={{ marginBottom: "16px" }}>
-          <SelectCustomNote t={t} config={customNoteConfig}></SelectCustomNote>
-        </div>
-
-        <div style={{ display: "flex", gap: "24px", marginBottom: "24px", alignItems: "center" }}>
-          <div style={{ flex: 1 }}>
-            <CardLabel style={{ paddingBottom: "5px" }}>{t("LATITUDE")}</CardLabel>
-            <TextInput
-              type="text"
-              value={coordinates.latitude}
-              onChange={(e) => handleInputChange(e, "latitude")}
-              style={{ width: "100%", height: "40px" }}
-              disable={isLoading}
-              error={errors.latitude}
-            />
-            {errors.latitude && <div style={{ color: "#d4351c", fontSize: "14px", marginTop: "4px" }}>{errors.latitude}</div>}
-          </div>
-          <div style={{ flex: 1 }}>
-            <CardLabel style={{ paddingBottom: "5px" }}>{t("LONGITUDE")}</CardLabel>
-            <TextInput
-              type="text"
-              value={coordinates.longitude}
-              onChange={(e) => handleInputChange(e, "longitude")}
-              style={{ width: "100%", height: "40px" }}
-              disable={isLoading}
-              error={errors.longitude}
-            />
-            {errors.longitude && <div style={{ color: "#d4351c", fontSize: "14px", marginTop: "4px" }}>{errors.longitude}</div>}
-          </div>
-          <div style={{ flex: 1, marginTop: "4px" }}>
-            <button
-              onClick={getPoliceStationByLocation}
-              disabled={isLoading || hasValidationErrors}
+    <React.Fragment>
+      <Modal
+        headerBarMain={<h1 className="heading-m">{t("FIND_POLICE_STATION")}</h1>}
+        headerBarEnd={<CloseBtn onClick={onClose} />}
+        actionCancelLabel={t("CS_COMMON_CANCEL")}
+        actionCancelOnSubmit={onClose}
+        actionSaveLabel={t("SAVE")}
+        actionSaveOnSubmit={handleSave}
+        isDisabled={isLoading || hasValidationErrors || !policeStation}
+        formId="modal-action"
+        popupStyles={{}}
+        isOpen={isOpen}
+        popmoduleClassName={"get-police-station-modal"}
+      >
+        <div style={{ padding: "24px 0px" }}>
+          <div style={{ marginBottom: "24px" }}>
+            <div
               style={{
-                background: "white",
-                height: "40px",
-                border: "1px solid #007E7E",
-                color: "#007E7E",
-                padding: "8px 24px",
-                cursor: hasValidationErrors || isLoading ? "not-allowed" : "pointer",
+                padding: "16px",
+                background: "#F7F5F3",
+                borderRadius: "4px",
                 fontSize: "16px",
-                fontWeight: "700",
-                marginTop: "18px",
+                color: "#0B0C0C",
+                display: "flex",
+                justifyContent: "space-between",
               }}
             >
-              {t("GET_POLICE_STATION")}
-            </button>
+              <span>{t("ADDRESS")}</span>
+              <span> {address}</span>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "16px" }}>
+            <SelectCustomNote t={t} config={customNoteConfig}></SelectCustomNote>
+          </div>
+
+          <div style={{ display: "flex", gap: "24px", marginBottom: "24px", alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+              <CardLabel style={{ paddingBottom: "5px" }}>{t("LATITUDE")}</CardLabel>
+              <TextInput
+                type="text"
+                value={coordinates.latitude}
+                onChange={(e) => handleInputChange(e, "latitude")}
+                style={{ width: "100%", height: "40px" }}
+                disable={isLoading}
+                error={errors.latitude}
+              />
+              {errors.latitude && <div style={{ color: "#d4351c", fontSize: "14px", marginTop: "4px" }}>{errors.latitude}</div>}
+            </div>
+            <div style={{ flex: 1 }}>
+              <CardLabel style={{ paddingBottom: "5px" }}>{t("LONGITUDE")}</CardLabel>
+              <TextInput
+                type="text"
+                value={coordinates.longitude}
+                onChange={(e) => handleInputChange(e, "longitude")}
+                style={{ width: "100%", height: "40px" }}
+                disable={isLoading}
+                error={errors.longitude}
+              />
+              {errors.longitude && <div style={{ color: "#d4351c", fontSize: "14px", marginTop: "4px" }}>{errors.longitude}</div>}
+            </div>
+            <div style={{ flex: 1, marginTop: "4px" }}>
+              <button
+                onClick={getPoliceStationByLocation}
+                disabled={isLoading || hasValidationErrors}
+                style={{
+                  background: "white",
+                  height: "40px",
+                  border: "1px solid #007E7E",
+                  color: "#007E7E",
+                  padding: "8px 24px",
+                  cursor: hasValidationErrors || isLoading ? "not-allowed" : "pointer",
+                  fontSize: "16px",
+                  fontWeight: "700",
+                  marginTop: "18px",
+                }}
+              >
+                {t("GET_POLICE_STATION")}
+              </button>
+            </div>
+          </div>
+
+          {policeStationError && <div style={{ color: "#d4351c", fontSize: "14px", marginBottom: "24px" }}>{policeStationError}</div>}
+
+          <div>
+            <div style={{ display: "flex", flexDirection: "row", gap: "10px", alignItems: "end", marginBottom: "10px" }}>
+              <span>{t("POLICE_STATION")}</span>
+              <InfoIcon />
+            </div>
+            <TextInput
+              type="text"
+              value={policeStation?.name}
+              style={{ height: "40px", background: "#D9D9D9" }}
+              textInputStyle={{ maxWidth: "100%" }}
+              disable={true}
+            />
           </div>
         </div>
-
-        {policeStationError && <div style={{ color: "#d4351c", fontSize: "14px", marginBottom: "24px" }}>{policeStationError}</div>}
-
-        <div>
-          <div style={{ display: "flex", flexDirection: "row", gap: "10px", alignItems: "end", marginBottom: "10px" }}>
-            <span>{t("POLICE_STATION")}</span>
-            <InfoIcon />
-          </div>
-          <TextInput
-            type="text"
-            value={policeStation?.name}
-            style={{ height: "40px", background: "#D9D9D9" }}
-            textInputStyle={{ maxWidth: "100%" }}
-            disable={true}
-          />
-        </div>
-      </div>
-    </Modal>
+      </Modal>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </React.Fragment>
   );
 };
 export default GetPoliceStationModal;

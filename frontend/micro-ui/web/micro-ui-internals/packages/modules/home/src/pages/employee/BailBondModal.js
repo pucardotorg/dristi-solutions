@@ -8,7 +8,7 @@ import { Urls } from "../../hooks";
 import { HomeService } from "../../hooks/services";
 import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
-const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, showToast = () => {} }) => {
+const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, setShowToast = () => {} }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
 
   const { t } = useTranslation();
@@ -289,7 +289,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
             setShowBailConfirmationModal(false);
             setShowBailModal(false);
             if (setUpdateCounter) setUpdateCounter((prev) => prev + 1);
-            showToast("sucess", t("BULK_CLOSE_PENDING_TASK"), 5000);
+            setShowToast({ error: false, label: t("BULK_CLOSE_PENDING_TASK") });
           }, 1000);
         }
       });

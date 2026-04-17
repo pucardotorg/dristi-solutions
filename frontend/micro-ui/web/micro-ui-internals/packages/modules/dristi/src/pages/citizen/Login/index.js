@@ -1,4 +1,4 @@
-import { AppContainer, Toast } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
@@ -322,7 +322,7 @@ const Login = ({ stateCode }) => {
             />
           )}
 
-          {error && <Toast error={true} label={error} onClose={() => setError(null)} />}
+          {error && <CustomToast error={true} label={error} errorId={null} onClose={() => setError(null)} duration={5000} />}
         </React.Fragment>
       </Switch>
     </div>

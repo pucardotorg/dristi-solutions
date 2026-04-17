@@ -140,7 +140,7 @@ export const validateDateForDelayApplication = ({
   selected,
   setValue,
   caseDetails,
-  toast,
+  setShowToast,
   t,
   history,
   caseId,
@@ -159,7 +159,7 @@ export const validateDateForDelayApplication = ({
       (caseDetails?.caseDetails && !caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.[0]?.data?.dateOfAccrual)
     ) {
       setValue("delayCondonationType", null);
-      toast.error(t("SELECT_ACCRUAL_DATE_BEFORE_DELAY_APP"));
+      setShowToast({ label: t("SELECT_ACCRUAL_DATE_BEFORE_DELAY_APP"), error: true });
       setTimeout(() => {
         history.push(`?caseId=${caseId}&selected=demandNoticeDetails`);
       }, 3000);
@@ -182,15 +182,14 @@ export const validateDateForDelayApplication = ({
   }
 };
 
-export const showToastForComplainant = ({ formData, setValue, selected, setSuccessToast, formState, clearErrors }) => {
+export const showToastForComplainant = ({ formData, setValue, selected, setShowToast, formState, clearErrors }) => {
   if (selected === "complainantDetails") {
     if (formData?.complainantId?.complainantId && formData?.complainantId?.verificationType && formData?.complainantId?.isFirstRender) {
       setValue("complainantId", { ...formData?.complainantId, isFirstRender: false });
-      setSuccessToast((prev) => ({
-        ...prev,
-        showSuccessToast: true,
-        successMsg: "CS_AADHAR_VERIFIED_SUCCESS_MSG",
-      }));
+      setShowToast({
+        label: "CS_AADHAR_VERIFIED_SUCCESS_MSG",
+        error: false,
+      });
     }
     const formDataCopy = structuredClone(formData);
     const addressDet = formDataCopy?.complainantVerification?.individualDetails?.addressDetails;
@@ -826,17 +825,7 @@ export const checkOnlyCharInCheque = ({ formData, setValue, selected }) => {
   }
 };
 
-export const respondentValidation = ({
-  setErrorMsg,
-  t,
-  formData,
-  selected,
-  caseDetails,
-  setShowErrorToast,
-  toast,
-  setFormErrors,
-  clearFormDataErrors,
-}) => {
+export const respondentValidation = ({ t, formData, selected, caseDetails, setShowToast, setFormErrors, clearFormDataErrors }) => {
   if (selected === "respondentDetails") {
     const formDataCopy = structuredClone(formData);
     if ("inquiryAffidavitFileUpload" in formDataCopy) {
@@ -856,7 +845,7 @@ export const respondentValidation = ({
       }
     }
     if (!formDataCopy?.respondentType?.code) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       return true;
     }
   }
@@ -871,7 +860,7 @@ export const respondentValidation = ({
     respondentMobileNUmbers &&
     respondentMobileNUmbers === complainantMobileNumber
   ) {
-    toast.error(t("RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM"));
+    setShowToast({ label: t("RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM"), error: true });
     setFormErrors("phonenumbers", { mobileNumber: "RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM" });
     return true;
   } else {
@@ -880,19 +869,19 @@ export const respondentValidation = ({
   }
 };
 
-export const demandNoticeFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors }) => {
+export const demandNoticeFileValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "demandNoticeDetails") {
     for (const key of ["legalDemandNoticeFileUpload", "proofOfDispatchFileUpload"]) {
       if (!(key in formData) || formData[key]?.document?.length === 0) {
         setFormErrors(key, { type: "required" });
-        setShowErrorToast(true);
+        setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
         return true;
       }
     }
 
     if (formData?.proofOfService?.code === "YES" && formData?.["proofOfAcknowledgmentFileUpload"]?.document.length === 0) {
       setFormErrors("proofOfAcknowledgmentFileUpload", { type: "required" });
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       return true;
     }
   } else {
@@ -900,18 +889,18 @@ export const demandNoticeFileValidation = ({ formData, selected, setShowErrorToa
   }
 };
 
-export const chequeDetailFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors }) => {
+export const chequeDetailFileValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "chequeDetails") {
     for (const key of ["bouncedChequeFileUpload", "returnMemoFileUpload"]) {
       if (!(key in formData) || formData[key]?.document?.length === 0 || !formData[key] || Object.keys(formData[key] || {}).length === 0) {
         setFormErrors(key, { type: "required" });
-        setShowErrorToast(true);
+        setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
         return true;
       }
     }
     if (formData?.chequeAmount === "0") {
       setFormErrors("chequeAmount", { message: "Amount cannot be zero" });
-      setShowErrorToast(true);
+      setShowToast({ label: "Amount cannot be zero", error: true });
       return true;
     }
     for (const field of ["payeeIfscField", "payerIfscField"]) {
@@ -925,19 +914,19 @@ export const chequeDetailFileValidation = ({ formData, selected, setShowErrorToa
 
       if (!ifscValue) {
         setFormErrors(field, { msg: "CORE_REQUIRED_FIELD_ERROR" });
-        setShowErrorToast(true);
+        setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
         return true;
       }
 
       if (ifscValue.length !== 11) {
         setFormErrors(field, { msg: "CS_INVALID_IFSC" });
-        setShowErrorToast(true);
+        setShowToast({ label: t("CS_INVALID_IFSC"), error: true });
         return true;
       }
 
       if (!bank || !branch) {
         setFormErrors(field, { msg: "PLEASE_SEARCH_IFSC" });
-        setShowErrorToast(true);
+        setShowToast({ label: t("PLEASE_SEARCH_IFSC"), error: true });
         return true;
       }
     }
@@ -1043,7 +1032,7 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
         errorObject.SUMMON_PROCESS_COURIER_INFORMATION_MISSING = true;
       }
     }
-    
+
     // warrant courier details are mandatory for both delay condonation and normal flow as warrant is issued in both scenarios
     if (formData?.multipleAccusedProcessCourier?.warrantCourierService?.length === 0) {
       errorObject.WARRANT_PROCESS_COURIER_INFORMATION_MISSING = true;
@@ -1075,13 +1064,11 @@ export const complainantValidation = ({
   t,
   caseDetails,
   selected,
-  setShowErrorToast,
-  toast,
+  setShowToast,
   setFormErrors,
   formState,
   clearFormDataErrors,
   displayindex,
-  setErrorMsg,
 }) => {
   if (selected === "complainantDetails") {
     const complainantFields = sideMenuConfig
@@ -1094,8 +1081,7 @@ export const complainantValidation = ({
       const value = extractValue(formData, key);
       const isValueEmpty = isEmptyValue(value);
       if (isValueEmpty) {
-        setShowErrorToast(true);
-        setErrorMsg(`Mandatory field missing- Complainant ${displayindex + 1} (${key})`);
+        setShowToast({ label: `Mandatory field missing- Complainant ${displayindex + 1} (${key})`, error: true });
         return true;
       }
     }
@@ -1105,8 +1091,7 @@ export const complainantValidation = ({
         const value = extractValue(formData, obj?.field);
         const isValueEmpty = isEmptyValue(value);
         if (isValueEmpty) {
-          setShowErrorToast(true);
-          setErrorMsg(`Mandatory field missing- Complainant ${displayindex + 1} (${obj?.field})`);
+          setShowToast({ label: `Mandatory field missing- Complainant ${displayindex + 1} (${obj?.field})`, error: true });
           return true;
         }
       }
@@ -1116,12 +1101,12 @@ export const complainantValidation = ({
       !formData?.complainantTypeOfEntity?.code &&
       !Object.keys(formState?.errors).includes("complainantTypeOfEntity")
     ) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("CORE_REQUIRED_FIELD_ERROR"), error: true });
       setFormErrors("complainantTypeOfEntity", { message: "CORE_REQUIRED_FIELD_ERROR" });
       return true;
     }
     if (!formData?.complainantVerification?.mobileNumber || !formData?.complainantVerification?.otpNumber) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("PLEASE_VERIFY_YOUR_PHONE_NUMBER"), error: true });
       setFormErrors("complainantVerification", { mobileNumber: "PLEASE_VERIFY_YOUR_PHONE_NUMBER" });
       return true;
     } else {
@@ -1134,7 +1119,7 @@ export const complainantValidation = ({
       if (respondentMobileNumbers && complainantMobileNumber) {
         for (let i = 0; i < respondentMobileNumbers.length; i++) {
           if (respondentMobileNumbers[i] === complainantMobileNumber) {
-            toast.error(t("CHANGE_RESPONDENT_MOBILE_NUMBER_REGISTERED"));
+            setShowToast({ label: t("CHANGE_RESPONDENT_MOBILE_NUMBER_REGISTERED"), error: true });
             return true;
           }
         }
@@ -1145,7 +1130,7 @@ export const complainantValidation = ({
   }
 };
 
-export const accusedAddressValidation = ({ formData, selected, setAddressError, config }) => {
+export const accusedAddressValidation = ({ t, formData, selected, setShowToast, config }) => {
   const addressKey = "addressDetails";
   if (
     config
@@ -1161,7 +1146,7 @@ export const accusedAddressValidation = ({ formData, selected, setAddressError, 
         })
       )
   ) {
-    setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
+    setShowToast({ label: t("CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT"), error: true });
     return true;
   }
 };
@@ -1191,7 +1176,7 @@ export const ageValidation = ({ formData, selected, setFormErrors, clearFormData
   }
 };
 
-export const addressValidation = ({ formData, selected, setAddressError, config }) => {
+export const addressValidation = ({ t, formData, selected, setShowToast, config }) => {
   if (
     config
       ?.find((item) =>
@@ -1225,7 +1210,7 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
                 );
         }))
   ) {
-    setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
+    setShowToast({ label: t("CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT"), error: true });
     return true;
   }
 };
@@ -1261,7 +1246,7 @@ export const chequeDateValidation = ({ selected, formData, setError, clearErrors
   }
 };
 
-export const delayApplicationValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
+export const delayApplicationValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "delayApplications") {
     if (
       formData?.delayCondonationType?.code === "NO" &&
@@ -1269,7 +1254,7 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
       (!formData?.condonationFileUpload?.document || formData?.condonationFileUpload?.document.length === 0)
     ) {
       setFormErrors("condonationFileUpload", { type: "required" });
-      toast.error(t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"));
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       return true;
     }
   } else {
@@ -1277,12 +1262,10 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
   }
 };
 
-export const witnessDetailsValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
+export const witnessDetailsValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "witnessDetails") {
     if (!(formData?.firstName || formData?.witnessDesignation)) {
-      // setFormErrors("firstName", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
-      // setFormErrors("witnessDesignation",{ message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" })
-      toast.error(t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"));
+      setShowToast({ label: t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"), error: true });
       return true;
     }
   } else {
@@ -1290,11 +1273,11 @@ export const witnessDetailsValidation = ({ t, formData, selected, setShowErrorTo
   }
 };
 
-export const debtLiabilityValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
+export const debtLiabilityValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
   if (selected === "debtLiabilityDetails") {
     if (formData?.totalAmount === "0") {
       setFormErrors("totalAmount", { message: "Amount cannot be zero" });
-      setShowErrorToast(true);
+      setShowToast({ label: "Amount cannot be zero", error: true });
       return true;
     }
   } else {
@@ -1302,7 +1285,7 @@ export const debtLiabilityValidation = ({ t, formData, selected, setShowErrorToa
   }
 };
 
-export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors, clearFormDataErrors }) => {
+export const prayerAndSwornValidation = ({ t, formData, selected, setShowToast, setFormErrors, clearFormDataErrors }) => {
   if (selected === "prayerSwornStatement") {
     let hasError = false;
 
@@ -1311,7 +1294,7 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
       for (const key of formData?.SelectUploadDocWithName) {
         if (!key?.document || key.document?.length === 0) {
           setFormErrors("SelectUploadDocWithName", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS", documentIndex: index });
-          setShowErrorToast(true);
+          setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
           hasError = true;
         } else {
           clearFormDataErrors("SelectUploadDocWithName");
@@ -1322,25 +1305,25 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
 
     if (formData?.prayer?.text === "<p></p>\n" || formData?.memorandumOfComplaint?.text === "<p></p>\n") {
       setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       hasError = true;
     }
 
     if (isRichTextEmpty(formData?.prayer?.text)) {
       setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       hasError = true;
     }
 
     if (isRichTextEmpty(formData?.memorandumOfComplaint?.text)) {
       setFormErrors("memorandumOfComplaint", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       hasError = true;
     }
 
     if (isRichTextEmpty(formData?.synopsis?.text)) {
       setFormErrors("synopsis", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       hasError = true;
     }
 

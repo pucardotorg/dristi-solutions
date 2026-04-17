@@ -1,4 +1,4 @@
-import { Toast, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -14,6 +14,7 @@ import { HomeService } from "../../hooks/services";
 import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -46,7 +47,7 @@ function BulkESignView() {
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const [signedList, setSignedList] = useState([]);
 
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const { orderNumber, deleteOrder } = Digit.Hooks.useQueryParams();
   const [showBulkSignAllModal, setShowBulkSignAllModal] = useState(false);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
@@ -58,10 +59,6 @@ function BulkESignView() {
 
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
-  
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
 
   const { data: ordersData } = useSearchOrdersService(
     {
@@ -111,15 +108,6 @@ function BulkESignView() {
       history.replace(homePath);
     }
   }, [history, userType, deleteOrder, orderDetails, bulkOrdersData]);
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   const config = useMemo(() => {
     const updateOrderFunc = async (orderData, checked) => {
@@ -271,7 +259,8 @@ function BulkESignView() {
           }, 2000);
         });
     } catch (e) {
-      setShowErrorToast({ label: t("FAILED_TO_REMOVE_ORDER_FROM_BULK_LIST"), error: true });
+      const errorId = e?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("FAILED_TO_REMOVE_ORDER_FROM_BULK_LIST"), error: true, errorId });
       setIsDeleteOrderLoading(false);
       console.error("Failed to remove the order from bulk list", e?.message);
     }
@@ -348,13 +337,10 @@ function BulkESignView() {
         const signedList = updateOrderResponse?.orders;
 
         if (signedList?.length === 0) {
-          setShowErrorToast({
-            message: t("FAILED_TO_PERFORM_BULK_SIGN"),
+          setShowToast({
+            label: t("FAILED_TO_PERFORM_BULK_SIGN"),
             error: true,
           });
-          setTimeout(() => {
-            setShowErrorToast(null);
-          }, 3000);
           return;
         }
 
@@ -362,7 +348,8 @@ function BulkESignView() {
         setShowBulkSignSuccessModal(true);
       });
     } catch (e) {
-      setShowErrorToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
+      const errorId = e?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true, errorId });
       console.error("Failed to perform bulk sign", e?.message);
     } finally {
       setIsLoading(false);
@@ -435,7 +422,15 @@ function BulkESignView() {
         />
       )}
       {showBulkSignSuccessModal && <OrderIssueBulkSuccesModal t={t} history={history} bulkSignOrderListLength={signedList?.length} />}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          isDleteBtn={true}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 }

@@ -1,5 +1,5 @@
-import { Toast, InboxSearchComposer, SubmitBar, Loader, Banner } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import { InboxSearchComposer, SubmitBar, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { bulkSignFormsConfig } from "../../configs/BulkSignFormsConfig";
@@ -11,6 +11,7 @@ import { HomeService } from "../../hooks/services";
 import DigitalDocumentSignModal from "./DigitalDocumentSignModal";
 import { numberToWords } from "@egovernments/digit-ui-module-orders/src/utils";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -41,7 +42,7 @@ function BulkSignDigitalizationView() {
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const [signedList, setSignedList] = useState([]);
 
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
   const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -62,20 +63,6 @@ function BulkSignDigitalizationView() {
 
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
-
-  
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   const config = useMemo(() => {
     const updateDocumentFunc = async (documentData, checked) => {
@@ -273,13 +260,10 @@ function BulkSignDigitalizationView() {
         const signedList = updateDocumentResponse?.documents;
 
         if (signedList?.length === 0) {
-          setShowErrorToast({
+          setShowToast({
             label: t("FAILED_TO_PERFORM_BULK_SIGN"),
             error: true,
           });
-          setTimeout(() => {
-            setShowErrorToast(null);
-          }, 3000);
           return;
         }
 
@@ -287,7 +271,8 @@ function BulkSignDigitalizationView() {
         setShowBulkSignSuccessModal(true);
       });
     } catch (e) {
-      setShowErrorToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
+      const errorId = e?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true, errorId });
       console.error("Failed to perform bulk sign", e?.message);
     } finally {
       setIsLoading(false);
@@ -307,13 +292,10 @@ function BulkSignDigitalizationView() {
     if (notAllowedItems?.length > 0) {
       const notAllowedTypes = [...new Set(notAllowedItems?.map((doc) => t(doc?.businessObject?.digitalizedDocumentDetails?.type)))];
       const msg = t("FOLLOWING_DOCUMENTS_CANNOT_BE_SIGNED") + notAllowedTypes?.join(", ");
-      setShowErrorToast({
+      setShowToast({
         label: msg,
         error: true,
       });
-      setTimeout(() => {
-        setShowErrorToast(null);
-      }, 5000);
       return;
     }
     setShowBulkSignConfirmModal(true);
@@ -351,7 +333,6 @@ function BulkSignDigitalizationView() {
           selectedDigitizedDocument={seletedDigitalizationDocument}
           setShowBulkSignModal={setShowBulkSignModal}
           digitalDocumentPaginationData={digitalDocumentPaginationData}
-          setShowErrorToast={setShowErrorToast}
           setCounter={setCounter}
         />
       )}
@@ -390,7 +371,15 @@ function BulkSignDigitalizationView() {
           </div>
         </Modal>
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 }

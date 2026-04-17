@@ -1,4 +1,4 @@
-import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Header, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { pleaSubmissionDetailConfig } from "../../configs/pleaSubmissionConfig";
@@ -21,6 +21,7 @@ import PreviewPdfModal from "../../components/PreviewPdfModal";
 import GenericSuccessLinkModal from "../../components/GenericSuccessLinkModal";
 import GenericNumberInputModal from "../../components/GenericNumberInputModal";
 import { getFormattedName } from "../../utils";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 const convertToFormData = (obj) => {
@@ -55,7 +56,7 @@ const PleaSubmission = () => {
   const { filingNumber, documentNumber, showModal } = Digit.Hooks.useQueryParams();
   const [formdata, setFormdata] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [loader, setLoader] = useState(false);
   const isBreadCrumbsParamsDataSet = useRef(false);
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
@@ -99,6 +100,8 @@ const PleaSubmission = () => {
       }
     } catch (err) {
       console.error(err);
+      const errorId = err?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("ERROR_FETCHING_CASE_DETAILS"), error: true, errorId });
     } finally {
       setIsCaseDetailsLoading(false);
     }
@@ -251,7 +254,8 @@ const PleaSubmission = () => {
       }
     } catch (error) {
       console.error("Failed to save plea draft:", error);
-      setShowErrorToast({ label: t("PLEA_SAVE_FAILED"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("PLEA_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -281,7 +285,8 @@ const PleaSubmission = () => {
       setShowAddPleaMobileNumber(true);
     } catch (error) {
       console.error("Failed to submit plea:", error);
-      setShowErrorToast({ label: t("PLEA_SUBMISSION_FAILED"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("PLEA_SUBMISSION_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -318,7 +323,8 @@ const PleaSubmission = () => {
       setShowPleaEsign(true);
     } catch (error) {
       console.error("Failed to verify plea OTP:", error);
-      setShowErrorToast({ label: t("PLEA_OTP_VERIFICATION_FAILED"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("PLEA_OTP_VERIFICATION_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -328,19 +334,6 @@ const PleaSubmission = () => {
     sessionStorage.setItem("documents-activeTab", "Digitalization Forms");
     history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`);
   };
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   if (userInfo?.type === "CITIZEN") {
     history.replace(homePath);
@@ -443,7 +436,15 @@ const PleaSubmission = () => {
           />
         )}
       </div>
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

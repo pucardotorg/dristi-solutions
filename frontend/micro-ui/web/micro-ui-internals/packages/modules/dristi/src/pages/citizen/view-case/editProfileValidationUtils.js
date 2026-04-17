@@ -4,30 +4,19 @@ import { SubmissionWorkflowAction } from "../../../Utils/submissionWorkflow";
 import { efilingDocumentKeyAndTypeMapping } from "../FileCase/Config/efilingDocumentKeyAndTypeMapping";
 import { formatName, onDocumentUpload, sendDocumentForOcr } from "../FileCase/EfilingValidationUtils";
 
-export const editComplainantValidation = ({
-  formData,
-  t,
-  caseDetails,
-  selected,
-  setShowErrorToast,
-  toast,
-  setFormErrors,
-  formState,
-  clearFormDataErrors,
-  currentComplainant,
-}) => {
+export const editComplainantValidation = ({ formData, t, caseDetails, selected, setShowToast, setFormErrors, formState, clearFormDataErrors }) => {
   if (selected === "complainantDetails") {
     if (
       formData?.complainantType?.code !== "INDIVIDUAL" &&
       !formData?.complainantTypeOfEntity?.code &&
       !Object.keys(formState?.errors).includes("complainantTypeOfEntity")
     ) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       setFormErrors("complainantTypeOfEntity", { message: "CORE_REQUIRED_FIELD_ERROR" });
       return true;
     }
     if (!formData?.complainantVerification?.mobileNumber || !formData?.complainantVerification?.otpNumber) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       setFormErrors("complainantVerification", { mobileNumber: "PLEASE_VERIFY_YOUR_PHONE_NUMBER" });
       return true;
     } else {
@@ -40,7 +29,7 @@ export const editComplainantValidation = ({
         formData?.complainantId?.complainantId === true
       )
     ) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       setFormErrors("complainantId", { message: "COMPLAINANT_ID_PROOF_IS_MANDATORY" });
       return true;
     } else {
@@ -53,7 +42,7 @@ export const editComplainantValidation = ({
       if (respondentMobileNumbers && complainantMobileNumber) {
         for (let i = 0; i < respondentMobileNumbers.length; i++) {
           if (respondentMobileNumbers[i] === complainantMobileNumber) {
-            toast.error(t("CHANGE_RESPONDENT_MOBILE_NUMBER_REGISTERED"));
+            setShowToast({ label: t("CHANGE_RESPONDENT_MOBILE_NUMBER_REGISTERED"), error: true });
             return true;
           }
         }
@@ -64,17 +53,7 @@ export const editComplainantValidation = ({
   }
 };
 
-export const editRespondentValidation = ({
-  setErrorMsg,
-  t,
-  formData,
-  selected,
-  caseDetails,
-  setShowErrorToast,
-  toast,
-  setFormErrors,
-  clearFormDataErrors,
-}) => {
+export const editRespondentValidation = ({ t, formData, selected, caseDetails, setShowToast, setFormErrors, clearFormDataErrors }) => {
   if (selected === "respondentDetails") {
     const formDataCopy = structuredClone(formData);
     if ("inquiryAffidavitFileUpload" in formDataCopy) {
@@ -94,7 +73,7 @@ export const editRespondentValidation = ({
       }
     }
     if (!formDataCopy?.respondentType?.code) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
       return true;
     }
   }
@@ -109,7 +88,7 @@ export const editRespondentValidation = ({
     respondentMobileNUmbers &&
     respondentMobileNUmbers === complainantMobileNumber
   ) {
-    toast.error(t("RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM"));
+    setShowToast({ label: t("RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM"), error: true });
     setFormErrors("phonenumbers", { mobileNumber: "RESPONDENT_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM" });
     return true;
   } else {
@@ -312,7 +291,7 @@ export const editShowToastForComplainant = ({ formData, setValue, selected, form
 export const updateProfileData = async ({
   t,
   tenantId,
-  toast,
+  setShowToast,
   caseId,
   uniqueId,
   isAdvocate,
@@ -744,6 +723,7 @@ export const updateProfileData = async ({
     return res;
   } catch (error) {
     console.error("Profile validation failed:", error);
-    toast.error(t("PROFILE_VALIDATION_FAILED"));
+    const errorId = error?.response?.headers?.["x-correlation-id"];
+    setShowToast({ label: t("PROFILE_VALIDATION_FAILED"), error: true, errorId });
   }
 };

@@ -1,11 +1,11 @@
-import { Banner, CardLabel, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Banner, CardLabel, Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useMemo, useState, useEffect, useCallback } from "react";
 import Button from "../../../components/Button";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
-import { useToast } from "../../../components/Toast/useToast";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import usePaymentProcess from "../../../../../home/src/hooks/usePaymentProcess";
@@ -28,16 +28,16 @@ const mockSubmitModalInfo = {
   isArrow: false,
   showTable: true,
 };
+
 function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const { caseId } = window?.Digit.Hooks.useQueryParams();
-  const toast = useToast();
   const scenario = "EfillingCase";
   const fileStoreId = sessionStorage.getItem("fileStoreId");
   const location = useLocation();
   const calculationResponse = location.state.state.calculationResponse;
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [receiptFilstoreId, setReceiptFilstoreId] = useState(null);
   const [retryPayment, setRetryPayment] = useState(false);
@@ -172,7 +172,7 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
         "case-default"
       );
       if (!bill?.Bill?.length) {
-        showToast("success", t("CS_NO_PENDING_PAYMENT"), 5000);
+        setShowToast({ label: t("CS_NO_PENDING_PAYMENT"), error: false });
         setIsCaseLocked(true);
         return;
       }
@@ -185,7 +185,7 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
       );
       if (caseLockStatus?.Lock?.isLocked) {
         setIsCaseLocked(true);
-        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 5000);
+        setShowToast({ label: t("CS_CASE_LOCKED_BY_ANOTHER_USER"), error: false });
         return;
       }
       await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
@@ -221,7 +221,8 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
       }
     } catch (error) {
       console.error("Payment initiation failed:", error);
-      toast.error(t("PAYMENT_INITIATION_FAILED"));
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("PAYMENT_INITIATION_FAILED"), error: true, errorId: errorId });
     } finally {
       setLoader(false);
     }
@@ -230,12 +231,6 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
   if (isLoading || paymentLoader || isPaymentTypeLoading || loader) {
     return <Loader />;
   }
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
 
   const fileStoreIdToUse = caseDetails?.additionalDetails?.signedCaseDocument || fileStoreId;
 
@@ -366,8 +361,14 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
                 isDisabled={paymentLoader || isCaseLocked}
               />
             </div>
-            {toastMsg && (
-              <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "670px" }} />
+            {showToast && (
+              <CustomToast
+                error={showToast?.error}
+                label={showToast?.label}
+                errorId={showToast?.errorId}
+                onClose={() => setShowToast(null)}
+                duration={showToast?.errorId ? 7000 : 5000}
+              />
             )}
           </Modal>
         )}

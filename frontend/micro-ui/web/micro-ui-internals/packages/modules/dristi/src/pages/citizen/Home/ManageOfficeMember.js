@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { InboxSearchComposer, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import { InfoCircleIcon, AdvocateProfileChevronIcon, ManageOfficeCloseIcon } from "../../../icons/svgIndex";
+import { InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import { InfoCircleIcon, ManageOfficeCloseIcon } from "../../../icons/svgIndex";
 import { assignCasesConfig } from "./assignCasesConfig";
+import CustomToast from "../../../components/CustomToast";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -14,8 +15,6 @@ const sectionsParentStyle = {
 };
 
 const REDIRECT_DELAY_MS = 400;
-
-
 
 const ManageOfficeMember = () => {
   const { t } = useTranslation();
@@ -41,7 +40,6 @@ const ManageOfficeMember = () => {
     };
   }, [advocateInfo, member?.officeAdvocateId, member?.advocateId]);
 
-  const [allowCaseCreate, setAllowCaseCreate] = useState(member?.allowCaseCreate !== false ? "Yes" : "No");
   const [addToNewCasesAuto, setAddToNewCasesAuto] = useState(member?.addNewCasesAutomatically !== false ? "Yes" : "No");
   const [selectedCasesCount, setSelectedCasesCount] = useState(0);
   const [casesRefreshKey, setCasesRefreshKey] = useState(0);
@@ -53,15 +51,8 @@ const ManageOfficeMember = () => {
   const [showUpdateAccessModal, setShowUpdateAccessModal] = useState(false);
   const [showAddMemberConfirmModal, setShowAddMemberConfirmModal] = useState(false);
   const [isUpdatingAccess, setIsUpdatingAccess] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const redirectTimeoutRef = useRef(null);
-
-  // Auto-close toast after 5 seconds (same pattern as ManageOffice)
-  useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 5000);
-    return () => clearTimeout(timer);
-  }, [toast]);
 
   useEffect(() => {
     return () => {
@@ -74,11 +65,7 @@ const ManageOfficeMember = () => {
   const memberName = member?.memberName || t("MANAGE_OFFICE_MEMBER_NAME_PLACEHOLDER");
   const clerkLabel = t("CLERK");
   const designation =
-    member?.memberType === "ADVOCATE_CLERK"
-      ? clerkLabel
-      : member?.memberType === "ADVOCATE"
-      ? t("ASSISTANT_ADVOCATE")
-      : member?.memberType || "—";
+    member?.memberType === "ADVOCATE_CLERK" ? clerkLabel : member?.memberType === "ADVOCATE" ? t("ASSISTANT_ADVOCATE") : member?.memberType || "—";
   const mobileNumber = member?.memberMobileNumber
     ? `+91 ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(0, 5)} ${(member.memberMobileNumber + "").replace(/\D/g, "").slice(5)}`
     : "—";
@@ -88,26 +75,6 @@ const ManageOfficeMember = () => {
     member,
     effectiveAdvocateInfo,
   ]);
-
-  const yesNoOptions = useMemo(
-    () => [
-      { code: "Yes", name: t("YES") },
-      { code: "No", name: t("NO") },
-    ],
-    [t]
-  );
-
-  const selectedAllowCaseCreateOption = useMemo(
-    () => yesNoOptions.find((opt) => opt.code === allowCaseCreate) || yesNoOptions[0],
-    [yesNoOptions, allowCaseCreate]
-  );
-
-  const selectedAddToNewCasesOption = useMemo(
-    () => yesNoOptions.find((opt) => opt.code === addToNewCasesAuto) || yesNoOptions[0],
-    [yesNoOptions, addToNewCasesAuto]
-  );
-
-  
 
   const syncSelectedCasesCount = React.useCallback(() => {
     const container = document.querySelector(".manage-office-member-inbox");
@@ -261,7 +228,7 @@ const ManageOfficeMember = () => {
 
   const handleConfirmRemoveMember = async () => {
     if (!member?.id) {
-      setToast({ label: t("REMOVE_MEMBER_ERROR"), type: "error" });
+      setShowToast({ label: t("REMOVE_MEMBER_ERROR"), error: true });
       return;
     }
     setIsRemovingMember(true);
@@ -277,19 +244,18 @@ const ManageOfficeMember = () => {
       };
       const response = await window?.Digit?.DRISTIService?.leaveOffice({ leaveOffice: leavePayload }, { tenantId });
       if (response) {
-        setToast({ label: t("MEMBER_REMOVED_SUCCESS"), type: "success" });
+        setShowToast({ label: t("MEMBER_REMOVED_SUCCESS"), error: false });
         setShowRemoveMemberModal(false);
         handleGoBack();
       }
     } catch (error) {
       console.error("Error removing member:", error);
-      setToast({ label: t("REMOVE_MEMBER_ERROR"), type: "error" });
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("REMOVE_MEMBER_ERROR"), error: true, errorId });
     } finally {
       setIsRemovingMember(false);
     }
   };
-
-  
 
   const getCaseSelectionDiff = () => {
     const container = document.querySelector(".manage-office-member-inbox");
@@ -331,7 +297,7 @@ const ManageOfficeMember = () => {
       const hasCaseDiff = currentDiff.addCaseIds.length > 0 || currentDiff.removeCaseIds.length > 0;
 
       if (!accessTypeChanged && !hasCaseDiff) {
-        setToast({ label: t("NO_CHANGES_TO_UPDATE"), type: "error" });
+        setShowToast({ label: t("NO_CHANGES_TO_UPDATE"), error: true });
         return;
       }
       setShowUpdateAccessModal(true);
@@ -350,11 +316,11 @@ const ManageOfficeMember = () => {
 
   const handleConfirmUpdateAccess = async (directDiff) => {
     if (!member?.memberId || !effectiveAdvocateInfo?.advocateId) {
-      setToast({ label: t("UPDATE_ACCESS_ERROR"), type: "error" });
+      setShowToast({ label: t("UPDATE_ACCESS_ERROR"), error: true });
       return;
     }
 
-    const diffToUse = (directDiff && !directDiff.nativeEvent) ? directDiff : caseSelectionDiff;
+    const diffToUse = directDiff && !directDiff.nativeEvent ? directDiff : caseSelectionDiff;
     const { addCaseIds = [], removeCaseIds = [] } = diffToUse || { addCaseIds: [], removeCaseIds: [] };
 
     const userInfo = window?.Digit?.UserService?.getUser()?.info || {};
@@ -385,9 +351,9 @@ const ManageOfficeMember = () => {
         if (!response) {
           throw new Error("Add member failed");
         }
-        
+
         newMemberId = response?.addMember?.id || response?.officeMembers?.[0]?.id || response?.members?.[0]?.id || response?.officeMember?.id || null;
-        
+
         // Fallback search to find the ID if not cleanly available in standard DIGIT response wrapper keys
         if (!newMemberId) {
           try {
@@ -397,12 +363,12 @@ const ManageOfficeMember = () => {
                   tenantId,
                   officeAdvocateId: effectiveAdvocateInfo?.advocateId,
                   memberId: member?.memberId,
-                }
+                },
               },
               { tenantId }
             );
             if (searchRes?.officeMembers?.length > 0) {
-              const createdMemberRow = searchRes.officeMembers.find(m => m.memberId === member?.memberId && m.isActive !== false);
+              const createdMemberRow = searchRes.officeMembers.find((m) => m.memberId === member?.memberId && m.isActive !== false);
               if (createdMemberRow) {
                 newMemberId = createdMemberRow.id;
               }
@@ -411,26 +377,32 @@ const ManageOfficeMember = () => {
             console.error("Failed to fetch new member id after creation:", e);
           }
         }
-
       } else {
-        const response = await window?.Digit?.DRISTIService?.customApiService("/advocate-office-management/v1/_updateMemberAccess", {
-          updateMemberAccess: {
-            tenantId,
-            officeAdvocateId: effectiveAdvocateInfo?.advocateId,
-            memberId: member?.memberId,
-            addNewCasesAutomatically: accessType === "ALL_CASES",
-            accessType: accessType,
-            allowCaseCreate: true,
+        const response = await window?.Digit?.DRISTIService?.customApiService(
+          "/advocate-office-management/v1/_updateMemberAccess",
+          {
+            updateMemberAccess: {
+              tenantId,
+              officeAdvocateId: effectiveAdvocateInfo?.advocateId,
+              memberId: member?.memberId,
+              addNewCasesAutomatically: accessType === "ALL_CASES",
+              accessType: accessType,
+              allowCaseCreate: true,
+            },
+            pagination: { limit: 10, offSet: 0 },
           },
-          pagination: { limit: 10, offSet: 0 },
-        }, { tenantId });
+          { tenantId }
+        );
         if (!response) {
           throw new Error("Update access failed");
         }
       }
 
       // Process specific cases if needed
-      if ((accessType === "SPECIFIC_CASES" && (addCaseIds.length > 0 || removeCaseIds.length > 0)) || (!isNewMember && (addCaseIds.length > 0 || removeCaseIds.length > 0))) {
+      if (
+        (accessType === "SPECIFIC_CASES" && (addCaseIds.length > 0 || removeCaseIds.length > 0)) ||
+        (!isNewMember && (addCaseIds.length > 0 || removeCaseIds.length > 0))
+      ) {
         const body = {
           processCaseMember: {
             tenantId,
@@ -449,7 +421,7 @@ const ManageOfficeMember = () => {
         await window?.Digit?.DRISTIService?.customApiService("/advocate-office-management/v1/_processCaseMember", body, { tenantId });
       }
 
-      setToast({ label: isNewMember ? t("MEMBER_ADDED_SUCCESSFULLY") : t("UPDATE_ACCESS_SUCCESS"), type: "success" });
+      setShowToast({ label: isNewMember ? t("MEMBER_ADDED_SUCCESSFULLY") : t("UPDATE_ACCESS_SUCCESS"), error: false });
       setShowUpdateAccessModal(false);
       setShowAddMemberConfirmModal(false);
       initialAccessType.current = accessType;
@@ -476,11 +448,11 @@ const ManageOfficeMember = () => {
       if (isNewMember && newMemberId) {
         newMemberData.id = newMemberId;
       }
-      
+
       // If we just added a new member, the memberId wasn't previously available to the table.
-      // The API addOfficeMember response theoretically returns the ID, but the component relies on 
-      // the existing member.memberId being passed in. It may require setting the newly generated ID 
-      // if it wasn't there before (or if it relies on individualId). Since `member.memberId` is mapped from the search response, 
+      // The API addOfficeMember response theoretically returns the ID, but the component relies on
+      // the existing member.memberId being passed in. It may require setting the newly generated ID
+      // if it wasn't there before (or if it relies on individualId). Since `member.memberId` is mapped from the search response,
       // it should already exist. Incrementing the key forces InboxSearchComposer to remount & fetch cases.
       setCasesRefreshKey((prev) => prev + 1);
 
@@ -499,7 +471,8 @@ const ManageOfficeMember = () => {
       });
     } catch (error) {
       console.error("Error saving member access logic:", error);
-      setToast({ label: isNewMember ? t("MEMBER_ADD_ERROR") : t("UPDATE_ACCESS_ERROR"), type: "error" });
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: isNewMember ? t("MEMBER_ADD_ERROR") : t("UPDATE_ACCESS_ERROR"), error: true, errorId });
     } finally {
       setIsUpdatingAccess(false);
     }
@@ -616,7 +589,7 @@ const ManageOfficeMember = () => {
             <span className="manage-office-member-field__label">{t("EMAIL")}</span>
             <span className="manage-office-member-field__value">{emailId}</span>
           </div>
-          
+
           {!isNewMember && (
             <button
               type="button"
@@ -637,7 +610,7 @@ const ManageOfficeMember = () => {
                 height: "40px",
                 width: "fit-content",
                 marginLeft: "auto",
-                alignSelf: "center"
+                alignSelf: "center",
               }}
             >
               {t("REMOVE_MEMBER")}
@@ -649,34 +622,32 @@ const ManageOfficeMember = () => {
           <span className="manage-office-member-info-icon" aria-hidden>
             <InfoCircleIcon />
           </span>
-          <span>
-            {t("MANAGE_OFFICE_MEMBER_ACCESS_INFO")}
-          </span>
+          <span>{t("MANAGE_OFFICE_MEMBER_ACCESS_INFO")}</span>
         </div>
 
         <div className="assign-cases-section">
           <h2 className="assign-cases-section-title">{t("MANAGE_CASE_ACCESS")}</h2>
-          
+
           <div className="manage-case-access-radio-container">
             <span className="manage-case-access-label">{t("CASE_ACCESS_TYPE")}</span>
             <div className="manage-case-access-radio-group">
               <label className="manage-case-access-radio">
-                <input 
-                  type="radio" 
-                  name="accessType" 
+                <input
+                  type="radio"
+                  name="accessType"
                   value="ALL_CASES"
                   checked={accessType === "ALL_CASES"}
-                  onChange={() => handleAccessTypeChange({code: "ALL_CASES"})}
+                  onChange={() => handleAccessTypeChange({ code: "ALL_CASES" })}
                 />
                 <span className="radio-label">{t("ALL_CASES")}</span>
               </label>
               <label className="manage-case-access-radio">
-                <input 
-                  type="radio" 
-                  name="accessType" 
+                <input
+                  type="radio"
+                  name="accessType"
                   value="SPECIFIC_CASES"
                   checked={accessType === "SPECIFIC_CASES"}
-                  onChange={() => handleAccessTypeChange({code: "SPECIFIC_CASES"})}
+                  onChange={() => handleAccessTypeChange({ code: "SPECIFIC_CASES" })}
                 />
                 <span className="radio-label">{t("SPECIFIC_CASES")}</span>
               </label>
@@ -688,23 +659,18 @@ const ManageOfficeMember = () => {
               <span className="manage-office-member-info-icon" aria-hidden>
                 <InfoCircleIcon />
               </span>
-              <span>
-                {t("MANAGE_CASE_ACCESS_INFO")}
-              </span>
+              <span>{t("MANAGE_CASE_ACCESS_INFO")}</span>
             </div>
           )}
 
           {accessType === "SPECIFIC_CASES" && (
             <div className={`inbox-search-wrapper manage-office-member-inbox`}>
-              <h3 className="assign-cases-subtitle">
-                {t(assignCasesConfigWithTenant?.label)}
-              </h3>
+              <h3 className="assign-cases-subtitle">{t(assignCasesConfigWithTenant?.label)}</h3>
               <InboxSearchComposer key={casesRefreshKey} customStyle={sectionsParentStyle} configs={assignCasesConfigWithTenant} showTab={false} />
             </div>
           )}
         </div>
       </div>
-
       <footer className="manage-office-member-footer">
         <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
           {selectedCasesCount > 0 && (
@@ -752,15 +718,10 @@ const ManageOfficeMember = () => {
         <button type="button" onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
           {t("GO_BACK")}
         </button>
-        <button
-          type="button"
-          onClick={handleUpdateAccessClick}
-          className={`manage-office-btn manage-office-btn--primary`}
-        >
-          {isNewMember ? (t("ADD_MEMBER")) : (t("UPDATE_ACCESS"))}
+        <button type="button" onClick={handleUpdateAccessClick} className={`manage-office-btn manage-office-btn--primary`}>
+          {isNewMember ? t("ADD_MEMBER") : t("UPDATE_ACCESS")}
         </button>
       </footer>
-
       {/* Full-page loader when updating access type directly (not via modal) */}
       {isUpdatingAccess && !showUpdateAccessModal && (
         <div className="manage-office-modal-overlay">
@@ -769,7 +730,6 @@ const ManageOfficeMember = () => {
           </div>
         </div>
       )}
-
       {/* Remove Member Confirmation Modal - same as ManageOffice */}
       {showRemoveMemberModal && (
         <div className="manage-office-modal-overlay" onClick={handleCloseRemoveModal}>
@@ -787,9 +747,7 @@ const ManageOfficeMember = () => {
               </div>
             ) : (
               <React.Fragment>
-                <p className="manage-office-remove-text">
-                  {t("CONFIRM_REMOVE_MEMBER_MESSAGE")}
-                </p>
+                <p className="manage-office-remove-text">{t("CONFIRM_REMOVE_MEMBER_MESSAGE")}</p>
 
                 <div className="manage-office-modal__footer">
                   <button onClick={handleCloseRemoveModal} className="manage-office-btn manage-office-btn--secondary">
@@ -804,7 +762,6 @@ const ManageOfficeMember = () => {
           </div>
         </div>
       )}
-
       {/* Update Access Confirmation Modal */}
       {showUpdateAccessModal && (
         <div className="manage-office-modal-overlay" onClick={handleCloseUpdateAccessModal}>
@@ -822,9 +779,7 @@ const ManageOfficeMember = () => {
               </div>
             ) : (
               <React.Fragment>
-                <p className="manage-office-remove-text">
-                  {t("UPDATE_ACCESS_CONFIRM_MESSAGE")}
-                </p>
+                <p className="manage-office-remove-text">{t("UPDATE_ACCESS_CONFIRM_MESSAGE")}</p>
 
                 <div className="manage-office-modal__footer">
                   <button onClick={handleGoBack} className="manage-office-btn manage-office-btn--secondary">
@@ -839,7 +794,6 @@ const ManageOfficeMember = () => {
           </div>
         </div>
       )}
-
       {/* Add Member Confirmation Modal */}
       {showAddMemberConfirmModal && (
         <div className="manage-office-modal-overlay" onClick={handleCloseAddMemberConfirmModal}>
@@ -857,9 +811,7 @@ const ManageOfficeMember = () => {
               </div>
             ) : (
               <React.Fragment>
-                <p className="manage-office-remove-text">
-                  {t("CONFIRM_ADD_MEMBER_MESSAGE")}
-                </p>
+                <p className="manage-office-remove-text">{t("CONFIRM_ADD_MEMBER_MESSAGE")}</p>
 
                 <div className="manage-office-modal__footer">
                   <button onClick={handleCloseAddMemberConfirmModal} className="manage-office-btn manage-office-btn--secondary">
@@ -874,8 +826,15 @@ const ManageOfficeMember = () => {
           </div>
         </div>
       )}
-
-      {toast && <Toast label={toast?.label} onClose={() => setToast(null)} error={toast?.type === "error"} isDleteBtn={true} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 };

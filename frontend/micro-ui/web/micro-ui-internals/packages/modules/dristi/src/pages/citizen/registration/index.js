@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import AdvocateClerkAdditionalDetail from "./AdvocateClerkAdditionalDetail";
 import SelectUserType from "./SelectUserType";
@@ -56,16 +57,6 @@ const Registration = ({ stateCode }) => {
   const [otpError, setOtpError] = useState(false);
   const [canSubmitAadharOtp, setCanSubmitAadharOtp] = useState(true);
   const [error, setError] = useState(null);
-  const closeToast = () => {
-    setError(null);
-  };
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      closeToast();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [closeToast]);
 
   useEffect(() => {
     if (location?.state?.newParams) {
@@ -418,7 +409,7 @@ const Registration = ({ stateCode }) => {
           <Route path={`${path}/terms-condition`}>
             <TermsCondition params={newParams} setParams={setNewParams} t={t} config={[stepItems[10]]} pathOnRefresh={pathOnRefresh} path={path} />
           </Route>
-          {error && <Toast error={true} label={error} onClose={closeToast} />}
+          {error && <CustomToast error={true} label={error} errorId={null} onClose={() => setError(null)} duration={5000} />}
         </React.Fragment>
       </Switch>
     </div>

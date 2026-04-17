@@ -1,22 +1,16 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Button, Modal, TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import { Button, Modal, TextInput } from "@egovernments/digit-ui-react-components";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import { sanitizeData } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 function ADiaryDocumentPdfModal({ t, tenantId, data, setShowDocumentPdfModal, isSelectedDataSigned, setReload, reload }) {
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [businessOfTheDay, setBusinessOfTheDay] = useState(data?.rowData?.businessOfDay || "");
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
 
   const { downloadPdf } = useDownloadCasePdf();
-
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
 
   const handleDownload = useCallback(
     (filestoreId) => {
@@ -25,7 +19,8 @@ function ADiaryDocumentPdfModal({ t, tenantId, data, setShowDocumentPdfModal, is
           downloadPdf(tenantId, filestoreId);
         } catch (error) {
           console.error("Failed to generate diary document PDF:", error);
-          showToast("error", t("DIARY_DOCUMENT_PDF_FAILED"));
+          const errorId = error?.response?.headers?.["x-correlation-id"];
+          setShowToast({ error: true, label: t("DIARY_DOCUMENT_PDF_FAILED"), errorId });
         }
       }
     },
@@ -43,10 +38,11 @@ function ADiaryDocumentPdfModal({ t, tenantId, data, setShowDocumentPdfModal, is
         },
         {}
       );
-      showToast("success", t("BUSINESS_OF_THE_DAY_UPDATED_SUCCESSFULLY"), 5000);
+      setShowToast({ error: false, label: t("BUSINESS_OF_THE_DAY_UPDATED_SUCCESSFULLY") });
     } catch (error) {
       console.error("error: ", error);
-      showToast("error", t("BUSINESS_OF_THE_DAY_UPDATE_FAILED"), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ error: true, label: t("BUSINESS_OF_THE_DAY_UPDATE_FAILED"), errorId });
     }
   };
 
@@ -131,13 +127,13 @@ function ADiaryDocumentPdfModal({ t, tenantId, data, setShowDocumentPdfModal, is
             {t("DOWNLOAD_DOCUMENT")}
           </div>
         </div>
-        {toastMsg && (
-          <Toast
-            error={toastMsg.key === "error"}
-            label={t(toastMsg.action)}
-            onClose={() => setToastMsg(null)}
-            isDleteBtn={true}
-            style={{ maxWidth: "500px" }}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
           />
         )}
       </React.Fragment>

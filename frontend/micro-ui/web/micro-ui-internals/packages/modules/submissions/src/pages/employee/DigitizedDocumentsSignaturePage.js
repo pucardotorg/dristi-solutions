@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ActionBar, SubmitBar, Button, Toast, Loader } from "@egovernments/digit-ui-react-components";
+import { ActionBar, SubmitBar, Button, Loader } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import BailEsignModal from "../../components/BailEsignModal";
 import GenericUploadSignatureModal from "../../components/GenericUploadSignatureModal";
@@ -12,6 +12,7 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom";
 import useOpenApiSearchDigitizedDocuments from "../../hooks/submissions/useOpenApiSearchDigitizedDocuments";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const getStyles = () => ({
   details: { color: "#0A0A0A", fontWeight: 700, fontSize: "18px", paddingBottom: "22px" },
@@ -60,9 +61,7 @@ const DigitizedDocumentsSignaturePage = () => {
   const [showSigningChoiceModal, setShowSigningChoiceModal] = useState(false);
   const [showUploadSignature, setShowUploadSignature] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(null);
-  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
-  const isCitizen = userRoles?.includes("CITIZEN");
+  const [showToast, setShowToast] = useState(null);
   const { downloadPdf } = useDownloadCasePdf();
 
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
@@ -146,7 +145,7 @@ const DigitizedDocumentsSignaturePage = () => {
     return mobNumber;
   }, [digitizedDocumentsDetails, isUserLoggedIn, type, mobileNumber]);
 
-  const { data: { file: documentPreviewPdf, fileName: documentPreviewFileName } = {}, isFetching: isLoading } = useQuery({
+  const { data: { file: documentPreviewPdf } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["DigitizedDocumentSignaturePdf", tenantId, documentNumber, userInfo?.uuid],
     retry: 3,
     cacheTime: 0,
@@ -165,6 +164,8 @@ const DigitizedDocumentsSignaturePage = () => {
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("FAILED_TO_FETCH_DOCUMENT_PREVIEW"), error: true, errorId });
     },
     enabled: Boolean(fileStoreId),
   });
@@ -215,13 +216,14 @@ const DigitizedDocumentsSignaturePage = () => {
         action: "UPLOAD",
         fileStoreId: uploadedFileStoreId,
       };
-      const res = await submissionService.updateOpenDigitizedDocument(payload, { tenantId });
+      await submissionService.updateOpenDigitizedDocument(payload, { tenantId });
       setShowSigningChoiceModal(false);
       setShowUploadSignature(false);
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error uploading signed document:", error);
-      setShowErrorToast({ label: t("DIGITIZED_DOCUMENT_SIGNATURE_FAILED"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("DIGITIZED_DOCUMENT_SIGNATURE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -238,12 +240,13 @@ const DigitizedDocumentsSignaturePage = () => {
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      const res = await submissionService.updateOpenDigitizedDocument(payload, { tenantId });
+      await submissionService.updateOpenDigitizedDocument(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating:", error);
-      setShowErrorToast({ label: t("DIGITIZED_DOCUMENT_SIGNATURE_FAILED"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("DIGITIZED_DOCUMENT_SIGNATURE_FAILED"), error: true, errorId });
     } finally {
       setShowSignatureModal(false);
       sessionStorage.removeItem("isSignSuccess");
@@ -299,19 +302,6 @@ const DigitizedDocumentsSignaturePage = () => {
     type,
   ]);
 
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
   const handleMockESign = async () => {
     try {
       setLoader(true);
@@ -323,12 +313,13 @@ const DigitizedDocumentsSignaturePage = () => {
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      const res = await submissionService.updateOpenDigitizedDocument(payload, { tenantId });
+      await submissionService.updateOpenDigitizedDocument(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating document:", error);
-      setShowErrorToast({ label: t("DIGITIZED_DOCUMENT_UPDATE_FAILED"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("DIGITIZED_DOCUMENT_UPDATE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -460,7 +451,15 @@ const DigitizedDocumentsSignaturePage = () => {
               message={type === "PLEA" ? "SIGNED_PLEA_DOCUMENT_MESSAGE" : "SIGNED_EXAMINATION_OF_ACCUSED_MESSAGE"}
             />
           )}
-          {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+          {showToast && (
+            <CustomToast
+              error={showToast?.error}
+              label={showToast?.label}
+              errorId={showToast?.errorId}
+              onClose={() => setShowToast(null)}
+              duration={showToast?.errorId ? 7000 : 5000}
+            />
+          )}
         </div>
       )}
     </div>

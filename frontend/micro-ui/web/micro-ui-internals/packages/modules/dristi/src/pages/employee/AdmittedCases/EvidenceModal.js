@@ -25,13 +25,13 @@ import {
   setApplicationStatus,
 } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
-import { useToast } from "../../../components/Toast/useToast";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
 import DOMPurify from "dompurify";
-import { getUserInfoFromIndividualId, getUserInfoFromUuids } from "../../../../../submissions/src/utils";
+import { getUserInfoFromUuids } from "../../../../../submissions/src/utils";
 import { CloseBtn } from "../../../components/ModalComponents";
+import CustomToast from "../../../components/CustomToast";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -46,7 +46,7 @@ const EvidenceModal = ({
   userRoles,
   modalType,
   setUpdateCounter,
-  showToast,
+  setShowToast,
   caseId,
   setIsDelayApplicationPending,
   currentDiaryEntry,
@@ -84,7 +84,7 @@ const EvidenceModal = ({
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
-  const toast = useToast();
+  const [toast, setToast] = useState(null);
   const urlParams = new URLSearchParams(window.location.search);
   const applicationNumber = urlParams.get("applicationNumber");
   const compositeOrderObj = history.location?.state?.compositeOrderObj;
@@ -440,9 +440,9 @@ const EvidenceModal = ({
       }
     }
     if (message) {
-      showToast({
-        isError: false,
-        message,
+      setShowToast({
+        label: t(message),
+        error: false,
       });
     }
     counterUpdate();
@@ -452,9 +452,9 @@ const EvidenceModal = ({
 
   const onError = async (result) => {
     if (modalType === "Documents") {
-      showToast({
-        isError: true,
-        message: documentSubmission?.[0].artifactList?.isEvidence ? "UNSUCCESSFULLY_UNMARKED_MESSAGE" : "UNSUCCESSFULLY_MARKED_MESSAGE",
+      setShowToast({
+        label: t(documentSubmission?.[0].artifactList?.isEvidence ? "UNSUCCESSFULLY_UNMARKED_MESSAGE" : "UNSUCCESSFULLY_MARKED_MESSAGE"),
+        error: true,
       });
     }
     handleBack();
@@ -615,7 +615,7 @@ const EvidenceModal = ({
   };
 
   const artifactNumber = documentSubmission?.[0]?.artifactList?.artifactNumber;
-  const { data: evidenceData, isloading: isEvidenceLoading, refetch: evidenceRefetch } = useSearchEvidenceService(
+  const { data: evidenceData } = useSearchEvidenceService(
     {
       criteria: {
         filingNumber,
@@ -652,7 +652,8 @@ const EvidenceModal = ({
         );
       } catch (error) {
         console.error("Failed to search hearings:", error);
-        toast.error(t("FAILED_TO_SEARCH_HEARINGS"));
+        const errorId = error?.response?.headers?.["x-correlation-id"];
+        setToast({ label: t("FAILED_TO_SEARCH_HEARINGS"), error: true, errorId });
         setIsSubmitDisabled(false);
         return;
       }
@@ -660,7 +661,6 @@ const EvidenceModal = ({
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       const courtId = localStorage.getItem("courtId");
       let evidenceReqBody = {};
-      let evidence = {};
       evidenceReqBody = {
         artifact: {
           ...evidenceDetails,
@@ -673,7 +673,8 @@ const EvidenceModal = ({
         await DRISTIService.updateEvidence(evidenceReqBody);
       } catch (error) {
         console.error("Failed to update evidence:", error);
-        toast.error(t("EVIDENCE_UPDATE_FAILED"));
+        const errorId = error?.response?.headers?.["x-correlation-id"];
+        setToast({ label: t("EVIDENCE_UPDATE_FAILED"), error: true, errorId });
         setIsSubmitDisabled(false);
         return;
       }
@@ -701,7 +702,8 @@ const EvidenceModal = ({
         );
       } catch (error) {
         console.error("Failed to add diary entry:", error);
-        toast.error(t("FAILED_TO_ADD_DIARY_ENTRY"));
+        const errorId = error?.response?.headers?.["x-correlation-id"];
+        setToast({ label: t("FAILED_TO_ADD_DIARY_ENTRY"), error: true, errorId });
         setIsSubmitDisabled(false);
         return;
       }
@@ -712,7 +714,8 @@ const EvidenceModal = ({
       await handleMarkEvidence();
     } catch (error) {
       console.error("Failed to mark evidence:", error);
-      toast.error(t("EVIDENCE_MARK_FAILED"));
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setToast({ label: t("EVIDENCE_MARK_FAILED"), error: true, errorId });
       setIsSubmitDisabled(false);
     }
   };
@@ -945,7 +948,8 @@ const EvidenceModal = ({
           const errorCode = error?.response?.data?.Errors?.[0]?.code;
           const errorMsg =
             errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("EVIDENCE_UPDATE_FAILED");
-          toast.error(errorMsg);
+          const errorId = error?.response?.headers?.["x-correlation-id"];
+          setToast({ label: errorMsg, error: true, errorId });
         }
       } else {
         if (showConfirmationModal.type === "reject") {
@@ -965,7 +969,8 @@ const EvidenceModal = ({
       }
     } catch (error) {
       console.error("Failed to save evidence changes:", error);
-      toast.error(t("EVIDENCE_SAVE_FAILED"));
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setToast({ label: t("EVIDENCE_SAVE_FAILED"), error: true, errorId });
     }
   };
 
@@ -993,8 +998,9 @@ const EvidenceModal = ({
         await submitCommentEvidence(newComment);
       }
     } catch (error) {
-      console.error("Error in handleSubmitComment:", error);
-      toast.error(t("ERROR_OCCURRED"));
+      console.error("Error in submitting comment:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setToast({ label: t("ERROR_SUBMITTING_COMMENT"), error: true, errorId });
     }
   };
 
@@ -1060,8 +1066,9 @@ const EvidenceModal = ({
         history.replace(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`);
       }
     } catch (error) {
-      console.error("Error in actionSaveOnSubmit:", error);
-      toast.error(t("ERROR_OCCURRED"));
+      console.error("Error in accepting submission", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setToast({ label: t("ERROR_ACCEPTING_SUBMISSION"), error: true, errorId });
     } finally {
       setIsActionLoading(false);
     }
@@ -1082,8 +1089,9 @@ const EvidenceModal = ({
         counterUpdate();
       }
     } catch (error) {
-      console.error("Error in actionCancelOnSubmit:", error);
-      toast.error(t("ERROR_OCCURRED"));
+      console.error("Error in rejecting submission", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setToast({ label: t("ERROR_REJECTING_SUBMISSION"), error: true, errorId });
     } finally {
       setIsActionLoading(false);
     }
@@ -1097,8 +1105,9 @@ const EvidenceModal = ({
         setShow(false);
       }
     } catch (error) {
-      console.error("Error in actionCustomLabelSubmit:", error);
-      toast.error(t("ERROR_OCCURRED"));
+      console.error("Error in setting term bail:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setToast({ label: t("ERROR_SETTING_TERM_BAIL"), error: true, errorId });
     } finally {
       setIsActionLoading(false);
     }
@@ -1608,6 +1617,15 @@ const EvidenceModal = ({
         />
       )}
       {showSuccessModal && modalType === "Submissions" && <SubmissionSuccessModal t={t} handleBack={handleBack} />}
+      {toast && (
+        <CustomToast
+          error={toast?.error}
+          label={toast?.label}
+          errorId={toast?.errorId}
+          onClose={() => setToast(null)}
+          duration={toast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

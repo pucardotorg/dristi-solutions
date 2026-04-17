@@ -3,6 +3,7 @@ import { Card, CardHeader, CardLabel, SubmitBar, TextInput } from "@egovernments
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { submissionService } from "../../hooks/services";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const DigitizedDocumentLoginPage = () => {
   const { t } = useTranslation();
@@ -11,6 +12,7 @@ const DigitizedDocumentLoginPage = () => {
   const { documentNumber, type } = Digit.Hooks.useQueryParams();
   const [mobileNumber, setMobileNumber] = useState("");
   const [error, setError] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const config = {
     name: "mobileNumber",
     key: "mobileNumber",
@@ -62,6 +64,8 @@ const DigitizedDocumentLoginPage = () => {
       });
     } catch (error) {
       setError(true);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("DIGITIZED_DOCUMENT_LOGIN_FAILED"), error: true, errorId });
       return;
     }
   };
@@ -137,6 +141,15 @@ const DigitizedDocumentLoginPage = () => {
           </div>
         </div>
       </div>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

@@ -1,6 +1,5 @@
 import React from "react";
 import { COLOR_FILL } from "../contants";
-import warningInfoIconYellow from "../images/warningInfoIconYellow.png";
 
 const RegisterIcon = () => (
   <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2020,6 +2019,29 @@ const NoAdvocateIcon = () => {
   );
 };
 
+const DeleteBtn = ({ className, onClick, fill }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className={className} onClick={onClick} width="18px" height="18px">
+    <path d="M0 0h24v24H0V0z" fill={fill} />
+    <path d="M18.3 5.71c-.39-.39-1.02-.39-1.41 0L12 10.59 7.11 5.7c-.39-.39-1.02-.39-1.41 0-.39.39-.39 1.02 0 1.41L10.59 12 5.7 16.89c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0L12 13.41l4.89 4.89c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z" />
+  </svg>
+);
+
+const RoundedCheck = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF" className={className}>
+    <path d="M0 0h24v24H0V0z" fill="none" />
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM9.29 16.29L5.7 12.7c-.39-.39-.39-1.02 0-1.41.39-.39 1.02-.39 1.41 0L10 14.17l6.88-6.88c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41l-7.59 7.59c-.38.39-1.02.39-1.41 0z" />
+  </svg>
+);
+
+const ErrorIcon = ({ className }) => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="#FFFFFF" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path
+      d="M10 0C4.48 0 0 4.48 0 10C0 15.52 4.48 20 10 20C15.52 20 20 15.52 20 10C20 4.48 15.52 0 10 0ZM11 15H9V13H11V15ZM11 11H9V5H11V11Z"
+      fill="white"
+    />
+  </svg>
+);
+
 export {
   AdvocateIcon,
   AdvocateProfileUserIcon,
@@ -2109,4 +2131,7 @@ export {
   DocumentNotSignedIcon,
   DocumentViewErrorIcon,
   NoAdvocateIcon,
+  DeleteBtn,
+  RoundedCheck,
+  ErrorIcon,
 };

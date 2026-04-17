@@ -1,5 +1,6 @@
 import { DocumentSearchConfig } from "./DocumentsV2Config";
-import { InboxSearchComposer, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "../../../components/CustomToast";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
@@ -48,7 +49,7 @@ const DocumentsV2 = ({
   const isCitizen = userRoles?.includes("CITIZEN");
   const canSign = roles?.some((role) => role.code === "JUDGE_ROLE");
   const [activeTab, setActiveTab] = useState(sessionStorage.getItem("documents-activeTab") || "Documents");
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [deleteDigitalization, setDeleteDigitalization] = useState(null);
   const [deleteEvidence, setDeleteEvidence] = useState(null);
@@ -115,7 +116,8 @@ const DocumentsV2 = ({
       setDeleteDigitalization(null);
     } catch (error) {
       console.error("Failed to delete digitalization draft:", error);
-      setShowErrorToast({ label: t("DELETE_DIGITALIZATION_DRAFT_FAILED"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("DELETE_DIGITALIZATION_DRAFT_FAILED"), error: true, errorId });
     } finally {
       setIsActionLoading(false);
     }
@@ -159,12 +161,13 @@ const DocumentsV2 = ({
         },
       };
       await DRISTIService.updateEvidence({ artifact: payload }, {});
-      setShowErrorToast({ label: t("DELETE_EVIDENCE_DRAFT_SUCCESS"), error: false });
+      setShowToast({ label: t("DELETE_EVIDENCE_DRAFT_SUCCESS"), error: false });
       history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
       setDeleteEvidence(null);
     } catch (error) {
       console.error("Error deleting evidence draft:", error);
-      setShowErrorToast({ label: t("DELETE_EVIDENCE_DRAFT_ERROR"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("DELETE_EVIDENCE_DRAFT_ERROR"), error: true, errorId });
     } finally {
       setIsActionLoading(false);
     }
@@ -624,15 +627,6 @@ const DocumentsV2 = ({
     return newTabSearchConfig?.TabSearchconfig;
   }, [newTabSearchConfig?.TabSearchconfig, caseDetails?.filingNumber]);
 
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
   return (
     <React.Fragment>
       <div style={{ padding: "5px", margin: "5px" }}>
@@ -694,6 +688,15 @@ const DocumentsV2 = ({
           className={"edit-send-back-modal"}
           submitButtonStyle={{ backgroundColor: "#C7222A" }}
           loader={isActionLoading}
+        />
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
     </React.Fragment>

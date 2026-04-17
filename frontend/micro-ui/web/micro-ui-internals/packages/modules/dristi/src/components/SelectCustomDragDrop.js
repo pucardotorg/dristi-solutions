@@ -5,7 +5,8 @@ import { FileUploadIcon } from "../icons/svgIndex";
 import { isEmptyObject } from "../Utils";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import RenderFileCard from "./RenderFileCard";
-import { useToast } from "./Toast/useToast";
+import { useState } from "react";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const DragDropJSX = ({ t, currentValue, error }) => {
   return (
@@ -33,7 +34,8 @@ const DragDropJSX = ({ t, currentValue, error }) => {
 };
 
 function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setError, clearErrors, formDisbalityCount = false }) {
-  const toast = useToast();
+  const [showToast, setShowToast] = useState(null);
+
   const inputs = useMemo(
     () =>
       config?.populators?.inputs || [
@@ -180,7 +182,7 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 children={<DragDropJSX t={t} currentValue={currentValue} error={errors?.[config.key]} />}
                 key={input?.name}
                 onTypeError={() => {
-                  toast.error(t("CS_INVALID_FILE_TYPE"));
+                  setShowToast({ label: t("CS_INVALID_FILE_TYPE"), error: true, errorId: null });
                 }}
               />
               <div className="upload-guidelines-div">
@@ -225,6 +227,15 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
             )}
             {/* {errors?.[config.key] && <CardLabelError>{t(errors[config.key]?.message || "CORE_COMMON_INVALID")}</CardLabelError>} */}
           </div>
+        )}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
         )}
       </React.Fragment>
     );

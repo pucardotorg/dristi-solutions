@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { GalleryIcon, RemoveIcon, UploadFile } from "@egovernments/digit-ui-react-components";
+import { GalleryIcon, RemoveIcon } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 
-function UploadDrawer({ setProfilePic, closeDrawer, userType, removeProfilePic, showToast }) {
-  const [uploadedFile, setUploadedFile] = useState(null);
+function UploadDrawer({ setProfilePic, closeDrawer, userType, removeProfilePic, setShowToast }) {
   const [file, setFile] = useState("");
-  const [error, setError] = useState(null);
   const { t } = useTranslation();
   const selectfile = (e) => setFile(e.target.files[0]);
   const removeimg = () => {
@@ -16,25 +14,21 @@ function UploadDrawer({ setProfilePic, closeDrawer, userType, removeProfilePic, 
 
   useEffect(() => {
     (async () => {
-      setError(null);
       if (file) {
         if (file.size >= 1000000) {
-          showToast("error", t("CORE_COMMON_PROFILE_MAXIMUM_UPLOAD_SIZE_EXCEEDED"));
-          setError(t("CORE_COMMON_PROFILE_MAXIMUM_UPLOAD_SIZE_EXCEEDED"));
+          setShowToast({ label: t("CORE_COMMON_PROFILE_MAXIMUM_UPLOAD_SIZE_EXCEEDED"), error: true });
         } else {
           try {
             const response = await Digit.UploadServices.Filestorage(`${userType}-profile`, file, Digit.ULBService.getStateId());
             if (response?.data?.files?.length > 0) {
               const fileStoreId = response?.data?.files[0]?.fileStoreId;
-              setUploadedFile(fileStoreId);
               setProfilePic(fileStoreId);
             } else {
-              showToast("error", t("CORE_COMMON_PROFILE_FILE_UPLOAD_ERROR"));
-              setError(t("CORE_COMMON_PROFILE_FILE_UPLOAD_ERROR"));
+              setShowToast({ label: t("CORE_COMMON_PROFILE_FILE_UPLOAD_ERROR"), error: true });
             }
           } catch (err) {
-            showToast("error", t("CORE_COMMON_PROFILE_INVALID_FILE_INPUT"));
-            // setError(t("PT_FILE_UPLOAD_ERROR"));
+            const errorId = err?.response?.headers?.["x-correlation-id"];
+            setShowToast({ label: t("CORE_COMMON_PROFILE_INVALID_FILE_INPUT"), error: true, errorId });
           }
         }
       }

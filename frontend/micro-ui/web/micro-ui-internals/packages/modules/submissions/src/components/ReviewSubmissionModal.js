@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import { Toast } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 import { Urls } from "../hooks/services/Urls";
 import { useQuery } from "react-query";
@@ -96,7 +96,7 @@ function ReviewSubmissionModal({
 }) {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [userInfoMap, setUserInfoMap] = useState({
     senderUser: null,
     createdByUser: null,
@@ -106,18 +106,6 @@ function ReviewSubmissionModal({
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   const { data: { file: applicationPreviewPdf, fileName: applicationPreviewFileName } = {}, isFetching: isLoading } = useQuery({
     queryKey: [
@@ -154,6 +142,11 @@ function ReviewSubmissionModal({
           }
         )
         .then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
+    },
+    onError: (error) => {
+      console.error("Failed to fetch submission preview PDF:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("ERROR_FETCHING_SUBMISSION_PREVIEW_PDF"), error: true, errorId });
     },
     enabled: !!application?.applicationNumber && !!application?.cnrNumber && !!SubmissionPreviewSubmissionTypeMap[application?.applicationType],
   });
@@ -193,6 +186,8 @@ function ReviewSubmissionModal({
         });
       } catch (error) {
         console.error("Failed to fetch user info", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"];
+        setShowToast({ label: t("ERROR_FETCHING_USER_INFO"), error: true, errorId });
       }
     };
 
@@ -233,7 +228,7 @@ function ReviewSubmissionModal({
         )}
       </React.Fragment>
     );
-  }, [applicationPreviewPdf, isLoading, t]);
+  }, [applicationPreviewFileName, applicationPreviewPdf, isLoading, t]);
 
   return (
     <Modal
@@ -241,7 +236,7 @@ function ReviewSubmissionModal({
       headerBarEnd={<CloseBtn onClick={handleBack} />}
       actionCancelLabel={t(cancelLabel)}
       actionCancelOnSubmit={handleCancel}
-      actionCustomLabel={authorizedUuid != userUuid ? t("UPLOAD_SIGNED_COPY") : null}
+      actionCustomLabel={authorizedUuid !== userUuid ? t("UPLOAD_SIGNED_COPY") : null}
       actionCustomLabelSubmit={() => handleSubmit({ applicationPreviewPdf, applicationPreviewFileName, isUpload: true })}
       actionSaveLabel={authorizedUuid === userUuid ? t("ADD_SIGNATURE") : application?.status === "DRAFT_IN_PROGRESS" ? t("SEND_FOR_ESIGN") : null}
       isDisabled={isLoading}
@@ -325,7 +320,15 @@ function ReviewSubmissionModal({
           </div>
         </div>
       </div>
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </Modal>
   );
 }

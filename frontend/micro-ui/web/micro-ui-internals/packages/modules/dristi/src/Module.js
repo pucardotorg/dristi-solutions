@@ -85,6 +85,7 @@ import InputWithSearch from "./components/InputWithSearch";
 import EvidenceModal from "./pages/employee/AdmittedCases/EvidenceModal";
 import GenericPreviewModal from "./components/GenericPreviewModal";
 import { CloseBtn, Heading } from "./components/ModalComponents";
+import CustomToast from "./components/CustomToast";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -230,7 +231,8 @@ const componentsToRegister = {
   EvidenceModal,
   GenericPreviewModal,
   CloseBtn,
-  Heading
+  Heading,
+  CustomToast,
 };
 
 const overrideHooks = () => {

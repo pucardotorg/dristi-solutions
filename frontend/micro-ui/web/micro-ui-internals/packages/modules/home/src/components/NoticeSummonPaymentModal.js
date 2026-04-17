@@ -1,6 +1,6 @@
-import { Loader, Button, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader, Button } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
-import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import usePaymentProcess from "../hooks/usePaymentProcess";
 import { useTranslation } from "react-i18next";
@@ -13,10 +13,9 @@ import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/Cust
 function NoticeSummonPaymentModal({ suffix, setHideCancelButton, formDataKey, taskManagementList, courierOrderDetails, setIsPaymentCompleted }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const toast = useToast();
   const scenario = "EfillingCase";
   const path = "";
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [calculationResponse, setCalculationResponse] = useState(null);
@@ -75,7 +74,8 @@ function NoticeSummonPaymentModal({ suffix, setHideCancelButton, formDataKey, ta
           setCalculationResponse(response?.TreasuryHeadMapping?.calculation);
         } catch (error) {
           console.error("Error fetching payment calculation:", error);
-          toast.error(t("CS_PAYMENT_CALCULATION_ERROR"));
+          const errorId = error?.response?.headers?.["x-correlation-id"];
+          setShowToast({ label: t("CS_PAYMENT_CALCULATION_ERROR"), error: true, errorId });
         } finally {
           setIsLoading(false);
         }
@@ -133,6 +133,8 @@ function NoticeSummonPaymentModal({ suffix, setHideCancelButton, formDataKey, ta
           setIsCaseLocked(status?.Lock?.isLocked);
         } catch (error) {
           console.error("Error fetching case lock status", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"];
+          setShowToast({ label: t("CS_CASE_LOCK_STATUS_ERROR"), error: true, errorId });
         }
       };
       fetchCaseLockStatus();
@@ -144,7 +146,7 @@ function NoticeSummonPaymentModal({ suffix, setHideCancelButton, formDataKey, ta
       setIsLoading(true);
       const bill = await fetchBill(taskManagement?.taskManagementNumber + `_${suffix}`, tenantId, "task-management-payment");
       if (!bill?.Bill?.length) {
-        showToast("success", t("CS_NO_PENDING_PAYMENT"), 5000);
+        setShowToast({ label: t("CS_NO_PENDING_PAYMENT"), error: false });
         setIsCaseLocked(true);
         return;
       }
@@ -157,7 +159,7 @@ function NoticeSummonPaymentModal({ suffix, setHideCancelButton, formDataKey, ta
       );
       if (caseLockStatus?.Lock?.isLocked) {
         setIsCaseLocked(true);
-        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 5000);
+        setShowToast({ label: t("CS_CASE_LOCKED_BY_ANOTHER_USER"), error: false });
         return;
       }
       await DRISTIService.setCaseLock({ Lock: { uniqueId: taskManagement?.taskManagementNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
@@ -176,18 +178,12 @@ function NoticeSummonPaymentModal({ suffix, setHideCancelButton, formDataKey, ta
         setRetryPayment(true);
       }
     } catch (error) {
-      toast.error(t("CS_PAYMENT_ERROR"));
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("CS_PAYMENT_ERROR"), error: true, errorId });
       console.error(error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
   };
 
   if (isLoading) {
@@ -268,8 +264,14 @@ function NoticeSummonPaymentModal({ suffix, setHideCancelButton, formDataKey, ta
         onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
         isDisabled={isCaseLocked}
       />
-      {toastMsg && (
-        <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </div>
   );

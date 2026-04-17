@@ -1,6 +1,6 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
-import { Header, InboxSearchComposer, Loader, Menu, Toast, CheckBox } from "@egovernments/digit-ui-react-components";
+import { Header, InboxSearchComposer, Loader, Menu, CheckBox } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState, useContext, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
@@ -46,7 +46,6 @@ import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearc
 import Breadcrumb from "../../../components/BreadCrumb";
 import Button from "../../../components/Button";
 import MonthlyCalendar from "@egovernments/digit-ui-module-hearings/src/pages/employee/CalendarView";
-import OrderDrawer from "./OrderDrawer";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
@@ -62,8 +61,16 @@ import { convertTaskResponseToPayload } from "@egovernments/digit-ui-module-orde
 import ExaminationDrawer from "./ExaminationDrawer";
 import useSortedMDMSData from "../../../hooks/dristi/useSortedMDMSData";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
-import { actionEnabledStatuses, applicationTypes, homeTabEnum, judgeReviewStages, userRolesEnum, viewEnabledStatuses } from "../../../Utils/constants";
+import {
+  actionEnabledStatuses,
+  applicationTypes,
+  homeTabEnum,
+  judgeReviewStages,
+  userRolesEnum,
+  viewEnabledStatuses,
+} from "../../../Utils/constants";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import CustomToast from "../../../components/CustomToast";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -95,7 +102,7 @@ const AdmittedCaseV2 = () => {
   const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
-  const { hearingId, taskOrderType, artifactNumber, fromHome, openExaminationModal, examinationDocNumber } = Digit.Hooks.useQueryParams();
+  const { artifactNumber, fromHome, openExaminationModal, examinationDocNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const userInfo = useMemo(() => JSON.parse(window.localStorage.getItem("user-info")), []);
   const userUuid = userInfo?.uuid;
@@ -118,7 +125,7 @@ const AdmittedCaseV2 = () => {
   const [currentOrder, setCurrentOrder] = useState();
   const [currentHearing, setCurrentHearing] = useState();
   const [showMenu, setShowMenu] = useState(false);
-  const [toast, setToast] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const [orderDraftModal, setOrderDraftModal] = useState(false);
   const [submissionsViewModal, setSubmissionsViewModal] = useState(false);
   const [draftOrderList, setDraftOrderList] = useState([]);
@@ -131,7 +138,6 @@ const AdmittedCaseV2 = () => {
   const [updatedCaseDetails, setUpdatedCaseDetails] = useState({});
   const [showDismissCaseConfirmation, setShowDismissCaseConfirmation] = useState(false);
   const [showPendingDelayApplication, setShowPendingDelayApplication] = useState(false);
-  const [toastStatus, setToastStatus] = useState({ alreadyShown: false });
   const [showVoidModal, setShowVoidModal] = useState(false);
   const [downloadCasePdfLoading, setDownloadCasePdfLoading] = useState(false);
   const [showDownloadCasePdfModal, setShowDownloadCasePdfModal] = useState(false);
@@ -191,8 +197,6 @@ const AdmittedCaseV2 = () => {
   const [deleteOrder, setDeleteOrder] = useState(null);
   const [deleteApplication, setDeleteApplication] = useState(null);
 
-  const openOrder = location?.state?.openOrder;
-  const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
   const courtId = localStorage.getItem("courtId");
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && !isCitizen) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
@@ -203,7 +207,7 @@ const AdmittedCaseV2 = () => {
 
   const { data: hearingTypeOptions } = useSortedMDMSData("Hearing", "HearingType", "type", t);
   const { data: orderTypeOptions } = useSortedMDMSData("Order", "OrderType", "type", t);
-  const { data: applicationTypeOptions, isLoading } = useSortedMDMSData("Application", "ApplicationType", "type", t);
+  const { data: applicationTypeOptions } = useSortedMDMSData("Application", "ApplicationType", "type", t);
   const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate"));
   const [showPopupForClerkOrAdvocate, setShowPopupForClerkOrAdvocate] = useState({ show: false, message: "" });
 
@@ -256,11 +260,10 @@ const AdmittedCaseV2 = () => {
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
 
-  const showTakeAction = useMemo(() => userRoles?.includes(userRolesEnum.ORDER_CREATOR) && !isCitizen && actionEnabledStatuses.includes(caseDetails?.status), [
-    caseDetails?.status,
-    userRoles,
-    isCitizen,
-  ]);
+  const showTakeAction = useMemo(
+    () => userRoles?.includes(userRolesEnum.ORDER_CREATOR) && !isCitizen && actionEnabledStatuses.includes(caseDetails?.status),
+    [caseDetails?.status, userRoles, isCitizen]
+  );
 
   const [data, setData] = useState([]);
   const [dataForNextHearings, setDataForNextHearings] = useState([]);
@@ -292,6 +295,8 @@ const AdmittedCaseV2 = () => {
       setData(res?.items || []);
     } catch (err) {
       console.error("error", err);
+      const errorId = err?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("FAILED_TO_FETCH_HEARING_INBOX_DATA"), error: true, errorId });
     } finally {
     }
   }, []);
@@ -329,6 +334,8 @@ const AdmittedCaseV2 = () => {
         }
       } catch (err) {
         console.error("error", err);
+        const errorId = err?.response?.headers?.["x-correlation-id"];
+        setShowToast({ label: t("FAILED_TO_FETCH_HEARING_INBOX_DATA"), error: true, errorId });
       } finally {
       }
     };
@@ -362,6 +369,8 @@ const AdmittedCaseV2 = () => {
         }
       } catch (err) {
         console.error(err);
+        const errorId = err?.response?.headers?.["x-correlation-id"];
+        setShowToast({ label: t("FAILED_TO_FETCH_BAIL_BOND_PENDING_TASK"), error: true, errorId });
       }
     };
     if (isEmployee) isBailBondPendingTaskPresent();
@@ -666,36 +675,18 @@ const AdmittedCaseV2 = () => {
     }
   }, [showMenu, showCitizenMenu]);
 
-  const showToast = useCallback((details, duration = 5000) => {
-    setToast(true);
-    setToastDetails(details);
-    setTimeout(() => {
-      setToast(false);
-      setToastStatus({ alreadyShown: true });
-    }, duration);
-  }, []);
-
-  const showToastMsg = useCallback((type, message, duration = 5000) => {
-    setToast(true);
-    setToastDetails({ isError: type === "error", message: message });
-    setTimeout(() => {
-      setToast(false);
-      setToastStatus({ alreadyShown: true });
-    }, duration);
-  }, []);
-
   const onSuccess = async (response, data) => {
-    showToast({
-      isError: false,
-      message: !data?.body?.artifact?.isEvidence ? t("SUCCESSFULLY_UNMARKED_MESSAGE") : t("SUCCESSFULLY_MARKED_MESSAGE"),
+    setShowToast({
+      label: !data?.body?.artifact?.isEvidence ? t("SUCCESSFULLY_UNMARKED_MESSAGE") : t("SUCCESSFULLY_MARKED_MESSAGE"),
+      error: false,
     });
     refetchCaseData();
   };
 
   const onError = async (error, data) => {
-    showToast({
-      isError: true,
-      message: !data?.body?.artifact?.isEvidence ? t("UNSUCCESSFULLY_UNMARKED_MESSAGE") : t("UNSUCCESSFULLY_MARKED_MESSAGE"),
+    setShowToast({
+      label: !data?.body?.artifact?.isEvidence ? t("UNSUCCESSFULLY_UNMARKED_MESSAGE") : t("UNSUCCESSFULLY_MARKED_MESSAGE"),
+      error: true,
     });
   };
 
@@ -878,13 +869,15 @@ const AdmittedCaseV2 = () => {
         setDeleteOrder(row);
       } catch (error) {
         console.error("Failed to search order for delete request:", error);
-        showToast({
-          isError: true,
-          message: t("FAILED_TO_SEARCH_ORDER_FOR_DELETE_REQUEST"),
+        const errorId = error?.response?.headers?.["x-correlation-id"];
+        setShowToast({
+          label: t("FAILED_TO_SEARCH_ORDER_FOR_DELETE_REQUEST"),
+          error: true,
+          errorId,
         });
       }
     },
-    [caseCourtId, filingNumber, ordersService, showToast, t, tenantId, setDeleteOrder]
+    [caseCourtId, filingNumber, ordersService, setShowToast, t, tenantId, setDeleteOrder]
   );
 
   const handleApplicationDeleteFunc = useCallback(
@@ -1147,9 +1140,7 @@ const AdmittedCaseV2 = () => {
                 ...tabConfig.sections.search,
                 uiConfig: {
                   ...tabConfig.sections.search.uiConfig,
-                  fields: [
-                    ...tabConfig.sections.search.uiConfig.fields,
-                  ],
+                  fields: [...tabConfig.sections.search.uiConfig.fields],
                 },
               },
               searchResult: {
@@ -1327,7 +1318,7 @@ const AdmittedCaseV2 = () => {
     ];
     const courtId = localStorage.getItem("courtId");
     try {
-      const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status ===  HearingWorkflowState.SCHEDULED);
+      const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === HearingWorkflowState.SCHEDULED);
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
@@ -1351,9 +1342,11 @@ const AdmittedCaseV2 = () => {
       setShowConfirmationModal(false);
     } catch (error) {
       console.error("Error marking evidence:", error);
-      showToast({
-        isError: true,
-        message: t("ERROR_MARKING_EVIDENCE"),
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({
+        label: t("ERROR_MARKING_EVIDENCE"),
+        error: true,
+        errorId,
       });
     }
   };
@@ -1374,18 +1367,18 @@ const AdmittedCaseV2 = () => {
     if (!showVoidModal) return {};
 
     const onSuccess = async (response, data) => {
-      showToast({
-        isError: false,
-        message: !data?.body?.artifact?.isVoid ? "SUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE" : "SUCCESSFULLY_MARKED_AS_VOID_MESSAGE",
+      setShowToast({
+        label: !data?.body?.artifact?.isVoid ? t("SUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE") : t("SUCCESSFULLY_MARKED_AS_VOID_MESSAGE"),
+        error: false,
       });
       refetchCaseData();
       setShowVoidModal(false);
     };
 
     const onError = async (error, data) => {
-      showToast({
-        isError: true,
-        message: !data?.body?.artifact?.isVoid ? "UNSUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE" : "UNSUCCESSFULLY_MARKED_AS_VOID_MESSAGE",
+      setShowToast({
+        label: !data?.body?.artifact?.isVoid ? t("UNSUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE") : t("UNSUCCESSFULLY_MARKED_AS_VOID_MESSAGE"),
+        error: true,
       });
     };
 
@@ -1528,7 +1521,6 @@ const AdmittedCaseV2 = () => {
   }, [activeTab]);
   const [updateCounter, setUpdateCounter] = useState(0);
   const [documentCounter, setDocumentCounter] = useState(0);
-  const [toastDetails, setToastDetails] = useState({});
   const [showOtherMenu, setShowOtherMenu] = useState(false);
   const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
 
@@ -1602,16 +1594,14 @@ const AdmittedCaseV2 = () => {
   }, [caseInfo, history?.location, isDelayApplicationCompleted, isDelayCondonationApplicable, openAdmitCaseModal]);
 
   useEffect(() => {
-    if (history?.location?.state?.from === "orderSuccessModal" && !toastStatus?.alreadyShown) {
-      showToast(true);
-
+    if (history?.location?.state?.from === "orderSuccessModal") {
       refetchCaseData();
-      setToastDetails({
-        isError: false,
-        message: "ORDER_SUCCESSFULLY_ISSUED",
+      setShowToast({
+        label: t("ORDER_SUCCESSFULLY_ISSUED"),
+        error: false,
       });
     }
-  }, [history?.location, showToast, toastStatus?.alreadyShown]);
+  }, [history?.location, setShowToast, t]);
 
   useEffect(() => {
     if (history.location?.state?.orderObj && !showOrderReviewModal) {
@@ -1639,9 +1629,9 @@ const AdmittedCaseV2 = () => {
 
   useEffect(() => {
     if (newWitnesToast) {
-      showToast({ message: t("NEW_WITNESS_SUCCESSFULLY_ADDED"), error: false });
+      setShowToast({ label: t("NEW_WITNESS_SUCCESSFULLY_ADDED"), error: false });
     }
-  }, [newWitnesToast, showToast, t]);
+  }, [newWitnesToast, setShowToast, t]);
 
   useEffect(() => {
     const { refApplicationNumber, ...rest } = location?.state || {};
@@ -1833,7 +1823,15 @@ const AdmittedCaseV2 = () => {
               },
             });
             history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
-          } catch (error) {}
+          } catch (error) {
+            console.error("Error creating order:", error);
+            const errorId = error?.response?.headers?.["x-correlation-id"];
+            setShowToast({
+              label: t("ERROR_CREATING_ORDER"),
+              error: true,
+              errorId,
+            });
+          }
         }
       } catch (error) {}
     },
@@ -2017,7 +2015,8 @@ const AdmittedCaseV2 = () => {
       })
       .catch((error) => {
         console.error("Error while creating order", error);
-        showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
+        const errorId = error?.response?.headers?.["x-correlation-id"];
+        setShowToast({ label: t("ORDER_CREATION_FAILED"), error: true, errorId });
       });
   };
 
@@ -2174,15 +2173,17 @@ const AdmittedCaseV2 = () => {
       setCasePdfFileStoreId(responseFileStoreId);
     } catch (error) {
       console.error("Error downloading PDF: ", error.message || error);
-      showToast({
-        isError: true,
-        message: "UNABLE_CASE_PDF",
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({
+        label: t("UNABLE_CASE_PDF"),
+        error: true,
+        errorId,
       });
       setCasePdfError(t("UNABLE_CASE_PDF"));
     } finally {
       setDownloadCasePdfLoading(false);
     }
-  }, [t, caseDetails, tenantId, showToast]);
+  }, [t, caseDetails, tenantId, setShowToast]);
 
   useEffect(() => {
     if (showDownloadCasePdfModal) {
@@ -2318,7 +2319,12 @@ const AdmittedCaseV2 = () => {
         }
       } catch (error) {
         console.error("Error handling citizen action:", error);
-        showToast({ isError: true, message: "BAIL_BOND_SEARCH_FAILED" });
+        const errorId = error?.response?.headers?.["x-correlation-id"];
+        setShowToast({
+          label: t("BAIL_BOND_SEARCH_FAILED"),
+          error: true,
+          errorId,
+        });
       } finally {
         setApiCalled(false);
       }
@@ -2412,7 +2418,7 @@ const AdmittedCaseV2 = () => {
         }
       }
     },
-    [currentInProgressHearing?.hearingId, data, history, todayScheduledHearing?.hearingId, userType]
+    [currentInProgressHearing?.hearingId, data, history, isEmployee, todayScheduledHearing?.hearingId, userType]
   );
 
   const handleCaseTransition = async (actionType) => {
@@ -2437,6 +2443,12 @@ const AdmittedCaseV2 = () => {
       nextHearing(true);
     } catch (error) {
       console.error("Error in updating hearing status", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({
+        label: t("HEARING_STATUS_UPDATE_FAILED"),
+        error: true,
+        errorId,
+      });
     } finally {
       setApiCalled(false);
     }
@@ -2549,7 +2561,12 @@ const AdmittedCaseV2 = () => {
             });
           })
           .catch((err) => {
-            showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
+            const errorId = err?.response?.headers?.["x-correlation-id"];
+            setShowToast({
+              label: t("ORDER_CREATION_FAILED"),
+              error: true,
+              errorId,
+            });
           });
         return;
       } else if (option === t("MANDATORY_SUBMISSIONS_RESPONSES")) {
@@ -2595,7 +2612,12 @@ const AdmittedCaseV2 = () => {
             });
           })
           .catch((err) => {
-            showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
+            const errorId = err?.response?.headers?.["x-correlation-id"];
+            setShowToast({
+              label: t("ORDER_CREATION_FAILED"),
+              error: true,
+              errorId,
+            });
           });
         return;
       } else if (option === t("GENERATE_PAYMENT_DEMAND")) {
@@ -2652,8 +2674,13 @@ const AdmittedCaseV2 = () => {
       } catch (error) {
         console.error("Error fetching order", error);
         const errorCode = error?.response?.data?.Errors?.[0]?.code;
+        const errorId = error?.response?.headers?.["x-correlation-id"];
         const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? "ORDER_ALREADY_PUBLISHED" : "CORE_SOMETHING_WENT_WRONG";
-        showToast({ isError: true, message: errorMsg }, 3000);
+        setShowToast({
+          label: t(errorMsg),
+          error: true,
+          errorId,
+        });
       } finally {
         setApiCalled(false);
       }
@@ -2670,7 +2697,7 @@ const AdmittedCaseV2 = () => {
       ordersService,
       caseId,
       activeTab,
-      showToast,
+      setShowToast,
     ]
   );
 
@@ -2804,7 +2831,12 @@ const AdmittedCaseV2 = () => {
         history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
       })
       .catch((err) => {
-        showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
+        const errorId = err?.response?.headers?.["x-correlation-id"];
+        setShowToast({
+          label: t("ORDER_CREATION_FAILED"),
+          error: true,
+          errorId,
+        });
       });
   };
 
@@ -3017,7 +3049,7 @@ const AdmittedCaseV2 = () => {
     });
   }, [employeeActionOptions, roles, employeeActionsPermissionsMapping]);
 
-  const takeActionOptions = useMemo(() => [{ label: "CS_GENERATE_ORDER" }, { label: "SUBMIT_DOCUMENTS" }, { label: "GENERATE_PAYMENT_DEMAND" }], [t]);
+  const takeActionOptions = useMemo(() => [{ label: "CS_GENERATE_ORDER" }, { label: "SUBMIT_DOCUMENTS" }, { label: "GENERATE_PAYMENT_DEMAND" }], []);
 
   const allowedTakeActionOptions = useMemo(() => {
     return takeActionOptions
@@ -3146,9 +3178,9 @@ const AdmittedCaseV2 = () => {
 
       if (bailBondPendingTask?.data?.length > 0) {
         setIsBailBondTaskExists(true);
-        showToast({
-          isError: true,
-          message: t("BAIL_BOND_TASK_ALREADY_EXISTS"),
+        setShowToast({
+          label: t("BAIL_BOND_TASK_ALREADY_EXISTS"),
+          error: true,
         });
         return;
       } else {
@@ -3181,10 +3213,11 @@ const AdmittedCaseV2 = () => {
     } catch (e) {
       console.error(e);
       setBailBondLoading(false);
-
-      showToast({
-        isError: true,
-        message: t("UNABLE_TO_CREATE_BAIL_BOND_TASK"),
+      const errorId = e?.response?.headers?.["x-correlation-id"];
+      setShowToast({
+        label: t("UNABLE_TO_CREATE_BAIL_BOND_TASK"),
+        error: true,
+        errorId,
       });
     }
   };
@@ -3224,9 +3257,11 @@ const AdmittedCaseV2 = () => {
       setUpdateCounter((prev) => prev + 1);
     } catch (error) {
       console.error(error);
-      showToast({
-        isError: true,
-        message: t("FAILED_TO_DELETE_ORDER"),
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({
+        label: t("FAILED_TO_DELETE_ORDER"),
+        error: true,
+        errorId,
       });
     } finally {
       setLoader(false);
@@ -3250,9 +3285,11 @@ const AdmittedCaseV2 = () => {
       window.location.reload();
     } catch (error) {
       console.error(error);
-      showToast({
-        isError: true,
-        message: t("FAILED_TO_SUBMIT_DELETE_APPLICATION_REQUEST"),
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({
+        label: t("FAILED_TO_SUBMIT_DELETE_APPLICATION_REQUEST"),
+        error: true,
+        errorId,
       });
     } finally {
       setLoader(false);
@@ -3824,7 +3861,7 @@ const AdmittedCaseV2 = () => {
           userRoles={userRoles}
           modalType={tabData?.filter((tab) => tab.active)?.[0]?.label}
           setUpdateCounter={setUpdateCounter}
-          showToast={showToast}
+          setShowToast={setShowToast}
           caseData={caseRelatedData}
           caseId={caseId}
           setIsDelayApplicationPending={setIsDelayApplicationPending}
@@ -3855,7 +3892,7 @@ const AdmittedCaseV2 = () => {
       {showScheduleHearingModal && (
         <ScheduleHearing
           setUpdateCounter={setUpdateCounter}
-          showToast={showToast}
+          setShowToast={setShowToast}
           tenantId={tenantId}
           caseData={caseRelatedData}
           setShowModal={setShowScheduleHearingModal}
@@ -3880,13 +3917,13 @@ const AdmittedCaseV2 = () => {
           asUser={getAuthorizedUuid(userInfo?.uuid)}
         />
       )}
-      {toast && toastDetails && (
-        <Toast
-          error={toastDetails?.isError}
-          label={t(toastDetails?.message)}
-          isDleteBtn={true}
-          onClose={() => setToast(false)}
-          style={{ maxWidth: "500px" }}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
       {isOpenDCA && <DocumentModal config={dcaConfirmModalConfig} />}
@@ -3980,7 +4017,7 @@ const AdmittedCaseV2 = () => {
       )}
       {showMakeAsEvidenceModal && (
         <MarkAsEvidence
-          showToast={showToastMsg}
+          setShowToast={setShowToast}
           t={t}
           evidenceDetailsObj={artifact || documentSubmission?.[0]?.artifactList || selectedRow}
           setDocumentCounter={setDocumentCounter}
@@ -4055,6 +4092,8 @@ const AdmittedCaseV2 = () => {
               })
               .catch((error) => {
                 console.error("Error while updating hearings", error);
+                const errorId = error?.response?.headers?.["x-correlation-id"];
+                setShowToast({ label: t("FAILED_TO_UPDATE_HEARINGS"), error: true, errorId });
                 setApiCalled(false);
               })
               .finally(() => {
@@ -4085,6 +4124,8 @@ const AdmittedCaseV2 = () => {
               })
               .catch((error) => {
                 console.error("Error while updating hearings", error);
+                const errorId = error?.response?.headers?.["x-correlation-id"];
+                setShowToast({ label: t("FAILED_TO_UPDATE_HEARINGS"), error: true, errorId });
                 setApiCalled(false);
               })
               .finally(() => {
@@ -4111,27 +4152,6 @@ const AdmittedCaseV2 = () => {
             />
           </div>
         </Modal>
-      )}
-      {showOrderModal && (
-        <OrderDrawer
-          isOpen={showOrderModal}
-          onClose={() => setShowOrderModal(false)}
-          onSubmit={(action) => {
-            if (action === "end-hearing") {
-              // Handle end hearing action
-            } else if (action === "view-cause-list") {
-              // Handle view cause list action
-            }
-            setShowOrderModal(false);
-          }}
-          attendees={currentInProgressHearing?.attendees}
-          caseDetails={caseDetails}
-          currentHearingId={currentInProgressHearingId}
-          setUpdateCounter={setUpdateCounter}
-          isBailBondTaskExists={isBailBondTaskExists}
-          setIsBailBondTaskExists={setIsBailBondTaskExists}
-          setShowBailBondModal={setShowBailBondModal}
-        />
       )}
       {showWitnessModal?.show && (
         <WitnessDrawerV2
@@ -4227,11 +4247,9 @@ const AdmittedCaseV2 = () => {
         <AddWitnessModal
           activeTab={activeTab}
           onCancel={() => setShowAddWitnessModal(false)}
-          onDismiss={() => setShowAddWitnessModal(false)}
           tenantId={tenantId}
           caseDetails={caseDetails}
           isEmployee={isEmployee}
-          showToast={showToast}
           onAddSuccess={() => {
             setShowAddWitnessModal(false);
           }}

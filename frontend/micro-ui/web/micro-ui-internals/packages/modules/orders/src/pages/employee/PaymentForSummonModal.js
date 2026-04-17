@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback } from "react";
-import { Button, RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { InfoCard, Loader } from "@egovernments/digit-ui-components";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
@@ -129,14 +130,15 @@ const PaymentForSummonComponent = ({
 
 const PaymentForSummonModal = ({ path }) => {
   const history = useHistory();
+  const { t } = useTranslation();
   const userInfo = Digit.UserService.getUser()?.info;
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
   const { filingNumber, taskNumber } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const [caseId, setCaseId] = useState();
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
+  const [showToast, setShowToast] = useState(null);
 
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
@@ -155,17 +157,6 @@ const PaymentForSummonModal = ({ path }) => {
 
   const isCaseAdmitted = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0]?.status === CaseWorkflowState.CASE_ADMITTED, [caseData]);
 
-  useEffect(() => {
-    if (caseData) {
-      const id = caseData?.criteria?.[0]?.responseList?.[0]?.id;
-      if (id) {
-        setCaseId(id); // Set the caseId in state
-      } else {
-        console.error("caseId is undefined or not available");
-      }
-    }
-  }, [caseData]);
-
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
@@ -183,6 +174,8 @@ const PaymentForSummonModal = ({ path }) => {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("ERROR_FETCHING_CASE_LOCK_STATUS"), error: true, errorId });
     }
   });
   useEffect(() => {
@@ -386,14 +379,25 @@ const PaymentForSummonModal = ({ path }) => {
           await Promise.all([
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
-                  ? `PAYMENT_PENDING_FOR_${orderType}`
-                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
+                name:
+                  orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+                    ? `PAYMENT_PENDING_FOR_${orderType}`
+                    : `MAKE_PAYMENT_FOR_${orderType}_POST`,
                 entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
                 referenceId: hearingsData?.HearingList?.[0]?.hearingId,
                 status: paymentType.PAYMENT_PENDING_POST,
                 assignedTo: [],
-                assignedRole: [orderType === ORDER_TYPES.WARRANT ? "PENDING_TASK_SHOW_WARRANT_STATUS" : orderType === ORDER_TYPES.PROCLAMATION ? "PENDING_TASK_SHOW_PROCLAMATION_STATUS" : orderType === ORDER_TYPES.ATTACHMENT ? "PENDING_TASK_SHOW_ATTACHMENT_STATUS" : orderType === ORDER_TYPES.SUMMONS ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
+                assignedRole: [
+                  orderType === ORDER_TYPES.WARRANT
+                    ? "PENDING_TASK_SHOW_WARRANT_STATUS"
+                    : orderType === ORDER_TYPES.PROCLAMATION
+                    ? "PENDING_TASK_SHOW_PROCLAMATION_STATUS"
+                    : orderType === ORDER_TYPES.ATTACHMENT
+                    ? "PENDING_TASK_SHOW_ATTACHMENT_STATUS"
+                    : orderType === ORDER_TYPES.SUMMONS
+                    ? "PENDING_TASK_SHOW_SUMMON_WARRANT"
+                    : "PENDING_TASK_SHOW_NOTICE_STATUS",
+                ],
                 cnrNumber: filteredTasks?.[0]?.cnrNumber,
                 filingNumber: filingNumber,
                 caseId: caseDetails?.id,
@@ -409,9 +413,10 @@ const PaymentForSummonModal = ({ path }) => {
             }),
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
-                  ? `PAYMENT_PENDING_FOR_${orderType}`
-                  : `MAKE_PAYMENT_FOR_${orderType}_POST`,
+                name:
+                  orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+                    ? `PAYMENT_PENDING_FOR_${orderType}`
+                    : `MAKE_PAYMENT_FOR_${orderType}_POST`,
                 entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
                 referenceId: `MANUAL_${taskNumber}`,
                 status: paymentType.PAYMENT_PENDING_POST,
@@ -597,7 +602,20 @@ const PaymentForSummonModal = ({ path }) => {
     return <Loader />;
   }
 
-  return <DocumentModal config={paymentForSummonModalConfig} />;
+  return (
+    <React.Fragment>
+      <DocumentModal config={paymentForSummonModalConfig} />
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </React.Fragment>
+  );
 };
 
 export default PaymentForSummonModal;

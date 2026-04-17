@@ -1,9 +1,9 @@
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useQuery } from "react-query";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
-import { Toast } from "@egovernments/digit-ui-react-components";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 const onDocumentUpload = async (fileData, filename) => {
   const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
   return { file: fileUploadRes?.data, fileType: fileData.type, filename };
@@ -24,7 +24,7 @@ const PreviewPdfModal = ({
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
 
   const { data: { file: previewPdf, fileName: previewPdfFilename } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["previewPdf", tenantId, pdfConfig?.id, pdfConfig?.cnrNumber, pdfConfig?.pdfMap],
@@ -51,6 +51,11 @@ const PreviewPdfModal = ({
           fileName: res.headers["content-disposition"]?.split("filename=")[1],
         }));
     },
+    onError: (error) => {
+      console.error("Failed to fetch preview PDF:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ label: t("ERROR_FETCHING_PREVIEW_PDF"), error: true, errorId });
+    },
     enabled: pdfConfig?.enabled,
   });
 
@@ -73,19 +78,6 @@ const PreviewPdfModal = ({
       </React.Fragment>
     );
   }, [previewPdf, isLoading, t]);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   return (
     <React.Fragment>
@@ -112,7 +104,8 @@ const PreviewPdfModal = ({
               callback && callback();
             })
             .catch((e) => {
-              setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+              const errorId = e?.response?.headers?.["x-correlation-id"];
+              setShowToast({ label: t("ERROR_UPLOADING_DOCUMENT"), error: true, errorId });
             });
         }}
         className={"review-submission-appl-modal bail-bond"}
@@ -137,8 +130,14 @@ const PreviewPdfModal = ({
           </div>
         </div>
       </Modal>
-      {showErrorToast && (
-        <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} style={{ zIndex: "10001" }} />
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </React.Fragment>
   );

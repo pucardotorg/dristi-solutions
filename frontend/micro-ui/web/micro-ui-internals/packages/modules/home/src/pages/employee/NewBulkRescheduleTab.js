@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Banner, Button, CardLabel, CloseSvg, Dropdown, LabelFieldPair, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Banner, Button, CardLabel, CloseSvg, Dropdown, LabelFieldPair, Loader } from "@egovernments/digit-ui-react-components";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
@@ -12,6 +12,7 @@ import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks
 import get from "lodash/get";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -52,7 +53,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const [isSigned, setIsSigned] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState(""); //signed notification filestore id
   const [loader, setLoader] = useState(false);
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const accessToken = window.localStorage.getItem("token");
@@ -118,13 +119,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const [bulkFormData, setBulkFormData] = useState(bulkNotificationFormData || defaultBulkFormData);
 
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${notificationFileStoreId}`;
-
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
 
   useEffect(() => {
     const esignProcess = sessionStorage.getItem("esignProcess");
@@ -305,7 +299,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     } catch (error) {
       console.error("Error :", error);
       setLoader(false);
-      showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ error: true, label: t("ISSUE_IN_BULK_HEARING"), errorId });
       setStepper(1);
       setIsSigned(false);
       setSignedDocumentUploadID("");
@@ -398,7 +393,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         setNotificationFileStoreId(fileStoreId);
         setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, fileStoreId]));
       } else if (!notificationFileStoreId) {
-        showToast("error", t("SOME_ERRORS_IN_HEARING_RESCHEDULE"), 5000);
+        setShowToast({ error: true, label: t("SOME_ERRORS_IN_HEARING_RESCHEDULE") });
         return;
       }
       const caseNumbers = newHearingData?.filter((hearing) => hearing?.caseId).map((hearing) => hearing.caseId);
@@ -475,7 +470,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       setAllHearings(tentativeDates?.Hearings || []);
       setNewHearingData(tentativeDates?.Hearings || []);
       if (tentativeDates?.Hearings?.length === 0) {
-        showToast("error", t("NO_NEW_HEARINGS_AVAILABLE"), 2000);
+        setShowToast({ error: true, label: t("NO_NEW_HEARINGS_AVAILABLE") });
       }
     } catch (error) {
       console.error(error);
@@ -489,7 +484,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       <NewBulkRescheduleTable
         t={t}
         loader={isRescheduleReasonLoading}
-        showToast={showToast}
         setStepper={setStepper}
         setNewHearingData={setNewHearingData}
         newHearingData={newHearingData}
@@ -756,13 +750,13 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           </div>
         </Modal>
       )}
-      {toastMsg && (
-        <Toast
-          error={toastMsg.key === "error"}
-          label={t(toastMsg.action)}
-          onClose={() => setToastMsg(null)}
-          isDleteBtn={true}
-          style={{ maxWidth: "500px" }}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
     </React.Fragment>

@@ -2,12 +2,12 @@ import { Loader, SubmitBar, ActionBar, CustomDropdown, CardLabel, LabelFieldPair
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
-import { useToast } from "../../../components/Toast/useToast";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import CustomCopyTextDiv from "../../../components/CustomCopyTextDiv";
 import { extractFeeMedium, getFilteredPaymentData, getTaskType } from "../../../Utils";
 import { ORDER_TYPES } from "../../../Utils/constants";
+import CustomToast from "../../../components/CustomToast";
 
 const paymentTaskType = {
   TASK_SUMMON: "task-summons",
@@ -67,7 +67,7 @@ const ViewPaymentDetails = ({ location, match }) => {
   const [payer, setPayer] = useState("");
   const [modeOfPayment, setModeOfPayment] = useState(null);
   const [additionDetails, setAdditionalDetails] = useState("");
-  const toast = useToast();
+  const [showToast, setShowToast] = useState(null);
   const [isDisabled, setIsDisabled] = useState(false);
   const {
     caseId,
@@ -130,46 +130,6 @@ const ViewPaymentDetails = ({ location, match }) => {
 
   const currentBillDetails = useMemo(() => BillResponse?.Bill?.[0], [BillResponse]);
 
-  // Now Epost aslo have only one delivery partner bill so using the same code ( removed sbi payment then  no need to check for delivery partner bill )
-  // const { data: ePostBillResponse, isLoading: isEPOSTBillLoading, refetch: epostBillRefetch } = Digit.Hooks.dristi.useBillSearch(
-  //   {},
-  //   {
-  //     tenantId,
-  //     consumerCode: `${consumerCodeWithoutSuffix}_POST_PROCESS_COURT`,
-  //     service: businessService,
-  //   },
-  //   `${consumerCodeWithoutSuffix}_POST_PROCESS_COURT`,
-  //   Boolean(consumerCodeWithoutSuffix && businessService)
-  // );
-
-  // const isDeliveryPartnerPaid = useMemo(() => (ePostBillResponse?.Bill?.[0]?.status ? ePostBillResponse?.Bill?.[0]?.status === "PAID" : true), [
-  //   ePostBillResponse,
-  // ]);
-
-  // const { data: calculationResponse, isLoading: isPaymentLoading } = Digit.Hooks.dristi.usePaymentCalculator(
-  //   {
-  //     EFillingCalculationCriteria: [
-  //       {
-  //         checkAmount: demandBill?.additionalDetails?.chequeDetails?.totalAmount,
-  //         numberOfApplication: 1,
-  //         tenantId: tenantId,
-  //         caseId: caseId,
-  //         filingNumber: filingNumber,
-  //         isDelayCondonation: !demandBill?.additionalDetails?.delayCondonation
-  //           ? demandBill?.additionalDetails?.isDelayCondonation
-  //           : Boolean(demandBill?.additionalDetails?.delayCondonation > 31 * 24 * 60 * 60 * 1000),
-  //       },
-  //     ],
-  //   },
-  //   {},
-  //   "dristi",
-  //   Boolean(
-  //     demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
-  //       demandBill?.additionalDetails?.chequeDetails.totalAmount !== "0" &&
-  //       paymentType?.toLowerCase()?.includes("case")
-  //   )
-  // );
-
   const [calculationResponse, setCalculationResponse] = useState(null);
   const [isPaymentLoading, setIsLoading] = useState(false);
 
@@ -196,7 +156,8 @@ const ViewPaymentDetails = ({ location, match }) => {
           setCalculationResponse({ Calculation: [response?.TreasuryHeadMapping?.calculation] });
         } catch (error) {
           console.error("Error fetching payment calculation:", error);
-          toast.error(t("CS_PAYMENT_CALCULATION_ERROR"));
+          const errorId = error?.response?.headers?.["x-correlation-id"];
+          setShowToast({ error: true, label: t("CS_PAYMENT_CALCULATION_ERROR"), errorId });
         }
       }
       setIsLoading(false);
@@ -303,7 +264,7 @@ const ViewPaymentDetails = ({ location, match }) => {
     const regenerateBill = await DRISTIService.callFetchBill({}, { consumerCode: consumerCode, tenantId, businessService: businessService });
     const billFetched = regenerateBill?.Bill ? regenerateBill?.Bill[0] : {};
     if (!Object.keys(bill || regenerateBill || {}).length) {
-      toast.error(t("CS_BILL_NOT_AVAILABLE"));
+      setShowToast({ error: true, label: t("CS_BILL_NOT_AVAILABLE") });
       return;
     }
     try {
@@ -556,6 +517,15 @@ const ViewPaymentDetails = ({ location, match }) => {
           />
         </ActionBar>
       </div>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label ? showToast?.label : t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

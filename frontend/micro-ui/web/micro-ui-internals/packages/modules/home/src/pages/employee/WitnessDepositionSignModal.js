@@ -27,7 +27,7 @@ export const WitnessDepositionSignModal = ({
   setShowBulkSignModal = () => {},
   witnessDepositionPaginationData,
   setCounter = () => {},
-  setShowErrorToast = () => {},
+  setShowToast = () => {},
 }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
   const location = useLocation();
@@ -256,7 +256,7 @@ export const WitnessDepositionSignModal = ({
       });
     } catch (error) {
       console.error("Error while updating witness deposition:", error);
-      setShowErrorToast({
+      setShowToast({
         error: true,
         label: t("ERROR_WITNESS_DEPOSITION_BULK_SIGN_MSG"),
       });

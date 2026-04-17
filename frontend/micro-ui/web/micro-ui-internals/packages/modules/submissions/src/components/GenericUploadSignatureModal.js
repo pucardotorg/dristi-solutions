@@ -2,6 +2,7 @@ import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import React, { useMemo, useState } from "react";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 const GenericUploadSignatureModal = ({
   t,
   handleCloseSignatureModal,
@@ -24,6 +25,7 @@ const GenericUploadSignatureModal = ({
   const [formData, setFormData] = useState({});
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [fileUploadError, setFileUploadError] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const name = "Signature";
   const userUuid = Digit.UserService.getUser()?.info?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
@@ -71,7 +73,10 @@ const GenericUploadSignatureModal = ({
         setLoader(false);
         console.error("error", error);
         setFormData({});
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+        setFileUploadError(errorCode);
+        setShowToast({ label: t(errorCode), error: true, errorId });
       }
     }
   };
@@ -123,6 +128,15 @@ const GenericUploadSignatureModal = ({
           cancelLabel={"SUBMIT"}
           fileUploadError={fileUploadError}
           onCustomDownload={onCustomDownload}
+        />
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
     </React.Fragment>
