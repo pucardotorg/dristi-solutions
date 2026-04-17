@@ -286,7 +286,7 @@ const TopBarComponent = ({
 
   const seniorAdvocates = useMemo(() => {
     if (isLoadingMembers) return [];
-    if (userType === "ADVOCATE" && advocateId) {
+    if (userType === "ADVOCATE" && advocateId && userInfo?.uuid) {
       const selfDetails = [{ id: advocateId, value: advocateId, advocateName: userInfo?.name, uuid: userInfo?.uuid, allowCaseCreate: true }];
       if (officeMembersData?.members?.length > 0) {
         const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
@@ -320,7 +320,7 @@ const TopBarComponent = ({
           setSeniorAdvocatesIndividualIdMapping(res);
         }
       } catch (error) {
-        console.log("error while fetching individual details of advocates", error);
+        console.error("error while fetching individual details of advocates", error);
       } finally {
         setIsIndividuaIdMappingsLoading(false);
       }
@@ -446,6 +446,10 @@ const TopBarComponent = ({
           <div
             style={{ display: "flex", gap: "16px", cursor: "pointer" }}
             onClick={() => {
+              if (!isUserLoggedIn) {
+                window.location.replace(window.location.origin);
+                return;
+              }
               if (isUserLoggedIn && pathname.includes("/citizen/dristi/home/registration")) {
                 history.push(`/${window?.contextPath}/citizen/dristi/home`);
               } else {
@@ -480,37 +484,39 @@ const TopBarComponent = ({
 
         <div className="RightMostTopBarOptions">
           {/* Manage Office button & Advocate profile dropdown - only visible for advocates / clerks */}
-          {(isAdvocate || (isAdvocateClerk && advocateDropdownOptions?.length > 0)) && !isApprovalPending && !isRejected && (
-            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
-              <AdvocateProfileDropdown
-                t={t}
-                options={advocateDropdownOptions}
-                selected={resolvedAdvocate}
-                onSelect={changeAdvocateSelection}
-                disabled={disableAdvocateChange}
-              />
-              {isAdvocate && !disableAdvocateChange && (
-                <button
-                  className="manage-office-btn"
-                  onClick={handleManageOfficeClick}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "8px 16px",
-                    backgroundColor: "white",
-                    border: "1px solid #007E7E",
-                    borderRadius: "4px",
-                    color: "#007E7E",
-                    cursor: "pointer",
-                  }}
-                >
-                  <ManageOfficeIcon />
-                  <span>{t ? t("MANAGE_OFFICE") : "Manage Office"}</span>
-                </button>
-              )}
-            </div>
-          )}
+          {((isAdvocate && advocateId) || (isAdvocateClerk && advClerkId && advocateDropdownOptions?.length > 0)) &&
+            !isApprovalPending &&
+            !isRejected && (
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", marginRight: "16px" }}>
+                <AdvocateProfileDropdown
+                  t={t}
+                  options={advocateDropdownOptions}
+                  selected={resolvedAdvocate}
+                  onSelect={changeAdvocateSelection}
+                  disabled={disableAdvocateChange}
+                />
+                {isAdvocate && !disableAdvocateChange && (
+                  <button
+                    className="manage-office-btn"
+                    onClick={handleManageOfficeClick}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "8px 16px",
+                      backgroundColor: "white",
+                      border: "1px solid #007E7E",
+                      borderRadius: "4px",
+                      color: "#007E7E",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <ManageOfficeIcon />
+                    <span>{t ? t("MANAGE_OFFICE") : "Manage Office"}</span>
+                  </button>
+                )}
+              </div>
+            )}
           {!hideChangeLangOnSomeUrlsWhenNotLoggedIn && !isUserLoggedIn ? changeLanguage : null}
           {!hideNotificationIconOnSomeUrlsWhenNotLoggedIn ? (
             <div className="EventNotificationWrapper" onClick={onNotificationIconClick}>

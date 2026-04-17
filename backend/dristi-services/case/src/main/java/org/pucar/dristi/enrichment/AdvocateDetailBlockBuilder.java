@@ -97,13 +97,13 @@ public class AdvocateDetailBlockBuilder {
                         }
 
             List<Document> vakalatnama = getVakalatnamaDocumentsForLitigant(courtCase, litigant);
-
-            // Identify PIP affidavit documents only by documentType
-            List<Document> pipAffidavit = caseDocuments.stream()
-                .filter(d -> d != null
-                    && d.getDocumentType() != null
-                    && d.getDocumentType().equalsIgnoreCase("COMPLAINANT_PIP_AFFIDAVIT"))
-                .collect(Collectors.toList());
+            List<Document> pipAffidavit = Optional.ofNullable(litigant.getDocuments())
+                                         .orElse(Collections.emptyList())
+                                         .stream()
+                                         .filter(d -> d != null
+                                        && d.getDocumentType() != null
+                                        && d.getDocumentType().equalsIgnoreCase("COMPLAINANT_PIP_AFFIDAVIT"))
+                                       .collect(Collectors.toList());
 
             Documents docs = Documents.builder()
                 .vakalatnama(vakalatnama)
@@ -209,7 +209,7 @@ public class AdvocateDetailBlockBuilder {
 
                         UiFlags uiFlags = UiFlags.builder()
                                 .showAffidavit(!pipAffidavit.isEmpty())
-                                .showVakalatNamaUpload(!vakalatnama.isEmpty())
+                                .showVakalatNamaUpload(pipAffidavit.isEmpty())
                                 .build();
 
 

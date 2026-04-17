@@ -616,7 +616,7 @@ const HomeView = () => {
   useEffect(() => {
     if (!individualData || !searchResult || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) return;
 
-    const userHasIncompleteRegistration = !individualId || isRejected || isLitigantPartialRegistered;
+    const userHasIncompleteRegistration = !individualId || isRejected || isLitigantPartialRegistered || searchResult?.length === 0;
 
     const registrationIsDoneApprovalIsPending = individualId && isApprovalPending && !isRejected && !isLitigantPartialRegistered;
 

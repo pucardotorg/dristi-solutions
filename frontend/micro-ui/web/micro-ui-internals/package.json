@@ -30,6 +30,7 @@
     "dev:hearings": "cd packages/modules/hearings && yarn start",
     "dev:cases": "cd packages/modules/cases && yarn start",
     "dev:home": "cd packages/modules/home && yarn start",
+    "dev:common": "cd packages/modules/common && yarn start",
     "build": "run-p build:**",
     "build:dristi": "cd packages/modules/dristi && yarn build",
     "build:submissions": "cd packages/modules/submissions && yarn build",
@@ -38,6 +39,7 @@
     "build:cases": "cd packages/modules/cases && yarn build",
     "build:home": "cd packages/modules/home && yarn build",
     "build:core": "cd packages/modules/core && yarn build",
+    "build:common": "cd packages/modules/common && yarn build",
     "build:css": "cd packages/css && yarn build:prod",
     "deploy:jenkins": "./scripts/jenkins.sh",
     "clean": "rm -rf node_modules && rm -f yarn.lock && cd example && rm -rf node_modules && rm -f yarn.lock"

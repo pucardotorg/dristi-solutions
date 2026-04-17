@@ -323,7 +323,17 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     breakupResponse,
   ]);
 
-  const service = useMemo(() => (orderType === ORDER_TYPES.SUMMONS ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
+  const service = useMemo(() => {
+    if (orderType === ORDER_TYPES.WARRANT) {
+      return paymentType.TASK_WARRANT;
+    } else if (orderType === ORDER_TYPES.PROCLAMATION) {
+      return paymentType.TASK_PROCLAMATION;
+    } else if (orderType === ORDER_TYPES.ATTACHMENT) {
+      return paymentType.TASK_ATTACHMENT;
+    } else {
+      return paymentType.TASK_NOTICE;
+    }
+  }, [orderType]);
 
   const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchCourtBill } = Digit.Hooks.dristi.useBillSearch(
     {},
@@ -480,7 +490,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
             caseDetails: caseDetails,
             consumerCode: `${taskNumber}_POST_PROCESS`,
             orderData: orderData,
-            partyIndex: orderType === ORDER_TYPES.NOTICE ? partyIndex : "",
+            partyIndex: partyIndex,
             filteredTasks: filteredTasks,
             filingNumber: filingNumber,
             isCourtBillPaid: courtBillResponse?.Bill?.[0]?.status === "PAID",
@@ -674,7 +684,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     return {
       handleClose: handleClose,
       heading: {
-        label: `Payment for ${orderType === ORDER_TYPES.SUMMONS ? "Summons" : "Notice"} via ${formattedChannelId}`,
+        label: `Payment for ${orderTypeEnum?.[orderType]} via ${formattedChannelId}`,
       },
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
