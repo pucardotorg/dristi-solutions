@@ -313,7 +313,7 @@ public class ServiceConstants {
     public static final String STAGE_LONG_PENDING_REGISTER = "Long Pending Register";
 
     public static final Set<String> TASK_END_TRIGGER_STATUSES = Set.of(
-            "EXECUTED", "EXPIRED", "DELIVERED", "ABATED", "UNDELIVERED", "NOT_EXECUTED");
+            "EXECUTED", "EXPIRED", "DELIVERED", "ABATED", "UNDELIVERED", "NOT_EXECUTED","OTHER");
 
     // Party type for accused side
     public static final String ACCUSED_PARTY_TYPE = "respondent";

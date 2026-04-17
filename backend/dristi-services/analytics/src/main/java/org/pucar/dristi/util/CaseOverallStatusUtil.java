@@ -676,6 +676,7 @@ public class CaseOverallStatusUtil {
 				}
 			}
 		}
+		boolean stageHandledBySummons = false;
 		if(SUMMONS.equalsIgnoreCase(orderType)){
 			boolean isAccusedJoinedCase = hasAccusedJoinedCase(caseObject);
 			String stage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
@@ -687,11 +688,11 @@ public class CaseOverallStatusUtil {
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, STAGE_APPEARANCE, "");
 					publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
 				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_COGNIZANCE, STAGE_APPEARANCE);
-				return caseObject;
+				stageHandledBySummons = true;
 			}
 		}
 		CaseOverallStatus caseOverallStatus = determineOrderStage(filingNumber, tenantId, orderType, status, hearingType, priorityMap);
-		if (canPublishCaseOverallStatus && !priorityMap.isEmpty()) {
+		if (!stageHandledBySummons && canPublishCaseOverallStatus && !priorityMap.isEmpty()) {
 			CaseOverallStatus finalCaseOverallStatus = priorityMap.firstEntry().getValue();
 
 			if (priorityMap.size() > 1) {
