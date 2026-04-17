@@ -40,7 +40,6 @@ const Registration = ({ stateCode }) => {
   const isUserLoggedIn = Boolean(token);
   const moduleCode = "DRISTI";
   const [newParams, setNewParams] = useState(history.location.state?.newParams || {});
-  const [userTypeRegister] = useState(history.location.state?.userType || {});
 
   const [canSubmitNo, setCanSubmitNo] = useState(true);
   const [isUserRegistered, setIsUserRegistered] = useState(true);
@@ -407,7 +406,6 @@ const Registration = ({ stateCode }) => {
               setParams={setNewParams}
               pathOnRefresh={pathOnRefresh}
               params={newParams}
-              userTypeRegister={userTypeRegister}
               onSelect={handleUserTypeSave}
               path={path}
             />
