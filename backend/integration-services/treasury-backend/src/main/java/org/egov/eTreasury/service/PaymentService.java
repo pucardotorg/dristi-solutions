@@ -984,24 +984,22 @@ public class PaymentService {
             //add flag to log the payload instead of pushing it to kafka
             if (config.isKafkaPushEnabled()) {
                 producer.push(config.getSaveTreasuryPaymentData(), paymentRequest);
+                PaymentStatus status = PaymentStatus.FAILED;
+                if ("Y".equalsIgnoreCase(String.valueOf(paymentData.getStatus()))) {
+                    status = PaymentStatus.SUCCESS;
+                }
+                repository.updateAuthTokenAndStatusByDepartmentId(
+                        authSek.getDepartmentId(),
+                        authSek.getAuthToken(),
+                        authSek.getDecryptedSek(),
+                        status.name(),
+                        "RECONCILIATION",
+                        System.currentTimeMillis(),
+                        "PROCESSED"
+                );
             } else {
                 log.info("Kafka push is disabled. Request payload we got: {}", paymentRequest);
             }
-
-            PaymentStatus status = PaymentStatus.FAILED;
-            if ("Y".equalsIgnoreCase(String.valueOf(paymentData.getStatus()))) {
-                status = PaymentStatus.SUCCESS;
-            }
-            repository.updateAuthTokenAndStatusByDepartmentId(
-                    authSek.getDepartmentId(),
-                    authSek.getAuthToken(),
-                    authSek.getDecryptedSek(),
-                    status.name(),
-                    "RECONCILIATION",
-                    System.currentTimeMillis(),
-                    "PROCESSED"
-            );
-            
             log.info("Double verification completed successfully for billId: {}", verificationData.getBillId());
             return paymentData;
             
