@@ -818,32 +818,33 @@ public class PaymentService {
 
         for (AuthSek authSek : pendingAuthSeks) {
             try {
-                if (!repository.markAsProcessing(authSek.getAuthToken())) {
-                    log.info("Record already processing or not in PENDING state for authToken: {}", authSek.getAuthToken());
-                    continue;
-                }
                 log.info("Processing double verification for billId: {}", authSek.getBillId());
-                VerificationDetails details = new VerificationDetails();
-                details.setDepartmentId(authSek.getDepartmentId());
-                details.setOfficeCode(config.getOfficeCode());
-                details.setServiceDeptCode(config.getServiceDeptCode());
-                details.setAmount(authSek.getTotalDue());
-
-                VerificationData verificationData = new VerificationData();
-                verificationData.setBillId(authSek.getBillId());
-                verificationData.setBusinessService(authSek.getBusinessService());
-                verificationData.setServiceNumber(authSek.getServiceNumber());
-                verificationData.setTotalDue(authSek.getTotalDue());
-                verificationData.setPaidBy(authSek.getPaidBy());
-                verificationData.setMobileNumber(authSek.getMobileNumber());
-                verificationData.setVerificationDetails(details);
-                verificationData.setMockEnabled(config.isMockEnabled());
+                VerificationData verificationData = getVerificationData(authSek);
 
                 doubleVerifyPayment(verificationData, requestInfo);
             } catch (Exception e) {
                 log.error("Error processing double verification for billId: {}", authSek.getBillId(), e);
             }
         }
+    }
+
+    private VerificationData getVerificationData(AuthSek authSek) {
+        VerificationDetails details = new VerificationDetails();
+        details.setDepartmentId(authSek.getDepartmentId());
+        details.setOfficeCode(config.getOfficeCode());
+        details.setServiceDeptCode(config.getServiceDeptCode());
+        details.setAmount(authSek.getTotalDue());
+
+        VerificationData verificationData = new VerificationData();
+        verificationData.setBillId(authSek.getBillId());
+        verificationData.setBusinessService(authSek.getBusinessService());
+        verificationData.setServiceNumber(authSek.getServiceNumber());
+        verificationData.setTotalDue(authSek.getTotalDue());
+        verificationData.setPaidBy(authSek.getPaidBy());
+        verificationData.setMobileNumber(authSek.getMobileNumber());
+        verificationData.setVerificationDetails(details);
+        verificationData.setMockEnabled(config.isMockEnabled());
+        return verificationData;
     }
 
     public TreasuryPaymentData doubleVerifyPayment(VerificationData verificationData, RequestInfo requestInfo) {
@@ -934,7 +935,7 @@ public class PaymentService {
             }
 
             TreasuryResponse response = TreasuryResponse.builder()
-                    .status(returnParams.has("status") ? returnParams.get("status").asBoolean() : false)
+                    .status(returnParams.has("status") && returnParams.get("status").asBoolean())
                     .rek(returnParams.has("rek") ? returnParams.get("rek").asText() : null)
                     .data(returnParams.has("data") ? returnParams.get("data").asText() : null)
                     .hmac(returnParams.has("hmac") ? returnParams.get("hmac").asText() : null)
