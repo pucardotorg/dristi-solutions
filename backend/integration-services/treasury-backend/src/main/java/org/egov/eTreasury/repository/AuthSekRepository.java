@@ -55,9 +55,4 @@ public class AuthSekRepository {
         }
     }
 
-    public boolean markAsProcessing(String authToken) {
-        String query = "UPDATE auth_sek_session_data SET processed_status = 'PROCESSING' WHERE auth_token = ? AND processed_status = 'PENDING'";
-        int updated = jdbcTemplate.update(query, authToken);
-        return updated > 0;
-    }
 }
