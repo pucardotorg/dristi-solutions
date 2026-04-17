@@ -374,7 +374,7 @@ public class SecondaryStageProcessor {
             if(!activeStages.contains(secondaryStage) && secondaryStage!=null){
                 activeStages.add(secondaryStage);
             }
-            if (secondaryStage==null || SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT.equalsIgnoreCase(secondaryStage))
+            if (secondaryStage==null)
                 activeStages.clear();
 
             RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
