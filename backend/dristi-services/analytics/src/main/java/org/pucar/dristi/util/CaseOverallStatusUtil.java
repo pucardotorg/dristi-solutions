@@ -684,7 +684,7 @@ public class CaseOverallStatusUtil {
 			if (stage == null || stage.isEmpty()) {
 				return null;
 			}
-			if(!isAccusedJoinedCase && STAGE_COGNIZANCE.equalsIgnoreCase(stage)){
+			if(!isAccusedJoinedCase){
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, STAGE_APPEARANCE, "");
 					publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
 				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_COGNIZANCE, STAGE_APPEARANCE);
