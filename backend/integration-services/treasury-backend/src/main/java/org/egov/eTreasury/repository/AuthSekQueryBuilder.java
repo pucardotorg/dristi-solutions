@@ -38,7 +38,7 @@ public class AuthSekQueryBuilder {
     public String getPendingAuthSeksQuery(Long thresholdTime, List<Object> preparedStmtList) {
         StringBuilder query = new StringBuilder(BASE_QUERY);
         query.append(FROM_TABLES);
-        query.append(" WHERE processed_status = 'PENDING' AND session_time <= ? ");
+        query.append(" WHERE processed_status = 'PENDING' AND session_time >= ? ");
         preparedStmtList.add(thresholdTime);
         query.append(ORDER_BY_SESSION_TIME);
         return query.toString();
