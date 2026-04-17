@@ -310,7 +310,7 @@ public class SecondaryStageProcessor {
             List<String> activeStages = caseStageTrackingUtil.getActiveSecondaryStageNames(filingNumber);
             if (activeStages.contains(SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT)) {
                 log.info("Accused joined case, ending secondary stage '{}' for filingNumber: {}", SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT, filingNumber);
-                publishSubstageUpdate(filingNumber, tenantId, request,SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT,caseObject);
+                publishSubstageUpdate(filingNumber, tenantId, request,null,caseObject);
                 caseStageTrackingUtil.endSecondaryStage(filingNumber);
             }
         } catch (Exception e) {
