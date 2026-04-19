@@ -117,10 +117,14 @@ function TakeUserToRegistration({ message, isRejected, isLitigantPartialRegister
 
     userType === "ADVOCATE" && !advocate
       ? history.push(`/${window?.contextPath}/citizen/dristi/home/registration/email`, {
-          newParams: { ...data, ...params, isRejected: !advocate },
-          userType: {
-            clientDetails: {
-              selectUserType: userTypeOptions?.find((item) => item?.code === userType),
+          newParams: {
+            ...data,
+            ...params,
+            isRejected: !advocate,
+            userType: {
+              clientDetails: {
+                selectUserType: userTypeOptions?.find((item) => item?.code === userType),
+              },
             },
           },
         })
@@ -133,16 +137,15 @@ function TakeUserToRegistration({ message, isRejected, isLitigantPartialRegister
               lastName: individual?.name?.familyName,
             },
             isLitigantPartialRegistered: isLitigantPartialRegistered,
-          },
-          userType: {
-            clientDetails: {
-              selectUserType: userTypeOptions?.find((item) => item?.code === "LITIGANT"),
+            userType: {
+              clientDetails: {
+                selectUserType: userTypeOptions?.find((item) => item?.code === "LITIGANT"),
+              },
             },
           },
         })
       : history.push(`/${window?.contextPath}/citizen/dristi/home/registration/email`, {
-          newParams: { ...data, ...params, isRejected: isRejected },
-          userType: advocate?.additionalDetails?.userType,
+          newParams: { ...data, ...params, isRejected: isRejected, refetch: Date.now(), userType: advocate?.additionalDetails?.userType },
         });
   };
   return (
