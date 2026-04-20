@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState, useContext } 
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
-import { Header, FormComposerV2, Toast, Button, EditIcon, Modal, CloseButton, TextInput, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { Header, FormComposerV2, Toast, Button, EditIcon, Modal, CloseButton, TextInput } from "@egovernments/digit-ui-react-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core"; // Import breadcrumb context from core module
 import {
   applicationTypeConfig,
@@ -68,6 +68,7 @@ import TasksComponent from "../../../../home/src/components/TaskComponent";
 import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
 import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSuccessModal";
 import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 // any order type from orderTypes can not be paired with any order from unAllowedOrderTypes when creating composite order.
 export const compositeOrderAllowedTypes = [
@@ -178,22 +179,6 @@ const OutlinedInfoIcon = () => (
     </defs>
   </svg>
 );
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-const CloseBtn = (props) => {
-  return (
-    <div
-      className="composite-orders-error-modal-close"
-      onClick={props?.onClick}
-      style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
 const stateSlaMap = {
   SECTION_202_CRPC: 3,
   MANDATORY_SUBMISSIONS_RESPONSES: 3,

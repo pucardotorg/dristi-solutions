@@ -1,5 +1,5 @@
 import { CardLabelError, CardText } from "@egovernments/digit-ui-components";
-import { CardLabel, CloseSvg, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { verifyMobileNoConfig } from "../configs/component";
 import useInterval from "../hooks/useInterval";
@@ -9,6 +9,7 @@ import Button from "./Button";
 import Modal from "./Modal";
 import OTPInput from "./OTPInput";
 import { maskEmail } from "../Utils";
+import { CloseBtn, Heading } from "./ModalComponents";
 const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
 const DEFAULT_USER = "digit-user";
@@ -21,19 +22,6 @@ const RoundedCheck = ({ className, height = "24", width = "24", style = {}, fill
     </svg>
   );
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setError }) {
   const [{ showModal, mobileNumber, isUserVerified, errorMsg }, setState] = useState({
     showModal: false,

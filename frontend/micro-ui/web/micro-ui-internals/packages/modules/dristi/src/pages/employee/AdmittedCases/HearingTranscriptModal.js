@@ -1,29 +1,20 @@
-import { CloseSvg, TextArea } from "@egovernments/digit-ui-components";
+import { TextArea } from "@egovernments/digit-ui-components";
 import React, { useEffect } from "react";
 import Modal from "../../../components/Modal";
 import { SubmitBar } from "@egovernments/digit-ui-react-components";
 import { DateUtils } from "../../../Utils";
+import { CloseBtn } from "../../../components/ModalComponents";
 
 function HearingTranscriptModal({ t, hearing, setShowHearingTranscriptModal }) {
   const Heading = () => {
     return <h1 className="heading-m">{`${t(hearing?.hearingType)} Hearing- ${DateUtils.getFormattedDate(hearing?.startTime)}`}</h1>;
   };
 
-  const CloseBtn = (props) => {
-    return (
-      <div
-        onClick={() => setShowHearingTranscriptModal(false)}
-        style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}
-      >
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   return (
     <Modal
       headerBarMain={<Heading />}
-      headerBarEnd={<CloseBtn />}
+      headerBarEnd={<CloseBtn onClick={() => setShowHearingTranscriptModal(false)} />}
       actionCancelLabel={null}
       actionCancelOnSubmit={() => {}}
       actionSaveLabel={null}

@@ -6,6 +6,7 @@ import SummaryModal from "../../components/SummaryModal";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { hearingService } from "../../hooks/services";
 import { useTranslation } from "react-i18next";
+import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournHearing, disableTextArea, setTranscriptText }) => {
   const { hearingId } = Digit.Hooks.useQueryParams();
@@ -83,9 +84,7 @@ const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournH
     );
   };
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
+  
   const onFormValueChange = (setValue, formData, formState) => {
     if (formData?.reason) {
       if (formData.reason !== reasonFormData.reason) {
