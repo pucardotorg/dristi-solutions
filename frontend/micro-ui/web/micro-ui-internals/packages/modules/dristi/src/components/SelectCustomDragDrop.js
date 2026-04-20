@@ -3,6 +3,7 @@ import React, { useMemo } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import { FileUploadIcon } from "../icons/svgIndex";
 import { isEmptyObject } from "../Utils";
+import { EXTENSION_TO_MIME } from "../Utils/constants";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import RenderFileCard from "./RenderFileCard";
 import { useState } from "react";
@@ -76,11 +77,15 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
   }
 
   const fileValidator = (file, input) => {
-    // const fileType = file?.type.split("/")[1].toUpperCase();
-    // if (fileType && !input.fileTypes.includes(fileType)) {
-    //   return { [input?.name]: "Invalid File Type", ...uploadErrorInfo };
-    // }
     if (file?.fileStore) return null;
+
+    if (file?.type && input?.fileTypes?.length) {
+      const allowedMimes = input.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
+      if (allowedMimes.length && !allowedMimes.includes(file.type)) {
+        return t("NOT_SUPPORTED_FILE_TYPE");
+      }
+    }
+
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     return file?.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
   };
