@@ -58,12 +58,20 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
-      <version>3.0</version>
+      <version>3.14.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.loki4j</groupId>
       <artifactId>loki-logback-appender</artifactId>
       <version>2.0.1</version>
+    </dependency>
+    <!-- YAML support (Spring Boot managed version) -->
+
+    <!-- JSON Smart (missing package net.minidev.json) -->
+    <dependency>
+      <groupId>net.minidev</groupId>
+      <artifactId>json-smart</artifactId>
+      <version>2.5.1</version>
     </dependency>
     <dependency>
       <groupId>org.codehaus.janino</groupId>
@@ -111,7 +119,6 @@
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
-      <version>6.4.3</version>
     </dependency>
     <dependency>
       <groupId>com.jayway.jsonpath</groupId>
@@ -126,7 +133,6 @@
     <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-yaml</artifactId>
-      <version>2.10.3</version>
     </dependency>
     <!--<dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -146,7 +152,7 @@
     <dependency>
       <groupId>com.github.zafarkhaja</groupId>
       <artifactId>java-semver</artifactId>
-      <version>0.9.0</version>
+      <version>0.10.2</version>
     </dependency>
   </dependencies>
   <repositories>
