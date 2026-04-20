@@ -23,7 +23,6 @@ import SelectCustomNote from "./components/SelectCustomNote";
 import SelectCustomTextArea from "./components/SelectCustomTextArea";
 import SelectReviewAccordion from "./components/SelectReviewAccordion";
 import SelectUploadDocWithName from "./components/SelectUploadDocWithName";
-import SelectUploadFiles from "./components/SelectUploadFiles";
 import { ToastProvider } from "./components/Toast/useToast";
 import VerificationComponent from "./components/VerificationComponent";
 import VerifyPhoneNumber from "./components/VerifyPhoneNumber";
@@ -174,7 +173,6 @@ const componentsToRegister = {
   AddressComponent,
   AdhaarInput,
   AdvocateDetailComponent,
-  SelectUploadFiles,
   SelectUploadDocWithName,
   SelectEmptyComponent,
   ScrutinyInfo,
@@ -230,7 +228,7 @@ const componentsToRegister = {
   EvidenceModal,
   GenericPreviewModal,
   CloseBtn,
-  Heading
+  Heading,
 };
 
 const overrideHooks = () => {

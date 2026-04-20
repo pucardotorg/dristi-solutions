@@ -1058,7 +1058,6 @@ function EFilingCases({ path }) {
     return pageConfig?.confirmmodalconfig;
   }, [pageConfig?.confirmmodalconfig]);
 
-  
   const isDependentEnabled = useMemo(() => {
     let result = false;
     formConfig.forEach((config) => {
@@ -1579,7 +1578,6 @@ function EFilingCases({ path }) {
                       "SelectCustomDragDrop",
                       "SelectBulkInputs",
                       "SelectCustomTextArea",
-                      "SelectUploadFiles",
                       "SelectCustomFormatterTextArea",
                       "SelectUserTypeComponent",
                     ].includes(formComponent.component)
@@ -1692,14 +1690,6 @@ function EFilingCases({ path }) {
                   }
                 }
                 if (scrutiny?.[selected] && scrutiny?.[selected]?.form?.[index]) {
-                  if (formComponent.component === "SelectUploadFiles") {
-                    if (formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name in scrutiny?.[selected]?.form?.[index]) {
-                      key = formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name;
-                    }
-                    if (formComponent.key + "." + formComponent.populators?.inputs?.[1]?.name in scrutiny?.[selected]?.form?.[index]) {
-                      key = formComponent.key + "." + formComponent.populators?.inputs?.[1]?.name;
-                    }
-                  }
                   if (selected === "chequeDetails" && formComponent.component === "InputWithSearch") {
                     key = formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name;
                   }
@@ -2502,9 +2492,7 @@ function EFilingCases({ path }) {
 
             const noticeTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.NOTICE);
             const summonsTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.SUMMONS);
-            const warrantTask = taskManagementList?.find(
-              (item) => item?.taskType === TASK_TYPES.WARRANT
-            );
+            const warrantTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.WARRANT);
             let updatedWarrantTask = null;
 
             // removing processDelieveryDetails for warrant because of payment calculation handled at backend
@@ -2514,7 +2502,7 @@ function EFilingCases({ path }) {
                 ...party,
                 processDeliveryDetails: null,
               }));
-            
+
               updatedWarrantTask = {
                 ...warrantTask,
                 partyDetails: updatedWarrantPartyDetails,
