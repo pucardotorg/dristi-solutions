@@ -15,7 +15,7 @@
 
     <properties>
         <java.version>25</java.version>
-        <egov-tracer.version>2.1.4-SNAPSHOT</egov-tracer.version>
+        <egov-tracer.version>2.9.2-SNAPSHOT</egov-tracer.version>
     </properties>
 
     <dependencyManagement>
