@@ -15,6 +15,7 @@ import setupRequestInterceptor from "@egovernments/digit-ui-module-core/src/Util
 import apiMonitor from "@egovernments/digit-ui-module-core/src/Utils/apiMonitor";
 import "dristi-ui-css/dist/index.min.css";
 import ApiMonitorPanel from "@egovernments/digit-ui-module-core/src/Utils/ApiMonitorPanel.js";
+import { initCommonComponents } from "@egovernments/digit-ui-module-common";
 
 window.contextPath = window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
 
@@ -35,6 +36,7 @@ const initDigitUI = () => {
   window.Digit.ComponentRegistryService.setupRegistry({});
   setupRequestInterceptor();
   initCoreComponents();
+  initCommonComponents();
   initDRISTIComponents();
   initOrdersComponents();
   initHearingsComponents();

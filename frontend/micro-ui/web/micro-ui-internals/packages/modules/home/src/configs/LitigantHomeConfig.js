@@ -176,12 +176,12 @@ export const TabLitigantSearchConfig = {
                 disable: false,
                 populators: {
                   name: "stage",
-                  optionsKey: "stage",
+                  optionsKey: "name",
                   mdmsConfig: {
-                    masterName: "CasePrimaryStage",
+                    masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
+                      "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
                   },
                   styles: {
                     maxWidth: "250px",

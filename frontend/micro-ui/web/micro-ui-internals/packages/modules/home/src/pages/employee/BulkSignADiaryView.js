@@ -185,7 +185,7 @@ function BulkSignADiaryView() {
           setShowToast({ label: t("BULK_SIGN_DIARY_SEARCH_EVIDENCE_FAILED"), error: true, errorId });
         }
       }
-      if (entry?.referenceType === ORDER_TYPES.NOTICE) {
+      if (entry?.referenceType === ORDER_TYPES.NOTICE.toLocaleLowerCase()) {
         try {
           const notificationResponse = await Digit.HearingService.searchNotification({
             criteria: {

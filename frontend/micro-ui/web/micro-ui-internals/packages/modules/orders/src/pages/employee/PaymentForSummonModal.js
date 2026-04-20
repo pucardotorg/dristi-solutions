@@ -257,17 +257,7 @@ const PaymentForSummonModal = ({ path }) => {
   const consumerCode = useMemo(() => {
     return taskNumber ? `${taskNumber}_POST_PROCESS_COURT` : undefined;
   }, [taskNumber]);
-  const service = useMemo(() => {
-    if (orderType === ORDER_TYPES.WARRANT) {
-      return paymentType.TASK_WARRANT;
-    } else if (orderType === ORDER_TYPES.PROCLAMATION) {
-      return paymentType.TASK_PROCLAMATION;
-    } else if (orderType === ORDER_TYPES.ATTACHMENT) {
-      return paymentType.TASK_ATTACHMENT;
-    } else {
-      return orderType === ORDER_TYPES.SUMMONS ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE;
-    }
-  }, [orderType]);
+  const service = useMemo(() => (orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
   const taskType = useMemo(() => getTaskType(service), [service]);
   const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useBillSearch(
     {},
@@ -379,25 +369,12 @@ const PaymentForSummonModal = ({ path }) => {
           await Promise.all([
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name:
-                  orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
-                    ? `PAYMENT_PENDING_FOR_${orderType}`
-                    : `MAKE_PAYMENT_FOR_${orderType}_POST`,
-                entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
+                name: orderType === ORDER_TYPES.SUMMONS ? "Show Summon-Warrant Status" : "Show Notice Status",
+                entityType: paymentType.ORDER_MANAGELIFECYCLE,
                 referenceId: hearingsData?.HearingList?.[0]?.hearingId,
-                status: paymentType.PAYMENT_PENDING_POST,
+                status: orderType === ORDER_TYPES.SUMMONS ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
                 assignedTo: [],
-                assignedRole: [
-                  orderType === ORDER_TYPES.WARRANT
-                    ? "PENDING_TASK_SHOW_WARRANT_STATUS"
-                    : orderType === ORDER_TYPES.PROCLAMATION
-                    ? "PENDING_TASK_SHOW_PROCLAMATION_STATUS"
-                    : orderType === ORDER_TYPES.ATTACHMENT
-                    ? "PENDING_TASK_SHOW_ATTACHMENT_STATUS"
-                    : orderType === ORDER_TYPES.SUMMONS
-                    ? "PENDING_TASK_SHOW_SUMMON_WARRANT"
-                    : "PENDING_TASK_SHOW_NOTICE_STATUS",
-                ],
+                assignedRole: [orderType === ORDER_TYPES.SUMMONS ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
                 cnrNumber: filteredTasks?.[0]?.cnrNumber,
                 filingNumber: filingNumber,
                 caseId: caseDetails?.id,
@@ -413,10 +390,7 @@ const PaymentForSummonModal = ({ path }) => {
             }),
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name:
-                  orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
-                    ? `PAYMENT_PENDING_FOR_${orderType}`
-                    : `MAKE_PAYMENT_FOR_${orderType}_POST`,
+                name: orderType === ORDER_TYPES.SUMMONS ? `MAKE_PAYMENT_FOR_SUMMONS_POST` : `MAKE_PAYMENT_FOR_NOTICE_POST`,
                 entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
                 referenceId: `MANUAL_${taskNumber}`,
                 status: paymentType.PAYMENT_PENDING_POST,

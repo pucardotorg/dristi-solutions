@@ -189,8 +189,6 @@ const AdmittedCaseV2 = () => {
   const { downloadPdf } = useDownloadCasePdf();
   const [isShow, setIsShow] = useState(false);
   const currentDiaryEntry = history.location?.state?.diaryEntry;
-  const historyCaseData = location?.state?.caseData;
-  const needCaseRefetch = location?.state?.needCaseRefetch;
   const historyOrderData = location?.state?.orderData;
   const newWitnesToast = history.location?.state?.newWitnesToast;
   const [isApplicationAccepted, setIsApplicationAccepted] = useState(null);
@@ -238,7 +236,7 @@ const AdmittedCaseV2 = () => {
 
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
-  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
+  const { data: caseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
     {
       criteria: {
         caseId: caseId,
@@ -249,13 +247,11 @@ const AdmittedCaseV2 = () => {
     {},
     `dristi-admitted-${caseId}`,
     caseId,
-    Boolean(caseId && (needCaseRefetch || !historyCaseData))
+    Boolean(caseId)
   );
 
-  const caseData = apiCaseData || historyCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
   const caseCourtId = !isCitizen ? localStorage.getItem("courtId") : caseDetails?.courtId;
-  const latestCaseDetails = useMemo(() => apiCaseData?.cases || historyCaseData?.cases || {}, [apiCaseData, historyCaseData]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
@@ -4204,7 +4200,7 @@ const AdmittedCaseV2 = () => {
           joinedLitigants={[...complainants, ...respondents]}
           showPaymentConfirmationModal={showPaymentConfirmationModal}
           showPaymentDemandModal={showPaymentDemandModal}
-          caseDetails={latestCaseDetails}
+          caseDetails={caseDetails}
           tenantId={tenantId}
         />
       )}{" "}

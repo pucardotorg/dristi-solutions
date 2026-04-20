@@ -1,5 +1,6 @@
 package org.egov.eTreasury.controller;
 
+import jakarta.validation.Valid;
 import org.egov.common.contract.models.Document;
 import org.egov.eTreasury.model.*;
 import org.egov.eTreasury.model.demand.DemandCreateRequest;
@@ -80,14 +81,24 @@ public class PaymentController {
         return ResponseEntity.ok(response);
     }
 
-//    @PostMapping("/v1/_doubleVerification")
-//    public HtmlResponse verifyDetails(@RequestBody VerificationRequest request) {
-//        log.info("Performing double verification for request: {}", request);
-//        Payload verificationPage = paymentService.doubleVerifyPayment(request.getVerificationData(), request.getRequestInfo());
-//        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
-//        log.info("Double verification successful for request: {}", request);
-//        return HtmlResponse.builder().payload(verificationPage).responseInfo(responseInfo).build();
-//    }
+    @PostMapping("/v1/_processDoubleVerification")
+    public ResponseEntity<String> processDoubleVerificationBatch(@RequestBody RequestInfo requestInfo) {
+        log.info("Batch triggering double verification via endpoint");
+        paymentService.processDoubleVerificationBatch(requestInfo);
+        return ResponseEntity.ok("Batch processing initiated.");
+    }
+
+    @PostMapping("/v1/_doubleVerification")
+    public TreasuryPaymentResponse verifyDetails(@Valid @RequestBody VerificationRequest request) {
+        log.info("Performing double verification for billId: {}",  request.getVerificationData() != null ? request.getVerificationData().getBillId() : "null");
+        TreasuryPaymentData treasuryPaymentData = paymentService.doubleVerifyPayment(request.getVerificationData(), request.getRequestInfo());
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        log.info("Double verification completed | status: {} | GRN: {}",  treasuryPaymentData != null ? treasuryPaymentData.getStatus() : "null", treasuryPaymentData != null ? treasuryPaymentData.getGrn() : "null");
+        return TreasuryPaymentResponse.builder()
+                .responseInfo(responseInfo)
+                .treasuryPaymentData(treasuryPaymentData)
+                .build();
+    }
 
 //    @PostMapping("/v1/_printPayInSlip")
 //    public PrintResponse printPayInSlip(@RequestBody PrintRequest request) {

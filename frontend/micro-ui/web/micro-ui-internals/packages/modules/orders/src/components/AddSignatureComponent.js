@@ -92,8 +92,8 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
     } else {
       txt = "Notice";
     }
-    return txt;
-  }, [rowData?.orderType]);
+    return `${txt} Document`;
+  }, [rowData]);
 
   const fileStore = sessionStorage.getItem("fileStoreId") || signatureId;
 
