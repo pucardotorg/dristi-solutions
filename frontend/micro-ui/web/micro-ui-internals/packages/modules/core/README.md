@@ -2,9 +2,10 @@
 
 ## 📌 Overview
 
-The **Core** module (`@egovernments/digit-ui-module-core`) is the **foundational shell** of the DRISTI micro-frontend application. It bootstraps the entire UI — setting up the Redux store, React Query client, routing infrastructure, authentication, breadcrumb context, and the top-bar/sidebar layout shell. All other modules (dristi, cases, hearings, orders, submissions, home) are loaded *through* this module.
+The **Core** module (`@egovernments/digit-ui-module-core`) is the **foundational shell** of the DRISTI micro-frontend application. It bootstraps the entire UI — setting up the Redux store, React Query client, routing infrastructure, authentication, breadcrumb context, and the top-bar/sidebar layout shell. All other modules (dristi, cases, hearings, orders, submissions, home) are loaded _through_ this module.
 
 **Business Purpose:**
+
 - Provides the application shell (layout, navigation, top bar, sidebar)
 - Manages authentication (login, logout, OTP, change password)
 - Initializes the Redux store with module-specific reducers
@@ -12,6 +13,7 @@ The **Core** module (`@egovernments/digit-ui-module-core`) is the **foundational
 - Routes between citizen and employee interfaces
 
 **Where it is used:**
+
 - This is the root module. All other modules render within the layout provided by Core.
 - Entry point of the entire DRISTI frontend application.
 
@@ -20,9 +22,11 @@ The **Core** module (`@egovernments/digit-ui-module-core`) is the **foundational
 ## 🏗 Architecture
 
 ### Entry Point
+
 - `src/Module.js` — Exports `DigitUI` (root component), `initCoreComponents` (initialization function), and context providers (`BreadCrumbsParamsDataContext`, `AdvocateDataContext`)
 
 ### Folder Structure
+
 ```
 src/
 ├── Module.js                          # Root component, context providers, store setup
@@ -76,7 +80,6 @@ src/
 │   │   │   ├── index.js              # Citizen home page
 │   │   │   ├── LanguageSelection.js
 │   │   │   ├── LocationSelection.js
-│   │   │   ├── UserProfile.js
 │   │   │   └── ImageUpload/
 │   │   ├── Login/
 │   │   │   ├── index.js
@@ -100,6 +103,7 @@ src/
 ```
 
 ### Key Design Patterns
+
 - **Shell architecture:** Core acts as the application shell that dynamically loads module components via `Digit.ComponentRegistryService`
 - **Context Providers:** `BreadCrumbsParamsDataContext` and `AdvocateDataContext` are created here and consumed by child modules
 - **Redux + Thunk:** Centralized store with `redux-thunk` middleware
@@ -112,37 +116,36 @@ src/
 
 ### Top-Level Routes (`App.js`)
 
-| Route Path | Component | Description |
-|---|---|---|
-| `/{contextPath}/employee` | `EmployeeApp` | Employee application shell |
-| `/{contextPath}/citizen` | `CitizenApp` | Citizen application shell |
-| Default | Redirect to `/{contextPath}/{defaultLanding}` | Default redirect |
+| Route Path                | Component                                     | Description                |
+| ------------------------- | --------------------------------------------- | -------------------------- |
+| `/{contextPath}/employee` | `EmployeeApp`                                 | Employee application shell |
+| `/{contextPath}/citizen`  | `CitizenApp`                                  | Citizen application shell  |
+| Default                   | Redirect to `/{contextPath}/{defaultLanding}` | Default redirect           |
 
 ### Employee Routes (`pages/employee/index.js`)
 
-| Route Path | Component | Auth |
-|---|---|---|
-| `{path}/user/login` | `EmployeeLogin` | Public |
-| `{path}/user/change-password` | `ChangePassword` | Public |
-| `{path}/user/profile` | `UserProfile` | Private |
-| `{path}/user/error` | `ErrorComponent` | Public |
-| `{path}/user/language-selection` | `LanguageSelection` | Public |
-| `{path}/*` (non-user) | `AppModules` (dynamic) | Authenticated |
+| Route Path                       | Component              | Auth          |
+| -------------------------------- | ---------------------- | ------------- |
+| `{path}/user/login`              | `EmployeeLogin`        | Public        |
+| `{path}/user/change-password`    | `ChangePassword`       | Public        |
+| `{path}/user/error`              | `ErrorComponent`       | Public        |
+| `{path}/user/language-selection` | `LanguageSelection`    | Public        |
+| `{path}/*` (non-user)            | `AppModules` (dynamic) | Authenticated |
 
 ### Citizen Routes (`pages/citizen/index.js`)
 
-| Route Path | Component | Auth |
-|---|---|---|
-| `{path}` (exact) | `CitizenHome` | Public |
-| `{path}/select-language` | `LanguageSelection` | Public |
-| `{path}/select-location` | `LocationSelection` | Public |
-| `{path}/login` | `Login` | Public |
-| `{path}/register` | `Login` (registration mode) | Public |
-| `{path}/user/profile` | `UserProfile` | Authenticated |
-| `{path}/all-services` | `AppHome` | Public |
-| `{path}/{moduleCode}` | Dynamic module routes | Module-dependent |
+| Route Path               | Component                   | Auth             |
+| ------------------------ | --------------------------- | ---------------- |
+| `{path}` (exact)         | `CitizenHome`               | Public           |
+| `{path}/select-language` | `LanguageSelection`         | Public           |
+| `{path}/select-location` | `LocationSelection`         | Public           |
+| `{path}/login`           | `Login`                     | Public           |
+| `{path}/register`        | `Login` (registration mode) | Public           |
+| `{path}/all-services`    | `AppHome`                   | Public           |
+| `{path}/{moduleCode}`    | Dynamic module routes       | Module-dependent |
 
 ### Route Guards
+
 - Mobile view restriction: Screens < 900px display a "Switch to desktop" message, except for specific open routes (bail-bond-sign, payment-login, sms-payment, etc.)
 - Employee routes use `PrivateRoute` for authenticated paths
 
@@ -151,16 +154,19 @@ src/
 ## 🧠 State Management
 
 ### Redux Store
+
 - **`redux/store.js`** — Factory function `getStore(defaultStore, moduleReducers)` creates the Redux store
 - Uses `combineReducers` with a `common` reducer and optional module-specific reducers
 - Middleware: `redux-thunk`
 - Redux DevTools Extension integration
 
 ### Global State Dependencies
+
 - `Digit.Hooks.useInitStore(stateCode, enabledModules)` — Initializes module data, tenants, state info
 - `Digit.Hooks.useStore.getInitData()` — Retrieves initialized store data
 
 ### Context State
+
 - `BreadCrumbsParamsDataContext` — Shares `{ caseId, filingNumber }` across modules for breadcrumb navigation
 - `AdvocateDataContext` — Shares selected advocate data across modules
 - `PrivacyProvider` — Manages field-level privacy settings
@@ -171,6 +177,7 @@ src/
 ## 🌐 API Integrations
 
 No dedicated service layer in this module. API interactions are handled through:
+
 - `Digit.Hooks.useInitStore` — Fetches initial configuration data
 - `Digit.Hooks.useCustomMDMS` — Fetches MDMS data for tenant info and link data
 - `useGetAccessToken` hook — Handles token refresh via `refresh-token`
@@ -181,18 +188,21 @@ No dedicated service layer in this module. API interactions are handled through:
 ## 🧩 Key Components
 
 ### Container Components
+
 - **`DigitUI`** — Root application component; sets up QueryClient, Redux Provider, Router, and all context providers
 - **`DigitUIWrapper`** — Handles store initialization and renders `DigitApp`
 - **`DigitApp` (App.js)** — Top-level router switching between citizen and employee apps
 - **`AppModules`** — Dynamically renders registered module components based on enabled modules
 
 ### Layout Components
+
 - **`TopBarSideBar`** — Navigation shell consisting of top bar and sidebar
 - **`TopBar` / `TopBarComponent`** — Application header bar
 - **`SideBar`** — Navigation sidebar (citizen and employee variants)
 - **`ProfileComponent`** — User profile dropdown
 
 ### Authentication Components
+
 - **`EmployeeLogin`** — Employee login page
 - **`Login` (citizen)** — Citizen login with mobile number + OTP
 - **`SelectOtp`** — OTP verification component (globally registered)
@@ -221,23 +231,25 @@ Application Bootstrap:
 ## 🔗 Dependencies
 
 ### Internal Module Dependencies
+
 - All other modules depend on Core (this module provides the application shell)
 - Core does not depend on other business modules
 
 ### External Library Dependencies
-| Library | Version | Purpose |
-|---|---|---|
-| `react` | 17.0.2 | UI framework |
-| `react-dom` | 17.0.2 | DOM rendering |
-| `react-router-dom` | 5.3.0 | Routing |
-| `react-redux` | 7.2.8 | Redux bindings |
-| `redux` | 4.1.2 | State management |
-| `redux-thunk` | 2.4.1 | Async Redux middleware |
-| `react-query` | 3.6.1 | Async data fetching/caching |
-| `react-i18next` | 11.16.2 | Internationalization |
-| `react-tooltip` | 4.1.2 | Tooltip component |
-| `@egovernments/digit-ui-react-components` | 1.8.2-beta.11 | Shared UI components |
-| `@egovernments/digit-ui-components` | 0.0.1-beta.28 | Design system components |
+
+| Library                                   | Version       | Purpose                     |
+| ----------------------------------------- | ------------- | --------------------------- |
+| `react`                                   | 17.0.2        | UI framework                |
+| `react-dom`                               | 17.0.2        | DOM rendering               |
+| `react-router-dom`                        | 5.3.0         | Routing                     |
+| `react-redux`                             | 7.2.8         | Redux bindings              |
+| `redux`                                   | 4.1.2         | State management            |
+| `redux-thunk`                             | 2.4.1         | Async Redux middleware      |
+| `react-query`                             | 3.6.1         | Async data fetching/caching |
+| `react-i18next`                           | 11.16.2       | Internationalization        |
+| `react-tooltip`                           | 4.1.2         | Tooltip component           |
+| `@egovernments/digit-ui-react-components` | 1.8.2-beta.11 | Shared UI components        |
+| `@egovernments/digit-ui-components`       | 0.0.1-beta.28 | Design system components    |
 
 ---
 
