@@ -132,9 +132,7 @@ export const TabJudgeSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: {
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
-          },
+          criteria: {},
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -287,9 +285,7 @@ export const TabJudgeSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: {
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
-          },
+          criteria: {},
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -443,7 +439,19 @@ export const TabJudgeSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
+            stage: [
+              "Long Pending Register",
+              "Post-Disposal",
+              "Post-Judgement",
+              "Judgement",
+              "Arguments",
+              "Defense Evidence",
+              "Examination of Accused",
+              "Complainant Evidence",
+              "Bail & Recording of Plea",
+              "Appearance",
+              "Cognizance",
+            ],
           },
         },
         masterName: "commonUiConfig",
