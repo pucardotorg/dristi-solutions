@@ -190,7 +190,7 @@ public class CaseConsumer {
             courtCase.setDates(ZoneId.of(transformerProperties.getApplicationZoneId()));
             courtCase.setStage(caseOverallStatus.getStage());
             courtCase.setSubstage(caseOverallStatus.getSubstage());
-            courtCase.setSecondaryStage(caseOverallStatus.getSecondaryStage());
+         //   courtCase.setSecondaryStage(caseOverallStatus.getSecondaryStage());
             CaseRequest caseRequest = new CaseRequest();
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
