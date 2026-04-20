@@ -614,7 +614,12 @@ const HomeView = () => {
   }, [searchResult, userType]);
 
   useEffect(() => {
-    if (!individualData || !searchResult || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) return;
+    if (
+      !individualData ||
+      (["ADVOCATE", "ADVOCATE_CLERK"]?.includes(userType) && !searchResult) ||
+      (userType === "ADVOCATE_CLERK" && unAssociatedClerk)
+    )
+      return;
 
     const userHasIncompleteRegistration = !individualId || isRejected || isLitigantPartialRegistered || searchResult?.length === 0;
 
