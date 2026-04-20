@@ -516,7 +516,7 @@ export const TabJudgeSearchConfig = {
                     masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+                      "(data) => {const excludedStages = ['Filing', 'Scrutiny', 'Defect Correction', 'Registration']; return data['case'].CaseUiPrimaryStage?.filter((item) => !excludedStages.includes((item?.name || '').trim())).sort((a,b)=>(a?.name || '').localeCompare(b?.name || '')).map((item) => {return item;});}",
                   },
                   styles: {
                     maxWidth: "250px",
