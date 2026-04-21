@@ -495,7 +495,7 @@ public class HearingUtil {
     }
 
     public void updateOpenHearingIndex(Order order) {
-        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(configuration.getCourtId(), order.getHearingNumber());
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(order.getCourtId(), order.getHearingNumber());
         log.info("inboxRequest = {}", inboxRequest.toString());
         List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
 
@@ -507,7 +507,7 @@ public class HearingUtil {
     }
 
     public void updateOpenHearingOrderStatusForDraftOrder(Order order) {
-        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(configuration.getCourtId(), order.getHearingNumber());
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(order.getCourtId(), order.getHearingNumber());
         log.info("inboxRequest :: {}", inboxRequest.toString());
         List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
 
@@ -519,7 +519,7 @@ public class HearingUtil {
     }
 
     public void updateOpenHearingOrderStatusForDeletedOrder(Order order) {
-        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(configuration.getCourtId(), order.getHearingNumber());
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(order.getCourtId(), order.getHearingNumber());
         log.info("inboxRequest :: {}", inboxRequest.toString());
         List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
 
@@ -531,7 +531,7 @@ public class HearingUtil {
     }
 
     public void updateOpenHearingOrderStatusForPendingSignOrder(Order order) {
-        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(configuration.getCourtId(), order.getHearingNumber());
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(order.getCourtId(), order.getHearingNumber());
         log.info("inboxRequest :: {}", inboxRequest.toString());
         List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
 
