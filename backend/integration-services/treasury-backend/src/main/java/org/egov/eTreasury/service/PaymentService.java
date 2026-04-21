@@ -23,6 +23,7 @@ import org.egov.eTreasury.repository.AuthSekRepository;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -226,6 +227,7 @@ public class PaymentService {
                 .paidBy(challanData.getPaidBy())
                 .sessionTime(System.currentTimeMillis())
                 .departmentId(departmentId)
+                .processedStatus("PENDING")
                 .build();
     }
 
@@ -276,8 +278,6 @@ public class PaymentService {
             treasuryEnrichment.enrichTreasuryPaymentData(data, requestInfo);
             requestInfo.getUserInfo().setTenantId(config.getEgovStateTenantId());
 
-            log.info("Request info: {}", requestInfo);
-
             TreasuryPaymentRequest request = TreasuryPaymentRequest.builder()
                     .requestInfo(requestInfo)
                     .treasuryPaymentData(data)
@@ -289,6 +289,12 @@ public class PaymentService {
             log.info("Saving Payment Data: {}", data);
 
             producer.push(config.getSaveTreasuryPaymentData(), request);
+
+            PaymentStatus status = PaymentStatus.FAILED;
+            if ("Y".equalsIgnoreCase(String.valueOf(transactionDetails.getStatus()))) {
+                status = PaymentStatus.SUCCESS;
+            }
+            repository.updateAuthSekStatus(authSek.getAuthToken(), status.name(), "CALLBACK", System.currentTimeMillis(), "PROCESSED");
 
             return data;
 
@@ -804,45 +810,212 @@ public class PaymentService {
     public TreasuryMapping getHeadBreakDown(String consumerCode) {
         return treasuryMappingRepository.getTreasuryMapping(consumerCode);
     }
-//    public Payload doubleVerifyPayment(VerificationData verificationData, RequestInfo requestInfo) {
-//        try {
-//            VerificationDetails verificationDetails = verificationData.getVerificationDetails();
-//            // Authenticate and get secret map
-//            Map<String, String> secretMap = authenticate();
-//
-//            // Decrypt the SEK using the appKey
-//            String decryptedSek = encryptionUtil.decryptAES(secretMap.get("sek"), secretMap.get("appKey"));
-//            AuthSek authSek = AuthSek.builder()
-//                    .authToken(secretMap.get("authToken"))
-//                    .decryptedSek(decryptedSek)
-//                    .billId(verificationData.getBillId())
-//                    .businessService(verificationData.getBusinessService())
-//                    .serviceNumber(verificationData.getServiceNumber())
-//                    .totalDue(verificationData.getTotalDue())
-//                    .paidBy(verificationData.getPaidBy())
-//                    .sessionTime(System.currentTimeMillis())
-//                    .departmentId(verificationDetails.getDepartmentId()).build();
-//            saveAuthTokenAndSek(requestInfo, authSek);
-//
-//            // Prepare the request body
-//            verificationDetails.setOfficeCode(config.getOfficeCode());
-//            verificationDetails.setServiceDeptCode(config.getServiceDeptCode());
-//            String postBody = generatePostBody(decryptedSek, objectMapper.writeValueAsString(verificationDetails));
-//
-//            // Prepare headers
-//            Headers headers = new Headers();
-//            headers.setClientId(config.getClientId());
-//            headers.setAuthToken(secretMap.get("authToken"));
-//            String headersData = objectMapper.writeValueAsString(headers);
-//
-//            return Payload.builder()
-//                    .url(config.getDoubleVerificationUrl())
-//                    .data(postBody).headers(headersData).build();
-//        } catch (Exception e) {
-//            log.error("Double verification Error: ", e);
-//            throw new CustomException("DOUBLE_VERIFICATION_ERROR", "Error occurred during double verification");
-//        }
-//    }
+
+
+    public void processDoubleVerificationBatch(RequestInfo requestInfo) {
+        log.info("Starting batch process for double verification");
+        Long thresholdTime = System.currentTimeMillis() - (config.getReconciliationThresholdHours() * 60 * 60 * 1000);
+        List<AuthSek> pendingAuthSeks = repository.getPendingAuthSeks(thresholdTime);
+        log.info("Found {} pending auth_sek records to verify", pendingAuthSeks.size());
+
+        for (AuthSek authSek : pendingAuthSeks) {
+            try {
+                log.info("Processing double verification for billId: {}", authSek.getBillId());
+                VerificationData verificationData = getVerificationData(authSek);
+
+                doubleVerifyPayment(verificationData, requestInfo);
+            } catch (Exception e) {
+                log.error("Error processing double verification for billId: {}", authSek.getBillId(), e);
+            }
+        }
+    }
+
+    private VerificationData getVerificationData(AuthSek authSek) {
+        VerificationDetails details = new VerificationDetails();
+        details.setDepartmentId(authSek.getDepartmentId());
+        details.setOfficeCode(config.getOfficeCode());
+        details.setServiceDeptCode(config.getServiceDeptCode());
+        details.setAmount(authSek.getTotalDue());
+
+        VerificationData verificationData = new VerificationData();
+        verificationData.setBillId(authSek.getBillId());
+        verificationData.setBusinessService(authSek.getBusinessService());
+        verificationData.setServiceNumber(authSek.getServiceNumber());
+        verificationData.setTotalDue(authSek.getTotalDue());
+        verificationData.setPaidBy(authSek.getPaidBy());
+        verificationData.setMobileNumber(authSek.getMobileNumber());
+        verificationData.setVerificationDetails(details);
+        verificationData.setMockEnabled(config.isMockEnabled());
+        return verificationData;
+    }
+
+    public TreasuryPaymentData doubleVerifyPayment(VerificationData verificationData, RequestInfo requestInfo) {
+        log.info("Starting double verification for billId: {} | businessService: {}", 
+                verificationData.getBillId(), verificationData.getBusinessService());
+        
+        try {
+            VerificationDetails verificationDetails = verificationData.getVerificationDetails();
+            
+            // Authenticate and get secret map
+            Map<String, String> secretMap;
+            String decryptedSek;
+            if(config.isMockEnabled() && verificationData.isMockEnabled()){
+                //mocking the treasury for authentication
+                log.info("Treasury is in mock mode, using mock authentication.");
+                secretMap = mockAuthentication();
+                decryptedSek = secretMap.get("sek");
+            } else {
+                secretMap = authenticate();
+                log.info("Authentication successful for double verification");
+
+                // Decrypt the SEK using the appKey
+                decryptedSek = encryptionUtil.decryptAES(secretMap.get("sek"), secretMap.get("appKey"));
+            }
+            
+            // Build AuthSek for tracking
+            AuthSek authSek = AuthSek.builder()
+                    .authToken(secretMap.get("authToken"))
+                    .decryptedSek(decryptedSek)
+                    .billId(verificationData.getBillId())
+                    .businessService(verificationData.getBusinessService())
+                    .serviceNumber(verificationData.getServiceNumber())
+                    .totalDue(verificationData.getTotalDue())
+                    .paidBy(verificationData.getPaidBy())
+                    .mobileNumber(verificationData.getMobileNumber())
+                    .sessionTime(System.currentTimeMillis())
+                    .departmentId(verificationDetails.getDepartmentId())
+                    .processedStatus("PENDING")
+                    .build();
+            log.info("AuthSek built for billId: {}", verificationData.getBillId());
+
+            // Prepare the request body
+            verificationDetails.setOfficeCode(config.getOfficeCode());
+            verificationDetails.setServiceDeptCode(config.getServiceDeptCode());
+            String postBody;
+            if (config.isMockEnabled() && verificationData.isMockEnabled()) {
+                log.info("Treasury is in mock mode, generating post body without encryption.");
+                postBody = objectMapper.writeValueAsString(verificationDetails);
+            } else {
+                postBody = generatePostBody(decryptedSek, objectMapper.writeValueAsString(verificationDetails));
+            }
+
+            // Prepare headers
+            Headers headers = new Headers();
+            headers.setClientId(config.getClientId());
+            headers.setAuthToken(secretMap.get("authToken"));
+            String headersData = objectMapper.writeValueAsString(headers);
+
+            // Call the double verification service to fetch payment status
+            log.info("Calling treasury double verification API for billId: {}", verificationData.getBillId());
+            ResponseEntity<String> responseEntity = treasuryUtil.callService(
+                    headersData, 
+                    postBody, 
+                    config.getDoubleVerificationUrl(), 
+                    String.class,
+                    MediaType.APPLICATION_JSON
+            );
+            
+            if (responseEntity == null || responseEntity.getBody() == null) {
+                log.error("No response received from treasury for billId: {}", verificationData.getBillId());
+                throw new CustomException("VERIFICATION_RESPONSE_NULL", 
+                        "No response received from treasury double verification service");
+            }
+            
+            JsonNode rootNode = objectMapper.readTree(responseEntity.getBody());
+            JsonNode returnParamsNode = rootNode.get("RETURN_PARAMS");
+            if (returnParamsNode == null) {
+                log.error("Invalid response format: missing RETURN_PARAMS for billId: {}", verificationData.getBillId());
+                throw new CustomException("INVALID_VERIFICATION_RESPONSE", 
+                        "Invalid response format from treasury double verification service");
+            }
+            
+            JsonNode returnParams;
+            if (returnParamsNode.isTextual()) {
+                returnParams = objectMapper.readTree(returnParamsNode.asText());
+            } else {
+                returnParams = returnParamsNode;
+            }
+
+            TreasuryResponse response = TreasuryResponse.builder()
+                    .status(returnParams.has("status") && returnParams.get("status").asBoolean())
+                    .rek(returnParams.has("rek") ? returnParams.get("rek").asText() : null)
+                    .data(returnParams.has("data") ? returnParams.get("data").asText() : null)
+                    .hmac(returnParams.has("hmac") ? returnParams.get("hmac").asText() : null)
+                    .build();
+                    
+            log.info("Received response from treasury for billId: {} | HTTP status: {}", 
+                    verificationData.getBillId(), responseEntity.getStatusCode());
+            
+            // Decrypt the response
+            String decryptedData;
+            if (config.isMockEnabled() && verificationData.isMockEnabled()) {
+                log.info("Treasury is in mock mode, using mock data.");
+                decryptedData = response.getData();
+            } else {
+                String decryptedRek = encryptionUtil.decryptResponse(response.getRek(), decryptedSek);
+                decryptedData = encryptionUtil.decryptResponse(response.getData(), decryptedRek);
+            }
+            log.info("Decrypted verification response data for billId: {}, decryptedData: {}", verificationData.getBillId(), decryptedData);
+
+            // Parse transaction details from response
+            TransactionDetails transactionDetails = objectMapper.readValue(decryptedData, TransactionDetails.class);
+            log.info("Transaction details retrieved | billId: {} | GRN: {} | status: {} | amount: {}",
+                    verificationData.getBillId(), transactionDetails.getGrn(), 
+                    transactionDetails.getStatus(), transactionDetails.getAmount());
+            
+            // Create treasury payment data
+            TreasuryPaymentData paymentData = createTreasuryPaymentData(transactionDetails, authSek);
+            
+            // Enrich payment data with additional information
+            treasuryEnrichment.enrichTreasuryPaymentData(paymentData, requestInfo);
+            requestInfo.getUserInfo().setTenantId(config.getEgovStateTenantId());
+            
+            // Generate and save payment receipt
+            TreasuryPaymentRequest paymentRequest = TreasuryPaymentRequest.builder()
+                    .requestInfo(requestInfo)
+                    .treasuryPaymentData(paymentData)
+                    .build();
+            
+            String fileStore = printPayInSlipPdf(paymentRequest);
+            paymentData.setFileStoreId(fileStore);
+            log.info("Payment receipt generated | billId: {} | fileStoreId: {}",
+                    verificationData.getBillId(), fileStore);
+            
+            // Save payment data
+            log.info("Saving verified payment data for billId: {}", verificationData.getBillId());
+            //add flag to log the payload instead of pushing it to kafka
+            if (config.isKafkaPushEnabled()) {
+                producer.push(config.getSaveTreasuryPaymentData(), paymentRequest);
+                PaymentStatus status = PaymentStatus.FAILED;
+                if ("Y".equalsIgnoreCase(String.valueOf(paymentData.getStatus()))) {
+                    status = PaymentStatus.SUCCESS;
+                }
+                repository.updateAuthTokenAndStatusByDepartmentId(
+                        authSek.getDepartmentId(),
+                        authSek.getAuthToken(),
+                        authSek.getDecryptedSek(),
+                        status.name(),
+                        "RECONCILIATION",
+                        System.currentTimeMillis(),
+                        "PROCESSED"
+                );
+            } else {
+                log.info("Kafka push is disabled. Request payload we got: {}", paymentRequest);
+            }
+            log.info("Double verification completed successfully for billId: {}", verificationData.getBillId());
+            return paymentData;
+            
+        } catch (CustomException e) {
+            log.error("Custom exception during double verification | billId: {} | error: {}", 
+                    verificationData.getBillId(), e.getMessage(), e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error during double verification | billId: {} | error: {}", 
+                    verificationData.getBillId(), e.getMessage(), e);
+            throw new CustomException("DOUBLE_VERIFICATION_ERROR", 
+                    "Error occurred during double verification: " + e.getMessage());
+        }
+    }
 
 //    public Document printPayInSlip(PrintDetails printDetails, RequestInfo requestInfo) {
 //        try {

@@ -131,9 +131,7 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
-          criteria: {
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
-          },
+          criteria: {},
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -182,12 +180,12 @@ export const TabUnifiedEmployeeSearchConfig = {
                 disable: false,
                 populators: {
                   name: "stage",
-                  optionsKey: "stage",
+                  optionsKey: "name",
                   mdmsConfig: {
-                    masterName: "CasePrimaryStage",
+                    masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
+                      "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -290,7 +288,23 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           criteria: {
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
+            isLPRCase: false,
+            stage: [
+              "Long Pending Register",
+              "Post-Judgement",
+              "Judgement",
+              "Arguments",
+              "Defense Evidence",
+              "Examination of Accused",
+              "Complainant Evidence",
+              "Bail & Recording of Plea",
+              "Appearance",
+              "Cognizance",
+              "Registration",
+              "Defect Correction",
+              "Scrutiny",
+              "Filing",
+            ],
           },
         },
         masterName: "commonUiConfig",
@@ -339,13 +353,13 @@ export const TabUnifiedEmployeeSearchConfig = {
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "substage",
-                  optionsKey: "stage",
+                  name: "stage",
+                  optionsKey: "name",
                   mdmsConfig: {
-                    masterName: "CasePrimaryStage",
+                    masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
+                      "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -448,7 +462,19 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           criteria: {
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
+            stage: [
+              "Long Pending Register",
+              "Post-Disposal",
+              "Post-Judgement",
+              "Judgement",
+              "Arguments",
+              "Defense Evidence",
+              "Examination of Accused",
+              "Complainant Evidence",
+              "Bail & Recording of Plea",
+              "Appearance",
+              "Cognizance",
+            ],
           },
         },
         masterName: "commonUiConfig",
@@ -512,13 +538,13 @@ export const TabUnifiedEmployeeSearchConfig = {
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "substage",
-                  optionsKey: "stage",
+                  name: "stage",
+                  optionsKey: "name",
                   mdmsConfig: {
-                    masterName: "CasePrimaryStage",
+                    masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
+                      "(data) => {const excludedStages = ['Filing', 'Scrutiny', 'Defect Correction', 'Registration']; return data['case'].CaseUiPrimaryStage?.filter((item) => !excludedStages.includes((item?.name || '').trim())).sort((a,b)=>(a?.name || '').localeCompare(b?.name || '')).map((item) => {return item;});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -960,12 +986,13 @@ export const CaseReviewerAdditionalTab = {
             type: "dropdown",
             disable: false,
             populators: {
-              name: "substage",
-              optionsKey: "stage",
+              name: "stage",
+              optionsKey: "name",
               mdmsConfig: {
-                masterName: "CasePrimaryStage",
+                masterName: "CaseUiPrimaryStage",
                 moduleName: "case",
-                select: "(data) => {return data['case'].CasePrimaryStage?.map((item) => {return item?.data || item}).filter((item) => item?.stage && item?.stage.trim() !== 'RESTORE_BACKUP').filter((item, index, arr) => index === arr.findIndex((x) => (x?.stage || '').trim().toLowerCase() === (item?.stage || '').trim().toLowerCase())).sort((a,b) => (a?.stage || '').trim().localeCompare((b?.stage || '').trim()));}",
+                select:
+                  "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
               },
               styles: {
                 maxWidth: "250px",

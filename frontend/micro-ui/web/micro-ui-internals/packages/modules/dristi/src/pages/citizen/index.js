@@ -23,6 +23,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const location = useLocation();
   const { t } = useTranslation();
   const history = useHistory();
+  const refetchAdvocateData = location?.state?.newParams?.refetch || null;
   const Registration = Digit?.ComponentRegistryService?.getComponent("DRISTIRegistration");
   const Response = Digit?.ComponentRegistryService?.getComponent("DRISTICitizenResponse");
   const BailBondSignaturePage = Digit?.ComponentRegistryService?.getComponent("BailBondSignaturePage");
@@ -90,10 +91,10 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
       tenantId,
     },
     { tenantId },
-    moduleCode,
+    `${moduleCode}-${refetchAdvocateData}`,
     Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
-  );
+  );  
 
   const userTypeDetail = useMemo(() => {
     return userTypeOptions.find((item) => item.code === userType) || {};
@@ -207,6 +208,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     history.push(`${path}/home/login`);
   }
   if (
+    !isSearchLoading && 
     !(isRejected || searchResult?.length === 0) &&
     individualId &&
     !isLitigantPartialRegistered &&

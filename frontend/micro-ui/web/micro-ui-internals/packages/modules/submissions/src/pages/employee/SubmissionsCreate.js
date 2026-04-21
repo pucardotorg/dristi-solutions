@@ -1005,7 +1005,7 @@ const SubmissionsCreate = ({ path }) => {
         assignedRole: assignedRole,
         cnrNumber: caseDetails?.cnrNumber || applicationDetails?.cnrNumber,
         filingNumber: filingNumber,
-        caseId: caseDetails?.id || applicationDetails?.cnrNumber,
+        caseId: caseDetails?.id || applicationDetails?.caseId,
         caseTitle: caseDetails?.caseTitle || applicationDetails?.additionalDetails?.caseTitle || "",
         isCompleted,
         stateSla,
