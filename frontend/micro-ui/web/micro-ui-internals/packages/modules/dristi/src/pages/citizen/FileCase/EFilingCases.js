@@ -2601,7 +2601,7 @@ function EFilingCases({ path }) {
         });
       })
       .then(() => {
-        setShowToast({ label: t("CS_SUCCESSFULLY_SAVED_DRAFT"), error: true });
+        setShowToast({ label: t("CS_SUCCESSFULLY_SAVED_DRAFT"), error: false });
       })
       .catch(async (error) => {
         const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
@@ -3260,11 +3260,10 @@ function EFilingCases({ path }) {
           )}
           {showToast && (
             <CustomToast
-              error={true}
+              error={showToast?.error}
               label={showToast?.label ? showToast?.label : t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")}
               errorId={showToast?.errorId}
               onClose={() => setShowToast(null)}
-              isDeleteBtn={true}
               duration={showToast?.errorId ? 7000 : 5000}
             />
           )}
