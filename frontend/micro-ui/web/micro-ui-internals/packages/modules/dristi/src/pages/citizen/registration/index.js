@@ -250,22 +250,27 @@ const Registration = ({ stateCode }) => {
     history.push(`/${window?.contextPath}/citizen/dristi/home/response`);
   };
   const onDocumentUpload = async (filename, filedata, IdType) => {
-    const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", filedata, Digit.ULBService.getStateId());
-    const identityObj = {
-      IdVerification: {
-        selectIdType: {
-          id: 2,
-          code: "OTHER_ID",
-          name: "CS_OTHER",
-          subText: "CS_OTHER_SUB_TEXT",
+    try {
+      const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", filedata, Digit.ULBService.getStateId());
+      const identityObj = {
+        IdVerification: {
+          selectIdType: {
+            id: 2,
+            code: "OTHER_ID",
+            name: "CS_OTHER",
+            subText: "CS_OTHER_SUB_TEXT",
+          },
         },
-      },
-    };
-    setNewParams({ ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } });
-    Digit.SessionStorage.del("aadharNumber");
-    history.replace(`${path}/user-type`, {
-      newParams: { ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } },
-    });
+      };
+      setNewParams({ ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } });
+      Digit.SessionStorage.del("aadharNumber");
+      history.replace(`${path}/user-type`, {
+        newParams: { ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } },
+      });
+    } catch (error) {
+      console.error("Error while uploading id proof", error);
+      setError(t("ERROR_WHILE_UPLOADING_ID_PROOF"));
+    }
   };
   if (isLoading || isFetching) {
     return <Loader />;

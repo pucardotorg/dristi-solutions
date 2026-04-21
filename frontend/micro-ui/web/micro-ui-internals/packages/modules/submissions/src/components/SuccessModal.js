@@ -48,13 +48,15 @@ function SuccessModal({
   ];
   return (
     <Modal
+      headerBarMain={!makePayment}
+      headerBarEnd={!makePayment && <CloseBtn onClick={headerBarEndClose} />}
+      headerBarMainStyle={{ padding: "10px 0px" }}
       actionCancelLabel={t(actionCancelLabel)}
       actionCancelOnSubmit={actionCancelOnSubmit}
       actionSaveLabel={makePayment ? t("CS_MAKE_PAYMENT") : t("CS_CLOSE")}
       actionSaveOnSubmit={handleCloseSuccessModal}
       className={"submission-success-modal"}
     >
-      {headerBarEndClose && <CloseBtn onClick={headerBarEndClose}></CloseBtn>}
       <div className="submission-success-modal-body-main">
         <Banner
           whichSvg={"tick"}
