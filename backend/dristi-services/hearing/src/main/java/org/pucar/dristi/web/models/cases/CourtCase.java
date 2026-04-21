@@ -34,6 +34,9 @@ public class CourtCase {
     @JsonProperty("resolutionMechanism")
     private String resolutionMechanism = null;
 
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
+
     @JsonProperty("caseTitle")
     private String caseTitle = null;
 
