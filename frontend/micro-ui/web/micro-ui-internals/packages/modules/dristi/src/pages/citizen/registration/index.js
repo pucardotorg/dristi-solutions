@@ -55,7 +55,7 @@ const Registration = ({ stateCode }) => {
   const [user, setUser] = useState(null);
   const [otpError, setOtpError] = useState(false);
   const [canSubmitAadharOtp, setCanSubmitAadharOtp] = useState(true);
-  const [error, setError] = useState(null);
+  const [showToast, setShowToast] = useState(null);
 
   useEffect(() => {
     if (location?.state?.newParams) {
@@ -145,7 +145,7 @@ const Registration = ({ stateCode }) => {
       }));
       return;
     } else {
-      setError(t("ES_ERROR_USER_ALREADY_REGISTERED"));
+      setShowToast({ error: true, label: t("ES_ERROR_USER_ALREADY_REGISTERED") });
       setCanSubmitNo(true);
     }
   };
@@ -269,7 +269,8 @@ const Registration = ({ stateCode }) => {
       });
     } catch (error) {
       console.error("Error while uploading id proof", error);
-      setError(t("ERROR_WHILE_UPLOADING_ID_PROOF"));
+      const errorId = error?.response?.headers?.["x-correlation-id"];
+      setShowToast({ error: true, label: t("ERROR_WHILE_UPLOADING_ID_PROOF"), errorId });
     }
   };
   if (isLoading || isFetching) {
@@ -412,7 +413,15 @@ const Registration = ({ stateCode }) => {
           <Route path={`${path}/terms-condition`}>
             <TermsCondition params={newParams} setParams={setNewParams} t={t} config={[stepItems[10]]} pathOnRefresh={pathOnRefresh} path={path} />
           </Route>
-          {error && <CustomToast error={true} label={error} errorId={null} onClose={() => setError(null)} duration={5000} />}
+          {showToast && (
+            <CustomToast
+              error={showToast?.error}
+              label={showToast?.label}
+              errorId={showToast?.errorId}
+              onClose={() => setShowToast(null)}
+              duration={showToast?.errorId ? 7000 : 5000}
+            />
+          )}
         </React.Fragment>
       </Switch>
     </div>
