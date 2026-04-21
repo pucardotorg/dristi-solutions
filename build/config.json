@@ -171,7 +171,7 @@
     "esign-interceptor": {
         "service_group": "core-services",
         "db_source_path": "",
-        "dockerfile_path": "build/maven-java25/Dockerfile.v2",
+        "dockerfile_path": "build/maven-java25/Dockerfile",
         "service_source_path": "backend/integration-services/esign-interceptor",
         "language": "java",
         "version": "25"
@@ -179,7 +179,7 @@
     "e-sign-svc": {
         "service_group": "core-services",
         "db_source_path": "backend/integration-services/e-sign-svc/src/main/resources/db",
-        "dockerfile_path": "build/maven-java25/Dockerfile.v2",
+        "dockerfile_path": "build/maven-java25/Dockerfile",
         "service_source_path": "backend/integration-services/e-sign-svc",
         "language": "java",
         "version": "25"
@@ -219,7 +219,7 @@
     "icops-integration": {
         "service_group": "core-services",
         "db_source_path": "backend/integration-services/icops_integration-kerala/src/main/resources/db",
-        "dockerfile_path": "build/maven-java25/Dockerfile.v2",
+        "dockerfile_path": "build/maven-java25/Dockerfile",
         "service_source_path": "backend/integration-services/icops_integration-kerala",
         "language": "java",
         "version": "25"
@@ -340,7 +340,7 @@
     "summons-svc": {
         "service_group": "core-services",
         "db_source_path": "backend/integration-services/summons-svc/src/main/resources/db",
-        "dockerfile_path": "build/maven-java25/Dockerfile.v2",
+        "dockerfile_path": "build/maven-java25/Dockerfile",
         "service_source_path": "backend/integration-services/summons-svc",
         "language": "java",
         "version": "25"
