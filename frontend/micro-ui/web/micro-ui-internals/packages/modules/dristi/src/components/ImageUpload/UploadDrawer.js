@@ -27,7 +27,7 @@ function UploadDrawer({ setProfilePic, closeDrawer, userType, removeProfilePic, 
               setShowToast({ label: t("CORE_COMMON_PROFILE_FILE_UPLOAD_ERROR"), error: true });
             }
           } catch (err) {
-            const errorId = err?.response?.headers?.["x-correlation-id"];
+            const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
             setShowToast({ label: t("CORE_COMMON_PROFILE_INVALID_FILE_INPUT"), error: true, errorId });
           }
         }

@@ -158,7 +158,7 @@ const HomeSidebar = ({
                   const res = await HomeService.InboxSearch(payload, { tenantId });
                   shouldProceed = res?.totalCount > 0;
                 } catch (err) {
-                  const errorId = err?.response?.headers?.["x-correlation-id"];
+                  const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
                   setShowToast({ label: t("ISSUE_IN_FETCHING"), error: true, errorId });
                   shouldProceed = false;
                   return;

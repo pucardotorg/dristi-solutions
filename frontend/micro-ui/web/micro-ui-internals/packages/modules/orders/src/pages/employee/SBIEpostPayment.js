@@ -64,7 +64,7 @@ const SBIEpostPayment = ({ path }) => {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_FETCHING_CASE_LOCK_STATUS"), error: true, errorId });
     }
   });
@@ -163,7 +163,7 @@ const SBIEpostPayment = ({ path }) => {
       }
     } catch (e) {
       console.error(e);
-      const errorId = e?.response?.headers?.["x-correlation-id"];
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
     }
   };

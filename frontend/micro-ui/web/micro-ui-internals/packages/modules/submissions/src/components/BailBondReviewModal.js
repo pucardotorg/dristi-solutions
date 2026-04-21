@@ -69,7 +69,7 @@ const BailBondReviewModal = ({
     },
     onError: (error) => {
       console.error("Failed to fetch bail bond preview PDF:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_FETCHING_BAIL_BOND_PREVIEW_PDF"), error: true, errorId });
     },
     enabled: !!bailBondDetails?.bailId && !!bailBondDetails?.cnrNumber && !!bailBondPreviewSubmissionTypeMap["BAIL_BOND"],
@@ -119,7 +119,7 @@ const BailBondReviewModal = ({
               setShowBailBondReview(false);
             })
             .catch((e) => {
-              const errorId = e?.response?.headers?.["x-correlation-id"];
+              const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
               setShowToast({ label: t("ERROR_UPLOADING_DOCUMENT"), error: true, errorId });
             });
         }}

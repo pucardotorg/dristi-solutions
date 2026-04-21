@@ -185,7 +185,7 @@ const DashboardPage = () => {
 
       pollTimer = setInterval(tryDownload, pollInterval);
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ error: true, label: t("ERR_REPORT_DOWNLOAD"), errorId });
       console.error("Error generating or downloading report:", error);
       setDownloadingIndices((prev) => prev.filter((i) => i !== index));

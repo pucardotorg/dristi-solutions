@@ -112,7 +112,7 @@ export const replaceUploadedDocsWithCombinedFile = async (t, formData, tenantId,
             doc.submissionDocuments.uploadedDocs = [file];
           } catch (error) {
             console.error("Error combining or uploading documents for index:", index, error);
-            const errorId = error?.response?.headers?.["x-correlation-id"];
+            const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
             setShowToast({ label: t("ERROR_COMBINING_OR_UPLOADING_DOCUMENTS"), error: true, errorId });
             throw new Error("Failed to combine and update uploaded documents.");
           }
@@ -144,7 +144,7 @@ export const replaceUploadedDocsWithFile = async (t, formData, tenantId, setShow
         formData.supportingDocuments.uploadedDocs = [file];
       } catch (error) {
         console.error("Error combining or uploading documents for production documents:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("ERROR_COMBINING_OR_UPLOADING_PRODUCTION_DOCUMENTS"), error: true, errorId });
         throw new Error("Failed to combine and update uploaded documents.");
       }

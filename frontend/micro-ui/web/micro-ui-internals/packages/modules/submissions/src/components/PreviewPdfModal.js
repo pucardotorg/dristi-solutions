@@ -53,7 +53,7 @@ const PreviewPdfModal = ({
     },
     onError: (error) => {
       console.error("Failed to fetch preview PDF:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_FETCHING_PREVIEW_PDF"), error: true, errorId });
     },
     enabled: pdfConfig?.enabled,
@@ -104,7 +104,7 @@ const PreviewPdfModal = ({
               callback && callback();
             })
             .catch((e) => {
-              const errorId = e?.response?.headers?.["x-correlation-id"];
+              const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
               setShowToast({ label: t("ERROR_UPLOADING_DOCUMENT"), error: true, errorId });
             });
         }}

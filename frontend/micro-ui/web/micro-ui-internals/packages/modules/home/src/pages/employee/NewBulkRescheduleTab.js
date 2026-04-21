@@ -299,7 +299,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     } catch (error) {
       console.error("Error :", error);
       setLoader(false);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ error: true, label: t("ISSUE_IN_BULK_HEARING"), errorId });
       setStepper(1);
       setIsSigned(false);

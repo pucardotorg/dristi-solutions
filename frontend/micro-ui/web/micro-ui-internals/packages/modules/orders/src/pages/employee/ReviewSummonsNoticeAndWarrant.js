@@ -75,10 +75,14 @@ function getAction(selectedDelievery, orderType) {
   }
 
   if (key === "DELIVERED") {
-    return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "DELIVERED" : "SERVED";
+    return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+      ? "DELIVERED"
+      : "SERVED";
   }
 
-  return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "NOT_DELIVERED" : "NOT_SERVED";
+  return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+    ? "NOT_DELIVERED"
+    : "NOT_SERVED";
 }
 
 // Tab configuration mapping - maps tab labels to their storage keys
@@ -380,7 +384,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         isInitialLoadRef.current = false;
       }, 1000);
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("SEND_FAILED"),
         error: true,
@@ -504,7 +508,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }, 1000);
       }
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
       setBulkSendList([]);
       // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
@@ -1054,7 +1058,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       setBulkRpadList((prev) => prev?.filter((i) => !selectedItems.some((s) => s.taskNumber === i.taskNumber)) || []);
       setReload((prev) => !prev);
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
     }
   }, [bulkRpadList, t, tenantId]);
@@ -1090,7 +1094,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         isInitialLoadRef.current = false;
       }, 1000);
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
     }
   }, [tenantId, rowData?.taskNumber, t]);
@@ -1367,7 +1371,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }
       });
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("FAILED_TO_PERFORM_BULK_SIGN"),
         error: true,
@@ -1468,7 +1472,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         });
       }
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("BULK_DOWNLOAD_FAILED"),
         error: true,

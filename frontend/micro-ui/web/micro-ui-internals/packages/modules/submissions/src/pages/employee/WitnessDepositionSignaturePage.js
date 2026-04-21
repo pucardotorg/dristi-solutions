@@ -119,7 +119,7 @@ const WitnessDepositionSignaturePage = () => {
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_FETCHING_WITNESS_DEPOSITION_PDF"), error: true, errorId });
     },
     enabled: Boolean(fileStoreId),
@@ -151,7 +151,7 @@ const WitnessDepositionSignaturePage = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("WITNESS_DEPOSITION_SIGNATURE_FAILED"), error: true, errorId });
     } finally {
       setShowSignatureModal(false);
@@ -208,7 +208,7 @@ const WitnessDepositionSignaturePage = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Failed to upload witness deposition:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("WITNESS_DEPOSITION_UPLOAD_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);

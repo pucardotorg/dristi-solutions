@@ -158,7 +158,7 @@ function BulkSignADiaryView() {
           setShowDocumentPdfModal({ show: true, rowData: { document: order?.documents?.[0], rowData: entry } });
         } catch (error) {
           console.error("error: ", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("BULK_SIGN_DIARY_SEARCH_ORDER_FAILED"), error: true, errorId });
         }
       }
@@ -181,7 +181,7 @@ function BulkSignADiaryView() {
           setShowDocumentPdfModal({ show: true, rowData: { document: response?.artifacts?.[0]?.file, rowData: entry } });
         } catch (error) {
           console.error("error: ", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("BULK_SIGN_DIARY_SEARCH_EVIDENCE_FAILED"), error: true, errorId });
         }
       }
@@ -204,7 +204,7 @@ function BulkSignADiaryView() {
           });
         } catch (error) {
           console.error("Failed to fetch notification:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("NOTIFICATION_FETCH_FAILED"), error: true, errorId });
         }
       }

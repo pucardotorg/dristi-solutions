@@ -80,7 +80,10 @@ const CustomToast = ({
         <div className="toast-label" style={{ ...labelstyle }}>
           {label}
           {errorId && (
-            <span style={{ fontWeight: "400", marginLeft: "8px", borderLeft: "1px solid rgba(255,255,255,0.3)", paddingLeft: "8px" }}>
+            <span
+              className="help-error"
+              style={{ fontWeight: "400", marginLeft: "8px", borderLeft: "1px solid rgba(255,255,255,0.3)", paddingLeft: "8px" }}
+            >
               {t("SHARE_ERROR_TO_HELPDESK")}: {errorId}
             </span>
           )}

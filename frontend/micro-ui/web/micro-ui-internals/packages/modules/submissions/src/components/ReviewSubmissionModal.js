@@ -145,7 +145,7 @@ function ReviewSubmissionModal({
     },
     onError: (error) => {
       console.error("Failed to fetch submission preview PDF:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_FETCHING_SUBMISSION_PREVIEW_PDF"), error: true, errorId });
     },
     enabled: !!application?.applicationNumber && !!application?.cnrNumber && !!SubmissionPreviewSubmissionTypeMap[application?.applicationType],
@@ -186,7 +186,7 @@ function ReviewSubmissionModal({
         });
       } catch (error) {
         console.error("Failed to fetch user info", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("ERROR_FETCHING_USER_INFO"), error: true, errorId });
       }
     };

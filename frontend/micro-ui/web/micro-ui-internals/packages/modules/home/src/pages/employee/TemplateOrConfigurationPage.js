@@ -94,7 +94,7 @@ const TemplateOrConfigurationPage = () => {
           setRefreshKey((prev) => prev + 1);
         } catch (error) {
           console.error("Delete failed", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("TEMPLATE_DELETE_FAILED"), error: true, errorId });
         } finally {
           setIsLoading(false);
@@ -118,7 +118,7 @@ const TemplateOrConfigurationPage = () => {
         }
       } catch (error) {
         console.error(error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("ERROR_OPENING_TEMPLATE"), error: true, errorId });
       } finally {
         setIsLoading(false);
@@ -274,7 +274,7 @@ const TemplateOrConfigurationPage = () => {
       }
     } catch (error) {
       console.error("Error while Updating....", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_UPDATING_TEMPLATE"), error: true, errorId });
     } finally {
       setIsLoading(false);
@@ -310,7 +310,7 @@ const TemplateOrConfigurationPage = () => {
       }
     } catch (error) {
       console.error("Error whle Updating....", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_UPDATING_TEMPLATE"), error: true, errorId });
     } finally {
       setIsLoading(false);

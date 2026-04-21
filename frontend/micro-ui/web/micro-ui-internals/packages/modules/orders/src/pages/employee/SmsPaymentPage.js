@@ -382,7 +382,7 @@ const SmsPaymentPage = () => {
       setStep(step + 1);
     } catch (error) {
       console.error("Error in proceeding to payment:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("SMS_PAYMENT_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -448,7 +448,7 @@ const SmsPaymentPage = () => {
       }
     } catch (error) {
       console.error("Error in proceeding to payment:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("SMS_PAYMENT_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -462,7 +462,7 @@ const SmsPaymentPage = () => {
       await download(receiptFilstoreId, tenantId, "treasury", fileName);
     } catch (err) {
       console.error("Error in downloading reciept:", err);
-      const errorId = err?.response?.headers?.["x-correlation-id"];
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("SMS_PAYMENT_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);

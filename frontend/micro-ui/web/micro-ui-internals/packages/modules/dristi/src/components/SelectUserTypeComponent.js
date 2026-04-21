@@ -28,7 +28,7 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
       return { file: fileUploadRes?.data, fileType: fileData.type, filename };
     } catch (error) {
       console.error("Error while uploading id proof", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_WHILE_UPLOADING_ID_PROOF"), error: true, errorId });
       return null;
     }

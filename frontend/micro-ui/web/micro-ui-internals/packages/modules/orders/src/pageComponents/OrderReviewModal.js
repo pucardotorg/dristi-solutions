@@ -72,7 +72,7 @@ function OrderReviewModal({
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_FETCHING_ORDER_PREVIEW_PDF"), error: true, errorId });
     },
     enabled: !!order?.id && !!order?.cnrNumber,
@@ -141,7 +141,7 @@ function OrderReviewModal({
         await onSuccess(fileStoreId);
       }
     } catch (e) {
-      const errorId = e?.response?.headers?.["x-correlation-id"];
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_UPLOADING_DOCUMENT"), error: true, errorId });
       console.error("Failed to upload document:", e);
       setUpdateLoading(false);
@@ -193,7 +193,7 @@ function OrderReviewModal({
             setUpdateLoading(false);
           })
           .catch((e) => {
-            const errorId = e?.response?.headers?.["x-correlation-id"];
+            const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
             setShowToast({ label: t("ERROR_UPDATING_ORDER"), error: true, errorId });
             console.error("Failed to update order:", e);
             setUpdateLoading(false);

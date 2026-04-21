@@ -157,7 +157,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_FETCHING_CASE_LOCK_STATUS"), error: true, errorId });
     }
   });
@@ -480,7 +480,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, postPaymenScreenObj);
       } catch (error) {
         console.error(error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
       }
     };
@@ -505,7 +505,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         });
       } catch (error) {
         console.error(error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
       }
     };

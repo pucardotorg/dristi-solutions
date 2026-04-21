@@ -134,7 +134,7 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
       setShowToast({ label: t("POLICE_STATION_FOUND"), error: false });
     } catch (error) {
       console.error("Error fetching police station:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_FETCHING_POLICE_STATION"), error: true, errorId });
       setPoliceStationError(t("ERROR_FETCHING_POLICE_STATION"));
       setPoliceStation(null);

@@ -100,7 +100,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
         refetch();
       } catch (error) {
         console.error("Error updating task data:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("ADVOCATE_REPLACEMENT_ERROR_UPDATING_TASK"), error: true, errorId });
         setPendingTaskActionModals((pendingTaskActionModals) => {
           const data = pendingTaskActionModals?.data;
@@ -193,7 +193,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
       history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
     } catch (error) {
       console.error("error", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_CREATING_ORDER"), error: true, errorId });
     } finally {
       setIsApiCalled(false);

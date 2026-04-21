@@ -286,7 +286,7 @@ const MarkAsEvidence = ({
       }
     } catch (error) {
       console.error("Error creating PDF seal:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("ERROR_CREATING_EVIDENCE_SEAL"),
         error: true,
@@ -399,7 +399,7 @@ const MarkAsEvidence = ({
         getIndividualDetails(response?.artifacts?.[0]?.sourceID);
       }
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("ERROR_FETCHING_EVIDENCE_DETAILS"),
         error: true,
@@ -494,7 +494,7 @@ const MarkAsEvidence = ({
       setWitnessTagValues(combined?.filter(Boolean));
       setCaseDetails(response?.criteria[0]?.responseList[0]);
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("ERROR_FETCHING_CASE_DETAILS"),
         error: true,
@@ -794,7 +794,7 @@ const MarkAsEvidence = ({
         });
       }
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("EVIDENCE_UPDATE_ERROR_MESSAGE"),
         error: true,
@@ -875,7 +875,7 @@ const MarkAsEvidence = ({
       sessionStorage.removeItem("fileStoreId");
       handleEsign(name, pageModule, file, "Judge/Magistrate");
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("ERROR_ESIGN_EVIDENCE"),
         error: true,

@@ -63,7 +63,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
       );
       setCaseDetails(response?.criteria[0]?.responseList[0]);
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       console.error("Error:", errorId, error);
     }
   };
@@ -137,7 +137,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
       })
       .catch((err) => {
         console.error(err);
-        const errorId = err?.response?.headers?.["x-correlation-id"];
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
         console.error("Error ID:", errorId);
       });
   };

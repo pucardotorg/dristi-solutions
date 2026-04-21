@@ -276,7 +276,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     } catch (error) {
       console.error("Error :", error);
       setLoader(false);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ISSUE_IN_BULK_HEARING"), error: true, errorId });
       setStepper(0);
       setIsSigned(false);
@@ -302,7 +302,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         });
     } catch (error) {
       console.error("Failed to update business of the day entry:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("UPDATE_BUSINESS_OF_DAY_FAILED"), error: true, errorId });
     }
   };

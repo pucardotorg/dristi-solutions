@@ -250,7 +250,7 @@ const ManageOfficeMember = () => {
       }
     } catch (error) {
       console.error("Error removing member:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("REMOVE_MEMBER_ERROR"), error: true, errorId });
     } finally {
       setIsRemovingMember(false);
@@ -471,7 +471,7 @@ const ManageOfficeMember = () => {
       });
     } catch (error) {
       console.error("Error saving member access logic:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: isNewMember ? t("MEMBER_ADD_ERROR") : t("UPDATE_ACCESS_ERROR"), error: true, errorId });
     } finally {
       setIsUpdatingAccess(false);

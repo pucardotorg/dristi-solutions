@@ -56,7 +56,7 @@ function OrderBulkReviewModal({ t, history, orderDetails }) {
           );
         });
     } catch (e) {
-      const errorId = e?.response?.headers?.["x-correlation-id"];
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("FAILED_TO_REMOVE_ORDER_FROM_BULK_LIST"), error: true, errorId });
       console.error("Failed to remove the order from bulk list", e);
     } finally {

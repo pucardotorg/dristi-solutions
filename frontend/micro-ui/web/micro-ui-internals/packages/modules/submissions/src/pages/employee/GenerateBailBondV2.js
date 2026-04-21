@@ -1051,7 +1051,7 @@ const GenerateBailBondV2 = () => {
       }
     } catch (error) {
       console.error("Error while creating bail bond:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -1072,7 +1072,7 @@ const GenerateBailBondV2 = () => {
         individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
       } catch (error) {
         console.error("Failed to fetch user UUID:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("FAILED_TO_FETCH_USER_DETAILS"), error: true, errorId });
         setLoader(false);
         return;
@@ -1086,7 +1086,7 @@ const GenerateBailBondV2 = () => {
           setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
         } catch (error) {
           console.error("Failed to create bail bond:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("BAIL_BOND_CREATE_FAILED"), error: true, errorId });
           setLoader(false);
           return;
@@ -1106,7 +1106,7 @@ const GenerateBailBondV2 = () => {
             });
           } catch (error) {
             console.error("Failed to update pending task:", error);
-            const errorId = error?.response?.headers?.["x-correlation-id"];
+            const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
             setShowToast({ label: t("FAILED_TO_UPDATE_PENDING_TASK"), error: true, errorId });
             setLoader(false);
             return;
@@ -1121,7 +1121,7 @@ const GenerateBailBondV2 = () => {
           setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
         } catch (error) {
           console.error("Failed to update bail bond:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("BAIL_BOND_UPDATE_FAILED"), error: true, errorId });
           setLoader(false);
           return;
@@ -1130,7 +1130,7 @@ const GenerateBailBondV2 = () => {
       setShowToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
     } catch (error) {
       console.error("Unexpected error while saving bail bond:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -1165,7 +1165,7 @@ const GenerateBailBondV2 = () => {
       setShowBailBondEsign(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true, errorId });
     } finally {
       setShowsignatureModal(false);
@@ -1192,7 +1192,7 @@ const GenerateBailBondV2 = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);

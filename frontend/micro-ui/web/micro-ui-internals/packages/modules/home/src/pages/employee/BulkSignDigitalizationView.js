@@ -271,7 +271,7 @@ function BulkSignDigitalizationView() {
         setShowBulkSignSuccessModal(true);
       });
     } catch (e) {
-      const errorId = e?.response?.headers?.["x-correlation-id"];
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true, errorId });
       console.error("Failed to perform bulk sign", e?.message);
     } finally {

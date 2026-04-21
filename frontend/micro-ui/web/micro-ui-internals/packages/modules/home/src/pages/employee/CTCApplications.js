@@ -66,7 +66,7 @@ const CTCApplications = ({ refetch }) => {
       setShowModal(true);
     } catch (error) {
       console.error("handleRowClick error:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("CTC_SEARCH_APPLICATION_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);
@@ -270,7 +270,7 @@ const CTCApplications = ({ refetch }) => {
       setShowToast({ label: t("CTC_APPLICATION_ACCEPTED"), error: false });
     } catch (error) {
       console.error("handleCTCApplications error:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("CTC_APPLICATION_APPROVE_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);
@@ -302,7 +302,7 @@ const CTCApplications = ({ refetch }) => {
       setShowToast({ label: t("CTC_APPLICATION_REJECTED"), error: false });
     } catch (error) {
       console.error("handleConfirmReject error:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("CTC_APPLICATION_REJECT_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);
@@ -331,7 +331,7 @@ const CTCApplications = ({ refetch }) => {
       setUpdateCounter((prev) => prev + 1);
     } catch (error) {
       console.error("Failed to process bulk CTC applications:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BULK_ACCEPT_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);

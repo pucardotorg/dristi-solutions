@@ -276,7 +276,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
       onAddSuccess();
     } catch (error) {
       console.error(error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_ADDING_WITNESS"), error: true, errorId });
     } finally {
       setIsWitnessAdding(false);

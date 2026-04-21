@@ -314,7 +314,7 @@ function ScheduleHearing({
         })
         .catch((err) => {
           console.error("Error creating order:", err);
-          const errorId = err?.response?.headers?.["x-correlation-id"];
+          const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ error: true, label: t("ERROR_CREATING_ORDER"), errorId });
           setIsSubmitDisabled(false);
         });
@@ -360,7 +360,7 @@ function ScheduleHearing({
         })
         .catch((err) => {
           console.error("Error creating opt-out:", err);
-          const errorId = err?.response?.headers?.["x-correlation-id"];
+          const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ error: true, label: t("ERROR_CREATING_OPT_OUT"), errorId });
           setIsSubmitDisabled(false);
         });

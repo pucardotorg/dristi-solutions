@@ -52,7 +52,7 @@ const BailBondLoginPage = () => {
       });
     } catch (error) {
       setError(true);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BAIL_BOND_LOGIN_FAILED"), error: true, errorId });
       return;
     }

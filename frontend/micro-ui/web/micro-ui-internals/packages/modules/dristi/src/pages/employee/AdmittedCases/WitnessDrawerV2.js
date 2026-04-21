@@ -730,7 +730,7 @@ const WitnessDrawerV2 = ({
       }
     } catch (error) {
       console.error("Failed to save witness deposition draft:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("WITNESS_DEPOSITION_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -797,7 +797,7 @@ const WitnessDrawerV2 = ({
       refetchCaseData();
     } catch (error) {
       console.error("Failed to save witness marking:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("FAILED_TO_SAVE_WITNESS_MARKING"), error: true, errorId });
     } finally {
     }
@@ -894,7 +894,7 @@ const WitnessDrawerV2 = ({
       setCurrentArtifactNumber(null);
     } catch (error) {
       console.error("Failed to update witness deposition:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("WITNESS_DEPOSITION_UPDATE_FAILED"), error: true, errorId });
     } finally {
       // evidenceRefetch();
@@ -915,7 +915,7 @@ const WitnessDrawerV2 = ({
       setCurrentArtifactNumber(null);
     } catch (error) {
       console.error("Failed to update bail bond signature:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BAIL_BOND_UPDATE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -993,7 +993,7 @@ const WitnessDrawerV2 = ({
       }
     } catch (error) {
       console.error("Failed to delete witness deposition:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("WITNESS_DELETE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -1121,7 +1121,7 @@ const WitnessDrawerV2 = ({
       // Also refresh evidence list to ensure server and client are in sync
     } catch (error) {
       console.error("Failed to save examination draft:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("EXAMINATION_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);

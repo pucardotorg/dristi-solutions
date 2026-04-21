@@ -96,7 +96,7 @@ const SBIPaymentStatus = ({ path }) => {
           ]);
         } catch (err) {
           console.error("Error fetching payment tasks:", err);
-          const errorId = err?.response?.headers?.["x-correlation-id"];
+          const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("FAILED_TO_FETCH_PAYMENT_TASKS"), error: true, errorId });
         }
       }

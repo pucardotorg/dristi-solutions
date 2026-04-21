@@ -189,7 +189,7 @@ const EmployeeProfileEdit = ({ stateCode, userType, cityDetails }) => {
       }
     } catch (error) {
       const errorObj = JSON.parse(error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t(errorObj.message), error: true, errorId });
     }
 

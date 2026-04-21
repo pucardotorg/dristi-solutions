@@ -221,7 +221,7 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
       }
     } catch (error) {
       console.error("Payment initiation failed:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("PAYMENT_INITIATION_FAILED"), error: true, errorId: errorId });
     } finally {
       setLoader(false);

@@ -156,7 +156,7 @@ const ViewPaymentDetails = ({ location, match }) => {
           setCalculationResponse({ Calculation: [response?.TreasuryHeadMapping?.calculation] });
         } catch (error) {
           console.error("Error fetching payment calculation:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ error: true, label: t("CS_PAYMENT_CALCULATION_ERROR"), errorId });
         }
       }

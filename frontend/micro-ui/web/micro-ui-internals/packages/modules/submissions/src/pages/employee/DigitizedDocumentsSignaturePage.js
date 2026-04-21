@@ -164,7 +164,7 @@ const DigitizedDocumentsSignaturePage = () => {
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("FAILED_TO_FETCH_DOCUMENT_PREVIEW"), error: true, errorId });
     },
     enabled: Boolean(fileStoreId),
@@ -222,7 +222,7 @@ const DigitizedDocumentsSignaturePage = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error uploading signed document:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("DIGITIZED_DOCUMENT_SIGNATURE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -245,7 +245,7 @@ const DigitizedDocumentsSignaturePage = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("DIGITIZED_DOCUMENT_SIGNATURE_FAILED"), error: true, errorId });
     } finally {
       setShowSignatureModal(false);
@@ -318,7 +318,7 @@ const DigitizedDocumentsSignaturePage = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating document:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("DIGITIZED_DOCUMENT_UPDATE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);

@@ -69,7 +69,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
         setFormData({});
         handleSigned(false);
         setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("CS_FILE_UPLOAD_ERROR"), error: true, errorId });
       }
     }

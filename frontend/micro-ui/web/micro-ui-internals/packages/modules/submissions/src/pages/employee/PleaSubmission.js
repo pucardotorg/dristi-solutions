@@ -100,7 +100,7 @@ const PleaSubmission = () => {
       }
     } catch (err) {
       console.error(err);
-      const errorId = err?.response?.headers?.["x-correlation-id"];
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_FETCHING_CASE_DETAILS"), error: true, errorId });
     } finally {
       setIsCaseDetailsLoading(false);
@@ -254,7 +254,7 @@ const PleaSubmission = () => {
       }
     } catch (error) {
       console.error("Failed to save plea draft:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("PLEA_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -285,7 +285,7 @@ const PleaSubmission = () => {
       setShowAddPleaMobileNumber(true);
     } catch (error) {
       console.error("Failed to submit plea:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("PLEA_SUBMISSION_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -323,7 +323,7 @@ const PleaSubmission = () => {
       setShowPleaEsign(true);
     } catch (error) {
       console.error("Failed to verify plea OTP:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("PLEA_OTP_VERIFICATION_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);

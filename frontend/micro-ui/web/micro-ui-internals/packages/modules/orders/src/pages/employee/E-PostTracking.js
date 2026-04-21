@@ -149,7 +149,7 @@ const EpostTrackingPage = () => {
       await downloadPdf(tenantId, fileStoreId, processNumber);
       setShowToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
     } catch (err) {
-      const errorId = err?.response?.headers?.["x-correlation-id"];
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_ERROR"), error: true, errorId });
     } finally {
       setLoading(false);
@@ -264,7 +264,7 @@ const EpostTrackingPage = () => {
         downloadFile(response?.data, filename);
         setShowToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
       } catch (error) {
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("POST_TRACKING_UPDATE_FAILED"), error: true, errorId });
         console.error(error);
       } finally {
@@ -450,7 +450,7 @@ const EpostTrackingPage = () => {
       setShowToast({ label: t("STATUS_UPDATE_SUCCESSFULLY"), error: false });
       setSearchRefreshCounter((prev) => prev + 1);
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       console.error("error while updating : ", error);
       const errorCode = error?.response?.data?.Errors?.[0]?.code;
       const errorMsg = errorCode === "DUPLICATE_SPEED_POST_ID_ERROR" ? t("DUPLICATE_SPEED_POST_ID_ERROR") : t("POST_TRACKING_FAILED");

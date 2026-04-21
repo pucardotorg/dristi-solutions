@@ -169,7 +169,7 @@ const HomeHearingsTab = ({
               })
               .catch((error) => {
                 setLoader(false);
-                const errorId = error?.response?.headers?.["x-correlation-id"];
+                const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
                 setShowToast({ error: true, label: t("ISSUE_IN_NEXT_START_HEARING"), errorId });
                 console.error("Error starting hearing", error);
               });
@@ -225,7 +225,7 @@ const HomeHearingsTab = ({
           } catch (e) {
             console.error(e);
             setLoader(false);
-            const errorId = e?.response?.headers?.["x-correlation-id"];
+            const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
             setShowToast({ error: true, label: t("ISSUE_IN_START_HEARING"), errorId });
           }
         } else if (["IN_PROGRESS"].includes(hearingDetails?.status)) {
@@ -256,7 +256,7 @@ const HomeHearingsTab = ({
           } catch (error) {
             const errorCode = error?.response?.data?.Errors?.[0]?.code;
             const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? t("ORDER_ALREADY_PUBLISHED") : t("CORE_SOMETHING_WENT_WRONG");
-            const errorId = error?.response?.headers?.["x-correlation-id"];
+            const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
             setShowToast({ error: true, label: errorMsg, errorId });
           }
         }
@@ -330,7 +330,7 @@ const HomeHearingsTab = ({
               } catch (e) {
                 console.error(e);
                 setLoader(false);
-                const errorId = e?.response?.headers?.["x-correlation-id"];
+                const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
                 setShowToast({ error: true, label: t("ISSUE_IN_START_HEARING"), errorId });
               }
             },
@@ -450,7 +450,7 @@ const HomeHearingsTab = ({
                     })
                     .catch((e) => {
                       setLoader(false);
-                      const errorId = e?.response?.headers?.["x-correlation-id"];
+                      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
                       setShowToast({ error: true, label: t("ISSUE_IN_PASS_OVER"), errorId });
                     });
                 }
@@ -458,7 +458,7 @@ const HomeHearingsTab = ({
             } catch (e) {
               console.error(e);
               setLoader(false);
-              const errorId = e?.response?.headers?.["x-correlation-id"];
+              const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
               setShowToast({ error: true, label: t("ISSUE_IN_PASS_OVER"), errorId });
             } finally {
               // setLoader(false);
@@ -960,7 +960,7 @@ const HomeHearingsTab = ({
                 });
             } catch (e) {
               setLoader(false);
-              const errorId = e?.response?.headers?.["x-correlation-id"];
+              const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
               setShowToast({ error: true, label: t("ISSUE_IN_HEARING_UPDATE"), errorId });
             } finally {
               setPassOver(false);
@@ -1013,7 +1013,7 @@ const HomeHearingsTab = ({
                 });
             } catch (e) {
               setLoader(false);
-              const errorId = e?.response?.headers?.["x-correlation-id"];
+              const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
               setShowToast({ error: true, label: t("ISSUE_IN_HEARING_UPDATE"), errorId });
               setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
             } finally {

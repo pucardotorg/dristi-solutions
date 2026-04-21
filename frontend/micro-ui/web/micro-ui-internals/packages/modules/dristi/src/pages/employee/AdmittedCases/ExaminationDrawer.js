@@ -415,7 +415,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       }
     } catch (error) {
       console.error("Error saving draft:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("EXAMINATION_DRAFT_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -488,7 +488,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       }
     } catch (error) {
       console.error("Error while deleting examination of accused", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("EXAMINATION_DELETE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -582,7 +582,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       }
     } catch (error) {
       console.error("Failed to save examination:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("EXAMINATION_CREATE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -669,7 +669,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       setCurrentDocumentNumber(null);
     } catch (error) {
       console.error("Error while updating examination:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("EXAMINATION_ESIGN_SUBMIT_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);

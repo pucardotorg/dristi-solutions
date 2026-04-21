@@ -494,7 +494,7 @@ function CaseFileAdmission({ t, path }) {
           setCreateAdmissionOrder(true);
           setLoader(false);
         } catch (error) {
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("UNABLE_TO_REGISTER_CASE"), error: true, errorId });
           console.error("some error occurred:", error);
           setLoader(false);

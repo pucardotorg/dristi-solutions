@@ -108,7 +108,7 @@ const SubmissionDocuments = ({ path }) => {
         }
       } catch (err) {
         console.error("Failed to fetch case details:", err);
-        const errorId = err?.response?.headers?.["x-correlation-id"];
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("ERROR_FETCHING_CASE_DETAILS"), error: true, errorId });
       } finally {
         setLoader(false);
@@ -248,7 +248,7 @@ const SubmissionDocuments = ({ path }) => {
       }
     } catch (error) {
       console.error("Failed to upload submission document:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       const errorCode = error?.response?.data?.Errors?.[0]?.code;
       setShowToast({ label: t(errorCode || "SUBMISSION_DOCUMENT_UPLOAD_FAILED"), error: true, errorId });
     } finally {
@@ -273,7 +273,7 @@ const SubmissionDocuments = ({ path }) => {
       }
     } catch (error) {
       console.error("Error whike combining documents:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("SUBMISSION_COMBINE_DOCUMENTS_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);

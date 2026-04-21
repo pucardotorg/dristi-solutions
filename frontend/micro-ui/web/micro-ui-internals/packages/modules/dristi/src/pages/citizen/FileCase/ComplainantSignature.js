@@ -570,7 +570,7 @@ const ComplainantSignature = ({ path }) => {
       });
     } catch (error) {
       console.error("Failed to close pending tasks:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("FAILED_TO_CLOSE_PENDING_TASKS"), error: true, errorId });
       setLoader(false);
     }
@@ -704,7 +704,7 @@ const ComplainantSignature = ({ path }) => {
           await handleCaseUnlockingWhenMockESign();
         } catch (error) {
           console.error("Failed to unlock case:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("FAILED_TO_UNLOCK_CASE"), error: true, errorId });
         }
       } else {
@@ -712,7 +712,7 @@ const ComplainantSignature = ({ path }) => {
       }
     } catch (error) {
       console.error("Failed to initiate e-signature:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ESIGN_INITIATION_FAILED"), error: true, errorId });
       setLoader(false);
     }
@@ -896,7 +896,7 @@ const ComplainantSignature = ({ path }) => {
         history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculation } });
       } catch (err) {
         console.error("Payment recovery failed:", err);
-        const errorId = err?.response?.headers?.["x-correlation-id"];
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("PAYMENT_RECOVERY_FAILED"), error: true, errorId });
         history.replace(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`);
       } finally {
@@ -1056,14 +1056,14 @@ const ComplainantSignature = ({ path }) => {
           }
         })
         .catch((error) => {
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("ESIGN_CALLBACK_FAILED"), error: true, errorId });
           setEsignSuccess(false);
           throw error;
         });
     } catch (error) {
       console.error("E-sign process failed:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ESIGN_PROCESS_FAILED"), error: true, errorId });
       setEsignSuccess(false);
       setLoader(false);

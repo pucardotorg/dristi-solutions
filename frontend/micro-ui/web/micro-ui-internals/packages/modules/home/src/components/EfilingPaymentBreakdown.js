@@ -86,7 +86,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
           setCalculationResponse({ Calculation: [response?.TreasuryHeadMapping?.calculation] });
         } catch (error) {
           console.error("Error fetching payment calculation:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("CS_PAYMENT_CALCULATION_ERROR"), error: true, errorId });
         } finally {
           setIsLoading(false);
@@ -144,7 +144,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("CS_CASE_LOCK_STATUS_ERROR"), error: true, errorId });
     }
   });
@@ -231,7 +231,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
         setRetryPayment(true);
       }
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("CS_PAYMENT_ERROR"), error: true, errorId });
       console.error(error);
     } finally {

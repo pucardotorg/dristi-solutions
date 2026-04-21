@@ -755,7 +755,7 @@ const EditProfile = ({ path }) => {
         } else if (extractCodeFromErrorMsg(error) === 413) {
           message = t("FAILED_TO_UPLOAD_FILE");
         }
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ error: true, label: message, errorId });
         console.error("An error occurred:", error);
         return { error };

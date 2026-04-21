@@ -184,7 +184,7 @@ const CourierSelectionPage = ({ t, onNext, noticeData, setNoticeData, breakupRes
       setShowAddAddressModalLocal(false);
     } catch (err) {
       console.error("Error while adding address", err);
-      const errorId = err?.response?.headers?.["x-correlation-id"];
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ADD_ADDRESS_FAILED"), error: true, errorId });
     }
   };

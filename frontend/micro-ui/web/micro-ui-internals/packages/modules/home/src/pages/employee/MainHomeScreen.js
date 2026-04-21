@@ -238,7 +238,7 @@ const MainHomeScreen = () => {
         const res = await HomeService.InboxSearch(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
         setHearingCount(res?.totalCount || 0);
       } catch (err) {
-        const errorId = err?.response?.headers?.["x-correlation-id"];
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ error: true, label: t("ISSUE_IN_FETCHING_HEARINGS"), errorId });
         console.error(err);
       }
@@ -273,7 +273,7 @@ const MainHomeScreen = () => {
         });
         // }
       } catch (err) {
-        const errorId = err?.response?.headers?.["x-correlation-id"];
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ error: true, label: t("ISSUE_IN_FETCHING_HEARINGS"), errorId });
         console.error(err);
       }
@@ -419,7 +419,7 @@ const MainHomeScreen = () => {
         OTHERS: otherApplicationsCount,
       });
     } catch (err) {
-      const errorId = err?.response?.headers?.["x-correlation-id"];
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ error: true, label: t("ISSUE_IN_FETCHING"), errorId });
       console.error(err);
     } finally {
@@ -680,7 +680,7 @@ const MainHomeScreen = () => {
           });
         } catch (error) {
           console.error("Failed to create or update courier task:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ error: true, label: t("FAILED_TO_UPDATE_COURIER_TASK"), errorId });
           return { continue: false };
         }
@@ -689,7 +689,7 @@ const MainHomeScreen = () => {
           await refetchTaskManagement();
         } catch (error) {
           console.error("Failed to refetch task management:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ error: true, label: t("FAILED_TO_REFETCH_TASKS"), errorId });
           return { continue: false };
         }
@@ -704,7 +704,7 @@ const MainHomeScreen = () => {
         return { continue: true };
       } catch (error) {
         console.error("Unexpected error in courier processing:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ error: true, label: t("HOME_SCREEN_UPDATE_FAILED"), errorId });
         return { continue: false };
       } finally {

@@ -84,7 +84,7 @@ const BulkRescheduleModal = ({
       setNewHearingData(tentativeDates?.Hearings);
     } catch (error) {
       console.error(error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BULK_RESCHEDULE_ERROR"), error: true, errorId });
     } finally {
       setIsLoader(false);

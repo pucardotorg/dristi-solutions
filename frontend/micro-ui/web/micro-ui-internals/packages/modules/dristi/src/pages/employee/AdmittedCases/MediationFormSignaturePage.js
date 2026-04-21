@@ -349,7 +349,7 @@ const MediationFormSignaturePage = () => {
       );
     } catch (error) {
       console.error("Error:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("MEDIATION_FORM_EDIT_FAILED"), error: true, errorId });
     }
   };
@@ -387,7 +387,7 @@ const MediationFormSignaturePage = () => {
           }
         } catch (error) {
           console.error("Error:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("MEDIATION_FORM_UNLOCK_FAILED"), error: true, errorId });
         }
       } else {
@@ -398,7 +398,7 @@ const MediationFormSignaturePage = () => {
       }
     } catch (error) {
       console.error("Failed to save mediation form:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("MEDIATION_FORM_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -432,7 +432,7 @@ const MediationFormSignaturePage = () => {
           }
         } catch (error) {
           console.error("Error:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("MEDIATION_FORM_SIGNATURE_FAILED"), error: true, errorId });
         } finally {
           setLoader(false);
@@ -472,7 +472,7 @@ const MediationFormSignaturePage = () => {
       await handleCaseUnlocking();
     } catch (error) {
       console.error("Error:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("MEDIATION_FORM_SKIP_AND_SUBMIT_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);

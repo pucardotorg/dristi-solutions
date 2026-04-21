@@ -162,7 +162,7 @@ const BailBondSignaturePage = () => {
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BAIL_BOND_PREVIEW_FAILED"), error: true, errorId });
     },
     enabled: Boolean(fileStoreId),
@@ -193,7 +193,7 @@ const BailBondSignaturePage = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BAIL_BOND_SIGNATURE_FAILED"), error: true, errorId });
     } finally {
       setShowSignatureModal(false);
@@ -227,7 +227,7 @@ const BailBondSignaturePage = () => {
       }
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BAIL_BOND_SIGNATURE_FAILED"), error: true, errorId });
     } finally {
       setEditCaseModal(false);
@@ -275,7 +275,7 @@ const BailBondSignaturePage = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Failed to process e-signature:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BAIL_BOND_SIGNATURE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);

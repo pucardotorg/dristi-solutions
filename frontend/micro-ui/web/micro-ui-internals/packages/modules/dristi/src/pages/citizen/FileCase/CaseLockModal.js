@@ -90,7 +90,7 @@ function CaseLockModal({
       history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}&caseId=${caseId}`);
     } catch (error) {
       console.error("Failed to create e-sign tasks:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("FAILED_TO_CREATE_ESIGN_TASKS"), error: true, errorId });
     }
   };
@@ -123,7 +123,7 @@ function CaseLockModal({
         history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}&caseId=${caseId}`);
       } catch (error) {
         console.error("Failed to create signature upload task:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("FAILED_TO_CREATE_SIGNATURE_UPLOAD_TASK"), error: true, errorId });
       }
     }

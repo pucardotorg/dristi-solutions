@@ -65,7 +65,7 @@ const AddAddressModal = ({ t, processCourierData, setShowAddAddressModalLocal, h
             setAddressErrors({});
           } catch (error) {
             console.error("error while adding address ", error);
-            const errorId = error?.response?.headers?.["x-correlation-id"];
+            const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
             setShowToast({ label: "ERROR_ADDING_ADDRESS", error: true, errorId });
           } finally {
             setLoader(false);

@@ -195,7 +195,7 @@ const SubmissionsCreate = ({ path }) => {
           isBreadCrumbsParamsDataSet.current = true;
         }
       } catch (err) {
-        const errorId = err?.response?.headers?.["x-correlation-id"];
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("ERROR_FETCHING_CASE_DETAILS"), error: true, errorId });
         return null;
       } finally {
@@ -1233,7 +1233,7 @@ const SubmissionsCreate = ({ path }) => {
                 toUpload = combined || docsArr;
               } catch (e) {
                 console.error("Error combining files:", e);
-                const errorId = e?.response?.headers?.["x-correlation-id"];
+                const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
                 setShowToast({ label: t("ERROR_COMBINING_FILES"), error: true, errorId });
                 throw e;
               }
@@ -1636,7 +1636,7 @@ const SubmissionsCreate = ({ path }) => {
       }
     } catch (error) {
       console.error("Error While Updatting:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_PROCESSING_CREATE_UPDATE_REQUEST"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -1680,7 +1680,7 @@ const SubmissionsCreate = ({ path }) => {
       }
     } catch (error) {
       console.error("Error While Updatting:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_PROCESSING_DRAFT_SAVE"), error: true, errorId });
     } finally {
       setLoader(false);
@@ -1721,7 +1721,7 @@ const SubmissionsCreate = ({ path }) => {
           res = await updateSubmission(SubmissionWorkflowAction.SUBMIT);
         } catch (error) {
           console.error("Failed to update submission:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("SUBMISSION_UPDATE_FAILED"), error: true, errorId });
           return;
         }
@@ -1738,7 +1738,7 @@ const SubmissionsCreate = ({ path }) => {
               });
             } catch (error) {
               console.error("Failed to create e-sign task:", error);
-              const errorId = error?.response?.headers?.["x-correlation-id"];
+              const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
               setShowToast({ label: t("FAILED_TO_CREATE_ESIGN_TASK"), error: true, errorId });
               return;
             }
@@ -1753,7 +1753,7 @@ const SubmissionsCreate = ({ path }) => {
                 });
               } catch (error) {
                 console.error("Failed to create DCA task:", error);
-                const errorId = error?.response?.headers?.["x-correlation-id"];
+                const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
                 setShowToast({ label: t("FAILED_TO_CREATE_DCA_TASK"), error: true, errorId });
                 return;
               }
@@ -1770,7 +1770,7 @@ const SubmissionsCreate = ({ path }) => {
               });
             } catch (error) {
               console.error("Failed to create e-sign task for role:", error);
-              const errorId = error?.response?.headers?.["x-correlation-id"];
+              const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
               setShowToast({ label: t("FAILED_TO_CREATE_ESIGN_TASK"), error: true, errorId });
               return;
             }
@@ -1784,7 +1784,7 @@ const SubmissionsCreate = ({ path }) => {
         document = await onDocumentUpload(pdfFile, pdfFile.name, tenantId);
       } catch (error) {
         console.error("Failed to upload document:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("SUBMISSION_DOCUMENT_UPLOAD_FAILED"), error: true, errorId });
         return;
       }
@@ -1818,7 +1818,7 @@ const SubmissionsCreate = ({ path }) => {
       setShowReviewModal(false);
     } catch (error) {
       console.error("Error while submitting the application:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_SUBMITTING_APPLICATION"), error: true, errorId });
     }
   };
@@ -1848,7 +1848,7 @@ const SubmissionsCreate = ({ path }) => {
       }
     } catch (error) {
       console.error("Error while Edit Applications:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_EDITING_APPLICATION"), error: true, errorId });
     }
   };
@@ -1903,7 +1903,7 @@ const SubmissionsCreate = ({ path }) => {
         });
       }
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_DOING_ESIGN_OR_PENDING_TASK_CREATION"), error: true, errorId });
       setLoader(false);
     }
@@ -1958,7 +1958,7 @@ const SubmissionsCreate = ({ path }) => {
       }
     } catch (error) {
       console.error(error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
     }
   };

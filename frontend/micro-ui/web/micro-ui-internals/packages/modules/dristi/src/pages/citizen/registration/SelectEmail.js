@@ -100,7 +100,7 @@ const SelectEmail = ({
       }
     } catch (error) {
       console.error("Email update failed:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("EMAIL_UPDATE_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);

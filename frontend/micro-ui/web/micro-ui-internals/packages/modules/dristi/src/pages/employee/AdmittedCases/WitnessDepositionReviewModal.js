@@ -72,7 +72,7 @@ const WitnessDepositionReviewModal = ({
     },
     onError: (error) => {
       console.error("Failed to fetch witness deposition preview PDF:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_FETCHING_WITNESS_DEPOSITION_PREVIEW_PDF"), error: true, errorId });
     },
     enabled: !!currentEvidence?.artifactNumber && !!cnrNumber && !!witnessDepositionPreviewSubmissionTypeMap["WITNESS_DEPOSITION"],

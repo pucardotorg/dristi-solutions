@@ -19,7 +19,7 @@ function ADiaryDocumentPdfModal({ t, tenantId, data, setShowDocumentPdfModal, is
           downloadPdf(tenantId, filestoreId);
         } catch (error) {
           console.error("Failed to generate diary document PDF:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ error: true, label: t("DIARY_DOCUMENT_PDF_FAILED"), errorId });
         }
       }
@@ -41,7 +41,7 @@ function ADiaryDocumentPdfModal({ t, tenantId, data, setShowDocumentPdfModal, is
       setShowToast({ error: false, label: t("BUSINESS_OF_THE_DAY_UPDATED_SUCCESSFULLY") });
     } catch (error) {
       console.error("error: ", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ error: true, label: t("BUSINESS_OF_THE_DAY_UPDATE_FAILED"), errorId });
     }
   };

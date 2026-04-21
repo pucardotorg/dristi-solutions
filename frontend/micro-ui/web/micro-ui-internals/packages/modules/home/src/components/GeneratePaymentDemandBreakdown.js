@@ -86,7 +86,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("CS_CASE_LOCK_STATUS_ERROR"), error: true, errorId });
     } finally {
       setLockLoader(false);
@@ -132,7 +132,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
       setPaymentBreakDown(updatedBreakdown);
     } catch (error) {
       console.error("Error fetching task data", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("CS_TASK_DATA_FETCH_ERROR"), error: true, errorId });
     } finally {
       setTaskloader(false);
@@ -201,7 +201,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
         });
       }
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("CS_PAYMENT_ERROR"), error: true, errorId });
       console.error(error);
     }

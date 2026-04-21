@@ -139,7 +139,7 @@ const BulkIssueCTC = () => {
       setShowModal(true);
     } catch (error) {
       console.error("Failed to generate CTC PDF:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BULK_CTC_PDF_ISSUE_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);
@@ -408,7 +408,7 @@ const BulkIssueCTC = () => {
       setRefreshKey((prev) => prev + 1);
     } catch (e) {
       console.error("Failed to perform bulk sign", e?.message || e);
-      const errorId = e?.response?.headers?.["x-correlation-id"];
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true, errorId });
     } finally {
       setIsLoading(false);
@@ -448,7 +448,7 @@ const BulkIssueCTC = () => {
       setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error("error while updating", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("BULK_CTC_ISSUE_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);

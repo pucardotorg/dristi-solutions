@@ -652,7 +652,7 @@ const EvidenceModal = ({
         );
       } catch (error) {
         console.error("Failed to search hearings:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setToast({ label: t("FAILED_TO_SEARCH_HEARINGS"), error: true, errorId });
         setIsSubmitDisabled(false);
         return;
@@ -673,7 +673,7 @@ const EvidenceModal = ({
         await DRISTIService.updateEvidence(evidenceReqBody);
       } catch (error) {
         console.error("Failed to update evidence:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setToast({ label: t("EVIDENCE_UPDATE_FAILED"), error: true, errorId });
         setIsSubmitDisabled(false);
         return;
@@ -702,7 +702,7 @@ const EvidenceModal = ({
         );
       } catch (error) {
         console.error("Failed to add diary entry:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setToast({ label: t("FAILED_TO_ADD_DIARY_ENTRY"), error: true, errorId });
         setIsSubmitDisabled(false);
         return;
@@ -714,7 +714,7 @@ const EvidenceModal = ({
       await handleMarkEvidence();
     } catch (error) {
       console.error("Failed to mark evidence:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setToast({ label: t("EVIDENCE_MARK_FAILED"), error: true, errorId });
       setIsSubmitDisabled(false);
     }
@@ -948,7 +948,7 @@ const EvidenceModal = ({
           const errorCode = error?.response?.data?.Errors?.[0]?.code;
           const errorMsg =
             errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("EVIDENCE_UPDATE_FAILED");
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setToast({ label: errorMsg, error: true, errorId });
         }
       } else {
@@ -969,7 +969,7 @@ const EvidenceModal = ({
       }
     } catch (error) {
       console.error("Failed to save evidence changes:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setToast({ label: t("EVIDENCE_SAVE_FAILED"), error: true, errorId });
     }
   };
@@ -999,7 +999,7 @@ const EvidenceModal = ({
       }
     } catch (error) {
       console.error("Error in submitting comment:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setToast({ label: t("ERROR_SUBMITTING_COMMENT"), error: true, errorId });
     }
   };
@@ -1067,7 +1067,7 @@ const EvidenceModal = ({
       }
     } catch (error) {
       console.error("Error in accepting submission", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setToast({ label: t("ERROR_ACCEPTING_SUBMISSION"), error: true, errorId });
     } finally {
       setIsActionLoading(false);
@@ -1090,7 +1090,7 @@ const EvidenceModal = ({
       }
     } catch (error) {
       console.error("Error in rejecting submission", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setToast({ label: t("ERROR_REJECTING_SUBMISSION"), error: true, errorId });
     } finally {
       setIsActionLoading(false);
@@ -1106,7 +1106,7 @@ const EvidenceModal = ({
       }
     } catch (error) {
       console.error("Error in setting term bail:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setToast({ label: t("ERROR_SETTING_TERM_BAIL"), error: true, errorId });
     } finally {
       setIsActionLoading(false);

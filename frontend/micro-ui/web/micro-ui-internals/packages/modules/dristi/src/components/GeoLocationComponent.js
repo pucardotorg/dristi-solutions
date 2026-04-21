@@ -80,7 +80,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
       return individualData;
     } catch (error) {
       console.error("Error fetching police station by location:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("GEOLOCATION_ERROR"), error: true, errorId });
     } finally {
       setIsLoading(false);

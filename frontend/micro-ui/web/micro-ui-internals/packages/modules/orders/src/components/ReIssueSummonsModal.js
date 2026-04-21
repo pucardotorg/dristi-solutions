@@ -129,7 +129,7 @@ function ReIssueSummonsModal() {
     try {
       return await hadleCreateOrder("RESCHEDULE_OF_HEARING_DATE", orderType);
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_RESCHEDULING_HEARING"), error: true, errorId });
     }
   };
@@ -138,7 +138,7 @@ function ReIssueSummonsModal() {
     try {
       return await hadleCreateOrder(orderType || "SUMMONS");
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_REISSUING_SUMMONS"), error: true, errorId });
     }
   };

@@ -48,17 +48,8 @@ import {
 } from "./EfilingValidationUtils";
 import isEqual from "lodash/isEqual";
 import isMatch from "lodash/isMatch";
-import CorrectionsSubmitModal from "../../../components/CorrectionsSubmitModal";
 import { Urls } from "../../../hooks";
-import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
-import {
-  findCaseDraftEditAllowedParties,
-  getAllComplainantSideUuids,
-  getFilingType,
-  getSuffixByBusinessCode,
-  TaskManagementWorkflowState,
-} from "../../../Utils";
-import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import { findCaseDraftEditAllowedParties, getAllComplainantSideUuids, getFilingType, TaskManagementWorkflowState } from "../../../Utils";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
 import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
@@ -197,7 +188,6 @@ function EFilingCases({ path }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoader, setIsLoader] = useState(false);
   const [pdfDetails, setPdfDetails] = useState(null);
-  const { downloadPdf } = useDownloadCasePdf();
   const [newCaseName, setNewCaseName] = useState("");
   const [showEditCaseNameModal, setShowEditCaseNameModal] = useState(false);
   const [modalCaseName, setModalCaseName] = useState("");
@@ -522,8 +512,6 @@ function EFilingCases({ path }) {
     state === CaseWorkflowState.PENDING_RE_E_SIGN
   );
   const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
-  const { data: courtRoomDetails, isLoading: isCourtIdsLoading } = useGetStatuteSection("common-masters", [{ name: "Court_Rooms" }]);
-  const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
 
   useEffect(() => {
     const isDcaSkipped = caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling?.code;
@@ -1878,7 +1866,7 @@ function EFilingCases({ path }) {
         isDcaPageRefreshed,
         setIsDcaPageRefreshed,
       });
-      showToastForComplainant({ formData, setValue, selected, setShowToast, formState, clearErrors });
+      showToastForComplainant({ t, formData, setValue, selected, setShowToast, formState, clearErrors });
       setFormdata(
         formdata.map((item, i) => {
           return i === index
@@ -2562,7 +2550,7 @@ function EFilingCases({ path }) {
         } else if (extractCodeFromErrorMsg(error) === 413) {
           message = t("FAILED_TO_UPLOAD_FILE");
         }
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: message, error: true, errorId });
         setIsDisabled(false);
         console.error("An error occurred:", error);
@@ -2622,10 +2610,10 @@ function EFilingCases({ path }) {
         });
       })
       .then(() => {
-        setShowToast({ label: t("CS_SUCCESSFULLY_SAVED_DRAFT"), error: false });
+        setShowToast({ label: t("CS_SUCCESSFULLY_SAVED_DRAFT"), error: true });
       })
       .catch(async (error) => {
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         if (error instanceof DocumentUploadError) {
           setShowToast({
             label: `${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`,
@@ -2712,7 +2700,7 @@ function EFilingCases({ path }) {
         }
       })
       .catch(async (error) => {
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         if (error instanceof DocumentUploadError) {
           setShowToast({
             label: `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`,
@@ -2736,92 +2724,6 @@ function EFilingCases({ path }) {
     } else {
       history.push(`?caseId=${caseId}&selected=${key}`);
     }
-  };
-
-  const chequeDetails = useMemo(() => {
-    const debtLiability = caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.[0]?.data;
-    if (debtLiability?.liabilityType?.code === "PARTIAL_LIABILITY") {
-      return {
-        totalAmount: debtLiability?.totalAmount,
-      };
-    } else {
-      const chequeData = caseDetails?.caseDetails?.chequeDetails?.formdata || [];
-      const totalAmount = chequeData.reduce((sum, item) => {
-        return sum + parseFloat(item.data.chequeAmount);
-      }, 0);
-      return {
-        totalAmount: totalAmount.toString(),
-      };
-    }
-  }, [caseDetails]);
-  const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "payment",
-    [{ name: "paymentType" }],
-    {
-      select: (data) => {
-        return data?.payment?.paymentType || [];
-      },
-    }
-  );
-
-  const callCreateDemandAndCalculation = async (caseDetails, tenantId, caseId) => {
-    const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
-    const calculationResponse = await DRISTIService.getPaymentBreakup(
-      {
-        EFillingCalculationCriteria: [
-          {
-            checkAmount: chequeDetails?.totalAmount,
-            numberOfApplication: 1,
-            tenantId: tenantId,
-            caseId: caseId,
-            isDelayCondonation: isDelayCondonation,
-            filingNumber: caseDetails?.filingNumber,
-          },
-        ],
-      },
-      {},
-      "dristi",
-      Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
-    );
-
-    // await DRISTIService.createDemand({
-    //   Demands: [
-    //     {
-    //       tenantId,
-    //       consumerCode: caseDetails?.filingNumber + `_${suffix}`,
-    //       consumerType: "case-default",
-    //       businessService: "case-default",
-    //       taxPeriodFrom: taxPeriod?.fromDate,
-    //       taxPeriodTo: taxPeriod?.toDate,
-    //       demandDetails: [
-    //         {
-    //           taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
-    //           taxAmount: 4, // amount to be replaced with calculationResponse
-    //           collectionAmount: 0,
-    //           isDelayCondonation: isDelayCondonation,
-    //         },
-    //       ],
-    //       additionalDetails: {
-    //         filingNumber: caseDetails?.filingNumber,
-    //         chequeDetails: chequeDetails,
-    //         cnrNumber: caseDetails?.cnrNumber,
-    //         payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
-    //         payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
-    //         isDelayCondonation: isDelayCondonation,
-    //       },
-    //     },
-    //   ],
-    // });
-
-    await DRISTIService.etreasuryCreateDemand({
-      tenantId,
-      entityType: "case-default",
-      filingNumber: caseDetails?.filingNumber,
-      consumerCode: caseDetails?.filingNumber + `_${suffix}`,
-      calculation: calculationResponse?.Calculation,
-    });
-    return calculationResponse;
   };
 
   const getFormClassName = useCallback(() => {
@@ -2870,7 +2772,7 @@ function EFilingCases({ path }) {
   }, [isEditingAllowed, mandatoryFieldsLeftTotalCount, isDisableAllFieldsMode]);
 
   const [isOpen, setIsOpen] = useState(false);
-  if (isLoading || isGetAllCasesLoading || isCourtIdsLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
+  if (isLoading || isGetAllCasesLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
     return <Loader />;
   }
 
@@ -2905,9 +2807,6 @@ function EFilingCases({ path }) {
     } else {
       history.push(`?caseId=${caseId}&selected=${key}`);
     }
-  };
-  const handleGoToHome = () => {
-    history.push(homepagePath);
   };
 
   if (typeof state === "string" && isDisableAllFieldsMode && selected !== "reviewCaseFile" && caseDetails) {
@@ -2953,7 +2852,7 @@ function EFilingCases({ path }) {
       setIsModalOpen(true);
     } catch (error) {
       console.error("Failed to generate case PDF:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("CASE_PDF_GENERATION_ERROR"), error: true, errorId });
     } finally {
       setIsLoader(false);

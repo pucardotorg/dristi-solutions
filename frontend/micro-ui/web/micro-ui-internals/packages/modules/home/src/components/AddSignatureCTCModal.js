@@ -74,7 +74,7 @@ const AddSignatureCTCModal = ({
         console.error("error", error);
         setLoader(false);
         setFormData({});
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("CS_ESIGN_ERROR"), error: true, errorId });
         setIsSigned(false);
         setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
@@ -108,7 +108,7 @@ const AddSignatureCTCModal = ({
         }
       } catch (error) {
         console.error("Failed to upload document for e-sign", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
         setShowToast({ label: t("CS_FILE_UPLOAD_ERROR"), error: true, errorId });
       } finally {

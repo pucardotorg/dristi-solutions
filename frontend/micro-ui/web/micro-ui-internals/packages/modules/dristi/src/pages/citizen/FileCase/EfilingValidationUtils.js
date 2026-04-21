@@ -182,12 +182,12 @@ export const validateDateForDelayApplication = ({
   }
 };
 
-export const showToastForComplainant = ({ formData, setValue, selected, setShowToast, formState, clearErrors }) => {
+export const showToastForComplainant = ({ t, formData, setValue, selected, setShowToast, formState, clearErrors }) => {
   if (selected === "complainantDetails") {
     if (formData?.complainantId?.complainantId && formData?.complainantId?.verificationType && formData?.complainantId?.isFirstRender) {
       setValue("complainantId", { ...formData?.complainantId, isFirstRender: false });
       setShowToast({
-        label: "CS_AADHAR_VERIFIED_SUCCESS_MSG",
+        label: t("CS_AADHAR_VERIFIED_SUCCESS_MSG"),
         error: false,
       });
     }

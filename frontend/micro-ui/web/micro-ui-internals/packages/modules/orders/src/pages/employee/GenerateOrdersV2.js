@@ -151,7 +151,7 @@ const GenerateOrdersV2 = () => {
         isBreadCrumbsParamsDataSet.current = true;
       }
     } catch (err) {
-      const errorId = err?.response?.headers?.["x-correlation-id"];
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_FETCHING_CASE_DETAILS"), error: true, errorId });
       return null;
     } finally {
@@ -489,7 +489,7 @@ const GenerateOrdersV2 = () => {
 
       setShowToast({ error: true, label: t("No next hearing with a draft order found") });
     } catch (e) {
-      const errorId = e?.response?.headers?.["x-correlation-id"];
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ error: true, label: t("No next hearing with a draft order found"), errorId });
     }
   }, [data, currentInProgressHearing, todayScheduledHearing, ordersService, tenantId, caseCourtId, history, userType, t]);
@@ -1698,7 +1698,7 @@ const GenerateOrdersV2 = () => {
           return response;
         });
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("ORDER_SAVE_FAILED"),
         error: true,
@@ -1771,7 +1771,7 @@ const GenerateOrdersV2 = () => {
       }
       return updateOrderResponse;
     } catch (error) {
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ORDER_SAVE_FAILED"), error: true, errorId });
       throw error;
     } finally {
@@ -1818,7 +1818,7 @@ const GenerateOrdersV2 = () => {
         updateOrderResponse = await handleSaveDraft(updatedOrderData);
       } catch (error) {
         console.error("Failed to save order draft:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("ORDER_SAVE_FAILED"), error: true, errorId });
         setAddOrderTypeLoader(false);
         return;
@@ -1829,7 +1829,7 @@ const GenerateOrdersV2 = () => {
           await createPendingTaskForJudge(updateOrderResponse?.order);
         } catch (error) {
           console.error("Failed to create pending task for judge:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("FAILED_TO_CREATE_TASK_FOR_JUDGE"), error: true, errorId });
           setAddOrderTypeLoader(false);
           return;
@@ -1839,7 +1839,7 @@ const GenerateOrdersV2 = () => {
           await createPendingTaskForEmployee(updateOrderResponse?.order, false);
         } catch (error) {
           console.error("Failed to create pending task for employee:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("FAILED_TO_CREATE_TASK_FOR_EMPLOYEE"), error: true, errorId });
           setAddOrderTypeLoader(false);
           return;
@@ -1859,13 +1859,13 @@ const GenerateOrdersV2 = () => {
           await refetchOrdersData();
         } catch (error) {
           console.error("Failed to refetch orders data:", error);
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("FAILED_TO_REFETCH_ORDERS"), error: true, errorId });
         }
       }
     } catch (error) {
       console.error("Unexpected error while adding order:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ORDER_SAVE_FAILED"), error: true, errorId });
     } finally {
       setAddOrderTypeLoader(false);
@@ -2207,7 +2207,7 @@ const GenerateOrdersV2 = () => {
         await handleSaveDraft(currentOrder);
         setShowReviewModal(true);
       } catch (error) {
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("ERROR_CREATING_ORDER"), error: true, errorId });
       } finally {
         setIsLoading(false);
@@ -2519,7 +2519,7 @@ const GenerateOrdersV2 = () => {
       await handleSaveDraft(currentOrder);
     } catch (error) {
       console.error("Error saving draft:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ORDER_SAVE_FAILED"), error: true, errorId });
     }
     nextHearing();
@@ -2531,7 +2531,7 @@ const GenerateOrdersV2 = () => {
       history.goBack();
     } catch (error) {
       console.error("Error saving draft:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ORDER_SAVE_FAILED"), error: true, errorId });
     }
   };
@@ -2690,7 +2690,7 @@ const GenerateOrdersV2 = () => {
               const errorCode = error?.response?.data?.Errors?.[0]?.code;
               const errorMsg =
                 errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
-              const errorId = error?.response?.headers?.["x-correlation-id"];
+              const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
               setShowToast({ label: errorMsg, error: true, errorId });
             }
           } else {
@@ -2767,7 +2767,7 @@ const GenerateOrdersV2 = () => {
           const errorCode = error?.response?.data?.Errors?.[0]?.code;
           const errorMsg =
             errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: errorMsg, error: true, errorId });
         }
       } else {
@@ -2840,7 +2840,7 @@ const GenerateOrdersV2 = () => {
           const errorCode = error?.response?.data?.Errors?.[0]?.code;
           const errorMsg =
             errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
-          const errorId = error?.response?.headers?.["x-correlation-id"];
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: errorMsg, error: true, errorId });
         }
       }
@@ -2848,7 +2848,7 @@ const GenerateOrdersV2 = () => {
       const errorCode = error?.response?.data?.Errors?.[0]?.code;
       const errorMsg =
         errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("HEARING_RESCHEDULE_FAILED");
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: errorMsg, error: true, errorId });
     }
   };
@@ -3077,7 +3077,7 @@ const GenerateOrdersV2 = () => {
                       setShowToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
                     } catch (error) {
                       console.error("Error saving draft:", error);
-                      const errorId = error?.response?.headers?.["x-correlation-id"];
+                      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
                       setShowToast({ label: t("ORDER_SAVE_FAILED"), error: true, errorId });
                     }
                   }}

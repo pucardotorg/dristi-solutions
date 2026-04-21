@@ -269,7 +269,7 @@ const Registration = ({ stateCode }) => {
       });
     } catch (error) {
       console.error("Error while uploading id proof", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ error: true, label: t("ERROR_WHILE_UPLOADING_ID_PROOF"), errorId });
     }
   };

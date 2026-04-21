@@ -283,7 +283,7 @@ const ReviewLitigantDetails = ({ path }) => {
       }
     } catch (error) {
       console.error("Failed to create order for updating litigant details:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("LITIGANT_UPDATE_FAILED"), error: true, errorId });
     }
   };

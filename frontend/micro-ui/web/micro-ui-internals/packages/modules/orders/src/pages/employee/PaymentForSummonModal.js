@@ -174,7 +174,7 @@ const PaymentForSummonModal = ({ path }) => {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_FETCHING_CASE_LOCK_STATUS"), error: true, errorId });
     }
   });

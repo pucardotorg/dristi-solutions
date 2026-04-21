@@ -723,7 +723,7 @@ export const updateProfileData = async ({
     return res;
   } catch (error) {
     console.error("Profile validation failed:", error);
-    const errorId = error?.response?.headers?.["x-correlation-id"];
+    const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
     setShowToast({ label: t("PROFILE_VALIDATION_FAILED"), error: true, errorId });
   }
 };

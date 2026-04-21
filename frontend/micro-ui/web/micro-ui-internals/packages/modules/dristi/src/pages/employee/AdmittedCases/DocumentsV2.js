@@ -116,7 +116,7 @@ const DocumentsV2 = ({
       setDeleteDigitalization(null);
     } catch (error) {
       console.error("Failed to delete digitalization draft:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("DELETE_DIGITALIZATION_DRAFT_FAILED"), error: true, errorId });
     } finally {
       setIsActionLoading(false);
@@ -166,7 +166,7 @@ const DocumentsV2 = ({
       setDeleteEvidence(null);
     } catch (error) {
       console.error("Error deleting evidence draft:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("DELETE_EVIDENCE_DRAFT_ERROR"), error: true, errorId });
     } finally {
       setIsActionLoading(false);

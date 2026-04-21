@@ -291,7 +291,7 @@ const AdmittedCaseV2 = () => {
       setData(res?.items || []);
     } catch (err) {
       console.error("error", err);
-      const errorId = err?.response?.headers?.["x-correlation-id"];
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("FAILED_TO_FETCH_HEARING_INBOX_DATA"), error: true, errorId });
     } finally {
     }
@@ -330,7 +330,7 @@ const AdmittedCaseV2 = () => {
         }
       } catch (err) {
         console.error("error", err);
-        const errorId = err?.response?.headers?.["x-correlation-id"];
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("FAILED_TO_FETCH_HEARING_INBOX_DATA"), error: true, errorId });
       } finally {
       }
@@ -365,7 +365,7 @@ const AdmittedCaseV2 = () => {
         }
       } catch (err) {
         console.error(err);
-        const errorId = err?.response?.headers?.["x-correlation-id"];
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("FAILED_TO_FETCH_BAIL_BOND_PENDING_TASK"), error: true, errorId });
       }
     };
@@ -865,7 +865,7 @@ const AdmittedCaseV2 = () => {
         setDeleteOrder(row);
       } catch (error) {
         console.error("Failed to search order for delete request:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({
           label: t("FAILED_TO_SEARCH_ORDER_FOR_DELETE_REQUEST"),
           error: true,
@@ -1338,7 +1338,7 @@ const AdmittedCaseV2 = () => {
       setShowConfirmationModal(false);
     } catch (error) {
       console.error("Error marking evidence:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("ERROR_MARKING_EVIDENCE"),
         error: true,
@@ -1821,7 +1821,7 @@ const AdmittedCaseV2 = () => {
             history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
           } catch (error) {
             console.error("Error creating order:", error);
-            const errorId = error?.response?.headers?.["x-correlation-id"];
+            const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
             setShowToast({
               label: t("ERROR_CREATING_ORDER"),
               error: true,
@@ -2011,7 +2011,7 @@ const AdmittedCaseV2 = () => {
       })
       .catch((error) => {
         console.error("Error while creating order", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("ORDER_CREATION_FAILED"), error: true, errorId });
       });
   };
@@ -2169,7 +2169,7 @@ const AdmittedCaseV2 = () => {
       setCasePdfFileStoreId(responseFileStoreId);
     } catch (error) {
       console.error("Error downloading PDF: ", error.message || error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("UNABLE_CASE_PDF"),
         error: true,
@@ -2315,7 +2315,7 @@ const AdmittedCaseV2 = () => {
         }
       } catch (error) {
         console.error("Error handling citizen action:", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({
           label: t("BAIL_BOND_SEARCH_FAILED"),
           error: true,
@@ -2439,7 +2439,7 @@ const AdmittedCaseV2 = () => {
       nextHearing(true);
     } catch (error) {
       console.error("Error in updating hearing status", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("HEARING_STATUS_UPDATE_FAILED"),
         error: true,
@@ -2557,7 +2557,7 @@ const AdmittedCaseV2 = () => {
             });
           })
           .catch((err) => {
-            const errorId = err?.response?.headers?.["x-correlation-id"];
+            const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
             setShowToast({
               label: t("ORDER_CREATION_FAILED"),
               error: true,
@@ -2608,7 +2608,7 @@ const AdmittedCaseV2 = () => {
             });
           })
           .catch((err) => {
-            const errorId = err?.response?.headers?.["x-correlation-id"];
+            const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
             setShowToast({
               label: t("ORDER_CREATION_FAILED"),
               error: true,
@@ -2670,7 +2670,7 @@ const AdmittedCaseV2 = () => {
       } catch (error) {
         console.error("Error fetching order", error);
         const errorCode = error?.response?.data?.Errors?.[0]?.code;
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         const errorMsg = errorCode === "ORDER_ALREADY_PUBLISHED" ? "ORDER_ALREADY_PUBLISHED" : "CORE_SOMETHING_WENT_WRONG";
         setShowToast({
           label: t(errorMsg),
@@ -2827,7 +2827,7 @@ const AdmittedCaseV2 = () => {
         history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
       })
       .catch((err) => {
-        const errorId = err?.response?.headers?.["x-correlation-id"];
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
         setShowToast({
           label: t("ORDER_CREATION_FAILED"),
           error: true,
@@ -3209,7 +3209,7 @@ const AdmittedCaseV2 = () => {
     } catch (e) {
       console.error(e);
       setBailBondLoading(false);
-      const errorId = e?.response?.headers?.["x-correlation-id"];
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("UNABLE_TO_CREATE_BAIL_BOND_TASK"),
         error: true,
@@ -3253,7 +3253,7 @@ const AdmittedCaseV2 = () => {
       setUpdateCounter((prev) => prev + 1);
     } catch (error) {
       console.error(error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("FAILED_TO_DELETE_ORDER"),
         error: true,
@@ -3281,7 +3281,7 @@ const AdmittedCaseV2 = () => {
       window.location.reload();
     } catch (error) {
       console.error(error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({
         label: t("FAILED_TO_SUBMIT_DELETE_APPLICATION_REQUEST"),
         error: true,
@@ -4088,7 +4088,7 @@ const AdmittedCaseV2 = () => {
               })
               .catch((error) => {
                 console.error("Error while updating hearings", error);
-                const errorId = error?.response?.headers?.["x-correlation-id"];
+                const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
                 setShowToast({ label: t("FAILED_TO_UPDATE_HEARINGS"), error: true, errorId });
                 setApiCalled(false);
               })
@@ -4120,7 +4120,7 @@ const AdmittedCaseV2 = () => {
               })
               .catch((error) => {
                 console.error("Error while updating hearings", error);
-                const errorId = error?.response?.headers?.["x-correlation-id"];
+                const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
                 setShowToast({ label: t("FAILED_TO_UPDATE_HEARINGS"), error: true, errorId });
                 setApiCalled(false);
               })

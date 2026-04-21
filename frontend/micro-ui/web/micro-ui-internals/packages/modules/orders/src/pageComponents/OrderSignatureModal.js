@@ -80,7 +80,7 @@ function OrderSignatureModal({
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: "CS_FILE_UPLOAD_ERROR", error: true, errorId });
         setLoader(false);
         setFormData({});

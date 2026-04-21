@@ -73,7 +73,7 @@ const GenericUploadSignatureModal = ({
         setLoader(false);
         console.error("error", error);
         setFormData({});
-        const errorId = error?.response?.headers?.["x-correlation-id"];
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
         setFileUploadError(errorCode);
         setShowToast({ label: t(errorCode), error: true, errorId });

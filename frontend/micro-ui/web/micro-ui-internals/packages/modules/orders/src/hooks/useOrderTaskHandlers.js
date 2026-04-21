@@ -87,7 +87,7 @@ const useOrderTaskHandlers = ({
       });
     } catch (e) {
       console.error("Error creating bail bond task:", e);
-      const errorId = e?.response?.headers?.["x-correlation-id"];
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_CREATING_BAIL_BOND_TASK"), error: true, errorId });
     }
   };
@@ -110,7 +110,7 @@ const useOrderTaskHandlers = ({
           return res?.Individual?.[0]?.userUuid || "";
         } catch (e) {
           console.error("Error fetching user UUID for individualId:", individualId, e);
-          const errorId = e?.response?.headers?.["x-correlation-id"];
+          const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
           setShowToast({ label: t("ERROR_FETCHING_USER_UUID"), error: true, errorId });
           return "";
         }
@@ -292,7 +292,7 @@ const useOrderTaskHandlers = ({
       }
     } catch (err) {
       console.error("Error creating raise bail bond task:", err);
-      const errorId = err?.response?.headers?.["x-correlation-id"];
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_CREATING_RAISE_BAIL_BOND_TASK"), error: true, errorId });
     }
   };
@@ -394,7 +394,7 @@ const useOrderTaskHandlers = ({
       return res?.order?.orderNumber;
     } catch (error) {
       console.error("Error issuing summons:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_ISSUING_SUMMONS"), error: true, errorId });
     }
   };
@@ -453,7 +453,7 @@ const useOrderTaskHandlers = ({
       return res?.order?.orderNumber;
     } catch (error) {
       console.error("Error issuing notice:", error);
-      const errorId = error?.response?.headers?.["x-correlation-id"];
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({ label: t("ERROR_ISSUING_NOTICE"), error: true, errorId });
     }
   };
