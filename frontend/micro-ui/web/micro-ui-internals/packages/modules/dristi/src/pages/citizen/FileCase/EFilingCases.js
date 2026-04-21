@@ -1151,7 +1151,16 @@ function EFilingCases({ path }) {
                                   <span>{t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
                                 </li>
                                 <li>
-                                  <span>{t("COURIER_RPAD_NOTE")}</span>
+                                  <span>{t("CS_NOT_DELAY_WARRANT_PROCESS_COURIER_SERVICE_NOTE")}</span>
+                                </li>
+                                <li>
+                                  <span>{t("CS_NOT_DELAY_SUMMONS_PROCESS_COURIER_SERVICE_NOTE")}</span>
+                                </li>
+                                <li>
+                                  <span>{t("CS_NOT_DELAY_UPFRONT_PAYMENT_NOTE")}</span>
+                                </li>
+                                <li>
+                                  <span>{t("CS_NOT_DELAY_SUBMIT_STAMP_ENVELOPE_NOTE")}</span>
                                 </li>
                               </ul>
                             </div>

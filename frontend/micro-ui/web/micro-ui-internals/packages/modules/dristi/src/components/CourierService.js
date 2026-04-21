@@ -392,13 +392,16 @@ function CourierService({
             <div className="label-container">
               <div className="label">{t("CS_WARRANT_COURIER")}</div>
               {!orderType && (
-                <div className="info-icon">
-                  <span style={{ position: "relative" }} data-tip data-for="warrant-tooltip">
-                    <InfoIcon />
-                  </span>
-                  <ReactTooltip id="warrant-tooltip" place="bottom" content={t("CS_WARRANT_COURIER_TOOLTIP")}>
-                    {t("CS_WARRANT_COURIER_TOOLTIP")}
-                  </ReactTooltip>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div className="optional">{t("CS_IS_OPTIONAL")}</div>
+                  <div className="info-icon">
+                    <span style={{ position: "relative" }} data-tip data-for="warrant-tooltip">
+                      <InfoIcon />
+                    </span>
+                    <ReactTooltip id="warrant-tooltip" place="bottom" content={t("CS_WARRANT_COURIER_TOOLTIP")}>
+                      {t("CS_WARRANT_COURIER_TOOLTIP")}
+                    </ReactTooltip>
+                  </div>
                 </div>
               )}
             </div>
