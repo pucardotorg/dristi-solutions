@@ -124,6 +124,9 @@ public class CourtCase {
     @JsonProperty("substage")
     private String substage = null;
 
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
+
     @JsonProperty("natureOfPleading")
     private String natureOfPleading = null;
 

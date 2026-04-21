@@ -36,6 +36,9 @@ public class CourtCase {
     @JsonProperty("courtCaseNumber")
     private String courtCaseNumber;
 
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
+
     @JsonProperty("caseTitle")
     private String caseTitle;
 

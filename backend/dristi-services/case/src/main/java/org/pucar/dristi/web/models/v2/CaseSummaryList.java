@@ -46,8 +46,11 @@ public class CaseSummaryList {
     @JsonProperty("natureOfDisposal")
     private NatureOfDisposal natureOfDisposal;
 
-    @JsonProperty("substage")
-    private String substage;
+    @JsonProperty("stage")
+    private String stage;
+
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage;
 
     @JsonProperty("cmpNumber")
     private String cmpNumber;
