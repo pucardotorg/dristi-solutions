@@ -132,8 +132,8 @@ public class BailService {
                     .criteria(Collections.singletonList(criteria))
                     .build();
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
-            String substage = caseUtil.getSubstage(caseDetails);
-            if(APPEARANCE.equalsIgnoreCase(substage)){
+            String stage = caseUtil.getStage(caseDetails);
+            if(APPEARANCE.equalsIgnoreCase(stage)){
                 // Notify Sureties
                 if (smsTopics.contains(BAIL_BOND_INITIATED_SURETY)) {
                     bail.getSureties().stream()
