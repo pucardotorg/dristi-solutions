@@ -22,7 +22,6 @@ import Modal from "../../../components/Modal";
 import ScrutinyInfo from "../../../components/ScrutinyInfo";
 import SelectCustomNote from "../../../components/SelectCustomNote";
 import { useToast } from "../../../components/Toast/useToast";
-import useGetAllCasesConfig from "../../../hooks/dristi/useGetAllCasesConfig";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { ReactComponent as InfoIcon } from "../../../icons/info.svg";
 import { CustomAddIcon, CustomArrowDownIcon, CustomDeleteIcon, RightArrow, WarningInfoRedIcon } from "../../../icons/svgIndex";
@@ -1020,18 +1019,10 @@ function EFilingCases({ path }) {
     }));
   }, [caseDetails, parentOpen, selected]);
 
-  const { data: caseDetailsConfig, isLoading: isGetAllCasesLoading } = useGetAllCasesConfig();
-
   const pageConfig = useMemo(() => {
-    if (!caseDetailsConfig) {
-      return {
-        formconfig: [],
-      };
-    }
-    return caseDetailsConfig
-      .find((parent) => parent.children.some((child) => child.key === selected))
-      ?.children?.find((child) => child.key === selected)?.pageConfig;
-  }, [caseDetailsConfig, selected]);
+    return sideMenuConfig.find((parent) => parent.children.some((child) => child.key === selected))?.children?.find((child) => child.key === selected)
+      ?.pageConfig;
+  }, [selected]);
 
   const formConfig = useMemo(() => {
     return pageConfig?.formconfig;
@@ -1058,7 +1049,6 @@ function EFilingCases({ path }) {
     return pageConfig?.confirmmodalconfig;
   }, [pageConfig?.confirmmodalconfig]);
 
-  
   const isDependentEnabled = useMemo(() => {
     let result = false;
     formConfig.forEach((config) => {
@@ -2511,9 +2501,7 @@ function EFilingCases({ path }) {
 
             const noticeTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.NOTICE);
             const summonsTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.SUMMONS);
-            const warrantTask = taskManagementList?.find(
-              (item) => item?.taskType === TASK_TYPES.WARRANT
-            );
+            const warrantTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.WARRANT);
             let updatedWarrantTask = null;
 
             // removing processDelieveryDetails for warrant because of payment calculation handled at backend
@@ -2523,7 +2511,7 @@ function EFilingCases({ path }) {
                 ...party,
                 processDeliveryDetails: null,
               }));
-            
+
               updatedWarrantTask = {
                 ...warrantTask,
                 partyDetails: updatedWarrantPartyDetails,
@@ -2931,7 +2919,7 @@ function EFilingCases({ path }) {
   }, [isEditingAllowed, mandatoryFieldsLeftTotalCount, isDisableAllFieldsMode]);
 
   const [isOpen, setIsOpen] = useState(false);
-  if (isLoading || isGetAllCasesLoading || isCourtIdsLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
+  if (isLoading || isCourtIdsLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
     return <Loader />;
   }
 
