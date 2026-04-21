@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 import { FormComposerV2, Header, Loader, Modal } from "@egovernments/digit-ui-react-components";
 import { extractCodeFromErrorMsg, extractValue, OutlinedInfoIcon } from "../FileCase/EFilingCases";
-import useGetAllCasesConfig from "../../../hooks/dristi/useGetAllCasesConfig";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import ReactTooltip from "react-tooltip";
 import isEqual from "lodash/isEqual";
@@ -70,7 +69,7 @@ const EditProfile = ({ path }) => {
     () => ({
       ...caseData?.criteria?.[0]?.responseList?.[0],
     }),
-    [caseData, caseId, selected, uniqueId]
+    [caseData]
   );
 
   const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
@@ -124,8 +123,6 @@ const EditProfile = ({ path }) => {
     };
   }, [history, location]);
 
-  const { data: caseDetailsConfig, isLoading: isGetAllCasesLoading } = useGetAllCasesConfig();
-
   const pageConfig = useMemo(() => {
     if (selected === "complainantDetails") {
       return editComplainantDetailsConfig;
@@ -133,7 +130,7 @@ const EditProfile = ({ path }) => {
       return editRespondentConfig;
     }
     return null;
-  }, [caseDetailsConfig, selected]);
+  }, [selected]);
 
   const formConfig = useMemo(() => {
     if (selected === "complainantDetails") {

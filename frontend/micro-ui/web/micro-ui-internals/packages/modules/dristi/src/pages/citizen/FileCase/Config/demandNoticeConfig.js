@@ -3,7 +3,7 @@ const demandNoticeFormConfig = [
     body: [
       {
         type: "date",
-        label: "CS_DATE_OF_DISPATCH_LDN",
+        label: "CS_DATE_OF_DISPATCH_LDN_BRACKETS",
         populators: {
           name: "dateOfDispatch",
           validation: {
@@ -15,7 +15,6 @@ const demandNoticeFormConfig = [
           },
         },
         isMandatory: true,
-        labelChildren: "OutlinedInfoIcon",
       },
     ],
   },
@@ -74,42 +73,6 @@ const demandNoticeFormConfig = [
   {
     body: [
       {
-        key: "proofOfService",
-        type: "radio",
-        label: "CS_DELAY_APPLICATION_TYPE",
-        populators: {
-          name: "proofOfService",
-          type: "radioButton",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          label: "CS_DELAY_APPLICATION_TYPE",
-          options: [
-            {
-              code: "YES",
-              name: "YES",
-              isEnabled: true,
-              showProofOfAcknowledgment: true,
-            },
-            {
-              code: "NO",
-              name: "NO",
-              isEnabled: true,
-              isVerified: true,
-              hasBarRegistrationNo: true,
-              showProofOfAcknowledgment: false,
-            },
-          ],
-          required: false,
-          optionsKey: "name",
-          isDependent: true,
-          isMandatory: true,
-        },
-        isMandatory: true,
-      },
-    ],
-  },
-  {
-    body: [
-      {
         type: "date",
         label: "CS_DATE_OF_SERVICE_LDN",
         populators: {
@@ -139,6 +102,7 @@ const demandNoticeFormConfig = [
               name: "document",
               type: "DragDropComponent",
               fileTypes: ["JPG", "JPEG", "PDF", "PNG"],
+              isOptional: "CS_IS_OPTIONAL",
               maxFileSize: 10,
               documentHeader: "PROOF_LEGAL_DEMAND_NOTICE",
               isMultipleUpload: true,
@@ -150,10 +114,7 @@ const demandNoticeFormConfig = [
             },
           ],
         },
-        isMandatory: true,
         withoutLabel: true,
-        isDocDependentOn: "proofOfService",
-        isDocDependentKey: "showProofOfAcknowledgment",
       },
     ],
   },
@@ -270,7 +231,6 @@ const demandNoticeFormConfig = [
         label: "CS_DATE_OF_ACCRUAL_LDN",
         populators: {
           name: "dateOfAccrual",
-          customClass: "date-of-accrual",
           validation: {
             max: {
               masterName: "commonUiConfig",
@@ -278,9 +238,9 @@ const demandNoticeFormConfig = [
               patternType: "date",
             },
           },
+          customClass: "date-of-accrual",
         },
         isMandatory: true,
-        labelChildren: "OutlinedInfoIcon",
       },
     ],
   },

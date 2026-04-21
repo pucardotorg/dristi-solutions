@@ -85,4 +85,5 @@ public class CaseUtil {
     public String getCaseId (JsonNode caseDetails) { return extractFieldFromFirstCase(caseDetails, "id"); }
 
     public String getSubstage(JsonNode caseDetails) { return extractFieldFromFirstCase(caseDetails, "substage"); }
+    public String getStage(JsonNode caseDetails) { return extractFieldFromFirstCase(caseDetails, "stage"); }
 }
