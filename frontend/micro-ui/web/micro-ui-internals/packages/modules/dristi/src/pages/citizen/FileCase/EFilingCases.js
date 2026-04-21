@@ -1138,9 +1138,19 @@ function EFilingCases({ path }) {
                                     <strong>{t("COURIER_SUMMONS")}</strong> {t("COURIER_SUMMONS_NOTE")}
                                   </span>
                                 </li>
+                                 <li>
+                                  <span>
+                                    <strong>{t("COURIER_WARRANT")}</strong> {t("CS_NOT_DELAY_WARRANT_PROCESS_COURIER_SERVICE_NOTE")}
+                                  </span>
+                                </li>
                                 <li>
                                   <span>
-                                    <strong>{t("COURIER_RPAD")}</strong> {t("COURIER_RPAD_NOTE")}
+                                    <strong>{t("REFUND_REQUEST")}</strong> {t("CS_REFUND_REQUEST_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_RPAD_SUBMISSION")}</strong> {t("COURIER_RPAD_SUBMISSION_NOTE")}
                                   </span>
                                 </li>
                               </ul>
@@ -1148,20 +1158,25 @@ function EFilingCases({ path }) {
                           ) : (
                             <div className="info-card-content">
                               <ul style={{ width: "100%" }}>
-                                <li>
-                                  <span>{t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                               <li>
+                                  <span>
+                                    <strong>{t("COURIER_SUMMONS")}</strong> {t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}
+                                  </span>
+                                </li>
+                                 <li>
+                                  <span>
+                                    <strong>{t("COURIER_WARRANT")}</strong> {t("CS_NOT_DELAY_WARRANT_PROCESS_COURIER_SERVICE_NOTE")}
+                                  </span>
                                 </li>
                                 <li>
-                                  <span>{t("CS_NOT_DELAY_WARRANT_PROCESS_COURIER_SERVICE_NOTE")}</span>
+                                  <span>
+                                    <strong>{t("REFUND_REQUEST")}</strong> {t("CS_REFUND_REQUEST_NOTE")}
+                                  </span>
                                 </li>
                                 <li>
-                                  <span>{t("CS_NOT_DELAY_SUMMONS_PROCESS_COURIER_SERVICE_NOTE")}</span>
-                                </li>
-                                <li>
-                                  <span>{t("CS_NOT_DELAY_UPFRONT_PAYMENT_NOTE")}</span>
-                                </li>
-                                <li>
-                                  <span>{t("CS_NOT_DELAY_SUBMIT_STAMP_ENVELOPE_NOTE")}</span>
+                                  <span>
+                                    <strong>{t("COURIER_RPAD_SUBMISSION")}</strong> {t("COURIER_RPAD_SUBMISSION_NOTE")}
+                                  </span>
                                 </li>
                               </ul>
                             </div>

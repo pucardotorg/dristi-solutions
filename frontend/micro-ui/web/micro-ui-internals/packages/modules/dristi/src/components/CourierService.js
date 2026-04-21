@@ -219,7 +219,7 @@ function CourierService({
 
       if (
         (orderType === "WARRANT" || !orderType) &&
-        (!processCourierData?.warrantCourierService || processCourierData?.warrantCourierService?.length === 0)
+        (!processCourierData?.warrantCourierService)
       ) {
         const policeWarrantOption = courierOptions?.find((option) => option?.channelId === "POLICE" && option?.taskType === "WARRANT");
         if (policeWarrantOption) {
