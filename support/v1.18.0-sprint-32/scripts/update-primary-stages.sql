@@ -11,7 +11,7 @@ BEGIN;
 UPDATE dristi_cases
 SET stage = CASE
     -- Defect Correction: cases sent back for correction
-    WHEN status IN ('CASE_REASSIGNED') THEN 'Defect Correction'
+    WHEN status IN ('CASE_REASSIGNED','PENDING_RE_E-SIGN','RE_PENDING_PAYMENT','PENDING_RE_SIGN') THEN 'Defect Correction'
 
     -- Scrutiny: cases currently with scrutiny officer
     WHEN status IN ('UNDER_SCRUTINY') THEN 'Scrutiny'
@@ -130,7 +130,7 @@ SET stage = CASE
     WHEN lh.hearingType ILIKE '%EVIDENCE_ACCUSED%'                                THEN 'Defense Evidence'
     WHEN lh.hearingType ILIKE '%ARGUMENTS%'                                       THEN 'Arguments'
     WHEN lh.hearingType ILIKE '%JUDGEMENT%' OR lh.hearingType ILIKE '%JUDGEMENT%' THEN 'Judgement'
-    ELSE dc.stage  -- keep Cognizance if hearing type doesn't match any stage
+    ELSE dc.stage  -- keep 'Cognizance', 'Appearance', 'Bail & Recording of Plea' if hearing type doesn't match any stage
 END
 FROM latest_hearing lh
 WHERE dc.filingNumber = lh.filingNumber;
@@ -157,32 +157,23 @@ WHERE EXISTS (
 -- Cases where a disposal or withdrawal order has been published.
 -- Overrides Post-Judgement.
 -- =============================================================================
-UPDATE dristi_cases dc
+UPDATE dristi_cases
 SET stage = 'Post-Disposal'
-WHERE EXISTS (
-    SELECT 1 FROM dristi_orders o
-    WHERE o.filingNumber = dc.filingNumber
-      AND o.status ILIKE 'published'
-      AND (
-        o.orderType ILIKE '%SETTLEMENT_ACCEPT%' OR o.orderType ILIKE '%WITHDRAWAL_ACCEPT%' OR o.orderType ILIKE '%DISMISS_CASE%' OR o.orderType ILIKE '%CASE_TRANSFER_ACCEPT%'
-        OR (
-          o.orderCategory = 'COMPOSITE' AND EXISTS (
-            SELECT 1 FROM jsonb_array_elements(o.compositeItems) elem
-            WHERE elem->>'orderType' ILIKE '%SETTLEMENT_ACCEPT%'
-               OR elem->>'orderType' ILIKE '%WITHDRAWAL_ACCEPT%'
-               OR elem->>'orderType' ILIKE '%DISMISS_CASE%'
-               OR elem->>'orderType' ILIKE '%CASE_TRANSFER_ACCEPT%'
-          )
-        )
-      )
+WHERE outcome IN (
+    'DISMISSED', 'ALLOWED', 'PARTIALLYALLOWED',
+    'CONVICTED', 'PARTIALLYCONVICTED',
+    'PARTIALLYACQUITTED', 'ACQUITTED',
+    'ABATED', 'WITHDRAWN', 'SETTLED', 'TRANSFERRED'
 );
 
 -- =============================================================================
 -- Step 6: Long Pending Register (highest priority override)
 -- Cases flagged as LPR.
+-- Once case moved to LPR, No actions will be performed so we are setting stagebackup to latest stage
 -- =============================================================================
 UPDATE dristi_cases
-SET stage = 'Long Pending Register'
+SET stagebackup = stage,
+    stage = 'Long Pending Register'
 WHERE isLPRCase = true;
 
 COMMIT;
