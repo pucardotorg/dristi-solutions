@@ -2,27 +2,24 @@ export const reviewCaseFileFormConfig = [
   {
     body: [
       {
-        type: "component",
-        component: "SelectReviewAccordion",
         key: "litigentDetails",
+        type: "component",
         label: "CS_LITIGENT_DETAILS",
         number: 1,
-        withoutLabel: true,
-        textAreaMaxLength: "255",
+        component: "SelectReviewAccordion",
         populators: {
           inputs: [
             {
               key: "complainantDetails",
+              data: {},
+              icon: "ComplainantDetailsIcon",
               name: "complainantDetails",
               label: "CS_COMPLAINT_DETAILS",
-              icon: "ComplainantDetailsIcon",
-              disableScrutiny: true,
               config: [
                 {
                   type: "title",
                   value: ["firstName", "middleName", "lastName"],
                   badgeType: "complainantType.name",
-                  enableScrutinyField: true,
                 },
                 {
                   type: "phonenumber",
@@ -33,15 +30,13 @@ export const reviewCaseFileFormConfig = [
                   type: "text",
                   label: "AGE",
                   value: "complainantAge",
-                  enableScrutinyField: true,
                 },
                 {
                   type: "text",
                   label: "DESIGNATION",
+                  value: "complainantDesignation",
                   dependentOn: "complainantType.code",
                   dependentValue: "REPRESENTATIVE",
-                  value: "complainantDesignation",
-                  enableScrutinyField: true,
                 },
                 {
                   type: "image",
@@ -52,10 +47,9 @@ export const reviewCaseFileFormConfig = [
                 {
                   type: "address",
                   label: "ADDRESS",
+                  value: "addressDetails",
                   dependentOn: "complainantType.code",
                   dependentValue: "INDIVIDUAL",
-                  value: "addressDetails",
-                  enableScrutinyField: true,
                 },
                 {
                   type: "address",
@@ -63,32 +57,28 @@ export const reviewCaseFileFormConfig = [
                   value: "currentAddressDetails",
                   dependentOn: "complainantType.code",
                   dependentValue: "INDIVIDUAL",
-                  enableScrutinyField: true,
                 },
                 {
                   type: "text",
                   label: "TYPE_OF_ENTITY",
+                  value: "complainantTypeOfEntity.name",
                   dependentOn: "complainantType.code",
                   dependentValue: "REPRESENTATIVE",
-                  value: "complainantTypeOfEntity.name",
                   isLocalizationRequired: true,
-                  enableScrutinyField: true,
                 },
                 {
                   type: "text",
                   label: "company_Name",
+                  value: "complainantCompanyName",
                   dependentOn: "complainantType.code",
                   dependentValue: "REPRESENTATIVE",
-                  value: "complainantCompanyName",
-                  enableScrutinyField: true,
                 },
                 {
                   type: "address",
                   label: "COMPANY_ADDRESS",
+                  value: "addressCompanyDetails",
                   dependentOn: "complainantType.code",
                   dependentValue: "REPRESENTATIVE",
-                  value: "addressCompanyDetails",
-                  enableScrutinyField: true,
                 },
                 {
                   type: "text",
@@ -131,9 +121,9 @@ export const reviewCaseFileFormConfig = [
                 {
                   type: "address",
                   label: "CS_POA_ADDRESS",
+                  value: "poaAddressDetails",
                   dependentOn: "transferredPOA.code",
                   dependentValue: "YES",
-                  value: "poaAddressDetails",
                   enableScrutinyField: true,
                 },
                 {
@@ -145,13 +135,14 @@ export const reviewCaseFileFormConfig = [
                   enableScrutinyField: true,
                 },
               ],
-              data: {},
+              disableScrutiny: true,
             },
             {
               key: "respondentDetails",
+              data: {},
+              icon: "RespondentDetailsIcon",
               name: "respondentDetails",
               label: "CS_RESPONDENT_DETAILS",
-              icon: "RespondentDetailsIcon",
               config: [
                 {
                   type: "title",
@@ -171,9 +162,9 @@ export const reviewCaseFileFormConfig = [
                 {
                   type: "text",
                   label: "DESIGNATION",
+                  value: "respondentDesignation",
                   dependentOn: "respondentType.code",
                   dependentValue: "REPRESENTATIVE",
-                  value: "respondentDesignation",
                 },
                 {
                   type: "text",
@@ -183,112 +174,63 @@ export const reviewCaseFileFormConfig = [
                 {
                   type: "address",
                   label: "ADDRESS",
+                  value: "addressDetails",
                   dependentOn: "respondentType.code",
                   dependentValue: "INDIVIDUAL",
-                  value: "addressDetails",
                 },
                 {
                   type: "text",
                   label: "TYPE_OF_ENTITY",
+                  value: "respondentTypeOfEntity.name",
                   dependentOn: "respondentType.code",
                   dependentValue: "REPRESENTATIVE",
-                  value: "respondentTypeOfEntity.name",
                   isLocalizationRequired: true,
                 },
                 {
                   type: "text",
                   label: "company_Name",
+                  value: "respondentCompanyName",
                   dependentOn: "respondentType.code",
                   dependentValue: "REPRESENTATIVE",
-                  value: "respondentCompanyName",
                 },
                 {
                   type: "address",
                   label: "COMPANY_ADDRESS",
+                  value: "addressDetails",
                   dependentOn: "respondentType.code",
                   dependentValue: "REPRESENTATIVE",
-                  value: "addressDetails",
                 },
                 {
                   type: "image",
                   label: "CS_DOCUMENT",
                   value: ["companyDetailsUpload.document", "inquiryAffidavitFileUpload.document"],
                 },
-                {
-                  type: "text",
-                  label: "HAS_LITIGANT_TRANFERRED_POA_TO_SOMEONE",
-                  value: "transferredPOA.name",
-                  isLocalizationRequired: true,
-                  defaultValue: "NO",
-                  hideOnStatus: ["DRAFT_IN_PROGRESS", "CASE_REASSIGNED", "UNDER_SCRUTINY", "PENDING_PAYMENT", "PENDING_REGISTRATION"],
-                },
-                {
-                  type: "textTitle",
-                  label: "POA_HOLDER_NAME",
-                  value: ["poaFirstName", "poaMiddleName", "poaLastName"],
-                  dependentOn: "transferredPOA.code",
-                  dependentValue: "YES",
-                },
-                {
-                  type: "phonenumber",
-                  label: "CS_POA_MOBILE_NUMBER",
-                  value: "poaVerification.mobileNumber",
-                  dependentOn: "transferredPOA.code",
-                  dependentValue: "YES",
-                },
-                {
-                  type: "text",
-                  label: "CS_POA_AGE",
-                  value: "poaAge",
-                  dependentOn: "transferredPOA.code",
-                  dependentValue: "YES",
-                },
-                {
-                  type: "image",
-                  label: "CS_POA_ID_PROOF",
-                  value: ["poaVerification.individualDetails.document"],
-                  dependentOn: "transferredPOA.code",
-                  dependentValue: "YES",
-                },
-                {
-                  type: "address",
-                  label: "CS_POA_ADDRESS",
-                  dependentOn: "transferredPOA.code",
-                  dependentValue: "YES",
-                  value: "poaAddressDetails",
-                },
-                {
-                  type: "image",
-                  label: "POA_AUTHORIZATION_DOCUMENT",
-                  value: ["poaAuthorizationDocument.poaDocument"],
-                  dependentOn: "transferredPOA.code",
-                  dependentValue: "YES",
-                },
               ],
-              data: {},
             },
           ],
         },
+        withoutLabel: true,
+        textAreaMaxLength: "255",
       },
       {
-        type: "component",
-        component: "SelectReviewAccordion",
         key: "caseSpecificDetails",
+        type: "component",
         label: "CS_CASE_SPECIFIC_DETAILS",
         number: 2,
-        withoutLabel: true,
+        component: "SelectReviewAccordion",
         populators: {
           inputs: [
             {
               key: "chequeDetails",
+              data: {},
+              icon: "ChequeDetailsIcon",
               name: "chequeDetails",
               label: "CS_CHECKQUE_DETAILS",
-              icon: "ChequeDetailsIcon",
               config: [
                 {
                   type: "title",
                   label: "CS_CHEQUE_NO",
-                  value: ["chequeNumber"],
+                  value: "chequeNumber",
                 },
                 {
                   type: "text",
@@ -316,21 +258,14 @@ export const reviewCaseFileFormConfig = [
                   value: "payeeIfscField.payeeIfsc",
                 },
                 {
-                  type: "date",
-                  label: "CS_DATE_OF_ISSUANCE",
-                  value: "issuanceDate",
-                  dependentFields: [
-                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
-                  ],
-                },
-                {
                   type: "text",
                   label: "CS_PAYER_BANK_NAME",
                   value: "payerBankName",
+                },
+                {
+                  type: "date",
+                  label: "CS_DATE_OF_ISSUANCE",
+                  value: "issuanceDate",
                 },
                 {
                   type: "text",
@@ -357,13 +292,6 @@ export const reviewCaseFileFormConfig = [
                   type: "date",
                   label: "CS_DATE_OF_CHEQUE_DEPOSIT",
                   value: "depositDate",
-                  dependentFields: [
-                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
-                  ],
                 },
                 {
                   type: "text",
@@ -385,13 +313,13 @@ export const reviewCaseFileFormConfig = [
                   value: ["bouncedChequeFileUpload.document", "depositChequeFileUpload.document", "returnMemoFileUpload.document"],
                 },
               ],
-              data: {},
             },
             {
               key: "debtLiabilityDetails",
+              data: {},
+              icon: "DebtLiabilityIcon",
               name: "debtLiabilityDetails",
               label: "CS_DEBT_LIABILITY_DETAILS",
-              icon: "DebtLiabilityIcon",
               config: [
                 {
                   type: "text",
@@ -420,19 +348,14 @@ export const reviewCaseFileFormConfig = [
                   value: ["debtLiabilityFileUpload.document"],
                 },
               ],
-              data: {},
             },
             {
               key: "demandNoticeDetails",
+              data: {},
+              icon: "DemandDetailsNoticeIcon",
               name: "demandNoticeDetails",
               label: "CS_DEMAND_NOTICE_DETAILS",
-              icon: "DemandDetailsNoticeIcon",
               config: [
-                // {
-                //   type: "text",
-                //   label: "CS_MODE_OF_DISPATCH",
-                //   value: "modeOfDispatchType.modeOfDispatchType.name",
-                // },
                 {
                   type: "infoBox",
                   value: "infoBoxData",
@@ -441,69 +364,41 @@ export const reviewCaseFileFormConfig = [
                   type: "date",
                   label: "CS_DATE_OF_DISPATCH_LDN",
                   value: "dateOfDispatch",
-                  dependentFields: [
-                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
-                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
-                  ],
                 },
                 {
                   type: "date",
                   label: "CS_DATE_OF_SERVICE_LDN",
                   value: "dateOfService",
-                  dependentFields: [
-                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
-                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
-                  ],
                 },
                 {
                   type: "date",
                   label: "CS_DATE_OF_REPLY_LDN",
                   value: "dateOfReply",
                   notAvailable: "NO_REPLY_RECIEVED",
-                  dependentFields: [
-                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
-                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
-                  ],
                 },
                 {
                   type: "date",
                   label: "CS_DATE_OF_ACCRUAL_LDN",
                   value: "dateOfAccrual",
-                  dependentFields: [
-                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
-                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
-                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
-                  ],
                 },
                 {
                   type: "image",
                   label: "CS_DOCUMENT",
                   value: [
                     "legalDemandNoticeFileUpload.document",
-                    "proofOfDispatchFileUpload.document",
                     "proofOfAcknowledgmentFileUpload.document",
+                    "proofOfDispatchFileUpload.document",
                     "proofOfReplyFileUpload.document",
                   ],
                 },
               ],
-              data: {},
             },
             {
               key: "delayApplications",
+              data: {},
+              icon: "DemandDetailsNoticeIcon",
               name: "delayApplications",
               label: "CS_DELAY_CONDONATION_APPLICATION",
-              icon: "DemandDetailsNoticeIcon",
               config: [
                 {
                   type: "text",
@@ -511,11 +406,6 @@ export const reviewCaseFileFormConfig = [
                   value: "delayCondonationType.name",
                   isLocalizationRequired: true,
                 },
-                // {
-                //   type: "text",
-                //   label: "CS_TEXTAREA_HEADER_DELAY_REASON",
-                //   value: "delayApplicationReason.reasonForDelay",
-                // },
                 {
                   type: "text",
                   label: "SKIP_DELAY_APPLICATION_CONFIRM",
@@ -537,26 +427,25 @@ export const reviewCaseFileFormConfig = [
                   dependentValue: "NO",
                 },
               ],
-              data: {},
             },
           ],
         },
+        withoutLabel: true,
       },
       {
-        type: "component",
-        component: "SelectReviewAccordion",
         key: "additionalDetails",
+        type: "component",
         label: "CS_ADDITIONAL_DETAILS",
         number: 3,
-        withoutLabel: true,
+        component: "SelectReviewAccordion",
         populators: {
           inputs: [
             {
               key: "witnessDetails",
+              data: {},
+              icon: "WitnessDetailsIcon",
               name: "witnessDetails",
               label: "CS_WITNESS_DETAIL_HEADING",
-              icon: "WitnessDetailsIcon",
-              noDataText: "NO_WITNESSES_ADDED",
               config: [
                 {
                   type: "witnessTitle",
@@ -588,23 +477,15 @@ export const reviewCaseFileFormConfig = [
                   value: "witnessAdditionalDetails.text",
                 },
               ],
-              data: {},
+              noDataText: "NO_WITNESSES_ADDED",
             },
             {
               key: "prayerSwornStatement",
+              data: {},
+              icon: "PrayerSwornIcon",
               name: "prayerSwornStatement",
               label: "CS_PRAYER_AND_SWORN_STATEMENT_HEADING",
-              icon: "PrayerSwornIcon",
               config: [
-                // {
-                //   type: "infoBox",
-                //   value: "infoBoxData",
-                // },
-                // {
-                //   type: "text",
-                //   label: "CS_CASE_SETTLEMENT_CONDITION_SUBHEADER",
-                //   value: "caseSettlementCondition.text",
-                // },
                 {
                   type: "formattedText",
                   label: "CS_SYNOPSIS_HEADER",
@@ -613,23 +494,14 @@ export const reviewCaseFileFormConfig = [
                 {
                   type: "formattedText",
                   label: "CS_MEMORANDUM_OF_COMPLAINT_HEADER",
-                  // textDependentOn: "memorandumOfComplaint.document",
-                  // textDependentValue: "DOCUMENT_UPLOADED",
                   value: "memorandumOfComplaint.text",
                 },
-                // {
-                //   type: "text",
-                //   label: "CS_PRAYER_FOR_RELIEF_HEADER",
-                //   textDependentOn: "prayerForRelief.document",
-                //   textDependentValue: "DOCUMENT_UPLOADED",
-                //   value: "prayerForRelief.text",
-                // },
                 {
                   type: "text",
                   label: "CS_SWORN_STATEMENT_HEADER",
+                  value: "swornStatement.text",
                   textDependentOn: "swornStatement.document",
                   textDependentValue: "DOCUMENT_UPLOADED",
-                  value: "swornStatement.text",
                 },
                 {
                   type: "formattedText",
@@ -641,77 +513,42 @@ export const reviewCaseFileFormConfig = [
                   label: "CS_ADDITIONAL_DETAILS",
                   value: "additionalDetails.text",
                 },
-                // {
-                //   type: "text",
-                //   label: "CS_SWORN_PAGE_ADDITIONAL_ACTS_SECTIONS_HEADER",
-                //   value: "additionalActsSections.text",
-                // },
                 {
                   type: "image",
                   label: "CS_DOCUMENT",
                   value: ["swornStatement.document", "SelectUploadDocWithName"],
                 },
               ],
-              data: {},
             },
             {
               key: "advocateDetails",
+              data: {},
+              icon: "AdvocateDetailsIcon",
               name: "advocateDetails",
               label: "CS_ADVOCATE_DETAILS",
-              icon: "AdvocateDetailsIcon",
-              disableScrutiny: true,
               config: [
                 {
                   type: "title",
-                  prefix: "Complainant:",
                   value: [
                     "multipleAdvocatesAndPip.boxComplainant.firstName",
                     "multipleAdvocatesAndPip.boxComplainant.middleName",
                     "multipleAdvocatesAndPip.boxComplainant.lastName",
                   ],
+                  prefix: "Complainant:",
                 },
               ],
-              data: {},
+              disableScrutiny: true,
             },
           ],
         },
-      },
-      {
-        type: "component",
-        component: "SelectReviewAccordion",
-        key: "submissionFromAccused",
-        label: "CS_SUBMISSSIONS_FROM_ACCUSED",
-        number: 4,
         withoutLabel: true,
-        populators: {
-          inputs: [
-            {
-              key: "submissionFromAccused",
-              name: "submissionFromAccused",
-              label: "CS_SUBMISSSIONS_FROM_ACCUSED",
-              icon: "WitnessDetailsIcon",
-              config: [
-                {
-                  type: "infoBox",
-                  value: "infoBoxData",
-                },
-                {
-                  type: "image",
-                  label: "CS_DOCUMENT",
-                  value: ["vakalatnamaDocument", "responseDocuments", "pipAffidavitDocument", "supportingDocument"],
-                },
-              ],
-              data: {},
-            },
-          ],
-        },
       },
       {
         key: "scrutinyMessage",
         type: "component",
-        withoutLabel: true,
         component: "SelectEmptyComponent",
         populators: {},
+        withoutLabel: true,
       },
     ],
   },
