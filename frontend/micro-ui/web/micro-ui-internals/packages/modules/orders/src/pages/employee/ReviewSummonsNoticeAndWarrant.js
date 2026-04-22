@@ -585,27 +585,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
             );
           }
         });
-        if (selectedDelievery?.key === "NOT_DELIVERED") {
-          ordersService.customApiService(Urls.orders.pendingTask, {
-            pendingTask: {
-              actionCategory: "Review Process",
-              name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
-              entityType: "order-default",
-              referenceId: `MANUAL_${orderData?.list[0]?.scheduledHearingNumber || orderData?.list[0]?.hearingNumber}`,
-              status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
-              assignedTo: [],
-              assignedRole: [orderType === "NOTICE" ? "PENDING_TASK_REISSUE_NOTICE" : "PENDING_TASK_REISSUE_SUMMON"], //checkForCourtRoomManager?
-              cnrNumber: tasksData?.list[0]?.cnrNumber,
-              filingNumber: tasksData?.list[0]?.filingNumber,
-              caseId: tasksData?.list[0]?.caseId,
-              caseTitle: tasksData?.list[0]?.caseTitle,
-              isCompleted: false,
-              stateSla: 3 * dayInMillisecond + todayDate,
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-        }
         setShowActionModal(false);
         // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
         isInitialLoadRef.current = true;
@@ -913,9 +892,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
       sessionStorage.removeItem("fileStoreId");
       sessionStorage.removeItem("homeActiveTab");
       sessionStorage.setItem("SignedFileStoreID", documentsFile?.fileStore);
-      
+
       const parsedTaskDetails = typeof rowData?.taskDetails === "string" ? JSON.parse(rowData?.taskDetails) : rowData?.taskDetails;
-      
+
       const reqBody = {
         task: {
           ...rowData,
@@ -1118,7 +1097,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
   }, [tenantId, rowData?.taskNumber, t]);
 
-  
   // XML parsing utility from BulkESignView
   const parseXml = (xmlString, tagName) => {
     const parser = new DOMParser();
