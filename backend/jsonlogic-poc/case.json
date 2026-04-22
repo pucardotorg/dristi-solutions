@@ -1,0 +1,727 @@
+{
+    "id": "7136b947-51ea-41b1-b9d9-dda83c6b6308",
+    "tenantId": "kl",
+    "resolutionMechanism": "COURT",
+    "caseTitle": "Yhdt Dfjdrtu vs Sdsd",
+    "isActive": true,
+    "caseDescription": "Case description",
+    "filingNumber": "KL-001664-2025",
+    "advocateCount": 0,
+    "courtCaseNumber": null,
+    "caseNumber": null,
+    "caseType": null,
+    "cnrNumber": null,
+    "cmpNumber": null,
+    "accessCode": "097891",
+    "outcome": null,
+    "pendingAdvocateRequests": [],
+    "courtId": null,
+    "benchId": null,
+    "linkedCases": null,
+    "filingDate": 1750760166255,
+    "registrationDate": null,
+    "judgementDate": null,
+    "caseDetails": {
+        "chequeDetails": {
+            "formdata": [
+                {
+                    "data": {
+                        "ifsc": "HFGH0GHFGHF",
+                        "name": "Hghgfh",
+                        "delayReason": {
+                            "reasonForReturnCheque": "hgfh"
+                        },
+                        "depositDate": "2025-05-24",
+                        "infoBoxData": {
+                            "data": [
+                                "CS_SIX_MONTH_BEFORE_DEPOSIT_TEXT",
+                                "CS_CHEQUE_RETURNED_INSUFFICIENT_FUND"
+                            ],
+                            "header": "CS_YOU_HAVE_CONFIRMED",
+                            "scrutinyHeader": "CS_COMPLAINANT_HAVE_CONFIRMED"
+                        },
+                        "chequeAmount": "6546666",
+                        "chequeNumber": "654645",
+                        "issuanceDate": "2025-05-24",
+                        "payeeBankName": "Hgfhgfh",
+                        "payerBankName": "Hfgh",
+                        "payeeBranchName": "Hhgfh",
+                        "payerBranchName": "Hfgh",
+                        "chequeSignatoryName": "Nbvn",
+                        "returnMemoFileUpload": {
+                            "document": [
+                                {
+                                    "fileName": "CS_CHEQUE_RETURN_MEMO",
+                                    "fileStore": "128ee25e-e90a-4878-b549-6067f9be94fb",
+                                    "documentName": "24x7 ON Courts.pdf",
+                                    "documentType": "case.cheque.returnmemo"
+                                }
+                            ]
+                        },
+                        "bouncedChequeFileUpload": {
+                            "document": [
+                                {
+                                    "fileName": "CS_BOUNCED_CHEQUE",
+                                    "fileStore": "e8a16e23-0e1e-4917-ae61-50b638fda9f8",
+                                    "documentName": "KL-001700-2025.pdf",
+                                    "documentType": "case.cheque"
+                                }
+                            ]
+                        },
+                        "depositChequeFileUpload": null,
+                        "policeStationJurisDictionCheque": {
+                            "code": 15996057,
+                            "name": "MEDICAL COLLEGE PS",
+                            "active": true,
+                            "district": "THRISSUR CITY"
+                        }
+                    },
+                    "isenabled": true,
+                    "displayindex": 0
+                }
+            ],
+            "isCompleted": true
+        },
+        "delayApplications": {
+            "formdata": [
+                {
+                    "data": {
+                        "delayCondonationType": {
+                            "code": "YES",
+                            "name": "YES",
+                            "showForm": false,
+                            "isEnabled": true
+                        },
+                        "condonationFileUpload": null
+                    },
+                    "isenabled": true,
+                    "displayindex": 0
+                }
+            ],
+            "isCompleted": true
+        },
+        "demandNoticeDetails": {
+            "formdata": [
+                {
+                    "data": {
+                        "infoBoxData": null,
+                        "proofOfReply": {
+                            "code": "NO",
+                            "name": "NO",
+                            "isEnabled": true,
+                            "isVerified": true,
+                            "showProofOfReply": false,
+                            "hasBarRegistrationNo": true
+                        },
+                        "dateOfAccrual": "2025-06-09",
+                        "dateOfService": "2025-05-24",
+                        "dateOfDispatch": "2025-05-24",
+                        "proofOfReplyFileUpload": null,
+                        "proofOfDispatchFileUpload": {
+                            "document": [
+                                {
+                                    "fileName": "PROOF_OF_DISPATCH_FILE_NAME",
+                                    "fileStore": "65a3f188-781d-44ac-9c19-18743f8b2f51",
+                                    "documentName": "24x7 ON Courts.pdf",
+                                    "documentType": "case.demandnotice.proof"
+                                }
+                            ]
+                        },
+                        "legalDemandNoticeFileUpload": {
+                            "document": [
+                                {
+                                    "fileName": "LEGAL_DEMAND_NOTICE",
+                                    "fileStore": "316bb14c-181d-45c4-85e5-ef12192dafa7",
+                                    "documentName": "KL-001700-2025.pdf",
+                                    "documentType": "case.demandnotice"
+                                }
+                            ]
+                        },
+                        "proofOfAcknowledgmentFileUpload": null
+                    },
+                    "isenabled": true,
+                    "displayindex": 0
+                }
+            ],
+            "isCompleted": true
+        },
+        "debtLiabilityDetails": {
+            "formdata": [
+                {
+                    "data": {
+                        "totalAmount": "6546666",
+                        "liabilityType": {
+                            "id": 1,
+                            "code": "FULL_LIABILITY",
+                            "name": "FULL_LIABILITY",
+                            "isActive": true,
+                            "liabilityType": 1,
+                            "showAmountCovered": false
+                        },
+                        "liabilityNature": "Hgfh",
+                        "debtLiabilityFileUpload": null
+                    },
+                    "isenabled": true,
+                    "displayindex": 0
+                }
+            ],
+            "isCompleted": true
+        }
+    },
+    "caseCategory": "CRIMINAL",
+    "judgeId": null,
+    "stage": "Pre-Trial",
+    "substage": "FILING",
+    "natureOfPleading": null,
+    "statutesAndSections": [
+        {
+            "id": "b1cd770d-30cd-4138-8de2-a31dccf57646",
+            "tenantId": "kl",
+            "statute": null,
+            "sections": [
+                "Negotiable Instrument Act",
+                "02."
+            ],
+            "subsections": [
+                "138",
+                "03."
+            ],
+            "additionalDetails": null,
+            "auditdetails": {
+                "createdBy": null,
+                "lastModifiedBy": null,
+                "createdTime": 0,
+                "lastModifiedTime": 0
+            },
+            "strSections": null,
+            "strSubsections": null
+        }
+    ],
+    "litigants": [
+        {
+            "id": "31062364-36d8-400a-9c0d-c5d84d9f3975",
+            "tenantId": "kl",
+            "caseId": "7136b947-51ea-41b1-b9d9-dda83c6b6308",
+            "partyCategory": "INDIVIDUAL",
+            "organisationID": null,
+            "individualId": "IND-2025-06-24-000345",
+            "partyType": "complainant.primary",
+            "isActive": true,
+            "isResponseRequired": false,
+            "isPartyInPerson": false,
+            "documents": null,
+            "auditDetails": {
+                "createdBy": "c8d701b0-84d7-4b6b-be56-4d6f82b9d06a",
+                "lastModifiedBy": "c8d701b0-84d7-4b6b-be56-4d6f82b9d06a",
+                "createdTime": 1750753173965,
+                "lastModifiedTime": 1750760652666
+            },
+            "additionalDetails": {
+                "uuid": null,
+                "fullName": "Yhdt Dfjdrtu",
+                "currentPosition": 1
+            },
+            "hasSigned": false
+        }
+    ],
+    "representatives": [
+        {
+            "id": "0b298d15-78e5-4265-89bd-41d80d624668",
+            "tenantId": "kl",
+            "advocateId": "6c69669d-3b3c-4883-a781-051019ffa167",
+            "caseId": "7136b947-51ea-41b1-b9d9-dda83c6b6308",
+            "representing": [
+                {
+                    "id": "23138434-9a08-4718-bd24-2e0564087308",
+                    "tenantId": "kl",
+                    "caseId": "7136b947-51ea-41b1-b9d9-dda83c6b6308",
+                    "partyCategory": "INDIVIDUAL",
+                    "organisationID": null,
+                    "individualId": "IND-2025-06-24-000345",
+                    "partyType": "complainant.primary",
+                    "isActive": true,
+                    "isResponseRequired": null,
+                    "isPartyInPerson": false,
+                    "documents": [
+                        {
+                            "id": "25b12028-33d2-4ac4-a6e0-5bb4f99e328b",
+                            "documentType": "VAKALATNAMA_DOC",
+                            "fileStore": "839e1b18-f461-4085-add5-598f17bcde30",
+                            "documentUid": "25b12028-33d2-4ac4-a6e0-5bb4f99e328b",
+                            "isActive": true,
+                            "additionalDetails": null
+                        }
+                    ],
+                    "auditDetails": {
+                        "createdBy": "c8d701b0-84d7-4b6b-be56-4d6f82b9d06a",
+                        "lastModifiedBy": "c8d701b0-84d7-4b6b-be56-4d6f82b9d06a",
+                        "createdTime": 1750753173965,
+                        "lastModifiedTime": 1750760652666
+                    },
+                    "additionalDetails": {
+                        "uuid": null,
+                        "fullName": "Yhdt Dfjdrtu",
+                        "currentPosition": 1
+                    },
+                    "hasSigned": null
+                }
+            ],
+            "isActive": true,
+            "documents": null,
+            "auditDetails": {
+                "createdBy": "c8d701b0-84d7-4b6b-be56-4d6f82b9d06a",
+                "lastModifiedBy": "c8d701b0-84d7-4b6b-be56-4d6f82b9d06a",
+                "createdTime": 1750753173965,
+                "lastModifiedTime": 1750760652666
+            },
+            "additionalDetails": {
+                "uuid": "c8d701b0-84d7-4b6b-be56-4d6f82b9d06a",
+                "advocateName": "adv iknoor"
+            },
+            "hasSigned": false
+        }
+    ],
+    "status": "PENDING_RE_SIGN",
+    "documents": [
+        {
+            "id": "676c6a21-a43c-4a4a-b5b2-e95791a67347",
+            "documentType": "COMPLAINANT_ID_PROOF",
+            "fileStore": "0feb125c-49f5-4779-9dd1-c6fbfddbcdee",
+            "documentUid": "676c6a21-a43c-4a4a-b5b2-e95791a67347",
+            "isActive": true,
+            "additionalDetails": null
+        },
+        {
+            "id": "6a0020df-803a-4b55-9576-fa77e88c1cd6",
+            "documentType": "VAKALATNAMA_DOC",
+            "fileStore": "839e1b18-f461-4085-add5-598f17bcde30",
+            "documentUid": "6a0020df-803a-4b55-9576-fa77e88c1cd6",
+            "isActive": true,
+            "additionalDetails": null
+        },
+        {
+            "id": "9cb5bd48-5eb3-4ca5-b470-ee64bb5ac29d",
+            "documentType": "case.demandnotice",
+            "fileStore": "316bb14c-181d-45c4-85e5-ef12192dafa7",
+            "documentUid": "9cb5bd48-5eb3-4ca5-b470-ee64bb5ac29d",
+            "isActive": true,
+            "additionalDetails": null
+        },
+        {
+            "id": "dff28880-b85a-4e65-8d6e-994715823b29",
+            "documentType": "case.demandnotice.proof",
+            "fileStore": "65a3f188-781d-44ac-9c19-18743f8b2f51",
+            "documentUid": "dff28880-b85a-4e65-8d6e-994715823b29",
+            "isActive": true,
+            "additionalDetails": null
+        },
+        {
+            "id": "12bd3520-953f-4858-b800-7362d9f1ffb6",
+            "documentType": "case.affidavit.223bnss",
+            "fileStore": "a9e56b78-bd25-43c9-b671-c6477128f1e7",
+            "documentUid": "12bd3520-953f-4858-b800-7362d9f1ffb6",
+            "isActive": true,
+            "additionalDetails": null
+        },
+        {
+            "id": "decbd7a9-c5f1-4e35-b832-a120106a6e5b",
+            "documentType": "case.cheque",
+            "fileStore": "e8a16e23-0e1e-4917-ae61-50b638fda9f8",
+            "documentUid": "decbd7a9-c5f1-4e35-b832-a120106a6e5b",
+            "isActive": true,
+            "additionalDetails": null
+        },
+        {
+            "id": "12a4392d-1d01-49f4-8bd4-a49410ec1296",
+            "documentType": "case.cheque.returnmemo",
+            "fileStore": "128ee25e-e90a-4878-b549-6067f9be94fb",
+            "documentUid": "12a4392d-1d01-49f4-8bd4-a49410ec1296",
+            "isActive": true,
+            "additionalDetails": null
+        },
+        {
+            "documentType": "case.complaint.signed",
+            "fileStore": "738b4906-023e-45dc-8ce3-9386d52942fe",
+            "fileName": "case Complaint Signed Document"
+        }
+    ],
+    "remarks": null,
+    "workflow": {
+        "action": "UPLOAD",
+        "assignes": []
+    },
+    "additionalDetails": {
+        "witnessDetails": {
+            "formdata": [],
+            "isCompleted": true
+        },
+        "advocateDetails": {
+            "formdata": [
+                {
+                    "data": {
+                        "multipleAdvocatesAndPip": {
+                            "multipleAdvocateNameDetails": [
+                                {
+                                    "advocateNameDetails": {
+                                        "lastName": "iknoor",
+                                        "firstName": "adv",
+                                        "middleName": "",
+                                        "advocateMobileNumber": "9955599992",
+                                        "advocateIdProof": [
+                                            {
+                                                "name": "DRIVING_LICENSE",
+                                                "fileName": "ID Proof",
+                                                "fileStore": "db0dcdbe-9753-46d8-a292-46d5c67372ba",
+                                                "documentName": "Screenshot from 2025-02-04 11-21-05.png"
+                                            }
+                                        ]
+                                    },
+                                    "advocateBarRegNumberWithName": {
+                                        "advocateName": "adv iknoor",
+                                        "isDisable": true,
+                                        "advocateId": "6c69669d-3b3c-4883-a781-051019ffa167",
+                                        "advocateUuid": "c8d701b0-84d7-4b6b-be56-4d6f82b9d06a",
+                                        "individualId": "IND-2025-02-05-000119",
+                                        "barRegistrationNumber": "IKNOOR/9955599992 (adv iknoor)",
+                                        "barRegistrationNumberOriginal": "IKNOOR/9955599992"
+                                    }
+                                }
+                            ],
+                            "boxComplainant": {
+                                "lastName": "Dfjdrtu",
+                                "firstName": "Yhdt",
+                                "mobileNumber": "7777777777",
+                                "middleName": "",
+                                "index": 0,
+                                "individualId": "IND-2025-06-24-000345"
+                            },
+                            "showAffidavit": false,
+                            "isComplainantPip": {
+                                "code": "NO",
+                                "name": "No",
+                                "isEnabled": true
+                            },
+                            "numberOfAdvocates": 1,
+                            "showVakalatNamaUpload": true,
+                            "vakalatnamaFileUpload": {
+                                "document": [
+                                    {
+                                        "fileName": "VAKALATNAMA",
+                                        "fileStore": "839e1b18-f461-4085-add5-598f17bcde30",
+                                        "documentName": "24x7 ON Courts.pdf",
+                                        "documentType": "VAKALATNAMA_DOC"
+                                    }
+                                ]
+                            },
+                            "pipAffidavitFileUpload": null
+                        }
+                    },
+                    "isenabled": true,
+                    "displayindex": 0,
+                    "isFormCompleted": true
+                }
+            ],
+            "isCompleted": true
+        },
+        "payerMobileNo": "9955599992",
+        "payerName": "adv iknoor ",
+        "respondentDetails": {
+            "formdata": [
+                {
+                    "data": {
+                        "phonenumbers": {
+                            "textfieldValue": ""
+                        },
+                        "addressDetails": [
+                            {
+                                "addressDetails": {
+                                    "pincode": "656456",
+                                    "city": "gdfgdf",
+                                    "district": "nbvn",
+                                    "locality": "Ggdf",
+                                    "state": "gfg"
+                                },
+                                "id": "aa6eab70-29c8-4a08-be46-f422b23ee6a7"
+                            }
+                        ],
+                        "respondentFirstName": "Sdsd",
+                        "respondentType": {
+                            "id": 1,
+                            "code": "INDIVIDUAL",
+                            "name": "Individual",
+                            "isactive": true,
+                            "commonFields": true,
+                            "isIndividual": true,
+                            "complainantTypeId": 1,
+                            "showCompanyDetails": false,
+                            "complainantLocation": true
+                        },
+                        "companyDetailsUpload": null,
+                        "inquiryAffidavitFileUpload": null
+                    },
+                    "uniqueId": "d8fe717f-d6bc-473c-bbb4-51498674ae94",
+                    "isenabled": true,
+                    "displayindex": 0
+                }
+            ],
+            "isCompleted": true
+        },
+        "complainantDetails": {
+            "formdata": [
+                {
+                    "data": {
+                        "complainantVerification": {
+                            "individualDetails": {
+                                "addressDetails-select": {
+                                    "pincode": "143001",
+                                    "city": "Amritsar",
+                                    "district": "Amritsar",
+                                    "locality": "shdsrxh, esagher, Tirath Nagar, Pratap Nagar, Azad Nagar",
+                                    "state": "Punjab",
+                                    "coordinates": {
+                                        "latitude": 31.6160638,
+                                        "longitude": 74.8978579
+                                    }
+                                },
+                                "addressDetails": {
+                                    "pincode": "143001",
+                                    "city": "Amritsar",
+                                    "district": "Amritsar",
+                                    "coordinates": {
+                                        "latitude": "31.6160638",
+                                        "longitude": "74.8978579"
+                                    },
+                                    "locality": "shdsrxh, esagher, Tirath Nagar, Pratap Nagar, Azad Nagar",
+                                    "state": "Punjab"
+                                },
+                                "currentAddressDetails": {
+                                    "pincode": "143001",
+                                    "city": "Amritsar",
+                                    "district": "Amritsar",
+                                    "coordinates": {
+                                        "latitude": "31.6160638",
+                                        "longitude": "74.8978579"
+                                    },
+                                    "locality": "shdsrxh, esagher, Tirath Nagar, Pratap Nagar, Azad Nagar",
+                                    "state": "Punjab",
+                                    "isCurrAddrSame": {
+                                        "code": "NO",
+                                        "name": "NO"
+                                    }
+                                },
+                                "currentAddressDetails-select": {
+                                    "pincode": "143001",
+                                    "city": "Amritsar",
+                                    "district": "Amritsar",
+                                    "locality": "shdsrxh, esagher, Tirath Nagar, Pratap Nagar, Azad Nagar",
+                                    "state": "Punjab",
+                                    "coordinates": {
+                                        "latitude": 31.6160638,
+                                        "longitude": 74.8978579
+                                    },
+                                    "isCurrAddrSame": {
+                                        "code": "NO",
+                                        "name": "NO"
+                                    }
+                                },
+                                "document": [
+                                    {
+                                        "fileStore": "0feb125c-49f5-4779-9dd1-c6fbfddbcdee",
+                                        "documentName": "24x7 ON Courts.pdf",
+                                        "documentType": "COMPLAINANT_ID_PROOF"
+                                    }
+                                ],
+                                "individualId": "IND-2025-06-24-000345"
+                            },
+                            "mobileNumber": "7777777777",
+                            "otpNumber": "123456",
+                            "userDetails": null,
+                            "isUserVerified": true
+                        },
+                        "lastName": "Dfjdrtu",
+                        "firstName": "Yhdt",
+                        "poaVerification": {
+                            "isUserVerified": false
+                        },
+                        "addressDetails-select": {
+                            "pincode": "143001",
+                            "city": "Amritsar",
+                            "district": "Amritsar",
+                            "locality": "shdsrxh, esagher, Tirath Nagar, Pratap Nagar, Azad Nagar",
+                            "state": "Punjab"
+                        },
+                        "addressDetails": {
+                            "pincode": "143001",
+                            "city": "Amritsar",
+                            "district": "Amritsar",
+                            "coordinates": {
+                                "latitude": "31.6160638",
+                                "longitude": "74.8978579"
+                            },
+                            "locality": "shdsrxh, esagher, Tirath Nagar, Pratap Nagar, Azad Nagar",
+                            "state": "Punjab"
+                        },
+                        "currentAddressDetails": {
+                            "pincode": "143001",
+                            "city": "Amritsar",
+                            "district": "Amritsar",
+                            "locality": "shdsrxh, esagher, Tirath Nagar, Pratap Nagar, Azad Nagar",
+                            "coordinates": {
+                                "latitude": "31.6160638",
+                                "longitude": "74.8978579"
+                            },
+                            "state": "Punjab",
+                            "isCurrAddrSame": {
+                                "code": "YES",
+                                "name": "YES"
+                            }
+                        },
+                        "middleName": "",
+                        "currentAddressDetails-select": {
+                            "pincode": "143001",
+                            "city": "Amritsar",
+                            "district": "Amritsar",
+                            "locality": "shdsrxh, esagher, Tirath Nagar, Pratap Nagar, Azad Nagar",
+                            "state": "Punjab"
+                        },
+                        "complainantId": {
+                            "complainantId": {
+                                "complainantId": {
+                                    "ID_Proof": [
+                                        [
+                                            "24x7 ON Courts.pdf",
+                                            {
+                                                "file": {
+                                                    "fileStore": "0feb125c-49f5-4779-9dd1-c6fbfddbcdee",
+                                                    "documentName": "24x7 ON Courts.pdf",
+                                                    "documentType": "COMPLAINANT_ID_PROOF"
+                                                },
+                                                "fileStoreId": "0feb125c-49f5-4779-9dd1-c6fbfddbcdee"
+                                            }
+                                        ]
+                                    ]
+                                }
+                            }
+                        },
+                        "complainantAge": "56",
+                        "transferredPOA": {
+                            "code": "NO",
+                            "name": "NO",
+                            "showPoaDetails": false
+                        },
+                        "complainantType": {
+                            "id": 1,
+                            "code": "INDIVIDUAL",
+                            "name": "Individual",
+                            "isactive": true,
+                            "commonFields": true,
+                            "isIndividual": true,
+                            "complainantTypeId": 1,
+                            "showCompanyDetails": false,
+                            "complainantLocation": true
+                        },
+                        "companyDetailsUpload": null,
+                        "poaAuthorizationDocument": null
+                    },
+                    "isenabled": true,
+                    "displayindex": 0,
+                    "isFormCompleted": true
+                }
+            ],
+            "isCompleted": true
+        },
+        "scrutiny": {
+            "data": {
+                "scrutinyMessage": {
+                    "popupInfo": null,
+                    "imagePopupInfo": null
+                },
+                "caseSpecificDetails": {
+                    "chequeDetails": {
+                        "form": [
+                            {
+                                "chequeAmount": {
+                                    "FSOError": "hgfbv",
+                                    "isWarning": false,
+                                    "markError": false
+                                }
+                            }
+                        ],
+                        "markError": false,
+                        "scrutinyMessage": ""
+                    }
+                }
+            },
+            "isenabled": true,
+            "displayindex": 0
+        },
+        "reviewCaseFile": {
+            "formdata": [
+                {
+                    "data": {
+                        "scrutinyMessage": {
+                            "popupInfo": null,
+                            "imagePopupInfo": null
+                        },
+                        "caseSpecificDetails": {
+                            "chequeDetails": {
+                                "form": [
+                                    {
+                                        "chequeAmount": {
+                                            "FSOError": "hgfbv",
+                                            "isWarning": false,
+                                            "markError": false
+                                        }
+                                    }
+                                ],
+                                "markError": false,
+                                "scrutinyMessage": ""
+                            }
+                        }
+                    },
+                    "isenabled": true,
+                    "displayindex": 0
+                }
+            ],
+            "isCompleted": true
+        },
+        "signedCaseDocument": "738b4906-023e-45dc-8ce3-9386d52942fe",
+        "prayerSwornStatement": {
+            "formdata": [
+                {
+                    "data": {
+                        "prayer": {
+                            "text": "hgfh"
+                        },
+                        "swornStatement": {
+                            "document": [
+                                {
+                                    "fileName": "CS_SWORN_STATEMENT_HEADER",
+                                    "fileStore": "a9e56b78-bd25-43c9-b671-c6477128f1e7",
+                                    "documentName": "24x7 ON Courts.pdf",
+                                    "documentType": "case.affidavit.223bnss"
+                                }
+                            ]
+                        },
+                        "memorandumOfComplaint": {
+                            "text": "<p>hgfh</p>\n"
+                        },
+                        "SelectUploadDocWithName": null
+                    },
+                    "isenabled": true,
+                    "displayindex": 0
+                }
+            ],
+            "isCompleted": true
+        },
+        "scrutinyCommentSendBack": ""
+    },
+    "auditDetails": {
+        "createdBy": "c8d701b0-84d7-4b6b-be56-4d6f82b9d06a",
+        "lastModifiedBy": "c8d701b0-84d7-4b6b-be56-4d6f82b9d06a",
+        "createdTime": 1750753173965,
+        "lastModifiedTime": 1750760652666
+    },
+    "advocateStatus": "JOINED",
+    "poaHolders": null
+}
