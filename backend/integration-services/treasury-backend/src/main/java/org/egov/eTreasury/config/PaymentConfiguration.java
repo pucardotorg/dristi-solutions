@@ -126,6 +126,12 @@ public class PaymentConfiguration {
     @Value(("${isTest.enabled}"))
     private boolean isTest;
 
+    @Value("${treasury.basic.auth.username:}")
+    private String basicAuthUsername;
+
+    @Value("${treasury.basic.auth.password:}")
+    private String basicAuthPassword;
+
     @Value("${challan.test.amount}")
     private String challanTestAmount;
 
