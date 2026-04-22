@@ -230,14 +230,6 @@ const PaymentForSummonModal = ({ path }) => {
     [orderData, compositeItem]
   );
 
-  const partyIndex = useMemo(
-    () =>
-      orderData?.list?.[0]?.orderCategory === "COMPOSITE"
-        ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex
-        : orderData?.list?.[0]?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex,
-    [orderData, compositeItem]
-  );
-
   const { data: hearingsData, isLoading: isHearingLoading } = Digit.Hooks.hearings.useGetHearings(
     {
       hearing: { tenantId },
@@ -367,27 +359,6 @@ const PaymentForSummonModal = ({ path }) => {
         // Removed condition 'ePostBillResponse?.Bill?.[0]?.status === "PAID"' since there is only one payment record
         if (fileStoreId) {
           await Promise.all([
-            ordersService.customApiService(Urls.orders.pendingTask, {
-              pendingTask: {
-                name: orderType === ORDER_TYPES.SUMMONS ? "Show Summon-Warrant Status" : "Show Notice Status",
-                entityType: paymentType.ORDER_MANAGELIFECYCLE,
-                referenceId: hearingsData?.HearingList?.[0]?.hearingId,
-                status: orderType === ORDER_TYPES.SUMMONS ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
-                assignedTo: [],
-                assignedRole: [orderType === ORDER_TYPES.SUMMONS ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
-                cnrNumber: filteredTasks?.[0]?.cnrNumber,
-                filingNumber: filingNumber,
-                caseId: caseDetails?.id,
-                caseTitle: caseDetails?.caseTitle,
-                isCompleted: false,
-                stateSla: 3 * dayInMillisecond + todayDate,
-                additionalDetails: {
-                  hearingId: hearingsData?.list?.[0]?.hearingId,
-                  partyIndex: orderType === ORDER_TYPES.NOTICE ? partyIndex : "",
-                },
-                tenantId,
-              },
-            }),
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
                 name: orderType === ORDER_TYPES.SUMMONS ? `MAKE_PAYMENT_FOR_SUMMONS_POST` : `MAKE_PAYMENT_FOR_NOTICE_POST`,
