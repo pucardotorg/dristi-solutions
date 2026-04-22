@@ -74,10 +74,14 @@ function getAction(selectedDelievery, orderType) {
   }
 
   if (key === "DELIVERED") {
-    return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "DELIVERED" : "SERVED";
+    return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+      ? "DELIVERED"
+      : "SERVED";
   }
 
-  return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT ? "NOT_DELIVERED" : "NOT_SERVED";
+  return orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
+    ? "NOT_DELIVERED"
+    : "NOT_SERVED";
 }
 
 // Tab configuration mapping - maps tab labels to their storage keys
@@ -586,27 +590,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
             );
           }
         });
-        if (selectedDelievery?.key === "NOT_DELIVERED") {
-          ordersService.customApiService(Urls.orders.pendingTask, {
-            pendingTask: {
-              actionCategory: "Review Process",
-              name: `Re-issue ${orderType === ORDER_TYPES.NOTICE ? "Notice" : "Summon"}`,
-              entityType: "order-default",
-              referenceId: `MANUAL_${orderData?.list[0]?.scheduledHearingNumber || orderData?.list[0]?.hearingNumber}`,
-              status: `RE-ISSUE_${orderType === ORDER_TYPES.NOTICE ? "NOTICE" : "SUMMON"}`,
-              assignedTo: [],
-              assignedRole: [orderType === ORDER_TYPES.NOTICE ? "PENDING_TASK_REISSUE_NOTICE" : "PENDING_TASK_REISSUE_SUMMON"], //checkForCourtRoomManager?
-              cnrNumber: tasksData?.list[0]?.cnrNumber,
-              filingNumber: tasksData?.list[0]?.filingNumber,
-              caseId: tasksData?.list[0]?.caseId,
-              caseTitle: tasksData?.list[0]?.caseTitle,
-              isCompleted: false,
-              stateSla: 3 * dayInMillisecond + todayDate,
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-        }
         setShowActionModal(false);
         // Set flag to prevent onFormValueChange from clearing sessionStorage during reload
         isInitialLoadRef.current = true;
@@ -914,9 +897,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
       sessionStorage.removeItem("fileStoreId");
       sessionStorage.removeItem("homeActiveTab");
       sessionStorage.setItem("SignedFileStoreID", documentsFile?.fileStore);
-      
+
       const parsedTaskDetails = typeof rowData?.taskDetails === "string" ? JSON.parse(rowData?.taskDetails) : rowData?.taskDetails;
-      
+
       const reqBody = {
         task: {
           ...rowData,
@@ -1119,7 +1102,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
   }, [tenantId, rowData?.taskNumber, t]);
 
-  
   // XML parsing utility from BulkESignView
   const parseXml = (xmlString, tagName) => {
     const parser = new DOMParser();
@@ -1423,7 +1405,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
       setIsBulkLoading(false);
       setShowBulkSignConfirmModal(false);
     }
-    const isPolice = bulkSignList?.filter((item) => item?.isSelected)?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE);
+    const isPolice = bulkSignList
+      ?.filter((item) => item?.isSelected)
+      ?.every((item) => item?.taskDetails?.deliveryChannels?.channelCode === CHANNEL_IDS.POLICE);
     setAllSelectedPolice(isPolice ? true : false);
   }, [bulkSignList, tenantId, t, setShowErrorToast, setIsBulkLoading, fetchResponseFromXmlRequest, callBulkSendApi]);
 
@@ -1604,7 +1588,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
           actionSaveOnSubmit: () => {},
           hideSubmit:
             isTypist ||
-            ((rowData?.taskType === ORDER_TYPES.WARRANT || rowData?.taskType === ORDER_TYPES.PROCLAMATION || rowData?.taskType === ORDER_TYPES.ATTACHMENT) &&
+            ((rowData?.taskType === ORDER_TYPES.WARRANT ||
+              rowData?.taskType === ORDER_TYPES.PROCLAMATION ||
+              rowData?.taskType === ORDER_TYPES.ATTACHMENT) &&
               rowData?.documentStatus === "SIGN_PENDING" &&
               !isJudge),
         },
@@ -1672,7 +1658,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
                     <CustomStepperSuccess
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                      submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== DELIVERY_CHANNELS.POLICE ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+                      submitButtonText={
+                        documents && hasEditTaskAccess && deliveryChannel !== DELIVERY_CHANNELS.POLICE ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")
+                      }
                       closeButtonText={documents ? t("DOWNLOAD_DOCUMENT") : t("BACK")}
                       closeButtonAction={handleClose}
                       submitButtonAction={hasEditTaskAccess && deliveryChannel !== DELIVERY_CHANNELS.POLICE ? handleSubmit : handleClose}
@@ -1733,7 +1721,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
           cancelTheme: "primary",
           hideSubmit:
             isTypist ||
-            ((rowData?.taskType === ORDER_TYPES.WARRANT || rowData?.taskType === ORDER_TYPES.PROCLAMATION || rowData?.taskType === ORDER_TYPES.ATTACHMENT) &&
+            ((rowData?.taskType === ORDER_TYPES.WARRANT ||
+              rowData?.taskType === ORDER_TYPES.PROCLAMATION ||
+              rowData?.taskType === ORDER_TYPES.ATTACHMENT) &&
               rowData?.documentStatus === "SIGN_PENDING" &&
               !isJudge),
         },
@@ -1801,7 +1791,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
                     <CustomStepperSuccess
                       successMessage={successMessage}
                       bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                      submitButtonText={documents && hasEditTaskAccess && deliveryChannel !== DELIVERY_CHANNELS.POLICE ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")}
+                      submitButtonText={
+                        documents && hasEditTaskAccess && deliveryChannel !== DELIVERY_CHANNELS.POLICE ? t("MARK_AS_SENT") : t("CS_COMMON_CLOSE")
+                      }
                       closeButtonText={documents ? t("DOWNLOAD_DOCUMENT") : t("BACK")}
                       closeButtonAction={handleClose}
                       submitButtonAction={hasEditTaskAccess && deliveryChannel !== DELIVERY_CHANNELS.POLICE ? handleSubmit : handleClose}

@@ -127,6 +127,8 @@ const TopBarComponent = ({
   const history = useHistory();
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
+  const isLoginRoute = pathname?.includes("/employee/user/login") || pathname?.includes("/citizen/dristi/home/login");
+  const showLoggedOutTopbarActions = !isUserLoggedIn || isLoginRoute;
   const { AdvocateData, setAdvocateDataContext } = useContext(AdvocateDataContext);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -446,7 +448,7 @@ const TopBarComponent = ({
           <div
             style={{ display: "flex", gap: "16px", cursor: "pointer" }}
             onClick={() => {
-              if (!isUserLoggedIn) {
+              if (showLoggedOutTopbarActions) {
                 window.location.replace(window.location.origin);
                 return;
               }
@@ -517,7 +519,7 @@ const TopBarComponent = ({
                 )}
               </div>
             )}
-          {!hideChangeLangOnSomeUrlsWhenNotLoggedIn && !isUserLoggedIn ? changeLanguage : null}
+          {!hideChangeLangOnSomeUrlsWhenNotLoggedIn && showLoggedOutTopbarActions ? changeLanguage : null}
           {!hideNotificationIconOnSomeUrlsWhenNotLoggedIn ? (
             <div className="EventNotificationWrapper" onClick={onNotificationIconClick}>
               {notificationCountLoaded && notificationCount ? (
