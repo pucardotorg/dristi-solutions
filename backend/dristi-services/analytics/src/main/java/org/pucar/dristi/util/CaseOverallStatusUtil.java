@@ -343,7 +343,17 @@ public class CaseOverallStatusUtil {
 		return null;
 	}
 
-	private org.pucar.dristi.web.models.CaseOverallStatus determineOrderStage(String filingNumber, String tenantId, String orderType, String status, String hearingType, TreeMap<Integer, CaseOverallStatus> priorityMap) {
+	private org.pucar.dristi.web.models.CaseOverallStatus determineOrderStage(String filingNumber, String tenantId, String orderType, String status, String hearingType, TreeMap<Integer, CaseOverallStatus> priorityMap, Object caseObject) {
+		if(SUMMONS.equalsIgnoreCase(orderType)){
+			boolean isAccusedJoinedCase = hasAccusedJoinedCase(caseObject);
+			if(!isAccusedJoinedCase){
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, STAGE_APPEARANCE, "");
+				Integer priority = Integer.MAX_VALUE;
+				priorityMap.put(priority, caseOverallStatus);
+				return caseOverallStatus;
+			}
+		}
+
 		for (CaseOverallStatusType statusType : caseOverallStatusTypeList) {
 			boolean isMatch = false;
 
@@ -676,23 +686,10 @@ public class CaseOverallStatusUtil {
 				}
 			}
 		}
-		boolean stageHandledBySummons = false;
-		if(SUMMONS.equalsIgnoreCase(orderType)){
-			boolean isAccusedJoinedCase = hasAccusedJoinedCase(caseObject);
-			String stage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
-			String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
-			if (stage == null || stage.isEmpty()) {
-				return null;
-			}
-			if(!isAccusedJoinedCase){
-				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, STAGE_APPEARANCE, "");
-					publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
-				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_COGNIZANCE, STAGE_APPEARANCE);
-				stageHandledBySummons = true;
-			}
-		}
-		CaseOverallStatus caseOverallStatus = determineOrderStage(filingNumber, tenantId, orderType, status, hearingType, priorityMap);
-		if (!stageHandledBySummons && canPublishCaseOverallStatus && !priorityMap.isEmpty()) {
+
+		determineOrderStage(filingNumber, tenantId, orderType, status, hearingType, priorityMap, caseObject);
+
+		if (canPublishCaseOverallStatus && !priorityMap.isEmpty()) {
 			CaseOverallStatus finalCaseOverallStatus = priorityMap.firstEntry().getValue();
 
 			if (priorityMap.size() > 1) {
@@ -714,6 +711,10 @@ public class CaseOverallStatusUtil {
 
 			log.info("Publishing case overall status with priority: {} for filing number: {}", priorityMap.firstEntry().getKey(), filingNumber);
 			publishToCaseOverallStatus(finalCaseOverallStatus, request,caseObject);
+			if(SUMMONS.equalsIgnoreCase(orderType) && !hasAccusedJoinedCase(caseObject)){
+				String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_COGNIZANCE, finalCaseOverallStatus.getStage());
+			}
 		}
         publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderItemJson, orderCategory), request);
 
