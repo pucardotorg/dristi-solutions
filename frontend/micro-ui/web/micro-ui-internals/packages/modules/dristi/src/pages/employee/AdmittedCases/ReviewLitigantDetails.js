@@ -364,7 +364,7 @@ const ReviewLitigantDetails = ({ path }) => {
     return imageInfo;
   }, [profileRequest, t]);
 
-  if (isLoading || !isApplicationLoading) {
+  if (isLoading || isApplicationLoading) {
     return <Loader />;
   }
 
