@@ -174,7 +174,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                 children={<DragDropComponent config={config} label={currentValue?.length > 0 ? t("UPLOAD_MORE") : t("UPLOAD")} />}
                 key={input?.name}
                 onTypeError={() =>
-                  setShowErrorToast({
+                  setShowToast({
                     label: t("NOT_SUPPORTED_FILE_TYPE"),
                     error: true,
                   })
