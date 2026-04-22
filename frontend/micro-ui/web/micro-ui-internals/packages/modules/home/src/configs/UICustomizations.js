@@ -201,6 +201,9 @@ export const UICustomizations = {
           });
         },
       });
+      const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
+      const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
@@ -217,9 +220,9 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.outcome && {
           outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
         }),
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
+        ...(selectedStage && { stage: [selectedStage] }),
+        substage: undefined,
+        ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
           offSet: requestCriteria?.state?.tableForm?.offset,
@@ -232,9 +235,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.code,
-          }),
+          stage: undefined,
+          substage: undefined,
+          secondaryStage: undefined,
           criteria,
           tenantId,
         },
@@ -267,6 +270,12 @@ export const UICustomizations = {
           return t(value);
         case "CS_STAGE":
           return t(value);
+        case "CS_SECONDARY_STAGE": {
+          const stages = Array.isArray(value) ? value : [value];
+          const normalized = stages.filter(Boolean);
+          return normalized.length ? normalized.map((item) => t(item)).join(", ") : t("ES_COMMON_NA");
+        }
+
         case "CS_FILING_DATE":
           return <span>{DateUtils.getFormattedDate(new Date(value))}</span>;
         case "CS_CASE_NUMBER_HOME":
@@ -306,12 +315,15 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       // We need to change tenantId "processSearchCriteria" here
       const tenantId = window?.Digit.ULBService.getStateId();
+      const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
+      const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
+        ...(selectedStage && { stage: [selectedStage] }),
+        substage: undefined,
+        ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         tenantId,
         ...additionalDetails,
         ...("sortBy" in additionalDetails && {
@@ -331,9 +343,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.code,
-          }),
+          stage: undefined,
+          substage: undefined,
+          secondaryStage: undefined,
           criteria,
           tenantId,
         },
@@ -357,6 +369,12 @@ export const UICustomizations = {
           return <span>NIA S138</span>;
         case "CS_STAGE":
           return t(value);
+        case "CS_SECONDARY_STAGE": {
+          const stages = Array.isArray(value) ? value : [value];
+          const normalized = stages.filter(Boolean);
+          return normalized.length ? normalized.map((item) => t(item)).join(", ") : t("ES_COMMON_NA");
+        }
+
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_CASE_NUMBER_HOME":
@@ -402,6 +420,9 @@ export const UICustomizations = {
           });
         },
       });
+      const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
+      const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
@@ -418,9 +439,9 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.outcome?.outcome && {
           outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
         }),
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
+        ...(selectedStage && { stage: [selectedStage] }),
+        substage: undefined,
+        ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
           offSet: requestCriteria?.state?.tableForm?.offset,
@@ -433,9 +454,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.code,
-          }),
+          stage: undefined,
+          substage: undefined,
+          secondaryStage: undefined,
           criteria,
           tenantId,
         },
@@ -463,6 +484,12 @@ export const UICustomizations = {
           return t(value);
         case "CS_STAGE":
           return t(value);
+        case "CS_SECONDARY_STAGE": {
+          const stages = Array.isArray(value) ? value : [value];
+          const normalized = stages.filter(Boolean);
+          return normalized.length ? normalized.map((item) => t(item)).join(", ") : t("ES_COMMON_NA");
+        }
+
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_CASE_NUMBER_HOME":
@@ -1099,8 +1126,9 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${applicationNumber || ""
-                  }&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${
+                  applicationNumber || ""
+                }&individualId=${individualId}&type=${usertype}`}
               >
                 {applicationNumber
                   ? String(column?.translate ? t(column?.prefix ? `${column?.prefix}${applicationNumber}` : applicationNumber) : applicationNumber)

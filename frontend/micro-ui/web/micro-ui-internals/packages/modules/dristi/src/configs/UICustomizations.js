@@ -23,6 +23,7 @@ import { constructFullName } from "@egovernments/digit-ui-module-orders/src/util
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import { CaseWorkflowState } from "../Utils/caseWorkflow";
 
 export const getSelectedAdvocate = () => {
   try {
@@ -2610,7 +2611,9 @@ export const UICustomizations = {
       const caseId = row?.caseNumber || row?.filingNumber;
       switch (key) {
         case "PENDING_CASE_NAME":
-          return row?.substage === "SCRUTINY" && row?.hasCaseReviewerAccess ? (
+          return row?.substage === CaseWorkflowState.FILING ? (
+            <span>{value ? value : "-"}</span>
+          ) : (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
               to={{
@@ -2621,8 +2624,6 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
-          ) : (
-            value || "-"
           );
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -2858,9 +2859,7 @@ export const UICustomizations = {
           return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
         }
         case "CASE_NUMBER": {
-          const caseNumber = row?.isLPRCase
-            ? row?.lprNumber
-            : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
+          const caseNumber = row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
           return caseNumber || "";
         }
         default:

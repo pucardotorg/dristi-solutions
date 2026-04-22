@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { InfoCard, Loader } from "@egovernments/digit-ui-components";
@@ -316,14 +316,6 @@ const PaymentForRPADModal = ({ path }) => {
     [isCaseAdmitted]
   );
 
-  const getPartyIndex = (orderType, orderDetails, compositeItem) => {
-    if (orderType !== "NOTICE") return "";
-
-    return orderDetails?.orderCategory === "COMPOSITE"
-      ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex || ""
-      : orderDetails?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex || "";
-  };
-
   const feeOptions = useMemo(() => {
     const taskAmount = filteredTasks?.[0]?.amount?.amount || 0;
 
@@ -394,27 +386,6 @@ const PaymentForRPADModal = ({ path }) => {
 
         if (fileStoreId) {
           await Promise.all([
-            ordersService.customApiService(Urls.orders.pendingTask, {
-              pendingTask: {
-                name: orderType === "SUMMONS" ? "Show Summon-Warrant Status" : "Show Notice Status",
-                entityType: paymentType.ORDER_MANAGELIFECYCLE,
-                referenceId: hearingsData?.HearingList?.[0]?.hearingId,
-                status: orderType === "SUMMONS" ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
-                assignedTo: [],
-                assignedRole: [orderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
-                cnrNumber: filteredTasks?.[0]?.cnrNumber,
-                filingNumber: filingNumber,
-                caseId: caseDetails?.id,
-                caseTitle: caseDetails?.caseTitle,
-                isCompleted: false,
-                stateSla: 3 * dayInMillisecond + todayDate,
-                additionalDetails: {
-                  hearingId: hearingsData?.list?.[0]?.hearingId,
-                  partyIndex: getPartyIndex(orderType, orderDetails, compositeItem),
-                },
-                tenantId,
-              },
-            }),
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
                 name: orderType === "SUMMONS" ? `MAKE_PAYMENT_FOR_SUMMONS_RPAD` : `MAKE_PAYMENT_FOR_NOTICE_RPAD`,
