@@ -537,6 +537,9 @@ public class IndexerUtils {
             requestInfo1.getUserInfo().setType("EMPLOYEE");
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo1, filingNumber, caseId);
             caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+            if(filingDate == null && caseDetails != null && !caseDetails.isEmpty()) {
+                filingDate = caseDetails.get(0).path("filingDate").asLong();
+            }
         }
         if (caseDetails != null) {
             courtId = caseDetails.get(0).path("courtId").textValue();
@@ -987,7 +990,7 @@ public class IndexerUtils {
         caseDetails.put("cmpNumber", cmpNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
-        caseDetails.put("filingDate", String.valueOf(caseFilingDate));
+        caseDetails.put("filingDate", caseFilingDate != null ? String.valueOf(caseFilingDate) : null);
         caseDetails.put("sectionAndSubSection", sectionAndSubSection);
 
         return caseDetails;
