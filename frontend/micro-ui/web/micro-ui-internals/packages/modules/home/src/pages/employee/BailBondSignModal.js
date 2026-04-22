@@ -10,6 +10,7 @@ import { bailBondWorkflowAction } from "@egovernments/digit-ui-module-dristi/src
 import { HomeService } from "../../hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -61,6 +62,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
+  const [showToast, setShowToast] = useState(null);
 
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [isSigned, setIsSigned] = useState(false);
@@ -310,7 +312,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         if (bailBondPaginationData?.limit) sessionStorage.setItem("bulkBailBondSignlimit", bailBondPaginationData?.limit);
         if (bailBondPaginationData?.caseTitle) sessionStorage.setItem("bulkBailBondSignCaseTitle", bailBondPaginationData?.caseTitle);
         if (bailBondPaginationData?.offset) sessionStorage.setItem("bulkBailBondSignoffset", bailBondPaginationData?.offset);
-        handleEsign(name, pageModule, selectedBailBondFilestoreid, "Magistrate Signature");
+        handleEsign(name, pageModule, selectedBailBondFilestoreid, setShowToast, t, "Magistrate Signature");
       } catch (error) {
         console.error("E-sign navigation error:", error);
         setLoader(false);
@@ -617,6 +619,15 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
             <p>{t("REJECT_BAIL_BOND_CONFIRMATION")}</p>
           </div>
         </Modal>
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </div>
   );

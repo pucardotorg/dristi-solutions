@@ -105,7 +105,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
       sessionStorage.setItem("ESignSummons", JSON.stringify(rowData));
       sessionStorage.setItem("delieveryChannel", deliveryChannel);
       sessionStorage.setItem("homeActiveTab", "CS_HOME_PROCESS");
-      handleEsign(name, pageModule, rowData?.documents?.[0]?.fileStore, placeHolder);
+      handleEsign(name, pageModule, rowData?.documents?.[0]?.fileStore, setShowToast, t, placeHolder);
     }
   };
 

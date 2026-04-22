@@ -314,6 +314,12 @@ function BulkSignADiaryView() {
         setStepper(parseInt(stepper) + 1);
       } catch (error) {
         console.error("Error :", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({
+          error: true,
+          label: t("FAILED_TO_GENERATE_THE_A_DIARY_PDF"),
+          errorId: errorId,
+        });
         setGenerateAdiaryLoader(false);
       }
     } else if (parseInt(stepper) === 1) {
@@ -436,7 +442,13 @@ function BulkSignADiaryView() {
         }
       })
       .catch((error) => {
-        console.error("Error during the API request:", error);
+        console.error("Failed to fetch the PDF", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({
+          error: true,
+          label: t("FAILED_TO_DOWNLOAD_THE_A_DIARY_PDF"),
+          errorId: errorId,
+        });
       });
   };
 
@@ -541,7 +553,7 @@ function BulkSignADiaryView() {
                     label={t("CS_ESIGN")}
                     onButtonClick={() => {
                       sessionStorage.setItem("homeActiveTab", "CS_HOME_A_DAIRY");
-                      handleEsign(name, pageModule, ADiarypdf, "Signature");
+                      handleEsign(name, pageModule, ADiarypdf, setShowToast, t, "Signature");
                     }} //as sending null throwing error in esign
                     className="aadhar-sign-in"
                     labelClassName="aadhar-sign-in"

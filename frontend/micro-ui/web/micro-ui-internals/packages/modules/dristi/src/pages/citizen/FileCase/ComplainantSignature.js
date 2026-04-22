@@ -708,7 +708,7 @@ const ComplainantSignature = ({ path }) => {
           setShowToast({ label: t("FAILED_TO_UNLOCK_CASE"), error: true, errorId });
         }
       } else {
-        handleEsign(name, "ci", DocumentFileStoreId, getPlaceholder());
+        handleEsign(name, "ci", DocumentFileStoreId, setShowToast, t, getPlaceholder());
       }
     } catch (error) {
       console.error("Failed to initiate e-signature:", error);

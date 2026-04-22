@@ -8,6 +8,7 @@ import { Banner } from "@egovernments/digit-ui-react-components";
 import { Urls } from "../../hooks";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 export const clearDigitalDocumentSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -116,6 +117,7 @@ export const DigitalDocumentSignModal = ({
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
+  const [showToast, setShowToast] = useState(null);
 
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [isSigned, setIsSigned] = useState(false);
@@ -368,7 +370,7 @@ export const DigitalDocumentSignModal = ({
         if (digitalDocumentPaginationData?.caseTitle)
           sessionStorage.setItem("bulkDigitalDocumentSignCaseTitle", digitalDocumentPaginationData?.caseTitle);
         if (digitalDocumentPaginationData?.offset) sessionStorage.setItem("bulkDigitalDocumentSignoffset", digitalDocumentPaginationData?.offset);
-        handleEsign(name, pageModule, selectedDigitalDocumentFilestoreid, "Signature of Magistrate");
+        handleEsign(name, pageModule, selectedDigitalDocumentFilestoreid, setShowToast, t, "Signature of Magistrate");
       } catch (error) {
         console.error("E-sign navigation error:", error);
         setLoader(false);
@@ -726,6 +728,15 @@ export const DigitalDocumentSignModal = ({
             <p>{t("EDIT_DIGITILIZATION_MODAL_TEXT")}</p>
           </div>
         </Modal>
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </div>
   );

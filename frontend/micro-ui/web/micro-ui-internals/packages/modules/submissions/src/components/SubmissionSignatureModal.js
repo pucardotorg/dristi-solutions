@@ -106,7 +106,7 @@ function SubmissionSignatureModal({
       setIsSigned(true);
     } else {
       sessionStorage.setItem("applicationPDF", applicationPdfFileStoreId);
-      handleEsign(name, pageModule, applicationPdfFileStoreId, applicationPlaceHolder);
+      handleEsign(name, pageModule, applicationPdfFileStoreId, setShowToast, t, applicationPlaceHolder);
     }
   };
 

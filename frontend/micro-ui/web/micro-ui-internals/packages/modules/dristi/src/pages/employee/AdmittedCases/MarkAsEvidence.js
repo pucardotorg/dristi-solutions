@@ -873,7 +873,7 @@ const MarkAsEvidence = ({
       if (paginatedData?.offset) sessionStorage.setItem("bulkMarkAsEvidenceOffset", paginatedData?.offset);
 
       sessionStorage.removeItem("fileStoreId");
-      handleEsign(name, pageModule, file, "Judge/Magistrate");
+      handleEsign(name, pageModule, file, setShowToast, t, "Judge/Magistrate");
     } catch (error) {
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setShowToast({

@@ -394,7 +394,7 @@ const MediationFormSignaturePage = () => {
         if (!isUserLoggedIn) {
           sessionStorage.setItem("mobileNumber", mobileNumber);
         }
-        handleEsign(name, pageModule, mediationFileStoreId, getPlaceholder());
+        handleEsign(name, pageModule, mediationFileStoreId, setShowToast, t, getPlaceholder());
       }
     } catch (error) {
       console.error("Failed to save mediation form:", error);

@@ -40,7 +40,7 @@ const Heading = ({ label }) => {
 };
 const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
   const { t } = useTranslation();
-  const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
+  const { handleEsign, checkSignStatus, showToast, setShowToast, CustomToast } = Digit.Hooks.orders.useESign();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
 
@@ -53,7 +53,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const [isSigned, setIsSigned] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState(""); //signed notification filestore id
   const [loader, setLoader] = useState(false);
-  const [showToast, setShowToast] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const accessToken = window.localStorage.getItem("token");
@@ -604,7 +603,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
                     sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
                     sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
                     sessionStorage.setItem("homeActiveTab", "CS_HOME_BULK_RESCHEDULE");
-                    handleEsign(name, pageModule, notificationFileStoreId, "Signature");
+                    handleEsign(name, pageModule, notificationFileStoreId, setShowToast, t, "Signature");
                   }} //as sending null throwing error in esign
                   className="aadhar-sign-in"
                   labelClassName="aadhar-sign-in"

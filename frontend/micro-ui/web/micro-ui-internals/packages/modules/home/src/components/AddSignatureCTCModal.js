@@ -104,7 +104,7 @@ const AddSignatureCTCModal = ({
           sessionStorage.setItem("homeActiveTab", "CS_HOME_ISSUE_CTC_COPY");
           sessionStorage.setItem("ctcSignState", JSON.stringify(selectedRowData));
           sessionStorage.setItem("docPdf", uploadedFileStoreId);
-          handleEsign(name, pageModule, uploadedFileStoreId, "Certification Signature");
+          handleEsign(name, pageModule, uploadedFileStoreId, setShowToast, t, "Certification Signature");
         }
       } catch (error) {
         console.error("Failed to upload document for e-sign", error);
@@ -164,6 +164,15 @@ const AddSignatureCTCModal = ({
           </div>
         )}
       </div>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </Modal>
   ) : (
     <React.Fragment>

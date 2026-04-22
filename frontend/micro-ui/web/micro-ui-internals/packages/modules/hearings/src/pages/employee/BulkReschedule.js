@@ -668,7 +668,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
                     sessionStorage.setItem("bulkNewHearingData", JSON.stringify(newHearingData));
                     sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
                     sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
-                    handleEsign(name, pageModule, notificationFileStoreId, "Signature");
+                    handleEsign(name, pageModule, notificationFileStoreId, setShowToast, t, "Signature");
                   }} //as sending null throwing error in esign
                   className="aadhar-sign-in"
                   labelClassName="aadhar-sign-in"

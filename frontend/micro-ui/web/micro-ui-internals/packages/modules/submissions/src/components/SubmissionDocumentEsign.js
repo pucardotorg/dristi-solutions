@@ -100,7 +100,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
       setIsSignedHeading(true);
     } else {
       sessionStorage.setItem("combineDocumentsPdf", combinedFileStoreId);
-      handleEsign(name, isEmployee ? "en" : "ci", combinedFileStoreId);
+      handleEsign(name, isEmployee ? "en" : "ci", combinedFileStoreId, setShowToast, t);
     }
   };
 
