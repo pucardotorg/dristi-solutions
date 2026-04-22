@@ -8,6 +8,8 @@ import com.jayway.jsonpath.PathNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
 import org.egov.common.models.individual.Individual;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -17,6 +19,7 @@ import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
+import java.util.Arrays;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.CaseOutcome;
 import org.pucar.dristi.web.models.CaseOutcomeType;
@@ -54,9 +57,15 @@ public class CaseOverallStatusUtil {
 
 	private final SmsNotificationService notificationService;
 
+	private final CaseStageTrackingUtil caseStageTrackingUtil;
+
+	private final SecondaryStageProcessor secondaryStageProcessor;
+
+	private final ApplicationUtil applicationUtil;
+
 
 	@Autowired
-	public CaseOverallStatusUtil(Configuration config, HearingUtil hearingUtil, OrderUtil orderUtil, Producer producer, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseUtil caseUtil, AdvocateUtil advocateUtil, IndividualService individualService, SmsNotificationService notificationService,Util util) {
+	public CaseOverallStatusUtil(Configuration config, HearingUtil hearingUtil, OrderUtil orderUtil, Producer producer, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseUtil caseUtil, AdvocateUtil advocateUtil, IndividualService individualService, SmsNotificationService notificationService, Util util, CaseStageTrackingUtil caseStageTrackingUtil, SecondaryStageProcessor secondaryStageProcessor, ApplicationUtil applicationUtil) {
 		this.config = config;
         this.hearingUtil = hearingUtil;
         this.orderUtil = orderUtil;
@@ -68,6 +77,9 @@ public class CaseOverallStatusUtil {
         this.individualService = individualService;
         this.notificationService = notificationService;
 		this.util = util;
+		this.caseStageTrackingUtil = caseStageTrackingUtil;
+		this.secondaryStageProcessor = secondaryStageProcessor;
+		this.applicationUtil = applicationUtil;
     }
 
 	public Object checkCaseOverAllStatus(String entityType, String referenceId, String status, String action, String tenantId, JSONObject requestInfo) throws JsonProcessingException {
@@ -83,6 +95,10 @@ public class CaseOverallStatusUtil {
 				return processHearingCaseOverallStatus(request, referenceId, action, tenantId);
 			} else if (config.getOrderBusinessServiceList().contains(entityType)) {
 				return processOrderOverallStatus(request, referenceId, status, tenantId);
+			} else if (config.getApplicationBusinessServiceList().contains(entityType)) {
+				return processApplicationSecondaryStageUpdate(request, referenceId, status, action, tenantId);
+			} else if (config.getTaskBusinessServiceList().contains(entityType) || "task-notice".equalsIgnoreCase(entityType)) {
+				return processTaskSecondaryStageUpdate(request, entityType, referenceId, tenantId,status);
 			}
 			log.info("Case overall status not supported for entityType: {}", entityType);
 			return null;
@@ -117,18 +133,28 @@ public class CaseOverallStatusUtil {
                     log.warn("No composite items found for filing number: {}", filingNumber);
                     return orderObject;
                 }
+                List<String> collectedSecondaryStages = new ArrayList<>();
+                Object compositeCase = null;
                 for (int i = 0; i < compositeItems.length(); i++) {
 					try{
 						JSONObject compositeItem = compositeItems.getJSONObject(i);
 						boolean canPublishCaseOverallStatus = i == compositeItems.length() - 1;
-                        processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE, canPublishCaseOverallStatus, isHearingFound, priorityMap);
+                        compositeCase = processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE, canPublishCaseOverallStatus, isHearingFound, priorityMap, collectedSecondaryStages);
 					} catch(Exception e){
 						log.error("Error processing composite item: {} for filing number: {}", e.getMessage(), filingNumber, e);
 					}
                 }
+                // Batch-start all collected secondary stages in one ES write + one Kafka publish
+                if (!collectedSecondaryStages.isEmpty()) {
+                    try {
+                        secondaryStageProcessor.batchStartSecondaryStages(filingNumber, tenantId, collectedSecondaryStages, request, compositeCase);
+                    } catch (Exception e) {
+                        log.error("Error batch starting secondary stages for filing number: {}", filingNumber, e);
+                    }
+                }
 
             } else {
-                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject, null, true, isHearingFound, priorityMap);
+                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject, null, true, isHearingFound, priorityMap, null);
             }
         } catch (JSONException e) {
             log.error("Error processing JSON structure in composite items: {}, for filing number: {}", e.getMessage(), filingNumber, e);
@@ -144,7 +170,7 @@ public class CaseOverallStatusUtil {
 		for (CaseOverallStatusType caseOverallStatusType : caseOverallStatusTypeList) {
 			if (HEARING.equalsIgnoreCase(caseOverallStatusType.getEntityType()) && caseOverallStatusType.getTypeIdentifier().equalsIgnoreCase(hearingType)) {
 				Integer priority = caseOverallStatusType.getPriority() != null ? caseOverallStatusType.getPriority() : Integer.MAX_VALUE;
-				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, caseOverallStatusType.getStage(), caseOverallStatusType.getSubstage());
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, caseOverallStatusType.getStage(), "");
 				caseOverallStatus.setProcessHandler(caseOverallStatusType.getProcessHandler());
 				priorityMap.put(priority, caseOverallStatus);
 			}
@@ -154,10 +180,55 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
+	private Object processApplicationSecondaryStageUpdate(JSONObject request, String referenceId, String status, String action, String tenantId) {
+		try {
+			Object applicationObject = applicationUtil.getApplication(request, config.getStateLevelTenantId(), referenceId);
+			if (applicationObject == null) {
+				log.info("Application not found for referenceId: {} during secondary stage update", referenceId);
+				return null;
+			}
+			String filingNumber = JsonPath.read(applicationObject.toString(), FILING_NUMBER_PATH);
+			String applicationType = JsonPath.read(applicationObject.toString(), APPLICATION_TYPE_PATH);
+			Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+			log.info("Processing application secondary stage: filingNumber={}, applicationType={}, status={}", filingNumber, applicationType, status);
+			secondaryStageProcessor.processApplicationSecondaryStage(filingNumber, tenantId, applicationType, status, request,caseObject);
+			return applicationObject;
+		} catch (Exception e) {
+			log.error("Error processing application secondary stage for referenceId: {}", referenceId, e);
+			return null;
+		}
+	}
+
+	private Object processTaskSecondaryStageUpdate(JSONObject request, String entityType, String referenceId, String tenantId,String status) {
+		try {
+			if(status!=null && TASK_END_TRIGGER_STATUSES.contains(status)){
+				log.info("Processing task secondary stage end trigger: entityType={}, referenceId={}", entityType, referenceId);
+				secondaryStageProcessor.processTaskEndTrigger(referenceId, tenantId, entityType, request);
+			}
+			return null;
+		} catch (Exception e) {
+			log.error("Error processing task secondary stage for referenceId: {}, entityType: {}", referenceId, entityType, e);
+			return null;
+		}
+	}
+
 	private Object processCaseOverallStatus(JSONObject request, String referenceId, String status, String action, String tenantId) throws JsonProcessingException {
 		RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
+		Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, referenceId, null);
+
 		CaseOverallStatus caseOverallStatus = determineCaseStage(referenceId,tenantId,status,action,requestInfo);
-		publishToCaseOverallStatus(caseOverallStatus, request);
+		publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
+
+		// When case is registered, check if delay condonation is required and start the secondary stage
+		if (caseOverallStatus != null && STAGE_COGNIZANCE.equalsIgnoreCase(caseOverallStatus.getStage())) {
+			try {
+				secondaryStageProcessor.processCaseRegistrationSecondaryStage(referenceId, tenantId, caseObject, request);
+			} catch (Exception e) {
+				log.error("Error checking delay condonation for case registration, filingNumber: {}", referenceId, e);
+			}
+		}
+
 		return caseOverallStatus;
 	}
 
@@ -174,7 +245,9 @@ public class CaseOverallStatusUtil {
 			throw new RuntimeException("Filing number not present for case overall status");
 		}
 		String hearingType = JsonPath.read(hearingObject.toString(), HEARING_TYPE_PATH);
-		publishToCaseOverallStatus(determineHearingStage( filingNumber, tenantId, hearingType, action ), request);
+		Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+		publishToCaseOverallStatus(determineHearingStage( filingNumber, tenantId, hearingType, action ), request,caseObject);
 		return hearingObject;
 	}
 
@@ -183,10 +256,31 @@ public class CaseOverallStatusUtil {
 			log.info("CaseOverallStatusType MDMS action ::{} and status :: {}",statusType.getAction(),statusType.getState());
 			if (statusType.getAction().equalsIgnoreCase(action) && statusType.getState().equalsIgnoreCase(status)){
 				log.info("Creating CaseOverallStatus for action ::{} and status :: {}",statusType.getAction(),statusType.getState());
-                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+
+				// Track stage timing in ES: add new stage entry with startTime=now, endTime=null
+				trackStageTransition(filingNumber, tenantId, statusType);
+
+                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), "");
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Tracks stage transitions in an ES index for each case.
+	 * - Adds the new stage to the stages list with startTime=now and endTime=null.
+	 * - If statusType has a non-null endStage, finds that stage in the index and sets its endTime=now.
+	 * - If no tracking document exists for this case, creates one.
+	 */
+	private void trackStageTransition(String filingNumber, String tenantId, CaseOverallStatusType statusType) {
+		try {
+			String newStage = statusType.getStage();
+			String endStage = statusType.getEndStage();
+			log.info("Stage transition for filingNumber: {}, endStage='{}', newStage='{}'", filingNumber, endStage, newStage);
+			caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, endStage, newStage);
+		} catch (Exception e) {
+			log.error("Error tracking stage transition for filingNumber: {}", filingNumber, e);
+		}
 	}
 
 	private void sendSmsForCaseSubStageChange(String filingNumber, RequestInfo requestInfo, String subStage) {
@@ -244,7 +338,7 @@ public class CaseOverallStatusUtil {
 	private org.pucar.dristi.web.models.CaseOverallStatus determineHearingStage(String filingNumber, String tenantId, String hearingType, String action) {
 		for (org.pucar.dristi.web.models.CaseOverallStatusType statusType : caseOverallStatusTypeList) {
 			if (statusType.getAction().equalsIgnoreCase(action) && statusType.getTypeIdentifier().equalsIgnoreCase(hearingType))
-                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), "");
 		}
 		return null;
 	}
@@ -252,19 +346,25 @@ public class CaseOverallStatusUtil {
 	private org.pucar.dristi.web.models.CaseOverallStatus determineOrderStage(String filingNumber, String tenantId, String orderType, String status, String hearingType, TreeMap<Integer, CaseOverallStatus> priorityMap) {
 		for (CaseOverallStatusType statusType : caseOverallStatusTypeList) {
 			boolean isMatch = false;
-			
+
 			if (statusType.getEntityType() != null) {
-				if (ORDER.equalsIgnoreCase(statusType.getEntityType()) && statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status)) {
-					isMatch = true;
+				if (ORDER.equalsIgnoreCase(statusType.getEntityType()) && statusType.getState().equalsIgnoreCase(status)) {
+					if("Post-Disposal".equalsIgnoreCase(statusType.getStage())){
+						String[] orderTypeList = statusType.getTypeIdentifier().split(",");
+						if(Arrays.asList(orderTypeList).contains(orderType))
+							isMatch = true;
+					}else if(statusType.getTypeIdentifier().equalsIgnoreCase(orderType)){
+						isMatch = true;
+					}
 				} else if (HEARING.equalsIgnoreCase(statusType.getEntityType()) && statusType.getTypeIdentifier().equalsIgnoreCase(hearingType) && statusType.getState().equalsIgnoreCase(status)) {
 					isMatch = true;
 				}
 			} else if (statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status)) {
 				isMatch = true;
 			}
-			
+
 			if (isMatch) {
-				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), "");
 				caseOverallStatus.setProcessHandler(statusType.getProcessHandler());
 				Integer priority = statusType.getPriority() != null ? statusType.getPriority() : Integer.MAX_VALUE;
 				priorityMap.put(priority, caseOverallStatus);
@@ -274,7 +374,77 @@ public class CaseOverallStatusUtil {
 		return null;
 	}
 
-	private void publishToCaseOverallStatus(CaseOverallStatus caseOverallStatus, JSONObject request) {
+	/**
+	 * Processes a join-case event to determine if the primary stage should transition
+	 * from Appearance to Bail & Recording of Plea.
+	 * Per PRD: When a user belonging to the Accused side joins the case and the current
+	 * primary stage is Appearance, the case moves to Bail & Recording of Plea.
+	 */
+	public void processJoinCaseStageUpdate(Map<String, Object> joinCaseJson) {
+		try {
+			String filingNumber = joinCaseJson.get("filingNumber") != null
+					? joinCaseJson.get("filingNumber").toString() : null;
+			if (filingNumber == null) {
+				log.info("filingNumber not found in join-case message, skipping stage update");
+				return;
+			}
+			String tenantId = joinCaseJson.get("tenantId") != null
+					? joinCaseJson.get("tenantId").toString() : config.getStateLevelTenantId();
+
+			JSONObject request = new JSONObject();
+			Object requestInfoObj = joinCaseJson.get("requestInfo");
+			if (requestInfoObj == null) {
+				requestInfoObj = joinCaseJson.get("RequestInfo");
+			}
+			RequestInfo requestInfo;
+			if (requestInfoObj != null) {
+				requestInfo = mapper.readValue(mapper.writeValueAsString(requestInfoObj), RequestInfo.class);
+			} else {
+				requestInfo = new RequestInfo();
+			}
+			if (requestInfo.getUserInfo() == null) {
+				requestInfo.setUserInfo(new User());
+			}
+			requestInfo.getUserInfo().setType("SYSTEM");
+			Role role = Role.builder().code("SYSTEM").name("SYSTEM").tenantId(tenantId).build();
+			requestInfo.getUserInfo().setRoles(List.of(role));
+			requestInfo.getUserInfo().setTenantId(tenantId);
+			request.put("RequestInfo", new JSONObject(mapper.writeValueAsString(requestInfo)));
+
+			Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+			if (caseObject == null) {
+				log.info("Case not found for filingNumber: {} during join-case stage update", filingNumber);
+				return;
+			}
+			String currentStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
+			String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+			log.info("Join-case stage update: filingNumber={}, currentStage={}", filingNumber, currentStage);
+
+			if (STAGE_APPEARANCE.equalsIgnoreCase(currentStage) && hasAccusedJoinedCase(caseObject)) {
+				log.info("Case {} is in Appearance stage and accused has joined, transitioning to Bail & Recording of Plea", filingNumber);
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(
+						filingNumber, tenantId, STAGE_BAIL_AND_RECORDING_OF_PLEA, "");
+				publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
+				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_APPEARANCE, STAGE_BAIL_AND_RECORDING_OF_PLEA);
+			} else {
+				log.info("Case {} stage is '{}'. No Appearance->Bail transition for join-case event.",
+						filingNumber, currentStage);
+			}
+
+			// Check if Proclamation & Attachment secondary stage should end due to accused joining
+			if (hasAccusedJoinedCase(caseObject)) {
+				try {
+					secondaryStageProcessor.processJoinCaseSecondaryStage(filingNumber, tenantId, request,caseObject);
+				} catch (Exception ex) {
+					log.error("Error processing Proclamation secondary stage end trigger for filingNumber: {}", filingNumber, ex);
+				}
+			}
+		} catch (Exception e) {
+			log.error("Error processing join-case stage update", e);
+		}
+	}
+
+	private void publishToCaseOverallStatus(CaseOverallStatus caseOverallStatus, JSONObject request,Object caseObject) {
 		try {
 			if(caseOverallStatus==null){
 				log.info("Case overall workflow update not eligible");
@@ -285,23 +455,35 @@ public class CaseOverallStatusUtil {
 			else{
 				RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
                 String filingNumber = caseOverallStatus.getFilingNumber();
-                Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+				// Enrich caseId and courtId in stage tracking index if available
+				try {
+					String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+					String courtId = JsonPath.read(caseObject.toString(), CASE_COURTID_PATH);
+					caseStageTrackingUtil.enrichCaseId(filingNumber, caseId,courtId);
+				} catch (Exception e) {
+					log.debug("Could not enrich caseId in stage tracking for filingNumber: {}", filingNumber);
+				}
+
                 Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
 				String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
 				String caseSubStage = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_PATH);
 				String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);
 				String caseSubStageBackup = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_BACKUP_PATH);
-				
+
 				handleProcessBackup(caseOverallStatus, caseStage, caseSubStage, caseStageBackup, caseSubStageBackup);
-				
+
 				if (!handleLprCase(caseOverallStatus, isLprCase, caseStage, filingNumber)) {
 					return;
 				}
+
 				AuditDetails auditDetails = new AuditDetails();
-				auditDetails.setLastModifiedBy(requestInfo.getUserInfo().getUuid());
+				String lastModifiedBy = (requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null)
+						? requestInfo.getUserInfo().getUuid() : "SYSTEM";
+				auditDetails.setLastModifiedBy(lastModifiedBy);
 				auditDetails.setLastModifiedTime(System.currentTimeMillis());
 				caseOverallStatus.setAuditDetails(auditDetails);
-				String subStage = caseOverallStatus.getSubstage();
+				String subStage = caseOverallStatus.getStage();
 				if(shouldSendSMSForSubStageChange(subStage)){
 					sendSmsForCaseSubStageChange(filingNumber, requestInfo, subStage);
 				}
@@ -318,12 +500,19 @@ public class CaseOverallStatusUtil {
 		if (caseOverallStatus.getProcessHandler() == null) {
 			caseOverallStatus.setProcessHandler(ProcessHandler.RESET_BACKUP);
 		}
-		
+
+ 		String filingNumber = caseOverallStatus.getFilingNumber();
+		String tenantId = caseOverallStatus.getTenantId();
+
 		if (caseOverallStatus.getProcessHandler() == UPDATE_BACKUP) {
 			if (caseOverallStatus.getStageBackup() == null) {
 				caseOverallStatus.setStageBackup(currentCaseStage);
 				caseOverallStatus.setSubstageBackup(currentCaseSubStage);
 			}
+			// End the current stage and add the new stage in ES (e.g., entering LPR)
+			String newStage = caseOverallStatus.getStage();
+			caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, newStage);
+			log.info("UPDATE_BACKUP: ended stage '{}', started stage '{}' for filingNumber: {}", currentCaseStage, newStage, filingNumber);
 		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESET_BACKUP) {
 			caseOverallStatus.setStageBackup(null);
 			caseOverallStatus.setSubstageBackup(null);
@@ -333,6 +522,10 @@ public class CaseOverallStatusUtil {
 				caseOverallStatus.setStage(caseStageBackup);
 				caseOverallStatus.setSubstage(caseSubStageBackup);
 			}
+			// End the current stage and add the restored stage in ES (e.g., leaving LPR)
+			String restoredStage = caseOverallStatus.getStage();
+			caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, restoredStage);
+			log.info("RESTORE_BACKUP: ended stage '{}', started restored stage '{}' for filingNumber: {}", currentCaseStage, restoredStage, filingNumber);
 		}
 	}
 
@@ -346,6 +539,29 @@ public class CaseOverallStatusUtil {
 			caseOverallStatus.setSubstage(config.getLprSubStage());
 		}
 		return true;
+	}
+
+	/**
+	 * Checks whether any active litigant with partyType containing the accused party type
+	 * (respondent) exists in the case litigants list.
+	 */
+	private boolean hasAccusedJoinedCase(Object caseObject) {
+		try {
+			List<Map<String, Object>> litigants = JsonPath.read(caseObject.toString(), CASE_LITIGANTS_PATH);
+			if (litigants == null || litigants.isEmpty()) {
+				return false;
+			}
+			for (Map<String, Object> litigant : litigants) {
+				Object partyType = litigant.get("partyType");
+				if (partyType != null && partyType.toString().contains(ACCUSED_PARTY_TYPE)) {
+					log.info("Found active accused-side litigant with partyType: {}", partyType);
+					return true;
+				}
+			}
+		} catch (Exception e) {
+			log.error("Error checking if accused has joined case", e);
+		}
+		return false;
 	}
 
 	private org.pucar.dristi.web.models.Outcome determineCaseOutcome(String filingNumber, String tenantId, String orderType, String status, Object orderObject, String orderCategory) {
@@ -430,9 +646,14 @@ public class CaseOverallStatusUtil {
     }
 
 
-    private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory, boolean canPublishCaseOverallStatus, boolean isHearingFound, TreeMap<Integer, CaseOverallStatus> priorityMap) {
+    private Object processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory, boolean canPublishCaseOverallStatus, boolean isHearingFound, TreeMap<Integer, CaseOverallStatus> priorityMap, List<String> collectedSecondaryStages) {
         String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
 		String hearingType = null;
+		Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+		if (caseObject == null) {
+			log.info("Case not found for filingNumber: {} during join-case stage update", filingNumber);
+			return null;
+		}
 		if (!isHearingFound) {
 			if (SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(orderType) || SCHEDULING_NEXT_HEARING.equalsIgnoreCase(orderType)) {
 				String path = null;
@@ -455,15 +676,30 @@ public class CaseOverallStatusUtil {
 				}
 			}
 		}
+		boolean stageHandledBySummons = false;
+		if(SUMMONS.equalsIgnoreCase(orderType)){
+			boolean isAccusedJoinedCase = hasAccusedJoinedCase(caseObject);
+			String stage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
+			String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+			if (stage == null || stage.isEmpty()) {
+				return null;
+			}
+			if(!isAccusedJoinedCase){
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, STAGE_APPEARANCE, "");
+					publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
+				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_COGNIZANCE, STAGE_APPEARANCE);
+				stageHandledBySummons = true;
+			}
+		}
 		CaseOverallStatus caseOverallStatus = determineOrderStage(filingNumber, tenantId, orderType, status, hearingType, priorityMap);
-		if (canPublishCaseOverallStatus && !priorityMap.isEmpty()) {
+		if (!stageHandledBySummons && canPublishCaseOverallStatus && !priorityMap.isEmpty()) {
 			CaseOverallStatus finalCaseOverallStatus = priorityMap.firstEntry().getValue();
 
 			if (priorityMap.size() > 1) {
 				Map.Entry<Integer, CaseOverallStatus> secondEntry = priorityMap.higherEntry(priorityMap.firstKey());
 				if (secondEntry != null) {
 					CaseOverallStatus backupCaseOverallStatus = secondEntry.getValue();
-					
+
 					if (finalCaseOverallStatus.getProcessHandler() == ProcessHandler.RESTORE_BACKUP) {
 						// For RESTORE_BACKUP, use second priority values directly for stage/substage
 						finalCaseOverallStatus.setStage(backupCaseOverallStatus.getStage());
@@ -477,8 +713,25 @@ public class CaseOverallStatusUtil {
 			}
 
 			log.info("Publishing case overall status with priority: {} for filing number: {}", priorityMap.firstEntry().getKey(), filingNumber);
-			publishToCaseOverallStatus(finalCaseOverallStatus, request);
+			publishToCaseOverallStatus(finalCaseOverallStatus, request,caseObject);
 		}
         publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderItemJson, orderCategory), request);
+
+		// Secondary stage processing: evaluate order-based triggers independently from primary stage
+		try {
+			if (collectedSecondaryStages != null) {
+				// Composite mode: collect secondary stage for batch processing after the loop
+				String secondaryStage = secondaryStageProcessor.resolveSecondaryStage(orderType, status);
+				if (secondaryStage != null) {
+					collectedSecondaryStages.add(secondaryStage);
+				}
+			} else {
+				// Non-composite: process immediately
+				secondaryStageProcessor.processOrderSecondaryStage(filingNumber, tenantId, orderType, status, request, caseObject);
+			}
+		} catch (Exception e) {
+			log.error("Error in secondary stage processing for order type: {} filingNumber: {}", orderType, filingNumber, e);
+		}
+		return caseObject;
     }
 }

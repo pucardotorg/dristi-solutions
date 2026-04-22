@@ -2501,7 +2501,6 @@ const GenerateOrdersV2 = () => {
     setShowSuccessModal(false);
     history.replace(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
       from: "orderSuccessModal",
-      needCaseRefetch: true,
     });
   };
 

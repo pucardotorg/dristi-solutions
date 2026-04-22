@@ -22,7 +22,6 @@ import Modal from "../../../components/Modal";
 import ScrutinyInfo from "../../../components/ScrutinyInfo";
 import SelectCustomNote from "../../../components/SelectCustomNote";
 import { useToast } from "../../../components/Toast/useToast";
-import useGetAllCasesConfig from "../../../hooks/dristi/useGetAllCasesConfig";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { ReactComponent as InfoIcon } from "../../../icons/info.svg";
 import { CustomAddIcon, CustomArrowDownIcon, CustomDeleteIcon, RightArrow, WarningInfoRedIcon } from "../../../icons/svgIndex";
@@ -1020,18 +1019,10 @@ function EFilingCases({ path }) {
     }));
   }, [caseDetails, parentOpen, selected]);
 
-  const { data: caseDetailsConfig, isLoading: isGetAllCasesLoading } = useGetAllCasesConfig();
-
   const pageConfig = useMemo(() => {
-    if (!caseDetailsConfig) {
-      return {
-        formconfig: [],
-      };
-    }
-    return caseDetailsConfig
-      .find((parent) => parent.children.some((child) => child.key === selected))
-      ?.children?.find((child) => child.key === selected)?.pageConfig;
-  }, [caseDetailsConfig, selected]);
+    return sideMenuConfig.find((parent) => parent.children.some((child) => child.key === selected))?.children?.find((child) => child.key === selected)
+      ?.pageConfig;
+  }, [selected]);
 
   const formConfig = useMemo(() => {
     return pageConfig?.formconfig;
@@ -1058,7 +1049,6 @@ function EFilingCases({ path }) {
     return pageConfig?.confirmmodalconfig;
   }, [pageConfig?.confirmmodalconfig]);
 
-  
   const isDependentEnabled = useMemo(() => {
     let result = false;
     formConfig.forEach((config) => {
@@ -1137,9 +1127,19 @@ function EFilingCases({ path }) {
                                     <strong>{t("COURIER_SUMMONS")}</strong> {t("COURIER_SUMMONS_NOTE")}
                                   </span>
                                 </li>
+                                 <li>
+                                  <span>
+                                    <strong>{t("COURIER_WARRANT")}</strong> {t("CS_NOT_DELAY_WARRANT_PROCESS_COURIER_SERVICE_NOTE")}
+                                  </span>
+                                </li>
                                 <li>
                                   <span>
-                                    <strong>{t("COURIER_RPAD")}</strong> {t("COURIER_RPAD_NOTE")}
+                                    <strong>{t("REFUND_REQUEST")}</strong> {t("CS_REFUND_REQUEST_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_RPAD_SUBMISSION")}</strong> {t("COURIER_RPAD_SUBMISSION_NOTE")}
                                   </span>
                                 </li>
                               </ul>
@@ -1147,11 +1147,25 @@ function EFilingCases({ path }) {
                           ) : (
                             <div className="info-card-content">
                               <ul style={{ width: "100%" }}>
-                                <li>
-                                  <span>{t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}</span>
+                               <li>
+                                  <span>
+                                    <strong>{t("COURIER_SUMMONS")}</strong> {t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}
+                                  </span>
+                                </li>
+                                 <li>
+                                  <span>
+                                    <strong>{t("COURIER_WARRANT")}</strong> {t("CS_NOT_DELAY_WARRANT_PROCESS_COURIER_SERVICE_NOTE")}
+                                  </span>
                                 </li>
                                 <li>
-                                  <span>{t("COURIER_RPAD_NOTE")}</span>
+                                  <span>
+                                    <strong>{t("REFUND_REQUEST")}</strong> {t("CS_REFUND_REQUEST_NOTE")}
+                                  </span>
+                                </li>
+                                <li>
+                                  <span>
+                                    <strong>{t("COURIER_RPAD_SUBMISSION")}</strong> {t("COURIER_RPAD_SUBMISSION_NOTE")}
+                                  </span>
                                 </li>
                               </ul>
                             </div>
@@ -2502,9 +2516,7 @@ function EFilingCases({ path }) {
 
             const noticeTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.NOTICE);
             const summonsTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.SUMMONS);
-            const warrantTask = taskManagementList?.find(
-              (item) => item?.taskType === TASK_TYPES.WARRANT
-            );
+            const warrantTask = taskManagementList?.find((item) => item?.taskType === TASK_TYPES.WARRANT);
             let updatedWarrantTask = null;
 
             // removing processDelieveryDetails for warrant because of payment calculation handled at backend
@@ -2514,7 +2526,7 @@ function EFilingCases({ path }) {
                 ...party,
                 processDeliveryDetails: null,
               }));
-            
+
               updatedWarrantTask = {
                 ...warrantTask,
                 partyDetails: updatedWarrantPartyDetails,
@@ -2922,7 +2934,7 @@ function EFilingCases({ path }) {
   }, [isEditingAllowed, mandatoryFieldsLeftTotalCount, isDisableAllFieldsMode]);
 
   const [isOpen, setIsOpen] = useState(false);
-  if (isLoading || isGetAllCasesLoading || isCourtIdsLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
+  if (isLoading || isCourtIdsLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
     return <Loader />;
   }
 

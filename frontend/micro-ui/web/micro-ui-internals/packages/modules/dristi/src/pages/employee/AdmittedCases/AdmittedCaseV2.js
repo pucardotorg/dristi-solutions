@@ -62,7 +62,14 @@ import { convertTaskResponseToPayload } from "@egovernments/digit-ui-module-orde
 import ExaminationDrawer from "./ExaminationDrawer";
 import useSortedMDMSData from "../../../hooks/dristi/useSortedMDMSData";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
-import { actionEnabledStatuses, applicationTypes, homeTabEnum, judgeReviewStages, userRolesEnum, viewEnabledStatuses } from "../../../Utils/constants";
+import {
+  actionEnabledStatuses,
+  applicationTypes,
+  homeTabEnum,
+  judgeReviewStages,
+  userRolesEnum,
+  viewEnabledStatuses,
+} from "../../../Utils/constants";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -183,8 +190,6 @@ const AdmittedCaseV2 = () => {
   const { downloadPdf } = useDownloadCasePdf();
   const [isShow, setIsShow] = useState(false);
   const currentDiaryEntry = history.location?.state?.diaryEntry;
-  const historyCaseData = location?.state?.caseData;
-  const needCaseRefetch = location?.state?.needCaseRefetch;
   const historyOrderData = location?.state?.orderData;
   const newWitnesToast = history.location?.state?.newWitnesToast;
   const [isApplicationAccepted, setIsApplicationAccepted] = useState(null);
@@ -234,7 +239,7 @@ const AdmittedCaseV2 = () => {
 
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
-  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
+  const { data: caseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
     {
       criteria: {
         caseId: caseId,
@@ -245,22 +250,19 @@ const AdmittedCaseV2 = () => {
     {},
     `dristi-admitted-${caseId}`,
     caseId,
-    Boolean(caseId && (needCaseRefetch || !historyCaseData))
+    Boolean(caseId)
   );
 
-  const caseData = apiCaseData || historyCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
   const caseCourtId = !isCitizen ? localStorage.getItem("courtId") : caseDetails?.courtId;
-  const latestCaseDetails = useMemo(() => apiCaseData?.cases || historyCaseData?.cases || {}, [apiCaseData, historyCaseData]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
 
-  const showTakeAction = useMemo(() => userRoles?.includes(userRolesEnum.ORDER_CREATOR) && !isCitizen && actionEnabledStatuses.includes(caseDetails?.status), [
-    caseDetails?.status,
-    userRoles,
-    isCitizen,
-  ]);
+  const showTakeAction = useMemo(
+    () => userRoles?.includes(userRolesEnum.ORDER_CREATOR) && !isCitizen && actionEnabledStatuses.includes(caseDetails?.status),
+    [caseDetails?.status, userRoles, isCitizen]
+  );
 
   const [data, setData] = useState([]);
   const [dataForNextHearings, setDataForNextHearings] = useState([]);
@@ -1147,9 +1149,7 @@ const AdmittedCaseV2 = () => {
                 ...tabConfig.sections.search,
                 uiConfig: {
                   ...tabConfig.sections.search.uiConfig,
-                  fields: [
-                    ...tabConfig.sections.search.uiConfig.fields,
-                  ],
+                  fields: [...tabConfig.sections.search.uiConfig.fields],
                 },
               },
               searchResult: {
@@ -1327,7 +1327,7 @@ const AdmittedCaseV2 = () => {
     ];
     const courtId = localStorage.getItem("courtId");
     try {
-      const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status ===  HearingWorkflowState.SCHEDULED);
+      const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === HearingWorkflowState.SCHEDULED);
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
@@ -4180,7 +4180,7 @@ const AdmittedCaseV2 = () => {
           joinedLitigants={[...complainants, ...respondents]}
           showPaymentConfirmationModal={showPaymentConfirmationModal}
           showPaymentDemandModal={showPaymentDemandModal}
-          caseDetails={latestCaseDetails}
+          caseDetails={caseDetails}
           tenantId={tenantId}
         />
       )}{" "}

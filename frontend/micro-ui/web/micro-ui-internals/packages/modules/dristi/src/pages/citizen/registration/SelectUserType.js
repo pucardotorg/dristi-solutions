@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getFileByFileStore } from "../../../Utils";
 
-const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRefresh, userTypeRegister }) => {
+const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRefresh }) => {
   const Digit = window.Digit || {};
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const history = useHistory();
@@ -364,8 +364,8 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
         }}
         onFormValueChange={onFormValueChange}
         isDisabled={isDisabled}
-        value={params?.userType || (userTypeRegister && userTypeRegister) || {}}
-        defaultValues={params?.userType || (userTypeRegister && userTypeRegister) || {}}
+        value={params?.userType || {}}
+        defaultValues={params?.userType || {}}
         headingStyle={{ textAlign: "center" }}
         cardStyle={{ minWidth: "100%", padding: 20, display: "flex", flexDirection: "column" }}
         sectionHeadStyle={{ marginBottom: "20px", fontSize: "40px" }}
