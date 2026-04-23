@@ -29,14 +29,12 @@ const DragDropJSX = ({ t, currentValue, error }) => {
           <h3>{t("CS_COMMON_CHOOSE_FILE")}</h3>
         </div>
       </div>
-      {error && <span className="alert-error">{t(error.msg || error.message || "CORE_REQUIRED_FIELD_ERROR")}</span>}
+      {/* {error && <span className="alert-error">{t(error.msg || error.message || "CORE_REQUIRED_FIELD_ERROR")}</span>} */}
     </React.Fragment>
   );
 };
 
 function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setError, clearErrors, formDisbalityCount = false }) {
-  const [showToast, setShowToast] = useState(null);
-
   const inputs = useMemo(
     () =>
       config?.populators?.inputs || [
@@ -92,6 +90,16 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
 
   const handleChange = (file, input, index = Infinity) => {
     let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || [];
+    // MIME type validation
+    if (file?.type && input?.fileTypes?.length) {
+      const allowedMimes = input.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
+      if (allowedMimes.length && !allowedMimes.includes(file.type)) {
+        setError(config.key, { message: t("NOT_SUPPORTED_FILE_TYPE") });
+        return;
+      }
+    } else if (clearErrors) {
+      clearErrors(config.key);
+    }
     // Check file size before adding to currentValue
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     if (file?.size > maxFileSize) {
@@ -167,6 +175,8 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 uploadErrorInfo={fileErrors[index]}
                 input={input}
                 disableUploadDelete={config?.disable || formDisbalityCount}
+                configKey={config?.key}
+                setError={setError}
               />
             ))}
 
@@ -187,7 +197,7 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 children={<DragDropJSX t={t} currentValue={currentValue} error={errors?.[config.key]} />}
                 key={input?.name}
                 onTypeError={() => {
-                  setShowToast({ label: t("CS_INVALID_FILE_TYPE"), error: true, errorId: null });
+                  setError(config.key, { message: t("CS_INVALID_FILE_TYPE") });
                 }}
               />
               <div className="upload-guidelines-div">
@@ -207,6 +217,9 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 )}
               </div>
             </div>
+            {errors?.[config.key] && (
+              <span className="alert-error">{t(errors?.[config.key]?.msg || errors?.[config.key].message || "CORE_REQUIRED_FIELD_ERROR")}</span>
+            )}
             {input.downloadTemplateText && input.downloadTemplateLink && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "20px" }}>
                 {input?.downloadTemplateText && t(input?.downloadTemplateText)}
@@ -230,17 +243,7 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 )}
               </div>
             )}
-            {/* {errors?.[config.key] && <CardLabelError>{t(errors[config.key]?.message || "CORE_COMMON_INVALID")}</CardLabelError>} */}
           </div>
-        )}
-        {showToast && (
-          <CustomToast
-            error={showToast?.error}
-            label={showToast?.label}
-            errorId={showToast?.errorId}
-            onClose={() => setShowToast(null)}
-            duration={showToast?.errorId ? 7000 : 5000}
-          />
         )}
       </React.Fragment>
     );

@@ -149,6 +149,8 @@ function OrderReviewModal({
   };
 
   const handleAddSignature = () => {
+    setShowsignatureModal(true);
+    setShowReviewModal(false);
     if (showActions) {
       handleDocumentUpload((fileStoreId) => {
         setOrderPdfFileStoreID(fileStoreId);
