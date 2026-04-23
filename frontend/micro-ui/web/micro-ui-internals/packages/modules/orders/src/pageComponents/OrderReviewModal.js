@@ -169,13 +169,15 @@ function OrderReviewModal({
   };
 
   const handleAddSignature = () => {
-    if (showActions) {
-      handleDocumentUpload((fileStoreId) => {
-        setOrderPdfFileStoreID(fileStoreId);
-        setShowsignatureModal(true);
-        setShowReviewModal(false);
-      });
-    }
+    setShowsignatureModal(true);
+    setShowReviewModal(false);
+    // if (showActions) {
+    //   handleDocumentUpload((fileStoreId) => {
+    //     setOrderPdfFileStoreID(fileStoreId);
+    //     setShowsignatureModal(true);
+    //     setShowReviewModal(false);
+    //   });
+    // }
   };
 
   const handleSignLater = () => {

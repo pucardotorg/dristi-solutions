@@ -241,6 +241,8 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
                   uploadErrorInfo={fileErrors[index]}
                   input={input}
                   disableUploadDelete={config?.disable}
+                  configKey={config?.key}
+                  setError={setError}
                 />
               ))}
               {showFileUploader && (

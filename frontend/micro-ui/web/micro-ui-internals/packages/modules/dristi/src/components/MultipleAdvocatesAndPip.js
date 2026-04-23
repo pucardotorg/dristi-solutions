@@ -1025,6 +1025,8 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                       t={t}
                       uploadErrorInfo={fileErrors[index]}
                       input={input}
+                      configKey={config?.key}
+                      setError={setError}
                     />
                   ))}
 

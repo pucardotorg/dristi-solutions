@@ -11,7 +11,7 @@ import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import { DRISTIService } from "../services";
 import { getAuthorizedUuid, getFilingType, sanitizeData } from "../Utils";
 
-function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
+function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError }) {
   const [documentData, setDocumentData] = useState(formData?.[config.key] ? formData?.[config.key] : []);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { caseId } = window?.Digit.Hooks.useQueryParams();
@@ -202,6 +202,8 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
                             uploadErrorInfo={fileErrors}
                             input={input}
                             disableUploadDelete={index < config?.doclength ? true : config?.disable}
+                            configKey={config?.key}
+                            setError={setError}
                           />
                         )}
                         {showFileUploader && (

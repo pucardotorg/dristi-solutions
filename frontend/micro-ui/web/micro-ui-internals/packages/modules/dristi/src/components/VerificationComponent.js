@@ -194,6 +194,8 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
                       input={input}
                       isDisabled={true}
                       disableUploadDelete={config?.disable}
+                      configKey={config?.key}
+                      setError={setError}
                     />
                   ))}
               </React.Fragment>
@@ -209,6 +211,8 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
                   uploadErrorInfo={fileErrors[index]}
                   input={input}
                   isDisabled={true}
+                  configKey={config?.key}
+                  setError={setError}
                 />
               ))
             )}
