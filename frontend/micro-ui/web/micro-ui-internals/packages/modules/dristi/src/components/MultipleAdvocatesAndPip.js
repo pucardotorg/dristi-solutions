@@ -217,7 +217,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           uploadGuidelines: "UPLOAD_DOC_10",
           maxFileSize: 10,
           maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-          fileTypes: ["JPG", "PDF", "PNG"],
+          fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           isMultipleUpload: true,
           downloadTemplateText: "VAKALATNAMA_TEMPLATE_TEXT",
           downloadTemplateLink: `https://oncourts.kerala.gov.in/minio-filestore/v1/files/id?tenantId=${tenantId}&fileStoreId=eb7407fb-5642-40d9-9f06-31e4895c75b0`,
@@ -232,7 +232,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           uploadGuidelines: "UPLOAD_DOC_10",
           maxFileSize: 10,
           maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-          fileTypes: ["JPG", "PDF", "PNG"],
+          fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           isMultipleUpload: true,
         },
       ];
