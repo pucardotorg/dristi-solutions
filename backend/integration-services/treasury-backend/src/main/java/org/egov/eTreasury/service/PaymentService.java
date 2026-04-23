@@ -921,27 +921,61 @@ public class PaymentService {
                         "No response received from treasury double verification service");
             }
             
-            JsonNode rootNode = objectMapper.readTree(responseEntity.getBody());
-            JsonNode returnParamsNode = rootNode.get("RETURN_PARAMS");
-            if (returnParamsNode == null) {
-                log.error("Invalid response format: missing RETURN_PARAMS for billId: {}", verificationData.getBillId());
-                throw new CustomException("INVALID_VERIFICATION_RESPONSE", 
-                        "Invalid response format from treasury double verification service");
-            }
+            String responseBody = responseEntity.getBody();
+            log.info("Raw response from treasury for billId: {}: {}", verificationData.getBillId(), responseBody);
             
-            JsonNode returnParams;
-            if (returnParamsNode.isTextual()) {
-                returnParams = objectMapper.readTree(returnParamsNode.asText());
+            TreasuryResponse response;
+            
+            // Check if response is HTML (contains form with input_data)
+            if (responseBody.trim().startsWith("<") || responseBody.contains("<form")) {
+                log.info("Detected HTML response from treasury, extracting input_data for billId: {}", verificationData.getBillId());
+                
+                // Extract input_data value from HTML form
+                String inputData = extractInputDataFromHtml(responseBody);
+                if (inputData == null || inputData.isEmpty()) {
+                    log.error("Failed to extract input_data from HTML response for billId: {}", verificationData.getBillId());
+                    throw new CustomException("INVALID_VERIFICATION_RESPONSE", 
+                            "Failed to extract input_data from HTML response");
+                }
+                
+                log.info("Extracted input_data for billId: {}: {}", verificationData.getBillId(), inputData);
+                
+                // Parse the input_data JSON (contains HMAC and DATA in uppercase)
+                JsonNode inputDataNode = objectMapper.readTree(inputData);
+                
+                response = TreasuryResponse.builder()
+                        .status(true)  // If we got a response with data, consider it successful
+                        .rek(inputDataNode.has("REK") ? inputDataNode.get("REK").asText() : 
+                             (inputDataNode.has("rek") ? inputDataNode.get("rek").asText() : null))
+                        .data(inputDataNode.has("DATA") ? inputDataNode.get("DATA").asText() : 
+                             (inputDataNode.has("data") ? inputDataNode.get("data").asText() : null))
+                        .hmac(inputDataNode.has("HMAC") ? inputDataNode.get("HMAC").asText() : 
+                             (inputDataNode.has("hmac") ? inputDataNode.get("hmac").asText() : null))
+                        .build();
             } else {
-                returnParams = returnParamsNode;
-            }
+                // Handle JSON response format
+                JsonNode rootNode = objectMapper.readTree(responseBody);
+                JsonNode returnParamsNode = rootNode.get("RETURN_PARAMS");
+                if (returnParamsNode == null) {
+                    log.error("Invalid response format: missing RETURN_PARAMS for billId: {}", verificationData.getBillId());
+                    throw new CustomException("INVALID_VERIFICATION_RESPONSE", 
+                            "Invalid response format from treasury double verification service");
+                }
+                
+                JsonNode returnParams;
+                if (returnParamsNode.isTextual()) {
+                    returnParams = objectMapper.readTree(returnParamsNode.asText());
+                } else {
+                    returnParams = returnParamsNode;
+                }
 
-            TreasuryResponse response = TreasuryResponse.builder()
-                    .status(returnParams.has("status") && returnParams.get("status").asBoolean())
-                    .rek(returnParams.has("rek") ? returnParams.get("rek").asText() : null)
-                    .data(returnParams.has("data") ? returnParams.get("data").asText() : null)
-                    .hmac(returnParams.has("hmac") ? returnParams.get("hmac").asText() : null)
-                    .build();
+                response = TreasuryResponse.builder()
+                        .status(returnParams.has("status") && returnParams.get("status").asBoolean())
+                        .rek(returnParams.has("rek") ? returnParams.get("rek").asText() : null)
+                        .data(returnParams.has("data") ? returnParams.get("data").asText() : null)
+                        .hmac(returnParams.has("hmac") ? returnParams.get("hmac").asText() : null)
+                        .build();
+            }
                     
             log.info("Received response from treasury for billId: {} | HTTP status: {}", 
                     verificationData.getBillId(), responseEntity.getStatusCode());
@@ -952,8 +986,16 @@ public class PaymentService {
                 log.info("Treasury is in mock mode, using mock data.");
                 decryptedData = response.getData();
             } else {
-                String decryptedRek = encryptionUtil.decryptResponse(response.getRek(), decryptedSek);
-                decryptedData = encryptionUtil.decryptResponse(response.getData(), decryptedRek);
+                // If REK is present, use it to decrypt. Otherwise, decrypt DATA directly with SEK
+                if (response.getRek() != null && !response.getRek().isEmpty()) {
+                    String decryptedRek = encryptionUtil.decryptResponse(response.getRek(), decryptedSek);
+                    decryptedData = encryptionUtil.decryptResponse(response.getData(), decryptedRek);
+                    log.info("Decrypted data using REK for billId: {}", verificationData.getBillId());
+                } else {
+                    // No REK present (HTML response format), decrypt DATA directly with SEK
+                    decryptedData = encryptionUtil.decryptResponse(response.getData(), decryptedSek);
+                    log.info("Decrypted data directly with SEK (no REK) for billId: {}", verificationData.getBillId());
+                }
             }
             log.info("Decrypted verification response data for billId: {}, decryptedData: {}", verificationData.getBillId(), decryptedData);
 
@@ -1187,5 +1229,70 @@ public class PaymentService {
 //        collectionsUtil.callService(paymentRequest, config.getCollectionServiceHost(), config.getCollectionsPaymentCreatePath());
 //        log.info("Payment request sent to collections service: {}", paymentRequest);
 //    }
+
+    /**
+     * Extracts the input_data value from an HTML form response.
+     * The HTML contains: <input type="hidden" name="input_data" value='{"HMAC":"...", "DATA":"..."}' />
+     */
+    private String extractInputDataFromHtml(String html) {
+        try {
+            // Pattern 1: value wrapped in single quotes (JSON inside has double quotes)
+            // Matches: name="input_data" value='{...}'
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
+                    "name=[\"']input_data[\"'][^>]*value='(\\{[^']+\\})'",
+                    java.util.regex.Pattern.CASE_INSENSITIVE
+            );
+            java.util.regex.Matcher matcher = pattern.matcher(html);
+            
+            if (matcher.find()) {
+                String value = matcher.group(1);
+                log.debug("Extracted input_data using pattern 1: {}", value);
+                return unescapeHtmlEntities(value);
+            }
+            
+            // Pattern 2: value wrapped in double quotes (JSON might have escaped quotes)
+            // Matches: name="input_data" value="{...}"
+            pattern = java.util.regex.Pattern.compile(
+                    "name=[\"']input_data[\"'][^>]*value=\"(\\{[^\"]*\\})\"",
+                    java.util.regex.Pattern.CASE_INSENSITIVE
+            );
+            matcher = pattern.matcher(html);
+            
+            if (matcher.find()) {
+                String value = matcher.group(1);
+                log.debug("Extracted input_data using pattern 2: {}", value);
+                return unescapeHtmlEntities(value);
+            }
+            
+            // Pattern 3: Try to find JSON directly after input_data
+            pattern = java.util.regex.Pattern.compile(
+                    "name=[\"']input_data[\"'].*?value=[\"'](\\{.*?\\})[\"']",
+                    java.util.regex.Pattern.CASE_INSENSITIVE | java.util.regex.Pattern.DOTALL
+            );
+            matcher = pattern.matcher(html);
+            
+            if (matcher.find()) {
+                String value = matcher.group(1);
+                log.debug("Extracted input_data using pattern 3: {}", value);
+                return unescapeHtmlEntities(value);
+            }
+            
+            log.warn("Could not find input_data in HTML response. HTML snippet: {}", 
+                    html.length() > 500 ? html.substring(0, 500) + "..." : html);
+            return null;
+        } catch (Exception e) {
+            log.error("Error extracting input_data from HTML: ", e);
+            return null;
+        }
+    }
+    
+    private String unescapeHtmlEntities(String value) {
+        if (value == null) return null;
+        return value.replace("&quot;", "\"")
+                    .replace("&amp;", "&")
+                    .replace("&lt;", "<")
+                    .replace("&gt;", ">")
+                    .replace("&#39;", "'");
+    }
 
 }
