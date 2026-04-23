@@ -305,7 +305,7 @@ const editComplainantDetailsFormConfig = [
             {
               name: "document",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "PDF", "PNG"],
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               isOptional: "CS_IS_OPTIONAL",
               isMandatory: false,
               maxFileSize: 10,
