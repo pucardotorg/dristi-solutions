@@ -537,11 +537,11 @@ public class IndexerUtils {
             requestInfo1.getUserInfo().setType("EMPLOYEE");
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo1, filingNumber, caseId);
             caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
-            if(filingDate == null && caseDetails != null && !caseDetails.isEmpty()) {
-                filingDate = caseDetails.get(0).path("filingDate").asLong();
-            }
         }
         if (caseDetails != null) {
+            if(filingDate == null && !caseDetails.isEmpty()) {
+                filingDate = caseDetails.get(0).path("filingDate").asLong();
+            }
             courtId = caseDetails.get(0).path("courtId").textValue();
 
             String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
