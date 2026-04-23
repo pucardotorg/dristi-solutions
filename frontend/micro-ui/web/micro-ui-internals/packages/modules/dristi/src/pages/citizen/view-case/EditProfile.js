@@ -3,10 +3,8 @@ import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
 import { FormComposerV2, Header, Loader, Modal, Toast } from "@egovernments/digit-ui-react-components";
 import { extractCodeFromErrorMsg, extractValue, OutlinedInfoIcon } from "../FileCase/EFilingCases";
-import useGetAllCasesConfig from "../../../hooks/dristi/useGetAllCasesConfig";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import ReactTooltip from "react-tooltip";
-import { RightArrow } from "../../../icons/svgIndex";
 import isEqual from "lodash/isEqual";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 import { useToast } from "../../../components/Toast/useToast";
@@ -53,7 +51,7 @@ const EditProfile = ({ path }) => {
   const userInfo = Digit.UserService.getUser()?.info;
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
 
-  const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
+  const { data: caseData, isLoading } = useSearchCaseService(
     {
       criteria: [
         {
@@ -73,7 +71,7 @@ const EditProfile = ({ path }) => {
     () => ({
       ...caseData?.criteria?.[0]?.responseList?.[0],
     }),
-    [caseData, caseId, selected, uniqueId]
+    [caseData]
   );
 
   const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
@@ -112,39 +110,6 @@ const EditProfile = ({ path }) => {
 
   const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "Application"), [filingTypeData?.FilingType]);
 
-  // useEffect(() => {
-  // if (selected === "complainantDetails") {
-  //   const currentComplainant = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
-  //     (item, index) => item?.data?.complainantVerification?.individualDetails?.individualId === uniqueId
-  //   );
-  //   if (currentComplainant?.data) {
-  //     if(complainantType?.code === "INDIVIDUAL") {
-  //     }
-  //     const updatedData = structuredClone(currentComplainant?.data);
-  //     updatedData.reasonForChange = updatedData?.updatedData || "";
-  //     let updatedFormData = structuredClone(formdata);
-  //     updatedFormData[0].data = updatedData;
-  //     if (!isEqual(updatedFormData, formdata?.[0]?.data)) {
-  //       setFormdata(updatedFormData);
-  //     }
-  //   }
-  // }
-  // if (selected === "respondentDetails") {
-  //   const currentRespondent = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
-  //     (item, index) => item?.data?.respondentVerification?.individualDetails?.individualId === uniqueId || item?.uniqueId === uniqueId
-  //   );
-  //   if (currentRespondent?.data) {
-  //     const updatedData = structuredClone(currentRespondent?.data);
-  //     updatedData.reasonForChange = "";
-  //     let updatedFormData = structuredClone(formdata);
-  //     updatedFormData[0].data = updatedData;
-  //     if (!isEqual(updatedFormData, formdata?.[0]?.data)) {
-  //       setFormdata(updatedFormData);
-  //     }
-  //   }
-  // }
-  // }, [caseDetails, selected, uniqueId]);
-
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
 
   useEffect(() => {
@@ -155,17 +120,10 @@ const EditProfile = ({ path }) => {
       return;
     }
 
-    // if (!type || !uniqueId) {
-    //   history.replace(`/${window.contextPath}/citizen/dristi/home/view-case`);
-    //   return;
-    // }
-
     return () => {
       sessionStorage.removeItem("editProfileAccess");
     };
   }, [history, location]);
-
-  const { data: caseDetailsConfig, isLoading: isGetAllCasesLoading } = useGetAllCasesConfig();
 
   const pageConfig = useMemo(() => {
     if (selected === "complainantDetails") {
@@ -174,7 +132,7 @@ const EditProfile = ({ path }) => {
       return editRespondentConfig;
     }
     return null;
-  }, [caseDetailsConfig, selected]);
+  }, [selected]);
 
   const closeToast = () => {
     setShowErrorToast(false);
