@@ -540,7 +540,10 @@ public class IndexerUtils {
         }
         if (caseDetails != null) {
             if(filingDate == null && !caseDetails.isEmpty()) {
-                filingDate = caseDetails.get(0).path("filingDate").asLong();
+                JsonNode filingDateNode = caseDetails.get(0).path("filingDate");
+                if (filingDateNode.isNumber()) {
+                    filingDate = filingDateNode.asLong();
+                }
             }
             courtId = caseDetails.get(0).path("courtId").textValue();
 
