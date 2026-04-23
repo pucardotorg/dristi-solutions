@@ -15,6 +15,7 @@ import { useToast } from "./Toast/useToast";
 import { FSOErrorIcon } from "../icons/svgIndex";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import SearchableDropdown from "./SearchableDropdown";
+import { EXTENSION_TO_MIME } from "../Utils/constants";
 
 function ScrutinyInfoAdvocate({ message, t }) {
   return (
@@ -631,6 +632,12 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
 
   const fileValidator = (file, input) => {
     if (file?.fileStore) return null;
+    if (file?.type && input?.fileTypes?.length) {
+      const allowedMimes = input.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
+      if (allowedMimes.length && !allowedMimes.includes(file.type)) {
+        return t("NOT_SUPPORTED_FILE_TYPE");
+      }
+    }
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     return file?.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
   };

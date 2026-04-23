@@ -7,6 +7,7 @@ import Modal from "./Modal";
 import RenderFileCard from "./RenderFileCard";
 import { useToast } from "./Toast/useToast";
 import { CloseBtn, Heading } from "./ModalComponents";
+import { EXTENSION_TO_MIME } from "../Utils/constants";
 function VerificationComponent({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) {
   const [{ showModal, verificationType, modalData, isAadharVerified }, setState] = useState({
     showModal: false,
@@ -78,6 +79,13 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
   );
 
   const fileValidator = (file, input) => {
+    if (file?.fileStore) return null;
+    if (file?.type && input?.fileTypes?.length) {
+      const allowedMimes = input.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
+      if (allowedMimes.length && !allowedMimes.includes(file.type)) {
+        return t("NOT_SUPPORTED_FILE_TYPE");
+      }
+    }
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     return file.size > maxFileSize ? t(input?.maxFileErrorMessage) : null;
   };

@@ -7,6 +7,7 @@ import Modal from "./Modal";
 import MultiUploadWrapper from "./MultiUploadWrapper";
 import RenderFileCard from "./RenderFileCard";
 import { CloseBtn, Heading } from "./ModalComponents";
+import { EXTENSION_TO_MIME } from "../Utils/constants";
 
 const textAreaJSX = (value, t, input, handleChange, error, disabled) => {
   return (
@@ -99,7 +100,14 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
   );
 
   const fileValidator = (file, input) => {
+    if (file?.fileStore) return null;
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
+    if (file?.type && input?.fileTypes?.length) {
+      const allowedMimes = input.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
+      if (allowedMimes.length && !allowedMimes.includes(file.type)) {
+        return t("NOT_SUPPORTED_FILE_TYPE");
+      }
+    }
     return file.size > maxFileSize ? t(input?.maxFileErrorMessage) : null;
   };
 
@@ -257,6 +265,10 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
                       types={input?.fileTypes}
                       children={dragDropJSX}
                       key={input?.name}
+                      onTypeError={(file) => {
+                        const fileTypeError = t("CS_FILE_TYPE_ERROR");
+                        setError((prev) => ({ ...prev, [config.key]: fileTypeError }));
+                      }}
                     />
                   </div>
                   <div className="upload-guidelines-div">
