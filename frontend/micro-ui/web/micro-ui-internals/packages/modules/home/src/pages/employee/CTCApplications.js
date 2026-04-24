@@ -449,7 +449,7 @@ const CTCApplications = ({ refetch }) => {
         <CustomToast
           error={showToast?.error}
           label={showToast?.label}
-          isDleteBtn={true}
+          errorId={showToast?.errorId}
           onClose={() => setShowToast(null)}
           duration={showToast?.errorId ? 7000 : 5000}
         />
