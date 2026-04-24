@@ -107,7 +107,7 @@ const prayerAndSwornFormConfig = [
             {
               name: "document",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "PDF", "PNG"],
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               isMandatory: true,
               maxFileSize: 10,
               documentHeader: "CS_SWORN_STATEMENT_HEADER",
@@ -195,7 +195,7 @@ const prayerAndSwornFormConfig = [
             {
               name: "document",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "PDF", "PNG"],
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               isMandatory: true,
               maxFileSize: 10,
               documentHeader: "CS_SWORN_ADDITIONAL_ACTS_DOCUMENT_HEADER",

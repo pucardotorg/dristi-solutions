@@ -39,7 +39,7 @@ const GenericUploadSignatureModal = ({
             uploadGuidelines: "Ensure the file is not blurry and under 5MB.",
             maxFileSize: 10,
             maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["PDF"],
+            fileTypes: ["PDF", "PNG", "JPEG", "JPG"],
             isMultipleUpload: false,
           },
         ],
