@@ -65,7 +65,7 @@ public class MDMSService {
     @Bean
     public Map<String, Boolean> stateLevelMapping() {
 
-        Map<String, Boolean> stateLevelMapping = new HashMap<>();
+        this.stateLevelMapping = new HashMap<>();
 
         Object mdmsData = getBusinessServiceMDMS();
         List<HashMap<String, Object>> configs =
@@ -74,10 +74,10 @@ public class MDMSService {
         for (Map map : configs) {
             String businessService = (String) map.get("businessService");
             Boolean isStatelevel = Boolean.valueOf((String) map.get("isStatelevel"));
-            stateLevelMapping.put(businessService, isStatelevel);
+            this.stateLevelMapping.put(businessService, isStatelevel);
         }
 
-        return stateLevelMapping;
+        return this.stateLevelMapping;
     }
 
     /**
