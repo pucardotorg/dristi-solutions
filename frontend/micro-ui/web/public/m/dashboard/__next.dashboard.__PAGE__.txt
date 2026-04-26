@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[2061,["/m/_next/static/chunks/5dcb15e496ea36d4.js","/m/_next/static/chunks/af28c28566f8b9e4.js"],"OutletBoundary"]
+3:"$Sreact.suspense"
+:HL["/m/_next/static/chunks/438829aa9d91d75c.css","style"]
+0:{"buildId":"_IVLFp9F6vXnwviANbVrC","rsc":["$","$1","c",{"children":[["$","div",null,{"className":"Dashboard-module__RNABMG__container","children":[["$","div",null,{"className":"Dashboard-module__RNABMG__header","children":[["$","h1",null,{"className":"h1","children":"Judicial Dashboard"}],["$","p",null,{"className":"text-muted","children":"Live statistics across Kerala Courts"}]]}],["$","div",null,{"className":"Dashboard-module__RNABMG__iframeWrapper","children":["$","iframe",null,{"src":"https://oncourts.kerala.gov.in/pucar-dashboard/public/dashboard/9b1eaaa1-9f5c-415e-81db-6e8c2388ad0c","className":"Dashboard-module__RNABMG__dashboardIframe","title":"24x7 ON Court Judicial Dashboard","allowFullScreen":true,"loading":"lazy","referrerPolicy":"no-referrer-when-downgrade"}]}]]}],[["$","link","0",{"rel":"stylesheet","href":"/m/_next/static/chunks/438829aa9d91d75c.css","precedence":"next"}]],["$","$L2",null,{"children":["$","$3",null,{"name":"Next.MetadataOutlet","children":"$@4"}]}]]}],"loading":null,"isPartial":false}
+4:null
