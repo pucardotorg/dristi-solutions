@@ -293,7 +293,6 @@ export const TabCourtRoomSearchConfig = {
           tenantId: "pg",
           criteria: {
             lifecycleStatus: "ACTIVE",
-            isLPRCase: false,
             stage: [
               "Long Pending Register",
               "Post-Judgement",
@@ -796,7 +795,6 @@ export const TabCourtRoomSearchConfig = {
           tenantId: "pg",
           criteria: {
             lifecycleStatus: "LPR",
-            isLPRCase: true,
           },
         },
         masterName: "commonUiConfig",

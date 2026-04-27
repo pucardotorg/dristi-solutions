@@ -291,7 +291,6 @@ export const TabUnifiedEmployeeSearchConfig = {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           criteria: {
             lifecycleStatus: "ACTIVE",
-            isLPRCase: false,
             stage: [
               "Long Pending Register",
               "Post-Judgement",
@@ -803,7 +802,6 @@ export const TabUnifiedEmployeeSearchConfig = {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           criteria: {
             lifecycleStatus: "LPR",
-            isLPRCase: true,
           },
         },
         masterName: "commonUiConfig",
