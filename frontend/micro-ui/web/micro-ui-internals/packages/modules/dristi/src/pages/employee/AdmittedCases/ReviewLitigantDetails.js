@@ -1,12 +1,11 @@
 //new comp
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { FormComposerV2, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
-import { useToast } from "../../../components/Toast/useToast";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
-import { DRISTIService } from "../../../services";
 import DocViewerWrapper from "../docViewerWrapper";
 import { Urls } from "../../../hooks";
 import { OrderWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
@@ -41,7 +40,6 @@ const ReviewLitigantDetails = ({ path }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const location = useLocation();
-  const toast = useToast();
   const urlParams = new URLSearchParams(window.location.search);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const caseId = urlParams.get("caseId");
@@ -51,22 +49,9 @@ const ReviewLitigantDetails = ({ path }) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const courtId = localStorage.getItem("courtId");
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
 
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
-  const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
+  const { data: caseData, isLoading } = useSearchCaseService(
     {
       criteria: [
         {
@@ -297,8 +282,9 @@ const ReviewLitigantDetails = ({ path }) => {
         );
       }
     } catch (error) {
-      toast.error(t("SOMETHING_WENT_WRONG"));
-      console.error(error);
+      console.error("Failed to create order for updating litigant details:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("LITIGANT_UPDATE_FAILED"), error: true, errorId });
     }
   };
 
@@ -347,9 +333,10 @@ const ReviewLitigantDetails = ({ path }) => {
             if (profileRequest?.document?.fileStore) {
               setShowDocModal(true);
             } else {
-              setShowErrorToast({
+              setShowToast({
                 label: t("NO_SUPPORTING_DOCUMENTS_UPLOADED"),
                 error: true,
+                errorId: null,
               });
             }
           }}
@@ -377,7 +364,7 @@ const ReviewLitigantDetails = ({ path }) => {
     return imageInfo;
   }, [profileRequest, t]);
 
-  if (isLoading) {
+  if (isLoading || isApplicationLoading) {
     return <Loader />;
   }
 
@@ -443,7 +430,15 @@ const ReviewLitigantDetails = ({ path }) => {
         </div>
       </div>
       {showDocModal && <ImageModal imageInfo={imageInfo} handleCloseModal={() => setShowDocModal(false)}></ImageModal>}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 };

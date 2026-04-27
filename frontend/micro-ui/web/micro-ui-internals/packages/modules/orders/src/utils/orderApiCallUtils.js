@@ -176,6 +176,7 @@ export const createOrder = async (order, tenantId, applicationTypeConfigUpdated,
     );
   } catch (error) {
     console.error(error);
+    throw error; // Re-throw to allow calling component to handle with CustomToast
   }
 };
 
@@ -194,6 +195,7 @@ export const deleteOrderItem = async (order, itemID, tenantId) => {
     );
   } catch (error) {
     console.error(error);
+    throw error; // Re-throw to allow calling component to handle with CustomToast
   }
 };
 

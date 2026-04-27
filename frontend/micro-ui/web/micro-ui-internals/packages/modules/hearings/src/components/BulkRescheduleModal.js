@@ -1,10 +1,10 @@
-import { InfoCard } from "@egovernments/digit-ui-components";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
-import { Button, CloseSvg, FormComposerV2, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import { Button, CloseSvg, FormComposerV2, Loader, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import { hearingService } from "../hooks/services";
 import BulkRescheduleTable from "./BulkRescheduleTable";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const CloseBtn = ({ onClick }) => {
   return (
@@ -45,11 +45,10 @@ const BulkRescheduleModal = ({
   handleUpdateBusinessOfDayEntry,
   bulkFromDate,
   bulkToDate,
-  toastMsg,
-  setToastMsg,
+  showToast,
+  setShowToast,
   setNewHearingData,
   bulkFormData,
-  showToast,
   newHearingData,
   isADiarySigned,
 }) => {
@@ -78,13 +77,15 @@ const BulkRescheduleModal = ({
         },
       });
       if (tentativeDates?.Hearings?.length === 0) {
-        showToast("error", t("NO_NEW_HEARINGS_AVAILABLE"), 5000);
+        setShowToast({ label: t("NO_NEW_HEARINGS_AVAILABLE"), error: true, errorId: null });
         return;
       }
       setIsReschedule(!isReschedule);
       setNewHearingData(tentativeDates?.Hearings);
     } catch (error) {
       console.error(error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BULK_RESCHEDULE_ERROR"), error: true, errorId });
     } finally {
       setIsLoader(false);
     }
@@ -178,38 +179,13 @@ const BulkRescheduleModal = ({
                 </div>
               )
             )}
-
-            {/* {!isBulkRescheduleDisabled && !currentDiaryEntry && bulkHearingsCount !== 0 && (
-          <InfoCard
-            variant={"default"}
-            label={t("PLEASE_NOTE")}
-            additionalElements={{}}
-            inline
-            text={t(`${t("BULK_INFO1")} ${bulkHearingsCount} ${t("BULK_INFO2")} ${formatDate(bulkFromDate)} and ${formatDate(bulkToDate)}`)}
-            textStyle={{}}
-            className={`custom-info-card`}
-            style={{ margin: "15px" }}
-          />
-        )}
-        {!isBulkRescheduleDisabled && !currentDiaryEntry && bulkHearingsCount === 0 && (
-          <InfoCard
-            variant={"default"}
-            label={t("PLEASE_NOTE")}
-            additionalElements={{}}
-            inline
-            text={t("BULK_NO_HEARINGS_SELECTED")}
-            textStyle={{}}
-            className={`custom-info-card`}
-            style={{ margin: "15px" }}
-          />
-        )} */}
-            {toastMsg && (
-              <Toast
-                error={toastMsg.key === "error"}
-                label={t(toastMsg.action)}
-                onClose={() => setToastMsg(null)}
-                isDleteBtn={true}
-                style={{ maxWidth: "500px" }}
+            {showToast && (
+              <CustomToast
+                error={showToast?.error}
+                label={showToast?.label}
+                errorId={showToast?.errorId}
+                onClose={() => setShowToast(null)}
+                duration={showToast?.errorId ? 7000 : 5000}
               />
             )}
           </div>

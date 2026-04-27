@@ -4,6 +4,7 @@ import { useQuery } from "react-query";
 import { Urls } from "../../../hooks";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 const onDocumentUpload = async (fileData, filename) => {
   const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
   return { file: fileUploadRes?.data, fileType: fileData.type, filename };
@@ -28,7 +29,7 @@ const WitnessDepositionReviewModal = ({
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
 
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
 
   const { data: { file: witnessDepositionPreviewPdf, fileName: witnessDepositionPreviewFilename } = {}, isFetching: isLoading } = useQuery({
     queryKey: [
@@ -69,6 +70,11 @@ const WitnessDepositionReviewModal = ({
           fileName: res.headers["content-disposition"]?.split("filename=")[1],
         }));
     },
+    onError: (error) => {
+      console.error("Failed to fetch witness deposition preview PDF:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_FETCHING_WITNESS_DEPOSITION_PREVIEW_PDF"), error: true, errorId });
+    },
     enabled: !!currentEvidence?.artifactNumber && !!cnrNumber && !!witnessDepositionPreviewSubmissionTypeMap["WITNESS_DEPOSITION"],
   });
 
@@ -90,7 +96,7 @@ const WitnessDepositionReviewModal = ({
         )}
       </React.Fragment>
     );
-  }, [witnessDepositionPreviewPdf, isLoading, t]);
+  }, [witnessDepositionPreviewPdf, witnessDepositionPreviewFilename, isLoading, t]);
 
   return (
     <React.Fragment>
@@ -129,7 +135,7 @@ const WitnessDepositionReviewModal = ({
               localStorage.removeItem("showPdfPreview");
             })
             .catch((e) => {
-              setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+              setShowToast({ label: t("ERROR_UPLOADING_DOCUMENT"), error: true, errorId: null });
             });
         }}
         className={"review-submission-appl-modal bail-bond"}
@@ -140,6 +146,15 @@ const WitnessDepositionReviewModal = ({
           </div>
         </div>
       </Modal>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

@@ -92,7 +92,7 @@ export const onDocumentUpload = async (fileData, filename, tenantId) => {
 };
 
 // move to utils
-export const replaceUploadedDocsWithCombinedFile = async (t, formData, tenantId) => {
+export const replaceUploadedDocsWithCombinedFile = async (t, formData, tenantId, setShowToast) => {
   if (formData?.supportingDocuments?.length) {
     for (let index = 0; index < formData.supportingDocuments.length; index++) {
       const doc = formData?.supportingDocuments[index];
@@ -112,6 +112,8 @@ export const replaceUploadedDocsWithCombinedFile = async (t, formData, tenantId)
             doc.submissionDocuments.uploadedDocs = [file];
           } catch (error) {
             console.error("Error combining or uploading documents for index:", index, error);
+            const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+            setShowToast({ label: t("ERROR_COMBINING_OR_UPLOADING_DOCUMENTS"), error: true, errorId });
             throw new Error("Failed to combine and update uploaded documents.");
           }
         }
@@ -121,7 +123,7 @@ export const replaceUploadedDocsWithCombinedFile = async (t, formData, tenantId)
   return formData;
 };
 
-export const replaceUploadedDocsWithFile = async (t, formData, tenantId) => {
+export const replaceUploadedDocsWithFile = async (t, formData, tenantId, setShowToast) => {
   if (formData?.supportingDocuments?.uploadedDocs?.length > 0) {
     const hasFileTypeDoc = formData?.supportingDocuments?.uploadedDocs?.some((doc) => doc instanceof File || (doc.file && doc.file instanceof File));
     if (hasFileTypeDoc) {
@@ -142,6 +144,8 @@ export const replaceUploadedDocsWithFile = async (t, formData, tenantId) => {
         formData.supportingDocuments.uploadedDocs = [file];
       } catch (error) {
         console.error("Error combining or uploading documents for production documents:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ERROR_COMBINING_OR_UPLOADING_PRODUCTION_DOCUMENTS"), error: true, errorId });
         throw new Error("Failed to combine and update uploaded documents.");
       }
     }
@@ -156,7 +160,7 @@ export const handleDocumentUploadValidation = (
   setFormErrors,
   clearFormDataErrors,
   userInfo,
-  setShowErrorToast,
+  setShowToast,
   formdata
 ) => {
   let documentErrorFlag = false;
@@ -195,7 +199,7 @@ export const handleDocumentUploadValidation = (
       });
     }
 
-    if (validateAdvocateSuretyContactNumber(t, formData?.sureties, userInfo, setShowErrorToast)) {
+    if (validateAdvocateSuretyContactNumber(t, formData?.sureties, userInfo, setShowToast)) {
       return true;
     }
   }

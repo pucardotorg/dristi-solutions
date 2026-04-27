@@ -1,11 +1,11 @@
-import { InboxSearchComposer, SubmitBar, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom";
 import { CTCApplicationsConfig } from "../../configs/CTCApplicationsConfig";
 import { HomeService } from "../../hooks/services";
 import RejectCTCApplicationReasonModal from "../../components/RejectCTCApplicationReasonModal";
 import GenericPreviewModal from "@egovernments/digit-ui-module-dristi/src/components/GenericPreviewModal";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -17,17 +17,15 @@ const sectionsParentStyle = {
 
 const CTCApplications = ({ refetch }) => {
   const { t } = useTranslation();
-  const history = useHistory();
   const tenantId = window?.Digit.ULBService.getStateId();
 
   const [isLoading, setIsLoading] = useState(false);
   const [bulkIssueList, setBulkIssueList] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedRowApplicationData, setShowSelectedApplicationData] = useState({});
-  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const [updateCounter, setUpdateCounter] = useState(0);
   const courtId = localStorage.getItem("courtId");
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [pendingRejectData, setPendingRejectData] = useState(null);
@@ -68,7 +66,8 @@ const CTCApplications = ({ refetch }) => {
       setShowModal(true);
     } catch (error) {
       console.error("handleRowClick error:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("CTC_SEARCH_APPLICATION_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);
     }
@@ -268,10 +267,11 @@ const CTCApplications = ({ refetch }) => {
       await HomeService.updateBulkCTCApplications(payload);
       setShowModal(false);
       setUpdateCounter((prev) => prev + 1);
-      setShowErrorToast({ label: t("CTC_APPLICATION_ACCEPTED"), error: false });
+      setShowToast({ label: t("CTC_APPLICATION_ACCEPTED"), error: false });
     } catch (error) {
       console.error("handleCTCApplications error:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("CTC_APPLICATION_APPROVE_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);
     }
@@ -299,10 +299,11 @@ const CTCApplications = ({ refetch }) => {
       setPendingRejectData(null);
       setRejectReason("");
       setUpdateCounter((prev) => prev + 1);
-      setShowErrorToast({ label: t("CTC_APPLICATION_REJECTED"), error: false });
+      setShowToast({ label: t("CTC_APPLICATION_REJECTED"), error: false });
     } catch (error) {
       console.error("handleConfirmReject error:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("CTC_APPLICATION_REJECT_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);
     }
@@ -326,30 +327,15 @@ const CTCApplications = ({ refetch }) => {
         applications: bulkUpdate,
       };
       await HomeService.updateBulkCTCApplications(payload);
-      setShowErrorToast({ label: t("BULK_ACCEPT_DONE"), error: false });
+      setShowToast({ label: t("BULK_ACCEPT_DONE"), error: false });
       setUpdateCounter((prev) => prev + 1);
     } catch (error) {
-      console.error(error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to process bulk CTC applications:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BULK_ACCEPT_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-  const showToast = ({ isError, message }) => {
-    setShowErrorToast({ label: t(message), error: isError });
   };
 
   const previewConfig = useMemo(() => {
@@ -459,7 +445,15 @@ const CTCApplications = ({ refetch }) => {
           isDisabled={isLoading}
         />
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

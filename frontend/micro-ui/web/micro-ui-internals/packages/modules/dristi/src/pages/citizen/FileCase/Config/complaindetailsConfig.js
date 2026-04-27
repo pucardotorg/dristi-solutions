@@ -326,7 +326,7 @@ const complainantDetailsFormConfig = [
             {
               name: "document",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "PDF", "PNG"],
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               isOptional: "CS_IS_OPTIONAL",
               isMandatory: false,
               maxFileSize: 10,
@@ -1012,7 +1012,7 @@ const complainantDetailsFormConfig = [
             {
               name: "poaDocument",
               type: "DragDropComponent",
-              fileTypes: ["JPG", "PDF", "PNG"],
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               isMandatory: true,
               maxFileSize: 10,
               documentHeader: "POA_AUTHORIZATION_DOCUMENT",

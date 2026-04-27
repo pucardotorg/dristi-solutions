@@ -110,8 +110,7 @@ const MarkAsEvidence = ({
   t,
   isEvidenceLoading = false,
   setShowMakeAsEvidenceModal,
-  selectedRow,
-  showToast,
+  setShowToast,
   paginatedData,
   evidenceDetailsObj,
   setDocumentCounter = (e) => {},
@@ -287,7 +286,12 @@ const MarkAsEvidence = ({
       }
     } catch (error) {
       console.error("Error creating PDF seal:", error);
-      showToast("error", t("ERROR_CREATING_EVIDENCE_SEAL"), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        label: t("ERROR_CREATING_EVIDENCE_SEAL"),
+        error: true,
+        errorId,
+      });
       return null;
     }
   };
@@ -395,7 +399,12 @@ const MarkAsEvidence = ({
         getIndividualDetails(response?.artifacts?.[0]?.sourceID);
       }
     } catch (error) {
-      showToast("error", t("ERROR_FETCHING_EVIDENCE_DETAILS"), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        label: t("ERROR_FETCHING_EVIDENCE_DETAILS"),
+        error: true,
+        errorId,
+      });
     } finally {
       setLoader(false);
     }
@@ -485,7 +494,12 @@ const MarkAsEvidence = ({
       setWitnessTagValues(combined?.filter(Boolean));
       setCaseDetails(response?.criteria[0]?.responseList[0]);
     } catch (error) {
-      showToast("error", t("ERROR_FETCHING_CASE_DETAILS"), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        label: t("ERROR_FETCHING_CASE_DETAILS"),
+        error: true,
+        errorId,
+      });
     } finally {
       setLoader(false);
     }
@@ -652,7 +666,11 @@ const MarkAsEvidence = ({
       if (error?.response?.data?.Errors?.[0]?.code === "EVIDENCE_NUMBER_EXISTS_EXCEPTION") {
         setEvidenceNumberError(error?.response?.data?.Errors?.[0]?.code);
         setStepper(0);
-      } else showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
+      } else
+        setShowToast({
+          label: t("EVIDENCE_UPDATE_ERROR_MESSAGE"),
+          error: true,
+        });
       return false;
     }
   };
@@ -698,13 +716,19 @@ const MarkAsEvidence = ({
             if (res && action === "SUBMIT_BULK_E-SIGN") {
               setShowMakeAsEvidenceModal(false);
               setDocumentCounter((prevCount) => prevCount + 1);
-              showToast("success", t("SUCCESSFULLY_SENT_FOR_E-SIGNING_MARKED_MESSAGE"), 5000);
+              setShowToast({
+                label: t("SUCCESSFULLY_SENT_FOR_E-SIGNING_MARKED_MESSAGE"),
+                error: false,
+              });
             }
           });
         }
       } else if (stepper === 1 && isSigned) {
         if (!mockESignEnabled && sessionStorage.getItem("fileStoreId") === null) {
-          showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
+          setShowToast({
+            label: t("EVIDENCE_UPDATE_ERROR_MESSAGE"),
+            error: true,
+          });
           return;
         }
         let fileStore = "";
@@ -770,7 +794,12 @@ const MarkAsEvidence = ({
         });
       }
     } catch (error) {
-      showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        label: t("EVIDENCE_UPDATE_ERROR_MESSAGE"),
+        error: true,
+        errorId,
+      });
     } finally {
       setLoader(false);
     }
@@ -844,9 +873,14 @@ const MarkAsEvidence = ({
       if (paginatedData?.offset) sessionStorage.setItem("bulkMarkAsEvidenceOffset", paginatedData?.offset);
 
       sessionStorage.removeItem("fileStoreId");
-      handleEsign(name, pageModule, file, "Judge/Magistrate");
+      handleEsign(name, pageModule, file, setShowToast, t, "Judge/Magistrate");
     } catch (error) {
-      showToast("error", t("ERROR_ESIGN_EVIDENCE"), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        label: t("ERROR_ESIGN_EVIDENCE"),
+        error: true,
+        errorId,
+      });
       setLoader(false);
     } finally {
       setLoader(false);
