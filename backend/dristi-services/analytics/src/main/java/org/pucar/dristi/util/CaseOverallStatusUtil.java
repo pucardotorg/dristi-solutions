@@ -535,7 +535,7 @@ public class CaseOverallStatusUtil {
 				log.info("case is already in lpr stage : {} ", filingNumber);
 				return false;
 			}
-			caseOverallStatus.setStage(config.getLprStage());
+			caseOverallStatus.setLifecycleStatus(LifecycleStatus.LPR);
 		}
 		return true;
 	}
