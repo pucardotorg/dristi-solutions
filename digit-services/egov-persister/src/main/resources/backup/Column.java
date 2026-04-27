@@ -9,9 +9,9 @@ import lombok.ToString;
 @ToString
 public class Column extends ObjectInfo{
 
-	private String colName;
-	private String jsonPath;
-	private String type;
-	private String defaultValue;
+    private String colName;
+    private String jsonPath;
+    private String type;
+    private String defaultValue;
 
 }

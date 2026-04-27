@@ -45,37 +45,7 @@ public class CoreIndexConsumerConfig implements ApplicationRunner {
 	
 	@Value("${spring.kafka.consumer.group}")
     private String consumerGroup;
-	
-	@Value("${egov.indexer.pgr.create.topic.name}")
-	private String pgrCreateTopic;
 
-	@Value("${pgr.create.topic.name}")
-	private String pgrServicesCreateTopic;
-
-	@Value("${pgr.update.topic.name}")
-	private String pgrServicesUpdateTopic;
-
-	@Value("${egov.indexer.pgr.update.topic.name}")
-	private String pgrUpdateTopic;
-		
-	@Value("${egov.indexer.pt.create.topic.name}")
-	private String ptCreateTopic;
-	
-	@Value("${egov.indexer.pt.update.topic.name}")
-	private String ptUpdateTopic;
-
-	@Value("${pgr.batch.create.topic.name}")
-	private String pgrServicesBatchCreateTopic;
-
-	@Value("${egov.indexer.bpa.create.topic.name}")
-	private String bpaCreateTopic;
-
-	@Value("${egov.indexer.bpa.update.topic.name}")
-	private String bpaUpdateTopic;
-
-	@Value("${egov.indexer.bpa.update.workflow.topic.name}")
-	private String bpaUpdateWorkflowTopic;
-	
 //    @Autowired
 //    private StoppingErrorHandler stoppingErrorHandler;
 
@@ -102,21 +72,10 @@ public class CoreIndexConsumerConfig implements ApplicationRunner {
     }
     
     public String setTopics(){
-    	String[] excludeArray = {pgrCreateTopic, pgrUpdateTopic, ptCreateTopic, ptUpdateTopic, pgrServicesCreateTopic, pgrServicesBatchCreateTopic,bpaCreateTopic,bpaUpdateTopic,bpaUpdateWorkflowTopic};
-    	int noOfExculdedTopics = 0;
 		List<String> topicsList = runner.getTopicMaps().get(ConfigKeyEnum.INDEX.toString());
-    	for(String excludeTopic: excludeArray) {
-    		if(topicsList.contains(excludeTopic)) noOfExculdedTopics++;
-    	}
-    	String[] topicsArray = new String[topicsList.size() - noOfExculdedTopics];
-    	int i = 0;
-    	for(String topic : topicsList){
-    		if(Arrays.asList(excludeArray).contains(topic)) continue;
-    		topicsArray[i] = topic; i++;
-    	}
-    	this.topics = topicsArray;  
-    	
-    	log.info("Core: Topics intialized..");
+		this.topics = topicsList.toArray(new String[0]);
+
+		log.info("Core: Topics intialized..");
     	
     	return Arrays.toString(topics);
     }

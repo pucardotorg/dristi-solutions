@@ -48,8 +48,6 @@ public class ReindexService {
 	@Value("${egov.core.reindex.topic.name}")
 	private String reindexTopic;
 
-	@Value("${egov.core.legacyindex.topic.name}")
-	private String legacyIndexTopic;
 
 	@Value("${egov.indexer.persister.create.topic}")
 	private String persisterCreate;
@@ -60,17 +58,10 @@ public class ReindexService {
 	@Value("${reindex.pagination.size.default}")
 	private Integer defaultPageSizeForReindex;
 
-	@Value("${legacyindex.pagination.size.default}")
-	private Integer defaultPageSizeForLegacyindex;
-
-	@Value("${egov.service.host}")
-	private String serviceHost;
 
 	@Value("${egov.infra.indexer.host}")
 	private String esHostUrl;
 
-	@Value("${egov.core.no.of.index.threads}")
-	private Integer noOfIndexThreads;
 
 	@Value("${egov.core.index.thread.poll.ms}")
 	private Long indexThreadPollInterval;

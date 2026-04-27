@@ -11,6 +11,6 @@ import lombok.ToString;
 @ToString
 public class TableInfo {
 
-	private String query;
-	private List<Column> columns;
+    private String query;
+    private List<Column> columns;
 }

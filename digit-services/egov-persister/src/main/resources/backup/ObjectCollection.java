@@ -10,5 +10,5 @@ import lombok.ToString;
 @Getter
 @ToString
 public class ObjectCollection {
-	private List<ObjectInfo> objectInfos;
+    private List<ObjectInfo> objectInfos;
 }

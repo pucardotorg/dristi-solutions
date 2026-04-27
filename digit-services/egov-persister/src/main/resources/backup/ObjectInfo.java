@@ -8,7 +8,7 @@ import lombok.ToString;
 @Getter
 @ToString
 public class ObjectInfo {
-	
-	private String objName;
-	private TableInfo tableInfo;
+
+    private String objName;
+    private TableInfo tableInfo;
 }
