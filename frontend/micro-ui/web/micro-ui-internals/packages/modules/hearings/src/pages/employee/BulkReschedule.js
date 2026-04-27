@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Banner, Button, CloseSvg, FormComposerV2, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import { Banner, Button, CloseSvg, Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { Urls } from "../../hooks/services/Urls";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
@@ -56,14 +57,13 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const [isBulkRescheduleDisabled, setIsBulkRescheduleDisabled] = useState(true);
   const [businessOfTheDay, setBusinessOfTheDay] = useState("");
   const [Loading, setLoader] = useState(false);
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const accessToken = window.localStorage.getItem("token");
 
   const name = "Signature";
   const pageModule = "en";
-  const judgeId = localStorage.getItem("judgeId");
   const courtId = localStorage.getItem("courtId");
 
   const bulkNotificationStepper = sessionStorage.getItem("bulkNotificationStepper")
@@ -110,13 +110,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     reason: bulkFormData?.reason || "",
   };
 
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
-
   useEffect(() => {
     if (currentDiaryEntry) setStepper(1);
     const esignProcess = sessionStorage.getItem("esignProcess");
@@ -148,28 +141,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     Boolean(bulkFromDate && bulkToDate && stepper > 0 && courtId)
   );
 
-  function formatTimeFromEpoch(epoch) {
-    return new Date(epoch).toLocaleTimeString("en-GB", { hour12: false });
-  }
-
-  function timeToSeconds(timeStr) {
-    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
-    return hours * 3600 + minutes * 60 + seconds;
-  }
   const bulkHearingsCount = useMemo(() => {
-    // if (bulkFormData?.slotIds?.length > 0) {
-    //   const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => {
-    //     const hearingStart = timeToSeconds(formatTimeFromEpoch(hearing.startTime));
-
-    //     return (
-    //       hearing?.status != "COMPLETED" &&
-    //       bulkFormData?.slotIds?.some((slot) => hearingStart >= timeToSeconds(slot.slotStartTime) && hearingStart <= timeToSeconds(slot.slotEndTime))
-    //     );
-    //   });
-
-    //   setOriginalHearingData(filteredHearings);
-    //   return filteredHearings?.length || 0;
-    // }
     setOriginalHearingData(hearingDetails?.HearingList);
     const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => hearing?.status !== "COMPLETED");
     return filteredHearings?.length || 0;
@@ -304,7 +276,8 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     } catch (error) {
       console.error("Error :", error);
       setLoader(false);
-      showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ISSUE_IN_BULK_HEARING"), error: true, errorId });
       setStepper(0);
       setIsSigned(false);
       setSignedDocumentUploadID("");
@@ -328,8 +301,9 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           history.goBack();
         });
     } catch (error) {
-      console.error("error: ", error);
-      showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+      console.error("Failed to update business of the day entry:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("UPDATE_BUSINESS_OF_DAY_FAILED"), error: true, errorId });
     }
   };
 
@@ -547,7 +521,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         setNotificationFileStoreId(fileStoreId);
         setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, fileStoreId]));
       } else if (!notificationFileStoreId) {
-        showToast("error", t("SOME_ERRORS_IN_HEARING_RESCHEDULE"), 5000);
+        setShowToast({ label: t("SOME_ERRORS_IN_HEARING_RESCHEDULE"), error: true, errorId: null });
         return;
       }
       const caseNumbers = newHearingData?.filter((hearing) => hearing?.caseId).map((hearing) => hearing.caseId);
@@ -621,8 +595,8 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
           bulkFromDate={bulkFromDate}
           bulkToDate={bulkToDate}
-          toastMsg={toastMsg}
-          setToastMsg={setToastMsg}
+          showToast={showToast}
+          setShowToast={setShowToast}
           setNewHearingData={setNewHearingData}
           newHearingData={newHearingData}
           bulkFormData={bulkFormData}
@@ -694,7 +668,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
                     sessionStorage.setItem("bulkNewHearingData", JSON.stringify(newHearingData));
                     sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
                     sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
-                    handleEsign(name, pageModule, notificationFileStoreId, "Signature");
+                    handleEsign(name, pageModule, notificationFileStoreId, setShowToast, t, "Signature");
                   }} //as sending null throwing error in esign
                   className="aadhar-sign-in"
                   labelClassName="aadhar-sign-in"
@@ -736,6 +710,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
 
@@ -841,13 +816,13 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           </div>
         </Modal>
       )}
-      {toastMsg && (
-        <Toast
-          error={toastMsg.key === "error"}
-          label={t(toastMsg.action)}
-          onClose={() => setToastMsg(null)}
-          isDleteBtn={true}
-          style={{ maxWidth: "500px" }}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
     </React.Fragment>

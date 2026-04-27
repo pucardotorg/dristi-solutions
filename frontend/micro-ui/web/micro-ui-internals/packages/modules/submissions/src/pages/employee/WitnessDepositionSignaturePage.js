@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ActionBar, SubmitBar, Button, Toast, Loader } from "@egovernments/digit-ui-react-components";
+import { ActionBar, SubmitBar, Button, Loader } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import BailEsignModal from "../../components/BailEsignModal";
 import SuccessBannerModal from "../../components/SuccessBannerModal";
@@ -12,6 +12,7 @@ import useOpenApiSearchWitnessDeposition from "../../hooks/submissions/useOpenAp
 import useSearchEvidenceService from "../../hooks/submissions/useSearchEvidenceService";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const getStyles = () => ({
   details: { color: "#0A0A0A", fontWeight: 700, fontSize: "18px", paddingBottom: "22px" },
@@ -57,7 +58,7 @@ const WitnessDepositionSignaturePage = () => {
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const isCitizen = userRoles?.includes("CITIZEN");
 
@@ -99,7 +100,7 @@ const WitnessDepositionSignaturePage = () => {
     return witnessDepositionDetails?.file?.fileStore;
   }, [witnessDepositionDetails]);
 
-  const { data: { file: orderPreviewPdf, fileName: orderPreviewFileName } = {}, isFetching: isLoading } = useQuery({
+  const { data: { file: orderPreviewPdf } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["witnessDepositionSignaturePdf", tenantId, artifactNumber, userInfo?.uuid],
     retry: 3,
     cacheTime: 0,
@@ -108,7 +109,7 @@ const WitnessDepositionSignaturePage = () => {
         .post(
           `${Urls.openApi.FileFetchByFileStore}`,
           {
-            tenantId: "kl",
+            tenantId,
             fileStoreId: fileStoreId,
             moduleName: "DRISTI",
           },
@@ -118,6 +119,8 @@ const WitnessDepositionSignaturePage = () => {
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_FETCHING_WITNESS_DEPOSITION_PDF"), error: true, errorId });
     },
     enabled: Boolean(fileStoreId),
   });
@@ -143,12 +146,13 @@ const WitnessDepositionSignaturePage = () => {
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      const res = await submissionService.updateOpenWitnessDeposition(payload, { tenantId });
+      await submissionService.updateOpenWitnessDeposition(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("WITNESS_DEPOSITION_SIGNATURE_FAILED"), error: true, errorId });
     } finally {
       setShowSignatureModal(false);
       sessionStorage.removeItem("isSignSuccess");
@@ -187,19 +191,6 @@ const WitnessDepositionSignaturePage = () => {
     }
   }, [artifactNumber, history, isAuthorised, isCitizen, isUserLoggedIn, tenantId, userType]);
 
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
   const handleMockESign = async () => {
     try {
       setLoader(true);
@@ -212,16 +203,27 @@ const WitnessDepositionSignaturePage = () => {
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      const res = await submissionService.updateOpenWitnessDeposition(payload, { tenantId });
+      await submissionService.updateOpenWitnessDeposition(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
     } catch (error) {
-      console.error("Error while updating witness deposition:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to upload witness deposition:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("WITNESS_DEPOSITION_UPLOAD_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
   };
+
+  const showEsignButton = useMemo(() => {
+    if (witnessDepositionDetails?.status === "PENDING_E-SIGN") {
+      if (isUserLoggedIn) {
+        if (authorizedUuid === userUuid) return true;
+        return false;
+      }
+      return true;
+    } else return false;
+  }, [authorizedUuid, isUserLoggedIn, userUuid, witnessDepositionDetails?.status]);
 
   if (isWitnessDepositionOpenLoading || isWitnessDepositionLoading || isLoading) {
     return <Loader />;
@@ -283,7 +285,7 @@ const WitnessDepositionSignaturePage = () => {
               className="back-button"
             />
           }
-          {witnessDepositionDetails?.status === "PENDING_E-SIGN" && (
+          {showEsignButton && (
             <SubmitBar
               label={
                 <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
@@ -313,7 +315,15 @@ const WitnessDepositionSignaturePage = () => {
       {showSuccessModal && (
         <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_WITNESS_DEPOSITION_MESSAGE"} />
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 };

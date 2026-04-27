@@ -17,15 +17,16 @@
   ],
   "homepage": "/ui",
   "dependencies": {
-    "@egovernments/digit-ui-components": "0.0.1-beta.28",
-    "@egovernments/digit-ui-libraries": "1.8.1-beta.3",
-    "@egovernments/digit-ui-module-core": "1.8.1-beta.6",
+    "@egovernments/digit-ui-components": "0.0.2-beta.1",
+    "@egovernments/digit-ui-libraries": "1.9.0",
+    "@egovernments/digit-ui-module-core": "0.0.1",
+    "@egovernments/digit-ui-module-common": "0.0.1",
     "@egovernments/digit-ui-module-dristi": "0.0.1",
     "@egovernments/digit-ui-module-hearings": "0.0.1",
     "@egovernments/digit-ui-module-home": "0.0.1",
     "@egovernments/digit-ui-module-orders": "0.0.1",
     "@egovernments/digit-ui-module-submissions": "0.0.1",
-    "@egovernments/digit-ui-react-components": "1.8.2-beta.11",
+    "@egovernments/digit-ui-react-components": "1.9.0",
     "jszip": "^3.10.1",
     "dristi-ui-css": "0.1.0-dristi-kerala.3",
     "babel-loader": "8.1.0",
@@ -39,7 +40,6 @@
     "react-router-dom": "5.3.0",
     "style-loader": "2.0.0",
     "terser-brunch": "^4.1.0",
-    "web-vitals": "1.1.2",
     "webpack-cli": "4.10.0"
   },
   "devDependencies": {

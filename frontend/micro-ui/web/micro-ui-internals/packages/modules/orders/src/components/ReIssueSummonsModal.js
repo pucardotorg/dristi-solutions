@@ -1,17 +1,21 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { Modal, CloseSvg } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { Loader } from "@egovernments/digit-ui-components";
 import { ordersService } from "../hooks/services";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
 import { Urls } from "../hooks/services/Urls";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { ORDER_TYPES } from "../utils/constants";
+import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 function ReIssueSummonsModal() {
   const { t } = useTranslation();
   const history = useHistory();
   const { hearingId, filingNumber, cnrNumber, orderType, caseId, caseTitle } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
+  const [showToast, setShowToast] = useState(null);
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const courtId = localStorage.getItem("courtId");
@@ -33,10 +37,6 @@ function ReIssueSummonsModal() {
 
   const handleCloseModal = () => {
     history.goBack();
-  };
-
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
   };
 
   const CloseButton = (props) => {
@@ -72,7 +72,7 @@ function ReIssueSummonsModal() {
         },
         documents: [],
         additionalDetails: {
-          [taskOrderType === "NOTICE" ? "isReIssueNotice" : "isReIssueSummons"]: true,
+          [taskOrderType === ORDER_TYPES.NOTICE ? "isReIssueNotice" : "isReIssueSummons"]: true,
           formdata: {
             orderType: {
               code: orderType,
@@ -128,13 +128,19 @@ function ReIssueSummonsModal() {
   const handleRescheduleHearing = async () => {
     try {
       return await hadleCreateOrder("RESCHEDULE_OF_HEARING_DATE", orderType);
-    } catch (error) {}
+    } catch (error) {
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_RESCHEDULING_HEARING"), error: true, errorId });
+    }
   };
 
   const handleReIssueSummon = async () => {
     try {
       return await hadleCreateOrder(orderType || "SUMMONS");
-    } catch (error) {}
+    } catch (error) {
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_REISSUING_SUMMONS"), error: true, errorId });
+    }
   };
 
   if (isHearingLoading) {
@@ -142,18 +148,29 @@ function ReIssueSummonsModal() {
   }
 
   return (
-    <Modal
-      headerBarMain={<Heading label={t("RESCHEDULE_HEARING_FOR_SUMMONS")} />}
-      headerBarEnd={<CloseButton onClick={handleCloseModal} />}
-      actionCancelLabel={t("CS_SKIP_AND_CONTINUE")}
-      actionCancelOnSubmit={handleReIssueSummon}
-      actionSaveLabel={t("RESCHEDULE_HEARING")}
-      actionSaveOnSubmit={handleRescheduleHearing}
-    >
-      <h2>{`${t("NEXT_HEARING_SCHEDULED_ON")} ${DateUtils.getFormattedDate(new Date(hearingDetails?.startTime))} ${t(
-        "DO_YOU_WANT_TO_RESCHEDULE"
-      )}`}</h2>
-    </Modal>
+    <React.Fragment>
+      <Modal
+        headerBarMain={<Heading label={t("RESCHEDULE_HEARING_FOR_SUMMONS")} />}
+        headerBarEnd={<CloseButton onClick={handleCloseModal} />}
+        actionCancelLabel={t("CS_SKIP_AND_CONTINUE")}
+        actionCancelOnSubmit={handleReIssueSummon}
+        actionSaveLabel={t("RESCHEDULE_HEARING")}
+        actionSaveOnSubmit={handleRescheduleHearing}
+      >
+        <h2>{`${t("NEXT_HEARING_SCHEDULED_ON")} ${DateUtils.getFormattedDate(new Date(hearingDetails?.startTime))} ${t(
+          "DO_YOU_WANT_TO_RESCHEDULE"
+        )}`}</h2>
+      </Modal>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </React.Fragment>
   );
 }
 

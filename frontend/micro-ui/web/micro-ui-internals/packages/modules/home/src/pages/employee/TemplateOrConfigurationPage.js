@@ -1,5 +1,5 @@
-import { InboxSearchComposer, Loader, SubmitBar, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { InboxSearchComposer, Loader, SubmitBar } from "@egovernments/digit-ui-react-components";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { temaplateOrConfigurationConfig } from "../../configs/TemplateOrConfigurationConfig";
 import AddTemplateModal from "../../components/AddTemplateModal";
@@ -7,6 +7,9 @@ import { AddTeamplateFormConfig, coverLetterTextConfig } from "../../configs/Add
 import { HomeService, Urls } from "../../hooks/services";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { isRichTextEmpty } from "../../utils";
+import { OutlinedInfoIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import ReactTooltip from "react-tooltip";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const convertToFormData = (t, data) => {
   const formData = {
@@ -16,6 +19,7 @@ const convertToFormData = (t, data) => {
     selectAddressee: { code: data?.addressee || "", name: data?.addressee || "" },
     processText: { text: data?.processText || "" },
     addresseeName: data?.addresseeName || "",
+    subTitle: data?.subTitle || "",
   };
 
   return formData;
@@ -31,7 +35,7 @@ const TemplateOrConfigurationPage = () => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const courtId = localStorage.getItem("courtId");
   const [refreshKey, setRefreshKey] = useState(0);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const accessToken = window.localStorage.getItem("token");
   const userInfo = Digit.UserService.getUser()?.info;
   const [pdfData, setPdfFile] = useState(null);
@@ -90,7 +94,8 @@ const TemplateOrConfigurationPage = () => {
           setRefreshKey((prev) => prev + 1);
         } catch (error) {
           console.error("Delete failed", error);
-          setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("TEMPLATE_DELETE_FAILED"), error: true, errorId });
         } finally {
           setIsLoading(false);
         }
@@ -109,10 +114,12 @@ const TemplateOrConfigurationPage = () => {
           setPdfFile(file);
           setStepper(3);
         } else {
-          setShowErrorToast({ label: t("ERROR_OPENING_TEMPLATE"), error: true });
+          setShowToast({ label: t("ERROR_OPENING_TEMPLATE"), error: true });
         }
       } catch (error) {
         console.error(error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ERROR_OPENING_TEMPLATE"), error: true, errorId });
       } finally {
         setIsLoading(false);
       }
@@ -151,7 +158,37 @@ const TemplateOrConfigurationPage = () => {
   const modifiedFormConfig = useMemo(() => {
     const selectedAddresseeCode = formdata?.selectAddressee?.code;
 
-    return AddTeamplateFormConfig.map((section) => {
+    const applyUiChanges = (config) => ({
+      ...config,
+      body: config?.body?.map((body) => {
+        if (body?.labelChildren === "optional") {
+          return {
+            ...body,
+            labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
+          };
+        }
+        if (body?.labelChildren === "OptionalWithOutlinedInfoIcon") {
+          return {
+            ...body,
+            labelChildren: (
+              <React.Fragment>
+                <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>
+                <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
+                  <OutlinedInfoIcon />
+                </span>
+
+                <ReactTooltip id={`${body.label}-tooltip`} place="bottom" content={body?.tooltipValue || ""}>
+                  {t(body?.tooltipValue || body.label)}
+                </ReactTooltip>
+              </React.Fragment>
+            ),
+          };
+        }
+        return body;
+      }),
+    });
+
+    const modifiedConfig = AddTeamplateFormConfig.map((section) => {
       return {
         ...section,
         body: section.body.filter((field) => {
@@ -163,7 +200,9 @@ const TemplateOrConfigurationPage = () => {
         }),
       };
     });
-  }, [formdata?.selectAddressee]);
+
+    return modifiedConfig?.map((config) => applyUiChanges(config));
+  }, [formdata?.selectAddressee?.code, t]);
 
   const getDefaultValues = useMemo(() => {
     if (stepper === 1) {
@@ -207,6 +246,7 @@ const TemplateOrConfigurationPage = () => {
           orderText: formdata?.orderText?.text || "",
           processText: formdata?.processText?.text || "",
           addresseeName: formdata?.addresseeName || "",
+          subTitle: formdata?.subTitle,
         },
       };
 
@@ -228,13 +268,14 @@ const TemplateOrConfigurationPage = () => {
             setPdfFile(file);
             setStepper(3);
           } else {
-            setShowErrorToast({ label: t("ERROR_GENERATING_PREVIEW"), error: true });
+            setShowToast({ label: t("ERROR_GENERATING_PREVIEW"), error: true });
           }
         }
       }
     } catch (error) {
       console.error("Error while Updating....", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_UPDATING_TEMPLATE"), error: true, errorId });
     } finally {
       setIsLoading(false);
     }
@@ -264,29 +305,17 @@ const TemplateOrConfigurationPage = () => {
           setPdfFile(file);
           setStepper(3);
         } else {
-          setShowErrorToast({ label: t("ERROR_GENERATING_PREVIEW"), error: true });
+          setShowToast({ label: t("ERROR_GENERATING_PREVIEW"), error: true });
         }
       }
     } catch (error) {
-      console.log("Error whle Updating....", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Error whle Updating....", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_UPDATING_TEMPLATE"), error: true, errorId });
     } finally {
       setIsLoading(false);
     }
   };
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   return (
     <React.Fragment>
@@ -388,7 +417,15 @@ const TemplateOrConfigurationPage = () => {
           setFormErrors={setFormErrors}
         />
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

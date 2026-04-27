@@ -35,6 +35,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.pucar.dristi.web.models.order.Order;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -55,11 +56,12 @@ public class PaymentUpdateService {
     private final CaseUtil caseUtil;
     private final AdvocateUtil advocateUtil;
     private final JsonUtil jsonUtil;
+    private final OrderUtil orderUtil;
 
     private ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
-    public PaymentUpdateService(WorkflowUtil workflowUtil, ObjectMapper mapper, TaskRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, DemandUtil demandUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, CaseUtil caseUtil, AdvocateUtil advocateUtil, JsonUtil jsonUtil) {
+    public PaymentUpdateService(WorkflowUtil workflowUtil, ObjectMapper mapper, TaskRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, DemandUtil demandUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, CaseUtil caseUtil, AdvocateUtil advocateUtil, JsonUtil jsonUtil, OrderUtil orderUtil) {
         this.workflowUtil = workflowUtil;
         this.mapper = mapper;
         this.repository = repository;
@@ -74,6 +76,7 @@ public class PaymentUpdateService {
         this.caseUtil = caseUtil;
         this.advocateUtil = advocateUtil;
         this.jsonUtil = jsonUtil;
+        this.orderUtil = orderUtil;
     }
 
     public void process(Map<String, Object> record) {
@@ -210,6 +213,8 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+                    task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -223,6 +228,8 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+                    task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -236,6 +243,8 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     updateDeliveryChannels(task);
                     createPendingTaskForRPAD(task, requestInfo);
+                    task.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+                    task.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -517,8 +526,26 @@ public class PaymentUpdateService {
             Map<String, List<String>> advocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
             Map<String, List<POAHolder>> poaMapping = caseUtil.getLitigantPoaMapping(courtCase);
 
-            List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, "complainant");
-            List<String> assigneeUUIDs = collectAssigneeUUIDs(complainants, advocateMapping, poaMapping);
+            String type = "complainant";
+            if(task.getOrderId() != null){
+                Order order = orderUtil.getOrderByOrderId(requestInfo, String.valueOf(task.getOrderId()));
+                if(INTERMEDIATE.equals(order.getOrderCategory())){
+                    if(isWarrantForAccusedWitness(order))
+                        type = "respondent";
+                }
+                else {
+                    List<Order> orders = getItemListFormCompositeItem(order);
+                    for(Order orderItem: orders){
+                        if(WARRANT.equals(orderItem.getOrderType())){
+                            if(isWarrantForAccusedWitness(orderItem))
+                                type = "respondent";
+                            break;
+                        }
+                    }
+                }
+            }
+            List<Party> parties = caseUtil.getRespondentOrComplainant(courtCase, type);
+            List<String> assigneeUUIDs = collectAssigneeUUIDs(parties, advocateMapping, poaMapping);
 
             List<User> uniqueAssignees = assigneeUUIDs.stream()
                     .distinct()
@@ -537,6 +564,72 @@ public class PaymentUpdateService {
             throw new CustomException("CREATE_PENDING_TASK_ERROR", "Error while creating pending task for envelope submission");
         }
     }
+
+    public List<Order> getItemListFormCompositeItem(Order order) {
+        log.info("method=getItemListFormCompositeItem , result= IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
+
+
+        Object compositeItems = order.getCompositeItems();
+        ObjectNode orderNode = null;
+        try {
+            String jsonString = objectMapper.writeValueAsString(order);
+            JsonNode jsonNode = objectMapper.readTree(jsonString);
+            if (jsonNode.isObject()) {
+                orderNode = (ObjectNode) jsonNode;
+            }
+        } catch (JsonProcessingException e) {
+            log.error("Error while converting order to json", e);
+            throw new CustomException("COMPOSITE_ORDER_CONVERSION_ERROR", "Error while converting order to json");
+        }
+
+        List<Order> compositeItemsList = new ArrayList<>();
+
+        try {
+            log.info("enriching order type ,order details and additional details");
+            JsonNode compositeItemArray = objectMapper.readTree(objectMapper.writeValueAsString(compositeItems));
+            for (JsonNode item : compositeItemArray) {
+                String orderType = item.get("orderType").asText();
+                JsonNode additionalDetails = item.get("orderSchema").get("additionalDetails");
+                ObjectNode additionalDetailsNode = (ObjectNode) additionalDetails;
+                additionalDetailsNode.put("itemId", item.get("id").asText());
+
+                JsonNode orderDetails = item.get("orderSchema").get("orderDetails");
+
+                assert orderNode != null;
+                orderNode.put("orderType", orderType);
+                orderNode.set("additionalDetails", additionalDetailsNode);
+                orderNode.set("orderDetails", orderDetails);
+
+                Order orderItem = objectMapper.convertValue(orderNode, Order.class);
+                compositeItemsList.add(orderItem);
+            }
+            log.info("successfully enriched order type ,order details and additional details completed");
+
+
+        } catch (Exception e) {
+            log.error("Error while enriching order type ,order details and additional details", e);
+            throw new CustomException("COMPOSITE_ORDER_ENRICHMENT_ERROR", "Error while enriching order type ,order details and additional details");
+        }
+        return compositeItemsList;
+    }
+
+    private boolean isWarrantForAccusedWitness(Order order) {
+        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
+        try {
+            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
+            JsonNode taskDetail = taskDetailsArray.get(0);
+            if(taskDetail.get("respondentDetails") != null
+                    && taskDetail.get("respondentDetails").get("ownerType") != null
+                    && taskDetail.get("respondentDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED)){
+                return true;
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return false;
+    }
+
 
     private List<String> collectAssigneeUUIDs(
             List<Party> complainants,

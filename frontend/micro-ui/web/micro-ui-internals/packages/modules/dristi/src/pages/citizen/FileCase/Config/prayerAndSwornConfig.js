@@ -2,16 +2,16 @@ const prayerAndSwornFormConfig = [
   {
     body: [
       {
+        key: "prayerAndSwornNote",
         type: "component",
         component: "SelectCustomNote",
-        key: "prayerAndSwornNote",
         populators: {
           inputs: [
             {
-              infoHeader: "CS_COMMON_NOTE",
-              infoText: "CS_NOTETEXT_PRAYER_AND_SWORN",
-              infoTooltipMessage: "CS_NOTETEXT_PRAYER_AND_SWORN",
               type: "InfoComponent",
+              infoText: "CS_NOTETEXT_PRAYER_AND_SWORN",
+              infoHeader: "CS_COMMON_NOTE",
+              infoTooltipMessage: "CS_NOTETEXT_PRAYER_AND_SWORN",
             },
           ],
         },
@@ -21,19 +21,14 @@ const prayerAndSwornFormConfig = [
   {
     body: [
       {
-        type: "radio",
         key: "prayerAndSwornStatementType",
+        type: "radio",
         label: "CS_PRAYER_AND_SWORN_STATEMENT_TYPE",
-        isMandatory: false,
         populators: {
           name: "prayerAndSwornStatementType",
-          label: "SELECT_PRAYER_AND_SWORN_STATEMENT_TYPE",
           type: "radioButton",
-          optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          required: false,
-          isMandatory: false,
-          isDependent: true,
+          label: "SELECT_PRAYER_AND_SWORN_STATEMENT_TYPE",
           options: [
             {
               code: "YES",
@@ -48,118 +43,170 @@ const prayerAndSwornFormConfig = [
               name: "Maybe",
             },
           ],
+          required: false,
+          optionsKey: "name",
+          isDependent: true,
+          isMandatory: false,
         },
+        isMandatory: false,
+        labelChildren: "optional",
       },
     ],
   },
   {
     body: [
       {
+        key: "synopsis",
         type: "component",
-        component: "SelectCustomTextArea",
-        key: "memorandumOfComplaint",
-        isMandatory: true,
+        label: "CS_SYNOPSIS_HEADER",
+        component: "SelectCustomFormatterTextArea",
         populators: {
           inputs: [
             {
               name: "text",
-              textAreaHeader: "CS_MEMORANDUM_OF_COMPLAINT_HEADER",
+              rows: 15,
               type: "TextAreaComponent",
+              maxLength: 50000,
+              textAreaSubHeader: "CS_SYNOPSIS_HEADER",
             },
           ],
         },
+        isMandatory: true,
+        withoutLabel: true,
+      },
+      {
+        key: "memorandumOfComplaint",
+        type: "component",
+        label: "CS_MEMORANDUM_OF_COMPLAINT_HEADER",
+        component: "SelectCustomFormatterTextArea",
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              rows: 15,
+              type: "TextAreaComponent",
+              maxLength: 50000,
+              textAreaSubHeader: "COMPLAINT_TEXT_AREA_SUBHEADER",
+            },
+          ],
+        },
+        isMandatory: true,
+        withoutLabel: true,
       },
     ],
   },
   {
     body: [
       {
-        type: "component",
-        component: "SelectCustomDragDrop",
-        label: "CS_SWORN_STATEMENT_HEADER",
-        withoutLabel: true,
         key: "swornStatement",
-        isMandatory: true,
+        type: "component",
+        label: "CS_SWORN_STATEMENT_HEADER",
+        component: "SelectCustomDragDrop",
         populators: {
           inputs: [
             {
-              isOptional: false,
               name: "document",
-              documentSubText: "CS_SWORN_STATEMENT_SUBTEXT",
-              documentHeader: "CS_SWORN_STATEMENT_HEADER",
               type: "DragDropComponent",
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+              isMandatory: true,
               maxFileSize: 10,
-              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-              fileTypes: ["JPG", "PDF", "PNG"],
+              documentHeader: "CS_SWORN_STATEMENT_HEADER",
+              documentSubText: "CS_SWORN_STATEMENT_SUBTEXT",
               isMultipleUpload: true,
               uploadGuidelines: "UPLOAD_DOC_10",
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             },
           ],
         },
+        isMandatory: true,
+        withoutLabel: true,
       },
     ],
   },
   {
     body: [
       {
+        key: "prayer",
         type: "component",
-        component: "SelectCustomTextArea",
-        key: "additionalDetails",
-        label: "CS_ADDITIONAL_DETAILS",
-        withoutLabel: true,
+        label: "CS_PRAYER",
+        component: "SelectCustomFormatterTextArea",
         populators: {
           inputs: [
             {
               name: "text",
-              textAreaSubHeader: "CS_ADDITIONAL_DETAILS",
+              rows: 5,
               type: "TextAreaComponent",
-              isOptional: true,
+              maxLength: 50000,
+              textAreaSubHeader: "CS_PRAYER",
             },
           ],
         },
+        isMandatory: true,
+        withoutLabel: true,
       },
     ],
   },
   {
     body: [
       {
+        key: "additionalDetails",
         type: "component",
-        component: "SelectUploadDocWithName",
-        key: "SelectUploadDocWithName",
-        withoutLabel: true,
+        label: "CS_ADDITIONAL_DETAILS",
+        component: "SelectCustomFormatterTextArea",
         populators: {
           inputs: [
             {
-              label: "DOCUMENT_LABEL_NAME",
-              type: "text",
+              name: "text",
+              type: "TextAreaComponent",
+              isOptional: true,
+              textAreaSubHeader: "CS_ADDITIONAL_DETAILS",
+            },
+          ],
+        },
+        withoutLabel: true,
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        key: "SelectUploadDocWithName",
+        type: "component",
+        component: "SelectUploadDocWithName",
+        populators: {
+          inputs: [
+            {
               name: "docName",
+              type: "text",
+              label: "DOCUMENT_LABEL_NAME",
               validation: {
+                title: "",
+                errMsg: "CORE_COMMON_DOCUMENT_NAME_INVALID",
                 pattern: {
-                  patternType: "docName",
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
+                  patternType: "docName",
                 },
-                errMsg: "CORE_COMMON_DOCUMENT_NAME_INVALID",
-                title: "",
-                patternType: "Name",
                 isRequired: true,
+                patternType: "Name",
               },
               isMandatory: true,
             },
             {
-              isMandatory: true,
               name: "document",
-              documentHeader: "CS_SWORN_ADDITIONAL_ACTS_DOCUMENT_HEADER",
               type: "DragDropComponent",
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+              isMandatory: true,
               maxFileSize: 10,
-              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-              fileTypes: ["JPG", "PDF", "PNG"],
-              uploadGuidelines: "UPLOAD_DOC_10",
+              documentHeader: "CS_SWORN_ADDITIONAL_ACTS_DOCUMENT_HEADER",
               isMultipleUpload: false,
+              uploadGuidelines: "UPLOAD_DOC_10",
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             },
           ],
           validation: {},
         },
+        withoutLabel: true,
       },
     ],
   },
@@ -171,8 +218,7 @@ export const prayerAndSwornConfig = {
   // addFormText: "ADD_DOCUMENT",
   className: "prayer-and-sworm",
   selectDocumentName: {
-    memorandumOfComplaint: "CS_MEMORANDUM_OF_COMPLAINT_HEADER",
-    prayerForRelief: "CS_PRAYER_FOR_RELIEF_HEADER",
     swornStatement: "CS_SWORN_STATEMENT_HEADER",
   },
+  subtext: "CS_COMPLAINT_DATA_ENTRY_INFO",
 };

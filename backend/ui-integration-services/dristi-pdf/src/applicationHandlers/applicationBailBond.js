@@ -35,7 +35,7 @@ const applicationBailBond = async (
   res,
   qrCode,
   application,
-  courtCaseJudgeDetails
+  courtCaseJudgeDetails,
 ) => {
   const cnrNumber = req.query.cnrNumber;
   const applicationNumber = req.query.applicationNumber;
@@ -56,7 +56,7 @@ const applicationBailBond = async (
     return renderError(
       res,
       `${missingFields.join(", ")} are mandatory to generate the PDF`,
-      400
+      400,
     );
   }
 
@@ -77,21 +77,21 @@ const applicationBailBond = async (
           tenantId,
           "rainmaker-submissions,rainmaker-common",
           "en_IN",
-          requestInfo
+          requestInfo,
         ),
-      "Failed to query Localized messages"
+      "Failed to query Localized messages",
     );
     const messages = resMessage?.data?.messages || [];
     const messagesMap =
       messages?.length > 0
         ? Object.fromEntries(
-            messages.map(({ code, message }) => [code, message])
+            messages.map(({ code, message }) => [code, message]),
           )
         : {};
 
     const resCase = await handleApiCall(
       () => search_case(cnrNumber, tenantId, requestInfo, application?.courtId),
-      "Failed to query case service"
+      "Failed to query case service",
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
     if (!courtCase) {
@@ -111,11 +111,11 @@ const applicationBailBond = async (
     if (advocateIndividualId) {
       const resAdvocate = await handleApiCall(
         () => search_advocate(tenantId, advocateIndividualId, requestInfo),
-        "Failed to query Advocate Details"
+        "Failed to query Advocate Details",
       );
       const advocateData = resAdvocate?.data?.advocates?.[0];
       const advocateDetails = advocateData?.responseList?.find(
-        (item) => item.isActive === true
+        (item) => item.isActive === true,
       );
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
@@ -147,10 +147,10 @@ const applicationBailBond = async (
         : [{ documentType: "" }];
 
     const additionalComments = htmlToFormattedText(
-      application?.applicationDetails?.additionalComments || ""
+      application?.applicationDetails?.additionalComments || "",
     );
     const reasonForApplication = htmlToFormattedText(
-      application?.applicationDetails?.reasonForApplicationOfBail || ""
+      application?.applicationDetails?.reasonForApplicationOfBail || "",
     );
     // Handle QR code if enabled
     let base64Url = "";
@@ -161,9 +161,9 @@ const applicationBailBond = async (
             tenantId,
             code,
             entityId,
-            requestInfo
+            requestInfo,
           ),
-        "Failed to query sunbirdrc credential service"
+        "Failed to query sunbirdrc credential service",
       );
       const $ = cheerio.load(resCredential.data);
       const imgTag = $("img");
@@ -171,7 +171,7 @@ const applicationBailBond = async (
         return renderError(
           res,
           "No img tag found in the sunbirdrc response",
-          500
+          500,
         );
       }
       base64Url = imgTag.attr("src");
@@ -215,13 +215,13 @@ const applicationBailBond = async (
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const { complainantList, accusedList } = getComplaintAndAccusedList(
-      courtCase || {}
+      courtCase || {},
     );
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
     const partyName = application?.additionalDetails?.onBehalOfName || "";
     const onBehalfOfLitigent = courtCase?.litigants?.find(
-      (item) => item.additionalDetails.uuid === onBehalfOfuuid
+      (item) => item.additionalDetails.uuid === onBehalfOfuuid,
     );
     let partyType = "COURT";
     if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("complainant")) {
@@ -250,7 +250,7 @@ const applicationBailBond = async (
           year: year,
           advocateSignature: "Advocate Signature",
           qrCodeUrl: base64Url,
-          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          petitionerName: getNameByUuid(application?.asUser, courtCase),
           complainantList: complainantList,
           accusedList: accusedList,
           advocateName: advocateName,
@@ -263,7 +263,7 @@ const applicationBailBond = async (
         : config.pdf.application_bail_bond;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
-      "Failed to generate PDF of Application Bail Bond"
+      "Failed to generate PDF of Application Bail Bond",
     );
 
     const filename = `${pdfKey}_${new Date().getTime()}`;
@@ -284,7 +284,7 @@ const applicationBailBond = async (
       res,
       "Failed to create PDF for Application for Bail",
       500,
-      ex
+      ex,
     );
   }
 };

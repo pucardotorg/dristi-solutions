@@ -2,35 +2,13 @@ import React, { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useHistory } from "react-router-dom";
-import { Loader, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { Urls } from "../../hooks";
 import { HomeService } from "../../hooks/services";
 import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, showToast = () => {} }) => {
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, setShowToast = () => {} }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
 
   const { t } = useTranslation();
@@ -57,6 +35,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
   const [cnrNumber, setCnrNumber] = useState("");
   const userUUID = Digit.UserService.getUser()?.info?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUUID);
+  const userInfoType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
 
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
@@ -92,7 +71,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
             // courtId: courtId,
             filingNumber: filingNumber,
             fuzzySearch: true,
-            asUser: authorizedUuid,
+            ...(userInfoType === "citizen" && { asUser: authorizedUuid }),
           },
           pagination: {
             limit: 100,
@@ -310,7 +289,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
             setShowBailConfirmationModal(false);
             setShowBailModal(false);
             if (setUpdateCounter) setUpdateCounter((prev) => prev + 1);
-            showToast("sucess", t("BULK_CLOSE_PENDING_TASK"), 5000);
+            setShowToast({ error: false, label: t("BULK_CLOSE_PENDING_TASK") });
           }, 1000);
         }
       });

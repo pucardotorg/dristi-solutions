@@ -1,4 +1,4 @@
-import { Button, CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DRISTIService } from "../../../../dristi/src/services";
 import { useTranslation } from "react-i18next";
@@ -10,7 +10,6 @@ import {
   searchIndividualUserWithUuid,
   submitJoinCase,
 } from "../../utils/joinCaseUtils";
-import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import SearchCaseAndShowDetails from "./joinCaseComponent/SearchCaseAndShowDetails";
 import AccessCodeValidation from "./joinCaseComponent/AccessCodeValidation";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
@@ -23,32 +22,15 @@ import POAInfo from "./joinCaseComponent/POAInfo";
 import { cleanString, combineMultipleFiles, getAuthorizedUuid, removeInvalidNameParts } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/submissionWorkflow";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import { JoinHomeLocalisation, optionsStatus } from "../../utils/constants";
 
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
 const Heading = (props) => {
   return (
     <div className="evidence-title">
       <h1 className="heading-m">{props.label}</h1>
     </div>
   );
-};
-
-const JoinHomeLocalisation = {
-  ADVOCATE_OPT: "ADVOCATE_OPT",
-  LITIGANT_OPT: "LITIGANT_OPT",
-  COMPLAINANT_BRACK: "COMPLAINANT_BRACK",
-  RESPONDENT_BRACK: "RESPONDENT_BRACK",
-  CASE_NOT_ADMITTED_TEXT: "CASE_NOT_ADMITTED_TEXT",
-  JOIN_CASE_BACK_TEXT: "JOIN_CASE_BACK_TEXT",
-  INVALID_ACCESS_CODE_MESSAGE: "INVALID_ACCESS_CODE_MESSAGE",
-  JOIN_CASE_SUCCESS: "JOIN_CASE_SUCCESS",
-  APPLICATION_CREATION_FAILED: "APPLICATION_CREATION_FAILED",
 };
 
 const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data }) => {
@@ -109,13 +91,10 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const [isSignedParty, setIsSignedParty] = useState(false);
   const [complainantList, setComplainantList] = useState([]);
   const [respondentList, setRespondentList] = useState([]);
-  const [showErrorToast, setShowErrorToast] = useState(false);
-  const [isAttendeeAdded, setIsAttendeeAdded] = useState(false);
   const [isLitigantJoined, setIsLitigantJoined] = useState(false);
   const [isAdvocateJoined, setIsAdvocateJoined] = useState(false);
   const [alreadyJoinedMobileNumber, setAlreadyJoinedMobileNumber] = useState([]);
   const [taskNumber, setTaskNumber] = useState("");
-  const [bailBondRequired, setBailBondRequired] = useState(false);
   const [poa, setIsPoa] = useState(false);
   const [poaJoinedParties, setPoaJoinedParties] = useState([]);
   const [formdata, setFormData] = useState({});
@@ -127,11 +106,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const authorizedUuid = getAuthorizedUuid(userInfo?.uuid);
 
-  const closeToast = () => {
-    setShowErrorToast(false);
-    setIsAttendeeAdded(false);
-  };
-
   useEffect(() => {
     if (type === "external") {
       setValidationCode(data?.caseDetails?.accessCode);
@@ -140,16 +114,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       setShow(showJoinCase);
     }
   }, [data?.caseDetails, showJoinCase, type]);
-
-  useEffect(() => {
-    let timer;
-    if (showErrorToast) {
-      timer = setTimeout(() => {
-        closeToast();
-      }, 2000);
-    }
-    return () => clearTimeout(timer);
-  }, [showErrorToast]);
 
   const { fetchBill, openPaymentPortal } = usePaymentProcess({ tenantId });
 
@@ -390,7 +354,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   }, [setShowJoinCase]);
 
   const onSelect = (option) => {
-    if (["PENDING_RESPONSE", "ADMISSION_HEARING_SCHEDULED", "CASE_ADMITTED", "PENDING_ADMISSION"].includes(option?.status)) {
+    if (optionsStatus.includes(option?.status)) {
       setIsDisabled(false);
       setCaseDetails(option);
 
@@ -628,6 +592,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           userUuid: item.phoneNumberVerification.userDetails.uuid,
           userId: item.phoneNumberVerification.userDetails.id,
           mobileNumber: item.phoneNumberVerification.userDetails.mobileNumber,
+          fatherName: item.fatherName,
         }));
 
       if (usersWithUUID.length === 0) {
@@ -636,6 +601,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           individualId: item?.phoneNumberVerification?.individualDetails?.individualId,
           uuid: item?.phoneNumberVerification?.individualDetails?.userUuid,
           fullName: getFullName(" ", item?.firstName, item?.middleName, item?.lastName),
+          fatherName: item?.fatherName,
         }));
       }
 
@@ -661,12 +627,14 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 individualId: matchedUser?.individualDetails?.individualId,
                 uuid: matchedUser?.individualDetails?.userUuid,
                 fullName: getFullName(" ", item?.firstName, item?.middleName, item?.lastName),
+                fatherName: item?.fatherName,
               }
             : {
                 ...item,
                 individualId: item?.phoneNumberVerification?.individualDetails?.individualId,
                 uuid: item?.phoneNumberVerification?.individualDetails?.userUuid,
                 fullName: getFullName(" ", item?.firstName, item?.middleName, item?.lastName),
+                fatherName: item?.fatherName,
               };
         });
 
@@ -689,6 +657,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               respondentFirstName: matchedUser?.firstName,
               respondentMiddleName: matchedUser?.middleName,
               respondentLastName: matchedUser?.lastName,
+              fatherName: matchedUser?.fatherName,
               respondentVerification: {
                 individualDetails: {
                   individualId: matchedUser?.individualId,
@@ -767,41 +736,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           }));
         }
 
-        const isResponseSubmitted = caseDetails?.litigants?.find((litigant) => litigant?.individualId === party?.individualId)?.isResponseSubmitted;
-
-        if ("PENDING_RESPONSE" === caseDetails?.status && !party?.isComplainant && !isResponseSubmitted) {
-          const poaHolders = (caseDetails?.poaHolders || [])
-            ?.filter((poa) => poa?.representingLitigants?.some((represent) => represent?.individualId === individual?.individualId))
-            ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
-
-          try {
-            await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-              pendingTask: {
-                name: `${t("PENDING_RESPONSE_FOR")} ${party?.fullName}`,
-                entityType: "case-default",
-                referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${individual?.individualId}`,
-                status: "PENDING_RESPONSE",
-                assignedTo: [{ uuid: individual?.userUuid }, ...(poaHolders?.length > 0 ? poaHolders : [])],
-                assignedRole: ["CASE_RESPONDER"],
-                cnrNumber: caseDetails?.cnrNumber,
-                filingNumber: caseDetails?.filingNumber,
-                caseId: caseDetails?.id,
-                caseTitle: caseDetails?.caseTitle,
-                isCompleted: false,
-                stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                additionalDetails: {
-                  individualId: individual?.individualId,
-                  caseId: caseDetails?.id,
-                  litigants: [individual?.individualId],
-                },
-                tenantId,
-                courtId: caseDetails?.courtId,
-              },
-            });
-          } catch (err) {
-            console.error("err :>> ", err);
-          }
-        }
         setShowConfirmModal(false);
         setMessageHeader(t("YOU_ARE_NOW_PARTY_IN_PERSON"));
         setSuccess(true);
@@ -813,25 +747,16 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     setIsApiCalled(false);
     setIsPipApiCalled(false);
   }, [
-    caseDetails?.caseTitle,
-    caseDetails?.cnrNumber,
-    caseDetails?.courtId,
     caseDetails?.filingNumber,
-    caseDetails?.id,
     caseDetails?.litigants,
-    caseDetails?.poaHolders,
     caseDetails?.representatives,
-    caseDetails?.status,
     individual?.individualId,
-    individual?.userUuid,
-    party?.fullName,
     party?.individualId,
     party.isComplainant,
     selectPartyData?.affidavit?.affidavitData?.document,
     step,
     t,
     tenantId,
-    todayDate,
     validationCode,
   ]);
 
@@ -973,32 +898,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                     }
                   }),
                 }));
-
-                if ("PENDING_RESPONSE" === caseDetails?.status && !party?.isComplainant) {
-                  try {
-                    await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                      pendingTask: {
-                        name: `${t("PENDING_RESPONSE_FOR")} ${getFullName(" ", givenName, otherNames, familyName)}`,
-                        entityType: "case-default",
-                        referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${individual?.individualId}`,
-                        status: "PENDING_RESPONSE",
-                        assignedTo: [{ uuid: individual?.userUuid }],
-                        assignedRole: ["CASE_RESPONDER"],
-                        cnrNumber: caseDetails?.cnrNumber,
-                        filingNumber: caseDetails?.filingNumber,
-                        caseId: caseDetails?.id,
-                        caseTitle: caseDetails?.caseTitle,
-                        isCompleted: false,
-                        stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                        additionalDetails: { individualId: individual?.individualId, caseId: caseDetails?.id, litigants: [individual?.individualId] },
-                        tenantId,
-                        courtId: caseDetails?.courtId,
-                      },
-                    });
-                  } catch (err) {
-                    console.error("err :>> ", err);
-                  }
-                }
                 setStep(step + 3);
                 setSuccess(true);
               } else {
@@ -1092,6 +991,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   additionalDetails: {
                     fullName: user?.fullName,
                     uuid: user?.uuid,
+                    fatherName: user?.fatherName,
                   },
                   tenantId: tenantId,
                   individualId: user?.individualId,
@@ -1211,56 +1111,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                     }),
                     respondentAdvocateList: [...successScreenData?.respondentAdvocateList, getFullName(" ", givenName, otherNames, familyName)],
                   }));
-                }
-
-                // create/update pending task for submit response
-                if ("PENDING_RESPONSE" === caseDetails?.status && documentUploadResult?.[0]?.isRespondent) {
-                  const pendingResponseTaskCreate = updatedParty
-                    ?.filter((user) => {
-                      const litigant = caseDetails?.litigants?.find((litigant) => litigant?.individualId === user?.individualId);
-                      if (!litigant) return true;
-
-                      if (!litigant?.isResponseRequired) return false;
-
-                      return !litigant?.documents?.some((document) => document?.additionalDetails?.fileType === "respondent-response");
-                    })
-                    ?.map((user) => {
-                      const { isFound, representatives } = searchLitigantInRepresentives(caseDetails?.representatives, user?.individualId);
-
-                      const poaHolders = (caseDetails?.poaHolders || [])
-                        ?.filter((poa) => poa?.representingLitigants?.some((represent) => represent?.individualId === user?.individualId))
-                        ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
-
-                      return DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                        pendingTask: {
-                          name: `${t("PENDING_RESPONSE_FOR")} ${user?.fullName}`,
-                          entityType: "case-default",
-                          referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${user?.individualId}`,
-                          status: "PENDING_RESPONSE",
-                          assignedTo: [
-                            { uuid: user?.uuid },
-                            ...(isFound ? representatives?.map((representative) => ({ uuid: representative?.additionalDetails?.uuid })) : []),
-                            { uuid: individual?.userUuid },
-                            ...(poaHolders?.length > 0 ? poaHolders : []),
-                          ],
-                          assignedRole: ["CASE_RESPONDER"],
-                          cnrNumber: caseDetails?.cnrNumber,
-                          filingNumber: caseDetails?.filingNumber,
-                          caseId: caseDetails?.id,
-                          caseTitle: caseDetails?.caseTitle,
-                          isCompleted: false,
-                          stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                          additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id, litigants: [user?.individualId] },
-                          tenantId,
-                          courtId: caseDetails?.courtId,
-                        },
-                      });
-                    });
-                  try {
-                    await Promise.all(pendingResponseTaskCreate);
-                  } catch (err) {
-                    console.error("err :>> ", err);
-                  }
                 }
               }
               if (res?.paymentTaskNumber) {
@@ -1482,67 +1332,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     ]
   );
 
-  const searchApplications = useCallback(
-    async (uuid) => {
-      try {
-        const response = await DRISTIService.searchSubmissions({
-          criteria: {
-            filingNumber: caseDetails?.filingNumber,
-            tenantId,
-            courtId: caseDetails?.courtId,
-            applicationType: "REQUEST_FOR_BAIL",
-            onBehalfOf: [uuid],
-            asUser: getAuthorizedUuid(uuid),
-          },
-        });
-
-        return response?.applicationList?.length > 0;
-      } catch (error) {
-        console.error("Error searching applications:", error);
-        return false;
-      }
-    },
-    [caseDetails?.courtId, caseDetails?.filingNumber, tenantId]
-  );
-
-  useEffect(() => {
-    const checkBailBondRequirement = async () => {
-      try {
-        let isBondRequired = true;
-
-        if (selectPartyData?.userType?.value === "Advocate" && selectPartyData?.isReplaceAdvocate?.value === "NO") {
-          const representedPersonUuids = party?.map((item) => item?.uuid).filter(Boolean);
-
-          if (representedPersonUuids?.length > 0) {
-            const applicationChecks = await Promise.all(representedPersonUuids.map((uuid) => searchApplications(uuid)));
-
-            const hasExistingApplication = applicationChecks.some((exists) => exists);
-            isBondRequired = !hasExistingApplication;
-          }
-        } else if (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES") {
-          const litigantUuid = individual?.userUuid;
-          if (litigantUuid) {
-            const hasExistingApplication = await searchApplications(litigantUuid);
-            isBondRequired = !hasExistingApplication;
-          }
-        }
-
-        setBailBondRequired(isBondRequired);
-      } catch (error) {
-        console.error("Error in checkBailBondRequirement:", error);
-        setBailBondRequired(true);
-      }
-    };
-
-    // Only run the check if we have the necessary data
-    if (
-      (selectPartyData?.userType?.value === "Advocate" && selectPartyData?.isReplaceAdvocate?.value === "NO" && party?.length > 0) ||
-      (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES" && individual?.userUuid)
-    ) {
-      checkBailBondRequirement();
-    }
-  }, [selectPartyData, party, individual, partyInPerson, searchApplications]);
-
   const handleKeyDown = useCallback(
     (event) => {
       if (event.key === "Enter") {
@@ -1655,7 +1444,11 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           successScreenData={successScreenData}
           isCaseViewDisabled={selectPartyData?.isReplaceAdvocate?.value === "YES" && !isAdvocateJoined}
           type={type}
-          isBailBondRequired={bailBondRequired}
+          isBailBondRequired={false}
+          selectPartyData={selectPartyData}
+          party={party}
+          partyInPerson={partyInPerson}
+          individual={individual}
         />
       ),
     },
@@ -1831,14 +1624,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           )}
           {step >= 0 && modalItem[step]?.modalMain}
         </Modal>
-      )}
-      {showErrorToast && (
-        <Toast
-          error={!isAttendeeAdded}
-          label={t(isAttendeeAdded ? "You have confirmed your attendance for summon!" : "You have already confirmed your attendance for the summon!")}
-          isDleteBtn={true}
-          onClose={closeToast}
-        />
       )}
       {showConfirmModal && (
         <Modal

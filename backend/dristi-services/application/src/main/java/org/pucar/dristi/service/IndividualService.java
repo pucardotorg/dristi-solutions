@@ -29,14 +29,36 @@ public class IndividualService {
         this.config = config;
     }
 
-    public List<Individual> getIndividualsBylId(RequestInfo requestInfo, List<String> ids) throws CustomException {
+    public List<Individual> getIndividualsByUserUuid(RequestInfo requestInfo, List<String> userUuids) throws CustomException {
         try {
             IndividualSearchRequest individualSearchRequest = new IndividualSearchRequest();
             individualSearchRequest.setRequestInfo(requestInfo);
             IndividualSearch individualSearch = new IndividualSearch();
-            individualSearch.setUserUuid(ids);
+            individualSearch.setUserUuid(userUuids);
             individualSearchRequest.setIndividual(individualSearch);
-            StringBuilder uri = buildIndividualSearchUri(requestInfo, ids);
+            StringBuilder uri = buildIndividualSearchUri(requestInfo, userUuids);
+            List<Individual> individual = individualUtils.getIndividualByIndividualId(individualSearchRequest, uri);
+            if (individual != null) {
+                return individual;
+            } else {
+                log.error("No individuals found");
+                return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            log.error("Error in search individual service: ", e);
+            log.error("Individuals not found");
+            return Collections.emptyList();
+        }
+    }
+
+    public List<Individual> getIndividualsByIndividualId(RequestInfo requestInfo, String individualId) throws CustomException {
+        try {
+            IndividualSearchRequest individualSearchRequest = new IndividualSearchRequest();
+            individualSearchRequest.setRequestInfo(requestInfo);
+            IndividualSearch individualSearch = new IndividualSearch();
+            individualSearch.setIndividualId(individualId);
+            individualSearchRequest.setIndividual(individualSearch);
+            StringBuilder uri = buildIndividualSearchUri(requestInfo, Collections.singletonList(individualId));
             List<Individual> individual = individualUtils.getIndividualByIndividualId(individualSearchRequest, uri);
             if (individual != null) {
                 return individual;

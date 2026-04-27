@@ -1,7 +1,7 @@
 import { CloseSvg, CardLabelError } from "@egovernments/digit-ui-react-components";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
-import { Toast } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import React, { useMemo, useState } from "react";
 
 const RemovalChip = ({ label, onRemove }) => {
   return (
@@ -21,17 +21,10 @@ const RemovalChip = ({ label, onRemove }) => {
 };
 
 function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors, clearErrors }) {
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
 
   const chipList = useMemo(() => formData?.[config.key] || [], [formData, config.key]);
   const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => setShowErrorToast(null), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   const handleDateAdd = (date, input) => {
     if (!date) return;
@@ -45,12 +38,12 @@ function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors, clea
     const maxAllowed = input?.maxSelected || Infinity;
 
     if (chipList.includes(formattedDate)) {
-      setShowErrorToast({ error: true, label: t("CS_DATE_ALREADY_SELECTED") });
+      setShowToast({ error: true, label: t("CS_DATE_ALREADY_SELECTED"), errorId: null });
       return;
     }
 
     if (chipList.length >= maxAllowed) {
-      setShowErrorToast({ error: true, label: t("CS_MAX_LIMIT_REACHED") });
+      setShowToast({ error: true, label: t("CS_MAX_LIMIT_REACHED"), errorId: null });
       return;
     }
 
@@ -116,8 +109,14 @@ function SelectBulkDateInputs({ t, config, onSelect, formData = {}, errors, clea
           </div>
         );
       })}
-      {showErrorToast && (
-        <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={() => setShowErrorToast(null)} />
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </div>
   );

@@ -1,22 +1,11 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import React, { useMemo, useState } from "react";
 import { useQuery } from "react-query";
 import { Urls } from "../hooks/services/Urls";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 const onDocumentUpload = async (fileData, filename) => {
   const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
   return { file: fileUploadRes?.data, fileType: fileData.type, filename };
@@ -38,7 +27,11 @@ const BailBondReviewModal = ({
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
 
   const { data: { file: bailBondPreviewPdf, fileName: bailBondPreviewFileName } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["bailBondPreviewPdf", tenantId, bailBondDetails?.bailId, bailBondDetails?.cnrNumber, bailBondPreviewSubmissionTypeMap["BAIL_BOND"]],
@@ -64,6 +57,7 @@ const BailBondReviewModal = ({
               bailBondPdfType: bailBondPreviewSubmissionTypeMap["BAIL_BOND"], // need to change
               courtId: courtId,
               filingNumber: bailBondDetails?.filingNumber,
+              ...(userInfoType === "citizen" && { asUser: authorizedUuid }),
             },
             responseType: "blob",
           }
@@ -72,6 +66,11 @@ const BailBondReviewModal = ({
           file: res.data,
           fileName: res.headers["content-disposition"]?.split("filename=")[1],
         }));
+    },
+    onError: (error) => {
+      console.error("Failed to fetch bail bond preview PDF:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_FETCHING_BAIL_BOND_PREVIEW_PDF"), error: true, errorId });
     },
     enabled: !!bailBondDetails?.bailId && !!bailBondDetails?.cnrNumber && !!bailBondPreviewSubmissionTypeMap["BAIL_BOND"],
   });
@@ -120,7 +119,8 @@ const BailBondReviewModal = ({
               setShowBailBondReview(false);
             })
             .catch((e) => {
-              setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+              const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+              setShowToast({ label: t("ERROR_UPLOADING_DOCUMENT"), error: true, errorId });
             });
         }}
         className={"review-submission-appl-modal bail-bond"}
@@ -145,6 +145,15 @@ const BailBondReviewModal = ({
           </div>
         </div>
       </Modal>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

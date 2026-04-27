@@ -1,6 +1,7 @@
 package org.egov.transformer.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
@@ -13,7 +14,6 @@ import org.egov.transformer.util.AdvocateUtil;
 import org.egov.transformer.util.InboxUtil;
 import org.egov.transformer.util.JsonUtil;
 import org.egov.transformer.util.MdmsUtil;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -78,6 +78,8 @@ public class HearingService {
     private OpenHearing getOpenHearing(RequestInfo requestInfo, Hearing hearing, CourtCase courtCase,boolean isCreateHearing) {
 
         List<AdvocateMapping> representatives = courtCase.getRepresentatives();
+        List<Party> litigants = courtCase.getLitigants();
+        List<POAHolder> poaHolders = courtCase.getPoaHolders();
 
         Advocate advocate = getAdvocates(representatives, courtCase.getLitigants(), requestInfo);
 
@@ -98,7 +100,7 @@ public class HearingService {
         openHearing.setCaseFilingDate(courtCase.getFilingDate());
         openHearing.setAdvocate(advocate);
         openHearing.setHearingType(hearing.getHearingType());
-        openHearing.setSearchableFields(getSearchableFields(advocate, hearing, courtCase));
+        openHearing.setSearchableFields(getSearchableFields(advocate, hearing, litigants, poaHolders, courtCase));
         openHearing.setHearingDurationInMillis(hearing.getHearingDurationInMillis());
         if(isCreateHearing){
             openHearing.setOrderStatus(OrderStatus.NOT_CREATED);
@@ -166,12 +168,26 @@ public class HearingService {
 
     }
 
-    private List<String> getSearchableFields(Advocate advocate, Hearing hearing, CourtCase courtCase) {
+    private List<String> getSearchableFields(Advocate advocate, Hearing hearing, List<Party> litigants, List<POAHolder> poaHolders, CourtCase courtCase) {
 
         List<String> searchableFields = new ArrayList<>();
         searchableFields.addAll(advocate.getComplainant());
         searchableFields.addAll(advocate.getAccused());
         searchableFields.addAll(advocate.getIndividualIds());
+
+        List<Party> litigantList = Optional.ofNullable(litigants).orElse(Collections.emptyList());
+        for (Party party : litigantList) {
+            if (party.getIndividualId() != null && !party.getIndividualId().isEmpty()) {
+                searchableFields.add(party.getIndividualId());
+            }
+        }
+
+        List<POAHolder> poaHolderList = Optional.ofNullable(poaHolders).orElse(Collections.emptyList());
+        for (POAHolder poaHolder : poaHolderList) {
+            if (poaHolder.getIndividualId() != null && !poaHolder.getIndividualId().isEmpty()) {
+                searchableFields.add(poaHolder.getIndividualId());
+            }
+        }
         searchableFields.add(courtCase.getCaseTitle());
         searchableFields.addAll(hearing.getFilingNumber());
         if (hearing.getCmpNumber() != null) searchableFields.add(hearing.getCmpNumber());

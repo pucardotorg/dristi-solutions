@@ -1,21 +1,14 @@
-import { Header, Card, Loader, ActionBar, SubmitBar, Modal, CardText, Toast, TextArea, BackButton } from "@egovernments/digit-ui-react-components";
+import { Header, Card, Loader, SubmitBar, Modal, CardText, TextArea } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useParams, useHistory } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import DocumentDetailCard from "../../components/DocumentDetailCard";
 import DocViewerWrapper from "./docViewerWrapper";
 import { ReactComponent as LocationOnMapIcon } from "../../images/location_onmap.svg";
 import { userTypeOptions } from "../citizen/registration/config";
-import Menu from "../../components/Menu";
-import { useToast } from "../../components/Toast/useToast";
 import { ErrorInfoIcon, SuccessIcon } from "../../icons/svgIndex";
 import ImageModal from "../../components/ImageModal";
-import { sanitizeData } from "../../Utils";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { Heading } from "../../components/ModalComponents";
 const Close = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF">
     <path d="M0 0h24v24H0V0z" fill="none" />
@@ -56,9 +49,9 @@ const extractFormattedAddresses = (individualData, t) => {
 
   const formatAddress = (addr) => {
     if (!addr) return "";
-    const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
+    const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "", doorNo = "" } = addr;
 
-    return `${addressLine1}, ${addressLine2}, ${buildingName}, ${street}, ${city}, ${pincode}`.trim();
+    return `${doorNo}, ${buildingName}, ${street}, ${city}, ${addressLine2}, ${addressLine1}, ${pincode}`.trim();
   };
 
   const permanentAddress = addresses?.find((addr) => addr?.type === "PERMANENT");
@@ -82,22 +75,16 @@ const extractFormattedAddresses = (individualData, t) => {
 
 const ApplicationDetails = ({ location, match }) => {
   const urlParams = new URLSearchParams(window.location.search);
-
-  const toast = useToast();
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const individualId = urlParams.get("individualId");
   const applicationNo = urlParams.get("applicationNo");
-  const type = urlParams.get("type") || "advocate";
   const moduleCode = "DRISTI";
   const { t } = useTranslation();
   const history = useHistory();
   const [showModal, setShowModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState({ isOpen: false, status: "" });
-  const [displayMenu, setDisplayMenu] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const [message, setMessage] = useState(null);
   const [reasons, setReasons] = useState(null);
-  const [isAction, setIsAction] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [isSubmittingAction, setIsSubmittingAction] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -183,9 +170,6 @@ const ApplicationDetails = ({ location, match }) => {
   const fileName = useMemo(() => {
     return searchResult?.[0]?.documents?.[0]?.additionalDetails?.fileName;
   }, [searchResult]);
-  useEffect(() => {
-    setIsAction(searchResult?.[0]?.status === "INWORKFLOW");
-  }, [searchResult]);
 
   const applicationNumber = useMemo(() => {
     return searchResult?.[0]?.applicationNumber;
@@ -253,7 +237,6 @@ const ApplicationDetails = ({ location, match }) => {
     if (action === "REJECT") {
       setShowModal(true);
     }
-    setDisplayMenu(false);
   }
 
   const handleDelete = (action) => {
@@ -353,7 +336,7 @@ const ApplicationDetails = ({ location, match }) => {
             />
 
             <DocumentDetailCard cardData={personalData} />
-            {type === "advocate" && (userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") && (
+            {(userType === "ADVOCATE" || userType === "ADVOCATE_CLERK") && (
               <DocumentDetailCard onClick={() => handleImageModalOpen(fileStoreId, fileName)} cardData={barDetails} />
             )}
           </div>

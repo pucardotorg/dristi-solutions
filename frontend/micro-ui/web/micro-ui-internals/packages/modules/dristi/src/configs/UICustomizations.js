@@ -23,6 +23,7 @@ import { constructFullName } from "@egovernments/digit-ui-module-orders/src/util
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import { CaseWorkflowState } from "../Utils/caseWorkflow";
 
 export const getSelectedAdvocate = () => {
   try {
@@ -831,6 +832,10 @@ export const UICustomizations = {
       const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
       const status = !filterList?.status || filterList?.status === "PUBLISHED" ? "PUBLISHED" : "EMPTY";
       const userUuid = Digit.UserService.getUser()?.info?.uuid;
+      const authorizedUuid = getAuthorizedUuid(userUuid);
+      const userInfo = Digit.UserService.getUser()?.info;
+      const userInfoType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+
       return {
         ...requestCriteria,
         body: {
@@ -839,7 +844,7 @@ export const UICustomizations = {
             ...requestCriteria.body.criteria,
             ...filterList,
             status: userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order") ? status : filterList?.status,
-            asUser: getAuthorizedUuid(userUuid),
+            ...(userInfoType === "citizen" && { asUser: authorizedUuid }),
           },
           tenantId,
           pagination: {
@@ -1155,6 +1160,8 @@ export const UICustomizations = {
       const tenantId = window?.Digit.ULBService.getStateId();
       const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
       const status = !filterList?.status || filterList?.status === "PUBLISHED" ? "PUBLISHED" : "EMPTY";
+      const userInfo = Digit.UserService.getUser()?.info;
+      const userInfoType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
       return {
         ...requestCriteria,
         body: {
@@ -1162,7 +1169,7 @@ export const UICustomizations = {
           criteria: {
             ...requestCriteria.body.criteria,
             ...filterList,
-            asUser: authorizedUuid,
+            ...(userInfoType === "citizen" && { asUser: authorizedUuid }),
             status: userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order") ? status : filterList?.status,
           },
           tenantId,
@@ -1539,6 +1546,8 @@ export const UICustomizations = {
             ? t(row?.status)
             : ["poa.regular"].includes(row?.partyType)
             ? t("JOINED")
+            : row?.status
+            ? t(row.status)
             : "";
 
           return caseJoinStatus ? <span style={{ backgroundColor: "#E8E8E8", padding: "6px", borderRadius: "14px" }}>{caseJoinStatus}</span> : null;
@@ -1625,15 +1634,15 @@ export const UICustomizations = {
         processSearchCriteria: {
           businessService: ["hearing-default"],
           moduleName: "Hearing Service",
-          tenantId: requestCriteria?.params?.tenantId || "kl",
+          tenantId: requestCriteria?.params?.tenantId,
         },
         moduleSearchCriteria: {
           fromDate: new Date(requestCriteria?.state?.searchForm?.date + "T00:00:00").getTime(),
           toDate: new Date(requestCriteria?.state?.searchForm?.date + "T23:59:59.999").getTime(),
-          tenantId: requestCriteria?.params?.tenantId || "kl",
+          tenantId: requestCriteria?.params?.tenantId,
           ...(requestCriteria?.state?.searchForm?.status && { status: requestCriteria?.state?.searchForm?.status?.value }),
         },
-        tenantId: requestCriteria?.params?.tenantId || "kl",
+        tenantId: requestCriteria?.params?.tenantId,
         limit: requestCriteria?.state?.tableForm?.limit || 10,
         offset: requestCriteria?.state?.tableForm?.offset || 0,
       };
@@ -2602,7 +2611,9 @@ export const UICustomizations = {
       const caseId = row?.caseNumber || row?.filingNumber;
       switch (key) {
         case "PENDING_CASE_NAME":
-          return row?.substage === "SCRUTINY" && row?.hasCaseReviewerAccess ? (
+          return row?.substage === CaseWorkflowState.FILING ? (
+            <span>{value ? value : "-"}</span>
+          ) : (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
               to={{
@@ -2613,8 +2624,6 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
-          ) : (
-            value || "-"
           );
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -2644,6 +2653,9 @@ export const UICustomizations = {
       const limit = requestCriteria?.state?.tableForm?.limit || 10;
       const offSet = requestCriteria?.state?.tableForm?.offset || 0;
       const bailId = requestCriteria?.state?.searchForm?.bailId;
+      const userInfo = Digit.UserService.getUser()?.info;
+      const userInfoType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+
       return {
         ...requestCriteria,
         body: {
@@ -2653,7 +2665,7 @@ export const UICustomizations = {
             ...requestCriteria?.body?.criteria,
             ...(bailId && { bailId }),
             ...(isCitizen ? {} : { status: ["PENDING_REVIEW", "COMPLETED", "VOID"] }),
-            asUser: authorizedUuid,
+            ...(userInfoType === "citizen" && { asUser: authorizedUuid }),
             fuzzySearch: true,
           },
           pagination: {
@@ -2799,18 +2811,32 @@ export const UICustomizations = {
       const caseSearchText = searchForm?.caseSearchText;
 
       const existingCriteria = requestCriteria?.body?.criteria || {};
+      const tableForm = requestCriteria?.state?.tableForm || {};
       const existingPagination = requestCriteria?.body?.pagination || { limit: 10, offSet: 0 };
+      const limit = tableForm.limit != null ? tableForm.limit : existingPagination.limit;
+      const offSet = tableForm.offset != null ? tableForm.offset : tableForm.offSet != null ? tableForm.offSet : existingPagination.offSet;
+
+      const finalLimit = limit != null ? limit : 10;
+      const finalOffSet = offSet != null ? offSet : 0;
 
       return {
         ...requestCriteria,
+        changeQueryName: "assignCases_" + finalLimit + "_" + finalOffSet + "_" + caseMappingFilterStatus,
         body: {
+          ...requestCriteria?.body,
           criteria: {
             ...existingCriteria,
             tenantId: tenantId || existingCriteria.tenantId,
             caseMappingFilterStatus,
             ...(caseSearchText ? { caseSearchText } : {}),
           },
-          pagination: existingPagination,
+          pagination: { limit: finalLimit, offSet: finalOffSet },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, totalCount: data?.pagination?.totalCount };
+          },
         },
       };
     },
@@ -2828,6 +2854,14 @@ export const UICustomizations = {
               style={{ cursor: "pointer", width: "20px", height: "20px" }}
             />
           );
+        case "CASE_NAME": {
+          const rawTitle = (row?.caseTitle || "").toString().trim();
+          return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
+        }
+        case "CASE_NUMBER": {
+          const caseNumber = row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
+          return caseNumber || "";
+        }
         default:
           return value != null ? value : "";
       }

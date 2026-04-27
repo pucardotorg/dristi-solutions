@@ -77,10 +77,10 @@ class OpenApiEvidenceSearchRequestTest {
 
         for (ConstraintViolation<OpenApiEvidenceSearchRequest> violation : violations) {
             assertTrue(
-                    violation.getPropertyPath().toString().equals("tenantId") ||
-                            violation.getPropertyPath().toString().equals("artifactNumber") ||
-                            violation.getPropertyPath().toString().equals("sourceType") ||
-                            violation.getPropertyPath().toString().equals("mobileNumber")
+                    "tenantId".equals(violation.getPropertyPath().toString()) ||
+                            "artifactNumber".equals(violation.getPropertyPath().toString()) ||
+                            "sourceType".equals(violation.getPropertyPath().toString()) ||
+                            "mobileNumber".equals(violation.getPropertyPath().toString())
             );
         }
     }

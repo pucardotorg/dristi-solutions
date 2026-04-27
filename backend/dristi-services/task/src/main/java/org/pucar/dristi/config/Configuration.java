@@ -196,6 +196,9 @@ public class Configuration {
     @Value("${egov.order.path}")
     private String orderPath;
 
+    @Value("${egov.order.search.path}")
+    private String orderSearchPath;
+
     @Value("${summons.court.fees.sufix}")
     private String summonsCourtFeesSufix;
 
@@ -279,6 +282,9 @@ public class Configuration {
 
     @Value("${egov.sms.notification.process.fee.payment.template.id}")
     private String smsNotificationProcessFeePaymentTemplateId;
+
+    @Value("${egov.sms.notification.rpad.dispatch.template.id}")
+    private String smsNotificationRPADTemplateId;
 
     //Individual Service
     @Value("${egov.individual.host}")

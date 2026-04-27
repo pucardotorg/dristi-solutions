@@ -44,6 +44,9 @@ public class CourtCase {
     @JsonProperty("filingNumber")
     private String filingNumber = null;
 
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
+
     @JsonProperty("advocateCount")
     private Integer advocateCount = null;
 

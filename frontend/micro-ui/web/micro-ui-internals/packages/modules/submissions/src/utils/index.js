@@ -1,8 +1,8 @@
-import _ from "lodash";
 import { UICustomizations } from "../configs/UICustomizations";
 
 import { CustomisedHooks } from "../hooks";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { getFormattedName } from "@egovernments/digit-ui-module-common";
 
 export const overrideHooks = () => {
   Object.keys(CustomisedHooks).map((ele) => {
@@ -129,17 +129,7 @@ export function convertTaskResponseToPayload(responseArray, id = null) {
   return pendingTask;
 }
 
-export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
-  const nameParts = [firstName, middleName, lastName]
-    ?.map((part) => part?.trim())
-    ?.filter(Boolean)
-    ?.join(" ")
-    ?.trim();
-
-  const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
-
-  return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
-};
+export { getFormattedName };
 
 export const getUserInfoFromUuids = async (uuidList) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -193,6 +183,38 @@ export const getUserInfoFromIndividualId = async (individualId) => {
     return userData;
   }
   return [];
+};
+
+export const validateAndFormatFields = ({ formData, setValue, clearErrors, fieldConfigs = [] }) => {
+  const formDataCopy = structuredClone(formData);
+
+  fieldConfigs?.forEach(({ key, maxLength, formatter }) => {
+    if (!Object.prototype.hasOwnProperty.call(formDataCopy, key)) return;
+
+    const oldValue = formDataCopy[key];
+    let value = oldValue;
+
+    if (typeof value !== "string") return;
+
+    if (maxLength && value.length > maxLength) {
+      value = value.slice(0, maxLength);
+    }
+
+    const updatedValue = formatter ? formatter(value) : value;
+
+    if (updatedValue !== oldValue) {
+      const element = document.querySelector(`[name="${key}"]`);
+      const start = element?.selectionStart;
+      const end = element?.selectionEnd;
+
+      setValue(key, updatedValue);
+      clearErrors?.(key);
+
+      setTimeout(() => {
+        element?.setSelectionRange(start, end);
+      }, 0);
+    }
+  });
 };
 
 export default {};

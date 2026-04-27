@@ -20,6 +20,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.ApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ApplicationRepository;
+import org.pucar.dristi.util.EvidenceUtil;
 import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.SmsNotificationUtil;
 import org.pucar.dristi.validator.ApplicationValidator;
@@ -74,6 +75,9 @@ class ApplicationServiceTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private EvidenceUtil evidenceUtil;
 
     @BeforeEach
     void setUp() {

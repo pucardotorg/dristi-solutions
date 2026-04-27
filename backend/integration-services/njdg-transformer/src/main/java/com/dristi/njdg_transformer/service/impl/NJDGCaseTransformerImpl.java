@@ -14,11 +14,11 @@ import com.dristi.njdg_transformer.service.interfaces.CaseTransformer;
 import com.dristi.njdg_transformer.utils.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -125,15 +125,21 @@ public class NJDGCaseTransformerImpl implements CaseTransformer {
                                                DesignationMaster designationMaster, RequestInfo requestInfo) {
         log.info("Building NJDG record for case: {}", courtCase.getCnrNumber());
         
+        // regNo/regYear: blank for CMP-only cases; ST number for ST cases
+        String courtCaseNumber = ST.equalsIgnoreCase(courtCase.getCaseType()) ? courtCase.getCourtCaseNumber() : null;
+
+        // filNo/filYear: CMP number goes into the filing number field in NJDG
+        String cmpNumber = courtCase.getCmpNumber();
+
         return NJDGTransformRecord.builder()
                 .cino(courtCase.getCnrNumber())
                 .dateOfFiling(dateUtil.formatDate(courtCase.getFilingDate()))
                 .dtRegis(dateUtil.formatDate(courtCase.getRegistrationDate()))
                 .caseType(getCaseTypeValue(courtCase.getCaseType()))
-                .regNo(numberExtractor.extractCaseNumber(courtCase.getCourtCaseNumber() != null ? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber()))
-                .regYear(extractRegYear(courtCase.getCourtCaseNumber() != null ? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber()))
-                .filNo(numberExtractor.extractFilingNumber(courtCase.getFilingNumber()))
-                .filYear(extractFilingYear(courtCase.getFilingNumber()))
+                .regNo(courtCaseNumber != null ? numberExtractor.extractCaseNumber(courtCaseNumber) : null)
+                .regYear(courtCaseNumber != null ? extractRegYear(courtCaseNumber) : null)
+                .filNo(numberExtractor.extractCaseNumber(cmpNumber))
+                .filYear(extractRegYear(cmpNumber))
                 .pendDisp(getDisposalStatus(courtCase.getOutcome()))
                 .dateOfDecision(getDateOfDecision(courtCase, requestInfo))
                 .dispReason(courtCase.getOutcome() != null ? 

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatNoticeDeliveryDate } from "../utils";
+import { ORDER_TYPES } from "../utils/constants";
 import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
@@ -201,6 +202,9 @@ export const UICustomizations = {
           });
         },
       });
+      const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
+      const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
@@ -217,9 +221,9 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.outcome && {
           outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
         }),
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
+        ...(selectedStage && { stage: [selectedStage] }),
+        substage: undefined,
+        ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
           offSet: requestCriteria?.state?.tableForm?.offset,
@@ -232,9 +236,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.code,
-          }),
+          stage: undefined,
+          substage: undefined,
+          secondaryStage: undefined,
           criteria,
           tenantId,
         },
@@ -267,6 +271,12 @@ export const UICustomizations = {
           return t(value);
         case "CS_STAGE":
           return t(value);
+        case "CS_SECONDARY_STAGE": {
+          const stages = Array.isArray(value) ? value : [value];
+          const normalized = stages.filter(Boolean);
+          return normalized.length ? normalized.map((item) => t(item)).join(", ") : t("ES_COMMON_NA");
+        }
+
         case "CS_FILING_DATE":
           return <span>{DateUtils.getFormattedDate(new Date(value))}</span>;
         case "CS_CASE_NUMBER_HOME":
@@ -306,12 +316,15 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       // We need to change tenantId "processSearchCriteria" here
       const tenantId = window?.Digit.ULBService.getStateId();
+      const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
+      const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
+        ...(selectedStage && { stage: [selectedStage] }),
+        substage: undefined,
+        ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         tenantId,
         ...additionalDetails,
         ...("sortBy" in additionalDetails && {
@@ -331,9 +344,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.code,
-          }),
+          stage: undefined,
+          substage: undefined,
+          secondaryStage: undefined,
           criteria,
           tenantId,
         },
@@ -357,6 +370,12 @@ export const UICustomizations = {
           return <span>NIA S138</span>;
         case "CS_STAGE":
           return t(value);
+        case "CS_SECONDARY_STAGE": {
+          const stages = Array.isArray(value) ? value : [value];
+          const normalized = stages.filter(Boolean);
+          return normalized.length ? normalized.map((item) => t(item)).join(", ") : t("ES_COMMON_NA");
+        }
+
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_CASE_NUMBER_HOME":
@@ -402,6 +421,9 @@ export const UICustomizations = {
           });
         },
       });
+      const stageForm = requestCriteria?.state?.searchForm?.substage || requestCriteria?.state?.searchForm?.stage;
+      const selectedStage = typeof stageForm === "string" ? stageForm : stageForm?.name || stageForm?.code || "";
+      const selectedSecondaryStage = requestCriteria?.state?.searchForm?.secondaryStage?.substage;
       const criteria = {
         ...requestCriteria?.body?.criteria,
         ...requestCriteria?.state?.searchForm,
@@ -418,9 +440,9 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.outcome?.outcome && {
           outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
         }),
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
+        ...(selectedStage && { stage: [selectedStage] }),
+        substage: undefined,
+        ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         pagination: {
           limit: requestCriteria?.state?.tableForm?.limit,
           offSet: requestCriteria?.state?.tableForm?.offset,
@@ -433,9 +455,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
-          ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.code,
-          }),
+          stage: undefined,
+          substage: undefined,
+          secondaryStage: undefined,
           criteria,
           tenantId,
         },
@@ -463,6 +485,12 @@ export const UICustomizations = {
           return t(value);
         case "CS_STAGE":
           return t(value);
+        case "CS_SECONDARY_STAGE": {
+          const stages = Array.isArray(value) ? value : [value];
+          const normalized = stages.filter(Boolean);
+          return normalized.length ? normalized.map((item) => t(item)).join(", ") : t("ES_COMMON_NA");
+        }
+
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_CASE_NUMBER_HOME":
@@ -590,10 +618,10 @@ export const UICustomizations = {
           return `${DateUtils.getFormattedDate(new Date(value))}`;
         case "PROCESS_TYPE":
           const processType = value?.toUpperCase?.();
-          if (processType === "NOTICE") {
+          if (processType === ORDER_TYPES.NOTICE) {
             const noticeType = row?.taskDetails?.noticeDetails?.noticeType || "NOTICE";
             return t(noticeType);
-          } else if (processType === "MISCELLANEOUS_PROCESS") {
+          } else if (processType === ORDER_TYPES.MISCELLANEOUS_PROCESS) {
             const miscType = row?.taskDetails?.miscellaneuosDetails?.processTitle || "MISCELLANEOUS_PROCESS";
             return t(miscType);
           }
@@ -632,6 +660,169 @@ export const UICustomizations = {
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
         case "PAYMENT_MADE":
           return taskDetails?.deliveryChannels?.feePaidDate || "-";
+        default:
+          return t("ES_COMMON_NA");
+      }
+    },
+  },
+
+  bulkIssueCTCConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const searchForm = requestCriteria?.state?.searchForm || {};
+      const tableForm = requestCriteria?.state?.tableForm || {};
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+
+      const moduleSearchCriteria = {
+        tenantId,
+        ...(searchForm?.searchQuery && { searchableFields: searchForm.searchQuery }),
+        ...(searchForm?.documentName && { docTitle: searchForm.documentName }),
+        ...(courtId && { courtId }),
+        status: "PENDING",
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            processSearchCriteria: {
+              businessService: ["ctc-default"],
+              moduleName: "CTC Issue Doc",
+              tenantId,
+            },
+            moduleSearchCriteria,
+            tenantId,
+            limit: tableForm?.limit || 10,
+            offset: tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, items: data?.items || [], totalCount: data?.totalCount || 0 };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
+        case "DOCUMENTS_REQUESTED":
+          return (
+            <span
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+              role="button"
+              tabIndex={0}
+              onClick={() => column?.clickFunc && column.clickFunc({ original: row })}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === " ") && column?.clickFunc) {
+                  e.preventDefault();
+                  column.clickFunc({ original: row });
+                }
+              }}
+            >{`${t(value)}`}</span>
+          );
+        case "CASE_NAME":
+          return <span>{value}</span>;
+        case "CASE_NUMBER":
+          return <span>{value}</span>;
+        case "APPLICATION_NUMBER":
+          return <span>{value}</span>;
+        default:
+          return t("ES_COMMON_NA");
+      }
+    },
+  },
+
+  CTCApplicationsConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const searchForm = requestCriteria?.state?.searchForm || {};
+      const tableForm = requestCriteria?.state?.tableForm || {};
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+
+      const moduleSearchCriteria = {
+        tenantId,
+        ...(searchForm?.caseSearchText && { searchableFields: searchForm.caseSearchText }),
+        ...(courtId && { courtId }),
+        status: "PENDING_APPROVAL",
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            processSearchCriteria: {
+              businessService: ["ctc-default"],
+              moduleName: "CTC Service",
+              tenantId,
+            },
+            moduleSearchCriteria,
+            tenantId,
+            limit: tableForm?.limit || 10,
+            offset: tableForm?.offset || 0,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            if (additionalDetails?.setCount) {
+              additionalDetails.setCount(data?.totalCount || 0);
+            }
+            return { ...data, items: data?.items || [], totalCount: data?.totalCount || 0 };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} defaultChecked={false} />;
+        case "APPLICATION_NUMBER":
+          return (
+            <span
+              style={{
+                textDecoration: "underline",
+                cursor: "pointer",
+              }}
+              role="button"
+              tabIndex={0}
+              onClick={() => column?.clickFunc && column.clickFunc({ original: row })}
+              onKeyDown={(e) => {
+                if ((e.key === "Enter" || e.key === " ") && column?.clickFunc) {
+                  e.preventDefault();
+                  column.clickFunc({ original: row });
+                }
+              }}
+            >{`${value}`}</span>
+          );
+        case "CASE_NUMBER":
+          return <span>{value || ""}</span>;
+        case "PETITIONER":
+          return <span>{value || ""}</span>;
+        case "DATE_RAISED":
+          const date = value ? new Date(value) : new Date();
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0");
+          const year = date.getFullYear();
+          return <span>{`${day}-${month}-${year}`}</span>;
+        case "STATUS":
+          return (
+            <span
+              style={{ padding: "4px 8px", background: "#FFF0E6", color: "#CC6600", borderRadius: "16px", fontSize: "12px", display: "inline-block" }}
+            >
+              {t(value || "")}
+            </span>
+          );
         default:
           return t("ES_COMMON_NA");
       }

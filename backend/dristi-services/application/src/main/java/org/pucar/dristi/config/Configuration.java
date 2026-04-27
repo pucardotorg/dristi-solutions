@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @Data
 @Import({TracerConfiguration.class})
@@ -273,5 +275,29 @@ public class Configuration {
 
     @Value("${app.zone.id}")
     private String zoneId;
+
+    //Advocate Config
+    @Value("${dristi.advocate.host}")
+    private String advocateHost;
+
+    @Value("${dristi.advocate.search.endpoint}")
+    private String advocateSearchEndPoint;
+
+    @Value("${dristi.advocate.clerk.search.endpoint}")
+    private String advocateClerkSearchEndPoint;
+
+    //etreasury Config
+    @Value("${egov.etreasury.host}")
+    private String etreasuryHost;
+
+    @Value("${egov.etreasury.create.demand.path}")
+    private String etreasuryCreateDemandPath;
+
+    //billing Config
+    @Value("${egov.billing.host}")
+    private String billingHost;
+
+    @Value("${egov.billing.bill.search.path}")
+    private String billSearchPath;
 
 }

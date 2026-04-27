@@ -161,7 +161,6 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                 const obj = formInstances?.[formIndex]?.[config?.key] ? formInstances[formIndex]?.[config?.key] : formInstances[formIndex];
                 const instanceLocked = isInstanceLockedAt(formIndex);
 
-
                 return (
                   <React.Fragment key={inputIndex}>
                     {input?.type === "text" && (

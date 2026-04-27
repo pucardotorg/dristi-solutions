@@ -3,6 +3,7 @@ package pucar.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
@@ -22,6 +23,8 @@ import pucar.web.models.WorkflowObject;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.task.*;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -107,7 +110,7 @@ public class TaskUtil {
     }
 
 
-    public TaskRequest createTaskRequestForSummonWarrantAndNotice(RequestInfo requestInfo, Order order, Object taskDetails, CourtCase courtCase, String channel) {
+    public TaskRequest createTaskRequest(RequestInfo requestInfo, Order order, Object taskDetails, CourtCase courtCase, String channel) {
         String itemId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
 
         Map<String, Object> additionalDetails = new HashMap<>();
@@ -119,6 +122,14 @@ public class TaskUtil {
         if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel) || courtCase.getIsLPRCase() ||
                 isCourtWitness(order.getOrderType(), objectMapper.convertValue(taskDetails, JsonNode.class))) {
             workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
+            // There is no pending collection when payment is not made
+            ObjectNode taskDetailsNode = (ObjectNode) taskDetails;
+            ObjectNode deliveryChannels = (ObjectNode) taskDetailsNode.get("deliveryChannels");
+            if (deliveryChannels == null) {
+                deliveryChannels = objectMapper.createObjectNode();
+                taskDetailsNode.set("deliveryChannels", deliveryChannels);
+            }
+            deliveryChannels.put("isPendingCollection", false);
         }
         else {
             workflowObject.setAction("CREATE");
@@ -154,6 +165,73 @@ public class TaskUtil {
                     taskDetails.get("witnessDetails").get("ownerType").textValue().equalsIgnoreCase(COURT_WITNESS));
         }
         return false;
+    }
+
+    /**
+     * Creates a TaskRequest for WARRANT order type with upfront payment check.
+     * If hasUpfrontPayment is true, uses CREATE action (requires payment).
+     * If hasUpfrontPayment is false, uses CREATE_WITH_OUT_PAYMENT action.
+     */
+    public TaskRequest createWarrantTaskRequest(RequestInfo requestInfo, Order order, Object taskDetails, 
+                                                 CourtCase courtCase, String channel, boolean hasUpfrontPayment) {
+
+        String itemId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
+
+        Map<String, Object> additionalDetails = new HashMap<>();
+        if (itemId != null) {
+            additionalDetails.put("itemId", itemId);
+        }
+
+        WorkflowObject workflowObject = new WorkflowObject();
+        JsonNode taskDetailsNode = objectMapper.convertValue(taskDetails, JsonNode.class);
+        
+        // Determine workflow action based on upfront payment status
+        // hasUpfrontPayment=true means payment was done upfront, so no payment required now
+        // hasUpfrontPayment=false means no upfront payment found, so payment is required
+        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel) || courtCase.getIsLPRCase() ||
+                isCourtWitness(order.getOrderType(), taskDetailsNode) || hasUpfrontPayment) {
+            workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
+            log.info("Creating warrant task without payment - channel: {}, hasUpfrontPayment: {}", channel, hasUpfrontPayment);
+            // There is no pending collection when payment is not made
+            ObjectNode taskDetailsObjNode = (ObjectNode) taskDetails;
+            ObjectNode deliveryChannels = (ObjectNode) taskDetailsObjNode.get("deliveryChannels");
+            if (deliveryChannels == null) {
+                deliveryChannels = objectMapper.createObjectNode();
+                taskDetailsObjNode.set("deliveryChannels", deliveryChannels);
+            }
+            deliveryChannels.put("isPendingCollection", false);
+            if (hasUpfrontPayment) {
+                LocalDate feePaidDate = dateUtil.getLocalDateFromEpoch(courtCase.getFilingDate());
+                deliveryChannels.put("feePaidDate", feePaidDate.format(DateTimeFormatter.ofPattern(LOCAL_DATE_FORMAT)));
+                if (RPAD.equalsIgnoreCase(channel)) {
+                    deliveryChannels.put("isPendingCollection", true);
+                }
+
+            }
+        } else {
+            workflowObject.setAction("CREATE");
+            log.info("Creating warrant task with payment - channel: {}, hasUpfrontPayment: {}", channel, hasUpfrontPayment);
+        }
+        workflowObject.setComments(order.getOrderType());
+        workflowObject.setDocuments(Collections.singletonList(Document.builder().build()));
+
+        Task task = Task.builder()
+                .tenantId(order.getTenantId())
+                .orderId(order.getId())
+                .filingNumber(order.getFilingNumber())
+                .cnrNumber(order.getCnrNumber())
+                .createdDate(dateUtil.getCurrentTimeInMilis())
+                .taskType(order.getOrderType())
+                .caseId(courtCase.getId().toString())
+                .caseTitle(courtCase.getCaseTitle())
+                .taskDetails(taskDetails)
+                .amount(Amount.builder().type("FINE").status("DONE").amount("0").build())
+                .status("INPROGRESS")
+                .additionalDetails(additionalDetails)
+                .workflow(workflowObject)
+                .build();
+
+        return TaskRequest.builder().requestInfo(requestInfo).task(task).build();
     }
 
     public String constructFullName(String firstName, String middleName, String lastName) {

@@ -3,9 +3,9 @@ package digit.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
 import digit.config.ServiceConstants;
+import digit.exception.RuntimeCustomException;
 import digit.kafka.producer.Producer;
 import digit.repository.CauseListRepository;
 import digit.repository.HearingRepository;
@@ -24,12 +24,8 @@ import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.client.ResourceAccessException;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -198,7 +194,11 @@ public class CauseListService {
 
             log.info("Update open hearing index with serialNumber");
             esUtil.updateOpenHearingSerialNumber(openHearings);
-
+            try {
+                esUtil.updateOpenHearingInCache(openHearings, getFromDate(hearingDate));
+            } catch (Exception e) {
+                log.error("Failed to update open hearing in cache for date: {}, error: {}", causeListDate.toString(), e.getMessage(), e);
+            }
             log.info("operation = generateCauseListForJudge, result = SUCCESS, judgeId = {}", courtId);
         } catch (Exception e) {
             log.error("operation = generateCauseListForJudge, result = FAILURE, judgeId = {}, error = {}", courtId, e.getMessage(), e);
@@ -369,7 +369,7 @@ public class CauseListService {
         log.info("operation = downloadCauseListForTomorrow, with searchRequest : {}", searchRequest.toString());
         List<String> fileStoreIds = getFileStoreForCauseList(searchRequest.getCauseListSearchCriteria());
         if(CollectionUtils.isEmpty(fileStoreIds)){
-            throw new CustomException("DK_CL_APP_ERR", "No CauseList found for the given search criteria");
+            throw new RuntimeCustomException("DK_CL_APP_ERR", "No CauseList found for the given search criteria");
         }
         byte[] pdfBytes = fileStoreUtil.getFile(config.getEgovStateTenantId(), fileStoreIds.get(0));
         return new ByteArrayResource(pdfBytes);

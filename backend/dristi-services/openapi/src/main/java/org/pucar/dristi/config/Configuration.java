@@ -100,6 +100,9 @@ public class Configuration {
     @Value("${case.service.searchbycasenumber.endpoint}")
     private String caseServiceSearchByCaseNumberEndpoint;
 
+    @Value("${case.service.searchbycasesearchtext.endpoint}")
+    private String caseServiceSearchByCaseSearchTextEndpoint;
+
     @Value("${case.service.search.endpoint}")
     private String caseServiceSearchEndpoint;
 

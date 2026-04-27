@@ -1,5 +1,5 @@
-import { BackButton, CheckSvg, CloseSvg, EditIcon, FormComposerV2, Header, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BackButton, CheckSvg, EditIcon, FormComposerV2, Header, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowAction } from "../../../Utils/caseWorkflow";
@@ -18,6 +18,9 @@ import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import { DateUtils, getCaseEditAllowedAssignees, runComprehensiveSanitizer } from "../../../Utils";
 import isEqual from "lodash/isEqual";
+import { transformCaseDataForFetching } from "../../citizen/FileCase/EfilingValidationUtils";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import CustomToast from "../../../components/CustomToast";
 const judgeId = "JUDGE_ID";
 const benchId = "BENCH_ID";
 
@@ -81,14 +84,13 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [formdata, setFormdata] = useState({ isenabled: true, data: {}, displayindex: 0 });
   const [actionModal, setActionModal] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(false);
   const [showEditCaseNameModal, setShowEditCaseNameModal] = useState(false);
   const [newCaseName, setNewCaseName] = useState("");
   const [modalCaseName, setModalCaseName] = useState("");
   const [highlightChecklist, setHighlightChecklist] = useState(false);
   const [comment, setComment] = useState("");
   const [commentSendBack, setCommentSendBack] = useState("");
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
   const [loading, setLoading] = useState(false);
@@ -115,10 +117,6 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     if (!isEqual(sessionFormData?.data, formData)) {
       setSessionFormData({ data: { ...sessionFormData?.data, ...formData }, caseId: caseId });
     }
-  };
-
-  const closeToast = () => {
-    setShowErrorToast(false);
   };
 
   const countSectionErrors = (section) => {
@@ -163,10 +161,11 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     Boolean(caseId && !caseDetailsAdmitted)
   );
 
-  const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || caseDetailsAdmitted || null, [
-    caseFetchResponse,
-    caseDetailsAdmitted,
-  ]);
+  const caseDetails = useMemo(() => {
+    const caseDetails = structuredClone(caseFetchResponse?.criteria?.[0]?.responseList?.[0] || caseDetailsAdmitted || {});
+    const updatedCaseData = transformCaseDataForFetching(caseDetails, ["witnessDetails", "advocateDetails"]);
+    return updatedCaseData;
+  }, [caseFetchResponse, caseDetailsAdmitted]);
 
   // Case correction/edition is allowed to all complainant side parties including poa holders, advocates, advocate's associated office members.
   // but no need to send uuid of office members in assignee payload
@@ -297,23 +296,10 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
       inputErrors,
     };
   }, [scrutinyErrors]);
-  const isDisabled = useMemo(() => totalErrors?.total > 0);
+  const isDisabled = useMemo(() => totalErrors?.total > 0, [totalErrors]);
 
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
-  const transformedData = useCallback(
-    (input) => {
-      if (input?.key === "witnessDetails") {
-        return (caseDetails?.witnessDetails || [])?.map((details) => ({
-          data: { ...(details || {}) },
-        }));
-      }
-      return caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
-    },
-    [caseDetails]
-  );
-
-  const state = useMemo(() => caseDetails?.status, [caseDetails]);
   const formConfig = useMemo(() => {
     if (!caseDetails) return null;
 
@@ -459,7 +445,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                     } else
                       return {
                         ...input,
-                        data: transformedData(input),
+                        data: caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {},
                         prevErrors: defaultScrutinyErrors?.data?.[section.key]?.[input.key] || {},
                       };
                   }),
@@ -469,7 +455,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
         };
       }),
     ];
-  }, [caseDetails, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t, transformedData]);
+  }, [caseDetails, inViewCase, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t]);
 
   const primaryButtonLabel = useMemo(() => {
     if (isScrutiny && caseDetails?.status === "UNDER_SCRUTINY") {
@@ -544,20 +530,13 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     // Write isAdmission condition here
   };
 
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
-
   const handleScrutinyAndLock = async (filingNumber) => {
     const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
     if (isScrutiny) {
       try {
         const response = await DRISTIService.getCaseLockStatus({}, { uniqueId: filingNumber, tenantId: tenantId });
         if (response?.Lock?.isLocked) {
-          showToast("error", t("CASE_IS_ALREADY_LOCKED_REDIRECT_TO_HOME"), 2000);
+          setShowToast({ label: t("CASE_IS_ALREADY_LOCKED_REDIRECT_TO_HOME"), error: true });
           return false;
         } else {
           await DRISTIService.setCaseLock({ Lock: { uniqueId: filingNumber, tenantId: tenantId, lockType: "SCRUTINY" } }, {});
@@ -565,7 +544,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           return true;
         }
       } catch (error) {
-        showToast("error", t("ISSUE_WITH_LOCK_REDIRECT_TO_HOME"), 2000);
+        setShowToast({ label: t("ISSUE_WITH_LOCK_REDIRECT_TO_HOME"), error: true });
         console.error(error);
         return false;
       }
@@ -719,21 +698,9 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     },
   ];
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
   if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny && !inViewCase) {
     history.push(homePath);
   }
-
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
 
   const scrollToHeading = (heading) => {
     const scroller = Array.from(document.querySelectorAll(".label-field-pair .accordion-title")).find((el) => el.textContent === heading);
@@ -839,9 +806,6 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                       : t("CS_NO_ERRORS")}
                   </h3>
                 </div>
-              )}
-              {showErrorToast && (
-                <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />
               )}
             </div>
           </div>
@@ -994,13 +958,13 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
             }}
           />
         )}
-        {toastMsg && (
-          <Toast
-            error={toastMsg.key === "error"}
-            label={t(toastMsg.action)}
-            onClose={() => setToastMsg(null)}
-            isDleteBtn={true}
-            style={{ maxWidth: "500px" }}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
           />
         )}
       </div>

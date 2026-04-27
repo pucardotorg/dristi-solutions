@@ -1,4 +1,4 @@
-import { CardLabelError, CloseSvg, UploadIcon } from "@egovernments/digit-ui-react-components";
+import { CardLabelError, UploadIcon } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
@@ -6,6 +6,8 @@ import CustomErrorTooltip from "./CustomErrorTooltip";
 import Modal from "./Modal";
 import MultiUploadWrapper from "./MultiUploadWrapper";
 import RenderFileCard from "./RenderFileCard";
+import { CloseBtn, Heading } from "./ModalComponents";
+import { EXTENSION_TO_MIME } from "../Utils/constants";
 
 const textAreaJSX = (value, t, input, handleChange, error, disabled) => {
   return (
@@ -39,19 +41,6 @@ const textAreaJSX = (value, t, input, handleChange, error, disabled) => {
     </div>
   );
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setError }) {
   const checkIfTextPresent = () => {
     if (!formData) {
@@ -111,7 +100,14 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
   );
 
   const fileValidator = (file, input) => {
+    if (file?.fileStore) return null;
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
+    if (file?.type && input?.fileTypes?.length) {
+      const allowedMimes = input.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
+      if (allowedMimes.length && !allowedMimes.includes(file.type)) {
+        return t("NOT_SUPPORTED_FILE_TYPE");
+      }
+    }
     return file.size > maxFileSize ? t(input?.maxFileErrorMessage) : null;
   };
 
@@ -253,6 +249,8 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
                   uploadErrorInfo={fileErrors[index]}
                   input={input}
                   disableUploadDelete={config?.disable}
+                  configKey={config?.key}
+                  setError={setError}
                 />
               ))}
               {showFileUploader && (
@@ -267,6 +265,10 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
                       types={input?.fileTypes}
                       children={dragDropJSX}
                       key={input?.name}
+                      onTypeError={(file) => {
+                        const fileTypeError = t("CS_FILE_TYPE_ERROR");
+                        setError((prev) => ({ ...prev, [config.key]: fileTypeError }));
+                      }}
                     />
                   </div>
                   <div className="upload-guidelines-div">

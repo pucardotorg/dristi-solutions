@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { submissionDocumentDetailsConfig } from "../../configs/submitDocumentConfig";
-import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Header, Loader } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import isEqual from "lodash/isEqual";
 import ReviewDocumentSubmissionModal from "../../components/ReviewDocumentSubmissionModal";
@@ -13,6 +13,9 @@ import useSearchEvidenceService from "../../hooks/submissions/useSearchEvidenceS
 import downloadPdfFromFile from "@egovernments/digit-ui-module-dristi/src/Utils/downloadPdfFromFile";
 import { SubmissionDocumentWorkflowAction, SubmissionDocumentWorkflowState } from "../../utils/submissionDocumentsWorkflow";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
+import { formatName } from "@egovernments/digit-ui-module-home/src/utils";
+import { validateAndFormatFields } from "../../utils";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -38,7 +41,7 @@ const SubmissionDocuments = ({ path }) => {
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showSubmissionSuccessModal, setShowSubmissionSuccessModal] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [combinedDocumentFile, setCombinedDocumentFile] = useState(null);
   const [combinedFileStoreId, setCombinedFileStoreId] = useState(null);
   const [signedDocumentUploadedID, setSignedDocumentUploadID] = useState(null);
@@ -73,14 +76,12 @@ const SubmissionDocuments = ({ path }) => {
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
 
   const [caseData, setCaseData] = useState(undefined);
-  const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
-  const [caseApiError, setCaseApiError] = useState(undefined);
   const isBreadCrumbsParamsDataSet = useRef(false);
 
   useEffect(() => {
     const fetchCaseDetails = async () => {
       try {
-        setIsCaseDetailsLoading(true);
+        setLoader(true);
         const caseData = await DRISTIService.searchCaseService(
           {
             criteria: [
@@ -106,14 +107,16 @@ const SubmissionDocuments = ({ path }) => {
           isBreadCrumbsParamsDataSet.current = true;
         }
       } catch (err) {
-        setCaseApiError(err);
+        console.error("Failed to fetch case details:", err);
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ERROR_FETCHING_CASE_DETAILS"), error: true, errorId });
       } finally {
-        setIsCaseDetailsLoading(false);
+        setLoader(false);
       }
     };
 
     fetchCaseDetails();
-  }, [caseIdFromBreadCrumbs, filingNumber, filingNumberFromBreadCrumbs, setBreadCrumbsParamsData, tenantId]);
+  }, [caseIdFromBreadCrumbs, filingNumber, filingNumberFromBreadCrumbs, setBreadCrumbsParamsData, t, tenantId]);
 
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
@@ -133,7 +136,7 @@ const SubmissionDocuments = ({ path }) => {
     [onBehalfOfLitigent, isCitizen]
   );
 
-  const { data: evidenceData, isloading: isEvidenceLoading, refetch: evidenceRefetch } = useSearchEvidenceService(
+  const { data: evidenceData, isloading: isEvidenceLoading } = useSearchEvidenceService(
     {
       criteria: {
         filingNumber,
@@ -180,19 +183,6 @@ const SubmissionDocuments = ({ path }) => {
       }
     }
   }, [evidenceDetails]);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   const handleClose = () => {
     setShowSubmissionSuccessModal(false);
@@ -257,9 +247,10 @@ const SubmissionDocuments = ({ path }) => {
         }
       }
     } catch (error) {
-      console.error("Error occured", error);
+      console.error("Failed to upload submission document:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       const errorCode = error?.response?.data?.Errors?.[0]?.code;
-      setShowErrorToast({ label: t(errorCode || "SOMETHING_WENT_WRONG"), error: true });
+      setShowToast({ label: t(errorCode || "SUBMISSION_DOCUMENT_UPLOAD_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -281,8 +272,9 @@ const SubmissionDocuments = ({ path }) => {
         setShowReviewModal(true);
       }
     } catch (error) {
-      console.error("Error occured", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Error whike combining documents:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("SUBMISSION_COMBINE_DOCUMENTS_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -304,6 +296,18 @@ const SubmissionDocuments = ({ path }) => {
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     runComprehensiveSanitizer({ formData, setValue });
+    validateAndFormatFields({
+      formData,
+      setValue,
+      clearErrors,
+      fieldConfigs: [
+        {
+          key: "documentTitle",
+          maxLength: 100,
+          formatter: formatName,
+        },
+      ],
+    });
     if (formData?.submissionDocuments?.uploadedDocs?.length > 0 && Object.keys(formState?.errors).includes("uploadedDocs")) {
       clearErrors("uploadedDocs");
     } else if (
@@ -369,25 +373,6 @@ const SubmissionDocuments = ({ path }) => {
 
   return (
     <React.Fragment>
-      <style>
-        {`
-          .formComposer .card {
-            margin: 0px;
-            padding: 0px;
-            border: none;
-          }
-
-          .formComposer .card .label-field-pair h2.card-label {
-            font-weight: 400;
-            font-size : 16px;
-            margin-bottom: 8px !important;
-          }   
-            
-          .formComposer .employeeCard .label-field-pair {
-            flex-direction: column;
-          } 
-        `}
-      </style>
       {(loader || isFilingTypeLoading || isEvidenceLoading) && (
         <div
           style={{
@@ -425,7 +410,7 @@ const SubmissionDocuments = ({ path }) => {
             onSubmit={handleOpenReview}
             fieldStyle={fieldStyle}
             key={formKey}
-            className={"formComposer"}
+            className={"submitDocument-formComposer"}
             isDisabled={isSubmitDisabled}
           />
         </div>
@@ -449,7 +434,15 @@ const SubmissionDocuments = ({ path }) => {
           />
         )}
       </div>
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

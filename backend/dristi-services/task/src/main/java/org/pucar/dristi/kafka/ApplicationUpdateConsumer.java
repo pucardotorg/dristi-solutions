@@ -48,7 +48,7 @@ public class ApplicationUpdateConsumer {
             String status = JsonPath.read(application, APPLICATION_STATUS_PATH);
             String filingNumber = JsonPath.read(application, FILING_NUMBER_PATH);
 
-            if(applicationType.equalsIgnoreCase("APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") && "COMPLETED".equalsIgnoreCase(status)) {
+            if("APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS".equalsIgnoreCase(applicationType) && "COMPLETED".equalsIgnoreCase(status)) {
                 String taskNumber = JsonPath.read(application, APPLICATION_DETAILS_PATH);
 
                 TaskSearchRequest taskSearchRequest = new TaskSearchRequest();

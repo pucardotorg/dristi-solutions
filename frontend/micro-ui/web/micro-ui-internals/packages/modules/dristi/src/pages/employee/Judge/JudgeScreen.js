@@ -5,6 +5,7 @@ import { useHistory } from "react-router-dom";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { judgeInboxConfig } from "./JudgeInboxConfig";
+import { statusArray } from "../../../Utils/constants";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -30,7 +31,6 @@ function JudgeScreen({ path }) {
             additionalConfig={{
               resultsTable: {
                 onClickRow: (props) => {
-                  const statusArray = ["CASE_ADMITTED", "PENDING_PAYMENT", "RE_PENDING_PAYMENT", "UNDER_SCRUTINY", "PENDING_ADMISSION"];
                   if (statusArray.includes(props?.original?.status)) {
                     history.push(`${path}/view-case?caseId=${props.original.id}&filingNumber=${props.original.filingNumber}&tab=Overview`);
                   } else if (props?.original?.status === CaseWorkflowState.PENDING_ADMISSION) {

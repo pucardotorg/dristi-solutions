@@ -1,5 +1,6 @@
 import { DocumentSearchConfig } from "./DocumentsV2Config";
-import { InboxSearchComposer, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "../../../components/CustomToast";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
@@ -10,6 +11,7 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
 import { MediationWorkflowState } from "../../../Utils/orderWorkflow";
 import { DRISTIService } from "../../../services";
+import EditSendBackModal from "../../../components/EditSendBackModal";
 
 const DocumentsV2 = ({
   caseDetails,
@@ -29,7 +31,6 @@ const DocumentsV2 = ({
   setShowWitnessDepositionDoc,
   counter,
   setShowWitnessModal,
-  setEditWitnessDepositionArtifact,
   setShowExaminationModal,
   setExaminationDocumentNumber,
   setDocumentCounter,
@@ -48,7 +49,10 @@ const DocumentsV2 = ({
   const isCitizen = userRoles?.includes("CITIZEN");
   const canSign = roles?.some((role) => role.code === "JUDGE_ROLE");
   const [activeTab, setActiveTab] = useState(sessionStorage.getItem("documents-activeTab") || "Documents");
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [deleteDigitalization, setDeleteDigitalization] = useState(null);
+  const [deleteEvidence, setDeleteEvidence] = useState(null);
 
   const { data: evidenceTypeData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Evidence", [{ name: "EvidenceType" }], {
     select: (data) => {
@@ -76,43 +80,61 @@ const DocumentsV2 = ({
       });
   }, [evidenceTypeData, t]);
 
-  const ditilizationDeleteFunc = async (history, column, row, item) => {
+  const ditilizationDeleteFunc = (history, column, row, item) => {
     if (item.id === "draft_ditilization_delete") {
-      const documentNumber = row?.documentNumber;
-      try {
-        const res = await Digit.submissionService.searchDigitalization({
-          criteria: {
-            tenantId: tenantId,
-            courtId: row?.courtId,
-            documentNumber: documentNumber,
-          },
-          pagination: {
-            limit: 10,
-            offSet: 0,
-          },
-        });
-        const payload = {
-          digitalizedDocument: {
-            ...res?.documents?.[0],
-            workflow: {
-              action: "DELETE_DRAFT",
-            },
-          },
-        };
-        await Digit.submissionService.updateDigitalization(payload, tenantId);
-        history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
-      } catch (error) {
-        console.error("error: ", error);
-        setShowErrorToast({ label: t("DELTED_SUCCESSFULLY"), error: true });
-      }
+      setDeleteDigitalization(row);
     }
   };
 
-  const evidenceDeleteFunc = async (row) => {
+  const handleDeleteDigitalization = async () => {
+    if (!deleteDigitalization) return;
+
+    setIsActionLoading(true);
     try {
-      const courtId = row?.courtId;
-      const filingNo = row?.filingNumber || filingNumber;
-      const artifactNum = row?.artifactNumber;
+      const documentNumber = deleteDigitalization?.documentNumber;
+      const res = await Digit.submissionService.searchDigitalization({
+        criteria: {
+          tenantId: tenantId,
+          courtId: deleteDigitalization?.courtId,
+          documentNumber: documentNumber,
+        },
+        pagination: {
+          limit: 10,
+          offSet: 0,
+        },
+      });
+      const payload = {
+        digitalizedDocument: {
+          ...res?.documents?.[0],
+          workflow: {
+            action: "DELETE_DRAFT",
+          },
+        },
+      };
+      await Digit.submissionService.updateDigitalization(payload, tenantId);
+      setDocumentCounter((prev) => prev + 1);
+      setDeleteDigitalization(null);
+    } catch (error) {
+      console.error("Failed to delete digitalization draft:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("DELETE_DIGITALIZATION_DRAFT_FAILED"), error: true, errorId });
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const evidenceDeleteFunc = (row) => {
+    setDeleteEvidence(row);
+  };
+
+  const handleDeleteEvidence = async () => {
+    if (!deleteEvidence) return;
+
+    setIsActionLoading(true);
+    try {
+      const courtId = deleteEvidence?.courtId;
+      const filingNo = deleteEvidence?.filingNumber || filingNumber;
+      const artifactNum = deleteEvidence?.artifactNumber;
 
       const searchRes = await DRISTIService.searchEvidence(
         {
@@ -139,11 +161,15 @@ const DocumentsV2 = ({
         },
       };
       await DRISTIService.updateEvidence({ artifact: payload }, {});
-      setShowErrorToast({ label: t("DELETE_EVIDENCE_DRAFT_SUCCESS"), error: false });
+      setShowToast({ label: t("DELETE_EVIDENCE_DRAFT_SUCCESS"), error: false });
       history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
+      setDeleteEvidence(null);
     } catch (error) {
       console.error("Error deleting evidence draft:", error);
-      setShowErrorToast({ label: t("DELETE_EVIDENCE_DRAFT_ERROR"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("DELETE_EVIDENCE_DRAFT_ERROR"), error: true, errorId });
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -158,7 +184,8 @@ const DocumentsV2 = ({
         if (type === "PLEA") {
           if (status === "DRAFT_IN_PROGRESS" && !isCitizen) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/submissions/record-plea?filingNumber=${filingNumber}&documentNumber=${documentNumber}`
             );
             return;
@@ -182,7 +209,8 @@ const DocumentsV2 = ({
 
           if (["PENDING_E-SIGN", "PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(status)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/home/digitized-document-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&caseId=${caseId}`
             );
           }
@@ -210,7 +238,8 @@ const DocumentsV2 = ({
 
           if (["PENDING_E-SIGN", "PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(status)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/home/digitized-document-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&caseId=${caseId}`
             );
           }
@@ -219,7 +248,8 @@ const DocumentsV2 = ({
             [MediationWorkflowState.PENDING_E_SIGN, MediationWorkflowState.PENDING_UPLOAD, MediationWorkflowState.PENDING_REVIEW]?.includes(status)
           ) {
             history.push(
-              `/${window.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/home/mediation-form-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&courtId=${courtId}`
             );
             return;
@@ -227,7 +257,8 @@ const DocumentsV2 = ({
 
           if (["COMPLETED", "VOID"]?.includes(status)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/home/digitized-document-sign?filingNumber=${filingNumber}&documentNumber=${documentNumber}&caseId=${caseId}`
             );
             return;
@@ -244,21 +275,24 @@ const DocumentsV2 = ({
         if (isCitizen) {
           if (bailStatus === "DRAFT_IN_PROGRESS" && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondId}`
             );
           }
 
           if (bailStatus === "PENDING_E-SIGN") {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/dristi/home/bail-bond-sign?tenantId=${tenantId}&bailbondId=${bailBondId}&filingNumber=${filingNumber}&caseId=${caseId}`
             );
           }
 
           if (["PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(bailStatus)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/home/sign-bail-bond?filingNumber=${filingNumber}&bailId=${bailBondId}&caseId=${caseId}`,
               { state: { params: { caseId, filingNumber } } }
             );
@@ -266,7 +300,8 @@ const DocumentsV2 = ({
         } else {
           if (["PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(bailStatus)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/home/sign-bail-bond?filingNumber=${filingNumber}&bailId=${bailBondId}&caseId=${caseId}`,
               { state: { params: { caseId, filingNumber } } }
             );
@@ -280,13 +315,13 @@ const DocumentsV2 = ({
         const isUserLoggedIn = Boolean(token);
         if (documentStatus === "PENDING_E-SIGN" && sourceID === userUuid && isUserLoggedIn) {
           history.push(
-            `/${window?.contextPath
+            `/${
+              window?.contextPath
             }/${"citizen"}/dristi/home/evidence-sign?tenantId=${tenantId}&artifactNumber=${artifactNumber}&filingNumber=${filingNumber}`
           );
         }
         if (documentStatus === "DRAFT_IN_PROGRESS") {
-          setShowWitnessModal(true);
-          setEditWitnessDepositionArtifact(artifactNumber);
+          setShowWitnessModal({ show: true, artifactNumber: artifactNumber });
         } else {
           if (documentStatus === "PENDING_REVIEW" && canSign) {
             history.push({
@@ -309,7 +344,8 @@ const DocumentsV2 = ({
         const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentOwnerUuid);
         if (documentStatus === "PENDING_E-SIGN" && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
           history.push(
-            `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+            `/${window?.contextPath}/${
+              isCitizen ? "citizen" : "employee"
             }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
           );
         }
@@ -318,7 +354,8 @@ const DocumentsV2 = ({
         ) {
           if (allAllowedPartiesForApplicationsActions.includes(userUuid)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
               }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
             );
           }
@@ -538,7 +575,32 @@ const DocumentsV2 = ({
     };
 
     return getTabConfig(activeTabConfig);
-  }, [activeTab, userInfo, isCitizen, evidenceTypeOptions, caseDetails, userUuid, caseId, filingNumber]);
+  }, [
+    activeTab,
+    isCitizen,
+    evidenceTypeOptions,
+    caseDetails,
+    userUuid,
+    caseId,
+    filingNumber,
+    canSign,
+    caseCourtId,
+    cnrNumber,
+    downloadPdf,
+    history,
+    setDocumentSubmission,
+    setExaminationDocumentNumber,
+    setSelectedItem,
+    setSelectedRow,
+    setShow,
+    setShowExaminationModal,
+    setShowMakeAsEvidenceModal,
+    setShowVoidModal,
+    setShowWitnessDepositionDoc,
+    setShowWitnessModal,
+    setVoidReason,
+    tenantId,
+  ]);
   const newTabSearchConfig = useMemo(
     () => ({
       ...DocumentSearchConfig,
@@ -564,17 +626,6 @@ const DocumentsV2 = ({
     if (!caseDetails?.filingNumber) return null; // wait for caseDetails to load
     return newTabSearchConfig?.TabSearchconfig;
   }, [newTabSearchConfig?.TabSearchconfig, caseDetails?.filingNumber]);
-
-
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   return (
     <React.Fragment>
@@ -609,6 +660,44 @@ const DocumentsV2 = ({
         <InboxSearchComposer key={`${config?.label}-${counter}-${caseDetails?.filingNumber}`} configs={config} showTab={false}></InboxSearchComposer>
       ) : (
         <Loader></Loader>
+      )}
+      {(deleteEvidence !== null || deleteDigitalization !== null) && (
+        <EditSendBackModal
+          t={t}
+          handleCancel={() => {
+            if (!isActionLoading) {
+              setDeleteEvidence(null);
+              setDeleteDigitalization(null);
+            }
+          }}
+          handleSubmit={() => {
+            if (deleteEvidence !== null) {
+              handleDeleteEvidence();
+            } else if (deleteDigitalization !== null) {
+              handleDeleteDigitalization();
+            }
+          }}
+          headerLabel={"GENERATE_ORDER_CONFIRM_DELETE"}
+          saveLabel={"GENERATE_ORDER_DELETE"}
+          cancelLabel={"GENERATE_ORDER_CANCEL_EDIT"}
+          contentText={
+            deleteEvidence !== null
+              ? "ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_EVIDENCE_DRAFT"
+              : "ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_DIGITALIZATION_DRAFT"
+          }
+          className={"edit-send-back-modal"}
+          submitButtonStyle={{ backgroundColor: "#C7222A" }}
+          loader={isActionLoading}
+        />
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </React.Fragment>
   );

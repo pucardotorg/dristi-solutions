@@ -42,6 +42,9 @@ public class CaseSummaryListCriteria {
     @JsonProperty("caseSearchText")
     private String caseSearchText = null;
 
+    @JsonProperty("searchByCnrAndCaseNumber")
+    private String searchByCnrAndCaseNumber = null;
+
     @JsonProperty("filingFromDate")
     @Valid
     private Long filingFromDate = null;
@@ -102,5 +105,8 @@ public class CaseSummaryListCriteria {
 
     @JsonProperty("isMemberActiveInCase")
     private Boolean isMemberActiveInCase = null;
+
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = null;
 
 }

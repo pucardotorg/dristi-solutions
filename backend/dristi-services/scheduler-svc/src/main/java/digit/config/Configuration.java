@@ -315,4 +315,16 @@ public class Configuration {
 
     @Value("${enable.dashboard.metrics.update}")
     private boolean enableDashboardMetricsUpdate;
+
+    @Value("${spring.redis.timeout}")
+    private Long redisTimeout;
+
+    @Value("${spring.redis.enabled}")
+    private Boolean redisEnabled;
+
+    @Value("${drishti.open.hearing.cache.load.cron:0 0 10 * * ?}")
+    private String openHearingCacheLoadCron;
+
+    @Value("${drishti.open.hearing.cache.clear.cron:0 0 14 * * ?}")
+    private String openHearingCacheClearCron;
 }

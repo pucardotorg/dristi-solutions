@@ -1,20 +1,8 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import React, { useMemo, useState } from "react";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 const GenericUploadSignatureModal = ({
   t,
   handleCloseSignatureModal,
@@ -37,6 +25,7 @@ const GenericUploadSignatureModal = ({
   const [formData, setFormData] = useState({});
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [fileUploadError, setFileUploadError] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const name = "Signature";
   const userUuid = Digit.UserService.getUser()?.info?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
@@ -52,7 +41,7 @@ const GenericUploadSignatureModal = ({
             uploadGuidelines: "Ensure the file is not blurry and under 5MB.",
             maxFileSize: 10,
             maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["PDF"],
+            fileTypes: ["PDF", "PNG", "JPEG", "JPG"],
             isMultipleUpload: false,
           },
         ],
@@ -84,7 +73,10 @@ const GenericUploadSignatureModal = ({
         setLoader(false);
         console.error("error", error);
         setFormData({});
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+        setFileUploadError(errorCode);
+        setShowToast({ label: t(errorCode), error: true, errorId });
       }
     }
   };
@@ -111,8 +103,9 @@ const GenericUploadSignatureModal = ({
         customActionClassName={"selector-button-border"}
         className={"bail-signature-modal"}
       >
-        <div style={{ padding: "10px" }}>
-          <p style={{ marginBottom: "24px", color: "#0A0A0A" }}>{t(infoText)}</p>
+        <div style={{ padding: "0px 10px" }}>
+          <p style={{ color: "#0A0A0A" }}>{t("YOU_CAN_CHOOSE_SIGN_MODE")}</p>
+          <p style={{ color: "#0A0A0A" }}>{t(infoText)}</p>
         </div>
       </Modal>
 
@@ -135,6 +128,16 @@ const GenericUploadSignatureModal = ({
           cancelLabel={"SUBMIT"}
           fileUploadError={fileUploadError}
           onCustomDownload={onCustomDownload}
+          setFileUploadError={setFileUploadError}
+        />
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
     </React.Fragment>

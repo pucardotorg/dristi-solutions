@@ -5,6 +5,7 @@ import { hearingService } from "../hooks/services";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { formatNoticeDeliveryDate } from "@egovernments/digit-ui-module-home/src/utils";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
+import { USER_TYPES, USER_ROLES, STATUS_TYPES } from "../utils/constants";
 
 function normalizeData(input) {
   try {
@@ -31,7 +32,7 @@ export const UICustomizations = {
           toDate: requestCriteria?.params.toDate,
           tenantId: requestCriteria?.params?.tenantId,
           ...(courtId && { courtId }),
-          ...(userInfo?.type === "CITIZEN" && { searchableFields: additionalDetails?.attendeeIndividualId }),
+          ...(userInfo?.type === USER_TYPES.CITIZEN && { searchableFields: additionalDetails?.attendeeIndividualId }),
         },
         tenantId: requestCriteria?.params?.tenantId,
         limit: requestCriteria?.state?.tableForm?.limit || 10,
@@ -47,17 +48,17 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-      const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+      const userType = userInfo?.type === USER_TYPES.CITIZEN ? "citizen" : "employee";
       const courtId = localStorage.getItem("courtId");
       const searchParams = new URLSearchParams();
       const showAction =
-        userInfo?.roles.map((role) => role.code).includes("HEARING_EDITOR") || row.hearing.status === HearingWorkflowState?.INPROGRESS;
+        userInfo?.roles.map((role) => role.code).includes(USER_ROLES.HEARING_EDITOR) || row.hearing.status === HearingWorkflowState?.INPROGRESS;
       searchParams.set("hearingId", row.hearingId);
       switch (key) {
         case "Actions":
           return (
             <div style={{ display: "flex", justifyContent: "flex-end  ", alignItems: "center" }}>
-              {row.hearing.status === "SCHEDULED" && userInfo?.roles.map((role) => role.code).includes("HEARING_EDITOR") && (
+              {row.hearing.status === STATUS_TYPES.SCHEDULED && userInfo?.roles.map((role) => role.code).includes(USER_ROLES.HEARING_EDITOR) && (
                 <Button
                   variation={"secondary"}
                   label={t(`START_HEARING`)}
@@ -68,7 +69,7 @@ export const UICustomizations = {
                           criteria: {
                             hearingId: row?.hearingId,
                             tenantId: row?.tenantId,
-                            ...(courtId && userType === "employee" && { courtId }),
+                            ...(courtId && userType === USER_TYPES.EMPLOYEE.toLocaleLowerCase() && { courtId }),
                           },
                         },
                         { tenantId: row?.tenantId }
@@ -89,10 +90,10 @@ export const UICustomizations = {
                   }}
                 />
               )}
-              {row.hearing.status === "SCHEDULED" && !userInfo.roles.map((role) => role.code).includes("HEARING_EDITOR") && (
+              {row.hearing.status === STATUS_TYPES.SCHEDULED && !userInfo.roles.map((role) => role.code).includes(USER_ROLES.HEARING_EDITOR) && (
                 <span style={{ color: "#007E7E" }}>{t("HEARING_AWAITING_START")}</span>
               )}
-              {row.hearing.status === HearingWorkflowState?.INPROGRESS && userInfo.roles.map((role) => role.code).includes("HEARING_EDITOR") && (
+              {row.hearing.status === HearingWorkflowState?.INPROGRESS && userInfo.roles.map((role) => role.code).includes(USER_ROLES.HEARING_EDITOR) && (
                 <Button
                   variation={"secondary"}
                   label={t("JOIN_HEARING")}
@@ -139,10 +140,10 @@ export const UICustomizations = {
       const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
       const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-      const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+      const userType = userInfo?.type === USER_TYPES.CITIZEN ? "citizen" : "employee";
       const searchParams = new URLSearchParams();
       const future = row.hearing.startTime > Date.now();
-      if (userInfo?.roles.map((role) => role.code).includes("EMPLOYEE")) {
+      if (userInfo?.roles.map((role) => role.code).includes(USER_ROLES.EMPLOYEE)) {
         if (future) {
           return [
             {

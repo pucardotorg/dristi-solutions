@@ -34,6 +34,25 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
     let newValue = e.target.value;
     if (input.name.includes("Ifsc")) {
       newValue = formatIFSC(newValue);
+
+      const prefix = input.name.replace("Ifsc", "");
+
+      const updatedValue = {
+        ...formData?.[config.key],
+        [input.name]: newValue,
+        BankReadOnly: false,
+        BranchReadOnly: false,
+      };
+
+      onSelect(config.key, updatedValue, { shouldValidate: false });
+      onSelect(`${prefix}BankName`, "", { shouldValidate: false });
+      onSelect(`${prefix}BranchName`, "", { shouldValidate: false });
+
+      clearErrors(`${prefix}BankName`);
+      clearErrors(`${prefix}BranchName`);
+      clearErrors(config.key);
+
+      return;
     }
     setValue(newValue, input.name);
   };
@@ -56,7 +75,14 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
       ifsc,
       bankField: `${prefix}BankName`,
       branchField: `${prefix}BranchName`,
-      setValue: (field, value) => onSelect(field, value, { shouldValidate: false }),
+      setValue: (field, value) => {
+        if (field.includes("ReadOnly")) {
+          const flagName = field.replace(prefix, "");
+          onSelect(config.key, { ...formData?.[config.key], [flagName]: value }, { shouldValidate: false });
+        } else {
+          onSelect(field, value, { shouldValidate: false });
+        }
+      },
       getValues: (field) => formData?.[field],
       setError,
       clearErrors,
@@ -67,6 +93,7 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
     } else {
       clearErrors(config.key);
       clearErrors(input.name);
+      onSelect(config.key, { ...formData?.[config.key], BankReadOnly: true, BranchReadOnly: true });
     }
   };
   return inputs.map((input) => {
@@ -87,11 +114,18 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
                 placeholder={t(input?.placeholder)}
                 className={`ifsc-text-input ${errors?.[config.key] ? "error" : ""}`}
                 error={errors?.[config.key]}
+                disable={config?.disable}
               />
             </div>
 
             <div>
-              <button className="ifsc-search-btn" onClick={() => handleSearch(input)} type="button">
+              <button
+                className="ifsc-search-btn"
+                style={{ opacity: config?.disable ? 0.5 : 1 }}
+                onClick={() => handleSearch(input)}
+                type="button"
+                disabled={config?.disable}
+              >
                 {t("ES_COMMON_SEARCH")}
               </button>
             </div>

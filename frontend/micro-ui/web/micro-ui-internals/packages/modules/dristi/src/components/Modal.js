@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 
-import { HeaderBar, Toast } from "@egovernments/digit-ui-react-components";
+import { HeaderBar } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import ButtonSelector from "./ButtonSelector";
 import PopUp from "./PopUp";
 
@@ -127,7 +128,7 @@ const Modal = ({
           )}
         </div>
       </div>
-      {error && <Toast label={error} onClose={() => setError(null)} error />}
+      {error && <CustomToast error={true} label={error} errorId={null} onClose={() => setError(null)} duration={5000} />}
     </PopUp>
   );
 };
