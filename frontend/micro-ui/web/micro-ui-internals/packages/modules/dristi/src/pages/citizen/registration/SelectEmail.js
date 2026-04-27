@@ -1,7 +1,7 @@
 import { BreadCrumb, FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useToast } from "../../../components/Toast/useToast";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const bredCrumbStyle = { maxWidth: "min-content" };
 
@@ -48,7 +48,8 @@ const SelectEmail = ({
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const toast = useToast();
+  const [showToast, setShowToast] = useState(null);
+
   const setFormErrors = useRef(null);
 
   useEffect(() => {
@@ -98,8 +99,9 @@ const SelectEmail = ({
         history.replace(`/${window?.contextPath}/citizen/dristi/home`);
       }
     } catch (error) {
-      console.error("error: ", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Email update failed:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("EMAIL_UPDATE_FAILED"), error: true, errorId });
     } finally {
       setIsLoading(false);
     }
@@ -168,6 +170,15 @@ const SelectEmail = ({
           </div>
         </div>
       </div>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 };

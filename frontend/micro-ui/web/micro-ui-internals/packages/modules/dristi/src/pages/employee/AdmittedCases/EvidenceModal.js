@@ -1,4 +1,4 @@
-import { TextInput } from "@egovernments/digit-ui-react-components";
+import { TextInput, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -25,13 +25,13 @@ import {
   setApplicationStatus,
 } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
-import { useToast } from "../../../components/Toast/useToast";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
 import DOMPurify from "dompurify";
-import { getUserInfoFromIndividualId, getUserInfoFromUuids } from "../../../../../submissions/src/utils";
+import { getUserInfoFromUuids } from "../../../../../submissions/src/utils";
 import { CloseBtn } from "../../../components/ModalComponents";
+import CustomToast from "../../../components/CustomToast";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -46,7 +46,7 @@ const EvidenceModal = ({
   userRoles,
   modalType,
   setUpdateCounter,
-  showToast,
+  setShowToast,
   caseId,
   setIsDelayApplicationPending,
   currentDiaryEntry,
@@ -82,8 +82,9 @@ const EvidenceModal = ({
   const { downloadPdf } = useDownloadCasePdf();
   const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments({ caseCourtId });
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
-  const toast = useToast();
+  const [toast, setToast] = useState(null);
   const urlParams = new URLSearchParams(window.location.search);
   const applicationNumber = urlParams.get("applicationNumber");
   const compositeOrderObj = history.location?.state?.compositeOrderObj;
@@ -99,7 +100,6 @@ const EvidenceModal = ({
     setFormData(data);
   };
 
-  
   const Heading = (props) => {
     return (
       <div className="evidence-title">
@@ -440,9 +440,9 @@ const EvidenceModal = ({
       }
     }
     if (message) {
-      showToast({
-        isError: false,
-        message,
+      setShowToast({
+        label: t(message),
+        error: false,
       });
     }
     counterUpdate();
@@ -452,9 +452,9 @@ const EvidenceModal = ({
 
   const onError = async (result) => {
     if (modalType === "Documents") {
-      showToast({
-        isError: true,
-        message: documentSubmission?.[0].artifactList?.isEvidence ? "UNSUCCESSFULLY_UNMARKED_MESSAGE" : "UNSUCCESSFULLY_MARKED_MESSAGE",
+      setShowToast({
+        label: t(documentSubmission?.[0].artifactList?.isEvidence ? "UNSUCCESSFULLY_UNMARKED_MESSAGE" : "UNSUCCESSFULLY_MARKED_MESSAGE"),
+        error: true,
       });
     }
     handleBack();
@@ -615,7 +615,7 @@ const EvidenceModal = ({
   };
 
   const artifactNumber = documentSubmission?.[0]?.artifactList?.artifactNumber;
-  const { data: evidenceData, isloading: isEvidenceLoading, refetch: evidenceRefetch } = useSearchEvidenceService(
+  const { data: evidenceData } = useSearchEvidenceService(
     {
       criteria: {
         filingNumber,
@@ -636,52 +636,88 @@ const EvidenceModal = ({
   const handleEvidenceAction = async () => {
     if (businessOfTheDay) {
       setIsSubmitDisabled(true);
-      const response = await Digit.HearingService.searchHearings(
-        {
-          criteria: {
-            tenantId: Digit.ULBService.getCurrentTenantId(),
-            filingNumber: filingNumber,
-            ...(caseCourtId && { courtId: caseCourtId }),
+
+      // Search for hearings
+      let response;
+      try {
+        response = await Digit.HearingService.searchHearings(
+          {
+            criteria: {
+              tenantId: Digit.ULBService.getCurrentTenantId(),
+              filingNumber: filingNumber,
+              ...(caseCourtId && { courtId: caseCourtId }),
+            },
           },
-        },
-        {}
-      );
+          {}
+        );
+      } catch (error) {
+        console.error("Failed to search hearings:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setToast({ label: t("FAILED_TO_SEARCH_HEARINGS"), error: true, errorId });
+        setIsSubmitDisabled(false);
+        return;
+      }
+
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       const courtId = localStorage.getItem("courtId");
       let evidenceReqBody = {};
-      let evidence = {};
       evidenceReqBody = {
         artifact: {
           ...evidenceDetails,
           publishedDate: new Date().getTime(),
         },
       };
-      await DRISTIService.updateEvidence(evidenceReqBody);
-      await DRISTIService.addADiaryEntry(
-        {
-          diaryEntry: {
-            courtId: courtId,
-            businessOfDay: businessOfTheDay,
-            tenantId: tenantId,
-            entryDate: new Date().setHours(0, 0, 0, 0),
-            caseNumber: caseData?.case?.cmpNumber,
-            referenceId: documentSubmission?.[0]?.artifactList?.artifactNumber,
-            referenceType: "Documents",
-            hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
-            additionalDetails: {
-              filingNumber: filingNumber,
-              caseId: caseId,
+
+      // Update evidence
+      try {
+        await DRISTIService.updateEvidence(evidenceReqBody);
+      } catch (error) {
+        console.error("Failed to update evidence:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setToast({ label: t("EVIDENCE_UPDATE_FAILED"), error: true, errorId });
+        setIsSubmitDisabled(false);
+        return;
+      }
+
+      // Add diary entry
+      try {
+        await DRISTIService.addADiaryEntry(
+          {
+            diaryEntry: {
+              courtId: courtId,
+              businessOfDay: businessOfTheDay,
+              tenantId: tenantId,
+              entryDate: new Date().setHours(0, 0, 0, 0),
+              caseNumber: caseData?.case?.cmpNumber,
+              referenceId: documentSubmission?.[0]?.artifactList?.artifactNumber,
+              referenceType: "Documents",
+              hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
+              additionalDetails: {
+                filingNumber: filingNumber,
+                caseId: caseId,
+              },
             },
           },
-        },
-        {}
-      ).catch((error) => {
-        console.error("error: ", error);
-        toast.error(t("SOMETHING_WENT_WRONG"));
+          {}
+        );
+      } catch (error) {
+        console.error("Failed to add diary entry:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setToast({ label: t("FAILED_TO_ADD_DIARY_ENTRY"), error: true, errorId });
         setIsSubmitDisabled(false);
-      });
+        return;
+      }
     }
-    await handleMarkEvidence();
+
+    // Mark evidence
+    try {
+      await handleMarkEvidence();
+    } catch (error) {
+      console.error("Failed to mark evidence:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({ label: t("EVIDENCE_MARK_FAILED"), error: true, errorId });
+      setIsSubmitDisabled(false);
+    }
   };
 
   const isMandatoryOrderCreation = useMemo(() => {
@@ -911,8 +947,9 @@ const EvidenceModal = ({
         } catch (error) {
           const errorCode = error?.response?.data?.Errors?.[0]?.code;
           const errorMsg =
-            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("SOMETHING_WENT_WRONG");
-          toast.error(errorMsg);
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("EVIDENCE_UPDATE_FAILED");
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setToast({ label: errorMsg, error: true, errorId });
         }
       } else {
         if (showConfirmationModal.type === "reject") {
@@ -931,7 +968,9 @@ const EvidenceModal = ({
         setShowConfirmationModal(null);
       }
     } catch (error) {
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Failed to save evidence changes:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({ label: t("EVIDENCE_SAVE_FAILED"), error: true, errorId });
     }
   };
 
@@ -951,11 +990,17 @@ const EvidenceModal = ({
   };
 
   const handleSubmitComment = async (newComment) => {
-    if (modalType === "Submissions") {
-      await submitCommentApplication(newComment);
-      setShowFileIcon(false);
-    } else {
-      await submitCommentEvidence(newComment);
+    try {
+      if (modalType === "Submissions") {
+        await submitCommentApplication(newComment);
+        setShowFileIcon(false);
+      } else {
+        await submitCommentEvidence(newComment);
+      }
+    } catch (error) {
+      console.error("Error in submitting comment:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({ label: t("ERROR_SUBMITTING_COMMENT"), error: true, errorId });
     }
   };
 
@@ -968,79 +1013,103 @@ const EvidenceModal = ({
       downloadPdf(tenantId, signedSubmission?.applicationContent?.fileStoreId);
       return;
     }
-    if (userType === "employee") {
-      if (documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS") {
-        const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
-        history.push(
-          `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${documentSubmission?.[0]?.details?.additionalDetails?.pendingTaskRefId}&refApplicationId=${refApplicationId}`,
-          {
-            dateOfApplication: documentSubmission?.[0]?.applicationList?.additionalDetails?.dateOfApplication,
-            uniqueId: documentSubmission?.[0]?.applicationList?.additionalDetails?.uniqueId,
+    setIsActionLoading(true);
+    try {
+      if (userType === "employee") {
+        if (documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS") {
+          const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
+          history.push(
+            `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${documentSubmission?.[0]?.details?.additionalDetails?.pendingTaskRefId}&refApplicationId=${refApplicationId}`,
+            {
+              dateOfApplication: documentSubmission?.[0]?.applicationList?.additionalDetails?.dateOfApplication,
+              uniqueId: documentSubmission?.[0]?.applicationList?.additionalDetails?.uniqueId,
+            }
+          );
+          return;
+        }
+        if (isBail) {
+          await handleApplicationAction(true, "accept");
+        } else if (modalType === "Submissions") {
+          await handleApplicationAction(true, "accept");
+        } else {
+          if (modalType === "Documents") {
+            setShow(false);
+            setShowMakeAsEvidenceModal(true);
           }
-        );
-        return;
-      }
-      if (isBail) {
-        await handleApplicationAction(true, "accept");
-      } else if (modalType === "Submissions") {
-        await handleApplicationAction(true, "accept");
+        }
       } else {
-        if (modalType === "Documents") {
-          setShow(false);
-          setShowMakeAsEvidenceModal(true);
+        if (actionSaveLabel === t("ADD_COMMENT")) {
+          try {
+          } catch (error) {}
+          await handleRespondApplication();
+          try {
+            DRISTIService.customApiService(Urls.dristi.pendingTask, {
+              pendingTask: {
+                entityType: "application-order-submission-feedback",
+                status: "RESPOND_TO_PRODUCTION_DOCUMENTS",
+                referenceId: `MANUAL_${signedSubmission?.applicationList?.applicationNumber}`,
+                cnrNumber,
+                filingNumber,
+                caseId,
+                caseTitle: caseData?.title,
+                isCompleted: true,
+                tenantId,
+              },
+            });
+          } catch (error) {
+            console.error("error :>> ", error);
+          }
         }
+        counterUpdate();
+        setShow(false);
+        counterUpdate();
+        history.replace(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`);
       }
-    } else {
-      if (actionSaveLabel === t("ADD_COMMENT")) {
-        try {
-        } catch (error) {}
-        await handleRespondApplication();
-        try {
-          DRISTIService.customApiService(Urls.dristi.pendingTask, {
-            pendingTask: {
-              entityType: "application-order-submission-feedback",
-              status: "RESPOND_TO_PRODUCTION_DOCUMENTS",
-              referenceId: `MANUAL_${signedSubmission?.applicationList?.applicationNumber}`,
-              cnrNumber,
-              filingNumber,
-              caseId,
-              caseTitle: caseData?.title,
-              isCompleted: true,
-              tenantId,
-            },
-          });
-        } catch (error) {
-          console.error("error :>> ", error);
-        }
-      }
-      ///show a toast message
-      counterUpdate();
-      setShow(false);
-      counterUpdate();
-      history.replace(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`);
+    } catch (error) {
+      console.error("Error in accepting submission", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({ label: t("ERROR_ACCEPTING_SUBMISSION"), error: true, errorId });
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
   const actionCancelOnSubmit = async () => {
-    if (userType === "employee") {
-      if (isBail) {
-        await handleApplicationAction(true, "reject");
-      } else if (modalType === "Submissions") {
-        await handleApplicationAction(true, "reject");
-      }
-    } else {
-      try {
+    setIsActionLoading(true);
+    try {
+      if (userType === "employee") {
+        if (isBail) {
+          await handleApplicationAction(true, "reject");
+        } else if (modalType === "Submissions") {
+          await handleApplicationAction(true, "reject");
+        }
+      } else {
         await handleDeleteApplication();
         setShow(false);
         counterUpdate();
-      } catch (error) {}
+      }
+    } catch (error) {
+      console.error("Error in rejecting submission", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({ label: t("ERROR_REJECTING_SUBMISSION"), error: true, errorId });
+    } finally {
+      setIsActionLoading(false);
     }
   };
   const actionCustomLabelSubmit = async () => {
-    if (userType === "employee") {
-      await handleApplicationAction(true, "SET_TERM_BAIL");
-    } else {
-      setShow(false);
+    setIsActionLoading(true);
+    try {
+      if (userType === "employee") {
+        await handleApplicationAction(true, "SET_TERM_BAIL");
+      } else {
+        setShow(false);
+      }
+    } catch (error) {
+      console.error("Error in setting term bail:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setToast({ label: t("ERROR_SETTING_TERM_BAIL"), error: true, errorId });
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -1159,6 +1228,9 @@ const EvidenceModal = ({
           // actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
           actionCustomLabelSubmit={actionCustomLabelSubmit}
+          isDisabled={isSubmitDisabled || isActionLoading}
+          isBackButtonDisabled={isSubmitDisabled || isActionLoading}
+          isCustomButtonDisabled={isActionLoading}
           formId="modal-action"
           headerBarMain={
             <Heading
@@ -1194,6 +1266,11 @@ const EvidenceModal = ({
           //     : {}
           // }
         >
+          {isActionLoading && (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "2rem" }}>
+              <Loader />
+            </div>
+          )}
           {(documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus || documentSubmission?.[0]?.artifactList?.isEvidence) &&
             userType === "employee" && (
               <div style={{ margin: "16px 24px" }}>
@@ -1540,6 +1617,15 @@ const EvidenceModal = ({
         />
       )}
       {showSuccessModal && modalType === "Submissions" && <SubmissionSuccessModal t={t} handleBack={handleBack} />}
+      {toast && (
+        <CustomToast
+          error={toast?.error}
+          label={toast?.label}
+          errorId={toast?.errorId}
+          onClose={() => setToast(null)}
+          duration={toast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

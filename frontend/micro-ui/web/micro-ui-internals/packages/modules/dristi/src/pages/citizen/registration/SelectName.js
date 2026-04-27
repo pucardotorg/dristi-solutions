@@ -1,22 +1,8 @@
-import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import React, { useEffect, useMemo } from "react";
 import { getFileByFileStore } from "../../../Utils";
 
 const SelectName = ({ config, t, onSubmit, isDisabled, params, history, value, isUserLoggedIn, pathOnRefresh, isLitigantPartialRegistered }) => {
-  const [showErrorToast, setShowErrorToast] = useState(false);
-
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      closeToast();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [closeToast]);
-
   if (!params?.mobileNumber && !isUserLoggedIn) {
     history.push(`/${window?.contextPath}/citizen/dristi/home/login`);
   }

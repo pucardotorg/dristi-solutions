@@ -1,15 +1,4 @@
-import {
-  ActionBar,
-  Button,
-  CloseSvg,
-  EditIcon,
-  FormComposerV2,
-  Header,
-  Loader,
-  SubmitBar,
-  TextInput,
-  Toast,
-} from "@egovernments/digit-ui-react-components";
+import { ActionBar, Button, EditIcon, FormComposerV2, Header, Loader, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -21,7 +10,6 @@ import FlagBox from "../../../components/FlagBox";
 import Modal from "../../../components/Modal";
 import ScrutinyInfo from "../../../components/ScrutinyInfo";
 import SelectCustomNote from "../../../components/SelectCustomNote";
-import { useToast } from "../../../components/Toast/useToast";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { ReactComponent as InfoIcon } from "../../../icons/info.svg";
 import { CustomAddIcon, CustomArrowDownIcon, CustomDeleteIcon, RightArrow, WarningInfoRedIcon } from "../../../icons/svgIndex";
@@ -29,7 +17,7 @@ import { DRISTIService } from "../../../services";
 import { sideMenuConfig } from "./Config";
 import EditFieldsModal from "./EditFieldsModal";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
-import { ORDER_TYPES, TASK_TYPES } from "../../../Utils/constants";
+import { TASK_TYPES } from "../../../Utils/constants";
 import {
   accusedAddressValidation,
   addressValidation,
@@ -46,10 +34,7 @@ import {
   delayApplicationValidation,
   demandNoticeFileValidation,
   getAdvocatesAndPipRemainingFields,
-  getAllAssignees,
-  getComplainantName,
   getProcessCourierRemainingFields,
-  getRespondentName,
   prayerAndSwornValidation,
   respondentValidation,
   runGenericTextSanitizer,
@@ -62,17 +47,8 @@ import {
 } from "./EfilingValidationUtils";
 import isEqual from "lodash/isEqual";
 import isMatch from "lodash/isMatch";
-import CorrectionsSubmitModal from "../../../components/CorrectionsSubmitModal";
 import { Urls } from "../../../hooks";
-import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
-import {
-  findCaseDraftEditAllowedParties,
-  getAllComplainantSideUuids,
-  getFilingType,
-  getSuffixByBusinessCode,
-  TaskManagementWorkflowState,
-} from "../../../Utils";
-import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import { findCaseDraftEditAllowedParties, getAllComplainantSideUuids, getFilingType, TaskManagementWorkflowState } from "../../../Utils";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
 import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
@@ -82,6 +58,7 @@ import ErrorDataModal from "./ErrorDataModal";
 import { documentLabels } from "../../../Utils";
 import useSearchTaskMangementService from "../../../hooks/dristi/useSearchTaskMangementService";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import CustomToast from "../../../components/CustomToast";
 
 export const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -159,25 +136,17 @@ export const extractCodeFromErrorMsg = (error) => {
   return statusCode;
 };
 
-const stateSla = {
-  PENDING_PAYMENT: 2,
-};
-
 const AccordionTabs = {
   REVIEW_CASE_FILE: "reviewCaseFile",
 };
 
-const dayInMillisecond = 24 * 3600 * 1000;
-
 function EFilingCases({ path }) {
   const [params, setParmas] = useState({});
   const { t } = useTranslation();
-  const toast = useToast();
   const history = useHistory();
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const [isDisabled, setIsDisabled] = useState(false);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
-  const todayDate = new Date().getTime();
   const userInfo = Digit?.UserService?.getUser()?.info;
   const moduleCode = "DRISTI";
   const token = window.localStorage.getItem("token");
@@ -212,27 +181,16 @@ function EFilingCases({ path }) {
   const [prevIsDcaSkipped, setPrevIsDcaSkipped] = useState("");
   const [showErrorDataModal, setShowErrorDataModal] = useState({ page: "", showModal: false, errorData: [] });
   const [isDcaPageRefreshed, setIsDcaPageRefreshed] = useState(true);
-
   const [showConfirmCaseDetailsModal, setShowConfirmCaseDetailsModal] = useState(false);
-
-  const [caseResubmitSuccess, setCaseResubmitSuccess] = useState(false);
   const [prevSelected, setPrevSelected] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [addressError, setAddressError] = useState({ show: false, message: "" });
   const homepagePath = `/${window?.contextPath}/citizen/dristi/home`;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoader, setIsLoader] = useState(false);
   const [pdfDetails, setPdfDetails] = useState(null);
-  const { downloadPdf } = useDownloadCasePdf();
   const [newCaseName, setNewCaseName] = useState("");
   const [showEditCaseNameModal, setShowEditCaseNameModal] = useState(false);
   const [modalCaseName, setModalCaseName] = useState("");
   const [isEditingAllowed, setIsEditingAllowed] = useState(false);
-
-  const [{ showSuccessToast, successMsg }, setSuccessToast] = useState({
-    showSuccessToast: false,
-    successMsg: "",
-  });
   const [deleteFormIndex, setDeleteFormIndex] = useState(null);
   const setFieldsRemainingInitially = () => {
     const array = [];
@@ -310,7 +268,7 @@ function EFilingCases({ path }) {
     Boolean(caseId)
   );
 
-  const { data: individualData, isIndividualLoading, refetch } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: individualData, isIndividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         userUuid: [userInfo?.uuid],
@@ -553,8 +511,6 @@ function EFilingCases({ path }) {
     state === CaseWorkflowState.PENDING_RE_E_SIGN
   );
   const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
-  const { data: courtRoomDetails, isLoading: isCourtIdsLoading } = useGetStatuteSection("common-masters", [{ name: "Court_Rooms" }]);
-  const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
 
   useEffect(() => {
     const isDcaSkipped = caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling?.code;
@@ -828,27 +784,6 @@ function EFilingCases({ path }) {
       setFormdata(data);
     }
   }, [selected, caseDetails, isLoading, completedComplainants, completedAccuseds, litigants, isDelayCondonation]);
-
-  const closeToast = () => {
-    setShowErrorToast(false);
-    setAddressError({ show: false, message: "" });
-    setErrorMsg("");
-    setSuccessToast((prev) => ({
-      ...prev,
-      showSuccessToast: false,
-      successMsg: "",
-    }));
-  };
-
-  useEffect(() => {
-    let timer;
-    if (showErrorToast || showSuccessToast || addressError?.show) {
-      timer = setTimeout(() => {
-        closeToast();
-      }, 2000);
-    }
-    return () => clearTimeout(timer);
-  }, [showErrorToast, showSuccessToast, addressError?.show]);
 
   useEffect(() => {
     if (isCaseReAssigned) {
@@ -1934,7 +1869,7 @@ function EFilingCases({ path }) {
         setValue,
         caseDetails,
         selected,
-        toast,
+        setShowToast,
         t,
         history,
         caseId,
@@ -1947,7 +1882,7 @@ function EFilingCases({ path }) {
         isDcaPageRefreshed,
         setIsDcaPageRefreshed,
       });
-      showToastForComplainant({ formData, setValue, selected, setSuccessToast, formState, clearErrors });
+      showToastForComplainant({ t, formData, setValue, selected, setShowToast, formState, clearErrors });
       setFormdata(
         formdata.map((item, i) => {
           return i === index
@@ -2199,8 +2134,7 @@ function EFilingCases({ path }) {
                 fData?.data?.poaVerification?.mobileNumber === userInfo?.mobileNumber)
           )
       ) {
-        setShowErrorToast(true);
-        setErrorMsg("LOGGED_IN_USER_MUST_BE_EITHER_COMPLAINANT_OR_POA");
+        setShowToast({ label: t("LOGGED_IN_USER_MUST_BE_EITHER_COMPLAINANT_OR_POA"), error: true });
         return;
       }
     }
@@ -2212,9 +2146,10 @@ function EFilingCases({ path }) {
           ?.filter((data) => data.isenabled)
           ?.some((data, index) =>
             addressValidation({
+              t,
               formData: data?.data,
               selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
-              setAddressError,
+              setShowToast,
               config: modifiedFormConfig[index],
               setFormErrors: setFormErrors.current,
             })
@@ -2265,9 +2200,10 @@ function EFilingCases({ path }) {
           ?.filter((data) => data.isenabled)
           ?.some((data, index) =>
             accusedAddressValidation({
+              t,
               formData: data?.data,
               selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
-              setAddressError,
+              setShowToast,
               config: modifiedFormConfig[index],
               setFormErrors: setFormErrors.current,
             })
@@ -2299,13 +2235,11 @@ function EFilingCases({ path }) {
         .filter((data) => data.isenabled)
         .some((data) =>
           respondentValidation({
-            setErrorMsg,
             t,
             formData: data?.data,
             caseDetails,
             selected,
-            setShowErrorToast,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
             clearFormDataErrors: clearFormDataErrors.current,
           })
@@ -2318,9 +2252,10 @@ function EFilingCases({ path }) {
         .filter((data) => data.isenabled)
         .some((data) =>
           demandNoticeFileValidation({
+            t,
             formData: data?.data,
             selected,
-            setShowErrorToast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
           })
         )
@@ -2330,7 +2265,7 @@ function EFilingCases({ path }) {
     if (
       formdata
         .filter((data) => data.isenabled)
-        .some((data) => chequeDetailFileValidation({ formData: data?.data, selected, setShowErrorToast, setFormErrors: setFormErrors.current }))
+        .some((data) => chequeDetailFileValidation({ t, formData: data?.data, selected, setShowToast, setFormErrors: setFormErrors.current }))
     ) {
       return;
     }
@@ -2361,13 +2296,11 @@ function EFilingCases({ path }) {
             t,
             caseDetails,
             selected,
-            setShowErrorToast,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
             formState: setFormState.current,
             clearFormDataErrors: clearFormDataErrors.current,
             displayindex: data?.displayindex,
-            setErrorMsg,
           })
         )
     ) {
@@ -2382,8 +2315,7 @@ function EFilingCases({ path }) {
             t,
             caseDetails,
             selected,
-            setShowErrorToast,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
           })
         )
@@ -2399,8 +2331,7 @@ function EFilingCases({ path }) {
             t,
             caseDetails,
             selected,
-            setShowErrorToast,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
           })
         )
@@ -2416,8 +2347,7 @@ function EFilingCases({ path }) {
             t,
             caseDetails,
             selected,
-            setShowErrorToast,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
             clearFormDataErrors: clearFormDataErrors.current,
           })
@@ -2433,9 +2363,7 @@ function EFilingCases({ path }) {
             t,
             formData: data?.data,
             selected,
-            setShowErrorToast,
-            setErrorMsg,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
             clearFormDataErrors: clearFormDataErrors.current,
           })
@@ -2632,13 +2560,14 @@ function EFilingCases({ path }) {
           history.push(`?caseId=${caseId}&selected=${nextSelected}`);
         }
       } catch (error) {
-        let message = t("SOMETHING_WENT_WRONG");
+        let message = t("E_FILING_SUBMISSION_FAILED");
         if (error instanceof DocumentUploadError) {
           message = `${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
         } else if (extractCodeFromErrorMsg(error) === 413) {
           message = t("FAILED_TO_UPLOAD_FILE");
         }
-        toast.error(message);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: message, error: true, errorId });
         setIsDisabled(false);
         console.error("An error occurred:", error);
         return { error };
@@ -2697,16 +2626,21 @@ function EFilingCases({ path }) {
         });
       })
       .then(() => {
-        toast.success(t("CS_SUCCESSFULLY_SAVED_DRAFT"));
+        setShowToast({ label: t("CS_SUCCESSFULLY_SAVED_DRAFT"), error: false });
       })
       .catch(async (error) => {
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         if (error instanceof DocumentUploadError) {
-          toast.error(`${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`);
+          setShowToast({
+            label: `${t(error?.code || "DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`,
+            error: true,
+            errorId,
+          });
         } else if (extractCodeFromErrorMsg(error) === 413) {
-          toast.error(t("FAILED_TO_UPLOAD_FILE"));
+          setShowToast({ label: t("FAILED_TO_UPLOAD_FILE"), error: true, errorId });
         } else {
-          console.error("Error:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          console.error("Failed to save case:", error);
+          setShowToast({ label: t("CASE_SAVE_FAILED"), error: true, errorId });
         }
         setIsDisabled(false);
       });
@@ -2782,13 +2716,18 @@ function EFilingCases({ path }) {
         }
       })
       .catch(async (error) => {
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         if (error instanceof DocumentUploadError) {
-          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`);
+          setShowToast({
+            label: `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`,
+            error: true,
+            errorId,
+          });
         } else if (extractCodeFromErrorMsg(error) === 413) {
-          toast.error(t("FAILED_TO_UPLOAD_FILE"));
+          setShowToast({ label: t("FAILED_TO_UPLOAD_FILE"), error: true, errorId });
         } else {
-          console.error("Error:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          console.error("Failed to submit case:", error);
+          setShowToast({ label: t("CASE_SUBMISSION_FAILED"), error: true, errorId });
         }
         setIsDisabled(false);
       })
@@ -2801,92 +2740,6 @@ function EFilingCases({ path }) {
     } else {
       history.push(`?caseId=${caseId}&selected=${key}`);
     }
-  };
-
-  const chequeDetails = useMemo(() => {
-    const debtLiability = caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.[0]?.data;
-    if (debtLiability?.liabilityType?.code === "PARTIAL_LIABILITY") {
-      return {
-        totalAmount: debtLiability?.totalAmount,
-      };
-    } else {
-      const chequeData = caseDetails?.caseDetails?.chequeDetails?.formdata || [];
-      const totalAmount = chequeData.reduce((sum, item) => {
-        return sum + parseFloat(item.data.chequeAmount);
-      }, 0);
-      return {
-        totalAmount: totalAmount.toString(),
-      };
-    }
-  }, [caseDetails]);
-  const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "payment",
-    [{ name: "paymentType" }],
-    {
-      select: (data) => {
-        return data?.payment?.paymentType || [];
-      },
-    }
-  );
-
-  const callCreateDemandAndCalculation = async (caseDetails, tenantId, caseId) => {
-    const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
-    const calculationResponse = await DRISTIService.getPaymentBreakup(
-      {
-        EFillingCalculationCriteria: [
-          {
-            checkAmount: chequeDetails?.totalAmount,
-            numberOfApplication: 1,
-            tenantId: tenantId,
-            caseId: caseId,
-            isDelayCondonation: isDelayCondonation,
-            filingNumber: caseDetails?.filingNumber,
-          },
-        ],
-      },
-      {},
-      "dristi",
-      Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
-    );
-
-    // await DRISTIService.createDemand({
-    //   Demands: [
-    //     {
-    //       tenantId,
-    //       consumerCode: caseDetails?.filingNumber + `_${suffix}`,
-    //       consumerType: "case-default",
-    //       businessService: "case-default",
-    //       taxPeriodFrom: taxPeriod?.fromDate,
-    //       taxPeriodTo: taxPeriod?.toDate,
-    //       demandDetails: [
-    //         {
-    //           taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
-    //           taxAmount: 4, // amount to be replaced with calculationResponse
-    //           collectionAmount: 0,
-    //           isDelayCondonation: isDelayCondonation,
-    //         },
-    //       ],
-    //       additionalDetails: {
-    //         filingNumber: caseDetails?.filingNumber,
-    //         chequeDetails: chequeDetails,
-    //         cnrNumber: caseDetails?.cnrNumber,
-    //         payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
-    //         payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
-    //         isDelayCondonation: isDelayCondonation,
-    //       },
-    //     },
-    //   ],
-    // });
-
-    await DRISTIService.etreasuryCreateDemand({
-      tenantId,
-      entityType: "case-default",
-      filingNumber: caseDetails?.filingNumber,
-      consumerCode: caseDetails?.filingNumber + `_${suffix}`,
-      calculation: calculationResponse?.Calculation,
-    });
-    return calculationResponse;
   };
 
   const getFormClassName = useCallback(() => {
@@ -2935,7 +2788,7 @@ function EFilingCases({ path }) {
   }, [isEditingAllowed, mandatoryFieldsLeftTotalCount, isDisableAllFieldsMode]);
 
   const [isOpen, setIsOpen] = useState(false);
-  if (isLoading || isCourtIdsLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
+  if (isLoading || isLoader || isIndividualLoading || isFilingTypeLoading || isTaskManagementLoading) {
     return <Loader />;
   }
 
@@ -2970,9 +2823,6 @@ function EFilingCases({ path }) {
     } else {
       history.push(`?caseId=${caseId}&selected=${key}`);
     }
-  };
-  const handleGoToHome = () => {
-    history.push(homepagePath);
   };
 
   if (typeof state === "string" && isDisableAllFieldsMode && selected !== "reviewCaseFile" && caseDetails) {
@@ -3017,8 +2867,9 @@ function EFilingCases({ path }) {
       setPdfDetails(response?.data);
       setIsModalOpen(true);
     } catch (error) {
-      console.error("Error generating case PDF:", error);
-      toast.error(t("CASE_PDF_GENERATION_ERROR"));
+      console.error("Failed to generate case PDF:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("CASE_PDF_GENERATION_ERROR"), error: true, errorId });
     } finally {
       setIsLoader(false);
     }
@@ -3432,29 +3283,17 @@ function EFilingCases({ path }) {
               handlePageChange={handlePageChange}
             />
           )}
-          {showErrorToast && (
-            <Toast
-              error={true}
-              label={t(errorMsg ? errorMsg : "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")}
-              isDleteBtn={true}
-              onClose={closeToast}
+          {showToast && (
+            <CustomToast
+              error={showToast?.error}
+              label={showToast?.label ? showToast?.label : t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")}
+              errorId={showToast?.errorId}
+              onClose={() => setShowToast(null)}
+              duration={showToast?.errorId ? 7000 : 5000}
             />
           )}
-          {addressError?.show && <Toast error={true} label={t(addressError?.message)} isDleteBtn={true} onClose={closeToast} />}
-          {showSuccessToast && <Toast label={t(successMsg)} isDleteBtn={true} onClose={closeToast} />}
         </div>
       </div>
-
-      {caseResubmitSuccess && (
-        <CorrectionsSubmitModal
-          t={t}
-          filingNumber={caseDetails?.filingNumber}
-          handleGoToHome={handleGoToHome}
-          downloadPdf={downloadPdf}
-          tenantId={tenantId}
-          caseDetails={caseDetails}
-        />
-      )}
       {selected === "witnessDetails" && !isPendingESign && Object.keys(formdata.filter((data) => data.isenabled)?.[0] || {}).length === 0 && (
         <ActionBar className={"e-filing-action-bar"}>
           <SubmitBar

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import SelectCustomDragDrop from "./SelectCustomDragDrop";
 import Modal from "./Modal";
-import { useToast } from "./Toast/useToast";
 import WarningTextComponent from "./WarningTextComponent";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import AuthenticatedLink from "../Utils/authenticatedLink";
@@ -29,7 +28,6 @@ function UploadSignatureModal({
   onCustomDownload,
   setFileUploadError,
 }) {
-  const toast = useToast();
   const [error, setError] = useState({});
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
@@ -46,8 +44,6 @@ function UploadSignatureModal({
     } else onSelect(config.key, { ...formData[config.key], [input]: value });
   }
 
-  
-  
   const onCancel = () => {
     setValue(null, name);
     setOpenUploadSignatureModal(false);

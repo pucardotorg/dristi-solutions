@@ -1,8 +1,9 @@
-import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseBtn, Heading } from "../../utils/orderUtils";
 import isEqual from "lodash/isEqual";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const EpostUpdateStatus = ({
   t,
@@ -13,8 +14,8 @@ const EpostUpdateStatus = ({
   modifiedFormConfig,
   saveLabel,
   cancelLabel,
-  closeToast,
-  showErrorToast,
+  setShowToast,
+  showToast,
   setFormErrors,
   clearFormErrors,
 }) => {
@@ -78,7 +79,15 @@ const EpostUpdateStatus = ({
           </div>
         </div>
       </Modal>
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

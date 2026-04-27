@@ -1,6 +1,5 @@
-import { InboxSearchComposer, SubmitBar, Loader, Button, Toast } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, SubmitBar, Loader, Button } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState, useCallback, useEffect } from "react";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
 import { bulkADiarySignConfig } from "../../configs/BulkADiarySignConfig";
 import { HomeService } from "../../hooks/services";
@@ -13,6 +12,7 @@ import ADiaryDocumentPdfModal from "./ADiaryDocumentPdfModal";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ORDER_TYPES } from "../../utils/constants";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const buttonStyle = {
   borderRadius: "4px",
@@ -47,8 +47,6 @@ const Heading = ({ label }) => {
 function BulkSignADiaryView() {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const queryStrings = Digit.Hooks.useQueryParams();
-  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const history = useHistory();
   const { t } = useTranslation();
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isDiaryApprover = useMemo(() => roles?.some((role) => role.code === "DIARY_APPROVER"), [roles]);
@@ -70,7 +68,7 @@ function BulkSignADiaryView() {
   const [noAdiaryModal, setNoAdiaryModal] = useState(false);
   const [loader, setLoader] = useState(false);
   const [showDocumentPdfModal, setShowDocumentPdfModal] = useState({ show: false, rowData: null });
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [reload, setReload] = useState(false);
   const [fileUploadError, setFileUploadError] = useState(null);
 
@@ -90,13 +88,6 @@ function BulkSignADiaryView() {
   const authorizedUuid = getAuthorizedUuid(userUuid);
 
   const [diaryEntries, setDiaryEntries] = useState([]);
-
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -167,7 +158,8 @@ function BulkSignADiaryView() {
           setShowDocumentPdfModal({ show: true, rowData: { document: order?.documents?.[0], rowData: entry } });
         } catch (error) {
           console.error("error: ", error);
-          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("BULK_SIGN_DIARY_SEARCH_ORDER_FAILED"), error: true, errorId });
         }
       }
 
@@ -189,7 +181,8 @@ function BulkSignADiaryView() {
           setShowDocumentPdfModal({ show: true, rowData: { document: response?.artifacts?.[0]?.file, rowData: entry } });
         } catch (error) {
           console.error("error: ", error);
-          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("BULK_SIGN_DIARY_SEARCH_EVIDENCE_FAILED"), error: true, errorId });
         }
       }
       if (entry?.referenceType === ORDER_TYPES.NOTICE.toLocaleLowerCase()) {
@@ -210,8 +203,9 @@ function BulkSignADiaryView() {
             rowData: { document: notification?.documents?.[notification?.documents?.length - 1], rowData: entry },
           });
         } catch (error) {
-          console.error("error: ", error);
-          showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+          console.error("Failed to fetch notification:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("NOTIFICATION_FETCH_FAILED"), error: true, errorId });
         }
       }
     };
@@ -320,6 +314,12 @@ function BulkSignADiaryView() {
         setStepper(parseInt(stepper) + 1);
       } catch (error) {
         console.error("Error :", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({
+          error: true,
+          label: t("FAILED_TO_GENERATE_THE_A_DIARY_PDF"),
+          errorId: errorId,
+        });
         setGenerateAdiaryLoader(false);
       }
     } else if (parseInt(stepper) === 1) {
@@ -442,7 +442,13 @@ function BulkSignADiaryView() {
         }
       })
       .catch((error) => {
-        console.error("Error during the API request:", error);
+        console.error("Failed to fetch the PDF", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({
+          error: true,
+          label: t("FAILED_TO_DOWNLOAD_THE_A_DIARY_PDF"),
+          errorId: errorId,
+        });
       });
   };
 
@@ -547,7 +553,7 @@ function BulkSignADiaryView() {
                     label={t("CS_ESIGN")}
                     onButtonClick={() => {
                       sessionStorage.setItem("homeActiveTab", "CS_HOME_A_DAIRY");
-                      handleEsign(name, pageModule, ADiarypdf, "Signature");
+                      handleEsign(name, pageModule, ADiarypdf, setShowToast, t, "Signature");
                     }} //as sending null throwing error in esign
                     className="aadhar-sign-in"
                     labelClassName="aadhar-sign-in"
@@ -678,13 +684,13 @@ function BulkSignADiaryView() {
             reload={reload}
           />
         )}
-        {toastMsg && (
-          <Toast
-            error={toastMsg.key === "error"}
-            label={t(toastMsg.action)}
-            onClose={() => setToastMsg(null)}
-            isDleteBtn={true}
-            style={{ maxWidth: "500px" }}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
           />
         )}
       </div>

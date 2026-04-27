@@ -27,7 +27,7 @@ export const WitnessDepositionSignModal = ({
   setShowBulkSignModal = () => {},
   witnessDepositionPaginationData,
   setCounter = () => {},
-  setShowErrorToast = () => {},
+  setShowToast = () => {},
 }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
   const location = useLocation();
@@ -68,7 +68,7 @@ export const WitnessDepositionSignModal = ({
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
+  const { handleEsign, checkSignStatus, showToast: apiErrorToast, setShowToast: setApiErrorToast, CustomToast } = Digit.Hooks.orders.useESign();
 
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [isSigned, setIsSigned] = useState(false);
@@ -256,7 +256,7 @@ export const WitnessDepositionSignModal = ({
       });
     } catch (error) {
       console.error("Error while updating witness deposition:", error);
-      setShowErrorToast({
+      setShowToast({
         error: true,
         label: t("ERROR_WITNESS_DEPOSITION_BULK_SIGN_MSG"),
       });
@@ -321,7 +321,7 @@ export const WitnessDepositionSignModal = ({
           sessionStorage.setItem("bulkWitnessDepositionSignCaseTitle", witnessDepositionPaginationData?.caseTitle);
         if (witnessDepositionPaginationData?.offset)
           sessionStorage.setItem("bulkWitnessDepositionSignoffset", witnessDepositionPaginationData?.offset);
-        handleEsign(name, pageModule, selectedWitnessDepositionFilestoreid, "Judicial Magistrate of First Class");
+        handleEsign(name, pageModule, selectedWitnessDepositionFilestoreid, setShowToast, t, "Judicial Magistrate of First Class");
       } catch (error) {
         console.error("E-sign navigation error:", error);
         setLoader(false);

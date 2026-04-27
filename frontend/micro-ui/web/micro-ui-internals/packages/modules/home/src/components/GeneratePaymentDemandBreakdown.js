@@ -1,15 +1,14 @@
-import { Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
-import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import usePaymentProcess from "../hooks/usePaymentProcess";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
-import { getSuffixByBusinessCode } from "../utils";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
@@ -30,10 +29,9 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
 
   const caseId = params?.caseId;
   const filingNumber = params?.filingNumber;
-  const toast = useToast();
   const scenario = "EfillingCase"; //what is this
   const path = "";
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
   const [paymentBreakDown, setPaymentBreakDown] = useState([]);
@@ -42,16 +40,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
   const [comments, setComments] = useState("");
   const [caseLockLoader, setLockLoader] = useState(false);
   const [taskLoader, setTaskloader] = useState(null);
-  // const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
-  //   Digit.ULBService.getStateId(),
-  //   "payment",
-  //   [{ name: "paymentType" }],
-  //   {
-  //     select: (data) => {
-  //       return data?.payment?.paymentType || [];
-  //     },
-  //   }
-  // );
+
   const { data: caseData, isLoading } = useSearchCaseService(
     {
       criteria: [
@@ -74,11 +63,9 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
     [caseData]
   );
 
-  // const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, "task-generic"), [paymentTypeData]);
-
-  const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal } = usePaymentProcess({
+  const { fetchBill, openPaymentPortal, paymentLoader, setShowPaymentModal } = usePaymentProcess({
     tenantId,
-    consumerCode: consumerCode, //taskNumber + `_${suffix}`,
+    consumerCode: consumerCode,
     service: "task-generic",
     path,
     caseDetails,
@@ -99,6 +86,8 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("CS_CASE_LOCK_STATUS_ERROR"), error: true, errorId });
     } finally {
       setLockLoader(false);
     }
@@ -143,6 +132,8 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
       setPaymentBreakDown(updatedBreakdown);
     } catch (error) {
       console.error("Error fetching task data", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("CS_TASK_DATA_FETCH_ERROR"), error: true, errorId });
     } finally {
       setTaskloader(false);
     }
@@ -158,7 +149,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
     try {
       const bill = await fetchBill(consumerCode, tenantId, "task-generic");
       if (!bill?.Bill?.length) {
-        showToast("success", t("CS_NO_PENDING_PAYMENT"), 50000);
+        setShowToast({ label: t("CS_NO_PENDING_PAYMENT"), error: false });
         setIsCaseLocked(true);
         setPayOnlineButtonTitle("CS_BUTTON_PAY_ONLINE_NO_PENDING_PAYMENT");
         return;
@@ -173,7 +164,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
       );
       if (caseLockStatus?.Lock?.isLocked) {
         setIsCaseLocked(true);
-        showToast("success", t("CS_CASE_LOCKED_BY_ANOTHER_USER"), 50000);
+        setShowToast({ label: t("CS_CASE_LOCKED_BY_ANOTHER_USER"), error: false });
         setPayOnlineButtonTitle("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
         return;
       }
@@ -210,20 +201,12 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
         });
       }
     } catch (error) {
-      toast.error(t("CS_PAYMENT_ERROR"));
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("CS_PAYMENT_ERROR"), error: true, errorId });
       console.error(error);
     }
   };
 
-  // if (isPaymentTypeLoading) {
-  //   return <Loader />;
-  // }
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
   return (
     <div className="e-filing-payment">
       <style>{`.tooltip {
@@ -346,9 +329,15 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
                   />
                 </div>
               </div>
-              {toastMsg && (
-                <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
-              )}{" "}
+              {showToast && (
+                <CustomToast
+                  error={showToast?.error}
+                  label={showToast?.label}
+                  errorId={showToast?.errorId}
+                  onClose={() => setShowToast(null)}
+                  duration={showToast?.errorId ? 7000 : 5000}
+                />
+              )}
             </React.Fragment>
           )}
         </React.Fragment>
