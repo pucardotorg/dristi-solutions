@@ -18,7 +18,7 @@ public class CaseMemberInfoRowMapper implements RowMapper<CaseMemberInfo> {
                 .filingNumber(rs.getString("filingnumber"))
                 .cmpNumber(rs.getString("cmpnumber"))
                 .lprNumber(rs.getString("lprnumber"))
-                .isLPRCase(rs.getObject("islprcase") != null ? rs.getBoolean("islprcase") : null)
+                .lifecycleStatus(rs.getString("lifecyclestatus") != null ? org.pucar.dristi.web.models.enums.LifecycleStatus.valueOf(rs.getString("lifecyclestatus")) : null)
                 .courtCaseNumber(rs.getString("courtcasenumber"))
                 .caseTitle(rs.getString("casetitle"))
                 .isActive(rs.getObject("is_active") != null ? rs.getBoolean("is_active") : null)

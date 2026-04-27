@@ -4206,7 +4206,7 @@ public class CaseService {
 
         if (courtCaseRedis != null) {
             courtCaseRedis.setStage(caseOverallStatus.getStage());
-            courtCaseRedis.setStageBackup(caseOverallStatus.getStageBackup());
+            courtCaseRedis.setLifecycleStatus(caseOverallStatus.getLifecycleStatus());
         }
         updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
     }
@@ -6411,7 +6411,7 @@ public class CaseService {
 
             validator.validateUpdateLPRDetails(caseRequest);
 
-            if (courtCase.getIsLPRCase()) {
+            if (courtCase.getLifecycleStatus() == org.pucar.dristi.web.models.enums.LifecycleStatus.LPR) {
                 // moving the case into LPR
                 enrichmentUtil.enrichLPRNumber(caseRequest);
             } else {
@@ -6609,7 +6609,7 @@ public class CaseService {
             caseConversionDetails.setPreCaseNumber(courtCase.getFilingNumber());
             caseConversionDetails.setPostCaseNumber(courtCase.getCmpNumber());
             caseConversionDetails.setDateOfConversion(dateOfConversion);
-        } else if (Boolean.TRUE.equals(courtCase.getIsLPRCase()) && courtCase.getLprNumber() != null) {
+        } else if (courtCase.getLifecycleStatus() == org.pucar.dristi.web.models.enums.LifecycleStatus.LPR && courtCase.getLprNumber() != null) {
             caseConversionDetails.setConvertedFrom(ST);
             caseConversionDetails.setConvertedTo(LP);
             caseConversionDetails.setPreCaseNumber(courtCase.getCourtCaseNumber());

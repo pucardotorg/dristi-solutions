@@ -183,9 +183,6 @@ public class PaymentUpdateService {
             CourtCase latestRedisCase = caseService.searchRedisCache(requestInfo, courtCase.getId().toString());
             if (latestRedisCase != null) {
                 caseRequest.getCases().setStage(latestRedisCase.getStage());
-                caseRequest.getCases().setSubstage(latestRedisCase.getSubstage());
-                caseRequest.getCases().setStageBackup(latestRedisCase.getStageBackup());
-                caseRequest.getCases().setSubstageBackup(latestRedisCase.getSubstageBackup());
             }
             cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), caseRequest.getCases());
             if(paymentReceipt!=null){

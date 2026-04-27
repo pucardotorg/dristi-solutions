@@ -71,7 +71,7 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
                         .secondaryStage(getObjectListFromJson(rs.getString("secondaryStage"), new TypeReference<List<String>>() {}))
                         .filingNumber(rs.getString("filingnumber"))
                         .lastModifiedTime(rs.getLong("lastmodifiedtime"))
-                        .isLPRCase(rs.getBoolean("isLPRCase"))
+                        .lifecycleStatus(org.pucar.dristi.web.models.enums.LifecycleStatus.valueOf(rs.getString("lifecycleStatus") != null ? rs.getString("lifecycleStatus") : "ACTIVE"))
                         .lprNumber(rs.getString("lprNumber"))
                         .build();
 

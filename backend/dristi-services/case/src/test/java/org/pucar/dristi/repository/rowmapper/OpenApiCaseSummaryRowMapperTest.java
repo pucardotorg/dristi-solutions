@@ -46,7 +46,6 @@ class OpenApiCaseSummaryRowMapperTest {
         when(resultSet.getString("cmpnumber")).thenReturn("CMP123");
         when(resultSet.getString("casetype")).thenReturn("ST");
         when(resultSet.getString("stage")).thenReturn("Stage1");
-        when(resultSet.getString("substage")).thenReturn("Substage1");
 
         // Invoke the method
         List<OpenApiCaseSummary> result = rowMapper.extractData(resultSet);
@@ -61,7 +60,6 @@ class OpenApiCaseSummaryRowMapperTest {
         assertEquals(1625184000000L, caseSummary.getRegistrationDate());
         assertEquals("CMP123", caseSummary.getRegistrationNumber());
         assertEquals(OpenApiCaseSummary.CaseTypeEnum.ST, caseSummary.getCaseType());
-        assertEquals("Stage1 - Substage1", caseSummary.getSubStage());
 
         verify(resultSet, times(1)).getString("id");
         verify(resultSet, times(1)).getString("cnrnumber");

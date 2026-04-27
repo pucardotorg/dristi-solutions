@@ -194,8 +194,8 @@ public class CourtCase {
     @JsonProperty("lprNumber")
     private String lprNumber = null;
 
-    @JsonProperty("isLPRCase")
-    private Boolean isLPRCase = false;
+    @JsonProperty("lifecycleStatus")
+    private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
 
     @JsonProperty("poaHolders")
     @Valid

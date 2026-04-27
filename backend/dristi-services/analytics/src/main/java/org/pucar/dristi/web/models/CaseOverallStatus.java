@@ -32,8 +32,8 @@ public class CaseOverallStatus {
     @JsonProperty("stage")
     private String stage = null;
 
-    @JsonProperty("substage")
-    private String substage = null;
+    @JsonProperty("lifecycleStatus")
+    private LifecycleStatus lifecycleStatus;
 
     @JsonProperty("secondaryStage")
     private List<String> secondaryStage = new ArrayList<>();
@@ -41,21 +41,14 @@ public class CaseOverallStatus {
     @JsonProperty("processHandler")
     private ProcessHandler processHandler = ProcessHandler.RESET_BACKUP;
 
-    @JsonProperty("stageBackup")
-    private String stageBackup = null;
-
-    @JsonProperty("substageBackup")
-    private String substageBackup = null;
-
     @JsonProperty("auditDetails")
     @Valid
     private AuditDetails auditDetails = null;
 
-    public CaseOverallStatus(String filingNumber, String tenantId, String stage, String substage) {
+    public CaseOverallStatus(String filingNumber, String tenantId, String stage) {
         this.filingNumber = filingNumber;
         this.tenantId = tenantId;
         this.stage = stage;
-        this.substage = substage;
     }
 
 }

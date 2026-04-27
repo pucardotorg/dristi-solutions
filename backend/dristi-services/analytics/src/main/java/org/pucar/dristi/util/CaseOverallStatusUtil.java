@@ -27,6 +27,7 @@ import org.pucar.dristi.web.models.CaseOverallStatus;
 import org.pucar.dristi.web.models.CaseOverallStatusType;
 import org.pucar.dristi.web.models.CaseStageSubStage;
 import org.pucar.dristi.web.models.Outcome;
+import org.pucar.dristi.web.models.LifecycleStatus;
 import org.pucar.dristi.web.models.enums.ProcessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -170,7 +171,7 @@ public class CaseOverallStatusUtil {
 		for (CaseOverallStatusType caseOverallStatusType : caseOverallStatusTypeList) {
 			if (HEARING.equalsIgnoreCase(caseOverallStatusType.getEntityType()) && caseOverallStatusType.getTypeIdentifier().equalsIgnoreCase(hearingType)) {
 				Integer priority = caseOverallStatusType.getPriority() != null ? caseOverallStatusType.getPriority() : Integer.MAX_VALUE;
-				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, caseOverallStatusType.getStage(), "");
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, caseOverallStatusType.getStage());
 				caseOverallStatus.setProcessHandler(caseOverallStatusType.getProcessHandler());
 				priorityMap.put(priority, caseOverallStatus);
 			}
@@ -260,7 +261,7 @@ public class CaseOverallStatusUtil {
 				// Track stage timing in ES: add new stage entry with startTime=now, endTime=null
 				trackStageTransition(filingNumber, tenantId, statusType);
 
-                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), "");
+                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage());
 			}
 		}
 		return null;
@@ -338,7 +339,7 @@ public class CaseOverallStatusUtil {
 	private org.pucar.dristi.web.models.CaseOverallStatus determineHearingStage(String filingNumber, String tenantId, String hearingType, String action) {
 		for (org.pucar.dristi.web.models.CaseOverallStatusType statusType : caseOverallStatusTypeList) {
 			if (statusType.getAction().equalsIgnoreCase(action) && statusType.getTypeIdentifier().equalsIgnoreCase(hearingType))
-                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), "");
+                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage());
 		}
 		return null;
 	}
@@ -347,7 +348,7 @@ public class CaseOverallStatusUtil {
 		if(SUMMONS.equalsIgnoreCase(orderType)){
 			boolean isAccusedJoinedCase = hasAccusedJoinedCase(caseObject);
 			if(!isAccusedJoinedCase){
-				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, STAGE_APPEARANCE, "");
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, STAGE_APPEARANCE);
 				Integer priority = Integer.MAX_VALUE;
 				priorityMap.put(priority, caseOverallStatus);
 				return caseOverallStatus;
@@ -374,7 +375,7 @@ public class CaseOverallStatusUtil {
 			}
 
 			if (isMatch) {
-				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), "");
+				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, statusType.getStage());
 				caseOverallStatus.setProcessHandler(statusType.getProcessHandler());
 				Integer priority = statusType.getPriority() != null ? statusType.getPriority() : Integer.MAX_VALUE;
 				priorityMap.put(priority, caseOverallStatus);
@@ -433,7 +434,7 @@ public class CaseOverallStatusUtil {
 			if (STAGE_APPEARANCE.equalsIgnoreCase(currentStage) && hasAccusedJoinedCase(caseObject)) {
 				log.info("Case {} is in Appearance stage and accused has joined, transitioning to Bail & Recording of Plea", filingNumber);
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(
-						filingNumber, tenantId, STAGE_BAIL_AND_RECORDING_OF_PLEA, "");
+						filingNumber, tenantId, STAGE_BAIL_AND_RECORDING_OF_PLEA);
 				publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
 				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_APPEARANCE, STAGE_BAIL_AND_RECORDING_OF_PLEA);
 			} else {
@@ -475,15 +476,12 @@ public class CaseOverallStatusUtil {
 					log.debug("Could not enrich caseId in stage tracking for filingNumber: {}", filingNumber);
 				}
 
-                Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
+                String lifecycleStatus = JsonPath.read(caseObject.toString(), CASE_LIFECYCLE_STATUS_PATH);
 				String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
 				String caseSubStage = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_PATH);
-				String caseStageBackup = JsonPath.read(caseObject.toString(), CASE_STAGE_BACKUP_PATH);
-				String caseSubStageBackup = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_BACKUP_PATH);
+				handleProcessBackup(caseOverallStatus, caseStage, caseSubStage);
 
-				handleProcessBackup(caseOverallStatus, caseStage, caseSubStage, caseStageBackup, caseSubStageBackup);
-
-				if (!handleLprCase(caseOverallStatus, isLprCase, caseStage, filingNumber)) {
+				if (!handleLprCase(caseOverallStatus, lifecycleStatus, caseStage, filingNumber)) {
 					return;
 				}
 
@@ -506,7 +504,7 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private void handleProcessBackup(CaseOverallStatus caseOverallStatus, String currentCaseStage, String currentCaseSubStage, String caseStageBackup, String caseSubStageBackup) {
+	private void handleProcessBackup(CaseOverallStatus caseOverallStatus, String currentCaseStage, String currentCaseSubStage) {
 		if (caseOverallStatus.getProcessHandler() == null) {
 			caseOverallStatus.setProcessHandler(ProcessHandler.RESET_BACKUP);
 		}
@@ -515,23 +513,15 @@ public class CaseOverallStatusUtil {
 		String tenantId = caseOverallStatus.getTenantId();
 
 		if (caseOverallStatus.getProcessHandler() == UPDATE_BACKUP) {
-			if (caseOverallStatus.getStageBackup() == null) {
-				caseOverallStatus.setStageBackup(currentCaseStage);
-				caseOverallStatus.setSubstageBackup(currentCaseSubStage);
-			}
+			caseOverallStatus.setLifecycleStatus(LifecycleStatus.LPR);
 			// End the current stage and add the new stage in ES (e.g., entering LPR)
 			String newStage = caseOverallStatus.getStage();
 			caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, newStage);
 			log.info("UPDATE_BACKUP: ended stage '{}', started stage '{}' for filingNumber: {}", currentCaseStage, newStage, filingNumber);
 		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESET_BACKUP) {
-			caseOverallStatus.setStageBackup(null);
-			caseOverallStatus.setSubstageBackup(null);
+			caseOverallStatus.setLifecycleStatus(LifecycleStatus.ACTIVE);
 		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESTORE_BACKUP) {
-			// If stage hasn't been set from second priority, use case backup values
-			if (caseOverallStatus.getStage() == null || caseOverallStatus.getStage().isEmpty() || caseOverallStatus.getStage().equalsIgnoreCase(RESTORE_BACKUP)) {
-				caseOverallStatus.setStage(caseStageBackup);
-				caseOverallStatus.setSubstage(caseSubStageBackup);
-			}
+			caseOverallStatus.setLifecycleStatus(LifecycleStatus.ACTIVE);
 			// End the current stage and add the restored stage in ES (e.g., leaving LPR)
 			String restoredStage = caseOverallStatus.getStage();
 			caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, restoredStage);
@@ -539,14 +529,13 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private boolean handleLprCase(CaseOverallStatus caseOverallStatus, Boolean isLprCase, String caseStage, String filingNumber) {
-		if (isLprCase != null && isLprCase) {
+	private boolean handleLprCase(CaseOverallStatus caseOverallStatus, String lifecycleStatus, String caseStage, String filingNumber) {
+		if (LifecycleStatus.LPR.name().equals(lifecycleStatus)) {
 			if (config.getLprStage().equalsIgnoreCase(caseStage)) {
 				log.info("case is already in lpr stage : {} ", filingNumber);
 				return false;
 			}
 			caseOverallStatus.setStage(config.getLprStage());
-			caseOverallStatus.setSubstage(config.getLprSubStage());
 		}
 		return true;
 	}
@@ -627,8 +616,8 @@ public class CaseOverallStatusUtil {
 				RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
                 String filingNumber = outcome.getFilingNumber();
                 Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
-                Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
-                if (isLprCase != null && isLprCase) {
+                String lifecycleStatus = JsonPath.read(caseObject.toString(), CASE_LIFECYCLE_STATUS_PATH);
+                if (LifecycleStatus.LPR.name().equals(lifecycleStatus)) {
                     log.info("case is in long pending registration {} not eligible for case outcome update" , filingNumber);
                     return;
                 }
@@ -699,12 +688,10 @@ public class CaseOverallStatusUtil {
 
 					if (finalCaseOverallStatus.getProcessHandler() == ProcessHandler.RESTORE_BACKUP) {
 						// For RESTORE_BACKUP, use second priority values directly for stage/substage
-						finalCaseOverallStatus.setStage(backupCaseOverallStatus.getStage());
-						finalCaseOverallStatus.setSubstage(backupCaseOverallStatus.getSubstage());
-					} else if (finalCaseOverallStatus.getStageBackup() == null && UPDATE_BACKUP.equals(finalCaseOverallStatus.getProcessHandler())) {
-						// For other handlers, set backup values if not already set
-						finalCaseOverallStatus.setStageBackup(backupCaseOverallStatus.getStage());
-						finalCaseOverallStatus.setSubstageBackup(backupCaseOverallStatus.getSubstage());
+						finalCaseOverallStatus.setLifecycleStatus(LifecycleStatus.ACTIVE);
+					} else if (UPDATE_BACKUP.equals(finalCaseOverallStatus.getProcessHandler())) {
+						// For UPDATE_BACKUP, mark lifecycle as LPR
+						finalCaseOverallStatus.setLifecycleStatus(LifecycleStatus.LPR);
 					}
 				}
 			}

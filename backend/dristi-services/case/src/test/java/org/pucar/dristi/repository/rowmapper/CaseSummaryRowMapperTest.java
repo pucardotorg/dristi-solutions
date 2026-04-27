@@ -45,7 +45,6 @@ public class CaseSummaryRowMapperTest {
         when(resultSet.getString("casetitle")).thenReturn("Case Title 1");
         when(resultSet.getString("filingdate")).thenReturn("123456789");
         when(resultSet.getString("stage")).thenReturn("stage1");
-        when(resultSet.getString("substage")).thenReturn("substage1");
         when(resultSet.getString("outcome")).thenReturn("outcome1");
         when(resultSet.getString("natureofdisposal")).thenReturn("DISMISSED");
         when(resultSet.getString("courtid")).thenReturn("courtId");

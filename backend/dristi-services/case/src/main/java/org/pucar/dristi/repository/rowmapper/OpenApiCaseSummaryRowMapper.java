@@ -50,7 +50,7 @@ public class OpenApiCaseSummaryRowMapper implements ResultSetExtractor<List<Open
                             .registrationNumber(rs.getString("cmpnumber"))
                             .caseType(getCaseType(rs))
                             .status(getStatus(rs))
-                            .subStage(rs.getString("stage") + " - " + rs.getString("substage"))
+                            .subStage(rs.getString("stage"))
                             .build();
 
                     openApiCaseSummaryMap.put(caseId, openApiCaseSummary);

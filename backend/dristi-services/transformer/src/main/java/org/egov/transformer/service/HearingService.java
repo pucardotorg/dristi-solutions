@@ -192,7 +192,7 @@ public class HearingService {
         searchableFields.addAll(hearing.getFilingNumber());
         if (hearing.getCmpNumber() != null) searchableFields.add(hearing.getCmpNumber());
         if (hearing.getCourtCaseNumber() != null) searchableFields.add(hearing.getCourtCaseNumber());
-        if (courtCase.getIsLPRCase() && courtCase.getLprNumber() != null) {
+        if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus()) && courtCase.getLprNumber() != null) {
             searchableFields.add(courtCase.getLprNumber());
         }
         return searchableFields;
@@ -261,7 +261,7 @@ public class HearingService {
 
     private String enrichCaseNumber(Hearing hearing, CourtCase courtCase) {
 
-        if (courtCase.getIsLPRCase() != null && courtCase.getIsLPRCase()) {
+        if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())) {
             return courtCase.getLprNumber();
         }
 

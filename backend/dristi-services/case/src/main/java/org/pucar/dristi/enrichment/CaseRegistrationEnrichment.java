@@ -444,7 +444,7 @@ public class CaseRegistrationEnrichment {
         }
 
         // Case for LPR (Legal Person Registration) cases with a court case number
-        else if (!courtCase.getIsLPRCase() && courtCase.getLprNumber() != null) {
+        else if (courtCase.getLifecycleStatus() != org.pucar.dristi.web.models.enums.LifecycleStatus.LPR && courtCase.getLprNumber() != null) {
             return extractYearFromCourtCaseNumber(courtCase.getCourtCaseNumber());
         } else {
             throw new CustomException(ENRICHMENT_EXCEPTION, "Invalid case for enriching court case number");

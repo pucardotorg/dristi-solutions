@@ -22,15 +22,15 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 public class CaseQueryBuilder {
     private static final String BASE_CASE_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
             "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.accesscode as accesscode, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber, " +
-            " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby," +
-            " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails, cases.secondaryStage as secondaryStage";
+            " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby," +
+            " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.lprNumber as lprNumber, cases.lifecycleStatus as lifecycleStatus, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails, cases.secondaryStage as secondaryStage";
 
     private static final String BASE_CASE_SUMMARY_LIST_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.courtid as courtid, cases.casetitle as casetitle, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
-            " cases.cmpnumber as cmpnumber, cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.status as status, cases.pendingadvocaterequests as pendingadvocaterequests, cases.stage as stage, cases.filingdate as filingdate,cases.lastmodifiedtime as lastmodifiedtime, cases.createdtime as createdtime, cases.isLPRCase as isLPRCase, cases.lprNumber as lprNumber, cases.secondaryStage as secondaryStage";
+            " cases.cmpnumber as cmpnumber, cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.status as status, cases.pendingadvocaterequests as pendingadvocaterequests, cases.stage as stage, cases.filingdate as filingdate,cases.lastmodifiedtime as lastmodifiedtime, cases.createdtime as createdtime, cases.lifecycleStatus as lifecycleStatus, cases.lprNumber as lprNumber, cases.secondaryStage as secondaryStage";
 
     private static final String BASE_CASE_SUMMARY_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
             "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
-            " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.cmpnumber as cmpnumber,cases.createdby as createdby,cases.courtid as courtid, cases.benchid as benchid, cases.casetype as casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdtime as createdtime, cases.secondaryStage as secondaryStage";
+            " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.cmpnumber as cmpnumber,cases.createdby as createdby,cases.courtid as courtid, cases.benchid as benchid, cases.casetype as casetype, cases.judgeid as judgeid, cases.stage as stage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdtime as createdtime, cases.secondaryStage as secondaryStage";
 
     private static final String FROM_CASES_TABLE = " FROM dristi_cases cases";
     private static final String ORDERBY_CLAUSE = " ORDER BY cases.{orderBy} {sortingOrder} ";
@@ -174,8 +174,6 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addListCriteria(criteria.getOutcome(), query, firstCriteria, "cases.outcome", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
-                firstCriteria = addCriteria(criteria.getSubstage(), query, firstCriteria, "cases.substage = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
-
                 firstCriteria = addCaseSearchTextCriteria(criteria, query, firstCriteria, preparedStmtList, preparedStmtArgList);
 
                 firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
@@ -190,12 +188,12 @@ public class CaseQueryBuilder {
 
                 addRegistrationDateCriteria(criteria, firstCriteria, query, preparedStmtList, preparedStmtArgList);
 
-                // Filter by isLPRCase if specified
-                if (criteria.getIsLPRCase() != null) {
+                // Filter by lifecycleStatus if specified
+                if (criteria.getLifecycleStatus() != null) {
                     addClauseIfRequired(query, firstCriteria);
-                    query.append("cases.isLPRCase = ?");
-                    preparedStmtList.add(criteria.getIsLPRCase());
-                    preparedStmtArgList.add(Types.BOOLEAN);
+                    query.append("cases.lifecycleStatus = ?");
+                    preparedStmtList.add(criteria.getLifecycleStatus().name());
+                    preparedStmtArgList.add(Types.VARCHAR);
                     firstCriteria = false;
                 }
             }
@@ -399,8 +397,6 @@ public class CaseQueryBuilder {
                 firstCriteria = addListCriteria(criteria.getStage(), query, firstCriteria, "cases.stage", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
                 firstCriteria = addListCriteria(criteria.getOutcome(), query, firstCriteria, "cases.outcome", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
-
-                firstCriteria = addCriteria(criteria.getSubstage(), query, firstCriteria, "cases.substage = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
                 firstCriteria = addCaseSearchTextCriteria(criteria, query, firstCriteria, preparedStmtList, preparedStmtArgList);
 
