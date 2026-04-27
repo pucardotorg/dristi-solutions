@@ -156,7 +156,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
     setDocumentData(currentDocumentDataCopy);
     onSelect(config.key, currentDocumentDataCopy);
   };
-  
+
   return (
     <div className="file-uploader-with-name">
       {documentData.length > 0 &&

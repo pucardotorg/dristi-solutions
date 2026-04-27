@@ -506,6 +506,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           onSubmit={onUploadSubmit}
           isDisabled={loader}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {/* after signing showing signed modal */}

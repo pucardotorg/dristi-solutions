@@ -1373,6 +1373,7 @@ const ComplainantSignature = ({ path }) => {
           warningText={t("UPLOAD_SIGNED_DOC_WARNING")}
           onSubmit={onSubmit}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {isEditCaseModal && (

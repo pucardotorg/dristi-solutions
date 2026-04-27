@@ -211,6 +211,7 @@ function ESignSignatureModal({
         formData={formData}
         onSubmit={onSubmit}
         fileUploadError={fileUploadError}
+        setFileUploadError={setFileUploadError}
       />
       {showToast && (
         <CustomToast

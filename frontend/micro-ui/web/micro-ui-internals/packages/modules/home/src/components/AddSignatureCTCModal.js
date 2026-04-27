@@ -187,6 +187,7 @@ const AddSignatureCTCModal = ({
         onSubmit={onSubmit}
         isDisabled={loader}
         fileUploadError={fileUploadError}
+        setFileUploadError={setFileUploadError}
       />
       {showToast && (
         <CustomToast

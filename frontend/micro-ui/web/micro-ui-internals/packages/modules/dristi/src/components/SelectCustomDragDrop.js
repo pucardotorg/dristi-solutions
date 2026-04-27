@@ -94,7 +94,7 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
     if (file?.type && input?.fileTypes?.length) {
       const allowedMimes = input.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
       if (allowedMimes.length && !allowedMimes.includes(file.type)) {
-        setError(config.key, { message: t("NOT_SUPPORTED_FILE_TYPE") });
+        setError(`${config?.key}_${index}`, { message: t("NOT_SUPPORTED_FILE_TYPE") });
         return;
       }
     } else if (clearErrors) {

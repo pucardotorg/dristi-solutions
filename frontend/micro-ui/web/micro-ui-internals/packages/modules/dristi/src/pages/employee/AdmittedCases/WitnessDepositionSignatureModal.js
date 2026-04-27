@@ -162,6 +162,7 @@ const WitnessDepositionSignatureModal = ({
           fileStoreId={witnessDepositionFileStoreId}
           cancelLabel={"SUBMIT"}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
     </React.Fragment>

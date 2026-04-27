@@ -710,6 +710,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
 

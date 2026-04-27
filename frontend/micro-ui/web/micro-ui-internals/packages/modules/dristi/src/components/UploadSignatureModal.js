@@ -26,6 +26,7 @@ function UploadSignatureModal({
   fileStoreId,
   fileUploadError,
   onCustomDownload,
+  setFileUploadError,
 }) {
   const [error, setError] = useState({});
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -53,11 +54,13 @@ function UploadSignatureModal({
     const updatedError = { ...error };
     delete updatedError[key];
     setError(updatedError);
+    setFileUploadError(null);
   };
 
   const setErrors = (key, errorMsg) => {
     if (!key) return;
     setError((prevErrors) => ({ ...prevErrors, [key]: errorMsg }));
+    setFileUploadError(null);
   };
 
   return (

@@ -264,6 +264,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
           formData={formData}
           onSubmit={onSubmit}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {showToast && (
