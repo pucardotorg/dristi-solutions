@@ -683,6 +683,9 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     const newData = { ...advocateAndPipData, [input?.fileKey]: { [input?.name]: currentValue } };
     onSelect(config?.key, newData);
     setAdvocateAndPipData(newData);
+    if (clearErrors) {
+      clearErrors(config.key);
+    }
   };
 
   const disableRadio = useMemo(() => {
