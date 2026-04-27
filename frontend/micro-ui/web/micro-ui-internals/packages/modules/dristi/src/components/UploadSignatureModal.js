@@ -27,6 +27,7 @@ function UploadSignatureModal({
   fileStoreId,
   fileUploadError,
   onCustomDownload,
+  setFileUploadError,
 }) {
   const toast = useToast();
   const [error, setError] = useState({});
@@ -57,11 +58,13 @@ function UploadSignatureModal({
     const updatedError = { ...error };
     delete updatedError[key];
     setError(updatedError);
+    setFileUploadError(null);
   };
 
   const setErrors = (key, errorMsg) => {
     if (!key) return;
     setError((prevErrors) => ({ ...prevErrors, [key]: errorMsg }));
+    setFileUploadError(null);
   };
 
   return (

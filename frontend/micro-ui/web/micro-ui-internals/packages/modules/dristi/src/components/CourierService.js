@@ -217,10 +217,7 @@ function CourierService({
         }
       }
 
-      if (
-        (orderType === "WARRANT" || !orderType) &&
-        (!processCourierData?.warrantCourierService)
-      ) {
+      if ((orderType === "WARRANT" || !orderType) && !processCourierData?.warrantCourierService) {
         const policeWarrantOption = courierOptions?.find((option) => option?.channelId === "POLICE" && option?.taskType === "WARRANT");
         if (policeWarrantOption) {
           data = { ...data, warrant: [policeWarrantOption] };
@@ -358,7 +355,7 @@ function CourierService({
             <div
               className="dropdown-container"
               onClick={() => {
-                if (!summonsActive && isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
+                if (!isDisableAllFields && !summonsActive && isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
                   setShowConfirmationModal(true);
                 }
               }}

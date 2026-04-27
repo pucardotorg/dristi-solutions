@@ -529,6 +529,7 @@ export const WitnessDepositionSignModal = ({
           onSubmit={onUploadSubmit}
           isDisabled={loader}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {/* after signing showing signed modal */}
