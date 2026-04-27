@@ -5,6 +5,7 @@ import { Modal } from "@egovernments/digit-ui-react-components";
 import AdmissionActionModal from "../admission/AdmissionActionModal";
 import { DRISTIService } from "../../../services";
 import { CloseBtn } from "../../../components/ModalComponents";
+import { isLPRCase } from "../../../Utils";
 
 const ScheduleHearing = ({
   tenantId,
@@ -42,7 +43,7 @@ const ScheduleHearing = ({
           filingNumber: [caseData.filingNumber],
           hearingType: data.purpose,
           courtCaseNumber:
-            (caseData?.case?.isLPRCase ? caseData?.case?.lprNumber : caseData?.case?.courtCaseNumber) || caseData?.case?.courtCaseNumber,
+            (isLPRCase(caseData?.case) ? caseData?.case?.lprNumber : caseData?.case?.courtCaseNumber) || caseData?.case?.courtCaseNumber,
           cmpNumber: caseData?.case?.cmpNumber,
           status: true,
           attendees: [

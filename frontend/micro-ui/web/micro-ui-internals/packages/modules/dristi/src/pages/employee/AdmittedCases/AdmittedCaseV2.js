@@ -33,6 +33,7 @@ import {
   getAllAssociatedPartyUuids,
   getAuthorizedUuid,
   getDate,
+  isLPRCase,
   removeInvalidNameParts,
 } from "../../../Utils";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
@@ -1751,7 +1752,7 @@ const AdmittedCaseV2 = () => {
     async (generateOrder, type) => {
       try {
         const caseNumber =
-          (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+          (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
           caseDetails?.courtCaseNumber ||
           caseDetails?.cmpNumber ||
           caseDetails?.filingNumber;
@@ -1859,7 +1860,7 @@ const AdmittedCaseV2 = () => {
             tenantId: tenantId,
             filingNumber: [caseDetails.filingNumber],
             hearingType: purpose,
-            courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
+            courtCaseNumber: isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
             cmpNumber: caseDetails?.cmpNumber,
             status: true,
             attendees: [
@@ -3659,7 +3660,7 @@ const AdmittedCaseV2 = () => {
                 <hr className="vertical-line" />
               </React.Fragment>
             )}
-            {caseDetails?.isLPRCase ? (
+            {isLPRCase(caseDetails) ? (
               <React.Fragment>
                 <div className="sub-details-text">{caseDetails?.lprNumber}</div>
                 <hr className="vertical-line" />
@@ -3679,7 +3680,7 @@ const AdmittedCaseV2 = () => {
                 <hr className="vertical-line" />
               </React.Fragment>
             )}
-            <div className="sub-details-text">Stage: {t(caseDetails?.stage)}</div>
+            <div className="sub-details-text">Stage: {isLPRCase(caseDetails) ? t("Long Pending Register") : t(caseDetails?.stage)}</div>
             {(Array.isArray(caseDetails?.secondaryStage) ? caseDetails?.secondaryStage?.length > 0 : caseDetails?.secondaryStage) && (
               <React.Fragment>
                 <hr className="vertical-line" />

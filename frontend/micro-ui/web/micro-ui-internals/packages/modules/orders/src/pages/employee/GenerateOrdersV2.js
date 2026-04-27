@@ -49,6 +49,7 @@ import {
   getAuthorizedUuid,
   getOrderActionName,
   getOrderTypes,
+  isLPRCase,
   setApplicationStatus,
 } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import useSearchMiscellaneousTemplate from "../../hooks/orders/useSearchMiscellaneousTemplate";
@@ -337,7 +338,7 @@ const GenerateOrdersV2 = () => {
       else if (isBailApplicationPending) baseSet = ORDER_TYPE_SETS.PENDING_BAIL;
       else baseSet = ORDER_TYPE_SETS.PENDING_DEFAULT;
     } else if (caseDetails?.courtCaseNumber) {
-      if (caseDetails?.isLPRCase) baseSet = ORDER_TYPE_SETS.ADMITTED_LPR;
+      if (isLPRCase(caseDetails)) baseSet = ORDER_TYPE_SETS.ADMITTED_LPR;
       else if (!caseDetails?.lprNumber) baseSet = ORDER_TYPE_SETS.ADMITTED_NO_LPR;
       else baseSet = ORDER_TYPE_SETS.ADMITTED_DEFAULT;
     } else {
@@ -1096,7 +1097,7 @@ const GenerateOrdersV2 = () => {
         updatedFormdata.nameofRespondentAdvocate = uuidNameMap?.[allAdvocates?.[respondentPrimary?.additionalDetails?.uuid]] || "";
         setValueRef?.current?.[index]?.("nameofRespondentAdvocate", updatedFormdata.nameofRespondentAdvocate);
 
-        updatedFormdata.caseNumber = (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.courtCaseNumber;
+        updatedFormdata.caseNumber = (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.courtCaseNumber;
         setValueRef?.current?.[index]?.("caseNumber", updatedFormdata.caseNumber);
 
         updatedFormdata.nameOfCourt = courtRooms.find((room) => room.code === caseDetails?.courtId)?.name;
@@ -1387,6 +1388,7 @@ const GenerateOrdersV2 = () => {
       applicationData?.applicationList,
       orderTypeData,
       caseDetails?.litigants,
+      caseDetails?.lifecycleStatus,
       caseDetails?.isLPRCase,
       caseDetails?.lprNumber,
       caseDetails?.courtCaseNumber,
@@ -1614,7 +1616,7 @@ const GenerateOrdersV2 = () => {
       });
 
       const caseNumber =
-        (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+        (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
         caseDetails?.courtCaseNumber ||
         caseDetails?.cmpNumber ||
         caseDetails?.filingNumber;
@@ -2117,7 +2119,7 @@ const GenerateOrdersV2 = () => {
             "WITHDRAWAL_REJECT",
             "WITHDRAWAL_ACCEPT",
           ].includes(orderType) &&
-          caseDetails?.isLPRCase
+          isLPRCase(caseDetails)
         ) {
           setShowToast({
             label: t("ORDER_NOT_ALLOWED_FOR_LPR_CASE"),
@@ -2543,7 +2545,7 @@ const GenerateOrdersV2 = () => {
       const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
       const currentHearingPurpose = documentSubmission?.[0]?.applicationList?.applicationDetails?.initialHearingPurpose || "";
       const caseNumber =
-        (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+        (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
         caseDetails?.courtCaseNumber ||
         caseDetails?.cmpNumber ||
         caseDetails?.filingNumber;
