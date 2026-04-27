@@ -33,6 +33,7 @@ import org.pucar.dristi.web.models.analytics.CaseOutcome;
 import org.pucar.dristi.web.models.analytics.CaseOverallStatus;
 import org.pucar.dristi.web.models.analytics.CaseStageSubStage;
 import org.pucar.dristi.web.models.analytics.Outcome;
+import org.pucar.dristi.web.models.enums.LifecycleStatus;
 import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.pucar.dristi.web.models.task.Task;
 import org.pucar.dristi.web.models.task.TaskRequest;
@@ -6411,7 +6412,7 @@ public class CaseService {
 
             validator.validateUpdateLPRDetails(caseRequest);
 
-            if (courtCase.getLifecycleStatus() == org.pucar.dristi.web.models.enums.LifecycleStatus.LPR) {
+            if (courtCase.getLifecycleStatus().name().equalsIgnoreCase(LifecycleStatus.LPR.name())) {
                 // moving the case into LPR
                 enrichmentUtil.enrichLPRNumber(caseRequest);
             } else {
