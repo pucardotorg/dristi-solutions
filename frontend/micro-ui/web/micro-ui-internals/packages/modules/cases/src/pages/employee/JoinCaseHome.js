@@ -1,4 +1,4 @@
-import { Button, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DRISTIService } from "../../../../dristi/src/services";
 import { useTranslation } from "react-i18next";
@@ -10,7 +10,6 @@ import {
   searchIndividualUserWithUuid,
   submitJoinCase,
 } from "../../utils/joinCaseUtils";
-import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import SearchCaseAndShowDetails from "./joinCaseComponent/SearchCaseAndShowDetails";
 import AccessCodeValidation from "./joinCaseComponent/AccessCodeValidation";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
@@ -92,13 +91,10 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const [isSignedParty, setIsSignedParty] = useState(false);
   const [complainantList, setComplainantList] = useState([]);
   const [respondentList, setRespondentList] = useState([]);
-  const [showErrorToast, setShowErrorToast] = useState(false);
-  const [isAttendeeAdded, setIsAttendeeAdded] = useState(false);
   const [isLitigantJoined, setIsLitigantJoined] = useState(false);
   const [isAdvocateJoined, setIsAdvocateJoined] = useState(false);
   const [alreadyJoinedMobileNumber, setAlreadyJoinedMobileNumber] = useState([]);
   const [taskNumber, setTaskNumber] = useState("");
-  const [bailBondRequired, setBailBondRequired] = useState(false);
   const [poa, setIsPoa] = useState(false);
   const [poaJoinedParties, setPoaJoinedParties] = useState([]);
   const [formdata, setFormData] = useState({});
@@ -110,11 +106,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const authorizedUuid = getAuthorizedUuid(userInfo?.uuid);
 
-  const closeToast = () => {
-    setShowErrorToast(false);
-    setIsAttendeeAdded(false);
-  };
-
   useEffect(() => {
     if (type === "external") {
       setValidationCode(data?.caseDetails?.accessCode);
@@ -123,16 +114,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       setShow(showJoinCase);
     }
   }, [data?.caseDetails, showJoinCase, type]);
-
-  useEffect(() => {
-    let timer;
-    if (showErrorToast) {
-      timer = setTimeout(() => {
-        closeToast();
-      }, 2000);
-    }
-    return () => clearTimeout(timer);
-  }, [showErrorToast]);
 
   const { fetchBill, openPaymentPortal } = usePaymentProcess({ tenantId });
 
@@ -1463,7 +1444,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           successScreenData={successScreenData}
           isCaseViewDisabled={selectPartyData?.isReplaceAdvocate?.value === "YES" && !isAdvocateJoined}
           type={type}
-          isBailBondRequired={bailBondRequired}
+          isBailBondRequired={false}
           selectPartyData={selectPartyData}
           party={party}
           partyInPerson={partyInPerson}
@@ -1643,14 +1624,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           )}
           {step >= 0 && modalItem[step]?.modalMain}
         </Modal>
-      )}
-      {showErrorToast && (
-        <Toast
-          error={!isAttendeeAdded}
-          label={t(isAttendeeAdded ? "You have confirmed your attendance for summon!" : "You have already confirmed your attendance for the summon!")}
-          isDleteBtn={true}
-          onClose={closeToast}
-        />
       )}
       {showConfirmModal && (
         <Modal

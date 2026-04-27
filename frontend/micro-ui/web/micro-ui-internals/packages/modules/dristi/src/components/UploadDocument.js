@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Modal from "./Modal";
-import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
-import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import isEqual from "lodash/isEqual";
 import { runComprehensiveSanitizer } from "../Utils";
 import { CloseBtn, Heading } from "./ModalComponents";

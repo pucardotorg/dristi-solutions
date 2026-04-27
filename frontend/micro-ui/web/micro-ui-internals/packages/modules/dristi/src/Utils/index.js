@@ -1,4 +1,4 @@
-import { Request } from "@egovernments/digit-ui-libraries";
+import { Request } from "@egovernments/digit-ui-module-common/src/utils/Request";
 import isEmpty from "lodash/isEmpty";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DocumentUploadError } from "./errorUtil";

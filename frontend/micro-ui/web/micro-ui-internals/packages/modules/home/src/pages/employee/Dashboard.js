@@ -1,10 +1,11 @@
-import { Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
 import { BreadCrumb } from "@egovernments/digit-ui-react-components";
-import { MailBoxIcon, CaseDynamicsIcon, ThreeUserIcon, DownloadIcon, ExpandIcon, CollapseIcon, FilterIcon, DocumentIcon } from "../../../homeIcon";
+import { MailBoxIcon, CaseDynamicsIcon, ThreeUserIcon, DownloadIcon, ExpandIcon, CollapseIcon, DocumentIcon } from "../../../homeIcon";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const METABASE_URL = "https://oncourts.kerala.gov.in/pucar-dashboard/public/dashboard/981a30b4-c33a-4f11-96a6-1242d95717e2";
 
@@ -18,13 +19,8 @@ const DashboardPage = () => {
   const [jobId, setJobID] = useState("");
   const [headingTxt, setHeadingTxt] = useState("");
   const [metabaseUrl, setMetabaseUrl] = useState(METABASE_URL);
-  const [toastMsg, setToastMsg] = useState(null);
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
+  const [showToast, setShowToast] = useState(null);
+
   const autoLogin = useCallback(() => {
     const iframe = document.querySelector("iframe");
     setTimeout(() => {
@@ -104,16 +100,11 @@ const DashboardPage = () => {
     history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeActiveTab: "CS_HOME_A_DAIRY" });
   };
 
-  const { data: kibanaData, isLoading: isDashboardJobIDsLoading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "kibana",
-    [{ name: "dashboards" }, { name: "reports" }],
-    {
-      select: (data) => {
-        return data?.kibana || [];
-      },
-    }
-  );
+  const { data: kibanaData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "kibana", [{ name: "dashboards" }, { name: "reports" }], {
+    select: (data) => {
+      return data?.kibana || [];
+    },
+  });
   const sortedDashboards = useMemo(() => (Array.isArray(kibanaData?.dashboards) ? [...kibanaData?.dashboards].sort((a, b) => a.id - b.id) : []), [
     kibanaData?.dashboards,
   ]);
@@ -150,7 +141,7 @@ const DashboardPage = () => {
     try {
       const response = await axiosInstance.post(downloadLink, null, config);
       if (!response.data?.path) {
-        showToast("error", t("ERR_REPORT_PATH"), 50000);
+        setShowToast({ error: true, label: t("ERR_REPORT_PATH") });
         console.error("Report path not found in the response");
         setDownloadingIndices((prev) => prev.filter((i) => i !== index));
         return;
@@ -184,7 +175,7 @@ const DashboardPage = () => {
             clearInterval(pollTimer);
             clearInterval(timer);
 
-            showToast("error", t("ERR_REPORT_TIMEOUT"), 50000);
+            setShowToast({ error: true, label: t("ERR_REPORT_TIMEOUT") });
             console.error("Report not ready after max attempts");
 
             setDownloadingIndices((prev) => prev.filter((i) => i !== index));
@@ -194,7 +185,8 @@ const DashboardPage = () => {
 
       pollTimer = setInterval(tryDownload, pollInterval);
     } catch (error) {
-      showToast("error", t("ERR_REPORT_DOWNLOAD"), 50000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("ERR_REPORT_DOWNLOAD"), errorId });
       console.error("Error generating or downloading report:", error);
       setDownloadingIndices((prev) => prev.filter((i) => i !== index));
     }
@@ -332,13 +324,13 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
-      {toastMsg && (
-        <Toast
-          error={toastMsg.key === "error"}
-          label={t(toastMsg.action)}
-          onClose={() => setToastMsg(null)}
-          isDleteBtn={true}
-          style={{ maxWidth: "500px" }}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
     </div>

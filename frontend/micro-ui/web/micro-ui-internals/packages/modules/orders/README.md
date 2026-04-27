@@ -51,7 +51,6 @@ src/
 │   ├── NoticeSummonPartyComponent.js  # Notice/summon party config
 │   ├── OrderTypeControls.js           # Order type control panel
 │   ├── OrderTypeControlItem.js        # Individual order type control
-│   ├── OrdersCard.js                  # Dashboard card
 │   ├── PaymentStatus.js               # Payment status display
 │   ├── Print&SendDocuments.js         # Print and send workflow
 │   ├── ReIssueSummonsModal.js         # Re-issue summons modal
@@ -101,7 +100,6 @@ src/
 ├── pages/
 │   └── employee/
 │       ├── index.js                   # Route definitions
-│       ├── OrdersHome.js              # Orders home page
 │       ├── OrdersResponse.js          # Order action response
 │       ├── GenerateOrdersV2.js        # Order generation (V2)
 │       ├── ReviewSummonsNoticeAndWarrant.js # Summons/notice review
@@ -132,8 +130,6 @@ All routes in `src/pages/employee/index.js` use `PrivateRoute`.
 
 | Route Path | Component | Description |
 |---|---|---|
-| `{path}/orders-response` | `OrdersResponse` | Order action response |
-| `{path}/orders-home` | `OrdersHome` | Orders listing/home |
 | `{path}/generate-order` | `GenerateOrdersV2` | Order generation interface |
 | `{path}/Summons&Notice` | `ReviewSummonsNoticeAndWarrant` | Summons/notice/warrant review |
 | `{path}/payment-screen` | `PaymentStatus` | Payment status display |
@@ -270,7 +266,6 @@ All routes in `src/pages/employee/index.js` use `PrivateRoute`.
 
 ### Globally Registered Components
 - **`OrdersModule`** — Main module component
-- **`OrdersCard`** — Dashboard card
 - **`DeliveryChannels`** — Delivery channel selection component
 - **`OrderWorkflowActionEnum`** / **`OrderWorkflowStateEnum`** — Workflow constants
 - **`OrdersService`** — Service object for external use

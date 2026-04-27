@@ -1,6 +1,5 @@
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import React, { useEffect, useState } from "react";
-import { Toast } from "@egovernments/digit-ui-react-components";
+import React from "react";
 import CustomChip from "./CustomChip";
 import { CloseBtn } from "./ModalComponents";
 
@@ -71,20 +70,6 @@ const GenericPreviewModal = ({
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const [showErrorToast, setShowErrorToast] = useState(null);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   return (
     <React.Fragment>
@@ -132,9 +117,6 @@ const GenericPreviewModal = ({
           </div>
         </div>
       </Modal>
-      {showErrorToast && (
-        <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} style={{ zIndex: "10001" }} />
-      )}
     </React.Fragment>
   );
 };

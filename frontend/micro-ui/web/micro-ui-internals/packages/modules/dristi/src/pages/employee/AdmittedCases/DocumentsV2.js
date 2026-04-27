@@ -1,5 +1,6 @@
 import { DocumentSearchConfig } from "./DocumentsV2Config";
-import { InboxSearchComposer, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "../../../components/CustomToast";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
@@ -10,6 +11,7 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { useRouteMatch } from "react-router-dom/cjs/react-router-dom.min";
 import { MediationWorkflowState } from "../../../Utils/orderWorkflow";
 import { DRISTIService } from "../../../services";
+import EditSendBackModal from "../../../components/EditSendBackModal";
 
 const DocumentsV2 = ({
   caseDetails,
@@ -47,7 +49,10 @@ const DocumentsV2 = ({
   const isCitizen = userRoles?.includes("CITIZEN");
   const canSign = roles?.some((role) => role.code === "JUDGE_ROLE");
   const [activeTab, setActiveTab] = useState(sessionStorage.getItem("documents-activeTab") || "Documents");
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [deleteDigitalization, setDeleteDigitalization] = useState(null);
+  const [deleteEvidence, setDeleteEvidence] = useState(null);
 
   const { data: evidenceTypeData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Evidence", [{ name: "EvidenceType" }], {
     select: (data) => {
@@ -75,43 +80,61 @@ const DocumentsV2 = ({
       });
   }, [evidenceTypeData, t]);
 
-  const ditilizationDeleteFunc = async (history, column, row, item) => {
+  const ditilizationDeleteFunc = (history, column, row, item) => {
     if (item.id === "draft_ditilization_delete") {
-      const documentNumber = row?.documentNumber;
-      try {
-        const res = await Digit.submissionService.searchDigitalization({
-          criteria: {
-            tenantId: tenantId,
-            courtId: row?.courtId,
-            documentNumber: documentNumber,
-          },
-          pagination: {
-            limit: 10,
-            offSet: 0,
-          },
-        });
-        const payload = {
-          digitalizedDocument: {
-            ...res?.documents?.[0],
-            workflow: {
-              action: "DELETE_DRAFT",
-            },
-          },
-        };
-        await Digit.submissionService.updateDigitalization(payload, tenantId);
-        history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
-      } catch (error) {
-        console.error("error: ", error);
-        setShowErrorToast({ label: t("DELTED_SUCCESSFULLY"), error: true });
-      }
+      setDeleteDigitalization(row);
     }
   };
 
-  const evidenceDeleteFunc = async (row) => {
+  const handleDeleteDigitalization = async () => {
+    if (!deleteDigitalization) return;
+
+    setIsActionLoading(true);
     try {
-      const courtId = row?.courtId;
-      const filingNo = row?.filingNumber || filingNumber;
-      const artifactNum = row?.artifactNumber;
+      const documentNumber = deleteDigitalization?.documentNumber;
+      const res = await Digit.submissionService.searchDigitalization({
+        criteria: {
+          tenantId: tenantId,
+          courtId: deleteDigitalization?.courtId,
+          documentNumber: documentNumber,
+        },
+        pagination: {
+          limit: 10,
+          offSet: 0,
+        },
+      });
+      const payload = {
+        digitalizedDocument: {
+          ...res?.documents?.[0],
+          workflow: {
+            action: "DELETE_DRAFT",
+          },
+        },
+      };
+      await Digit.submissionService.updateDigitalization(payload, tenantId);
+      setDocumentCounter((prev) => prev + 1);
+      setDeleteDigitalization(null);
+    } catch (error) {
+      console.error("Failed to delete digitalization draft:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("DELETE_DIGITALIZATION_DRAFT_FAILED"), error: true, errorId });
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const evidenceDeleteFunc = (row) => {
+    setDeleteEvidence(row);
+  };
+
+  const handleDeleteEvidence = async () => {
+    if (!deleteEvidence) return;
+
+    setIsActionLoading(true);
+    try {
+      const courtId = deleteEvidence?.courtId;
+      const filingNo = deleteEvidence?.filingNumber || filingNumber;
+      const artifactNum = deleteEvidence?.artifactNumber;
 
       const searchRes = await DRISTIService.searchEvidence(
         {
@@ -138,11 +161,15 @@ const DocumentsV2 = ({
         },
       };
       await DRISTIService.updateEvidence({ artifact: payload }, {});
-      setShowErrorToast({ label: t("DELETE_EVIDENCE_DRAFT_SUCCESS"), error: false });
+      setShowToast({ label: t("DELETE_EVIDENCE_DRAFT_SUCCESS"), error: false });
       history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
+      setDeleteEvidence(null);
     } catch (error) {
       console.error("Error deleting evidence draft:", error);
-      setShowErrorToast({ label: t("DELETE_EVIDENCE_DRAFT_ERROR"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("DELETE_EVIDENCE_DRAFT_ERROR"), error: true, errorId });
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -548,7 +575,32 @@ const DocumentsV2 = ({
     };
 
     return getTabConfig(activeTabConfig);
-  }, [activeTab, userInfo, isCitizen, evidenceTypeOptions, caseDetails, userUuid, caseId, filingNumber]);
+  }, [
+    activeTab,
+    isCitizen,
+    evidenceTypeOptions,
+    caseDetails,
+    userUuid,
+    caseId,
+    filingNumber,
+    canSign,
+    caseCourtId,
+    cnrNumber,
+    downloadPdf,
+    history,
+    setDocumentSubmission,
+    setExaminationDocumentNumber,
+    setSelectedItem,
+    setSelectedRow,
+    setShow,
+    setShowExaminationModal,
+    setShowMakeAsEvidenceModal,
+    setShowVoidModal,
+    setShowWitnessDepositionDoc,
+    setShowWitnessModal,
+    setVoidReason,
+    tenantId,
+  ]);
   const newTabSearchConfig = useMemo(
     () => ({
       ...DocumentSearchConfig,
@@ -574,15 +626,6 @@ const DocumentsV2 = ({
     if (!caseDetails?.filingNumber) return null; // wait for caseDetails to load
     return newTabSearchConfig?.TabSearchconfig;
   }, [newTabSearchConfig?.TabSearchconfig, caseDetails?.filingNumber]);
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   return (
     <React.Fragment>
@@ -617,6 +660,44 @@ const DocumentsV2 = ({
         <InboxSearchComposer key={`${config?.label}-${counter}-${caseDetails?.filingNumber}`} configs={config} showTab={false}></InboxSearchComposer>
       ) : (
         <Loader></Loader>
+      )}
+      {(deleteEvidence !== null || deleteDigitalization !== null) && (
+        <EditSendBackModal
+          t={t}
+          handleCancel={() => {
+            if (!isActionLoading) {
+              setDeleteEvidence(null);
+              setDeleteDigitalization(null);
+            }
+          }}
+          handleSubmit={() => {
+            if (deleteEvidence !== null) {
+              handleDeleteEvidence();
+            } else if (deleteDigitalization !== null) {
+              handleDeleteDigitalization();
+            }
+          }}
+          headerLabel={"GENERATE_ORDER_CONFIRM_DELETE"}
+          saveLabel={"GENERATE_ORDER_DELETE"}
+          cancelLabel={"GENERATE_ORDER_CANCEL_EDIT"}
+          contentText={
+            deleteEvidence !== null
+              ? "ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_EVIDENCE_DRAFT"
+              : "ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_DIGITALIZATION_DRAFT"
+          }
+          className={"edit-send-back-modal"}
+          submitButtonStyle={{ backgroundColor: "#C7222A" }}
+          loader={isActionLoading}
+        />
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </React.Fragment>
   );

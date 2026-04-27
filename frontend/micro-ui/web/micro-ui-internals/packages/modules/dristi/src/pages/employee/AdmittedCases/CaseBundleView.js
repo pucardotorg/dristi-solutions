@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { DRISTIService } from "../../../services";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
-import { Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import DocViewerWrapper from "../docViewerWrapper";
 import { modifiedEvidenceNumber } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
@@ -11,6 +11,7 @@ import MarkAsEvidence from "./MarkAsEvidence";
 import DownloadButton from "../../../components/DownloadButton";
 import CustomChip from "../../../components/CustomChip";
 import { CustomArrowDownIcon, CustomArrowUpIcon } from "../../../icons/svgIndex";
+import CustomToast from "../../../components/CustomToast";
 
 function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [expandedItems, setExpandedItems] = useState({
@@ -31,7 +32,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [showEvidenceConfirmationModal, setShowEvidenceConfirmationModal] = useState(false);
   const [counter, setCounter] = useState(0);
   const { t } = useTranslation();
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
 
   const courtId = caseDetails?.courtId;
 
@@ -310,12 +311,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       </div>
     );
   };
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
 
   return (
     <React.Fragment>
@@ -405,16 +400,16 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           setShowMakeAsEvidenceModal={setShowEvidenceConfirmationModal}
           evidenceDetailsObj={evidenceFileStoreMap.get(selectedFileStoreId)}
           setDocumentCounter={setCounter}
-          showToast={showToast}
+          setShowToast={setShowToast}
         />
       )}
-      {toastMsg && (
-        <Toast
-          error={toastMsg.key === "error"}
-          label={t(toastMsg.action)}
-          onClose={() => setToastMsg(null)}
-          isDleteBtn={true}
-          style={{ maxWidth: "500px" }}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
     </React.Fragment>
