@@ -589,6 +589,7 @@ function BulkSignADiaryView() {
             onSubmit={onUploadSubmit}
             isDisabled={loader}
             fileUploadError={fileUploadError}
+            setFileUploadError={setFileUploadError}
           />
         )}
 

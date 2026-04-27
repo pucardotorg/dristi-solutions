@@ -156,7 +156,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
     setDocumentData(currentDocumentDataCopy);
     onSelect(config.key, currentDocumentDataCopy);
   };
-  
+
   return (
     <div className="file-uploader-with-name">
       {documentData.length > 0 &&
@@ -170,6 +170,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
                   <span
                     onClick={() => {
                       if (!config?.disable && (["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"]?.includes(config?.state) || index >= config?.doclength)) {
+                        clearErrors(`${config?.key}_${index}`);
                         handleDeleteDocument(index);
                       }
                     }}
@@ -227,7 +228,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
                             uploadErrorInfo={fileErrors}
                             input={input}
                             disableUploadDelete={index < config?.doclength ? true : config?.disable}
-                            configKey={config?.key}
+                            configKey={`${config?.key}_${index}`}
                             setError={setError}
                           />
                         )}

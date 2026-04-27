@@ -2636,6 +2636,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           formData={bulkSignatureData}
           onSubmit={onBulkSignatureSubmit}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {showErrorToast && (
