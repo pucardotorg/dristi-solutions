@@ -1098,6 +1098,7 @@ function EFilingCases({ path }) {
             const updatedBody = config?.body?.map((item) => ({
               ...item,
               isDelayCondonation: isDelayCondonation,
+              isDisableAllFields: false,
             }));
 
             if (index === 0) {
@@ -1127,7 +1128,7 @@ function EFilingCases({ path }) {
                                     <strong>{t("COURIER_SUMMONS")}</strong> {t("COURIER_SUMMONS_NOTE")}
                                   </span>
                                 </li>
-                                 <li>
+                                <li>
                                   <span>
                                     <strong>{t("COURIER_WARRANT")}</strong> {t("CS_NOT_DELAY_WARRANT_PROCESS_COURIER_SERVICE_NOTE")}
                                   </span>
@@ -1147,12 +1148,12 @@ function EFilingCases({ path }) {
                           ) : (
                             <div className="info-card-content">
                               <ul style={{ width: "100%" }}>
-                               <li>
+                                <li>
                                   <span>
                                     <strong>{t("COURIER_SUMMONS")}</strong> {t("CS_NOT_DELAY_PROCESS_DELIVERY_COURIER_SERVICE_NOTE")}
                                   </span>
                                 </li>
-                                 <li>
+                                <li>
                                   <span>
                                     <strong>{t("COURIER_WARRANT")}</strong> {t("CS_NOT_DELAY_WARRANT_PROCESS_COURIER_SERVICE_NOTE")}
                                   </span>

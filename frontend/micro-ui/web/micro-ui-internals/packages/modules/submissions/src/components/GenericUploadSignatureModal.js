@@ -123,6 +123,7 @@ const GenericUploadSignatureModal = ({
           cancelLabel={"SUBMIT"}
           fileUploadError={fileUploadError}
           onCustomDownload={onCustomDownload}
+          setFileUploadError={setFileUploadError}
         />
       )}
     </React.Fragment>

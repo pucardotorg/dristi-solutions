@@ -175,6 +175,7 @@ function SubmissionSignatureModal({
       onSubmit={onSubmit}
       isDisabled={loader}
       fileUploadError={fileUploadError}
+      setFileUploadError={setFileUploadError}
     />
   );
 }
