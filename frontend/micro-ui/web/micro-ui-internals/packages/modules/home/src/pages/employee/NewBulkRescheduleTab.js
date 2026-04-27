@@ -651,6 +651,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {stepper === 3 && !openUploadSignatureModal && isSigned && (

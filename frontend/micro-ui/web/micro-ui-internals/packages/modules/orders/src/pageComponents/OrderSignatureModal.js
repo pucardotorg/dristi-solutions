@@ -177,6 +177,7 @@ function OrderSignatureModal({
       onSubmit={onSubmit}
       isDisabled={loader}
       fileUploadError={fileUploadError}
+      setFileUploadError={setFileUploadError}
     />
   );
 }
