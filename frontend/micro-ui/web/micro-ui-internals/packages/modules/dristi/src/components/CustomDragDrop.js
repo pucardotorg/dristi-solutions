@@ -14,7 +14,7 @@ const CustomDragDrop = ({
   uploadGuidelines,
   file = null,
   t,
-  fileTypes = ["JPG", "PNG", "PDF"],
+  fileTypes = ["JPG", "PNG", "PDF", "JPEG"],
   fileValidator,
   onChange,
   ...props

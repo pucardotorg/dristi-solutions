@@ -1099,7 +1099,7 @@ function EFilingCases({ path }) {
             const updatedBody = config?.body?.map((item) => ({
               ...item,
               isDelayCondonation: isDelayCondonation,
-              isDisableAllFields : false,
+              isDisableAllFields: false,
             }));
 
             if (index === 0) {
