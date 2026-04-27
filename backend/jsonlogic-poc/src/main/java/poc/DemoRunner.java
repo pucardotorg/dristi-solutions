@@ -41,9 +41,10 @@ public class DemoRunner {
         // In production, these are fetched from MDMS. Here we use defaults.
         Map<String, Object> mdmsParams = MdmsPaymentConfig.getDefaultMdmsParams();
         String headConfigJson = mapper.writeValueAsString(MdmsPaymentConfig.getDefaultRuleConfig());
+        Map<String, String> opsConfig = mapper.readValue(getOperationsJson(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
 
         // 3. Initialize the Calculator
-        CaseFeeCalculator calculator = new CaseFeeCalculator(headConfigJson);
+        CaseFeeCalculator calculator = new CaseFeeCalculator(headConfigJson, opsConfig);
 
         // 4. Calculate and output as JSON
         String resultJson = calculator.calculateAsJson(caseObject, mdmsParams);
@@ -87,6 +88,27 @@ public class DemoRunner {
                     "case.json not found. Searched: " + Arrays.toString(candidates));
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to read case.json", e);
+        }
+    }
+
+    /**
+     * Loads the operations config from operations.json file.
+     */
+    public static String getOperationsJson() {
+        try {
+            Path[] candidates = {
+                    Path.of("operations.json"),
+                    Path.of("jsonlogic-poc", "operations.json"),
+                    Path.of("src", "test", "resources", "operations.json")
+            };
+            for (Path p : candidates) {
+                if (Files.exists(p)) {
+                    return Files.readString(p);
+                }
+            }
+            throw new FileNotFoundException("operations.json not found.");
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read operations.json", e);
         }
     }
 }

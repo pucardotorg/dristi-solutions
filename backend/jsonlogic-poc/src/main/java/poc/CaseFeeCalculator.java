@@ -2,7 +2,6 @@ package poc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.jamsesso.jsonlogic.JsonLogicException;
 
@@ -26,9 +25,10 @@ public class CaseFeeCalculator {
      * Create a calculator with MDMS payment config and head configurations.
      *
      * @param headConfigJson JSON string of payment head configurations with JsonLogic rules
+     * @param customOperations Map of custom operations (name -> script) 
      */
-    public CaseFeeCalculator(String headConfigJson) throws JsonProcessingException {
-        this.engine = new JsonLogicPaymentEngine();
+    public CaseFeeCalculator(String headConfigJson, Map<String, String> customOperations) throws JsonProcessingException {
+        this.engine = new JsonLogicPaymentEngine(customOperations);
         this.objectMapper = new ObjectMapper();
         this.headConfigs = objectMapper.readValue(headConfigJson, new TypeReference<>() {});
     }
@@ -37,9 +37,10 @@ public class CaseFeeCalculator {
      * Create a calculator with pre-parsed head configs.
      *
      * @param headConfigs List of parsed rule configurations
+     * @param customOperations Map of custom operations (name -> script)
      */
-    public CaseFeeCalculator(List<Map<String, Object>> headConfigs) {
-        this.engine = new JsonLogicPaymentEngine();
+    public CaseFeeCalculator(List<Map<String, Object>> headConfigs, Map<String, String> customOperations) {
+        this.engine = new JsonLogicPaymentEngine(customOperations);
         this.objectMapper = new ObjectMapper();
         this.headConfigs = headConfigs;
     }

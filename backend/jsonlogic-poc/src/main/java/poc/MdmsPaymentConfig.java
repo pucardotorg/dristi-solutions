@@ -37,10 +37,17 @@ public class MdmsPaymentConfig {
     // ================================================================
     private Map<String, List<Map<String, Object>>> rangeTables;
 
+    // ================================================================
+    // Custom Operations (from MDMS)
+    // Map of operation name -> JEXL script
+    // ================================================================
+    private Map<String, String> customOperations;
+
     public MdmsPaymentConfig() {
         this.headConfigs = new ArrayList<>();
         this.feeParams = new LinkedHashMap<>();
         this.rangeTables = new LinkedHashMap<>();
+        this.customOperations = new LinkedHashMap<>();
     }
 
     // --- Getters and Setters ---
@@ -67,6 +74,14 @@ public class MdmsPaymentConfig {
 
     public void setRangeTables(Map<String, List<Map<String, Object>>> rangeTables) {
         this.rangeTables = rangeTables;
+    }
+
+    public Map<String, String> getCustomOperations() {
+        return customOperations;
+    }
+
+    public void setCustomOperations(Map<String, String> customOperations) {
+        this.customOperations = customOperations;
     }
 
     // ================================================================
@@ -113,6 +128,14 @@ public class MdmsPaymentConfig {
          */
         public Builder rangeTable(String name, List<Map<String, Object>> ranges) {
             config.rangeTables.put(name, ranges);
+            return this;
+        }
+
+        /**
+         * Add custom operations.
+         */
+        public Builder customOperations(Map<String, String> operations) {
+            config.customOperations.putAll(operations);
             return this;
         }
 
@@ -372,4 +395,5 @@ public class MdmsPaymentConfig {
 
         return rules;
     }
+
 }

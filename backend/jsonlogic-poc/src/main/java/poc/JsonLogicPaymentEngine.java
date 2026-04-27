@@ -1,6 +1,5 @@
 package poc;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.jamsesso.jsonlogic.JsonLogic;
 import io.github.jamsesso.jsonlogic.JsonLogicException;
@@ -45,12 +44,12 @@ public class JsonLogicPaymentEngine {
     private final JsonLogic jsonLogic;
     private final ObjectMapper objectMapper;
 
-    public JsonLogicPaymentEngine() {
+    public JsonLogicPaymentEngine(Map<String, String> customOperations) {
         this.jsonLogic = new JsonLogic();
         this.objectMapper = new ObjectMapper();
         
         // Register custom operations separated into another class (SRP)
-        CustomJsonLogicOperations.register(jsonLogic);
+        CustomJsonLogicOperations.register(jsonLogic, customOperations);
     }
 
     /**

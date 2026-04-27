@@ -32,7 +32,9 @@ class DemoRunnerTest {
 
     private CaseFeeCalculator getCalculator() throws Exception {
         String rulesJson = mapper.writeValueAsString(MdmsPaymentConfig.getDefaultRuleConfig());
-        return new CaseFeeCalculator(rulesJson);
+        String opsJson = DemoRunner.getOperationsJson();
+        Map<String, String> opsConfig = mapper.readValue(opsJson, new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+        return new CaseFeeCalculator(rulesJson, opsConfig);
     }
 
     // ================================================================

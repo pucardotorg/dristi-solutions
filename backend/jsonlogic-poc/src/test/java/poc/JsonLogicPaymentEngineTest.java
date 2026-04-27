@@ -23,9 +23,14 @@ class JsonLogicPaymentEngineTest {
     private ObjectMapper mapper;
 
     @BeforeEach
-    void setUp() {
-        engine = new JsonLogicPaymentEngine();
+    void setUp() throws Exception {
         mapper = new ObjectMapper();
+        
+        // Read operations mapping from json
+        String opsJson = DemoRunner.getOperationsJson();
+        Map<String, String> opsConfig = mapper.readValue(opsJson, new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+        
+        engine = new JsonLogicPaymentEngine(opsConfig);
     }
 
     // ================================================================

@@ -1,7 +1,12 @@
 package poc;
 
 import io.github.jamsesso.jsonlogic.JsonLogic;
-import java.util.List;
+import org.apache.commons.jexl3.JexlBuilder;
+import org.apache.commons.jexl3.JexlContext;
+import org.apache.commons.jexl3.JexlEngine;
+import org.apache.commons.jexl3.JexlScript;
+import org.apache.commons.jexl3.MapContext;
+
 import java.util.Map;
 
 /**
@@ -11,119 +16,39 @@ import java.util.Map;
  */
 public class CustomJsonLogicOperations {
 
-    public static void register(JsonLogic jsonLogic) {
-        // ceil — Math.ceil
-        jsonLogic.addOperation("ceil", args -> {
-            if (args == null) return 0.0;
-            return Math.ceil(toDouble(args));
-        });
+    public static void register(JsonLogic jsonLogic, Map<String, String> customOperations) {
+        if (customOperations == null || customOperations.isEmpty()) return;
 
-        // to_number — convert string to number
-        jsonLogic.addOperation("to_number", args -> {
-            if (args == null) return 0.0;
-            if (args instanceof Object[] && ((Object[]) args).length > 0)
-                return toDouble(((Object[]) args)[0]);
-            return toDouble(args);
-        });
+        java.util.Map<String, Object> funcs = new java.util.HashMap<>();
+        funcs.put("math", Math.class);
+        funcs.put("Double", Double.class);
+        funcs.put("String", String.class);
 
-        // count_active_reps — counts active representatives for a given litigant
-        jsonLogic.addOperation("count_active_reps", args -> {
-            if (!(args instanceof Object[]) || ((Object[]) args).length < 2) return 0.0;
-            Object[] arr = (Object[]) args;
-            return (double) countActiveRepsForLitigant((List<?>) arr[0], String.valueOf(arr[1]));
-        });
+        JexlEngine jexl = new JexlBuilder()
+                .cache(512)
+                .strict(false)
+                .silent(false)
+                .namespaces(funcs)
+                .create();
 
-        // range_lookup — [{min,max,fee}] lookup
-        jsonLogic.addOperation("range_lookup", args -> {
-            if (!(args instanceof Object[]) || ((Object[]) args).length < 2) return 0.0;
-            Object[] arr = (Object[]) args;
-            if (!(arr[0] instanceof List)) return 0.0;
-            return lookupRange((List<?>) arr[0], toDouble(arr[1]));
-        });
+        for (Map.Entry<String, String> entry : customOperations.entrySet()) {
+            String opName = entry.getKey();
+            String scriptText = entry.getValue();
 
-        // has_any_advocate — checks if ANY litigant has at least one active representative
-        jsonLogic.addOperation("has_any_advocate", args -> {
-            if (!(args instanceof Object[]) || ((Object[]) args).length < 2) return false;
-            Object[] arr = (Object[]) args;
-            if (!(arr[0] instanceof List) || !(arr[1] instanceof List)) return false;
-            
-            List<?> litigants = (List<?>) arr[0];
-            List<?> reps = (List<?>) arr[1];
+            // Pre-compile the script to JexlScript for performance
+            JexlScript script = jexl.createScript(scriptText);
 
-            for (Object lit : litigants) {
-                if (!(lit instanceof Map)) continue;
-                String litId = String.valueOf(((Map<?, ?>) lit).get("individualId"));
-                if (countActiveRepsForLitigant(reps, litId) > 0) {
-                    return true;
+            jsonLogic.addOperation(opName, args -> {
+                JexlContext context = new MapContext();
+                context.set("args", args);
+
+                try {
+                    return script.execute(context);
+                } catch (Exception e) {
+                    System.err.println("Error evaluating MDMS custom operation '" + opName + "': " + e.getMessage());
+                    return 0.0;
                 }
-            }
-            return false;
-        });
-
-        // sum_advocate_range_fee — iterates litigants, counts advocates per litigant,
-        // looks up fee from range table embedded in args
-        jsonLogic.addOperation("sum_advocate_range_fee", args -> {
-            if (!(args instanceof Object[]) || ((Object[]) args).length < 3) return 0.0;
-            Object[] arr = (Object[]) args;
-            if (!(arr[0] instanceof List) || !(arr[1] instanceof List) || !(arr[2] instanceof List))
-                return 0.0;
-            
-            List<?> litigants = (List<?>) arr[0];
-            List<?> reps = (List<?>) arr[1];
-            List<?> ranges = (List<?>) arr[2];
-
-            double total = 0;
-            for (Object lit : litigants) {
-                if (!(lit instanceof Map)) continue;
-                String litId = String.valueOf(((Map<?, ?>) lit).get("individualId"));
-                int advCount = countActiveRepsForLitigant(reps, litId);
-                total += lookupRange(ranges, advCount);
-            }
-            return total;
-        });
-    }
-
-    private static int countActiveRepsForLitigant(List<?> reps, String litigantId) {
-        int count = 0;
-        if (reps == null) return 0;
-        for (Object rep : reps) {
-            if (!(rep instanceof Map)) continue;
-            Map<?, ?> repMap = (Map<?, ?>) rep;
-            if (!Boolean.TRUE.equals(repMap.get("isActive"))) continue;
-            Object representing = repMap.get("representing");
-            if (!(representing instanceof List)) continue;
-            for (Object r : (List<?>) representing) {
-                if (!(r instanceof Map)) continue;
-                Map<?, ?> rMap = (Map<?, ?>) r;
-                if (litigantId.equals(String.valueOf(rMap.get("individualId")))) {
-                    count++;
-                    break;
-                }
-            }
+            });
         }
-        return count;
-    }
-
-    private static double lookupRange(List<?> ranges, double value) {
-        if (ranges == null) return 0.0;
-        for (Object range : ranges) {
-            if (!(range instanceof Map)) continue;
-            Map<?, ?> r = (Map<?, ?>) range;
-            if (value >= toDouble(r.get("min")) && value <= toDouble(r.get("max")))
-                return toDouble(r.get("fee"));
-        }
-        return 0.0;
-    }
-
-    private static double toDouble(Object value) {
-        if (value == null) return 0.0;
-        if (value instanceof Number) return ((Number) value).doubleValue();
-        if (value instanceof String) {
-            try { return Double.parseDouble((String) value); }
-            catch (NumberFormatException e) { return 0.0; }
-        }
-        if (value instanceof Object[] && ((Object[]) value).length > 0)
-            return toDouble(((Object[]) value)[0]);
-        return 0.0;
     }
 }
