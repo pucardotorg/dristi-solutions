@@ -54,7 +54,6 @@ function UploadSignatureModal({
   };
 
   const clearError = (key) => {
-    debugger;
     if (!key) return;
     const updatedError = { ...error };
     delete updatedError[key];
