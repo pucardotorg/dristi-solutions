@@ -1320,61 +1320,6 @@
     redux "4.1.2"
     xlsx "0.17.5"
 
-"@egovernments/digit-ui-module-core@1.8.1-beta.6":
-  version "1.8.1-beta.6"
-  resolved "https://registry.yarnpkg.com/@egovernments/digit-ui-module-core/-/digit-ui-module-core-1.8.1-beta.6.tgz#458de95daedf4bee6491c9891ea31c5f31773f88"
-  integrity sha512-UoQJsr/nZAM5zWS5iWzWKZ7J5KorruLFldiEJQvX1VuJWJBLqbebju2Mpcv0nX9mdrcBAn+TxvY8MZeQQmQqJQ==
-  dependencies:
-    "@egovernments/digit-ui-react-components" "1.8.1-beta.2"
-    react "17.0.2"
-    react-dom "17.0.2"
-    react-i18next "11.16.2"
-    react-query "3.6.1"
-    react-redux "7.2.8"
-    react-router-dom "5.3.0"
-    react-tooltip "4.1.2"
-    redux "4.1.2"
-    redux-thunk "2.4.1"
-
-"@egovernments/digit-ui-react-components@1.8.1-beta.2":
-  version "1.8.1-beta.2"
-  resolved "https://registry.yarnpkg.com/@egovernments/digit-ui-react-components/-/digit-ui-react-components-1.8.1-beta.2.tgz#892961b7808fa9b654378651f5db359e092efe55"
-  integrity sha512-rjkXfkiTm7hZ425LZKmq9xUUG4UwhPLFr58O99j1W3em6im36TqKybPn4XNd499FlnjuKRuDo2NfYyywDGxShw==
-  dependencies:
-    "@egovernments/digit-ui-svg-components" "1.0.0"
-    "@googlemaps/js-api-loader" "1.13.10"
-    "@hookform/resolvers" "1.3.7"
-    ajv "^8.12.0"
-    ajv-errors "^3.0.0"
-    ajv-formats "^2.1.1"
-    json-schema-to-yup "^1.8.8"
-    react-date-range "1.3.0"
-    react-drag-drop-files "^2.3.10"
-    react-hook-form "6.15.8"
-    react-i18next "11.16.2"
-    react-joyride "2.5.5"
-    react-table "7.7.0"
-
-"@egovernments/digit-ui-react-components@1.8.2-beta.11":
-  version "1.8.2-beta.11"
-  resolved "https://registry.yarnpkg.com/@egovernments/digit-ui-react-components/-/digit-ui-react-components-1.8.2-beta.11.tgz#94620e6c9095cae982390dfc8a56d0f0c65bd2cc"
-  integrity sha512-EH4kUFDmtfO2HR9S0ThTo8evR4vDLpdDvGKTJjXpAY7I9r5WwR0Pcygz/EYXiFzjbrPL+P2i26SviZWW3UdKvQ==
-  dependencies:
-    "@cyntler/react-doc-viewer" "1.10.3"
-    "@egovernments/digit-ui-svg-components" "1.0.10"
-    "@googlemaps/js-api-loader" "1.13.10"
-    "@hookform/resolvers" "1.3.7"
-    ajv "8.11.2"
-    ajv-errors "3.0.0"
-    ajv-formats "2.1.1"
-    json-schema-to-yup "1.8.8"
-    react-date-range "1.3.0"
-    react-drag-drop-files "2.3.10"
-    react-hook-form "6.15.8"
-    react-i18next "11.16.2"
-    react-joyride "2.5.5"
-    react-table "7.7.0"
-
 "@egovernments/digit-ui-react-components@1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@egovernments/digit-ui-react-components/-/digit-ui-react-components-1.9.0.tgz#ebfcc6fbc18f74f1c319711f6212dc965d2072c3"
@@ -1395,16 +1340,6 @@
     react-i18next "11.16.2"
     react-joyride "2.5.5"
     react-table "7.7.0"
-
-"@egovernments/digit-ui-svg-components@1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@egovernments/digit-ui-svg-components/-/digit-ui-svg-components-1.0.0.tgz#0f7f54ebbf26db9a4f45c646256c75f7abaa9a03"
-  integrity sha512-UArJzdg8Klr0AUja2uWWwi0ygdon67Mg7yER2FGfSf+n/czG9Aoa1z+lunyB0KcQKj7epRbh/n3FRByV7G9/Ig==
-
-"@egovernments/digit-ui-svg-components@1.0.10":
-  version "1.0.10"
-  resolved "https://registry.yarnpkg.com/@egovernments/digit-ui-svg-components/-/digit-ui-svg-components-1.0.10.tgz#99f75dd11d9b300ee656d95fb212bfd7ffc12f58"
-  integrity sha512-pU6EdylFmx//VPgqE5PYCk5tPK1CWiOsM/8TX6QbAiDaNDPE2a/sbA2jSLJ2d5otd5vZmqFaSXXuWkwYF64oSA==
 
 "@egovernments/digit-ui-svg-components@1.0.21":
   version "1.0.21"
@@ -2940,7 +2875,7 @@ aggregate-error@^3.0.0:
     clean-stack "^2.0.0"
     indent-string "^4.0.0"
 
-ajv-errors@3.0.0, ajv-errors@^3.0.0:
+ajv-errors@3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/ajv-errors/-/ajv-errors-3.0.0.tgz#e54f299f3a3d30fe144161e5f0d8d51196c527bc"
   integrity sha512-V3wD15YHfHz6y0KdhYFjyy9vWtEVALT9UrxfN3zqlI6dMioHnJrqOYfyPKol3oqrnCM9uwkcdCwkJ0WUcbLMTQ==
@@ -2950,7 +2885,7 @@ ajv-errors@^1.0.0:
   resolved "https://registry.yarnpkg.com/ajv-errors/-/ajv-errors-1.0.1.tgz#f35986aceb91afadec4102fbd85014950cefa64d"
   integrity sha512-DCRfO/4nQ+89p/RK43i8Ezd41EqdGIU4ld7nGF8OQ14oc/we5rEntLCUa7+jrn3nn83BosfwZA0wb4pon2o8iQ==
 
-ajv-formats@2.1.1, ajv-formats@^2.1.1:
+ajv-formats@2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/ajv-formats/-/ajv-formats-2.1.1.tgz#6e669400659eb74973bbf2e33327180a0996b520"
   integrity sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==
@@ -2986,16 +2921,6 @@ ajv@^8.0.0, ajv@^8.0.1:
   version "8.17.1"
   resolved "https://registry.yarnpkg.com/ajv/-/ajv-8.17.1.tgz#37d9a5c776af6bc92d7f4f9510eba4c0a60d11a6"
   integrity sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==
-  dependencies:
-    fast-deep-equal "^3.1.3"
-    fast-uri "^3.0.1"
-    json-schema-traverse "^1.0.0"
-    require-from-string "^2.0.2"
-
-ajv@^8.12.0:
-  version "8.20.0"
-  resolved "https://registry.yarnpkg.com/ajv/-/ajv-8.20.0.tgz#304b3636add88ba7d936760dd50ece006dea95f9"
-  integrity sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==
   dependencies:
     fast-deep-equal "^3.1.3"
     fast-uri "^3.0.1"
@@ -9515,7 +9440,7 @@ json-parse-even-better-errors@^2.3.0:
   resolved "https://registry.yarnpkg.com/json-parse-even-better-errors/-/json-parse-even-better-errors-2.3.1.tgz#7c47805a94319928e05777405dc12e1f7a4ee02d"
   integrity sha512-xyFwyhro/JEof6Ghe2iz2NcXoj2sloNsWr/XsERDK/oiPCfaNhl5ONfp+jQdAZRQQ0IJWNzH9zIZF7li91kh2w==
 
-json-schema-to-yup@1.8.8, json-schema-to-yup@^1.8.8:
+json-schema-to-yup@1.8.8:
   version "1.8.8"
   resolved "https://registry.yarnpkg.com/json-schema-to-yup/-/json-schema-to-yup-1.8.8.tgz#94adf6471455cabd3054c1904b792d40b8555f87"
   integrity sha512-mZJayR97yvHPW89u85Ewkmj1KGyLn8xITm2ds3Y0++Hrg3e7s2mIET99+jEPEu2p4x9AqOrbt/668GJkVQjHLw==
@@ -12861,7 +12786,7 @@ react-dnd@16.0.1:
     fast-deep-equal "^3.1.3"
     hoist-non-react-statics "^3.3.2"
 
-react-dom@17.0.2, react-dom@18.2.0:
+react-dom@18.2.0:
   version "18.2.0"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-18.2.0.tgz#22aaf38708db2674ed9ada224ca4aa708d821e3d"
   integrity sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==
