@@ -6610,7 +6610,7 @@ public class CaseService {
             caseConversionDetails.setPreCaseNumber(courtCase.getFilingNumber());
             caseConversionDetails.setPostCaseNumber(courtCase.getCmpNumber());
             caseConversionDetails.setDateOfConversion(dateOfConversion);
-        } else if (courtCase.getLifecycleStatus() == org.pucar.dristi.web.models.enums.LifecycleStatus.LPR && courtCase.getLprNumber() != null) {
+        } else if (courtCase.getLifecycleStatus().name().equalsIgnoreCase(LifecycleStatus.LPR.name()) && courtCase.getLprNumber() != null) {
             caseConversionDetails.setConvertedFrom(ST);
             caseConversionDetails.setConvertedTo(LP);
             caseConversionDetails.setPreCaseNumber(courtCase.getCourtCaseNumber());
