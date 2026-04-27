@@ -59,6 +59,7 @@ public class HearingService {
     private final JsonUtil jsonUtil;
     private final EsUtil esUtil;
     private final OrderUtil orderUtil;
+    private final CacheService cacheService;
 
     @Autowired
     public HearingService(
@@ -67,7 +68,7 @@ public class HearingService {
             WorkflowService workflowService,
             HearingRepository hearingRepository,
             Producer producer,
-            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil, FileStoreUtil fileStoreUtil, InboxUtil inboxUtil, JsonUtil jsonUtil, EsUtil esUtil, OrderUtil orderUtil) {
+            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil, FileStoreUtil fileStoreUtil, InboxUtil inboxUtil, JsonUtil jsonUtil, EsUtil esUtil, OrderUtil orderUtil, CacheService cacheService) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.workflowService = workflowService;
@@ -86,6 +87,7 @@ public class HearingService {
         this.jsonUtil = jsonUtil;
         this.esUtil = esUtil;
         this.orderUtil = orderUtil;
+        this.cacheService = cacheService;
     }
 
     public Hearing createHearing(HearingRequest body) {
@@ -213,6 +215,7 @@ public class HearingService {
                     String request = esUtil.buildPayload(openHearing);
                     String uri = config.getEsHostUrl() + config.getBulkPath();
                     esUtil.manualIndex(uri, request);
+                    updateStatusInCache(openHearing);
                     // search the open hearing index here for confirmation
                     InboxRequest confirmationRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, requestInfo, hearingNumber,status);
                    List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(confirmationRequest);
@@ -230,6 +233,50 @@ public class HearingService {
         }
 
 
+    }
+
+    private void updateStatusInCache(OpenHearing openHearing) {
+        if (!config.getRedisEnabled()) {
+            log.info("Redis is disabled. Skipping cache update for open hearing: {}", openHearing.getHearingNumber());
+            return;
+        }
+
+        String courtId = openHearing.getCourtId();
+        String date = dateUtil.getCurrentDate();
+        String key  = CACHE_KEY_PREFIX + courtId + ":" + date;
+        Object response = cacheService.getCache(key);
+        if (response != null) {
+            List<OpenHearing> openHearingList = new ArrayList<>();
+            if (response instanceof List<?> rawList) {
+                for (Object item : rawList) {
+                    if (item instanceof OpenHearing) {
+                        openHearingList.add((OpenHearing) item);
+                    } else if (item instanceof LinkedHashMap) {
+                        try {
+                            OpenHearing convertedHearing = objectMapper.convertValue(item, OpenHearing.class);
+                            openHearingList.add(convertedHearing);
+                        } catch (Exception e) {
+                            log.error("Error converting LinkedHashMap to OpenHearing: {}", e.getMessage());
+                        }
+                    }
+                }
+            }
+
+            boolean updated = false;
+            for(OpenHearing openHearing1 : openHearingList) {
+                if(openHearing1.getHearingNumber().equalsIgnoreCase(openHearing.getHearingNumber())) {
+                    openHearing1.setStatus(openHearing.getStatus());
+                    openHearing1.setStatusOrder(openHearing.getStatusOrder());
+                    openHearing1.setHearingType(openHearing.getHearingType());
+                    updated = true;
+                    break;
+                }
+            }
+            if(!updated) {
+                openHearingList.add(openHearing);
+            }
+            cacheService.updateCache(key, openHearingList);
+        }
     }
 
     private void enrichStatusOrderInOpenHearing(RequestInfo requestInfo, OpenHearing openHearing) {
@@ -403,7 +450,7 @@ public class HearingService {
             Set<String> phoneNumbers = callIndividualService(hearingRequest.getRequestInfo(), individualIds);
 
             String localizedHearingType = "";
-            if (hearingType != null && messageCode.equals(VARIABLE_HEARING_SCHEDULED)) {
+            if (hearingType != null && VARIABLE_HEARING_SCHEDULED.equals(messageCode)) {
                 localizedHearingType = getLocalizedMessageOfHearingType(hearingRequest, hearingType);
             }
             String oldHearingDate = null;

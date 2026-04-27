@@ -78,8 +78,6 @@ const TopBar = ({
     history.push(`/${window?.contextPath}/citizen/engagement/notifications`);
   }
 
-
-
   if (CITIZEN) {
     return (
       <TopBarComponent
@@ -149,8 +147,13 @@ const TopBar = ({
     <div className="topbar">
       <div
         className="hambuger-back-wrapper"
+        style={{ cursor: "pointer" }}
         onClick={() => {
           sessionStorage.removeItem("homeActiveTab");
+          if (!loggedin) {
+            window.location.replace(window.location.origin);
+            return;
+          }
           if (isEpostUser) {
             history.push(pathname);
           } else {

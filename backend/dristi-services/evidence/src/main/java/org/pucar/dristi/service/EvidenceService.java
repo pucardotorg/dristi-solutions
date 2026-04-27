@@ -686,7 +686,9 @@ public class EvidenceService {
             Artifact artifact = evidenceRequest.getArtifact();
 
             String sourceType = evidenceRequest.getArtifact().getSourceType();
-            String action = evidenceRequest.getArtifact().getWorkflow().getAction();
+            String action = Optional.ofNullable(evidenceRequest.getArtifact().getWorkflow())
+                    .map(Workflow::getAction)
+                    .orElse(null);
             String smsTopic = getSmsTopic(sourceType, isCreateCall, action);
             log.info("Message Code : {}", smsTopic);
             Set<String> litigantIndividualIds = extractLitigantIndividualIds(caseDetails,null);

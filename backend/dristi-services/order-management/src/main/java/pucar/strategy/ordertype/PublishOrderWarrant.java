@@ -22,6 +22,7 @@ import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
 import pucar.web.models.task.TaskRequest;
 import pucar.web.models.task.TaskResponse;
+import pucar.web.models.taskManagement.TaskManagement;
 
 import java.util.*;
 
@@ -39,9 +40,10 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
     private final AdvocateUtil advocateUtil;
     private final UserUtil userUtil;
     private final SmsNotificationService smsNotificationService;
+    private final TaskManagementUtil taskManagementUtil;
 
     @Autowired
-    public PublishOrderWarrant(TaskUtil taskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, AdvocateUtil advocateUtil, UserUtil userUtil, SmsNotificationService smsNotificationService) {
+    public PublishOrderWarrant(TaskUtil taskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, AdvocateUtil advocateUtil, UserUtil userUtil, SmsNotificationService smsNotificationService, TaskManagementUtil taskManagementUtil) {
         this.taskUtil = taskUtil;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
@@ -50,6 +52,7 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
         this.advocateUtil = advocateUtil;
         this.userUtil = userUtil;
         this.smsNotificationService = smsNotificationService;
+        this.taskManagementUtil = taskManagementUtil;
     }
 
     @Override
@@ -142,6 +145,9 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
             JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
             log.info("taskDetailsArray:{}", taskDetailsArray.size());
 
+            // Fetch TaskManagement records once before the loop to avoid multiple API calls
+            List<TaskManagement> warrantTaskManagementRecords = taskManagementUtil.fetchWarrantTaskManagementRecords(order, requestInfo);
+
             for (JsonNode taskDetail : taskDetailsArray) {
 
 
@@ -149,13 +155,30 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
                 Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<>() {
                 });
                 String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
+                // TODO : need to update this, UI is sending uniqueId, addressId for witness as well in respondentDetails
+                String addressId = jsonUtil.getNestedValue(jsonMap, Arrays.asList("respondentDetails", "address", "id"), String.class);
+                String uniqueId = jsonUtil.getNestedValue(jsonMap, Arrays.asList("respondentDetails", "uniqueId"), String.class);
 
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase,channel);
+                // Find upfront payment result once - avoid computing twice
+                TaskManagementUtil.WarrantUpfrontResult upfrontResult = taskManagementUtil.findWarrantUpfrontPayment(addressId, channel, warrantTaskManagementRecords, uniqueId);
+                boolean hasUpfrontPayment = upfrontResult != null;
+                log.info("Warrant upfront payment check - addressId: {}, channel: {}, hasUpfront: {}", addressId, channel, hasUpfrontPayment);
+
+                TaskRequest taskRequest = taskUtil.createWarrantTaskRequest(requestInfo, order, taskDetail, courtCase, channel, hasUpfrontPayment);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
-                // create pending task
+                // Update task management record after task creation if upfront payment was found
+                if (hasUpfrontPayment) {
+                    taskManagementUtil.updateWarrantUpfrontPayment(order, requestInfo, upfrontResult);
+                    if (RPAD.equalsIgnoreCase(channel)) {
+                        pendingTaskUtil.createPendingTaskForRPAD(taskResponse.getTask(), requestInfo, courtCase, uniqueAssignee);
+                    }
+                }
 
-                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))
+                // Create pending task for non-EMAIL/SMS channels only when upfront payment was NOT done
+                // hasUpfrontPayment=true: payment was done upfront
+                // hasUpfrontPayment=false: payment required, pending task tracks payment
+                if (!hasUpfrontPayment && channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))
                         && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail) && !courtCase.getIsLPRCase()) {
 
                     PendingTask pendingTask = PendingTask.builder()

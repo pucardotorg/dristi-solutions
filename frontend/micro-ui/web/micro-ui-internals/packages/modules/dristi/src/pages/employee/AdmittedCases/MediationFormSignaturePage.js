@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
-import { ActionBar, Button, Toast, Loader, CloseSvg, LabelFieldPair, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
+import { ActionBar, Button, Loader, LabelFieldPair, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
@@ -17,6 +17,8 @@ import { useQuery } from "react-query";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { Urls } from "../../../../../submissions/src/hooks/services/Urls";
 import useESignOpenApi from "../../../../../submissions/src/hooks/submissions/useESignOpenApi";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import CustomToast from "../../../components/CustomToast";
 
 const MediationFormSignaturePage = () => {
   const { t } = useTranslation();
@@ -28,7 +30,7 @@ const MediationFormSignaturePage = () => {
   const isMediationCreator = useMemo(() => userInfo?.roles?.some((role) => ["MEDIATION_CREATOR"]?.includes(role?.code)), [userInfo?.roles]);
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [loader, setLoader] = useState(false);
   const [uploadLoader, setUploadLoader] = useState(false);
   const {
@@ -75,18 +77,6 @@ const MediationFormSignaturePage = () => {
 
   const pageModule = isUserLoggedIn ? (isCitizen ? "ci" : "en") : "ci";
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
-
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -168,7 +158,7 @@ const MediationFormSignaturePage = () => {
         .post(
           `${Urls.openApi.FileFetchByFileStore}`,
           {
-            tenantId: "kl",
+            tenantId,
             fileStoreId: mediationFileStoreId,
             moduleName: "mediation-document",
           },
@@ -359,7 +349,8 @@ const MediationFormSignaturePage = () => {
       );
     } catch (error) {
       console.error("Error:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("MEDIATION_FORM_EDIT_FAILED"), error: true, errorId });
     }
   };
 
@@ -375,7 +366,7 @@ const MediationFormSignaturePage = () => {
           }
         );
         if (caseLockStatus?.Lock?.isLocked) {
-          setShowErrorToast({ label: t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"), error: true });
+          setShowToast({ label: t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"), error: true });
           setLoader(false);
           return;
         }
@@ -396,18 +387,19 @@ const MediationFormSignaturePage = () => {
           }
         } catch (error) {
           console.error("Error:", error);
-          setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("MEDIATION_FORM_UNLOCK_FAILED"), error: true, errorId });
         }
       } else {
         if (!isUserLoggedIn) {
           sessionStorage.setItem("mobileNumber", mobileNumber);
         }
-        handleEsign(name, pageModule, mediationFileStoreId, getPlaceholder());
+        handleEsign(name, pageModule, mediationFileStoreId, setShowToast, t, getPlaceholder());
       }
     } catch (error) {
-      console.error("Error:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
-      setLoader(false);
+      console.error("Failed to save mediation form:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("MEDIATION_FORM_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -425,10 +417,6 @@ const MediationFormSignaturePage = () => {
     }
   };
 
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
   useEffect(() => {
     const esignMediationUpdate = async () => {
       if (isEsignSuccess && digitalizationServiceDetails?.documentNumber && !isUpdatingRef.current) {
@@ -444,7 +432,8 @@ const MediationFormSignaturePage = () => {
           }
         } catch (error) {
           console.error("Error:", error);
-          setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("MEDIATION_FORM_SIGNATURE_FAILED"), error: true, errorId });
         } finally {
           setLoader(false);
           isUpdatingRef.current = false;
@@ -470,7 +459,7 @@ const MediationFormSignaturePage = () => {
         }
       );
       if (caseLockStatus?.Lock?.isLocked) {
-        setShowErrorToast({ label: t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"), error: true });
+        setShowToast({ label: t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"), error: true });
         setLoader(false);
         return;
       }
@@ -483,6 +472,8 @@ const MediationFormSignaturePage = () => {
       await handleCaseUnlocking();
     } catch (error) {
       console.error("Error:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("MEDIATION_FORM_SKIP_AND_SUBMIT_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -520,15 +511,6 @@ const MediationFormSignaturePage = () => {
 
     return () => clearTimeout(cleanupTimer);
   }, [tenantId, digitalizationServiceDetails, isCitizen, isUserLoggedIn]);
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   useEffect(() => {
     if (!isUserLoggedIn && !ifUserAuthorized) {
@@ -791,7 +773,15 @@ const MediationFormSignaturePage = () => {
       {showSuccessModal && (
         <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_MEDIATION_DOCUMENT_MESSAGE"} />
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

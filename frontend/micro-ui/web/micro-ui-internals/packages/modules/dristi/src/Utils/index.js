@@ -1,4 +1,4 @@
-import { Request } from "@egovernments/digit-ui-libraries";
+import { Request } from "@egovernments/digit-ui-module-common/src/utils/Request";
 import isEmpty from "lodash/isEmpty";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DocumentUploadError } from "./errorUtil";
@@ -118,7 +118,8 @@ export const modifiedEvidenceNumber = (value, filingNumber = null) => {
 };
 export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
   const processedPaymentType = paymentType?.toLowerCase()?.includes("application");
-  return processedPaymentType ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;
+  const isCTC = paymentType?.toLowerCase()?.includes("ctc");
+  return processedPaymentType && !isCTC ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;
 };
 
 export const getTaskType = (businessService) => {
@@ -174,6 +175,7 @@ export const documentsTypeMapping = {
   nocJudgeOrder: "NOC_JUDGE_ORDER",
   supportingDocument: "SUPPORTING_DOCUMENT",
   lprDocument: "LPR_DOCUMENT",
+  advocateIdProof: "ADVOCATE_ID_PROOF",
 };
 
 export const documentLabels = {
@@ -756,6 +758,7 @@ export const advocateCaseFilingStatusTypes = {
 };
 
 export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
+  const storedAdvocate = JSON.parse(sessionStorage.getItem("selectedAdvocate")); //selected advocate in the top dropdown.
   const isOwnerAdvocate = caseDetails?.representatives?.find((rep) => rep?.advocateFilingStatus === advocateCaseFilingStatusTypes?.CASE_OWNER);
   //if neither a senior advocate nor junior adv/clerk did the filing on his behalf that means litigant only did case filing and only he/she can have edit draft access.
   if (!isOwnerAdvocate) {
@@ -774,17 +777,19 @@ export const findCaseDraftEditAllowedParties = (caseDetails, createdByUuid) => {
     // Fallback
     return [createdByUuid];
   }
-  const advocates = matchingOffice?.advocates || [];
-  const clerks = matchingOffice?.clerks || [];
-  // Collect all memberUserUuid
-  const editableUsers = [
-    matchingOffice?.officeAdvocateUserUuid, // senior advocate himself
-    ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
-    ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
-  ];
+  if (matchingOffice?.officeAdvocateUserUuid === storedAdvocate?.uuid) {
+    const advocates = matchingOffice?.advocates || [];
+    const clerks = matchingOffice?.clerks || [];
+    // Collect all memberUserUuid
+    const editableUsers = [
+      matchingOffice?.officeAdvocateUserUuid, // senior advocate himself
+      ...advocates.map((adv) => adv?.memberUserUuid), // associated junior advocates members
+      ...clerks.map((clerk) => clerk?.memberUserUuid), // associated clerks members
+    ];
 
-  // Remove null/undefined + de-duplicate
-  return Array.from(new Set((editableUsers || []).filter(Boolean)));
+    // Remove null/undefined + de-duplicate
+    return Array.from(new Set((editableUsers || []).filter(Boolean)));
+  } else return [];
 };
 
 export const getLoggedInUserOnBehalfOfUuid = (caseDetails, currentLoggedInUserUuid) => {
@@ -857,6 +862,7 @@ export const getClerkMembersForPartiesTab = (data) => {
         partyType: "CLERK",
         isEditable: false,
         status: "JOINED",
+        auditDetails: { createdTime: clerk.auditDetails?.lastModifiedTime },
       }));
 
       return memberClerks;
@@ -875,6 +881,7 @@ export const getClerkMembersForPartiesTab = (data) => {
             partyType: clerk.partyType,
             isEditable: clerk.isEditable,
             status: clerk.status,
+            auditDetails: clerk.auditDetails,
           });
         } else {
           const existing = map.get(clerk.partyUuid);
@@ -898,14 +905,15 @@ export const getAssistantAdvocateMembersForPartiesTab = (data) => {
     advocateOffices?.flatMap((rep) => {
       const officeAdvocateUuid = rep?.officeAdvocateUserUuid;
       const officeAdvocateName = rep?.officeAdvocateName;
-      const memberAdvocates = (rep?.advocates || []).map((clerk) => ({
-        name: clerk?.memberName,
-        partyUuid: clerk?.memberUserUuid,
+      const memberAdvocates = (rep?.advocates || []).map((assistantAdvocate) => ({
+        name: assistantAdvocate?.memberName,
+        partyUuid: assistantAdvocate?.memberUserUuid,
         officeAdvocateUuid: officeAdvocateUuid,
         officeAdvocateName: officeAdvocateName,
         partyType: "ASSISTANT_ADVOCATE",
         isEditable: false,
         status: "JOINED",
+        auditDetails: { createdTime: assistantAdvocate?.auditDetails?.lastModifiedTime },
       }));
 
       return memberAdvocates;
@@ -924,6 +932,7 @@ export const getAssistantAdvocateMembersForPartiesTab = (data) => {
             partyType: assistantAdvocate.partyType,
             isEditable: assistantAdvocate.isEditable,
             status: assistantAdvocate.status,
+            auditDetails: assistantAdvocate.auditDetails,
           });
         } else {
           const existing = map.get(assistantAdvocate.partyUuid);
@@ -1001,6 +1010,17 @@ export const getAllAssociatedPartyUuids = (caseDetails, ownerUuid) => {
     return Array.from(new Set((editableUsers || []).filter(Boolean)));
   }
   return [ownerUuid];
+};
+
+export const downloadPdfFromBlob = (blob, fileName) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", fileName || "document.pdf");
+  document.body.appendChild(link);
+  link.click();
+  link.parentNode.removeChild(link);
+  window.URL.revokeObjectURL(url);
 };
 
 export const DateUtils = {
@@ -1093,4 +1113,10 @@ export const DateUtils = {
     const year = date.getFullYear();
     return `${day} ${month} ${year}`;
   },
+};
+
+export const isRichTextEmpty = (html) => {
+  if (!html) return true;
+  const plainText = html?.replace(/<[^>]*>/g, "").trim();
+  return plainText?.length === 0;
 };

@@ -24,4 +24,8 @@ public class AuthSek {
     private long sessionTime;
     private String departmentId;
     private Object requestBlob;
+    private PaymentStatus paymentStatus;
+    private String completionSource;
+    private Long verificationTimestamp;
+    private String processedStatus;
 }

@@ -35,7 +35,7 @@ const applicationCaseWithdrawal = async (
   res,
   qrCode,
   application,
-  courtCaseJudgeDetails
+  courtCaseJudgeDetails,
 ) => {
   const cnrNumber = req.query.cnrNumber;
   const applicationNumber = req.query.applicationNumber;
@@ -56,7 +56,7 @@ const applicationCaseWithdrawal = async (
     return renderError(
       res,
       `${missingFields.join(", ")} are mandatory to generate the PDF`,
-      400
+      400,
     );
   }
 
@@ -74,19 +74,19 @@ const applicationCaseWithdrawal = async (
     const resMessage = await handleApiCall(
       () =>
         search_message(tenantId, "rainmaker-submissions", "en_IN", requestInfo),
-      "Failed to query Localized messages"
+      "Failed to query Localized messages",
     );
     const messages = resMessage?.data?.messages || [];
     const messagesMap =
       messages?.length > 0
         ? Object.fromEntries(
-            messages.map(({ code, message }) => [code, message])
+            messages.map(({ code, message }) => [code, message]),
           )
         : {};
 
     const resCase = await handleApiCall(
       () => search_case(cnrNumber, tenantId, requestInfo, application?.courtId),
-      "Failed to query case service"
+      "Failed to query case service",
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
     if (!courtCase) {
@@ -94,18 +94,17 @@ const applicationCaseWithdrawal = async (
     }
 
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-
     let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
       const resAdvocate = await handleApiCall(
         () => search_advocate(tenantId, advocateIndividualId, requestInfo),
-        "Failed to query Advocate Details"
+        "Failed to query Advocate Details",
       );
       const advocateData = resAdvocate?.data?.advocates?.[0];
       const advocateDetails = advocateData?.responseList?.find(
-        (item) => item.isActive === true
+        (item) => item.isActive === true,
       );
       advocateName =
         cleanName(advocateDetails?.additionalDetails?.username) || "";
@@ -114,14 +113,14 @@ const applicationCaseWithdrawal = async (
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
     const partyName = application?.additionalDetails?.onBehalOfName || "";
     const additionalComments = htmlToFormattedText(
-      application?.applicationDetails?.additionalComments || ""
+      application?.applicationDetails?.additionalComments || "",
     );
     const localreasonForWithdrawal =
       application?.applicationDetails?.reasonForWithdrawal || "";
     const reasonForWithdrawal =
       messagesMap?.[localreasonForWithdrawal] || localreasonForWithdrawal;
     const onBehalfOfLitigent = courtCase?.litigants?.find(
-      (item) => item.additionalDetails.uuid === onBehalfOfuuid
+      (item) => item.additionalDetails.uuid === onBehalfOfuuid,
     );
     let partyType = "COURT";
     if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("complainant")) {
@@ -139,9 +138,9 @@ const applicationCaseWithdrawal = async (
             tenantId,
             code,
             entityId,
-            requestInfo
+            requestInfo,
           ),
-        "Failed to query sunbirdrc credential service"
+        "Failed to query sunbirdrc credential service",
       );
       const $ = cheerio.load(resCredential.data);
       const imgTag = $("img");
@@ -149,7 +148,7 @@ const applicationCaseWithdrawal = async (
         return renderError(
           res,
           "No img tag found in the sunbirdrc response",
-          500
+          500,
         );
       }
       base64Url = imgTag.attr("src");
@@ -188,13 +187,12 @@ const applicationCaseWithdrawal = async (
     const year = currentDate.getFullYear();
     const ordinalSuffix = getOrdinalSuffix(day);
 
-
     const caseNumber = courtCase?.isLPRCase
       ? courtCase?.lprNumber
       : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const prayer = application?.applicationDetails?.prayer || "";
     const { complainantList, accusedList } = getComplaintAndAccusedList(
-      courtCase || {}
+      courtCase || {},
     );
 
     const data = {
@@ -216,7 +214,7 @@ const applicationCaseWithdrawal = async (
           advocateName,
           applicationTitle: "APPLICATION FOR WITHDRAWAL OF CASE",
           qrCodeUrl: base64Url,
-          petitionerName: getNameByUuid(application?.createdBy, courtCase),
+          petitionerName: getNameByUuid(application?.asUser, courtCase),
           complainantList: complainantList,
           accusedList: accusedList,
           day: day + ordinalSuffix,
@@ -231,7 +229,7 @@ const applicationCaseWithdrawal = async (
         : config.pdf.application_case_withdrawal;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
-      "Failed to generate PDF of Application for Case Withdrawal"
+      "Failed to generate PDF of Application for Case Withdrawal",
     );
 
     const filename = `${pdfKey}_${new Date().getTime()}`;
@@ -252,7 +250,7 @@ const applicationCaseWithdrawal = async (
       res,
       "Failed to query details of APPLICATION FOR EXTENSION OF SUBMISSION DEADLINE",
       500,
-      ex
+      ex,
     );
   }
 };

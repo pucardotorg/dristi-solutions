@@ -37,6 +37,8 @@ public class Configuration {
 	@Value("${egov.user.update.path}")
 	private String userUpdateEndpoint;
 
+	@Value("${spring.data.redis.timeout}")
+	private Long redisTimeout;
 
 	//Idgen Config
 	@Value("${egov.idgen.host}")
@@ -94,19 +96,19 @@ public class Configuration {
 	@Value("${egov.sms.notification.topic}")
 	private String smsNotificationTopic;
 
-	@Value("${dristi.dev.file.search.host}")
+	@Value("${egov.filestore.host}")
 	private String fileStoreHost;
 
-	@Value("${dristi.dev.file.search.path}")
+	@Value("${dristi.file.search.path}")
 	private String fileStorePath;
 
-	@Value("${dristi.dev.file.delete.path}")
+	@Value("${dristi.file.delete.path}")
 	private String fileStoreDeleteEndPoint;
 
-	@Value("${dristi.dev.order.search.host}")
+	@Value("${dristi.order.host}")
 	private String orderSearchHost;
 
-	@Value("${dristi.dev.order.search.url}")
+	@Value("${dristi.order.search.url}")
 	private String orderSearchPath;
 
 	@Value("${egov.pdf.create}")
@@ -121,10 +123,10 @@ public class Configuration {
 	@Value("${egov.credential.url}")
 	private String credentialUrl;
 
-	@Value("${dristi.dev.task.search.host}")
+	@Value("${dristi.task.host}")
 	private String taskSearchHost;
 
-	@Value("${dristi.dev.task.search.url}")
+	@Value("${dristi.task.search.url}")
 	private String taskSearchPath;
 
 
@@ -143,6 +145,13 @@ public class Configuration {
 	@Value("${dristi.case.search.url}")
 	private String caseSearchUrl;
 
+	// Application Config
+	@Value("${dristi.application.host}")
+	private String applicationHost;
+
+	@Value("${dristi.application.search.endpoint}")
+	private String applicationSearchEndPoint;
+
 	//ElasticSearch Config
 	@Value("${egov.infra.indexer.host}")
 	private String esHostUrl;
@@ -158,6 +167,9 @@ public class Configuration {
 
 	@Value("${dristi.bundle.index}")
 	private String caseBundleIndex;
+
+	@Value("${dristi.preview.index}")
+	private String casePreviewIndex;
 
 	@Value("${dristi.hearing.index}")
 	private String hearingIndex;
@@ -187,6 +199,9 @@ public class Configuration {
 	@Value("${casemanagement.kafka.bundle.create.topic}")
 	private String bundleCreateTopic;
 
+	@Value("${casemanagement.kafka.update.casebundles.topic}")
+	private String updateCaseBundlesTopic;
+
 	@Value("${generate.vc.code}")
 	private String vcCode;
 
@@ -197,6 +212,37 @@ public class Configuration {
 	@Value("${case.allowed.status}")
 	private String caseAllowedStatuses;
 	private List<String> caseAllowedStatusesList = new ArrayList<>();
+
+	// Digitalized Documents Config
+	@Value("${dristi.digitalized.documents.host}")
+	private String digitalizedDocumentsHost;
+
+	@Value("${dristi.digitalized.documents.search.endpoint}")
+	private String digitalizedDocumentsSearchEndPoint;
+
+	// Task Management Config
+	@Value("${dristi.taskmanagement.host}")
+	private String taskManagementServiceHost;
+
+	@Value("${dristi.taskmanagement.search.endpoint}")
+	private String taskManagementSearchEndpoint;
+
+	// Evidence Service Config
+	@Value("${dristi.evidence.host}")
+	private String evidenceServiceHost;
+
+	@Value("${dristi.evidence.search.endpoint}")
+	private String evidenceServiceSearchEndpoint;
+
+	// CTC Service Config
+	@Value("${dristi.ctc.host}")
+	private String ctcHost;
+
+	@Value("${dristi.ctc.search.endpoint}")
+	private String ctcSearchEndpoint;
+
+	@Value("${dristi.ctc.update.endpoint}")
+	private String ctcUpdateEndpoint;
 
 	@PostConstruct
 	public void init() {

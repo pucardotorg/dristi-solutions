@@ -5,7 +5,7 @@ import HomeHearingsTab from "./HomeHearingsTab";
 import { pendingTaskConfig } from "../../configs/PendingTaskConfig";
 import { HomeService, Urls } from "../../hooks/services";
 import { useHistory } from "react-router-dom";
-import { Loader, Toast, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { Loader, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import BulkBailBondSignView from "./BulkBailBondSignView";
 import BailBondModal from "./BailBondModal";
@@ -26,6 +26,10 @@ import useCaseDetailSearchService from "@egovernments/digit-ui-module-dristi/src
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import BulkSignDigitalizationView from "./BulkSignDigitalizationView";
 import TemplateOrConfigurationPage from "./TemplateOrConfigurationPage";
+import CTCApplications from "./CTCApplications";
+import BulkIssueCTC from "./BulkIssueCTC";
+import { ORDER_TYPES } from "../../utils/constants";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -63,6 +67,7 @@ const MainHomeScreen = () => {
   const [scrutinyConfig, setScrutinyConfig] = useState(structuredClone(scrutinyPendingTaskConfig[0]));
   const [tabData, setTabData] = useState(null);
   const [scrutinyDueCount, setScrutinyDueCount] = useState(0);
+  const [ctcApplicationCount, setCtcApplicationCount] = useState(0);
 
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
   const [pendingTaskCount, setPendingTaskCount] = useState({
@@ -79,12 +84,13 @@ const MainHomeScreen = () => {
     RESCHEDULE_APPLICATIONS: 0,
     DELAY_CONDONATION: 0,
     OTHERS: 0,
+    CTC_APPLICATIONS: 0,
   });
   const [stepper, setStepper] = useState(0);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [showBailBondModal, setShowBailBondModal] = useState(false);
   const [selectedBailBond, setSelectedBailBond] = useState(null);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -110,6 +116,7 @@ const MainHomeScreen = () => {
   const hasCaseReviewerAccess = useMemo(() => assignedRoles?.includes("CASE_REVIEWER"), [assignedRoles]);
   const hasViewProcessManagementAccess = useMemo(() => assignedRoles?.includes("VIEW_PROCESS_MANAGEMENT"), [assignedRoles]);
   const hasViewReschedulingRequestAccess = useMemo(() => assignedRoles?.includes("VIEW_RESCHEDULING_REQUESTS"), [assignedRoles]);
+  const hasViewCTCApplicationAccess = useMemo(() => assignedRoles?.includes("CTC_APPLICATION_APPROVER"), [assignedRoles]);
 
   const today = new Date();
 
@@ -196,12 +203,7 @@ const MainHomeScreen = () => {
     const toDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59, 999).getTime();
     return { fromDate, toDate };
   };
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
+
   const fetchHearingCount = async (filters, activeTab) => {
     if (filters && activeTab === "TOTAL_HEARINGS_TAB" && filters.date) {
       try {
@@ -236,7 +238,8 @@ const MainHomeScreen = () => {
         const res = await HomeService.InboxSearch(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
         setHearingCount(res?.totalCount || 0);
       } catch (err) {
-        showToast("error", t("ISSUE_IN_FETCHING"), 5000);
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: t("ISSUE_IN_FETCHING_HEARINGS"), errorId });
         console.error(err);
       }
     } else {
@@ -270,9 +273,38 @@ const MainHomeScreen = () => {
         });
         // }
       } catch (err) {
-        showToast("error", t("ISSUE_IN_FETCHING"), 5000);
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: t("ISSUE_IN_FETCHING_HEARINGS"), errorId });
         console.error(err);
       }
+    }
+  };
+
+  const fetchCTCApplicationCount = async () => {
+    try {
+      if (!hasViewCTCApplicationAccess) return;
+      const ctcApplicationPayload = {
+        inbox: {
+          processSearchCriteria: {
+            businessService: ["ctc-default"],
+            moduleName: "CTC Service",
+            tenantId: tenantId,
+          },
+          moduleSearchCriteria: {
+            tenantId: tenantId,
+            courtId: localStorage.getItem("courtId"),
+            status: "PENDING_APPROVAL",
+          },
+          tenantId: tenantId,
+          limit: 10,
+          offset: 0,
+        },
+      };
+
+      const resCtCApplication = await HomeService.InboxSearch(ctcApplicationPayload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+      setCtcApplicationCount(resCtCApplication?.totalCount || 0);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -358,7 +390,9 @@ const MainHomeScreen = () => {
           },
         },
       };
+
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
+
       const reviwCount = res?.reviewProcessData?.totalCount || 0;
       const registerCount = res?.registerCasesData?.totalCount || 0;
       const bailBondStatusCount = res?.bailBondData?.totalCount || 0;
@@ -385,7 +419,8 @@ const MainHomeScreen = () => {
         OTHERS: otherApplicationsCount,
       });
     } catch (err) {
-      showToast("error", t("ISSUE_IN_FETCHING"), 5000);
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("ISSUE_IN_FETCHING"), errorId });
       console.error(err);
     } finally {
       setLoader(false);
@@ -597,7 +632,7 @@ const MainHomeScreen = () => {
               let noticeCourierService = [];
               let summonsCourierService = [];
 
-              if (orderType === "SUMMONS") {
+              if (orderType === ORDER_TYPES.SUMMONS) {
                 summonsCourierService = partyDetails?.deliveryChannels;
               } else {
                 noticeCourierService = partyDetails?.deliveryChannels;
@@ -633,16 +668,32 @@ const MainHomeScreen = () => {
       const existingTask = taskManagementList?.find((item) => item?.taskType === orderType);
       setIsProcessLoader(true);
       try {
-        await createOrUpdateTask({
-          type: orderType,
-          existingTask: existingTask,
-          courierData: courierData,
-          formData: formData,
-          filingNumber: courierOrderDetails?.filingNumber,
-          tenantId,
-          isLast,
-        });
-        await refetchTaskManagement();
+        try {
+          await createOrUpdateTask({
+            type: orderType,
+            existingTask: existingTask,
+            courierData: courierData,
+            formData: formData,
+            filingNumber: courierOrderDetails?.filingNumber,
+            tenantId,
+            isLast,
+          });
+        } catch (error) {
+          console.error("Failed to create or update courier task:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ error: true, label: t("FAILED_TO_UPDATE_COURIER_TASK"), errorId });
+          return { continue: false };
+        }
+
+        try {
+          await refetchTaskManagement();
+        } catch (error) {
+          console.error("Failed to refetch task management:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ error: true, label: t("FAILED_TO_REFETCH_TASKS"), errorId });
+          return { continue: false };
+        }
+
         if (isLast) {
           setCourierServicePendingTask(null);
           setCourierOrderDetails({});
@@ -652,8 +703,9 @@ const MainHomeScreen = () => {
         }
         return { continue: true };
       } catch (error) {
-        console.error("Error creating or updating task:", error);
-        showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
+        console.error("Unexpected error in courier processing:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: t("HOME_SCREEN_UPDATE_FAILED"), errorId });
         return { continue: false };
       } finally {
         setIsProcessLoader(false);
@@ -670,7 +722,33 @@ const MainHomeScreen = () => {
       if (updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party?.[index]) {
         const updatedParties = [...updatedOrderDetails.additionalDetails.formdata[formDataKey].party];
         const updatedParty = { ...updatedParties[index] };
-        updatedParty[type === "notice" ? "noticeCourierService" : "summonsCourierService"] = value;
+        updatedParty[type === ORDER_TYPES.NOTICE.toLocaleLowerCase() ? "noticeCourierService" : "summonsCourierService"] = value;
+        updatedParties[index] = updatedParty;
+        updatedOrderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
+      }
+
+      return updatedOrderDetails;
+    });
+  }, []);
+
+  const handleInitialCourierServiceChange = useCallback((data, index) => {
+    setCourierOrderDetails((prevOrderDetails) => {
+      const updatedOrderDetails = { ...prevOrderDetails };
+      const formDataKey = formDataKeyMap[updatedOrderDetails?.orderType];
+
+      if (updatedOrderDetails?.additionalDetails?.formdata?.[formDataKey]?.party?.[index]) {
+        const updatedParties = [...updatedOrderDetails.additionalDetails.formdata[formDataKey].party];
+        const updatedParty = { ...updatedParties[index] };
+        const courierFieldMap = {
+          notice: "noticeCourierService",
+          summons: "summonsCourierService",
+        };
+
+        Object.keys(courierFieldMap).forEach((key) => {
+          if (data?.[key]) {
+            updatedParty[courierFieldMap[key]] = data[key];
+          }
+        });
         updatedParties[index] = updatedParty;
         updatedOrderDetails.additionalDetails.formdata[formDataKey].party = updatedParties;
       }
@@ -814,6 +892,7 @@ const MainHomeScreen = () => {
               setNoticeActive={setActive}
               orderType={orderType}
               handleAddAddress={handleAddAddress}
+              handleInitialCourierServiceChange={(data) => handleInitialCourierServiceChange(data, i)}
             />
           ),
           actionSaveOnSubmit: async () => {
@@ -823,7 +902,7 @@ const MainHomeScreen = () => {
             isTaskManagementLoading ||
             isCaseLoading ||
             isProcessLoader ||
-            (orderType === "SUMMONS" ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
+            (orderType === ORDER_TYPES.SUMMONS ? courierData?.summonsCourierService?.length === 0 : courierData?.noticeCourierService?.length === 0),
         };
       }) || [];
     return courierServiceSteps;
@@ -856,6 +935,12 @@ const MainHomeScreen = () => {
 
   useEffect(() => {
     if (userType === "employee") {
+      fetchCTCApplicationCount();
+    }
+  }, [userType, hasViewCTCApplicationAccess]);
+
+  useEffect(() => {
+    if (userType === "employee") {
       fetchPendingTaskCounts();
       fetchHearingCount(filters, activeTab);
     }
@@ -883,6 +968,9 @@ const MainHomeScreen = () => {
   if (hasViewCollectOfflinePaymentsAccess) {
     options.OFFLINE_PAYMENTS = { name: "HOME_OFFLINE_PAYMENTS" };
   }
+  if (hasViewCTCApplicationAccess) {
+    options.CTC_APPLICATIONS = { name: "HOME_CTC_APPLICATIONS" };
+  }
 
   // VIEW_APPLICATION: {
   //   name: "View Applications",
@@ -904,6 +992,22 @@ const MainHomeScreen = () => {
   if (hasViewOthers) {
     applicationOptions.OTHERS = { name: "HOME_OTHER_APPLICATIONS" };
   }
+
+  const handleSetCount = useCallback(
+    (value) => {
+      if (typeof value === "function") {
+        setPendingTaskCount((prev) => {
+          const next = value(prev);
+          return { ...prev, ...next };
+        });
+      } else if (typeof value === "object" && value !== null) {
+        setPendingTaskCount((prev) => ({ ...prev, ...value }));
+      } else {
+        setPendingTaskCount((prev) => ({ ...prev, [activeTab]: Number(value) || 0 }));
+      }
+    },
+    [activeTab]
+  );
 
   useEffect(() => {
     let updatedConfig = structuredClone(pendingTaskConfig);
@@ -1046,7 +1150,7 @@ const MainHomeScreen = () => {
         },
       },
       additionalDetails: {
-        setCount: setPendingTaskCount,
+        setCount: handleSetCount,
         activeTab: activeTab,
         setShowBailBondModal: setShowBailBondModal,
         setSelectedBailBond: setSelectedBailBond,
@@ -1107,6 +1211,7 @@ const MainHomeScreen = () => {
         fetchPendingTaskCounts();
       }
     }
+    fetchCTCApplicationCount();
     setActiveTab(label || title);
     setActiveTabTitle(title);
     sessionStorage.removeItem("diaryDateFilter");
@@ -1135,7 +1240,7 @@ const MainHomeScreen = () => {
           configs={{
             ...scrutinyConfig,
             additionalDetails: {
-              setCount: setPendingTaskCount,
+              setCount: handleSetCount,
               activeTab: activeTab,
               hasCaseReviewerAccess: hasCaseReviewerAccess,
             },
@@ -1175,14 +1280,15 @@ const MainHomeScreen = () => {
       <div className="main-home-screen">
         <HomeSidebar
           t={t}
+          tenantId={tenantId}
           onTabChange={handleTabChange}
           activeTab={activeTab}
           options={options}
           isOptionsLoading={false}
           applicationOptions={applicationOptions}
           hearingCount={hearingCount}
-          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount }}
-          showToast={showToast}
+          pendingTaskCount={{ ...pendingTaskCount, SCRUTINISE_CASES: scrutinyDueCount, CTC_APPLICATIONS: ctcApplicationCount }}
+          setShowToast={setShowToast}
         />
         {activeTab === "TEMPLATE_OR_CONFIGURATION" ? (
           <div className="home-bulk-sign">
@@ -1198,7 +1304,7 @@ const MainHomeScreen = () => {
               showEndHearingModal={showEndHearingModal}
               setFilters={setFilters}
               filters={filters}
-              showToast={showToast}
+              setShowToast={setShowToast}
               hearingCount={hearingCount}
             />
           </div>
@@ -1212,7 +1318,7 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "BULK_BAIL_BOND_SIGN" ? (
           <div className="home-bulk-sign">
-            <BulkBailBondSignView showToast={showToast} />
+            <BulkBailBondSignView setShowToast={setShowToast} />
           </div>
         ) : activeTab === "REGISTER_USERS" ? (
           <div className="home-bulk-sign">
@@ -1228,15 +1334,15 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "CS_HOME_A_DAIRY" ? (
           <div className="home-bulk-sign">
-            <BulkSignADiaryView showToast={showToast} />
+            <BulkSignADiaryView />
           </div>
         ) : activeTab === "BULK_EVIDENCE_SIGN" ? (
           <div className="home-bulk-sign">
-            <BulkMarkAsEvidenceView showToast={showToast} />
+            <BulkMarkAsEvidenceView setShowToast={setShowToast} />
           </div>
         ) : activeTab === "BULK_WITNESS_DEPOSITION_SIGN" ? (
           <div className="home-bulk-sign">
-            <BulkWitnessDepositionView showToast={showToast} />
+            <BulkWitnessDepositionView setShowToast={setShowToast} />
           </div>
         ) : activeTab === "CS_HOME_ORDERS" ? (
           <div className="home-bulk-sign">
@@ -1245,6 +1351,14 @@ const MainHomeScreen = () => {
         ) : activeTab === "CS_HOME_SIGN_FORMS" ? (
           <div className="home-bulk-sign">
             <BulkSignDigitalizationView />
+          </div>
+        ) : activeTab === "CTC_APPLICATIONS" ? (
+          <div className="home-bulk-sign">
+            <CTCApplications refetch={fetchCTCApplicationCount} />
+          </div>
+        ) : activeTab === "CS_HOME_ISSUE_CTC_COPY" ? (
+          <div className="home-bulk-sign">
+            <BulkIssueCTC />
           </div>
         ) : (
           <div className={`bulk-esign-order-view`}>
@@ -1255,19 +1369,19 @@ const MainHomeScreen = () => {
         {showBailBondModal && (
           <BailBondModal
             t={t}
-            showToast={showToast}
+            setShowToast={setShowToast}
             setShowBailModal={setShowBailBondModal}
             row={selectedBailBond}
             setUpdateCounter={setUpdateCounter}
           />
         )}
-        {toastMsg && (
-          <Toast
-            error={toastMsg.key === "error"}
-            label={t(toastMsg.action)}
-            onClose={() => setToastMsg(null)}
-            isDleteBtn={true}
-            style={{ maxWidth: "500px" }}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
           />
         )}
         {courierServicePendingTask && Object?.keys(courierServicePendingTask)?.length > 0 && courierServiceSteps?.length > 0 && (

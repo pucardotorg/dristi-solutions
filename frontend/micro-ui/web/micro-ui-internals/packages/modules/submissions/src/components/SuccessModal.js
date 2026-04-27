@@ -1,9 +1,9 @@
 import React from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import SelectCustomNote from "../../../dristi/src/components/SelectCustomNote";
 import { Banner } from "@egovernments/digit-ui-react-components";
 import CustomCopyTextDiv from "../../../dristi/src/components/CustomCopyTextDiv";
+import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const customNoteConfig = {
   populators: {
@@ -29,18 +29,6 @@ const paymentFailedNoteConfig = {
     ],
   },
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingTop: "10px", cursor: "pointer" }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
 function SuccessModal({
   t,
   actionCancelLabel,
@@ -60,13 +48,15 @@ function SuccessModal({
   ];
   return (
     <Modal
+      headerBarMain={!makePayment}
+      headerBarEnd={!makePayment && <CloseBtn onClick={headerBarEndClose} />}
+      headerBarMainStyle={{ padding: "10px 0px" }}
       actionCancelLabel={t(actionCancelLabel)}
       actionCancelOnSubmit={actionCancelOnSubmit}
       actionSaveLabel={makePayment ? t("CS_MAKE_PAYMENT") : t("CS_CLOSE")}
       actionSaveOnSubmit={handleCloseSuccessModal}
       className={"submission-success-modal"}
     >
-      {headerBarEndClose && <CloseBtn onClick={headerBarEndClose}></CloseBtn>}
       <div className="submission-success-modal-body-main">
         <Banner
           whichSvg={"tick"}

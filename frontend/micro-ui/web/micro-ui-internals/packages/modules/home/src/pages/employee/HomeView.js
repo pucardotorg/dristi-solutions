@@ -4,7 +4,7 @@ import { useHistory } from "react-router-dom";
 import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { rolesToConfigMapping, userTypeOptions, getUnifiedEmployeeConfig, getOnRowClickConfig, litigantConfig } from "../../configs/HomeConfig";
 import UpcomingHearings from "../../components/UpComingHearing";
-import { Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import TasksComponent from "../../components/TaskComponent";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { HomeService } from "../../hooks/services";
@@ -21,6 +21,7 @@ import { BreadCrumb } from "@egovernments/digit-ui-react-components";
 import SelectAdvocateModal from "./SelectAdvocateModal";
 import { extractedSeniorAdvocates } from "../../utils";
 import { AdvocateDataContext } from "@egovernments/digit-ui-module-core";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -75,6 +76,7 @@ const HomeView = () => {
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
+  const refetchMemberData = state?.refectMemberData || "";
 
   const [tabData, setTabData] = useState(null);
   const [callRefetch, setCallRefetch] = useState(false);
@@ -97,7 +99,7 @@ const HomeView = () => {
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const [toastMsg, setToastMsg] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const courtId = localStorage.getItem("courtId");
   const isLitigant = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role?.code)), [
     userInfo?.roles,
@@ -209,7 +211,7 @@ const HomeView = () => {
     return userType === "ADVOCATE" ? { memberId: advocateId } : userType === "ADVOCATE_CLERK" ? { memberId: advClerkId } : {};
   }, [advocateId, advClerkId, userType]);
 
-  const { data: officeMembersData, isLoading: isLoadingMembers, refetch: refetchMembers } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
+  const { data: officeMembersData, isLoading: isLoadingMembers } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
     {
       searchCriteria: {
         ...searchCriteria,
@@ -217,7 +219,7 @@ const HomeView = () => {
       },
     },
     { tenantId },
-    searchCriteria,
+    `${JSON.stringify(searchCriteria)} + ${refetchMemberData}`,
     Boolean((advocateId || advClerkId) && tenantId)
   );
 
@@ -360,7 +362,7 @@ const HomeView = () => {
   useEffect(() => {
     if (!selectedSeniorAdvocate?.id) return;
     initialCountFetchRef.current === true && refreshInboxAfterSelectedAdvocateChange();
-  }, [selectedSeniorAdvocate?.id]);
+  }, [selectedSeniorAdvocate?.id, refetchMemberData]);
 
   const citizenId = useMemo(() => {
     if (userInfoType === "citizen" && !isSearchLoading) {
@@ -493,7 +495,7 @@ const HomeView = () => {
       try {
         const response = await DRISTIService.getCaseLockStatus({}, { uniqueId: filingNumber, tenantId: tenantId });
         if (response?.Lock?.isLocked) {
-          showToast("error", t("CASE_IS_ALREADY_LOCKED"), 5000);
+          setShowToast({ error: true, label: t("CASE_IS_ALREADY_LOCKED") });
           return false;
         } else {
           await DRISTIService.setCaseLock({ Lock: { uniqueId: filingNumber, tenantId: tenantId, lockType: "SCRUTINY" } }, {});
@@ -501,7 +503,8 @@ const HomeView = () => {
           return true;
         }
       } catch (error) {
-        showToast("error", t("ISSUE_WITH_LOCK"), 5000);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: t("ISSUE_WITH_LOCK"), errorId });
         console.error(error);
         return false;
       }
@@ -613,9 +616,14 @@ const HomeView = () => {
   }, [searchResult, userType]);
 
   useEffect(() => {
-    if (!individualData || !searchResult || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) return;
+    if (
+      !individualData ||
+      (["ADVOCATE", "ADVOCATE_CLERK"]?.includes(userType) && !searchResult) ||
+      (userType === "ADVOCATE_CLERK" && unAssociatedClerk)
+    )
+      return;
 
-    const userHasIncompleteRegistration = !individualId || isRejected || isLitigantPartialRegistered;
+    const userHasIncompleteRegistration = !individualId || isRejected || isLitigantPartialRegistered || searchResult?.length === 0;
 
     const registrationIsDoneApprovalIsPending = individualId && isApprovalPending && !isRejected && !isLitigantPartialRegistered;
 
@@ -643,12 +651,6 @@ const HomeView = () => {
   if (isLoading || isFetching || isSearchLoading || isOrdersLoading || isOutcomeLoading || isCitizenCaseDataLoading || isLoadingMembers) {
     return <Loader />;
   }
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
 
   const handleConfirmAdvocate = (advocate) => {
     setShowSelectAdvocateModal(false);
@@ -678,7 +680,7 @@ const HomeView = () => {
         userType &&
         userInfoType === "citizen" &&
         ((userType === "LITIGANT" && !isCitizenReferredInAnyCase) || (userType === "ADVOCATE_CLERK" && unAssociatedClerk)) ? (
-          <LitigantHomePage isApprovalPending={isApprovalPending} unAssociatedClerk={unAssociatedClerk} />
+          <LitigantHomePage isApprovalPending={isApprovalPending} unAssociatedClerk={unAssociatedClerk} isRejected={isRejected} />
         ) : (
           <React.Fragment>
             <div
@@ -792,16 +794,17 @@ const HomeView = () => {
               caseType={caseType}
               setCaseType={setCaseType}
               pendingSignOrderList={ordersNotificationData}
+              refetchTasks={refetchMemberData}
             />
           </div>
         )}
-        {toastMsg && (
-          <Toast
-            error={toastMsg.key === "error"}
-            label={t(toastMsg.action)}
-            onClose={() => setToastMsg(null)}
-            isDleteBtn={true}
-            style={{ maxWidth: "500px" }}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
           />
         )}
         {showSelectAdvocateModal && (

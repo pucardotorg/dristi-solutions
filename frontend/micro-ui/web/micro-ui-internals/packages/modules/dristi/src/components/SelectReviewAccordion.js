@@ -141,7 +141,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
       ? formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.isWarning
         ? ""
         : formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.FSOError ||
-        formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.systemError
+          formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.systemError
       : formData?.[configKey]?.[name]?.scrutinyMessage?.FSOError || "";
   }, [formData, popupInfo]);
 
@@ -259,9 +259,9 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
       formData && formData[configKey]
         ? { ...formData[config.key]?.[name] }
         : {
-          scrutinyMessage: "",
-          form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
-        };
+            scrutinyMessage: "",
+            form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
+          };
 
     const dependentFields = inputs?.find((item) => item.name === name)?.config?.find((f) => f.value === fieldName)?.dependentFields || [];
 
@@ -284,7 +284,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
         ...currentMessage.form[index],
         ...fieldObj,
       };
-      setValue(config.Key, currentMessage, name);
+      setValue(config.key, currentMessage, name);
     } else {
       // Proceed with deleting error if no false isWarning values exist
       if (index == null) {
@@ -299,7 +299,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
           ...fieldObj,
         };
       }
-      setValue(config.Key, currentMessage, name);
+      setValue(config.key, currentMessage, name);
       // Update dependent scrutiny messages
       for (const { configKey, page, field } of dependentFields) {
         const scrutinyMessage = get(formData, [configKey, page], {
@@ -364,9 +364,9 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
       formData && formData[configKey] && formData[config.key]?.[name]
         ? { ...formData[config.key]?.[name] }
         : {
-          scrutinyMessage: "",
-          form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
-        };
+            scrutinyMessage: "",
+            form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
+          };
 
     if (currentMessage?.form) {
       if (index == null) {
@@ -416,8 +416,6 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
       setSystemError("");
     }
   };
-
-
 
   useEffect(() => {
     if (
@@ -479,7 +477,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
 
   let showFlagIcon = isScrutiny ? true : false;
   return (
-    <div className="accordion-wrapper" onClick={() => { }}>
+    <div className="accordion-wrapper" onClick={() => {}}>
       <div className={`accordion-title ${isOpen ? "open" : ""}`} onClick={() => setOpen(!isOpen)}>
         <span>
           {config?.number}. {t(config?.label)}
@@ -691,10 +689,10 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                   !defaultError
                     ? t("CS_MARK_ERROR")
                     : systemDefaultError
-                      ? t("CS_CONFIRM_ERROR")
-                      : defaultError === scrutinyError
-                        ? t("CS_COMMON_CANCEL")
-                        : t("CS_COMMON_UPDATE")
+                    ? t("CS_CONFIRM_ERROR")
+                    : defaultError === scrutinyError
+                    ? t("CS_COMMON_CANCEL")
+                    : t("CS_COMMON_UPDATE")
                 }
                 isDisabled={!scrutinyError?.trim()}
                 onButtonClick={() => {

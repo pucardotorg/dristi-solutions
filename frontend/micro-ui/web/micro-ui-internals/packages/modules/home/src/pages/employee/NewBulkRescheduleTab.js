@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Banner, Button, CardLabel, CloseSvg, Dropdown, LabelFieldPair, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Banner, Button, CardLabel, CloseSvg, Dropdown, LabelFieldPair, Loader } from "@egovernments/digit-ui-react-components";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
@@ -9,9 +9,10 @@ import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/componen
 import NewBulkRescheduleTable from "./NewBulkRescheduleTable";
 import { Urls } from "@egovernments/digit-ui-module-hearings/src/hooks/services/Urls";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
-import _ from "lodash";
+import get from "lodash/get";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -39,7 +40,7 @@ const Heading = ({ label }) => {
 };
 const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
   const { t } = useTranslation();
-  const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
+  const { handleEsign, checkSignStatus, showToast, setShowToast, CustomToast } = Digit.Hooks.orders.useESign();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
 
@@ -52,7 +53,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const [isSigned, setIsSigned] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState(""); //signed notification filestore id
   const [loader, setLoader] = useState(false);
-  const [toastMsg, setToastMsg] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const accessToken = window.localStorage.getItem("token");
@@ -119,13 +119,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
 
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${notificationFileStoreId}`;
 
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
-
   useEffect(() => {
     const esignProcess = sessionStorage.getItem("esignProcess");
     if (esignProcess) {
@@ -162,7 +155,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     [{ name: "BulkRescheduleReason" }],
     {
       select: (data) => {
-        return _.get(data, "Hearing.BulkRescheduleReason", []).map((opt) => ({ ...opt }));
+        return get(data, "Hearing.BulkRescheduleReason", []).map((opt) => ({ ...opt }));
       },
     }
   );
@@ -305,7 +298,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     } catch (error) {
       console.error("Error :", error);
       setLoader(false);
-      showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("ISSUE_IN_BULK_HEARING"), errorId });
       setStepper(1);
       setIsSigned(false);
       setSignedDocumentUploadID("");
@@ -398,7 +392,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
         setNotificationFileStoreId(fileStoreId);
         setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, fileStoreId]));
       } else if (!notificationFileStoreId) {
-        showToast("error", t("SOME_ERRORS_IN_HEARING_RESCHEDULE"), 5000);
+        setShowToast({ error: true, label: t("SOME_ERRORS_IN_HEARING_RESCHEDULE") });
         return;
       }
       const caseNumbers = newHearingData?.filter((hearing) => hearing?.caseId).map((hearing) => hearing.caseId);
@@ -475,7 +469,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       setAllHearings(tentativeDates?.Hearings || []);
       setNewHearingData(tentativeDates?.Hearings || []);
       if (tentativeDates?.Hearings?.length === 0) {
-        showToast("error", t("NO_NEW_HEARINGS_AVAILABLE"), 2000);
+        setShowToast({ error: true, label: t("NO_NEW_HEARINGS_AVAILABLE") });
       }
     } catch (error) {
       console.error(error);
@@ -489,7 +483,6 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       <NewBulkRescheduleTable
         t={t}
         loader={isRescheduleReasonLoading}
-        showToast={showToast}
         setStepper={setStepper}
         setNewHearingData={setNewHearingData}
         newHearingData={newHearingData}
@@ -610,7 +603,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
                     sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
                     sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
                     sessionStorage.setItem("homeActiveTab", "CS_HOME_BULK_RESCHEDULE");
-                    handleEsign(name, pageModule, notificationFileStoreId, "Signature");
+                    handleEsign(name, pageModule, notificationFileStoreId, setShowToast, t, "Signature");
                   }} //as sending null throwing error in esign
                   className="aadhar-sign-in"
                   labelClassName="aadhar-sign-in"
@@ -651,6 +644,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           onSubmit={onUploadSubmit}
           isDisabled={issignLoader}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {stepper === 3 && !openUploadSignatureModal && isSigned && (
@@ -756,13 +750,13 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
           </div>
         </Modal>
       )}
-      {toastMsg && (
-        <Toast
-          error={toastMsg.key === "error"}
-          label={t(toastMsg.action)}
-          onClose={() => setToastMsg(null)}
-          isDleteBtn={true}
-          style={{ maxWidth: "500px" }}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
     </React.Fragment>

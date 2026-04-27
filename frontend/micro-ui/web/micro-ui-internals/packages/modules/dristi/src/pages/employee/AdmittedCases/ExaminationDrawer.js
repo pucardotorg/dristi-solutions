@@ -1,16 +1,13 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Dropdown, LabelFieldPair, CardLabel, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { LeftArrow, CustomAddIcon, CustomDeleteIcon } from "../../../icons/svgIndex";
 import Button from "../../../components/Button";
 import isEmpty from "lodash/isEmpty";
-import TranscriptComponent from "../../../../../hearings/src/pages/employee/Transcription";
 import { Urls } from "../../../hooks";
-import { getFilingType } from "../../../Utils";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { DRISTIService } from "../../../services";
 import isEqual from "lodash/isEqual";
-
 import WitnessDepositionESignLockModal from "./WitnessDepositionESignLockModal";
 import AddWitnessMobileNumberModal from "./AddWitnessMobileNumberModal";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
@@ -19,20 +16,7 @@ import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearc
 import SelectCustomFormatterTextArea from "../../../components/SelectCustomFormatterTextArea";
 import { MultiSelectDropdownNew } from "../../../components/MultiSelectDropdownNew";
 import PreviewPdfModal from "../../../../../submissions/src/components/PreviewPdfModal";
-
-const defaultExaminationQuestionOptions = [
-  { code: "Q1", title: "whereabouts", label: "Where were you on the night of the incident?" },
-  { code: "Q2", title: "silence", label: "Are you sure you want to stay silent?" },
-  { code: "Q3", title: "threat", label: "Did anyone threaten you to stay silent?" },
-];
-
-const formatAddress = (addr) => {
-  if (!addr) return "";
-  const { locality = "", city = "", district = "", state = "", pincode = "" } = addr;
-  return `${locality}, ${city}, ${district}, ${state}, ${pincode}`.trim();
-};
-
-
+import CustomToast from "../../../components/CustomToast";
 
 export const _getPdfConfigForExamination = (documentNumber, caseDetails, courtId, tenantId) => {
   return {
@@ -54,16 +38,13 @@ export const _getPdfConfigForExamination = (documentNumber, caseDetails, courtId
 
 const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, caseId, courtId }) => {
   const { t } = useTranslation();
-  const textAreaRef = useRef(null);
   const [options, setOptions] = useState([]);
   const [selectedAccused, setSelectedAccused] = useState({});
   const [examinationText, setExaminationText] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProceeding, setIsProceeding] = useState(false);
   const [activeTabs, setActiveTabs] = useState([]);
   const [activeTabIndex, setActiveTabIndex] = useState(0); // set activetabindex based on new or already existing tab.
   const [currentDocument, setCurrentDocument] = useState(null);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [showAccusedExaminationReview, setShowAccusedExaminationReview] = useState(localStorage.getItem("showPdfPreview") || false);
   const [documentFileStoreId, setDocumentFileStoreId] = useState("");
   const [currentDocumentNumber, setCurrentDocumentNumber] = useState(documentNumber || localStorage.getItem("documentNumber") || null);
@@ -76,25 +57,11 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
   const [showConfirmDeleteExaminationModal, setShowConfirmDeleteExaminationModal] = useState({ show: false, tab: {} });
   const [respondentsData, setRespondentsData] = useState([]);
   const [active, setActive] = useState(false);
-  const [selectedQuestions, setSelectedQuestions] = useState([]);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
 
   const formatText = (text) => {
     if (!text) return "";
     return text.replace(/\\n/g, "<wbr>").replace(/\n/g, "<wbr>");
   };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   const { isLoading: examinationQuestionsDataLoading, data: examinationQuestionsData } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -120,7 +87,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
     );
   }, [examinationQuestionsData]);
 
-  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
+  const { data: apiCaseData, isLoading: caseApiLoading } = useCaseDetailSearchService(
     {
       criteria: {
         caseId: caseId,
@@ -165,8 +132,8 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
               numberFromIndividual = individualData?.Individual?.[0]?.mobileNumber
                 ? individualData?.Individual?.[0]?.mobileNumber
                 : individualData?.Individual?.[0]?.userDetails?.username
-                  ? individualData?.Individual?.[0]?.userDetails?.username
-                  : "";
+                ? individualData?.Individual?.[0]?.userDetails?.username
+                : "";
             } catch (error) {
               console.error("Error fetching respondent individual data:", error);
             }
@@ -209,10 +176,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
   const documentsList = useMemo(() => documentsData?.documents?.filter((document) => document?.status === "DRAFT_IN_PROGRESS") || [], [
     documentsData,
   ]);
-  const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
-    { name: "FilingType" },
-  ]);
-  const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "CaseFiling"), [filingTypeData?.FilingType]);
 
   useEffect(() => {
     if (isOpen) {
@@ -346,7 +309,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
 
   const handleSaveDraft = async (submit = false, newCurrentDocumentNumber = null, backAction = false) => {
     if (!selectedAccused?.value) {
-      setShowErrorToast({ label: t("PLEASE_SELECT_ACCUSED_FIRST"), error: true });
+      setShowToast({ label: t("PLEASE_SELECT_ACCUSED_FIRST"), error: true });
       if (backAction) {
         onClose();
       }
@@ -355,7 +318,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
 
     const formattedText = formatText(examinationText);
     if (!formattedText.trim() && submit) {
-      setShowErrorToast({ label: t("PLEASE_ENTER_EXAMINATION_DETAILS"), error: true });
+      setShowToast({ label: t("PLEASE_ENTER_EXAMINATION_DETAILS"), error: true });
       if (backAction) {
         onClose();
       }
@@ -402,7 +365,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             }
             setActiveTabs(updatedTabs);
           }
-          setShowErrorToast({ label: t("EXAMINATION_OF_ACCUSED_UPDATED_SUCCESSFULLY"), error: false });
+          setShowToast({ label: t("EXAMINATION_OF_ACCUSED_UPDATED_SUCCESSFULLY"), error: false });
         }
       } else {
         // Create new
@@ -442,7 +405,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
           }
         }
 
-        setShowErrorToast({ label: t("EXAMINATION_OF_ACCUSED_CREATED_SUCCESSFULLY"), error: false });
+        setShowToast({ label: t("EXAMINATION_OF_ACCUSED_CREATED_SUCCESSFULLY"), error: false });
       }
 
       // Also refresh to ensure server and client are in sync
@@ -452,7 +415,8 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       }
     } catch (error) {
       console.error("Error saving draft:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("EXAMINATION_DRAFT_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
       if (backAction) {
@@ -497,8 +461,8 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
           },
         };
 
-        const updatedDocument = await DRISTIService.updateDigitizedDocument(reqBody);
-        setShowErrorToast({ label: t("EXAMINATION_OF_ACCUSED_DELETED_SUCCESSFULLY"), error: false });
+        await DRISTIService.updateDigitizedDocument(reqBody);
+        setShowToast({ label: t("EXAMINATION_OF_ACCUSED_DELETED_SUCCESSFULLY"), error: false });
         const updatedActiveTabs = activeTabs?.filter((tab) => tab?.documentNumber !== selectedTab?.documentNumber);
         setActiveTabs(updatedActiveTabs);
         if (deletedDocumentIndex === activeTabs?.length - 1) {
@@ -524,7 +488,8 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       }
     } catch (error) {
       console.error("Error while deleting examination of accused", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("EXAMINATION_DELETE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -532,7 +497,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
 
   const handleAddNewDepositionDraft = async () => {
     if (!selectedAccused?.value) {
-      setShowErrorToast({ label: t("PLEASE_SELECT_ACCUSED_FIRST"), error: true });
+      setShowToast({ label: t("PLEASE_SELECT_ACCUSED_FIRST"), error: true });
       return;
     }
     try {
@@ -571,7 +536,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
               updatedTabs[currentActiveIndex] = newDocument?.digitalizedDocument;
               setActiveTabs(updatedTabs);
               setCurrentDocument(newDocument?.digitalizedDocument);
-              setShowErrorToast({ label: t("EXAMINATION_OF_ACCUSED_UPDATED_SUCCESSFULLY"), error: false });
+              setShowToast({ label: t("EXAMINATION_OF_ACCUSED_UPDATED_SUCCESSFULLY"), error: false });
               setCurrentDocumentNumber(null);
               createNewDraft(updatedTabs, true);
             }
@@ -609,15 +574,16 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             updatedTabs[currentActiveIndex] = updatedDocument.digitalizedDocument;
             setActiveTabs(updatedTabs);
             setCurrentDocument(updatedDocument.digitalizedDocument);
-            setShowErrorToast({ label: t("EXAMINATION_OF_ACCUSED_UPDATED_SUCCESSFULLY"), error: false });
+            setShowToast({ label: t("EXAMINATION_OF_ACCUSED_UPDATED_SUCCESSFULLY"), error: false });
             setCurrentDocumentNumber(null);
             createNewDraft(updatedTabs, true);
           }
         }
       }
     } catch (error) {
-      console.error("Error saving draft:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Failed to save examination:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("EXAMINATION_CREATE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -652,13 +618,13 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       const party = allParties?.find((p) => p?.uniqueId === selectedAccused?.value);
       const documentsFile = fileStoreId
         ? [
-          {
-            fileStore: fileStoreId,
-            documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
-            additionalDetails: { name: `${t("S351_EXAMINATION")} (${party?.name}).pdf` },
-            tenantId,
-          },
-        ]
+            {
+              fileStore: fileStoreId,
+              documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
+              additionalDetails: { name: `${t("S351_EXAMINATION")} (${party?.name}).pdf` },
+              tenantId,
+            },
+          ]
         : null;
       const document = activeTabs?.find((tab) => tab?.documentNumber === currentDocumentNumber);
       const reqBody = {
@@ -703,13 +669,14 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
       setCurrentDocumentNumber(null);
     } catch (error) {
       console.error("Error while updating examination:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("EXAMINATION_ESIGN_SUBMIT_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
   };
 
-  if (isFilingTypeLoading || isDocumentsDataLoading || caseApiLoading || examinationQuestionsDataLoading) {
+  if (isDocumentsDataLoading || caseApiLoading || examinationQuestionsDataLoading) {
     return <Loader />;
   }
   const CONFIG_KEY = "examinationOfAccused";
@@ -727,11 +694,9 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
     }
   };
 
-  const isDisabled = isProceeding;
-
   const config = {
     key: CONFIG_KEY,
-    disable: isDisabled,
+    disable: false,
     populators: {
       inputs: [
         {
@@ -742,10 +707,10 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             width: "100%",
             minHeight: "40vh",
             fontSize: "large",
-            opacity: isDisabled ? 0.5 : 1,
+            opacity: 1,
             pointerEvents: !IsSelectedAccused ? "unset !important" : "auto",
-            backgroundColor: isDisabled ? "#f5f5f5" : "white",
-            color: isDisabled ? "#666" : "black",
+            backgroundColor: "white",
+            color: "black",
           },
         },
       ],
@@ -869,7 +834,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
                       optionKey={"label"}
                       select={handleDropdownChange}
                       freeze={true}
-                      disable={isProceeding}
                       selected={selectedAccused}
                       placeholder={t("SELECT_HERE")}
                       style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
@@ -883,7 +847,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
                       t={t}
                       defaultLabel={t("SELECT_HERE")}
                       options={examinationQuestionOptions}
-                      selected={selectedQuestions}
                       onConfirm={handleConfirmQuestions}
                       optionsKey="code"
                       displayKey="title"
@@ -897,19 +860,11 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
 
               <div style={{ gap: "16px", border: "1px solid" }}>
                 <SelectCustomFormatterTextArea t={t} config={config} formData={formData} onSelect={onSelect} errors={{}} />
-                {IsSelectedAccused && (
-                  <TranscriptComponent
-                    setExaminationText={setExaminationText}
-                    isRecording={isRecording}
-                    setIsRecording={setIsRecording}
-                    activeTab={"Witness Deposition"}
-                  ></TranscriptComponent>
-                )}
               </div>
               <div className="drawer-footer" style={{ display: "flex", justifyContent: "end", flexDirection: "row", gap: "16px" }}>
                 <Button
                   label={t("SAVE_DRAFT")}
-                  isDisabled={!IsSelectedAccused || isProceeding}
+                  isDisabled={!IsSelectedAccused}
                   onButtonClick={() => handleSaveDraft()}
                   style={{
                     width: "130px",
@@ -921,7 +876,7 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
                 />
                 <Button
                   label={t("SUBMIT_BUTTON")}
-                  isDisabled={!IsSelectedAccused || isProceeding || examinationText?.length === 0}
+                  isDisabled={!IsSelectedAccused || examinationText?.length === 0}
                   className={"order-drawer-save-btn"}
                   onButtonClick={() => handleSaveDraft(true)}
                   style={{
@@ -932,7 +887,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             </div>
           </div>
         </div>
-
         {showAccusedExaminationReview && (
           <PreviewPdfModal
             t={t}
@@ -955,7 +909,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             documents={[]}
           />
         )}
-
         {showAddAccusedMobileNumberModal && (
           <AddWitnessMobileNumberModal
             t={t}
@@ -972,7 +925,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             selectedPartyId={selectedAccused?.value}
           />
         )}
-
         {showExaminationESign && (
           <WitnessDepositionESignLockModal
             t={t}
@@ -985,7 +937,6 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
             header={"EXAMINATION_OF_ACCUSED_ESIGN_LOCK_BANNER_HEADER"}
           />
         )}
-
         {showConfirmDeleteExaminationModal?.show && (
           <ConfirmDepositionDeleteModal
             t={t}
@@ -1007,14 +958,20 @@ const ExaminationDrawer = ({ isOpen, onClose, tenantId, documentNumber = null, c
               setShowSuccessModal(false);
               documentsRefetch();
               setCurrentDocument(null);
-              setExaminationUploadLoader(false);
               onClose();
             }}
             message={"EXAMINATION_OF_ACCUSED_SUCCESS_BANNER_HEADER"}
           />
         )}
-
-        {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
+        )}
       </div>
     </React.Fragment>
   );

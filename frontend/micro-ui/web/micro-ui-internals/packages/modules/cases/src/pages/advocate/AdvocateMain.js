@@ -5,10 +5,8 @@ import { useHistory } from "react-router-dom";
 import { advocateSearchconfig } from "../../configs/advocateSearchConfig";
 import { useLocation } from "react-router-dom";
 
-
-
 const defaultSearchValues = {
-  barRegistrationNumber: ""
+  barRegistrationNumber: "",
 };
 
 const AdvocateMain = () => {
@@ -18,7 +16,6 @@ const AdvocateMain = () => {
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues); // State to hold default values for search fields
   const indConfigs = advocateSearchconfig();
 
-
   useEffect(() => {
     // Set default values when component mounts
     setDefaultValues(defaultSearchValues);
@@ -26,11 +23,9 @@ const AdvocateMain = () => {
 
   const history = useHistory();
 
-
-
   return (
     <div>
-      <Header >{t(indConfigs?.label)}</Header>
+      <Header>{t(indConfigs?.label)}</Header>
       <div className="inbox-search-wrapper">
         {/* Pass defaultValues as props to InboxSearchComposer */}
         <InboxSearchComposer configs={indConfigs} defaultValues={defaultValues}></InboxSearchComposer>

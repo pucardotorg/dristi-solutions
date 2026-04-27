@@ -117,8 +117,8 @@ class TaskManagementValidatorTest {
 
         verify(taskManagementRepository).getTaskManagement(
                 argThat(criteria -> 
-                    criteria.getId().equals("task-id-123") && 
-                    criteria.getTaskManagementNumber().equals("TM-001")
+                    "task-id-123".equals(criteria.getId()) && 
+                    "TM-001".equals(criteria.getTaskManagementNumber())
                 ), 
                 isNull()
         );

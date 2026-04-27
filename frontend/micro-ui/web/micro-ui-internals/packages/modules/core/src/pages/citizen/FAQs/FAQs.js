@@ -8,8 +8,6 @@ const FAQsSection = ({ module }) => {
   const tenantId = user?.info?.tenantId || Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
 
-
-
   const { isLoading, data } = Digit.Hooks.useGetFAQsJSON(Digit.ULBService.getStateId());
 
   const moduleFaqs = data?.MdmsRes["common-masters"]?.faqs[0]?.[`${module}`].faqs;

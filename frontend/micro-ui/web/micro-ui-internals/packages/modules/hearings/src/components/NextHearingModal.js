@@ -7,11 +7,7 @@ import { useHistory } from "react-router-dom";
 import CustomCalendar from "../../../dristi/src/components/CustomCalendar";
 import { useTranslation } from "react-i18next";
 import { DateUtils, formatDateInMonth } from "@egovernments/digit-ui-module-dristi/src/Utils";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
+import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const Close = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g>
@@ -27,8 +23,6 @@ const CloseBtn = (props) => {
     </div>
   );
 };
-
-
 
 const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript, handleConfirmationModal }) => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -69,7 +63,8 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
       );
       setCaseDetails(response?.criteria[0]?.responseList[0]);
     } catch (error) {
-      // console.log("error fetching case details", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      console.error("Error:", errorId, error);
     }
   };
 
@@ -142,6 +137,8 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
       })
       .catch((err) => {
         console.error(err);
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        console.error("Error ID:", errorId);
       });
   };
 

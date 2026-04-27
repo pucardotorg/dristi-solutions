@@ -1,5 +1,6 @@
-import { Button, CloseSvg, FormComposerV2, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button, FormComposerV2, Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import addWitnessConfig from "../../configs/AddWitnessConfig.js";
 import { useTranslation } from "react-i18next";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal.js";
@@ -10,8 +11,9 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min.js";
 import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
 import { formatName } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils.js";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils/index.js";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
-const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmployee, showToast, onAddSuccess, style }) => {
+const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmployee, onAddSuccess, style }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const DRISTIService = Digit?.ComponentRegistryService?.getComponent("DRISTIService");
@@ -23,36 +25,11 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
   const setFormErrors = useRef([]);
   const [isWitnessAdding, setIsWitnessAdding] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [currentFormErrors, setCurrentFormErrors] = useState({});
   const [addressErrors, setAddressError] = useState([]);
   const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
   const authorizedUuid = getAuthorizedUuid(userUuid);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
 
   const generateUUID = () => {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
@@ -184,7 +161,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
     // Validate required fields
     for (const { data } of validFormData) {
       if (!(data?.firstName || data?.witnessDesignation)) {
-        setShowErrorToast({ label: t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"), error: true });
+        setShowToast({ label: t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"), error: true, errorId: null });
         return;
       }
     }
@@ -222,7 +199,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
               }
             );
           } else {
-            showToast({ message: t("NEW_WITNESS_SUCCESSFULLY_ADDED"), error: false });
+            setShowToast({ label: t("NEW_WITNESS_SUCCESSFULLY_ADDED"), error: false, errorId: null });
           }
         });
       } else {
@@ -299,7 +276,8 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
       onAddSuccess();
     } catch (error) {
       console.error(error);
-      setShowErrorToast({ label: t("ERROR_ADDING_WITNESS"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_ADDING_WITNESS"), error: true, errorId });
     } finally {
       setIsWitnessAdding(false);
     }
@@ -394,14 +372,12 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
         ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
     const advocateMobileNumbersArray =
-      caseDetails?.additionalDetails?.advocateDetails?.formdata
+      caseDetails?.advocateDetailBlock
         ?.filter((data) => {
-          return data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length > 0;
+          return data?.advocates?.length > 0;
         })
         ?.map((data) => {
-          return data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
-            ?.filter((advocate) => advocate?.advocateNameDetails?.advocateMobileNumber)
-            ?.map((advocate) => advocate?.advocateNameDetails?.advocateMobileNumber);
+          return data?.advocates?.filter((adv) => adv?.mobileNumber)?.map((adv) => adv?.mobileNumber);
         })
         ?.reduce((acc, curr) => acc.concat(curr), []) || [];
 
@@ -655,7 +631,15 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
           }
         />
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, CardText, CustomDropdown, SubmitBar, TextInput, Toast, Modal, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import { Button, CardText, CustomDropdown, SubmitBar, TextInput, Modal, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import { formatDateInMonth } from "../../utils";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -7,6 +7,7 @@ import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks
 import { HomeService, Urls } from "../../hooks/services";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const hearingTypeOptions = [{}];
 
@@ -18,11 +19,6 @@ const dropdownConfig = {
   isMandatory: true,
   options: hearingTypeOptions,
 };
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 const Close = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clip-path="url(#clip0_4124_3214)">
@@ -157,7 +153,6 @@ function ScheduleHearing({
   const { filingNumber, status } = Digit.Hooks.useQueryParams();
   const [modalInfo, setModalInfo] = useState(null);
   const [selectedChip, setSelectedChip] = React.useState(status === "OPTOUT" ? [] : null);
-  const [showErrorToast, setShowErrorToast] = useState(false);
   const [scheduleHearingParams, setScheduleHearingParam] = useState({ purpose: "Admission Purpose" });
   const [selectedCustomDate, setSelectedCustomDate] = useState(new Date());
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -221,7 +216,7 @@ function ScheduleHearing({
 
   const nextFourDates = status === "OPTOUT" ? getSuggestedDates(dateResponse) : nextFiveDates;
 
-  const { data: OptOutLimit, isLoading: loading } = Digit.Hooks.useCustomMDMS(
+  const { data: OptOutLimit } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "SCHEDULER-CONFIG",
     [
@@ -233,10 +228,6 @@ function ScheduleHearing({
       cacheTime: 0,
     }
   );
-
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
 
   const setPurposeValue = (value, input) => {
     setScheduleHearingParam({ ...scheduleHearingParams, purpose: isCaseAdmitted ? value : value.code });
@@ -504,8 +495,6 @@ function ScheduleHearing({
             }
           ></SubmitBar>
         </div>
-
-        {showErrorToast && <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
         {modalInfo?.showDate && (
           <Modal
             headerBarMain={<Heading label={t(customDateConfig.headModal)} />}

@@ -59,6 +59,8 @@ public class TaskManagementService {
 
             enrichment.enrichCreateRequest(request);
 
+            enrichment.enrichWarrantUpfrontData(request);
+
             if (CREATE.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction())) {
                 demandService.createDemand(request);
                 log.info("demand created successfully");
@@ -80,6 +82,8 @@ public class TaskManagementService {
         validator.validateUpdateRequest(request);
 
         enrichment.enrichUpdateRequest(request);
+
+        enrichment.enrichWarrantUpfrontData(request);
 
         if (UPDATE.equalsIgnoreCase(request.getTaskManagement().getWorkflow().getAction())) {
             demandService.updateDemand(request);

@@ -37,6 +37,7 @@ const EmployeeApp = ({
   const showLanguageChange = location?.pathname?.includes("language-selection");
   const [tenantsData, setTenantsData] = useState([]);
   const isUserProfile = userScreensExempted.some((url) => location?.pathname?.includes(url));
+  const isLoginPage = location?.pathname?.includes("user/login");
   useEffect(() => {
     Digit.UserService.setType("employee");
   }, []);
@@ -66,12 +67,12 @@ const EmployeeApp = ({
     <div className="employee">
       <Switch>
         <Route path={`${path}/user`}>
-          {isUserProfile && (
+          {(isUserProfile || isLoginPage) && (
             <TopBarSideBar
               t={t}
               stateInfo={stateInfo}
               userDetails={userDetails}
-              CITIZEN={CITIZEN}
+              CITIZEN={isLoginPage ? true : CITIZEN}
               cityDetails={cityDetails}
               mobileView={mobileView}
               handleUserDropdownSelection={handleUserDropdownSelection}

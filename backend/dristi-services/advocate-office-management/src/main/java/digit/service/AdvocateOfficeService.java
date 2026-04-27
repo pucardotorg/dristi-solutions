@@ -1,5 +1,6 @@
 package digit.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import digit.config.Configuration;
 import digit.enrichment.AdvocateOfficeEnrichment;
 import digit.kafka.Producer;
@@ -8,12 +9,16 @@ import digit.util.CacheUtil;
 import digit.util.CaseUtil;
 import digit.validator.AdvocateOfficeValidator;
 import digit.web.models.*;
+import digit.web.models.enums.MemberType;
+import digit.web.models.sms.SmsTemplateData;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 import static digit.config.ServiceConstants.*;
 
@@ -28,15 +33,16 @@ public class AdvocateOfficeService {
     private final Configuration configuration;
     private final CaseUtil caseUtil;
     private final CacheUtil cacheUtil;
+    private final NotificationService notificationService;
 
     @Autowired
     public AdvocateOfficeService(AdvocateOfficeRepository advocateOfficeRepository,
-                                  AdvocateOfficeValidator validator,
-                                  AdvocateOfficeEnrichment enrichment,
-                                  Producer producer,
-                                  Configuration configuration,
-                                  CaseUtil caseUtil,
-                                  CacheUtil cacheUtil) {
+                                 AdvocateOfficeValidator validator,
+                                 AdvocateOfficeEnrichment enrichment,
+                                 Producer producer,
+                                 Configuration configuration,
+                                 CaseUtil caseUtil,
+                                 CacheUtil cacheUtil, NotificationService notificationService) {
         this.advocateOfficeRepository = advocateOfficeRepository;
         this.validator = validator;
         this.enrichment = enrichment;
@@ -44,6 +50,7 @@ public class AdvocateOfficeService {
         this.configuration = configuration;
         this.caseUtil = caseUtil;
         this.cacheUtil = cacheUtil;
+        this.notificationService = notificationService;
     }
 
     public AddMember addMember(AddMemberRequest request) {
@@ -57,6 +64,8 @@ public class AdvocateOfficeService {
             validator.validateCanAddMember(request);
 
             producer.push(configuration.getAddMemberTopic(), request);
+
+            callNotificationService(request);
 
             log.info("Member added successfully with id: {}", request.getAddMember().getId());
             return request.getAddMember();
@@ -179,6 +188,20 @@ public class AdvocateOfficeService {
             log.error("Unexpected error while processing case member", e);
             throw new CustomException("PROCESS_CASE_MEMBER_ERROR", "Error processing case member: " + e.getMessage());
         }
+    }
+
+    private void callNotificationService(AddMemberRequest request) {
+
+        RequestInfo requestInfo = request.getRequestInfo();
+        String memberType = request.getAddMember().getMemberType() == MemberType.ADVOCATE ? "assistant advocate" : "clerk";
+
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .tenantId(request.getAddMember().getTenantId())
+                .advocateName(request.getAddMember().getOfficeAdvocateName())
+                .memberType(memberType)
+                .build();
+
+        notificationService.sendNotification(requestInfo, smsTemplateData, ADVOCATE_OFFICE_ADDITION, request.getAddMember().getMemberMobileNumber());
     }
 
 }

@@ -38,8 +38,14 @@ public class Configuration {
 	@Value("${billing.index}")
 	private String billingIndex;
 
+	@Value("${case.stage.tracking.index}")
+	private String caseStageTrackingIndex;
+
 	@Value("${egov.case.overall.status.topic}")
 	private String caseOverallStatusTopic;
+
+	@Value("${egov.case.overall.status.topic.v2}")
+	private String caseOverallStatusTopicV2;
 
 	@Value("${egov.case.outcome.topic}")
 	private String caseOutcomeTopic;
@@ -132,6 +138,12 @@ public class Configuration {
 	@Value("${egov.mdms.case.outcome.module.name}")
 	private String mdmsCaseOutcomeModuleName;
 
+	@Value("${egov.mdms.case.secondary.stage.module.name}")
+	private String mdmsCaseSecondaryStageModuleName;
+
+	@Value("${egov.mdms.case.secondary.stage.master.name}")
+	private String mdmsCaseSecondaryStageMasterName;
+
 	@Value("${egov.mdms.case.outcome.master.name}")
 	private String mdmsCaseOutcomeMasterName;
 
@@ -188,7 +200,11 @@ public class Configuration {
 	private String bailBondBusinessServices;
 	private List<String> bailBondBusinessServiceList;
 
-	//Localization
+	@Value("${egov.ctc.application.business.services}")
+	private String ctcApplicationBusinessServices;
+	private List<String> ctcApplicationBusinessServiceList;
+
+	// Localization
 	@Value("${egov.localization.host}")
 	private String localizationHost;
 
@@ -262,6 +278,13 @@ public class Configuration {
 	@Value("${dristi.task-management.search.endpoint}")
 	private String taskManagementSearchEndpoint;
 
+	// CTC application config
+	@Value("${dristi.ctc.host}")
+	private String ctcApplicationServiceHost;
+
+	@Value("${dristi.ctc-application.search.endpoint}")
+	private String ctcApplicationSearchEndpoint;
+
 	// Workflow Service config
 	@Value("${egov.workflow.host}")
 	private String workflowHost;
@@ -284,12 +307,13 @@ public class Configuration {
 		caseBusinessServiceList = Arrays.asList(caseBusinessServices.split(","));
 		evidenceBusinessServiceList = Arrays.asList(evidenceBusinessServices.split(","));
 		taskBusinessServiceList = Arrays.asList(taskBusinessServices.split(","));
-        taskManagementBusinessServiceList = Arrays.asList(taskManagementBusinessServices.split(","));
+		taskManagementBusinessServiceList = Arrays.asList(taskManagementBusinessServices.split(","));
 		digitalizedDocumentsBusinessServiceList = Arrays.asList(digitalizedDocumentsBusinessServices.split(","));
 		applicationBusinessServiceList = Arrays.asList(applicationBusinessServices.split(","));
 		orderBusinessServiceList = Arrays.asList(orderBusinessServices.split(","));
 		aDiaryBusinessServiceList = Arrays.asList(aDiaryBusinessServices.split(","));
 		bailBondBusinessServiceList = Arrays.asList(bailBondBusinessServices.split(","));
+		ctcApplicationBusinessServiceList = Arrays.asList(ctcApplicationBusinessServices.split(","));
 	}
 
 	@Value("${app.zone.id}")

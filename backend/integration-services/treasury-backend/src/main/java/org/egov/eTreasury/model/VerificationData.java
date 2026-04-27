@@ -32,4 +32,8 @@ public class VerificationData {
 
     @JsonProperty("paidBy")
     private String paidBy;
+
+    //flag for treasury mock
+    @JsonProperty("mockEnabled")
+    private boolean mockEnabled;
 }

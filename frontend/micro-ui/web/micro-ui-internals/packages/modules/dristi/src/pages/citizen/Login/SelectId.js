@@ -1,20 +1,12 @@
-import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useEffect, useState } from "react";
 import { getFileByFileStore } from "../../../Utils";
 
 function SelectId({ config, t, params, history, onSelect, pathOnRefresh }) {
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const [isDisabled, setIsDisabled] = useState(false);
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      closeToast();
-    }, 2000);
 
-    return () => clearTimeout(timer);
-  }, [closeToast]);
   const onFormValueChange = (setValue, formData, formState) => {
     let isDisabled = false;
     config.forEach((curr) => {
@@ -129,7 +121,7 @@ function SelectId({ config, t, params, history, onSelect, pathOnRefresh }) {
         value={params?.indentity || {}}
         onSubmit={(props) => {
           if (!validateFormData(props)) {
-            setShowErrorToast(!validateFormData(props));
+            setShowToast({ label: t("ID_NOT_SELECTED_ERROR_MESSAGE"), error: true, errorId: null });
           } else {
             onSelect(props);
           }
@@ -137,7 +129,15 @@ function SelectId({ config, t, params, history, onSelect, pathOnRefresh }) {
         }}
         submitInForm
       ></FormComposerV2>
-      {showErrorToast && <Toast error={true} label={t("ID_NOT_SELECTED_ERROR_MESSAGE")} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 }

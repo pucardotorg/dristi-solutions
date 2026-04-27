@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
 import DocumentModal from "../../components/DocumentModal";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
@@ -13,6 +14,7 @@ import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@eg
 import { getFormattedName, getSuffixByDeliveryChannel } from "../../utils";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
+import { ORDER_TYPES } from "../../utils/constants";
 
 const submitModalInfo = {
   header: "CS_HEADER_FOR_SUMMON_POST",
@@ -49,10 +51,6 @@ const PaymentForSummonComponent = ({
   payOnlineButtonTitle = null,
 }) => {
   const { t } = useTranslation();
-  const CustomErrorTooltip = window?.Digit?.ComponentRegistryService?.getComponent("CustomErrorTooltip");
-  const [selectedOption, setSelectedOption] = useState({});
-
-
 
   return (
     <div className="payment-for-summon">
@@ -98,6 +96,7 @@ const PaymentForSummonComponent = ({
 
 const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const history = useHistory();
+  const { t } = useTranslation();
   const userInfo = Digit.UserService.getUser()?.info;
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
@@ -106,6 +105,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const [caseId, setCaseId] = useState();
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
+  const [showToast, setShowToast] = useState(null);
 
   useEffect(() => {
     // If we don't have query params, redirect to home
@@ -157,6 +157,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_FETCHING_CASE_LOCK_STATUS"), error: true, errorId });
     }
   });
   useEffect(() => {
@@ -181,10 +183,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       isCaseAdmitted
         ? submitModalInfo
         : {
-          ...submitModalInfo,
-          header: "CS_HEADER_FOR_NOTICE_POST",
-          subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
-        },
+            ...submitModalInfo,
+            header: "CS_HEADER_FOR_NOTICE_POST",
+            subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
+          },
     [isCaseAdmitted]
   );
 
@@ -325,11 +327,11 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   ]);
 
   const service = useMemo(() => {
-    if (orderType === "WARRANT") {
+    if (orderType === ORDER_TYPES.WARRANT) {
       return paymentType.TASK_WARRANT;
-    } else if (orderType === "PROCLAMATION") {
+    } else if (orderType === ORDER_TYPES.PROCLAMATION) {
       return paymentType.TASK_PROCLAMATION;
-    } else if (orderType === "ATTACHMENT") {
+    } else if (orderType === ORDER_TYPES.ATTACHMENT) {
       return paymentType.TASK_ATTACHMENT;
     } else {
       return paymentType.TASK_NOTICE;
@@ -434,7 +436,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           await ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
               name:
-                orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT"
+                orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
                   ? `PAYMENT_PENDING_FOR_${orderType}`
                   : `MAKE_PAYMENT_FOR_${orderType}_POST`,
               entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
@@ -456,7 +458,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           await ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
               name:
-                orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT"
+                orderType === ORDER_TYPES.WARRANT || orderType === ORDER_TYPES.PROCLAMATION || orderType === ORDER_TYPES.ATTACHMENT
                   ? `PAYMENT_PENDING_FOR_${orderType}`
                   : `MAKE_PAYMENT_FOR_${orderType}_POST`,
               entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
@@ -478,6 +480,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, postPaymenScreenObj);
       } catch (error) {
         console.error(error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
       }
     };
 
@@ -501,6 +505,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         });
       } catch (error) {
         console.error(error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ERROR_PROCESSING_PAYMENT"), error: true, errorId });
       }
     };
 
@@ -598,6 +604,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     status,
     filteredTasks,
     filingNumber,
+    t,
     service,
     orderData,
     partyIndex,
@@ -625,9 +632,9 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         partyData?.witnessDesignation?.trim(),
         null
       ) ||
-      (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
-      (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
-      (orderType === "ATTACHMENT" && formdata?.attachmentFor?.name) ||
+      (orderType === ORDER_TYPES.WARRANT && formdata?.warrantFor?.name) ||
+      (orderType === ORDER_TYPES.PROCLAMATION && formdata?.proclamationFor?.name) ||
+      (orderType === ORDER_TYPES.ATTACHMENT && formdata?.attachmentFor?.name) ||
       formdata?.warrantFor ||
       formdata?.proclamationFor ||
       formdata?.attachmentFor ||
@@ -726,7 +733,20 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   if (isOrdersLoading || !orderData || isPaymentTypeLoading || isSummonsBreakUpLoading || isBillLoading) {
     return <Loader />;
   }
-  return <DocumentModal config={paymentForSummonModalConfig} />;
+  return (
+    <React.Fragment>
+      <DocumentModal config={paymentForSummonModalConfig} />
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </React.Fragment>
+  );
 };
 
 export default PaymentForSummonModalSMSAndEmail;

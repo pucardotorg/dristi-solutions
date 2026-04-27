@@ -32,6 +32,9 @@ public class Configuration {
     @Value("${drishti.esign.redirect.url}")
     private String redirectUrl;
 
+    @Value("${drishti.esign.landing.page.redirect.url}")
+    private String landingPageRedirectUrl;
+
     // oath-token
     @Value("${drishti.oath.host}")
     private String oathHost;

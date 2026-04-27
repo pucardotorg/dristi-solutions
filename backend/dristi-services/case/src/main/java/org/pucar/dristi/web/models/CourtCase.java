@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
+import org.pucar.dristi.web.models.advocateDetails.AdvocateDetailBlock;
 import org.pucar.dristi.web.models.v2.WitnessDetails;
 import org.springframework.validation.annotation.Validated;
 
@@ -193,6 +194,11 @@ public class CourtCase {
     @Builder.Default
     private List<WitnessDetails> witnessDetails = new ArrayList<>();
 
+    @JsonProperty("advocateDetailBlock")
+    @Valid
+    @Builder.Default
+    private List<AdvocateDetailBlock> advocateDetailBlock = new ArrayList<>();
+
     @JsonProperty("lprNumber")
     private String lprNumber = null;
 
@@ -201,5 +207,8 @@ public class CourtCase {
 
     @JsonProperty("courtCaseNumberBackup")
     private String courtCaseNumberBackup = null;
+
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = new ArrayList<>();
 
 }

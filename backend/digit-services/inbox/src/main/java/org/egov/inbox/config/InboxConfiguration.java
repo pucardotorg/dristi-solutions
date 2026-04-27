@@ -146,5 +146,10 @@ public class InboxConfiguration {
     @Value("${advocate.service.module.name}")
     private String advocateModuleName;
 
+	@Value("${spring.redis.timeout}")
+	private Long redisTimeout;
+
+	@Value("${spring.redis.enabled}")
+	private Boolean redisEnabled;
 
 }

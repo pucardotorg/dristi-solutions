@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import AdvocateClerkAdditionalDetail from "./AdvocateClerkAdditionalDetail";
 import SelectUserType from "./SelectUserType";
@@ -16,6 +17,7 @@ import UploadIdType from "./UploadIdType";
 import TermsCondition from "./TermsCondition";
 import SelectEmail from "./SelectEmail";
 import Modal from "../../../components/Modal";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 const TYPE_REGISTER = { type: "REGISTER" };
 const setCitizenDetail = (userObject, token, tenantId) => {
@@ -30,19 +32,6 @@ const setCitizenDetail = (userObject, token, tenantId) => {
   localStorage.setItem("user-info", JSON.stringify(userObject));
   localStorage.setItem("Citizen.user-info", JSON.stringify(userObject));
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 const Registration = ({ stateCode }) => {
   const Digit = window.Digit || {};
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -52,7 +41,6 @@ const Registration = ({ stateCode }) => {
   const isUserLoggedIn = Boolean(token);
   const moduleCode = "DRISTI";
   const [newParams, setNewParams] = useState(history.location.state?.newParams || {});
-  const [userTypeRegister] = useState(history.location.state?.userType || {});
 
   const [canSubmitNo, setCanSubmitNo] = useState(true);
   const [isUserRegistered, setIsUserRegistered] = useState(true);
@@ -67,17 +55,7 @@ const Registration = ({ stateCode }) => {
   const [user, setUser] = useState(null);
   const [otpError, setOtpError] = useState(false);
   const [canSubmitAadharOtp, setCanSubmitAadharOtp] = useState(true);
-  const [error, setError] = useState(null);
-  const closeToast = () => {
-    setError(null);
-  };
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      closeToast();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [closeToast]);
+  const [showToast, setShowToast] = useState(null);
 
   useEffect(() => {
     if (location?.state?.newParams) {
@@ -121,7 +99,6 @@ const Registration = ({ stateCode }) => {
       [newConfig]
     )
   );
-
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const { data, isLoading, refetch, isFetching } = Digit.Hooks.dristi.useGetIndividualUser(
     {
@@ -168,7 +145,7 @@ const Registration = ({ stateCode }) => {
       }));
       return;
     } else {
-      setError(t("ES_ERROR_USER_ALREADY_REGISTERED"));
+      setShowToast({ error: true, label: t("ES_ERROR_USER_ALREADY_REGISTERED") });
       setCanSubmitNo(true);
     }
   };
@@ -273,22 +250,28 @@ const Registration = ({ stateCode }) => {
     history.push(`/${window?.contextPath}/citizen/dristi/home/response`);
   };
   const onDocumentUpload = async (filename, filedata, IdType) => {
-    const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", filedata, Digit.ULBService.getStateId());
-    const identityObj = {
-      IdVerification: {
-        selectIdType: {
-          id: 2,
-          code: "OTHER_ID",
-          name: "CS_OTHER",
-          subText: "CS_OTHER_SUB_TEXT",
+    try {
+      const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", filedata, Digit.ULBService.getStateId());
+      const identityObj = {
+        IdVerification: {
+          selectIdType: {
+            id: 2,
+            code: "OTHER_ID",
+            name: "CS_OTHER",
+            subText: "CS_OTHER_SUB_TEXT",
+          },
         },
-      },
-    };
-    setNewParams({ ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } });
-    Digit.SessionStorage.del("aadharNumber");
-    history.replace(`${path}/user-type`, {
-      newParams: { ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } },
-    });
+      };
+      setNewParams({ ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } });
+      Digit.SessionStorage.del("aadharNumber");
+      history.replace(`${path}/user-type`, {
+        newParams: { ...newParams, indentity: identityObj, uploadedDocument: { filedata: fileUploadRes?.data, IdType, filename, file: filedata } },
+      });
+    } catch (error) {
+      console.error("Error while uploading id proof", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("ERROR_WHILE_UPLOADING_ID_PROOF"), errorId });
+    }
   };
   if (isLoading || isFetching) {
     return <Loader />;
@@ -420,7 +403,6 @@ const Registration = ({ stateCode }) => {
               setParams={setNewParams}
               pathOnRefresh={pathOnRefresh}
               params={newParams}
-              userTypeRegister={userTypeRegister}
               onSelect={handleUserTypeSave}
               path={path}
             />
@@ -431,7 +413,15 @@ const Registration = ({ stateCode }) => {
           <Route path={`${path}/terms-condition`}>
             <TermsCondition params={newParams} setParams={setNewParams} t={t} config={[stepItems[10]]} pathOnRefresh={pathOnRefresh} path={path} />
           </Route>
-          {error && <Toast error={true} label={error} onClose={closeToast} />}
+          {showToast && (
+            <CustomToast
+              error={showToast?.error}
+              label={showToast?.label}
+              errorId={showToast?.errorId}
+              onClose={() => setShowToast(null)}
+              duration={showToast?.errorId ? 7000 : 5000}
+            />
+          )}
         </React.Fragment>
       </Switch>
     </div>

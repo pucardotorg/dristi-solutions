@@ -2,6 +2,7 @@ package org.pucar.dristi.repository.querybuilder;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -22,14 +23,14 @@ public class CaseQueryBuilder {
     private static final String BASE_CASE_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
             "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.accesscode as accesscode, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber, " +
             " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby," +
-            " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails";
+            " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, cases.stageBackup as stageBackup, cases.substageBackup as substageBackup, cases.lprNumber as lprNumber, cases.isLPRCase as isLPRCase, cases.courtCaseNumberBackup as courtCaseNumberBackup, cases.witnessDetails as witnessDetails, cases.secondaryStage as secondaryStage";
 
     private static final String BASE_CASE_SUMMARY_LIST_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.courtid as courtid, cases.casetitle as casetitle, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
-            " cases.cmpnumber as cmpnumber, cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.status as status, cases.pendingadvocaterequests as pendingadvocaterequests, cases.substage as substage, cases.filingdate as filingdate,cases.lastmodifiedtime as lastmodifiedtime, cases.createdtime as createdtime, cases.isLPRCase as isLPRCase, cases.lprNumber as lprNumber";
+            " cases.cmpnumber as cmpnumber, cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.status as status, cases.pendingadvocaterequests as pendingadvocaterequests, cases.stage as stage, cases.filingdate as filingdate,cases.lastmodifiedtime as lastmodifiedtime, cases.createdtime as createdtime, cases.isLPRCase as isLPRCase, cases.lprNumber as lprNumber, cases.secondaryStage as secondaryStage";
 
     private static final String BASE_CASE_SUMMARY_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
             "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
-            " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.cmpnumber as cmpnumber,cases.createdby as createdby,cases.courtid as courtid, cases.benchid as benchid, cases.casetype as casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdtime as createdtime";
+            " cases.outcome as outcome, cases.natureofdisposal as natureofdisposal, cases.cmpnumber as cmpnumber,cases.createdby as createdby,cases.courtid as courtid, cases.benchid as benchid, cases.casetype as casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdtime as createdtime, cases.secondaryStage as secondaryStage";
 
     private static final String FROM_CASES_TABLE = " FROM dristi_cases cases";
     private static final String ORDERBY_CLAUSE = " ORDER BY cases.{orderBy} {sortingOrder} ";
@@ -69,8 +70,8 @@ public class CaseQueryBuilder {
 
 
     private static final String BASE_REPRESENTATIVES_QUERY = " SELECT rep.id as id, rep.tenantid as tenantid, rep.advocateid as advocateid, rep.case_id as case_id, " +
-            " rep.isactive as isactive, rep.additionaldetails as additionaldetails, rep.createdby as createdby," +
-            " rep.lastmodifiedby as lastmodifiedby, rep.createdtime as createdtime, rep.lastmodifiedtime as lastmodifiedtime , rep.hassigned as hassigned, rep.advocate_filing_status as advocate_filing_status ";
+        " rep.isactive as isactive, rep.additionaldetails as additionaldetails, rep.createdby as createdby," +
+        " rep.lastmodifiedby as lastmodifiedby, rep.createdtime as createdtime, rep.lastmodifiedtime as lastmodifiedtime , rep.hassigned as hassigned, rep.advocate_filing_status as advocate_filing_status ";
 
     private static final String BASE_REPRESENTATIVES_SUMMARY_QUERY = " SELECT  rep.case_id as case_id, rep.id as id, rep.advocateid as advocateid, rep.additionaldetails as additionaldetails";
 
@@ -138,6 +139,8 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addAdvocateCriteria(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
+                firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
+
                 addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
             }
 
@@ -178,6 +181,8 @@ public class CaseQueryBuilder {
                 firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
                 firstCriteria = addAdvocateCriteriaForListSearch(criteria.getAdvocateId(), criteria.getPoaHolderIndividualId(), criteria.getOfficeAdvocateId(), criteria.getIsMemberActiveInCase(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+
+                firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
 
                 firstCriteria = addListCriteria(criteria.getStatus(), query, firstCriteria, "cases.status", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
@@ -405,6 +410,8 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addClerkCriteria(criteria.getIsClerk(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
+                firstCriteria = addJsonbArrayCriteria(criteria.getSecondaryStage(), query, firstCriteria, "cases.secondaryStage", preparedStmtList, preparedStmtArgList);
+
                 firstCriteria = addListCriteria(criteria.getStatus(), query, firstCriteria, "cases.status", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
                 firstCriteria = addFilingDateCriteria(criteria, firstCriteria, query, preparedStmtList, preparedStmtArgList);
@@ -425,6 +432,36 @@ public class CaseQueryBuilder {
             prepareStatementAndArgumentForListCriteria(itemList, query, str, preparedStmtList, preparedStmtArgList, varchar);
             firstCriteria = false;
         }
+        return firstCriteria;
+    }
+
+    private boolean addJsonbArrayCriteria(
+            List<String> itemList,
+            StringBuilder query,
+            boolean firstCriteria,
+            String jsonbColumn,
+            List<Object> preparedStmtList,
+            List<Integer> preparedStmtArgList) {
+
+        if (itemList != null && !itemList.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+
+            // Use jsonb_exists_any() function instead of ?| operator
+            // because JDBC interprets ? in ?| as a parameter placeholder
+            query.append("jsonb_exists_any(COALESCE(")
+                    .append(jsonbColumn)
+                    .append(", '[]'::jsonb), ARRAY[");
+
+            query.append(itemList.stream()
+                    .filter(Objects::nonNull)
+                    .map(item -> "'" + item.replace("'", "''") + "'")
+                    .collect(Collectors.joining(",")));
+
+            query.append("])");
+
+            firstCriteria = false;
+        }
+
         return firstCriteria;
     }
 
@@ -739,6 +776,7 @@ public class CaseQueryBuilder {
         try {
             StringBuilder query = new StringBuilder(BASE_REPRESENTATIVES_QUERY);
             query.append(FROM_REPRESENTATIVES_TABLE);
+            // NOTE: Do not join advocates by default here; tests expect only representatives columns.
             if (!ids.isEmpty()) {
                 query.append(" WHERE rep.case_id IN (")
                         .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
@@ -753,6 +791,42 @@ public class CaseQueryBuilder {
         } catch (Exception e) {
             log.error("Error while building representatives search query :: {}", e.toString());
             throw new CustomException(REPRESENTATIVES_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative search query: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Returns representatives query with a LEFT JOIN to dristi_advocate to fetch authoritative advocate columns.
+     * This is used by search flows that need the joined advocate fields populated in the row mapper.
+     */
+    public String getRepresentativesSearchQueryWithAdvocateJoin(List<String> ids, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        try {
+            StringBuilder query = new StringBuilder();
+            // select representative columns
+            query.append(BASE_REPRESENTATIVES_QUERY);
+            // select joined advocate columns with aliases expected by the row mapper
+            query.append(
+                ", da.id as advocate_id, da.tenantid as advocate_tenantid, da.applicationnumber as advocate_applicationnumber, da.status as advocate_status, " +
+                "da.barregistrationnumber as advocate_barregistrationnumber, da.organisationid as advocate_organisationid, da.individualid as advocate_individualid, da.isactive as advocate_isactive, da.additionaldetails as advocate_additionaldetails"
+            );
+
+            // from representatives with left join to advocates
+            query.append(" ").append(FROM_REPRESENTATIVES_TABLE)
+                 .append(" LEFT JOIN dristi_advocate da ON rep.advocateid = da.id");
+
+            if (!ids.isEmpty()) {
+                query.append(" WHERE rep.case_id IN (")
+                        .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
+                        .append(")")
+                        .append(AND)
+                        .append("rep.isactive = true");
+                preparedStmtList.addAll(ids);
+                ids.forEach(i -> preparedStmtArgList.add(Types.VARCHAR));
+            }
+
+            return query.toString();
+        } catch (Exception e) {
+            log.error("Error while building representatives search query with advocate join :: {}", e.toString());
+            throw new CustomException(REPRESENTATIVES_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative search query with advocate join: " + e.getMessage());
         }
     }
 
@@ -943,6 +1017,19 @@ public class CaseQueryBuilder {
             query.append(" (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?) or LOWER(cases.casetitle) LIKE LOWER(?) OR LOWER(cases.lprnumber) LIKE LOWER(?)  OR LOWER(cases.courtcasenumberbackup) LIKE LOWER(?))");
             for (int i = 0; i < 6; i++) {
                 preparedStmtList.add("%" + criteria.getCaseSearchText() + "%");
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    private boolean addCaseSearchByCnrAndCaseNumberCriteria(CaseSummaryListCriteria criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (criteria.getSearchByCnrAndCaseNumber() != null && !criteria.getSearchByCnrAndCaseNumber().isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(" (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?) or LOWER(cases.cnrNumber) LIKE LOWER(?) OR LOWER(cases.lprnumber) LIKE LOWER(?)  OR LOWER(cases.courtcasenumberbackup) LIKE LOWER(?))");
+            for (int i = 0; i < 6; i++) {
+                preparedStmtList.add("%" + criteria.getSearchByCnrAndCaseNumber() + "%");
                 preparedStmtArgList.add(Types.VARCHAR);
             }
             firstCriteria = false;

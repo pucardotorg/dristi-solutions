@@ -308,12 +308,24 @@ module.exports = {
     application_reschedule_hearing_qr:
       process.env.APPLICATION_RESCHEDULE_HEARING_QR ||
       "application-reschedule-hearing-qr",
-    template_configuration_miscellaneous_process:                   
+    template_configuration_miscellaneous_process:
       process.env.TEMPLATE_CONFIGURATION_MISCELLANEOUS_PROCESS ||
       "template-miscellaneous-process",
     template_configuration_miscellaneous_process_qr:
       process.env.TEMPLATE_CONFIGURATION_MISCELLANEOUS_PROCESS_QR ||
       "template-miscellaneous-process-qr",
+    application_certified_true_copies:
+      process.env.APPLICATION_CERTIFIED_TRUE_COPIES ||
+      "application-certified-true-copies",
+    application_certified_true_copies_qr:
+      process.env.APPLICATION_CERTIFIED_TRUE_COPIES_QR ||
+      "application-certified-true-copies-qr",
+    application_ctc_certification:
+      process.env.APPLICATION_CTC_CERTIFICATION ||
+      "application-ctc-certification",
+    application_ctc_certification_qr:
+      process.env.APPLICATION_CTC_CERTIFICATION_QR ||
+      "application-ctc-certification-qr",
   },
 
   app: {
@@ -344,10 +356,8 @@ module.exports = {
       process.env.DRISTI_TASK_MANAGEMENT_HOST || "http://localhost:8087",
     digitisation:
       process.env.DRISTI_DIGITALIZED_DOCUMENTS_HOST || "http://localhost:8333",
-    // templateConfiguration:
-    //   process.env.DRISTI_TEMPLATE_CONFIGURATION_HOST ||
-    //   "http://localhost:8030",
-    // // TODO : no need of host remove it
+    ctcApplications:
+      process.env.DRISTI_CTC_APPLICATIONS_HOST || "http://localhost:8098",
   },
 
   paths: {
@@ -375,6 +385,8 @@ module.exports = {
     task_management_search: "/task-management/v1/_search",
     digitalized_documents_search: "/digitalized-documents/v1/_search",
     template_configuration_search: "/template-configuration/v1/_search",
+    ctc_applications_search: "/ctc/applications/_search", // TODO : verify the path
+
     // TODO : Add mdms response and role action to support folder
   },
 

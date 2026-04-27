@@ -96,24 +96,32 @@ public class ApplicationQueryBuilder {
                 firstCriteria = false;
             }
 
-            if (asUser != null) {
-                addClauseIfRequired(query, firstCriteria);
-                query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.asuser = ?))");
-                preparedStmtList.add(asUser);
-                preparedStmtArgList.add(Types.VARCHAR);
-                firstCriteria = false;
-            }
-
-            // TODO : remove this, this is temporary fix (#5016)
-            // --------- REQUEST_FOR_BAIL visibility ----------
             boolean isCitizen = Optional.ofNullable(requestInfo)
                     .map(RequestInfo::getUserInfo)
                     .map(User::getType)
                     .map(CITIZEN_UPPER::equalsIgnoreCase)
                     .orElse(false);
+
+            if (isCitizen) {
+                if(asUser != null){
+                    addClauseIfRequired(query, firstCriteria);
+                    query.append("(app.status != 'DRAFT_IN_PROGRESS' OR (app.status = 'DRAFT_IN_PROGRESS' AND app.asuser = ?))");
+                    preparedStmtList.add(asUser);
+                    preparedStmtArgList.add(Types.VARCHAR);
+                    firstCriteria = false;
+                }
+            }
+            else {
+                addClauseIfRequired(query, firstCriteria);
+                query.append("app.status != 'DRAFT_IN_PROGRESS'");
+                firstCriteria = false;
+            }
+
+            // TODO : remove this, this is temporary fix (#5016)
+            // --------- REQUEST_FOR_BAIL visibility ----------
             if(isCitizen){
                 applyRequestForBailVisibility(
-                        query, firstCriteria, asUser,
+                        query, firstCriteria, asUser, applicationCriteria.getOnBehalfOf(),
                         preparedStmtList, preparedStmtArgList);
             }
 
@@ -125,7 +133,7 @@ public class ApplicationQueryBuilder {
         }
     }
 
-    private void applyRequestForBailVisibility(StringBuilder query, boolean firstCriteria, String asUser, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    private void applyRequestForBailVisibility(StringBuilder query, boolean firstCriteria, String asUser, List<UUID> onBehalfOf, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
 
         // If user info is missing, do not restrict visibility
         if (asUser == null || asUser.isEmpty()) {
@@ -139,25 +147,40 @@ public class ApplicationQueryBuilder {
                 .append("OR ")
                 .append("(")
                 .append("app.applicationType = ? ")
-                .append("AND ")
-                .append("(")
-                .append("app.onBehalfOf @> ?::jsonb ")
-                .append("OR app.asUser = ?")
-                .append(")")
-                .append(")")
+                .append("AND ");
+
+        preparedStmtList.add(REQUEST_FOR_BAIL);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        preparedStmtList.add(REQUEST_FOR_BAIL);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        if (onBehalfOf != null && !onBehalfOf.isEmpty()) {
+            query.append("(");
+            for (int i = 0; i < onBehalfOf.size(); i++) {
+                if (i > 0) {
+                    query.append(" OR ");
+                }
+                query.append("app.onBehalfOf @> ?::jsonb");
+                preparedStmtList.add("[\"" + onBehalfOf.get(i).toString() + "\"]");
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
+            query.append(")");
+        } else {
+            query.append("(")
+                    .append("app.onBehalfOf @> ?::jsonb ")
+                    .append("OR app.asUser = ?")
+                    .append(")");
+
+            preparedStmtList.add("[\"" + asUser + "\"]");
+            preparedStmtArgList.add(Types.VARCHAR);
+
+            preparedStmtList.add(asUser);
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
+
+        query.append(")")
                 .append(")");
-
-        preparedStmtList.add(REQUEST_FOR_BAIL);
-        preparedStmtArgList.add(Types.VARCHAR);
-
-        preparedStmtList.add(REQUEST_FOR_BAIL);
-        preparedStmtArgList.add(Types.VARCHAR);
-
-        preparedStmtList.add("[\"" + asUser + "\"]");
-        preparedStmtArgList.add(Types.VARCHAR);
-
-        preparedStmtList.add(asUser);
-        preparedStmtArgList.add(Types.VARCHAR);
     }
     boolean addMultipleCriteria(List<UUID> criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {

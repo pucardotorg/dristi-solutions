@@ -1,23 +1,12 @@
-import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import React, { useState, useMemo, useEffect } from "react";
 import Modal from "./Modal";
 import { Button } from "@egovernments/digit-ui-react-components";
 import { FileUploadIcon } from "../icons/svgIndex";
 import { Urls } from "../hooks";
 import AuthenticatedLink from "../Utils/authenticatedLink";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "./ModalComponents";
+import CustomToast from "./CustomToast";
 function ESignSignatureModal({
   t,
   handleIssueOrder,
@@ -32,14 +21,16 @@ function ESignSignatureModal({
   const [formData, setFormData] = useState({}); // storing the file upload data
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
-  const [fileStoreId, setFileStoreId] = useState(formUploadData?.SelectUserTypeComponent?.doc?.[0]?.[1]?.fileStoreId?.fileStoreId);
-  const [pageModule, setPageModule] = useState("ci");
+  const fileStoreId = formUploadData?.SelectUserTypeComponent?.doc?.[0]?.[1]?.fileStoreId?.fileStoreId;
+  const pageModule = "ci";
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [isSigned, setIsSigned] = useState(false);
   const [fileUploadError, setFileUploadError] = useState(null);
   const name = "Signature";
+  const [showToast, setShowToast] = useState(null);
+
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -83,6 +74,8 @@ function ESignSignatureModal({
       } catch (error) {
         console.error("error", error);
         setFormData({});
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("CS_ESIGN_ERROR"), error: true, errorId });
         setIsSigned(false);
         setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
@@ -162,7 +155,7 @@ function ESignSignatureModal({
                   sessionStorage.setItem("docSubmission", JSON.stringify(documentSubmission));
                   sessionStorage.setItem("formUploadData", JSON.stringify(formUploadData));
                   saveFileToLocalStorage(formUploadData?.SelectUserTypeComponent?.doc?.[0]?.[1]);
-                  handleEsign(name, pageModule, formUploadData?.SelectUserTypeComponent?.doc?.[0]?.[1]?.fileStoreId?.fileStoreId);
+                  handleEsign(name, pageModule, fileStoreId, setShowToast, t);
                 }}
                 className={"aadhar-sign-in"}
                 labelClassName={"aadhar-sign-in"}
@@ -196,19 +189,40 @@ function ESignSignatureModal({
           </div>
         )}
       </div>
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </Modal>
   ) : (
-    <UploadSignatureModal
-      t={t}
-      key={name}
-      name={name}
-      setOpenUploadSignatureModal={setOpenUploadSignatureModal}
-      onSelect={onSelect}
-      config={uploadModalConfig}
-      formData={formData}
-      onSubmit={onSubmit}
-      fileUploadError={fileUploadError}
-    />
+    <React.Fragment>
+      <UploadSignatureModal
+        t={t}
+        key={name}
+        name={name}
+        setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+        onSelect={onSelect}
+        config={uploadModalConfig}
+        formData={formData}
+        onSubmit={onSubmit}
+        fileUploadError={fileUploadError}
+        setFileUploadError={setFileUploadError}
+      />
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </React.Fragment>
   );
 }
 

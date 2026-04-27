@@ -1,6 +1,6 @@
-import { Button, CardLabel, SubmitBar, Toast } from "@egovernments/digit-ui-react-components";
-import isEmpty from "lodash/isEmpty";
-import React, { useCallback, useEffect, useState } from "react";
+import { Button, CardLabel, SubmitBar } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import React, { useState } from "react";
 import DependentCheckBoxComponent from "../../../components/DependentCheckBoxComponent";
 
 function SelectParticipant({
@@ -16,28 +16,19 @@ function SelectParticipant({
   handleScheduleCase,
   t,
 }) {
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [showToast, setShowToast] = useState(null);
 
   const onSubmitSchedule = (props) => {
     const isInvalid =
       Object.keys(selectedValues).length === 0 ||
       !Object.values(selectedValues).every((value) => (value ? Object.values(value).some((innerVal) => innerVal) : false));
     if (isInvalid) {
-      setShowErrorToast(true);
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true, errorId: null });
     } else {
       handleScheduleCase({ ...scheduleHearingParams, participant: selectedValues });
     }
   };
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      closeToast();
-    }, 2000);
 
-    return () => clearTimeout(timer);
-  }, [closeToast]);
   return (
     <div className="select-participants-main-div">
       <CardLabel className={"choose-participants-heading"}>{t(config?.header)}</CardLabel>
@@ -65,7 +56,15 @@ function SelectParticipant({
           label={"Schedule"}
         ></SubmitBar>
       </div>
-      {showErrorToast && <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 }

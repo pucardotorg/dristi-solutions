@@ -1,26 +1,16 @@
-import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useEffect, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getFileByFileStore } from "../../../Utils";
 
-const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRefresh, userTypeRegister }) => {
+const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRefresh }) => {
   const Digit = window.Digit || {};
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const history = useHistory();
-  const [showErrorToast, setShowErrorToast] = useState(false);
-  const [showUsename, setshowUsename] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
 
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      closeToast();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [closeToast]);
   const validateFormData = (data) => {
     let isValid = true;
     config.forEach((curr) => {
@@ -117,7 +107,6 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
     const data = params;
     const userTypeSelcted = userType?.clientDetails?.selectUserType?.code;
     const uploadedDocument = params?.uploadedDocument;
-    const aadhaarNumber = Digit?.SessionStorage?.get("aadharNumber");
     const identifierId = uploadedDocument ? uploadedDocument?.filedata?.files?.[0]?.fileStoreId : data?.adhaarNumber;
     const identifierIdDetails = uploadedDocument
       ? {
@@ -289,7 +278,7 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
 
   useEffect(() => {
     const handleRedirect = async () => {
-      if (!params?.indentity && showUsename === false && !params?.Individual?.[0]?.additionalFields) {
+      if (!params?.indentity && !params?.Individual?.[0]?.additionalFields) {
         const storedParams = sessionStorage.getItem("userRegistrationParams");
         let newParams = storedParams ? JSON.parse(storedParams) : params;
 
@@ -344,7 +333,7 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
     };
 
     handleRedirect();
-  }, [params?.address, params, history, pathOnRefresh, showUsename, Digit.ULBService]);
+  }, [params?.address, params, history, pathOnRefresh, Digit.ULBService]);
 
   return (
     <div className="select-user">
@@ -356,7 +345,7 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
         label={t("CS_COMMON_CONTINUE")}
         onSubmit={(props) => {
           if (!validateFormData(props)) {
-            setShowErrorToast(!validateFormData(props));
+            setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true, errorId: null });
           } else {
             onSubmit(props);
           }
@@ -364,15 +353,23 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
         }}
         onFormValueChange={onFormValueChange}
         isDisabled={isDisabled}
-        value={params?.userType || (userTypeRegister && userTypeRegister) || {}}
-        defaultValues={params?.userType || (userTypeRegister && userTypeRegister) || {}}
+        value={params?.userType || {}}
+        defaultValues={params?.userType || {}}
         headingStyle={{ textAlign: "center" }}
         cardStyle={{ minWidth: "100%", padding: 20, display: "flex", flexDirection: "column" }}
         sectionHeadStyle={{ marginBottom: "20px", fontSize: "40px" }}
         buttonStyle={{ alignSelf: "center", minWidth: "50%" }}
         submitInForm
       ></FormComposerV2>
-      {showErrorToast && <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 };

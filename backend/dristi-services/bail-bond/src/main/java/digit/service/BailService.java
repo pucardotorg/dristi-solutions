@@ -132,8 +132,8 @@ public class BailService {
                     .criteria(Collections.singletonList(criteria))
                     .build();
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
-            String substage = caseUtil.getSubstage(caseDetails);
-            if(APPEARANCE.equalsIgnoreCase(substage)){
+            String stage = caseUtil.getStage(caseDetails);
+            if(APPEARANCE.equalsIgnoreCase(stage)){
                 // Notify Sureties
                 if (smsTopics.contains(BAIL_BOND_INITIATED_SURETY)) {
                     bail.getSureties().stream()
@@ -533,12 +533,11 @@ public class BailService {
             }
             case "citizen" -> {
                 bailSearchRequest.getCriteria().setUserUuid(userUuid);
+                if(bailSearchRequest.getCriteria().getAsUser() == null){
+                    bailSearchRequest.getCriteria().setAsUser(userUuid);
+                }
             }
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
-        }
-
-        if(bailSearchRequest.getCriteria().getAsUser() == null){
-            bailSearchRequest.getCriteria().setAsUser(userUuid);
         }
     }
 

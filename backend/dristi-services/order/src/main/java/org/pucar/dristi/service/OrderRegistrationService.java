@@ -292,16 +292,19 @@ public class OrderRegistrationService {
         if(SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(orderType)){
             return HEARING_SCHEDULED;
         }
-        if (orderType.equalsIgnoreCase(ASSIGNING_DATE_RESCHEDULED_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
+        if (ASSIGNING_DATE_RESCHEDULED_HEARING.equalsIgnoreCase(orderType) &&
+                PUBLISHED.equalsIgnoreCase(updatedStatus)) {
             return HEARING_RESCHEDULED;
         }
-        if (orderType.equalsIgnoreCase(SUMMONS) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
+        if (SUMMONS.equalsIgnoreCase(orderType) &&
+                PUBLISHED.equalsIgnoreCase(updatedStatus)) {
             return SUMMONS_ISSUED;
         }
-        if (orderType.equalsIgnoreCase(NOTICE) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
+        if (NOTICE.equalsIgnoreCase(orderType) &&
+                PUBLISHED.equalsIgnoreCase(updatedStatus)) {
             return NOTICE_ISSUED;
         }
-        if (updatedStatus.equalsIgnoreCase(PUBLISHED)) {
+        if (PUBLISHED.equalsIgnoreCase(updatedStatus)) {
             return ORDER_ISSUED;
         }
         return null;
@@ -394,7 +397,9 @@ public class OrderRegistrationService {
     }
 
     private static String getReceiverParty(String messageCode) {
-        if (messageCode.equalsIgnoreCase(NOTICE_ISSUED) || messageCode.equalsIgnoreCase(WARRANT_ISSUED) || messageCode.equalsIgnoreCase(SUMMONS_ISSUED)) {
+        if (NOTICE_ISSUED.equalsIgnoreCase(messageCode) ||
+                WARRANT_ISSUED.equalsIgnoreCase(messageCode) ||
+                SUMMONS_ISSUED.equalsIgnoreCase(messageCode)) {
             return RESPONDENT;
         }
         return null;

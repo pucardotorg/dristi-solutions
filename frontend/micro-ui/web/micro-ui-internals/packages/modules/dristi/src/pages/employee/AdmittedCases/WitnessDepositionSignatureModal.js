@@ -1,19 +1,6 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import React, { useMemo, useState } from "react";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 const WitnessDepositionSignatureModal = ({
   t,
   handleCloseSignatureModal,
@@ -175,6 +162,7 @@ const WitnessDepositionSignatureModal = ({
           fileStoreId={witnessDepositionFileStoreId}
           cancelLabel={"SUBMIT"}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
     </React.Fragment>

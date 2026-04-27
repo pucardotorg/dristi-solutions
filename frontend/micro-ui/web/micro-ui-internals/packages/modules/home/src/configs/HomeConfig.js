@@ -131,10 +131,7 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
-          criteria: {
-            stage: ["Pre-Trial", "Trial", "Post-Trial", "Long Pending Register"],
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
-          },
+          criteria: {},
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -154,6 +151,7 @@ export const TabUnifiedEmployeeSearchConfig = {
               caseSearchText: "",
               caseType: "NIA S138",
               substage: "",
+              secondaryStage: "",
             },
             fields: [
               {
@@ -181,12 +179,37 @@ export const TabUnifiedEmployeeSearchConfig = {
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "substage",
-                  optionsKey: "code",
+                  name: "stage",
+                  optionsKey: "name",
                   mdmsConfig: {
-                    masterName: "SubStage",
+                    masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                    select:
+                      "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                isMandatory: false,
+                key: "secondaryStage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "secondaryStage",
+                  optionsKey: "substage",
+                  mdmsConfig: {
+                    masterName: "CaseSecondaryStage",
+                    moduleName: "case",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -225,7 +248,12 @@ export const TabUnifiedEmployeeSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -260,8 +288,23 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           criteria: {
-            stage: ["Trial"],
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
+            isLPRCase: false,
+            stage: [
+              "Long Pending Register",
+              "Post-Judgement",
+              "Judgement",
+              "Arguments",
+              "Defense Evidence",
+              "Examination of Accused",
+              "Complainant Evidence",
+              "Bail & Recording of Plea",
+              "Appearance",
+              "Cognizance",
+              "Registration",
+              "Defect Correction",
+              "Scrutiny",
+              "Filing",
+            ],
           },
         },
         masterName: "commonUiConfig",
@@ -282,6 +325,7 @@ export const TabUnifiedEmployeeSearchConfig = {
               caseSearchText: "",
               caseType: "NIA S138",
               substage: "",
+              secondaryStage: "",
             },
             fields: [
               {
@@ -309,12 +353,37 @@ export const TabUnifiedEmployeeSearchConfig = {
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "substage",
-                  optionsKey: "code",
+                  name: "stage",
+                  optionsKey: "name",
                   mdmsConfig: {
-                    masterName: "SubStage",
+                    masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                    select:
+                      "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                isMandatory: false,
+                key: "secondaryStage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "secondaryStage",
+                  optionsKey: "substage",
+                  mdmsConfig: {
+                    masterName: "CaseSecondaryStage",
+                    moduleName: "case",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -353,7 +422,12 @@ export const TabUnifiedEmployeeSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -388,8 +462,19 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           criteria: {
-            stage: ["Pre-Trial"],
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
+            stage: [
+              "Long Pending Register",
+              "Post-Disposal",
+              "Post-Judgement",
+              "Judgement",
+              "Arguments",
+              "Defense Evidence",
+              "Examination of Accused",
+              "Complainant Evidence",
+              "Bail & Recording of Plea",
+              "Appearance",
+              "Cognizance",
+            ],
           },
         },
         masterName: "commonUiConfig",
@@ -410,6 +495,7 @@ export const TabUnifiedEmployeeSearchConfig = {
               caseSearchText: "",
               caseType: "NIA S138",
               substage: "",
+              secondaryStage: "",
             },
             fields: [
               {
@@ -452,12 +538,37 @@ export const TabUnifiedEmployeeSearchConfig = {
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "substage",
-                  optionsKey: "code",
+                  name: "stage",
+                  optionsKey: "name",
                   mdmsConfig: {
-                    masterName: "SubStage",
+                    masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item}).sort((a,b) => a.code.localeCompare(b.code));}",
+                    select:
+                      "(data) => {const excludedStages = ['Filing', 'Scrutiny', 'Defect Correction', 'Registration']; return data['case'].CaseUiPrimaryStage?.filter((item) => !excludedStages.includes((item?.name || '').trim())).sort((a,b)=>(a?.name || '').localeCompare(b?.name || '')).map((item) => {return item;});}",
+                  },
+                  styles: {
+                    maxWidth: "250px",
+                    minWidth: "200px",
+                  },
+                  optionsCustomStyle: {
+                    overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                isMandatory: false,
+                key: "secondaryStage",
+                type: "dropdown",
+                disable: false,
+                populators: {
+                  name: "secondaryStage",
+                  optionsKey: "substage",
+                  mdmsConfig: {
+                    masterName: "CaseSecondaryStage",
+                    moduleName: "case",
+                    select:
+                      "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -496,7 +607,12 @@ export const TabUnifiedEmployeeSearchConfig = {
               },
               {
                 label: "CS_STAGE",
-                jsonPath: "substage",
+                jsonPath: "stage",
+                additionalCustomization: true,
+              },
+              {
+                label: "CS_SECONDARY_STAGE",
+                jsonPath: "secondaryStage",
                 additionalCustomization: true,
               },
               {
@@ -555,6 +671,7 @@ export const TabUnifiedEmployeeSearchConfig = {
               caseSearchText: "",
               caseType: "NIA S138",
               substage: "",
+              secondaryStage: "",
             },
             fields: [
               {
@@ -701,6 +818,7 @@ export const TabUnifiedEmployeeSearchConfig = {
               caseSearchText: "",
               caseType: "NIA S138",
               substage: "",
+              secondaryStage: "",
             },
             fields: [
               {
@@ -821,6 +939,7 @@ export const CaseReviewerAdditionalTab = {
           caseSearchText: "",
           caseType: "NIA S138",
           substage: "",
+          secondaryStage: "",
           sortCaseListByDate: {
             sortBy: "createdtime",
             order: "desc",
@@ -867,12 +986,37 @@ export const CaseReviewerAdditionalTab = {
             type: "dropdown",
             disable: false,
             populators: {
-              name: "substage",
-              optionsKey: "code",
+              name: "stage",
+              optionsKey: "name",
               mdmsConfig: {
-                masterName: "SubStage",
+                masterName: "CaseUiPrimaryStage",
                 moduleName: "case",
-                select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                select:
+                  "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+              },
+              styles: {
+                maxWidth: "250px",
+                minWidth: "200px",
+              },
+              optionsCustomStyle: {
+                overflowX: "hidden",
+              },
+            },
+          },
+          {
+            label: "CS_SECONDARY_STAGE",
+            isMandatory: false,
+            key: "secondaryStage",
+            type: "dropdown",
+            disable: false,
+            populators: {
+              name: "secondaryStage",
+              optionsKey: "substage",
+              mdmsConfig: {
+                masterName: "CaseSecondaryStage",
+                moduleName: "case",
+                select:
+                  "(data) => {return data['case'].CaseSecondaryStage?.map((item) => {return item}).filter((item) => item?.substage).filter((item, index, arr) => index === arr.findIndex((x) => (x?.substage || '').trim().toLowerCase() === (item?.substage || '').trim().toLowerCase())).sort((a,b) => (a?.substage || '').trim().localeCompare((b?.substage || '').trim()));}",
               },
               styles: {
                 maxWidth: "250px",

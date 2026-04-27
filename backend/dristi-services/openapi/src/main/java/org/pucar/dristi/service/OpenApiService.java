@@ -196,6 +196,28 @@ public class OpenApiService {
         return CaseType.equals(CASE_TYPE_CMP) || CaseType.equals(CASE_TYPE_ST);
     }
 
+    public CaseSearchTextResponse getCasesBySearchText(String tenantId, String searchText, String courtId, Integer limit, Integer offset) {
+        log.info("Fetching cases from Case Service by search text");
+        StringBuilder uri = new StringBuilder(configuration.getCaseServiceHost()).append(configuration.getCaseServiceSearchByCaseSearchTextEndpoint());
+
+        Pagination pagination = null;
+        if (limit != null || offset != null) {
+            pagination = Pagination.builder()
+                    .limit(limit != null ? limit.doubleValue() : 10.0)
+                    .offSet(offset != null ? offset.doubleValue() : 0.0)
+                    .build();
+        }
+
+        CaseSearchTextRequest request = CaseSearchTextRequest.builder()
+                .tenantId(tenantId)
+                .searchText(searchText)
+                .courtId(courtId)
+                .pagination(pagination)
+                .build();
+        Object response = serviceRequestRepository.fetchResult(uri, request);
+        return objectMapper.convertValue(response, CaseSearchTextResponse.class);
+    }
+
     public List<OpenHearing> getHearings(OpenAPiHearingRequest body) {
         String tenantId = body.getTenantId();
         String searchText = body.getSearchText();
@@ -291,9 +313,9 @@ public class OpenApiService {
                             caseNumberCriteria.getYear());
 
                     String caseType = caseNumberCriteria.getCaseType();
-                    if (caseType.equalsIgnoreCase("ST")) {
+                    if ("ST".equalsIgnoreCase(caseType)) {
                         moduleSearchCriteria.put("stNumber", caseNumber);
-                    } else if (caseType.equalsIgnoreCase("CMP")) {
+                    } else if ("CMP".equalsIgnoreCase(caseType)) {
                         moduleSearchCriteria.put("cmpNumber", caseNumber);
                     } else {
                         return null;

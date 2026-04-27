@@ -3,9 +3,9 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const ToastContext = React.createContext({
   message: "",
-  setMessage: () => { },
+  setMessage: () => {},
   type: "",
-  setType: () => { },
+  setType: () => {},
 });
 
 export function ToastProvider({ children }) {
@@ -27,5 +27,3 @@ export function ToastProvider({ children }) {
   }, [history?.location?.state?.toast]);
   return <ToastContext.Provider value={{ message, setMessage, type, setType }}>{children}</ToastContext.Provider>;
 }
-
-

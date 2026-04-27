@@ -43,7 +43,7 @@ src/
 │   ├── TaskComponent.js               # Task item component
 │   ├── TaskComponentCalander.js       # Calendar task component
 │   ├── UpComingHearing.js             # Upcoming hearings widget
-│   └── WitnessModal.js                # Witness management modal
+
 ├── configs/
 │   ├── AddNewPartyConfig.js           # Add new party form config
 │   ├── AddWitnessConfig.js            # Add witness form config
@@ -73,16 +73,11 @@ src/
 │   └── employee/
 │       ├── index.js                   # Route definitions
 │       ├── CalendarView.js            # Monthly calendar view (MonthlyCalendar)
-│       ├── InsideHearingMainPage.js   # In-hearing management
-│       ├── AdjournHearing.js          # Adjourn hearing flow
-│       ├── EndHearing.js              # End hearing flow
 │       ├── AddAttendees.js            # Attendee management
-│       ├── AddParty.js                # Add party to hearing
 │       ├── AddWitnessModal.js         # Add witness dialog
 │       ├── BulkReschedule.js          # Bulk reschedule page
 │       ├── DisplayAttendees.js        # Attendee display
 │       ├── EvidenceHeader.js          # Evidence section header
-│       ├── HearingSideCard.js         # Side panel for hearing
 │       ├── HearingsResponse.js        # Hearing action response
 │       ├── NoticeProcessModal.js      # Notice process management
 │       ├── SummonsAndWarrantsModal.js  # Summons/warrants management
@@ -94,7 +89,6 @@ src/
 
 ### Key Design Patterns
 - **Calendar-centric UI:** FullCalendar library drives the scheduling view
-- **In-hearing state machine:** InsideHearingMainPage manages hearing state transitions (START → IN_PROGRESS → END/ADJOURN)
 - **Component registry sharing:** `SummonsAndWarrantsModal`, `NoticeProcessModal` are registered globally for use in the home module
 - **Breadcrumb context consumption:** Uses `BreadCrumbsParamsDataContext` from Core for case-aware breadcrumbs
 
@@ -106,9 +100,6 @@ All routes in `src/pages/employee/index.js` use `PrivateRoute` (authentication r
 
 | Route Path | Component | Description |
 |---|---|---|
-| `{path}/inside-hearing` | `InsideHearingMainPage` | Active hearing management page |
-| `{path}/end-hearing` | `EndHearing` | End hearing workflow |
-| `{path}/adjourn-hearing` | `AdjournHearing` | Adjourn hearing workflow |
 | `{path}/` (exact) | `MonthlyCalendar` | Calendar view of hearings |
 
 ### Route Guards
@@ -170,9 +161,6 @@ No dedicated Redux slices. Relies on common store from Core.
 
 ### Container Components
 - **`MonthlyCalendar` (CalendarView.js)** — Full-month calendar view using FullCalendar library, showing hearing schedules
-- **`InsideHearingMainPage`** — Active hearing management: transcript, attendees, evidence, witness depositions
-- **`EndHearing`** — End-hearing workflow with summary and next-hearing scheduling
-- **`AdjournHearing`** — Hearing adjournment with reason capture
 
 ### Globally Registered Components
 - **`HearingsCalendar`** — MonthlyCalendar component, available for home module
@@ -184,7 +172,6 @@ No dedicated Redux slices. Relies on common store from Core.
 - **`HearingsCard`** — Dashboard card for hearings module
 - **`PreHearingModal`** — Pre-hearing preparation checklist
 - **`NextHearingModal`** — Schedule next hearing date
-- **`WitnessModal`** — Witness examination management
 - **`BulkRescheduleModal` / `BulkRescheduleTable`** — Bulk operation UI
 - **`UpComingHearing`** — Widget showing upcoming hearings
 
@@ -200,7 +187,7 @@ Calendar View:
     → User clicks hearing → navigates to inside-hearing
 
 Inside Hearing:
-  User → InsideHearingMainPage
+  User 
     → hearingService.startHearing() → API: /hearing/v1/update (START)
     → Transcript recording, attendee marking
     → hearingService.updateHearingTranscript() → API: /hearing/v1/update_transcript_additional_attendees
@@ -220,7 +207,6 @@ Inside Hearing:
 |---|---|---|
 | `react` | 17.0.2 | UI framework |
 | `react-router-dom` | 5.3.0 | Routing |
-| `react-hook-form` | 6.15.8 | Form management |
 | `react-i18next` | 11.16.2 | i18n |
 | `react-query` | 3.6.1 | Data fetching |
 | `@fullcalendar/core` | ^6.1.14 | Calendar core |

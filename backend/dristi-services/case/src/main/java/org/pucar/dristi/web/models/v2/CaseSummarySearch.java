@@ -95,6 +95,9 @@ public class CaseSummarySearch {
     @JsonProperty("natureOfPleading")
     private String natureOfPleading = null;
 
+    @JsonProperty("secondaryStage")
+    private List<String> secondaryStage = null;
+
     @JsonProperty("statutesAndSection")
     private StatuteSectionV2 statutesAndSection = null;
 

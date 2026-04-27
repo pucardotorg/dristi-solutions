@@ -1,56 +1,22 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
-import { Toast, Loader } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { DRISTIService } from "../../../services";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
-function WitnessDepositionDocModal({
-  t,
-  docObj,
-  setShowWitnessDepositionDoc,
-  showWitnessModal,
-  setShowWitnessModal,
-  setEditWitnessDepositionArtifact,
-  editWitnessDepositionArtifact,
-}) {
+function WitnessDepositionDocModal({ t, docObj, setShowWitnessDepositionDoc, setShowWitnessModal }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const artifact = docObj?.artifactList;
-  const useDownloadCasePdf = Digit?.Hooks?.dristi?.useDownloadCasePdf;
-  const { downloadPdf } = useDownloadCasePdf();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const isCitizen = useMemo(() => userRoles?.includes("CITIZEN"), [userRoles]);
   const isEmployee = useMemo(() => userRoles?.includes("EMPLOYEE"), [userRoles]);
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
 
   const showDocument = useMemo(() => {
     return (
@@ -99,13 +65,13 @@ function WitnessDepositionDocModal({
         };
         const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
         if (updatedEvidence?.artifact) {
-          setShowWitnessModal(true);
-          setEditWitnessDepositionArtifact(updatedEvidence?.artifact?.artifactNumber);
+          setShowWitnessModal({ show: true, artifactNumber: updatedEvidence?.artifact?.artifactNumber });
           setShowWitnessDepositionDoc({ docObj: null, show: false });
         }
       } catch (error) {
-        console.error("Error updating witness:", error);
-        setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+        console.error("Failed to update witness evidence:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("WITNESS_UPDATE_FAILED"), error: true, errorId });
       } finally {
         setIsLoading(false);
       }
@@ -122,6 +88,8 @@ function WitnessDepositionDocModal({
         actionSaveLabel={saveLabel}
         hideSubmit={!Boolean(saveLabel)}
         actionSaveOnSubmit={handleSubmit}
+        isDisabled={isLoading}
+        isBackButtonDisabled={isLoading}
         popupStyles={{ width: "70vw", minHeight: "75vh", maxHeight: "90vh" }}
         headerBarMainStyle={{ minHeight: "50px" }}
         className={"review-submission-appl-modal bail-bond"}
@@ -153,7 +121,15 @@ function WitnessDepositionDocModal({
             <Loader />
           </div>
         )}
-        {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
+        )}
       </Modal>
     </div>
   );

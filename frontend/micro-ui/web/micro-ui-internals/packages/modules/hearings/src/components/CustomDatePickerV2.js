@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { LabelFieldPair, TextInput, CloseSvg, CardLabelError, Toast } from "@egovernments/digit-ui-react-components";
+import { LabelFieldPair, TextInput, CardLabelError } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const CustomDatePickerV2 = ({
   t,
@@ -26,16 +28,7 @@ const CustomDatePickerV2 = ({
     },
   });
 
-  const [showErrorToast, setShowErrorToast] = useState(null);
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
+  const [showToast, setShowToast] = useState(null);
 
   // Add event listener to handle clicks outside the modal
   useEffect(() => {
@@ -73,18 +66,15 @@ const CustomDatePickerV2 = ({
     };
   }, [showModal]);
 
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
   const handleSelect = (date) => {
     const formattedDate = date.toLocaleDateString("en-GB");
     const formattedForCheck = formattedDate.replace(/\//g, "-");
     const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
     if (isNonWorkingDay) {
-      setShowErrorToast({
+      setShowToast({
         error: true,
         label: t("CS_COMMON_COURT_NON_WORKING"),
+        errorId: null,
       });
     }
     if (onDateChange) {
@@ -155,19 +145,18 @@ const CustomDatePickerV2 = ({
           />
         </Modal>
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
 const CalendarIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clip-path="url(#clip0_1959_2689)">

@@ -549,7 +549,8 @@
 
 .bail-signature-modal {
   width: 638px;
-  height: 230px;
+  min-height: 230px;
+  height: auto;
   border-radius: 4px;
 
   .popup-module-main {
@@ -979,6 +980,33 @@
       width: fit-content;
       padding: 0px 10px;
       box-shadow: none;
+    }
+  }
+}
+
+.submitDocument-formComposer {
+  .card {
+    margin: 0;
+    padding: 0;
+    border: none;
+
+    .label-field-pair {
+      h2.card-label {
+        font-weight: 400;
+        font-size: 16px;
+        margin-bottom: 8px !important;
+      }
+    }
+  }
+
+  .employeeCard {
+    .label-field-pair {
+      flex-direction: column;
+    }
+
+    .card-label-error {
+      margin-bottom: 0;
+      margin-left: 0 !important;
     }
   }
 }

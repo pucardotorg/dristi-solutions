@@ -1,0 +1,37 @@
+{
+    "id": "2032ed67-595e-4e7b-92cf-e42b93a912b2",
+    "tenantId": "kl",
+    "code": "case.CaseUiPrimaryStage",
+    "description": null,
+    "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "required": [
+            "id",
+            "code",
+            "name"
+        ],
+        "x-unique": [
+            "id"
+        ],
+        "properties": {
+            "id": {
+                "type": "integer"
+            },
+            "code": {
+                "type": "string"
+            },
+            "name": {
+                "type": "string"
+            }
+        },
+        "additionalProperties": false
+    },
+    "isActive": true,
+    "auditDetails": {
+        "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "createdTime": 1776335724988,
+        "lastModifiedTime": 1776335724988
+    }
+}

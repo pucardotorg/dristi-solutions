@@ -82,6 +82,10 @@ import SelectBulkDateInputs from "./components/SelectBulkDateInputs";
 import SelectCustomHearingDate from "./components/SelectCustomHearingDate";
 import EditDeleteModal from "./components/EditDeleteModal";
 import InputWithSearch from "./components/InputWithSearch";
+import EvidenceModal from "./pages/employee/AdmittedCases/EvidenceModal";
+import GenericPreviewModal from "./components/GenericPreviewModal";
+import { CloseBtn, Heading } from "./components/ModalComponents";
+import CustomToast from "./components/CustomToast";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -224,6 +228,11 @@ const componentsToRegister = {
   SelectCustomHearingDate,
   EditDeleteModal,
   InputWithSearch,
+  EvidenceModal,
+  GenericPreviewModal,
+  CloseBtn,
+  Heading,
+  CustomToast,
 };
 
 const overrideHooks = () => {

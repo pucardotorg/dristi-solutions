@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback } from "react";
-import { Button, RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { InfoCard, Loader } from "@egovernments/digit-ui-components";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
@@ -15,6 +16,8 @@ import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@eg
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
 import { getPartyNameForInfos } from "../../utils";
+import { CaseWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/caseWorkflow";
+import { ORDER_TYPES } from "../../utils/constants";
 
 const modeOptions = [{ label: "E-Post (3-5 days)", value: "e-post" }];
 
@@ -65,7 +68,7 @@ const PaymentForSummonComponent = ({
         label={"Complete in 2 days"}
         additionalElements={[
           <p>
-            {t(orderType === "SUMMONS" ? "SUMMON_DELIVERY_NOTE" : "NOTICE_DELIVERY_NOTE")}{" "}
+            {t(orderType === ORDER_TYPES.SUMMONS ? "SUMMON_DELIVERY_NOTE" : "NOTICE_DELIVERY_NOTE")}{" "}
             <span style={{ fontWeight: "bold" }}>{getDateWithMonthName(orderDate)}</span> {t("ON_TIME_DELIVERY")}
           </p>,
         ]}
@@ -127,14 +130,15 @@ const PaymentForSummonComponent = ({
 
 const PaymentForSummonModal = ({ path }) => {
   const history = useHistory();
+  const { t } = useTranslation();
   const userInfo = Digit.UserService.getUser()?.info;
   const userUuid = userInfo?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
   const { filingNumber, taskNumber } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const [caseId, setCaseId] = useState();
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
+  const [showToast, setShowToast] = useState(null);
 
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
@@ -151,18 +155,7 @@ const PaymentForSummonModal = ({ path }) => {
     Boolean(filingNumber)
   );
 
-  const isCaseAdmitted = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0]?.status === "CASE_ADMITTED", [caseData]);
-
-  useEffect(() => {
-    if (caseData) {
-      const id = caseData?.criteria?.[0]?.responseList?.[0]?.id;
-      if (id) {
-        setCaseId(id); // Set the caseId in state
-      } else {
-        console.error("caseId is undefined or not available");
-      }
-    }
-  }, [caseData]);
+  const isCaseAdmitted = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0]?.status === CaseWorkflowState.CASE_ADMITTED, [caseData]);
 
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
@@ -181,6 +174,8 @@ const PaymentForSummonModal = ({ path }) => {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_FETCHING_CASE_LOCK_STATUS"), error: true, errorId });
     }
   });
   useEffect(() => {
@@ -232,14 +227,6 @@ const PaymentForSummonModal = ({ path }) => {
 
   const orderType = useMemo(
     () => (orderData?.list?.[0]?.orderCategory === "COMPOSITE" ? compositeItem?.orderType : orderData?.list?.[0]?.orderType),
-    [orderData, compositeItem]
-  );
-
-  const partyIndex = useMemo(
-    () =>
-      orderData?.list?.[0]?.orderCategory === "COMPOSITE"
-        ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex
-        : orderData?.list?.[0]?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex,
     [orderData, compositeItem]
   );
 
@@ -374,28 +361,7 @@ const PaymentForSummonModal = ({ path }) => {
           await Promise.all([
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: orderType === "SUMMONS" ? "Show Summon-Warrant Status" : "Show Notice Status",
-                entityType: paymentType.ORDER_MANAGELIFECYCLE,
-                referenceId: hearingsData?.HearingList?.[0]?.hearingId,
-                status: orderType === "SUMMONS" ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
-                assignedTo: [],
-                assignedRole: [orderType === "SUMMONS" ? "PENDING_TASK_SHOW_SUMMON_WARRANT" : "PENDING_TASK_SHOW_NOTICE_STATUS"],
-                cnrNumber: filteredTasks?.[0]?.cnrNumber,
-                filingNumber: filingNumber,
-                caseId: caseDetails?.id,
-                caseTitle: caseDetails?.caseTitle,
-                isCompleted: false,
-                stateSla: 3 * dayInMillisecond + todayDate,
-                additionalDetails: {
-                  hearingId: hearingsData?.list?.[0]?.hearingId,
-                  partyIndex: orderType === "NOTICE" ? partyIndex : "",
-                },
-                tenantId,
-              },
-            }),
-            ordersService.customApiService(Urls.orders.pendingTask, {
-              pendingTask: {
-                name: orderType === "SUMMONS" ? `MAKE_PAYMENT_FOR_SUMMONS_POST` : `MAKE_PAYMENT_FOR_NOTICE_POST`,
+                name: orderType === ORDER_TYPES.SUMMONS ? `MAKE_PAYMENT_FOR_SUMMONS_POST` : `MAKE_PAYMENT_FOR_NOTICE_POST`,
                 entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
                 referenceId: `MANUAL_${taskNumber}`,
                 status: paymentType.PAYMENT_PENDING_POST,
@@ -555,7 +521,7 @@ const PaymentForSummonModal = ({ path }) => {
 
     return {
       handleClose: handleClose,
-      heading: { label: `Payment for ${orderType === "SUMMONS" ? "Summons" : "Notice"} via post` },
+      heading: { label: `Payment for ${orderType === ORDER_TYPES.SUMMONS ? "Summons" : "Notice"} via post` },
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
       payOnlineButtonTitle: payOnlineButtonTitle,
@@ -581,7 +547,20 @@ const PaymentForSummonModal = ({ path }) => {
     return <Loader />;
   }
 
-  return <DocumentModal config={paymentForSummonModalConfig} />;
+  return (
+    <React.Fragment>
+      <DocumentModal config={paymentForSummonModalConfig} />
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
+    </React.Fragment>
+  );
 };
 
 export default PaymentForSummonModal;

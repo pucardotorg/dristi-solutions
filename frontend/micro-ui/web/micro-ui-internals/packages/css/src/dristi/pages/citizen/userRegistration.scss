@@ -1080,3 +1080,15 @@ body {
     align-items: center;
   }
 }
+
+.unregistered-number-modal{
+  border-radius: 4px;
+  
+  .header-wrap{
+    .header-content.popup-header-fix{
+      .heading-m{
+        margin: 14px !important;
+      }
+    }
+  }
+}
