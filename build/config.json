@@ -517,7 +517,7 @@
     "lock-svc": {
         "service_group": "core-services",
         "db_source_path": "backend/dristi-services/lock-svc/src/main/resources/db",
-        "dockerfile_path": "build/maven/Dockerfile.v2",
+        "dockerfile_path": "build/maven-java25/Dockerfile.v2",
         "service_source_path": "backend/dristi-services/lock-svc",
         "language": "java",
         "version": "25"
