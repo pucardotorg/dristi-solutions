@@ -1,5 +1,6 @@
-import { CardText, Modal, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import { CardText, Modal } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import React, { useMemo, useState } from "react";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 
 import { modalConfig } from "../../citizen/FileCase/Config/admissionActionConfig";
@@ -66,8 +67,7 @@ function AdmissionActionModal({
   isDelayApplicationRejected = false,
 }) {
   const history = useHistory();
-  const [showErrorToast, setShowErrorToast] = useState(false);
-  const [label, setLabel] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const courtId = localStorage.getItem("courtId");
@@ -77,18 +77,6 @@ function AdmissionActionModal({
 
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (!isEpostUser && userType === "employee") homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
-
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      closeToast();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [closeToast]);
 
   const stepItems = useMemo(() => {
     return modalConfig.map((step) => {
@@ -106,13 +94,11 @@ function AdmissionActionModal({
   const onSubmit = (props, wordLimit) => {
     const words = props?.commentForLitigant?.trim()?.split(/\s+/);
     if (!props?.commentForLitigant) {
-      setShowErrorToast(true);
-      setLabel("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS");
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true, errorId: null });
       return;
     }
     if (words?.length >= wordLimit) {
-      setShowErrorToast(true);
-      setLabel(`ES_WORD_COUNT_LIMIT ${wordLimit}`);
+      setShowToast({ label: t(`ES_WORD_COUNT_LIMIT ${wordLimit}`), error: true, errorId: null });
     } else {
       handleSendCaseBack(props);
     }
@@ -274,7 +260,15 @@ function AdmissionActionModal({
             buttonStyle={{ alignSelf: "center", minWidth: "50%" }}
             actionClassName="e-filing-action-bar"
           ></FormComposerV2>
-          {showErrorToast && <Toast error={true} label={t(label)} isDleteBtn={true} onClose={closeToast} />}
+          {showToast && (
+            <CustomToast
+              error={showToast?.error}
+              label={showToast?.label}
+              errorId={showToast?.errorId}
+              onClose={() => setShowToast(null)}
+              duration={showToast?.errorId ? 7000 : 5000}
+            />
+          )}
         </Modal>
       )}
       {modalInfo?.page === 0 && modalInfo?.type === "admitCase" && (
@@ -353,10 +347,8 @@ function AdmissionActionModal({
             selectedValues={selectedValues}
             setSelectedValues={setSelectedValues}
             handleScheduleCase={handleScheduleCase}
-            setShowErrorToast={setShowErrorToast}
             t={t}
           />
-          {showErrorToast && <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
         </Modal>
       )}
       {modalInfo?.showDate && (

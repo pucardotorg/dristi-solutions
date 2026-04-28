@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import AdvocateClerkAdditionalDetail from "./AdvocateClerkAdditionalDetail";
 import SelectUserType from "./SelectUserType";
@@ -54,17 +55,7 @@ const Registration = ({ stateCode }) => {
   const [user, setUser] = useState(null);
   const [otpError, setOtpError] = useState(false);
   const [canSubmitAadharOtp, setCanSubmitAadharOtp] = useState(true);
-  const [error, setError] = useState(null);
-  const closeToast = () => {
-    setError(null);
-  };
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      closeToast();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [closeToast]);
+  const [showToast, setShowToast] = useState(null);
 
   useEffect(() => {
     if (location?.state?.newParams) {
@@ -154,7 +145,7 @@ const Registration = ({ stateCode }) => {
       }));
       return;
     } else {
-      setError(t("ES_ERROR_USER_ALREADY_REGISTERED"));
+      setShowToast({ error: true, label: t("ES_ERROR_USER_ALREADY_REGISTERED") });
       setCanSubmitNo(true);
     }
   };
@@ -278,7 +269,8 @@ const Registration = ({ stateCode }) => {
       });
     } catch (error) {
       console.error("Error while uploading id proof", error);
-      setError(t("ERROR_WHILE_UPLOADING_ID_PROOF"));
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("ERROR_WHILE_UPLOADING_ID_PROOF"), errorId });
     }
   };
   if (isLoading || isFetching) {
@@ -421,7 +413,15 @@ const Registration = ({ stateCode }) => {
           <Route path={`${path}/terms-condition`}>
             <TermsCondition params={newParams} setParams={setNewParams} t={t} config={[stepItems[10]]} pathOnRefresh={pathOnRefresh} path={path} />
           </Route>
-          {error && <Toast error={true} label={error} onClose={closeToast} />}
+          {showToast && (
+            <CustomToast
+              error={showToast?.error}
+              label={showToast?.label}
+              errorId={showToast?.errorId}
+              onClose={() => setShowToast(null)}
+              duration={showToast?.errorId ? 7000 : 5000}
+            />
+          )}
         </React.Fragment>
       </Switch>
     </div>

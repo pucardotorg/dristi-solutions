@@ -2,6 +2,7 @@ import { InfoCard } from "@egovernments/digit-ui-components";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { Button, FileIcon, PrintIcon } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import useESign from "../hooks/orders/useESign";
 import { Urls } from "../hooks/services/Urls";
 import useDocumentUpload from "../hooks/orders/useDocumentUpload";
@@ -9,13 +10,14 @@ import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/au
 import { ORDER_TYPES } from "../utils/constants";
 
 const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData, setSignatureId, signatureId, deliveryChannel }) => {
+  const [showToast, setShowToast] = useState(null);
   const { handleEsign, checkSignStatus } = useESign();
   const { uploadDocuments } = useDocumentUpload();
   const [formData, setFormData] = useState({}); // storing the file upload data
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
-  const [fileStoreId, setFileStoreId] = useState(rowData?.documents?.[0]?.fileStore || ""); // have to set the uploaded fileStoreID
-  const [pageModule, setPageModule] = useState("en");
+  const fileStoreId = rowData?.documents?.[0]?.fileStore || "";
+  const pageModule = "en";
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const [fileUploadError, setFileUploadError] = useState(null);
@@ -67,6 +69,8 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
         setFormData({});
         handleSigned(false);
         setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("CS_FILE_UPLOAD_ERROR"), error: true, errorId });
       }
     }
   };
@@ -101,7 +105,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
       sessionStorage.setItem("ESignSummons", JSON.stringify(rowData));
       sessionStorage.setItem("delieveryChannel", deliveryChannel);
       sessionStorage.setItem("homeActiveTab", "CS_HOME_PROCESS");
-      handleEsign(name, pageModule, rowData?.documents?.[0]?.fileStore, placeHolder);
+      handleEsign(name, pageModule, rowData?.documents?.[0]?.fileStore, setShowToast, t, placeHolder);
     }
   };
 
@@ -260,6 +264,16 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
           formData={formData}
           onSubmit={onSubmit}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
+        />
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
         />
       )}
     </div>

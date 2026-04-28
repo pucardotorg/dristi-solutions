@@ -1,20 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import { Toast } from "@egovernments/digit-ui-react-components";
-import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
-import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { SubmissionDocumentWorkflowState } from "../utils/submissionDocumentsWorkflow";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
-const downloadSvgStyle = {
-  margin: "0px 12px 0px 0px",
-  height: "16px",
-  width: "16px",
-};
-
-const downloadPathStyle = {
-  fill: "#007e7e",
-};
 function ReviewDocumentSubmissionModal({
   t,
   combinedFileStoreId,
@@ -25,20 +13,7 @@ function ReviewDocumentSubmissionModal({
   handleDownloadReviewModal,
 }) {
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const [showErrorToast, setShowErrorToast] = useState(null);
   const tenantId = Digit.ULBService.getCurrentTenantId();
-
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   const showDocument = useMemo(() => {
     return (
@@ -82,7 +57,6 @@ function ReviewDocumentSubmissionModal({
           </div>
         </div>
       </div>
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </Modal>
   );
 }

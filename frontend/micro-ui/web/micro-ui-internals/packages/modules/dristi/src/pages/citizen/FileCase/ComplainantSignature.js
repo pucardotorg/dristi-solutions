@@ -17,7 +17,7 @@ import {
 } from "../../../Utils";
 import UploadSignatureModal from "../../../components/UploadSignatureModal";
 import { Urls } from "../../../hooks";
-import { useToast } from "../../../components/Toast/useToast";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import Modal from "../../../components/Modal";
 import { mergeBreakdowns } from "./EfilingValidationUtils";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
@@ -173,7 +173,7 @@ const dayInMillisecond = 24 * 3600 * 1000;
 const ComplainantSignature = ({ path }) => {
   const { t } = useTranslation();
   const history = useHistory();
-  const toast = useToast();
+  const [showToast, setShowToast] = useState(null);
   const Digit = window.Digit || {};
   const { filingNumber, caseId } = Digit.Hooks.useQueryParams();
   const todayDate = new Date().getTime();
@@ -569,8 +569,9 @@ const ComplainantSignature = ({ path }) => {
         }
       });
     } catch (error) {
-      console.error("Error:", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Failed to close pending tasks:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("FAILED_TO_CLOSE_PENDING_TASKS"), error: true, errorId });
       setLoader(false);
     }
   };
@@ -689,7 +690,7 @@ const ComplainantSignature = ({ path }) => {
         }
       );
       if (caseLockStatus?.Lock?.isLocked) {
-        toast.error(t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"));
+        setShowToast({ label: t("SOMEONEELSE_IS_ESIGNING_CURRENTLY"), error: true, errorId: null });
         setLoader(false);
         return;
       }
@@ -702,15 +703,17 @@ const ComplainantSignature = ({ path }) => {
         try {
           await handleCaseUnlockingWhenMockESign();
         } catch (error) {
-          console.error("Error:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          console.error("Failed to unlock case:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("FAILED_TO_UNLOCK_CASE"), error: true, errorId });
         }
       } else {
-        handleEsign(name, "ci", DocumentFileStoreId, getPlaceholder());
+        handleEsign(name, "ci", DocumentFileStoreId, setShowToast, t, getPlaceholder());
       }
     } catch (error) {
-      console.error("Error:", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("Failed to initiate e-signature:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ESIGN_INITIATION_FAILED"), error: true, errorId });
       setLoader(false);
     }
   };
@@ -831,6 +834,7 @@ const ComplainantSignature = ({ path }) => {
           });
         } catch (err) {
           console.error("Recovery: failed to close old pending task:", err);
+          throw err;
         }
 
         // Step 2: Create Pending Payment pending task (best-effort)
@@ -866,6 +870,7 @@ const ComplainantSignature = ({ path }) => {
           });
         } catch (err) {
           console.error("Recovery: failed to create payment pending task:", err);
+          throw err;
         }
 
         // Step 3: Create demand/calculation and redirect to payment
@@ -884,13 +889,15 @@ const ComplainantSignature = ({ path }) => {
             calculation = { Calculation: [resp?.TreasuryHeadMapping?.calculation] };
           } catch (error) {
             console.error("Recovery: error fetching treasury payment breakup:", error);
+            throw error;
           }
         }
         setCalculationResponse(calculation);
         history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculation } });
       } catch (err) {
         console.error("Payment recovery failed:", err);
-        toast.error(t("SOMETHING_WENT_WRONG"));
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("PAYMENT_RECOVERY_FAILED"), error: true, errorId });
         history.replace(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`);
       } finally {
         setLoader(false);
@@ -1049,13 +1056,15 @@ const ComplainantSignature = ({ path }) => {
           }
         })
         .catch((error) => {
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("ESIGN_CALLBACK_FAILED"), error: true, errorId });
           setEsignSuccess(false);
           throw error;
         });
     } catch (error) {
-      console.error("Error:", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error("E-sign process failed:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ESIGN_PROCESS_FAILED"), error: true, errorId });
       setEsignSuccess(false);
       setLoader(false);
     }
@@ -1364,6 +1373,7 @@ const ComplainantSignature = ({ path }) => {
           warningText={t("UPLOAD_SIGNED_DOC_WARNING")}
           onSubmit={onSubmit}
           fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {isEditCaseModal && (
@@ -1389,6 +1399,15 @@ const ComplainantSignature = ({ path }) => {
             handleEditCase();
           }}
         ></Modal>
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </div>
   );

@@ -5,7 +5,6 @@ import { idProofVerificationConfig } from "../configs/component";
 import Button from "./Button";
 import Modal from "./Modal";
 import RenderFileCard from "./RenderFileCard";
-import { useToast } from "./Toast/useToast";
 import { CloseBtn, Heading } from "./ModalComponents";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
 function VerificationComponent({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) {

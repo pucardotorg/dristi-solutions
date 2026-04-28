@@ -1,4 +1,5 @@
-import { BackButton, FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { BackButton, FormComposerV2, Header, Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
@@ -87,7 +88,7 @@ const delayCondonationTextStyle = {
 function CaseFileAdmission({ t, path }) {
   const [isDisabled, setIsDisabled] = useState(false);
   const history = useHistory();
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [modalInfo, setModalInfo] = useState(null);
   const [submitModalInfo, setSubmitModalInfo] = useState(null);
@@ -484,9 +485,8 @@ function CaseFileAdmission({ t, path }) {
               setIsDisabled(true);
               await createDcaAndPendingTasks();
             } catch (error) {
-              setShowErrorToast("INTERNAL_ERROR_OCCURRED");
               setIsDisabled(false);
-              throw new Error("Delay condonation application creation failed: " + error.message);
+              throw error;
             }
           }
           await handleRegisterCase();
@@ -494,7 +494,8 @@ function CaseFileAdmission({ t, path }) {
           setCreateAdmissionOrder(true);
           setLoader(false);
         } catch (error) {
-          setShowErrorToast("INTERNAL_ERROR_OCCURRED");
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("UNABLE_TO_REGISTER_CASE"), error: true, errorId });
           console.error("some error occurred:", error);
           setLoader(false);
         }
@@ -564,10 +565,6 @@ function CaseFileAdmission({ t, path }) {
     });
     setShowModal(true);
     setModalInfo({ type: "sendCaseBack", page: 0 });
-  };
-
-  const closeToast = () => {
-    setShowErrorToast(false);
   };
 
   const handleSendCaseBack = (props) => {
@@ -1098,7 +1095,15 @@ function CaseFileAdmission({ t, path }) {
                   noBreakLine
                   skipStyle={{ position: "fixed", left: "20px", bottom: "18px", color: "#007E7E", fontWeight: "700" }}
                 />
-                {showErrorToast && <Toast error={true} label={t(showErrorToast)} isDleteBtn={true} onClose={closeToast} />}
+                {showToast && (
+                  <CustomToast
+                    error={showToast?.error}
+                    label={showToast?.label}
+                    errorId={showToast?.errorId}
+                    onClose={() => setShowToast(null)}
+                    duration={showToast?.errorId ? 7000 : 5000}
+                  />
+                )}
                 {showScheduleHearingModal && (
                   <ScheduleHearing
                     setUpdateCounter={setUpdateCounter}

@@ -6,7 +6,8 @@ import { isEmptyObject } from "../Utils";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import RenderFileCard from "./RenderFileCard";
-import { useToast } from "./Toast/useToast";
+import { useState } from "react";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const DragDropJSX = ({ t, currentValue, error }) => {
   return (
@@ -93,7 +94,7 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
     if (file?.type && input?.fileTypes?.length) {
       const allowedMimes = input.fileTypes.flatMap((ext) => EXTENSION_TO_MIME[ext.toLowerCase()] || []);
       if (allowedMimes.length && !allowedMimes.includes(file.type)) {
-        setError(config.key, { message: t("NOT_SUPPORTED_FILE_TYPE") });
+        setError(`${config?.key}_${index}`, { message: t("NOT_SUPPORTED_FILE_TYPE") });
         return;
       }
     } else if (clearErrors) {
@@ -216,9 +217,9 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 )}
               </div>
             </div>
-             {errors?.[config.key] && (
-                <span className="alert-error">{t(errors?.[config.key]?.msg || errors?.[config.key].message || "CORE_REQUIRED_FIELD_ERROR")}</span>
-              )}
+            {errors?.[config.key] && (
+              <span className="alert-error">{t(errors?.[config.key]?.msg || errors?.[config.key].message || "CORE_REQUIRED_FIELD_ERROR")}</span>
+            )}
             {input.downloadTemplateText && input.downloadTemplateLink && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "20px" }}>
                 {input?.downloadTemplateText && t(input?.downloadTemplateText)}

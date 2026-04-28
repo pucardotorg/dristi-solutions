@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import { Toast } from "@egovernments/digit-ui-react-components";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
 import { ordersService } from "../hooks/services";
-import { Loader, TextInput } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 function OrderBulkReviewModal({ t, history, orderDetails }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -12,23 +12,9 @@ function OrderBulkReviewModal({ t, history, orderDetails }) {
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showOrderDeleteModal, setShowOrderDeleteModal] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const closeToast = () => {
-    setShowErrorToast(null);
-  };
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
-
-  
   const orderFileStoreId = useMemo(() => {
     return orderDetails?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore;
   }, [orderDetails]);
@@ -70,7 +56,8 @@ function OrderBulkReviewModal({ t, history, orderDetails }) {
           );
         });
     } catch (e) {
-      setShowErrorToast({ label: t("FAILED_TO_REMOVE_ORDER_FROM_BULK_LIST"), error: true });
+      const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("FAILED_TO_REMOVE_ORDER_FROM_BULK_LIST"), error: true, errorId });
       console.error("Failed to remove the order from bulk list", e);
     } finally {
       setIsLoading(false);
@@ -101,28 +88,18 @@ function OrderBulkReviewModal({ t, history, orderDetails }) {
               <React.Fragment>
                 <div className="review-order-modal-document-div" style={{ padding: "0px 20px", width: "100%", overflow: "auto" }}>
                   {showDocument}
-                  {/* <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <TextInput
-                      className="field desktop-w-full"
-                      disable={true}
-                      defaultValue={orderDetails?.additionalDetails?.businessOfTheDay}
-                      style={{ minWidth: "500px" }}
-                      textInputStyle={{ maxWidth: "100%" }}
-                    />
-                  </div> */}
                 </div>
               </React.Fragment>
             }
           </div>
         }
-        {showErrorToast && (
-          <Toast
-            error={showErrorToast?.error}
-            label={showErrorToast?.label}
-            isDleteBtn={true}
-            onClose={closeToast}
-            style={{ left: "calc(100% - 540px)", top: "92%" }}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
           />
         )}
       </Modal>

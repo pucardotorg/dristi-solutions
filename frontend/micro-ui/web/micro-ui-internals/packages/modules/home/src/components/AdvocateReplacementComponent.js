@@ -8,7 +8,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
-import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const Heading = (props) => {
@@ -22,7 +22,7 @@ const Heading = (props) => {
 const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTaskActionModals, refetch }) => {
   const { t } = useTranslation();
   const history = useHistory();
-  const toast = useToast();
+  const [showToast, setShowToast] = useState(null);
 
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), []);
@@ -96,10 +96,12 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
             data: data,
           };
         });
-        toast.success(t(action === "APPROVE" ? "ADVOCATE_REPLACEMENT_SUCCESS" : "ADVOCATE_REPLACEMENT_REJECTED"));
+        setShowToast({ label: t(action === "APPROVE" ? "ADVOCATE_REPLACEMENT_SUCCESS" : "ADVOCATE_REPLACEMENT_REJECTED"), error: false });
         refetch();
       } catch (error) {
         console.error("Error updating task data:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("ADVOCATE_REPLACEMENT_ERROR_UPDATING_TASK"), error: true, errorId });
         setPendingTaskActionModals((pendingTaskActionModals) => {
           const data = pendingTaskActionModals?.data;
           delete data.filingNumber;
@@ -110,13 +112,12 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
             data: data,
           };
         });
-        toast.error(t("ADVOCATE_REPLACEMENT_ERROR"));
         refetch();
       } finally {
         setIsApiCalled(false);
       }
     },
-    [task, tenantId, setPendingTaskActionModals, toast, t, refetch]
+    [task, tenantId, setPendingTaskActionModals, t, refetch]
   );
 
   const replaceAdvocateOrderCreate = async (type) => {
@@ -192,6 +193,8 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
       history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
     } catch (error) {
       console.error("error", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_CREATING_ORDER"), error: true, errorId });
     } finally {
       setIsApiCalled(false);
     }
@@ -346,6 +349,15 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
             )}
           </div>
         </Modal>
+      )}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </div>
   );

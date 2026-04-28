@@ -11,7 +11,7 @@ const ScheduleHearing = ({
   setShowModal,
   caseData,
   setUpdateCounter,
-  showToast,
+  setShowToast,
   advocateDetails,
   caseAdmittedSubmit,
   isCaseAdmitted,
@@ -77,7 +77,6 @@ const ScheduleHearing = ({
     );
   };
 
-  
   const Heading = (props) => {
     return (
       <div className="evidence-title">
@@ -107,13 +106,13 @@ const ScheduleHearing = ({
     await scheduleHearing(props).then((res) => {
       setShowModal(false);
       res.responseInfo.status === "successful"
-        ? showToast({
-            isError: false,
-            message: "HEARING_CREATE_SUCCESSFUL",
+        ? setShowToast({
+            label: t("HEARING_CREATE_SUCCESSFUL"),
+            error: false,
           })
-        : showToast({
-            isError: true,
-            message: "HEARING_CREATE_UNSUCCESSFUL",
+        : setShowToast({
+            label: t("HEARING_CREATE_UNSUCCESSFUL"),
+            error: true,
           });
     });
   };

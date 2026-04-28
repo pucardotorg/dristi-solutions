@@ -1,10 +1,11 @@
-import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useState } from "react";
-import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getFileByFileStore } from "../../../Utils";
+import CustomToast from "../../../components/CustomToast";
 
 function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pathOnRefresh, isAdvocateUploading, onFormValueChange }) {
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const history = useHistory();
   const validateFormData = (data) => {
     let isValid = true;
@@ -46,18 +47,6 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
     });
     return isValid;
   };
-
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      closeToast();
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [closeToast]);
 
   useEffect(() => {
     const handleRedirect = async () => {
@@ -148,7 +137,7 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
             return;
           }
           if (!validateFormData(data)) {
-            setShowErrorToast(!validateFormData(data));
+            setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true });
           } else if (data?.SelectUserTypeComponent?.aadharNumber) {
             onAadharChange(data?.SelectUserTypeComponent?.aadharNumber);
           } else {
@@ -168,7 +157,15 @@ function UploadIdType({ config, t, onAadharChange, onDocumentUpload, params, pat
         onSecondayActionClick={() => {}}
         submitInForm={!isAdvocateUploading}
       ></FormComposerV2>
-      {showErrorToast && <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 }
