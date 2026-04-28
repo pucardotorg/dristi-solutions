@@ -639,26 +639,31 @@ public class CaseOverallStatusUtil {
 
 		determineOrderStage(filingNumber, tenantId, orderType, status, hearingType, priorityMap, caseObject);
 
+		// LPR move-to must run for every order item (including composite items)
+		String currentCaseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
+		if (MOVE_CASE_TO_LONG_PENDING_REGISTER.equalsIgnoreCase(orderType)) {
+			caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, "Long Pending Register");
+			log.info("ended stage '{}', started stage '{}' for filingNumber: {}", currentCaseStage, "Long Pending Register", filingNumber);
+		}
+
 		if (canPublishCaseOverallStatus && !priorityMap.isEmpty()) {
 			CaseOverallStatus finalCaseOverallStatus = priorityMap.firstEntry().getValue();
 
 			log.info("Publishing case overall status with priority: {} for filing number: {}", priorityMap.firstEntry().getKey(), filingNumber);
 			publishToCaseOverallStatus(finalCaseOverallStatus, request,caseObject);
 
-			String currentCaseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
 			String newStage = finalCaseOverallStatus.getStage();
 
-			if (SUMMONS.equalsIgnoreCase(orderType) && !hasAccusedJoinedCase(caseObject)) {
+			if (MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER.equalsIgnoreCase(orderType)) {
+				// Restored stage comes from the highest-priority stage in the priority map
+				caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, "Long Pending Register", newStage);
+				log.info("ended stage '{}', started restored stage '{}' for filingNumber: {}", "Long Pending Register", newStage, filingNumber);
+			} else if (SUMMONS.equalsIgnoreCase(orderType) && !hasAccusedJoinedCase(caseObject)) {
 				String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
 				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_COGNIZANCE, newStage);
-			} else if (MOVE_CASE_TO_LONG_PENDING_REGISTER.equalsIgnoreCase(orderType)) {
-				caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, "Long Pending Register");
-				log.info("ended stage '{}', started stage '{}' for filingNumber: {}", currentCaseStage, "Long Pending Register", filingNumber);
-			} else if (MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER.equalsIgnoreCase(orderType)) {
-				caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, "Long Pending Register", currentCaseStage);
-				log.info("ended stage '{}', started restored stage '{}' for filingNumber: {}", "Long Pending Register", currentCaseStage, filingNumber);
-			} else if (newStage != null && !newStage.equalsIgnoreCase(currentCaseStage)) {
-				// Generic stage transition for all other order types
+			} else if (!MOVE_CASE_TO_LONG_PENDING_REGISTER.equalsIgnoreCase(orderType)
+					&& newStage != null && !newStage.equalsIgnoreCase(currentCaseStage)) {
+				// Generic stage transition for all other order types (LPR move-to already handled above)
 				caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, newStage);
 				log.info("Stage transition for filingNumber: {}, endStage='{}', newStage='{}'", filingNumber, currentCaseStage, newStage);
 			}
