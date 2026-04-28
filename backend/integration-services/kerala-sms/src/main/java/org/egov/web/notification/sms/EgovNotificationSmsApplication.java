@@ -20,6 +20,7 @@ import org.springframework.core.env.*;
 import org.springframework.kafka.annotation.*;
 import org.springframework.util.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 
 import jakarta.annotation.*;
 
@@ -53,6 +54,11 @@ public class EgovNotificationSmsApplication {
     @Bean
     public RestTemplate getRestTemplate() {
         return new RestTemplate();
+    }
+
+    @Bean
+    public RestTemplateBuilder restTemplateBuilder() {
+        return new RestTemplateBuilder();
     }
 
     @Primary
