@@ -478,8 +478,7 @@ public class CaseOverallStatusUtil {
 
                 String lifecycleStatus = JsonPath.read(caseObject.toString(), CASE_LIFECYCLE_STATUS_PATH);
 				String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
-				String caseSubStage = JsonPath.read(caseObject.toString(), CASE_SUB_STAGE_PATH);
-				handleProcessBackup(caseOverallStatus, caseStage, caseSubStage);
+				handleProcessBackup(caseOverallStatus, caseStage);
 
 				if (!handleLprCase(caseOverallStatus, lifecycleStatus, caseStage, filingNumber)) {
 					return;
@@ -504,7 +503,7 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private void handleProcessBackup(CaseOverallStatus caseOverallStatus, String currentCaseStage, String currentCaseSubStage) {
+	private void handleProcessBackup(CaseOverallStatus caseOverallStatus, String currentCaseStage) {
 		if (caseOverallStatus.getProcessHandler() == null) {
 			caseOverallStatus.setProcessHandler(ProcessHandler.RESET_BACKUP);
 		}
