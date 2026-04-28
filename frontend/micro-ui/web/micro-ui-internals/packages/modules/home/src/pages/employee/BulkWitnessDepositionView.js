@@ -49,6 +49,12 @@ function BulkWitnessDepositionView({ setShowToast = () => {} }) {
   const hasEvidenceEsignAccess = useMemo(() => roles?.some((role) => role.code === "EVIDENCE_ESIGN"), [roles]);
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
   const [counter, setCounter] = useState(0);
+
+  const { data: designationData } = Digit.Hooks.useCustomMDMS(tenantId, "common-masters", [{ name: "Designation" }]);
+  const judgeDesignation = useMemo(
+    () => designationData?.["common-masters"]?.Designation?.find((d) => d.code === "JUDICIAL_MAGISTRATE")?.name || "",
+    [designationData]
+  );
   const config = useMemo(() => {
     const setWitnessDepositionFunc = async (deposition) => {
       setShowBulkSignModal(true);
@@ -200,7 +206,7 @@ function BulkWitnessDepositionView({ setShowToast = () => {} }) {
             return {
               fileStoreId: deposition?.businessObject?.artifactDetails?.file?.fileStore,
               artifactNumber: deposition?.businessObject?.artifactDetails?.artifactNumber,
-              placeholder: "Judicial Magistrate of First Class",
+              placeholder: judgeDesignation,
               tenantId: tenantId,
             };
           });
