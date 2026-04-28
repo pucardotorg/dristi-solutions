@@ -183,7 +183,7 @@ const witnessDeposition = async (req, res, qrCode) => {
           depositionType: "",
           witnessDeposition: witnessDepositionText,
           witnessPlaceholder: "Deponent",
-          judgePlaceholder: "Judicial Magistrate of First Class",
+          judgePlaceholder: courtCaseJudgeDetails.judgeDetails?.designation,
           qrCodeUrl: base64Url,
           designation:
             witnessEvidence.additionalDetails.witnessDetails.designation,
@@ -195,6 +195,7 @@ const witnessDeposition = async (req, res, qrCode) => {
       qrCode === "true"
         ? config.pdf.new_witness_deposition_qr
         : config.pdf.new_witness_deposition;
+    console.log("[witnessDeposition] data being sent to create_pdf:", JSON.stringify(data?.Data?.[0], null, 2));
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
       "Failed to generate PDF of Application Bail Bond"
