@@ -4207,7 +4207,6 @@ public class CaseService {
 
         if (courtCaseRedis != null) {
             courtCaseRedis.setStage(caseOverallStatus.getStage());
-            courtCaseRedis.setLifecycleStatus(caseOverallStatus.getLifecycleStatus());
         }
         updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
     }

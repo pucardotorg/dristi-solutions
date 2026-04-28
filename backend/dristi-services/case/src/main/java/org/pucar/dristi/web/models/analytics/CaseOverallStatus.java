@@ -33,12 +33,6 @@ public class CaseOverallStatus {
     @JsonProperty("stage")
     private String stage = null;
 
-    @JsonProperty("lifecycleStatus")
-    private LifecycleStatus lifecycleStatus;
-
-    @JsonProperty("processHandler")
-    private ProcessHandler processHandler = ProcessHandler.RESET_BACKUP;
-
     @JsonProperty("secondaryStage")
     private List<String> secondaryStage = new ArrayList<>();
 
