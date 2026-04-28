@@ -644,22 +644,23 @@ public class CaseOverallStatusUtil {
 
 			log.info("Publishing case overall status with priority: {} for filing number: {}", priorityMap.firstEntry().getKey(), filingNumber);
 			publishToCaseOverallStatus(finalCaseOverallStatus, request,caseObject);
-			if(SUMMONS.equalsIgnoreCase(orderType) && !hasAccusedJoinedCase(caseObject)){
-				String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
-				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_COGNIZANCE, finalCaseOverallStatus.getStage());
-			}
 
 			String currentCaseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
+			String newStage = finalCaseOverallStatus.getStage();
 
-			if (MOVE_CASE_TO_LONG_PENDING_REGISTER.equalsIgnoreCase(orderType)) {
-				// End the current stage and add the new stage in ES (e.g., entering LPR)
-
+			if (SUMMONS.equalsIgnoreCase(orderType) && !hasAccusedJoinedCase(caseObject)) {
+				String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_COGNIZANCE, newStage);
+			} else if (MOVE_CASE_TO_LONG_PENDING_REGISTER.equalsIgnoreCase(orderType)) {
 				caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, "Long Pending Register");
 				log.info("ended stage '{}', started stage '{}' for filingNumber: {}", currentCaseStage, "Long Pending Register", filingNumber);
-			}  else if (MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER.equalsIgnoreCase(orderType)){
-				// End the current stage and add the restored stage in ES (e.g., leaving LPR)
+			} else if (MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER.equalsIgnoreCase(orderType)) {
 				caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, "Long Pending Register", currentCaseStage);
-				log.info(" ended stage '{}', started restored stage '{}' for filingNumber: {}", "Long Pending Register", currentCaseStage, filingNumber);
+				log.info("ended stage '{}', started restored stage '{}' for filingNumber: {}", "Long Pending Register", currentCaseStage, filingNumber);
+			} else if (newStage != null && !newStage.equalsIgnoreCase(currentCaseStage)) {
+				// Generic stage transition for all other order types
+				caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, newStage);
+				log.info("Stage transition for filingNumber: {}, endStage='{}', newStage='{}'", filingNumber, currentCaseStage, newStage);
 			}
 		}
         publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderItemJson, orderCategory), request);
