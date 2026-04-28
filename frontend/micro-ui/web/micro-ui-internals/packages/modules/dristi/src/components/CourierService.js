@@ -218,11 +218,10 @@ function CourierService({
         }
       }
 
-      if (
-        (orderType === "WARRANT" || !orderType) &&
-        (!processCourierData?.warrantCourierService || processCourierData?.warrantCourierService?.length === 0)
-      ) {
-        const policeWarrantOption = courierOptions?.find((option) => option?.channelId === CHANNEL_IDS.POLICE && option?.taskType === TASK_TYPES.WARRANT);
+      if ((orderType === "WARRANT" || !orderType) && !processCourierData?.warrantCourierService) {
+        const policeWarrantOption = courierOptions?.find(
+          (option) => option?.channelId === CHANNEL_IDS.POLICE && option?.taskType === TASK_TYPES.WARRANT
+        );
         if (policeWarrantOption) {
           data = { ...data, warrant: [policeWarrantOption] };
         }
@@ -359,7 +358,7 @@ function CourierService({
             <div
               className="dropdown-container"
               onClick={() => {
-                if (!summonsActive && isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
+                if (!isDisableAllFields && !summonsActive && isDelayCondonation && processCourierData?.summonsCourierService?.length === 0) {
                   setShowConfirmationModal(true);
                 }
               }}
@@ -392,13 +391,16 @@ function CourierService({
             <div className="label-container">
               <div className="label">{t("CS_WARRANT_COURIER")}</div>
               {!orderType && (
-                <div className="info-icon">
-                  <span style={{ position: "relative" }} data-tip data-for="warrant-tooltip">
-                    <InfoIcon />
-                  </span>
-                  <ReactTooltip id="warrant-tooltip" place="bottom" content={t("CS_WARRANT_COURIER_TOOLTIP")}>
-                    {t("CS_WARRANT_COURIER_TOOLTIP")}
-                  </ReactTooltip>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div className="optional">{t("CS_IS_OPTIONAL")}</div>
+                  <div className="info-icon">
+                    <span style={{ position: "relative" }} data-tip data-for="warrant-tooltip">
+                      <InfoIcon />
+                    </span>
+                    <ReactTooltip id="warrant-tooltip" place="bottom" content={t("CS_WARRANT_COURIER_TOOLTIP")}>
+                      {t("CS_WARRANT_COURIER_TOOLTIP")}
+                    </ReactTooltip>
+                  </div>
                 </div>
               )}
             </div>

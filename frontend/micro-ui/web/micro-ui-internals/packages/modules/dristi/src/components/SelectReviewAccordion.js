@@ -284,7 +284,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
         ...currentMessage.form[index],
         ...fieldObj,
       };
-      setValue(config.Key, currentMessage, name);
+      setValue(config.key, currentMessage, name);
     } else {
       // Proceed with deleting error if no false isWarning values exist
       if (index == null) {
@@ -299,7 +299,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
           ...fieldObj,
         };
       }
-      setValue(config.Key, currentMessage, name);
+      setValue(config.key, currentMessage, name);
       // Update dependent scrutiny messages
       for (const { configKey, page, field } of dependentFields) {
         const scrutinyMessage = get(formData, [configKey, page], {

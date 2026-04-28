@@ -1,15 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom";
-import { FormComposerV2, Header, Loader, Modal, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Header, Loader, Modal } from "@egovernments/digit-ui-react-components";
 import { extractCodeFromErrorMsg, extractValue, OutlinedInfoIcon } from "../FileCase/EFilingCases";
-import useGetAllCasesConfig from "../../../hooks/dristi/useGetAllCasesConfig";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import ReactTooltip from "react-tooltip";
-import { RightArrow } from "../../../icons/svgIndex";
 import isEqual from "lodash/isEqual";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
-import { useToast } from "../../../components/Toast/useToast";
 import { documentLabels, getFilingType, runComprehensiveSanitizer } from "../../../Utils";
 import {
   editCheckDuplicateMobileEmailValidation,
@@ -25,11 +22,11 @@ import { getAdvocates } from "../FileCase/EfilingValidationUtils";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import CustomToast from "../../../components/CustomToast";
 const EditProfile = ({ path }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const location = useLocation();
-  const toast = useToast();
   const urlParams = new URLSearchParams(window.location.search);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [formdata, setFormdata] = useState([{ isenabled: true, data: { reasonForChange: "" }, displayindex: 0 }]);
@@ -39,12 +36,11 @@ const EditProfile = ({ path }) => {
   const setFormDataValue = useRef(null);
   const clearFormDataErrors = useRef(null);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const [showConfirmSubmission, setShowConfirmSubmission] = useState(false);
   const [complainantIdProofFileName, setComplainantIdProofFileName] = useState("");
   const [isLoader, setIsLoader] = useState(false);
 
-  const [errorMsg, setErrorMsg] = useState("");
   const selected = urlParams.get("type") || "";
   const caseId = urlParams.get("caseId");
   const isAdvocate = urlParams.get("isAdvocate") === "true";
@@ -53,7 +49,7 @@ const EditProfile = ({ path }) => {
   const userInfo = Digit.UserService.getUser()?.info;
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
 
-  const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
+  const { data: caseData, isLoading } = useSearchCaseService(
     {
       criteria: [
         {
@@ -73,7 +69,7 @@ const EditProfile = ({ path }) => {
     () => ({
       ...caseData?.criteria?.[0]?.responseList?.[0],
     }),
-    [caseData, caseId, selected, uniqueId]
+    [caseData]
   );
 
   const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
@@ -112,39 +108,6 @@ const EditProfile = ({ path }) => {
 
   const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "Application"), [filingTypeData?.FilingType]);
 
-  // useEffect(() => {
-  // if (selected === "complainantDetails") {
-  //   const currentComplainant = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
-  //     (item, index) => item?.data?.complainantVerification?.individualDetails?.individualId === uniqueId
-  //   );
-  //   if (currentComplainant?.data) {
-  //     if(complainantType?.code === "INDIVIDUAL") {
-  //     }
-  //     const updatedData = structuredClone(currentComplainant?.data);
-  //     updatedData.reasonForChange = updatedData?.updatedData || "";
-  //     let updatedFormData = structuredClone(formdata);
-  //     updatedFormData[0].data = updatedData;
-  //     if (!isEqual(updatedFormData, formdata?.[0]?.data)) {
-  //       setFormdata(updatedFormData);
-  //     }
-  //   }
-  // }
-  // if (selected === "respondentDetails") {
-  //   const currentRespondent = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
-  //     (item, index) => item?.data?.respondentVerification?.individualDetails?.individualId === uniqueId || item?.uniqueId === uniqueId
-  //   );
-  //   if (currentRespondent?.data) {
-  //     const updatedData = structuredClone(currentRespondent?.data);
-  //     updatedData.reasonForChange = "";
-  //     let updatedFormData = structuredClone(formdata);
-  //     updatedFormData[0].data = updatedData;
-  //     if (!isEqual(updatedFormData, formdata?.[0]?.data)) {
-  //       setFormdata(updatedFormData);
-  //     }
-  //   }
-  // }
-  // }, [caseDetails, selected, uniqueId]);
-
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
 
   useEffect(() => {
@@ -155,17 +118,10 @@ const EditProfile = ({ path }) => {
       return;
     }
 
-    // if (!type || !uniqueId) {
-    //   history.replace(`/${window.contextPath}/citizen/dristi/home/view-case`);
-    //   return;
-    // }
-
     return () => {
       sessionStorage.removeItem("editProfileAccess");
     };
   }, [history, location]);
-
-  const { data: caseDetailsConfig, isLoading: isGetAllCasesLoading } = useGetAllCasesConfig();
 
   const pageConfig = useMemo(() => {
     if (selected === "complainantDetails") {
@@ -174,27 +130,7 @@ const EditProfile = ({ path }) => {
       return editRespondentConfig;
     }
     return null;
-  }, [caseDetailsConfig, selected]);
-
-  const closeToast = () => {
-    setShowErrorToast(false);
-    setErrorMsg("");
-    // setSuccessToast((prev) => ({
-    //   ...prev,
-    //   showSuccessToast: false,
-    //   successMsg: "",
-    // }));
-  };
-
-  useEffect(() => {
-    let timer;
-    if (showErrorToast) {
-      timer = setTimeout(() => {
-        closeToast();
-      }, 2000);
-    }
-    return () => clearTimeout(timer);
-  }, [showErrorToast]);
+  }, [selected]);
 
   const formConfig = useMemo(() => {
     if (selected === "complainantDetails") {
@@ -727,13 +663,11 @@ const EditProfile = ({ path }) => {
         .filter((data) => data.isenabled)
         .some((data) =>
           editRespondentValidation({
-            setErrorMsg,
             t,
             formData: data?.data,
             caseDetails,
             selected,
-            setShowErrorToast,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
             clearFormDataErrors: clearFormDataErrors.current,
           })
@@ -751,8 +685,7 @@ const EditProfile = ({ path }) => {
             t,
             caseDetails,
             selected,
-            setShowErrorToast,
-            toast,
+            setShowToast,
             setFormErrors: setFormErrors.current,
             formState: setFormState.current,
             clearFormDataErrors: clearFormDataErrors.current,
@@ -766,7 +699,7 @@ const EditProfile = ({ path }) => {
         const referenceId = `MANUAL_${uniqueId}_${editorUuid}_${caseDetails?.id}`;
         const ifProfileRequestAlreadyExists = caseDetails?.additionalDetails?.profileRequests?.find((req) => req?.pendingTaskRefId === referenceId);
         if (ifProfileRequestAlreadyExists) {
-          toast.error(t("AN_EDIT_PROFILE_REQUEST_ALREADY_EXISTS"));
+          setShowToast({ error: true, label: t("AN_EDIT_PROFILE_REQUEST_ALREADY_EXISTS") });
           return;
         }
         const onBehalfOfUuid = await getOnBehalfOfUuid();
@@ -774,7 +707,7 @@ const EditProfile = ({ path }) => {
           t,
           isCompleted: true,
           caseDetails: caseDetails,
-          toast,
+          setShowToast,
           formdata,
           pageConfig,
           multiUploadList,
@@ -813,13 +746,14 @@ const EditProfile = ({ path }) => {
           `/${window.contextPath}/citizen/submissions/submissions-create?filingNumber=${caseDetails?.filingNumber}&applicationNumber=${newapplicationNumber}`
         );
       } catch (error) {
-        let message = t("SOMETHING_WENT_WRONG");
+        let message = t("PROFILE_UPDATE_FAILED");
         if (error instanceof DocumentUploadError) {
           message = `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
         } else if (extractCodeFromErrorMsg(error) === 413) {
           message = t("FAILED_TO_UPLOAD_FILE");
         }
-        toast.error(message);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: message, errorId });
         console.error("An error occurred:", error);
         return { error };
       } finally {
@@ -908,8 +842,14 @@ const EditProfile = ({ path }) => {
           <h3 className="input-label">{t("THIS_WILL_CREATE_REQUEST_FOR_APPROVAL_BY_JUDGE")}</h3>
         </Modal>
       )}
-      {showErrorToast && (
-        <Toast error={true} label={t(errorMsg ? errorMsg : "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label ? showToast?.label : t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </React.Fragment>
   );

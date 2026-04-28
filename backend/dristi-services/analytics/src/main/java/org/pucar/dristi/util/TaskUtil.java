@@ -55,6 +55,30 @@ public class TaskUtil {
         }
     }
 
+    public JSONArray getTasksByFilingNumberAndType(JSONObject request, String tenantId, String filingNumber, String taskType) {
+        StringBuilder url = getSearchURLWithParams();
+        log.info("Inside TaskUtil getTasksByFilingNumberAndType :: URL: {}", url);
+
+        request.put("tenantId", tenantId);
+        JSONObject criteria = new JSONObject();
+        if (tenantId != null)
+            criteria.put("tenantId", tenantId);
+        if (filingNumber != null)
+            criteria.put("filingNumber", filingNumber);
+        if (taskType != null)
+            criteria.put("taskType", taskType);
+        request.put("criteria", criteria);
+
+        try {
+            String response = repository.fetchResult(url, request);
+            log.info("Inside TaskUtil getTasksByFilingNumberAndType :: Response length: {}", response != null ? response.length() : 0);
+            return util.constructArray(response, TASK_PATH);
+        } catch (Exception e) {
+            log.error("Error while fetching tasks for filingNumber: {}, taskType: {}", filingNumber, taskType, e);
+            return new JSONArray();
+        }
+    }
+
     private StringBuilder getSearchURLWithParams() {
         StringBuilder url = new StringBuilder(config.getTaskHost());
         url.append(config.getTaskSearchPath());

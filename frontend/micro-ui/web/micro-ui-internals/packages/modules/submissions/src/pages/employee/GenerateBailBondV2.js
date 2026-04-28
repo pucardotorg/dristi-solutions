@@ -1,4 +1,4 @@
-import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Header, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bailBondConfig } from "../../configs/generateBailBondConfig";
@@ -24,6 +24,7 @@ import {
   validateSuretyContactNumber,
   validateSurities,
 } from "../../utils/bailBondUtils";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -75,7 +76,7 @@ const GenerateBailBondV2 = () => {
   const { t } = useTranslation();
   const history = useHistory();
   const { filingNumber, bailBondId, showModal } = Digit.Hooks.useQueryParams();
-  const { state, pathname, search } = useLocation();
+  const { state, pathname } = useLocation();
   const pendingTaskrefId = state?.state?.params?.actualReferenceId || null;
   // const pendingTaskId = state?.state?.params?.refId || null;
   const userInfo = Digit.UserService.getUser()?.info;
@@ -98,7 +99,7 @@ const GenerateBailBondV2 = () => {
   const setFormDataValue = useRef(null);
   const clearFormDataErrors = useRef(null);
   const [formdata, setFormdata] = useState({});
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [bailBondFileStoreId, setBailBondFileStoreId] = useState("");
   const [bailBondSignatureURL, setBailBondSignatureURL] = useState("");
   const [defaultFormValueData, setDefaultFormValueData] = useState({});
@@ -991,7 +992,7 @@ const GenerateBailBondV2 = () => {
       // If NOT form reset → perform sureties validation
       if (!clearAutoPopulatedData && !isFormReset) {
         if (formdata?.sureties?.length < pendingTaskAdditionalDetails?.noOfSureties) {
-          setShowErrorToast({
+          setShowToast({
             label: t("NUMBER_OF_SURETIES_IS_LESS_THAN_EXPECTED"),
             error: true,
           });
@@ -1004,12 +1005,12 @@ const GenerateBailBondV2 = () => {
         const surety = formdata?.sureties?.[i];
         const isError = bailBondAddressValidation({ formData: surety?.address, inputs });
         if (isError) {
-          setShowErrorToast({ label: t("CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT"), error: true });
+          setShowToast({ label: t("CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT"), error: true });
           return;
         }
       }
 
-      if (validateAdvocateSuretyContactNumber(t, formdata?.sureties, userInfo, setShowErrorToast)) {
+      if (validateAdvocateSuretyContactNumber(t, formdata?.sureties, userInfo, setShowToast)) {
         return;
       }
     }
@@ -1017,7 +1018,7 @@ const GenerateBailBondV2 = () => {
     try {
       setLoader(true);
       const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
-      const validateSuretyContactNumbers = validateSuretyContactNumber(individualData, formdata, setShowErrorToast, t);
+      const validateSuretyContactNumbers = validateSuretyContactNumber(individualData, formdata, setShowToast, t);
 
       if (!validateSuretyContactNumbers) {
         setLoader(false);
@@ -1050,7 +1051,8 @@ const GenerateBailBondV2 = () => {
       }
     } catch (error) {
       console.error("Error while creating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -1060,40 +1062,76 @@ const GenerateBailBondV2 = () => {
     // Todo : Create and Update Api Call
     try {
       if (!formdata?.bailType) {
-        setShowErrorToast({ label: t("BAIL_TYPE_ISSUE"), error: true });
+        setShowToast({ label: t("BAIL_TYPE_ISSUE"), error: true });
         return;
       }
 
       setLoader(true);
-      const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
+      let individualData;
+      try {
+        individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
+      } catch (error) {
+        console.error("Failed to fetch user UUID:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("FAILED_TO_FETCH_USER_DETAILS"), error: true, errorId });
+        setLoader(false);
+        return;
+      }
+
       let bailBondResponse = null;
       if (!bailBondId) {
         const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
-        bailBondResponse = await createBailBond(individualData);
-        setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        try {
+          bailBondResponse = await createBailBond(individualData);
+          setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        } catch (error) {
+          console.error("Failed to create bail bond:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("BAIL_BOND_CREATE_FAILED"), error: true, errorId });
+          setLoader(false);
+          return;
+        }
+
         if (pendingTasks?.length > 0) {
-          await submissionService.customApiService(Urls.pendingTask, {
-            pendingTask: {
-              ...getPendingTaskPayload,
-              additionalDetails: {
-                ...getPendingTaskPayload?.additionalDetails,
-                bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+          try {
+            await submissionService.customApiService(Urls.pendingTask, {
+              pendingTask: {
+                ...getPendingTaskPayload,
+                additionalDetails: {
+                  ...getPendingTaskPayload?.additionalDetails,
+                  bailBondId: bailBondResponse?.bails?.[0]?.bailId || null,
+                },
+                tenantId,
               },
-              tenantId,
-            },
-          });
+            });
+          } catch (error) {
+            console.error("Failed to update pending task:", error);
+            const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+            setShowToast({ label: t("FAILED_TO_UPDATE_PENDING_TASK"), error: true, errorId });
+            setLoader(false);
+            return;
+          }
         }
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}`
         );
       } else {
-        bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
-        setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        try {
+          bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
+          setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
+        } catch (error) {
+          console.error("Failed to update bail bond:", error);
+          const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("BAIL_BOND_UPDATE_FAILED"), error: true, errorId });
+          setLoader(false);
+          return;
+        }
       }
-      setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
+      setShowToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
     } catch (error) {
-      console.error("Error while creating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      console.error("Unexpected error while saving bail bond:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -1127,7 +1165,8 @@ const GenerateBailBondV2 = () => {
       setShowBailBondEsign(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true, errorId });
     } finally {
       setShowsignatureModal(false);
     }
@@ -1138,7 +1177,7 @@ const GenerateBailBondV2 = () => {
     try {
       setLoader(true);
       const getPendingTaskPayload = convertTaskResponseToPayload(pendingTasks);
-      const res = await updateBailBond(fileStoreId, bailBondWorkflowAction.UPLOAD);
+      await updateBailBond(fileStoreId, bailBondWorkflowAction.UPLOAD);
       if (pendingTasks?.length > 0) {
         await submissionService.customApiService(Urls.pendingTask, {
           pendingTask: {
@@ -1153,7 +1192,8 @@ const GenerateBailBondV2 = () => {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("BAIL_BOND_SAVE_FAILED"), error: true, errorId });
     } finally {
       setLoader(false);
     }
@@ -1161,10 +1201,6 @@ const GenerateBailBondV2 = () => {
 
   const handleCloseSuccessModal = () => {
     history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`);
-  };
-
-  const closeToast = () => {
-    setShowErrorToast(null);
   };
 
   const documents = useMemo(() => {
@@ -1183,15 +1219,6 @@ const GenerateBailBondV2 = () => {
     }
     return docList;
   }, [bailBondDetails]);
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   useEffect(() => {
     if (showModal) {
@@ -1329,7 +1356,15 @@ const GenerateBailBondV2 = () => {
           />
         )}
         {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"BAIL_BOND_BANNER_HEADER"} />}
-        {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
+        )}
       </div>
     </React.Fragment>
   );

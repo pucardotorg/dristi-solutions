@@ -35,7 +35,6 @@ src/
 │   ├── ClerkWithoutAdvocateView.js    # Clerk standalone view
 │   ├── CustomDateRangePicker.js       # Date range picker
 │   ├── EfilingPaymentBreakdown.js     # E-filing payment breakdown
-│   ├── EfilingPaymentDropdown.js      # Payment method dropdown
 │   ├── EfilingPaymentRes.js           # Payment response handler
 │   ├── EmptyStates.js                 # Empty state illustrations
 │   ├── GeneratePaymentDemandBreakdown.js # Payment demand breakdown
@@ -90,7 +89,6 @@ src/
 │       ├── MainHomeScreen.js          # Main home screen (role-based)
 │       ├── Dashboard.js               # Analytics dashboard
 │       ├── HearingsResponse.js        # Hearing response page
-│       ├── InsideHearingMainPage.js   # In-hearing management
 │       ├── ScheduleHearing.js         # Hearing scheduling
 │       ├── ScheduleNextHearing.js     # Next hearing scheduling
 │       ├── ViewHearing.js             # View hearing details
@@ -122,7 +120,6 @@ All routes in `src/pages/employee/index.js` use `PrivateRoute`.
 | `{path}/home-pending-task` | `HomeView` | Pending task list (primary landing) |
 | `{path}/home-screen` | `MainHomeScreen` | Main home screen (employees) |
 | `{path}/hearings-response` | `HearingsResponse` | Hearing action response |
-| `{path}/inside-hearing` | `InsideHearingMainPage` | In-hearing management |
 | `{path}/home-pending-task/e-filing-payment-response` | `EFilingPaymentRes` | E-filing payment response |
 | `{path}/home-pending-task/e-filing-payment-breakdown` | `EfilingPaymentBreakdown` | Payment breakdown details |
 | `{path}/home-pending-task/case-payment-demand-breakdown` | `GeneratePaymentDemandBreakdown` | Case payment demand |

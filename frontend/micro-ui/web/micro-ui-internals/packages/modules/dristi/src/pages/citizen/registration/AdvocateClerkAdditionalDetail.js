@@ -1,4 +1,5 @@
-import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
@@ -30,7 +31,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
   const { t } = useTranslation();
   const Digit = window.Digit || {};
   const history = useHistory();
-  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [showToast, setShowToast] = useState(null);
   const [isDisabled, setIsDisabled] = useState(false);
   const setFormErrors = useRef(null);
 
@@ -43,9 +44,6 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
   const currentConfig = useMemo(() => {
     return isAdvocateClerk ? advocateClerkVerificationConfig : advocateClerkConfig;
   }, [isAdvocateClerk]);
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
 
   const getUserForAdvocateUUID = async (barRegistrationNumber) => {
     const advocateDetail = await window?.Digit.DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
@@ -151,7 +149,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
 
   const onSubmit = async (formData) => {
     if (!validateFormData(formData)) {
-      setShowErrorToast(!validateFormData(formData));
+      setShowToast({ label: t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"), error: true, errorId: null });
       return;
     }
 
@@ -291,7 +289,15 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
         onFormValueChange={onFormValueChange}
       ></FormComposerV2>
 
-      {showErrorToast && <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
+      {showToast && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
+      )}
     </div>
   );
 }

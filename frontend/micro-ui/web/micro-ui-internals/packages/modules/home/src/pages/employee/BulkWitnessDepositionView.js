@@ -1,7 +1,6 @@
-import { ActionBar, Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import React, { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { bulkWitnessDepositionSignConfig } from "../../configs/BulkWitnessDepositionSignConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
@@ -11,6 +10,7 @@ import { HomeService } from "../../hooks/services";
 import { numberToWords } from "@egovernments/digit-ui-module-orders/src/utils";
 import { Banner } from "@egovernments/digit-ui-react-components";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlString, "application/xml");
@@ -26,16 +26,14 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkWitnessDepositionView({ showToast = () => {} }) {
+function BulkWitnessDepositionView({ setShowToast = () => {} }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
-  const history = useHistory();
   const userInfo = Digit.UserService.getUser()?.info;
-  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const [bulkSignList, setBulkSignList] = useState(null);
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [toast, setToast] = useState(null);
   const [selectedWitnessDeposition, setSelectedWitnessDeposition] = useState(
     sessionStorage.getItem("bulkWitnessDepositionSignSelectedItem")
       ? JSON.parse(sessionStorage.getItem("bulkWitnessDepositionSignSelectedItem"))
@@ -115,19 +113,6 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
       },
     };
   }, [needConfigRefresh]);
-
-  const closeToast = useCallback(() => {
-    setShowErrorToast(null);
-  }, []);
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => {
-        setShowErrorToast(null);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   const getFormattedDate = () => {
     const currentDate = new Date();
@@ -237,13 +222,13 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
               setShowBulkSignConfirmModal(false);
               setShowBulkSignSuccessModal(true);
               setSuccessCount(response?.artifacts?.length);
-              showToast("success", t("WITNESS_DEPOSITION_BULK_SIGN_SUCCESS_MSG"));
+              setShowToast({ label: t("WITNESS_DEPOSITION_BULK_SIGN_SUCCESS_MSG"), error: false });
             });
           });
         }
       }
     } catch (error) {
-      setShowErrorToast({
+      setToast({
         error: true,
         label: error?.message ? error?.message : t("ERROR_WITNESS_DEPOSITION_BULK_SIGN_MSG"),
       });
@@ -302,7 +287,6 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
           </div>
         )}
       </React.Fragment>
-
       {showBulkSignConfirmModal && (
         <Modal
           headerBarMain={<Heading label={t("CONFIRM_BULK_SIGN")} />}
@@ -327,7 +311,7 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
           setShowBulkSignModal={setShowBulkSignModal}
           witnessDepositionPaginationData={witnessDepositionPaginationData}
           setCounter={setCounter}
-          setShowErrorToast={setShowErrorToast}
+          setShowToast={setToast}
         />
       )}
       {showBulkSignSuccessModal && (
@@ -358,7 +342,15 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
           </div>
         </Modal>
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
+      {toast && (
+        <CustomToast
+          error={toast?.error}
+          label={toast?.label}
+          errorId={toast?.errorId}
+          onClose={() => setToast(null)}
+          duration={toast?.errorId ? 7000 : 5000}
+        />
+      )}
     </React.Fragment>
   );
 }

@@ -6,6 +6,7 @@ import { CardText } from "@egovernments/digit-ui-components";
 import useInterval from "../hooks/useInterval";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import ImageModal from "./ImageModal";
+import CustomToast from "./CustomToast";
 const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
 const DEFAULT_USER = "digit-user";
@@ -17,16 +18,24 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [fileStoreId, setFileStoreID] = useState();
   const [fileName, setFileName] = useState();
-  // const [isUserRegistered, setIsUserRegistered] = useState(true);
+  const [showToast, setShowToast] = useState(null);
   const getUserType = () => window?.Digit.UserService.getType();
   const stateCode = window?.Digit.ULBService.getStateId();
   const Digit = window.Digit || {};
   const onDocumentUpload = async (fileData, filename) => {
-    const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
-    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    try {
+      const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
+      return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    } catch (error) {
+      console.error("Error while uploading id proof", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ERROR_WHILE_UPLOADING_ID_PROOF"), error: true, errorId });
+      return null;
+    }
   };
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [imageInfo, setImageInfo] = useState(null);
+
   useInterval(
     () => {
       setTimeLeft(timeLeft - 1);
@@ -250,12 +259,19 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
                     />
                   )}
                   {showDoc && input?.type === "documentUpload" && showUploadedDocument}
-                  {isImageModalOpen && <ImageModal t={t} imageInfo={imageInfo} handleCloseModal={handleImageModalClose} headerBarMainStyle={{
-                    position: "sticky",
-                    top: "0",
-                    zIndex: 1000,
-                    backgroundColor: "grey",
-                  }} />}
+                  {isImageModalOpen && (
+                    <ImageModal
+                      t={t}
+                      imageInfo={imageInfo}
+                      handleCloseModal={handleImageModalClose}
+                      headerBarMainStyle={{
+                        position: "sticky",
+                        top: "0",
+                        zIndex: 1000,
+                        backgroundColor: "grey",
+                      }}
+                    />
+                  )}
                   {input?.type === "text" && (
                     <TextInput
                       className="field desktop-w-full"
@@ -322,6 +338,15 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
                   </p>
                 )}
               </React.Fragment>
+            )}
+            {showToast && (
+              <CustomToast
+                error={showToast?.error}
+                label={showToast?.label}
+                errorId={showToast?.errorId}
+                onClose={() => setShowToast(null)}
+                duration={showToast?.errorId ? 7000 : 5000}
+              />
             )}
           </React.Fragment>
         );

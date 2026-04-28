@@ -23,6 +23,7 @@ import { constructFullName } from "@egovernments/digit-ui-module-orders/src/util
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import { CaseWorkflowState } from "../Utils/caseWorkflow";
 
 export const getSelectedAdvocate = () => {
   try {
@@ -2610,7 +2611,9 @@ export const UICustomizations = {
       const caseId = row?.caseNumber || row?.filingNumber;
       switch (key) {
         case "PENDING_CASE_NAME":
-          return (
+          return row?.substage === CaseWorkflowState.FILING ? (
+            <span>{value ? value : "-"}</span>
+          ) : (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
               to={{

@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Button, CardText, CustomDropdown, SubmitBar, TextInput, Toast, Modal, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import React, { useMemo, useState } from "react";
+import { Button, CardText, CustomDropdown, SubmitBar, TextInput, Modal, Loader } from "@egovernments/digit-ui-react-components";
 import { formatDateInMonth } from "../../utils";
 import { useTranslation } from "react-i18next";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -64,7 +64,6 @@ function ScheduleNextHearing({
   showPurposeOfHearing = false,
 }) {
   const getSuggestedDates = (dateResponse) => {
-    const dates = [];
     if (dateResponse?.Hearings?.[0]?.suggestedDates && dateResponse?.Hearings?.[0]?.availableDates) {
       return dateResponse?.Hearings?.[0]?.suggestedDates;
     }
@@ -72,21 +71,10 @@ function ScheduleNextHearing({
   };
 
   const getAvailableDates = (dateResponse) => {
-    const dates = [];
     if (dateResponse?.Hearings?.[0]?.suggestedDates && dateResponse?.Hearings?.[0]?.availableDates) {
       return dateResponse?.Hearings?.[0]?.availableDates;
     }
     return [];
-  };
-
-  const extractUnitValue = (OptOutLimit) => {
-    const configArray = OptOutLimit?.["SCHEDULER-CONFIG"]?.config;
-    if (Array.isArray(configArray)) {
-      const configItem = configArray.find((item) => item.identifier === "OPT_OUT_SELECTION_LIMIT");
-      return configItem ? configItem.unit : null;
-    }
-
-    return null;
   };
 
   const fetchBasicUserInfo = async () => {
@@ -104,19 +92,14 @@ function ScheduleNextHearing({
     return individualData?.Individual?.[0]?.individualId;
   };
 
-  const { filingNumber, status, hearingId } = Digit.Hooks.useQueryParams();
-  const [modalInfo, setModalInfo] = useState(null);
+  const { filingNumber, status } = Digit.Hooks.useQueryParams();
   const [selectedChip, setSelectedChip] = React.useState(null);
-  const [showErrorToast, setShowErrorToast] = useState(false);
   const [scheduleHearingParams, setScheduleHearingParam] = useState({ purpose: "Admission Purpose" });
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
-  const [sucessOptOut, setSucessOptOut] = useState(false);
-  const [OptOutLimitValue, setOptOutLimitValue] = useState(null);
   const location = useLocation();
   const referenceId = location?.state?.state?.params?.referenceId;
 
   const CustomCaseInfoDiv = Digit.ComponentRegistryService.getComponent("CustomCaseInfoDiv") || <React.Fragment></React.Fragment>;
-  const CustomChooseDate = Digit.ComponentRegistryService.getComponent("CustomChooseDate") || <React.Fragment></React.Fragment>;
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const courtId = localStorage.getItem("courtId");
@@ -153,24 +136,7 @@ function ScheduleNextHearing({
     Boolean(filingNumber)
   );
   const caseDetails = useMemo(() => caseData?.criteria[0]?.responseList[0], [caseData]);
-  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
-
-  const { data: applicationData } = Digit.Hooks.submissions.useSearchSubmissionService(
-    {
-      criteria: {
-        filingNumber: filingNumber,
-        tenantId: tenantId,
-        ...(caseCourtId && { courtId: caseCourtId }),
-        applicationType: "RE_SCHEDULE",
-        status: "COMPLETED",
-      },
-      tenantId,
-    },
-    {},
-    "",
-    Boolean(caseCourtId)
-  );
 
   const { data: dateResponse } = Digit.Hooks.home.useSearchReschedule(
     {
@@ -184,37 +150,8 @@ function ScheduleNextHearing({
     !!referenceId
   );
 
-  const nextFourDates = getSuggestedDates(dateResponse);
-  const availableDates = getAvailableDates(dateResponse);
-
-  const { data: OptOutLimit, isLoading: loading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "SCHEDULER-CONFIG",
-    [
-      {
-        name: "config",
-      },
-    ],
-    {
-      cacheTime: 0,
-    }
-  );
-
-  const closeToast = () => {
-    setShowErrorToast(false);
-  };
-
   const setPurposeValue = (value, input) => {
     setScheduleHearingParam({ ...scheduleHearingParams, purpose: isCaseAdmitted ? value : value.code });
-  };
-
-  const handleClickDate = (label) => {
-    const newSelectedChip = selectedChip === label ? null : label;
-    setSelectedChip(newSelectedChip);
-    setScheduleHearingParam({
-      ...scheduleHearingParams,
-      date: newSelectedChip,
-    });
   };
 
   const handleClose = () => {
@@ -333,17 +270,12 @@ function ScheduleNextHearing({
             },
           });
           setIsSubmitDisabled(false);
-          setSucessOptOut(true);
         })
         .catch((err) => {
           setIsSubmitDisabled(false);
         });
     }
   };
-
-  useEffect(() => {
-    if (OptOutLimit) setOptOutLimitValue(extractUnitValue(OptOutLimit));
-  }, [OptOutLimit]);
 
   if (isLoading) {
     return <Loader />;
@@ -361,7 +293,6 @@ function ScheduleNextHearing({
     >
       <div className="schedule-admission-main">
         {shortCaseInfo && <CustomCaseInfoDiv t={t} data={shortCaseInfo} style={{ marginTop: "24px" }} />}
-
         {status === "OPTOUT" && Array.isArray(selectedChip) && selectedChip.length > 0 && (
           <InfoCard
             className="payment-status-info-card"
@@ -404,20 +335,6 @@ function ScheduleNextHearing({
             config={dropdownConfig}
           ></CustomDropdown>
         )}
-        {!modalInfo?.showCustomDate && (
-          <div>
-            <CardText>{t("CS_SELECT_DATE")}</CardText>
-            <CustomChooseDate
-              data={nextFourDates}
-              selectedChip={selectedChip}
-              handleClick={handleClickDate}
-              scheduleHearingParams={scheduleHearingParams}
-              isSelectMulti={false}
-              enabledData={availableDates}
-            />
-          </div>
-        )}
-
         <div className="action-button-schedule-admission">
           <Button variation="secondary" onButtonClick={handleClose} className="primary-label-btn back-from-schedule" label={"Close"}></Button>
           <SubmitBar
@@ -432,8 +349,6 @@ function ScheduleNextHearing({
             }
           ></SubmitBar>
         </div>
-
-        {showErrorToast && <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />}
       </div>
     </Modal>
   );

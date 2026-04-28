@@ -1,15 +1,12 @@
-import { ActionBar, Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom";
 import { bulkMarkAsEvidenceConfig } from "../../configs/BulkMarkAsEvidenceConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import MarkAsEvidence from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/MarkAsEvidence";
 import { HomeService } from "../../hooks/services";
-import { numberToWords } from "@egovernments/digit-ui-module-orders/src/utils";
 import { Banner } from "@egovernments/digit-ui-react-components";
-import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import qs from "qs";
 
 const parseXml = (xmlString, tagName) => {
@@ -28,25 +25,20 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkMarkAsEvidenceView({ showToast = () => {} }) {
+function BulkMarkAsEvidenceView({ setShowToast = () => {} }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
-  const history = useHistory();
   const userInfo = Digit.UserService.getUser()?.info;
-  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const [bulkSignList, setBulkSignList] = useState(null);
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showErrorToast, setShowErrorToast] = useState(null);
   const [selectedEvidence, setSelectedEvidence] = useState(
     sessionStorage.getItem("markAsEvidenceSelectedItem") ? JSON.parse(sessionStorage.getItem("markAsEvidenceSelectedItem")) : null
   );
   const [showMakeAsEvidenceModal, setShowMakeAsEvidenceModal] = useState(sessionStorage.getItem("markAsEvidenceSelectedItem") ? true : false);
   const [showBulkEvidenceSuccessModal, setShowBulkEvidenceSuccessModal] = useState(false);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
-  const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const [successCount, setSuccessCount] = useState(0);
   const hasEvidenceEsignAccess = useMemo(() => roles?.some((role) => role.code === "EVIDENCE_ESIGN"), [roles]);
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
   const [counter, setCounter] = useState(0);
@@ -112,10 +104,6 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
       },
     };
   }, [needConfigRefresh, tenantId]);
-
-  const closeToast = useCallback(() => {
-    setShowErrorToast(null);
-  }, []);
 
   const evidenceModalInfo = {
     // header: `${t("YOU_HAVE_SUCCESSFULLY_ISSUED_BULK_EVIDENCE")} ${numberToWords(successCount)} ${t("ISSUE_EVIDENCES")} `,
@@ -217,14 +205,12 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
             ).then((response) => {
               setShowBulkSignConfirmModal(false);
               setShowBulkEvidenceSuccessModal(true);
-              setSuccessCount(response?.artifactList?.length);
-              // showToast("success", t("EVIDENCE_BULK_SIGN_SUCCESS_MSG"));
             });
           });
         }
       }
     } catch (error) {
-      setShowErrorToast({
+      setShowToast({
         error: true,
         label: error?.message ? error?.message : t("ERROR_EVIDENCE_BULK_SIGN_MSG"),
       });
@@ -232,7 +218,7 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
     } finally {
       setIsLoading(false);
     }
-  }, [bulkSignList, tenantId, userInfo, showToast, t]);
+  }, [bulkSignList, tenantId, userInfo, setShowToast, t]);
 
   const MemoInboxSearchComposer = useMemo(() => {
     return (
@@ -310,7 +296,7 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
           evidenceDetailsObj={selectedEvidence?.businessObject?.artifactDetails}
           paginatedData={paginatedData}
           setDocumentCounter={setCounter}
-          showToast={showToast}
+          setShowToast={setShowToast}
         />
       )}
       {showBulkEvidenceSuccessModal && (
@@ -330,14 +316,6 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
               headerStyles={{ fontSize: "32px" }}
               style={{ minWidth: "100%" }}
             ></Banner>
-            {/* {
-              <CustomCopyTextDiv
-                t={t}
-                keyStyle={{ margin: "8px 0px" }}
-                valueStyle={{ margin: "8px 0px", fontWeight: 700 }}
-                data={evidenceModalInfo?.caseInfo}
-              />
-            } */}
           </div>
         </Modal>
       )}

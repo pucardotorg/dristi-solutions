@@ -124,9 +124,7 @@ export const TabBenchSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: {
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
-          },
+          criteria: {},
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -280,7 +278,23 @@ export const TabBenchSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
+            isLPRCase: false,
+            stage: [
+              "Long Pending Register",
+              "Post-Judgement",
+              "Judgement",
+              "Arguments",
+              "Defense Evidence",
+              "Examination of Accused",
+              "Complainant Evidence",
+              "Bail & Recording of Plea",
+              "Appearance",
+              "Cognizance",
+              "Registration",
+              "Defect Correction",
+              "Scrutiny",
+              "Filing",
+            ],
           },
         },
         masterName: "commonUiConfig",
@@ -435,7 +449,19 @@ export const TabBenchSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
+            stage: [
+              "Long Pending Register",
+              "Post-Disposal",
+              "Post-Judgement",
+              "Judgement",
+              "Arguments",
+              "Defense Evidence",
+              "Examination of Accused",
+              "Complainant Evidence",
+              "Bail & Recording of Plea",
+              "Appearance",
+              "Cognizance",
+            ],
           },
         },
         masterName: "commonUiConfig",
@@ -500,7 +526,7 @@ export const TabBenchSearchConfig = {
                     masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+                      "(data) => {const excludedStages = ['Filing', 'Scrutiny', 'Defect Correction', 'Registration']; return data['case'].CaseUiPrimaryStage?.filter((item) => !excludedStages.includes((item?.name || '').trim())).sort((a,b)=>(a?.name || '').localeCompare(b?.name || '')).map((item) => {return item;});}",
                   },
                   styles: {
                     maxWidth: "250px",

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { InboxSearchComposer, Toast, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { TabSearchConfig } from "./../../configs/E-PostTrackingConfig";
-import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
 import Inboxheader from "../../components/InboxComposerHeader.js/Inboxheader";
 import SubmitBar from "../../components/SubmitBar";
@@ -26,7 +27,6 @@ const defaultSearchValues = {
 };
 
 const convertToFormData = (t, obj, dropdownData) => {
-  const bookingData = [null, 0]?.includes(obj?.bookingDate) ? null : obj?.bookingDate;
   const formdata = {
     statusDate: DateUtils.getFormattedDate(new Date(), "YYYY-MM-DD"),
     remarks: {
@@ -41,7 +41,6 @@ const convertToFormData = (t, obj, dropdownData) => {
 
 const EpostTrackingPage = () => {
   const { t } = useTranslation();
-  const location = useLocation();
   const history = useHistory();
   const { getEpochRangeFromMonthIST, getEpochRangeFromDateIST } = DateUtils;
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -55,7 +54,7 @@ const EpostTrackingPage = () => {
   const clearFormErrors = useRef({});
   const [selectedRowData, setSelectedRowData] = useState({});
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
-  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [showToast, setShowToast] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchRefreshCounter, setSearchRefreshCounter] = useState(0);
   const [hasResults, setHasResults] = useState(() => sessionStorage.getItem("epostSearchHasResults") === "true");
@@ -142,15 +141,16 @@ const EpostTrackingPage = () => {
   const handleDownloadDocument = async (row) => {
     const { fileStoreId, processNumber } = row;
     if (!fileStoreId) {
-      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_ERROR"), error: true });
+      setShowToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_ERROR"), error: true });
       return;
     }
     try {
       setLoading(true);
       await downloadPdf(tenantId, fileStoreId, processNumber);
-      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
+      setShowToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
     } catch (err) {
-      setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_ERROR"), error: true });
+      const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_ERROR"), error: true, errorId });
     } finally {
       setLoading(false);
     }
@@ -220,9 +220,9 @@ const EpostTrackingPage = () => {
         const monthName = dateForMonth.toLocaleString("en-US", { month: "long" });
         const filename = `${yearStr}_${monthName}_Epost_Report.xlsx`;
         downloadFile(response?.data, filename);
-        setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
+        setShowToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
       } catch (error) {
-        setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+        setShowToast({ label: t("POST_TRACKING_UPDATE_FAILED"), error: true });
         console.error(error);
       } finally {
         setLoading(false);
@@ -262,9 +262,10 @@ const EpostTrackingPage = () => {
 
         const filename = `Epost_List.xlsx`;
         downloadFile(response?.data, filename);
-        setShowErrorToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
+        setShowToast({ label: t("ES_COMMON_DOCUMENT_DOWNLOADED_SUCCESS"), error: false });
       } catch (error) {
-        setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("POST_TRACKING_UPDATE_FAILED"), error: true, errorId });
         console.error(error);
       } finally {
         setLoading(false);
@@ -394,8 +395,6 @@ const EpostTrackingPage = () => {
     };
   }, [activeTabIndex, initialSearchPerformed, searchFormData, intermediateStatuses, hasResults, loggedInUser?.postHubName]);
 
-  const closeToast = () => setShowErrorToast(null);
-
   const onFormSubmit = (formData, isClear = false) => {
     setSearchFormData((prev) => {
       const newData = [...prev];
@@ -448,12 +447,13 @@ const EpostTrackingPage = () => {
       await EpostService.EpostUpdate(updateStatusPayload, { tenantId });
       setShowUpdateStatusModal(false);
       setSelectedRowData({});
-      setShowErrorToast({ label: t("STATUS_UPDATE_SUCCESSFULLY"), error: false });
+      setShowToast({ label: t("STATUS_UPDATE_SUCCESSFULLY"), error: false });
       setSearchRefreshCounter((prev) => prev + 1);
     } catch (error) {
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       console.error("error while updating : ", error);
       const errorCode = error?.response?.data?.Errors?.[0]?.code;
-      const errorMsg = errorCode === "DUPLICATE_SPEED_POST_ID_ERROR" ? t("DUPLICATE_SPEED_POST_ID_ERROR") : t("SOMETHING_WENT_WRONG");
+      const errorMsg = errorCode === "DUPLICATE_SPEED_POST_ID_ERROR" ? t("DUPLICATE_SPEED_POST_ID_ERROR") : t("POST_TRACKING_FAILED");
 
       if (errorCode === "DUPLICATE_SPEED_POST_ID_ERROR") {
         setFormErrors?.current("speedPostId", {
@@ -461,7 +461,7 @@ const EpostTrackingPage = () => {
         });
         return;
       }
-      setShowErrorToast({ label: errorMsg, error: true });
+      setShowToast({ label: errorMsg, error: true, errorId });
     }
   };
 
@@ -529,13 +529,6 @@ const EpostTrackingPage = () => {
       return convertToFormData(t, selectedRowData, epostStatusDropDownData);
     }
   }, [epostStatusDropDownData, selectedRowData, showUpdateStatusModal, t]);
-
-  useEffect(() => {
-    if (showErrorToast) {
-      const timer = setTimeout(() => setShowErrorToast(null), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showErrorToast]);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -618,14 +611,20 @@ const EpostTrackingPage = () => {
           modifiedFormConfig={modifiedFormConfig}
           saveLabel={"CONFIRM"}
           cancelLabel={"CS_COMMON_CANCEL"}
-          closeToast={closeToast}
-          showErrorToast={showErrorToast}
+          setShowToast={setShowToast}
+          showToast={showToast}
           setFormErrors={setFormErrors}
           clearFormErrors={clearFormErrors}
         />
       )}
-      {showErrorToast && !showUpdateStatusModal && (
-        <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn onClose={closeToast} />
+      {showToast && !showUpdateStatusModal && (
+        <CustomToast
+          error={showToast?.error}
+          label={showToast?.label}
+          errorId={showToast?.errorId}
+          onClose={() => setShowToast(null)}
+          duration={showToast?.errorId ? 7000 : 5000}
+        />
       )}
     </React.Fragment>
   );

@@ -363,7 +363,7 @@ export const useNewFeatureSearch = (filters = {}, config = {}) => {
   "module": "dist/index.modern.js",
   "source": "src/Module.js",
   "dependencies": {
-    "@egovernments/digit-ui-react-components": "^1.8.2-beta.11",
+    "@egovernments/digit-ui-react-components": "1.9.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-hook-form": "6.15.8",
