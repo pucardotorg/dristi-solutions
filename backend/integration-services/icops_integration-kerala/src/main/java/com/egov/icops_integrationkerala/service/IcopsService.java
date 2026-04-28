@@ -180,7 +180,6 @@ public class IcopsService {
             icopsTracker.setRemarks(icopsProcessReport.getProcessActionRemarks());
             icopsTracker.setFailureReason(icopsProcessReport.getProcessFailureReason());
         }
-        icopsTracker.setResponseBlob(icopsProcessReport);
         ZoneId zone;
         try {
             zone = ZoneId.of(config.getZoneId());
