@@ -92,6 +92,9 @@ public class ServiceConstants {
     public static final String CASEID_PATH = "$.id";
     public static final String CASE_FILING_DATE_PATH = "$.filingDate";
 
+    public static final String MOVE_CASE_TO_LONG_PENDING_REGISTER = "MOVE_CASE_TO_LONG_PENDING_REGISTER";
+    public static final String MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER = "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER";
+
     public static final String CASE_STAGE_PATH = "$.stage";
     public static final String CASE_LIFECYCLE_STATUS_PATH = "$.lifecycleStatus";
     public static final String CASE_SUB_STAGE_PATH = "$.substage";

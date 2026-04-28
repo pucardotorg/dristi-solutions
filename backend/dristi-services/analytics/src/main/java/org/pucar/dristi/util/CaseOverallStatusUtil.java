@@ -28,14 +28,12 @@ import org.pucar.dristi.web.models.CaseOverallStatusType;
 import org.pucar.dristi.web.models.CaseStageSubStage;
 import org.pucar.dristi.web.models.Outcome;
 import org.pucar.dristi.web.models.LifecycleStatus;
-import org.pucar.dristi.web.models.enums.ProcessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
-import static org.pucar.dristi.web.models.enums.ProcessHandler.UPDATE_BACKUP;
 
 @Slf4j
 @Component
@@ -140,7 +138,7 @@ public class CaseOverallStatusUtil {
 					try{
 						JSONObject compositeItem = compositeItems.getJSONObject(i);
 						boolean canPublishCaseOverallStatus = i == compositeItems.length() - 1;
-                        compositeCase = processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject, COMPOSITE, canPublishCaseOverallStatus, isHearingFound, priorityMap, collectedSecondaryStages);
+                        compositeCase = processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), COMPOSITE, canPublishCaseOverallStatus, isHearingFound, priorityMap, collectedSecondaryStages);
 					} catch(Exception e){
 						log.error("Error processing composite item: {} for filing number: {}", e.getMessage(), filingNumber, e);
 					}
@@ -155,7 +153,7 @@ public class CaseOverallStatusUtil {
                 }
 
             } else {
-                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject, null, true, isHearingFound, priorityMap, null);
+                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), null, true, isHearingFound, priorityMap, null);
             }
         } catch (JSONException e) {
             log.error("Error processing JSON structure in composite items: {}, for filing number: {}", e.getMessage(), filingNumber, e);
@@ -172,7 +170,6 @@ public class CaseOverallStatusUtil {
 			if (HEARING.equalsIgnoreCase(caseOverallStatusType.getEntityType()) && caseOverallStatusType.getTypeIdentifier().equalsIgnoreCase(hearingType)) {
 				Integer priority = caseOverallStatusType.getPriority() != null ? caseOverallStatusType.getPriority() : Integer.MAX_VALUE;
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, caseOverallStatusType.getStage());
-				caseOverallStatus.setProcessHandler(caseOverallStatusType.getProcessHandler());
 				priorityMap.put(priority, caseOverallStatus);
 			}
 		}
@@ -376,7 +373,6 @@ public class CaseOverallStatusUtil {
 
 			if (isMatch) {
 				CaseOverallStatus caseOverallStatus = new CaseOverallStatus(filingNumber, tenantId, statusType.getStage());
-				caseOverallStatus.setProcessHandler(statusType.getProcessHandler());
 				Integer priority = statusType.getPriority() != null ? statusType.getPriority() : Integer.MAX_VALUE;
 				priorityMap.put(priority, caseOverallStatus);
 				return caseOverallStatus;
@@ -476,14 +472,6 @@ public class CaseOverallStatusUtil {
 					log.debug("Could not enrich caseId in stage tracking for filingNumber: {}", filingNumber);
 				}
 
-                String lifecycleStatus = JsonPath.read(caseObject.toString(), CASE_LIFECYCLE_STATUS_PATH);
-				String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
-				handleProcessBackup(caseOverallStatus, caseStage);
-
-				if (!handleLprCase(caseOverallStatus, lifecycleStatus, caseStage, filingNumber)) {
-					return;
-				}
-
 				AuditDetails auditDetails = new AuditDetails();
 				String lastModifiedBy = (requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null)
 						? requestInfo.getUserInfo().getUuid() : "SYSTEM";
@@ -501,42 +489,6 @@ public class CaseOverallStatusUtil {
 		} catch (Exception e) {
 			log.error("Error in publishToCaseOverallStatus method", e);
 		}
-	}
-
-	private void handleProcessBackup(CaseOverallStatus caseOverallStatus, String currentCaseStage) {
-		if (caseOverallStatus.getProcessHandler() == null) {
-			caseOverallStatus.setProcessHandler(ProcessHandler.RESET_BACKUP);
-		}
-
- 		String filingNumber = caseOverallStatus.getFilingNumber();
-		String tenantId = caseOverallStatus.getTenantId();
-
-		if (caseOverallStatus.getProcessHandler() == UPDATE_BACKUP) {
-			caseOverallStatus.setLifecycleStatus(LifecycleStatus.LPR);
-			// End the current stage and add the new stage in ES (e.g., entering LPR)
-			String newStage = caseOverallStatus.getStage();
-			caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, newStage);
-			log.info("UPDATE_BACKUP: ended stage '{}', started stage '{}' for filingNumber: {}", currentCaseStage, newStage, filingNumber);
-		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESET_BACKUP) {
-			caseOverallStatus.setLifecycleStatus(LifecycleStatus.ACTIVE);
-		} else if (caseOverallStatus.getProcessHandler() == ProcessHandler.RESTORE_BACKUP) {
-			caseOverallStatus.setLifecycleStatus(LifecycleStatus.ACTIVE);
-			// End the current stage and add the restored stage in ES (e.g., leaving LPR)
-			String restoredStage = caseOverallStatus.getStage();
-			caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, restoredStage);
-			log.info("RESTORE_BACKUP: ended stage '{}', started restored stage '{}' for filingNumber: {}", currentCaseStage, restoredStage, filingNumber);
-		}
-	}
-
-	private boolean handleLprCase(CaseOverallStatus caseOverallStatus, String lifecycleStatus, String caseStage, String filingNumber) {
-		if (LifecycleStatus.LPR.name().equals(lifecycleStatus)) {
-			if (config.getLprStage().equalsIgnoreCase(caseStage)) {
-				log.info("case is already in lpr stage : {} ", filingNumber);
-				return false;
-			}
-			caseOverallStatus.setLifecycleStatus(LifecycleStatus.LPR);
-		}
-		return true;
 	}
 
 	/**
@@ -644,7 +596,7 @@ public class CaseOverallStatusUtil {
     }
 
 
-    private Object processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject, String orderCategory, boolean canPublishCaseOverallStatus, boolean isHearingFound, TreeMap<Integer, CaseOverallStatus> priorityMap, List<String> collectedSecondaryStages) {
+    private Object processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, String orderCategory, boolean canPublishCaseOverallStatus, boolean isHearingFound, TreeMap<Integer, CaseOverallStatus> priorityMap, List<String> collectedSecondaryStages) {
         String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
 		String hearingType = null;
 		Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
@@ -680,26 +632,24 @@ public class CaseOverallStatusUtil {
 		if (canPublishCaseOverallStatus && !priorityMap.isEmpty()) {
 			CaseOverallStatus finalCaseOverallStatus = priorityMap.firstEntry().getValue();
 
-			if (priorityMap.size() > 1) {
-				Map.Entry<Integer, CaseOverallStatus> secondEntry = priorityMap.higherEntry(priorityMap.firstKey());
-				if (secondEntry != null) {
-					CaseOverallStatus backupCaseOverallStatus = secondEntry.getValue();
-
-					if (finalCaseOverallStatus.getProcessHandler() == ProcessHandler.RESTORE_BACKUP) {
-						// For RESTORE_BACKUP, use second priority values directly for stage/substage
-						finalCaseOverallStatus.setLifecycleStatus(LifecycleStatus.ACTIVE);
-					} else if (UPDATE_BACKUP.equals(finalCaseOverallStatus.getProcessHandler())) {
-						// For UPDATE_BACKUP, mark lifecycle as LPR
-						finalCaseOverallStatus.setLifecycleStatus(LifecycleStatus.LPR);
-					}
-				}
-			}
-
 			log.info("Publishing case overall status with priority: {} for filing number: {}", priorityMap.firstEntry().getKey(), filingNumber);
 			publishToCaseOverallStatus(finalCaseOverallStatus, request,caseObject);
 			if(SUMMONS.equalsIgnoreCase(orderType) && !hasAccusedJoinedCase(caseObject)){
 				String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
 				caseStageTrackingUtil.transitionStage(filingNumber, caseId, tenantId, STAGE_COGNIZANCE, finalCaseOverallStatus.getStage());
+			}
+
+			String currentCaseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
+
+			if (MOVE_CASE_TO_LONG_PENDING_REGISTER.equalsIgnoreCase(orderType)) {
+				// End the current stage and add the new stage in ES (e.g., entering LPR)
+
+				caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, currentCaseStage, "Long Pending Register");
+				log.info("ended stage '{}', started stage '{}' for filingNumber: {}", currentCaseStage, "Long Pending Register", filingNumber);
+			}  else if (MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER.equalsIgnoreCase(orderType)){
+				// End the current stage and add the restored stage in ES (e.g., leaving LPR)
+				caseStageTrackingUtil.transitionStage(filingNumber, null, tenantId, "Long Pending Register", currentCaseStage);
+				log.info(" ended stage '{}', started restored stage '{}' for filingNumber: {}", "Long Pending Register", currentCaseStage, filingNumber);
 			}
 		}
         publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderItemJson, orderCategory), request);

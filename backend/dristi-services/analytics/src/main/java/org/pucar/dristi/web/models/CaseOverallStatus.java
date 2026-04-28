@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
-import org.pucar.dristi.web.models.enums.ProcessHandler;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
@@ -32,14 +31,8 @@ public class CaseOverallStatus {
     @JsonProperty("stage")
     private String stage = null;
 
-    @JsonProperty("lifecycleStatus")
-    private LifecycleStatus lifecycleStatus;
-
     @JsonProperty("secondaryStage")
     private List<String> secondaryStage = new ArrayList<>();
-
-    @JsonProperty("processHandler")
-    private ProcessHandler processHandler = ProcessHandler.RESET_BACKUP;
 
     @JsonProperty("auditDetails")
     @Valid
