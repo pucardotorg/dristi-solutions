@@ -215,6 +215,15 @@ public class CaseOverallStatusUtil {
 		RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
 		Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, referenceId, null);
 
+		// Enrich caseId/courtId BEFORE stage transition to avoid stale-read overwrites in ES
+		try {
+			String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+			String courtId = JsonPath.read(caseObject.toString(), CASE_COURTID_PATH);
+			caseStageTrackingUtil.enrichCaseId(referenceId, caseId, courtId);
+		} catch (Exception e) {
+			log.debug("Could not enrich caseId in stage tracking for filingNumber: {}", referenceId);
+		}
+
 		CaseOverallStatus caseOverallStatus = determineCaseStage(referenceId,tenantId,status,action,requestInfo);
 		publishToCaseOverallStatus(caseOverallStatus, request,caseObject);
 
@@ -463,15 +472,6 @@ public class CaseOverallStatusUtil {
 				RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
                 String filingNumber = caseOverallStatus.getFilingNumber();
 
-				// Enrich caseId and courtId in stage tracking index if available
-				try {
-					String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
-					String courtId = JsonPath.read(caseObject.toString(), CASE_COURTID_PATH);
-					caseStageTrackingUtil.enrichCaseId(filingNumber, caseId,courtId);
-				} catch (Exception e) {
-					log.debug("Could not enrich caseId in stage tracking for filingNumber: {}", filingNumber);
-				}
-
 				AuditDetails auditDetails = new AuditDetails();
 				String lastModifiedBy = (requestInfo.getUserInfo() != null && requestInfo.getUserInfo().getUuid() != null)
 						? requestInfo.getUserInfo().getUuid() : "SYSTEM";
@@ -604,6 +604,16 @@ public class CaseOverallStatusUtil {
 			log.info("Case not found for filingNumber: {} during join-case stage update", filingNumber);
 			return null;
 		}
+
+		// Enrich caseId/courtId BEFORE any stage transitions to avoid stale-read overwrites in ES
+		try {
+			String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+			String courtId = JsonPath.read(caseObject.toString(), CASE_COURTID_PATH);
+			caseStageTrackingUtil.enrichCaseId(filingNumber, caseId, courtId);
+		} catch (Exception e) {
+			log.debug("Could not enrich caseId in stage tracking for filingNumber: {}", filingNumber);
+		}
+
 		if (!isHearingFound) {
 			if (SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(orderType) || SCHEDULING_NEXT_HEARING.equalsIgnoreCase(orderType)) {
 				String path = null;
