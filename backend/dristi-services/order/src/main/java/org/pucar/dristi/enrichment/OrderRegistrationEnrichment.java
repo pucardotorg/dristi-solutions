@@ -168,7 +168,7 @@ public class OrderRegistrationEnrichment {
 
                             if (itemNode.has("orderType")) {
                                 String orderType = itemNode.get("orderType").asText();
-                                if(intermediateOrderType.equalsIgnoreCase(orderType))
+                                if(intermediateOrderType !=null && intermediateOrderType.equalsIgnoreCase(orderType))
                                     continue;
 
                                 if (orderType != null && !orderType.equalsIgnoreCase(orderRequest.getOrder().getOrderType()) && itemNode.has("orderSchema")) {
