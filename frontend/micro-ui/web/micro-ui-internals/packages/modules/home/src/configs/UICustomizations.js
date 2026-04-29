@@ -8,7 +8,7 @@ import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
 import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
-import { DateUtils, modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, modifiedEvidenceNumber, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ADiaryRowClick } from "@egovernments/digit-ui-module-dristi/src/components/ADiaryRowClick";
 import PencilIconEdit from "@egovernments/digit-ui-module-dristi/src/components/PencilIconEdit";
 import EditDeleteModal from "@egovernments/digit-ui-module-dristi/src/components/EditDeleteModal";
@@ -256,7 +256,7 @@ export const UICustomizations = {
       const activeTab = searchResult?.additionalDetails?.activeTab || "";
       const isDisposedTab = activeTab === "DISPOSED";
       const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+        (isLPRCase(row) && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "Draft Name":
         case "CS_CASE_NAME":
@@ -270,7 +270,7 @@ export const UICustomizations = {
         case "CS_OUTCOME":
           return t(value);
         case "CS_STAGE":
-          return t(value);
+          return isLPRCase(row) ? t("Long Pending Register") : t(value);
         case "CS_SECONDARY_STAGE": {
           const stages = Array.isArray(value) ? value : [value];
           const normalized = stages.filter(Boolean);
@@ -364,12 +364,12 @@ export const UICustomizations = {
       const activeTab = searchResult?.additionalDetails?.activeTab || "";
       const isDisposedTab = activeTab === "DISPOSED";
       const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+        (isLPRCase(row) && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
         case "CS_STAGE":
-          return t(value);
+          return isLPRCase(row) ? t("Long Pending Register") : t(value);
         case "CS_SECONDARY_STAGE": {
           const stages = Array.isArray(value) ? value : [value];
           const normalized = stages.filter(Boolean);
@@ -475,7 +475,7 @@ export const UICustomizations = {
       const activeTab = searchResult?.additionalDetails?.activeTab || "";
       const isDisposedTab = activeTab === "DISPOSED";
       const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+        (isLPRCase(row) && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -484,7 +484,7 @@ export const UICustomizations = {
         case "CD_OUTCOME":
           return t(value);
         case "CS_STAGE":
-          return t(value);
+          return isLPRCase(row) ? t("Long Pending Register") : t(value);
         case "CS_SECONDARY_STAGE": {
           const stages = Array.isArray(value) ? value : [value];
           const normalized = stages.filter(Boolean);
@@ -607,7 +607,7 @@ export const UICustomizations = {
       const activeTab = searchResult?.additionalDetails?.activeTab || "";
       const isDisposedTab = activeTab === "DISPOSED";
       const caseId =
-        (row?.isLPRCase && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
+        (isLPRCase(row) && !isDisposedTab ? row?.lprNumber : row?.courtCaseNumber) || row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
 
       switch (key) {
         // case "CASE_NAME_ID":
