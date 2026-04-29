@@ -12,8 +12,7 @@ const LitigantVerification = ({
   setParty,
   goBack,
   onProceed,
-  setErrors,
-  uploadErrorMessage,
+  uploadErrorMessages,
   clearUploadError,
   alreadyJoinedMobileNumber,
   setAlreadyJoinedMobileNumber,
@@ -313,13 +312,14 @@ const LitigantVerification = ({
 
   useEffect(() => {
     const uploadFieldKey = poa ? "poaAuthorizationDocument" : "vakalatnama";
+    const uploadErrorMessage = uploadErrorMessages?.[`${uploadFieldKey}:${index}`] || null;
 
     if (uploadErrorMessage && setFormErrors.current[index]) {
       setFormErrors.current[index](uploadFieldKey, { message: uploadErrorMessage });
     } else if (!uploadErrorMessage && clearFormErrors.current[index]) {
       clearFormErrors.current[index](uploadFieldKey);
     }
-  }, [uploadErrorMessage, index, poa]);
+  }, [uploadErrorMessages, index, poa]);
 
   return (
     <React.Fragment>
@@ -339,12 +339,9 @@ const LitigantVerification = ({
               const previousDocument = poa
                 ? litigants?.[index]?.poaAuthorizationDocument?.poaDocument
                 : litigants?.[index]?.vakalatnama?.document;
-              if (!areFileArraysEqual(previousDocument || [], currentDocument || []) && uploadErrorMessage) {
-                setErrors((prev) => ({
-                  ...prev,
-                  validationCode: undefined,
-                }));
-                clearUploadError();
+              const uploadFieldKey = poa ? "poaAuthorizationDocument" : "vakalatnama";
+              if (!areFileArraysEqual(previousDocument || [], currentDocument || []) && uploadErrorMessages?.[`${uploadFieldKey}:${index}`]) {
+                clearUploadError(`${uploadFieldKey}:${index}`);
               }
               onFormValueChange(setValue, formData, formState, reset, setError, clearErrors);
             }}

@@ -9,7 +9,6 @@ import CustomTextArea from "@egovernments/digit-ui-module-dristi/src/components/
 const SelectParty = ({
   selectPartyData,
   setSelectPartyData,
-  setErrors,
   uploadErrorMessage,
   clearUploadError,
   caseDetails,
@@ -531,11 +530,11 @@ const SelectParty = ({
               onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) => {
                 setFormError.current = setError;
                 clearFormError.current = clearErrors;
-                if (!isEqual(formData?.document, selectPartyData?.affidavit?.document) && uploadErrorMessage) {
-                  setErrors((prev) => ({
-                    ...prev,
-                    validationCode: undefined,
-                  }));
+                const currentAffidavitDoc = formData?.affidavitData?.document;
+                const previousAffidavitDoc = selectPartyData?.affidavit?.affidavitData?.document;
+                const hasPreviousDoc = Array.isArray(previousAffidavitDoc) && previousAffidavitDoc.length > 0;
+                const hasCurrentDoc = Array.isArray(currentAffidavitDoc) && currentAffidavitDoc.length > 0;
+                if (uploadErrorMessage && hasCurrentDoc && hasPreviousDoc && !isEqual(currentAffidavitDoc, previousAffidavitDoc)) {
                   clearUploadError();
                 }
                 if (!isEqual(formData, selectPartyData?.affidavit)) {
