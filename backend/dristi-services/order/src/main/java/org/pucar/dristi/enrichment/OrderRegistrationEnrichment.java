@@ -14,6 +14,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.MdmsDataConfig;
+import org.pucar.dristi.repository.OrderRepository;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.util.LocalizationUtil;
@@ -43,14 +44,17 @@ public class OrderRegistrationEnrichment {
     private CaseUtil caseUtil;
     private final MdmsDataConfig mdmsDataConfig;
     private final LocalizationUtil localizationUtil;
+    private final OrderRepository repository;
 
-    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil, MdmsDataConfig mdmsDataConfig, LocalizationUtil localizationUtil) {
+
+    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil, MdmsDataConfig mdmsDataConfig, LocalizationUtil localizationUtil, OrderRepository repository) {
         this.idgenUtil = idgenUtil;
         this.configuration = configuration;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
         this.mdmsDataConfig = mdmsDataConfig;
         this.localizationUtil = localizationUtil;
+        this.repository = repository;
     }
 
     public void enrichOrderRegistration(OrderRequest orderRequest) {
@@ -141,6 +145,18 @@ public class OrderRegistrationEnrichment {
             if (COMPOSITE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && orderRequest.getOrder().getCompositeItems() != null) {
                 Object compositeOrderItem = orderRequest.getOrder().getCompositeItems();
                 ArrayNode arrayNode = objectMapper.convertValue(compositeOrderItem, ArrayNode.class);
+                OrderCriteria orderCriteria = new OrderCriteria();
+                orderCriteria.setFilingNumber(orderRequest.getOrder().getFilingNumber());
+                orderCriteria.setTenantId(orderRequest.getOrder().getTenantId());
+                orderCriteria.setOrderCategory(INTERMEDIATE);
+                orderCriteria.setOrderNumber(orderRequest.getOrder().getOrderNumber());
+                orderCriteria.setCourtId(orderRequest.getOrder().getCourtId());
+
+                List<Order> existingOrders = repository.getOrders(orderCriteria, Pagination.builder().limit(1.0).offSet(0.0).build());
+                String intermediateOrderType = null;
+                if(existingOrders != null && !existingOrders.isEmpty()) {
+                    intermediateOrderType = existingOrders.get(0).getOrderType();
+                }
 
                 if (arrayNode != null && !arrayNode.isEmpty()) {
                     for (int i = 0; i < arrayNode.size(); i++) {
@@ -152,6 +168,8 @@ public class OrderRegistrationEnrichment {
 
                             if (itemNode.has("orderType")) {
                                 String orderType = itemNode.get("orderType").asText();
+                                if(intermediateOrderType.equalsIgnoreCase(orderType))
+                                    continue;
 
                                 if (orderType != null && !orderType.equalsIgnoreCase(orderRequest.getOrder().getOrderType()) && itemNode.has("orderSchema")) {
                                     JsonNode orderSchemaNode = itemNode.get("orderSchema");

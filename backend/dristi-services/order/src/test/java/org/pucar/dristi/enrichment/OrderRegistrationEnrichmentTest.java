@@ -13,13 +13,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.repository.OrderRepository;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.Order;
 import org.pucar.dristi.web.models.OrderRequest;
 import org.pucar.dristi.web.models.StatuteSection;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,6 +39,9 @@ class OrderRegistrationEnrichmentTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private OrderRepository orderRepository;
 
     @Mock
     private CaseUtil caseUtil;
@@ -169,6 +175,7 @@ class OrderRegistrationEnrichmentTest {
         realArrayNode.add(realObjectNode);
 
         when(objectMapper.convertValue(any(), eq(ArrayNode.class))).thenReturn(realArrayNode);
+        when(orderRepository.getOrders(any(), any())).thenReturn(new ArrayList<>());
 
         orderRegistrationEnrichment.enrichCompositeOrderItemIdOnAddItem(orderRequest);
 
