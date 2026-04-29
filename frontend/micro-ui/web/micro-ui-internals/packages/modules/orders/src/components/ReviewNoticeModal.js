@@ -26,7 +26,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   };
 
   const combinedDoc = useMemo(() => {
-    return [policeDoc, doc];
+    return [policeDoc, doc].filter((d) => d?.fileStore);
   }, [doc, policeDoc]);
 
   const showDocument = useMemo(() => {
@@ -38,16 +38,18 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          maxWidth: "100%",
-          overflow: "hidden",
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          overflowX: "hidden",
         }}
       >
         {combinedDoc?.length > 0 ? (
           combinedDoc.map((docs) => (
             <DocViewerWrapper
               key={docs?.fileStore}
-              docWidth={"calc(95vw * 62 / 100)"}
-              docHeight={"60vh"}
+              docWidth={"calc(90vw - 96px)"}
+              docHeight={combinedDoc.length === 1 ? "calc(90vh - 160px)" : "calc(45vh - 80px)"}
               fileStoreId={docs?.fileStore}
               tenantId={tenantId}
               displayFilename={docs?.additionalDetails?.name}
@@ -84,11 +86,12 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
       actionSaveLabel={null}
       hideSubmit={true}
       actionSaveOnSubmit={() => {}}
-      popupStyles={{ minWidth: "880px", width: "80%" }}
+      popupStyles={{ width: "90vw", height: "90vh", maxHeight: "90vh", display: "flex", flexDirection: "column" }}
+      popupModuleMianStyles={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", padding: "0 24px 24px" }}
     >
       {infos && <ApplicationInfoComponent infos={infos} />}
       {showDocument}
-      <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
+      <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px", flexShrink: 0 }}>
         <div
           onClick={() => {
             handleDownload(tenantId, doc?.fileStore, policeDoc?.fileStore);
