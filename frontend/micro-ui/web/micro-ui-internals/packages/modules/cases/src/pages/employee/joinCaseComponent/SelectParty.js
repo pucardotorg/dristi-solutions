@@ -9,6 +9,8 @@ import CustomTextArea from "@egovernments/digit-ui-module-dristi/src/components/
 const SelectParty = ({
   selectPartyData,
   setSelectPartyData,
+  setErrors,
+  errors,
   caseDetails,
   parties,
   party,
@@ -22,6 +24,8 @@ const SelectParty = ({
 }) => {
   const { t } = useTranslation();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const setFormError = useRef(null);
+  const clearFormError = useRef(null);
 
   const MultiSelectDropdown = window?.Digit?.ComponentRegistryService?.getComponent("MultiSelectDropdown");
 
@@ -167,6 +171,16 @@ const SelectParty = ({
   useEffect(() => {
     scrollToDiv();
   }, [selectPartyData?.partyInvolve, party, partyInPerson]);
+
+  useEffect(() => {
+    const errorMessage = errors?.validationCode?.message;
+
+    if (errorMessage && setFormError.current) {
+      setFormError.current("affidavitData", { message: errorMessage });
+    } else if (!errorMessage && clearFormError.current) {
+      clearFormError.current("affidavitData");
+    }
+  }, [errors?.validationCode?.message]);
 
   const getDisableParty = (party) => {
     if (party?.advocateRepresentingLength > 0) {
@@ -515,7 +529,15 @@ const SelectParty = ({
             <FormComposerV2
               key={2}
               config={advocateVakalatnamaConfig}
-              onFormValueChange={(setValue, formData) => {
+              onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) => {
+                setFormError.current = setError;
+                clearFormError.current = clearErrors;
+                if (!isEqual(formData?.document, selectPartyData?.affidavit?.document) && errors?.validationCode) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    validationCode: undefined,
+                  }));
+                }
                 if (!isEqual(formData, selectPartyData?.affidavit)) {
                   setSelectPartyData((selectPartyData) => ({
                     ...selectPartyData,
