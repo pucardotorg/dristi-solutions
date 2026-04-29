@@ -51,6 +51,21 @@ const SelectEmail = ({
   const [showToast, setShowToast] = useState(null);
 
   const setFormErrors = useRef(null);
+  const token = window.localStorage.getItem("token");
+
+  const { data: individualData, isIndividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+    {
+      Individual: {
+        userUuid: [userInfo?.uuid],
+      },
+    },
+    { tenantId, limit: 500, offset: 0 },
+    "Home",
+    `${token}-${userInfo?.uuid}-${isUserLoggedIn}`,
+    Boolean(userInfo?.uuid && isUserLoggedIn)
+  );
+
+  const individualId = individualData?.Individual?.[0]?.individualId;
 
   useEffect(() => {
     if (isProfile) {
@@ -120,8 +135,14 @@ const SelectEmail = ({
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isIndividualLoading) {
     return <Loader />;
+  }
+
+  // return from here if individualId exists and we are not in profile mode
+  if (individualId && !isProfile) {
+    history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
+    return null;
   }
 
   return (
