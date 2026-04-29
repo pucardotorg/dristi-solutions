@@ -91,6 +91,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const [isApiCalled, setIsApiCalled] = useState(false);
   const [isPipApiCalled, setIsPipApiCalled] = useState(false);
   const [errors, setErrors] = useState({});
+  const [documentUploadError, setDocumentUploadError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [messageHeader, setMessageHeader] = useState(t(JoinHomeLocalisation.JOIN_CASE_SUCCESS));
 
@@ -422,8 +423,20 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
   const onDocumentUpload = async (fileData, filename, tenantId) => {
     if (fileData?.fileStore) return fileData;
-    const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
-    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    try {
+      const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
+      return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    } catch (error) {
+      const errorMessage = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+      setErrors((prev) => ({
+        ...prev,
+        validationCode: {
+          message: errorMessage,
+        },
+      }));
+      setDocumentUploadError({ message: errorMessage, step });
+      throw error;
+    }
   };
 
   const getComplainantListNew = (formdata) => {
@@ -1422,6 +1435,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         <SelectParty
           selectPartyData={selectPartyData}
           setSelectPartyData={setSelectPartyData}
+          setErrors={setErrors}
+          uploadErrorMessage={step === 2 ? documentUploadError?.message : null}
+          clearUploadError={() => setDocumentUploadError(null)}
           caseDetails={caseDetails}
           party={party}
           setParty={setParty}
@@ -1446,6 +1462,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           setParty={setParty}
           goBack={() => setStep(step - 1)}
           onProceed={onProceed}
+          setErrors={setErrors}
+          uploadErrorMessage={step === 3 ? documentUploadError?.message : null}
+          clearUploadError={() => setDocumentUploadError(null)}
           alreadyJoinedMobileNumber={alreadyJoinedMobileNumber}
           setAlreadyJoinedMobileNumber={setAlreadyJoinedMobileNumber}
           isDisabled={isDisabled}

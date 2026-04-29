@@ -12,6 +12,9 @@ const LitigantVerification = ({
   setParty,
   goBack,
   onProceed,
+  setErrors,
+  uploadErrorMessage,
+  clearUploadError,
   alreadyJoinedMobileNumber,
   setAlreadyJoinedMobileNumber,
   isDisabled,
@@ -22,6 +25,8 @@ const LitigantVerification = ({
   userInfo,
 }) => {
   const modalRef = useRef(null);
+  const setFormErrors = useRef({});
+  const clearFormErrors = useRef({});
   const [index, setIndex] = useState(0);
   const [litigants, setLitigants] = useState([]);
 
@@ -306,6 +311,16 @@ const LitigantVerification = ({
     };
   }, [handleKeyDown]);
 
+  useEffect(() => {
+    const uploadFieldKey = poa ? "poaAuthorizationDocument" : "vakalatnama";
+
+    if (uploadErrorMessage && setFormErrors.current[index]) {
+      setFormErrors.current[index](uploadFieldKey, { message: uploadErrorMessage });
+    } else if (!uploadErrorMessage && clearFormErrors.current[index]) {
+      clearFormErrors.current[index](uploadFieldKey);
+    }
+  }, [uploadErrorMessage, index, poa]);
+
   return (
     <React.Fragment>
       <div ref={modalRef} className="litigant-verification">
@@ -313,9 +328,26 @@ const LitigantVerification = ({
           <FormComposerV2
             key={index}
             config={modifiedFormConfig}
-            onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) =>
-              onFormValueChange(setValue, formData, formState, reset, setError, clearErrors)
-            }
+            onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) => {
+              if (!setFormErrors.current.hasOwnProperty(index)) {
+                setFormErrors.current[index] = setError;
+              }
+              if (!clearFormErrors.current.hasOwnProperty(index)) {
+                clearFormErrors.current[index] = clearErrors;
+              }
+              const currentDocument = poa ? formData?.poaAuthorizationDocument?.poaDocument : formData?.vakalatnama?.document;
+              const previousDocument = poa
+                ? litigants?.[index]?.poaAuthorizationDocument?.poaDocument
+                : litigants?.[index]?.vakalatnama?.document;
+              if (!areFileArraysEqual(previousDocument || [], currentDocument || []) && uploadErrorMessage) {
+                setErrors((prev) => ({
+                  ...prev,
+                  validationCode: undefined,
+                }));
+                clearUploadError();
+              }
+              onFormValueChange(setValue, formData, formState, reset, setError, clearErrors);
+            }}
             defaultValues={{
               ...litigants?.[index],
               ...(!poa && {
