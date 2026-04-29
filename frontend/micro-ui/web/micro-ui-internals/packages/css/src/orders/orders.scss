@@ -401,6 +401,8 @@
       padding: 40px !important;
       .popup-module-action-bar {
         margin: 0px !important;
+        display: flex;
+        gap: 12px;
         .selector-button-border {
           border: 1px solid #007e7e !important;
           display: flex;
@@ -408,8 +410,8 @@
           justify-content: center;
           align-items: center;
           height: 40px;
-          width: 50%;
-          padding: 8px 24px;
+          flex: 1;
+          padding: 8px 16px;
 
           h2 {
             width: 65% !important;
@@ -428,8 +430,8 @@
 
         .selector-button-primary {
           height: 40px;
-          width: 50%;
-          padding: 8px 24px;
+          flex: 1;
+          padding: 8px 16px;
 
           h2 {
             font-family: Roboto;
