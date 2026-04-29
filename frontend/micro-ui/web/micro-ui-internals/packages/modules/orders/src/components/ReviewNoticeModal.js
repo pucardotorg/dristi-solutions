@@ -49,7 +49,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
             <DocViewerWrapper
               key={docs?.fileStore}
               docWidth={"calc(90vw - 96px)"}
-              docHeight={combinedDoc.length === 1 ? "calc(90vh - 160px)" : "calc(45vh - 80px)"}
+              docHeight={"calc(90vh - 200px)"}
               fileStoreId={docs?.fileStore}
               tenantId={tenantId}
               displayFilename={docs?.additionalDetails?.name}
@@ -87,7 +87,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
       hideSubmit={true}
       actionSaveOnSubmit={() => {}}
       popupStyles={{ width: "90vw", height: "90vh", maxHeight: "90vh", display: "flex", flexDirection: "column" }}
-      popupModuleMianStyles={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", padding: "0 24px 24px" }}
+      popupModuleMianStyles={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", padding: "0 24px 24px" }}
     >
       {infos && <ApplicationInfoComponent infos={infos} />}
       {showDocument}
