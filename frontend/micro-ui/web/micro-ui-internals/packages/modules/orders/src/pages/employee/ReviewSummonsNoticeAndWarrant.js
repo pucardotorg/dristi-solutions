@@ -19,7 +19,7 @@ import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
 import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
-import { DateUtils, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS } from "../../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
@@ -1406,7 +1406,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             return s.charAt(0) + s.slice(1).toLowerCase();
           })();
           const caseNumber = (
-            (isLPRCase(item) ? item?.lprNumber : item?.courtCaseNumber) ||
+            (item?.isLPRCase ? item?.lprNumber : item?.courtCaseNumber) ||
             item?.courtCaseNumber ||
             item?.cmpNumber ||
             item?.filingNumber ||

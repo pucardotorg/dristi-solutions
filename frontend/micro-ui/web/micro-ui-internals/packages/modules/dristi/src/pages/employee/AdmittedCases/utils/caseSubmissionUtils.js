@@ -1,4 +1,4 @@
-import { DateUtils, isLPRCase } from "../../../../Utils";
+import { DateUtils } from "../../../../Utils";
 import { OrderWorkflowAction } from "../../../../Utils/orderWorkflow";
 
 // Helper function to handle admit/dismiss case order creation
@@ -18,7 +18,7 @@ export const handleAdmitDismissCaseOrder = async ({
 }) => {
   try {
     const caseNumber =
-      (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+      (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
       caseDetails?.courtCaseNumber ||
       caseDetails?.cmpNumber ||
       caseDetails?.filingNumber;

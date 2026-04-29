@@ -5,7 +5,7 @@ import React, { useMemo } from "react";
 import NameListWithModal from "../../../components/NameListWithModal";
 import { createShorthand } from "../../../utils/joinCaseUtils";
 import { useTranslation } from "react-i18next";
-import { DateUtils, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const SearchCaseAndShowDetails = ({
   caseNumber,
@@ -39,7 +39,7 @@ const SearchCaseAndShowDetails = ({
         {
           key: "CASE_NUMBER",
           value:
-            (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+            (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
             caseDetails?.courtCaseNumber ||
             caseDetails?.cmpNumber ||
             caseDetails?.filingNumber,

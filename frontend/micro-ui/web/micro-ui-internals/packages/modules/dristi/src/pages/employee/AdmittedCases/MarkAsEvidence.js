@@ -8,7 +8,7 @@ import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { Urls } from "../../../hooks";
 import { useHistory } from "react-router-dom";
 import { InfoCard } from "@egovernments/digit-ui-components";
-import { getAuthorizedUuid, isLPRCase, sanitizeData } from "../../../Utils";
+import { getAuthorizedUuid, sanitizeData } from "../../../Utils";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
@@ -255,7 +255,7 @@ const MarkAsEvidence = ({
             courtId: courtId,
             markedAs: `${taggedEvidenceNumber || `${evidenceTag?.value}${evidenceNumber}`}`,
             caseNumber:
-              (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+              (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
               caseDetails?.courtCaseNumber ||
               caseDetails?.cmpNumber ||
               caseDetails?.filingNumber,
@@ -765,7 +765,7 @@ const MarkAsEvidence = ({
                   tenantId: tenantId,
                   entryDate: new Date().setHours(0, 0, 0, 0),
                   caseNumber:
-                    (isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+                    (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
                     caseDetails?.courtCaseNumber ||
                     caseDetails?.cmpNumber ||
                     caseDetails?.filingNumber,
