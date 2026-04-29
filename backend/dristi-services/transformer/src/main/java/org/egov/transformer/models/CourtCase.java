@@ -195,6 +195,7 @@ public class CourtCase {
     private String lprNumber = null;
 
     @JsonProperty("lifecycleStatus")
+    @Builder.Default
     private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
 
     @JsonProperty("poaHolders")

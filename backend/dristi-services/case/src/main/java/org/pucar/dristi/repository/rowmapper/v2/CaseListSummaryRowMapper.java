@@ -71,7 +71,7 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
                         .secondaryStage(getObjectListFromJson(rs.getString("secondaryStage"), new TypeReference<List<String>>() {}))
                         .filingNumber(rs.getString("filingnumber"))
                         .lastModifiedTime(rs.getLong("lastmodifiedtime"))
-                        .lifecycleStatus(org.pucar.dristi.web.models.enums.LifecycleStatus.valueOf(rs.getString("lifecycleStatus") != null ? rs.getString("lifecycleStatus") : "ACTIVE"))
+                        .lifecycleStatus(getLifecycleStatus(rs))
                         .lprNumber(rs.getString("lprNumber"))
                         .build();
 
@@ -80,6 +80,17 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
         }
 
         return new ArrayList<>(caseMap.values());
+    }
+
+    private org.pucar.dristi.web.models.enums.LifecycleStatus getLifecycleStatus(ResultSet rs) throws SQLException {
+        try {
+            String str = rs.getString("lifecycleStatus");
+            if (str == null || str.isEmpty()) return org.pucar.dristi.web.models.enums.LifecycleStatus.ACTIVE;
+            return org.pucar.dristi.web.models.enums.LifecycleStatus.valueOf(str);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid LifecycleStatus value in database", e);
+            return org.pucar.dristi.web.models.enums.LifecycleStatus.ACTIVE;
+        }
     }
 
     public <T> T getObjectListFromJson(String json, TypeReference<T> typeRef) {

@@ -6411,7 +6411,7 @@ public class CaseService {
 
             validator.validateUpdateLPRDetails(caseRequest);
 
-            if (courtCase.getLifecycleStatus().name().equalsIgnoreCase(LifecycleStatus.LPR.name())) {
+            if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())) {
                 // moving the case into LPR
                 enrichmentUtil.enrichLPRNumber(caseRequest);
             } else {
@@ -6609,7 +6609,7 @@ public class CaseService {
             caseConversionDetails.setPreCaseNumber(courtCase.getFilingNumber());
             caseConversionDetails.setPostCaseNumber(courtCase.getCmpNumber());
             caseConversionDetails.setDateOfConversion(dateOfConversion);
-        } else if (courtCase.getLifecycleStatus().name().equalsIgnoreCase(LifecycleStatus.LPR.name()) && courtCase.getLprNumber() != null) {
+        } else if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus()) && courtCase.getLprNumber() != null) {
             caseConversionDetails.setConvertedFrom(ST);
             caseConversionDetails.setConvertedTo(LP);
             caseConversionDetails.setPreCaseNumber(courtCase.getCourtCaseNumber());

@@ -587,7 +587,12 @@ public class CaseOverallStatusUtil {
                 RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
                 String filingNumber = outcome.getFilingNumber();
                 Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
-                String lifecycleStatus = JsonPath.read(caseObject.toString(), CASE_LIFECYCLE_STATUS_PATH);
+                String lifecycleStatus = null;
+                try {
+                    lifecycleStatus = JsonPath.read(caseObject.toString(), CASE_LIFECYCLE_STATUS_PATH);
+                } catch (PathNotFoundException e) {
+                    log.debug("lifecycleStatus not found for filingNumber: {}, defaulting to null", filingNumber);
+                }
                 if (LifecycleStatus.LPR.name().equals(lifecycleStatus)) {
                     log.info("case is in long pending registration {} not eligible for case outcome update", filingNumber);
                     return;

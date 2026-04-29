@@ -83,7 +83,7 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
                             .auditdetails(auditdetails)
                             .courtCaseNumberBackup(rs.getString("courtCaseNumberBackup"))
                             .lprNumber(rs.getString("lprNumber"))
-                            .lifecycleStatus(org.pucar.dristi.web.models.enums.LifecycleStatus.valueOf(rs.getString("lifecycleStatus") != null ? rs.getString("lifecycleStatus") : "ACTIVE"))
+                            .lifecycleStatus(getLifecycleStatus(rs, "lifecycleStatus"))
                             .witnessDetails(getObjectListFromJson(rs.getString("witnessdetails"), new TypeReference<>() {
                             }))
                             .secondaryStage(getObjectListFromJson(rs.getString("secondaryStage"), new TypeReference<List<String>>() {}))
@@ -107,6 +107,20 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
             throw new CustomException(ROW_MAPPER_EXCEPTION, "Exception occurred while processing Case ResultSet: " + e.getMessage());
         }
         return new ArrayList<>(caseMap.values());
+    }
+
+    private org.pucar.dristi.web.models.enums.LifecycleStatus getLifecycleStatus(ResultSet rs, String columnName) throws SQLException {
+        try {
+            String str = rs.getString(columnName);
+            if (str == null || str.isEmpty()) return org.pucar.dristi.web.models.enums.LifecycleStatus.ACTIVE;
+            return org.pucar.dristi.web.models.enums.LifecycleStatus.valueOf(str);
+        } catch (SQLException e) {
+            log.error("Error reading lifecycleStatus column from ResultSet", e);
+            return org.pucar.dristi.web.models.enums.LifecycleStatus.ACTIVE;
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid LifecycleStatus value in database: {}", columnName, e);
+            return org.pucar.dristi.web.models.enums.LifecycleStatus.ACTIVE;
+        }
     }
 
     private NatureOfDisposal getNatureOfDisposal(ResultSet rs) throws SQLException {
