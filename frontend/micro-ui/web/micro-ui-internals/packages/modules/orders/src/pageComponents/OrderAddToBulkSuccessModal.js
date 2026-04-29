@@ -4,7 +4,7 @@ import { BlackTickIcon, FileDownloadIcon } from "../../../dristi/src/icons/svgIn
 import CustomCopyTextDiv from "../../../dristi/src/components/CustomCopyTextDiv";
 import { Banner, CardLabel, CloseSvg } from "@egovernments/digit-ui-react-components";
 
-function OrderAddToBulkSuccessModal({ order, t, handleDownloadOrders, handleCloseSuccessModal }) {
+function OrderAddToBulkSuccessModal({ order, t, handleDownloadOrders, handleGoToBulkSignList, handleGoHome }) {
   const orderModalInfo = {
     header: "CS_ORDER_ADDED_TO_BULK_SIGN_LIST",
     subHeader: "CS_ORDER_ADDED_TO_BULK_SIGN_LIST_SUBTEXT",
@@ -24,8 +24,12 @@ function OrderAddToBulkSuccessModal({ order, t, handleDownloadOrders, handleClos
     <Modal
       actionCancelLabel={t("DOWNLOAD_ORDER")}
       actionCancelOnSubmit={handleDownloadOrders}
-      actionSaveLabel={t("CS_COMMON_CLOSE")}
-      actionSaveOnSubmit={handleCloseSuccessModal}
+      actionCustomLabel={t("CS_GO_TO_BULK_SIGN_LIST")}
+      actionCustomLabelSubmit={handleGoToBulkSignList}
+      customActionStyle={{ border: "1px solid #007E7E", backgroundColor: "white" }}
+      customActionTextStyle={{ color: "#007E7E" }}
+      actionSaveLabel={t("CS_GO_TO_HOME")}
+      actionSaveOnSubmit={handleGoHome}
       className={"orders-add-bulk-list-modal"}
       cancelButtonBody={<FileDownloadIcon></FileDownloadIcon>}
     >

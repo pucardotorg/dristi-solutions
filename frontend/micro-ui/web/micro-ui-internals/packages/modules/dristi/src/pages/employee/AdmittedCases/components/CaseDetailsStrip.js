@@ -1,4 +1,5 @@
 import React from "react";
+import { isLPRCase } from "../../../../Utils";
 
 const delayCondonationStylsMain = {
   padding: "6px 8px",
@@ -38,7 +39,7 @@ const CaseDetailsStrip = ({
             <hr className="vertical-line" />
           </React.Fragment>
         )}
-        {caseDetails?.isLPRCase ? (
+        {isLPRCase(caseDetails) ? (
           <React.Fragment>
             <div className="sub-details-text">{caseDetails?.lprNumber}</div>
             <hr className="vertical-line" />

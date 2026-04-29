@@ -131,7 +131,9 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
-          criteria: {},
+          criteria: {
+            lifecycleStatus: "ACTIVE",
+          },
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -288,7 +290,7 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           criteria: {
-            isLPRCase: false,
+            lifecycleStatus: "ACTIVE",
             stage: [
               "Long Pending Register",
               "Post-Judgement",
@@ -462,6 +464,7 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           criteria: {
+            lifecycleStatus: "ACTIVE",
             stage: [
               "Long Pending Register",
               "Post-Disposal",
@@ -650,6 +653,7 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           criteria: {
+            lifecycleStatus: "ACTIVE",
             outcome: [],
           },
         },
@@ -797,7 +801,7 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           criteria: {
-            isLPRCase: true,
+            lifecycleStatus: "LPR",
           },
         },
         masterName: "commonUiConfig",

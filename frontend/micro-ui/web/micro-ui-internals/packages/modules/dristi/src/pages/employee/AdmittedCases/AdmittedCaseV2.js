@@ -28,6 +28,8 @@ import {
   getAllAssociatedPartyUuids,
   getAuthorizedUuid,
   getDate,
+  isLPRCase,
+  removeInvalidNameParts,
 } from "../../../Utils";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import VoidSubmissionBody from "./VoidSubmissionBody";
@@ -1249,7 +1251,7 @@ const AdmittedCaseV2 = () => {
             tenantId: tenantId,
             filingNumber: [caseDetails.filingNumber],
             hearingType: purpose,
-            courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
+            courtCaseNumber: isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
             cmpNumber: caseDetails?.cmpNumber,
             status: true,
             attendees: [
