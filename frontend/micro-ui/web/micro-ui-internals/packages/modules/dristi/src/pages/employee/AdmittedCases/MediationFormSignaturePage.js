@@ -236,30 +236,33 @@ const MediationFormSignaturePage = () => {
         return party;
       });
       if (isUserLoggedIn) {
-        await submissionService.updateDigitalization({
-          digitalizedDocument: {
-            ...digitalizationServiceDetails,
-            mediationDetails: {
-              ...digitalizationServiceDetails?.mediationDetails,
-              partyDetails: updatedPartyDetails,
-            },
-            ...((signatureDocumentId || fileStoreId) && {
-              documents: [
-                {
-                  ...digitalizationServiceDetails?.documents?.[0],
-                  fileStore: signatureDocumentId || fileStoreId,
-                  documentType: "SIGNED",
-                },
-              ],
-            }),
-            workflow: {
-              action: digitalizationAction,
+        const fStoreId = signatureDocumentId || fileStoreId;
+        if (fStoreId && fStoreId !== mediationFileStoreId) {
+          await submissionService.updateDigitalization({
+            digitalizedDocument: {
+              ...digitalizationServiceDetails,
+              mediationDetails: {
+                ...digitalizationServiceDetails?.mediationDetails,
+                partyDetails: updatedPartyDetails,
+              },
+              ...(fStoreId && {
+                documents: [
+                  {
+                    ...digitalizationServiceDetails?.documents?.[0],
+                    fileStore: fStoreId,
+                    documentType: "SIGNED",
+                  },
+                ],
+              }),
+              workflow: {
+                action: digitalizationAction,
 
-              documents: [{}],
+                documents: [{}],
+              },
             },
-          },
-        });
-      } else {
+          });
+        }
+      } else if (signatureDocumentId && signatureDocumentId !== mediationFileStoreId) {
         await submissionService.updateOpenDigitizedDocument({
           tenantId,
           documentNumber: documentNumber,
