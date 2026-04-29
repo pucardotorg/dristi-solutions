@@ -187,7 +187,7 @@ export const DigitalDocumentSignModal = ({
     return (
       <div className="evidence-title">
         <h1 className="heading-m">{props.label}</h1>
-        <CustomChip text={props.status} shade={"green"} />
+        {props.status && <CustomChip text={props.status} shade={"green"} />}
       </div>
     );
   }, []);
@@ -729,7 +729,7 @@ export const DigitalDocumentSignModal = ({
           actionSaveOnSubmit={handleConfirmEdit}
           className="reject-modal"
         >
-          <div className="reject-modal-content">
+          <div className="reject-modal-content" style={{ padding: "16px 0" }}>
             <p>{t("EDIT_DIGITILIZATION_MODAL_TEXT")}</p>
           </div>
         </Modal>
