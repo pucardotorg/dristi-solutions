@@ -39,7 +39,7 @@ function ApplicationAwaitingPage({ individualId }) {
       tenantId,
     },
     {},
-    individualId + userType + (applicationNo || ""),
+    applicationNo + individualId,
     Boolean(isUserLoggedIn && individualId && userType && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
