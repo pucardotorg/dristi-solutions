@@ -116,29 +116,6 @@ export const modifiedEvidenceNumber = (value, filingNumber = null) => {
   }
   return value;
 };
-
-// Returns true when a case is in the Long Pending Register lifecycle.
-// Prefers the new `lifecycleStatus` field and falls back to the legacy
-// `isLPRCase` boolean while older payloads are still in flight.
-export const isLPRCase = (caseObj) => {
-  if (!caseObj) return false;
-  if (caseObj.lifecycleStatus !== undefined && caseObj.lifecycleStatus !== null) {
-    return caseObj.lifecycleStatus === "LPR";
-  }
-  return Boolean(isLPRCase(caseObj));
-};
-
-// Returns the case-number to display, taking LPR cases into account.
-export const getDisplayCaseNumber = (caseObj) => {
-  if (!caseObj) return "";
-  return (
-    (isLPRCase(caseObj) ? caseObj?.lprNumber : caseObj?.courtCaseNumber) ||
-    caseObj?.courtCaseNumber ||
-    caseObj?.cmpNumber ||
-    caseObj?.filingNumber ||
-    ""
-  );
-};
 export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
   const processedPaymentType = paymentType?.toLowerCase()?.includes("application");
   const isCTC = paymentType?.toLowerCase()?.includes("ctc");

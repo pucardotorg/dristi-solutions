@@ -22,7 +22,6 @@ import {
   getDate,
   getOrderActionName,
   getOrderTypes,
-  isLPRCase,
   setApplicationStatus,
 } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
@@ -834,7 +833,7 @@ const EvidenceModal = ({
       const applicationCMPNumber = documentSubmission?.[0]?.applicationList?.applicationCMPNumber;
       const currentHearingPurpose = documentSubmission?.[0]?.applicationList?.applicationDetails?.initialHearingPurpose || "";
       const caseNumber =
-        (isLPRCase(caseData) ? caseData?.lprNumber : caseData?.courtCaseNumber) ||
+        (caseData?.isLPRCase ? caseData?.lprNumber : caseData?.courtCaseNumber) ||
         caseData?.courtCaseNumber ||
         caseData?.cmpNumber ||
         caseData?.filingNumber;

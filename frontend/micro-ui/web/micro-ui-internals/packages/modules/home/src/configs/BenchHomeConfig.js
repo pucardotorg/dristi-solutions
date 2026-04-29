@@ -124,9 +124,7 @@ export const TabBenchSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: {
-            lifecycleStatus: "ACTIVE",
-          },
+          criteria: {},
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -280,7 +278,7 @@ export const TabBenchSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            lifecycleStatus: "ACTIVE",
+            isLPRCase: false,
             stage: [
               "Long Pending Register",
               "Post-Judgement",
@@ -451,7 +449,6 @@ export const TabBenchSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            lifecycleStatus: "ACTIVE",
             stage: [
               "Long Pending Register",
               "Post-Disposal",
@@ -636,7 +633,6 @@ export const TabBenchSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            lifecycleStatus: "ACTIVE",
             outcome: [],
           },
         },
@@ -781,7 +777,7 @@ export const TabBenchSearchConfig = {
         requestBody: {
           tenantId: "pg",
           criteria: {
-            lifecycleStatus: "LPR",
+            isLPRCase: true,
           },
         },
         masterName: "commonUiConfig",

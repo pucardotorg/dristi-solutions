@@ -15,7 +15,6 @@ import {
   getAuthorizedUuid,
   getClerkMembersForPartiesTab,
   getDate,
-  isLPRCase,
   modifiedEvidenceNumber,
   removeInvalidNameParts,
 } from "../Utils";
@@ -2860,7 +2859,7 @@ export const UICustomizations = {
           return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
         }
         case "CASE_NUMBER": {
-          const caseNumber = isLPRCase(row) ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
+          const caseNumber = row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
           return caseNumber || "";
         }
         default:
