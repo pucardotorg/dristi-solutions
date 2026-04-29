@@ -38,10 +38,8 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          maxHeight: "60vh",
           maxWidth: "100%",
-          overflowY: "auto",
-          overflowX: "hidden",
+          overflow: "hidden",
         }}
       >
         {combinedDoc?.length > 0 ? (
@@ -49,7 +47,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
             <DocViewerWrapper
               key={docs?.fileStore}
               docWidth={"calc(95vw * 62 / 100)"}
-              docHeight={"unset"}
+              docHeight={"60vh"}
               fileStoreId={docs?.fileStore}
               tenantId={tenantId}
               displayFilename={docs?.additionalDetails?.name}
