@@ -9,6 +9,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { getCaseNumber } = require("../utils/commonUtils");
 const {
   getNameByUuid,
   getComplaintAndAccusedList,
@@ -247,9 +248,7 @@ async function applicationProfileEdit(
         ? oldData?.data?.respondentType?.code
         : oldData?.data?.complainantType?.code;
 
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
     const reasonForChange =
       application?.additionalDetails?.formdata?.reasonForChange?.text || "";
     const comments =

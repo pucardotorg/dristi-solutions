@@ -2,6 +2,7 @@ const { PDFDocument } = require("pdf-lib");
 const { create_pdf_v2 } = require("../../api");
 const { persistPDF } = require("../utils/persistPDF");
 const { logger } = require("../../logger");
+const { getCaseNumber } = require("../../utils/commonUtils");
 const {
   filterCaseBundleBySection,
 } = require("../utils/filterCaseBundleBySection");
@@ -22,12 +23,7 @@ async function processTitlePageSection(
   if (titlepageSection.length !== 0) {
     const coverCaseName = courtCase.caseTitle;
     const coverCaseType = courtCase.caseType;
-    const coverCaseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase.courtCaseNumber) ||
-      courtCase.cmpNumber ||
-      courtCase.filingNumber;
+    const coverCaseNumber = getCaseNumber(courtCase);
     const coverYear = (
       courtCase?.filingDate ? new Date(courtCase?.filingDate) : new Date()
     )?.getFullYear();

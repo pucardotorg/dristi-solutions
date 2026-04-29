@@ -9,6 +9,7 @@ const {
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("../applicationHandlers/formatDate");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 const extractPermanentAddress = (individualData) => {
   const permanentAddress = individualData?.address?.find(
@@ -175,9 +176,7 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
 
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
     const data = {
       Data: [
