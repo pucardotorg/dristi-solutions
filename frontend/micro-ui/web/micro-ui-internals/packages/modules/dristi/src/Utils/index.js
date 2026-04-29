@@ -125,7 +125,7 @@ export const isLPRCase = (caseObj) => {
   if (caseObj.lifecycleStatus !== undefined && caseObj.lifecycleStatus !== null) {
     return caseObj.lifecycleStatus === "LPR";
   }
-  return Boolean(caseObj.isLPRCase);
+  return Boolean(isLPRCase(caseObj));
 };
 
 // Returns the case-number to display, taking LPR cases into account.

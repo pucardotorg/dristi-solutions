@@ -1389,7 +1389,7 @@ const GenerateOrdersV2 = () => {
       orderTypeData,
       caseDetails?.litigants,
       caseDetails?.lifecycleStatus,
-      caseDetails?.isLPRCase,
+      isLPRCase(caseDetails),
       caseDetails?.lprNumber,
       caseDetails?.courtCaseNumber,
       caseDetails?.additionalDetails?.respondentDetails?.formdata,
@@ -2467,9 +2467,14 @@ const GenerateOrdersV2 = () => {
     downloadPdf(tenantId, fileStoreId);
   };
 
-  const handleBulkCloseSuccessModal = () => {
+  const handleBulkGoToSignList = () => {
     setShowBulkModal(false);
     history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`, { homeActiveTab: "CS_HOME_ORDERS" });
+  };
+
+  const handleBulkGoHome = () => {
+    setShowBulkModal(false);
+    history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`);
   };
 
   const handleClose = async () => {
@@ -3214,7 +3219,8 @@ const GenerateOrdersV2 = () => {
           t={t}
           order={currentOrder}
           handleDownloadOrders={handleBulkDownloadOrder}
-          handleCloseSuccessModal={handleBulkCloseSuccessModal}
+          handleGoToBulkSignList={handleBulkGoToSignList}
+          handleGoHome={handleBulkGoHome}
         ></OrderAddToBulkSuccessModal>
       )}
       {showToast && (

@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { initLibraries } from "@egovernments/digit-ui-libraries";
 import { DigitUI, initCoreComponents } from "@egovernments/digit-ui-module-core";
 import setupRequestInterceptor from "@egovernments/digit-ui-module-core/src/Utils/requestInterceptor";
@@ -74,12 +74,14 @@ const initDigitUI = () => {
   const stateCode = window?.globalConfigs.getConfig("STATE_LEVEL_TENANT_ID");
   initTokens(stateCode);
 
-  ReactDOM.render(
+  const container = document.getElementById("root");
+  if (!container) throw new Error("Root element #root not found");
+  const root = createRoot(container);
+  root.render(
     <>
       <DigitUI stateCode={stateCode} enabledModules={enabledModules} defaultLanding="employee" moduleReducers={moduleReducers} />
       {hasViewApiMonitorAccess && <ApiMonitorPanel />}
-    </>,
-    document.getElementById("root")
+    </>
   );
 };
 

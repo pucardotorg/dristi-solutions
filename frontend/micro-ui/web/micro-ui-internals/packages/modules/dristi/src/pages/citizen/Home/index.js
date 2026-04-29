@@ -63,8 +63,8 @@ function CitizenHome({ tenantId, setHideBack = () => {} }) {
       tenantId,
     },
     { tenantId },
-    individualId,
-    Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
+    individualId + (userType || ""),
+    Boolean(isUserLoggedIn && individualId && userType && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
   useEffect(() => {
@@ -118,7 +118,7 @@ function CitizenHome({ tenantId, setHideBack = () => {} }) {
   const registrationIsDoneApprovalIsPending = individualId && isApprovalPending && !isRejected && !isLitigantPartialRegistered;
 
   useEffect(() => {
-    if (!data || !searchData) return;
+    if (!data || (userType !== "LITIGANT" && !searchData)) return;
     if (
       individualId &&
       !isApprovalPending &&
