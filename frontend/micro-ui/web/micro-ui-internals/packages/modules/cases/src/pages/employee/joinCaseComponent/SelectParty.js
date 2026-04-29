@@ -181,9 +181,6 @@ const SelectParty = ({
     }
   }, [uploadErrorMessage]);
 
-  console.log();
-  
-
   const getDisableParty = (party) => {
     if (party?.advocateRepresentingLength > 0) {
       if (party?.isPoaAvailable?.code === "NO" && party?.uuid === userInfo?.uuid) {
