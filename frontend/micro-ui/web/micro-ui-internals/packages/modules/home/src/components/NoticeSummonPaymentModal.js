@@ -6,11 +6,21 @@ import usePaymentProcess from "../hooks/usePaymentProcess";
 import { useTranslation } from "react-i18next";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
 import { getFormattedName } from "@egovernments/digit-ui-module-orders/src/utils";
+import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { PrintIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 
-function NoticeSummonPaymentModal({ suffix, setHideCancelButton, formDataKey, taskManagementList, courierOrderDetails, setIsPaymentCompleted }) {
+function NoticeSummonPaymentModal({
+  suffix,
+  setHideCancelButton,
+  formDataKey,
+  taskManagementList,
+  courierOrderDetails,
+  setIsPaymentCompleted,
+  caseDetails,
+  authorizedUuid,
+}) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const scenario = "EfillingCase";
@@ -57,6 +67,15 @@ function NoticeSummonPaymentModal({ suffix, setHideCancelButton, formDataKey, ta
     });
     return Object.entries(channelMap).map(([code, names]) => `${t(code)} (${names?.join(", ")})`);
   }, [t, taskManagement]);
+
+  const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
+  const advocatesUuids = useMemo(() => {
+    if (allAdvocates && typeof allAdvocates === "object") {
+      return Object.values(allAdvocates).flat();
+    }
+    return [];
+  }, [allAdvocates]);
+  const isUserAdv = useMemo(() => advocatesUuids.includes(authorizedUuid), [advocatesUuids, authorizedUuid]);
 
   useEffect(() => {
     const fetchCalculation = async () => {
@@ -262,7 +281,7 @@ function NoticeSummonPaymentModal({ suffix, setHideCancelButton, formDataKey, ta
         className={"pay-online-button"}
         icon={receiptFilstoreId && <PrintIcon />}
         onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
-        isDisabled={isCaseLocked}
+        isDisabled={isCaseLocked || !isUserAdv}
       />
       {showToast && (
         <CustomToast
