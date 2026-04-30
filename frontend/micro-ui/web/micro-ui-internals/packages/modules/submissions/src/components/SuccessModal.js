@@ -3,7 +3,7 @@ import Modal from "../../../dristi/src/components/Modal";
 import SelectCustomNote from "../../../dristi/src/components/SelectCustomNote";
 import { Banner } from "@egovernments/digit-ui-react-components";
 import CustomCopyTextDiv from "../../../dristi/src/components/CustomCopyTextDiv";
-import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 
 const customNoteConfig = {
   populators: {
@@ -48,8 +48,8 @@ function SuccessModal({
   ];
   return (
     <Modal
-      headerBarMain={!makePayment}
-      headerBarEnd={!makePayment && <CloseBtn onClick={headerBarEndClose} />}
+      headerBarMain={<Heading label={t("")} />}
+      headerBarEnd={<CloseBtn onClick={headerBarEndClose} />}
       headerBarMainStyle={{ padding: "10px 0px" }}
       actionCancelLabel={t(actionCancelLabel)}
       actionCancelOnSubmit={actionCancelOnSubmit}
