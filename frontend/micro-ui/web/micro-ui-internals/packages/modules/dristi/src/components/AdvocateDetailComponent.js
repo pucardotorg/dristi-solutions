@@ -7,6 +7,7 @@ import ImageModal from "./ImageModal";
 const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, clearErrors }) => {
   const [removeFile, setRemoveFile] = useState();
   const [showDoc, setShowDoc] = useState(false);
+  const [uploadErrors, setUploadErrors] = useState({});
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [fileStoreId, setFileStoreID] = useState();
   const [fileName, setFileName] = useState();
@@ -25,12 +26,24 @@ const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, c
     [config?.populators?.inputs]
   );
   const onDocumentUpload = async (fileData, filename) => {
-    const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
-    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    try {
+      const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
+      return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    } catch (error) {
+      const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+      throw new Error(errorCode);
+    }
+  };
+  const getExistingFileStoreId = (fileMeta = {}) => {
+    const candidate = fileMeta?.fileStoreId?.fileStoreId || fileMeta?.fileStoreId || fileMeta?.fileStore;
+    return typeof candidate === "string" && candidate.length > 5 ? candidate : null;
   };
   function setValue(value, name, input) {
     if (errors?.[name]) {
       clearErrors();
+    }
+    if (uploadErrors?.[name]) {
+      setUploadErrors((prev) => ({ ...prev, [name]: null }));
     }
     if (input && input?.clearFields && value) {
       if (input?.clearFieldsType && formData[config.key]) {
@@ -46,26 +59,51 @@ const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, c
   }
   function getFileStoreData(filesData, input) {
     const numberOfFiles = filesData.length;
-    let finalDocumentData = [];
     if (numberOfFiles > 0) {
-      filesData.forEach((value) => {
-        finalDocumentData.push({
-          fileName: value?.[0],
-          fileStoreId: value?.[1]?.fileStoreId,
-          documentType: value?.[1]?.file?.type,
-        });
-      });
-    }
+      const selectedFile = filesData?.[0]?.[1] || {};
+      const existingFileStoreId = getExistingFileStoreId(selectedFile);
 
-    numberOfFiles > 0
-      ? onDocumentUpload(filesData[0][1]?.file, filesData[0][0]).then((document) => {
+      // MultiUploadWrapper emits state updates for parent-sync as well; avoid re-upload for already uploaded files.
+      if (existingFileStoreId) {
+        setFileName(filesData?.[0]?.[0]);
+        setFileStoreID(existingFileStoreId);
+        setShowDoc(true);
+        setUploadErrors((prev) => ({ ...prev, [input.name]: null }));
+        return;
+      }
+
+      onDocumentUpload(filesData[0][1]?.file, filesData[0][0])
+        .then((document) => {
+          const uploadedFileStoreId = document?.file?.files?.[0]?.fileStoreId;
           setFileName(filesData[0][0]);
-
-          setFileStoreID(document.file?.files?.[0]?.fileStoreId);
+          setFileStoreID(uploadedFileStoreId);
           setShowDoc(true);
+          setUploadErrors((prev) => ({ ...prev, [input.name]: null }));
+          const uploadedFileData = [
+            [
+              filesData[0][0],
+              {
+                ...(filesData[0][1] || {}),
+                fileStoreId: { fileStoreId: uploadedFileStoreId },
+                fileStore: uploadedFileStoreId,
+              },
+            ],
+          ];
+          setValue(uploadedFileData, input.name, input);
         })
-      : setShowDoc(false);
-    setValue(numberOfFiles > 0 ? filesData : [], input.name, input);
+        .catch((error) => {
+          setShowDoc(false);
+          setUploadErrors((prev) => ({ ...prev, [input.name]: error?.message || "CS_FILE_UPLOAD_ERROR" }));
+          // Reset the field so mandatory validation blocks continue.
+          setValue([], input.name, input);
+        });
+    } else {
+      setShowDoc(false);
+      setFileStoreID(null);
+      setFileName(null);
+      setUploadErrors((prev) => ({ ...prev, [input.name]: null }));
+      setValue([], input.name, input);
+    }
   }
 
   const handleImageModalOpen = (fileStoreId, fileName) => {
@@ -166,6 +204,9 @@ const AdvocateDetailComponent = ({ t, config, onSelect, formData = {}, errors, c
                 {errors[input.name]?.message ? errors[input.name]?.message : t(errors[input.name]) || t(input.error)}
                 {t(input.error)}
               </CardLabelError>
+            )}
+            {uploadErrors[input.name] && (
+              <CardLabelError style={{ color: "#FF0000", marginTop: "5px", fontSize: "14px" }}>{t(uploadErrors[input.name])}</CardLabelError>
             )}
             {/* )} */}
           </React.Fragment>
