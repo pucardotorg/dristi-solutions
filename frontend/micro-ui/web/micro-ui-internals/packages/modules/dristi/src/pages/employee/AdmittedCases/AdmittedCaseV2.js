@@ -1,6 +1,6 @@
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
@@ -224,6 +224,7 @@ const AdmittedCaseV2 = () => {
   const historyOrderData = location?.state?.orderData;
   const newWitnesToast = history.location?.state?.newWitnesToast;
   const [isApplicationAccepted, setIsApplicationAccepted] = useState(null);
+  const submissionModalPendingTaskLocationRef = useRef(false);
   const [deleteOrder, setDeleteOrder] = useState(null);
   const [deleteApplication, setDeleteApplication] = useState(null);
 
@@ -1076,6 +1077,7 @@ const AdmittedCaseV2 = () => {
 
   useEffect(() => {
     if (history.location?.state?.applicationDocObj && !show) {
+      submissionModalPendingTaskLocationRef.current = true;
       setDocumentSubmission(history.location?.state?.applicationDocObj);
       setShow(true);
 
@@ -1084,6 +1086,21 @@ const AdmittedCaseV2 = () => {
       }
     }
   }, [history.location?.state?.applicationDocObj, history.location?.state?.isApplicationAccepted, show]);
+
+  useEffect(() => {
+    if (!show && !location.state?.applicationDocObj) {
+      submissionModalPendingTaskLocationRef.current = false;
+    }
+  }, [show, location.state?.applicationDocObj]);
+
+  useEffect(() => {
+    if (show && submissionModalPendingTaskLocationRef.current && !location.state?.applicationDocObj) {
+      submissionModalPendingTaskLocationRef.current = false;
+      setShow(false);
+      setIsApplicationAccepted(null);
+      setDocumentSubmission(undefined);
+    }
+  }, [location.key, location.state?.applicationDocObj, show]);
 
   useEffect(() => {
     if (currentDiaryEntry && artifactNumber) {
