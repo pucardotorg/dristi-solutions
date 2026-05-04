@@ -2390,16 +2390,7 @@ export const UICustomizations = {
               {value ? value : "-"}
             </Link>
           ) : row?.tab === "RESCHEDULE_REQUEST" ? (
-            <Link
-              style={{ color: "black", textDecoration: "underline" }}
-              to={{
-                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
-                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Submissions&fromHome=true`,
-                state: { homeActiveTab: row?.tab, refApplicationNumber: row?.referenceId },
-              }}
-            >
-              {value ? value : "-"}
-            </Link>
+            <span style={{ cursor: "pointer", textDecoration: "underline" }}>{value ? value : "-"}</span>
           ) : ["BAIL_BOND_STATUS", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(row?.tab) ? (
             <OrderName rowData={row} colData={column} value={value} />
           ) : (
