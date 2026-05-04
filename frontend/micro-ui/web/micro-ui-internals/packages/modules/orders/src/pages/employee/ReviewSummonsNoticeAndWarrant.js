@@ -23,6 +23,7 @@ import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS } from "../../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 
 const defaultSearchValues = {
   eprocess: "",
@@ -228,7 +229,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   // Initialize download PDF hook
   const { downloadPdf } = useDownloadCasePdf();
   const { uploadDocuments } = useDocumentUpload();
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const history = useHistory();
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
@@ -1125,25 +1125,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
     await Promise.allSettled(requests);
     return responses;
   };
-  const bulkUploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: "Signature",
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["PDF", "PNG", "JPEG", "JPG"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, []);
 
   const onBulkSignatureSelect = (key, value) => {
     if (value?.Signature === null) {
@@ -1157,7 +1138,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setFileUploadError(null);
   };
 
-  const onBulkSignatureSubmit = async () => {
+  const onBulkSignatureSubmit = async (combineResult) => {
     if (bulkSignatureData?.uploadSignature?.Signature?.length > 0) {
       try {
         setShowBulkSignatureModal(false);
@@ -2558,17 +2539,17 @@ const ReviewSummonsNoticeAndWarrant = () => {
         />
       )}
       {showBulkSignatureModal && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key="bulkSignature"
           name="Signature"
-          setOpenUploadSignatureModal={setShowBulkSignatureModal}
+          onClose={() => setShowBulkSignatureModal(false)}
           onSelect={onBulkSignatureSelect}
-          config={bulkUploadModalConfig}
           formData={bulkSignatureData}
           onSubmit={onBulkSignatureSubmit}
+          isDisabled={isBulkLoading}
+          isParentLoading={isBulkLoading}
           fileUploadError={fileUploadError}
-          setFileUploadError={setFileUploadError}
         />
       )}
       {showToast && (

@@ -9,13 +9,11 @@ import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core
 import { useToast } from "../../components/Toast/useToast";
 import ApplicationDetails from "./ApplicationDetails";
 import EFilingPaymentResponse from "./Payment/EFilingPaymentResponse";
-import PaymentInbox from "./Payment/PaymentInbox";
 import ViewPaymentDetails from "./Payment/ViewPaymentDetails";
 import CaseFileAdmission from "./admission/CaseFileAdmission";
 import Home from "./home";
 import ViewCaseFile from "./scrutiny/ViewCaseFile";
 import ReviewLitigantDetails from "./AdmittedCases/ReviewLitigantDetails";
-import EmployeeProfileEdit from "../../components/EmployeeProfileEdit/EmployeeProfileEdit";
 import AdmittedCaseV2 from "./AdmittedCases/AdmittedCaseV2";
 
 const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileStoreId }) => {
@@ -149,9 +147,6 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
           <PrivateRoute exact path={`${path}/home/view-case`} component={AdmittedCaseV2} />
           <PrivateRoute exact path={`${path}/home/view-case/review-litigant-details`} component={(props) => <ReviewLitigantDetails />} />
           <PrivateRoute exact path={`${path}/case`} component={(props) => <ViewCaseFile {...props} t={t} />} />
-          <PrivateRoute exact path={`${path}/home/edit-profile`}>
-            <EmployeeProfileEdit />
-          </PrivateRoute>
         </div>
         {toastMessage && (
           <Toast

@@ -5,6 +5,8 @@ import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { downloadPdfFromBlob } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
+
 const AddSignatureCTCModal = ({
   t,
   setSignedDocumentUploadID,
@@ -19,7 +21,6 @@ const AddSignatureCTCModal = ({
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const [formData, setFormData] = useState({});
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const pageModule = "en";
   const [loader, setLoader] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -28,26 +29,7 @@ const AddSignatureCTCModal = ({
   const [fileUploadError, setFileUploadError] = useState(null);
   const [showToast, setShowToast] = useState(null);
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: name,
-            // documentHeader: "CS_ADD_SIGNATURE",
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const onSelect = (key, value) => {
     if (value?.[name] === null) {
@@ -176,18 +158,16 @@ const AddSignatureCTCModal = ({
     </Modal>
   ) : (
     <React.Fragment>
-      <UploadSignatureModal
+      <UploadModal
         t={t}
         key={name}
         name={name}
-        setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+        onClose={() => setOpenUploadSignatureModal(false)}
         onSelect={onSelect}
-        config={uploadModalConfig}
         formData={formData}
         onSubmit={onSubmit}
         isDisabled={loader}
         fileUploadError={fileUploadError}
-        setFileUploadError={setFileUploadError}
       />
       {showToast && (
         <CustomToast

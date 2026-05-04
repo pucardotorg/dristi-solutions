@@ -1,8 +1,8 @@
 import { UploadIcon } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import { FileUploadIcon } from "../icons/svgIndex";
-import { isEmptyObject } from "../Utils";
+import { isEmptyObject, combineMultipleFiles } from "../Utils";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import RenderFileCard from "./RenderFileCard";
@@ -34,7 +34,17 @@ const DragDropJSX = ({ t, currentValue, error }) => {
   );
 };
 
-function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setError, clearErrors, formDisbalityCount = false }) {
+function SelectCustomDragDrop({
+  t,
+  config,
+  formData = {},
+  onSelect,
+  errors,
+  setError,
+  clearErrors,
+  formDisbalityCount = false,
+  combineAndSelectRef,
+}) {
   const inputs = useMemo(
     () =>
       config?.populators?.inputs || [
@@ -44,15 +54,31 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
           isOptional: "CS_IS_OPTIONAL",
           infoTooltipMessage: "AADHAR",
           type: "DragDropComponent",
-          uploadGuidelines: t("UPLOAD_DOC_10"),
-          maxFileSize: 10,
-          maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-          fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-          isMultipleUpload: true,
+          uploadGuidelines: config?.note || t("UPLOAD_DOC_10"),
+          maxFileSize: config?.maxFileSize || 10,
+          maxFileErrorMessage: config?.maxFileErrorMessage || "CS_FILE_LIMIT_10_MB",
+          fileTypes: config?.fileTypes || ["JPG", "PDF", "PNG", "JPEG"],
+          isMultipleUpload: config?.isMultipleUpload || true,
         },
       ],
-    [config?.populators?.inputs, t]
+    [config?.populators?.inputs, config?.note, config?.maxFileSize, config?.maxFileErrorMessage, config?.fileTypes, config?.isMultipleUpload, t]
   );
+  useEffect(() => {
+    if (!combineAndSelectRef) return;
+    combineAndSelectRef.current = async () => {
+      let result = null;
+      for (const input of inputs) {
+        const currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || [];
+        if (currentValue.length > 1) {
+          const combined = await combineMultipleFiles(currentValue);
+          const updatedValue = { ...formData[config.key], [input.name]: combined };
+          onSelect(config.key, isEmptyObject(updatedValue) ? null : updatedValue, { shouldValidate: true });
+          result = { configKey: config.key, inputName: input.name, combinedFiles: combined };
+        }
+      }
+      return result;
+    };
+  }, [combineAndSelectRef, inputs, formData, config.key, onSelect]);
 
   function setValue(value, input, isFileSizeLimitExceeded) {
     let updatedValue = {
@@ -201,20 +227,18 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 }}
               />
               <div className="upload-guidelines-div">
-                {input?.fileTypes && input?.maxFileSize ? (
-                  <p>
-                    {`${t("CS_COMMON_CHOOSE_FILE")} ${
-                      input?.fileTypes.length > 1
-                        ? `${input?.fileTypes
-                            .slice(0, -1)
-                            .map((type) => `.${type.toLowerCase()}`)
-                            .join(", ")} ${t("CS_COMMON_OR")} .${input?.fileTypes[input?.fileTypes.length - 1].toLowerCase()}`
-                        : `.${input?.fileTypes[0].toLowerCase()}`
-                    }. ${t("CS_MAX_UPLOAD")} ${input.maxFileSize}MB. ${t("UPLOAD_NOTE")}`}
-                  </p>
-                ) : (
-                  <p>{input.uploadGuidelines}</p>
-                )}
+                <p>
+                  {input?.fileTypes?.length > 0 && input?.maxFileSize
+                    ? `${t("CS_COMMON_CHOOSE_FILE")} ${
+                        input.fileTypes.length > 1
+                          ? `${input.fileTypes
+                              .slice(0, -1)
+                              .map((type) => `.${type.toLowerCase()}`)
+                              .join(", ")} ${t("CS_COMMON_OR")} .${input.fileTypes[input.fileTypes.length - 1].toLowerCase()}`
+                          : `.${input.fileTypes[0].toLowerCase()}`
+                      }. ${t("CS_MAX_UPLOAD")} ${input.maxFileSize}MB. ${t("UPLOAD_NOTE")}`
+                    : input.uploadGuidelines}
+                </p>
               </div>
             </div>
             {errors?.[config.key] && (

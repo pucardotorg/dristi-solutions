@@ -11,6 +11,7 @@ import { HomeService } from "../../hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 
 export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -64,7 +65,6 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const [showToast, setShowToast] = useState(null);
 
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [isSigned, setIsSigned] = useState(false);
 
   const [formData, setFormData] = useState({});
@@ -136,25 +136,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
     );
   }, []);
 
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const onSelect = (key, value) => {
     if (value?.Signature === null) {
@@ -169,23 +151,27 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
     setFileUploadError(null);
   };
 
-  const onUploadSubmit = useCallback(async () => {
-    if (formData?.uploadSignature?.Signature?.length > 0) {
-      try {
-        setLoader(true);
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
-        setIsSigned(true);
-        setOpenUploadSignatureModal(false);
-        setBailBondSignedPdf(uploadedFileId?.[0]?.fileStoreId);
-        clearBailBondSessionData();
-      } catch (error) {
-        console.error("error", error);
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
-      } finally {
-        setLoader(false);
+  const onUploadSubmit = useCallback(
+    async (combineResult) => {
+      if (formData?.uploadSignature?.Signature?.length > 0) {
+        try {
+          setLoader(true);
+          const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+          const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
+          setIsSigned(true);
+          setOpenUploadSignatureModal(false);
+          setBailBondSignedPdf(uploadedFileId?.[0]?.fileStoreId);
+          clearBailBondSessionData();
+        } catch (error) {
+          console.error("error", error);
+          setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        } finally {
+          setLoader(false);
+        }
       }
-    }
-  }, [formData, uploadDocuments, tenantId]);
+    },
+    [formData, uploadDocuments, tenantId]
+  );
 
   const updateBailBond = async ({ bailBondId, Action, fileStoreId }) => {
     try {
@@ -495,16 +481,16 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       )}
       {/* upload doc modal */}
       {stepper === 1 && openUploadSignatureModal && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+          onClose={() => setOpenUploadSignatureModal(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={formData}
           onSubmit={onUploadSubmit}
           isDisabled={loader}
+          isParentLoading={loader}
           fileUploadError={fileUploadError}
           setFileUploadError={setFileUploadError}
         />

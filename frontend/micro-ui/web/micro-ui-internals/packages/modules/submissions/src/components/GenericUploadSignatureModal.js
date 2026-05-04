@@ -3,6 +3,7 @@ import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Util
 import React, { useMemo, useState } from "react";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { SIGNATURE_UPLOAD_CONFIG, UploadModal } from "@egovernments/digit-ui-module-common";
 const GenericUploadSignatureModal = ({
   t,
   handleCloseSignatureModal,
@@ -23,32 +24,11 @@ const GenericUploadSignatureModal = ({
   const { uploadDocuments: defaultUploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const uploadDocuments = customUploadDocuments || defaultUploadDocuments;
   const [formData, setFormData] = useState({});
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [fileUploadError, setFileUploadError] = useState(null);
   const [showToast, setShowToast] = useState(null);
   const name = "Signature";
   const userUuid = Digit.UserService.getUser()?.info?.uuid;
   const authorizedUuid = getAuthorizedUuid(userUuid);
-
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the file is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["PDF", "PNG", "JPEG", "JPG"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
 
   const onSelect = (key, value) => {
     if (value?.[name] === null) {
@@ -62,21 +42,23 @@ const GenericUploadSignatureModal = ({
     setFileUploadError(null);
   };
 
-  const onSubmit = async () => {
+  const onSubmit = async (combineResult) => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
         setLoader(true);
-        const uploadResult = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+        const uploadResult = await uploadDocuments(filesToUpload, tenantId);
         const uploadedFileStoreId = uploadResult?.[0]?.fileStoreId;
         handleSubmit(uploadedFileStoreId);
       } catch (error) {
-        setLoader(false);
         console.error("error", error);
         setFormData({});
         const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
         setFileUploadError(errorCode);
         setShowToast({ label: t(errorCode), error: true, errorId });
+      } finally {
+        setLoader(false);
       }
     }
   };
@@ -110,25 +92,22 @@ const GenericUploadSignatureModal = ({
       </Modal>
 
       {showUploadSignature && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setShowUploadSignature}
+          onClose={() => setShowUploadSignature(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={formData}
           onSubmit={onSubmit}
           isDisabled={loader}
+          isParentLoading={loader}
           showInfo={true}
           infoHeader={"CS_PLEASE_COMMON_NOTE"}
           infoText={"PLEASE_ENSURE_SIGN"}
           showDownloadText={true}
-          fileStoreId={fileStoreId}
-          cancelLabel={"SUBMIT"}
           fileUploadError={fileUploadError}
           onCustomDownload={onCustomDownload}
-          setFileUploadError={setFileUploadError}
         />
       )}
       {showToast && (

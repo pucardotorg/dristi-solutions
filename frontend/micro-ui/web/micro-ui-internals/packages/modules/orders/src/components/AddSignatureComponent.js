@@ -8,6 +8,7 @@ import { Urls } from "../hooks/services/Urls";
 import useDocumentUpload from "../hooks/orders/useDocumentUpload";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 import { ORDER_TYPES } from "../utils/constants";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 
 const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData, setSignatureId, signatureId, deliveryChannel }) => {
   const [showToast, setShowToast] = useState(null);
@@ -15,34 +16,16 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
   const { uploadDocuments } = useDocumentUpload();
   const [formData, setFormData] = useState({}); // storing the file upload data
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const fileStoreId = rowData?.documents?.[0]?.fileStore || "";
   const pageModule = "en";
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const [fileUploadError, setFileUploadError] = useState(null);
+  const [loader, setLoader] = useState(false);
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
   const name = "Signature";
   const signPlaceHolder = "Signature";
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["PDF", "PNG", "JPEG", "JPG"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const onSelect = (key, value) => {
     if (value?.[name] === null) {
@@ -57,10 +40,12 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
     setFileUploadError(null);
   };
 
-  const onSubmit = async () => {
+  const onSubmit = async (combineResult) => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        setLoader(true);
+        const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+        const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
         setSignatureId(uploadedFileId?.[0]?.fileStoreId);
         handleSigned(true);
         setOpenUploadSignatureModal(false);
@@ -71,6 +56,8 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
         setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
         const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setShowToast({ label: t("CS_FILE_UPLOAD_ERROR"), error: true, errorId });
+      } finally {
+        setLoader(false);
       }
     }
   };
@@ -254,17 +241,17 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
           )}
         </div>
       ) : (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+          onClose={() => setOpenUploadSignatureModal(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={formData}
           onSubmit={onSubmit}
+          isDisabled={loader}
+          isParentLoading={loader}
           fileUploadError={fileUploadError}
-          setFileUploadError={setFileUploadError}
         />
       )}
       {showToast && (

@@ -5,13 +5,13 @@ import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/s
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 
 function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSignedDocumentUploadID, combinedFileStoreId }) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = useESign();
   const [formData, setFormData] = useState({}); // storing the file upload data
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const userInfo = Digit.UserService.getUser()?.info;
   const isEmployee = useMemo(() => userInfo?.type === "EMPLOYEE", [userInfo]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -26,25 +26,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const name = "Signature";
   const isAdvocateOrClerk = userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK_ROLE"].includes(role.code));
 
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const onSelect = (key, value) => {
     if (value?.[name] === null) {
@@ -70,10 +52,14 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
       .trim();
   };
 
-  const onSubmit = async () => {
+  const [loader, setLoader] = useState(false);
+
+  const onSubmit = async (combineResult) => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        setLoader(true);
+        const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+        const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setSignedId(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
@@ -86,6 +72,8 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
         const errorCode = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
         setFileUploadError(errorCode);
         setShowToast({ label: t(errorCode), error: true, errorId });
+      } finally {
+        setLoader(false);
       }
     }
   };
@@ -204,17 +192,18 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
           )}
         </div>
       ) : (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+          onClose={() => setOpenUploadSignatureModal(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={formData}
           onSubmit={onSubmit}
+          isDisabled={loader}
+          isParentLoading={loader}
           fileUploadError={fileUploadError}
-          setFileUploadError={setFileUploadError}
+          submitLabel={"CS_SUBMIT_SIGNATURE"}
         />
       )}
       {showToast && (

@@ -13,6 +13,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { DateUtils, getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ORDER_TYPES } from "../../utils/constants";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 
 const buttonStyle = {
   borderRadius: "4px",
@@ -75,7 +76,6 @@ function BulkSignADiaryView() {
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${ADiarypdf}`;
@@ -89,25 +89,7 @@ function BulkSignADiaryView() {
 
   const [diaryEntries, setDiaryEntries] = useState([]);
 
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const fetchEntries = useCallback(
     async (date) => {
@@ -342,23 +324,24 @@ function BulkSignADiaryView() {
     setFileUploadError(null);
   };
 
-  const onUploadSubmit = async () => {
+  const onUploadSubmit = async (combineResult) => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
         setLoader(true);
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+        const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setFileStoreIds((prevFileStoreIds) => new Set([...prevFileStoreIds, uploadedFileId?.[0]?.fileStoreId]));
         setIsSigned(true);
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
-        setLoader(false);
         setFormData({});
         setIsSigned(false);
         setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+      } finally {
+        setLoader(false);
       }
-      setLoader(false);
     }
   };
 
@@ -584,16 +567,16 @@ function BulkSignADiaryView() {
         )}
 
         {stepper === 2 && openUploadSignatureModal && (
-          <UploadSignatureModal
+          <UploadModal
             t={t}
             key={name}
             name={name}
-            setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+            onClose={() => setOpenUploadSignatureModal(false)}
             onSelect={onSelect}
-            config={uploadModalConfig}
             formData={formData}
             onSubmit={onUploadSubmit}
             isDisabled={loader}
+            isParentLoading={loader}
             fileUploadError={fileUploadError}
             setFileUploadError={setFileUploadError}
           />

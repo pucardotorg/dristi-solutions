@@ -1,6 +1,8 @@
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { CloseBtn, Heading } from "../../../components/ModalComponents";
+import { UploadModal } from "@egovernments/digit-ui-module-common";
+
 const WitnessDepositionSignatureModal = ({
   t,
   handleCloseSignatureModal,
@@ -16,29 +18,8 @@ const WitnessDepositionSignatureModal = ({
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [formData, setFormData] = useState({});
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const name = "Signature";
   const [fileUploadError, setFileUploadError] = useState(null);
-
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the file is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
 
   const onSelect = (key, value) => {
     if (value?.[name] === null) {
@@ -52,17 +33,19 @@ const WitnessDepositionSignatureModal = ({
     setFileUploadError(null);
   };
 
-  const onSubmit = async () => {
+  const onSubmit = async (combineResult) => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
         setLoader(true);
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+        const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
         handleSubmit(uploadedFileId?.[0]?.fileStoreId);
       } catch (error) {
-        setLoader(false);
         console.error("error", error);
         setFormData({});
         setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+      } finally {
+        setLoader(false);
       }
     }
   };
@@ -145,22 +128,21 @@ const WitnessDepositionSignatureModal = ({
       </Modal>
 
       {showUploadSignature && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setShowUploadSignature}
+          onClose={() => setShowUploadSignature(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={formData}
           onSubmit={onSubmit}
           isDisabled={loader}
+          isParentLoading={loader}
           showInfo={true}
           infoHeader={"CS_PLEASE_COMMON_NOTE"}
           infoText={"PLEASE_ENSURE_SIGN"}
           showDownloadText={true}
           fileStoreId={witnessDepositionFileStoreId}
-          cancelLabel={"SUBMIT"}
           fileUploadError={fileUploadError}
           setFileUploadError={setFileUploadError}
         />

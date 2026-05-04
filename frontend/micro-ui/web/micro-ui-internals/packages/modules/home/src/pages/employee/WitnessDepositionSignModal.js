@@ -10,6 +10,7 @@ import { HomeService } from "../../hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { witnessDepositionWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
 import { useLocation } from "react-router-dom/cjs/react-router-dom";
+import { SIGNATURE_UPLOAD_CONFIG, buildUploadModalConfig, UploadModal } from "@egovernments/digit-ui-module-common";
 
 export const clearWitnessDepositionSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -70,7 +71,6 @@ export const WitnessDepositionSignModal = ({
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const { handleEsign, checkSignStatus, showToast: apiErrorToast, setShowToast: setApiErrorToast, CustomToast } = Digit.Hooks.orders.useESign();
 
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [isSigned, setIsSigned] = useState(false);
 
   const [formData, setFormData] = useState({});
@@ -151,25 +151,7 @@ export const WitnessDepositionSignModal = ({
     );
   }, []);
 
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name,
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 10,
-            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
-            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
+  const uploadModalConfig = useMemo(() => buildUploadModalConfig(name, SIGNATURE_UPLOAD_CONFIG), [name]);
 
   const onSelect = (key, value) => {
     if (value?.Signature === null) {
@@ -184,23 +166,27 @@ export const WitnessDepositionSignModal = ({
     setFileUploadError(null);
   };
 
-  const onUploadSubmit = useCallback(async () => {
-    if (formData?.uploadSignature?.Signature?.length > 0) {
-      try {
-        setLoader(true);
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
-        setIsSigned(true);
-        setOpenUploadSignatureModal(false);
-        setWitnessDepositionSignedPdf(uploadedFileId?.[0]?.fileStoreId);
-        clearWitnessDepositionSessionData();
-      } catch (error) {
-        console.error("error", error);
-        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
-      } finally {
-        setLoader(false);
+  const onUploadSubmit = useCallback(
+    async (combineResult) => {
+      if (formData?.uploadSignature?.Signature?.length > 0) {
+        try {
+          setLoader(true);
+          const filesToUpload = combineResult?.combinedFiles || formData?.uploadSignature?.Signature;
+          const uploadedFileId = await uploadDocuments(filesToUpload, tenantId);
+          setIsSigned(true);
+          setOpenUploadSignatureModal(false);
+          setWitnessDepositionSignedPdf(uploadedFileId?.[0]?.fileStoreId);
+          clearWitnessDepositionSessionData();
+        } catch (error) {
+          console.error("error", error);
+          setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
+        } finally {
+          setLoader(false);
+        }
       }
-    }
-  }, [formData, uploadDocuments, tenantId]);
+    },
+    [formData, uploadDocuments, tenantId]
+  );
 
   const updateWitnessDeposition = async ({ artifactNumber, action, fileStoreId }) => {
     try {
@@ -518,16 +504,16 @@ export const WitnessDepositionSignModal = ({
       )}
       {/* upload doc modal */}
       {stepper === 1 && openUploadSignatureModal && (
-        <UploadSignatureModal
+        <UploadModal
           t={t}
           key={name}
           name={name}
-          setOpenUploadSignatureModal={setOpenUploadSignatureModal}
+          onClose={() => setOpenUploadSignatureModal(false)}
           onSelect={onSelect}
-          config={uploadModalConfig}
           formData={formData}
           onSubmit={onUploadSubmit}
           isDisabled={loader}
+          isParentLoading={loader}
           fileUploadError={fileUploadError}
           setFileUploadError={setFileUploadError}
         />
