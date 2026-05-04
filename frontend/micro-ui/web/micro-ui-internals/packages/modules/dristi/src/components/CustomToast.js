@@ -107,6 +107,9 @@ const CustomToast = ({
               gap: "4px",
               transition: "background 0.2s",
               marginLeft: "10px",
+              marginTop: "0px",
+              whiteSpace: "nowrap",
+              width: "fit-content",
             }}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">
