@@ -940,6 +940,8 @@ const EvidenceModal = ({
       history.goBack();
     } else if (modalType === "Submissions" && history.location?.state?.applicationDocObj) {
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`);
+    } else if (history.location?.state?.submissionEvidenceModal) {
+      history.goBack();
     } else {
       if (currentDiaryEntry) {
         history.goBack();
