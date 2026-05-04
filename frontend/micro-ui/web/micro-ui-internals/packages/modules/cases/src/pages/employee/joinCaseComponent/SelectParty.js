@@ -9,6 +9,8 @@ import CustomTextArea from "@egovernments/digit-ui-module-dristi/src/components/
 const SelectParty = ({
   selectPartyData,
   setSelectPartyData,
+  uploadErrorMessage,
+  clearUploadError,
   caseDetails,
   parties,
   party,
@@ -22,6 +24,8 @@ const SelectParty = ({
 }) => {
   const { t } = useTranslation();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const setFormError = useRef(null);
+  const clearFormError = useRef(null);
 
   const MultiSelectDropdown = window?.Digit?.ComponentRegistryService?.getComponent("MultiSelectDropdown");
 
@@ -167,6 +171,14 @@ const SelectParty = ({
   useEffect(() => {
     scrollToDiv();
   }, [selectPartyData?.partyInvolve, party, partyInPerson]);
+
+  useEffect(() => {
+    if (uploadErrorMessage && setFormError.current) {
+      setFormError.current("affidavitData", { message: uploadErrorMessage });
+    } else if (!uploadErrorMessage && clearFormError.current) {
+      clearFormError.current("affidavitData");
+    }
+  }, [uploadErrorMessage]);
 
   const getDisableParty = (party) => {
     if (party?.advocateRepresentingLength > 0) {
@@ -515,7 +527,16 @@ const SelectParty = ({
             <FormComposerV2
               key={2}
               config={advocateVakalatnamaConfig}
-              onFormValueChange={(setValue, formData) => {
+              onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) => {
+                setFormError.current = setError;
+                clearFormError.current = clearErrors;
+                const currentAffidavitDoc = formData?.affidavitData?.document;
+                const previousAffidavitDoc = selectPartyData?.affidavit?.affidavitData?.document;
+                const hasPreviousDoc = Array.isArray(previousAffidavitDoc) && previousAffidavitDoc.length > 0;
+                const hasCurrentDoc = Array.isArray(currentAffidavitDoc) && currentAffidavitDoc.length > 0;
+                if (uploadErrorMessage && hasCurrentDoc && hasPreviousDoc && !isEqual(currentAffidavitDoc, previousAffidavitDoc)) {
+                  clearUploadError();
+                }
                 if (!isEqual(formData, selectPartyData?.affidavit)) {
                   setSelectPartyData((selectPartyData) => ({
                     ...selectPartyData,

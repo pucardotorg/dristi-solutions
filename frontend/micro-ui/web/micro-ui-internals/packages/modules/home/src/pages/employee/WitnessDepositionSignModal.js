@@ -83,6 +83,12 @@ export const WitnessDepositionSignModal = ({
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
+  const { data: designationData } = Digit.Hooks.useCustomMDMS(tenantId, "common-masters", [{ name: "Designation" }]);
+  const judgeDesignation = useMemo(
+    () => designationData?.["common-masters"]?.Designation?.find((d) => d.code === "JUDICIAL_MAGISTRATE")?.name || "",
+    [designationData]
+  );
+
   const witnessDepositionDocuments = useMemo(() => {
     return effectiveRowData?.businessObject?.artifactDetails?.file || effectiveRowData?.file || docObj?.artifactList.file
       ? [effectiveRowData?.businessObject?.artifactDetails?.file || effectiveRowData?.file || docObj?.artifactList.file]
@@ -307,7 +313,7 @@ export const WitnessDepositionSignModal = ({
           sessionStorage.setItem("bulkWitnessDepositionSignCaseTitle", witnessDepositionPaginationData?.caseTitle);
         if (witnessDepositionPaginationData?.offset)
           sessionStorage.setItem("bulkWitnessDepositionSignoffset", witnessDepositionPaginationData?.offset);
-        handleEsign(name, pageModule, selectedWitnessDepositionFilestoreid, setShowToast, t, "Judicial Magistrate of First Class");
+        handleEsign(name, pageModule, selectedWitnessDepositionFilestoreid, setShowToast, t, judgeDesignation);
       } catch (error) {
         console.error("E-sign navigation error:", error);
         setLoader(false);

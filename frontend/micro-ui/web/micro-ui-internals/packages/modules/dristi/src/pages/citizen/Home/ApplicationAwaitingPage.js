@@ -15,6 +15,8 @@ function ApplicationAwaitingPage({ individualId }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [isFetching, setIsFetching] = useState(true);
   const [isFetchingAdvoacte, setIsFetchingAdvocate] = useState(true);
+  const token = window.localStorage.getItem("token");
+  const isUserLoggedIn = Boolean(token);
   const { data: individualData, isLoading: isGetUserLoading, refetch: refetch } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
@@ -38,7 +40,7 @@ function ApplicationAwaitingPage({ individualId }) {
     },
     {},
     applicationNo + individualId,
-    userType,
+    Boolean(isUserLoggedIn && individualId && userType && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
 

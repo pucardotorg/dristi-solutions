@@ -80,6 +80,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const [isApiCalled, setIsApiCalled] = useState(false);
   const [isPipApiCalled, setIsPipApiCalled] = useState(false);
   const [errors, setErrors] = useState({});
+  const [documentUploadErrors, setDocumentUploadErrors] = useState({});
   const [success, setSuccess] = useState(false);
   const [messageHeader, setMessageHeader] = useState(t(JoinHomeLocalisation.JOIN_CASE_SUCCESS));
 
@@ -338,6 +339,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     setRoleOfNewAdvocate("");
     setBarRegNumber("");
     setErrors({});
+    setDocumentUploadErrors({});
     setStep(0);
     setShow(false);
     if (setShowJoinCase) setShowJoinCase(false);
@@ -391,10 +393,31 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     }
   };
 
-  const onDocumentUpload = async (fileData, filename, tenantId) => {
+  const clearDocumentUploadError = useCallback((errorKey) => {
+    if (!errorKey) return;
+    setDocumentUploadErrors((prev) => {
+      if (!prev?.[errorKey]) return prev;
+      const updated = { ...prev };
+      delete updated[errorKey];
+      return updated;
+    });
+  }, []);
+
+  const onDocumentUpload = async (fileData, filename, tenantId, errorKey) => {
     if (fileData?.fileStore) return fileData;
-    const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
-    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    try {
+      const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
+      return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    } catch (error) {
+      const errorMessage = error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR";
+      if (errorKey) {
+        setDocumentUploadErrors((prev) => ({
+          ...prev,
+          [errorKey]: errorMessage,
+        }));
+      }
+      throw error;
+    }
   };
 
   const getComplainantListNew = (formdata) => {
@@ -680,7 +703,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       const affidavitUpload = await onDocumentUpload(
         selectPartyData?.affidavit?.affidavitData?.document?.[0],
         selectPartyData?.affidavit?.affidavitData?.document?.name,
-        tenantId
+        tenantId,
+        "affidavitData"
       ).then((uploadedData) => ({
         document: [
           {
@@ -839,7 +863,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 affidavitUpload = await onDocumentUpload(
                   selectPartyData?.affidavit?.affidavitData?.document?.[0],
                   selectPartyData?.affidavit?.affidavitData?.document?.name,
-                  tenantId
+                  tenantId,
+                  "affidavitData"
                 ).then((uploadedData) => ({
                   document: [
                     {
@@ -947,16 +972,16 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         if (selectPartyData?.userType?.value === "Litigant") {
           try {
             const poaUpdatedData = await Promise.all(
-              updatedParty?.map(async (user) => {
+              updatedParty?.map(async (user, index) => {
                 const document = user?.poaAuthorizationDocument?.poaDocument;
                 const hasFileTypeDoc = document?.some((doc) => doc instanceof File || (doc.file && doc.file instanceof File));
                 let uploadedData = {};
 
                 if (hasFileTypeDoc && document?.length > 1) {
                   const combineDocs = await combineMultipleFiles(document);
-                  uploadedData = await onDocumentUpload(combineDocs[0], "poaAuthorization.pdf", tenantId);
+                  uploadedData = await onDocumentUpload(combineDocs[0], "poaAuthorization.pdf", tenantId, `poaAuthorizationDocument:${index}`);
                 } else if (hasFileTypeDoc && document?.length > 0) {
-                  uploadedData = await onDocumentUpload(document[0], "poaAuthorization.pdf", tenantId);
+                  uploadedData = await onDocumentUpload(document[0], "poaAuthorization.pdf", tenantId, `poaAuthorizationDocument:${index}`);
                 }
 
                 return {
@@ -1003,16 +1028,18 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             ];
 
             const { givenName, otherNames, familyName } = individual?.name;
-            const documentToUploadApiCall = updatedParty?.map((user) => {
+            const documentToUploadApiCall = updatedParty?.map((user, index) => {
               if (user?.isVakalatnamaNew?.code === "YES") {
-                return onDocumentUpload(user?.vakalatnama?.document?.[0], user?.vakalatnama?.document?.name, tenantId).then((uploadedData) => ({
-                  ...user,
-                  uploadedVakalatnama: {
-                    documentType: uploadedData.fileType || document?.documentType,
-                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
-                    fileName: "VAKALATNAMA",
-                  },
-                }));
+                return onDocumentUpload(user?.vakalatnama?.document?.[0], user?.vakalatnama?.document?.name, tenantId, `vakalatnama:${index}`).then(
+                  (uploadedData) => ({
+                    ...user,
+                    uploadedVakalatnama: {
+                      documentType: uploadedData.fileType || document?.documentType,
+                      fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
+                      fileName: "VAKALATNAMA",
+                    },
+                  })
+                );
               }
               return user;
             });
@@ -1024,7 +1051,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               affidavitUpload = await onDocumentUpload(
                 selectPartyData?.affidavit?.affidavitData?.document?.[0],
                 selectPartyData?.affidavit?.affidavitData?.document?.name,
-                tenantId
+                tenantId,
+                "affidavitData"
               ).then((uploadedData) => ({
                 document: [
                   {
@@ -1393,6 +1421,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         <SelectParty
           selectPartyData={selectPartyData}
           setSelectPartyData={setSelectPartyData}
+          uploadErrorMessage={documentUploadErrors?.affidavitData || null}
+          clearUploadError={() => clearDocumentUploadError("affidavitData")}
           caseDetails={caseDetails}
           party={party}
           setParty={setParty}
@@ -1417,6 +1447,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           setParty={setParty}
           goBack={() => setStep(step - 1)}
           onProceed={onProceed}
+          uploadErrorMessages={documentUploadErrors}
+          clearUploadError={clearDocumentUploadError}
           alreadyJoinedMobileNumber={alreadyJoinedMobileNumber}
           setAlreadyJoinedMobileNumber={setAlreadyJoinedMobileNumber}
           isDisabled={isDisabled}

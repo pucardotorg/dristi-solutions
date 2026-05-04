@@ -50,6 +50,7 @@ const MediationFormSignaturePage = () => {
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
   const name = "Signature";
   const [formData, setFormData] = useState({});
+  const [fileUploadError, setFileUploadError] = useState(null);
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [signatureDocumentId, setSignatureDocumentId] = useState(null);
   const [isEsignSuccess, setEsignSuccess] = useState(false);
@@ -216,30 +217,33 @@ const MediationFormSignaturePage = () => {
         return party;
       });
       if (isUserLoggedIn) {
-        await submissionService.updateDigitalization({
-          digitalizedDocument: {
-            ...digitalizationServiceDetails,
-            mediationDetails: {
-              ...digitalizationServiceDetails?.mediationDetails,
-              partyDetails: updatedPartyDetails,
-            },
-            ...((signatureDocumentId || fileStoreId) && {
-              documents: [
-                {
-                  ...digitalizationServiceDetails?.documents?.[0],
-                  fileStore: signatureDocumentId || fileStoreId,
-                  documentType: "SIGNED",
-                },
-              ],
-            }),
-            workflow: {
-              action: digitalizationAction,
+        const fStoreId = signatureDocumentId || fileStoreId;
+        if (fStoreId && fStoreId !== mediationFileStoreId) {
+          await submissionService.updateDigitalization({
+            digitalizedDocument: {
+              ...digitalizationServiceDetails,
+              mediationDetails: {
+                ...digitalizationServiceDetails?.mediationDetails,
+                partyDetails: updatedPartyDetails,
+              },
+              ...(fStoreId && {
+                documents: [
+                  {
+                    ...digitalizationServiceDetails?.documents?.[0],
+                    fileStore: fStoreId,
+                    documentType: "SIGNED",
+                  },
+                ],
+              }),
+              workflow: {
+                action: digitalizationAction,
 
-              documents: [{}],
+                documents: [{}],
+              },
             },
-          },
-        });
-      } else {
+          });
+        }
+      } else if (signatureDocumentId && signatureDocumentId !== mediationFileStoreId) {
         await submissionService.updateOpenDigitizedDocument({
           tenantId,
           documentNumber: documentNumber,
@@ -270,6 +274,7 @@ const MediationFormSignaturePage = () => {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async (combineResult) => {
@@ -284,6 +289,8 @@ const MediationFormSignaturePage = () => {
       } catch (error) {
         console.error("error", error);
         setFormData({});
+        setSignatureDocumentId(null);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       } finally {
         setUploadLoader(false);
       }
@@ -713,6 +720,8 @@ const MediationFormSignaturePage = () => {
           onSubmit={onSubmit}
           isDisabled={uploadLoader}
           isParentLoading={uploadLoader}
+          fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {showSkipConfirmModal && (

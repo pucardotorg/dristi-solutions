@@ -1276,6 +1276,8 @@ const TasksComponent = ({
                     formDataKey={formDataKeyMap[courierOrderDetails?.orderType]}
                     taskManagementList={taskManagementList}
                     courierOrderDetails={courierOrderDetails}
+                    caseDetails={caseDetails}
+                    authorizedUuid={authorizedUuid}
                     refetchPendingTasks={refetch}
                     setIsPaymentCompleted={setIsPaymentCompleted}
                   />
