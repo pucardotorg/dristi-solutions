@@ -30,7 +30,16 @@ import CTCApplications from "./CTCApplications";
 import BulkIssueCTC from "./BulkIssueCTC";
 import { ORDER_TYPES } from "../../utils/constants";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
-
+import { getAuthorizedUuid, getDate } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import {
+  getStatue,
+  getLitigants,
+  getFinalLitigantsData,
+  getReps,
+  getFinalRepresentativesData,
+  getWitnesses,
+  getUnJoinedLitigant,
+} from "@egovernments/digit-ui-module-dristi/src/pages/employee/AdmittedCases/utils/caseDataProcessingUtils";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -103,6 +112,199 @@ const MainHomeScreen = () => {
   const CourierService = useMemo(() => Digit.ComponentRegistryService.getComponent("CourierService"), []);
   const [isProcessLoader, setIsProcessLoader] = useState(false);
   const courtId = localStorage.getItem("courtId");
+
+  const EvidenceModal = useMemo(() => Digit.ComponentRegistryService.getComponent("EvidenceModal"), []);
+
+  const [rescheduleEvidenceSession, setRescheduleEvidenceSession] = useState(null);
+  const [homeRescheduleEvidenceSubmission, setHomeRescheduleEvidenceSubmission] = useState(null);
+  const [showHomeRescheduleEvidence, setShowHomeRescheduleEvidence] = useState(false);
+  const lastRescheduleEvidenceBuildKey = useRef("");
+
+  const userUuid = userInfo?.uuid;
+  const authorizedUuidForRescheduleEvidence = useMemo(() => getAuthorizedUuid(userUuid), [userUuid]);
+
+  const rescheduleEvidenceCaseId = rescheduleEvidenceSession?.caseId;
+  const rescheduleEvidenceFilingNumber = rescheduleEvidenceSession?.filingNumber;
+  const rescheduleEvidenceReferenceId = rescheduleEvidenceSession?.referenceId;
+
+  const { data: rescheduleEvidenceCaseSearchData, isLoading: rescheduleEvidenceCaseLoading } = useCaseDetailSearchService(
+    {
+      criteria: {
+        caseId: rescheduleEvidenceCaseId,
+        ...(courtId && { courtId }),
+      },
+      tenantId,
+    },
+    {},
+    `home-reschedule-evidence-${rescheduleEvidenceCaseId}`,
+    rescheduleEvidenceCaseId,
+    Boolean(rescheduleEvidenceCaseId)
+  );
+
+  const rescheduleEvidenceCaseDetails = useMemo(() => rescheduleEvidenceCaseSearchData?.cases || {}, [rescheduleEvidenceCaseSearchData]);
+
+  const {
+    data: rescheduleEvidenceApplicationData,
+    isLoading: rescheduleEvidenceApplicationLoading,
+  } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber: rescheduleEvidenceFilingNumber,
+        tenantId,
+        asUser: authorizedUuidForRescheduleEvidence,
+      },
+      tenantId,
+      ...(courtId && { courtId }),
+    },
+    {},
+    rescheduleEvidenceFilingNumber ? `${rescheduleEvidenceFilingNumber}-home-reschedule-evidence` : "home-reschedule-evidence-idle",
+    Boolean(rescheduleEvidenceFilingNumber && courtId && rescheduleEvidenceCaseId && rescheduleEvidenceSession)
+  );
+
+  const resetRescheduleEvidenceSession = useCallback(() => {
+    lastRescheduleEvidenceBuildKey.current = "";
+    setRescheduleEvidenceSession(null);
+    setHomeRescheduleEvidenceSubmission(null);
+    setShowHomeRescheduleEvidence(false);
+  }, []);
+
+  const openRescheduleRequestEvidence = useCallback((row) => {
+    if (!row?.caseId || !row?.filingNumber || !row?.referenceId) {
+      return;
+    }
+    lastRescheduleEvidenceBuildKey.current = "";
+    setHomeRescheduleEvidenceSubmission(null);
+    setShowHomeRescheduleEvidence(false);
+    setRescheduleEvidenceSession({
+      caseId: row.caseId,
+      filingNumber: row.filingNumber,
+      referenceId: row.referenceId,
+    });
+  }, []);
+
+  const handleRescheduleRequestRowClick = useCallback(
+    (row) => {
+      const data = row.original ? row?.original : null;
+      openRescheduleRequestEvidence(data);
+    },
+    [openRescheduleRequestEvidence]
+  );
+
+  useEffect(() => {
+    if (activeTab !== "RESCHEDULE_REQUEST") {
+      resetRescheduleEvidenceSession();
+    }
+  }, [activeTab, resetRescheduleEvidenceSession]);
+
+  useEffect(() => {
+    if (!rescheduleEvidenceSession?.referenceId) {
+      lastRescheduleEvidenceBuildKey.current = "";
+      setHomeRescheduleEvidenceSubmission(null);
+      setShowHomeRescheduleEvidence(false);
+      return;
+    }
+    const sessionKey = `${rescheduleEvidenceSession.caseId}|${rescheduleEvidenceSession.filingNumber}|${rescheduleEvidenceSession.referenceId}`;
+    if (lastRescheduleEvidenceBuildKey.current === sessionKey && homeRescheduleEvidenceSubmission?.length > 0) {
+      return;
+    }
+    if (rescheduleEvidenceCaseLoading || rescheduleEvidenceApplicationLoading) {
+      return;
+    }
+    const caseLoaded = rescheduleEvidenceCaseSearchData?.cases && Object.keys(rescheduleEvidenceCaseDetails).length > 0;
+    if (!caseLoaded) {
+      lastRescheduleEvidenceBuildKey.current = "";
+      setShowToast({ label: t("CS_SOMETHING_WENT_WRONG"), error: true });
+      setRescheduleEvidenceSession(null);
+      return;
+    }
+    const applicationDetails = rescheduleEvidenceApplicationData?.applicationList?.find(
+      (application) => application?.applicationNumber === rescheduleEvidenceReferenceId
+    );
+    if (!applicationDetails) {
+      lastRescheduleEvidenceBuildKey.current = "";
+      setShowToast({ label: t("CS_SOMETHING_WENT_WRONG"), error: true });
+      setRescheduleEvidenceSession(null);
+      return;
+    }
+    const mapped =
+      applicationDetails?.documents?.map((doc) => ({
+        status: applicationDetails?.status,
+        details: {
+          applicationType: applicationDetails?.applicationType,
+          applicationSentOn: getDate(parseInt(applicationDetails?.auditDetails?.createdTime)),
+          sender: applicationDetails?.additionalDetails?.owner,
+          additionalDetails: applicationDetails?.additionalDetails,
+          applicationId: applicationDetails?.id,
+          auditDetails: applicationDetails?.auditDetails,
+        },
+        applicationContent: {
+          tenantId: applicationDetails?.tenantId,
+          fileStoreId: doc.fileStore,
+          id: doc.id,
+          documentType: doc.documentType,
+          documentUid: doc.documentUid,
+          additionalDetails: doc.additionalDetails,
+        },
+        comments: applicationDetails?.comment ? applicationDetails?.comment : [],
+        applicationList: applicationDetails,
+      })) || [];
+    if (!mapped.length) {
+      lastRescheduleEvidenceBuildKey.current = "";
+      setShowToast({ label: t("PREVIEW_DOC_NOT_AVAILABLE"), error: true });
+      setRescheduleEvidenceSession(null);
+      return;
+    }
+    lastRescheduleEvidenceBuildKey.current = sessionKey;
+    setHomeRescheduleEvidenceSubmission(mapped);
+    setShowHomeRescheduleEvidence(true);
+  }, [
+    rescheduleEvidenceSession,
+    rescheduleEvidenceReferenceId,
+    rescheduleEvidenceCaseLoading,
+    rescheduleEvidenceApplicationLoading,
+    rescheduleEvidenceCaseSearchData,
+    rescheduleEvidenceCaseDetails,
+    rescheduleEvidenceApplicationData,
+    homeRescheduleEvidenceSubmission,
+    t,
+  ]);
+
+  const homeRescheduleStatue = useMemo(() => getStatue(rescheduleEvidenceCaseDetails), [rescheduleEvidenceCaseDetails]);
+  const homeRescheduleLitigants = useMemo(() => getLitigants(rescheduleEvidenceCaseDetails), [rescheduleEvidenceCaseDetails]);
+  const homeRescheduleFinalLitigantsData = useMemo(() => getFinalLitigantsData(homeRescheduleLitigants), [homeRescheduleLitigants]);
+  const homeRescheduleReps = useMemo(() => getReps(rescheduleEvidenceCaseDetails), [rescheduleEvidenceCaseDetails]);
+  const homeRescheduleFinalRepresentativesData = useMemo(() => getFinalRepresentativesData(homeRescheduleReps), [homeRescheduleReps]);
+  const homeRescheduleWitnesses = useMemo(() => getWitnesses(rescheduleEvidenceCaseDetails), [rescheduleEvidenceCaseDetails]);
+  const homeRescheduleUnJoinedLitigant = useMemo(() => getUnJoinedLitigant(rescheduleEvidenceCaseDetails), [rescheduleEvidenceCaseDetails]);
+
+  const homeRescheduleCaseRelatedData = useMemo(() => {
+    if (!rescheduleEvidenceSession || !rescheduleEvidenceCaseDetails || Object.keys(rescheduleEvidenceCaseDetails).length === 0) {
+      return null;
+    }
+    return {
+      caseId: rescheduleEvidenceSession.caseId,
+      filingNumber: rescheduleEvidenceSession.filingNumber,
+      cnrNumber: rescheduleEvidenceCaseDetails?.cnrNumber || "",
+      title: rescheduleEvidenceCaseDetails?.caseTitle || "",
+      stage: rescheduleEvidenceCaseDetails?.stage,
+      parties: [
+        ...homeRescheduleFinalLitigantsData,
+        ...homeRescheduleFinalRepresentativesData,
+        ...homeRescheduleUnJoinedLitigant,
+        ...homeRescheduleWitnesses,
+      ],
+      case: rescheduleEvidenceCaseDetails,
+      statue: homeRescheduleStatue,
+    };
+  }, [
+    rescheduleEvidenceSession,
+    rescheduleEvidenceCaseDetails,
+    homeRescheduleFinalLitigantsData,
+    homeRescheduleFinalRepresentativesData,
+    homeRescheduleUnJoinedLitigant,
+    homeRescheduleWitnesses,
+    homeRescheduleStatue,
+  ]);
 
   const hasViewRegisterUserAccess = useMemo(() => assignedRoles?.includes("ADVOCATE_APPROVER"), [assignedRoles]);
   const hasViewCollectOfflinePaymentsAccess = useMemo(() => assignedRoles?.includes("PAYMENT_COLLECTOR"), [assignedRoles]);
@@ -1226,9 +1428,22 @@ const MainHomeScreen = () => {
 
   const inboxSearchComposer = useMemo(
     () => (
-      <InboxSearchComposer key={`${activeTab}-${updateCounter}`} customStyle={sectionsParentStyle} configs={modifiedConfig}></InboxSearchComposer>
+      <InboxSearchComposer
+        key={`${activeTab}-${updateCounter}`}
+        customStyle={sectionsParentStyle}
+        configs={modifiedConfig}
+        {...(activeTab === "RESCHEDULE_REQUEST"
+          ? {
+              additionalConfig: {
+                resultsTable: {
+                  onClickRow: handleRescheduleRequestRowClick,
+                },
+              },
+            }
+          : {})}
+      ></InboxSearchComposer>
     ),
-    [activeTab, updateCounter, modifiedConfig]
+    [activeTab, updateCounter, modifiedConfig, handleRescheduleRequestRowClick]
   );
 
   const scrutinyInboxSearchComposer = useMemo(
@@ -1258,7 +1473,11 @@ const MainHomeScreen = () => {
   return (
     <React.Fragment>
       {" "}
-      {(loader || ((isTaskManagementLoading || isCaseLoading || orderLoader) && courierServiceSteps?.length === 0) || isPaymentTypeLoading) && (
+      {(loader ||
+        rescheduleEvidenceCaseLoading ||
+        rescheduleEvidenceApplicationLoading ||
+        ((isTaskManagementLoading || isCaseLoading || orderLoader) && courierServiceSteps?.length === 0) ||
+        isPaymentTypeLoading) && (
         <div
           style={{
             width: "100vw",
@@ -1373,6 +1592,22 @@ const MainHomeScreen = () => {
             setShowBailModal={setShowBailBondModal}
             row={selectedBailBond}
             setUpdateCounter={setUpdateCounter}
+          />
+        )}
+        {showHomeRescheduleEvidence && EvidenceModal && homeRescheduleCaseRelatedData && homeRescheduleEvidenceSubmission?.length > 0 && (
+          <EvidenceModal
+            documentSubmission={homeRescheduleEvidenceSubmission}
+            setShow={setShowHomeRescheduleEvidence}
+            userRoles={assignedRoles}
+            modalType="Submissions"
+            setUpdateCounter={setUpdateCounter}
+            setShowToast={setShowToast}
+            caseData={homeRescheduleCaseRelatedData}
+            caseId={rescheduleEvidenceSession?.caseId}
+            setIsDelayApplicationPending={undefined}
+            currentDiaryEntry={undefined}
+            artifact={undefined}
+            setShowMakeAsEvidenceModal={() => {}}
           />
         )}
         {showToast && (
