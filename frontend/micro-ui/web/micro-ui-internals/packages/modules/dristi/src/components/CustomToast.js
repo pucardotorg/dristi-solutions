@@ -47,7 +47,9 @@ const CustomToast = ({
     return () => clearTimeout(timer);
   }, [duration, onClose]);
 
-  const handleCopy = () => {
+  const handleCopy = (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     if (!errorId) return;
     const write = () => {
       setCopied(true);
@@ -90,6 +92,7 @@ const CustomToast = ({
         </div>
         {errorId && (
           <button
+            type="button"
             onClick={handleCopy}
             style={{
               background: "rgba(255,255,255,0.15)",
