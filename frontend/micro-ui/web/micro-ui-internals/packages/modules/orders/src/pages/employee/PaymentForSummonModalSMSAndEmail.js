@@ -46,7 +46,6 @@ const PaymentForSummonComponent = ({
   channelId,
   formattedChannelId,
   orderType,
-  isUserAdv,
   isCaseLocked = false,
   payOnlineButtonTitle = null,
 }) => {
@@ -64,28 +63,26 @@ const PaymentForSummonComponent = ({
             <div className={`${index === 0 ? "header-row" : "action-row"}`} key={index}>
               <div className="payment-label">{t(action?.label)}</div>
               <div className="payment-amount">{action?.action !== "offline-process" && action?.amount ? `Rs. ${action?.amount}/-` : "-"}</div>
-              {isUserAdv && (
-                <div className="payment-action">
-                  {!action?.isCompleted &&
-                    (index === 0 ? (
-                      t(action?.action)
-                    ) : action?.action !== "offline-process" ? (
-                      <ButtonSelector
-                        style={{ border: "1px solid" }}
-                        label={t(action.action)}
-                        onSubmit={action.onClick}
-                        isDisabled={paymentLoader || isCaseLocked}
-                        title={isCaseLocked ? t(payOnlineButtonTitle) : ""}
-                        textStyles={{ margin: "0px" }}
-                      />
-                    ) : (
-                      <p className="offline-process-text">
-                        This is an offline process. <span className="learn-more-text">Learn More</span>
-                      </p>
-                    ))}
-                  {action?.isCompleted && <p style={{ color: "green" }}>{t("PAYMENT_COMPLETED")}</p>}
-                </div>
-              )}
+              <div className="payment-action">
+                {!action?.isCompleted &&
+                  (index === 0 ? (
+                    t(action?.action)
+                  ) : action?.action !== "offline-process" ? (
+                    <ButtonSelector
+                      style={{ border: "1px solid" }}
+                      label={t(action.action)}
+                      onSubmit={action.onClick}
+                      isDisabled={paymentLoader || isCaseLocked}
+                      title={isCaseLocked ? t(payOnlineButtonTitle) : ""}
+                      textStyles={{ margin: "0px" }}
+                    />
+                  ) : (
+                    <p className="offline-process-text">
+                      This is an offline process. <span className="learn-more-text">Learn More</span>
+                    </p>
+                  ))}
+                {action?.isCompleted && <p style={{ color: "green" }}>{t("PAYMENT_COMPLETED")}</p>}
+              </div>
             </div>
           ))}
         </div>
@@ -709,7 +706,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           formattedChannelId={formattedChannelId}
           isCaseAdmitted={isCaseAdmitted}
           orderType={orderType}
-          isUserAdv={isUserAdv}
           isCaseLocked={isCaseLocked}
           payOnlineButtonTitle={payOnlineButtonTitle}
         />
