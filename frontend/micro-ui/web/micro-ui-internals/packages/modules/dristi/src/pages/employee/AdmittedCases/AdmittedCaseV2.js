@@ -1652,20 +1652,8 @@ const AdmittedCaseV2 = () => {
       if (history.location?.state?.isApplicationAccepted !== undefined) {
         setIsApplicationAccepted({ value: history.location?.state?.isApplicationAccepted });
       }
-
-      // Drop applicationDocObj / isApplicationAccepted from this history entry so that
-      // navigating back to this page later (e.g. after the approval order is published)
-      // does not auto-reopen the modal with a stale snapshot whose status no longer
-      // matches the actionable workflow states.
-      const { applicationDocObj: _omitDoc, isApplicationAccepted: _omitAccepted, ...restState } = history.location.state || {};
-      history.replace({
-        pathname: history.location.pathname,
-        search: history.location.search,
-        hash: history.location.hash,
-        state: restState,
-      });
     }
-  }, [history, history.location?.state?.applicationDocObj, history.location?.state?.isApplicationAccepted, show]);
+  }, [history.location?.state?.applicationDocObj, history.location?.state?.isApplicationAccepted, show]);
 
   useEffect(() => {
     if (currentDiaryEntry && artifactNumber) {
