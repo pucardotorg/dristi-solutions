@@ -9,9 +9,6 @@ import org.egov.user.domain.model.enums.UserType;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-/*
-	Update password request by non logged in user
- */
 @Getter
 @Setter
 @AllArgsConstructor

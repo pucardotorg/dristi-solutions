@@ -2,7 +2,6 @@ package org.egov.pgr.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
-import org.hibernate.validator.constraints.SafeHtml;
 import org.springframework.validation.annotation.Validated;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,14 +9,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.Builder;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 /**
  * Representation of a address. Indiavidual APIs may choose to extend from this using allOf if more details needed to be added in their case. 
  */
 @ApiModel(description = "Representation of a address. Indiavidual APIs may choose to extend from this using allOf if more details needed to be added in their case. ")
 @Validated
-//@javax.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2020-07-15T11:35:33.568+05:30")
+//@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2020-07-15T11:35:33.568+05:30")
 
 @Getter
 @Setter
@@ -25,59 +24,46 @@ import javax.validation.Valid;
 @NoArgsConstructor
 @Builder
 public class Address   {
-        @SafeHtml
-        @JsonProperty("tenantId")
+                @JsonProperty("tenantId")
         private String tenantId = null;
 
-        @SafeHtml
-        @JsonProperty("doorNo")
+                @JsonProperty("doorNo")
         private String doorNo = null;
 
-        @SafeHtml
-        @JsonProperty("plotNo")
+                @JsonProperty("plotNo")
         private String plotNo = null;
 
-        @SafeHtml
-        @JsonProperty("id")
+                @JsonProperty("id")
         private String id = null;
 
-        @SafeHtml
-        @JsonProperty("landmark")
+                @JsonProperty("landmark")
         private String landmark = null;
 
-        @SafeHtml
-        @JsonProperty("city")
+                @JsonProperty("city")
         private String city = null;
 
-        @SafeHtml
-        @JsonProperty("district")
+                @JsonProperty("district")
         private String district = null;
 
-        @SafeHtml
-        @JsonProperty("region")
+                @JsonProperty("region")
         private String region = null;
 
-        @SafeHtml
-        @JsonProperty("state")
+                @JsonProperty("state")
         private String state = null;
 
-        @SafeHtml
-        @JsonProperty("country")
+                @JsonProperty("country")
         private String country = null;
 
-        @SafeHtml
-        @JsonProperty("pincode")
+                @JsonProperty("pincode")
         private String pincode = null;
 
         @JsonProperty("additionDetails")
         private Object additionDetails = null;
 
-        @SafeHtml
-        @JsonProperty("buildingName")
+                @JsonProperty("buildingName")
         private String buildingName = null;
 
-        @SafeHtml
-        @JsonProperty("street")
+                @JsonProperty("street")
         private String street = null;
 
         @Valid

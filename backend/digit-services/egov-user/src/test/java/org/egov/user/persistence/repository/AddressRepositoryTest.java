@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,11 +17,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+// FIX: Updated Assertions to JUnit 5
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@Disabled
-@ExtendWith(SpringExtension.class)
+@Disabled // Replacement for @Ignore
+@ExtendWith(SpringExtension.class) // Replacement for @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 public class AddressRepositoryTest {
 
@@ -32,11 +32,11 @@ public class AddressRepositoryTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @InjectMocks
     private AddressRepository addressRepository;
 
-    @BeforeEach
+    @BeforeEach // Replacement for @Before
     public void before() {
+        // Manually initializing since we are in a SpringBootTest context
         addressRepository = new AddressRepository(namedParameterJdbcTemplate, jdbcTemplate);
     }
 
@@ -45,7 +45,7 @@ public class AddressRepositoryTest {
     public void test_should_save_new_address() {
         final Address domainAddress = Address.builder()
                 .city("city")
-                .userId(1l)
+                .userId(1L) // Using capital L for long literal
                 .tenantId("ap.public")
                 .address("address")
                 .pinCode("pinCode")
@@ -74,6 +74,7 @@ public class AddressRepositoryTest {
     @Sql(scripts = {"/sql/clearAddresses.sql", "/sql/clearUserRoles.sql", "/sql/clearUsers.sql", "/sql/createUsers.sql", "/sql/createAddresses.sql"})
     public void test_should_delete_all_associated_addresses() {
         final List<Address> domainAddresses = Collections.emptyList();
+        // Ensuring this doesn't throw an exception
         addressRepository.update(domainAddresses, 1L, "ap.public");
     }
 
@@ -104,7 +105,6 @@ public class AddressRepositoryTest {
                 .build();
         final List<Address> domainAddresses = Arrays.asList(domainAddress1, domainAddress2);
         addressRepository.update(domainAddresses, 1L, "ap.public");
-
     }
 
     @Test
@@ -119,6 +119,4 @@ public class AddressRepositoryTest {
         final List<Address> domainAddresses = Collections.singletonList(domainAddress1);
         addressRepository.update(domainAddresses, 1L, "ap.public");
     }
-
-
 }

@@ -1,6 +1,8 @@
 package org.egov.user;
 
 import org.egov.encryption.EncryptionService;
+import org.egov.encryption.config.DecryptionPolicyConfiguration;
+import org.egov.encryption.config.EncryptionPolicyConfiguration;
 import org.egov.encryption.masking.MaskingService;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +34,18 @@ public class TestConfiguration {
     @Primary
     public EncryptionService encryptionService() {
         return mock(EncryptionService.class);
+    }
+
+    @Bean
+    @Primary
+    public EncryptionPolicyConfiguration encryptionPolicyConfiguration() {
+        return mock(EncryptionPolicyConfiguration.class);
+    }
+
+    @Bean
+    @Primary
+    public DecryptionPolicyConfiguration decryptionPolicyConfiguration() {
+        return mock(DecryptionPolicyConfiguration.class);
     }
 
     @Bean
