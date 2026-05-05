@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import DocViewerWrapper from "../docViewerWrapper";
-import { modifiedEvidenceNumber } from "../../../Utils";
+import { formatTitle, modifiedEvidenceNumber } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import useDownloadFiles from "../../../hooks/dristi/useDownloadFiles";
 import MarkAsEvidence from "./MarkAsEvidence";
@@ -27,6 +27,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [selectedFileStoreId, setSelectedFileStoreId] = useState(null);
+  const [currentItem, setCurrentItem] = useState(null);
   const { downloadPdf } = useDownloadCasePdf();
   const { downloadFilesAsZip } = useDownloadFiles();
   const [showEvidenceConfirmationModal, setShowEvidenceConfirmationModal] = useState(false);
@@ -84,9 +85,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       const firstValidNode = previewNodes.find((node) => node.fileStoreId || (node.children && node.children.length > 0));
       if (firstValidNode) {
         if (firstValidNode.fileStoreId) {
+          setCurrentItem(firstValidNode);
           setSelectedDocument(firstValidNode.id);
           setSelectedFileStoreId(firstValidNode.fileStoreId);
         } else if (firstValidNode.children?.[0]?.fileStoreId) {
+          setCurrentItem(firstValidNode.children[0]);
           setSelectedDocument(firstValidNode.children[0].id);
           setSelectedFileStoreId(firstValidNode.children[0].fileStoreId);
         }
@@ -129,7 +132,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     });
   };
 
-  const handleDocumentSelect = (docId, fileStoreId) => {
+  const handleDocumentSelect = (docId, fileStoreId, item) => {
+    setCurrentItem(item);
     setSelectedDocument(docId);
     setSelectedFileStoreId(fileStoreId);
   };
@@ -172,26 +176,33 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       }));
   }, [previewNodes]);
 
-  // Handle download for either single PDF or ZIP containing evidence file and seal
   const handleDownload = (fileStoreId) => {
-    if (evidenceFileStoreMap?.has(fileStoreId)) {
-      const evidenceData = evidenceFileStoreMap.get(fileStoreId);
-      // Check if evidence is marked as COMPLETED and has a seal object
-      if (evidenceData?.evidenceMarkedStatus === "COMPLETED" && evidenceData?.seal?.fileStore) {
-        // Download both evidence and seal files as a ZIP
-        const filesToDownload = [
-          { fileStoreId: fileStoreId, fileName: `Evidence_${evidenceData.evidenceNumber || "File"}` },
-          { fileStoreId: evidenceData.seal.fileStore, fileName: `Seal_${evidenceData.evidenceNumber || "File"}` },
-        ];
-        downloadFilesAsZip(tenantId, filesToDownload, `Evidence_${evidenceData.evidenceNumber || "Files"}`);
-      } else {
-        // Normal PDF download if not completed or no seal
-        downloadPdf(tenantId, fileStoreId);
-      }
-    } else {
-      // Normal PDF download for non-evidence files
-      downloadPdf(tenantId, fileStoreId);
+    const evidenceData = evidenceFileStoreMap?.get(fileStoreId);
+
+    // Check if evidence is marked as COMPLETED and has a seal object
+    const isCompletedWithSeal = evidenceData?.evidenceMarkedStatus === "COMPLETED" && evidenceData?.seal?.fileStore;
+
+    if (isCompletedWithSeal) {
+      // Download both evidence and seal files as a ZIP
+      const evidenceNumber = evidenceData.evidenceNumber || "File";
+
+      return downloadFilesAsZip(
+        tenantId,
+        [
+          { fileStoreId, fileName: `Evidence_${evidenceNumber}` },
+          { fileStoreId: evidenceData.seal.fileStore, fileName: `Seal_${evidenceNumber}` },
+        ],
+        `Evidence_${evidenceNumber}`
+      );
     }
+
+    // Normal PDF download if not completed or no seal
+    // Normal PDF download for non-evidence files
+    return downloadPdf(
+      tenantId,
+      fileStoreId,
+      `${caseDetails?.caseNumber || caseDetails?.filingNumber || "File"}_${formatTitle(t(currentItem?.title || ""))}`
+    );
   };
 
   const localizeTitle = (title) => {
@@ -278,7 +289,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
             if (item.hasChildren) {
               toggleExpanded(item);
             } else if (item.fileStoreId && item.id !== selectedDocument) {
-              handleDocumentSelect(item.id, item.fileStoreId);
+              handleDocumentSelect(item.id, item.fileStoreId, item);
             }
           }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = isSelected ? "#E8E8E8" : "#F9FAFB")}
