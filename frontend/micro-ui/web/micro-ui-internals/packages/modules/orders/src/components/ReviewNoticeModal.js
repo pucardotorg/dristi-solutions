@@ -38,8 +38,8 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          flex: 1,
-          minHeight: 0,
+          maxHeight: "60vh",
+          maxWidth: "100%",
           overflowY: "auto",
           overflowX: "hidden",
         }}
@@ -87,12 +87,11 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
       actionSaveLabel={null}
       hideSubmit={true}
       actionSaveOnSubmit={() => {}}
-      popupStyles={{ width: "90vw", height: "90vh", maxHeight: "90vh", display: "flex", flexDirection: "column" }}
-      popupModuleMianStyles={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", padding: "0 24px 24px" }}
+      popupStyles={{ minWidth: "880px", width: "80%" }}
     >
       {infos && <ApplicationInfoComponent infos={infos} />}
       {showDocument}
-      <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px", flexShrink: 0 }}>
+      <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
         <div
           onClick={() => {
             handleDownload(tenantId, doc?.fileStore, policeDoc?.fileStore);

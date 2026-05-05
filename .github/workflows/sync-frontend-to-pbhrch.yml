@@ -3,6 +3,7 @@ name: Sync Kerala Frontend to dristi-frontend-pbhrch
 # Path mapping:
 #   dristi-solutions/frontend/src/foo.js  -->  dristi-frontend-pbhrch/oncourts-ui/src/foo.js
 #   (git apply -p2 strips 'a/frontend/', --directory=oncourts-ui prepends destination)
+#   Sync marker: dristi-frontend-pbhrch/oncourts-ui/.last-kerala-sync
 
 on:
   push:
@@ -42,11 +43,11 @@ jobs:
           if [ -n "${{ github.event.inputs.from_sha }}" ]; then
             FROM="${{ github.event.inputs.from_sha }}"
             echo "Source: workflow_dispatch from_sha"
-          elif [ -f pbhrch/.last-kerala-sync ]; then
-            FROM=$(cat pbhrch/.last-kerala-sync | tr -d '[:space:]')
-            echo "Source: .last-kerala-sync = $FROM"
+          elif [ -f pbhrch/oncourts-ui/.last-kerala-sync ]; then
+            FROM=$(cat pbhrch/oncourts-ui/.last-kerala-sync | tr -d '[:space:]')
+            echo "Source: oncourts-ui/.last-kerala-sync = $FROM"
           else
-            echo "ERROR: No .last-kerala-sync file in dristi-frontend-pbhrch and no from_sha provided."
+            echo "ERROR: No oncourts-ui/.last-kerala-sync in dristi-frontend-pbhrch and no from_sha provided."
             exit 1
           fi
 
@@ -107,7 +108,7 @@ jobs:
           git checkout -b "$BRANCH"
 
           # -p2 strips 'a/frontend/' from patch paths
-          # --directory=oncourts-ui prepends destination: frontend/src/foo.js → oncourts-ui/src/foo.js
+          # --directory=oncourts-ui prepends destination: frontend/src/foo.js -> oncourts-ui/src/foo.js
           APPLY_STATUS="clean"
           if ! git apply --binary -p2 --directory=oncourts-ui /tmp/kerala-frontend.patch 2>/tmp/apply-log.txt; then
             echo "Clean apply failed - retrying with --reject"
@@ -118,7 +119,8 @@ jobs:
 
           echo "apply_status=$APPLY_STATUS" >> $GITHUB_OUTPUT
 
-          echo "${{ steps.range.outputs.to }}" > .last-kerala-sync
+          # Update sync marker inside oncourts-ui/
+          echo "${{ steps.range.outputs.to }}" > oncourts-ui/.last-kerala-sync
 
           git add -A
           if git diff --staged --quiet; then
