@@ -121,7 +121,7 @@ public class CaseQueryBuilder {
                     firstCriteria = false;
                 }
                 addClauseIfRequired(query, firstCriteria);
-                query.append(" AND cases.status NOT IN ('DRAFT_IN_PROGRESS', 'DELETED_DRAFT') ");
+                query.append(" cases.status NOT IN ('DRAFT_IN_PROGRESS', 'DELETED_DRAFT') ");
             }
 
             return query.toString();
