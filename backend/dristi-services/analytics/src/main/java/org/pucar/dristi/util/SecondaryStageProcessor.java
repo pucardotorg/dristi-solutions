@@ -296,29 +296,6 @@ public class SecondaryStageProcessor {
         }
     }
 
-    /**
-     * Evaluates whether the Proclamation & Attachment secondary stage should end
-     * because the accused has joined the case.
-     * Called from join-case event processing.
-     *
-     * @param filingNumber case filing number
-     * @param tenantId     tenant ID
-     * @param request      the JSONObject request containing RequestInfo
-     */
-    public void processJoinCaseSecondaryStage(String filingNumber, String tenantId, JSONObject request,Object caseObject) {
-        try {
-            List<String> activeStages = caseStageTrackingUtil.getActiveSecondaryStageNames(filingNumber);
-            if (activeStages.contains(SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT)) {
-                log.info("Accused joined case, ending secondary stage '{}' for filingNumber: {}", SECONDARY_STAGE_PROCLAMATION_AND_ATTACHMENT, filingNumber);
-                publishSubstageUpdate(filingNumber, tenantId, request,null,caseObject);
-                caseStageTrackingUtil.endSecondaryStage(filingNumber);
-            }
-        } catch (Exception e) {
-            log.error("Error processing join case secondary stage for filingNumber: {}", filingNumber, e);
-        }
-    }
-
-
 
     /**
      * Maps a task business service (entityType) to the corresponding secondary stage name.

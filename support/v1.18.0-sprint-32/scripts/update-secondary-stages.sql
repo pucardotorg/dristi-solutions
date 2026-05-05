@@ -65,17 +65,20 @@ WITH active_flags AS (
         )
         THEN true ELSE false END AS has_warrant,
 
-        -- Proclamation & Attachment: published PROCLAMATION order AND accused not yet joined
+        -- Proclamation & Attachment: published PROCLAMATION/ATTACHMENT order AND not all tasks completed
         CASE WHEN EXISTS (
             SELECT 1 FROM dristi_orders o
             WHERE o.filingNumber = dc.filingNumber AND o.status ILIKE 'published'
               AND (o.orderType = 'PROCLAMATION' OR o.orderType = 'ATTACHMENT'
                    OR (o.orderCategory = 'COMPOSITE' AND EXISTS (SELECT 1 FROM jsonb_array_elements(o.compositeItems) elem WHERE elem->>'orderType' IN ('PROCLAMATION', 'ATTACHMENT'))))
-        ) AND NOT EXISTS (
-            SELECT 1 FROM dristi_case_litigants l
-            WHERE l.case_id = dc.id
-              AND l.partyType ILIKE '%respondent%'
-              AND l.isActive = true
+        ) AND (
+            NOT EXISTS (
+                SELECT 1 FROM dristi_task t WHERE t.filingNumber = dc.filingNumber AND t.taskType IN ('PROCLAMATION','ATTACHMENT')
+            )
+            OR EXISTS (
+                SELECT 1 FROM dristi_task t WHERE t.filingNumber = dc.filingNumber AND t.taskType IN ('PROCLAMATION','ATTACHMENT')
+                  AND t.status NOT IN ('EXECUTED','EXPIRED','DELIVERED','ABATED','UNDELIVERED','NOT_EXECUTED')
+            )
         )
         THEN true ELSE false END AS has_proclamation
 
