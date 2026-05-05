@@ -2458,12 +2458,16 @@ const GenerateOrdersV2 = () => {
 
   const handleDownloadOrders = () => {
     const fileStoreId = sessionStorage.getItem("fileStoreId");
-    downloadPdf(tenantId, signedDoucumentUploadedID || fileStoreId);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${prevOrder?.orderNumber}_Order`;
+    downloadPdf(tenantId, signedDoucumentUploadedID || fileStoreId, name);
   };
 
   const handleBulkDownloadOrder = () => {
     const fileStoreId = prevOrder?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore;
-    downloadPdf(tenantId, fileStoreId);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${
+      currentOrder?.orderNumber
+    }_Order`;
+    downloadPdf(tenantId, fileStoreId, name);
   };
 
   const handleBulkGoToSignList = () => {
@@ -3199,6 +3203,7 @@ const GenerateOrdersV2 = () => {
           orderPdfFileStoreID={orderPdfFileStoreID}
           saveOnsubmitLabel={"ISSUE_ORDER"}
           businessOfDay={businessOfTheDay}
+          caseDetails={caseDetails}
         />
       )}
       {showSuccessModal && (

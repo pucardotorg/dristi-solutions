@@ -2008,10 +2008,14 @@ const AdmittedCaseV2 = () => {
   const handleDownload = useCallback(
     (filestoreId) => {
       if (filestoreId) {
-        downloadPdf(tenantId, filestoreId);
+        const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${
+          currentOrder?.orderNumber
+        }_Order`;
+
+        downloadPdf(tenantId, filestoreId, name);
       }
     },
-    [downloadPdf, tenantId]
+    [downloadPdf, tenantId, caseDetails, currentOrder]
   );
 
   const handleOrdersTab = useCallback(() => {
