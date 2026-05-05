@@ -1,5 +1,5 @@
 import { CardLabelError, CardText } from "@egovernments/digit-ui-components";
-import { CardLabel, CloseSvg, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { verifyMobileNoConfig } from "../configs/component";
 import useInterval from "../hooks/useInterval";
@@ -9,6 +9,7 @@ import Button from "./Button";
 import Modal from "./Modal";
 import OTPInput from "./OTPInput";
 import { maskEmail } from "../Utils";
+import { CloseBtn, Heading } from "./ModalComponents";
 const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
 const DEFAULT_USER = "digit-user";
@@ -21,19 +22,6 @@ const RoundedCheck = ({ className, height = "24", width = "24", style = {}, fill
     </svg>
   );
 };
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setError }) {
   const [{ showModal, mobileNumber, isUserVerified, errorMsg }, setState] = useState({
     showModal: false,
@@ -216,7 +204,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
       },
       { tenantId: stateCode, limit: 10, offset: 0 }
     )
-      .then((individualData) => {
+      .then(async (individualData) => {
         if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
           let permanentAddress;
           let currentAddress;
@@ -250,9 +238,9 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
           const data = {
             "addressDetails-select": {
               pincode: permanentAddress?.pincode || "",
-              district: permanentAddress?.addressLine2 || "Rangareddy",
+              district: permanentAddress?.addressLine2 || "",
               city: permanentAddress?.city || "",
-              state: permanentAddress?.addressLine1 || "Telangana",
+              state: permanentAddress?.addressLine1 || "",
               coordinates: {
                 longitude: permanentAddress?.longitude || "",
                 latitude: permanentAddress?.latitude || "",
@@ -261,9 +249,9 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
             },
             "currentAddressDetails-select": {
               pincode: currentAddress?.pincode || "",
-              district: currentAddress?.addressLine2 || "Rangareddy",
+              district: currentAddress?.addressLine2 || "",
               city: currentAddress?.city || "",
-              state: currentAddress?.addressLine1 || "Telangana",
+              state: currentAddress?.addressLine1 || "",
               coordinates: {
                 longitude: currentAddress?.longitude || "",
                 latitude: currentAddress?.latitude || "",
@@ -329,9 +317,6 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
             },
             { shouldValidate: true }
           );
-          if (config?.screen === "join-case") {
-            ["firstName", "lastName", "middleName"].forEach((key) => onSelect(key, data[key], { shouldValidate: true }));
-          }
         } else {
           onSelect(
             config?.key,

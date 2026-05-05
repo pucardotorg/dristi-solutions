@@ -1,27 +1,16 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../components/Modal";
 import useGetDiaryEntry from "../../../hooks/dristi/useGetDiaryEntry";
 import { TextInput } from "@egovernments/digit-ui-react-components";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 function PublishedNotificationModal({ t, notification, handleDownload, filingNumber, handleOrdersTab }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const courtId = localStorage.getItem("courtId");
 
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const { data: diaryResponse } = useGetDiaryEntry(
     {
       criteria: {

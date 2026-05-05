@@ -1,23 +1,11 @@
-import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
 import React, { useState, useMemo, useEffect } from "react";
 import Modal from "./Modal";
 import { Button } from "@egovernments/digit-ui-react-components";
 import { FileUploadIcon } from "../icons/svgIndex";
 import { Urls } from "../hooks";
 import AuthenticatedLink from "../Utils/authenticatedLink";
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
+import { CloseBtn, Heading } from "./ModalComponents";
 function ESignSignatureModal({
   t,
   handleIssueOrder,
@@ -38,6 +26,7 @@ function ESignSignatureModal({
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [isSigned, setIsSigned] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
   const name = "Signature";
   const uploadModalConfig = useMemo(() => {
     return {
@@ -48,8 +37,8 @@ function ESignSignatureModal({
             name: name,
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            maxFileSize: 10,
+            maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
@@ -69,6 +58,7 @@ function ESignSignatureModal({
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -82,6 +72,7 @@ function ESignSignatureModal({
         console.error("error", error);
         setFormData({});
         setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       }
     }
   };
@@ -204,6 +195,8 @@ function ESignSignatureModal({
       config={uploadModalConfig}
       formData={formData}
       onSubmit={onSubmit}
+      fileUploadError={fileUploadError}
+      setFileUploadError={setFileUploadError}
     />
   );
 }

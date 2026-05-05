@@ -1,0 +1,58 @@
+//For searching
+GET pending-tasks-index/_search
+{
+"size": 10000,
+"query": {
+  "bool": {
+    "must": [
+      {
+        "term": {
+          "Data.name.keyword": "name"//replace with Re-issue Notice, Re-issue Summon, Confirm Bond Submission
+        }
+      }
+    ]
+  }
+}
+}
+
+POST pending-tasks-index/_update_by_query
+{
+  "script": {
+    "source": "ctx._source.Data.assignedRole = ['PENDING_TASK_REISSUE_NOTICE']",
+    "lang": "painless"
+  },
+  "query": {
+    "term": {
+      "Data.name.keyword": "Re-issue Notice"
+    }
+  }
+}
+
+POST pending-tasks-index/_update_by_query
+{
+  "script": {
+    "source": "ctx._source.Data.assignedRole = ['PENDING_TASK_REISSUE_SUMMON']",
+    "lang": "painless"
+  },
+  "query": {
+    "term": {
+      "Data.name.keyword": "Re-issue Summon"
+    }
+  }
+}
+
+POST pending-tasks-index/_update_by_query
+{
+  "script": {
+    "source": "ctx._source.Data.assignedRole = ['PENDING_TASK_CONFIRM_BOND_SUBMISSION']",
+    "lang": "painless"
+  },
+  "query": {
+    "term": {
+      "Data.name.keyword": "Confirm Bond Submission"
+    }
+  }
+}
+
+//Db update
+update dristi_diaryentries set reference_type='notice' where reference_type='bulkreschedule';

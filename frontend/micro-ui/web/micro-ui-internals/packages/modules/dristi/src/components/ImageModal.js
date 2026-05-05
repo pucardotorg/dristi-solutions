@@ -6,7 +6,18 @@ import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import { ZoomInIcon, ZoomOutIcon, RotateIcon, DownloadIcon } from "../icons/svgIndex";
 import useDownloadCasePdf from "../hooks/dristi/useDownloadCasePdf";
 
-export const ImageModal =({ imageInfo, handleCloseModal, handleOpenPopup, t, anchorRef, showFlag, isPrevScrutiny, selectedDocs, headerBarMainStyle }) =>{
+export const ImageModal = ({
+  imageInfo,
+  handleCloseModal,
+  handleOpenPopup,
+  t,
+  anchorRef,
+  showFlag,
+  isPrevScrutiny,
+  selectedDocs,
+  headerBarMainStyle,
+  popupModuleMianStyles,
+}) => {
   let showFlagNew = (!imageInfo?.disableScrutiny || imageInfo?.enableScrutinyField) && showFlag;
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
@@ -18,6 +29,22 @@ export const ImageModal =({ imageInfo, handleCloseModal, handleOpenPopup, t, anc
     });
   }
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+
+  const handleLocalDownload = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const a = document.createElement("a");
+      a.href = reader.result;
+      a.download = file.name || "document";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+
+    reader.readAsDataURL(file);
+  };
 
   const zoomIn = () => {
     setZoom(zoom + 0.1);
@@ -68,7 +95,18 @@ export const ImageModal =({ imageInfo, handleCloseModal, handleOpenPopup, t, anc
           </div>
         )}
 
-        <div className="close-icon" onClick={() => downloadPdf(tenantId, imageInfo?.data?.fileStore)} style={{ cursor: "pointer" }}>
+        <div
+          className="close-icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (imageInfo?.data?.fileStore) {
+              downloadPdf(tenantId, imageInfo?.data?.fileStore);
+            } else if (selectedDocs?.length > 0) {
+              handleLocalDownload(selectedDocs[0]);
+            }
+          }}
+          style={{ cursor: "pointer" }}
+        >
           <DownloadIcon size={20} />
         </div>
         <div className="close-icon" onClick={zoomIn} style={{ cursor: "pointer" }}>
@@ -103,6 +141,7 @@ export const ImageModal =({ imageInfo, handleCloseModal, handleOpenPopup, t, anc
         width: "100%",
       }}
       headerBarMainStyle={headerBarMainStyle}
+      popupModuleMianStyles={popupModuleMianStyles}
     >
       <DocViewerWrapper
         fileStoreId={imageInfo?.data?.fileStore}
@@ -117,6 +156,6 @@ export const ImageModal =({ imageInfo, handleCloseModal, handleOpenPopup, t, anc
       />
     </Modal>
   );
-}
+};
 
 export default ImageModal;

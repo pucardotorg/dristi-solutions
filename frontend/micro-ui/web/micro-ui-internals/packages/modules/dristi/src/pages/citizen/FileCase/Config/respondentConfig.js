@@ -100,14 +100,14 @@ const respondentFromconfig = [
               fileTypes: ["JPG", "JPEG", "PDF", "PNG"],
               isOptional: "CS_IS_OPTIONAL",
               isMandatory: false,
-              maxFileSize: 50,
+              maxFileSize: 10,
               documentHeader: "COMPANY_DOCUMENT_DETAILS",
               isMultipleUpload: true,
-              uploadGuidelines: "UPLOAD_DOC_50",
+              uploadGuidelines: "UPLOAD_DOC_10",
               documentHeaderStyle: {
                 textAlign: "start",
               },
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             },
           ],
         },
@@ -392,7 +392,7 @@ const respondentFromconfig = [
               label: "STATE",
               validation: {
                 isRequired: true,
-                patternType: "Name", // new
+                patternType: "Name",
               },
               isMandatory: true,
             },
@@ -402,7 +402,7 @@ const respondentFromconfig = [
               label: "DISTRICT",
               validation: {
                 isRequired: true,
-                patternType: "Name", // new
+                patternType: "Name",
               },
               isMandatory: true,
             },
@@ -412,7 +412,7 @@ const respondentFromconfig = [
               label: "CITY/TOWN",
               validation: {
                 isRequired: true,
-                patternType: "Name", // new
+                patternType: "Name",
               },
               isMandatory: true,
             },
@@ -421,13 +421,12 @@ const respondentFromconfig = [
               type: "text",
               label: "ADDRESS",
               validation: {
-                isRequired: true,
-                // new
                 pattern: {
                   masterName: "commonUiConfig",
                   moduleName: "patternValidation",
                   patternType: "address",
                 },
+                isRequired: true,
               },
               isMandatory: true,
             },
@@ -516,12 +515,12 @@ const respondentFromconfig = [
               type: "DragDropComponent",
               fileTypes: ["JPG", "JPEG", "PDF", "PNG"],
               isOptional: "",
-              maxFileSize: 50,
+              maxFileSize: 10,
               documentHeader: "AFFIDAVIT_UNDER_SECTION_225_BNSS",
               isMultipleUpload: true,
-              uploadGuidelines: "UPLOAD_DOC_50",
+              uploadGuidelines: "UPLOAD_DOC_10",
               infoTooltipMessage: "AFFIDAVIT_UNDER_SECTION_225_BNSS_TOOLTIP_MSG",
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              maxFileErrorMessage: "CS_FILE_LIMIT_10_MB",
             },
           ],
         },
@@ -537,7 +536,7 @@ const respondentFromconfig = [
 export const respondentconfig = {
   formconfig: respondentFromconfig,
   header: "CS_RESPONDENT_DETAIL_HEADING",
-  subtext: "CS_RESPONDENT_DETAIL_SUBTEXT",
+  subtext: "CS_COMPLAINT_DATA_ENTRY_INFO",
   isOptional: false,
   addFormText: "ADD_RESPONDENT",
   formItemName: "CS_RESPONDENT",

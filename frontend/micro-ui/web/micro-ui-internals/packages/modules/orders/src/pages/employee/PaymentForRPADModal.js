@@ -1,19 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Button, RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { InfoCard, Loader } from "@egovernments/digit-ui-components";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
 import DocumentModal from "../../components/DocumentModal";
-import { formatDate } from "../../../../hearings/src/utils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { ordersService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { paymentType } from "../../utils/paymentType";
-import { extractFeeMedium, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, extractFeeMedium, getAuthorizedUuid, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getAdvocates } from "../../utils/caseUtils";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
+import { getPartyNameForInfos } from "../../utils";
 const modeOptions = [{ label: "Registered Post (10-15 days)", value: "registered-post" }];
 
 const submitModalInfo = {
@@ -127,6 +127,8 @@ const PaymentForSummonComponent = ({
 const PaymentForRPADModal = ({ path }) => {
   const history = useHistory();
   const userInfo = Digit.UserService.getUser()?.info;
+  const userUuid = userInfo?.uuid;
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const { filingNumber, taskNumber } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [caseId, setCaseId] = useState();
@@ -165,6 +167,8 @@ const PaymentForRPADModal = ({ path }) => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+
   const fetchCaseLockStatus = useCallback(async () => {
     try {
       const status = await DRISTIService.getCaseLockStatus(
@@ -192,7 +196,7 @@ const PaymentForRPADModal = ({ path }) => {
     }
     return [];
   }, [allAdvocates]);
-  const isUserAdv = useMemo(() => advocatesUuids.includes(userInfo.uuid), [advocatesUuids, userInfo.uuid]);
+  const isUserAdv = useMemo(() => advocatesUuids.includes(authorizedUuid), [advocatesUuids, authorizedUuid]);
 
   const onViewOrderClick = () => {
     history.push(
@@ -208,20 +212,21 @@ const PaymentForRPADModal = ({ path }) => {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
 
-  const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId } },
+  const { data: orderData, isLoading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
+    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
-    Boolean(filteredTasks?.[0]?.orderId)
+    Boolean(filteredTasks?.[0]?.orderId && caseCourtId)
   );
   const orderDetails = useMemo(() => orderData?.list?.[0] || {}, [orderData]);
 
@@ -241,12 +246,13 @@ const PaymentForRPADModal = ({ path }) => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
-        hearingId: orderDetails?.hearingNumber,
+        hearingId: orderDetails?.scheduledHearingNumber || orderDetails?.hearingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
-    orderDetails?.hearingNumber,
-    Boolean(orderDetails?.hearingNumber)
+    orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber,
+    Boolean((orderDetails?.hearingNumber || orderDetails?.scheduledHearingNumber) && caseCourtId)
   );
 
   const consumerCode = useMemo(() => {
@@ -309,14 +315,6 @@ const PaymentForRPADModal = ({ path }) => {
           },
     [isCaseAdmitted]
   );
-
-  const getPartyIndex = (orderType, orderDetails, compositeItem) => {
-    if (orderType !== "NOTICE") return "";
-
-    return orderDetails?.orderCategory === "COMPOSITE"
-      ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex || ""
-      : orderDetails?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex || "";
-  };
 
   const feeOptions = useMemo(() => {
     const taskAmount = filteredTasks?.[0]?.amount?.amount || 0;
@@ -390,27 +388,6 @@ const PaymentForRPADModal = ({ path }) => {
           await Promise.all([
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: orderType === "SUMMONS" ? "Show Summon-Warrant Status" : "Show Notice Status",
-                entityType: paymentType.ORDER_MANAGELIFECYCLE,
-                referenceId: hearingsData?.HearingList?.[0]?.hearingId,
-                status: orderType === "SUMMONS" ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
-                assignedTo: [],
-                assignedRole: ["JUDGE_ROLE"],
-                cnrNumber: filteredTasks?.[0]?.cnrNumber,
-                filingNumber: filingNumber,
-                caseId: caseDetails?.id,
-                caseTitle: caseDetails?.caseTitle,
-                isCompleted: false,
-                stateSla: 3 * dayInMillisecond + todayDate,
-                additionalDetails: {
-                  hearingId: hearingsData?.list?.[0]?.hearingId,
-                  partyIndex: getPartyIndex(orderType, orderDetails, compositeItem),
-                },
-                tenantId,
-              },
-            }),
-            ordersService.customApiService(Urls.orders.pendingTask, {
-              pendingTask: {
                 name: orderType === "SUMMONS" ? `MAKE_PAYMENT_FOR_SUMMONS_RPAD` : `MAKE_PAYMENT_FOR_NOTICE_RPAD`,
                 entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
                 referenceId: `MANUAL_${taskNumber}`,
@@ -473,7 +450,6 @@ const PaymentForRPADModal = ({ path }) => {
   ]);
 
   const infos = useMemo(() => {
-    const name = filteredTasks?.[0]?.taskDetails?.respondentDetails?.name;
     const addressDetails = filteredTasks?.[0]?.taskDetails?.respondentDetails?.address;
     const formattedAddress =
       typeof addressDetails === "object"
@@ -482,14 +458,14 @@ const PaymentForRPADModal = ({ path }) => {
           }`
         : addressDetails;
     return [
-      { key: "Issued to", value: name },
-      { key: "Next Hearing Date", value: formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },
+      { key: "Issued to", value: getPartyNameForInfos(orderDetails, compositeItem, orderType) },
+      { key: "Next Hearing Date", value: DateUtils.getFormattedDate(new Date(hearingsData?.HearingList?.[0]?.startTime), "DD-MM-YYYY") },
       {
         key: "Delivery Channel",
         value: `RPAD (${formattedAddress})`,
       },
     ];
-  }, [filteredTasks, hearingsData?.HearingList]);
+  }, [compositeItem, filteredTasks, hearingsData?.HearingList, orderDetails, orderType]);
 
   const orderDate = useMemo(() => {
     return hearingsData?.HearingList?.[0]?.startTime;
@@ -512,6 +488,7 @@ const PaymentForRPADModal = ({ path }) => {
       isStepperModal: false,
       isCaseLocked: isCaseLocked,
       payOnlineButtonTitle: payOnlineButtonTitle,
+      className: "payment-modal",
       modalBody: (
         <PaymentForSummonComponent
           infos={infos}
@@ -529,7 +506,7 @@ const PaymentForRPADModal = ({ path }) => {
     };
   }, [orderType, infos, links, feeOptions, orderDate, paymentLoader, isCaseAdmitted, isUserAdv, history]);
 
-  if (isOrdersLoading || isSummonsBreakUpLoading || isCourtBillLoading || isTaskLoading || isHearingLoading) {
+  if (isOrdersLoading || !orderData || isSummonsBreakUpLoading || isCourtBillLoading || isTaskLoading || isHearingLoading) {
     return <Loader />;
   }
 

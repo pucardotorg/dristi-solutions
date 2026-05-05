@@ -1,13 +1,13 @@
-import { CloseSvg } from "@egovernments/digit-ui-components";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../components/Modal";
 import { Button, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
-import { DRISTIService } from "../../../services";
 import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import useGetDiaryEntry from "../../../hooks/dristi/useGetDiaryEntry";
+import { getAllAssociatedPartyUuids, getAuthorizedUuid } from "../../../Utils";
+import { CloseBtn, Heading } from "../../../components/ModalComponents";
 
 function PublishedOrderModal({
   t,
@@ -27,27 +27,17 @@ function PublishedOrderModal({
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const courtId = localStorage.getItem("courtId");
 
-  const { documents, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
+  const { documents, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments({ ...(!isCitizen && { courtId }) });
   const [loading, setLoading] = useState(false);
-  const Heading = (props) => {
-    return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
-
+  
   const { data: caseData } = useSearchCaseService(
     {
       criteria: [
         {
           filingNumber: order?.filingNumber,
+          ...(courtId && !isCitizen && { courtId }),
         },
       ],
       tenantId,
@@ -58,9 +48,11 @@ function PublishedOrderModal({
     Boolean(order?.filingNumber)
   );
   const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0] || {}, [caseData]);
-
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const signedOrder = useMemo(() => order?.documents?.filter((item) => item?.documentType === "SIGNED")[0], [order]);
   const userInfo = Digit.UserService.getUser()?.info;
+  const userUuid = userInfo?.uuid; // use userUuid only if required explicitly, otherwise use only authorizedUuid.
+  const authorizedUuid = getAuthorizedUuid(userUuid);
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
 
   const { data: diaryResponse } = useGetDiaryEntry(
@@ -68,13 +60,13 @@ function PublishedOrderModal({
       criteria: {
         referenceId: order?.orderNumber,
         tenantId,
-        courtId: courtId,
-        caseId: caseDetails?.cmpNumber,
+        courtId: caseCourtId,
+        caseId: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber,
       },
     },
     {},
     order?.orderNumber + caseDetails?.id,
-    Boolean(order?.orderNumber) && !Boolean(isCitizen) && Boolean(caseDetails?.id)
+    Boolean(order?.orderNumber && caseCourtId) && !Boolean(isCitizen) && Boolean(caseDetails?.id)
   );
 
   const isComposite = useMemo(() => order?.orderCategory === "COMPOSITE", [order]);
@@ -87,7 +79,7 @@ function PublishedOrderModal({
   const mandatorySubmissionItemId = useMemo(() => {
     for (const compositeItem of compositeMandatorySubmissionItems) {
       const isCurrentUserPresent = compositeItem?.orderSchema?.additionalDetails?.formdata?.submissionParty?.some(
-        (party) => [...party?.uuid]?.includes(userInfo?.uuid) || userInfo?.uuid === party?.partyUuid
+        (party) => [...party?.uuid]?.includes(userUuid) || userUuid === party?.partyUuid
       );
       const isCompleted = productionOfDocumentApplications?.some(
         (item) => item?.additionalDetails?.formdata?.refOrderId === `${compositeItem?.id}_${order?.orderNumber}`
@@ -98,7 +90,7 @@ function PublishedOrderModal({
       }
     }
     return null;
-  }, [order, compositeMandatorySubmissionItems, productionOfDocumentApplications, userInfo]);
+  }, [order, compositeMandatorySubmissionItems, productionOfDocumentApplications, userUuid]);
 
   const compositeSetTermsOfBailItems = useMemo(() => order?.compositeItems?.filter((item) => item?.orderType === "SET_BAIL_TERMS") || [], [order]);
 
@@ -127,12 +119,13 @@ function PublishedOrderModal({
         filingNumber: order?.filingNumber,
         tenantId: tenantId,
         applicationNumber: applicationNumberSetTerms,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     applicationNumberSetTerms + order?.filingNumber,
-    Boolean(applicationNumberSetTerms && order?.filingNumber)
+    Boolean(applicationNumberSetTerms && order?.filingNumber && caseCourtId)
   );
   const applicationDetails = useMemo(() => applicationData?.applicationList?.[0], [applicationData]);
 
@@ -157,10 +150,9 @@ function PublishedOrderModal({
       (isComposite
         ? compositeMandatorySubmissionItems?.find((item) => item?.id === mandatorySubmissionItemId)?.orderSchema
         : order
-      )?.additionalDetails?.formdata?.submissionParty?.find(
-        (party) => [...party?.uuid]?.includes(userInfo?.uuid) || userInfo?.uuid === party?.partyUuid
-      )?.individualId,
-    [compositeMandatorySubmissionItems, mandatorySubmissionItemId, userInfo?.uuid, order, isComposite]
+      )?.additionalDetails?.formdata?.submissionParty?.find((party) => [...party?.uuid]?.includes(userUuid) || userUuid === party?.partyUuid)
+        ?.individualId,
+    [compositeMandatorySubmissionItems, mandatorySubmissionItemId, userUuid, order, isComposite]
   );
 
   const mandatorySubmissionLitigant = useMemo(
@@ -168,10 +160,9 @@ function PublishedOrderModal({
       (isComposite
         ? compositeMandatorySubmissionItems?.find((item) => item?.id === mandatorySubmissionItemId)?.orderSchema
         : order
-      )?.additionalDetails?.formdata?.submissionParty?.find(
-        (party) => [...party?.uuid]?.includes(userInfo?.uuid) || userInfo?.uuid === party?.partyUuid
-      )?.partyUuid,
-    [compositeMandatorySubmissionItems, mandatorySubmissionItemId, userInfo?.uuid, order, isComposite]
+      )?.additionalDetails?.formdata?.submissionParty?.find((party) => [...party?.uuid]?.includes(userUuid) || userUuid === party?.partyUuid)
+        ?.partyUuid,
+    [compositeMandatorySubmissionItems, mandatorySubmissionItemId, userUuid, order, isComposite]
   );
 
   const showSubmissionButtons = useMemo(() => {
@@ -206,9 +197,14 @@ function PublishedOrderModal({
         )
         ?.flat()
         ?.filter(Boolean) || [];
-    const allSubmissionParty = [...submissionParty, isAuthority].filter(Boolean);
+
+    const submissionPartiesIncludingOfficeMembers = submissionParty?.flatMap((partyUuid) => {
+      const allMembers = getAllAssociatedPartyUuids(caseDetails, partyUuid); // Include memebrs like jr.advocate/ clerk who are associated with respective advocates
+      return [...allMembers];
+    });
+    const allSubmissionParty = [...new Set([...submissionPartiesIncludingOfficeMembers, isAuthority]?.filter(Boolean))];
     return (
-      allSubmissionParty?.includes(userInfo?.uuid) &&
+      allSubmissionParty?.includes(userUuid) &&
       userRoles.includes("SUBMISSION_CREATOR") &&
       [
         CaseWorkflowState.PENDING_ADMISSION_HEARING,
@@ -219,15 +215,13 @@ function PublishedOrderModal({
       ].includes(caseStatus)
     );
   }, [
-    compositeMandatorySubmissionItems,
     mandatorySubmissionItemId,
-    compositeSetTermsOfBailItems,
     setTermBailItemId,
     caseDetails,
     allAdvocates,
     isComposite,
     order,
-    userInfo?.uuid,
+    userUuid,
     userRoles,
     caseStatus,
     productionOfDocumentApplications,

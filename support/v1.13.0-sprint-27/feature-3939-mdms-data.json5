@@ -1,0 +1,13 @@
+//TODO: can be added through workbench
+{
+  "tenantId": "kl",
+  "schemaCode": "survey.SurveyConfig",
+  "uniqueIdentifier": "1",
+  "data": {
+    "id": 1,
+    "maxNoOfAttempts": 3,
+    "noOfDaysForRemindMeLater": 172800000,
+    "noOfDaysForExpiryAfterFeedBack": 5184000000
+  },
+  "isActive": true
+}

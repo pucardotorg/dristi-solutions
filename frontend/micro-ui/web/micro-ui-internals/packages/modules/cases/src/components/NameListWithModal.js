@@ -1,13 +1,5 @@
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
+import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const Heading = (props) => {
   return (
     <div className="evidence-title">

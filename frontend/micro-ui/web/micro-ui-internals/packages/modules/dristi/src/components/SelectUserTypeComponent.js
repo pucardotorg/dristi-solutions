@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from "react";
-import { LabelFieldPair, CardLabel, TextInput, CardLabelError, CustomDropdown } from "@egovernments/digit-ui-react-components";
+import React, { useEffect, useMemo, useState } from "react";
+import { LabelFieldPair, CardLabel, TextInput, CardLabelError, CustomDropdown, Toast } from "@egovernments/digit-ui-react-components";
 import MultiUploadWrapper from "./MultiUploadWrapper";
 import CitizenInfoLabel from "./CitizenInfoLabel";
 import { CardText } from "@egovernments/digit-ui-components";
 import useInterval from "../hooks/useInterval";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
+import ImageModal from "./ImageModal";
 const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
 const DEFAULT_USER = "digit-user";
@@ -21,9 +22,28 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
   const stateCode = window?.Digit.ULBService.getStateId();
   const Digit = window.Digit || {};
   const onDocumentUpload = async (fileData, filename) => {
-    const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
-    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    try {
+      const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
+      return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    } catch (error) {
+      console.error("Error while uploading id proof", error);
+      setShowToast({ label: t("ERROR_WHILE_UPLOADING_ID_PROOF"), error: true });
+      return null;
+    }
   };
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [imageInfo, setImageInfo] = useState(null);
+  const [showToast, setShowToast] = useState(null);
+
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
+
   useInterval(
     () => {
       setTimeLeft(timeLeft - 1);
@@ -134,9 +154,18 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
     }
   };
 
+  const handleImageModalOpen = (fileStoreId, fileName) => {
+    setIsImageModalOpen(true);
+    setImageInfo({ data: { fileStore: fileStoreId, fileName: fileName, docViewerStyle: { minWidth: "100%", height: "calc(100vh - 154px)" } } });
+  };
+
+  const handleImageModalClose = () => {
+    setIsImageModalOpen(false);
+  };
+
   const showUploadedDocument = useMemo(() => {
     return (
-      <div>
+      <div onClick={() => handleImageModalOpen(fileStoreId, fileName)}>
         <div className="documentDetails_row_items" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
           <DocViewerWrapper fileStoreId={fileStoreId} tenantId={tenantId} displayFilename={fileName} />
         </div>
@@ -225,7 +254,7 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
                       showHintBelow={input?.showHintBelow ? true : false}
                       setuploadedstate={formData?.[config.key]?.[input.name] || []}
                       allowedFileTypesRegex={input.allowedFileTypes}
-                      allowedMaxSizeInMB={input.allowedMaxSizeInMB || "5"}
+                      allowedMaxSizeInMB={input.allowedMaxSizeInMB || "10"}
                       hintText={input.hintText}
                       maxFilesAllowed={input.maxFilesAllowed || "1"}
                       extraStyleName={{ padding: "0.5rem" }}
@@ -238,6 +267,19 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
                     />
                   )}
                   {showDoc && input?.type === "documentUpload" && showUploadedDocument}
+                  {isImageModalOpen && (
+                    <ImageModal
+                      t={t}
+                      imageInfo={imageInfo}
+                      handleCloseModal={handleImageModalClose}
+                      headerBarMainStyle={{
+                        position: "sticky",
+                        top: "0",
+                        zIndex: 1000,
+                        backgroundColor: "grey",
+                      }}
+                    />
+                  )}
                   {input?.type === "text" && (
                     <TextInput
                       className="field desktop-w-full"
@@ -305,6 +347,7 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
                 )}
               </React.Fragment>
             )}
+            {showToast && <Toast error={showToast?.error} label={showToast?.label} onClose={() => setShowToast(null)} />}
           </React.Fragment>
         );
       })}

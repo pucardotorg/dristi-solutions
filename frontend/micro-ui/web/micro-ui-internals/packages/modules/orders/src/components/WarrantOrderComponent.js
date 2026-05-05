@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import useSearchCaseService from "../../../dristi/src/hooks/dristi/useSearchCaseService";
 import { Button, Dropdown } from "@egovernments/digit-ui-react-components";
-import _ from "lodash";
-import AddParty from "../../../hearings/src/pages/employee/AddParty";
+import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getFormattedName } from "../utils";
 import WarrantRenderDeliveryChannels from "./WarrantRenderDeliveryChannels";
+import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
+import { Toast } from "@egovernments/digit-ui-components";
 
 // Helper function to compare addresses without police station data
 const compareAddressValues = (value1, value2) => {
@@ -64,6 +65,8 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const orderType = useMemo(() => formData?.orderType?.code, [formData?.orderType?.code]);
   const [userList, setUserList] = useState([]);
   const [policeStationIdMapping, setPoliceStationIdMapping] = useState([]);
+  const [showErrorToast, setShowErrorToast] = useState(null);
+  const courtId = localStorage.getItem("courtId");
   const [deliveryChannels, setDeliveryChannels] = useState([
     {
       label: "EPOST",
@@ -77,18 +80,23 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       code: "RPAD",
       values: [],
     },
-    orderType === "WARRANT" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: [] },
+    (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") && {
+      label: "VIA_POLICE",
+      type: "Via Police",
+      code: "POLICE",
+      values: [],
+    },
   ]);
 
   const { data: caseData, refetch } = useSearchCaseService(
     {
-      criteria: [{ filingNumber: filingNumber }],
+      criteria: [{ filingNumber: filingNumber, ...(courtId && { courtId }) }],
       tenantId,
     },
     {},
     `dristi-${filingNumber}`,
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && courtId)
   );
   const caseDetails = useMemo(
     () => ({
@@ -117,12 +125,25 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       ...(address?.geoLocationDetails && { geoLocationDetails: address.geoLocationDetails }),
     }));
   };
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       let users = [];
       if (caseDetails?.additionalDetails) {
         const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
+        const witnessData = caseDetails?.witnessDetails || [];
 
         const updatedRespondentData = respondentData.map((item, index) => ({
           ...item,
@@ -143,8 +164,23 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             uniqueId: item?.uniqueId,
           },
         }));
+        const updatedWitnessData = witnessData.map((item, index) => ({
+          data: {
+            ...item,
+            firstName: item?.firstName,
+            lastName: item?.lastName,
+            witnessDesignation: item?.witnessDesignation,
+            address: mapAddressDetails(item?.addressDetails),
+            partyType: "Witness",
+            phone_numbers: item?.phonenumbers?.mobileNumber || [],
+            email: item?.emails?.emailId || [],
+            uuid: item?.uuid,
+            partyIndex: `Witness_${index}`,
+            uniqueId: item?.uniqueId,
+          },
+        }));
 
-        users = [...updatedRespondentData];
+        users = [...updatedRespondentData, ...updatedWitnessData];
       }
       setUserList(users);
     };
@@ -154,8 +190,8 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
 
   const handleDropdownChange = (selectedOption) => {
     clearErrors(config?.key);
-    const isEqual = _.isEqual(selectedOption.value.data, formData?.[config.key]?.party?.data);
-    if (!isEqual) {
+    const isDataEqual = isEqual(selectedOption.value.data, formData?.[config.key]?.party?.data);
+    if (!isDataEqual) {
       setSelectedChannels([]);
       onSelect(config.key, { ...formData[config.key], party: selectedOption.value, selectedChannels: [] });
     }
@@ -291,7 +327,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const getEPostAddress = useCallback(
     async (address = []) => {
       const policeStationIdMapping = [];
-      const addressList = await Promise.all(
+      await Promise.all(
         address.map(async (item) => {
           const policeStationInOrderSaved = formData?.[config?.key]?.selectedChannels?.find((channel, index) => channel?.value?.id === item?.id)
             ?.value?.geoLocationDetails?.policeStation;
@@ -306,7 +342,6 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
           return null;
         })
       );
-      const ePostAddresses = addressList?.filter((item) => Boolean(item));
       setPoliceStationIdMapping(policeStationIdMapping);
       setDeliveryChannels(
         [
@@ -322,7 +357,12 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             code: "RPAD",
             values: address || [],
           },
-          orderType === "WARRANT" && { label: "SEND_ICOPS", type: "Via Police", code: "POLICE", values: address || [] },
+          (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") && {
+            label: "SEND_ICOPS",
+            type: "Via Police",
+            code: "POLICE",
+            values: address || [],
+          },
         ]
           .filter((item) => Boolean(item))
           .map((item) => item)
@@ -373,6 +413,29 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
                 style={{ maxWidth: "100%", marginBottom: 8 }}
                 className="party-dropdown"
               />
+              <Button
+                onButtonClick={handleAddParty}
+                className="add-party-btn"
+                style={{
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  WebkitBoxShadow: "none",
+                  boxShadow: "none",
+                  height: "auto",
+                }}
+                textStyles={{
+                  marginTop: 0,
+                  fontFamily: "Roboto",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  lineHeight: "18.75px",
+                  textAlign: "center",
+                  color: "#007E7E",
+                }}
+                label={t("+ Add new witness")}
+              />
             </div>
           )}
           {input.type !== "dropdown" && selectedParty && (
@@ -392,17 +455,19 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
         </div>
       ))}
       {isPartyModalOpen && (
-        <AddParty
-          onCancel={handleAddParty}
-          onDismiss={handleAddParty}
+        <AddWitnessModal
           tenantId={tenantId}
-          caseData={caseData}
+          onCancel={handleAddParty}
+          caseDetails={caseDetails}
+          isEmployee={true}
           onAddSuccess={() => {
             handleAddParty();
             refetch();
           }}
-        ></AddParty>
+          showToast={setShowErrorToast}
+        ></AddWitnessModal>
       )}
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.message} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };

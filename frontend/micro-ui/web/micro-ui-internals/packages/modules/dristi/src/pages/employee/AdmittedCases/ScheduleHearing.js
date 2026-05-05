@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { modalConfig, selectParticipantConfig } from "../../citizen/FileCase/Config/admissionActionConfig";
-import { CloseSvg, Modal } from "@egovernments/digit-ui-react-components";
+import { Modal } from "@egovernments/digit-ui-react-components";
 import AdmissionActionModal from "../admission/AdmissionActionModal";
 import { DRISTIService } from "../../../services";
+import { CloseBtn } from "../../../components/ModalComponents";
 
 const ScheduleHearing = ({
   tenantId,
@@ -40,7 +41,8 @@ const ScheduleHearing = ({
           tenantId: tenantId,
           filingNumber: [caseData.filingNumber],
           hearingType: data.purpose,
-          courtCaseNumber: caseData?.case?.courtCaseNumber,
+          courtCaseNumber:
+            (caseData?.case?.isLPRCase ? caseData?.case?.lprNumber : caseData?.case?.courtCaseNumber) || caseData?.case?.courtCaseNumber,
           cmpNumber: caseData?.case?.cmpNumber,
           status: true,
           attendees: [
@@ -75,13 +77,7 @@ const ScheduleHearing = ({
     );
   };
 
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
+  
   const Heading = (props) => {
     return (
       <div className="evidence-title">
@@ -126,8 +122,8 @@ const ScheduleHearing = ({
     const litigantsNames = caseDetails.litigants?.map((litigant) => {
       return { name: litigant.additionalDetails.fullName, individualId: litigant.individualId, type: partyTypes[litigant.partyType] };
     });
-    const witnessNames = caseDetails.additionalDetails.witnessDetails.formdata?.map((data) => {
-      return { name: `${data.data.firstName} ${data.data.lastName}`, type: "Witness" };
+    const witnessNames = caseDetails?.witnessDetails?.map((data) => {
+      return { name: `${data?.firstName} ${data?.lastName}`, type: "Witness" };
     });
 
     config.checkBoxes.forEach((checkbox) => {
