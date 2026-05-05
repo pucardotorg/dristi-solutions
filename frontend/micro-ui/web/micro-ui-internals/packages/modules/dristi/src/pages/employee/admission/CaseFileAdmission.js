@@ -977,7 +977,7 @@ function CaseFileAdmission({ t, path }) {
       caseDetails?.documents?.find((doc) => doc?.key === "case.complaint.signed")?.fileStore || caseDetails?.additionalDetails?.signedCaseDocument;
 
     if (fileStoreId) {
-      downloadPdf(tenantId, fileStoreId);
+      downloadPdf(tenantId, fileStoreId, `${caseDetails?.caseNumber || caseDetails?.filingNumber || "Case"}_Complaint`);
       return;
     } else {
       console.error("No fileStoreId available for download.");
