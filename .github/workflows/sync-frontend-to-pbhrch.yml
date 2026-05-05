@@ -1,10 +1,15 @@
 name: Sync Kerala Frontend to dristi-frontend-pbhrch
 
+# Path mapping (git apply -p2 strips 'a/frontend/'):
+#   dristi-solutions/frontend/oncourts-ui/**  -->  dristi-frontend-pbhrch/oncourts-ui/**
+#   dristi-solutions/frontend/workbench-ui/** -->  dristi-frontend-pbhrch/workbench-ui/**
+#   dristi-solutions/frontend/<X>/**          -->  dristi-frontend-pbhrch/<X>/**
+
 on:
   push:
     branches: [main]
     paths:
-      - 'frontend/oncourts-ui/**'
+      - 'frontend/**'
   workflow_dispatch:
     inputs:
       from_sha:
@@ -13,7 +18,7 @@ on:
 
 jobs:
   sync-frontend:
-    name: Sync frontend/oncourts-ui to dristi-frontend-pbhrch
+    name: Sync frontend to dristi-frontend-pbhrch
     runs-on: ubuntu-latest
 
     steps:
@@ -54,20 +59,21 @@ jobs:
           echo "from=$FROM" >> $GITHUB_OUTPUT
           echo "to=$TO" >> $GITHUB_OUTPUT
 
-          CHANGED=$(git diff --name-only "$FROM" "$TO" -- frontend/oncourts-ui/ | wc -l | tr -d ' ')
+          CHANGED=$(git diff --name-only "$FROM" "$TO" -- frontend/ | wc -l | tr -d ' ')
           echo "changed_count=$CHANGED" >> $GITHUB_OUTPUT
-          echo "oncourts-ui files changed: $CHANGED"
+          echo "frontend/ files changed: $CHANGED"
 
-      - name: Exit - no oncourts-ui changes
+      - name: Exit - no frontend changes
         if: steps.range.outputs.changed_count == '0'
-        run: echo "No frontend/oncourts-ui changes in this range. Nothing to sync."
+        run: echo "No frontend/ changes in this range. Nothing to sync."
 
       - name: Generate patch
         if: steps.range.outputs.changed_count != '0'
         run: |
           FROM="${{ steps.range.outputs.from }}"
           TO="${{ steps.range.outputs.to }}"
-          git diff --binary "$FROM" "$TO" -- frontend/oncourts-ui/ > /tmp/kerala-frontend.patch
+          # -p2 will strip 'a/frontend/' so frontend/oncourts-ui/X maps to oncourts-ui/X in pbhrch
+          git diff --binary "$FROM" "$TO" -- frontend/ > /tmp/kerala-frontend.patch
           echo "Patch: $(wc -l < /tmp/kerala-frontend.patch) lines / $(wc -c < /tmp/kerala-frontend.patch) bytes"
 
       - name: Check for existing open sync PR
@@ -102,7 +108,8 @@ jobs:
           BRANCH="sync/kerala-$(date +%Y%m%d%H%M)-${{ github.run_number }}"
           git checkout -b "$BRANCH"
 
-          # -p2 strips 'a/frontend/' → maps frontend/oncourts-ui/* to oncourts-ui/* in pbhrch root
+          # -p2 strips 'a/frontend/' — maps frontend/<X>/... to <X>/... in pbhrch root
+          # e.g. frontend/oncourts-ui/src/foo.js --> oncourts-ui/src/foo.js
           APPLY_STATUS="clean"
           if ! git apply --binary -p2 /tmp/kerala-frontend.patch 2>/tmp/apply-log.txt; then
             echo "Clean apply failed - retrying with --reject"
@@ -126,7 +133,7 @@ jobs:
           SHORT_TO=$(echo "${{ steps.range.outputs.to }}" | cut -c1-7)
 
           git commit \
-            -m "sync: Kerala oncourts-ui ${SHORT_FROM}..${SHORT_TO}" \
+            -m "sync: Kerala frontend ${SHORT_FROM}..${SHORT_TO}" \
             -m "Source: pucardotorg/dristi-solutions@${{ steps.range.outputs.to }}" \
             -m "Apply status: $APPLY_STATUS"
 
@@ -147,9 +154,9 @@ jobs:
           BRANCH="${{ steps.apply.outputs.branch }}"
           STATUS="${{ steps.apply.outputs.apply_status }}"
 
-          COMMITS=$(git -C .. log --oneline "$FROM".."$TO" -- frontend/oncourts-ui/ | head -25)
-          FILES=$(git -C .. diff --name-only "$FROM" "$TO" -- frontend/oncourts-ui/ | sed 's|^frontend/||' | head -30)
-          FILE_COUNT=$(git -C .. diff --name-only "$FROM" "$TO" -- frontend/oncourts-ui/ | wc -l | tr -d ' ')
+          COMMITS=$(git -C .. log --oneline "$FROM".."$TO" -- frontend/ | head -25)
+          FILES=$(git -C .. diff --name-only "$FROM" "$TO" -- frontend/ | sed 's|^frontend/||' | head -30)
+          FILE_COUNT=$(git -C .. diff --name-only "$FROM" "$TO" -- frontend/ | wc -l | tr -d ' ')
 
           TITLE_SUFFIX=""
           if [ "$STATUS" = "conflicts" ]; then
@@ -162,8 +169,8 @@ jobs:
             --repo pucardotorg/dristi-frontend-pbhrch \
             --base main \
             --head "$BRANCH" \
-            --title "Sync: Kerala -> pbhrch oncourts-ui $(date +%Y-%m-%d) #${{ github.run_number }}${TITLE_SUFFIX}" \
-            --body "## Kerala oncourts-ui Sync
+            --title "Sync: Kerala -> pbhrch frontend $(date +%Y-%m-%d) #${{ github.run_number }}${TITLE_SUFFIX}" \
+            --body "## Kerala Frontend Sync
 
           **Kerala FROM:** ${FROM:0:7} (https://github.com/pucardotorg/dristi-solutions/commit/${FROM})
           **Kerala TO:** ${TO:0:7} (https://github.com/pucardotorg/dristi-solutions/commit/${TO})
@@ -173,9 +180,9 @@ jobs:
           ### Commits synced
           ${COMMITS}
 
-          ### Files changed (under oncourts-ui/)
+          ### Files changed
           ${FILES}
 
           ---
-          Auto-synced from dristi-solutions/frontend/oncourts-ui by Kerala Sync workflow.
+          Auto-synced from dristi-solutions/frontend by Kerala Sync workflow.
           Review for pbhrch-specific regressions before merging."
