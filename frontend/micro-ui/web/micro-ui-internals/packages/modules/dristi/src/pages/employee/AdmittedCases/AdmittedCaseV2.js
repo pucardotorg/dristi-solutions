@@ -1556,9 +1556,9 @@ const AdmittedCaseV2 = () => {
 
   const handleDownloadClick = useCallback(() => {
     if (casePdfFileStoreId) {
-      downloadPdf(tenantId, casePdfFileStoreId);
+      downloadPdf(tenantId, casePdfFileStoreId, `${caseDetails?.caseNumber || caseDetails?.filingNumber}_CaseFile`); //here
     }
-  }, [casePdfFileStoreId, downloadPdf, tenantId]);
+  }, [casePdfFileStoreId, downloadPdf, tenantId, caseDetails]);
 
   const pipComplainants = useMemo(() => getPipComplainants(caseDetails), [caseDetails]);
 
