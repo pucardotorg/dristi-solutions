@@ -48,8 +48,9 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
           combinedDoc.map((docs) => (
             <DocViewerWrapper
               key={docs?.fileStore}
-              docWidth={"calc(90vw - 96px)"}
-              docHeight={"calc(90vh - 200px)"}
+              docWidth={"calc(95vw * 62 / 100)"}
+              docHeight={"unset"}
+              disableInnerViewerScroll={true}
               fileStoreId={docs?.fileStore}
               tenantId={tenantId}
               displayFilename={docs?.additionalDetails?.name}
