@@ -1,0 +1,209 @@
+name: Sync Kerala Frontend → dristi-frontend-pbhrch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+  workflow_dispatch:
+    inputs:
+      from_sha:
+        description: 'Sync FROM this Kerala SHA (leave empty to use .last-kerala-sync)'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Dry run — generate patch but skip push and PR creation'
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  sync-frontend:
+    name: Sync frontend/ → dristi-frontend-pbhrch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout dristi-solutions (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout dristi-frontend-pbhrch
+        uses: actions/checkout@v4
+        with:
+          repository: pucardotorg/dristi-frontend-pbhrch
+          token: ${{ secrets.PBHRCH_SYNC_TOKEN }}
+          path: pbhrch
+          fetch-depth: 0
+
+      - name: Determine sync range
+        id: range
+        run: |
+          TO="${{ github.sha }}"
+
+          if [ -n "${{ github.event.inputs.from_sha }}" ]; then
+            FROM="${{ github.event.inputs.from_sha }}"
+            echo "Source: workflow_dispatch from_sha"
+          elif [ -f pbhrch/.last-kerala-sync ]; then
+            FROM=$(cat pbhrch/.last-kerala-sync | tr -d '[:space:]')
+            echo "Source: .last-kerala-sync = $FROM"
+          else
+            echo "ERROR: No .last-kerala-sync file in dristi-frontend-pbhrch and no from_sha provided."
+            echo "Bootstrap by running workflow_dispatch with a from_sha, or create .last-kerala-sync manually."
+            exit 1
+          fi
+
+          if ! git cat-file -e "${FROM}^{commit}" 2>/dev/null; then
+            echo "ERROR: SHA '$FROM' not found in dristi-solutions history."
+            exit 1
+          fi
+
+          echo "from=$FROM" >> $GITHUB_OUTPUT
+          echo "to=$TO" >> $GITHUB_OUTPUT
+
+          CHANGED=$(git diff --name-only "$FROM" "$TO" -- frontend/ | wc -l | tr -d ' ')
+          echo "changed_count=$CHANGED" >> $GITHUB_OUTPUT
+          echo "Frontend files changed: $CHANGED"
+
+      - name: Exit — no frontend changes
+        if: steps.range.outputs.changed_count == '0'
+        run: echo "No frontend/ changes in this range. Nothing to sync."
+
+      - name: Generate patch
+        if: steps.range.outputs.changed_count != '0'
+        run: |
+          FROM="${{ steps.range.outputs.from }}"
+          TO="${{ steps.range.outputs.to }}"
+          git diff --binary "$FROM" "$TO" -- frontend/ > /tmp/kerala-frontend.patch
+          echo "Patch: $(wc -l < /tmp/kerala-frontend.patch) lines / $(wc -c < /tmp/kerala-frontend.patch) bytes"
+
+      - name: Check for existing open sync PR
+        if: steps.range.outputs.changed_count != '0'
+        id: existing_pr
+        env:
+          GH_TOKEN: ${{ secrets.PBHRCH_SYNC_TOKEN }}
+        run: |
+          COUNT=$(gh pr list \
+            --repo pucardotorg/dristi-frontend-pbhrch \
+            --base main --state open \
+            --json title \
+            --jq '[.[] | select(.title | startswith("Sync: Kerala"))] | length')
+          echo "open_count=$COUNT" >> $GITHUB_OUTPUT
+          echo "Open Kerala sync PRs: $COUNT"
+
+      - name: Skip — existing sync PR is open
+        if: steps.range.outputs.changed_count != '0' && steps.existing_pr.outputs.open_count != '0'
+        run: |
+          echo "An open sync PR already exists in dristi-frontend-pbhrch."
+          echo "Merge or close it before triggering a new sync."
+
+      - name: Create sync branch and apply patch
+        if: steps.range.outputs.changed_count != '0' && steps.existing_pr.outputs.open_count == '0'
+        id: apply
+        run: |
+          cd pbhrch
+
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "Kerala Sync Bot"
+
+          BRANCH="sync/kerala-$(date +%Y%m%d%H%M)-${{ github.run_number }}"
+          git checkout -b "$BRANCH"
+
+          # -p2 strips 'a/frontend/' prefix so paths align with pbhrch root
+          APPLY_STATUS="clean"
+          if ! git apply --binary -p2 /tmp/kerala-frontend.patch 2>/tmp/apply-log.txt; then
+            echo "Clean apply failed — retrying with --reject"
+            git apply --binary --reject -p2 /tmp/kerala-frontend.patch 2>/tmp/apply-log.txt || true
+            APPLY_STATUS="conflicts"
+          fi
+          cat /tmp/apply-log.txt || true
+
+          echo "apply_status=$APPLY_STATUS" >> $GITHUB_OUTPUT
+
+          # Update sync marker so next run starts from here
+          echo "${{ steps.range.outputs.to }}" > .last-kerala-sync
+
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No staged changes after apply — patch was a no-op."
+            echo "branch=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          SHORT_FROM=$(echo "${{ steps.range.outputs.from }}" | cut -c1-7)
+          SHORT_TO=$(echo "${{ steps.range.outputs.to }}" | cut -c1-7)
+
+          git commit \
+            -m "sync: Kerala frontend ${SHORT_FROM}..${SHORT_TO}" \
+            -m "Source: pucardotorg/dristi-solutions@${{ steps.range.outputs.to }}" \
+            -m "Apply status: $APPLY_STATUS"
+
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Push and create PR
+        if: |
+          steps.range.outputs.changed_count != '0' &&
+          steps.existing_pr.outputs.open_count == '0' &&
+          steps.apply.outputs.branch != '' &&
+          github.event.inputs.dry_run != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PBHRCH_SYNC_TOKEN }}
+        run: |
+          cd pbhrch
+
+          FROM="${{ steps.range.outputs.from }}"
+          TO="${{ steps.range.outputs.to }}"
+          BRANCH="${{ steps.apply.outputs.branch }}"
+          STATUS="${{ steps.apply.outputs.apply_status }}"
+
+          COMMITS=$(git -C .. log --oneline "$FROM".."$TO" -- frontend/ | head -25)
+          FILES=$(git -C .. diff --name-only "$FROM" "$TO" -- frontend/ | sed 's|^frontend/||' | head -30)
+          FILE_COUNT=$(git -C .. diff --name-only "$FROM" "$TO" -- frontend/ | wc -l | tr -d ' ')
+
+          CONFLICT_SECTION=""
+          TITLE_SUFFIX=""
+          if [ "$STATUS" = "conflicts" ]; then
+            CONFLICT_SECTION="## ⚠️ Conflicts Detected
+
+          Some hunks could not be applied cleanly. \`.rej\` files are committed alongside the changes.
+          **Resolve all \`.rej\` files before merging.**
+
+          "
+            TITLE_SUFFIX=" [CONFLICTS]"
+          fi
+
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --repo pucardotorg/dristi-frontend-pbhrch \
+            --base main \
+            --head "$BRANCH" \
+            --title "Sync: Kerala → pbhrch frontend $(date +%Y-%m-%d) #${{ github.run_number }}${TITLE_SUFFIX}" \
+            --body "${CONFLICT_SECTION}## Kerala Frontend Sync
+
+          | | |
+          |---|---|
+          | **Kerala FROM** | [\`${FROM:0:7}\`](https://github.com/pucardotorg/dristi-solutions/commit/${FROM}) |
+          | **Kerala TO** | [\`${TO:0:7}\`](https://github.com/pucardotorg/dristi-solutions/commit/${TO}) |
+          | **Files changed** | ${FILE_COUNT} |
+
+          ### Commits synced
+          \`\`\`
+          ${COMMITS}
+          \`\`\`
+
+          ### Files changed
+          \`\`\`
+          ${FILES}
+          \`\`\`
+
+          ---
+          > Auto-synced by the [Kerala Sync workflow](https://github.com/pucardotorg/dristi-solutions/actions/workflows/sync-frontend-to-pbhrch.yml).
+          > Review carefully for pbhrch-specific regressions before merging."
+
+      - name: Dry run summary
+        if: github.event.inputs.dry_run == 'true' && steps.range.outputs.changed_count != '0'
+        run: |
+          echo "=== DRY RUN — nothing was pushed ==="
+          echo "Files that would be synced:"
+          git diff --name-only "${{ steps.range.outputs.from }}" "${{ steps.range.outputs.to }}" -- frontend/ | sed 's|^frontend/||'
