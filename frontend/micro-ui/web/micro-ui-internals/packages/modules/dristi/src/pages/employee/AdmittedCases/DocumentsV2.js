@@ -408,7 +408,7 @@ const DocumentsV2 = ({
         setVoidReason(row?.reason);
         setShowVoidModal(true);
       } else if ("download_filing" === item.id) {
-        downloadPdf(tenantId, row?.file?.fileStore);
+        downloadPdf(tenantId, row?.file?.fileStore, `${row?.artifactNumber}_${row?.additionalDetails?.formdata?.documentTitle || row?.artifactType}`);
       } else if ("delete_evidence_draft" === item.id) {
         evidenceDeleteFunc(row);
       }
