@@ -71,7 +71,6 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
                             .judgeId(rs.getString("judgeid"))
                             .stage(rs.getString("stage"))
                             .isActive(rs.getBoolean("isactive"))
-                            .substage(rs.getString("substage"))
                             .advocateCount(rs.getInt("advocatecount"))
                             .filingDate(parseDateToLong(rs.getString("filingdate")))
                             .judgementDate(parseDateToLong(rs.getString("judgementdate")))
@@ -83,10 +82,8 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
                             .remarks(rs.getString("remarks"))
                             .auditdetails(auditdetails)
                             .courtCaseNumberBackup(rs.getString("courtCaseNumberBackup"))
-                            .stageBackup(rs.getString("stageBackup"))
-                            .substageBackup(rs.getString("substageBackup"))
                             .lprNumber(rs.getString("lprNumber"))
-                            .isLPRCase(rs.getBoolean("isLPRCase"))
+                            .lifecycleStatus(getLifecycleStatus(rs, "lifecycleStatus"))
                             .witnessDetails(getObjectListFromJson(rs.getString("witnessdetails"), new TypeReference<>() {
                             }))
                             .secondaryStage(getObjectListFromJson(rs.getString("secondaryStage"), new TypeReference<List<String>>() {}))
@@ -110,6 +107,20 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
             throw new CustomException(ROW_MAPPER_EXCEPTION, "Exception occurred while processing Case ResultSet: " + e.getMessage());
         }
         return new ArrayList<>(caseMap.values());
+    }
+
+    private org.pucar.dristi.web.models.enums.LifecycleStatus getLifecycleStatus(ResultSet rs, String columnName) throws SQLException {
+        try {
+            String str = rs.getString(columnName);
+            if (str == null || str.isEmpty()) return org.pucar.dristi.web.models.enums.LifecycleStatus.ACTIVE;
+            return org.pucar.dristi.web.models.enums.LifecycleStatus.valueOf(str);
+        } catch (SQLException e) {
+            log.error("Error reading lifecycleStatus column from ResultSet", e);
+            return org.pucar.dristi.web.models.enums.LifecycleStatus.ACTIVE;
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid LifecycleStatus value in database: {}", columnName, e);
+            return org.pucar.dristi.web.models.enums.LifecycleStatus.ACTIVE;
+        }
     }
 
     private NatureOfDisposal getNatureOfDisposal(ResultSet rs) throws SQLException {

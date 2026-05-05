@@ -1729,7 +1729,7 @@ public class CaseServiceTest {
         courtCase.setCnrNumber("CNR-2024-003");
         courtCase.setTenantId("kl.kollam");
         courtCase.setCaseType("ST");
-        courtCase.setIsLPRCase(true);
+        courtCase.setLifecycleStatus(org.pucar.dristi.web.models.enums.LifecycleStatus.LPR);
         courtCase.setCourtCaseNumber("ST-2024-003");
         courtCase.setLprNumber("LPR-2024-003");
 
@@ -1757,7 +1757,7 @@ public class CaseServiceTest {
         courtCase.setCnrNumber("CNR-2024-004");
         courtCase.setTenantId("kl.kollam");
         courtCase.setCaseType("ST");
-        courtCase.setIsLPRCase(false);
+        courtCase.setLifecycleStatus(org.pucar.dristi.web.models.enums.LifecycleStatus.ACTIVE);
         courtCase.setLprNumber("LPR-2024-004");
         courtCase.setCourtCaseNumberBackup("ST-2024-004-BACKUP");
         courtCase.setCourtCaseNumber("ST-2024-004-NEW");
@@ -1859,7 +1859,7 @@ public class CaseServiceTest {
         courtCase.setTenantId("kl.kollam");
         courtCase.setCaseType("ST");
         courtCase.setCourtCaseNumber(null);
-        courtCase.setIsLPRCase(true);
+        courtCase.setLifecycleStatus(org.pucar.dristi.web.models.enums.LifecycleStatus.LPR);
         courtCase.setLprNumber("LPR-2024-008");
 
         CaseRequest caseRequest = new CaseRequest();

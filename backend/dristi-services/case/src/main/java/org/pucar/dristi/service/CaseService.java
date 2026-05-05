@@ -33,6 +33,7 @@ import org.pucar.dristi.web.models.analytics.CaseOutcome;
 import org.pucar.dristi.web.models.analytics.CaseOverallStatus;
 import org.pucar.dristi.web.models.analytics.CaseStageSubStage;
 import org.pucar.dristi.web.models.analytics.Outcome;
+import org.pucar.dristi.web.models.enums.LifecycleStatus;
 import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.pucar.dristi.web.models.task.Task;
 import org.pucar.dristi.web.models.task.TaskRequest;
@@ -4206,7 +4207,6 @@ public class CaseService {
 
         if (courtCaseRedis != null) {
             courtCaseRedis.setStage(caseOverallStatus.getStage());
-            courtCaseRedis.setStageBackup(caseOverallStatus.getStageBackup());
         }
         updateCourtCaseInRedis(caseOverallStatus.getTenantId(), courtCaseRedis);
     }
@@ -6411,7 +6411,7 @@ public class CaseService {
 
             validator.validateUpdateLPRDetails(caseRequest);
 
-            if (courtCase.getIsLPRCase()) {
+            if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())) {
                 // moving the case into LPR
                 enrichmentUtil.enrichLPRNumber(caseRequest);
             } else {
@@ -6609,7 +6609,7 @@ public class CaseService {
             caseConversionDetails.setPreCaseNumber(courtCase.getFilingNumber());
             caseConversionDetails.setPostCaseNumber(courtCase.getCmpNumber());
             caseConversionDetails.setDateOfConversion(dateOfConversion);
-        } else if (Boolean.TRUE.equals(courtCase.getIsLPRCase()) && courtCase.getLprNumber() != null) {
+        } else if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus()) && courtCase.getLprNumber() != null) {
             caseConversionDetails.setConvertedFrom(ST);
             caseConversionDetails.setConvertedTo(LP);
             caseConversionDetails.setPreCaseNumber(courtCase.getCourtCaseNumber());

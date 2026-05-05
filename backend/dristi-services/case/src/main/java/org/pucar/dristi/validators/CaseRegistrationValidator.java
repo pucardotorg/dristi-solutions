@@ -258,7 +258,6 @@ public class CaseRegistrationValidator {
 
         caseRequest.getCases().setCourtId(courtCase.getCourtId());
         caseRequest.getCases().setCaseType(courtCase.getCaseType());
-        caseRequest.getCases().setSubstage(courtCase.getSubstage());
         caseRequest.getCases().setStage(courtCase.getStage());
         caseRequest.getCases().setStatus(courtCase.getStatus());
         caseRequest.getCases().setOutcome(courtCase.getOutcome());
@@ -756,11 +755,11 @@ public class CaseRegistrationValidator {
             throw new CustomException(VALIDATION_ERR, "courtCaseNumber cannot be empty or null");
         }
 
-        if (courtCase.getIsLPRCase() == null || ObjectUtils.isEmpty(courtCase.getIsLPRCase())) {
-            throw new CustomException(VALIDATION_ERR, "isLPRCase cannot be empty or null");
+        if (courtCase.getLifecycleStatus() == null) {
+            throw new CustomException(VALIDATION_ERR, "lifecycleStatus cannot be empty or null");
         }
 
-        if (courtCase.getIsLPRCase() && (courtCase.getLprNumber() != null || courtCase.getCourtCaseNumberBackup() != null)) {
+        if (courtCase.getLifecycleStatus() == org.pucar.dristi.web.models.enums.LifecycleStatus.LPR && (courtCase.getLprNumber() != null || courtCase.getCourtCaseNumberBackup() != null)) {
             // If trying to convert case to Long Pending Registration, it should not have LPR number or backup court case number
             // case can only go to LPR once
             throw new CustomException(VALIDATION_ERR, "To convert to LPR, case cannot have LPR number or backup court case number");

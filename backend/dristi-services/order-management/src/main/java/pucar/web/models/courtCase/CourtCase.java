@@ -109,15 +109,7 @@ public class CourtCase {
     @JsonProperty("stage")
     private String stage = null;
 
-    @JsonProperty("stageBackup")
-    private String stageBackup = null;
-
-    @JsonProperty("substage")
-    private String substage = null;
-
-    @JsonProperty("substageBackup")
-    private String substageBackup = null;
-
+    
     @JsonProperty("natureOfPleading")
     //@Size(min = 2, max = 64)
     private String natureOfPleading = null;
@@ -181,8 +173,9 @@ public class CourtCase {
     @JsonProperty("lprNumber")
     private String lprNumber = null;
 
-    @JsonProperty("isLPRCase")
-    private Boolean isLPRCase = false;
+    @JsonProperty("lifecycleStatus")
+    @Builder.Default
+    private LifecycleStatus lifecycleStatus = LifecycleStatus.ACTIVE;
 
     @JsonProperty("courtCaseNumberBackup")
     private String courtCaseNumberBackup = null;
