@@ -8,13 +8,8 @@ on:
   workflow_dispatch:
     inputs:
       from_sha:
-        description: 'Sync FROM this Kerala SHA (leave empty to use .last-kerala-sync)'
+        description: 'Starting Kerala commit SHA (leave empty to use .last-kerala-sync)'
         required: false
-        default: ''
-      dry_run:
-        description: 'Dry run - generate patch but skip push and PR creation (true/false)'
-        required: false
-        default: 'false'
 
 jobs:
   sync-frontend:
@@ -107,7 +102,6 @@ jobs:
           BRANCH="sync/kerala-$(date +%Y%m%d%H%M)-${{ github.run_number }}"
           git checkout -b "$BRANCH"
 
-          # -p2 strips 'a/frontend/' prefix so paths align with pbhrch root
           APPLY_STATUS="clean"
           if ! git apply --binary -p2 /tmp/kerala-frontend.patch 2>/tmp/apply-log.txt; then
             echo "Clean apply failed - retrying with --reject"
@@ -118,7 +112,6 @@ jobs:
 
           echo "apply_status=$APPLY_STATUS" >> $GITHUB_OUTPUT
 
-          # Update sync marker so next run starts from here
           echo "${{ steps.range.outputs.to }}" > .last-kerala-sync
 
           git add -A
@@ -142,8 +135,7 @@ jobs:
         if: |
           steps.range.outputs.changed_count != '0' &&
           steps.existing_pr.outputs.open_count == '0' &&
-          steps.apply.outputs.branch != '' &&
-          github.event.inputs.dry_run != 'true'
+          steps.apply.outputs.branch != ''
         env:
           GH_TOKEN: ${{ secrets.PBHRCH_SYNC_TOKEN }}
         run: |
@@ -158,15 +150,8 @@ jobs:
           FILES=$(git -C .. diff --name-only "$FROM" "$TO" -- frontend/ | sed 's|^frontend/||' | head -30)
           FILE_COUNT=$(git -C .. diff --name-only "$FROM" "$TO" -- frontend/ | wc -l | tr -d ' ')
 
-          CONFLICT_SECTION=""
           TITLE_SUFFIX=""
           if [ "$STATUS" = "conflicts" ]; then
-            CONFLICT_SECTION="## Conflicts Detected
-
-          Some hunks could not be applied cleanly. .rej files are committed alongside the changes.
-          Resolve all .rej files before merging.
-
-          "
             TITLE_SUFFIX=" [CONFLICTS]"
           fi
 
@@ -177,31 +162,18 @@ jobs:
             --base main \
             --head "$BRANCH" \
             --title "Sync: Kerala -> pbhrch frontend $(date +%Y-%m-%d) #${{ github.run_number }}${TITLE_SUFFIX}" \
-            --body "${CONFLICT_SECTION}## Kerala Frontend Sync
+            --body "## Kerala Frontend Sync
 
-          | | |
-          |---|---|
-          | **Kerala FROM** | ${FROM:0:7} (https://github.com/pucardotorg/dristi-solutions/commit/${FROM}) |
-          | **Kerala TO** | ${TO:0:7} (https://github.com/pucardotorg/dristi-solutions/commit/${TO}) |
-          | **Files changed** | ${FILE_COUNT} |
+          **Kerala FROM:** ${FROM:0:7} (https://github.com/pucardotorg/dristi-solutions/commit/${FROM})
+          **Kerala TO:** ${TO:0:7} (https://github.com/pucardotorg/dristi-solutions/commit/${TO})
+          **Files changed:** ${FILE_COUNT}
+          **Apply status:** ${STATUS}
 
           ### Commits synced
-          \`\`\`
           ${COMMITS}
-          \`\`\`
 
           ### Files changed
-          \`\`\`
           ${FILES}
-          \`\`\`
 
           ---
-          Auto-synced by the Kerala Sync workflow: https://github.com/pucardotorg/dristi-solutions/actions/workflows/sync-frontend-to-pbhrch.yml
-          Review carefully for pbhrch-specific regressions before merging."
-
-      - name: Dry run summary
-        if: github.event.inputs.dry_run == 'true' && steps.range.outputs.changed_count != '0'
-        run: |
-          echo "=== DRY RUN - nothing was pushed ==="
-          echo "Files that would be synced:"
-          git diff --name-only "${{ steps.range.outputs.from }}" "${{ steps.range.outputs.to }}" -- frontend/ | sed 's|^frontend/||'
+          Auto-synced by Kerala Sync workflow. Review for pbhrch regressions before merging."
