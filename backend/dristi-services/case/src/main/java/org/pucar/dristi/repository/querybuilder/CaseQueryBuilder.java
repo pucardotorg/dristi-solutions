@@ -118,7 +118,9 @@ public class CaseQueryBuilder {
                         preparedStmtList.add(searchTerm);
                         preparedStmtArgList.add(Types.VARCHAR);
                     }
+                    firstCriteria = false;
                 }
+                addClauseIfRequired(query, firstCriteria);
                 query.append(" AND cases.status NOT IN ('DRAFT_IN_PROGRESS', 'DELETED_DRAFT') ");
             }
 
