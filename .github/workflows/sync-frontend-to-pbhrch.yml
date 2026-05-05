@@ -1,4 +1,4 @@
-name: Sync Kerala Frontend → dristi-frontend-pbhrch
+name: Sync Kerala Frontend to dristi-frontend-pbhrch
 
 on:
   push:
@@ -12,14 +12,14 @@ on:
         required: false
         default: ''
       dry_run:
-        description: 'Dry run — generate patch but skip push and PR creation'
+        description: 'Dry run - generate patch but skip push and PR creation'
         type: boolean
         required: false
         default: false
 
 jobs:
   sync-frontend:
-    name: Sync frontend/ → dristi-frontend-pbhrch
+    name: Sync frontend to dristi-frontend-pbhrch
     runs-on: ubuntu-latest
 
     steps:
@@ -65,7 +65,7 @@ jobs:
           echo "changed_count=$CHANGED" >> $GITHUB_OUTPUT
           echo "Frontend files changed: $CHANGED"
 
-      - name: Exit — no frontend changes
+      - name: Exit - no frontend changes
         if: steps.range.outputs.changed_count == '0'
         run: echo "No frontend/ changes in this range. Nothing to sync."
 
@@ -91,7 +91,7 @@ jobs:
           echo "open_count=$COUNT" >> $GITHUB_OUTPUT
           echo "Open Kerala sync PRs: $COUNT"
 
-      - name: Skip — existing sync PR is open
+      - name: Skip - existing sync PR is open
         if: steps.range.outputs.changed_count != '0' && steps.existing_pr.outputs.open_count != '0'
         run: |
           echo "An open sync PR already exists in dristi-frontend-pbhrch."
@@ -112,7 +112,7 @@ jobs:
           # -p2 strips 'a/frontend/' prefix so paths align with pbhrch root
           APPLY_STATUS="clean"
           if ! git apply --binary -p2 /tmp/kerala-frontend.patch 2>/tmp/apply-log.txt; then
-            echo "Clean apply failed — retrying with --reject"
+            echo "Clean apply failed - retrying with --reject"
             git apply --binary --reject -p2 /tmp/kerala-frontend.patch 2>/tmp/apply-log.txt || true
             APPLY_STATUS="conflicts"
           fi
@@ -125,7 +125,7 @@ jobs:
 
           git add -A
           if git diff --staged --quiet; then
-            echo "No staged changes after apply — patch was a no-op."
+            echo "No staged changes after apply - patch was a no-op."
             echo "branch=" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -163,10 +163,10 @@ jobs:
           CONFLICT_SECTION=""
           TITLE_SUFFIX=""
           if [ "$STATUS" = "conflicts" ]; then
-            CONFLICT_SECTION="## ⚠️ Conflicts Detected
+            CONFLICT_SECTION="## Conflicts Detected
 
-          Some hunks could not be applied cleanly. \`.rej\` files are committed alongside the changes.
-          **Resolve all \`.rej\` files before merging.**
+          Some hunks could not be applied cleanly. .rej files are committed alongside the changes.
+          Resolve all .rej files before merging.
 
           "
             TITLE_SUFFIX=" [CONFLICTS]"
@@ -178,13 +178,13 @@ jobs:
             --repo pucardotorg/dristi-frontend-pbhrch \
             --base main \
             --head "$BRANCH" \
-            --title "Sync: Kerala → pbhrch frontend $(date +%Y-%m-%d) #${{ github.run_number }}${TITLE_SUFFIX}" \
+            --title "Sync: Kerala -> pbhrch frontend $(date +%Y-%m-%d) #${{ github.run_number }}${TITLE_SUFFIX}" \
             --body "${CONFLICT_SECTION}## Kerala Frontend Sync
 
           | | |
           |---|---|
-          | **Kerala FROM** | [\`${FROM:0:7}\`](https://github.com/pucardotorg/dristi-solutions/commit/${FROM}) |
-          | **Kerala TO** | [\`${TO:0:7}\`](https://github.com/pucardotorg/dristi-solutions/commit/${TO}) |
+          | **Kerala FROM** | ${FROM:0:7} (https://github.com/pucardotorg/dristi-solutions/commit/${FROM}) |
+          | **Kerala TO** | ${TO:0:7} (https://github.com/pucardotorg/dristi-solutions/commit/${TO}) |
           | **Files changed** | ${FILE_COUNT} |
 
           ### Commits synced
@@ -198,12 +198,12 @@ jobs:
           \`\`\`
 
           ---
-          > Auto-synced by the [Kerala Sync workflow](https://github.com/pucardotorg/dristi-solutions/actions/workflows/sync-frontend-to-pbhrch.yml).
-          > Review carefully for pbhrch-specific regressions before merging."
+          Auto-synced by the Kerala Sync workflow: https://github.com/pucardotorg/dristi-solutions/actions/workflows/sync-frontend-to-pbhrch.yml
+          Review carefully for pbhrch-specific regressions before merging."
 
       - name: Dry run summary
         if: github.event.inputs.dry_run == 'true' && steps.range.outputs.changed_count != '0'
         run: |
-          echo "=== DRY RUN — nothing was pushed ==="
+          echo "=== DRY RUN - nothing was pushed ==="
           echo "Files that would be synced:"
           git diff --name-only "${{ steps.range.outputs.from }}" "${{ steps.range.outputs.to }}" -- frontend/ | sed 's|^frontend/||'
