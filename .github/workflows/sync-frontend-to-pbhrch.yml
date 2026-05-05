@@ -12,10 +12,9 @@ on:
         required: false
         default: ''
       dry_run:
-        description: 'Dry run - generate patch but skip push and PR creation'
-        type: boolean
+        description: 'Dry run - generate patch but skip push and PR creation (true/false)'
         required: false
-        default: false
+        default: 'false'
 
 jobs:
   sync-frontend:
@@ -49,7 +48,6 @@ jobs:
             echo "Source: .last-kerala-sync = $FROM"
           else
             echo "ERROR: No .last-kerala-sync file in dristi-frontend-pbhrch and no from_sha provided."
-            echo "Bootstrap by running workflow_dispatch with a from_sha, or create .last-kerala-sync manually."
             exit 1
           fi
 
