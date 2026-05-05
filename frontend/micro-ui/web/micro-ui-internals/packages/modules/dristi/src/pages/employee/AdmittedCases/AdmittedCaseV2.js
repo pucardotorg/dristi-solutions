@@ -199,7 +199,6 @@ const AdmittedCaseV2 = () => {
   const newWitnesToast = history.location?.state?.newWitnesToast;
   const [isApplicationAccepted, setIsApplicationAccepted] = useState(null);
   const submissionModalPendingTaskLocationRef = useRef(false);
-  const submissionTableModalHistoryRef = useRef(false);
   const [deleteOrder, setDeleteOrder] = useState(null);
   const [deleteApplication, setDeleteApplication] = useState(null);
 
@@ -770,26 +769,12 @@ const AdmittedCaseV2 = () => {
       const allAllowedPartiesForApplicationsActions = getAllAssociatedPartyUuids(caseDetails, applicationOwnerUuid);
       const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentOwnerUuid);
 
-      let didOpenEvidenceModal = false;
-      const openSubmissionEvidenceModalInHistory = () => {
-        if (didOpenEvidenceModal) return;
-        didOpenEvidenceModal = true;
-        submissionTableModalHistoryRef.current = true;
-        history.push(`${history.location.pathname}${history.location.search}${history.location.hash || ""}`, {
-          ...(history.location.state || {}),
-          submissionEvidenceModal: true,
-        });
-        setDocumentSubmission(docObj);
-        setShow(true);
-      };
-
       if (documentStatus === "PENDING_E-SIGN" && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
         history.push(
           `/${window?.contextPath}/${
             isCitizen ? "citizen" : "employee"
           }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
         );
-        return;
       }
       if (
         [
@@ -805,15 +790,16 @@ const AdmittedCaseV2 = () => {
               isCitizen ? "citizen" : "employee"
             }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
           );
-          return;
         }
       } else {
-        openSubmissionEvidenceModalInHistory();
+        setDocumentSubmission(docObj);
+        setShow(true);
       }
       if (
         ![SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
       ) {
-        openSubmissionEvidenceModalInHistory();
+        setDocumentSubmission(docObj);
+        setShow(true);
       }
     },
     [caseDetails, filingNumber, history, isCitizen, userUuid, setDocumentSubmission, setShow]
@@ -1685,32 +1671,6 @@ const AdmittedCaseV2 = () => {
       setDocumentSubmission(undefined);
     }
   }, [location.key, location.state?.applicationDocObj, show]);
-
-  useEffect(() => {
-    if (!show && !location.state?.submissionEvidenceModal) {
-      submissionTableModalHistoryRef.current = false;
-    }
-  }, [show, location.state?.submissionEvidenceModal]);
-
-  useEffect(() => {
-    if (show && submissionTableModalHistoryRef.current && !location.state?.submissionEvidenceModal) {
-      submissionTableModalHistoryRef.current = false;
-      setShow(false);
-      setIsApplicationAccepted(null);
-      setDocumentSubmission(undefined);
-    }
-  }, [location.key, location.state?.submissionEvidenceModal, show]);
-
-  useEffect(() => {
-    if (show || !location.state?.submissionEvidenceModal) return;
-    const { submissionEvidenceModal: _omit, ...rest } = location.state || {};
-    history.replace({
-      pathname: location.pathname,
-      search: location.search,
-      hash: location.hash,
-      state: Object.keys(rest).length ? rest : null,
-    });
-  }, [history, location.hash, location.key, location.pathname, location.search, location.state?.submissionEvidenceModal, show]);
 
   useEffect(() => {
     if (currentDiaryEntry && artifactNumber) {
