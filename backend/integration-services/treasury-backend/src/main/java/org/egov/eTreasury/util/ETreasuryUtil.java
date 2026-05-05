@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.egov.eTreasury.config.PaymentConfiguration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,10 +21,20 @@ import java.util.List;
 public class ETreasuryUtil {
 
     private final RestTemplate restTemplate;
+    private final PaymentConfiguration paymentConfiguration;
 
     @Autowired
-    public ETreasuryUtil(RestTemplate restTemplate) {
+    public ETreasuryUtil(RestTemplate restTemplate, PaymentConfiguration paymentConfiguration) {
         this.restTemplate = restTemplate;
+        this.paymentConfiguration = paymentConfiguration;
+    }
+
+    private void addBasicAuthIfRequired(HttpHeaders headers) {
+        if (paymentConfiguration.isTest() && 
+            paymentConfiguration.getBasicAuthUsername() != null && 
+            !paymentConfiguration.getBasicAuthUsername().isEmpty()) {
+            headers.setBasicAuth(paymentConfiguration.getBasicAuthUsername(), paymentConfiguration.getBasicAuthPassword());
+        }
     }
 
     public <T> ResponseEntity<T> callConnectionService(String url, Class<T> responseType) {
@@ -32,6 +43,7 @@ public class ETreasuryUtil {
         List<MediaType> mediaTypeList = new ArrayList<>();
         mediaTypeList.add(MediaType.APPLICATION_JSON);
         headers.setAccept(mediaTypeList);
+        addBasicAuthIfRequired(headers);
 
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
         return restTemplate.postForEntity(url, requestEntity, responseType);
@@ -44,6 +56,7 @@ public class ETreasuryUtil {
 
         httpHeaders.add("clientId", clientId);
         httpHeaders.add("clientSecret", clientSecret);
+        addBasicAuthIfRequired(httpHeaders);
 
         HttpEntity<String> httpEntity = new HttpEntity<>(payload, httpHeaders);
         return restTemplate.postForEntity(url, httpEntity, Object.class);
@@ -57,6 +70,7 @@ public class ETreasuryUtil {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("input_headers", inputHeaders);
         body.add("input_data", inputBody);
+        addBasicAuthIfRequired(headers);
 
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(body, headers);
         return restTemplate.postForEntity(url, requestEntity, responseType);
@@ -67,6 +81,7 @@ public class ETreasuryUtil {
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.add("clientId", clientId);
         headers.add("authToken", authToken);
+        addBasicAuthIfRequired(headers);
 
         HttpEntity<String> requestEntity = new HttpEntity<>(payload, headers);
 
