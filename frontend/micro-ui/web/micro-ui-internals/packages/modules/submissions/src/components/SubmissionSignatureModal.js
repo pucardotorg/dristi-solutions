@@ -15,6 +15,7 @@ function SubmissionSignatureModal({
   setSignedDocumentUploadID,
   applicationPdfFileStoreId,
   applicationType,
+  applicationNumber,
 }) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
@@ -158,6 +159,7 @@ function SubmissionSignatureModal({
                     t={t}
                     displayFilename={"CLICK_HERE"}
                     pdf={true}
+                    name={`${applicationNumber}_${applicationType}_draft`}
                   />
                 </div>
               </div>

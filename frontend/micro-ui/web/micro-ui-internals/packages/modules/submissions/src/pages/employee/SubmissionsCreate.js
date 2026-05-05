@@ -1964,7 +1964,11 @@ const SubmissionsCreate = ({ path }) => {
   };
 
   const handleDownloadSubmission = () => {
-    downloadPdf(tenantId, applicationDetails?.documents?.filter((doc) => doc?.documentType === "SIGNED")?.[0]?.fileStore);
+    downloadPdf(
+      tenantId,
+      applicationDetails?.documents?.filter((doc) => doc?.documentType === "SIGNED")?.[0]?.fileStore,
+      `${applicationNumber}_${applicationType}`
+    );
   };
 
   useEffect(() => {
@@ -2059,6 +2063,7 @@ const SubmissionsCreate = ({ path }) => {
             setSignedDocumentUploadID={setSignedDocumentUploadID}
             applicationPdfFileStoreId={applicationPdfFileStoreId}
             applicationType={applicationType}
+            applicationNumber={applicationNumber}
           />
         )}
         {showPaymentModal && (
