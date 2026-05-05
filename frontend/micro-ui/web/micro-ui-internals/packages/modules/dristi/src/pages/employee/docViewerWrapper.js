@@ -181,7 +181,6 @@ const DocViewerWrapper = ({
         fileName: file?.name,
       }));
 
-
   return (
     <div className={`docviewer-wrapper ${disableInnerViewerScroll ? "single-scroll-doc-viewer" : ""}`} id="docviewer-id">
       <Card
@@ -209,11 +208,18 @@ const DocViewerWrapper = ({
               50% { opacity: 1; }
               100% { opacity: .6; }
             }
+            .single-scroll-doc-viewer .employeeCard,
             .single-scroll-doc-viewer #react-doc-viewer,
             .single-scroll-doc-viewer .react-doc-viewer,
+            .single-scroll-doc-viewer #proxy-renderer,
+            .single-scroll-doc-viewer #proxy-renderer > div,
+            .single-scroll-doc-viewer #pdf-renderer,
+            .single-scroll-doc-viewer #pdf-renderer > div,
             .single-scroll-doc-viewer .react-pdf__Document {
               overflow-y: visible !important;
+              overflow-x: visible !important;
               max-height: none !important;
+              height: auto !important;
             }
           `}
         </style>
