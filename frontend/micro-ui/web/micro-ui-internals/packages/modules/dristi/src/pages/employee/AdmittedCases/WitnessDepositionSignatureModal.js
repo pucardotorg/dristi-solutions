@@ -12,6 +12,8 @@ const WitnessDepositionSignatureModal = ({
   setLoader,
   loader,
   witnessDepositionFileStoreId,
+  caseDetails,
+  currentArtifactNumber,
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
@@ -163,6 +165,9 @@ const WitnessDepositionSignatureModal = ({
           cancelLabel={"SUBMIT"}
           fileUploadError={fileUploadError}
           setFileUploadError={setFileUploadError}
+          downloadedFileName={`${
+            caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"
+          }_${currentArtifactNumber}_Witness_Deposition_draft`}
         />
       )}
     </React.Fragment>

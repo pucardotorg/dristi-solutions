@@ -1143,7 +1143,8 @@ const GenerateBailBondV2 = () => {
   };
 
   const handleDownload = () => {
-    downloadPdf(tenantId, bailBondFileStoreId);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${bailBondId}_Bail_Bond_draft`;
+    downloadPdf(tenantId, bailBondFileStoreId, name);
   };
 
   const handleESign = async () => {
@@ -1343,6 +1344,9 @@ const GenerateBailBondV2 = () => {
             setLoader={setBailUploadLoader}
             loader={bailUploadLoader}
             fileStoreId={bailBondFileStoreId}
+            downloadedFileName={`${
+              caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"
+            }_${bailBondId}_Bail_Bond_draft`}
           />
         )}
 
