@@ -452,7 +452,7 @@ const WitnessDrawerV2 = ({
         const newTab = {
           artifactNumber: null, // Will be set after saving
           sourceName: "Deposition", // Default name until saved
-          sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
+          sourceType: selectedWitnessType?.value?.includes("PW") ? "COMPLAINANT" : selectedWitnessType?.value?.includes("DW") ? "ACCUSED" : "COURT",
           sourceID: selectedWitness?.value,
           content: "",
           artifactType: "WITNESS_DEPOSITION",
@@ -524,7 +524,7 @@ const WitnessDrawerV2 = ({
         const newTab = {
           artifactNumber: null, // Will be set after saving
           sourceName: "Deposition", // Default name until saved
-          sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
+          sourceType: selectedWitnessType?.value?.includes("PW") ? "COMPLAINANT" : selectedWitnessType?.value?.includes("DW") ? "ACCUSED" : "COURT",
           sourceID: selectedWitness?.value,
           content: "",
           artifactType: "WITNESS_DEPOSITION",
@@ -651,7 +651,11 @@ const WitnessDrawerV2 = ({
           const updateEvidenceReqBody = {
             artifact: {
               ...evidence,
-              sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
+              sourceType: selectedWitnessType?.value?.includes("PW")
+                ? "COMPLAINANT"
+                : selectedWitnessType?.value?.includes("DW")
+                ? "ACCUSED"
+                : "COURT",
               tag: selectedWitnessType?.value,
               sourceID: selectedWitness.value,
               sourceName: party?.sourceName,
@@ -696,7 +700,7 @@ const WitnessDrawerV2 = ({
             caseId: caseDetails?.id,
             filingNumber: caseDetails?.filingNumber,
             tenantId,
-            sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
+            sourceType: selectedWitnessType?.value?.includes("PW") ? "COMPLAINANT" : selectedWitnessType?.value?.includes("DW") ? "ACCUSED" : "COURT",
             tag: selectedWitnessType?.value,
             sourceID: selectedWitness?.value,
             asUser: selectedWitness?.value, // This field is added as part of advocate office management feature requirement.
@@ -1050,7 +1054,11 @@ const WitnessDrawerV2 = ({
           const updateEvidenceReqBody = {
             artifact: {
               ...evidence,
-              sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
+              sourceType: selectedWitnessType?.value?.includes("PW")
+                ? "COMPLAINANT"
+                : selectedWitnessType?.value?.includes("DW")
+                ? "ACCUSED"
+                : "COURT",
               tag: selectedWitnessType?.value,
               sourceID: selectedWitness.value,
               sourceName: party?.sourceName,
@@ -1099,7 +1107,7 @@ const WitnessDrawerV2 = ({
             caseId: caseDetails?.id,
             filingNumber: caseDetails?.filingNumber,
             tenantId,
-            sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
+            sourceType: selectedWitnessType?.value?.includes("PW") ? "COMPLAINANT" : selectedWitnessType?.value?.includes("DW") ? "ACCUSED" : "COURT",
             tag: selectedWitnessType?.value,
             sourceID: selectedWitness?.value,
             asUser: selectedWitness?.value, // This field is added as part of advocate office management feature requirement.
