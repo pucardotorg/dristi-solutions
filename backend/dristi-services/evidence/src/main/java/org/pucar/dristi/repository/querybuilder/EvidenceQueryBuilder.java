@@ -124,6 +124,7 @@ public class EvidenceQueryBuilder {
         else if(searchCriteria.getOwner() != null && !searchCriteria.getOwner().toString().equals(asUser)) {
             queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
         }
+        queryBuilder.append(" AND status != 'DRAFT_IN_PROGRESS' ");
 
         return queryBuilder.toString();
     }
