@@ -282,7 +282,11 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
             labelClassName={"secondary-label-selector"}
             style={{ minWidth: "30%" }}
             onButtonClick={() => {
-              downloadPdf(tenantId, fileStoreIdToUse, `${caseDetails?.caseNumber || caseDetails?.filingNumber || "Case"}_Complaint`);
+              downloadPdf(
+                tenantId,
+                fileStoreIdToUse,
+                `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Complaint`
+              );
               sessionStorage.removeItem("fileStoreId");
             }}
           />
@@ -363,7 +367,7 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
                         downloadPdf(
                           tenantId,
                           receiptFilstoreId,
-                          `${caseDetails?.caseNumber || caseDetails?.filingNumber || "Case"}_Efiling_payment_Receipt`
+                          `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Efiling_payment_Receipt`
                         )
                     : onTaskPayOnline
                 }

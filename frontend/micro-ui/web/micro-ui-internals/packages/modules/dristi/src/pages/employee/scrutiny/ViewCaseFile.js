@@ -740,7 +740,11 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                       className="download-button"
                       label={t("CS_COMMON_DOWNLOAD")}
                       onButtonClick={() =>
-                        downloadPdf(tenantId, fileStoreId, `${caseDetails?.caseNumber || caseDetails?.filingNumber || "Case"}_Complaint`)
+                        downloadPdf(
+                          tenantId,
+                          fileStoreId,
+                          `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Complaint`
+                        )
                       }
                     />
                   </div>

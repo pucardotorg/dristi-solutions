@@ -1556,7 +1556,8 @@ const AdmittedCaseV2 = () => {
 
   const handleDownloadClick = useCallback(() => {
     if (casePdfFileStoreId) {
-      downloadPdf(tenantId, casePdfFileStoreId, `${caseDetails?.caseNumber || caseDetails?.filingNumber}_CaseFile`); //here
+      const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}_CaseFile`;
+      downloadPdf(tenantId, casePdfFileStoreId, name);
     }
   }, [casePdfFileStoreId, downloadPdf, tenantId, caseDetails]);
 

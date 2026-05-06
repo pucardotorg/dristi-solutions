@@ -198,11 +198,10 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
     // Normal PDF download if not completed or no seal
     // Normal PDF download for non-evidence files
-    return downloadPdf(
-      tenantId,
-      fileStoreId,
-      `${caseDetails?.caseNumber || caseDetails?.filingNumber || "File"}_${formatTitle(t(currentItem?.title || ""))}`
-    );
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "File"}_${formatTitle(
+      t(currentItem?.title || "")
+    )}`;
+    return downloadPdf(tenantId, fileStoreId, name);
   };
 
   const localizeTitle = (title) => {

@@ -1010,9 +1010,10 @@ const EvidenceModal = ({
 
   const actionSaveOnSubmit = async () => {
     if (actionSaveLabel === t("DOWNLOAD_SUBMISSION") && signedSubmission?.applicationContent?.fileStoreId) {
-      const applicationNumber = signedSubmission?.applicationList?.applicationNumber;
-      const applicationType = signedSubmission?.applicationList?.applicationType;
-      downloadPdf(tenantId, signedSubmission?.applicationContent?.fileStoreId, `${applicationNumber}_${applicationType}`);
+      const name = `${caseData?.courtCaseNumber || caseData?.cmpNumber || caseData?.filingNumber || "Case"}_${
+        signedSubmission?.applicationList?.applicationNumber || ""
+      }_Application`;
+      downloadPdf(tenantId, signedSubmission?.applicationContent?.fileStoreId, name);
       return;
     }
     setIsActionLoading(true);
