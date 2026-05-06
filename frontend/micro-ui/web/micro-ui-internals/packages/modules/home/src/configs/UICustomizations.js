@@ -440,7 +440,11 @@ export const UICustomizations = {
         ...(requestCriteria?.state?.searchForm?.outcome?.outcome && {
           outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
         }),
-        ...(selectedStage && { stage: [selectedStage] }),
+        ...(selectedStage
+          ? { stage: [selectedStage] }
+          : requestCriteria?.body?.criteria?.stage
+          ? { stage: requestCriteria.body.criteria.stage }
+          : {}),
         substage: undefined,
         ...(selectedSecondaryStage ? { secondaryStage: [selectedSecondaryStage] } : { secondaryStage: undefined }),
         pagination: {
