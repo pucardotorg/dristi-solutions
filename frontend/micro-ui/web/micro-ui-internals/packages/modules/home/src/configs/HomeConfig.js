@@ -131,7 +131,25 @@ export const TabUnifiedEmployeeSearchConfig = {
         requestParam: {},
         requestBody: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
-          criteria: {},
+          criteria: {
+            isLPRCase: false,
+            stage: [
+              "Post-Disposal",
+              "Long Pending Register",
+              "Post-Judgement",
+              "Judgement",
+              "Arguments",
+              "Defense Evidence",
+              "Examination of Accused",
+              "Complainant Evidence",
+              "Bail & Recording of Plea",
+              "Appearance",
+              "Cognizance",
+              "Registration",
+              "Defect Correction",
+              "Scrutiny",
+            ],
+          },
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -185,7 +203,7 @@ export const TabUnifiedEmployeeSearchConfig = {
                     masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+                      "(data) => {return data['case'].CaseUiPrimaryStage?.filter((item) => (item?.name || '').trim() !== 'Filing').sort((a,b)=>(a?.name || '').localeCompare(b?.name || '')).map((item) => {return item;});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -303,7 +321,6 @@ export const TabUnifiedEmployeeSearchConfig = {
               "Registration",
               "Defect Correction",
               "Scrutiny",
-              "Filing",
             ],
           },
         },
@@ -359,7 +376,7 @@ export const TabUnifiedEmployeeSearchConfig = {
                     masterName: "CaseUiPrimaryStage",
                     moduleName: "case",
                     select:
-                      "(data) => {return data['case'].CaseUiPrimaryStage?.sort((a,b)=>a.name.localeCompare(b.name)).map((item) => {return item;});}",
+                      "(data) => {return data['case'].CaseUiPrimaryStage?.filter((item) => (item?.name || '').trim() !== 'Filing').sort((a,b)=>(a?.name || '').localeCompare(b?.name || '')).map((item) => {return item;});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -1088,7 +1105,19 @@ export const CaseReviewerAdditionalTab = {
 export const getUnifiedEmployeeConfig = (roles) => {
   const baseConfig = { ...TabUnifiedEmployeeSearchConfig };
   const hasCaseReviewerRole = roles?.some((role) => role.code === "CASE_REVIEWER");
-  const allTabs = [...baseConfig.TabSearchConfig];
+
+  const allTabs = baseConfig.TabSearchConfig.map((tab) => {
+    const tabCopy = JSON.parse(JSON.stringify(tab));
+
+    if (!hasCaseReviewerRole && tabCopy.apiDetails?.requestBody?.criteria?.stage) {
+      tabCopy.apiDetails.requestBody.criteria.stage = tabCopy.apiDetails.requestBody.criteria.stage.filter(
+        (stage) => stage !== "Defect Correction" && stage !== "Scrutiny"
+      );
+    }
+
+    return tabCopy;
+  });
+
   baseConfig.TabSearchConfig = allTabs;
   return baseConfig;
 };

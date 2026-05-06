@@ -539,6 +539,12 @@ public class IndexerUtils {
             caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
         }
         if (caseDetails != null) {
+            if(filingDate == null && !caseDetails.isEmpty()) {
+                JsonNode filingDateNode = caseDetails.get(0).path("filingDate");
+                if (filingDateNode.isNumber()) {
+                    filingDate = filingDateNode.asLong();
+                }
+            }
             courtId = caseDetails.get(0).path("courtId").textValue();
 
             String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
@@ -987,7 +993,7 @@ public class IndexerUtils {
         caseDetails.put("cmpNumber", cmpNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
-        caseDetails.put("filingDate", String.valueOf(caseFilingDate));
+        caseDetails.put("filingDate", caseFilingDate != null ? String.valueOf(caseFilingDate) : null);
         caseDetails.put("sectionAndSubSection", sectionAndSubSection);
 
         return caseDetails;
