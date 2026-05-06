@@ -809,11 +809,7 @@ export const UICustomizations = {
         case "PETITIONER":
           return <span>{value || ""}</span>;
         case "DATE_RAISED":
-          const date = value ? new Date(value) : new Date();
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0");
-          const year = date.getFullYear();
-          return <span>{`${day}-${month}-${year}`}</span>;
+          return <span>{DateUtils.getFormattedDate(value)}</span>;
         case "STATUS":
           return (
             <span
@@ -870,12 +866,7 @@ export const UICustomizations = {
         case "STATUS":
           return <CustomChip text={t(value)} shade={value === OrderWorkflowState.PENDING_BULK_E_SIGN && "orange"} />;
         case "DATE_ADDED":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+          return <span>{value && value !== "0" ? DateUtils.getFormattedDate(value) : ""}</span>;
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
         case "CS_ACTIONS":
@@ -973,12 +964,7 @@ export const UICustomizations = {
         case "PROCESS_TYPE":
           return t(value);
         case "DATE_CREATED":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+          return <span>{value && value !== "0" ? DateUtils.getFormattedDate(value) : ""}</span>;
         default:
           break;
       }
