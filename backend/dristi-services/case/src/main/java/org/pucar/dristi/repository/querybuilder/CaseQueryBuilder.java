@@ -113,8 +113,8 @@ public class CaseQueryBuilder {
                 if (criteria.getSearchNumber() != null && !criteria.getSearchNumber().isEmpty()) {
                     String searchTerm = "%" + criteria.getSearchNumber() + "%";
                     addClauseIfRequired(query, firstCriteria);
-                    query.append("(LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cnrnumber) LIKE LOWER(?) OR LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?) OR LOWER(cases.casenumber) LIKE LOWER(?))");
-                    for (int i = 0; i < 5; i++) {
+                    query.append("(LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cnrnumber) LIKE LOWER(?) OR LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?))");
+                    for (int i = 0; i < 4; i++) {
                         preparedStmtList.add(searchTerm);
                         preparedStmtArgList.add(Types.VARCHAR);
                     }
