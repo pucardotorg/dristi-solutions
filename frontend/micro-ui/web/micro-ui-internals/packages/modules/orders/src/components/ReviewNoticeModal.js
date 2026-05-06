@@ -26,7 +26,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   };
 
   const combinedDoc = useMemo(() => {
-    return [policeDoc, doc];
+    return [policeDoc, doc].filter((d) => d?.fileStore);
   }, [doc, policeDoc]);
 
   const showDocument = useMemo(() => {
@@ -50,6 +50,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
               key={docs?.fileStore}
               docWidth={"calc(95vw * 62 / 100)"}
               docHeight={"unset"}
+              disableInnerViewerScroll={true}
               fileStoreId={docs?.fileStore}
               tenantId={tenantId}
               displayFilename={docs?.additionalDetails?.name}

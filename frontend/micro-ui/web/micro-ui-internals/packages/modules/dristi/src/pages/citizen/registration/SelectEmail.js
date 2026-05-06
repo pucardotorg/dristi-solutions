@@ -2,6 +2,111 @@ import { BreadCrumb, FormComposerV2, Loader } from "@egovernments/digit-ui-react
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useToast } from "../../../components/Toast/useToast";
+export const userTypeOptions = [
+  {
+    code: "LITIGANT",
+    name: "LITIGANT_TEXT",
+    showBarDetails: false,
+    isVerified: false,
+    role: [
+      "CASE_CREATOR",
+      "CASE_EDITOR",
+      "CASE_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
+      "APPLICATION_CREATOR",
+      "APPLICATION_VIEWER",
+      "HEARING_VIEWER",
+      "ORDER_VIEWER",
+      "SUBMISSION_CREATOR",
+      "SUBMISSION_RESPONDER",
+      "SUBMISSION_DELETE",
+      "TASK_VIEWER",
+      "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
+    ],
+    subText: "LITIGANT_SUB_TEXT",
+  },
+  {
+    code: "ADVOCATE",
+    name: "ADVOCATE_TEXT",
+    showBarDetails: true,
+    isVerified: true,
+    hasBarRegistrationNo: true,
+    role: [
+      "ADVOCATE_ROLE",
+      "CASE_CREATOR",
+      "CASE_EDITOR",
+      "CASE_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
+      "APPLICATION_CREATOR",
+      "APPLICATION_VIEWER",
+      "HEARING_VIEWER",
+      "ORDER_VIEWER",
+      "SUBMISSION_CREATOR",
+      "SUBMISSION_RESPONDER",
+      "SUBMISSION_DELETE",
+      "TASK_VIEWER",
+      "USER_REGISTER",
+      "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
+    ],
+    apiDetails: {
+      serviceName: "/advocate/v1/_create",
+      requestKey: "advocate",
+      AdditionalFields: ["barRegistrationNumber"],
+    },
+    subText: "ADVOCATE_SUB_TEXT",
+  },
+  {
+    code: "ADVOCATE_CLERK",
+    name: "ADVOCATE_CLERK_TEXT",
+    showBarDetails: true,
+    hasStateRegistrationNo: true,
+    isVerified: true,
+    role: [
+      "ADVOCATE_CLERK_ROLE",
+      "CASE_CREATOR",
+      "CASE_EDITOR",
+      "CASE_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
+      "APPLICATION_CREATOR",
+      "APPLICATION_VIEWER",
+      "HEARING_VIEWER",
+      "ORDER_VIEWER",
+      "SUBMISSION_CREATOR",
+      "SUBMISSION_RESPONDER",
+      "SUBMISSION_DELETE",
+      "TASK_VIEWER",
+      "USER_REGISTER",
+      "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
+    ],
+    apiDetails: {
+      serviceName: "/advocate/clerk/v1/_create",
+      requestKey: "clerk",
+      AdditionalFields: ["stateRegnNumber"],
+    },
+
+    subText: "ADVOCATE_CLERK_SUB_TEXT",
+  },
+];
 
 const bredCrumbStyle = { maxWidth: "min-content" };
 
@@ -50,6 +155,77 @@ const SelectEmail = ({
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const toast = useToast();
   const setFormErrors = useRef(null);
+  const token = window.localStorage.getItem("token");
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+
+  const { data: individualData, isIndividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+    {
+      Individual: {
+        userUuid: [userInfo?.uuid],
+      },
+    },
+    { tenantId, limit: 500, offset: 0 },
+    "Home",
+    `${token}-${userInfo?.uuid}-${isUserLoggedIn}`,
+    Boolean(userInfo?.uuid && isUserLoggedIn)
+  );
+
+  const individualId = individualData?.Individual?.[0]?.individualId;
+  const userType = useMemo(
+    () => individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value || [individualData?.Individual],
+    [individualData?.Individual]
+  );
+
+  const isLitigantPartialRegistered = useMemo(() => {
+    if (userInfoType !== "citizen") return false;
+
+    if (!individualData?.Individual || individualData.Individual.length === 0) return false;
+
+    if (individualData?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
+
+    const address = individualData.Individual[0]?.address;
+    return !address || (Array.isArray(address) && address.length === 0);
+  }, [individualData?.Individual, userInfoType]);
+
+  const { data: searchData, isLoading: isSearchLoading, refetch: refetchAdvocateClerk } = Digit?.Hooks?.dristi?.useGetAdvocateClerk(
+    {
+      criteria: [{ individualId }],
+      tenantId,
+    },
+    { tenantId, limit: 400 },
+    `${individualId}-${isUserLoggedIn}-${userType}-${token}-${userInfo?.uuid}-${individualData?.Individual?.[0]?.individualId || ""}`,
+    Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
+    userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
+  );
+
+  const userTypeDetail = useMemo(() => {
+    return userTypeOptions.find((item) => item.code === userType) || {};
+  }, [userType]);
+
+  const searchResult = useMemo(() => {
+    return searchData?.[`${userTypeDetail?.apiDetails?.requestKey}s`]?.[0]?.responseList;
+  }, [searchData, userTypeDetail?.apiDetails?.requestKey]);
+
+  const isApprovalPending = useMemo(() => {
+    if (!searchResult) return true;
+    return (
+      userType !== "LITIGANT" &&
+      Array.isArray(searchResult) &&
+      searchResult?.length > 0 &&
+      searchResult?.[0]?.isActive === false &&
+      searchResult?.[0]?.status !== "INACTIVE"
+    );
+  }, [searchResult, userType]);
+
+  const isRejected = useMemo(() => {
+    return (
+      userType !== "LITIGANT" &&
+      Array.isArray(searchResult) &&
+      searchResult?.length > 0 &&
+      searchResult?.[0]?.isActive === false &&
+      searchResult?.[0]?.status === "INACTIVE"
+    );
+  }, [searchResult, userType]);
 
   useEffect(() => {
     if (isProfile) {
@@ -118,8 +294,19 @@ const SelectEmail = ({
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isIndividualLoading || isSearchLoading) {
     return <Loader />;
+  }
+
+  // return from here if individualId exists and we are not in profile mode
+  if (
+    individualId &&
+    (userType === "LITIGANT" ? !isLitigantPartialRegistered : true) &&
+    (userType !== "LITIGANT" ? !isApprovalPending && !isRejected : true) &&
+    !isProfile
+  ) {
+    history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
+    return null;
   }
 
   return (

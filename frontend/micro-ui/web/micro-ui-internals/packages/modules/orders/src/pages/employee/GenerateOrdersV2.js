@@ -123,6 +123,7 @@ const GenerateOrdersV2 = () => {
   const isApplicationAccepted = history.location?.state?.isApplicationAccepted;
   const hasCalledApplicationAction = useRef(false);
   const hasInitialized = useRef(false);
+  const hasViewSignOrdersAccess = roles?.some((role) => role.code === "VIEW_SIGN_ORDERS");
 
   const fetchCaseDetails = async () => {
     try {
@@ -2468,7 +2469,12 @@ const GenerateOrdersV2 = () => {
 
   const handleBulkCloseSuccessModal = () => {
     setShowBulkModal(false);
-    history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`, { homeActiveTab: "CS_HOME_ORDERS" });
+    // redirecting to the home screen with the "orders tab active" only if user has corresponding roles
+    if (hasViewSignOrdersAccess) {
+      history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`, { homeActiveTab: "CS_HOME_ORDERS" });
+    } else {
+      history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`);
+    }
   };
 
   const handleClose = async () => {

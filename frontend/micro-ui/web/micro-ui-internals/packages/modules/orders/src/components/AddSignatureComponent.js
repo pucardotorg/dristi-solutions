@@ -76,13 +76,13 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
 
   const documentType = useMemo(() => {
     let txt = "";
-    if (rowData?.orderType === "SUMMONS") {
+    if (rowData?.taskType === "SUMMONS") {
       txt = "Summons";
-    } else if (rowData?.orderType === "WARRANT") {
+    } else if (rowData?.taskType === "WARRANT") {
       txt = "Warrant";
-    } else if (rowData?.orderType === "PROCLAMATION") {
+    } else if (rowData?.taskType === "PROCLAMATION") {
       txt = "Proclamation";
-    } else if (rowData?.orderType === "ATTACHMENT") {
+    } else if (rowData?.taskType === "ATTACHMENT") {
       txt = "Attachment";
     } else {
       txt = "Notice";

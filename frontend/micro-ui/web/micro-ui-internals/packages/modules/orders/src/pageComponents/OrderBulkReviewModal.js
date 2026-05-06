@@ -43,7 +43,7 @@ function OrderBulkReviewModal({ t, history, orderDetails }) {
         }}
       >
         {orderFileStoreId ? (
-          <DocViewerWrapper docWidth={"74vw"} docHeight={"50vh"} fileStoreId={orderFileStoreId} tenantId={tenantId} showDownloadOption={false} />
+          <DocViewerWrapper docWidth={"74vw"} docHeight={"100%"} fileStoreId={orderFileStoreId} tenantId={tenantId} showDownloadOption={false} />
         ) : (
           <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
         )}

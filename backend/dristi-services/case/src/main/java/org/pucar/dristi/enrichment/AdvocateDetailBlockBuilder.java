@@ -96,34 +96,26 @@ public class AdvocateDetailBlockBuilder {
                             if (nameBuilder.length() > 0) complainant.setFullName(nameBuilder.toString());
                         }
 
-            List<Document> vakalatnama = getVakalatnamaDocumentsForLitigant(courtCase, litigant);
+                        List<Document> vakalatnama = getVakalatnamaDocumentsForLitigant(courtCase, litigant);
+                        List<Document> pipAffidavit = Optional.ofNullable(litigant.getDocuments())
+                                .orElse(Collections.emptyList())
+                                .stream()
+                                .filter(d -> d != null
+                                        && d.getDocumentType() != null
+                                        && d.getDocumentType().equalsIgnoreCase("COMPLAINANT_PIP_AFFIDAVIT"))
+                                .collect(Collectors.toList());
 
-            // Identify PIP affidavit documents only by documentType
-            List<Document> pipAffidavit = caseDocuments.stream()
-                .filter(d -> d != null
-                    && d.getDocumentType() != null
-                    && d.getDocumentType().equalsIgnoreCase("COMPLAINANT_PIP_AFFIDAVIT"))
-                .collect(Collectors.toList());
-
-            Documents docs = Documents.builder()
-                .vakalatnama(vakalatnama)
-                .pipAffidavit(pipAffidavit)
-                .build();
+                        Documents docs = Documents.builder()
+                                .vakalatnama(vakalatnama)
+                                .pipAffidavit(pipAffidavit)
+                                .build();
 
                         // Build advocates list by finding representatives who represent this litigant (match by individualId)
                         List<Advocate> advocates = new ArrayList<>();
                         if (courtCase.getRepresentatives() != null && litigant.getIndividualId() != null) {
                             for (AdvocateMapping rep : courtCase.getRepresentatives()) {
                                 if (rep == null) continue;
-                                boolean representsLitigant = false;
-                                if (rep.getRepresenting() != null) {
-                                    for (Party p : rep.getRepresenting()) {
-                                        if (p != null && p.getIndividualId() != null && p.getIndividualId().equalsIgnoreCase(litigant.getIndividualId())) {
-                                            representsLitigant = true;
-                                            break;
-                                        }
-                                    }
-                                }
+                                boolean representsLitigant = isRepresentsLitigant(litigant, rep);
                                 if (!representsLitigant) continue;
 
                                 Advocate adv = Advocate.builder().build();
@@ -213,17 +205,17 @@ public class AdvocateDetailBlockBuilder {
                                 .build();
 
 
-            AdvocateDetailBlock block = AdvocateDetailBlock.builder()
-                .complainant(complainant)
-                .documents(docs)
-                .advocates(advocates)
-                .advocateCount(advocates != null ? advocates.size() : 0)
-                .isEnabled(true)
-                .isFormCompleted(!advocates.isEmpty())
-                .displayIndex(0)
-                .isComplainantPip(pipStatus)
-                .uiFlags(uiFlags)
-                .build();
+                        AdvocateDetailBlock block = AdvocateDetailBlock.builder()
+                                .complainant(complainant)
+                                .documents(docs)
+                                .advocates(advocates)
+                                .advocateCount(advocates != null ? advocates.size() : 0)
+                                .isEnabled(true)
+                                .isFormCompleted(!advocates.isEmpty())
+                                .displayIndex(0)
+                                .isComplainantPip(pipStatus)
+                                .uiFlags(uiFlags)
+                                .build();
 
                         blocks.add(block);
                     }
@@ -234,6 +226,19 @@ public class AdvocateDetailBlockBuilder {
         } catch (Exception e) {
             log.error("Error while building AdvocateDetailBlock: {}", e.toString());
         }
+    }
+
+    private static boolean isRepresentsLitigant(Party litigant, AdvocateMapping rep) {
+        boolean representsLitigant = false;
+        if (rep.getRepresenting() != null) {
+            for (Party p : rep.getRepresenting()) {
+                if (p != null && p.getIndividualId() != null && p.getIndividualId().equalsIgnoreCase(litigant.getIndividualId())) {
+                    representsLitigant = true;
+                    break;
+                }
+            }
+        }
+        return representsLitigant;
     }
 
     private List<Document> getVakalatnamaDocumentsForLitigant(CourtCase courtCase, Party litigant) {
@@ -281,7 +286,7 @@ public class AdvocateDetailBlockBuilder {
 
     private String getDocumentIdentity(Document document) {
         if (document == null) {
-           return "NULL_DOCUMENT";
+            return "NULL_DOCUMENT";
         }
         if (document.getFileStore() != null && !document.getFileStore().isBlank()) {
             return "filestore:" + document.getFileStore();

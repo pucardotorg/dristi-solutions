@@ -2046,7 +2046,15 @@ const SubmissionsCreate = ({ path }) => {
           <SuccessModal
             t={t}
             isPaymentDone={applicationDetails?.status === SubmissionWorkflowState.PENDINGPAYMENT}
-            headerBarEndClose={handleBack}
+            headerBarEndClose={
+              !makePaymentLabel
+                ? handleBack
+                : () => {
+                    history.replace(
+                      `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+                    );
+                  }
+            }
             handleCloseSuccessModal={makePaymentLabel ? handleMakePayment : handleBack}
             actionCancelLabel={"DOWNLOAD_SUBMISSION"}
             actionCancelOnSubmit={handleDownloadSubmission}

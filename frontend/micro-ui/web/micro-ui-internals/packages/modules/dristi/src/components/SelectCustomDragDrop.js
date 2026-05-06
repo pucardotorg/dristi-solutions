@@ -109,8 +109,15 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
     }
 
     // Only add the file to currentValue if it passes size validation
-    currentValue.splice(index, 1, file);
-    currentValue = currentValue.map((item) => {
+    // Use immutable update to avoid mutating the original array reference in formData
+    let newCurrentValue;
+    if (index === Infinity) {
+      newCurrentValue = [...currentValue, file];
+    } else {
+      newCurrentValue = [...currentValue];
+      newCurrentValue[index] = file;
+    }
+    currentValue = newCurrentValue.map((item) => {
       if (item?.name) {
         const fileNameParts = item?.name.split(".");
         const extension = fileNameParts.pop().toLowerCase();
@@ -216,9 +223,9 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                 )}
               </div>
             </div>
-             {errors?.[config.key] && (
-                <span className="alert-error">{t(errors?.[config.key]?.msg || errors?.[config.key].message || "CORE_REQUIRED_FIELD_ERROR")}</span>
-              )}
+            {errors?.[config.key] && (
+              <span className="alert-error">{t(errors?.[config.key]?.msg || errors?.[config.key].message || "CORE_REQUIRED_FIELD_ERROR")}</span>
+            )}
             {input.downloadTemplateText && input.downloadTemplateLink && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "20px" }}>
                 {input?.downloadTemplateText && t(input?.downloadTemplateText)}
