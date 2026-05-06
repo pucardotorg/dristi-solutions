@@ -125,6 +125,7 @@ export const DigitalDocumentSignModal = ({
   const [formData, setFormData] = useState({});
   const [digitalDocumentSignedPdf, setDigitalDocumentSignedPdf] = useState("");
   const [loader, setLoader] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState(null);
   const [documentFiles, setDocumentFiles] = useState([]);
   const [documentLoader, setDocumentLoader] = useState(false);
   const name = "Signature";
@@ -223,6 +224,7 @@ export const DigitalDocumentSignModal = ({
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onUploadSubmit = useCallback(async () => {
@@ -236,6 +238,9 @@ export const DigitalDocumentSignModal = ({
         clearDigitalDocumentSessionData();
       } catch (error) {
         console.error("error", error);
+        setFormData({});
+        setIsSigned(false);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       } finally {
         setLoader(false);
       }
@@ -618,6 +623,8 @@ export const DigitalDocumentSignModal = ({
           formData={formData}
           onSubmit={onUploadSubmit}
           isDisabled={loader}
+          fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
         />
       )}
       {/* after signing showing signed modal */}
