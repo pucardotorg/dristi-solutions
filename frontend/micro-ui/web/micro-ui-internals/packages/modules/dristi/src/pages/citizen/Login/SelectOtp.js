@@ -116,7 +116,7 @@ const SelectOtp = ({
 
   return (
     <Modal
-      headerBarEnd={<CloseBtn onClick={onCancel} isMobileView={false} />}
+      headerBarEnd={<CloseBtn onClick={onCancel} isMobileView={false} style={{ paddingTop: "9px" }} />}
       actionSaveLabel={t("VERIFY")}
       actionSaveOnSubmit={onModalSubmit}
       isDisabled={!(otp?.length === 6 && canSubmit)}

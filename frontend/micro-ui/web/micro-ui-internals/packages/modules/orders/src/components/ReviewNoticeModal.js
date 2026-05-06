@@ -50,6 +50,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
               key={docs?.fileStore}
               docWidth={"calc(95vw * 62 / 100)"}
               docHeight={"unset"}
+              disableInnerViewerScroll={true}
               fileStoreId={docs?.fileStore}
               tenantId={tenantId}
               displayFilename={docs?.additionalDetails?.name}
