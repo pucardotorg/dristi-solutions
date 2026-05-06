@@ -269,7 +269,7 @@ const GenerateBailBondV2 = () => {
       ];
     }
     return [];
-  }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
+  }, [authorizedUuid, caseDetails?.representatives, pipComplainants, pipAccuseds]);
 
   const pendingTasks = useMemo(() => {
     if (complainantsList?.length === 1 || (!pendingTaskrefId && !pendingTaskId)) {
@@ -286,7 +286,7 @@ const GenerateBailBondV2 = () => {
   }, [pendingTasks]);
 
   const selectedRepresentative = useMemo(() => {
-    return caseDetails?.litigants?.filter((litigant) => litigant?.individualId === pendingTaskAdditionalDetails?.litigantUuid)?.[0] || {};
+    return caseDetails?.litigants?.filter((litigant) => litigant?.additionalDetails?.uuid === pendingTaskAdditionalDetails?.litigantUuid)?.[0] || {};
   }, [caseDetails?.litigants, pendingTaskAdditionalDetails?.litigantUuid]);
 
   const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -704,7 +704,7 @@ const GenerateBailBondV2 = () => {
       const newObject = {
         ...getPendingTaskPayload,
         litigantId: selectedRepresentative?.additionalDetails?.uuid || getPendingTaskPayload?.litigantUuid,
-        litigantName: getPendingTaskPayload?.litigantName || selectedRepresentative?.additionalDetails?.fullName,
+        litigantName: getPendingTaskPayload?.litigantName || selectedRepresentative?.additionalDetails?.fullName || complainantsList?.[0]?.name,
       };
       return convertToFormData(t, newObject);
     }
