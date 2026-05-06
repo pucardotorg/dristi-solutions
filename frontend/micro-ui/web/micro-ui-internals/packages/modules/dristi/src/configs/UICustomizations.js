@@ -11,6 +11,7 @@ import ActionEdit from "../components/ActionEdit";
 import ReactTooltip from "react-tooltip";
 import {
   _getDigitilizationPatiresName,
+  DateUtils,
   getAssistantAdvocateMembersForPartiesTab,
   getAuthorizedUuid,
   getClerkMembersForPartiesTab,
@@ -684,12 +685,7 @@ export const UICustomizations = {
           );
         case "DATE_ISSUED":
         case "DATE_ADDED":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0");
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+          return <span>{value && value !== "0" ? DateUtils.getFormattedDate(value) : ""}</span>;
         case "ORDER_TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
         case "CS_ACTIONS":
@@ -880,12 +876,7 @@ export const UICustomizations = {
         case "DATE_ADDED":
         case "DATE_ISSUED":
         case "DATE":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+          return <span>{value && value !== "0" ? DateUtils.getFormattedDate(value) : ""}</span>;
         case "PARTIES":
           if (value === null || value === undefined || value === "undefined" || value === "null") {
             return null;
@@ -1122,12 +1113,7 @@ export const UICustomizations = {
         case "Instance":
           return <RenderInstance value={value} t={t} />;
         case "Date":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{formattedDate}</span>;
+          return <span>{DateUtils.getFormattedDate(value)}</span>;
         case "Status":
           return t(value);
         default:
