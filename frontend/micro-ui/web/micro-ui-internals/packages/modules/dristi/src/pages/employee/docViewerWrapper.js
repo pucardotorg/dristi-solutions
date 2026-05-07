@@ -1,5 +1,6 @@
 import { Card } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import PropTypes from "prop-types";
 import { useHistory } from "react-router-dom";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import { useTranslation } from "react-i18next";
@@ -341,6 +342,27 @@ const DocViewerWrapper = ({
       )}
     </div>
   );
+};
+
+DocViewerWrapper.propTypes = {
+  disableInnerViewerScroll: PropTypes.bool,
+  displayFilename: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+  docHeight: PropTypes.string,
+  docViewerCardClassName: PropTypes.string,
+  docViewerStyle: PropTypes.object,
+  docWidth: PropTypes.string,
+  documentName: PropTypes.string,
+  errorHeight: PropTypes.string,
+  errorStyleSmallType: PropTypes.any,
+  fileStoreId: PropTypes.string,
+  handleImageModalOpen: PropTypes.func,
+  isLocalizationRequired: PropTypes.bool,
+  pdfZoom: PropTypes.number,
+  preview: PropTypes.bool,
+  selectedDocs: PropTypes.array,
+  showDownloadOption: PropTypes.bool,
+  style: PropTypes.object,
+  tenantId: PropTypes.string,
 };
 
 export default DocViewerWrapper;

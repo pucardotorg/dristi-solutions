@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import SelectCustomDragDrop from "./SelectCustomDragDrop";
 import Modal from "./Modal";
 import WarningTextComponent from "./WarningTextComponent";
@@ -108,7 +109,8 @@ function UploadSignatureModal({
         <div className="donwload-submission" style={{ display: "flex", alignItems: "center" }}>
           <h2>{t("WANT_TO_UNSIGNED_DOWNLOAD")}</h2>
           {onCustomDownload ? (
-            <span
+            <button
+              type="button"
               onClick={onCustomDownload}
               style={{
                 display: "flex",
@@ -120,10 +122,15 @@ function UploadSignatureModal({
                 cursor: "pointer",
                 textDecoration: "underline",
                 marginLeft: "5px",
+                background: "none",
+                border: "none",
+                padding: 0,
+                font: "inherit",
+                textAlign: "left",
               }}
             >
               {t("CLICK_HERE")}
-            </span>
+            </button>
           ) : (
             <AuthenticatedLink uri={uri} t={t} displayFilename={"CLICK_HERE"} pdf={true} name={downloadedFileName} />
           )}
@@ -132,5 +139,31 @@ function UploadSignatureModal({
     </Modal>
   );
 }
+
+UploadSignatureModal.propTypes = {
+  cancelLabel: PropTypes.string,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    populators: PropTypes.object,
+  }).isRequired,
+  downloadedFileName: PropTypes.string,
+  fileStoreId: PropTypes.string,
+  fileUploadError: PropTypes.any,
+  formData: PropTypes.object,
+  infoHeader: PropTypes.string,
+  infoText: PropTypes.string,
+  isDisabled: PropTypes.bool,
+  name: PropTypes.string,
+  onCustomDownload: PropTypes.func,
+  onSelect: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func,
+  setFileUploadError: PropTypes.func,
+  setOpenUploadSignatureModal: PropTypes.func.isRequired,
+  showDownloadText: PropTypes.bool,
+  showInfo: PropTypes.bool,
+  showWarning: PropTypes.bool,
+  t: PropTypes.func.isRequired,
+  warningText: PropTypes.string,
+};
 
 export default UploadSignatureModal;

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Modal from "./Modal";
-import { CheckBox, TextArea } from "@egovernments/digit-ui-react-components";
+import { TextArea } from "@egovernments/digit-ui-react-components";
 import { CloseBtn } from "./ModalComponents";
 
 function ConfirmEvidenceAction({

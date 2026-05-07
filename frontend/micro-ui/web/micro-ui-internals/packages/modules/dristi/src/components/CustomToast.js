@@ -70,7 +70,7 @@ const CustomToast = ({
     el.value = errorId;
     document.body.appendChild(el);
     el.select();
-    document.execCommand("copy");
+    document.execCommand("copy"); // NOSONAR
     document.body.removeChild(el);
     cb();
   };

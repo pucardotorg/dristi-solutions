@@ -1,5 +1,6 @@
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import PropTypes from "prop-types";
 import React, { useMemo, useState } from "react";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
@@ -144,6 +145,24 @@ const GenericUploadSignatureModal = ({
       )}
     </React.Fragment>
   );
+};
+
+GenericUploadSignatureModal.propTypes = {
+  customUploadDocuments: PropTypes.func,
+  downloadedFileName: PropTypes.string,
+  fileStoreId: PropTypes.string,
+  handleCloseSignatureModal: PropTypes.func.isRequired,
+  handleDownload: PropTypes.func.isRequired,
+  handleESign: PropTypes.func.isRequired,
+  handleSubmit: PropTypes.func.isRequired,
+  infoText: PropTypes.string,
+  loader: PropTypes.bool,
+  onCustomDownload: PropTypes.func,
+  setLoader: PropTypes.func.isRequired,
+  setShowUploadSignature: PropTypes.func.isRequired,
+  showUploadSignature: PropTypes.bool.isRequired,
+  t: PropTypes.func.isRequired,
+  title: PropTypes.string,
 };
 
 export default GenericUploadSignatureModal;

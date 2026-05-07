@@ -454,7 +454,7 @@ const AdmittedCaseV2 = () => {
     allAdvocates,
     authorizedUuid,
   ]);
-  const { data: applicationData, isLoading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: applicationData } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         filingNumber,
@@ -1133,7 +1133,9 @@ const AdmittedCaseV2 = () => {
 
   useEffect(() => {
     if (show || !location.state?.submissionEvidenceModal) return;
-    const { submissionEvidenceModal: _omit, ...rest } = location.state || {};
+    const prevState = location.state || {};
+    const rest = { ...prevState };
+    delete rest.submissionEvidenceModal;
     history.replace({
       pathname: location.pathname,
       search: location.search,
