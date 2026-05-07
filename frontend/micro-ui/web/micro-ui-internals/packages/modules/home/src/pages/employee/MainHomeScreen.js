@@ -405,7 +405,6 @@ const MainHomeScreen = () => {
     const toDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59, 999).getTime();
     return { fromDate, toDate };
   };
-
   const fetchHearingCount = async (filters, activeTab) => {
     if (filters && activeTab === "TOTAL_HEARINGS_TAB" && filters.date) {
       try {

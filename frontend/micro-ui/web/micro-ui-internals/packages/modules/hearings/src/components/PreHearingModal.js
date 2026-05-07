@@ -26,7 +26,6 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
 
   const DateFormat = "DD-MM-YYYY";
 
-  
   const openRescheduleModal = (caseDetails) => {
     setPurposeModalData(caseDetails);
     setPurposeModalOpen(true);

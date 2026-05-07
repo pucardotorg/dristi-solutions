@@ -93,24 +93,25 @@ export const UICustomizations = {
               {row.hearing.status === STATUS_TYPES.SCHEDULED && !userInfo.roles.map((role) => role.code).includes(USER_ROLES.HEARING_EDITOR) && (
                 <span style={{ color: "#007E7E" }}>{t("HEARING_AWAITING_START")}</span>
               )}
-              {row.hearing.status === HearingWorkflowState?.INPROGRESS && userInfo.roles.map((role) => role.code).includes(USER_ROLES.HEARING_EDITOR) && (
-                <Button
-                  variation={"secondary"}
-                  label={t("JOIN_HEARING")}
-                  onButtonClick={() => {
-                    const path = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row.caseId}&filingNumber=${row.filingNumber}&tab=Overview`;
-                    window.location = path;
-                  }}
-                  style={{ marginRight: "1rem" }}
-                  textStyles={{
-                    fontFamily: "Roboto",
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    lineHeight: "18.75px",
-                    textAlign: "center",
-                  }}
-                />
-              )}
+              {row.hearing.status === HearingWorkflowState?.INPROGRESS &&
+                userInfo.roles.map((role) => role.code).includes(USER_ROLES.HEARING_EDITOR) && (
+                  <Button
+                    variation={"secondary"}
+                    label={t("JOIN_HEARING")}
+                    onButtonClick={() => {
+                      const path = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row.caseId}&filingNumber=${row.filingNumber}&tab=Overview`;
+                      window.location = path;
+                    }}
+                    style={{ marginRight: "1rem" }}
+                    textStyles={{
+                      fontFamily: "Roboto",
+                      fontSize: "16px",
+                      fontWeight: 700,
+                      lineHeight: "18.75px",
+                      textAlign: "center",
+                    }}
+                  />
+                )}
               {showAction && (
                 <OverlayDropdown
                   styles={{
