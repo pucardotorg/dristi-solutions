@@ -343,9 +343,7 @@ const CTCApplications = ({ refetch }) => {
     if (!selectedRowApplicationData) return [];
     const app = selectedRowApplicationData;
     const applicationType = t("APPLICATION_FOR_CERTIFIED_TRUE_COPY");
-    const submissionDate = app?.auditDetails?.createdTime
-      ? DateUtils.getFormattedDate(app?.auditDetails?.createdTime)
-      : "";
+    const submissionDate = app?.auditDetails?.createdTime ? DateUtils.getFormattedDate(app?.auditDetails?.createdTime) : "";
     const applicantName = app?.applicantName || "NA";
 
     return [

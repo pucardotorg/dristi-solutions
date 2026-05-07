@@ -1031,7 +1031,6 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
         errorObject.SUMMON_PROCESS_COURIER_INFORMATION_MISSING = true;
       }
     }
-
     let mandatoryLeft = false;
     for (let key in errorObject) {
       if (errorObject[key] === true) {

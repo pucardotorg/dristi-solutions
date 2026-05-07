@@ -437,7 +437,11 @@ public class PaymentService {
 
     public void sendNotificationForPaymentCompleted(TreasuryPaymentRequest request) {
         String filingNumber = request.getTreasuryPaymentData().getCaseNumber();
+<<<<<<< HEAD
         CourtCase courtCase = fetchCourtCase(filingNumber, request.getRequestInfo());
+=======
+        CourtCase courtCase = fetchCourtCase(filingNumber);
+>>>>>>> main
         if(courtCase == null) return;
         Set<String> individualIds = collectIndividualIds(courtCase);
         List<Individual> individuals = fetchIndividuals(individualIds);
@@ -448,14 +452,22 @@ public class PaymentService {
     }
 
 
+<<<<<<< HEAD
     private CourtCase fetchCourtCase(String filingNumber, RequestInfo requestInfo) {
         CaseCriteria criteria = CaseCriteria.builder()
                 .defaultFields(false)
+=======
+    private CourtCase fetchCourtCase(String filingNumber) {
+        CaseCriteria criteria = CaseCriteria.builder()
+>>>>>>> main
                 .filingNumber(filingNumber)
                 .build();
 
         CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+<<<<<<< HEAD
                 .requestInfo(requestInfo)
+=======
+>>>>>>> main
                 .criteria(List.of(criteria))
                 .build();
 

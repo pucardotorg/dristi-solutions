@@ -411,7 +411,9 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     );
   }, [caseDetails, filingNumber, respondentName, hearingDetails, orderList, userType, caseId]);
 
-  const modalLabel = [ORDER_TYPES.SUMMONS, ORDER_TYPES.WARRANT, ORDER_TYPES.PROCLAMATION, ORDER_TYPES.ATTACHMENT].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
+  const modalLabel = [ORDER_TYPES.SUMMONS, ORDER_TYPES.WARRANT, ORDER_TYPES.PROCLAMATION, ORDER_TYPES.ATTACHMENT].includes(orderType)
+    ? "SUMMON_WARRANT_STATUS"
+    : "NOTICE_STATUS";
 
   function removeAccusedSuffix(partyName) {
     return partyName.replace(/\s*\(Accused\)$/, "");
