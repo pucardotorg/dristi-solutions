@@ -1870,6 +1870,7 @@ const SubmissionsCreate = ({ path }) => {
   const handleCloseSignaturePopup = () => {
     setShowsignatureModal(false);
     setShowReviewModal(true);
+    sessionStorage.removeItem("fileStoreId");
   };
 
   const handleSkipPayment = () => {
