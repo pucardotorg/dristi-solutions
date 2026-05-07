@@ -589,7 +589,6 @@ const ManageOfficeMember = () => {
             <span className="manage-office-member-field__label">{t("EMAIL")}</span>
             <span className="manage-office-member-field__value">{emailId}</span>
           </div>
-
           {!isNewMember && (
             <button
               type="button"
@@ -627,7 +626,6 @@ const ManageOfficeMember = () => {
 
         <div className="assign-cases-section">
           <h2 className="assign-cases-section-title">{t("MANAGE_CASE_ACCESS")}</h2>
-
           <div className="manage-case-access-radio-container">
             <span className="manage-case-access-label">{t("CASE_ACCESS_TYPE")}</span>
             <div className="manage-case-access-radio-group">
