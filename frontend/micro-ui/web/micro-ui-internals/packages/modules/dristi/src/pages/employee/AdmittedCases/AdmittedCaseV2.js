@@ -1613,9 +1613,10 @@ const AdmittedCaseV2 = () => {
 
   const handleDownloadClick = useCallback(() => {
     if (casePdfFileStoreId) {
-      downloadPdf(tenantId, casePdfFileStoreId);
+      const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}_CaseFile`;
+      downloadPdf(tenantId, casePdfFileStoreId, name);
     }
-  }, [casePdfFileStoreId, downloadPdf, tenantId]);
+  }, [casePdfFileStoreId, downloadPdf, tenantId, caseDetails]);
 
   const pipComplainants = useMemo(() => getPipComplainants(caseDetails), [caseDetails]);
 
@@ -2065,10 +2066,14 @@ const AdmittedCaseV2 = () => {
   const handleDownload = useCallback(
     (filestoreId) => {
       if (filestoreId) {
-        downloadPdf(tenantId, filestoreId);
+        const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${
+          currentOrder?.orderNumber
+        }_Order`;
+
+        downloadPdf(tenantId, filestoreId, name);
       }
     },
-    [downloadPdf, tenantId]
+    [downloadPdf, tenantId, caseDetails, currentOrder]
   );
 
   const handleOrdersTab = useCallback(() => {

@@ -739,7 +739,13 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                       icon={<FileDownloadIcon svgStyle={downloadSvgStyle} pathStyle={downloadPathStyle} />}
                       className="download-button"
                       label={t("CS_COMMON_DOWNLOAD")}
-                      onButtonClick={() => downloadPdf(tenantId, fileStoreId)}
+                      onButtonClick={() =>
+                        downloadPdf(
+                          tenantId,
+                          fileStoreId,
+                          `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Complaint`
+                        )
+                      }
                     />
                   </div>
                   <div className="header-content">

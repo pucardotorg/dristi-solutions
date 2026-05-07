@@ -1121,3 +1121,7 @@ export const isRichTextEmpty = (html) => {
   const plainText = html?.replace(/<[^>]*>/g, "").trim();
   return plainText?.length === 0;
 };
+
+export const formatTitle = (translatedTitle) => {
+  return (translatedTitle || "").trim().replace(/\s+/g, "_");
+};

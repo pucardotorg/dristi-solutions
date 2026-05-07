@@ -813,7 +813,10 @@ const WitnessDrawerV2 = ({
   };
 
   const handleDownload = () => {
-    downloadPdf(tenantId, witnessDepositionFileStoreId);
+    const name = `${
+      caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"
+    }_${currentArtifactNumber}_Witness_Deposition_draft`;
+    downloadPdf(tenantId, witnessDepositionFileStoreId, name);
   };
 
   const updateWitnessDepositionDocument = async (fileStoreId = null, action, witnessMobileNumbers) => {
@@ -1408,6 +1411,8 @@ const WitnessDrawerV2 = ({
             setLoader={setWitnessDepositionUploadLoader}
             loader={witnessDepositionUploadLoader}
             witnessDepositionFileStoreId={witnessDepositionFileStoreId}
+            caseDetails={caseDetails}
+            currentArtifactNumber={currentArtifactNumber}
           />
         )}
         {showAddWitnessMobileNumberModal && (

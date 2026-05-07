@@ -628,7 +628,8 @@ const ComplainantSignature = ({ path }) => {
   }, [litigants, loggedInUserOnBehalfOfUuid]);
 
   const handleCasePdf = () => {
-    downloadPdf(tenantId, signatureDocumentId ? signatureDocumentId : DocumentFileStoreId);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Complaint`;
+    downloadPdf(tenantId, signatureDocumentId ? signatureDocumentId : DocumentFileStoreId, name);
   };
 
   const getPlaceholder = () => {
