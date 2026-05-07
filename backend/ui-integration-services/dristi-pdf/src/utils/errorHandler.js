@@ -7,7 +7,6 @@ const { logger } = require("../logger");
  * @returns {Object} Sanitized error details
  */
 const sanitizeError = (error, context) => {
-  // Basic error info without sensitive data
   const sanitizedError = {
     context,
     message: error.message,
@@ -15,16 +14,29 @@ const sanitizeError = (error, context) => {
     timestamp: new Date().toISOString(),
   };
 
-  // Add HTTP-specific info if available, without sensitive data
   if (error.response) {
     sanitizedError.status = error.response.status;
     sanitizedError.statusText = error.response.statusText;
+    try {
+      const raw = error.response.data;
+      const bodyStr =
+        typeof raw === "string"
+          ? raw
+          : Buffer.isBuffer(raw)
+          ? raw.toString("utf8").slice(0, 500)
+          : JSON.stringify(raw);
+      sanitizedError.responseBody = bodyStr ? bodyStr.slice(0, 500) : null;
+    } catch (_) {}
   }
 
-  // Add request context if available, without query parameters or headers
   if (error.config) {
-    sanitizedError.endpoint = new URL(error.config.url).pathname;
-    sanitizedError.method = error.config.method;
+    try {
+      sanitizedError.downstreamUrl = error.config.url;
+      sanitizedError.method = error.config.method?.toUpperCase();
+    } catch (_) {}
+    if (error.config.params) {
+      sanitizedError.requestParams = error.config.params;
+    }
   }
 
   return sanitizedError;

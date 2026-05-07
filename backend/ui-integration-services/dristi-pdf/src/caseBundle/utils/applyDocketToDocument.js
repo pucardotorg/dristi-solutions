@@ -3,6 +3,7 @@ const { mergePDFDocuments } = require("./mergePDFDocuments");
 const { persistPDF } = require("./persistPDF");
 const { convertFileStoreToDocument } = require("./convertFileStoreToDocument");
 const { search_mdms, create_pdf_v2 } = require("../../api");
+const { logger } = require("../../logger");
 
 /**
  *
@@ -31,6 +32,7 @@ async function applyDocketToDocument(
     return null;
   }
 
+  logger.info("applyDocket start", { tenantId, fileStoreId: documentFileStoreId, docketApplicationType });
   const filingPDFDocument = await convertFileStoreToDocument(
     tenantId,
     documentFileStoreId,

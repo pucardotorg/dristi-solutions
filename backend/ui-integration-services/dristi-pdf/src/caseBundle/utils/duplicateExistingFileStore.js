@@ -1,5 +1,6 @@
 const { convertFileStoreToDocument } = require("./convertFileStoreToDocument");
 const { persistPDF } = require("./persistPDF");
+const { logger } = require("../../logger");
 
 async function duplicateExistingFileStore(
   tenantId,
@@ -7,6 +8,7 @@ async function duplicateExistingFileStore(
   requestInfo,
   TEMP_FILES_DIR
 ) {
+  logger.info("duplicateExistingFileStore start", { tenantId, fileStoreId: documentFileStoreId });
   const document = await convertFileStoreToDocument(
     tenantId,
     documentFileStoreId,

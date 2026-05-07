@@ -1,6 +1,7 @@
 const { convertFileStoreToDocument } = require("./convertFileStoreToDocument");
 const { mergePDFDocuments } = require("./mergePDFDocuments");
 const { persistPDF } = require("./persistPDF");
+const { logger } = require("../../logger");
 
 async function combineMultipleFilestores(
   fileStoreIds,
@@ -12,6 +13,7 @@ async function combineMultipleFilestores(
     throw new Error("fileStoreIds must be a non-empty array");
   }
 
+  logger.info("combineMultipleFilestores start", { tenantId, fileStoreIds });
   const pdfDocuments = await Promise.all(
     fileStoreIds.map((id) =>
       convertFileStoreToDocument(tenantId, id, requestInfo)

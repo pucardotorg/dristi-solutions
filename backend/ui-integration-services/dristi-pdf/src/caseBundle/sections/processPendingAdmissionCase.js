@@ -26,6 +26,35 @@ const { processOrders } = require("./processOrders");
 const { processExamination } = require("./processExamination");
 const { processOthersSection } = require("./processOthersSection");
 
+async function runSection(name, caseId, fn) {
+  try {
+    return await fn();
+  } catch (err) {
+    logger.error(`Section failed: ${name}`, {
+      sectionName: name,
+      caseId,
+      error: err.message,
+      status: err.status,
+      downstreamUrl: err.downstreamUrl,
+      requestParams: err.requestParams,
+      responseBody: err.responseBody,
+      stack: err.stack,
+    });
+    throw err;
+  }
+}
+
+async function runParallel(label, caseId, promises) {
+  const results = await Promise.allSettled(promises);
+  const failures = results.filter((r) => r.status === "rejected");
+  failures.forEach((r) => {
+    logger.error(`Parallel batch failed: ${label}`, { caseId, reason: r.reason?.message || r.reason });
+  });
+  if (failures.length > 0) {
+    throw failures[0].reason;
+  }
+}
+
 async function processPendingAdmissionCase({
   tenantId,
   caseId,
@@ -70,188 +99,41 @@ async function processPendingAdmissionCase({
       ? Object.fromEntries(messages.map(({ code, message }) => [code, message]))
       : {};
 
-  // Create an array of promises for all processing functions
-  const complaintPromises = [
-    processTitlePageSection(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy
-    ),
-    processComplaintSection(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy
-    ),
-    processPendingApplicationsSection(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy,
-      messagesMap
-    ),
-  ];
+  await runParallel("batch-1: titlepage/complaint/pendingApplications", caseId, [
+    runSection("titlepage", caseId, () => processTitlePageSection(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy)),
+    runSection("complaint", caseId, () => processComplaintSection(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy)),
+    runSection("pendingApplications", caseId, () => processPendingApplicationsSection(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy, messagesMap)),
+  ]);
 
-  await Promise.all(complaintPromises);
+  await runParallel("batch-2: filings/affidavit/vakalat/additionalFilings", caseId, [
+    runSection("filings", caseId, () => processFilingsSection(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy)),
+    runSection("affidavit", caseId, () => processAffidavitSection(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy)),
+    runSection("vakalat", caseId, () => processVakalatSection(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy, messagesMap)),
+    runSection("additionalFilings", caseId, () => processAdditionalFilings(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy, messagesMap)),
+  ]);
 
-  const filingPromises = [
-    processFilingsSection(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy
-    ),
-    processAffidavitSection(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy
-    ),
-    processVakalatSection(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy,
-      messagesMap
-    ),
-    processAdditionalFilings(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy,
-      messagesMap
-    ),
-  ];
+  await runParallel("batch-3: mandatory/complainantEvidence/accusedEvidence/courtEvidence/disposedApplications", caseId, [
+    runSection("mandatorySubmissions", caseId, () => processMandatorySubmissions(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy, messagesMap)),
+    runSection("complainantEvidence", caseId, () => processComplainantEvidence(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy, messagesMap)),
+    runSection("accusedEvidence", caseId, () => processAccusedEvidence(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy, messagesMap)),
+    runSection("courtEvidence", caseId, () => processCourtEvidence(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy)),
+    runSection("disposedApplications", caseId, () => processDisposedApplications(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy, messagesMap)),
+  ]);
 
-  await Promise.all(filingPromises);
+  await runParallel("batch-4: bail/taskProcesses", caseId, [
+    runSection("bailDocuments", caseId, () => processBailDocuments(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy, messagesMap)),
+    runSection("taskProcesses", caseId, () => processTaskProcesses(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy)),
+  ]);
 
-  const processingPromises = [
-    processMandatorySubmissions(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy,
-      messagesMap
-    ),
-    processComplainantEvidence(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy,
-      messagesMap
-    ),
-    processAccusedEvidence(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy,
-      messagesMap
-    ),
-    processCourtEvidence(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy
-    ),
-    processDisposedApplications(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy,
-      messagesMap
-    ),
-  ];
+  await runParallel("batch-5: paymentReceipts/examination/orders", caseId, [
+    runSection("paymentReceipts", caseId, () => processPaymentReceipts(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy)),
+    runSection("examination", caseId, () => processExamination(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy)),
+    runSection("orders", caseId, () => processOrders(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy)),
+  ]);
 
-  await Promise.all(processingPromises);
-
-  const finalPromises = [
-    processBailDocuments(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy,
-      messagesMap
-    ),
-    processTaskProcesses(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy
-    ),
-  ];
-
-  await Promise.all(finalPromises);
-
-  const orderPromises = [
-    processPaymentReceipts(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy
-    ),
-    processExamination(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy
-    ),
-    processOrders(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy
-    ),
-  ];
-
-  await Promise.all(orderPromises);
-
-  const othersPromises = [
-    processOthersSection(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy
-    ),
-  ];
-
-  await Promise.all(othersPromises);
+  await runParallel("batch-6: others", caseId, [
+    runSection("others", caseId, () => processOthersSection(courtCase, caseBundleMaster, tenantId, requestInfo, TEMP_FILES_DIR, indexCopy)),
+  ]);
 
   indexCopy.isRegistered = true;
   indexCopy.contentLastModified = Date.now();

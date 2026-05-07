@@ -97,10 +97,25 @@ router.post(
         index: updatedIndex,
       });
     } catch (error) {
-      console.error("Error processing case bundle:", error);
+      logger.error("Case bundle failed", {
+        caseId,
+        tenantId,
+        errorMessage: error.message,
+        errorCode: error.code,
+        status: error.status,
+        downstreamUrl: error.downstreamUrl,
+        requestParams: error.requestParams,
+        responseBody: error.responseBody,
+        stack: error.stack,
+      });
       res.status(400).json({
-        message: "An error occurred while processing the case bundle.",
-        error: error.message,
+        ResponseInfo: null,
+        Errors: [
+          {
+            code: "CASE_BUNDLE_PROCESSING_ERROR",
+            message: "Error processing case bundle",
+          },
+        ],
       });
     }
   })

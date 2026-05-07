@@ -2,17 +2,33 @@ const { PDFDocument } = require("pdf-lib");
 const { fixJpg } = require("./fixJpg");
 const { A4_WIDTH, A4_HEIGHT } = require("./size");
 const { search_pdf_v2 } = require("../../api");
+const { logger } = require("../../logger");
 
 async function convertFileStoreToDocument(
   tenantId,
   documentFileStoreId,
   requestInfo
 ) {
-  const { data: stream, headers } = await search_pdf_v2(
-    tenantId,
-    documentFileStoreId,
-    requestInfo
-  );
+  logger.info("filestore fetch start", { tenantId, fileStoreId: documentFileStoreId });
+  let stream, headers;
+  try {
+    ({ data: stream, headers } = await search_pdf_v2(
+      tenantId,
+      documentFileStoreId,
+      requestInfo
+    ));
+  } catch (err) {
+    logger.error("filestore fetch failed", {
+      tenantId,
+      fileStoreId: documentFileStoreId,
+      error: err.message,
+      status: err.status,
+      downstreamUrl: err.downstreamUrl,
+      requestParams: err.requestParams,
+      responseBody: err.responseBody,
+    });
+    throw err;
+  }
   const mimeType = headers["content-type"];
   let filingPDFDocument;
   if (mimeType === "application/pdf") {
