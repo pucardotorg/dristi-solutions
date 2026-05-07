@@ -28,7 +28,6 @@ const mockSubmitModalInfo = {
   isArrow: false,
   showTable: true,
 };
-
 function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();

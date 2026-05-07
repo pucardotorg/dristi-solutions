@@ -9,11 +9,11 @@ on:
   push:
     branches: [main]
     paths:
-      - 'frontend/**'
+      - "frontend/**"
   workflow_dispatch:
     inputs:
       from_sha:
-        description: 'Starting Kerala commit SHA (leave empty to use .last-kerala-sync)'
+        description: "Starting Kerala commit SHA (leave empty to use .last-kerala-sync)"
         required: false
 
 jobs:

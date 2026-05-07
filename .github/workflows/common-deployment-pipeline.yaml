@@ -46,7 +46,6 @@ on:
       - release/*
       - sdc-uat
 
-
 jobs:
   check-diff:
     name: Check Differences
@@ -100,7 +99,7 @@ jobs:
 
           BASE=${{ steps.diff_range.outputs.base_ref }}
           HEAD=${{ steps.diff_range.outputs.head_ref }}
-          
+
           echo "performing git diff between $BASE and $HEAD"
           git diff --name-only "$BASE" "$HEAD" > changed.txt
 
@@ -188,8 +187,8 @@ jobs:
     if: needs.check-diff.outputs.matrix != ''
     strategy:
       matrix:
-          service: ${{ fromJSON(needs.check-diff.outputs.matrix) }}
-    environment: 
+        service: ${{ fromJSON(needs.check-diff.outputs.matrix) }}
+    environment:
       name: ${{ needs.check-diff.outputs.deployment_env }}
     steps:
       - name: Print Service Name
