@@ -441,14 +441,6 @@ public class CaseOverallStatusUtil {
 						filingNumber, currentStage);
 			}
 
-			// Check if Proclamation & Attachment secondary stage should end due to accused joining
-			if (hasAccusedJoinedCase(caseObject)) {
-				try {
-					secondaryStageProcessor.processJoinCaseSecondaryStage(filingNumber, tenantId, request,caseObject);
-				} catch (Exception ex) {
-					log.error("Error processing Proclamation secondary stage end trigger for filingNumber: {}", filingNumber, ex);
-				}
-			}
 		} catch (Exception e) {
 			log.error("Error processing join-case stage update", e);
 		}
