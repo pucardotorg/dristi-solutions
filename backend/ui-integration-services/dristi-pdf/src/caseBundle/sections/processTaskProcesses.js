@@ -2,6 +2,7 @@ const {
   filterCaseBundleBySection,
 } = require("../utils/filterCaseBundleBySection");
 const { search_table_task } = require("../../api");
+const { getCaseNumber } = require("../../utils/commonUtils");
 const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
@@ -49,9 +50,7 @@ async function processTaskProcesses(
         searchText:
           courtCase.cnrNumber ||
           courtCase.cmpNumber ||
-          (courtCase?.isLPRCase
-            ? courtCase?.lprNumber
-            : courtCase.courtCaseNumber),
+          getCaseNumber(courtCase),
         courtId: courtCase.courtId,
         tenantId,
       },
