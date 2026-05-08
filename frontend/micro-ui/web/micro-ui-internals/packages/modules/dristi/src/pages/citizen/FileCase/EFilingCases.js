@@ -1070,25 +1070,32 @@ function EFilingCases({ path }) {
           return formConfig.map((config) => {
             return {
               ...config,
-              body: config?.body?.map((body) => {
-                return {
-                  ...body,
-                  populators: {
-                    inputs: body?.populators?.inputs?.map((input) => {
-                      let dataobj = caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
-                      if (isCaseReAssigned) {
-                        dataobj =
-                          errorCaseDetails?.additionalDetails?.[input?.key]?.formdata || errorCaseDetails?.caseDetails?.[input?.key]?.formdata || {};
-                      }
-                      return {
-                        ...input,
-                        data: dataobj,
-                        isEditingAllowed: isEditingAllowed,
-                      };
-                    }),
-                  },
-                };
-              }),
+              body: config?.body
+                ?.filter((body) => body?.key !== "submissionFromAccused")
+                ?.map((body) => {
+                  return {
+                    ...body,
+                    populators: {
+                      inputs: body?.populators?.inputs?.map((input) => {
+                        let dataobj =
+                          caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
+
+                        if (isCaseReAssigned) {
+                          dataobj =
+                            errorCaseDetails?.additionalDetails?.[input?.key]?.formdata ||
+                            errorCaseDetails?.caseDetails?.[input?.key]?.formdata ||
+                            {};
+                        }
+
+                        return {
+                          ...input,
+                          data: dataobj,
+                          isEditingAllowed: isEditingAllowed,
+                        };
+                      }),
+                    },
+                  };
+                }),
             };
           });
         }
