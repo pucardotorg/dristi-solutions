@@ -621,7 +621,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         value === "YES"
           ? false
           : Array.isArray(advocateAndPipData?.multipleAdvocateNameDetails) &&
-            Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0])?.length !== 0,
+            Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0] || {})?.length !== 0,
       showAffidavit: value === "YES" ? true : false,
       vakalatnamaFileUpload: value === "YES" ? null : advocateAndPipData?.vakalatnamaFileUpload,
       pipAffidavitFileUpload: value === "NO" ? null : advocateAndPipData?.pipAffidavitFileUpload,
