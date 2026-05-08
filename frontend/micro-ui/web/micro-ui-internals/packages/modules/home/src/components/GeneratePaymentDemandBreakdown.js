@@ -40,7 +40,6 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
   const [comments, setComments] = useState("");
   const [caseLockLoader, setLockLoader] = useState(false);
   const [taskLoader, setTaskloader] = useState(null);
-
   const { data: caseData, isLoading } = useSearchCaseService(
     {
       criteria: [

@@ -27,6 +27,7 @@ function UploadSignatureModal({
   fileUploadError,
   onCustomDownload,
   setFileUploadError,
+  downloadedFileName,
 }) {
   const [error, setError] = useState({});
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -124,7 +125,7 @@ function UploadSignatureModal({
               {t("CLICK_HERE")}
             </span>
           ) : (
-            <AuthenticatedLink uri={uri} t={t} displayFilename={"CLICK_HERE"} pdf={true} />
+            <AuthenticatedLink uri={uri} t={t} displayFilename={"CLICK_HERE"} pdf={true} name={downloadedFileName} />
           )}
         </div>
       )}

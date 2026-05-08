@@ -265,13 +265,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
           const extension = mimeType.includes("/") ? mimeType.split("/")[1] : "bin";
           const link = document.createElement("a");
           link.href = blobUrl;
-          link.download = `downloadedFile.${extension}`;
+          const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber}_${rowData?.taskNumber}_${rowData?.taskType}`;
+          link.download = `${fileName}.${extension}`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(blobUrl);
         } else {
-          console.error("Failed to fetch the PDF:", response.statusText);
+          console.error("Failed to fetch the file:", response.statusText);
         }
       })
       .catch((error) => {

@@ -220,6 +220,7 @@ export const documentLabels = {
   VAKALATNAMA_DOC: "VAKALATNAMA_DOCUMENT",
   SUBMISSION_DOCUMENTS: "SUBMISSION_DOCUMENTS",
   COMPLAINANT_PIP_AFFIDAVIT: "COMPLAINANT_PIP_AFFIDAVIT",
+  POA_AUTHORIZATION_DOCUMENT: "POA_AUTHORIZATION_DOCUMENT",
 };
 
 export const caseFileLabels = {
@@ -1142,4 +1143,8 @@ export const isRichTextEmpty = (html) => {
   if (!html) return true;
   const plainText = html?.replace(/<[^>]*>/g, "").trim();
   return plainText?.length === 0;
+};
+
+export const formatTitle = (translatedTitle) => {
+  return (translatedTitle || "").trim().replace(/\s+/g, "_");
 };

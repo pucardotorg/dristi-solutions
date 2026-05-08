@@ -190,15 +190,16 @@ const DigitizedDocumentsSignaturePage = () => {
   const handleDownloadPdf = () => {
     if (!fileStoreId) return;
 
+    const name = `${documentNumber}_${type || "Digitalized_Document"}`;
     if (isUserLoggedIn) {
-      downloadPdf(tenantId, fileStoreId);
+      downloadPdf(tenantId, fileStoreId, name);
     } else if (documentPreviewPdf) {
       // For unauthenticated SMS users, use the already-fetched blob from the open API
       const blob = new Blob([documentPreviewPdf], { type: documentPreviewPdf.type || "application/pdf" });
       const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = "downloadedFile.pdf";
+      link.download = `${name}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

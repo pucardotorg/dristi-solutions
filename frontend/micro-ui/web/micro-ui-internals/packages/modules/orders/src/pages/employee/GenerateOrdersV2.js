@@ -125,6 +125,7 @@ const GenerateOrdersV2 = () => {
   const isApplicationAccepted = history.location?.state?.isApplicationAccepted;
   const hasCalledApplicationAction = useRef(false);
   const hasInitialized = useRef(false);
+  const hasViewSignOrdersAccess = roles?.some((role) => role.code === "VIEW_SIGN_ORDERS");
 
   const fetchCaseDetails = async () => {
     try {
@@ -2459,17 +2460,26 @@ const GenerateOrdersV2 = () => {
 
   const handleDownloadOrders = () => {
     const fileStoreId = sessionStorage.getItem("fileStoreId");
-    downloadPdf(tenantId, signedDoucumentUploadedID || fileStoreId);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${prevOrder?.orderNumber}_Order`;
+    downloadPdf(tenantId, signedDoucumentUploadedID || fileStoreId, name);
   };
 
   const handleBulkDownloadOrder = () => {
     const fileStoreId = prevOrder?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore;
-    downloadPdf(tenantId, fileStoreId);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${
+      currentOrder?.orderNumber
+    }_Order`;
+    downloadPdf(tenantId, fileStoreId, name);
   };
 
   const handleBulkGoToSignList = () => {
     setShowBulkModal(false);
-    history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`, { homeActiveTab: "CS_HOME_ORDERS" });
+    // redirecting to the home screen with the "orders tab active" only if user has corresponding roles
+    if (hasViewSignOrdersAccess) {
+      history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`, { homeActiveTab: "CS_HOME_ORDERS" });
+    } else {
+      history.replace(`/${window.contextPath}/${userInfoType}/home/home-screen`);
+    }
   };
 
   const handleBulkGoHome = () => {
@@ -3195,6 +3205,7 @@ const GenerateOrdersV2 = () => {
           orderPdfFileStoreID={orderPdfFileStoreID}
           saveOnsubmitLabel={"ISSUE_ORDER"}
           businessOfDay={businessOfTheDay}
+          caseDetails={caseDetails}
         />
       )}
       {showSuccessModal && (

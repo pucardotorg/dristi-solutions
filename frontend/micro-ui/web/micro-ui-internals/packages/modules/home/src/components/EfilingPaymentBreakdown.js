@@ -242,7 +242,6 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
   if (isLoading || ispaymentLoading || isPaymentTypeLoading || loader) {
     return <Loader />;
   }
-
   return (
     <div className="e-filing-payment">
       <Modal headerBarEnd={<CloseBtn onClick={onCancel} />} formId="modal-action" headerBarMain={<Heading label={t("PENDING_PAYMENT")} />}>

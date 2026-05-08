@@ -47,7 +47,9 @@ const CustomToast = ({
     return () => clearTimeout(timer);
   }, [duration, onClose]);
 
-  const handleCopy = () => {
+  const handleCopy = (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     if (!errorId) return;
     const write = () => {
       setCopied(true);
@@ -90,6 +92,7 @@ const CustomToast = ({
         </div>
         {errorId && (
           <button
+            type="button"
             onClick={handleCopy}
             style={{
               background: "rgba(255,255,255,0.15)",
@@ -104,6 +107,9 @@ const CustomToast = ({
               gap: "4px",
               transition: "background 0.2s",
               marginLeft: "10px",
+              marginTop: "0px",
+              whiteSpace: "nowrap",
+              width: "fit-content",
             }}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2">

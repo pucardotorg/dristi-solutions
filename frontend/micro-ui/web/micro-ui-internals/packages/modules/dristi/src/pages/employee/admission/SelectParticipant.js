@@ -28,7 +28,6 @@ function SelectParticipant({
       handleScheduleCase({ ...scheduleHearingParams, participant: selectedValues });
     }
   };
-
   return (
     <div className="select-participants-main-div">
       <CardLabel className={"choose-participants-heading"}>{t(config?.header)}</CardLabel>

@@ -617,20 +617,32 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     history.push(`/${window?.contextPath}/employee/dristi/cases`);
   };
   const handleRegisterCase = () => {
-    updateCaseDetails(CaseWorkflowAction.VALIDATE, false).then((res) => {
-      setTimeout(() => {
+    updateCaseDetails(CaseWorkflowAction.VALIDATE, false)
+      .then((res) => {
+        setTimeout(() => {
+          setLoading(false);
+          setActionModal("caseRegisterSuccess");
+        }, 2000);
+      })
+      .catch((error) => {
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setLoading(false);
-        setActionModal("caseRegisterSuccess");
-      }, 2000);
-    });
+        setShowToast({ label: t("CASE_UPDATE_FAILED"), error: true, errorId });
+      });
   };
   const handleSendCaseBack = () => {
-    updateCaseDetails(CaseWorkflowAction.SEND_BACK, true).then((res) => {
-      setTimeout(() => {
+    updateCaseDetails(CaseWorkflowAction.SEND_BACK, true)
+      .then((res) => {
+        setTimeout(() => {
+          setLoading(false);
+          setActionModal("caseSendBackSuccess");
+        }, 2000);
+      })
+      .catch((error) => {
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
         setLoading(false);
-        setActionModal("caseSendBackSuccess");
-      }, 2000);
-    });
+        setShowToast({ label: t("CASE_UPDATE_FAILED"), error: true, errorId });
+      });
   };
   const handlePotentialConfirm = () => {
     setActionModal("caseRegisterPotential");
@@ -739,7 +751,13 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                       icon={<FileDownloadIcon svgStyle={downloadSvgStyle} pathStyle={downloadPathStyle} />}
                       className="download-button"
                       label={t("CS_COMMON_DOWNLOAD")}
-                      onButtonClick={() => downloadPdf(tenantId, fileStoreId)}
+                      onButtonClick={() =>
+                        downloadPdf(
+                          tenantId,
+                          fileStoreId,
+                          `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Complaint`
+                        )
+                      }
                     />
                   </div>
                   <div className="header-content">
