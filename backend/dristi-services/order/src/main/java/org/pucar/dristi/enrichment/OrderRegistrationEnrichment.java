@@ -168,6 +168,7 @@ public class OrderRegistrationEnrichment {
 
                             if (itemNode.has("orderType")) {
                                 String orderType = itemNode.get("orderType").asText();
+                                // ID already assigned above; skip text enrichment — itemText was set when this order was in INTERMEDIATE state, re-enriching would duplicate it
                                 if(intermediateOrderType !=null && intermediateOrderType.equalsIgnoreCase(orderType))
                                     continue;
 
