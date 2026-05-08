@@ -1220,6 +1220,25 @@ const EvidenceModal = ({
         margin: 0;
       }`}
       </style>
+      {isActionLoading && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "10001",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       {!showConfirmationModal && !showSuccessModal && (
         <Modal
           hideModalActionbar={actionSaveLabel === t("UNMARK_AS_EVIDENCE")}
@@ -1271,11 +1290,6 @@ const EvidenceModal = ({
           //     : {}
           // }
         >
-          {isActionLoading && (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "2rem" }}>
-              <Loader />
-            </div>
-          )}
           {(documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus || documentSubmission?.[0]?.artifactList?.isEvidence) &&
             userType === "employee" && (
               <div style={{ margin: "16px 24px" }}>
