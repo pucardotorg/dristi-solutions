@@ -150,7 +150,7 @@ public class PublishOrderAttachment implements OrderUpdateStrategy {
                 // create pending task
 
                 if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))
-                        && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail) && !courtCase.getIsLPRCase()) {
+                        && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail) && !LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())) {
 
                     PendingTask pendingTask = PendingTask.builder()
                             .name(PAYMENT_PENDING_FOR_ATTACHMENT)

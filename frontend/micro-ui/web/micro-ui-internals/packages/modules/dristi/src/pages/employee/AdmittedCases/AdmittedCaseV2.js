@@ -1,6 +1,6 @@
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
@@ -28,6 +28,8 @@ import {
   getAllAssociatedPartyUuids,
   getAuthorizedUuid,
   getDate,
+  isLPRCase,
+  removeInvalidNameParts,
 } from "../../../Utils";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import VoidSubmissionBody from "./VoidSubmissionBody";
@@ -224,6 +226,8 @@ const AdmittedCaseV2 = () => {
   const historyOrderData = location?.state?.orderData;
   const newWitnesToast = history.location?.state?.newWitnesToast;
   const [isApplicationAccepted, setIsApplicationAccepted] = useState(null);
+  const submissionModalPendingTaskLocationRef = useRef(false);
+  const submissionTableModalHistoryRef = useRef(false);
   const [deleteOrder, setDeleteOrder] = useState(null);
   const [deleteApplication, setDeleteApplication] = useState(null);
 
@@ -631,12 +635,26 @@ const AdmittedCaseV2 = () => {
       const allAllowedPartiesForApplicationsActions = getAllAssociatedPartyUuids(caseDetails, applicationOwnerUuid);
       const allAllowedPartiesForDocumentsActions = getAllAssociatedPartyUuids(caseDetails, documentOwnerUuid);
 
+      let didOpenEvidenceModal = false;
+      const openSubmissionEvidenceModalInHistory = () => {
+        if (didOpenEvidenceModal) return;
+        didOpenEvidenceModal = true;
+        submissionTableModalHistoryRef.current = true;
+        history.push(`${history.location.pathname}${history.location.search}${history.location.hash || ""}`, {
+          ...(history.location.state || {}),
+          submissionEvidenceModal: true,
+        });
+        setDocumentSubmission(docObj);
+        setShow(true);
+      };
+
       if (documentStatus === SubmissionWorkflowState.PENDING_E_SIGN && allAllowedPartiesForDocumentsActions.includes(userUuid)) {
         history.push(
           `/${window?.contextPath}/${
             isCitizen ? "citizen" : "employee"
           }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
         );
+        return;
       }
       if (
         [
@@ -652,16 +670,15 @@ const AdmittedCaseV2 = () => {
               isCitizen ? "citizen" : "employee"
             }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
           );
+          return;
         }
       } else {
-        setDocumentSubmission(docObj);
-        setShow(true);
+        openSubmissionEvidenceModalInHistory();
       }
       if (
         ![SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
       ) {
-        setDocumentSubmission(docObj);
-        setShow(true);
+        openSubmissionEvidenceModalInHistory();
       }
     },
     [caseDetails, filingNumber, history, isCitizen, userUuid, setDocumentSubmission, setShow]
@@ -1076,6 +1093,7 @@ const AdmittedCaseV2 = () => {
 
   useEffect(() => {
     if (history.location?.state?.applicationDocObj && !show) {
+      submissionModalPendingTaskLocationRef.current = true;
       setDocumentSubmission(history.location?.state?.applicationDocObj);
       setShow(true);
 
@@ -1084,6 +1102,47 @@ const AdmittedCaseV2 = () => {
       }
     }
   }, [history.location?.state?.applicationDocObj, history.location?.state?.isApplicationAccepted, show]);
+
+  useEffect(() => {
+    if (!show && !location.state?.applicationDocObj) {
+      submissionModalPendingTaskLocationRef.current = false;
+    }
+  }, [show, location.state?.applicationDocObj]);
+
+  useEffect(() => {
+    if (show && submissionModalPendingTaskLocationRef.current && !location.state?.applicationDocObj) {
+      submissionModalPendingTaskLocationRef.current = false;
+      setShow(false);
+      setIsApplicationAccepted(null);
+      setDocumentSubmission(undefined);
+    }
+  }, [location.key, location.state?.applicationDocObj, show]);
+
+  useEffect(() => {
+    if (!show && !location.state?.submissionEvidenceModal) {
+      submissionTableModalHistoryRef.current = false;
+    }
+  }, [show, location.state?.submissionEvidenceModal]);
+
+  useEffect(() => {
+    if (show && submissionTableModalHistoryRef.current && !location.state?.submissionEvidenceModal) {
+      submissionTableModalHistoryRef.current = false;
+      setShow(false);
+      setIsApplicationAccepted(null);
+      setDocumentSubmission(undefined);
+    }
+  }, [location.key, location.state?.submissionEvidenceModal, show]);
+
+  useEffect(() => {
+    if (show || !location.state?.submissionEvidenceModal) return;
+    const { submissionEvidenceModal: _omit, ...rest } = location.state || {};
+    history.replace({
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+      state: Object.keys(rest).length ? rest : null,
+    });
+  }, [history, location.hash, location.key, location.pathname, location.search, location.state?.submissionEvidenceModal, show]);
 
   useEffect(() => {
     if (currentDiaryEntry && artifactNumber) {
@@ -1249,7 +1308,7 @@ const AdmittedCaseV2 = () => {
             tenantId: tenantId,
             filingNumber: [caseDetails.filingNumber],
             hearingType: purpose,
-            courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
+            courtCaseNumber: isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
             cmpNumber: caseDetails?.cmpNumber,
             status: true,
             attendees: [
@@ -1556,9 +1615,10 @@ const AdmittedCaseV2 = () => {
 
   const handleDownloadClick = useCallback(() => {
     if (casePdfFileStoreId) {
-      downloadPdf(tenantId, casePdfFileStoreId);
+      const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}_CaseFile`;
+      downloadPdf(tenantId, casePdfFileStoreId, name);
     }
-  }, [casePdfFileStoreId, downloadPdf, tenantId]);
+  }, [casePdfFileStoreId, downloadPdf, tenantId, caseDetails]);
 
   const pipComplainants = useMemo(() => getPipComplainants(caseDetails), [caseDetails]);
 
@@ -2008,10 +2068,14 @@ const AdmittedCaseV2 = () => {
   const handleDownload = useCallback(
     (filestoreId) => {
       if (filestoreId) {
-        downloadPdf(tenantId, filestoreId);
+        const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${
+          currentOrder?.orderNumber
+        }_Order`;
+
+        downloadPdf(tenantId, filestoreId, name);
       }
     },
-    [downloadPdf, tenantId]
+    [downloadPdf, tenantId, caseDetails, currentOrder]
   );
 
   const handleOrdersTab = useCallback(() => {

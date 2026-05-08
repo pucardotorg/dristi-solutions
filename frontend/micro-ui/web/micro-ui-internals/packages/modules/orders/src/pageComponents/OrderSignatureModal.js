@@ -18,6 +18,7 @@ function OrderSignatureModal({
   setSignedDocumentUploadID,
   orderPdfFileStoreID,
   setSignedOrderPdfFileName,
+  caseDetails,
 }) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = useESign();
@@ -158,6 +159,9 @@ function OrderSignatureModal({
                     t={t}
                     displayFilename={"CLICK_HERE"}
                     pdf={true}
+                    name={`${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${
+                      order?.orderNumber
+                    }_Order`}
                   />
                 </div>
               </div>

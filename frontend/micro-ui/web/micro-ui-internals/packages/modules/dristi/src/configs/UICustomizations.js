@@ -11,10 +11,12 @@ import ActionEdit from "../components/ActionEdit";
 import ReactTooltip from "react-tooltip";
 import {
   _getDigitilizationPatiresName,
+  DateUtils,
   getAssistantAdvocateMembersForPartiesTab,
   getAuthorizedUuid,
   getClerkMembersForPartiesTab,
   getDate,
+  isLPRCase,
   modifiedEvidenceNumber,
   removeInvalidNameParts,
 } from "../Utils";
@@ -684,12 +686,7 @@ export const UICustomizations = {
           );
         case "DATE_ISSUED":
         case "DATE_ADDED":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0");
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+          return <span>{value && value !== "0" ? DateUtils.getFormattedDate(value) : ""}</span>;
         case "ORDER_TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
         case "CS_ACTIONS":
@@ -880,12 +877,7 @@ export const UICustomizations = {
         case "DATE_ADDED":
         case "DATE_ISSUED":
         case "DATE":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+          return <span>{value && value !== "0" ? DateUtils.getFormattedDate(value) : ""}</span>;
         case "PARTIES":
           if (value === null || value === undefined || value === "undefined" || value === "null") {
             return null;
@@ -1122,12 +1114,7 @@ export const UICustomizations = {
         case "Instance":
           return <RenderInstance value={value} t={t} />;
         case "Date":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{formattedDate}</span>;
+          return <span>{DateUtils.getFormattedDate(value)}</span>;
         case "Status":
           return t(value);
         default:
@@ -2390,16 +2377,7 @@ export const UICustomizations = {
               {value ? value : "-"}
             </Link>
           ) : row?.tab === "RESCHEDULE_REQUEST" ? (
-            <Link
-              style={{ color: "black", textDecoration: "underline" }}
-              to={{
-                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
-                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Submissions&fromHome=true`,
-                state: { homeActiveTab: row?.tab, refApplicationNumber: row?.referenceId },
-              }}
-            >
-              {value ? value : "-"}
-            </Link>
+            <span style={{ cursor: "pointer", textDecoration: "underline" }}>{value ? value : "-"}</span>
           ) : ["BAIL_BOND_STATUS", "NOTICE_SUMMONS_MANAGEMENT"]?.includes(row?.tab) ? (
             <OrderName rowData={row} colData={column} value={value} />
           ) : (
@@ -2859,7 +2837,7 @@ export const UICustomizations = {
           return rawTitle ? rawTitle : t("CASE_UNTITLED") || "Case Untitled";
         }
         case "CASE_NUMBER": {
-          const caseNumber = row?.isLPRCase ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
+          const caseNumber = isLPRCase(row) ? row?.lprNumber : row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber || "";
           return caseNumber || "";
         }
         default:

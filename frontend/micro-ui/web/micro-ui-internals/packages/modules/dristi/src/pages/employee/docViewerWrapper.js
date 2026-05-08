@@ -43,6 +43,7 @@ const DocViewerWrapper = ({
   pdfZoom = 1.1,
   isLocalizationRequired = true,
   handleImageModalOpen,
+  disableInnerViewerScroll = false,
 }) => {
   const { t } = useTranslation();
   const token = localStorage.getItem("token");
@@ -181,7 +182,7 @@ const DocViewerWrapper = ({
       }));
 
   return (
-    <div className="docviewer-wrapper" id="docviewer-id">
+    <div className={`docviewer-wrapper ${disableInnerViewerScroll ? "single-scroll-doc-viewer" : ""}`} id="docviewer-id">
       <Card
         className={docViewerCardClassName}
         style={{ ...docViewerStyle, border: "none", backgroundColor: docError ? " #F9FAFB" : "white" }}
@@ -206,6 +207,19 @@ const DocViewerWrapper = ({
               0% { opacity: .6; }
               50% { opacity: 1; }
               100% { opacity: .6; }
+            }
+            .single-scroll-doc-viewer .employeeCard,
+            .single-scroll-doc-viewer #react-doc-viewer,
+            .single-scroll-doc-viewer .react-doc-viewer,
+            .single-scroll-doc-viewer #proxy-renderer,
+            .single-scroll-doc-viewer #proxy-renderer > div,
+            .single-scroll-doc-viewer #pdf-renderer,
+            .single-scroll-doc-viewer #pdf-renderer > div,
+            .single-scroll-doc-viewer .react-pdf__Document {
+              overflow-y: visible !important;
+              overflow-x: visible !important;
+              max-height: none !important;
+              height: auto !important;
             }
           `}
         </style>

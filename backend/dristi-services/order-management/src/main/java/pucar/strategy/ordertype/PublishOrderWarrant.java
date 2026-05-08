@@ -179,7 +179,7 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
                 // hasUpfrontPayment=true: payment was done upfront
                 // hasUpfrontPayment=false: payment required, pending task tracks payment
                 if (!hasUpfrontPayment && channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))
-                        && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail) && !courtCase.getIsLPRCase()) {
+                        && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail) && !LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())) {
 
                     PendingTask pendingTask = PendingTask.builder()
                             .name(PAYMENT_PENDING_FOR_WARRANT)

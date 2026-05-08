@@ -6,8 +6,6 @@ import { isEmptyObject } from "../Utils";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import RenderFileCard from "./RenderFileCard";
-import { useState } from "react";
-import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const DragDropJSX = ({ t, currentValue, error }) => {
   return (
@@ -110,8 +108,15 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
     }
 
     // Only add the file to currentValue if it passes size validation
-    currentValue.splice(index, 1, file);
-    currentValue = currentValue.map((item) => {
+    // Use immutable update to avoid mutating the original array reference in formData
+    let newCurrentValue;
+    if (index === Infinity) {
+      newCurrentValue = [...currentValue, file];
+    } else {
+      newCurrentValue = [...currentValue];
+      newCurrentValue[index] = file;
+    }
+    currentValue = newCurrentValue.map((item) => {
       if (item?.name) {
         const fileNameParts = item?.name.split(".");
         const extension = fileNameParts.pop().toLowerCase();

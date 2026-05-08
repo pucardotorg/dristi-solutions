@@ -12,8 +12,8 @@ const LitigantVerification = ({
   setParty,
   goBack,
   onProceed,
-  setErrors,
-  errors,
+  uploadErrorMessages,
+  clearUploadError,
   alreadyJoinedMobileNumber,
   setAlreadyJoinedMobileNumber,
   isDisabled,
@@ -312,14 +312,14 @@ const LitigantVerification = ({
 
   useEffect(() => {
     const uploadFieldKey = poa ? "poaAuthorizationDocument" : "vakalatnama";
-    const errorMessage = errors?.validationCode?.message;
+    const uploadErrorMessage = uploadErrorMessages?.[`${uploadFieldKey}:${index}`] || null;
 
-    if (errorMessage && setFormErrors.current[index]) {
-      setFormErrors.current[index](uploadFieldKey, { message: errorMessage });
-    } else if (!errorMessage && clearFormErrors.current[index]) {
+    if (uploadErrorMessage && setFormErrors.current[index]) {
+      setFormErrors.current[index](uploadFieldKey, { message: uploadErrorMessage });
+    } else if (!uploadErrorMessage && clearFormErrors.current[index]) {
       clearFormErrors.current[index](uploadFieldKey);
     }
-  }, [errors?.validationCode?.message, index, poa]);
+  }, [uploadErrorMessages, index, poa]);
 
   return (
     <React.Fragment>
@@ -339,11 +339,9 @@ const LitigantVerification = ({
               const previousDocument = poa
                 ? litigants?.[index]?.poaAuthorizationDocument?.poaDocument
                 : litigants?.[index]?.vakalatnama?.document;
-              if (!areFileArraysEqual(previousDocument || [], currentDocument || []) && errors?.validationCode) {
-                setErrors((prev) => ({
-                  ...prev,
-                  validationCode: undefined,
-                }));
+              const uploadFieldKey = poa ? "poaAuthorizationDocument" : "vakalatnama";
+              if (!areFileArraysEqual(previousDocument || [], currentDocument || []) && uploadErrorMessages?.[`${uploadFieldKey}:${index}`]) {
+                clearUploadError(`${uploadFieldKey}:${index}`);
               }
               onFormValueChange(setValue, formData, formState, reset, setError, clearErrors);
             }}

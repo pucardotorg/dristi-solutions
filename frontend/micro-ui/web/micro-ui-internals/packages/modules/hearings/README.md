@@ -5,6 +5,7 @@
 The **Hearings** module (`@egovernments/digit-ui-module-hearings`) manages the complete hearing lifecycle — scheduling, calendar views, in-hearing actions, hearing transcription, attendance tracking, adjournment, evidence presentation, witness depositions, and bulk rescheduling. It provides both the calendar-based overview and the inside-hearing management interface.
 
 **Business Purpose:**
+
 - Display monthly calendar view of scheduled hearings
 - Manage inside-hearing workflows (attendance, transcripts, evidence, witnesses)
 - Handle hearing adjournment and end-hearing flows
@@ -13,6 +14,7 @@ The **Hearings** module (`@egovernments/digit-ui-module-hearings`) manages the c
 - Track witness depositions and diary entries
 
 **Where it is used:**
+
 - Rendered under `/{contextPath}/employee/hearings/*`
 - `HearingsCalendar` (MonthlyCalendar) is globally registered and used in the home module
 - `SummonsAndWarrantsModal`, `CustomDatePicker`, `NoticeProcessModal` are globally registered for cross-module use
@@ -22,9 +24,11 @@ The **Hearings** module (`@egovernments/digit-ui-module-hearings`) manages the c
 ## 🏗 Architecture
 
 ### Entry Point
+
 - `src/Module.js` — Exports `HearingsModule` (main component) and `initHearingsComponents` (initialization function)
 
 ### Folder Structure
+
 ```
 src/
 ├── Module.js                          # Entry, component registration
@@ -88,6 +92,7 @@ src/
 ```
 
 ### Key Design Patterns
+
 - **Calendar-centric UI:** FullCalendar library drives the scheduling view
 - **Component registry sharing:** `SummonsAndWarrantsModal`, `NoticeProcessModal` are registered globally for use in the home module
 - **Breadcrumb context consumption:** Uses `BreadCrumbsParamsDataContext` from Core for case-aware breadcrumbs
@@ -98,11 +103,12 @@ src/
 
 All routes in `src/pages/employee/index.js` use `PrivateRoute` (authentication required).
 
-| Route Path | Component | Description |
-|---|---|---|
+| Route Path        | Component         | Description               |
+| ----------------- | ----------------- | ------------------------- |
 | `{path}/` (exact) | `MonthlyCalendar` | Calendar view of hearings |
 
 ### Route Guards
+
 - All routes use `PrivateRoute` requiring authentication
 - Role-based redirection: Citizens → citizen home, employees → employee home/home-screen
 - E-post users (`POST_MANAGER` role) are redirected to pending task home
@@ -112,14 +118,17 @@ All routes in `src/pages/employee/index.js` use `PrivateRoute` (authentication r
 ## 🧠 State Management
 
 ### Redux Slices
+
 No dedicated Redux slices. Relies on common store from Core.
 
 ### Global State Dependencies
+
 - `Digit.Services.useStore` — Loads modules: `["hearings", "case", "common", "workflow"]`
 - `BreadCrumbsParamsDataContext` — Case navigation context from Core
 - `Digit.UserService` — Authentication and role detection
 
 ### Local State Strategy
+
 - `useState` for hearing step management, modal visibility, attendee lists
 - `react-query` via custom hooks for hearing data fetching and mutations
 
@@ -129,46 +138,50 @@ No dedicated Redux slices. Relies on common store from Core.
 
 ### hearingService
 
-| Service Method | Endpoint | Description |
-|---|---|---|
-| `searchHearings` | `/hearing/v1/search` | Search hearings |
-| `updateHearings` | `/hearing/v1/update` | Update hearing details |
-| `updateHearingTranscript` | `/hearing/v1/update_transcript_additional_attendees` | Update transcript & attendees |
-| `startHearing` | `/hearing/v1/update` (action: START) | Start a hearing |
-| `searchHearingCount` | `/hearing-management/hearing/v1/search` | Get hearing counts |
-| `searchTaskList` | `/task/v1/search` | Search tasks for hearing |
-| `generateWitnessDepostionDownload` | `/hearing/witnessDeposition/v1/downloadPdf` | Download witness deposition PDF |
-| `bulkReschedule` | `/hearing/v1/bulk/_reschedule` | Bulk reschedule hearings |
-| `updateBulkHearing` | `/hearing/v1/bulk/_update` | Bulk update hearings |
-| `addBulkDiaryEntries` | `/ab-diary/case/diary/v1/bulkEntry` | Add bulk diary entries |
-| `createNotification` | `/notification/v1/_create` | Create notification |
-| `updateNotification` | `/notification/v1/_update` | Update notification |
-| `searchNotification` | `/notification/v1/_search` | Search notifications |
-| `aDiaryEntryUpdate` | `/ab-diary/case/diary/entry/v1/update` | Update diary entry |
-| `customApiService` | Dynamic URL | Generic API caller |
+| Service Method                     | Endpoint                                             | Description                     |
+| ---------------------------------- | ---------------------------------------------------- | ------------------------------- |
+| `searchHearings`                   | `/hearing/v1/search`                                 | Search hearings                 |
+| `updateHearings`                   | `/hearing/v1/update`                                 | Update hearing details          |
+| `updateHearingTranscript`          | `/hearing/v1/update_transcript_additional_attendees` | Update transcript & attendees   |
+| `startHearing`                     | `/hearing/v1/update` (action: START)                 | Start a hearing                 |
+| `searchHearingCount`               | `/hearing-management/hearing/v1/search`              | Get hearing counts              |
+| `searchTaskList`                   | `/task/v1/search`                                    | Search tasks for hearing        |
+| `generateWitnessDepostionDownload` | `/hearing/witnessDeposition/v1/downloadPdf`          | Download witness deposition PDF |
+| `bulkReschedule`                   | `/hearing/v1/bulk/_reschedule`                       | Bulk reschedule hearings        |
+| `updateBulkHearing`                | `/hearing/v1/bulk/_update`                           | Bulk update hearings            |
+| `addBulkDiaryEntries`              | `/ab-diary/case/diary/v1/bulkEntry`                  | Add bulk diary entries          |
+| `createNotification`               | `/notification/v1/_create`                           | Create notification             |
+| `updateNotification`               | `/notification/v1/_update`                           | Update notification             |
+| `searchNotification`               | `/notification/v1/_search`                           | Search notifications            |
+| `aDiaryEntryUpdate`                | `/ab-diary/case/diary/entry/v1/update`               | Update diary entry              |
+| `customApiService`                 | Dynamic URL                                          | Generic API caller              |
 
 ### Additional Endpoints
-| Endpoint | Usage |
-|---|---|
-| `/order/v1/create` | Create orders from hearing context |
-| `/case/v1/_search` | Search cases related to hearings |
-| `/scheduler/causelist/v1/_download` | Download cause list |
-| `/egov-pdf/hearing` | Generate hearing notification PDF |
+
+| Endpoint                            | Usage                              |
+| ----------------------------------- | ---------------------------------- |
+| `/order/v1/create`                  | Create orders from hearing context |
+| `/case/v1/_search`                  | Search cases related to hearings   |
+| `/scheduler/causelist/v1/_download` | Download cause list                |
+| `/egov-pdf/hearing`                 | Generate hearing notification PDF  |
 
 ---
 
 ## 🧩 Key Components
 
 ### Container Components
+
 - **`MonthlyCalendar` (CalendarView.js)** — Full-month calendar view using FullCalendar library, showing hearing schedules
 
 ### Globally Registered Components
+
 - **`HearingsCalendar`** — MonthlyCalendar component, available for home module
 - **`SummonsAndWarrantsModal`** — Summons and warrants issuance modal
 - **`CustomDatePicker`** — Reusable date picker
 - **`NoticeProcessModal`** — Notice process management modal
 
 ### Presentational Components
+
 - **`HearingsCard`** — Dashboard card for hearings module
 - **`PreHearingModal`** — Pre-hearing preparation checklist
 - **`NextHearingModal`** — Schedule next hearing date
@@ -187,7 +200,7 @@ Calendar View:
     → User clicks hearing → navigates to inside-hearing
 
 Inside Hearing:
-  User 
+  User
     → hearingService.startHearing() → API: /hearing/v1/update (START)
     → Transcript recording, attendee marking
     → hearingService.updateHearingTranscript() → API: /hearing/v1/update_transcript_additional_attendees
@@ -200,23 +213,25 @@ Inside Hearing:
 ## 🔗 Dependencies
 
 ### Internal Module Dependencies
+
 - `@egovernments/digit-ui-module-core` — `BreadCrumbsParamsDataContext` context
 
 ### External Library Dependencies
-| Library | Version | Purpose |
-|---|---|---|
-| `react` | 17.0.2 | UI framework |
-| `react-router-dom` | 5.3.0 | Routing |
-| `react-i18next` | 11.16.2 | i18n |
-| `react-query` | 3.6.1 | Data fetching |
-| `@fullcalendar/core` | ^6.1.14 | Calendar core |
-| `@fullcalendar/daygrid` | ^6.1.14 | Day grid plugin |
-| `@fullcalendar/interaction` | ^6.1.14 | Calendar interactions |
-| `@fullcalendar/react` | ^6.1.14 | React wrapper |
-| `@fullcalendar/timegrid` | ^6.1.14 | Time grid plugin |
-| `@egovernments/digit-ui-react-components` | 1.8.2-beta.9 | Shared UI |
-| `@egovernments/digit-ui-components` | 0.0.2-beta.1 | Design system |
-| `@egovernments/digit-ui-module-core` | 1.8.1-beta.6 | Core module |
+
+| Library                                   | Version      | Purpose               |
+| ----------------------------------------- | ------------ | --------------------- |
+| `react`                                   | 17.0.2       | UI framework          |
+| `react-router-dom`                        | 5.3.0        | Routing               |
+| `react-i18next`                           | 11.16.2      | i18n                  |
+| `react-query`                             | 3.6.1        | Data fetching         |
+| `@fullcalendar/core`                      | ^6.1.14      | Calendar core         |
+| `@fullcalendar/daygrid`                   | ^6.1.14      | Day grid plugin       |
+| `@fullcalendar/interaction`               | ^6.1.14      | Calendar interactions |
+| `@fullcalendar/react`                     | ^6.1.14      | React wrapper         |
+| `@fullcalendar/timegrid`                  | ^6.1.14      | Time grid plugin      |
+| `@egovernments/digit-ui-react-components` | 1.8.2-beta.9 | Shared UI             |
+| `@egovernments/digit-ui-components`       | 0.0.2-beta.1 | Design system         |
+| `@egovernments/digit-ui-module-core`      | 1.8.1-beta.6 | Core module           |
 
 ---
 
