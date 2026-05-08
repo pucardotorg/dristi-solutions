@@ -185,6 +185,40 @@ class OrderRegistrationEnrichmentTest {
 
 
     @Test
+    void testEnrichCompositeOrderItemIdOnAddItem_SkipsTextEnrichmentForExistingIntermediateType() {
+        // Given: composite order whose item.orderType matches the existing INTERMEDIATE order's type.
+        // Expectation: id is still assigned, but item-text enrichment is skipped (no duplication).
+        OrderRequest orderRequest = createMockOrderRequest();
+        orderRequest.getOrder().setOrderCategory("COMPOSITE");
+        orderRequest.getOrder().setOrderType("BAIL");
+        orderRequest.getOrder().setItemText("existing text");
+
+        ObjectNode itemNode = new ObjectMapper().createObjectNode();
+        itemNode.put("orderType", "BAIL"); // matches intermediateOrderType returned below
+        ArrayNode realArrayNode = new ObjectMapper().createArrayNode();
+        realArrayNode.add(itemNode);
+
+        // Provide a non-null compositeItems so the outer guard passes.
+        orderRequest.getOrder().setCompositeItems(realArrayNode);
+
+        when(objectMapper.convertValue(any(), eq(ArrayNode.class))).thenReturn(realArrayNode);
+
+        Order existingIntermediateOrder = new Order();
+        existingIntermediateOrder.setOrderType("BAIL");
+        when(orderRepository.getOrders(any(), any())).thenReturn(List.of(existingIntermediateOrder));
+
+        // When
+        orderRegistrationEnrichment.enrichCompositeOrderItemIdOnAddItem(orderRequest);
+
+        // Then: itemText must not be appended/duplicated
+        assertEquals("existing text", orderRequest.getOrder().getItemText());
+        // And: id must still be assigned to the composite item
+        assertTrue(itemNode.has("id"));
+        assertNotNull(itemNode.get("id").asText());
+    }
+
+
+    @Test
     void testEnrichCompositeOrderItemIdOnAddItem_ThrowsCustomException() {
         OrderRequest orderRequest = new OrderRequest();
 
