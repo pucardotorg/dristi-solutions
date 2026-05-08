@@ -8,6 +8,7 @@ import { HomeService, Urls } from "../../hooks/services";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { getAuthorizedUuid } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const hearingTypeOptions = [{}];
 
@@ -71,6 +72,7 @@ function ScheduleHearing({
   isCaseAdmitted = false,
   showPurposeOfHearing = false,
 }) {
+  const [showToast, setShowToast] = useState(null);
   const { data: availableDateResponse } = window?.Digit.Hooks.dristi.useJudgeAvailabilityDates(
     {
       SearchCriteria: {
@@ -316,32 +318,34 @@ function ScheduleHearing({
         },
       };
 
-      setIsSubmitDisabled(true);
-      HomeService.customApiService(Urls.orderCreate, reqBody, { tenantId })
-        .then(async (res) => {
-          await HomeService.customApiService(Urls.pendingTask, {
-            pendingTask: {
-              name: "Schedule Hearing",
-              entityType: "case-default",
-              referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-              status: "SCHEDULE_HEARING",
-              assignedTo: [],
-              assignedRole: ["PENDING_TASK_ORDER"],
-              cnrNumber: caseDetails?.cnrNumber,
-              filingNumber: caseDetails?.filingNumber,
-              caseId: caseDetails?.id,
-              caseTitle: caseDetails?.caseTitle,
-              isCompleted: true,
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
-          setIsSubmitDisabled(false);
-        })
-        .catch((err) => {
-          setIsSubmitDisabled(false);
+      try {
+        setIsSubmitDisabled(true);
+        const res = await HomeService.customApiService(Urls.orderCreate, reqBody, { tenantId });
+        await HomeService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            name: "Schedule Hearing",
+            entityType: "case-default",
+            referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+            status: "SCHEDULE_HEARING",
+            assignedTo: [],
+            assignedRole: ["PENDING_TASK_ORDER"],
+            cnrNumber: caseDetails?.cnrNumber,
+            filingNumber: caseDetails?.filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
+            isCompleted: true,
+            additionalDetails: {},
+            tenantId,
+          },
         });
+        history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+      } catch (err) {
+        console.error("Error creating order:", err);
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: t("CS_ORDER_CREATION_FAILED"), errorId });
+      } finally {
+        setIsSubmitDisabled(false);
+      }
     } else if (status && status === "OPTOUT") {
       const individualId = await fetchBasicUserInfo();
       const judgeId = localStorage.getItem("judgeId");
@@ -550,6 +554,15 @@ function ScheduleHearing({
               />
             </div>
           </Modal>
+        )}
+        {showToast && (
+          <CustomToast
+            error={showToast?.error}
+            label={showToast?.label}
+            errorId={showToast?.errorId}
+            onClose={() => setShowToast(null)}
+            duration={showToast?.errorId ? 7000 : 5000}
+          />
         )}
       </div>
     </Modal>

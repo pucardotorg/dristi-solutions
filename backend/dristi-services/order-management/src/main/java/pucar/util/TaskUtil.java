@@ -21,6 +21,7 @@ import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.Order;
 import pucar.web.models.WorkflowObject;
 import pucar.web.models.courtCase.CourtCase;
+import pucar.web.models.courtCase.LifecycleStatus;
 import pucar.web.models.task.*;
 
 import java.time.LocalDate;
@@ -119,7 +120,7 @@ public class TaskUtil {
         }
 
         WorkflowObject workflowObject = new WorkflowObject();
-        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel) || courtCase.getIsLPRCase() ||
+        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel) || LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus()) ||
                 isCourtWitness(order.getOrderType(), objectMapper.convertValue(taskDetails, JsonNode.class))) {
             workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
             // There is no pending collection when payment is not made
@@ -188,7 +189,7 @@ public class TaskUtil {
         // Determine workflow action based on upfront payment status
         // hasUpfrontPayment=true means payment was done upfront, so no payment required now
         // hasUpfrontPayment=false means no upfront payment found, so payment is required
-        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel) || courtCase.getIsLPRCase() ||
+        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel) || LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus()) ||
                 isCourtWitness(order.getOrderType(), taskDetailsNode) || hasUpfrontPayment) {
             workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
             log.info("Creating warrant task without payment - channel: {}, hasUpfrontPayment: {}", channel, hasUpfrontPayment);

@@ -432,7 +432,8 @@ function BulkSignADiaryView() {
           const blobUrl = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = blobUrl;
-          link.download = `downloadedFile.${extension}`;
+          const name = `${entryDate}_ADiary_signed`;
+          link.download = `${name}.${extension}`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -576,6 +577,7 @@ function BulkSignADiaryView() {
                     displayFilename={"CLICK_HERE"}
                     t={t}
                     pdf={true}
+                    name={`${entryDate}_ADiary_unsigned`}
                   />
                 </div>
               </div>
@@ -596,6 +598,7 @@ function BulkSignADiaryView() {
             isDisabled={loader}
             fileUploadError={fileUploadError}
             setFileUploadError={setFileUploadError}
+            downloadedFileName={`${entryDate}_ADiary_unsigned`}
           />
         )}
 

@@ -3,12 +3,14 @@
 ## Adding a New API
 
 ### 1. Define API Specification
+
 - Create or update YAML file in `/api_specifications` directory
 - Follow OpenAPI 3.0 standards
 - Include proper request/response schemas
 - Document all parameters and responses
 
 ### 2. Create Model Classes
+
 ```java
 // Step 1: Create request model
 @Data
@@ -18,7 +20,7 @@
 public class NewFeatureRequest {
     @JsonProperty("RequestInfo")
     private RequestInfo requestInfo;
-    
+
     @JsonProperty("newFeature")
     @Valid
     private NewFeature newFeature;
@@ -32,7 +34,7 @@ public class NewFeatureRequest {
 public class NewFeatureResponse {
     @JsonProperty("ResponseInfo")
     private ResponseInfo responseInfo;
-    
+
     @JsonProperty("newFeature")
     private NewFeature newFeature;
 }
@@ -45,22 +47,23 @@ public class NewFeatureResponse {
 public class NewFeature {
     @JsonProperty("id")
     private String id;
-    
+
     @NotNull
     @JsonProperty("tenantId")
     private String tenantId;
-    
+
     // Other properties
-    
+
     @JsonProperty("isActive")
     private Boolean isActive;
-    
+
     @JsonProperty("additionalDetails")
     private JsonNode additionalDetails;
 }
 ```
 
 ### 3. Create Database Migration
+
 ```sql
 -- Create in src/main/resources/db/migration/main/V<timestamp>__<feature>__ddl.sql
 CREATE TABLE dristi_new_feature (
@@ -77,20 +80,21 @@ CREATE TABLE dristi_new_feature (
 ```
 
 ### 4. Implement Repository Layer
+
 ```java
 // Step 1: Create query builder
 @Component
 public class NewFeatureQueryBuilder {
     private static final String BASE_QUERY = "SELECT * FROM dristi_new_feature";
-    
+
     public String getNewFeatureSearchQuery(NewFeatureSearchCriteria criteria, List<Object> preparedStmtList) {
         StringBuilder query = new StringBuilder(BASE_QUERY);
-        
+
         query.append(" WHERE tenantId = ?");
         preparedStmtList.add(criteria.getTenantId());
-        
+
         // Add other filters
-        
+
         return query.toString();
     }
 }
@@ -112,7 +116,7 @@ public class NewFeatureRowMapper implements ResultSetExtractor<List<NewFeature>>
         }
         return features;
     }
-    
+
     private JsonNode getAdditionalDetails(ResultSet rs) throws SQLException {
         try {
             return mapper.readTree(rs.getString("additionalDetails"));
@@ -128,20 +132,20 @@ public class NewFeatureRepository {
     private final JdbcTemplate jdbcTemplate;
     private final NewFeatureQueryBuilder queryBuilder;
     private final NewFeatureRowMapper rowMapper;
-    
+
     @Autowired
     public NewFeatureRepository(JdbcTemplate jdbcTemplate, NewFeatureQueryBuilder queryBuilder, NewFeatureRowMapper rowMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.queryBuilder = queryBuilder;
         this.rowMapper = rowMapper;
     }
-    
+
     public List<NewFeature> search(NewFeatureSearchCriteria criteria) {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getNewFeatureSearchQuery(criteria, preparedStmtList);
         return jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
     }
-    
+
     public void save(NewFeature newFeature) {
         // Implementation
     }
@@ -149,25 +153,26 @@ public class NewFeatureRepository {
 ```
 
 ### 5. Implement Service Layer
+
 ```java
 @Service
 public class NewFeatureService {
     private final NewFeatureRepository repository;
     private final EnrichmentService enrichmentService;
-    
+
     @Autowired
     public NewFeatureService(NewFeatureRepository repository, EnrichmentService enrichmentService) {
         this.repository = repository;
         this.enrichmentService = enrichmentService;
     }
-    
+
     public NewFeature create(NewFeatureRequest request) {
         NewFeature newFeature = request.getNewFeature();
         enrichmentService.enrichNewFeatureOnCreate(newFeature, request.getRequestInfo());
         repository.save(newFeature);
         return newFeature;
     }
-    
+
     public List<NewFeature> search(NewFeatureSearchCriteria criteria) {
         return repository.search(criteria);
     }
@@ -175,19 +180,20 @@ public class NewFeatureService {
 ```
 
 ### 6. Implement Controller
+
 ```java
 @RestController
 @RequestMapping("/v1")
 public class NewFeatureController {
     private final NewFeatureService service;
     private final ResponseInfoFactory responseInfoFactory;
-    
+
     @Autowired
     public NewFeatureController(NewFeatureService service, ResponseInfoFactory responseInfoFactory) {
         this.service = service;
         this.responseInfoFactory = responseInfoFactory;
     }
-    
+
     @PostMapping("/_create")
     public ResponseEntity<NewFeatureResponse> create(@Valid @RequestBody NewFeatureRequest request) {
         NewFeature newFeature = service.create(request);
@@ -198,7 +204,7 @@ public class NewFeatureController {
             .build();
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
-    
+
     @PostMapping("/_search")
     public ResponseEntity<NewFeatureResponse> search(@Valid @RequestBody NewFeatureSearchRequest request) {
         List<NewFeature> features = service.search(request.getCriteria());
@@ -213,6 +219,7 @@ public class NewFeatureController {
 ```
 
 ### 7. Add Frontend API Service
+
 ```javascript
 export const NewFeatureService = {
   create: (data) => {
@@ -220,13 +227,14 @@ export const NewFeatureService = {
   },
   search: (data) => {
     return Digit.ApiCall.post("/new-feature/v1/_search", data);
-  }
+  },
 };
 ```
 
 ## Adding a New Screen/Module
 
 ### 1. Create Module Structure
+
 ```
 frontend/micro-ui/web/micro-ui-internals/packages/modules/new-module/
 ├── src/
@@ -246,10 +254,14 @@ frontend/micro-ui/web/micro-ui-internals/packages/modules/new-module/
 ```
 
 ### 2. Define Module Entry Point
+
 ```javascript
 // Module.js
 import React from "react";
-import { CitizenHomeCard, EmployeeHomeCard } from "@egovernments/digit-ui-react-components";
+import {
+  CitizenHomeCard,
+  EmployeeHomeCard,
+} from "@egovernments/digit-ui-react-components";
 
 const NewModuleComponent = ({ stateCode, userType, tenants }) => {
   const moduleConfig = {
@@ -257,18 +269,19 @@ const NewModuleComponent = ({ stateCode, userType, tenants }) => {
     type: userType === "citizen" ? "citizen" : "employee",
     routes: [
       {
-        path: userType === "citizen" ? "citizen/new-module" : "employee/new-module",
-        component: NewModulePage
-      }
-    ]
+        path:
+          userType === "citizen" ? "citizen/new-module" : "employee/new-module",
+        component: NewModulePage,
+      },
+    ],
   };
-  
+
   return moduleConfig;
 };
 
 const componentsToRegister = {
   NewModuleComponent,
-  NewModulePage
+  NewModulePage,
 };
 
 export const initNewModule = () => {
@@ -279,15 +292,16 @@ export const initNewModule = () => {
 ```
 
 ### 3. Create Page Component
+
 ```javascript
 // pages/employee/NewPage.js
 import React, { useState, useEffect } from "react";
-import { 
-  Card, 
-  Header, 
-  Loader, 
-  ActionBar, 
-  SubmitBar 
+import {
+  Card,
+  Header,
+  Loader,
+  ActionBar,
+  SubmitBar,
 } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
@@ -297,21 +311,19 @@ const NewPage = () => {
   const history = useHistory();
   const [isLoading, setIsLoading] = useState(false);
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  
+
   // Fetch data or initialize state
-  
+
   const handleSubmit = async () => {
     // Handle form submission
   };
-  
+
   if (isLoading) return <Loader />;
-  
+
   return (
     <React.Fragment>
       <Header>{t("NEW_PAGE_TITLE")}</Header>
-      <Card>
-        {/* Page content */}
-      </Card>
+      <Card>{/* Page content */}</Card>
       <ActionBar>
         <SubmitBar label={t("SUBMIT")} onSubmit={handleSubmit} />
       </ActionBar>
@@ -323,6 +335,7 @@ export default NewPage;
 ```
 
 ### 4. Create Custom Hook
+
 ```javascript
 // hooks/useNewFeature.js
 import { useQuery, useMutation } from "react-query";
@@ -334,7 +347,7 @@ export const useNewFeatureCreate = () => {
 export const useNewFeatureSearch = (filters = {}, config = {}) => {
   const client = Digit.ApiCall;
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  
+
   return useQuery(
     ["NEW_FEATURE_SEARCH", filters],
     async () => {
@@ -342,18 +355,22 @@ export const useNewFeatureSearch = (filters = {}, config = {}) => {
         RequestInfo: Digit.RequestInfo,
         criteria: {
           tenantId,
-          ...filters
-        }
+          ...filters,
+        },
       };
-      const response = await client.post("/new-feature/v1/_search", requestData);
+      const response = await client.post(
+        "/new-feature/v1/_search",
+        requestData,
+      );
       return response.newFeatures || [];
     },
-    config
+    config,
   );
 };
 ```
 
 ### 5. Register Module in package.json
+
 ```json
 {
   "name": "@egovernments/digit-ui-module-new-module",
@@ -375,6 +392,7 @@ export const useNewFeatureSearch = (filters = {}, config = {}) => {
 ```
 
 ### 6. Update Main package.json
+
 ```json
 // frontend/micro-ui/web/package.json
 {
@@ -386,6 +404,7 @@ export const useNewFeatureSearch = (filters = {}, config = {}) => {
 ```
 
 ### 7. Initialize Module in App
+
 ```javascript
 // src/App.js
 import { initNewModule } from "@egovernments/digit-ui-module-new-module";
@@ -393,7 +412,7 @@ import { initNewModule } from "@egovernments/digit-ui-module-new-module";
 const App = () => {
   // Initialize all modules
   initNewModule();
-  
+
   return (
     // App component
   );
@@ -403,6 +422,7 @@ const App = () => {
 ## Adding State Management
 
 ### 1. Create Redux Slice
+
 ```javascript
 // Create in frontend/micro-ui/web/micro-ui-internals/packages/libraries/src/redux/slices/newFeatureSlice.js
 import { createSlice } from "@reduxjs/toolkit";
@@ -410,7 +430,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   entities: {},
   loading: false,
-  error: null
+  error: null,
 };
 
 const newFeatureSlice = createSlice({
@@ -433,25 +453,26 @@ const newFeatureSlice = createSlice({
       state.error = action.payload;
     },
     // Additional reducers
-  }
+  },
 });
 
 export const {
   fetchNewFeatureRequest,
   fetchNewFeatureSuccess,
-  fetchNewFeatureFailure
+  fetchNewFeatureFailure,
 } = newFeatureSlice.actions;
 
 export default newFeatureSlice.reducer;
 ```
 
 ### 2. Create Thunk Actions
+
 ```javascript
 // Add to frontend/micro-ui/web/micro-ui-internals/packages/libraries/src/redux/actions/newFeature.js
 import {
   fetchNewFeatureRequest,
   fetchNewFeatureSuccess,
-  fetchNewFeatureFailure
+  fetchNewFeatureFailure,
 } from "../slices/newFeatureSlice";
 
 export const fetchNewFeatures = (filters) => async (dispatch, getState) => {
@@ -461,10 +482,13 @@ export const fetchNewFeatures = (filters) => async (dispatch, getState) => {
       RequestInfo: Digit.RequestInfo,
       criteria: {
         tenantId: Digit.ULBService.getCurrentTenantId(),
-        ...filters
-      }
+        ...filters,
+      },
     };
-    const response = await Digit.ApiCall.post("/new-feature/v1/_search", requestData);
+    const response = await Digit.ApiCall.post(
+      "/new-feature/v1/_search",
+      requestData,
+    );
     dispatch(fetchNewFeatureSuccess(response.newFeatures || []));
     return response.newFeatures;
   } catch (error) {
@@ -477,6 +501,7 @@ export const fetchNewFeatures = (filters) => async (dispatch, getState) => {
 ```
 
 ### 3. Register Reducer in Store
+
 ```javascript
 // Update frontend/micro-ui/web/micro-ui-internals/packages/libraries/src/redux/store.js
 import { configureStore } from "@reduxjs/toolkit";
@@ -485,34 +510,39 @@ import newFeatureReducer from "./slices/newFeatureSlice";
 const store = configureStore({
   reducer: {
     // Existing reducers
-    newFeature: newFeatureReducer
+    newFeature: newFeatureReducer,
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware({
-    serializableCheck: false
-  })
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+    }),
 });
 
 export default store;
 ```
 
 ### 4. Create Selectors
+
 ```javascript
 // Add to frontend/micro-ui/web/micro-ui-internals/packages/libraries/src/redux/selectors/newFeature.js
 export const selectNewFeatureLoading = (state) => state.newFeature.loading;
 export const selectNewFeatureError = (state) => state.newFeature.error;
-export const selectAllNewFeatures = (state) => Object.values(state.newFeature.entities);
-export const selectNewFeatureById = (state, id) => state.newFeature.entities[id];
+export const selectAllNewFeatures = (state) =>
+  Object.values(state.newFeature.entities);
+export const selectNewFeatureById = (state, id) =>
+  state.newFeature.entities[id];
 ```
 
 ### 5. Use in Components
+
 ```javascript
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchNewFeatures } from "../../redux/actions/newFeature";
-import { 
-  selectNewFeatureLoading, 
-  selectAllNewFeatures, 
-  selectNewFeatureError 
+import {
+  selectNewFeatureLoading,
+  selectAllNewFeatures,
+  selectNewFeatureError,
 } from "../../redux/selectors/newFeature";
 
 const NewFeatureList = () => {
@@ -520,20 +550,18 @@ const NewFeatureList = () => {
   const isLoading = useSelector(selectNewFeatureLoading);
   const features = useSelector(selectAllNewFeatures);
   const error = useSelector(selectNewFeatureError);
-  
+
   useEffect(() => {
     dispatch(fetchNewFeatures());
   }, [dispatch]);
-  
+
   if (isLoading) return <Loader />;
   if (error) return <Error error={error} />;
-  
+
   return (
     <div>
-      {features.map(feature => (
-        <Card key={feature.id}>
-          {/* Feature details */}
-        </Card>
+      {features.map((feature) => (
+        <Card key={feature.id}>{/* Feature details */}</Card>
       ))}
     </div>
   );
@@ -543,6 +571,7 @@ const NewFeatureList = () => {
 ## Debugging Common Issues
 
 ### Frontend Network Errors
+
 1. **Check Network Tab**:
    - Open browser developer tools (F12)
    - Go to Network tab
@@ -560,6 +589,7 @@ const NewFeatureList = () => {
    - For local development, ensure proxy is configured correctly
 
 ### Backend Service Errors
+
 1. **Check Logs**:
    - Look at service logs: `kubectl logs -f <pod-name>`
    - Check for exceptions and stack traces
@@ -576,6 +606,7 @@ const NewFeatureList = () => {
    - Test connectivity between services
 
 ### Performance Issues
+
 1. **Frontend Performance**:
    - Use React DevTools Profiler to identify slow components
    - Check for unnecessary re-renders
