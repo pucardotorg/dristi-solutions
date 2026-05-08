@@ -94,7 +94,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${moduleCode}-${refetchAdvocateData}`,
     Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
-  );  
+  );
 
   const userTypeDetail = useMemo(() => {
     return userTypeOptions.find((item) => item.code === userType) || {};
@@ -208,7 +208,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     history.push(`${path}/home/login`);
   }
   if (
-    !isSearchLoading && 
+    !isSearchLoading &&
     !(isRejected || searchResult?.length === 0) &&
     individualId &&
     !isLitigantPartialRegistered &&

@@ -116,29 +116,6 @@ export const modifiedEvidenceNumber = (value, filingNumber = null) => {
   }
   return value;
 };
-
-// Returns true when a case is in the Long Pending Register lifecycle.
-// Prefers the new `lifecycleStatus` field and falls back to the legacy
-// `isLPRCase` boolean while older payloads are still in flight.
-export const isLPRCase = (caseObj) => {
-  if (!caseObj) return false;
-  if (caseObj.lifecycleStatus !== undefined && caseObj.lifecycleStatus !== null) {
-    return caseObj.lifecycleStatus === "LPR";
-  }
-  return Boolean(caseObj?.isLPRCase);
-};
-
-// Returns the case-number to display, taking LPR cases into account.
-export const getDisplayCaseNumber = (caseObj) => {
-  if (!caseObj) return "";
-  return (
-    (isLPRCase(caseObj) ? caseObj?.lprNumber : caseObj?.courtCaseNumber) ||
-    caseObj?.courtCaseNumber ||
-    caseObj?.cmpNumber ||
-    caseObj?.filingNumber ||
-    ""
-  );
-};
 export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
   const processedPaymentType = paymentType?.toLowerCase()?.includes("application");
   const isCTC = paymentType?.toLowerCase()?.includes("ctc");
@@ -220,6 +197,7 @@ export const documentLabels = {
   VAKALATNAMA_DOC: "VAKALATNAMA_DOCUMENT",
   SUBMISSION_DOCUMENTS: "SUBMISSION_DOCUMENTS",
   COMPLAINANT_PIP_AFFIDAVIT: "COMPLAINANT_PIP_AFFIDAVIT",
+  POA_AUTHORIZATION_DOCUMENT: "POA_AUTHORIZATION_DOCUMENT",
 };
 
 export const caseFileLabels = {
@@ -1142,4 +1120,8 @@ export const isRichTextEmpty = (html) => {
   if (!html) return true;
   const plainText = html?.replace(/<[^>]*>/g, "").trim();
   return plainText?.length === 0;
+};
+
+export const formatTitle = (translatedTitle) => {
+  return (translatedTitle || "").trim().replace(/\s+/g, "_");
 };

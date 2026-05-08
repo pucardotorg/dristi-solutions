@@ -19,6 +19,8 @@ public class SmsTemplateData {
 
     private String cmpNumber;
 
+    private String caseNumber;
+
     private String filingNumber;
 
     private String shortenedUrl;

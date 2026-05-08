@@ -516,6 +516,7 @@ export const WitnessDepositionSignModal = ({
                   displayFilename={"CLICK_HERE"}
                   t={t}
                   pdf={true}
+                  name={`${effectiveRowData?.artifactNumber}_Witness_Deposition`}
                 />
               </div>
             </div>
@@ -536,6 +537,7 @@ export const WitnessDepositionSignModal = ({
           isDisabled={loader}
           fileUploadError={fileUploadError}
           setFileUploadError={setFileUploadError}
+          downloadedFileName={`${effectiveRowData?.artifactNumber}_Witness_Deposition`}
         />
       )}
       {/* after signing showing signed modal */}
@@ -601,7 +603,8 @@ export const WitnessDepositionSignModal = ({
         <Modal
           actionCancelLabel={t("DOWNLOAD_WITNESS_DEPOSITION")}
           actionCancelOnSubmit={() => {
-            downloadPdf(tenantId, witnessDepositionSignedPdf || sessionStorage.getItem("fileStoreId"));
+            const name = `${effectiveRowData?.artifactNumber}_Witness_Deposition`;
+            downloadPdf(tenantId, witnessDepositionSignedPdf || sessionStorage.getItem("fileStoreId"), name);
           }}
           actionSaveLabel={t("BULK_SUCCESS_CLOSE")}
           actionSaveOnSubmit={() => {

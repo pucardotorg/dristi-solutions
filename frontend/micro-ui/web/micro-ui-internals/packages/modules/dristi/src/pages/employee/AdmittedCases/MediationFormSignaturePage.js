@@ -49,6 +49,7 @@ const MediationFormSignaturePage = () => {
   const [showEditConfirmModal, setShowEditConfirmModal] = useState(false);
   const name = "Signature";
   const [formData, setFormData] = useState({});
+  const [fileUploadError, setFileUploadError] = useState(null);
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [signatureDocumentId, setSignatureDocumentId] = useState(null);
   const [isEsignSuccess, setEsignSuccess] = useState(false);
@@ -293,6 +294,7 @@ const MediationFormSignaturePage = () => {
         [key]: value,
       }));
     }
+    setFileUploadError(null);
   };
 
   const onSubmit = async () => {
@@ -306,6 +308,8 @@ const MediationFormSignaturePage = () => {
       } catch (error) {
         console.error("error", error);
         setFormData({});
+        setSignatureDocumentId(null);
+        setFileUploadError(error?.response?.data?.Errors?.[0]?.code || "CS_FILE_UPLOAD_ERROR");
       } finally {
         setUploadLoader(false);
       }
@@ -617,7 +621,10 @@ const MediationFormSignaturePage = () => {
                       textAlign: "center",
                       color: "#007E7E",
                     }}
-                    onButtonClick={() => downloadPdf(tenantId, signatureDocumentId || mediationFileStoreId)}
+                    onButtonClick={() => {
+                      const name = `${digitalizationServiceDetails?.mediationDetails?.mediationId}_mediation`;
+                      downloadPdf(tenantId, signatureDocumentId || mediationFileStoreId, name);
+                    }}
                   />
                 )}
                 {isUserLoggedIn &&
@@ -735,6 +742,9 @@ const MediationFormSignaturePage = () => {
           formData={formData}
           onSubmit={onSubmit}
           isDisabled={uploadLoader}
+          fileUploadError={fileUploadError}
+          setFileUploadError={setFileUploadError}
+          downloadedFileName={`${digitalizationServiceDetails?.mediationDetails?.mediationId}_mediation`}
         />
       )}
       {showSkipConfirmModal && (

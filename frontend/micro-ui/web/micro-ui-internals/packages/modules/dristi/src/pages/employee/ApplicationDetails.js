@@ -9,6 +9,7 @@ import { userTypeOptions } from "../citizen/registration/config";
 import { ErrorInfoIcon, SuccessIcon } from "../../icons/svgIndex";
 import ImageModal from "../../components/ImageModal";
 import { Heading } from "../../components/ModalComponents";
+import CustomToast from "../../components/CustomToast";
 const Close = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#FFFFFF">
     <path d="M0 0h24v24H0V0z" fill="none" />
@@ -89,8 +90,9 @@ const ApplicationDetails = ({ location, match }) => {
   const [isSubmittingAction, setIsSubmittingAction] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [imageInfo, setImageInfo] = useState(null);
+  const [showToast, setShowToast] = useState(null);
 
-  const { data: individualData, isLoading: isGetUserLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: individualData, isLoading: isGetUserLoading, error: individualError } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         individualId,
@@ -119,7 +121,7 @@ const ApplicationDetails = ({ location, match }) => {
     [individualData?.Individual]
   );
 
-  const { data: searchData, isLoading: isSearchLoading } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
+  const { data: searchData, isLoading: isSearchLoading, error: advocateSearchError } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
     {
       criteria: [{ applicationNumber: applicationNo }],
       tenantId: tenantId,
@@ -134,7 +136,7 @@ const ApplicationDetails = ({ location, match }) => {
     return userTypeOptions.find((item) => item.code === userType) || {};
   }, [userType]);
 
-  const { isLoading: isWorkFlowLoading, data: workFlowDetails } = window?.Digit.Hooks.useWorkflowDetails({
+  const { isLoading: isWorkFlowLoading, data: workFlowDetails, error: workflowError } = window?.Digit.Hooks.useWorkflowDetails({
     tenantId,
     id: applicationNo,
     moduleCode,
@@ -150,6 +152,37 @@ const ApplicationDetails = ({ location, match }) => {
         .map((action) => action.action) || [],
     [workFlowDetails?.processInstances, userRoles]
   );
+
+  useEffect(() => {
+    if (individualError) {
+      const errorId = individualError?.response?.headers?.["x-correlation-id"] || individualError?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        error: true,
+        label: t("FAILED_TO_FETCH_INDIVIDUAL_DETAILS"),
+        errorId,
+      });
+      return;
+    }
+
+    if (advocateSearchError) {
+      const errorId = advocateSearchError?.response?.headers?.["x-correlation-id"] || advocateSearchError?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        error: true,
+        label: t("FAILED_TO_FETCH_APPLICATION_DETAILS"),
+        errorId,
+      });
+      return;
+    }
+
+    if (workflowError) {
+      const errorId = workflowError?.response?.headers?.["x-correlation-id"] || workflowError?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({
+        error: true,
+        label: t("FAILED_TO_FETCH_WORKFLOW_DETAILS"),
+        errorId,
+      });
+    }
+  }, [individualError, advocateSearchError, workflowError, t]);
 
   const searchResult = useMemo(() => {
     const requestKey = userTypeDetail?.apiDetails?.requestKey;
@@ -227,6 +260,7 @@ const ApplicationDetails = ({ location, match }) => {
         setShowApproveModal(false);
         setIsSubmittingAction(false);
         setShowInfoModal({ isOpen: true, status: "ES_API_ERROR" });
+        setShowToast({ error: true, label: t("FAILED_TO_UPDATE_APPLICATION_STATUS") });
       });
   }
 
@@ -302,7 +336,7 @@ const ApplicationDetails = ({ location, match }) => {
         ),
       },
     ];
-  }, [identifierIdDetails?.fileStoreId, identifierIdDetails?.filename, individualData?.Individual, tenantId]);
+  }, [identifierIdDetails?.fileStoreId, identifierIdDetails?.filename, individualData?.Individual, tenantId, t]);
 
   const header = useMemo(() => {
     return applicationNo || applicationNumber ? ` ${t("APPLICATION_NUMBER")} ${applicationNo || applicationNumber}` : "My Application";
@@ -458,6 +492,15 @@ const ApplicationDetails = ({ location, match }) => {
                 </div>
               </div>
             </Modal>
+          )}
+          {showToast && (
+            <CustomToast
+              error={showToast?.error}
+              label={showToast?.label}
+              errorId={showToast?.errorId}
+              onClose={() => setShowToast(null)}
+              duration={showToast?.errorId ? 7000 : 5000}
+            />
           )}
         </div>
       </div>
