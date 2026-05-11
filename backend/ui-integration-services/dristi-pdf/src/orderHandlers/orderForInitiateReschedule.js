@@ -10,6 +10,7 @@ const {
   search_order,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
+const { getCaseNumber } = require("../utils/commonUtils");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -168,12 +169,7 @@ const orderForInitiateReschedule = async (req, res, qrCode) => {
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
 
     const data = {
       Data: [

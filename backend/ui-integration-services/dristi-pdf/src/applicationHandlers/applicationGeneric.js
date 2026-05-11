@@ -10,6 +10,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
+const { getCaseNumber } = require("../utils/commonUtils");
 const {
   getNameByUuid,
   getComplaintAndAccusedList,
@@ -190,9 +191,7 @@ async function applicationGeneric(
       application?.applicationDetails?.applicationTitle ||
       applicationNameMap[application?.applicationType] ||
       "General Application";
-    const caseNumber = courtCase?.isLPRCase
-      ? courtCase?.lprNumber
-      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = getCaseNumber(courtCase);
     const { complainantList, accusedList } = getComplaintAndAccusedList(
       courtCase || {},
     );

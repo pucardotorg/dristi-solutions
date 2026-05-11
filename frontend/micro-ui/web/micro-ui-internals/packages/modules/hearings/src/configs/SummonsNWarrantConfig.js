@@ -40,7 +40,9 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
           // cnrNumber: taskCnrNumber,
           orderId: orderId,
           partyType: _getPartyType(orderType, partyType),
-          ...(![PARTY_TYPES.POLICE, PARTY_TYPES.OTHER, PARTY_TYPES.OTHERS]?.includes((partyType || "")?.toLowerCase()) && { partyUniqueId: partyUniqueId }),
+          ...(![PARTY_TYPES.POLICE, PARTY_TYPES.OTHER, PARTY_TYPES.OTHERS]?.includes((partyType || "")?.toLowerCase()) && {
+            partyUniqueId: partyUniqueId,
+          }),
         },
       },
       masterName: "commonUiConfig",

@@ -144,6 +144,7 @@ function EFilingCases({ path }) {
   const [params, setParmas] = useState({});
   const { t } = useTranslation();
   const history = useHistory();
+  const shouldRefetchCaseDetails = history?.location?.state?.shouldRefetchCaseDetails;
   const [showToast, setShowToast] = useState(null);
   const [isDisabled, setIsDisabled] = useState(false);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -192,6 +193,7 @@ function EFilingCases({ path }) {
   const [modalCaseName, setModalCaseName] = useState("");
   const [isEditingAllowed, setIsEditingAllowed] = useState(false);
   const [deleteFormIndex, setDeleteFormIndex] = useState(null);
+  const [formRenderKey, setFormRenderKey] = useState(0);
   const setFieldsRemainingInitially = () => {
     const array = [];
     for (let i = 0; i < selectedArray.length; i++) {
@@ -511,6 +513,48 @@ function EFilingCases({ path }) {
     state === CaseWorkflowState.PENDING_RE_E_SIGN
   );
   const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
+
+  useEffect(() => {
+    const hydrateFreshCaseData = async () => {
+      try {
+        if (!shouldRefetchCaseDetails || !selected) return;
+
+        setIsLoader(true);
+
+        // clear stale form state first
+        setFormdata([]);
+
+        // fetch latest backend state
+        const updatedCaseResponse = await refetchCaseData();
+
+        const updatedCaseDetails = updatedCaseResponse?.data?.criteria?.[0]?.responseList?.[0];
+
+        const freshFormData =
+          updatedCaseDetails?.additionalDetails?.[selected]?.formdata ||
+          updatedCaseDetails?.caseDetails?.[selected]?.formdata ||
+          (selected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
+
+        // hydrate fresh state
+        setFormdata(freshFormData);
+
+        // force FormComposerV2 remount
+        setFormRenderKey(Date.now());
+
+        // VERY IMPORTANT:
+        // clear navigation state after consumption
+        history.replace({
+          search: history.location.search,
+          state: {},
+        });
+      } catch (error) {
+        console.error("Failed to hydrate fresh case data", error);
+      } finally {
+        setIsLoader(false);
+      }
+    };
+
+    hydrateFreshCaseData();
+  }, [shouldRefetchCaseDetails, selected]);
 
   useEffect(() => {
     const isDcaSkipped = caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling?.code;
@@ -1006,25 +1050,32 @@ function EFilingCases({ path }) {
           return formConfig.map((config) => {
             return {
               ...config,
-              body: config?.body?.map((body) => {
-                return {
-                  ...body,
-                  populators: {
-                    inputs: body?.populators?.inputs?.map((input) => {
-                      let dataobj = caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
-                      if (isCaseReAssigned) {
-                        dataobj =
-                          errorCaseDetails?.additionalDetails?.[input?.key]?.formdata || errorCaseDetails?.caseDetails?.[input?.key]?.formdata || {};
-                      }
-                      return {
-                        ...input,
-                        data: dataobj,
-                        isEditingAllowed: isEditingAllowed,
-                      };
-                    }),
-                  },
-                };
-              }),
+              body: config?.body
+                ?.filter((body) => body?.key !== "submissionFromAccused")
+                ?.map((body) => {
+                  return {
+                    ...body,
+                    populators: {
+                      inputs: body?.populators?.inputs?.map((input) => {
+                        let dataobj =
+                          caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
+
+                        if (isCaseReAssigned) {
+                          dataobj =
+                            errorCaseDetails?.additionalDetails?.[input?.key]?.formdata ||
+                            errorCaseDetails?.caseDetails?.[input?.key]?.formdata ||
+                            {};
+                        }
+
+                        return {
+                          ...input,
+                          data: dataobj,
+                          isEditingAllowed: isEditingAllowed,
+                        };
+                      }),
+                    },
+                  };
+                }),
             };
           });
         }
@@ -2800,21 +2851,86 @@ function EFilingCases({ path }) {
     href: "https://www.indiacode.nic.in/bitstream/123456789/2189/1/a1881-26.pdf",
   };
 
-  const takeUserToRemainingMandatoryFieldsPage = () => {
-    const firstPageInTheListWhichHasMandatoryFieldsLeft = checkAndGetMandatoryFieldLeftPages?.[0];
-    const selectedPage = firstPageInTheListWhichHasMandatoryFieldsLeft?.selectedPage;
-    setPrevSelected(selected);
-    history.push(`?caseId=${caseId}&selected=${selectedPage}`);
-    setShowConfirmMandatoryModal(false);
+  const takeUserToRemainingMandatoryFieldsPage = async () => {
+    try {
+      setIsLoader(true);
+
+      const firstPageInTheListWhichHasMandatoryFieldsLeft = checkAndGetMandatoryFieldLeftPages?.[0];
+
+      const selectedPage = firstPageInTheListWhichHasMandatoryFieldsLeft?.selectedPage;
+
+      // VERY IMPORTANT
+      // clear existing local state before refetch
+      setFormdata([]);
+
+      // refetch fresh case data exactly like refresh
+      const updatedCaseResponse = await refetchCaseData();
+
+      const updatedCaseDetails = updatedCaseResponse?.data?.criteria?.[0]?.responseList?.[0];
+
+      const freshFormData =
+        updatedCaseDetails?.additionalDetails?.[selectedPage]?.formdata ||
+        updatedCaseDetails?.caseDetails?.[selectedPage]?.formdata ||
+        (selectedPage === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
+
+      // load fresh state FIRST
+      setFormdata(freshFormData);
+
+      // force remount AFTER fresh data
+      setFormRenderKey(Date.now());
+
+      setPrevSelected(selected);
+
+      // navigate LAST
+      history.push(`?caseId=${caseId}&selected=${selectedPage}`);
+
+      setShowConfirmMandatoryModal(false);
+    } catch (error) {
+      console.error("Failed to reload mandatory page data", error);
+    } finally {
+      setIsLoader(false);
+    }
   };
 
-  const takeUserToRemainingOptionalFieldsPage = () => {
-    const firstPageInTheListWhichHasOptionalFieldsLeft = checkAndGetOptionalFieldLeftPages?.[0];
-    const selectedPage = firstPageInTheListWhichHasOptionalFieldsLeft?.selectedPage;
-    setPrevSelected(selected);
-    history.push(`?caseId=${caseId}&selected=${selectedPage}`);
-    setShowConfirmOptionalModal(false);
-    setOptionalFieldModalAlreadyViewed(true);
+  const takeUserToRemainingOptionalFieldsPage = async () => {
+    try {
+      setIsLoader(true);
+
+      const firstPageInTheListWhichHasOptionalFieldsLeft = checkAndGetOptionalFieldLeftPages?.[0];
+
+      const selectedPage = firstPageInTheListWhichHasOptionalFieldsLeft?.selectedPage;
+
+      // clear stale local state first
+      setFormdata([]);
+
+      // refetch latest backend data
+      const updatedCaseResponse = await refetchCaseData();
+
+      const updatedCaseDetails = updatedCaseResponse?.data?.criteria?.[0]?.responseList?.[0];
+
+      const freshFormData =
+        updatedCaseDetails?.additionalDetails?.[selectedPage]?.formdata ||
+        updatedCaseDetails?.caseDetails?.[selectedPage]?.formdata ||
+        (selectedPage === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
+
+      // hydrate fresh state
+      setFormdata(freshFormData);
+
+      // force FormComposerV2 remount
+      setFormRenderKey(Date.now());
+
+      setPrevSelected(selected);
+
+      // navigate after state hydration
+      history.push(`?caseId=${caseId}&selected=${selectedPage}`);
+
+      setShowConfirmOptionalModal(false);
+      setOptionalFieldModalAlreadyViewed(true);
+    } catch (error) {
+      console.error("Failed to reload optional page data", error);
+    } finally {
+      setIsLoader(false);
+    }
   };
 
   const handleGoToPage = (key) => {
@@ -2840,7 +2956,8 @@ function EFilingCases({ path }) {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `${caseDetails?.filingNumber || "CasePdf"}.pdf`);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Complaint.pdf`;
+    link.setAttribute("download", name);
     document.body.appendChild(link);
     link.click();
     link.parentNode.removeChild(link);
@@ -3128,6 +3245,7 @@ function EFilingCases({ path }) {
                     </div>
                   )}
                   <FormComposerV2
+                    key={`${selected}-${index}-${formRenderKey}`}
                     label={showActionsLabels && actionName}
                     config={config}
                     onSubmit={() => onSubmit("SAVE_DRAFT")}
