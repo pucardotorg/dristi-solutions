@@ -948,7 +948,7 @@ const EvidenceModal = ({
         } catch (error) {
           const errorCode = error?.response?.data?.Errors?.[0]?.code;
           const errorMsg =
-            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("EVIDENCE_UPDATE_FAILED");
+            errorCode === "HEARING_ALREADY_COMPLETED" ? t("HEARING_ALREADY_CLOSED_FOR_THIS_RESCHEDULE_REQUEST") : t("ORDER_UPDATE_FAILED");
           const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
           setToast({ label: errorMsg, error: true, errorId });
         }

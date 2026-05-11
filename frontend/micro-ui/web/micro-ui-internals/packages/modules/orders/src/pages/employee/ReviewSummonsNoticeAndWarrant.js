@@ -593,6 +593,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }, 1000);
       } catch (error) {
         console.error("Error updating task data:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("HOME_SCREEN_UPDATE_FAILED"), error: true, errorId });
       }
     }
   }, [dayInMillisecond, orderData, orderType, refetch, reload, selectedDelievery, tasksData, tenantId, todayDate]);
@@ -706,6 +708,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
       setNextHearingDate(findNextHearings(response?.HearingList));
     } catch (error) {
       console.error("error :>> ", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ISSUE_IN_FETCH_HEARINGS"), error: true, errorId });
     }
   };
 
@@ -959,6 +963,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return { continue: true };
     } catch (error) {
       console.error("Error uploading document:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
     } finally {
       setIsLoading(false);
       // Reset the flag after a delay to allow re-renders to complete
@@ -1348,6 +1354,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
           setShowBulkSignSuccessModal(true);
         } catch (e) {
           console.error("Error preparing bulk send after bulk sign:", e);
+          const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
         }
       });
     } catch (error) {
