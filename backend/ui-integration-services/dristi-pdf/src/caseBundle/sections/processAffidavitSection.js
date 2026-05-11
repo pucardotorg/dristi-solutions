@@ -1,8 +1,7 @@
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processAffidavitSection(
   courtCase,
@@ -12,7 +11,7 @@ async function processAffidavitSection(
   TEMP_FILES_DIR,
   indexCopy
 ) {
-  // update affidavits
+  logger.info(`[processAffidavitSection] Started | filingNumber: ${courtCase?.filingNumber}`);
   const affidavitsSection = filterCaseBundleBySection(
     caseBundleMaster,
     "affidavit"

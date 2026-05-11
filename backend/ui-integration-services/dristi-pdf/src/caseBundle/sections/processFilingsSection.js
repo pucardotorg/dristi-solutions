@@ -13,8 +13,7 @@ async function processFilingsSection(
   TEMP_FILES_DIR,
   indexCopy
 ) {
-  // move to filings section of case complaint
-  logger.info(caseBundleMaster);
+  logger.info(`[processFilingsSection] Started | filingNumber: ${courtCase?.filingNumber}`);
   const sectionPosition = indexCopy.sections?.findIndex(
     (s) => s.name === "filings"
   );
