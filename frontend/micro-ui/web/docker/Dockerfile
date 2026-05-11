@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 FROM node:22-alpine AS build
 
-RUN apk add --no-cache 'git>2.30.0'
+RUN apk add --no-cache 'git>2.30.0' python3 make g++ && \
+    ln -sf /usr/bin/python3 /usr/bin/python
 
 ARG WORK_DIR=.
 WORKDIR /app
