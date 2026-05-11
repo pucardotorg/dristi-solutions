@@ -225,7 +225,7 @@ function BulkBailBondSignView({ setShowToast = () => {} }) {
       const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
       setToast({
         error: true,
-        label: error?.message ? error?.message : t("ERROR_BAIL_BULK_SIGN_MSG"),
+        label: t("ERROR_BAIL_BULK_SIGN_MSG"),
         errorId,
       });
       setShowBulkSignConfirmModal(false);
