@@ -1,12 +1,9 @@
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 const { search_task_v2, search_task_mangement } = require("../../api");
-const {
-  duplicateExistingFileStore,
-} = require("../utils/duplicateExistingFileStore");
+const { duplicateExistingFileStore } = require("../utils/duplicateExistingFileStore");
+const { logger } = require("../../logger");
 
 async function processPaymentReceipts(
   courtCase,
@@ -16,6 +13,7 @@ async function processPaymentReceipts(
   TEMP_FILES_DIR,
   indexCopy
 ) {
+  logger.info(`[processPaymentReceipts] Started | filingNumber: ${courtCase?.filingNumber}`);
   const paymentReceiptSection = filterCaseBundleBySection(
     caseBundleMaster,
     "paymentreceipts"

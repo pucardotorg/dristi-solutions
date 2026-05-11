@@ -3,9 +3,7 @@ const { create_pdf_v2 } = require("../../api");
 const { persistPDF } = require("../utils/persistPDF");
 const { logger } = require("../../logger");
 const { getCaseNumber } = require("../../utils/commonUtils");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 
 async function processTitlePageSection(
   courtCase,
@@ -15,6 +13,7 @@ async function processTitlePageSection(
   TEMP_FILES_DIR,
   indexCopy
 ) {
+  logger.info(`[processTitlePageSection] Started | filingNumber: ${courtCase?.filingNumber}`);
   const titlepageSection = filterCaseBundleBySection(
     caseBundleMaster,
     "titlepage"

@@ -1,16 +1,9 @@
-const {
-  search_application_v2,
-  search_order_v2,
-  search_bailBond_v2,
-} = require("../../api");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { search_application_v2, search_order_v2, search_bailBond_v2 } = require("../../api");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  combineMultipleFilestores,
-} = require("../utils/combineMultipleFilestores");
+const { combineMultipleFilestores } = require("../utils/combineMultipleFilestores");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processBailDocuments(
   courtCase,
@@ -21,6 +14,7 @@ async function processBailDocuments(
   indexCopy,
   messagesMap
 ) {
+  logger.info(`[processBailDocuments] Started | filingNumber: ${courtCase?.filingNumber}`);
   const bailApplicationSection = filterCaseBundleBySection(
     caseBundleMaster,
     "baildocument"
