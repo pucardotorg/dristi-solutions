@@ -557,6 +557,20 @@ function EFilingCases({ path }) {
   }, [shouldRefetchCaseDetails, selected]);
 
   useEffect(() => {
+    if (selected !== "complainantDetails") return;
+
+    const hasTransferredPOA = (caseDetails || errorCaseDetails || {})?.additionalDetails?.complainantDetails?.formdata?.some(
+      (item) => item?.data?.transferredPOA?.code === "YES"
+    );
+
+    if (hasTransferredPOA) {
+      setTimeout(() => {
+        setFormRenderKey(Date.now());
+      }, 0);
+    }
+  }, [selected, caseDetails, errorCaseDetails]);
+
+  useEffect(() => {
     const isDcaSkipped = caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling?.code;
     if (isDcaSkipped !== prevIsDcaSkipped) {
       if (!isCaseReAssigned || (isCaseReAssigned && isDcaSkipped === "NO")) {
@@ -825,7 +839,7 @@ function EFilingCases({ path }) {
       }
     }
     if (!["advocateDetails", "processCourierService"]?.includes(selected)) {
-      setFormdata(data);
+      setFormdata(structuredClone(data));
     }
   }, [selected, caseDetails, isLoading, completedComplainants, completedAccuseds, litigants, isDelayCondonation]);
 
@@ -2760,6 +2774,8 @@ function EFilingCases({ path }) {
               caseDetails?.caseDetails?.[nextSelected]?.formdata ||
               (nextSelected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
             setFormdata(caseData);
+            setFormRenderKey(Date.now());
+
             setIsDisabled(false);
           });
         } else {
@@ -3245,7 +3261,9 @@ function EFilingCases({ path }) {
                     </div>
                   )}
                   <FormComposerV2
-                    key={`${selected}-${index}-${formRenderKey}`}
+                    key={`${selected}-${index}-${formRenderKey}-${
+                      (caseDetails || errorCaseDetails || {})?.additionalDetails?.[selected]?.formdata?.[index]?.transferredPOA?.code || "EMPTY"
+                    }`}
                     label={showActionsLabels && actionName}
                     config={config}
                     onSubmit={() => onSubmit("SAVE_DRAFT")}
