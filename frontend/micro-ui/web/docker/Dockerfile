@@ -25,7 +25,7 @@ COPY ${WORK_DIR}/web/micro-ui-internals/packages/modules/orders/package.json    
 COPY ${WORK_DIR}/web/micro-ui-internals/packages/modules/core/package.json         web/micro-ui-internals/packages/modules/core/
 
 RUN --mount=type=cache,target=/root/.yarn,id=digit-ui-yarn \
-    cd web && YARN_CACHE_FOLDER=/root/.yarn yarn install --frozen-lockfile
+    cd web && YARN_CACHE_FOLDER=/root/.yarn yarn install
 
 # --- Source layer: yarn install is skipped when only source files change ---
 COPY ${WORK_DIR} .
