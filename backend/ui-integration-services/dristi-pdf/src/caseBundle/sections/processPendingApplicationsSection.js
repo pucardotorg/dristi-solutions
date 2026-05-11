@@ -1,15 +1,10 @@
 const { search_application_v2 } = require("../../api");
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
-const {
-  combineMultipleFilestores,
-} = require("../utils/combineMultipleFilestores");
-const {
-  duplicateExistingFileStore,
-} = require("../utils/duplicateExistingFileStore");
+const { combineMultipleFilestores } = require("../utils/combineMultipleFilestores");
+const { duplicateExistingFileStore } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 const extractNumber = (cmpNumber) => {
   const parts = cmpNumber.split("/");
@@ -25,6 +20,7 @@ async function processPendingApplicationsSection(
   indexCopy,
   messagesMap
 ) {
+  logger.info(`[processPendingApplicationsSection] Started | filingNumber: ${courtCase?.filingNumber}`);
   const pendingReviewApplicationSection = filterCaseBundleBySection(
     caseBundleMaster,
     "pendingapplications"

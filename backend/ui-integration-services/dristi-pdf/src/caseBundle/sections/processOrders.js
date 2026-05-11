@@ -1,7 +1,6 @@
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { search_order_v2 } = require("../../api");
+const { logger } = require("../../logger");
 
 async function processOrders(
   courtCase,
@@ -11,6 +10,7 @@ async function processOrders(
   TEMP_FILES_DIR,
   indexCopy
 ) {
+  logger.info(`[processOrders] Started | filingNumber: ${courtCase?.filingNumber}`);
   const processesSection = filterCaseBundleBySection(
     caseBundleMaster,
     "orders"
