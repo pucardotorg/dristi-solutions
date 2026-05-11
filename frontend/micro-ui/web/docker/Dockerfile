@@ -1,8 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM node:22-alpine AS build
 
-RUN apk add --no-cache 'git>2.30.0' python3 make g++ && \
-    ln -sf /usr/bin/python3 /usr/bin/python
+RUN apk add --no-cache 'git>2.30.0'
 
 ARG WORK_DIR=.
 WORKDIR /app
@@ -15,6 +14,7 @@ ENV REACT_APP_STATE_LEVEL_TENANT_ID ${REACT_APP_STATE_LEVEL_TENANT_ID}
 # --- Dependency layer: only invalidated when package.json or yarn.lock changes ---
 COPY ${WORK_DIR}/web/package.json ${WORK_DIR}/web/yarn.lock web/
 COPY ${WORK_DIR}/web/micro-ui-internals/package.json web/micro-ui-internals/
+COPY ${WORK_DIR}/web/micro-ui-internals/packages/node-sass-stub/package.json       web/micro-ui-internals/packages/node-sass-stub/
 COPY ${WORK_DIR}/web/micro-ui-internals/packages/css/package.json                  web/micro-ui-internals/packages/css/
 COPY ${WORK_DIR}/web/micro-ui-internals/packages/modules/hearings/package.json     web/micro-ui-internals/packages/modules/hearings/
 COPY ${WORK_DIR}/web/micro-ui-internals/packages/modules/home/package.json         web/micro-ui-internals/packages/modules/home/
