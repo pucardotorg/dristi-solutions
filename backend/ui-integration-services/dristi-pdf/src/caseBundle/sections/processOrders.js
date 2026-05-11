@@ -2,6 +2,7 @@ const {
   filterCaseBundleBySection,
 } = require("../utils/filterCaseBundleBySection");
 const { search_order_v2 } = require("../../api");
+const { logger } = require("../../logger");
 
 async function processOrders(
   courtCase,
@@ -11,6 +12,7 @@ async function processOrders(
   TEMP_FILES_DIR,
   indexCopy
 ) {
+  logger.info(`[processOrders] Started | filingNumber: ${courtCase?.filingNumber}`);
   const processesSection = filterCaseBundleBySection(
     caseBundleMaster,
     "orders"
@@ -68,6 +70,9 @@ async function processOrders(
   } else {
     ordersIndexSection.lineItems = [];
   }
+  logger.info(
+    `[processOrders] Completed | lineItems: ${ordersIndexSection?.lineItems?.length || 0}`
+  );
 }
 
 module.exports = {

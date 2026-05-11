@@ -8,6 +8,7 @@ const {
 const {
   filterCaseBundleBySection,
 } = require("../utils/filterCaseBundleBySection");
+const { logger } = require("../../logger");
 
 async function processCourtEvidence(
   courtCase,
@@ -17,6 +18,7 @@ async function processCourtEvidence(
   TEMP_FILES_DIR,
   indexCopy
 ) {
+  logger.info(`[processCourtEvidence] Started | filingNumber: ${courtCase?.filingNumber}`);
   const courtEvidenceDepositionSection = filterCaseBundleBySection(
     caseBundleMaster,
     "courtevidencedepositions"
@@ -30,6 +32,7 @@ async function processCourtEvidence(
   const courtEvidenceLineItems = [];
 
   if (courtEvidenceDepositionSection?.length !== 0) {
+    logger.info(`[processCourtEvidence] search_evidence_v2 | depositions`);
     const courtDocs = await search_evidence_v2(
       tenantId,
       requestInfo,
@@ -86,6 +89,7 @@ async function processCourtEvidence(
   }
 
   if (courtEvidenceSection?.length !== 0) {
+    logger.info(`[processCourtEvidence] search_evidence_v2 | exhibits`);
     const courtDocs = await search_evidence_v2(
       tenantId,
       requestInfo,
@@ -149,6 +153,7 @@ async function processCourtEvidence(
     (section) => section.name === "courtevidence"
   );
   courtEvidenceIndexSection.lineItems = courtEvidenceLineItems?.filter(Boolean);
+  logger.info(`[processCourtEvidence] Completed | lineItems: ${courtEvidenceIndexSection.lineItems?.length || 0}`);
 }
 
 module.exports = {

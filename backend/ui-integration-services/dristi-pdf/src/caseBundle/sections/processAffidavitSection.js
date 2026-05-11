@@ -3,6 +3,7 @@ const {
   filterCaseBundleBySection,
 } = require("../utils/filterCaseBundleBySection");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processAffidavitSection(
   courtCase,
@@ -12,7 +13,7 @@ async function processAffidavitSection(
   TEMP_FILES_DIR,
   indexCopy
 ) {
-  // update affidavits
+  logger.info(`[processAffidavitSection] Started | filingNumber: ${courtCase?.filingNumber}`);
   const affidavitsSection = filterCaseBundleBySection(
     caseBundleMaster,
     "affidavit"
@@ -121,6 +122,7 @@ async function processAffidavitSection(
     (section) => section.name === "affidavit"
   );
   affidavitsIndexSection.lineItems = affidavitsLineItems?.filter(Boolean);
+  logger.info(`[processAffidavitSection] Completed | lineItems: ${affidavitsIndexSection.lineItems?.length || 0}`);
 }
 
 module.exports = {

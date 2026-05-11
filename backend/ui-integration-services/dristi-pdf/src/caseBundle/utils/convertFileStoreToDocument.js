@@ -2,12 +2,14 @@ const { PDFDocument } = require("pdf-lib");
 const { fixJpg } = require("./fixJpg");
 const { A4_WIDTH, A4_HEIGHT } = require("./size");
 const { search_pdf_v2 } = require("../../api");
+const { logger } = require("../../logger");
 
 async function convertFileStoreToDocument(
   tenantId,
   documentFileStoreId,
   requestInfo
 ) {
+  logger.info(`[convertFileStoreToDocument] search_pdf_v2 | fileStoreId: ${documentFileStoreId}`);
   const { data: stream, headers } = await search_pdf_v2(
     tenantId,
     documentFileStoreId,

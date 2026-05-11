@@ -10,6 +10,7 @@ const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 const extractNumber = (cmpNumber) => {
   const parts = cmpNumber.split("/");
@@ -25,6 +26,7 @@ async function processPendingApplicationsSection(
   indexCopy,
   messagesMap
 ) {
+  logger.info(`[processPendingApplicationsSection] Started | filingNumber: ${courtCase?.filingNumber}`);
   const pendingReviewApplicationSection = filterCaseBundleBySection(
     caseBundleMaster,
     "pendingapplications"
@@ -50,6 +52,7 @@ async function processPendingApplicationsSection(
 
   if (pendingReviewApplicationSection?.length !== 0) {
     const section = pendingReviewApplicationSection[0];
+    logger.info(`[processPendingApplicationsSection] search_application_v2 | status: PENDINGREVIEW`);
     const pendingReviewApplications = await search_application_v2(
       tenantId,
       requestInfo,
@@ -67,7 +70,7 @@ async function processPendingApplicationsSection(
       }
     );
 
-    // Search for PENDINGAPPROVAL applications
+    logger.info(`[processPendingApplicationsSection] search_application_v2 | status: PENDINGAPPROVAL`);
     const pendingApprovalApplications = await search_application_v2(
       tenantId,
       requestInfo,
@@ -85,6 +88,7 @@ async function processPendingApplicationsSection(
       }
     );
 
+    logger.info(`[processPendingApplicationsSection] search_application_v2 | status: DOCUMENT_UPLOAD`);
     const pendingDocUploadApplications = await search_application_v2(
       tenantId,
       requestInfo,
@@ -348,6 +352,9 @@ async function processPendingApplicationsSection(
   } else {
     pendingApplicationsIndexSection.lineItems = [];
   }
+  logger.info(
+    `[processPendingApplicationsSection] Completed | lineItems: ${pendingApplicationsIndexSection?.lineItems?.length || 0}`
+  );
 }
 
 module.exports = {

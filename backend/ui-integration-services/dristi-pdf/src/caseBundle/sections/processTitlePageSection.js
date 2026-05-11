@@ -14,6 +14,7 @@ async function processTitlePageSection(
   TEMP_FILES_DIR,
   indexCopy
 ) {
+  logger.info(`[processTitlePageSection] Started | filingNumber: ${courtCase?.filingNumber}`);
   const titlepageSection = filterCaseBundleBySection(
     caseBundleMaster,
     "titlepage"
@@ -34,6 +35,7 @@ async function processTitlePageSection(
     const data = {
       Data: [{ coverCaseName, coverCaseType, coverCaseNumber, coverYear }],
     };
+    logger.info("[processTitlePageSection] create_pdf_v2 | key: cover-page-pdf");
     const caseCoverPdfResponse = await create_pdf_v2(
       tenantId,
       "cover-page-pdf",
@@ -71,6 +73,9 @@ async function processTitlePageSection(
         sortParam: null,
       },
     ];
+    logger.info(`[processTitlePageSection] Completed | fileStoreId: ${titlepageFileStoreId}`);
+  } else {
+    logger.info("[processTitlePageSection] Skipped | section not active in MDMS");
   }
 }
 
