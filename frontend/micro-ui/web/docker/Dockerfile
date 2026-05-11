@@ -32,7 +32,8 @@ RUN --mount=type=cache,target=/root/.yarn,id=digit-ui-yarn \
 # --- Source layer: yarn install is skipped when only source files change ---
 COPY ${WORK_DIR} .
 
-RUN cd web && ./install-deps.sh && yarn build:webpack
+RUN --mount=type=cache,target=/tmp/webpack-cache,id=digit-ui-webpack \
+    cd web && ./install-deps.sh && yarn build:webpack
 
 FROM nginx:mainline-alpine
 ENV WORK_DIR=/var/web/ui

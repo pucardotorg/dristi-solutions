@@ -5,6 +5,10 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = {
   // mode: 'development',
+  cache: {
+    type: "filesystem",
+    cacheDirectory: "/tmp/webpack-cache",
+  },
   entry: {
     main: "./src/index.js",
     //    telemetry: "./public/scripts/telemetry/index.js",
