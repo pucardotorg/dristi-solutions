@@ -1,8 +1,7 @@
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processComplaintSection(
   courtCase,
@@ -12,6 +11,7 @@ async function processComplaintSection(
   TEMP_FILES_DIR,
   indexCopy
 ) {
+  logger.info(`[processComplaintSection] Started | filingNumber: ${courtCase?.filingNumber}`);
   const complaintSection = filterCaseBundleBySection(
     caseBundleMaster,
     "complaint"
@@ -33,6 +33,7 @@ async function processComplaintSection(
       (doc) => doc.documentType === "case.complaint.signed"
     )?.fileStore;
     if (!complaintFileStoreId) {
+      logger.error(`[processComplaintSection] No complaint document found | filingNumber: ${courtCase?.filingNumber}, expected documentType: case.complaint.signed`);
       throw new Error("no case complaint");
     }
 
