@@ -3,6 +3,7 @@ const {
 } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processComplaintSection(
   courtCase,
@@ -12,6 +13,9 @@ async function processComplaintSection(
   TEMP_FILES_DIR,
   indexCopy
 ) {
+  logger.info(
+    `[processComplaintSection] Started | filingNumber: ${courtCase?.filingNumber}`
+  );
   const complaintSection = filterCaseBundleBySection(
     caseBundleMaster,
     "complaint"
@@ -29,10 +33,39 @@ async function processComplaintSection(
   if (complaintSection?.length !== 0) {
     const section = complaintSection[0];
 
-    const complaintFileStoreId = courtCase.documents?.find(
+    // Fallback chain mirroring Java ComplaintSection.java:
+    // 1. case.complaint.signed (ideal — fully signed document)
+    // 2. additionalDetails.signedCaseDocument (backup written by ComplainantSignature.js)
+    // 3. case.complaint.unsigned (last resort — signing incomplete but doc exists)
+    let complaintFileStoreId = courtCase.documents?.find(
       (doc) => doc.documentType === "case.complaint.signed"
     )?.fileStore;
+
     if (!complaintFileStoreId) {
+      complaintFileStoreId =
+        courtCase.additionalDetails?.signedCaseDocument || null;
+      if (complaintFileStoreId) {
+        logger.warn(
+          `[processComplaintSection] case.complaint.signed not found, falling back to additionalDetails.signedCaseDocument | filingNumber: ${courtCase?.filingNumber}, fileStoreId: ${complaintFileStoreId}`
+        );
+      }
+    }
+
+    if (!complaintFileStoreId) {
+      complaintFileStoreId = courtCase.documents?.find(
+        (doc) => doc.documentType === "case.complaint.unsigned"
+      )?.fileStore;
+      if (complaintFileStoreId) {
+        logger.warn(
+          `[processComplaintSection] Falling back to case.complaint.unsigned | filingNumber: ${courtCase?.filingNumber}, fileStoreId: ${complaintFileStoreId}`
+        );
+      }
+    }
+
+    if (!complaintFileStoreId) {
+      logger.error(
+        `[processComplaintSection] No complaint document found in any fallback (signed, additionalDetails.signedCaseDocument, unsigned) | filingNumber: ${courtCase?.filingNumber}`
+      );
       throw new Error("no case complaint");
     }
 
