@@ -110,9 +110,18 @@ public class CaseQueryBuilder {
             if (criteria != null) {
                 firstCriteria = addCriteria(criteria.getCourtId(), query, firstCriteria, "cases.courtid = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
-                addCriteria(criteria.getFilingNumber() == null ? null : "%" + criteria.getFilingNumber() + "%", query, firstCriteria, "LOWER(cases.filingnumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
-
-                query.append(" AND cases.status NOT IN ('DRAFT_IN_PROGRESS', 'DELETED_DRAFT') ");
+                if (criteria.getSearchNumber() != null && !criteria.getSearchNumber().trim().isEmpty()) {
+                    String searchTerm = "%" + criteria.getSearchNumber().trim() + "%";
+                    addClauseIfRequired(query, firstCriteria);
+                    query.append("(LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cnrnumber) LIKE LOWER(?) OR LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?))");
+                    for (int i = 0; i < 4; i++) {
+                        preparedStmtList.add(searchTerm);
+                        preparedStmtArgList.add(Types.VARCHAR);
+                    }
+                    firstCriteria = false;
+                }
+                addClauseIfRequired(query, firstCriteria);
+                query.append(" cases.status NOT IN ('DRAFT_IN_PROGRESS', 'DELETED_DRAFT') ");
             }
 
             return query.toString();
