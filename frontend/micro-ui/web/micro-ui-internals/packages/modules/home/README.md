@@ -5,6 +5,7 @@
 The **Home** module (`@egovernments/digit-ui-module-home`) serves as the **central dashboard and task management hub** for the DRISTI platform. It provides the main home screen, pending task lists, payment workflows, hearing management shortcuts, bail bond signing, witness deposition signing, e-post tracking, and the analytics dashboard. It acts as the primary navigation entry point for all user roles.
 
 **Business Purpose:**
+
 - Display role-specific home screens (Judge, Advocate, Litigant, Clerk, FSO, Bench, Court Room, E-Post Manager)
 - Manage and display pending tasks with categorized views
 - Handle e-filing payment flows (breakdown, response)
@@ -15,6 +16,7 @@ The **Home** module (`@egovernments/digit-ui-module-home`) serves as the **centr
 - Handle e-post tracking for postal service managers
 
 **Where it is used:**
+
 - Rendered under `/{contextPath}/employee/home/*` and `/{contextPath}/citizen/home/*`
 - The primary landing page after authentication for all user roles
 
@@ -23,9 +25,11 @@ The **Home** module (`@egovernments/digit-ui-module-home`) serves as the **centr
 ## 🏗 Architecture
 
 ### Entry Point
+
 - `src/Module.js` — Exports `HomeModule` (main component) and `initHomeComponents`
 
 ### Folder Structure
+
 ```
 src/
 ├── Module.js                          # Entry point, component registration
@@ -104,6 +108,7 @@ src/
 ```
 
 ### Key Design Patterns
+
 - **Role-based configuration:** Separate config files for each user role (Judge, Litigant, FSO, Bench, CourtRoom, E-Post Manager)
 - **Pending task aggregation:** Central hub for displaying all pending actions from various modules
 - **Component registry consumption:** Dynamically loads components from other modules (orders, hearings) via `Digit.ComponentRegistryService`
@@ -115,49 +120,52 @@ src/
 
 All routes in `src/pages/employee/index.js` use `PrivateRoute`.
 
-| Route Path | Component | Description |
-|---|---|---|
-| `{path}/home-pending-task` | `HomeView` | Pending task list (primary landing) |
-| `{path}/home-screen` | `MainHomeScreen` | Main home screen (employees) |
-| `{path}/hearings-response` | `HearingsResponse` | Hearing action response |
-| `{path}/home-pending-task/e-filing-payment-response` | `EFilingPaymentRes` | E-filing payment response |
-| `{path}/home-pending-task/e-filing-payment-breakdown` | `EfilingPaymentBreakdown` | Payment breakdown details |
-| `{path}/home-pending-task/case-payment-demand-breakdown` | `GeneratePaymentDemandBreakdown` | Case payment demand |
-| `{path}/home-pending-task/summons-warrants-modal` | `SummonsAndWarrantsModal` | Summons/warrants issuance |
-| `{path}/home-pending-task/reissue-summons-modal` | `ReIssueSummonsModal` | Reissue summons |
-| `{path}/home-pending-task/post-payment-modal` | `PaymentForSummonModal` | Post payment for summon |
-| `{path}/home-pending-task/rpad-payment-modal` | `PaymentForRPADModal` | RPAD payment |
-| `{path}/home-pending-task/icops-payment-modal` | `PaymentForSummonModalSMSAndEmail` | iCOPS payment |
-| `{path}/home-pending-task/sms-payment-modal` | `PaymentForSummonModalSMSAndEmail` | SMS payment |
-| `{path}/home-pending-task/email-payment-modal` | `PaymentForSummonModalSMSAndEmail` | Email payment |
-| `{path}/home-pending-task/home-schedule-hearing` | `ScheduleHearing` | Schedule hearing |
-| `{path}/home-pending-task/home-set-next-hearing` | `ScheduleNextHearing` | Set next hearing |
-| `{path}/bail-bond` | `BailBondModal` | Bail bond review |
-| `{path}/sign-bail-bond` | `BailBondSignModal` | Bulk bail bond signing |
-| `{path}/sign-witness-deposition` | `WitnessDepositionSignModal` | Bulk witness deposition signing |
-| `{path}/dashboard` | `DashboardPage` | Analytics dashboard |
-| `{path}/sbi-epost-payment` | `SBIEpostPayment` | SBI e-post payment |
-| `{path}/post-payment-screen` | `PaymentStatus` | Payment status |
-| `{path}/sbi-payment-screen` | `SBIPaymentStatus` | SBI payment status |
-| `{path}/view-hearing` | `ViewHearing` | View hearing details |
-| `{path}/home-popup` | `HomePopUp` | Home popup modal |
-| `{path}/epost-home-screen` | `EpostTrackingPage` | E-post tracking |
-| `{path}/mediation-form-sign` | `MediationFormSignaturePage` | Mediation form e-sign |
-| `{path}/digitized-document-sign` | `DigitalDocumentSignModal` | Digitized document signing |
+| Route Path                                               | Component                          | Description                         |
+| -------------------------------------------------------- | ---------------------------------- | ----------------------------------- |
+| `{path}/home-pending-task`                               | `HomeView`                         | Pending task list (primary landing) |
+| `{path}/home-screen`                                     | `MainHomeScreen`                   | Main home screen (employees)        |
+| `{path}/hearings-response`                               | `HearingsResponse`                 | Hearing action response             |
+| `{path}/home-pending-task/e-filing-payment-response`     | `EFilingPaymentRes`                | E-filing payment response           |
+| `{path}/home-pending-task/e-filing-payment-breakdown`    | `EfilingPaymentBreakdown`          | Payment breakdown details           |
+| `{path}/home-pending-task/case-payment-demand-breakdown` | `GeneratePaymentDemandBreakdown`   | Case payment demand                 |
+| `{path}/home-pending-task/summons-warrants-modal`        | `SummonsAndWarrantsModal`          | Summons/warrants issuance           |
+| `{path}/home-pending-task/reissue-summons-modal`         | `ReIssueSummonsModal`              | Reissue summons                     |
+| `{path}/home-pending-task/post-payment-modal`            | `PaymentForSummonModal`            | Post payment for summon             |
+| `{path}/home-pending-task/rpad-payment-modal`            | `PaymentForRPADModal`              | RPAD payment                        |
+| `{path}/home-pending-task/icops-payment-modal`           | `PaymentForSummonModalSMSAndEmail` | iCOPS payment                       |
+| `{path}/home-pending-task/sms-payment-modal`             | `PaymentForSummonModalSMSAndEmail` | SMS payment                         |
+| `{path}/home-pending-task/email-payment-modal`           | `PaymentForSummonModalSMSAndEmail` | Email payment                       |
+| `{path}/home-pending-task/home-schedule-hearing`         | `ScheduleHearing`                  | Schedule hearing                    |
+| `{path}/home-pending-task/home-set-next-hearing`         | `ScheduleNextHearing`              | Set next hearing                    |
+| `{path}/bail-bond`                                       | `BailBondModal`                    | Bail bond review                    |
+| `{path}/sign-bail-bond`                                  | `BailBondSignModal`                | Bulk bail bond signing              |
+| `{path}/sign-witness-deposition`                         | `WitnessDepositionSignModal`       | Bulk witness deposition signing     |
+| `{path}/dashboard`                                       | `DashboardPage`                    | Analytics dashboard                 |
+| `{path}/sbi-epost-payment`                               | `SBIEpostPayment`                  | SBI e-post payment                  |
+| `{path}/post-payment-screen`                             | `PaymentStatus`                    | Payment status                      |
+| `{path}/sbi-payment-screen`                              | `SBIPaymentStatus`                 | SBI payment status                  |
+| `{path}/view-hearing`                                    | `ViewHearing`                      | View hearing details                |
+| `{path}/home-popup`                                      | `HomePopUp`                        | Home popup modal                    |
+| `{path}/epost-home-screen`                               | `EpostTrackingPage`                | E-post tracking                     |
+| `{path}/mediation-form-sign`                             | `MediationFormSignaturePage`       | Mediation form e-sign               |
+| `{path}/digitized-document-sign`                         | `DigitalDocumentSignModal`         | Digitized document signing          |
 
 ---
 
 ## 🧠 State Management
 
 ### Redux Slices
+
 No dedicated Redux slices.
 
 ### Global State Dependencies
+
 - `Digit.Services.useStore` — Loads modules: `["home", "common", "workflow", "orders"]`
 - `Digit.UserService` — User authentication and role detection
 - `Digit.ComponentRegistryService` — Dynamically loads components from other modules
 
 ### Local State Strategy
+
 - `useGetPendingTask` hook for pending task data
 - `useInboxSearch` for inbox search functionality
 - `useSearchReschedule` for reschedule search
@@ -227,6 +235,7 @@ No dedicated Redux slices.
 ## 🧩 Key Components
 
 ### Container Components
+
 - **`HomeView`** — Primary pending task home view with task categorization
 - **`MainHomeScreen`** — Role-based main home screen
 - **`DashboardPage`** — Analytics dashboard for judges
@@ -235,6 +244,7 @@ No dedicated Redux slices.
 - **`DigitalDocumentSignModal`** — Digital document signing
 
 ### Presentational Components
+
 - **`HomeCard`** — Dashboard card (globally registered)
 - **`CustomDateRangePicker`** — Date range picker (globally registered)
 - **`PendingTaskAccordion`** — Expandable pending task groups
@@ -274,22 +284,24 @@ Bulk Signing Flow:
 ## 🔗 Dependencies
 
 ### Internal Module Dependencies
+
 - `@egovernments/digit-ui-module-core` — Core shell, context
 - `@egovernments/digit-ui-module-orders` — `PaymentStatus` component (direct import from `../../../../orders/src/components/PaymentStatus`)
 - `@egovernments/digit-ui-module-dristi` — `MediationFormSignaturePage` component (import via package path)
 - `@egovernments/digit-ui-module-hearings` — `SummonsAndWarrantsModal`, `SBIEpostPayment`, `EpostTrackingPage` etc. (via ComponentRegistryService)
 
 ### External Library Dependencies
-| Library | Version | Purpose |
-|---|---|---|
-| `react` | 17.0.2 | UI framework |
-| `react-router-dom` | 5.3.0 | Routing |
-| `react-i18next` | 11.16.2 | i18n |
-| `react-query` | 3.6.1 | Data fetching |
-| `react-date-range` | ^1.4.0 | Date range picker |
-| `@egovernments/digit-ui-react-components` | 1.8.2-beta.9 | Shared UI |
-| `@egovernments/digit-ui-components` | 0.0.2-beta.1 | Design system |
-| `@egovernments/digit-ui-module-core` | 1.8.1-beta.6 | Core module |
+
+| Library                                   | Version      | Purpose           |
+| ----------------------------------------- | ------------ | ----------------- |
+| `react`                                   | 17.0.2       | UI framework      |
+| `react-router-dom`                        | 5.3.0        | Routing           |
+| `react-i18next`                           | 11.16.2      | i18n              |
+| `react-query`                             | 3.6.1        | Data fetching     |
+| `react-date-range`                        | ^1.4.0       | Date range picker |
+| `@egovernments/digit-ui-react-components` | 1.8.2-beta.9 | Shared UI         |
+| `@egovernments/digit-ui-components`       | 0.0.2-beta.1 | Design system     |
+| `@egovernments/digit-ui-module-core`      | 1.8.1-beta.6 | Core module       |
 
 ---
 

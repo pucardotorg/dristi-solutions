@@ -69,14 +69,14 @@ public class PublishOrderMoveCaseToLongPendingRegister implements OrderUpdateStr
             throw new CustomException(MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION, "ST Number can not be null for moving case to LPR : " + courtCase.getFilingNumber());
         }
 
-        if (courtCase.getIsLPRCase()) {
+        if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus())) {
             throw new CustomException(MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION, "Case is already a LPR case : " + courtCase.getFilingNumber());
         }
 
         if (courtCase.getCourtCaseNumberBackup() != null) {
             throw new CustomException(MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION, "Case is already move to LPR case once : " + courtCase.getFilingNumber());
         }
-        courtCase.setIsLPRCase(true);
+        courtCase.setLifecycleStatus(LifecycleStatus.LPR);
 
         CaseRequest caseRequest = CaseRequest.builder().cases(courtCase).requestInfo(requestInfo).build();
         log.info("Moving case to LPR : {}", courtCase.getFilingNumber());

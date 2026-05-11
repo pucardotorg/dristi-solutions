@@ -82,7 +82,7 @@ const DigitUIWrapper = ({ stateCode, enabledModules, moduleReducers, defaultLand
 export const DigitUI = ({ stateCode, registry, enabledModules, moduleReducers, defaultLanding }) => {
   const [privacy, setPrivacy] = useState(Digit.Utils.getPrivacyObject() || {});
   // State to manage breadcrumb parameters across the application
-    const [BreadCrumbsParamsData, setBreadCrumbsParamsData] = useState(initialBreadCrumbParamsData);
+  const [BreadCrumbsParamsData, setBreadCrumbsParamsData] = useState(initialBreadCrumbParamsData);
   // State to manage advocate data across the application
   const [AdvocateData, setAdvocateDataContext] = useState(initialAdvocateData);
 
