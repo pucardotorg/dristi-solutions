@@ -14,6 +14,7 @@ ENV REACT_APP_STATE_LEVEL_TENANT_ID ${REACT_APP_STATE_LEVEL_TENANT_ID}
 # --- Dependency layer: only invalidated when package.json or yarn.lock changes ---
 COPY ${WORK_DIR}/web/package.json ${WORK_DIR}/web/yarn.lock web/
 COPY ${WORK_DIR}/web/micro-ui-internals/package.json web/micro-ui-internals/
+COPY ${WORK_DIR}/web/micro-ui-internals/packages/libraries/package.json            web/micro-ui-internals/packages/libraries/
 COPY ${WORK_DIR}/web/micro-ui-internals/packages/node-sass-stub/package.json       web/micro-ui-internals/packages/node-sass-stub/
 COPY ${WORK_DIR}/web/micro-ui-internals/packages/css/package.json                  web/micro-ui-internals/packages/css/
 COPY ${WORK_DIR}/web/micro-ui-internals/packages/modules/hearings/package.json     web/micro-ui-internals/packages/modules/hearings/
