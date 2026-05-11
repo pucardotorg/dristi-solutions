@@ -3523,7 +3523,7 @@ export const updateCaseDetails = async ({
           documentName: "UPLOAD_PIP_AFFIDAVIT",
         };
 
-        updatedDocuments = [...updatedDocuments, updatedDoc];
+        updatedDocuments = [updatedDoc];
       } else {
         // remove previously added affidavit document
         updatedDocuments = [];
