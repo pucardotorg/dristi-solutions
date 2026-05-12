@@ -77,7 +77,7 @@ const SearchCaseAndShowDetails = ({
                 setCaseList([]);
                 let str = e.target.value;
                 if (str) {
-                  str = str.replace(/[^a-zA-Z0-9.-]/g, "");
+                  str = str.replace(/[^a-zA-Z0-9.\/-]/g, "");
                   if (str.length > 50) {
                     str = str.substring(0, 50);
                   }
