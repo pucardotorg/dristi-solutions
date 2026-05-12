@@ -50,6 +50,7 @@ public class AdvocateDetailBlockBuilder {
                     if (litigant == null) continue;
                     // Build a block for every complainant (primary or additional)
                     if (litigant.getPartyType() != null && litigant.getPartyType().toLowerCase().startsWith("complainant")) {
+                        boolean isFormCompleted=true;
                         Complainant complainant = Complainant.builder()
                                 .index(idx++)
                                 .individualId(litigant.getIndividualId())
@@ -74,6 +75,9 @@ public class AdvocateDetailBlockBuilder {
                                 if (litNode.has("middleName")) complainant.setMiddleName(litNode.get("middleName").asText());
                                 if (litNode.has("lastName")) complainant.setLastName(litNode.get("lastName").asText());
                                 if (litNode.has("mobileNumber")) complainant.setMobileNumber(litNode.get("mobileNumber").asText());
+                                if (litNode.has("isLitigantDetailsChanged") && !litNode.get("isLitigantDetailsChanged").isNull()) {
+                                    isFormCompleted = litNode.get("isLitigantDetailsChanged").asBoolean();
+                                }
                                 // if additionalDetails contains a display/full name, prefer that
                                 if (litNode.has("fullName")) complainant.setFullName(litNode.get("fullName").asText());
                             }
@@ -203,11 +207,6 @@ public class AdvocateDetailBlockBuilder {
                                 .showAffidavit(!pipAffidavit.isEmpty())
                                 .showVakalatNamaUpload(pipAffidavit.isEmpty())
                                 .build();
-
-                        boolean isFormCompleted = "YES".equalsIgnoreCase(pipStatus.getCode())
-                                ? pipAffidavit != null && !pipAffidavit.isEmpty()
-                                : advocates != null && !advocates.isEmpty() && vakalatnama != null && !vakalatnama.isEmpty();
-
 
                         AdvocateDetailBlock block = AdvocateDetailBlock.builder()
                                 .complainant(complainant)
