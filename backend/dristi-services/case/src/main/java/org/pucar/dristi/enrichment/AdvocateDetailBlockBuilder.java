@@ -204,6 +204,10 @@ public class AdvocateDetailBlockBuilder {
                                 .showVakalatNamaUpload(pipAffidavit.isEmpty())
                                 .build();
 
+                        boolean isFormCompleted = "YES".equalsIgnoreCase(pipStatus.getCode())
+                                ? pipAffidavit != null && !pipAffidavit.isEmpty()
+                                : advocates != null && !advocates.isEmpty() && vakalatnama != null && !vakalatnama.isEmpty();
+
 
                         AdvocateDetailBlock block = AdvocateDetailBlock.builder()
                                 .complainant(complainant)
@@ -211,7 +215,7 @@ public class AdvocateDetailBlockBuilder {
                                 .advocates(advocates)
                                 .advocateCount(advocates != null ? advocates.size() : 0)
                                 .isEnabled(true)
-                                .isFormCompleted(!advocates.isEmpty())
+                                .isFormCompleted(isFormCompleted)
                                 .displayIndex(0)
                                 .isComplainantPip(pipStatus)
                                 .uiFlags(uiFlags)
