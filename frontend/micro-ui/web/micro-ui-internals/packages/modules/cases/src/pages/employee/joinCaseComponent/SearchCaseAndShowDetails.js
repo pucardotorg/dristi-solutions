@@ -115,9 +115,7 @@ const SearchCaseAndShowDetails = ({
                 </div>
               );
             })}
-          <p style={{ fontSize: "12px" }}>
-            {t("FILLING_NUMBER_FORMATE_TEXT")} {"KL-<6 digit sequence number>-<YYYY>"}
-          </p>
+
         </LabelFieldPair>
       )}
       {errors?.caseNumber && (
