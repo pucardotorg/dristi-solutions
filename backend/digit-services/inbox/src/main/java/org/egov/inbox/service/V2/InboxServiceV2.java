@@ -1,7 +1,6 @@
 package org.egov.inbox.service.V2;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.wnameless.json.flattener.JsonFlattener;
 import com.jayway.jsonpath.JsonPath;
@@ -474,7 +473,7 @@ public class InboxServiceV2 {
                 .build();
 
         InboxRequest inboxRequest = InboxRequest.builder()
-                .RequestInfo(searchRequest.getRequestInfo())
+                .requestInfo(searchRequest.getRequestInfo())
                 .inbox(inboxSearchCriteria)
                 .build();
         InboxResponse inboxResponse = getIndexResponse(inboxRequest);
