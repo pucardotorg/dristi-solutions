@@ -2580,19 +2580,25 @@ export const updateCaseDetails = async ({
     const hasRepresentativeAdvocate = caseDetails?.representatives?.some((rep) => rep?.advocateId);
 
     const activeLitigants = updatedLitigants?.filter((lit) => !(Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false));
+    let documentToDelete = null;
     const finalLitigants =
       hasRepresentativeAdvocate && activeLitigants?.length === 1
-        ? updatedLitigants.map((lit) =>
-            Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false
-              ? lit
-              : {
-                  ...lit,
-                  documents: null,
-                }
-          )
+        ? updatedLitigants.map((lit) => {
+            if (Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false) {
+              return lit;
+            } else {
+              documentToDelete = lit?.documents?.[0]?.fileStore;
+              return {
+                ...lit,
+                documents: null,
+              };
+            }
+          })
         : updatedLitigants;
 
     data.litigants = [...finalLitigants];
+
+    tempDocList = tempDocList?.filter((doc) => doc?.fileStore !== documentToDelete);
 
     const mergedPoaHoldersMap = new Map();
 
