@@ -125,7 +125,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           const response = await DRISTIService.summaryCaseSearchService(
             {
               criteria: {
-                filingNumber: caseNumber,
+                searchNumber: caseNumber,
                 ...(courtId && { courtId }),
                 pagination: {
                   limit: 5,
