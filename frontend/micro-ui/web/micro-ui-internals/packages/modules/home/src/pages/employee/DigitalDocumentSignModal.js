@@ -456,7 +456,8 @@ export const DigitalDocumentSignModal = ({
   const handleDownload = async () => {
     try {
       const fileStoreId = effectiveRowData?.documents?.[0]?.fileStore;
-      await downloadPdf(tenantId, fileStoreId);
+      const name = `${queryStrings?.documentNumber || effectiveRowData?.documentNumber}_${effectiveRowData?.type || "Digitalized_Document"}`;
+      await downloadPdf(tenantId, fileStoreId, name);
     } catch (error) {
       console.error("Error: ", error);
     }

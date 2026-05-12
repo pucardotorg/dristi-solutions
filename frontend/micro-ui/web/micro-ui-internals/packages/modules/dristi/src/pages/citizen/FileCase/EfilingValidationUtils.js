@@ -1031,7 +1031,6 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
         errorObject.SUMMON_PROCESS_COURIER_INFORMATION_MISSING = true;
       }
     }
-
     let mandatoryLeft = false;
     for (let key in errorObject) {
       if (errorObject[key] === true) {
@@ -2578,7 +2577,22 @@ export const updateCaseDetails = async ({
         });
       }
     });
-    data.litigants = [...updatedLitigants];
+    const hasRepresentativeAdvocate = caseDetails?.representatives?.some((rep) => rep?.advocateId);
+
+    const activeLitigants = updatedLitigants?.filter((lit) => !(Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false));
+    const finalLitigants =
+      hasRepresentativeAdvocate && activeLitigants?.length === 1
+        ? updatedLitigants.map((lit) =>
+            Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false
+              ? lit
+              : {
+                  ...lit,
+                  documents: null,
+                }
+          )
+        : updatedLitigants;
+
+    data.litigants = [...finalLitigants];
 
     const mergedPoaHoldersMap = new Map();
 
@@ -3506,17 +3520,34 @@ export const updateCaseDetails = async ({
 
     const updatedCaseLitigants = caseDetails?.litigants?.map((litigant) => {
       const lit = complainantDetails?.find((comp) => comp?.individualId === litigant?.individualId);
-      if (lit) {
-        const updatedDoc = lit?.pipAffidavitFileUpload ? structuredClone(lit?.pipAffidavitFileUpload) : null;
-        if (updatedDoc) {
-          const additionalDetails = {
-            documentName: "UPLOAD_PIP_AFFIDAVIT",
-          };
-          updatedDoc.additionalDetails = additionalDetails;
-        }
-        const updatedLitigant = { ...litigant, documents: lit?.pipAffidavitFileUpload ? [updatedDoc] : [] };
-        return updatedLitigant;
-      } else return litigant;
+
+      // if litigant not found in complainantDetails
+      if (!lit) {
+        return {
+          ...litigant,
+          documents: [],
+        };
+      }
+
+      let updatedDocuments = litigant?.documents || [];
+
+      if (lit?.pipAffidavitFileUpload) {
+        const updatedDoc = structuredClone(lit.pipAffidavitFileUpload);
+
+        updatedDoc.additionalDetails = {
+          documentName: "UPLOAD_PIP_AFFIDAVIT",
+        };
+
+        updatedDocuments = [updatedDoc];
+      } else {
+        // remove previously added affidavit document
+        updatedDocuments = [];
+      }
+
+      return {
+        ...litigant,
+        documents: updatedDocuments,
+      };
     });
 
     data.litigants = [...updatedCaseLitigants];
@@ -3848,12 +3879,25 @@ export const createOrUpdateTask = async ({
     });
   };
 
+  const transformAddresses = (addresses = []) => {
+    return addresses.map((addr) => ({
+      ...addr,
+      addressDetails: {
+        ...addr?.addressDetails,
+        typeOfAddress: addr?.addressDetails?.typeOfAddress?.code || "",
+      },
+    }));
+  };
+
   const partyDetails = accusedDetails?.map((accused) => ({
     ...(status && { status }),
-    addresses: accused?.addressDetails?.filter((addr) => addr?.checked) || [],
+    addresses: transformAddresses(accused?.addressDetails?.filter((addr) => addr?.checked) || []),
     deliveryChannels: _getdelieveryChannels(accused?.[`${type?.toLowerCase()}CourierService`] || []),
     respondentDetails: {
       ...respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data,
+      addressDetails: transformAddresses(
+        respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data?.addressDetails || []
+      ),
       uniqueId: accused?.uniqueId,
     },
   }));

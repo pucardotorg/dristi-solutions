@@ -28,7 +28,6 @@ const mockSubmitModalInfo = {
   isArrow: false,
   showTable: true,
 };
-
 function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -282,7 +281,11 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
             labelClassName={"secondary-label-selector"}
             style={{ minWidth: "30%" }}
             onButtonClick={() => {
-              downloadPdf(tenantId, fileStoreIdToUse);
+              downloadPdf(
+                tenantId,
+                fileStoreIdToUse,
+                `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Complaint`
+              );
               sessionStorage.removeItem("fileStoreId");
             }}
           />
@@ -357,7 +360,16 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
                 variation="secondary"
                 className={"pay-online-button"}
                 icon={receiptFilstoreId && <PrintIcon />}
-                onButtonClick={receiptFilstoreId ? () => downloadPdf(tenantId, receiptFilstoreId) : onTaskPayOnline}
+                onButtonClick={
+                  receiptFilstoreId
+                    ? () =>
+                        downloadPdf(
+                          tenantId,
+                          receiptFilstoreId,
+                          `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_Efiling_payment_Receipt`
+                        )
+                    : onTaskPayOnline
+                }
                 isDisabled={paymentLoader || isCaseLocked}
               />
             </div>

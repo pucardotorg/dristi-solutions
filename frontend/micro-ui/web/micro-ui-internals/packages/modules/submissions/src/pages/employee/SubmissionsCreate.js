@@ -1913,6 +1913,7 @@ const SubmissionsCreate = ({ path }) => {
   const handleCloseSignaturePopup = () => {
     setShowsignatureModal(false);
     setShowReviewModal(true);
+    sessionStorage.removeItem("fileStoreId");
   };
 
   const handleSkipPayment = () => {
@@ -1964,7 +1965,10 @@ const SubmissionsCreate = ({ path }) => {
   };
 
   const handleDownloadSubmission = () => {
-    downloadPdf(tenantId, applicationDetails?.documents?.filter((doc) => doc?.documentType === "SIGNED")?.[0]?.fileStore);
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${
+      applicationNumber || ""
+    }_Application`;
+    downloadPdf(tenantId, applicationDetails?.documents?.filter((doc) => doc?.documentType === "SIGNED")?.[0]?.fileStore, name);
   };
 
   useEffect(() => {
@@ -2059,6 +2063,8 @@ const SubmissionsCreate = ({ path }) => {
             setSignedDocumentUploadID={setSignedDocumentUploadID}
             applicationPdfFileStoreId={applicationPdfFileStoreId}
             applicationType={applicationType}
+            applicationNumber={applicationNumber}
+            caseDetails={caseDetails}
           />
         )}
         {showPaymentModal && (

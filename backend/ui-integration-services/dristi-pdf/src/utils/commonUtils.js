@@ -127,8 +127,35 @@ function getPartyType(witnessType) {
   }
 }
 
+function isLPRCase(courtCase) {
+  if (courtCase?.lifecycleStatus !== undefined && courtCase?.lifecycleStatus !== null) {
+    return courtCase.lifecycleStatus === "LPR";
+  }
+  return Boolean(courtCase?.isLPRCase);
+}
+
+function getCaseNumber(courtCase) {
+  if (isLPRCase(courtCase)) {
+    return (
+      courtCase?.lprNumber ||
+      courtCase?.courtCaseNumber ||
+      courtCase?.cmpNumber ||
+      courtCase?.filingNumber ||
+      ""
+    );
+  }
+  return (
+    courtCase?.courtCaseNumber ||
+    courtCase?.cmpNumber ||
+    courtCase?.filingNumber ||
+    ""
+  );
+}
+
 module.exports = {
   getCourtAndJudgeDetails,
   getPartyType,
   getSelectedTitles,
+  isLPRCase,
+  getCaseNumber,
 };

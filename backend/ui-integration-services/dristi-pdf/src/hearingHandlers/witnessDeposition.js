@@ -7,10 +7,7 @@ const {
   search_evidence_v2,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
-const {
-  getPartyType,
-  getCourtAndJudgeDetails,
-} = require("../utils/commonUtils");
+const { getPartyType, getCourtAndJudgeDetails, getCaseNumber } = require("../utils/commonUtils");
 const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 const { formatDate } = require("../applicationHandlers/formatDate");
 
@@ -154,12 +151,7 @@ const witnessDeposition = async (req, res, qrCode) => {
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const caseNumber =
-      (courtCase?.isLPRCase
-        ? courtCase?.lprNumber
-        : courtCase?.courtCaseNumber) ||
-      courtCase?.courtCaseNumber ||
-      courtCase?.cmpNumber ||
-      "";
+      getCaseNumber(courtCase);
     const witnessDepositionText = htmlToFormattedText(
       witnessEvidence?.description || ""
     );

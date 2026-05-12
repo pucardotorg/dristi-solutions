@@ -28,6 +28,8 @@ import {
   getAllAssociatedPartyUuids,
   getAuthorizedUuid,
   getDate,
+  isLPRCase,
+  removeInvalidNameParts,
 } from "../../../Utils";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import VoidSubmissionBody from "./VoidSubmissionBody";
@@ -1306,7 +1308,7 @@ const AdmittedCaseV2 = () => {
             tenantId: tenantId,
             filingNumber: [caseDetails.filingNumber],
             hearingType: purpose,
-            courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
+            courtCaseNumber: isLPRCase(caseDetails) ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
             cmpNumber: caseDetails?.cmpNumber,
             status: true,
             attendees: [
@@ -1613,9 +1615,10 @@ const AdmittedCaseV2 = () => {
 
   const handleDownloadClick = useCallback(() => {
     if (casePdfFileStoreId) {
-      downloadPdf(tenantId, casePdfFileStoreId);
+      const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}_CaseFile`;
+      downloadPdf(tenantId, casePdfFileStoreId, name);
     }
-  }, [casePdfFileStoreId, downloadPdf, tenantId]);
+  }, [casePdfFileStoreId, downloadPdf, tenantId, caseDetails]);
 
   const pipComplainants = useMemo(() => getPipComplainants(caseDetails), [caseDetails]);
 
@@ -2065,10 +2068,14 @@ const AdmittedCaseV2 = () => {
   const handleDownload = useCallback(
     (filestoreId) => {
       if (filestoreId) {
-        downloadPdf(tenantId, filestoreId);
+        const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${
+          currentOrder?.orderNumber
+        }_Order`;
+
+        downloadPdf(tenantId, filestoreId, name);
       }
     },
-    [downloadPdf, tenantId]
+    [downloadPdf, tenantId, caseDetails, currentOrder]
   );
 
   const handleOrdersTab = useCallback(() => {

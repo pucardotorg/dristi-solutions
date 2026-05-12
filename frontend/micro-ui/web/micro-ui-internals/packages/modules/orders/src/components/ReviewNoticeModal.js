@@ -14,7 +14,6 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   const useDownloadCasePdf = Digit?.Hooks?.dristi?.useDownloadCasePdf;
   const { downloadPdf } = useDownloadCasePdf();
 
-  
   const handleDownload = async (tenantId, filestoreId, filestoreIdPolice) => {
     // await downloadPdfFromFile(file?.[0]);
     if (filestoreId) {
@@ -26,7 +25,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   };
 
   const combinedDoc = useMemo(() => {
-    return [policeDoc, doc];
+    return [policeDoc, doc].filter((d) => d?.fileStore);
   }, [doc, policeDoc]);
 
   const showDocument = useMemo(() => {

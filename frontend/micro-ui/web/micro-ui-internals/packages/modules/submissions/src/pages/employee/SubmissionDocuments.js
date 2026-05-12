@@ -191,7 +191,11 @@ const SubmissionDocuments = ({ path }) => {
   };
 
   const handleSuccessDownloadSubmission = () => {
-    downloadPdf(tenantId, signedDocumentUploadedID);
+    //
+    const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${
+      evidenceDetails?.artifactNumber || evidenceId
+    }_Document`;
+    downloadPdf(tenantId, signedDocumentUploadedID, name);
   };
 
   const handleDownloadReviewModal = async () => {

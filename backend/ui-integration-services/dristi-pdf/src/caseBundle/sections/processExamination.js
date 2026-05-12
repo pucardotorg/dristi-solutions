@@ -1,9 +1,8 @@
-const {
-  filterCaseBundleBySection,
-} = require("../utils/filterCaseBundleBySection");
+const { filterCaseBundleBySection } = require("../utils/filterCaseBundleBySection");
 const { search_digitalizedDocuments } = require("../../api");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const { logger } = require("../../logger");
 
 async function processExamination(
   courtCase,
@@ -13,6 +12,7 @@ async function processExamination(
   TEMP_FILES_DIR,
   indexCopy
 ) {
+  logger.info(`[processExamination] Started | filingNumber: ${courtCase?.filingNumber}`);
   const section = filterCaseBundleBySection(
     caseBundleMaster,
     "digitalizedDocuments"

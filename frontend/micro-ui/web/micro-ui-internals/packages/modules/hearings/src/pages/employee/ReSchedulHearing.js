@@ -22,7 +22,7 @@ import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/Mo
 //   </svg>
 // );
 
-// 
+//
 // const RescheduleHearing = ({ onSelect, onCancel, onDismiss , rescheduleAll}) => {
 //   const { t } = useTranslation();
 //   const history = useHistory();

@@ -18,6 +18,7 @@ import org.pucar.dristi.validator.HearingRegistrationValidator;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.cases.CaseRequest;
 import org.pucar.dristi.web.models.cases.CourtCase;
+import org.pucar.dristi.web.models.cases.LifecycleStatus;
 import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.pucar.dristi.web.models.orders.*;
 import org.pucar.dristi.web.models.orders.Order;
@@ -857,7 +858,7 @@ public class HearingService {
             for (Hearing hearing : hearingList) {
                 hearing.setCourtCaseNumber(courtCase.getCourtCaseNumber());
                 hearing.setCmpNumber(courtCase.getCmpNumber());
-                if ((courtCase.getIsLPRCase() != null && courtCase.getIsLPRCase()) && courtCase.getLprNumber() != null) {
+                if (LifecycleStatus.LPR.equals(courtCase.getLifecycleStatus()) && courtCase.getLprNumber() != null) {
                     hearing.setCaseReferenceNumber(courtCase.getLprNumber());
                 } else if (courtCase.getCourtCaseNumber() != null) {
                     hearing.setCaseReferenceNumber(courtCase.getCourtCaseNumber());
