@@ -62,6 +62,15 @@ const SearchCaseAndShowDetails = ({
     return [];
   }, [caseDetails]);
 
+  const getDisplayNumber = (option, searchTerm) => {
+    if (!searchTerm) return option?.filingNumber;
+    const term = searchTerm.toLowerCase();
+    if (option?.cmpNumber?.toLowerCase().includes(term)) return option?.cmpNumber;
+    if (option?.cnrNumber?.toLowerCase().includes(term)) return option?.cnrNumber;
+    if (option?.courtCaseNumber?.toLowerCase().includes(term)) return option?.courtCaseNumber;
+    return option?.filingNumber;
+  };
+
   return (
     <div className="case-number-input">
       {!caseDetails?.cnrNumber && (
@@ -102,7 +111,7 @@ const SearchCaseAndShowDetails = ({
                     onSelect(option);
                   }}
                 >
-                  <span> {option?.filingNumber}</span>
+                  <span> {getDisplayNumber(option, caseNumber)}</span>
                 </div>
               );
             })}
