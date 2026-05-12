@@ -2577,7 +2577,22 @@ export const updateCaseDetails = async ({
         });
       }
     });
-    data.litigants = [...updatedLitigants];
+    const hasRepresentativeAdvocate = caseDetails?.representatives?.some((rep) => rep?.advocateId);
+
+    const activeLitigants = updatedLitigants?.filter((lit) => !(Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false));
+    const finalLitigants =
+      hasRepresentativeAdvocate && activeLitigants?.length === 1
+        ? updatedLitigants.map((lit) =>
+            Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false
+              ? lit
+              : {
+                  ...lit,
+                  documents: null,
+                }
+          )
+        : updatedLitigants;
+
+    data.litigants = [...finalLitigants];
 
     const mergedPoaHoldersMap = new Map();
 
