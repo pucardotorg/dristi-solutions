@@ -1042,7 +1042,7 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
         errorObject.SUMMON_PROCESS_COURIER_INFORMATION_MISSING = true;
       }
     }
-    
+
     let mandatoryLeft = false;
     for (let key in errorObject) {
       if (errorObject[key] === true) {
@@ -1321,19 +1321,19 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
       hasError = true;
     }
 
-    if(isRichTextEmpty(formData?.prayer?.text)){
+    if (isRichTextEmpty(formData?.prayer?.text)) {
       setFormErrors("prayer", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
       setShowErrorToast(true);
       hasError = true;
     }
 
-    if(isRichTextEmpty(formData?.memorandumOfComplaint?.text)){
+    if (isRichTextEmpty(formData?.memorandumOfComplaint?.text)) {
       setFormErrors("memorandumOfComplaint", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
       setShowErrorToast(true);
       hasError = true;
     }
 
-    if(isRichTextEmpty(formData?.synopsis?.text)){
+    if (isRichTextEmpty(formData?.synopsis?.text)) {
       setFormErrors("synopsis", { message: "ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS" });
       setShowErrorToast(true);
       hasError = true;
@@ -3523,17 +3523,34 @@ export const updateCaseDetails = async ({
 
     const updatedCaseLitigants = caseDetails?.litigants?.map((litigant) => {
       const lit = complainantDetails?.find((comp) => comp?.individualId === litigant?.individualId);
-      if (lit) {
-        const updatedDoc = lit?.pipAffidavitFileUpload ? structuredClone(lit?.pipAffidavitFileUpload) : null;
-        if (updatedDoc) {
-          const additionalDetails = {
-            documentName: "UPLOAD_PIP_AFFIDAVIT",
-          };
-          updatedDoc.additionalDetails = additionalDetails;
-        }
-        const updatedLitigant = { ...litigant, documents: lit?.pipAffidavitFileUpload ? [updatedDoc] : [] };
-        return updatedLitigant;
-      } else return litigant;
+
+      // if litigant not found in complainantDetails
+      if (!lit) {
+        return {
+          ...litigant,
+          documents: [],
+        };
+      }
+
+      let updatedDocuments = litigant?.documents || [];
+
+      if (lit?.pipAffidavitFileUpload) {
+        const updatedDoc = structuredClone(lit.pipAffidavitFileUpload);
+
+        updatedDoc.additionalDetails = {
+          documentName: "UPLOAD_PIP_AFFIDAVIT",
+        };
+
+        updatedDocuments = [updatedDoc];
+      } else {
+        // remove previously added affidavit document
+        updatedDocuments = [];
+      }
+
+      return {
+        ...litigant,
+        documents: updatedDocuments,
+      };
     });
 
     data.litigants = [...updatedCaseLitigants];
@@ -3865,12 +3882,25 @@ export const createOrUpdateTask = async ({
     });
   };
 
+  const transformAddresses = (addresses = []) => {
+    return addresses.map((addr) => ({
+      ...addr,
+      addressDetails: {
+        ...addr?.addressDetails,
+        typeOfAddress: addr?.addressDetails?.typeOfAddress?.code || "",
+      },
+    }));
+  };
+
   const partyDetails = accusedDetails?.map((accused) => ({
     ...(status && { status }),
-    addresses: accused?.addressDetails?.filter((addr) => addr?.checked) || [],
+    addresses: transformAddresses(accused?.addressDetails?.filter((addr) => addr?.checked) || []),
     deliveryChannels: _getdelieveryChannels(accused?.[`${type?.toLowerCase()}CourierService`] || []),
     respondentDetails: {
       ...respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data,
+      addressDetails: transformAddresses(
+        respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data?.addressDetails || []
+      ),
       uniqueId: accused?.uniqueId,
     },
   }));
