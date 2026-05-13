@@ -1594,6 +1594,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
+                      rowData={rowData}
                     />
                   ) : (
                     <CustomStepperSuccess
@@ -1611,6 +1612,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
                       isSubmitting={isSubmitting}
+                      rowData={rowData}
                     />
                   ),
               },
@@ -1727,6 +1729,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
+                      rowData={rowData}
                     />
                   ) : (
                     <CustomStepperSuccess
@@ -1744,6 +1747,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
                       isSubmitting={isSubmitting}
+                      rowData={rowData}
                     />
                   ),
               },
@@ -1797,6 +1801,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           deliveryChannel={deliveryChannel}
           orderType={orderType}
           isSubmitting={isSubmitting}
+          rowData={rowData}
         />
         // <PrintAndSendDocumentComponent
         //   infos={infos}
