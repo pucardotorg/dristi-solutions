@@ -314,14 +314,14 @@ public class CaseOverallStatusUtil {
         }
     }
 
-    private void sendSmsForCaseSubStageChange(String filingNumber, RequestInfo requestInfo, String subStage) {
+    private void sendSmsForCaseSubStageChange(String filingNumber, RequestInfo requestInfo, String stage) {
         org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
         JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
         String courtCaseNumber = caseUtil.getCourtCaseNumber(caseDetails);
         String cmpNumber = caseUtil.getCmpNumber(caseDetails);
         JsonNode litigants = caseUtil.getLitigants(caseDetails);
         Set<String> individualIds = caseUtil.getIndividualIds(litigants);
-        SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber, cmpNumber, courtCaseNumber, requestInfo, subStage);
+        SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber, cmpNumber, courtCaseNumber, requestInfo, stage);
         List<String> phoneNumbers = callIndividualService(requestInfo, new ArrayList<>(individualIds));
         for (String number : phoneNumbers) {
             notificationService.sendNotification(requestInfo, smsTemplateData, CASE_STATUS_CHANGED_MESSAGE, number);
@@ -332,14 +332,18 @@ public class CaseOverallStatusUtil {
         if (subStage == null) {
             return false;
         }
-        List<String> consideredSubStages = List.of(APPEARANCE, ARGUMENTS, EVIDENCE, LONG_PENDING_REGISTER, REFER_TO_ADR);
+        List<String> consideredSubStages = List.of(
+                STAGE_APPEARANCE, STAGE_BAIL_AND_RECORDING_OF_PLEA, STAGE_COMPLAINANT_EVIDENCE,
+                STAGE_EXAMINATION_OF_ACCUSED, STAGE_DEFENSE_EVIDENCE, STAGE_ARGUMENTS,
+                STAGE_JUDGEMENT, STAGE_POST_JUDGEMENT, STAGE_POST_DISPOSAL, STAGE_LONG_PENDING_REGISTER
+        );
         return consideredSubStages.contains(subStage);
     }
 
-    private SmsTemplateData enrichSmsTemplateData(String filingNumber, String cmpNumber, String courtCaseNumber, RequestInfo requestInfo, String subStage) {
+    private SmsTemplateData enrichSmsTemplateData(String filingNumber, String cmpNumber, String courtCaseNumber, RequestInfo requestInfo, String stage) {
         return SmsTemplateData.builder()
                 .efilingNumber(filingNumber)
-                .subStage(subStage)
+                .subStage(stage)
                 .cmpNumber(cmpNumber)
                 .courtCaseNumber(courtCaseNumber)
                 .tenantId(requestInfo.getUserInfo().getTenantId())
@@ -470,15 +474,6 @@ public class CaseOverallStatusUtil {
                 log.info("Case {} stage is '{}'. No Appearance->Bail transition for join-case event.",
                         filingNumber, currentStage);
             }
-
-            // Check if Proclamation & Attachment secondary stage should end due to accused joining
-            if (hasAccusedJoinedCase(caseObject)) {
-                try {
-                    secondaryStageProcessor.processJoinCaseSecondaryStage(filingNumber, tenantId, request, caseObject);
-                } catch (Exception ex) {
-                    log.error("Error processing Proclamation secondary stage end trigger for filingNumber: {}", filingNumber, ex);
-                }
-            }
         } catch (Exception e) {
             log.error("Error processing join-case stage update", e);
         }
@@ -500,9 +495,9 @@ public class CaseOverallStatusUtil {
                 auditDetails.setLastModifiedBy(lastModifiedBy);
                 auditDetails.setLastModifiedTime(System.currentTimeMillis());
                 caseOverallStatus.setAuditDetails(auditDetails);
-                String subStage = caseOverallStatus.getStage();
-                if (shouldSendSMSForSubStageChange(subStage)) {
-                    sendSmsForCaseSubStageChange(filingNumber, requestInfo, subStage);
+                String stage = caseOverallStatus.getStage();
+                if (shouldSendSMSForSubStageChange(stage)) {
+                    sendSmsForCaseSubStageChange(filingNumber, requestInfo, stage);
                 }
                 org.pucar.dristi.web.models.CaseStageSubStage caseStageSubStage = new CaseStageSubStage(requestInfo, caseOverallStatus);
                 log.info("Publishing to kafka topic: {}, caseStageSubstage: {}", config.getCaseOverallStatusTopic(), caseStageSubStage);
