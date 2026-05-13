@@ -19,6 +19,7 @@ const GenericUploadSignatureModal = ({
   infoText = "BAIL_SIGN_INFO",
   customUploadDocuments,
   onCustomDownload,
+  downloadedFileName,
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { uploadDocuments: defaultUploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
@@ -108,6 +109,7 @@ const GenericUploadSignatureModal = ({
           showDownloadText={true}
           fileUploadError={fileUploadError}
           onCustomDownload={onCustomDownload}
+          downloadedFileName={downloadedFileName}
         />
       )}
       {showToast && (

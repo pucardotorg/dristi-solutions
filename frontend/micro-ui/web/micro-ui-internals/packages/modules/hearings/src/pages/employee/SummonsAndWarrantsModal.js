@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useHistory } from "react-router-dom";
-import { Modal, CloseSvg, Button, InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import { Modal, CloseSvg, Button, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import { useTranslation } from "react-i18next";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
 import useSearchOrdersService from "../../../../orders/src/hooks/orders/useSearchOrdersService";
@@ -411,7 +412,9 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     );
   }, [caseDetails, filingNumber, respondentName, hearingDetails, orderList, userType, caseId]);
 
-  const modalLabel = [ORDER_TYPES.SUMMONS, ORDER_TYPES.WARRANT, ORDER_TYPES.PROCLAMATION, ORDER_TYPES.ATTACHMENT].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
+  const modalLabel = [ORDER_TYPES.SUMMONS, ORDER_TYPES.WARRANT, ORDER_TYPES.PROCLAMATION, ORDER_TYPES.ATTACHMENT].includes(orderType)
+    ? "SUMMON_WARRANT_STATUS"
+    : "NOTICE_STATUS";
 
   function removeAccusedSuffix(partyName) {
     return partyName.replace(/\s*\(Accused\)$/, "");

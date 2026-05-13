@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { InboxSearchComposer, SubmitBar, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import { SubmitBar, Loader, Banner } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
@@ -19,7 +20,7 @@ import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
 import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useDownloadCasePdf";
-import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { DateUtils, isLPRCase } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ORDER_TYPES, CHANNEL_IDS, DELIVERY_CHANNELS } from "../../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
@@ -265,13 +266,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
           const extension = mimeType.includes("/") ? mimeType.split("/")[1] : "bin";
           const link = document.createElement("a");
           link.href = blobUrl;
-          link.download = `downloadedFile.${extension}`;
+          const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber}_${rowData?.taskNumber}_${rowData?.taskType}`;
+          link.download = `${fileName}.${extension}`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(blobUrl);
         } else {
-          console.error("Failed to fetch the PDF:", response.statusText);
+          console.error("Failed to fetch the file:", response.statusText);
         }
       })
       .catch((error) => {
@@ -592,6 +594,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
         }, 1000);
       } catch (error) {
         console.error("Error updating task data:", error);
+        const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ label: t("HOME_SCREEN_UPDATE_FAILED"), error: true, errorId });
       }
     }
   }, [dayInMillisecond, orderData, orderType, refetch, reload, selectedDelievery, tasksData, tenantId, todayDate]);
@@ -705,6 +709,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
       setNextHearingDate(findNextHearings(response?.HearingList));
     } catch (error) {
       console.error("error :>> ", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("ISSUE_IN_FETCH_HEARINGS"), error: true, errorId });
     }
   };
 
@@ -958,6 +964,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return { continue: true };
     } catch (error) {
       console.error("Error uploading document:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
     } finally {
       setIsLoading(false);
       // Reset the flag after a delay to allow re-renders to complete
@@ -1328,6 +1336,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
           setShowBulkSignSuccessModal(true);
         } catch (e) {
           console.error("Error preparing bulk send after bulk sign:", e);
+          const errorId = e?.response?.headers?.["x-correlation-id"] || e?.response?.headers?.["X-Correlation-Id"];
+          setShowToast({ label: t("FAILED_TO_PERFORM_BULK_SEND"), error: true, errorId });
         }
       });
     } catch (error) {
@@ -1387,7 +1397,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             return s.charAt(0) + s.slice(1).toLowerCase();
           })();
           const caseNumber = (
-            (item?.isLPRCase ? item?.lprNumber : item?.courtCaseNumber) ||
+            (isLPRCase(item) ? item?.lprNumber : item?.courtCaseNumber) ||
             item?.courtCaseNumber ||
             item?.cmpNumber ||
             item?.filingNumber ||
@@ -1566,6 +1576,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
+                      rowData={rowData}
                     />
                   ) : (
                     <CustomStepperSuccess
@@ -1583,6 +1594,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
                       isSubmitting={isSubmitting}
+                      rowData={rowData}
                     />
                   ),
               },
@@ -1699,6 +1711,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
+                      rowData={rowData}
                     />
                   ) : (
                     <CustomStepperSuccess
@@ -1716,6 +1729,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
                       isSubmitting={isSubmitting}
+                      rowData={rowData}
                     />
                   ),
               },
@@ -1769,6 +1783,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           deliveryChannel={deliveryChannel}
           orderType={orderType}
           isSubmitting={isSubmitting}
+          rowData={rowData}
         />
         // <PrintAndSendDocumentComponent
         //   infos={infos}

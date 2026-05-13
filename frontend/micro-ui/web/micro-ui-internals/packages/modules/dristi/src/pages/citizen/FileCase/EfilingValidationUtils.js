@@ -1031,7 +1031,6 @@ export const getProcessCourierRemainingFields = (formdata, t, isDelayCondonation
         errorObject.SUMMON_PROCESS_COURIER_INFORMATION_MISSING = true;
       }
     }
-
     let mandatoryLeft = false;
     for (let key in errorObject) {
       if (errorObject[key] === true) {
@@ -1719,6 +1718,9 @@ export const updateCaseDetails = async ({
   caseComplaintDocument,
   filingType,
   isDelayCondonation,
+  isContinueClicked = false,
+  isCaseReAssigned = false,
+  isDraftInProgress = false,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -1816,7 +1818,9 @@ export const updateCaseDetails = async ({
     const poaFilestoreIds = {};
     // check -in new flow, mltiple complainant forms are possible, so iscompleted logic has to be updated
     // and logic to update litigants also has to be changed.
-    if (isCompleted === true) {
+    if (isContinueClicked === true || isCaseReAssigned) {
+      // Only in case of Efiling, continue click is needed for user registration because fields validation is needed.
+      // That's why isContinueClicked shoule be true in case of efiling stage.
       litigants = await Promise.all(
         updatedFormData
           .filter((item) => item.isenabled)
@@ -2523,7 +2527,7 @@ export const updateCaseDetails = async ({
 
           return {
             ...data,
-            isFormCompleted: true,
+            isFormCompleted: isDraftInProgress ? isContinueClicked : true,
             data: {
               ...data.data,
               ...documentData,
@@ -2578,7 +2582,38 @@ export const updateCaseDetails = async ({
         });
       }
     });
-    data.litigants = [...updatedLitigants];
+    const hasRepresentativeAdvocate = caseDetails?.representatives?.some((rep) => rep?.advocateId);
+
+    const activeLitigants = updatedLitigants?.filter((lit) => !(Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false));
+    let documentToDelete = null;
+    const finalLitigants =
+      hasRepresentativeAdvocate && activeLitigants?.length === 1
+        ? updatedLitigants.map((lit) => {
+            if (Object.prototype.hasOwnProperty.call(lit, "isActive") && lit?.isActive === false) {
+              return lit;
+            } else {
+              documentToDelete = lit?.documents?.[0]?.fileStore;
+              return {
+                ...lit,
+                documents: null,
+              };
+            }
+          })
+        : updatedLitigants;
+
+    if (isDraftInProgress) {
+      finalLitigants.forEach((lit) => {
+        lit.additionalDetails = {
+          ...(lit?.additionalDetails || {}),
+          isLitigantDetailsChanged: isContinueClicked, // This field is set true when ever user clicks on continue button on complainant details screen,
+          // So that we can redirect user to advocate details page(if user comes on review screen) once to update advocate related details correctly in case complaiant details were changed.
+        };
+      });
+    }
+
+    data.litigants = [...finalLitigants];
+
+    tempDocList = tempDocList?.filter((doc) => doc?.fileStore !== documentToDelete);
 
     const mergedPoaHoldersMap = new Map();
 
@@ -3506,18 +3541,43 @@ export const updateCaseDetails = async ({
 
     const updatedCaseLitigants = caseDetails?.litigants?.map((litigant) => {
       const lit = complainantDetails?.find((comp) => comp?.individualId === litigant?.individualId);
-      if (lit) {
-        const updatedDoc = lit?.pipAffidavitFileUpload ? structuredClone(lit?.pipAffidavitFileUpload) : null;
-        if (updatedDoc) {
-          const additionalDetails = {
-            documentName: "UPLOAD_PIP_AFFIDAVIT",
-          };
-          updatedDoc.additionalDetails = additionalDetails;
-        }
-        const updatedLitigant = { ...litigant, documents: lit?.pipAffidavitFileUpload ? [updatedDoc] : [] };
-        return updatedLitigant;
-      } else return litigant;
+
+      // if litigant not found in complainantDetails
+      if (!lit) {
+        return {
+          ...litigant,
+          documents: [],
+        };
+      }
+
+      let updatedDocuments = litigant?.documents || [];
+
+      if (lit?.pipAffidavitFileUpload) {
+        const updatedDoc = structuredClone(lit.pipAffidavitFileUpload);
+
+        updatedDoc.additionalDetails = {
+          documentName: "UPLOAD_PIP_AFFIDAVIT",
+        };
+
+        updatedDocuments = [updatedDoc];
+      } else {
+        // remove previously added affidavit document
+        updatedDocuments = [];
+      }
+
+      return {
+        ...litigant,
+        documents: updatedDocuments,
+      };
     });
+    if (isDraftInProgress) {
+      updatedCaseLitigants.forEach((lit) => {
+        lit.additionalDetails = {
+          ...(lit?.additionalDetails || {}),
+          isLitigantDetailsChanged: false, // This field is used only for UI formcomposer purpose. so unsetting it once user saves data on advocate details screen.
+        };
+      });
+    }
 
     data.litigants = [...updatedCaseLitigants];
     data.representatives = [...updatedRepresentatives];
@@ -3848,12 +3908,25 @@ export const createOrUpdateTask = async ({
     });
   };
 
+  const transformAddresses = (addresses = []) => {
+    return addresses.map((addr) => ({
+      ...addr,
+      addressDetails: {
+        ...addr?.addressDetails,
+        typeOfAddress: addr?.addressDetails?.typeOfAddress?.code || "",
+      },
+    }));
+  };
+
   const partyDetails = accusedDetails?.map((accused) => ({
     ...(status && { status }),
-    addresses: accused?.addressDetails?.filter((addr) => addr?.checked) || [],
+    addresses: transformAddresses(accused?.addressDetails?.filter((addr) => addr?.checked) || []),
     deliveryChannels: _getdelieveryChannels(accused?.[`${type?.toLowerCase()}CourierService`] || []),
     respondentDetails: {
       ...respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data,
+      addressDetails: transformAddresses(
+        respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data?.addressDetails || []
+      ),
       uniqueId: accused?.uniqueId,
     },
   }));

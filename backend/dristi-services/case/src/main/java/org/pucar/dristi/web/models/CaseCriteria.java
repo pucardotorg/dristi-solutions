@@ -66,9 +66,6 @@ public class CaseCriteria {
     @JsonProperty("stage")
     private List<String> stage = null;
 
-    @JsonProperty("substage")
-    private String substage = null;
-
     @JsonProperty("litigantId")
     @Valid
     private String litigantId = null;

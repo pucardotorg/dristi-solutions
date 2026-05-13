@@ -1,5 +1,6 @@
 import { DocumentSearchConfig } from "./DocumentsV2Config";
-import { InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import CustomToast from "../../../components/CustomToast";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -408,7 +409,10 @@ const DocumentsV2 = ({
         setVoidReason(row?.reason);
         setShowVoidModal(true);
       } else if ("download_filing" === item.id) {
-        downloadPdf(tenantId, row?.file?.fileStore);
+        const name = `${caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber || "Case"}_${
+          row?.artifactNumber || ""
+        }_Document`;
+        downloadPdf(tenantId, row?.file?.fileStore, name);
       } else if ("delete_evidence_draft" === item.id) {
         evidenceDeleteFunc(row);
       }

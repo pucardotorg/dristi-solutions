@@ -41,7 +41,7 @@ const Heading = ({ label }) => {
 };
 const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
   const { t } = useTranslation();
-  const { handleEsign, checkSignStatus, showToast, setShowToast, CustomToast } = Digit.Hooks.orders.useESign();
+  const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
 
@@ -49,6 +49,7 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
 
+  const [showToast, setShowToast] = useState(null);
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState(""); //signed notification filestore id
@@ -360,6 +361,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
     } catch (error) {
       setLoader(false);
       console.error("Error generating notificationReviewPdf:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("ERROR_GENERATING_NOTIFICATION_PDF"), errorId });
     }
   };
 
@@ -402,6 +405,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       if (stepper === 2) setStepper(3);
     } catch (error) {
       console.error("Error:", error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("SOME_ERRORS_IN_HEARING_RESCHEDULE"), errorId });
     } finally {
       setLoader(false);
     }
@@ -456,6 +461,8 @@ const NewBulkRescheduleTab = ({ stepper, setStepper, selectedDate = new Date().s
       }
     } catch (error) {
       console.error(error);
+      const errorId = error?.response?.headers?.["x-correlation-id"] || error?.response?.headers?.["X-Correlation-Id"];
+      setShowToast({ error: true, label: t("BULK_RESCHEDULE_ERROR_FETCHING"), errorId });
     } finally {
       setIsLoader(false);
     }

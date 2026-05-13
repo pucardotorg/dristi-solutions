@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 import { TabSearchConfig } from "./../../configs/E-PostTrackingConfig";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";

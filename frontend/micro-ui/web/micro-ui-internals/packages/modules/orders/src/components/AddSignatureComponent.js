@@ -178,6 +178,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
                   t={t}
                   displayFilename={"CLICK_HERE"}
                   pdf={true}
+                  name={`${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber}_${rowData?.taskNumber}_${rowData?.taskType}`}
                 />
               </div>
             </div>
@@ -229,6 +230,9 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
                           t={t}
                           style={{ marginLeft: "0.5rem", color: "#007E7E" }}
                           displayFilename={"PRINT"}
+                          name={`${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber}_${rowData?.taskNumber}_${
+                            rowData?.taskType
+                          }`}
                         />
                       ) : (
                         <span style={{ marginLeft: "0.5rem", color: "grey" }}>Print</span>

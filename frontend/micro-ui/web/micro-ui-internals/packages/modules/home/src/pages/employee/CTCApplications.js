@@ -1,4 +1,5 @@
-import { InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { CTCApplicationsConfig } from "../../configs/CTCApplicationsConfig";
@@ -6,6 +7,7 @@ import { HomeService } from "../../hooks/services";
 import RejectCTCApplicationReasonModal from "../../components/RejectCTCApplicationReasonModal";
 import GenericPreviewModal from "@egovernments/digit-ui-module-dristi/src/components/GenericPreviewModal";
 import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
+import { DateUtils } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -342,9 +344,7 @@ const CTCApplications = ({ refetch }) => {
     if (!selectedRowApplicationData) return [];
     const app = selectedRowApplicationData;
     const applicationType = t("APPLICATION_FOR_CERTIFIED_TRUE_COPY");
-    const submissionDate = app?.auditDetails?.createdTime
-      ? new Date(app.auditDetails.createdTime).toLocaleDateString("en-IN").replace(/\//g, "-")
-      : "";
+    const submissionDate = app?.auditDetails?.createdTime ? DateUtils.getFormattedDate(app?.auditDetails?.createdTime) : "";
     const applicantName = app?.applicantName || "NA";
 
     return [

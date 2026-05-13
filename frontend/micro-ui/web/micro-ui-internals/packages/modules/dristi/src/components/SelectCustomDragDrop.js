@@ -6,8 +6,6 @@ import { isEmptyObject, combineMultipleFiles } from "../Utils";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import RenderFileCard from "./RenderFileCard";
-import { useState } from "react";
-import CustomToast from "@egovernments/digit-ui-module-dristi/src/components/CustomToast";
 
 const DragDropJSX = ({ t, currentValue, error }) => {
   return (

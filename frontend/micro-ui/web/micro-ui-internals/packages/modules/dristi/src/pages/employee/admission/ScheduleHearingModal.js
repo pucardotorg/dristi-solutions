@@ -288,36 +288,35 @@ function ScheduleHearing({
         },
       };
 
-      setIsSubmitDisabled(true);
-      HomeService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId })
-        .then(async (res) => {
-          await HomeService.customApiService(Urls.dristi.pendingTask, {
-            pendingTask: {
-              actionCategory: "Schedule Hearing",
-              name: "Schedule Hearing",
-              entityType: "case-default",
-              referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-              status: "SCHEDULE_HEARING",
-              assignedTo: [],
-              assignedRole: ["PENDING_TASK_ORDER"],
-              cnrNumber: caseDetails?.cnrNumber,
-              filingNumber: caseDetails?.filingNumber,
-              caseId: caseDetails?.id,
-              caseTitle: caseDetails?.caseTitle,
-              isCompleted: true,
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-          history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
-          setIsSubmitDisabled(false);
-        })
-        .catch((err) => {
-          console.error("Error creating order:", err);
-          const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
-          setShowToast({ error: true, label: t("ERROR_CREATING_ORDER"), errorId });
-          setIsSubmitDisabled(false);
+      try {
+        setIsSubmitDisabled(true);
+        const res = await HomeService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId });
+        await HomeService.customApiService(Urls.dristi.pendingTask, {
+          pendingTask: {
+            actionCategory: "Schedule Hearing",
+            name: "Schedule Hearing",
+            entityType: "case-default",
+            referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+            status: "SCHEDULE_HEARING",
+            assignedTo: [],
+            assignedRole: ["PENDING_TASK_ORDER"],
+            cnrNumber: caseDetails?.cnrNumber,
+            filingNumber: caseDetails?.filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
+            isCompleted: true,
+            additionalDetails: {},
+            tenantId,
+          },
         });
+        history.push(`/${window.contextPath}/employee/orders/generate-order?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
+      } catch (err) {
+        console.error("Error creating order:", err);
+        const errorId = err?.response?.headers?.["x-correlation-id"] || err?.response?.headers?.["X-Correlation-Id"];
+        setShowToast({ error: true, label: t("CS_ORDER_CREATION_FAILED"), errorId });
+      } finally {
+        setIsSubmitDisabled(false);
+      }
     } else if (status && status === "OPTOUT") {
       const individualId = await fetchBasicUserInfo();
       setIsSubmitDisabled(true);

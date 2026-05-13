@@ -1,4 +1,5 @@
 import React from "react";
+import { isLPRCase } from "../../../../Utils";
 
 const delayCondonationStylsMain = {
   padding: "6px 8px",
@@ -15,14 +16,7 @@ const delayCondonationTextStyle = {
   color: "#231F20",
 };
 
-const CaseDetailsStrip = ({ 
-  t, 
-  caseDetails, 
-  advocateName, 
-  delayCondonationData, 
-  isDelayApplicationCompleted, 
-  isDelayApplicationPending 
-}) => {
+const CaseDetailsStrip = ({ t, caseDetails, advocateName, delayCondonationData, isDelayApplicationCompleted, isDelayApplicationPending }) => {
   return (
     <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
       <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -38,7 +32,7 @@ const CaseDetailsStrip = ({
             <hr className="vertical-line" />
           </React.Fragment>
         )}
-        {caseDetails?.isLPRCase ? (
+        {isLPRCase(caseDetails) ? (
           <React.Fragment>
             <div className="sub-details-text">{caseDetails?.lprNumber}</div>
             <hr className="vertical-line" />
@@ -58,7 +52,21 @@ const CaseDetailsStrip = ({
             <div className="sub-details-text">{t(caseDetails?.filingNumber)}</div> <hr className="vertical-line" />
           </React.Fragment>
         )}
-        <div className="sub-details-text">{t(caseDetails?.substage)}</div>
+        <div className="sub-details-text">Stage: {t(caseDetails?.stage)}</div>
+        {(Array.isArray(caseDetails?.secondaryStage) ? caseDetails?.secondaryStage?.length > 0 : caseDetails?.secondaryStage) && (
+          <React.Fragment>
+            <hr className="vertical-line" />
+            <div className="sub-details-text">
+              Secondary Stage:{" "}
+              {(Array.isArray(caseDetails?.secondaryStage) ? caseDetails?.secondaryStage : [caseDetails?.secondaryStage]).map((stage, index) => (
+                <React.Fragment key={`${stage}-${index}`}>
+                  {index > 0 ? ", " : ""}
+                  {t(stage)}
+                </React.Fragment>
+              ))}
+            </div>
+          </React.Fragment>
+        )}
         {caseDetails?.outcome && (
           <React.Fragment>
             <hr className="vertical-line" />

@@ -517,7 +517,12 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                         className="header-right"
                         style={{ display: "contents" }}
                         onClick={(e) => {
-                          history.push(`?caseId=${caseId}&selected=${input?.key}`);
+                          history.push({
+                            search: `?caseId=${caseId}&selected=${input?.key}`,
+                            state: {
+                              shouldRefetchCaseDetails: true,
+                            },
+                          });
                         }}
                       >
                         <EditPencilIcon />
@@ -759,6 +764,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
             zIndex: 1000,
             backgroundColor: "grey",
           }}
+          caseDetails={caseDetails}
         />
       )}
     </div>

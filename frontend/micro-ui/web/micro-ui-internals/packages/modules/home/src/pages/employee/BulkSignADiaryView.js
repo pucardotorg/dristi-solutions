@@ -1,4 +1,5 @@
-import { InboxSearchComposer, SubmitBar, Loader, Button } from "@egovernments/digit-ui-react-components";
+import { SubmitBar, Loader, Button } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkADiarySignConfig } from "../../configs/BulkADiarySignConfig";
@@ -415,7 +416,8 @@ function BulkSignADiaryView() {
           const blobUrl = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = blobUrl;
-          link.download = `downloadedFile.${extension}`;
+          const name = `${new Date(entryDate).toLocaleDateString("en-GB")}_ADiary_signed`;
+          link.download = `${name}.${extension}`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -559,6 +561,7 @@ function BulkSignADiaryView() {
                     displayFilename={"CLICK_HERE"}
                     t={t}
                     pdf={true}
+                    name={`${new Date(entryDate).toLocaleDateString("en-GB")}_ADiary_unsigned`} // here
                   />
                 </div>
               </div>
@@ -579,6 +582,7 @@ function BulkSignADiaryView() {
             isParentLoading={loader}
             fileUploadError={fileUploadError}
             setFileUploadError={setFileUploadError}
+            downloadedFileName={`${new Date(entryDate).toLocaleDateString("en-GB")}_ADiary_signed`}
           />
         )}
 

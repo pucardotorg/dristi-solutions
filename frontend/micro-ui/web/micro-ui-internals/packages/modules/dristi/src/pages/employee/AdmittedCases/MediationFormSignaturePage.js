@@ -602,7 +602,10 @@ const MediationFormSignaturePage = () => {
                       textAlign: "center",
                       color: "#007E7E",
                     }}
-                    onButtonClick={() => downloadPdf(tenantId, signatureDocumentId || mediationFileStoreId)}
+                    onButtonClick={() => {
+                      const name = `${digitalizationServiceDetails?.mediationDetails?.mediationId}_mediation`;
+                      downloadPdf(tenantId, signatureDocumentId || mediationFileStoreId, name);
+                    }}
                   />
                 )}
                 {isUserLoggedIn &&
@@ -722,6 +725,7 @@ const MediationFormSignaturePage = () => {
           isParentLoading={uploadLoader}
           fileUploadError={fileUploadError}
           setFileUploadError={setFileUploadError}
+          downloadedFileName={`${digitalizationServiceDetails?.mediationDetails?.mediationId}_mediation`}
         />
       )}
       {showSkipConfirmModal && (

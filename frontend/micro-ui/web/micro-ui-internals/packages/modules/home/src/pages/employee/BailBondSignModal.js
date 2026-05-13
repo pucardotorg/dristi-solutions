@@ -473,6 +473,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
                   displayFilename={"CLICK_HERE"}
                   t={t}
                   pdf={true}
+                  name={`${effectiveRowData?.bailId}_Bail_Bond`}
                 />
               </div>
             </div>
@@ -493,6 +494,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           isParentLoading={loader}
           fileUploadError={fileUploadError}
           setFileUploadError={setFileUploadError}
+          downloadedFileName={`${effectiveRowData?.bailId}_Bail_Bond`}
         />
       )}
       {/* after signing showing signed modal */}
@@ -553,7 +555,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         <Modal
           actionCancelLabel={t("DOWNLOAD_BAIL_BOND")}
           actionCancelOnSubmit={() => {
-            downloadPdf(tenantId, bailBondSignedPdf || sessionStorage.getItem("fileStoreId"));
+            const name = `${effectiveRowData?.bailId}_Bail_Bond`;
+            downloadPdf(tenantId, bailBondSignedPdf || sessionStorage.getItem("fileStoreId"), name);
           }}
           actionSaveLabel={t("BULK_SUCCESS_CLOSE")}
           actionSaveOnSubmit={() => {

@@ -1,4 +1,5 @@
-import { InboxSearchComposer, Loader, SubmitBar } from "@egovernments/digit-ui-react-components";
+import { Loader, SubmitBar } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { temaplateOrConfigurationConfig } from "../../configs/TemplateOrConfigurationConfig";
