@@ -600,7 +600,7 @@ export const _getPartiesOptions = (caseDetails, type = "all", isFlat = false) =>
   if (!caseDetails?.additionalDetails) return [];
 
   const mapParty = (item, index, partyRole) => {
-    const addressData = item?.data?.addressDetails || item?.addressDetails;
+    const addressData = item?.data?.addressDetails || item?.addressDetails || item?.data?.addressCompanyDetails;
     const addressArray = Array.isArray(addressData) ? addressData : addressData ? [addressData] : [];
     const mappedAddresses = mapAddressDetails(addressArray) || [];
     const complaintUUID = item?.data?.complainantVerification?.individualDetails?.userUuid;
