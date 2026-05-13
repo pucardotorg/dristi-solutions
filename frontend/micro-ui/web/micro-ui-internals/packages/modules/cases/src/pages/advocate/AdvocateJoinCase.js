@@ -1,5 +1,4 @@
-import { TextInput } from "@egovernments/digit-ui-react-components";
-import { Button } from "@egovernments/digit-ui-react-components";
+import { TextInput, Button } from "@egovernments/digit-ui-react-components";
 import React from "react";
 import { useHistory } from "react-router-dom";
 
@@ -12,7 +11,7 @@ const AdvocateJoinCase = () => {
 
   return (
     <div>
-      {/* //TODO: enrich the code entered in text field */}
+      {/* Expand with validation when the join-case invite code UX is finalized. */}
       Enter 6 digit code to join case
       <TextInput></TextInput>
       <Button

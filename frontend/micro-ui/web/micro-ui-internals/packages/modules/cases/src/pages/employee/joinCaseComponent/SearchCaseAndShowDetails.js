@@ -1,6 +1,7 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
 import CustomCaseInfoDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCaseInfoDiv";
 import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useMemo } from "react";
 import NameListWithModal from "../../../components/NameListWithModal";
 import { createShorthand } from "../../../utils/joinCaseUtils";
@@ -92,20 +93,25 @@ const SearchCaseAndShowDetails = ({
               autoFocus={true}
             />
           </div>
-          {caseList &&
-            caseList?.map((option, index) => {
-              return (
-                <div
-                  className={`cp profile-dropdown--item display: flex `}
-                  key={index}
-                  onClick={() => {
-                    onSelect(option);
-                  }}
-                >
-                  <span> {option?.filingNumber}</span>
-                </div>
-              );
-            })}
+          {caseList?.map((option, index) => (
+            <button
+              key={option?.filingNumber ?? option?.cnrNumber ?? `case-search-result-${index}`}
+              type="button"
+              className="cp profile-dropdown--item display: flex "
+              style={{ background: "transparent", border: "none", width: "100%", textAlign: "left", cursor: "pointer", padding: "8px" }}
+              onClick={() => {
+                onSelect(option);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect(option);
+                }
+              }}
+            >
+              <span> {option?.filingNumber}</span>
+            </button>
+          ))}
           <p style={{ fontSize: "12px" }}>
             {t("FILLING_NUMBER_FORMATE_TEXT")} {"KL-<6 digit sequence number>-<YYYY>"}
           </p>
@@ -116,11 +122,13 @@ const SearchCaseAndShowDetails = ({
           variant={"default"}
           label={t("INVALID_CASE_FILING_NUMBER")}
           additionalElements={
-            !errors?.caseNumber?.type && [
-              <p>
-                {t("INVALID_CASE_INFO_TEXT")} <span style={{ fontWeight: "bold" }}>{t("NYAYA_MITRA_TEXT")}</span> {t("FOR_SUPPORT_TEXT")}
-              </p>,
-            ]
+            !errors?.caseNumber?.type
+              ? [
+                  <p key="invalid-case-support">
+                    {t("INVALID_CASE_INFO_TEXT")} <span style={{ fontWeight: "bold" }}>{t("NYAYA_MITRA_TEXT")}</span> {t("FOR_SUPPORT_TEXT")}
+                  </p>,
+                ]
+              : undefined
           }
           text={errors?.caseNumber?.type === "not-admitted" && t(errors?.caseNumber?.message)}
           inline
@@ -131,52 +139,63 @@ const SearchCaseAndShowDetails = ({
         />
       )}
       {caseDetails?.cnrNumber && (
-        <React.Fragment>
-          <CustomCaseInfoDiv
-            t={t}
-            data={caseInfo}
-            column={4}
-            children={
-              <div>
-                <div className="complainants-respondents" style={{ display: "flex", flexWrap: "wrap", gap: "0px" }}>
-                  <div
-                    style={{
-                      flex: "0 0 50%",
-                      boxSizing: "border-box",
-                    }}
-                  >
-                    <h2 className="case-info-title">{t("COMPLAINANTS_TEXT")}</h2>
-                    <NameListWithModal t={t} data={successScreenData?.complainantList} type={"COMPLAINANTS_TEXT"} />
-                  </div>
-                  <div
-                    style={{
-                      flex: "0 0 50%",
-                      boxSizing: "border-box",
-                      borderLeft: "1px solid rgba(0, 0, 0, 0.10196)",
-                      paddingLeft: "16px",
-                    }}
-                  >
-                    <h2 className="case-info-title">{t("RESPONDENTS_TEXT")}</h2>
-                    <NameListWithModal t={t} data={successScreenData?.respondentList} type={"RESPONDENTS_TEXT"} />
-                  </div>
-                </div>
-                <div className="complainants-respondents" style={{ display: "flex", flexWrap: "wrap", gap: "0px" }}>
-                  <div style={{ width: "50%" }}>
-                    <h2 className="case-info-title">{t("COMPLAINTS_ADVOCATES")}</h2>
-                    <NameListWithModal t={t} data={successScreenData?.complainantAdvocateList} type={"COMPLAINTS_ADVOCATES"} />
-                  </div>
-                  <div style={{ width: "50%", paddingLeft: "16px", borderLeft: "1px solid rgba(0, 0, 0, 0.10196)" }}>
-                    <h2 className="case-info-title">{t("ACCUSEDS_ADVOCATES")}</h2>
-                    <NameListWithModal t={t} data={successScreenData?.respondentAdvocateList} type={"ACCUSEDS_ADVOCATES"} />
-                  </div>
-                </div>
+        <CustomCaseInfoDiv t={t} data={caseInfo} column={4}>
+          <div>
+            <div className="complainants-respondents" style={{ display: "flex", flexWrap: "wrap", gap: "0px" }}>
+              <div
+                style={{
+                  flex: "0 0 50%",
+                  boxSizing: "border-box",
+                }}
+              >
+                <h2 className="case-info-title">{t("COMPLAINANTS_TEXT")}</h2>
+                <NameListWithModal t={t} data={successScreenData?.complainantList} type={"COMPLAINANTS_TEXT"} />
               </div>
-            }
-          />
-        </React.Fragment>
+              <div
+                style={{
+                  flex: "0 0 50%",
+                  boxSizing: "border-box",
+                  borderLeft: "1px solid rgba(0, 0, 0, 0.10196)",
+                  paddingLeft: "16px",
+                }}
+              >
+                <h2 className="case-info-title">{t("RESPONDENTS_TEXT")}</h2>
+                <NameListWithModal t={t} data={successScreenData?.respondentList} type={"RESPONDENTS_TEXT"} />
+              </div>
+            </div>
+            <div className="complainants-respondents" style={{ display: "flex", flexWrap: "wrap", gap: "0px" }}>
+              <div style={{ width: "50%" }}>
+                <h2 className="case-info-title">{t("COMPLAINTS_ADVOCATES")}</h2>
+                <NameListWithModal t={t} data={successScreenData?.complainantAdvocateList} type={"COMPLAINTS_ADVOCATES"} />
+              </div>
+              <div style={{ width: "50%", paddingLeft: "16px", borderLeft: "1px solid rgba(0, 0, 0, 0.10196)" }}>
+                <h2 className="case-info-title">{t("ACCUSEDS_ADVOCATES")}</h2>
+                <NameListWithModal t={t} data={successScreenData?.respondentAdvocateList} type={"ACCUSEDS_ADVOCATES"} />
+              </div>
+            </div>
+          </div>
+        </CustomCaseInfoDiv>
       )}
     </div>
   );
+};
+
+SearchCaseAndShowDetails.propTypes = {
+  caseNumber: PropTypes.string,
+  setCaseNumber: PropTypes.func.isRequired,
+  caseList: PropTypes.array,
+  setCaseList: PropTypes.func.isRequired,
+  setIsSearchingCase: PropTypes.func.isRequired,
+  errors: PropTypes.object,
+  caseDetails: PropTypes.object,
+  setCaseDetails: PropTypes.func.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  successScreenData: PropTypes.shape({
+    complainantList: PropTypes.array,
+    respondentList: PropTypes.array,
+    complainantAdvocateList: PropTypes.array,
+    respondentAdvocateList: PropTypes.array,
+  }),
 };
 
 export default SearchCaseAndShowDetails;

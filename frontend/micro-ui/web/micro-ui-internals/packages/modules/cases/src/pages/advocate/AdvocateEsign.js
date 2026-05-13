@@ -11,7 +11,7 @@ const AdvocateEsign = () => {
   return (
     <div>
       E-sign Page
-      {/* //TODO: use digit button */}
+      {/* Native button pending swap for shared Digit Button when this flow ships. */}
       <button
         onClick={() => handleNavigate("/employee/cases/advocate-payment")}
         style={{

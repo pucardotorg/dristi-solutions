@@ -1,4 +1,5 @@
 import { Button, Loader } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DRISTIService } from "../../../../dristi/src/services";
 import { useTranslation } from "react-i18next";
@@ -25,17 +26,18 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { CloseBtn } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 import { JoinHomeLocalisation, optionsStatus } from "../../utils/constants";
 
-const Heading = (props) => {
-  return (
-    <div className="evidence-title">
-      <h1 className="heading-m">{props.label}</h1>
-    </div>
-  );
+const Heading = ({ label }) => (
+  <div className="evidence-title">
+    <h1 className="heading-m">{label}</h1>
+  </div>
+);
+Heading.propTypes = {
+  label: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
 };
 
 const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data }) => {
   const { t } = useTranslation();
-  const todayDate = new Date().getTime();
+  const todayDate = Date.now();
 
   const { downloadPdf } = useDownloadCasePdf();
 
@@ -96,9 +98,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const [isAdvocateJoined, setIsAdvocateJoined] = useState(false);
   const [alreadyJoinedMobileNumber, setAlreadyJoinedMobileNumber] = useState([]);
   const [taskNumber, setTaskNumber] = useState("");
-  const [poa, setIsPoa] = useState(false);
+  const [isPoa, setIsPoa] = useState(false);
   const [poaJoinedParties, setPoaJoinedParties] = useState([]);
-  const [formdata, setFormData] = useState({});
+  const [joinCaseDraftForm, setJoinCaseDraftForm] = useState({});
   const history = useHistory();
 
   const [isVerified, setIsVerified] = useState(false);
@@ -163,7 +165,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   );
 
   const searchLitigantInRepresentives = useCallback((representatives, individualId) => {
-    const representativesList = representatives?.filter((data) => data?.representing?.find((rep) => rep?.individualId === individualId));
+    const representativesList = representatives?.filter((representativeRow) =>
+      representativeRow?.representing?.find((rep) => rep?.individualId === individualId)
+    );
     let representing;
     if (representativesList?.length > 0) representing = representativesList?.[0]?.representing?.find((rep) => rep?.individualId === individualId);
 
@@ -174,19 +178,19 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
   const searchAdvocateInRepresentives = useCallback(
     (advocateId) => {
-      const representative = caseDetails?.representatives?.find((data) => data.advocateId === advocateId);
+      const representative = caseDetails?.representatives?.find((rep) => rep.advocateId === advocateId);
       if (representative) {
         return {
           isFound: true,
           representative: representative,
           partyType: representative?.representing?.[0]?.partyType.includes("complainant") ? "complainant" : "respondent",
         };
-      } else
-        return {
-          isFound: false,
-          representative: undefined,
-          partyType: undefined,
-        };
+      }
+      return {
+        isFound: false,
+        representative: undefined,
+        partyType: undefined,
+      };
     },
     [caseDetails?.representatives]
   );
@@ -223,7 +227,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         party &&
         partyInPerson?.value &&
         ((partyInPerson?.value === "YES" && selectPartyData?.affidavit?.affidavitData) ||
-          (partyInPerson?.value === "NO" && !Boolean(party?.individualId)))
+          (partyInPerson?.value === "NO" && !party?.individualId))
       ) {
         setIsDisabled(false);
       } else if (
@@ -352,7 +356,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     setIsLitigantJoined(false);
     setSuccess(false);
     setIsPoa(false);
-    setFormData({});
+    setJoinCaseDraftForm({});
   }, [setShowJoinCase]);
 
   const onSelect = (option) => {
@@ -421,8 +425,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   };
 
   const getComplainantListNew = (formdata) => {
-    const complainantList = formdata?.map((data, index) => {
-      const individualId = data?.data?.complainantVerification?.individualDetails?.individualId;
+    const complainantList = formdata?.map((formRow, index) => {
+      const individualId = formRow?.data?.complainantVerification?.individualDetails?.individualId;
 
       const { representatives } = searchLitigantInRepresentives(caseDetails?.representatives, individualId);
       const isAdvocateRepresenting = representatives?.find((representative) => representative?.advocateId === advocateData?.id);
@@ -437,31 +441,32 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         }));
       }
 
-      const { firstName, middleName, lastName } = data?.data;
+      const complainantDatum = formRow?.data ?? {};
+      const { firstName, middleName, lastName } = complainantDatum;
 
       const fullName = getFullName(" ", firstName, middleName, lastName);
-      const complaintUuid = data?.data?.complainantVerification?.individualDetails?.userUuid;
-      const poaAuthorizationDocument = complaintUuid === userInfo?.uuid ? data?.data?.poaAuthorizationDocument : null;
-      const isAlreadyPoa = data?.data?.transferredPOA || { code: "NO", name: "NO", showPoaDetails: false };
-      const poaVerification = data?.data?.poaVerification;
+      const complaintUuid = formRow?.data?.complainantVerification?.individualDetails?.userUuid;
+      const poaAuthorizationDocument = complaintUuid === userInfo?.uuid ? formRow?.data?.poaAuthorizationDocument : null;
+      const isAlreadyPoa = formRow?.data?.transferredPOA || { code: "NO", name: "NO", showPoaDetails: false };
+      const poaVerification = formRow?.data?.poaVerification;
 
       return {
-        ...data?.data,
+        ...formRow?.data,
         label: `${fullName} ${t(JoinHomeLocalisation.COMPLAINANT_BRACK)}`,
         fullName,
         partyType: index === 0 ? "complainant.primary" : "complainant.additional",
         isComplainant: true,
         individualId,
-        uuid: data?.data?.complainantVerification?.individualDetails?.userUuid || "",
+        uuid: formRow?.data?.complainantVerification?.individualDetails?.userUuid || "",
         firstName,
         middleName,
         lastName,
         phoneNumberVerification: {
           isUserVerified: true,
-          mobileNumber: data?.data?.complainantVerification?.mobileNumber,
+          mobileNumber: formRow?.data?.complainantVerification?.mobileNumber,
           individualDetails: {
             individualId: individualId,
-            userUuid: data?.data?.complainantVerification?.individualDetails?.userUuid,
+            userUuid: formRow?.data?.complainantVerification?.individualDetails?.userUuid,
           },
         },
         isPoaAvailable: isAlreadyPoa,
@@ -476,17 +481,17 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       ...successScreenData,
       complainantList: complainantList?.map((complainant) => complainant?.fullName),
     }));
-    setComplainantList(complainantList?.map((data) => data));
+    setComplainantList(complainantList?.map((complainant) => complainant));
   };
 
   const getRespondentList = async (formdata) => {
     const respondentList = await Promise.all(
-      formdata?.map(async (data, index) => {
+      formdata?.map(async (formRow, index) => {
         try {
           let response;
           let fullName = "";
 
-          const individualId = data?.data?.respondentVerification?.individualDetails?.individualId;
+          const individualId = formRow?.data?.respondentVerification?.individualDetails?.individualId;
 
           const { representatives } = searchLitigantInRepresentives(caseDetails?.representatives, individualId);
           const isAdvocateRepresenting = representatives?.find((representative) => representative?.advocateId === advocateData?.id);
@@ -506,16 +511,17 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             response = await getUserUUID(individualId);
           }
 
-          const { respondentFirstName, respondentMiddleName, respondentLastName } = data?.data;
+          const respondentDatum = formRow?.data ?? {};
+          const { respondentFirstName, respondentMiddleName, respondentLastName } = respondentDatum;
 
           fullName = getFullName(" ", respondentFirstName, respondentMiddleName, respondentLastName);
           const respondentUUID = response?.Individual?.[0]?.userUuid || "";
-          const poaAuthorizationDocument = respondentUUID === userInfo?.uuid ? data?.data?.poaAuthorizationDocument : null;
-          const isAlreadyPoa = data?.data?.transferredPOA || { code: "NO", name: "NO", showPoaDetails: false };
-          const poaVerification = data?.data?.poaVerification;
+          const poaAuthorizationDocument = respondentUUID === userInfo?.uuid ? formRow?.data?.poaAuthorizationDocument : null;
+          const isAlreadyPoa = formRow?.data?.transferredPOA || { code: "NO", name: "NO", showPoaDetails: false };
+          const poaVerification = formRow?.data?.poaVerification;
 
           return {
-            ...data?.data,
+            ...formRow?.data,
             label: `${fullName} ${t(JoinHomeLocalisation.RESPONDENT_BRACK)}`,
             fullName,
             index,
@@ -541,7 +547,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             poaVerification,
             isAdvocateRepresenting: !!isAdvocateRepresenting,
             advocateRepresentingLength: representatives?.length || 0,
-            uniqueId: data?.uniqueId,
+            uniqueId: formRow?.uniqueId,
             isPip,
           };
         } catch (error) {
@@ -553,11 +559,11 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       ...successScreenData,
       respondentList: respondentList?.map((respondent) => respondent?.fullName),
     }));
-    setRespondentList(respondentList?.map((data) => data));
+    setRespondentList(respondentList?.map((respondent) => respondent));
   };
 
   useEffect(() => {
-    setParties([...complainantList, ...respondentList].map((data, index) => ({ ...data, key: index })));
+    setParties([...complainantList, ...respondentList].map((partyMember, index) => ({ ...partyMember, key: index })));
   }, [complainantList, respondentList]);
 
   useEffect(() => {
@@ -588,7 +594,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             value: litigant?.partyType?.includes("respondent") ? "RESPONDENTS" : "COMPLAINANTS",
           },
         }));
-        const { givenName, otherNames, familyName } = individual?.name;
+        const litigantName = individual?.name ?? {};
+        const { givenName, otherNames, familyName } = litigantName;
         const fullName = getFullName(" ", givenName, otherNames, familyName);
         setParty({
           label: `${fullName} ${t(litigant?.partyType?.includes("respondent") ? "RESPONDENT_BRACK" : "COMPLAINANT_BRACK")}`,
@@ -603,8 +610,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   }, [caseDetails, t, userInfo.name, userInfo?.uuid, selectPartyData?.userType, individual]);
 
   const registerLitigants = useCallback(
-    async (data) => {
-      const usersWithUUID = data
+    async (partyRows) => {
+      const usersWithUUID = partyRows
         .filter((item) => item?.phoneNumberVerification?.userDetails?.uuid)
         .map((item) => ({
           firstName: item?.firstName,
@@ -619,7 +626,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         }));
 
       if (usersWithUUID.length === 0) {
-        return data?.map((item) => ({
+        return partyRows?.map((item) => ({
           ...item,
           individualId: item?.phoneNumberVerification?.individualDetails?.individualId,
           uuid: item?.phoneNumberVerification?.individualDetails?.userUuid,
@@ -638,7 +645,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
         const results = await Promise.all(apiCalls);
 
-        const updatedData = data.map((item) => {
+        const updatedData = partyRows.map((item) => {
           const matchedUser = results.find((res) => res.userUuid === item.phoneNumberVerification?.userDetails?.uuid);
           return matchedUser
             ? {
@@ -743,20 +750,18 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           ?.filter((represent) => represent?.representing?.[0]?.partyType?.includes(party?.isComplainant ? "complainant" : "respondent"))
           ?.filter((representative) => {
             const filterData = representative?.representing?.filter((represent) => party?.individualId === represent?.individualId);
-
-            if (filterData?.length === 1 && representative?.representing?.length === 1) return false;
-            return true;
+            return !(filterData?.length === 1 && representative?.representing?.length === 1);
           });
 
         if (party.isComplainant) {
           setSuccessScreenData((successScreenData) => ({
             ...successScreenData,
-            complainantAdvocateList: [...advocateList?.map((adv) => adv?.additionalDetails?.fullName)],
+            complainantAdvocateList: [...(advocateList?.map((adv) => adv?.additionalDetails?.fullName) ?? [])],
           }));
         } else {
           setSuccessScreenData((successScreenData) => ({
             ...successScreenData,
-            respondentAdvocateList: [...advocateList?.map((adv) => adv?.additionalDetails?.fullName)],
+            respondentAdvocateList: [...(advocateList?.map((adv) => adv?.additionalDetails?.fullName) ?? [])],
           }));
         }
 
@@ -852,11 +857,12 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           } else if (isLitigantJoined && partyInPerson?.value === "YES" && isFound) {
             setIsApiCalled(true);
             setShowConfirmModal(true);
-          } else if (!isLitigantJoined && !Boolean(party?.individualId)) {
+          } else if (!isLitigantJoined && !party?.individualId) {
             setIsApiCalled(true);
             try {
               setMessageHeader(t("JOIN_CASE_SUCCESS"));
-              const { givenName, otherNames, familyName } = individual?.name;
+              const joinCaseNameParts = individual?.name ?? {};
+              const { givenName, otherNames, familyName } = joinCaseNameParts;
 
               let affidavitUpload;
               if (partyInPerson?.value === "YES") {
@@ -917,10 +923,10 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   respondentList: caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((respondent, index) => {
                     if (index === party?.index) {
                       return getFullName(" ", givenName, otherNames, familyName);
-                    } else {
-                      const { respondentFirstName, respondentMiddleName, respondentLastName } = respondent?.data;
-                      return getFullName(" ", respondentFirstName, respondentMiddleName, respondentLastName);
                     }
+                    const respondentRow = respondent?.data ?? {};
+                    const { respondentFirstName, respondentMiddleName, respondentLastName } = respondentRow;
+                    return getFullName(" ", respondentFirstName, respondentMiddleName, respondentLastName);
                   }),
                 }));
                 setStep(step + 3);
@@ -954,9 +960,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           party?.length > 0 &&
           selectPartyData?.isReplaceAdvocate?.value
         ) {
-          setAlreadyJoinedMobileNumber([
-            ...parties?.filter((party) => party?.phoneNumberVerification?.mobileNumber)?.map((party) => party?.phoneNumberVerification?.mobileNumber),
-          ]);
+          setAlreadyJoinedMobileNumber(
+            parties?.filter((party) => party?.phoneNumberVerification?.mobileNumber)?.map((party) => party?.phoneNumberVerification?.mobileNumber) ?? []
+          );
           if (
             (selectPartyData?.isReplaceAdvocate?.value === "YES" && selectPartyData?.approver?.label && selectPartyData?.reasonForReplacement) ||
             selectPartyData?.isReplaceAdvocate?.value === "NO"
@@ -1010,9 +1016,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         } else if (selectPartyData?.isReplaceAdvocate?.value === "NO" || selectPartyData?.isReplaceAdvocate?.value === "YES") {
           try {
             const litigantData = [
-              ...updatedParty
-                .filter((item1) => !caseDetails?.litigants.some((item2) => item1.individualId === item2.individualId))
-                ?.map((user) => ({
+              ...(updatedParty ?? [])
+                .filter((item1) => !(caseDetails?.litigants ?? []).some((item2) => item1.individualId === item2.individualId))
+                .map((user) => ({
                   additionalDetails: {
                     fullName: user?.fullName,
                     uuid: user?.uuid,
@@ -1027,7 +1033,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 })),
             ];
 
-            const { givenName, otherNames, familyName } = individual?.name;
+            const advocateRepresentingName = individual?.name ?? {};
+            const { givenName, otherNames, familyName } = advocateRepresentingName;
             const documentToUploadApiCall = updatedParty?.map((user, index) => {
               if (user?.isVakalatnamaNew?.code === "YES") {
                 return onDocumentUpload(user?.vakalatnama?.document?.[0], user?.vakalatnama?.document?.name, tenantId, `vakalatnama:${index}`).then(
@@ -1098,7 +1105,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                       uniqueId: item?.uniqueId,
                       replaceAdvocates: (litigantAdvocateGroup?.[item?.individualId] || [])
                         ?.map((advocate) => advocate?.advocateId)
-                        ?.filter((advocateId) => Boolean(advocateId))
+                        ?.filter(Boolean)
                         ?.filter((advocateId) => advocateId !== advocateData?.id),
                       isAlreadyPip: !isFound,
                       isVakalathnamaAlreadyPresent: item?.isVakalatnamaNew?.code === "YES",
@@ -1134,10 +1141,11 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   setSuccessScreenData((successScreenData) => ({
                     ...successScreenData,
                     respondentList: respondentDetails?.formdata?.map((respondent) => {
-                      const { respondentFirstName, respondentMiddleName, respondentLastName } = respondent?.data;
+                      const row = respondent?.data ?? {};
+                      const { respondentFirstName, respondentMiddleName, respondentLastName } = row;
                       return getFullName(" ", respondentFirstName, respondentMiddleName, respondentLastName);
                     }),
-                    respondentAdvocateList: [...successScreenData?.respondentAdvocateList, getFullName(" ", givenName, otherNames, familyName)],
+                    respondentAdvocateList: [...(successScreenData?.respondentAdvocateList ?? []), getFullName(" ", givenName, otherNames, familyName)],
                   }));
                 }
               }
@@ -1180,7 +1188,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             return {
               uniqueId: party?.uniqueId,
               individualId: party?.individualId,
-              isRevoking: party?.transferredPOA?.code === "YES" ? true : false,
+              isRevoking: party?.transferredPOA?.code === "YES",
               poaAuthDocument: party?.poaAuthorizationDocument?.poaDocument?.[0],
               existingPoaIndividualId: party?.poaVerification?.individualDetails?.individualId,
             };
@@ -1230,7 +1238,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 cmpNumber: caseDetails?.cmpNumber,
                 caseId: caseDetails?.id,
                 referenceId: null,
-                createdDate: new Date().getTime(),
+                createdDate: Date.now(),
                 applicationType: "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
                 status: "",
                 isActive: true,
@@ -1238,7 +1246,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 statuteSection: { tenantId },
                 additionalDetails: {
                   formdata: {
-                    ...formdata,
+                    ...joinCaseDraftForm,
                     submissionType: {
                       code: "APPLICATION",
                       name: "APPLICATION",
@@ -1314,7 +1322,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               },
             });
           }
-          // TODO : create application
         } catch (error) {
           console.error("error :>> ", error);
         }
@@ -1357,6 +1364,12 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       fetchBill,
       taskNumber,
       openPaymentPortal,
+      authorizedUuid,
+      joinCaseDraftForm,
+      history,
+      userInfoType,
+      userInfo,
+      selectPartyData?.isPoaRightsClaiming?.value,
     ]
   );
 
@@ -1367,7 +1380,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         if (step === 0 && isSearchingCase) searchCase(caseNumber);
       }
     },
-    [isDisabled, onProceed, step, isSearchingCase, caseNumber]
+    [isDisabled, onProceed, step, isSearchingCase, caseNumber, searchCase]
   );
 
   useEffect(() => {
@@ -1378,7 +1391,25 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     };
   }, [handleKeyDown]);
 
-  if (type === "external" && !showJoinCase) return <React.Fragment></React.Fragment>;
+  if (type === "external" && !showJoinCase) {
+    return null;
+  }
+
+  let modalActionCancelLabel;
+  if (step === 1) {
+    modalActionCancelLabel = t("DOWNLOAD_CASE_FILE");
+  } else if ((step === 2 && type === "external") || step === 3 || step === 4 || step === 6) {
+    modalActionCancelLabel = undefined;
+  } else if ((step === 0 && caseDetails?.cnrNumber) || step !== 0) {
+    modalActionCancelLabel = t(JoinHomeLocalisation.JOIN_CASE_BACK_TEXT);
+  } else {
+    modalActionCancelLabel = false;
+  }
+
+  let modalActionSaveLabel = t("PROCEED_TEXT");
+  if (step === 4) modalActionSaveLabel = t("CS_PAY_ONLINE");
+  else if (step === 0 && !caseDetails.filingNumber) modalActionSaveLabel = t("ES_COMMON_SEARCH");
+  else if (step === 1) modalActionSaveLabel = !isVerified ? t("CS_VERIFY") : t("JOIN_A_CASE");
 
   const modalItem = [
     // 0
@@ -1455,7 +1486,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           setIsDisabled={setIsDisabled}
           selectPartyData={selectPartyData}
           isApiCalled={isApiCalled}
-          poa={poa}
+          poa={isPoa}
           userInfo={userInfo}
         />
       ),
@@ -1497,11 +1528,11 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           isDisabled={isDisabled}
           setIsDisabled={setIsDisabled}
           goBack={() => {
-            setFormData({});
+            setJoinCaseDraftForm({});
             setStep(step - 3);
           }}
-          setFormData={setFormData}
-          formdata={formdata}
+          setFormData={setJoinCaseDraftForm}
+          formdata={joinCaseDraftForm}
         />
       ),
     },
@@ -1539,13 +1570,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       {show && (
         <Modal
           headerBarEnd={<CloseBtn onClick={closeModal} />}
-          actionCancelLabel={
-            step === 1
-              ? t("DOWNLOAD_CASE_FILE")
-              : (step === 2 && type === "external") || step === 3 || step === 4 || step === 6
-              ? undefined
-              : ((step === 0 && caseDetails?.cnrNumber) || step !== 0) && t(JoinHomeLocalisation.JOIN_CASE_BACK_TEXT)
-          }
+          actionCancelLabel={modalActionCancelLabel}
           actionCustomLabel={step === 1 ? t(JoinHomeLocalisation.JOIN_CASE_BACK_TEXT) : ""}
           actionCancelOnSubmit={() => {
             if (step === 0 && caseDetails?.cnrNumber) {
@@ -1573,29 +1598,27 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   }));
                   setPartyInPerson({});
                 }
+              } else if (!isAdvocateJoined) {
+                setSelectPartyData((selectPartyData) => ({
+                  ...selectPartyData,
+                  partyInvolve: {},
+                  isReplaceAdvocate: {},
+                  affidavit: {},
+                  approver: {},
+                  reasonForReplacement: "",
+                  advocateToReplaceList: [],
+                }));
+                setParty([]);
               } else {
-                if (!isAdvocateJoined) {
-                  setSelectPartyData((selectPartyData) => ({
-                    ...selectPartyData,
-                    partyInvolve: {},
-                    isReplaceAdvocate: {},
-                    affidavit: {},
-                    approver: {},
-                    reasonForReplacement: "",
-                    advocateToReplaceList: [],
-                  }));
-                  setParty([]);
-                } else {
-                  setSelectPartyData((selectPartyData) => ({
-                    ...selectPartyData,
-                    isReplaceAdvocate: {},
-                    affidavit: {},
-                    approver: {},
-                    reasonForReplacement: "",
-                    advocateToReplaceList: [],
-                  }));
-                  setParty([]);
-                }
+                setSelectPartyData((selectPartyData) => ({
+                  ...selectPartyData,
+                  isReplaceAdvocate: {},
+                  affidavit: {},
+                  approver: {},
+                  reasonForReplacement: "",
+                  advocateToReplaceList: [],
+                }));
+                setParty([]);
               }
               setStep(step - 1);
             } else setStep(step - 1);
@@ -1612,17 +1635,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               });
             }
           }}
-          actionSaveLabel={
-            step === 4
-              ? t("CS_PAY_ONLINE")
-              : step === 0 && !caseDetails.filingNumber
-              ? t("ES_COMMON_SEARCH")
-              : step === 1
-              ? !isVerified
-                ? t("CS_VERIFY")
-                : t("JOIN_A_CASE")
-              : t("PROCEED_TEXT")
-          }
+          actionSaveLabel={modalActionSaveLabel}
           actionSaveOnSubmit={onProceed}
           formId="modal-action"
           headerBarMain={<Heading label={getCaseHeaderLabel(step, type, t)} />}
@@ -1632,7 +1645,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           popupStyles={{ width: "fit-content", userSelect: "none" }}
           customActionStyle={{ background: "#fff", boxShadow: "none", border: "1px solid #007e7e" }}
           customActionTextStyle={{ color: "#007e7e" }}
-          hideModalActionbar={step === 3 || step === 6 ? true : false}
+          hideModalActionbar={step === 3 || step === 6}
           popupModuleMianClassName={success ? "success-main" : ""}
         >
           {isApiCalled && (
@@ -1686,6 +1699,16 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       )}
     </div>
   );
+};
+
+JoinCaseHome.propTypes = {
+  refreshInbox: PropTypes.func,
+  setShowJoinCase: PropTypes.func.isRequired,
+  showJoinCase: PropTypes.bool,
+  type: PropTypes.string,
+  data: PropTypes.shape({
+    caseDetails: PropTypes.object,
+  }),
 };
 
 export default JoinCaseHome;

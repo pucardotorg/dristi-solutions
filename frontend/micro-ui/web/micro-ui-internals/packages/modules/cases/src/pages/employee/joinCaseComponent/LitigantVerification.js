@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import { VerifyMultipartyLitigantConfig, VerifyPoaClaiming } from "../../../configs/VerifyMultipartyLitigantconfig";
@@ -213,7 +214,7 @@ const LitigantVerification = ({
     if (formData?.firstName || formData?.middleName || formData?.lastName || formData?.fatherName) {
       const formDataCopy = structuredClone(formData);
       for (const key in formDataCopy) {
-        if (["firstName", "middleName", "lastName", "fatherName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+        if (["firstName", "middleName", "lastName", "fatherName"].includes(key) && Object.hasOwn(formDataCopy, key)) {
           const oldValue = formDataCopy[key];
           let value = oldValue;
           if (typeof value === "string") {
@@ -329,10 +330,10 @@ const LitigantVerification = ({
             key={index}
             config={modifiedFormConfig}
             onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) => {
-              if (!setFormErrors.current.hasOwnProperty(index)) {
+              if (!Object.hasOwn(setFormErrors.current, index)) {
                 setFormErrors.current[index] = setError;
               }
-              if (!clearFormErrors.current.hasOwnProperty(index)) {
+              if (!Object.hasOwn(clearFormErrors.current, index)) {
                 clearFormErrors.current[index] = clearErrors;
               }
               const currentDocument = poa ? formData?.poaAuthorizationDocument?.poaDocument : formData?.vakalatnama?.document;
@@ -395,6 +396,24 @@ const LitigantVerification = ({
       </div>
     </React.Fragment>
   );
+};
+
+LitigantVerification.propTypes = {
+  t: PropTypes.func.isRequired,
+  party: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+  setParty: PropTypes.func.isRequired,
+  goBack: PropTypes.func.isRequired,
+  onProceed: PropTypes.func.isRequired,
+  uploadErrorMessages: PropTypes.object,
+  clearUploadError: PropTypes.func,
+  alreadyJoinedMobileNumber: PropTypes.arrayOf(PropTypes.string),
+  setAlreadyJoinedMobileNumber: PropTypes.func.isRequired,
+  isDisabled: PropTypes.bool,
+  setIsDisabled: PropTypes.func.isRequired,
+  selectPartyData: PropTypes.object,
+  isApiCalled: PropTypes.bool,
+  poa: PropTypes.bool,
+  userInfo: PropTypes.object,
 };
 
 export default LitigantVerification;

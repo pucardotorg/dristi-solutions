@@ -1,5 +1,6 @@
 import CustomCaseInfoDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCaseInfoDiv";
 import { Button, CheckSvg } from "@egovernments/digit-ui-react-components";
+import PropTypes from "prop-types";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createShorthand } from "../../../utils/joinCaseUtils";
 import NameListWithModal from "../../../components/NameListWithModal";
@@ -144,51 +145,44 @@ const JoinCaseSuccess = ({
         </div>
       </div>
       {success && (
-        <React.Fragment>
+        <div className="join-case-success-inner">
           {caseDetails?.cnrNumber && (
-            <React.Fragment>
-              <CustomCaseInfoDiv
-                t={t}
-                data={caseInfo}
-                column={4}
-                children={
-                  <div>
-                    <div className="complainants-respondents" style={{ display: "flex", flexWrap: "wrap", gap: "0px" }}>
-                      <div
-                        style={{
-                          flex: "0 0 50%",
-                          boxSizing: "border-box",
-                        }}
-                      >
-                        <h2 className="case-info-title">{t("COMPLAINANTS_TEXT")}</h2>
-                        <NameListWithModal t={t} data={successScreenData?.complainantList} type={"COMPLAINANTS_TEXT"} />
-                      </div>
-                      <div
-                        style={{
-                          flex: "0 0 50%",
-                          boxSizing: "border-box",
-                          borderLeft: "1px solid rgba(0, 0, 0, 0.10196)",
-                          paddingLeft: "16px",
-                        }}
-                      >
-                        <h2 className="case-info-title">{t("RESPONDENTS_TEXT")}</h2>
-                        <NameListWithModal t={t} data={successScreenData?.respondentList} type={"RESPONDENTS_TEXT"} />
-                      </div>
-                    </div>
-                    <div className="complainants-respondents" style={{ display: "flex", flexWrap: "wrap", gap: "0px" }}>
-                      <div style={{ width: "50%" }}>
-                        <h2 className="case-info-title">{t("COMPLAINTS_ADVOCATES")}</h2>
-                        <NameListWithModal t={t} data={successScreenData?.complainantAdvocateList} type={"COMPLAINTS_ADVOCATES"} />
-                      </div>
-                      <div style={{ width: "50%", paddingLeft: "16px", borderLeft: "1px solid rgba(0, 0, 0, 0.10196)" }}>
-                        <h2 className="case-info-title">{t("ACCUSEDS_ADVOCATES")}</h2>
-                        <NameListWithModal t={t} data={successScreenData?.respondentAdvocateList} type={"ACCUSEDS_ADVOCATES"} />
-                      </div>
-                    </div>
+            <CustomCaseInfoDiv t={t} data={caseInfo} column={4}>
+              <div>
+                <div className="complainants-respondents" style={{ display: "flex", flexWrap: "wrap", gap: "0px" }}>
+                  <div
+                    style={{
+                      flex: "0 0 50%",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <h2 className="case-info-title">{t("COMPLAINANTS_TEXT")}</h2>
+                    <NameListWithModal t={t} data={successScreenData?.complainantList} type={"COMPLAINANTS_TEXT"} />
                   </div>
-                }
-              />
-            </React.Fragment>
+                  <div
+                    style={{
+                      flex: "0 0 50%",
+                      boxSizing: "border-box",
+                      borderLeft: "1px solid rgba(0, 0, 0, 0.10196)",
+                      paddingLeft: "16px",
+                    }}
+                  >
+                    <h2 className="case-info-title">{t("RESPONDENTS_TEXT")}</h2>
+                    <NameListWithModal t={t} data={successScreenData?.respondentList} type={"RESPONDENTS_TEXT"} />
+                  </div>
+                </div>
+                <div className="complainants-respondents" style={{ display: "flex", flexWrap: "wrap", gap: "0px" }}>
+                  <div style={{ width: "50%" }}>
+                    <h2 className="case-info-title">{t("COMPLAINTS_ADVOCATES")}</h2>
+                    <NameListWithModal t={t} data={successScreenData?.complainantAdvocateList} type={"COMPLAINTS_ADVOCATES"} />
+                  </div>
+                  <div style={{ width: "50%", paddingLeft: "16px", borderLeft: "1px solid rgba(0, 0, 0, 0.10196)" }}>
+                    <h2 className="case-info-title">{t("ACCUSEDS_ADVOCATES")}</h2>
+                    <NameListWithModal t={t} data={successScreenData?.respondentAdvocateList} type={"ACCUSEDS_ADVOCATES"} />
+                  </div>
+                </div>
+              </div>
+            </CustomCaseInfoDiv>
           )}
           <div className="action-button-success">
             <Button
@@ -206,7 +200,6 @@ const JoinCaseSuccess = ({
               label={bailBondRequired ? t("FILE_BAIL_APPLICATION") : t("VIEW_CASE_FILE")}
               onButtonClick={() => {
                 if (bailBondRequired) {
-                  // TODO : can add for lititgants and respondents like litigant=${}&&litigantIndId=${}`;
                   history.push(
                     `/${window?.contextPath}/${userInfoType}/submissions/submissions-create?filingNumber=${caseDetails?.filingNumber}&applicationType=REQUEST_FOR_BAIL`
                   );
@@ -228,11 +221,52 @@ const JoinCaseSuccess = ({
               <RightArrow />
             </Button>
           </div>
-        </React.Fragment>
+        </div>
       )}
       {SurveyUI}
     </div>
   );
+};
+
+const statutesShape = PropTypes.shape({
+  section: PropTypes.any,
+  subsection: PropTypes.any,
+});
+
+JoinCaseSuccess.propTypes = {
+  success: PropTypes.bool,
+  messageHeader: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+  type: PropTypes.string,
+  caseDetails: PropTypes.shape({
+    caseCategory: PropTypes.any,
+    caseTitle: PropTypes.any,
+    cnrNumber: PropTypes.any,
+    filingNumber: PropTypes.any,
+    isLPRCase: PropTypes.bool,
+    lprNumber: PropTypes.any,
+    courtCaseNumber: PropTypes.any,
+    cmpNumber: PropTypes.any,
+    statutesAndSection: statutesShape,
+    filingDate: PropTypes.any,
+    id: PropTypes.any,
+    courtId: PropTypes.any,
+  }),
+  closeModal: PropTypes.func.isRequired,
+  refreshInbox: PropTypes.func,
+  successScreenData: PropTypes.shape({
+    complainantList: PropTypes.array,
+    respondentList: PropTypes.array,
+    complainantAdvocateList: PropTypes.array,
+    respondentAdvocateList: PropTypes.array,
+  }),
+  isCaseViewDisabled: PropTypes.bool,
+  selectPartyData: PropTypes.shape({
+    userType: PropTypes.shape({ value: PropTypes.string }),
+    isReplaceAdvocate: PropTypes.shape({ value: PropTypes.string }),
+  }),
+  party: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
+  partyInPerson: PropTypes.shape({ value: PropTypes.string }),
+  individual: PropTypes.shape({ userUuid: PropTypes.string }),
 };
 
 export default JoinCaseSuccess;
