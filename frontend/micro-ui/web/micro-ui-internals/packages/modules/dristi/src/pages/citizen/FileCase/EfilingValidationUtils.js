@@ -1718,6 +1718,9 @@ export const updateCaseDetails = async ({
   caseComplaintDocument,
   filingType,
   isDelayCondonation,
+  isContinueClicked = false,
+  isCaseReAssigned = false,
+  isDraftInProgress = false,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -1815,7 +1818,9 @@ export const updateCaseDetails = async ({
     const poaFilestoreIds = {};
     // check -in new flow, mltiple complainant forms are possible, so iscompleted logic has to be updated
     // and logic to update litigants also has to be changed.
-    if (isCompleted === true) {
+    if (isContinueClicked === true || isCaseReAssigned) {
+      // Only in case of Efiling, continue click is needed for user registration because fields validation is needed.
+      // That's why isContinueClicked shoule be true in case of efiling stage.
       litigants = await Promise.all(
         updatedFormData
           .filter((item) => item.isenabled)
@@ -2522,7 +2527,7 @@ export const updateCaseDetails = async ({
 
           return {
             ...data,
-            isFormCompleted: true,
+            isFormCompleted: isDraftInProgress ? isContinueClicked : true,
             data: {
               ...data.data,
               ...documentData,
@@ -2595,6 +2600,16 @@ export const updateCaseDetails = async ({
             }
           })
         : updatedLitigants;
+
+    if (isDraftInProgress) {
+      finalLitigants.forEach((lit) => {
+        lit.additionalDetails = {
+          ...(lit?.additionalDetails || {}),
+          isLitigantDetailsChanged: isContinueClicked, // This field is set true when ever user clicks on continue button on complainant details screen,
+          // So that we can redirect user to advocate details page(if user comes on review screen) once to update advocate related details correctly in case complaiant details were changed.
+        };
+      });
+    }
 
     data.litigants = [...finalLitigants];
 
@@ -3555,6 +3570,14 @@ export const updateCaseDetails = async ({
         documents: updatedDocuments,
       };
     });
+    if (isDraftInProgress) {
+      updatedCaseLitigants.forEach((lit) => {
+        lit.additionalDetails = {
+          ...(lit?.additionalDetails || {}),
+          isLitigantDetailsChanged: false, // This field is used only for UI formcomposer purpose. so unsetting it once user saves data on advocate details screen.
+        };
+      });
+    }
 
     data.litigants = [...updatedCaseLitigants];
     data.representatives = [...updatedRepresentatives];
