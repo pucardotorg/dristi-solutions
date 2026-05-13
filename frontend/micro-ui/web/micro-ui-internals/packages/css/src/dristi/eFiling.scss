@@ -5,7 +5,7 @@
 
   .e-filing-header-content {
     .e-filing-header-subtext {
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 16px;
       font-weight: 400;
       line-height: 18.75px;
@@ -56,7 +56,7 @@
     margin-top: 24px;
 
     h2 {
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 16px !important;
       font-weight: 700 !important;
       line-height: 18.75px !important;
@@ -82,7 +82,7 @@
       height: fit-content;
 
       span {
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 700;
         line-height: 18.75px;
@@ -103,7 +103,7 @@
         align-items: center;
 
         header.h1 {
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 40px;
           font-weight: 700;
           line-height: 46.88px;
@@ -120,7 +120,7 @@
 
       p {
         margin: 0px;
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 400;
         line-height: 18.75px;
@@ -151,7 +151,7 @@
         justify-content: space-between;
 
         h1 {
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 24px;
           font-weight: 700;
           line-height: 28.13px;
@@ -253,7 +253,7 @@
         }
 
         label {
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 14px;
           font-weight: 400;
           line-height: 16.41px;
@@ -301,7 +301,7 @@
 
           h2 {
             width: 100%;
-            font-family: Roboto;
+            font-family: Roboto, sans-serif;
             font-size: 16px;
             font-weight: 400;
             line-height: 18.75px;
@@ -330,6 +330,17 @@
   .card-label-error {
     margin-top: -16px !important;
   }
+
+  .select-wrap {
+    margin: 0px !important;
+    max-width: 100%;
+  }
+
+  .date-of-accrual {
+    color: #bbbbbd !important;
+    border: solid 1px #bbbbbd !important;
+    pointer-events: none !important;
+  }
 }
 
 .witness-details,
@@ -347,7 +358,7 @@
     padding-bottom: 0px !important;
 
     .bolder {
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 16px;
       font-weight: 400;
       line-height: 18.75px;
@@ -364,9 +375,6 @@
   input {
     margin: 0px !important;
   }
-}
-
-.witness-details {
 }
 
 .debt-liability {
@@ -386,7 +394,7 @@
   gap: 20px;
 
   h2.card-label {
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-size: 16px;
     font-weight: 700;
     line-height: 18.75px;
@@ -409,7 +417,7 @@
 
   .digit-card-label-error {
     margin: 0px;
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-size: 14px;
     font-weight: 400;
     line-height: 24px;
@@ -449,7 +457,7 @@
 
     h2 {
       margin: 0px !important;
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 16px;
       font-weight: 700;
       line-height: 18.75px;
@@ -481,7 +489,7 @@
     }
   }
   .custom-sub-header {
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-size: 16px;
     font-weight: 400;
     line-height: 18.75px;
@@ -494,7 +502,7 @@
   }
 
   h2 {
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-size: 16px;
     font-weight: 700 !important;
     line-height: 18.75px;
@@ -547,7 +555,7 @@
         border-bottom: 1px #bbbbbd solid;
 
         h1 {
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 24px;
           font-weight: 700;
           line-height: 28.13px;
@@ -562,7 +570,7 @@
 
         .file-name-field {
           h1 {
-            font-family: Roboto;
+            font-family: Roboto, sans-serif;
             font-size: 16px;
             font-weight: 400;
             line-height: 18.75px;
@@ -578,7 +586,7 @@
         }
 
         .document-header {
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 16px;
           font-weight: 400 !important;
           line-height: 18.75px;
@@ -595,7 +603,7 @@
     .drag-drop-heading-main {
       .drag-drop-heading {
         .custom-document-header {
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 16px;
           font-weight: 700;
           line-height: 18.75px;
@@ -607,7 +615,7 @@
       .custom-document-sub-header {
         margin: 0px !important;
         margin-top: 20px !important;
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 400;
         line-height: 18.75px;
@@ -636,7 +644,7 @@
     left: -40px;
 
     .add-new-document-label {
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 16px;
       font-weight: 700 !important;
       line-height: 18.75px;
@@ -666,7 +674,7 @@
     padding-bottom: 16px;
 
     h2 {
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 16px;
       font-weight: 400;
       line-height: 18.75px;
@@ -699,24 +707,12 @@
   }
 }
 
-.demand-notice {
-  .select-wrap {
-    margin: 0px !important;
-    max-width: 100%;
-  }
-  .date-of-accrual {
-    color: #bbbbbd !important;
-    border: solid 1px #bbbbbd !important;
-    pointer-events: none !important;
-  }
-}
-
 .delay-application {
   .label-field-pair {
     padding-bottom: 16px;
 
     h2.card-label {
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 16px;
       font-weight: 700;
       line-height: 18.75px;
@@ -732,7 +728,7 @@
         padding: 0px;
 
         .text-area-header {
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 16px;
           font-weight: 400;
           line-height: 18.75px;
@@ -761,12 +757,22 @@
       }
     }
   }
+
+  &.disable-form {
+    .radio-wrap {
+      pointer-events: none;
+    }
+  }
 }
 
 .advocate-detail.disable-form,
 .advocate-detail {
   .label-field-pair {
     margin-bottom: 10px;
+    flex-direction: column;
+    align-items: start;
+    gap: 4px !important;
+
     .advocate-basic-info {
       .card-label {
         margin-bottom: 8px !important;
@@ -775,7 +781,30 @@
         margin-bottom: 16px !important;
       }
     }
+
+    .card-label {
+      font-family: Roboto, sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 18.75px;
+      text-align: left;
+      color: #0a0a0a;
+    }
+
+    .field {
+      .drag-drop-visible-main {
+        .card-label {
+          font-family: Roboto, sans-serif;
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 18.75px;
+          text-align: left;
+          color: #0a0a0a;
+        }
+      }
+    }
   }
+
   .user-details-form-style {
     input {
       margin: 0px !important;
@@ -813,7 +842,7 @@
     }
 
     .card-label {
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 16px;
       font-weight: 700;
       line-height: 18.75px;
@@ -822,33 +851,6 @@
     }
   }
 
-  .label-field-pair {
-    flex-direction: column;
-    align-items: start;
-    gap: 4px !important;
-
-    .card-label {
-      font-family: Roboto;
-      font-size: 16px;
-      font-weight: 400;
-      line-height: 18.75px;
-      text-align: left;
-      color: #0a0a0a;
-    }
-
-    .field {
-      .drag-drop-visible-main {
-        .card-label {
-          font-family: Roboto;
-          font-size: 16px;
-          font-weight: 700;
-          line-height: 18.75px;
-          text-align: left;
-          color: #0a0a0a;
-        }
-      }
-    }
-  }
   .action-bar-wrap.e-filing-action-bar {
     header {
       margin-bottom: 0px !important;
@@ -863,14 +865,6 @@
       background-color: #eee !important;
     }
 
-    .radio-wrap {
-      pointer-events: none;
-    }
-  }
-}
-
-.delay-application {
-  &.disable-form {
     .radio-wrap {
       pointer-events: none;
     }
@@ -950,7 +944,7 @@
               align-items: center !important;
 
               span {
-                font-family: Roboto;
+                font-family: Roboto, sans-serif;
                 font-size: 16px;
                 font-weight: 700;
                 line-height: 18.75px;
@@ -971,7 +965,7 @@
             .title {
               .label,
               .value {
-                font-family: Roboto;
+                font-family: Roboto, sans-serif;
                 font-size: 16px;
                 font-weight: 700;
                 line-height: 18.75px;
@@ -1064,7 +1058,7 @@
 
             .label {
               width: 35%;
-              font-family: Roboto;
+              font-family: Roboto, sans-serif;
               font-size: 14px;
               font-weight: 400;
               line-height: 21px;
@@ -1074,7 +1068,7 @@
 
             .value {
               width: 55%;
-              font-family: Roboto;
+              font-family: Roboto, sans-serif;
               font-size: 14px;
               font-weight: 400;
               line-height: 22px;
@@ -1244,13 +1238,12 @@
       }
 
       p {
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 400;
         line-height: 24px;
         text-align: left;
         color: #3d3c3c;
-        line-height: 24px;
         margin: 10px 0px 0px 0px;
 
         .act-name {
@@ -1335,7 +1328,7 @@
   background-color: #fff;
 
   .e-filing-card-label {
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-size: 19px;
     font-weight: 400;
     line-height: 28.5px;
@@ -1481,7 +1474,7 @@
     }
 
     .pay-online-button {
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 16px !important;
       font-weight: 700;
       padding: 8px 24px;
@@ -1489,7 +1482,6 @@
       line-height: 18.75px;
       border: 1px solid #007e7e !important;
       background-color: white !important;
-      border: none;
       color: #007e7e;
       cursor: pointer;
       display: flex;
@@ -1531,7 +1523,7 @@
   h3.bulk-input-header {
     margin: 0px !important;
     width: 100%;
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-size: 16px;
     font-weight: 400;
     line-height: 18.75px;
@@ -1566,7 +1558,7 @@
       h2 {
         text-align: center !important;
         margin: 0px;
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 700;
         line-height: 18.75px;
@@ -1597,7 +1589,7 @@
 
       .e-sign-aadhar-button,
       .upload-signature-button {
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 700;
         line-height: 18.75px;
@@ -1612,7 +1604,7 @@
       padding: 16px 24px 0px;
 
       .e-sign-aadhar-title {
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 400;
         line-height: 18.75px;
@@ -1638,7 +1630,7 @@
     width: 100%;
 
     .signature-label {
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 24px;
       font-weight: 700;
       line-height: 28.13px;
@@ -1661,7 +1653,7 @@
     border-radius: 15px;
     width: 59px;
     height: 28px;
-    font-family: Roboto;
+    font-family: Roboto, sans-serif;
     font-size: 14px;
     font-weight: 400;
     line-height: 16.41px;
@@ -1691,7 +1683,7 @@
 
   .icon-and-title {
     .signature-title {
-      font-family: Roboto;
+      font-family: Roboto, sans-serif;
       font-size: 16px;
       font-weight: 600;
       line-height: 18.75px;
@@ -1709,7 +1701,7 @@
 
       .aadhar-sign-in,
       .upload-signature-label {
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 700;
         line-height: 18.75px;
@@ -1788,7 +1780,7 @@
               align-items: center;
 
               header.h1 {
-                font-family: Roboto;
+                font-family: Roboto, sans-serif;
                 font-size: 32px;
                 font-weight: 700;
                 line-height: 37.5px;
@@ -1830,7 +1822,7 @@
           left: 24px;
 
           h3 {
-            font-family: Lato;
+            font-family: "Lato", sans-serif, sans-serif;
             font-size: 16px;
             font-weight: 500;
             line-height: 18px;
@@ -1858,7 +1850,7 @@
         background-color: #f9fafb;
 
         .checklist-title {
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 16px;
           font-weight: 700;
           line-height: 18.75px;
@@ -1883,7 +1875,7 @@
 
           h3.item-text {
             width: calc(100% - 28px);
-            font-family: Roboto;
+            font-family: Roboto, sans-serif;
             font-size: 14px;
             font-weight: 400;
             line-height: 16.41px;
@@ -1917,7 +1909,7 @@
         transition: background-color 1s;
 
         .checklist-title {
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 16px;
           font-weight: 700;
           line-height: 18.75px;
@@ -1942,7 +1934,7 @@
 
           h3.item-text {
             width: calc(100% - 28px);
-            font-family: Roboto;
+            font-family: Roboto, sans-serif;
             font-size: 14px;
             font-weight: 400;
             line-height: 16.41px;
@@ -2006,14 +1998,11 @@
     td:first-child {
       padding-left: 0px;
     }
-
-    td {
-    }
   }
 }
 
 .case-info-title {
-  font-family: Roboto;
+  font-family: Roboto, sans-serif;
   font-size: 14px;
   font-weight: 400;
   line-height: 16.41px;
@@ -2023,7 +2012,7 @@
 }
 
 .case-info-value {
-  font-family: Roboto;
+  font-family: Roboto, sans-serif;
   font-size: 16px;
   font-weight: 700;
   line-height: 18.75px;
@@ -2047,7 +2036,7 @@
 
         h2 {
           width: 65% !important;
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 16px;
           font-weight: 700;
           line-height: 18.75px;
@@ -2066,7 +2055,7 @@
         padding: 8px 24px;
 
         h2 {
-          font-family: Roboto;
+          font-family: Roboto, sans-serif;
           font-size: 16px;
           font-weight: 700;
           line-height: 18.75px;
@@ -2238,7 +2227,7 @@
       border: solid 1px #007e7e;
 
       h2 {
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 700;
         line-height: 18.75px;
@@ -2251,7 +2240,7 @@
       height: 2.5rem;
       width: fit-content !important;
       h2 {
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 700;
         line-height: 18.75px;
@@ -2264,7 +2253,7 @@
       height: 2.5rem;
       width: fit-content !important;
       h2 {
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 16px;
         font-weight: 700;
         line-height: 18.75px;
@@ -2280,7 +2269,7 @@
     border-bottom: 1px #e8e8e8 solid;
     .header-content.popup-header-fix {
       .main-heading {
-        font-family: Roboto;
+        font-family: Roboto, sans-serif;
         font-size: 24px;
         font-weight: 700;
         line-height: 28.13px;

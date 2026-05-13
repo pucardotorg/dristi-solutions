@@ -19,7 +19,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .citizenAllServiceGrid {
     display: flex;
     flex-direction: column;

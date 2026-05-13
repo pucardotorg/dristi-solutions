@@ -45,12 +45,9 @@
     }
 
     p {
+      padding-top: 9px;
       @extend .light-text-color-primary;
       @apply text-form-field text-text-primary float-left ml-sm;
-    }
-
-    p {
-      padding-top: 9px;
     }
 
     img {
@@ -131,12 +128,9 @@
     }
 
     p {
+      padding-top: 9px;
       @extend .light-text-color-primary;
       @apply text-form-field text-text-primary float-left ml-sm;
-    }
-
-    p {
-      padding-top: 9px;
     }
 
     img {
@@ -164,7 +158,4 @@
       }
     }
   }
-}
-
-@screen dt {
 }

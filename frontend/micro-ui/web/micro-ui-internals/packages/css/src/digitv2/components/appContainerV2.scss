@@ -24,7 +24,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .employee-app-container {
     @apply w-full;
   }

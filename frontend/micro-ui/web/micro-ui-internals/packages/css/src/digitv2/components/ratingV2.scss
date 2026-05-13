@@ -15,7 +15,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .digit-rating-star-wrap {
     @apply w-2/5;
   }

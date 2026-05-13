@@ -424,7 +424,7 @@
       flex-direction: column;
       padding-top: 80px;
       margin-left: 72px;
-      width: calc(100%-83px);
+      width: calc(100% - 83px);
     }
     .citizen-home-container {
       display: flex;
@@ -467,7 +467,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .d-grid {
     display: grid;
     grid-template-columns: 250px 250px 250px 250px;
@@ -510,7 +510,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .back-wrapper {
     margin-right: 2rem;
     margin-left: 2rem;

@@ -204,7 +204,7 @@
   }
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .submit-bar,
   .submit-bar-disabled {
     width: 240px;

@@ -46,7 +46,7 @@
   min-width: 280px;
 }
 
-@screen dt {
+@media (min-width: 780px) {
   .ground-container {
     margin-bottom: 56px;
     @apply p-md;
