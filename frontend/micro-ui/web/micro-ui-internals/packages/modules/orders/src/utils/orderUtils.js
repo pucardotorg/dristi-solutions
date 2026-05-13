@@ -252,7 +252,7 @@ export const getParties = (type, orderSchema, allParties) => {
   return updatedParties;
 };
 
-export const checkValidation = (t, formData, index, setFormErrors, setShowToast) => {
+export const checkValidation = (t, formData, index, setFormErrors, setShowToast) => { // NOSONAR S3776 — branching per order type; extracting would scatter shared setters
   let hasError = false;
   const currentOrderType = formData?.orderType?.code || "";
   if (currentOrderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
@@ -754,7 +754,7 @@ export const getRaiseBailBondReferenceId = ({ accusedKey, filingNumber }) => {
   }
 };
 
-export const createTaskPayload = async (orderType, orderDetails, { caseDetails, courtRoomData, tenantId, judgeName }) => {
+export const createTaskPayload = async (orderType, orderDetails, { caseDetails, courtRoomData, tenantId, judgeName }) => { // NOSONAR S3776 — task payload assembly is inherently branch-heavy
   let payload = {};
   const { litigants } = caseDetails;
   const complainantIndividualId = litigants?.find((item) => item?.partyType === "complainant.primary")?.individualId;

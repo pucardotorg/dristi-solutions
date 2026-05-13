@@ -7,6 +7,7 @@ import { OrderWorkflowAction } from "../utils/orderWorkflow";
 import axiosInstance from "@egovernments/digit-ui-module-core/src/Utils/axiosInstance";
 import { ORDER_CATEGORIES } from "../utils/constants";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
+import PropTypes from "prop-types";
 
 const onDocumentUpload = async (fileData, filename) => {
   try {
@@ -240,5 +241,26 @@ function OrderReviewModal({
     </React.Fragment>
   );
 }
+
+OrderReviewModal.propTypes = {
+  courtId: PropTypes.string,
+  handleReviewGoBack: PropTypes.func.isRequired,
+  order: PropTypes.shape({
+    additionalDetails: PropTypes.object,
+    compositeItems: PropTypes.array,
+    hearingNumber: PropTypes.any,
+    orderCategory: PropTypes.string,
+    orderType: PropTypes.string,
+    scheduledHearingNumber: PropTypes.any,
+  }).isRequired,
+  saveSignLater: PropTypes.bool,
+  setOrderPdfFileStoreID: PropTypes.func.isRequired,
+  setShowBulkModal: PropTypes.func.isRequired,
+  setShowReviewModal: PropTypes.func.isRequired,
+  setShowsignatureModal: PropTypes.func.isRequired,
+  showActions: PropTypes.bool,
+  t: PropTypes.func.isRequired,
+  updateOrder: PropTypes.func.isRequired,
+};
 
 export default OrderReviewModal;

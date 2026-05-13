@@ -7,6 +7,7 @@ import { Urls } from "../hooks";
 import AuthenticatedLink from "../Utils/authenticatedLink";
 import { CloseBtn, Heading } from "./ModalComponents";
 import CustomToast from "./CustomToast";
+import PropTypes from "prop-types";
 function ESignSignatureModal({
   t,
   handleIssueOrder,
@@ -225,5 +226,20 @@ function ESignSignatureModal({
     </React.Fragment>
   );
 }
+
+ESignSignatureModal.propTypes = {
+  documentSubmission: PropTypes.any,
+  doctype: PropTypes.string,
+  formUploadData: PropTypes.shape({
+    SelectUserTypeComponent: PropTypes.shape({
+      doc: PropTypes.arrayOf(PropTypes.arrayOf(PropTypes.any)),
+    }),
+  }),
+  handleGoBackSignatureModal: PropTypes.func.isRequired,
+  handleIssueOrder: PropTypes.func.isRequired,
+  saveOnsubmitLabel: PropTypes.string,
+  setSignedDocumentUploadID: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
+};
 
 export default ESignSignatureModal;

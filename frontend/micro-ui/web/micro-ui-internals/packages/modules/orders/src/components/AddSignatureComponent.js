@@ -8,6 +8,7 @@ import { Urls } from "../hooks/services/Urls";
 import useDocumentUpload from "../hooks/orders/useDocumentUpload";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 import { ORDER_TYPES } from "../utils/constants";
+import PropTypes from "prop-types";
 
 const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData, setSignatureId, signatureId, deliveryChannel }) => {
   const [showToast, setShowToast] = useState(null);
@@ -282,6 +283,24 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
       )}
     </div>
   );
+};
+
+AddSignatureComponent.propTypes = {
+  deliveryChannel: PropTypes.any,
+  handleSigned: PropTypes.func.isRequired,
+  isSigned: PropTypes.bool,
+  rowData: PropTypes.shape({
+    documents: PropTypes.arrayOf(
+      PropTypes.shape({
+        fileStore: PropTypes.string,
+      })
+    ),
+    taskType: PropTypes.string,
+  }),
+  setIsSigned: PropTypes.func.isRequired,
+  setSignatureId: PropTypes.func,
+  signatureId: PropTypes.string,
+  t: PropTypes.func.isRequired,
 };
 
 export default AddSignatureComponent;

@@ -2589,7 +2589,7 @@ export const UICustomizations = {
       switch (key) {
         case "PENDING_CASE_NAME":
           return row?.substage === CaseWorkflowState.FILING ? (
-            <span>{value ? value : "-"}</span>
+            <span>{value || "-"}</span>
           ) : (
             <Link
               style={{ color: "black", textDecoration: "underline" }}

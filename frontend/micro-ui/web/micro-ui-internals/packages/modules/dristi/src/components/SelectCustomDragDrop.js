@@ -27,7 +27,6 @@ const DragDropJSX = ({ t, currentValue, error }) => {
           <h3>{t("CS_COMMON_CHOOSE_FILE")}</h3>
         </div>
       </div>
-      {/* {error && <span className="alert-error">{t(error.msg || error.message || "CORE_REQUIRED_FIELD_ERROR")}</span>} */}
     </React.Fragment>
   );
 };

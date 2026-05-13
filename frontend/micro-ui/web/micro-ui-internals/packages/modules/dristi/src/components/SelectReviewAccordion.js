@@ -20,6 +20,7 @@ import CustomPopUp from "./CustomPopUp";
 import CustomReviewCard from "./CustomReviewCard";
 import ImageModal from "./ImageModal";
 import { sanitizeData } from "../Utils";
+import PropTypes from "prop-types";
 
 const extractValue = (data, key) => {
   if (!key.includes(".")) {
@@ -764,5 +765,19 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
     </div>
   );
 }
+
+SelectReviewAccordion.propTypes = {
+  config: PropTypes.shape({
+    isPrevScrutiny: PropTypes.bool,
+    key: PropTypes.string.isRequired,
+  }).isRequired,
+  control: PropTypes.any,
+  errors: PropTypes.object,
+  formData: PropTypes.object,
+  formState: PropTypes.any,
+  onSelect: PropTypes.func.isRequired,
+  setError: PropTypes.func,
+  t: PropTypes.func.isRequired,
+};
 
 export default SelectReviewAccordion;

@@ -16,6 +16,7 @@ import { FSOErrorIcon } from "../icons/svgIndex";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import SearchableDropdown from "./SearchableDropdown";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
+import PropTypes from "prop-types";
 
 function ScrutinyInfoAdvocate({ message, t }) {
   return (
@@ -324,7 +325,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return false;
   }, [caseDetails, advocateAndPipData]);
 
-  const { data, isLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data, isLoading } = Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         userUuid: selectedAdvocateUuid ? [selectedAdvocateUuid] : [userUuid], //If clerk/junior adv is filing case, details of respective office advocate should be fetched.
@@ -339,7 +340,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
 
-  const { data: searchData, isLoading: isSearchLoading } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
+  const { data: searchData, isLoading: isSearchLoading } = Digit.Hooks.dristi.useGetAdvocateClerk(
     {
       criteria: [{ individualId }],
       tenantId,
@@ -386,7 +387,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     return individualData;
   };
 
-  const { data: selectedIndividual, isLoading: isIndividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: selectedIndividual, isLoading: isIndividualLoading } = Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         individualId: individualId,
@@ -1003,7 +1004,10 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
               ? isCaseReAssigned?.pipAffidavitFileUploadMessage
               : "";
           return (
-            <div style={{ pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty(input?.fileKey) ? "auto" : "none") : "auto" }}>
+            <div
+              key={input?.fileKey || input?.name}
+              style={{ pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty(input?.fileKey) ? "auto" : "none") : "auto" }}
+            >
               {showDocument && (
                 <div className="drag-drop-visible-main">
                   <div className="drag-drop-heading-main">
@@ -1122,5 +1126,20 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     </div>
   );
 }
+
+MultipleAdvocatesAndPip.propTypes = {
+  clearErrors: PropTypes.func,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+  }).isRequired,
+  errors: PropTypes.object,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  setError: PropTypes.func,
+  t: PropTypes.func.isRequired,
+};
 
 export default MultipleAdvocatesAndPip;

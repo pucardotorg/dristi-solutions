@@ -2618,12 +2618,7 @@ const AdmittedCaseV2 = () => {
             onTabChange(0, {}, "Documents");
             setDocumentCounter((prev) => prev + 1);
           }}
-          onSubmit={(action) => {
-            if (action === "end-hearing") {
-              // Handle end hearing action
-            } else if (action === "view-cause-list") {
-              // Handle view cause list action
-            }
+          onSubmit={() => {
             setShowWitnessModal({ show: false, artifactNumber: null });
           }}
           attendees={currentActiveHearing?.attendees}

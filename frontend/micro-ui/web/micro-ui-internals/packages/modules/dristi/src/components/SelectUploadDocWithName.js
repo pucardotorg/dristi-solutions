@@ -11,6 +11,7 @@ import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import { DRISTIService } from "../services";
 import { getAuthorizedUuid, getFilingType, sanitizeData } from "../Utils";
 import { EXTENSION_TO_MIME } from "../Utils/constants";
+import PropTypes from "prop-types";
 
 function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError, errors, clearErrors }) {
   const [documentData, setDocumentData] = useState(formData?.[config.key] ? formData?.[config.key] : []);
@@ -277,5 +278,23 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect, setError,
     </div>
   );
 }
+
+SelectUploadDocWithName.propTypes = {
+  clearErrors: PropTypes.func,
+  config: PropTypes.shape({
+    disable: PropTypes.bool,
+    doclength: PropTypes.number,
+    key: PropTypes.string.isRequired,
+    populators: PropTypes.shape({
+      inputs: PropTypes.array,
+    }),
+    state: PropTypes.any,
+  }).isRequired,
+  errors: PropTypes.object,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  setError: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
+};
 
 export default SelectUploadDocWithName;

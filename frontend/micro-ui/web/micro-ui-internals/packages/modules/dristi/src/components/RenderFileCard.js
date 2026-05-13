@@ -5,6 +5,7 @@ import { FileUploader } from "react-drag-drop-files";
 import { ReactComponent as UploadFileIcon } from "../images/upload.svg";
 import { CloseIconWhite, FileIcon } from "../icons/svgIndex";
 import ImageModal from "./ImageModal";
+import PropTypes from "prop-types";
 function RenderFileCard({
   handleChange,
   handleDeleteFile,
@@ -152,5 +153,19 @@ function RenderFileCard({
     </div>
   );
 }
+
+RenderFileCard.propTypes = {
+  configKey: PropTypes.string,
+  disableUploadDelete: PropTypes.bool,
+  fileData: PropTypes.object.isRequired,
+  handleChange: PropTypes.func.isRequired,
+  handleDeleteFile: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
+  input: PropTypes.object.isRequired,
+  isDisabled: PropTypes.bool,
+  setError: PropTypes.func,
+  t: PropTypes.func.isRequired,
+  uploadErrorInfo: PropTypes.oneOfType([PropTypes.string, PropTypes.bool, PropTypes.object]),
+};
 
 export default RenderFileCard;
