@@ -137,40 +137,6 @@ export const formatNoticeDeliveryDate = (inputDate) => {
   return `${dd}-${mm}-${yyyy}`;
 };
 
-const transformTypeOfAddress = (addresses = []) => {
-  return addresses?.map((addr) => ({
-    ...addr,
-
-    // handles addresses[].addressDetails.typeOfAddress
-    ...(addr?.addressDetails
-      ? {
-          addressDetails: {
-            ...addr?.addressDetails,
-            ...(typeof addr?.addressDetails?.typeOfAddress === "object" && addr?.addressDetails?.typeOfAddress !== null
-              ? {
-                  typeOfAddress: addr?.addressDetails?.typeOfAddress?.code,
-                }
-              : {}),
-          },
-        }
-      : {}),
-
-    // handles respondentDetails.address[].address.typeOfAddress
-    ...(addr?.address
-      ? {
-          address: {
-            ...addr?.address,
-            ...(typeof addr?.address?.typeOfAddress === "object" && addr?.address?.typeOfAddress !== null
-              ? {
-                  typeOfAddress: addr?.address?.typeOfAddress?.code,
-                }
-              : {}),
-          },
-        }
-      : {}),
-  }));
-};
-
 export const createOrUpdateTask = async ({ type, existingTask, courierData, formData, filingNumber, tenantId, isLast }) => {
   if (!courierData) return;
 
@@ -179,20 +145,7 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
 
   // Build new party object
   const baseParty = {
-    addresses:
-      courierData?.addressDetails
-        ?.filter((addr) => addr?.checked)
-        ?.map((addr) => ({
-          ...addr,
-          addressDetails: {
-            ...addr?.addressDetails,
-            ...(typeof addr?.addressDetails?.typeOfAddress === "object" && addr?.addressDetails?.typeOfAddress !== null
-              ? {
-                  typeOfAddress: addr?.addressDetails?.typeOfAddress?.code,
-                }
-              : {}),
-          },
-        })) || [],
+    addresses: courierData?.addressDetails?.filter((addr) => addr?.checked) || [],
     deliveryChannels: courierData?.[`${type?.toLowerCase()}CourierService`],
   };
 
@@ -225,39 +178,6 @@ export const createOrUpdateTask = async ({ type, existingTask, courierData, form
   } else {
     updatedPartyDetails = [newParty];
   }
-
-  updatedPartyDetails = updatedPartyDetails?.map((party) => ({
-    ...party,
-
-    // top level addresses
-    addresses: transformTypeOfAddress(party?.addresses),
-
-    // respondentDetails.addressDetails
-    ...(party?.respondentDetails
-      ? {
-          respondentDetails: {
-            ...party?.respondentDetails,
-
-            addressDetails: transformTypeOfAddress(party?.respondentDetails?.addressDetails),
-
-            address: transformTypeOfAddress(party?.respondentDetails?.address),
-          },
-        }
-      : {}),
-
-    // witnessDetails.addressDetails
-    ...(party?.witnessDetails
-      ? {
-          witnessDetails: {
-            ...party?.witnessDetails,
-
-            addressDetails: transformTypeOfAddress(party?.witnessDetails?.addressDetails),
-
-            address: transformTypeOfAddress(party?.witnessDetails?.address),
-          },
-        }
-      : {}),
-  }));
 
   const taskManagementPayload = existingTask
     ? {
