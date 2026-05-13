@@ -17,10 +17,16 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   const handleDownload = async (tenantId, filestoreId, filestoreIdPolice) => {
     // await downloadPdfFromFile(file?.[0]);
     if (filestoreId) {
-      downloadPdf(tenantId, filestoreId);
+      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || "Case"}_${rowData?.taskNumber}_${t(
+        rowData?.taskType
+      )}`;
+      downloadPdf(tenantId, filestoreId, fileName);
     }
     if (filestoreIdPolice) {
-      downloadPdf(tenantId, filestoreIdPolice, "Police Report");
+      const fileName = `${rowData?.courtCaseNumber || rowData?.cmpNumber || rowData?.filingNumber || "Case"}_${rowData?.taskNumber}_${t(
+        "Police_Report"
+      )}`;
+      downloadPdf(tenantId, filestoreIdPolice, fileName);
     }
   };
 
