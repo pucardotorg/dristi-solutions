@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState, useContext } 
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
-import { Header, FormComposerV2, Toast, Button, EditIcon, Modal, CloseButton, TextInput } from "@egovernments/digit-ui-react-components";
+import { Header, FormComposerV2, Toast, Button, EditIcon, Modal, TextInput } from "@egovernments/digit-ui-react-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core"; // Import breadcrumb context from core module
 import {
   applicationTypeConfig,
@@ -47,16 +47,16 @@ import { CustomAddIcon, CustomDeleteIcon, WarningInfoIconYellow } from "../../..
 import OrderReviewModal from "../../pageComponents/OrderReviewModal";
 import OrderSignatureModal from "../../pageComponents/OrderSignatureModal";
 import OrderDeleteModal from "../../pageComponents/OrderDeleteModal";
-import { ordersService, schedulerService, taskService } from "../../hooks/services";
+import { ordersService, taskService } from "../../hooks/services";
 import { Loader } from "@egovernments/digit-ui-components";
 import OrderSucessModal from "../../pageComponents/OrderSucessModal";
 import { applicationTypes } from "../../utils/applicationTypes";
 import isEqual from "lodash/isEqual";
 import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkflow";
 import { Urls } from "../../hooks/services/Urls";
-import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../utils/submissionWorkflow";
+import { SubmissionWorkflowState } from "../../utils/submissionWorkflow";
 import { getAdvocates, getuuidNameMap } from "../../utils/caseUtils";
-import { HearingWorkflowAction, HearingWorkflowState } from "../../utils/hearingWorkflow";
+import { HearingWorkflowState } from "../../utils/hearingWorkflow";
 import get from "lodash/get";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
@@ -104,11 +104,6 @@ export const compositeOrderAllowedTypes = [
   },
 ];
 
-const stateSla = {
-  SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
-  NOTICE: 3 * 24 * 3600 * 1000,
-};
-
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
   MANDATORY_SUBMISSIONS_RESPONSES: configsOrderMandatorySubmissions,
@@ -155,13 +150,6 @@ function applyMultiSelectDropdownFix(setValue, formData, keys) {
       setValue(key, undefined);
     }
   });
-}
-
-function appendRoleToName(name, newRole) {
-  const nameWithoutParentheses = name?.replace(/\([^)]*\)/, "")?.trim();
-  const existingRoles = name?.match(/\(([^)]+)\)/);
-  const roles = existingRoles ? `${existingRoles[1]}, ${newRole}` : newRole;
-  return `${nameWithoutParentheses} (${roles})`;
 }
 
 const OutlinedInfoIcon = () => (
@@ -240,16 +228,14 @@ const GenerateOrders = () => {
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [loader, setLoader] = useState(false);
-  const [createdHearing, setCreatedHearing] = useState({});
   const [signedDoucumentUploadedID, setSignedDocumentUploadID] = useState("");
-  const [newHearingNumber, setNewHearingNumber] = useState(null);
+  const [newHearingNumber] = useState(null);
   const [createdSummon, setCreatedSummon] = useState(null);
   const [createdNotice, setCreatedNotice] = useState(null);
   const [orderPdfFileStoreID, setOrderPdfFileStoreID] = useState(null);
   const history = useHistory();
   const todayDate = new Date().getTime();
   const setFormErrors = useRef([]);
-  const [currentFormData, setCurrentFormData] = useState(null);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
   const canSaveSignLater = roles?.some((role) => role.code === "ORDER_APPROVER");
@@ -293,19 +279,7 @@ const GenerateOrders = () => {
   ]);
   const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
 
-  const { data: courtFeeAmount, isLoading: isLoadingCourtFeeData } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "payment",
-    [{ name: "courtFeePayment" }],
-    {
-      select: (data) => {
-        return data?.payment?.courtFeePayment || [];
-      },
-    }
-  );
-  const summonsCourtFee = useMemo(() => courtFeeAmount?.find((p) => p?.paymentCode === "SUMMONS_COURT_FEE")?.amount || 0, [courtFeeAmount]);
-
-  const { data: warrantSubType, isLoading: isWarrantSubType } = Digit.Hooks.useCustomMDMS(
+  const { data: warrantSubType } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "Order",
     [{ name: "warrantSubType" }],
@@ -356,7 +330,7 @@ const GenerateOrders = () => {
   // Manual state management for case data instead of using React Query
   const [caseData, setCaseData] = useState(undefined);
   const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
-  const [caseApiError, setCaseApiError] = useState(undefined);
+  const [, setCaseApiError] = useState(undefined);
   // Flag to prevent multiple breadcrumb updates
   const isBreadCrumbsParamsDataSet = useRef(false);
 
@@ -899,9 +873,6 @@ const GenerateOrders = () => {
       ),
     [applicationData]
   );
-  const isDcaFiled = useMemo(() => {
-    return caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.isDcaSkippedInEFiling === "NO" || isDelayApplicationSubmitted;
-  }, [caseDetails, isDelayApplicationSubmitted]);
 
   const hearingId = useMemo(() => currentOrder?.hearingNumber || applicationDetails?.additionalDetails?.hearingId || "", [
     applicationDetails,
@@ -1918,7 +1889,6 @@ const GenerateOrders = () => {
           "";
         setValueRef?.current?.[index]?.("originalHearingDate", updatedFormdata.originalHearingDate);
       }
-      // setCurrentFormData(updatedFormdata); // TODO: check and update setCurrentFormData here and update where ever currentFormData is being used.
       return updatedFormdata;
     },
     [currentOrder, hearingDetails, applicationData, caseDetails]
@@ -2194,7 +2164,6 @@ const GenerateOrders = () => {
         });
       });
 
-      // setCurrentFormData(formData); // TODO: check and update setCurrentFormData here and update where ever currentFormData is being used.
     }
 
     setFormErrors.current[index] = setError;
@@ -3664,48 +3633,6 @@ const GenerateOrders = () => {
     downloadPdf(tenantId, fileStoreId);
   };
 
-  const handleCustomSubmit = () => {
-    modifiedFormConfig.forEach((_, index) => {
-      formValueChangeTriggerRefs.current[index]();
-    });
-    const formSubmitButton = submitButtonRefs.current?.querySelector('button[type="submit"]');
-    if (formSubmitButton) {
-      formSubmitButton.click();
-    }
-  };
-
-  function validateValue(masterName, moduleName, value) {
-    // Retrieve the validation function dynamically
-    const validationFn = Digit?.Customizations?.[masterName]?.[moduleName];
-
-    if (typeof validationFn !== "function") {
-      console.error(`Validation function not found for ${masterName}.${moduleName}`);
-      return false;
-    }
-
-    // Get the validation rules by calling the function
-    const rules = validationFn();
-
-    let isValid = true; // Assume valid initially
-
-    // Check pattern validation (for strings)
-    if (rules.pattern && typeof rules.pattern.test === "function") {
-      isValid = rules.pattern.test(value);
-    }
-
-    // Check min validation (for numbers or dates)
-    if (rules.min !== undefined) {
-      isValid = isValid && value >= rules.min;
-    }
-
-    // Check max validation (for numbers or dates)
-    if (rules.max !== undefined) {
-      isValid = isValid && value <= rules.max;
-    }
-
-    return isValid;
-  }
-
   const getMandatoryFieldsErrors = (modifiedFormConfig, currentOrder) => {
     // we are doing this only for composite items
     let errrors = [];
@@ -3714,9 +3641,7 @@ const GenerateOrders = () => {
         continue;
       } else {
         const formdata = currentOrder?.compositeItems?.[i]?.orderSchema?.additionalDetails?.formdata;
-        const displayindex = currentOrder?.compositeItems?.[i]?.displayindex;
         const orderType = currentOrder?.compositeItems?.[i]?.orderType;
-        const allFormSections = [];
         const itemErrors = [];
         for (let p = 0; p < modifiedFormConfig?.[i]?.length; p++) {
           if (!formdata) {

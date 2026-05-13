@@ -78,6 +78,17 @@ export const getVoidModalConfig = ({
 }) => {
   if (!showVoidModal) return {};
 
+  const itemType = documentSubmission?.[0]?.itemType;
+
+  let voidHeadingLabel = t("ARE_YOU_SURE_TO_MARK_AS_VOID");
+  if (itemType === "view_reason_for_voiding") voidHeadingLabel = t("REASON_FOR_VOIDING");
+  else if (itemType === "unmark_void_submission") voidHeadingLabel = t("ARE_YOU_SURE_TO_UNMARK_AS_VOID");
+
+  let voidActionSaveLabel;
+  if (userType === "citizen") voidActionSaveLabel = undefined;
+  else if (itemType === "view_reason_for_voiding") voidActionSaveLabel = t("UNMARK_AS_VOID");
+  else if (itemType === "unmark_void_submission") voidActionSaveLabel = t("MARK_VOID_CONFIRM");
+  else voidActionSaveLabel = t("MARK_AS_VOID");
   const onSuccess = async (response, data) => {
     setShowToast({
       label: !data?.body?.artifact?.isVoid ? t("SUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE") : t("SUCCESSFULLY_MARKED_AS_VOID_MESSAGE"),
@@ -127,38 +138,26 @@ export const getVoidModalConfig = ({
   return {
     handleClose: handleClose,
     heading: {
-      label:
-        "view_reason_for_voiding" === documentSubmission?.[0]?.itemType
-          ? t("REASON_FOR_VOIDING")
-          : "unmark_void_submission" === documentSubmission?.[0]?.itemType
-          ? t("ARE_YOU_SURE_TO_UNMARK_AS_VOID")
-          : t("ARE_YOU_SURE_TO_MARK_AS_VOID"),
+      label: voidHeadingLabel,
     },
     isStepperModal: true,
-    actionSaveLabel:
-      userType === "citizen"
-        ? undefined
-        : "view_reason_for_voiding" === documentSubmission?.[0]?.itemType
-        ? t("UNMARK_AS_VOID")
-        : "unmark_void_submission" === documentSubmission?.[0]?.itemType
-        ? t("MARK_VOID_CONFIRM")
-        : t("MARK_AS_VOID"),
+    actionSaveLabel: voidActionSaveLabel,
     actionCancelLabel: userType === "citizen" ? t("VOID_BACK") : t("MARK_VOID_CANCEL"),
     steps: [
       {
         actionCancelOnSubmit: handleClose,
-        actionSaveLableType: "mark_as_void" === documentSubmission?.[0]?.itemType ? "WARNING" : null,
+        actionSaveLableType: itemType === "mark_as_void" ? "WARNING" : null,
         modalBody: (
           <VoidSubmissionBody
             t={t}
             documentSubmission={documentSubmission}
             setVoidReason={setVoidReason}
             voidReason={voidReason}
-            disabled={"view_reason_for_voiding" === documentSubmission[0].itemType || "unmark_void_submission" === documentSubmission[0].itemType}
+            disabled={itemType === "view_reason_for_voiding" || itemType === "unmark_void_submission"}
           />
         ),
         async: true,
-        isDisabled: !Boolean(voidReason),
+        isDisabled: !voidReason,
         actionSaveOnSubmit: async () => {
           if (documentSubmission[0].itemType === "unmark_void_submission") {
             await handleMarkAsVoid(documentSubmission, false);
