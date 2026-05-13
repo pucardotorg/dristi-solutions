@@ -1,24 +1,36 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { DateUtils, downloadPdfFromBlob } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-dristi/src/components/ModalComponents";
 const HeaderBarEnd = ({ t, setShowModal, handleDownload }) => {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "10px", paddingRight: "20px" }}>
-      <div
-        style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "#007E7E", fontWeight: "700" }}
+      <button
+        type="button"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          cursor: "pointer",
+          color: "#007E7E",
+          fontWeight: "700",
+          background: "none",
+          border: "none",
+          padding: 0,
+          font: "inherit",
+        }}
         onClick={handleDownload}
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path
-            fill-rule="evenodd"
-            clip-rule="evenodd"
+            fillRule="evenodd"
+            clipRule="evenodd"
             d="M8.00004 1.33398C8.36823 1.33398 8.66671 1.63246 8.66671 2.00065V9.72451L11.5286 6.86258C11.789 6.60223 12.2111 6.60223 12.4714 6.86258C12.7318 7.12293 12.7318 7.54504 12.4714 7.80539L8.47144 11.8054C8.2111 12.0657 7.78899 12.0657 7.52864 11.8054L3.52864 7.80539C3.26829 7.54504 3.26829 7.12293 3.52864 6.86258C3.78899 6.60223 4.2111 6.60223 4.47144 6.86258L7.33337 9.72451V2.00065C7.33337 1.63246 7.63185 1.33398 8.00004 1.33398ZM1.33337 14.0007C1.33337 13.6325 1.63185 13.334 2.00004 13.334H14C14.3682 13.334 14.6667 13.6325 14.6667 14.0007C14.6667 14.3688 14.3682 14.6673 14 14.6673H2.00004C1.63185 14.6673 1.33337 14.3688 1.33337 14.0007Z"
             fill="#007E7E"
           />
         </svg>
         <span style={{ fontSize: "16px" }}>{t("DOWNLOAD_APPLICATION")}</span>
-      </div>
+      </button>
       <CloseBtn onClick={() => setShowModal(false)} />
     </div>
   );

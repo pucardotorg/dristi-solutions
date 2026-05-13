@@ -115,9 +115,14 @@ export const generateAddress = ({
   if (address) {
     return address;
   }
-  return `${locality ? `${locality},` : ""} ${district ? `${district},` : ""} ${city ? `${city},` : ""} ${state ? `${state},` : ""} ${
-    pincode ? `- ${pincode}` : ""
-  }`.trim();
+  const parts = [];
+  if (locality) parts.push(`${locality},`);
+  if (district) parts.push(`${district},`);
+  if (city) parts.push(`${city},`);
+  if (state) parts.push(`${state},`);
+  const body = parts.join(" ").trimEnd();
+  const pinPart = pincode ? `- ${pincode}` : "";
+  return pinPart ? (body ? `${body} ${pinPart}` : pinPart).trim() : body;
 };
 
 export const channelTypeEnum = {
@@ -772,11 +777,16 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
   };
   const selectedChannel = orderData?.additionalDetails?.formdata?.[formDataKeyMap[orderType]]?.selectedChannels;
   const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
-  const respondentAddress = orderFormData?.addressDetails
-    ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
-    : respondentNameData?.address
-    ? respondentNameData?.address
-    : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
+  let respondentAddress;
+  if (orderFormData?.addressDetails) {
+    respondentAddress = orderFormData.addressDetails.map((data) => ({ ...data?.addressDetails }));
+  } else if (respondentNameData?.address) {
+    respondentAddress = respondentNameData.address;
+  } else {
+    respondentAddress = caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map(
+      (data) => data?.addressDetails
+    );
+  }
   const partyIndex = orderFormData?.party?.data?.partyIndex || "";
   const result = getRespondantName(respondentNameData);
   const respondentName = result?.name || result;
@@ -1048,7 +1058,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
         },
       };
       break;
-    case "MISCELLANEOUS_PROCESS":
+    case "MISCELLANEOUS_PROCESS": {
       const hearingDate = new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime();
       const taskCaseDetails = {
         title: caseDetails?.caseTitle,
@@ -1063,6 +1073,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
       const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
       payload = await _getTaskPayload(taskCaseDetails, orderData, caseDetails?.filingDate, hearingDate, caseNumber, caseDetails?.filingNumber);
       break;
+    }
     default:
       break;
   }
@@ -1090,7 +1101,7 @@ export const createTaskPayload = async (orderType, orderDetails, { caseDetails, 
             channelName: channelTypeEnum?.[item?.type]?.type,
             fees: courtFees,
             channelCode: channelTypeEnum?.[item?.type]?.code,
-            isPendingCollection: channelTypeEnum?.[item?.type]?.code === "RPAD" ? true : false,
+            isPendingCollection: channelTypeEnum?.[item?.type]?.code === "RPAD",
           };
 
           let address = {};

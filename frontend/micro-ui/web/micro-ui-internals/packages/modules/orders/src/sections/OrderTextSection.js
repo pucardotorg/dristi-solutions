@@ -34,14 +34,22 @@ const formatAttendanceSummary = ({ presentAttendees, absentAttendees, currentOrd
   return `${presentText}${newline}${absentText}`;
 };
 
+const resolvePurposeForNextHearingLabel = (purposeOfHearing, currentOrder) => {
+  if (purposeOfHearing && typeof purposeOfHearing === "object" && purposeOfHearing.code != null) {
+    return purposeOfHearing.code;
+  }
+  if (purposeOfHearing != null && purposeOfHearing !== "" && typeof purposeOfHearing !== "object") {
+    return purposeOfHearing;
+  }
+  return currentOrder?.purposeOfNextHearing;
+};
+
 const formatNextHearingSummary = (t, skipScheduling, purposeOfHearing, currentOrder, nextHearingDate) => {
   if (skipScheduling) {
     return t("NO_NEXT_HEARING");
   }
-  const purposeCode = purposeOfHearing || currentOrder?.purposeOfNextHearing;
-  const purposeLine = purposeCode
-    ? `${t("PURPOSE_OF_NEXT_HEARING")} ${t(purposeOfHearing?.code || purposeOfHearing || currentOrder?.purposeOfNextHearing)}`
-    : "";
+  const purposeKey = resolvePurposeForNextHearingLabel(purposeOfHearing, currentOrder);
+  const purposeLine = purposeKey ? `${t("PURPOSE_OF_NEXT_HEARING")} ${t(purposeKey)}` : "";
   const dateRaw = nextHearingDate || currentOrder?.nextHearingDate;
   const divider = purposeLine && dateRaw ? "\n" : "";
   const dateLine = dateRaw ? `${t("DATE_TEXT")} ${new Date(dateRaw).toLocaleDateString()}` : "";

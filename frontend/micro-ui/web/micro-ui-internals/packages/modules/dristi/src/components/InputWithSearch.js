@@ -98,7 +98,7 @@ function InputWithSearch({ t, config, formData = {}, onSelect, errors, setError,
   };
   return inputs.map((input) => {
     return (
-      <div>
+      <div key={input?.name}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
             <label className="digit-label">{t(input?.label)}</label>

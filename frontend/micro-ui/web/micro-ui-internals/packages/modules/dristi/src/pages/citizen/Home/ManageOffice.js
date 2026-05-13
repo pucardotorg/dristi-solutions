@@ -6,6 +6,20 @@ import { userTypeOptions } from "../registration/config";
 import { ManageOfficeDeleteIcon, ManageOfficeCloseIcon, ManageOfficeLeaveIcon, ProvideCaseAccessArrowIcon } from "../../../icons/svgIndex";
 import CustomToast from "../../../components/CustomToast";
 
+const capitalizeDisplayWord = (s) => (s ? `${s.charAt(0).toUpperCase()}${s.slice(1).toLowerCase()}` : s);
+
+function formatOfficeMemberTypeLabel(memberType, t) {
+  if (memberType === "ADVOCATE_CLERK") return capitalizeDisplayWord(t("CLERK"));
+  if (memberType === "ADVOCATE") return t("ASSISTANT_ADVOCATE");
+  return memberType;
+}
+
+function formatSearchDesignationLabel(designation, t) {
+  if (designation === "Clerk") return capitalizeDisplayWord(t("CLERK"));
+  if (designation === "Advocate") return t("ASSISTANT_ADVOCATE");
+  return designation;
+}
+
 const ManageOffice = () => {
   const { t } = useTranslation();
   const history = useHistory();
@@ -450,41 +464,44 @@ const ManageOffice = () => {
                 key={member.id || member.memberId}
                 className={`manage-office-table-row${activeTab === "advocatesWorkingFor" ? " manage-office-table-row--working-for" : ""}`}
               >
-                <span
-                  className={activeTab === "advocatesWorkingFor" ? "manage-office-name" : "manage-office-name manage-office-name--clickable"}
-                  role={activeTab === "myAdvocatesClerks" ? "button" : undefined}
-                  onClick={
-                    activeTab === "myAdvocatesClerks"
-                      ? () =>
-                          history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office/manage-member`, {
-                            member,
-                            advocateInfo: {
-                              officeAdvocateUserUuid: officeAdvocateUserUuid,
-                              advocateId:
-                                advocateSearchResult?.[0]?.responseList?.[0]?.id ||
-                                advocateSearchResult?.[0]?.id ||
-                                member?.officeAdvocateId ||
-                                member?.advocateId,
-                            },
-                          })
-                      : undefined
-                  }
-                >
-                  {activeTab === "advocatesWorkingFor" ? member?.officeAdvocateName || member?.memberName : member?.memberName}
-                </span>
+                {activeTab === "advocatesWorkingFor" ? (
+                  <span className="manage-office-name">{member?.officeAdvocateName || member?.memberName}</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="manage-office-name manage-office-name--clickable"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      font: "inherit",
+                      textAlign: "left",
+                      cursor: "pointer",
+                    }}
+                    onClick={() =>
+                      history.push(`/${window?.contextPath}/citizen/dristi/home/manage-office/manage-member`, {
+                        member,
+                        advocateInfo: {
+                          officeAdvocateUserUuid: officeAdvocateUserUuid,
+                          advocateId:
+                            advocateSearchResult?.[0]?.responseList?.[0]?.id ||
+                            advocateSearchResult?.[0]?.id ||
+                            member?.officeAdvocateId ||
+                            member?.advocateId,
+                        },
+                      })
+                    }
+                  >
+                    {member?.memberName}
+                  </button>
+                )}
                 <span>
                   {activeTab === "advocatesWorkingFor"
                     ? formatMobileForDisplay(member?.advocateOfficeMobileNumber)
                     : formatMobileForDisplay(member?.memberMobileNumber)}
                 </span>
                 {activeTab !== "advocatesWorkingFor" && (
-                  <span>
-                    {member?.memberType === "ADVOCATE_CLERK"
-                      ? ((l) => l.charAt(0).toUpperCase() + l.slice(1).toLowerCase())(t("CLERK"))
-                      : member?.memberType === "ADVOCATE"
-                      ? t("ASSISTANT_ADVOCATE")
-                      : member?.memberType}
-                  </span>
+                  <span>{formatOfficeMemberTypeLabel(member?.memberType, t)}</span>
                 )}
                 <span>
                   <span className="manage-office-access-pill">{member?.accessType === "ALL_CASES" ? t("ALL_CASES") : t("SPECIFIC_CASES")}</span>
@@ -576,13 +593,7 @@ const ManageOffice = () => {
                       </div>
                       <div className="manage-office-search-card__row">
                         <p className="manage-office-search-card__label">{t("DESIGNATION")}</p>
-                        <p className="manage-office-search-card__value">
-                          {searchResult?.designation === "Clerk"
-                            ? ((l) => l.charAt(0).toUpperCase() + l.slice(1).toLowerCase())(t("CLERK"))
-                            : searchResult?.designation === "Advocate"
-                            ? t("ASSISTANT_ADVOCATE")
-                            : searchResult?.designation}
-                        </p>
+                        <p className="manage-office-search-card__value">{formatSearchDesignationLabel(searchResult?.designation, t)}</p>
                       </div>
                       <div className="manage-office-search-card__row">
                         <p className="manage-office-search-card__label">{t("MOBILE_NUMBER")}</p>

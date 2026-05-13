@@ -403,10 +403,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     const isAdvocateOfficeCreator = caseDetails?.representatives?.find(
       (rep) => rep?.advocateFilingStatus === advocateCaseFilingStatusTypes?.CASE_OWNER
     );
-    if (isAdvocateOfficeCreator?.additionalDetails?.uuid === userUuid) {
-      return true;
-    }
-    return false;
+    return isAdvocateOfficeCreator?.additionalDetails?.uuid === userUuid;
   }, [caseDetails, userUuid]);
 
   const casePrimaryAdvocateId = useMemo(() => {
@@ -697,13 +694,10 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   const isDeleteAllowed = useCallback(
     (i) => {
       if (advocateAndPipData?.boxComplainant?.index !== 0) return true;
-      // For all complainants boxes except 1st, deleting is allowed.
-      else {
-        if (advocateAndPipData?.multipleAdvocateNameDetails?.[i]?.advocateBarRegNumberWithName?.advocateId === casePrimaryAdvocateId) {
-          return false; // For 1st complainant box, the filing advocate is the primary advocate, so it can not be deleted by anyone.
-        }
-        return true;
+      if (advocateAndPipData?.multipleAdvocateNameDetails?.[i]?.advocateBarRegNumberWithName?.advocateId === casePrimaryAdvocateId) {
+        return false;
       }
+      return true;
     },
     [advocateAndPipData, casePrimaryAdvocateId]
   );
