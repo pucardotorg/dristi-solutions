@@ -1,5 +1,6 @@
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
-import { Button, CloseSvg, FormComposerV2, Loader, TextInput } from "@egovernments/digit-ui-react-components";
+import { Button, CloseSvg, Loader, TextInput } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import { hearingService } from "../hooks/services";

@@ -1,4 +1,5 @@
-import { ActionBar, Button, EditIcon, FormComposerV2, Header, Loader, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
+import { ActionBar, Button, EditIcon, Header, Loader, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2 } from "@egovernments/digit-ui-module-core";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
