@@ -39,6 +39,68 @@ const linkStyle = {
 };
 const bredCrumbStyle = { maxWidth: "min-content" };
 
+function buildSeniorAdvocatesForAdvocate(advocateId, userInfo, officeMembersData) {
+  const selfDetails = [{ id: advocateId, value: advocateId, advocateName: userInfo?.name, uuid: userInfo?.uuid }];
+  if (!officeMembersData?.members?.length) return selfDetails;
+  const seniorAdvocatesList = Array.isArray(officeMembersData?.members)
+    ? extractedSeniorAdvocates(officeMembersData) || []
+    : [];
+  return [...selfDetails, ...seniorAdvocatesList].sort((a, b) => (a?.advocateName || "").localeCompare(b?.advocateName || ""));
+}
+
+function buildSeniorAdvocatesForClerk(officeMembersData) {
+  if (!officeMembersData?.members?.length) return [];
+  const seniorAdvocatesList = Array.isArray(officeMembersData?.members)
+    ? extractedSeniorAdvocates(officeMembersData) || []
+    : [];
+  return [...seniorAdvocatesList].sort((a, b) => (a?.advocateName || "").localeCompare(b?.advocateName || ""));
+}
+
+function buildAdditionalSearchFields(advClerkId, advocateId, selectedSeniorAdvocate, courtId, isScrutiny, individualId) {
+  const court = courtId && !isScrutiny ? { courtId } : {};
+  if (advClerkId) {
+    return {
+      searchKey: "filingNumber",
+      defaultFields: true,
+      officeAdvocateId: selectedSeniorAdvocate?.id,
+      memberId: advClerkId,
+      ...court,
+    };
+  }
+  if (advocateId) {
+    const idPayload =
+      advocateId === selectedSeniorAdvocate?.id ? { advocateId } : { officeAdvocateId: selectedSeniorAdvocate?.id, memberId: advocateId };
+    return {
+      searchKey: "filingNumber",
+      defaultFields: true,
+      ...idPayload,
+      ...court,
+    };
+  }
+  if (individualId) {
+    return {
+      searchKey: "filingNumber",
+      defaultFields: true,
+      litigantId: individualId,
+      ...court,
+    };
+  }
+  return court;
+}
+
+function buildCitizenCaseCriteria(citizenId, advocateId, selectedSeniorAdvocate, advClerkId, individualId) {
+  if (!citizenId) return {};
+  if (advocateId) {
+    return advocateId === selectedSeniorAdvocate?.id
+      ? { advocateId }
+      : { officeAdvocateId: selectedSeniorAdvocate?.id, memberId: advocateId };
+  }
+  if (advClerkId) {
+    return { officeAdvocateId: selectedSeniorAdvocate?.id, memberId: advClerkId };
+  }
+  return { litigantId: individualId };
+}
+
 const ProjectBreadCrumb = ({ location, t }) => {
   const userInfo = window?.Digit?.UserService?.getUser()?.info;
   let userType = "employee";
@@ -208,7 +270,9 @@ const HomeView = () => {
   }, [searchResult, userType]);
 
   const searchCriteria = useMemo(() => {
-    return userType === "ADVOCATE" ? { memberId: advocateId } : userType === "ADVOCATE_CLERK" ? { memberId: advClerkId } : {};
+    if (userType === "ADVOCATE") return { memberId: advocateId };
+    if (userType === "ADVOCATE_CLERK") return { memberId: advClerkId };
+    return {};
   }, [advocateId, advClerkId, userType]);
 
   const { data: officeMembersData, isLoading: isLoadingMembers } = window?.Digit?.Hooks?.dristi?.useSearchOfficeMember(
@@ -226,27 +290,16 @@ const HomeView = () => {
   const seniorAdvocates = useMemo(() => {
     if (isLoadingMembers) return [];
     if (userType === "ADVOCATE" && advocateId) {
-      const selfDetails = [{ id: advocateId, value: advocateId, advocateName: userInfo?.name, uuid: userInfo?.uuid }];
-      if (officeMembersData?.members?.length > 0) {
-        const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
-        const totalList = [...selfDetails, ...seniorAdvocatesList];
-        return [...(totalList || [])].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
-      } else return selfDetails;
-    } else if (userType === "ADVOCATE_CLERK" && advClerkId) {
-      if (officeMembersData?.members?.length > 0) {
-        const seniorAdvocatesList = Array.isArray(officeMembersData?.members) ? extractedSeniorAdvocates(officeMembersData) || [] : [];
-        return [...(seniorAdvocatesList || [])].sort((a, b) => a?.advocateName?.localeCompare(b?.advocateName));
-      } else return [];
+      return buildSeniorAdvocatesForAdvocate(advocateId, userInfo, officeMembersData);
+    }
+    if (userType === "ADVOCATE_CLERK" && advClerkId) {
+      return buildSeniorAdvocatesForClerk(officeMembersData);
     }
     return [];
   }, [advocateId, advClerkId, officeMembersData, isLoadingMembers, userType, userInfo?.name, userInfo?.uuid]);
 
   const unAssociatedClerk = useMemo(() => {
-    // seniorAdvocates length zero means the logged in clerk is not associated with any advocate yet.
-    if (userType === "ADVOCATE_CLERK" && seniorAdvocates?.length === 0) {
-      return true;
-    }
-    return false;
+    return userType === "ADVOCATE_CLERK" && seniorAdvocates?.length === 0;
   }, [userType, seniorAdvocates?.length]);
 
   const additionalDetails = useMemo(() => {
@@ -254,36 +307,8 @@ const HomeView = () => {
     if (userInfoType === "citizen" && !userType) return null;
     if ((userType === "ADVOCATE" && !advocateId) || (userType === "ADVOCATE_CLERK" && !advClerkId)) return null;
     if (((userType === "ADVOCATE" && advocateId) || (userType === "ADVOCATE_CLERK" && advClerkId)) && !selectedSeniorAdvocate?.id) return null;
-    return {
-      ...(advClerkId
-        ? {
-            searchKey: "filingNumber",
-            defaultFields: true,
-            officeAdvocateId: selectedSeniorAdvocate?.id, // TODO: handle for jr adv and senr adv
-            memberId: advClerkId,
-            ...(courtId && !isScrutiny && { courtId }),
-          }
-        : advocateId
-        ? {
-            searchKey: "filingNumber",
-            defaultFields: true,
-            ...(advocateId === selectedSeniorAdvocate?.id
-              ? { advocateId }
-              : {
-                  officeAdvocateId: selectedSeniorAdvocate?.id,
-                  memberId: advocateId,
-                }),
-            ...(courtId && !isScrutiny && { courtId }),
-          }
-        : individualId
-        ? {
-            searchKey: "filingNumber",
-            defaultFields: true,
-            litigantId: individualId,
-            ...(courtId && !isScrutiny && { courtId }),
-          }
-        : { ...(courtId && !isScrutiny && { courtId }) }),
-    };
+    const fields = buildAdditionalSearchFields(advClerkId, advocateId, selectedSeniorAdvocate, courtId, isScrutiny, individualId);
+    return { ...fields };
   }, [advocateId, advClerkId, individualId, courtId, isScrutiny, selectedSeniorAdvocate, userType, userInfoType]);
 
   useEffect(() => {
@@ -308,23 +333,17 @@ const HomeView = () => {
   );
 
   const rolesToConfigMappingData = useMemo(() => {
-    if (state?.role && rolesToConfigMapping?.find((item) => item[state.role])) {
-      return rolesToConfigMapping?.find((item) => item[state.role]);
-    } else {
-      // For employees, use unified config approach
-      if (userInfoType === "employee") {
-        const unifiedConfig = getUnifiedEmployeeConfig(roles);
-        const onRowClickRoute = getOnRowClickConfig(roles);
-
-        return {
-          config: unifiedConfig,
-          onRowClickRoute: onRowClickRoute,
-          isEmployee: true,
-        };
-      } else if (userInfoType === "citizen") {
-        return litigantConfig;
-      } else return null;
+    const fromState = state?.role && rolesToConfigMapping?.find((item) => item[state.role]);
+    if (fromState) return fromState;
+    if (userInfoType === "employee") {
+      return {
+        config: getUnifiedEmployeeConfig(roles),
+        onRowClickRoute: getOnRowClickConfig(roles),
+        isEmployee: true,
+      };
     }
+    if (userInfoType === "citizen") return litigantConfig;
+    return null;
   }, [state?.role, roles, userInfoType]);
 
   const tabConfigs = useMemo(() => rolesToConfigMappingData.config, [rolesToConfigMappingData]);
@@ -349,7 +368,7 @@ const HomeView = () => {
           const totalCount = response?.pagination?.totalCount;
           return {
             key: index,
-            label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
+            label: `${t(configItem.label)} (${totalCount || 0})`,
             active: index === 0 ? true : false,
           };
         }) || []
@@ -371,20 +390,11 @@ const HomeView = () => {
   }, [userInfoType, advocateId, individualId, isSearchLoading]);
 
   const casefetchCriteriaForCitizen = useMemo(() => {
-    if (!citizenId) return false;
-    if (citizenId) {
-      if (!userType) return false;
-      if (userType === "LITIGANT") {
-        if (individualId) return true;
-        return false;
-      }
-      if ((userType === "ADVOCATE" && !advocateId) || (userType === "ADVOCATE_CLERK" && !advClerkId)) return false;
-      if ((userType === "ADVOCATE" && advocateId) || (userType === "ADVOCATE_CLERK" && advClerkId)) {
-        if (selectedSeniorAdvocate?.id) {
-          return true;
-        }
-      }
-      return false;
+    if (!citizenId || !userType) return false;
+    if (userType === "LITIGANT") return Boolean(individualId);
+    if ((userType === "ADVOCATE" && !advocateId) || (userType === "ADVOCATE_CLERK" && !advClerkId)) return false;
+    if ((userType === "ADVOCATE" && advocateId) || (userType === "ADVOCATE_CLERK" && advClerkId)) {
+      return Boolean(selectedSeniorAdvocate?.id);
     }
     return false;
   }, [citizenId, userType, advocateId, advClerkId, selectedSeniorAdvocate?.id, individualId]);
@@ -392,21 +402,7 @@ const HomeView = () => {
   const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseListService(
     {
       criteria: {
-        ...(citizenId
-          ? advocateId
-            ? advocateId === selectedSeniorAdvocate?.id
-              ? { advocateId }
-              : {
-                  officeAdvocateId: selectedSeniorAdvocate?.id,
-                  memberId: advocateId,
-                }
-            : advClerkId
-            ? {
-                officeAdvocateId: selectedSeniorAdvocate?.id,
-                memberId: advClerkId,
-              }
-            : { litigantId: individualId }
-          : {}),
+        ...buildCitizenCaseCriteria(citizenId, advocateId, selectedSeniorAdvocate, advClerkId, individualId),
         pagination: { offSet: 0, limit: 1 },
         tenantId,
       },

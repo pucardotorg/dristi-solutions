@@ -284,6 +284,7 @@ SelectUploadDocWithName.propTypes = {
   config: PropTypes.shape({
     disable: PropTypes.bool,
     doclength: PropTypes.number,
+    filingNumber: PropTypes.string,
     key: PropTypes.string.isRequired,
     populators: PropTypes.shape({
       inputs: PropTypes.array,

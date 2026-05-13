@@ -1,6 +1,7 @@
 import { CloseBtn, Heading } from "@egovernments/digit-ui-module-orders/src/utils/orderUtils";
-import { FormComposerV2, SubmitBar } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
+import React, { useState } from "react";
+import PropTypes from "prop-types";
 import isEqual from "lodash/isEqual";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { formatName, isRichTextEmpty } from "../utils";
@@ -26,7 +27,7 @@ const AddTemplateModal = ({
   const checkTextValidation = ({ formData, setValue, reset, formdata, clearErrors, formState }) => {
     const formDataCopy = structuredClone(formData);
     for (const key in formDataCopy) {
-      if (["processTitle"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+      if (["processTitle"].includes(key) && Object.hasOwn(formDataCopy, key)) {
         const oldValue = formDataCopy[key];
         let value = oldValue;
         if (typeof value === "string") {
@@ -130,6 +131,22 @@ const AddTemplateModal = ({
       </Modal>
     </React.Fragment>
   );
+};
+
+AddTemplateModal.propTypes = {
+  cancelLabel: PropTypes.string,
+  config: PropTypes.array.isRequired,
+  defaultValues: PropTypes.object,
+  formdata: PropTypes.object,
+  handleCancel: PropTypes.func.isRequired,
+  handleSubmit: PropTypes.func.isRequired,
+  headerLabel: PropTypes.string,
+  isShowPdf: PropTypes.bool,
+  previewPdf: PropTypes.any,
+  saveLabel: PropTypes.string,
+  setFormData: PropTypes.func.isRequired,
+  setFormErrors: PropTypes.shape({ current: PropTypes.any }),
+  t: PropTypes.func.isRequired,
 };
 
 export default AddTemplateModal;
