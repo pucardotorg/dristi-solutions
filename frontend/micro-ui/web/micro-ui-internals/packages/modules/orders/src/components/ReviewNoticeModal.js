@@ -37,13 +37,12 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   const showDocument = useMemo(() => {
     return (
       <div
-        className="show-document-doc-container"
         style={{
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
-          maxHeight: "60vh",
+          maxHeight: infos ? "50vh" : "60vh",
           maxWidth: "100%",
           overflowY: "auto",
           overflowX: "hidden",
@@ -92,7 +91,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
       actionSaveLabel={null}
       hideSubmit={true}
       actionSaveOnSubmit={() => {}}
-      popupStyles={{ minWidth: "880px", width: "80%" }}
+      popupStyles={{ minWidth: "880px", width: "80%", maxHeight: "95vh" }}
     >
       {infos && <ApplicationInfoComponent infos={infos} />}
       {showDocument}
