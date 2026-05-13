@@ -2,6 +2,7 @@ import { CardLabelError } from "@egovernments/digit-ui-components";
 import { CustomMultiSelectDropdown } from "@egovernments/digit-ui-module-dristi/src/components/CustomMultiSelectDropdown";
 import { CustomAddIcon, OutlinedInfoIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import React, { useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { Dropdown } from "@egovernments/digit-ui-react-components";
 import ReactTooltip from "react-tooltip";
 
@@ -74,7 +75,7 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
         return (
           <div key={index} className="party-card">
             {selectedRows?.length > 1 && (
-              <div onClick={() => removeRow(index)} className="delete-btn">
+              <button type="button" onClick={() => removeRow(index)} className="delete-btn" aria-label={t("ES_COMMON_DELETE")}>
                 <svg width="16" height="18" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path
                     fillRule="evenodd"
@@ -83,7 +84,7 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
                     fill="#DC2626"
                   />
                 </svg>
-              </div>
+              </button>
             )}
 
             <div className="card-content">
@@ -136,7 +137,8 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
         );
       })}
 
-      <div
+      <button
+        type="button"
         onClick={addRow}
         style={{
           display: "inline-flex",
@@ -146,11 +148,15 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
           color: "#007E7E",
           fontWeight: "700",
           marginTop: "6px",
+          background: "none",
+          border: "none",
+          padding: 0,
+          font: "inherit",
         }}
       >
         <CustomAddIcon width="14px" height="14px" />
         <span style={{ color: "#007E7E" }}>{t("ADD_PARTIES")}</span>
-      </div>
+      </button>
 
       {errors?.[config?.key] && (
         <CardLabelError style={inputs?.errorStyle || { color: "red", marginTop: "5px", marginBottom: 0 }}>
@@ -159,6 +165,18 @@ const MultiPartyAddressSelector = ({ t, config, formData = {}, onSelect, errors 
       )}
     </div>
   );
+};
+
+MultiPartyAddressSelector.propTypes = {
+  t: PropTypes.func.isRequired,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    populators: PropTypes.object,
+    disable: PropTypes.bool,
+  }).isRequired,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func,
+  errors: PropTypes.object,
 };
 
 export default MultiPartyAddressSelector;

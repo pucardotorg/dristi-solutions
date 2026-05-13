@@ -146,7 +146,7 @@ const CustomReviewCardRow = ({
       }
       return null;
     },
-    [handleClickImage, isScrutiny]
+    [handleClickImage, isScrutiny, disableScrutiny, enableScrutinyField]
   );
   const renderCard = useMemo(() => {
     let bgclassname = "";
@@ -720,7 +720,6 @@ const CustomReviewCardRow = ({
       case "image":
         let FSOErrors = [];
         let systemErrors = [];
-        let valuesAvailable = [];
         if (typeof dataError === "object") {
           value?.forEach((val) => {
             if (dataError?.[val]?.FSOError) {
@@ -742,19 +741,19 @@ const CustomReviewCardRow = ({
         if (isPrevScrutiny && (!disableScrutiny || enableScrutinyField)) {
           showFlagIcon = prevDataError?.[type]?.FSOError;
         }
+        const valuesAvailable = [...(value || [])];
         const files =
-          value?.map((value) => {
-            valuesAvailable.push(value);
-            const getFile = extractValue(data, value);
+          value?.map((fieldKey) => {
+            const getFile = extractValue(data, fieldKey);
             if (getFile) {
               return getFile;
-            } else if (value !== "SelectUploadDocWithName") {
-              return {
-                fileName: t(getNotUploadedFileName(value)),
-              };
-            } else {
-              return [];
             }
+            if (fieldKey !== "SelectUploadDocWithName") {
+              return {
+                fileName: t(getNotUploadedFileName(fieldKey)),
+              };
+            }
+            return [];
           }) || [];
         return (
           <div className={`image-main ${bgclassname}`}>
@@ -762,15 +761,17 @@ const CustomReviewCardRow = ({
               <div className="label">{t(label)}</div>
               <div className={`value ${!isScrutiny ? "column" : ""}`} style={{ overflowX: "scroll", width: "100%", marginRight: "56px" }}>
                 {Array.isArray(files)
-                  ? files?.map((file, fileIndex) =>
-                      file && Array.isArray(file) ? (
-                        file?.map((data, index) => {
-                          if (data?.fileStore) {
+                  ? files.map((file, fileIndex) => {
+                      const pathKey = value[fileIndex];
+                      if (file && Array.isArray(file)) {
+                        return file.map((nestedData, index) => {
+                          if (nestedData?.fileStore) {
                             return (
                               <div
+                                key={`${nestedData.fileStore}-${pathKey}-${index}`}
                                 style={{ cursor: "pointer" }}
                                 onClick={() => {
-                                  handleImageClick(configKey, name, dataIndex, value[fileIndex], data, [value[fileIndex]], dataError);
+                                  handleImageClick(configKey, name, dataIndex, pathKey, nestedData, [pathKey], dataError);
                                   if (!isScrutiny)
                                     setShowImageModal({
                                       openModal: true,
@@ -778,33 +779,34 @@ const CustomReviewCardRow = ({
                                         configKey,
                                         name,
                                         index: dataIndex,
-                                        fieldName: value[fileIndex],
-                                        data,
-                                        inputlist: [value[fileIndex]],
+                                        fieldName: pathKey,
+                                        data: nestedData,
+                                        inputlist: [pathKey],
                                       },
                                     });
                                 }}
                               >
                                 <MemoDocViewerWrapper
-                                  key={`${file.fileStore}-${index}`}
-                                  fileStoreId={data?.fileStore}
-                                  displayFilename={data?.fileName}
+                                  fileStoreId={nestedData?.fileStore}
+                                  displayFilename={nestedData?.fileName}
                                   tenantId={tenantId}
                                   docWidth="250px"
                                   errorStyleSmallType={true}
                                   showDownloadOption={false}
-                                  documentName={data?.fileName || data?.additionalDetails?.fileName}
+                                  documentName={nestedData?.fileName || nestedData?.additionalDetails?.fileName}
                                   preview
                                 />
                               </div>
                             );
-                          } else if (data?.document) {
-                            return data?.document?.map((data, index) => {
+                          }
+                          if (nestedData?.document) {
+                            return nestedData.document.map((docItem, docIndex) => {
                               return (
                                 <div
+                                  key={`${docItem?.fileStore || docIndex}-${pathKey}-${docIndex}`}
                                   style={{ cursor: "pointer" }}
                                   onClick={() => {
-                                    handleImageClick(configKey, name, dataIndex, value[fileIndex], data, [value[fileIndex]], dataError);
+                                    handleImageClick(configKey, name, dataIndex, pathKey, docItem, [pathKey], dataError);
                                     if (!isScrutiny)
                                       setShowImageModal({
                                         openModal: true,
@@ -812,77 +814,92 @@ const CustomReviewCardRow = ({
                                           configKey,
                                           name,
                                           index: dataIndex,
-                                          fieldName: value[fileIndex],
-                                          data,
-                                          inputlist: [value[fileIndex]],
+                                          fieldName: pathKey,
+                                          data: docItem,
+                                          inputlist: [pathKey],
                                         },
                                       });
                                   }}
                                 >
                                   <MemoDocViewerWrapper
-                                    key={`${file.fileStore}-${index}`}
-                                    fileStoreId={data?.fileStore}
-                                    displayFilename={data?.fileName}
+                                    fileStoreId={docItem?.fileStore}
+                                    displayFilename={docItem?.fileName}
                                     tenantId={tenantId}
                                     docWidth="250px"
                                     errorStyleSmallType={true}
                                     showDownloadOption={false}
-                                    documentName={data?.fileName}
+                                    documentName={docItem?.fileName}
                                     preview
                                   />
                                 </div>
                               );
                             });
-                          } else {
-                            return null;
                           }
-                        })
-                      ) : file?.fileStore ? (
-                        <div
-                          style={{ cursor: "pointer" }}
-                          onClick={() => {
-                            handleImageClick(configKey, name, dataIndex, value[fileIndex], data, [value[fileIndex]], dataError);
-                          }}
-                        >
-                          <MemoDocViewerWrapper
-                            key={`${value}-${file?.name}`}
-                            fileStoreId={file?.fileStore}
-                            displayFilename={file?.fileName}
-                            tenantId={tenantId}
-                            docWidth="250px"
-                            errorStyleSmallType={true}
-                            showDownloadOption={false}
-                            documentName={data?.fileName}
-                            preview
-                          />
-                        </div>
-                      ) : file?.fileName ? (
-                        <div
-                          key={fileIndex}
-                          style={{ display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer" }}
-                          onClick={() => {
-                            handleImageClick(configKey, name, dataIndex, value[fileIndex], file, [value[fileIndex]], dataError);
-                          }}
-                        >
+                          return null;
+                        });
+                      }
+                      if (file?.fileStore) {
+                        return (
                           <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              fontSize: "16px",
-                              color: "#888",
-                              height: "238px",
-                              padding: "16px",
-                              boxSizing: "border-box",
-                              marginBottom: "16px",
-                              border: "1px solid #ccc",
+                            key={`filestore-${pathKey}-${file.fileStore}-${file.fileName}`}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => {
+                              handleImageClick(configKey, name, dataIndex, pathKey, file, [pathKey], dataError);
                             }}
                           >
-                            {t("NOT_UPLOADED")}
+                            <MemoDocViewerWrapper
+                              fileStoreId={file?.fileStore}
+                              displayFilename={file?.fileName}
+                              tenantId={tenantId}
+                              docWidth="250px"
+                              errorStyleSmallType={true}
+                              showDownloadOption={false}
+                              documentName={data?.fileName}
+                              preview
+                            />
                           </div>
-                          <div style={{ fontSize: "14px", color: "#555" }}>{file?.fileName}</div>
-                        </div>
-                      ) : null
-                    )
+                        );
+                      }
+                      if (file?.fileName) {
+                        return (
+                          <button
+                            key={`${pathKey}-${file.fileName}-${String(fileIndex)}`}
+                            type="button"
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              cursor: "pointer",
+                              background: "none",
+                              border: "none",
+                              padding: 0,
+                              font: "inherit",
+                            }}
+                            onClick={() => {
+                              handleImageClick(configKey, name, dataIndex, pathKey, file, [pathKey], dataError);
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                fontSize: "16px",
+                                color: "#888",
+                                height: "238px",
+                                padding: "16px",
+                                boxSizing: "border-box",
+                                marginBottom: "16px",
+                                border: "1px solid #ccc",
+                              }}
+                            >
+                              {t("NOT_UPLOADED")}
+                            </div>
+                            <div style={{ fontSize: "14px", color: "#555" }}>{file?.fileName}</div>
+                          </button>
+                        );
+                      }
+                      return null;
+                    })
                   : null}
               </div>
               {showFlagIcon && (

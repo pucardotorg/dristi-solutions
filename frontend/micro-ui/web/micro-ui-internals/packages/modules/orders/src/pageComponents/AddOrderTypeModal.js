@@ -1,14 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import isEqual from "lodash/isEqual";
 import { _getPartiesOptions, CloseBtn, Heading } from "../utils/orderUtils";
-import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
-import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
-import { generateUUID } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { generateUUID, runComprehensiveSanitizer } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { ORDER_TYPES } from "../utils/constants";
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
@@ -488,7 +484,7 @@ const AddOrderTypeModal = ({
                           ...field,
                           populators: {
                             ...field?.populators,
-                            hideInForm: ["POLICE", "OTHER"]?.includes(formdata?.processTemplate?.addressee) ? false : true,
+                            hideInForm: !["POLICE", "OTHER"]?.includes(formdata?.processTemplate?.addressee),
                             options: _getPartiesOptions(caseDetails) || [],
                           },
                         };
@@ -600,6 +596,34 @@ const AddOrderTypeModal = ({
       )}
     </React.Fragment>
   );
+};
+
+AddOrderTypeModal.propTypes = {
+  t: PropTypes.func.isRequired,
+  headerLabel: PropTypes.string,
+  saveLabel: PropTypes.string,
+  cancelLabel: PropTypes.string,
+  handleCancel: PropTypes.func,
+  handleSubmit: PropTypes.func,
+  modifiedFormConfig: PropTypes.array,
+  getDefaultValue: PropTypes.func,
+  currentOrder: PropTypes.object,
+  index: PropTypes.number,
+  setFormErrors: PropTypes.func,
+  clearFormErrors: PropTypes.shape({ current: PropTypes.any }),
+  setValueRef: PropTypes.object,
+  orderType: PropTypes.shape({
+    code: PropTypes.string,
+  }),
+  addOrderTypeLoader: PropTypes.bool,
+  setWarrantSubtypeCode: PropTypes.func,
+  onOrderFormDataChange: PropTypes.func,
+  persistedDefaultValues: PropTypes.object,
+  bailBondRequired: PropTypes.bool,
+  setBailBondRequired: PropTypes.func,
+  policeStationData: PropTypes.object,
+  caseDetails: PropTypes.object,
+  miscellaneousProcessTemplateDropDown: PropTypes.array,
 };
 
 export default AddOrderTypeModal;

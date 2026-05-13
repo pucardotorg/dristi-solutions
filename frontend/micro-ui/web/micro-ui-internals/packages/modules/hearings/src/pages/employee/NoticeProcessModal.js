@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import { Modal, CloseSvg, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
 import ReviewNoticeModal from "@egovernments/digit-ui-module-orders/src/components/ReviewNoticeModal";
@@ -38,6 +38,49 @@ const ModalHeading = ({ label }) => {
     </h1>
   );
 };
+
+ModalHeading.propTypes = {
+  label: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+};
+
+function normalizeOrderDisplayTitle(order) {
+  return order?.orderType === "MISCELLANEOUS_PROCESS"
+    ? order?.orderDetails?.processTemplate?.processTitle
+    : order?.orderType;
+}
+
+function toTitleCaseOrderType(type) {
+  if (!type || typeof type !== "string") return "";
+  return type
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function augmentPartyGroupWithDisplayTitles(partyGroup) {
+  const typeCounters = {};
+  partyGroup?.ordersList?.forEach((order) => {
+    const type = normalizeOrderDisplayTitle(order);
+    if (!typeCounters[type]) typeCounters[type] = 0;
+    typeCounters[type]++;
+  });
+
+  const updatedOrdersList =
+    partyGroup?.ordersList?.map((order) => {
+      const type = normalizeOrderDisplayTitle(order);
+      const round = typeCounters[type]--;
+      const titleCaseType = toTitleCaseOrderType(type);
+      return {
+        ...order,
+        displayTitle: `${titleCaseType} - R${round}`,
+      };
+    }) || [];
+
+  return {
+    ...partyGroup,
+    ordersList: updatedOrdersList,
+  };
+}
 
 function removeAccusedSuffix(partyName) {
   return partyName?.replace(/\s*\((Accused|witness)\)$/, "");
@@ -86,7 +129,13 @@ function groupOrdersByParty(filteredOrders) {
       }
     } else {
       const party = order?.additionalDetails?.formdata?.[formDataKeyMap[order?.orderType]]?.party;
-      parties = Array.isArray(party) ? party : party ? [party] : [];
+      if (Array.isArray(party)) {
+        parties = party;
+      } else if (party) {
+        parties = [party];
+      } else {
+        parties = [];
+      }
     }
 
     if (!Array?.isArray(parties) || parties?.length === 0) return;
@@ -235,33 +284,7 @@ const NoticeProcessModal = ({
     const sortedOrders = [...filteredOrders]?.sort((a, b) => new Date(b?.createdDate) - new Date(a?.createdDate));
 
     const groupedByParty = groupOrdersByParty(sortedOrders);
-    const updatedGrouped = groupedByParty?.map((partyGroup) => {
-      const typeCounters = {};
-
-      partyGroup?.ordersList?.forEach((order) => {
-        const type = order?.orderType === "MISCELLANEOUS_PROCESS" ? order?.orderDetails?.processTemplate?.processTitle : order?.orderType;
-        if (!typeCounters[type]) typeCounters[type] = 0;
-        typeCounters[type]++;
-      });
-
-      const updatedOrdersList = partyGroup?.ordersList?.map((order) => {
-        const type = order?.orderType === "MISCELLANEOUS_PROCESS" ? order?.orderDetails?.processTemplate?.processTitle : order?.orderType;
-        const round = typeCounters[type]--;
-        const titleCaseType = type
-          .split(" ")
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-          .join(" ");
-        return {
-          ...order,
-          displayTitle: `${titleCaseType} - R${round}`,
-        };
-      });
-
-      return {
-        ...partyGroup,
-        ordersList: updatedOrdersList,
-      };
-    });
+    const updatedGrouped = groupedByParty?.map(augmentPartyGroupWithDisplayTitles);
 
     return updatedGrouped;
   }, [ordersData]);
@@ -564,6 +587,16 @@ const NoticeProcessModal = ({
       {showNoticeModal && <ReviewNoticeModal rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
     </React.Fragment>
   );
+};
+
+NoticeProcessModal.propTypes = {
+  handleClose: PropTypes.func,
+  filingNumber: PropTypes.string,
+  currentHearingId: PropTypes.string,
+  caseDetails: PropTypes.object,
+  showModal: PropTypes.bool,
+  ordersDataFromParent: PropTypes.object,
+  hearingsDataFromParent: PropTypes.object,
 };
 
 export default NoticeProcessModal;
