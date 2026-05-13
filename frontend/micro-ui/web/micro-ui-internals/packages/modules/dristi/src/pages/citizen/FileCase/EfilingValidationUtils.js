@@ -3882,25 +3882,12 @@ export const createOrUpdateTask = async ({
     });
   };
 
-  const transformAddresses = (addresses = []) => {
-    return addresses.map((addr) => ({
-      ...addr,
-      addressDetails: {
-        ...addr?.addressDetails,
-        typeOfAddress: addr?.addressDetails?.typeOfAddress?.code || "",
-      },
-    }));
-  };
-
   const partyDetails = accusedDetails?.map((accused) => ({
     ...(status && { status }),
-    addresses: transformAddresses(accused?.addressDetails?.filter((addr) => addr?.checked) || []),
+    addresses: accused?.addressDetails?.filter((addr) => addr?.checked) || [],
     deliveryChannels: _getdelieveryChannels(accused?.[`${type?.toLowerCase()}CourierService`] || []),
     respondentDetails: {
       ...respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data,
-      addressDetails: transformAddresses(
-        respondentFormData?.find((acc) => acc?.uniqueId === (accused?.data?.uniqueId || accused?.uniqueId))?.data?.addressDetails || []
-      ),
       uniqueId: accused?.uniqueId,
     },
   }));
