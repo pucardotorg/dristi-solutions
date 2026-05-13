@@ -1,6 +1,7 @@
 import { CardLabelError, CardText } from "@egovernments/digit-ui-components";
 import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { verifyMobileNoConfig } from "../configs/component";
 import useInterval from "../hooks/useInterval";
 import { InfoIconRed } from "../icons/svgIndex";
@@ -587,5 +588,18 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
     </div>
   );
 }
+
+VerifyPhoneNumber.propTypes = {
+  clearErrors: PropTypes.func,
+  config: PropTypes.shape({
+    key: PropTypes.string.isRequired,
+    populators: PropTypes.object,
+  }).isRequired,
+  errors: PropTypes.object,
+  formData: PropTypes.object,
+  onSelect: PropTypes.func.isRequired,
+  setError: PropTypes.func,
+  t: PropTypes.func.isRequired,
+};
 
 export default VerifyPhoneNumber;

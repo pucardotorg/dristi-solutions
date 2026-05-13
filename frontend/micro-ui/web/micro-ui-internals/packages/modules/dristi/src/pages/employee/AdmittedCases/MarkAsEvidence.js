@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import PropTypes from "prop-types";
 import Modal from "../../../components/Modal";
 import { Dropdown, Loader, TextInput, LabelFieldPair, CardLabel } from "@egovernments/digit-ui-react-components";
 import { DRISTIService } from "../../../services";
@@ -1210,6 +1211,16 @@ const MarkAsEvidence = ({
       )}
     </React.Fragment>
   );
+};
+
+MarkAsEvidence.propTypes = {
+  evidenceDetailsObj: PropTypes.object,
+  isEvidenceLoading: PropTypes.bool,
+  paginatedData: PropTypes.object,
+  setDocumentCounter: PropTypes.func,
+  setShowMakeAsEvidenceModal: PropTypes.func.isRequired,
+  setShowToast: PropTypes.func.isRequired,
+  t: PropTypes.func.isRequired,
 };
 
 export default MarkAsEvidence;

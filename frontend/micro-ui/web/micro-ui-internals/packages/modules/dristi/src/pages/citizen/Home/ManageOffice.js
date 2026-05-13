@@ -551,11 +551,12 @@ const ManageOffice = () => {
         )}
       </div>
       {showAddMemberModal && (
-        <div className="manage-office-modal-overlay" onClick={handleCloseModal}>
-          <div className={`manage-office-modal ${searchResult ? "manage-office-modal--compact" : ""}`} onClick={(e) => e.stopPropagation()}>
+        <div className="manage-office-modal-overlay">
+          <button type="button" className="manage-office-modal-backdrop" aria-label={t("CS_COMMON_CLOSE")} onClick={handleCloseModal} />
+          <div className={`manage-office-modal ${searchResult ? "manage-office-modal--compact" : ""}`}>
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">{t("ADD_MEMBER")}</h2>
-              <button onClick={handleCloseModal} className="manage-office-modal__close">
+              <button type="button" onClick={handleCloseModal} className="manage-office-modal__close">
                 <ManageOfficeCloseIcon />
               </button>
             </div>
@@ -646,11 +647,12 @@ const ManageOffice = () => {
       )}
       {/* Remove Member Confirmation Modal */}
       {showRemoveMemberModal && (
-        <div className="manage-office-modal-overlay" onClick={handleCloseRemoveModal}>
-          <div className="manage-office-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="manage-office-modal-overlay">
+          <button type="button" className="manage-office-modal-backdrop" aria-label={t("CS_COMMON_CLOSE")} onClick={handleCloseRemoveModal} />
+          <div className="manage-office-modal">
             <div className="manage-office-modal__header">
               <h2 className="manage-office-modal__title">{activeTab === "advocatesWorkingFor" ? t("LEAVE_OFFICE") : t("REMOVE_MEMBER")}</h2>
-              <button onClick={handleCloseRemoveModal} className="manage-office-modal__close">
+              <button type="button" onClick={handleCloseRemoveModal} className="manage-office-modal__close">
                 <ManageOfficeCloseIcon />
               </button>
             </div>

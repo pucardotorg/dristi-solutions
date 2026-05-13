@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { GalleryIcon, RemoveIcon } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 
@@ -69,7 +70,7 @@ function UploadDrawer({ setProfilePic, closeDrawer, userType, removeProfilePic, 
         <div
           style={{ display: "flex", flex: "1", flexDirection: "column", width: "100%", justifyContent: "center", alignItems: "center", gap: "8px 0" }}
         >
-          <label for="file" style={{ cursor: "pointer" }}>
+          <label htmlFor="file" style={{ cursor: "pointer" }}>
             {" "}
             <GalleryIcon />
           </label>
@@ -80,7 +81,7 @@ function UploadDrawer({ setProfilePic, closeDrawer, userType, removeProfilePic, 
         <div
           style={{ display: "flex", flex: "1", width: "100%", justifyContent: "center", alignItems: "center", flexDirection: "column", gap: "8px 0" }}
         >
-          <button onClick={removeimg}>
+          <button type="button" onClick={removeimg}>
             <RemoveIcon />
           </button>
           <label style={{ cursor: "pointer" }}>Remove</label>
@@ -89,5 +90,13 @@ function UploadDrawer({ setProfilePic, closeDrawer, userType, removeProfilePic, 
     </React.Fragment>
   );
 }
+
+UploadDrawer.propTypes = {
+  closeDrawer: PropTypes.func.isRequired,
+  removeProfilePic: PropTypes.func.isRequired,
+  setProfilePic: PropTypes.func.isRequired,
+  setShowToast: PropTypes.func.isRequired,
+  userType: PropTypes.string.isRequired,
+};
 
 export default UploadDrawer;

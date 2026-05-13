@@ -889,7 +889,7 @@ export const demandNoticeFileValidation = ({ t, formData, selected, setShowToast
   }
 };
 
-export const chequeDetailFileValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => {
+export const chequeDetailFileValidation = ({ t, formData, selected, setShowToast, setFormErrors }) => { // NOSONAR S3776 — explicit per-field cheque validation
   if (selected === "chequeDetails") {
     for (const key of ["bouncedChequeFileUpload", "returnMemoFileUpload"]) {
       if (!(key in formData) || formData[key]?.document?.length === 0 || !formData[key] || Object.keys(formData[key] || {}).length === 0) {

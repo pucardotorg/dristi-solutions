@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
 import DocumentViewerWithComment from "../../components/DocumentViewerWithComment";
 import AddSignatureComponent from "../../components/AddSignatureComponent";
-import useDocumentUpload from "../../hooks/orders/useDocumentUpload";
 import CustomStepperSuccess from "../../components/CustomStepperSuccess";
 import UpdateDeliveryStatusComponent from "../../components/UpdateDeliveryStatusComponent";
 import { taskService, processManagementService } from "../../hooks/services";
@@ -227,7 +226,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   // Initialize download PDF hook
   const { downloadPdf } = useDownloadCasePdf();
-  const { uploadDocuments } = useDocumentUpload();
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const history = useHistory();
   const dayInMillisecond = 24 * 3600 * 1000;

@@ -1,6 +1,6 @@
-import { UploadIcon } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
 import { FileUploader } from "react-drag-drop-files";
+import { UploadIcon } from "@egovernments/digit-ui-react-components";
 import { FileUploadIcon } from "../icons/svgIndex";
 import { isEmptyObject } from "../Utils";
 import { EXTENSION_TO_MIME } from "../Utils/constants";

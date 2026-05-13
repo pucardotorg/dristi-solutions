@@ -1112,7 +1112,21 @@
   z-index: 9999;
 }
 
+/* Full-area hit target behind the dialog; keeps dimming on the overlay container. */
+.manage-office-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+}
+
 .manage-office-modal {
+  position: relative;
+  z-index: 1;
   box-sizing: border-box;
   background: #ffffff;
   border: 1px solid #e2e8f0;

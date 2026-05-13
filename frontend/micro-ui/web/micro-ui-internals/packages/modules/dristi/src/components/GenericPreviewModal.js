@@ -72,52 +72,50 @@ const GenericPreviewModal = ({
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
 
   return (
-    <React.Fragment>
-      <Modal
-        headerBarMain={<Heading t={t} label={header} showCustomChip={showCustomChip} customChipText={customChipText} />}
-        headerBarEnd={<CloseBtn onClick={handleBack} />}
-        actionCancelLabel={t(cancelLabel)}
-        actionCancelOnSubmit={onCancel || handleBack}
-        actionSaveLabel={saveLabel ? t(saveLabel) : undefined}
-        isDisabled={isDisabled}
-        actionSaveOnSubmit={onSubmit}
-        className={`review-submission-appl-modal ${className}`}
-      >
-        <div className="review-submission-appl-body-main">
-          <div className="application-details">
-            {config && config.length > 0 && (
-              <div style={getStyles("container")}>
-                {config.map((item, index) => (
-                  <div style={getStyles("infoRow")} key={index}>
-                    <h3 style={getStyles("infoKey")}>{item?.key}</h3>
-                    <h3 style={getStyles("infoValue")}>{item?.value === "CS_NA" ? t(item?.value) : item?.value}</h3>
-                  </div>
-                ))}
+    <Modal
+      headerBarMain={<Heading t={t} label={header} showCustomChip={showCustomChip} customChipText={customChipText} />}
+      headerBarEnd={<CloseBtn onClick={handleBack} />}
+      actionCancelLabel={t(cancelLabel)}
+      actionCancelOnSubmit={onCancel || handleBack}
+      actionSaveLabel={saveLabel ? t(saveLabel) : undefined}
+      isDisabled={isDisabled}
+      actionSaveOnSubmit={onSubmit}
+      className={`review-submission-appl-modal ${className}`}
+    >
+      <div className="review-submission-appl-body-main">
+        <div className="application-details">
+          {config && config.length > 0 && (
+            <div style={getStyles("container")}>
+              {config.map((item, index) => (
+                <div style={getStyles("infoRow")} key={index}>
+                  <h3 style={getStyles("infoKey")}>{item?.key}</h3>
+                  <h3 style={getStyles("infoValue")}>{item?.value === "CS_NA" ? t(item?.value) : item?.value}</h3>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="application-view">
+            {documents && documents?.length > 0 ? (
+              documents.map((docs) => (
+                <DocViewerWrapper
+                  key={docs?.fileStore}
+                  fileStoreId={docs?.fileStore}
+                  tenantId={tenantId}
+                  docWidth="100%"
+                  docHeight={"calc(100vh - 250px)"}
+                  showDownloadOption={false}
+                  documentName={docs?.name}
+                />
+              ))
+            ) : (
+              <div style={{ padding: "20px", textAlign: "center" }}>
+                <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
               </div>
             )}
-            <div className="application-view">
-              {documents && documents?.length > 0 ? (
-                documents.map((docs) => (
-                  <DocViewerWrapper
-                    key={docs?.fileStore}
-                    fileStoreId={docs?.fileStore}
-                    tenantId={tenantId}
-                    docWidth="100%"
-                    docHeight={"calc(100vh - 250px)"}
-                    showDownloadOption={false}
-                    documentName={docs?.name}
-                  />
-                ))
-              ) : (
-                <div style={{ padding: "20px", textAlign: "center" }}>
-                  <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
-                </div>
-              )}
-            </div>
           </div>
         </div>
-      </Modal>
-    </React.Fragment>
+      </div>
+    </Modal>
   );
 };
 
