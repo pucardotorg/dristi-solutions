@@ -1,4 +1,5 @@
-import { CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
+import { InboxSearchComposer } from "@egovernments/digit-ui-module-core";
 import React, { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { bulkBailBondSignConfig } from "../../configs/BulkBailBondSignConfig";
